@@ -17,14 +17,8 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
-import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
@@ -46,15 +40,12 @@ public class BuildSteps {
    * All the steps to build an image to a Docker registry.
    *
    * @param buildConfiguration the configuration parameters for the build
-   * @param cachesInitializer the {@link Caches.Initializer} used to setup the cache
    * @return a new {@link BuildSteps} for building to a registry
    */
-  public static BuildSteps forBuildToDockerRegistry(
-      BuildConfiguration buildConfiguration, Caches.Initializer cachesInitializer) {
+  public static BuildSteps forBuildToDockerRegistry(BuildConfiguration buildConfiguration) {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_REGISTRY,
         buildConfiguration,
-        cachesInitializer,
         stepsRunner ->
             stepsRunner
                 .runRetrieveTargetRegistryCredentialsStep()
@@ -75,15 +66,12 @@ public class BuildSteps {
    * All the steps to build to Docker daemon
    *
    * @param buildConfiguration the configuration parameters for the build
-   * @param cachesInitializer the {@link Caches.Initializer} used to setup the cache
    * @return a new {@link BuildSteps} for building to a Docker daemon
    */
-  public static BuildSteps forBuildToDockerDaemon(
-      BuildConfiguration buildConfiguration, Caches.Initializer cachesInitializer) {
+  public static BuildSteps forBuildToDockerDaemon(BuildConfiguration buildConfiguration) {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_DAEMON,
         buildConfiguration,
-        cachesInitializer,
         stepsRunner ->
             stepsRunner
                 .runPullBaseImageStep()
@@ -100,17 +88,12 @@ public class BuildSteps {
    *
    * @param outputPath the path to output the tarball to
    * @param buildConfiguration the configuration parameters for the build
-   * @param cachesInitializer the {@link Caches.Initializer} used to setup the cache
    * @return a new {@link BuildSteps} for building a tarball
    */
-  public static BuildSteps forBuildToTar(
-      Path outputPath,
-      BuildConfiguration buildConfiguration,
-      Caches.Initializer cachesInitializer) {
+  public static BuildSteps forBuildToTar(Path outputPath, BuildConfiguration buildConfiguration) {
     return new BuildSteps(
         DESCRIPTION_FOR_TARBALL,
         buildConfiguration,
-        cachesInitializer,
         stepsRunner ->
             stepsRunner
                 .runPullBaseImageStep()
@@ -124,21 +107,19 @@ public class BuildSteps {
 
   private final String description;
   private final BuildConfiguration buildConfiguration;
-  private final Caches.Initializer cachesInitializer;
   private final StepsRunnerConsumer stepsRunnerConsumer;
 
   /**
    * @param description a description of what the steps do
+   * @param buildConfiguration the configuration parameters for the build
    * @param stepsRunnerConsumer accepts a {@link StepsRunner} by running the necessary steps
    */
   private BuildSteps(
       String description,
       BuildConfiguration buildConfiguration,
-      Caches.Initializer cachesInitializer,
       StepsRunnerConsumer stepsRunnerConsumer) {
     this.description = description;
     this.buildConfiguration = buildConfiguration;
-    this.cachesInitializer = cachesInitializer;
     this.stepsRunnerConsumer = stepsRunnerConsumer;
   }
 
@@ -146,33 +127,19 @@ public class BuildSteps {
     return buildConfiguration;
   }
 
-  public void run()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
-    buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(""));
+  public void run() throws InterruptedException, ExecutionException {
+    buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
 
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), description)) {
-      try (Caches caches = cachesInitializer.init()) {
-        Cache baseImageLayersCache = caches.getBaseCache();
-        Cache applicationLayersCache = caches.getApplicationCache();
-
-        StepsRunner stepsRunner =
-            new StepsRunner(buildConfiguration, baseImageLayersCache, applicationLayersCache);
-        stepsRunnerConsumer.accept(stepsRunner);
-
-        // Writes the cached layers to the cache metadata.
-        baseImageLayersCache.addCachedLayersToMetadata(stepsRunner.getCachedBaseImageLayers());
-        applicationLayersCache.addCachedLayersWithMetadataToMetadata(
-            stepsRunner.getCachedApplicationLayers());
-      }
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
+      stepsRunnerConsumer.accept(new StepsRunner(buildConfiguration));
     }
 
     if (buildConfiguration.getContainerConfiguration() != null) {
-      buildConfiguration.getEventEmitter().emit(LogEvent.lifecycle(""));
+      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
       buildConfiguration
-          .getEventEmitter()
-          .emit(
+          .getEventDispatcher()
+          .dispatch(
               LogEvent.lifecycle(
                   "Container entrypoint set to "
                       + buildConfiguration.getContainerConfiguration().getEntrypoint()));

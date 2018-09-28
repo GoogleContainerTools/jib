@@ -25,7 +25,7 @@ import java.util.Optional;
  *
  * <p>Timer events follow a specific {@link Timer} through a {@link State#START}, {@link State#LAP},
  * and {@link State#FINISHED} states. The duration indicates the duration since the last {@link
- * TimerEvent} emitted for the {@link Timer}.
+ * TimerEvent} dispatched for the {@link Timer}.
  *
  * <p>Timers can also define a hierarchy.
  */

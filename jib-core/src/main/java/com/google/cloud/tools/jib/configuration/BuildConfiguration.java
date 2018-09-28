@@ -16,13 +16,16 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -54,9 +57,9 @@ public class BuildConfiguration {
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
-    private EventEmitter eventEmitter =
+    private EventDispatcher eventDispatcher =
         jibEvent -> {
-          /* No-op EventEmitter. */
+          /* No-op EventDispatcher. */
         };
     @Nullable private ExecutorService executorService;
 
@@ -176,13 +179,13 @@ public class BuildConfiguration {
     }
 
     /**
-     * Sets the {@link EventEmitter} to emit events with.
+     * Sets the {@link EventDispatcher} to dispatch events with.
      *
-     * @param eventEmitter the {@link EventEmitter}
+     * @param eventDispatcher the {@link EventDispatcher}
      * @return this
      */
-    public Builder setEventEmitter(EventEmitter eventEmitter) {
-      this.eventEmitter = eventEmitter;
+    public Builder setEventDispatcher(EventDispatcher eventDispatcher) {
+      this.eventDispatcher = eventDispatcher;
       return this;
     }
 
@@ -202,8 +205,10 @@ public class BuildConfiguration {
      * Builds a new {@link BuildConfiguration} using the parameters passed into the builder.
      *
      * @return the corresponding build configuration
+     * @throws IOException if an I/O exception occurs
+     * @throws CacheDirectoryCreationException if failed to create the configured cache directories
      */
-    public BuildConfiguration build() {
+    public BuildConfiguration build() throws IOException, CacheDirectoryCreationException {
       // Validates the parameters.
       List<String> errorMessages = new ArrayList<>();
       if (baseImageConfiguration == null) {
@@ -219,7 +224,7 @@ public class BuildConfiguration {
             throw new IllegalStateException("Required fields should not be null");
           }
           if (baseImageConfiguration.getImage().usesDefaultTag()) {
-            eventEmitter.emit(
+            eventDispatcher.dispatch(
                 LogEvent.warn(
                     "Base image '"
                         + baseImageConfiguration.getImage()
@@ -230,18 +235,26 @@ public class BuildConfiguration {
             executorService = Executors.newCachedThreadPool();
           }
 
+          if (baseImageLayersCacheConfiguration == null) {
+            baseImageLayersCacheConfiguration =
+                CacheConfiguration.forDefaultUserLevelCacheDirectory();
+          }
+          if (applicationLayersCacheConfiguration == null) {
+            applicationLayersCacheConfiguration = CacheConfiguration.makeTemporary();
+          }
+
           return new BuildConfiguration(
               baseImageConfiguration,
               targetImageConfiguration,
               additionalTargetImageTags,
               containerConfiguration,
-              applicationLayersCacheConfiguration,
-              baseImageLayersCacheConfiguration,
+              Cache.withDirectory(baseImageLayersCacheConfiguration.getCacheDirectory()),
+              Cache.withDirectory(applicationLayersCacheConfiguration.getCacheDirectory()),
               targetFormat,
               allowInsecureRegistries,
               layerConfigurations,
               toolName,
-              eventEmitter,
+              eventDispatcher,
               executorService);
 
         case 1:
@@ -254,6 +267,18 @@ public class BuildConfiguration {
           // Should never reach here.
           throw new IllegalStateException();
       }
+    }
+
+    @Nullable
+    @VisibleForTesting
+    CacheConfiguration getBaseImageLayersCacheConfiguration() {
+      return baseImageLayersCacheConfiguration;
+    }
+
+    @Nullable
+    @VisibleForTesting
+    CacheConfiguration getApplicationLayersCacheConfiguration() {
+      return applicationLayersCacheConfiguration;
     }
   }
 
@@ -270,13 +295,13 @@ public class BuildConfiguration {
   private final ImageConfiguration targetImageConfiguration;
   private final ImmutableSet<String> additionalTargetImageTags;
   @Nullable private final ContainerConfiguration containerConfiguration;
-  @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
-  @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
+  private final Cache baseImageLayersCache;
+  private final Cache applicationLayersCache;
   private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
   private final String toolName;
-  private final EventEmitter eventEmitter;
+  private final EventDispatcher eventDispatcher;
   private final ExecutorService executorService;
 
   /** Instantiate with {@link #builder}. */
@@ -285,25 +310,25 @@ public class BuildConfiguration {
       ImageConfiguration targetImageConfiguration,
       ImmutableSet<String> additionalTargetImageTags,
       @Nullable ContainerConfiguration containerConfiguration,
-      @Nullable CacheConfiguration applicationLayersCacheConfiguration,
-      @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
+      Cache baseImageLayersCache,
+      Cache applicationLayersCache,
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
       String toolName,
-      EventEmitter eventEmitter,
+      EventDispatcher eventDispatcher,
       ExecutorService executorService) {
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
     this.additionalTargetImageTags = additionalTargetImageTags;
     this.containerConfiguration = containerConfiguration;
-    this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
-    this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
+    this.baseImageLayersCache = baseImageLayersCache;
+    this.applicationLayersCache = applicationLayersCache;
     this.targetFormat = targetFormat;
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.layerConfigurations = layerConfigurations;
     this.toolName = toolName;
-    this.eventEmitter = eventEmitter;
+    this.eventDispatcher = eventDispatcher;
     this.executorService = executorService;
   }
 
@@ -336,8 +361,8 @@ public class BuildConfiguration {
     return toolName;
   }
 
-  public EventEmitter getEventEmitter() {
-    return eventEmitter;
+  public EventDispatcher getEventDispatcher() {
+    return eventDispatcher;
   }
 
   public ExecutorService getExecutorService() {
@@ -345,23 +370,20 @@ public class BuildConfiguration {
   }
 
   /**
-   * Gets the location of the cache for storing application layers.
+   * Gets the {@link Cache} for base image layers.
    *
-   * @return the application layers {@link CacheConfiguration}, or {@code null} if not set
+   * @return the {@link Cache} for base image layers
    */
-  @Nullable
-  public CacheConfiguration getApplicationLayersCacheConfiguration() {
-    return applicationLayersCacheConfiguration;
+  public Cache getBaseImageLayersCache() {
+    return baseImageLayersCache;
   }
-
   /**
-   * Gets the location of the cache for storing base image layers.
+   * Gets the {@link Cache} for application layers.
    *
-   * @return the base image layers {@link CacheConfiguration}, or {@code null} if not set
+   * @return the {@link Cache} for application layers
    */
-  @Nullable
-  public CacheConfiguration getBaseImageLayersCacheConfiguration() {
-    return baseImageLayersCacheConfiguration;
+  public Cache getApplicationLayersCache() {
+    return applicationLayersCache;
   }
 
   /**
@@ -405,7 +427,7 @@ public class BuildConfiguration {
 
   private RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
     return RegistryClient.factory(
-            getEventEmitter(),
+            getEventDispatcher(),
             imageConfiguration.getImageRegistry(),
             imageConfiguration.getImageRepository())
         .setAllowInsecureRegistries(getAllowInsecureRegistries())

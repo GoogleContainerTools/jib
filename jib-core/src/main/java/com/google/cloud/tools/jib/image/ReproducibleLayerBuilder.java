@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
@@ -30,9 +31,9 @@ import java.util.Set;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /**
- * Builds a reproducible {@link UnwrittenLayer} from files. The reproducibility is implemented by
- * strips out all non-reproducible elements (modification time, group ID, user ID, user name, and
- * group name) from name-sorted tar archive entries.
+ * Builds a reproducible layer {@link Blob} from files. The reproducibility is implemented by strips
+ * out all non-reproducible elements (modification time, group ID, user ID, user name, and group
+ * name) from name-sorted tar archive entries.
  */
 public class ReproducibleLayerBuilder {
 
@@ -88,11 +89,11 @@ public class ReproducibleLayerBuilder {
   }
 
   /**
-   * Builds and returns the layer.
+   * Builds and returns the layer {@link Blob}.
    *
    * @return the new layer
    */
-  public UnwrittenLayer build() {
+  public Blob build() {
     UniqueTarArchiveEntries uniqueTarArchiveEntries = new UniqueTarArchiveEntries();
 
     // Adds all the layer entries as tar entries.
@@ -125,10 +126,6 @@ public class ReproducibleLayerBuilder {
       tarStreamBuilder.addTarArchiveEntry(entry);
     }
 
-    return new UnwrittenLayer(tarStreamBuilder.toBlob());
-  }
-
-  public ImmutableList<LayerEntry> getLayerEntries() {
-    return layerEntries;
+    return tarStreamBuilder.toBlob();
   }
 }

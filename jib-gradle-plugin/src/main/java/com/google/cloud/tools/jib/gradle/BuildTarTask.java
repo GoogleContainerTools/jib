@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -27,10 +27,10 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
 import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Nested;
@@ -97,7 +97,9 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   }
 
   @TaskAction
-  public void buildTar() throws InvalidImageReferenceException {
+  public void buildTar()
+      throws InvalidImageReferenceException, BuildStepsExecutionException, IOException,
+          CacheDirectoryCreationException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
@@ -110,7 +112,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     ImageReference targetImage =
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
             jibExtension.getTargetImage(),
-            gradleProjectProperties.getEventEmitter(),
+            gradleProjectProperties.getEventDispatcher(),
             getProject().getName(),
             getProject().getVersion().toString(),
             gradleHelpfulSuggestionsBuilder.build());
@@ -137,14 +139,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
             .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
             .build();
 
-    // Uses a directory in the Gradle build cache as the Jib cache.
-    try {
-      BuildStepsRunner.forBuildTar(Paths.get(getTargetPath()), buildConfiguration)
-          .build(helpfulSuggestions);
-
-    } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
-      throw new GradleException(ex.getMessage(), ex.getCause());
-    }
+    BuildStepsRunner.forBuildTar(Paths.get(getTargetPath()), buildConfiguration)
+        .build(helpfulSuggestions);
   }
 
   @Override

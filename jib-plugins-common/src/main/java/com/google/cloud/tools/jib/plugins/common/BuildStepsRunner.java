@@ -19,14 +19,9 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.cache.Caches.Initializer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -37,7 +32,6 @@ import com.google.cloud.tools.jib.registry.RegistryErrorException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
-import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.StringJoiner;
@@ -84,13 +78,10 @@ public class BuildStepsRunner {
    *
    * @param buildConfiguration the configuration parameters for the build
    * @return a {@link BuildStepsRunner} for building to a registry
-   * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildImage(BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
+  public static BuildStepsRunner forBuildImage(BuildConfiguration buildConfiguration) {
     return new BuildStepsRunner(
-        BuildSteps.forBuildToDockerRegistry(
-            buildConfiguration, getCacheInitializer(buildConfiguration)),
+        BuildSteps.forBuildToDockerRegistry(buildConfiguration),
         buildMessageWithTargetImageReferences(
             buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, "..."),
         buildMessageWithTargetImageReferences(
@@ -102,13 +93,10 @@ public class BuildStepsRunner {
    *
    * @param buildConfiguration the configuration parameters for the build
    * @return a {@link BuildStepsRunner} for building to a Docker daemon
-   * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildToDockerDaemon(BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
+  public static BuildStepsRunner forBuildToDockerDaemon(BuildConfiguration buildConfiguration) {
     return new BuildStepsRunner(
-        BuildSteps.forBuildToDockerDaemon(
-            buildConfiguration, getCacheInitializer(buildConfiguration)),
+        BuildSteps.forBuildToDockerDaemon(buildConfiguration),
         buildMessageWithTargetImageReferences(
             buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
         buildMessageWithTargetImageReferences(
@@ -121,35 +109,13 @@ public class BuildStepsRunner {
    * @param outputPath the path to output the tarball to
    * @param buildConfiguration the configuration parameters for the build
    * @return a {@link BuildStepsRunner} for building a tarball
-   * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildTar(Path outputPath, BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
+  public static BuildStepsRunner forBuildTar(
+      Path outputPath, BuildConfiguration buildConfiguration) {
     return new BuildStepsRunner(
-        BuildSteps.forBuildToTar(
-            outputPath, buildConfiguration, getCacheInitializer(buildConfiguration)),
+        BuildSteps.forBuildToTar(outputPath, buildConfiguration),
         String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
         String.format(SUCCESS_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()));
-  }
-
-  // TODO: Move this up to somewhere where defaults for cache location are provided and ownership is
-  // checked rather than in Caches.Initializer.
-  private static Initializer getCacheInitializer(BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
-    CacheConfiguration applicationLayersCacheConfiguration =
-        buildConfiguration.getApplicationLayersCacheConfiguration() == null
-            ? CacheConfiguration.makeTemporary()
-            : buildConfiguration.getApplicationLayersCacheConfiguration();
-    CacheConfiguration baseImageLayersCacheConfiguration =
-        buildConfiguration.getBaseImageLayersCacheConfiguration() == null
-            ? CacheConfiguration.forDefaultUserLevelCacheDirectory()
-            : buildConfiguration.getBaseImageLayersCacheConfiguration();
-
-    return new Initializer(
-        baseImageLayersCacheConfiguration.getCacheDirectory(),
-        applicationLayersCacheConfiguration.shouldEnsureOwnership(),
-        applicationLayersCacheConfiguration.getCacheDirectory(),
-        applicationLayersCacheConfiguration.shouldEnsureOwnership());
   }
 
   private static void handleRegistryUnauthorizedException(
@@ -199,13 +165,14 @@ public class BuildStepsRunner {
    */
   public void build(HelpfulSuggestions helpfulSuggestions) throws BuildStepsExecutionException {
     try {
-      EventEmitter eventEmitter = buildSteps.getBuildConfiguration().getEventEmitter();
+      EventDispatcher eventDispatcher = buildSteps.getBuildConfiguration().getEventDispatcher();
 
-      eventEmitter.emit(LogEvent.lifecycle(""));
-      eventEmitter.emit(LogEvent.lifecycle(startupMessage));
+      eventDispatcher.dispatch(LogEvent.lifecycle(""));
+      eventDispatcher.dispatch(LogEvent.lifecycle(startupMessage));
 
       // Logs the different source files used.
-      eventEmitter.emit(LogEvent.info("Containerizing application with the following files:"));
+      eventDispatcher.dispatch(
+          LogEvent.info("Containerizing application with the following files:"));
 
       for (LayerConfiguration layerConfiguration :
           buildSteps.getBuildConfiguration().getLayerConfigurations()) {
@@ -213,22 +180,18 @@ public class BuildStepsRunner {
           continue;
         }
 
-        eventEmitter.emit(
+        eventDispatcher.dispatch(
             LogEvent.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":"));
 
         for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
-          eventEmitter.emit(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
+          eventDispatcher.dispatch(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
         }
       }
 
       buildSteps.run();
 
-      eventEmitter.emit(LogEvent.lifecycle(""));
-      eventEmitter.emit(LogEvent.lifecycle(successMessage));
-
-    } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
-      throw new BuildStepsExecutionException(
-          helpfulSuggestions.forCacheNeedsClean(), cacheMetadataCorruptedException);
+      eventDispatcher.dispatch(LogEvent.lifecycle(""));
+      eventDispatcher.dispatch(LogEvent.lifecycle(successMessage));
 
     } catch (ExecutionException executionException) {
       Throwable exceptionDuringBuildSteps = executionException.getCause();
@@ -278,21 +241,9 @@ public class BuildStepsRunner {
             helpfulSuggestions.none(), executionException.getCause());
       }
 
-    } catch (InterruptedException | IOException | CacheDirectoryCreationException ex) {
+    } catch (InterruptedException ex) {
       // TODO: Add more suggestions for various build failures.
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
-
-    } catch (CacheDirectoryNotOwnedException ex) {
-      String helpfulSuggestion =
-          helpfulSuggestions.forCacheDirectoryNotOwned(ex.getCacheDirectory());
-      CacheConfiguration applicationLayersCacheConfiguration =
-          buildSteps.getBuildConfiguration().getApplicationLayersCacheConfiguration();
-      if (applicationLayersCacheConfiguration != null
-          && ex.getCacheDirectory()
-              .equals(applicationLayersCacheConfiguration.getCacheDirectory())) {
-        helpfulSuggestion = helpfulSuggestions.forCacheNeedsClean();
-      }
-      throw new BuildStepsExecutionException(helpfulSuggestion, ex);
     }
   }
 }

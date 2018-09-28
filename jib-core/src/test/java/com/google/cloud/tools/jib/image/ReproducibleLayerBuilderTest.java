@@ -106,11 +106,11 @@ public class ReproducibleLayerBuilderTest {
                 .getLayerEntries());
 
     // Writes the layer tar to a temporary file.
-    UnwrittenLayer unwrittenLayer = layerBuilder.build();
+    Blob unwrittenBlob = layerBuilder.build();
     Path temporaryFile = temporaryFolder.newFile().toPath();
     try (OutputStream temporaryFileOutputStream =
         new BufferedOutputStream(Files.newOutputStream(temporaryFile))) {
-      unwrittenLayer.getBlob().writeTo(temporaryFileOutputStream);
+      unwrittenBlob.writeTo(temporaryFileOutputStream);
     }
 
     // Reads the file back.
@@ -166,15 +166,13 @@ public class ReproducibleLayerBuilderTest {
                 ImmutableList.of(
                     new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA")),
                     new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"))))
-            .build()
-            .getBlob();
+            .build();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
                     new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB")),
                     new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"))))
-            .build()
-            .getBlob();
+            .build();
 
     byte[] layerContent = Blobs.writeToByteArray(layer);
     byte[] reproducedLayerContent = Blobs.writeToByteArray(reproduced);

@@ -18,8 +18,9 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
-import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
+import com.google.cloud.tools.jib.cache.CacheEntry;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
@@ -36,8 +37,8 @@ class PushLayersStep
 
   private final BuildConfiguration buildConfiguration;
   private final AuthenticatePushStep authenticatePushStep;
-  private final AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CachedLayer>>>
-      cachedLayerStepsStep;
+  private final AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CacheEntry>>>
+      cacheEntryStep;
 
   private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<ImmutableList<AsyncStep<PushBlobStep>>> listenableFuture;
@@ -46,16 +47,15 @@ class PushLayersStep
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       AuthenticatePushStep authenticatePushStep,
-      AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CachedLayer>>>
-          cachedLayerStepsStep) {
+      AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CacheEntry>>>
+          cacheEntryStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.authenticatePushStep = authenticatePushStep;
-    this.cachedLayerStepsStep = cachedLayerStepsStep;
+    this.cacheEntryStep = cacheEntryStep;
 
     listenableFuture =
-        Futures.whenAllSucceed(cachedLayerStepsStep.getFuture())
-            .call(this, listeningExecutorService);
+        Futures.whenAllSucceed(cacheEntryStep.getFuture()).call(this, listeningExecutorService);
   }
 
   @Override
@@ -65,14 +65,14 @@ class PushLayersStep
 
   @Override
   public ImmutableList<AsyncStep<PushBlobStep>> call() throws ExecutionException {
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
-      ImmutableList<? extends AsyncStep<? extends CachedLayer>> cachedLayerSteps =
-          NonBlockingSteps.get(cachedLayerStepsStep);
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+      ImmutableList<? extends AsyncStep<? extends CacheEntry>> cacheEntry =
+          NonBlockingSteps.get(cacheEntryStep);
 
       // Constructs a PushBlobStep for each layer.
       ImmutableList.Builder<AsyncStep<PushBlobStep>> pushBlobStepsBuilder = ImmutableList.builder();
-      for (AsyncStep<? extends CachedLayer> cachedLayerStep : cachedLayerSteps) {
+      for (AsyncStep<? extends CacheEntry> cachedLayerStep : cacheEntry) {
         ListenableFuture<PushBlobStep> pushBlobStepFuture =
             Futures.whenAllSucceed(cachedLayerStep.getFuture())
                 .call(() -> makePushBlobStep(cachedLayerStep), listeningExecutorService);
@@ -83,14 +83,14 @@ class PushLayersStep
     }
   }
 
-  private PushBlobStep makePushBlobStep(AsyncStep<? extends CachedLayer> cachedLayerStep)
+  private PushBlobStep makePushBlobStep(AsyncStep<? extends CacheEntry> cacheEntryStep)
       throws ExecutionException {
-    CachedLayer cachedLayer = NonBlockingSteps.get(cachedLayerStep);
+    CacheEntry cacheEntry = NonBlockingSteps.get(cacheEntryStep);
     return new PushBlobStep(
         listeningExecutorService,
         buildConfiguration,
         authenticatePushStep,
-        cachedLayer.getBlobDescriptor(),
-        cachedLayer.getBlob());
+        new BlobDescriptor(cacheEntry.getLayerSize(), cacheEntry.getLayerDigest()),
+        cacheEntry.getLayerBlob());
   }
 }

@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
@@ -34,7 +34,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class MavenProjectPropertiesTest {
 
   @Mock private MavenProject mockMavenProject;
-  @Mock private EventEmitter mockEventEmitter;
+  @Mock private EventDispatcher mockEventDispatcher;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
   @Mock private Plugin mockJarPlugin;
 
@@ -48,7 +48,8 @@ public class MavenProjectPropertiesTest {
   @Before
   public void setup() {
     mavenProjectProperties =
-        new MavenProjectProperties(mockMavenProject, mockEventEmitter, mockJavaLayerConfigurations);
+        new MavenProjectProperties(
+            mockMavenProject, mockEventDispatcher, mockJavaLayerConfigurations);
     jarPluginConfiguration = new Xpp3Dom("");
     archive = new Xpp3Dom("archive");
     manifest = new Xpp3Dom("manifest");

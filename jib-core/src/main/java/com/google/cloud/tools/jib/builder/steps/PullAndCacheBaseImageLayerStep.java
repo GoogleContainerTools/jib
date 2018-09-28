@@ -17,43 +17,38 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.cache.CacheReader;
-import com.google.cloud.tools.jib.cache.CacheWriter;
-import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.cache.CacheCorruptedException;
+import com.google.cloud.tools.jib.cache.CacheEntry;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.cloud.tools.jib.registry.RegistryException;
-import com.google.common.io.CountingOutputStream;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /** Pulls and caches a single base image layer. */
-class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable<CachedLayer> {
+class PullAndCacheBaseImageLayerStep implements AsyncStep<CacheEntry>, Callable<CacheEntry> {
 
   private static final String DESCRIPTION = "Pulling base image layer %s";
 
   private final BuildConfiguration buildConfiguration;
-  private final Cache cache;
   private final DescriptorDigest layerDigest;
   private final @Nullable Authorization pullAuthorization;
 
-  private final ListenableFuture<CachedLayer> listenableFuture;
+  private final ListenableFuture<CacheEntry> listenableFuture;
 
   PullAndCacheBaseImageLayerStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      Cache cache,
       DescriptorDigest layerDigest,
       @Nullable Authorization pullAuthorization) {
     this.buildConfiguration = buildConfiguration;
-    this.cache = cache;
     this.layerDigest = layerDigest;
     this.pullAuthorization = pullAuthorization;
 
@@ -61,32 +56,29 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
   }
 
   @Override
-  public ListenableFuture<CachedLayer> getFuture() {
+  public ListenableFuture<CacheEntry> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public CachedLayer call() throws IOException, RegistryException {
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(
-            buildConfiguration.getEventEmitter(), String.format(DESCRIPTION, layerDigest))) {
+  public CacheEntry call() throws IOException, CacheCorruptedException {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(
+            buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, layerDigest))) {
+      Cache cache = buildConfiguration.getBaseImageLayersCache();
+
+      // Checks if the layer already exists in the cache.
+      Optional<CacheEntry> optionalCacheEntry = cache.retrieve(layerDigest);
+      if (optionalCacheEntry.isPresent()) {
+        return optionalCacheEntry.get();
+      }
+
       RegistryClient registryClient =
           buildConfiguration
               .newBaseImageRegistryClientFactory()
               .setAuthorization(pullAuthorization)
               .newRegistryClient();
-
-      // Checks if the layer already exists in the cache.
-      CachedLayer cachedLayer = new CacheReader(cache).getLayer(layerDigest);
-      if (cachedLayer != null) {
-        return cachedLayer;
-      }
-
-      CacheWriter cacheWriter = new CacheWriter(cache);
-      CountingOutputStream layerOutputStream = cacheWriter.getLayerOutputStream(layerDigest);
-      registryClient.pullBlob(layerDigest, layerOutputStream);
-      layerOutputStream.close();
-      return cacheWriter.getCachedLayer(layerOutputStream.getCount(), layerDigest);
+      return cache.writeCompressedLayer(registryClient.pullBlob(layerDigest));
     }
   }
 }

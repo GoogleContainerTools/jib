@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -95,10 +96,10 @@ public class BuildImageMojo extends JibPluginConfiguration {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
             CredentialRetrieverFactory.forImage(
-                targetImage, mavenProjectProperties.getEventEmitter()));
+                targetImage, mavenProjectProperties.getEventDispatcher()));
     Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            mavenProjectProperties.getEventEmitter(),
+            mavenProjectProperties.getEventDispatcher(),
             "jib.to.auth.username",
             "jib.to.auth.password",
             getTargetImageAuth());
@@ -122,32 +123,35 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .setCredentialRetrievers(defaultCredentialRetrievers.asList())
             .build();
 
-    BuildConfiguration buildConfiguration =
-        pluginConfigurationProcessor
-            .getBuildConfigurationBuilder()
-            .setBaseImageConfiguration(
-                pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
-            .setTargetImageConfiguration(targetImageConfiguration)
-            .setAdditionalTargetImageTags(getTargetImageAdditionalTags())
-            .setContainerConfiguration(
-                pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
-            .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
-            .build();
-
-    HelpfulSuggestions helpfulSuggestions =
-        new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this)
-            .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
-            .setBaseImageHasConfiguredCredentials(
-                pluginConfigurationProcessor.isBaseImageCredentialPresent())
-            .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
-            .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
-            .build();
-
     try {
+      BuildConfiguration buildConfiguration =
+          pluginConfigurationProcessor
+              .getBuildConfigurationBuilder()
+              .setBaseImageConfiguration(
+                  pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
+              .setTargetImageConfiguration(targetImageConfiguration)
+              .setAdditionalTargetImageTags(getTargetImageAdditionalTags())
+              .setContainerConfiguration(
+                  pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
+              .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
+              .build();
+
+      HelpfulSuggestions helpfulSuggestions =
+          new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this)
+              .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+              .setBaseImageHasConfiguredCredentials(
+                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
+              .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+              .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
+              .build();
+
       BuildStepsRunner.forBuildImage(buildConfiguration).build(helpfulSuggestions);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
+    } catch (CacheDirectoryCreationException | IOException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+
+    } catch (BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
   }

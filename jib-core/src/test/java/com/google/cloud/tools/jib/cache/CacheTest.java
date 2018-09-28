@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC.
+ * Copyright 2018 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,27 +16,25 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.cache.LayerMetadata.LayerMetadataEntry;
+import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.Resources;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.CountingOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
-import java.security.DigestException;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -44,142 +42,220 @@ import org.junit.rules.TemporaryFolder;
 /** Tests for {@link Cache}. */
 public class CacheTest {
 
-  @Rule public TemporaryFolder temporaryCacheDirectory = new TemporaryFolder();
+  /**
+   * Gets a {@link Blob} that is {@code blob} compressed.
+   *
+   * @param blob the {@link Blob} to compress
+   * @return the compressed {@link Blob}
+   */
+  private static Blob compress(Blob blob) {
+    return Blobs.from(
+        outputStream -> {
+          try (GZIPOutputStream compressorStream = new GZIPOutputStream(outputStream)) {
+            blob.writeTo(compressorStream);
+          }
+        });
+  }
 
-  @Test
-  public void testInit_empty() throws IOException, CacheMetadataCorruptedException {
-    Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
+  /**
+   * Gets a {@link Blob} that is {@code blob} decompressed.
+   *
+   * @param blob the {@link Blob} to decompress
+   * @return the decompressed {@link Blob}
+   */
+  private static Blob decompress(Blob blob) {
+    return Blobs.from(
+        outputStream -> {
+          ByteArrayInputStream compressedInputStream =
+              new ByteArrayInputStream(Blobs.writeToByteArray(blob));
+          try (GZIPInputStream decompressorStream = new GZIPInputStream(compressedInputStream)) {
+            ByteStreams.copy(decompressorStream, outputStream);
+          }
+        });
+  }
 
-    Cache cache = Cache.init(cacheDirectory);
-    Assert.assertEquals(0, cache.getMetadata().getLayers().getLayers().size());
+  /**
+   * Gets the digest of {@code blob}.
+   *
+   * @param blob the {@link Blob}
+   * @return the {@link DescriptorDigest} of {@code blob}
+   * @throws IOException if an I/O exception occurs
+   */
+  private static DescriptorDigest digestOf(Blob blob) throws IOException {
+    return blob.writeTo(ByteStreams.nullOutputStream()).getDigest();
+  }
+
+  /**
+   * Gets the size of {@code blob}.
+   *
+   * @param blob the {@link Blob}
+   * @return the size (in bytes) of {@code blob}
+   * @throws IOException if an I/O exception occurs
+   */
+  private static long sizeOf(Blob blob) throws IOException {
+    CountingOutputStream countingOutputStream =
+        new CountingOutputStream(ByteStreams.nullOutputStream());
+    blob.writeTo(countingOutputStream);
+    return countingOutputStream.getCount();
+  }
+
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  private Blob layerBlob1;
+  private DescriptorDigest layerDigest1;
+  private DescriptorDigest layerDiffId1;
+  private long layerSize1;
+  private ImmutableList<LayerEntry> layerEntries1;
+
+  private Blob layerBlob2;
+  private DescriptorDigest layerDigest2;
+  private DescriptorDigest layerDiffId2;
+  private long layerSize2;
+  private ImmutableList<LayerEntry> layerEntries2;
+
+  @Before
+  public void setUp() throws IOException {
+    Path directory = temporaryFolder.newFolder().toPath();
+    Files.createDirectory(directory.resolve("source"));
+    Files.createFile(directory.resolve("source/file"));
+    Files.createDirectories(directory.resolve("another/source"));
+    Files.createFile(directory.resolve("another/source/file"));
+
+    layerBlob1 = Blobs.from("layerBlob1");
+    layerDigest1 = digestOf(compress(layerBlob1));
+    layerDiffId1 = digestOf(layerBlob1);
+    layerSize1 = sizeOf(compress(layerBlob1));
+    layerEntries1 =
+        ImmutableList.of(
+            new LayerEntry(
+                directory.resolve("source/file"), AbsoluteUnixPath.get("/extraction/path")),
+            new LayerEntry(
+                directory.resolve("another/source/file"),
+                AbsoluteUnixPath.get("/another/extraction/path")));
+
+    layerBlob2 = Blobs.from("layerBlob2");
+    layerDigest2 = digestOf(compress(layerBlob2));
+    layerDiffId2 = digestOf(layerBlob2);
+    layerSize2 = sizeOf(compress(layerBlob2));
+    layerEntries2 = ImmutableList.of();
   }
 
   @Test
-  public void testInit_notDirectory() throws CacheMetadataCorruptedException, IOException {
-    Path tempFile = temporaryCacheDirectory.newFile().toPath();
+  public void testWithDirectory_existsButNotDirectory() throws IOException {
+    Path file = temporaryFolder.newFile().toPath();
 
     try {
-      Cache.init(tempFile);
-      Assert.fail("Cache should not be able to initialize on non-directory");
+      Cache.withDirectory(file);
+      Assert.fail();
 
-    } catch (NotDirectoryException ex) {
-      Assert.assertEquals("The cache can only write to a directory", ex.getMessage());
+    } catch (FileAlreadyExistsException ex) {
+      // pass
     }
   }
 
   @Test
-  public void testInit_withMetadata()
-      throws URISyntaxException, IOException, CacheMetadataCorruptedException {
-    Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
+  public void testWriteCompressed_retrieveByLayerDigest()
+      throws IOException, CacheCorruptedException {
+    Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    Path resourceMetadataJsonPath =
-        Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
-    Path testMetadataJsonPath = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
-    Files.copy(resourceMetadataJsonPath, testMetadataJsonPath);
-
-    try (Cache cache = Cache.init(cacheDirectory)) {
-      Assert.assertEquals(2, cache.getMetadata().getLayers().getLayers().size());
-    }
-
-    Assert.assertArrayEquals(
-        Files.readAllBytes(resourceMetadataJsonPath), Files.readAllBytes(testMetadataJsonPath));
+    verifyIsLayer1NoMetadata(cache.writeCompressedLayer(compress(layerBlob1)));
+    verifyIsLayer1NoMetadata(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
+    Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
   }
 
   @Test
-  public void test_saveMetadata_noDuplicates()
-      throws IOException, CacheMetadataCorruptedException, DigestException, URISyntaxException {
-    Path cacheDirectory = temporaryCacheDirectory.newFolder().toPath();
+  public void testWriteUncompressedWithLayerEntries_retrieveByLayerDigest()
+      throws IOException, CacheCorruptedException {
+    Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    Path resourceMetadataJsonPath =
-        Paths.get(Resources.getResource("json/metadata-v3.json").toURI());
-    Path testMetadataJsonPath = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
-    Files.copy(resourceMetadataJsonPath, testMetadataJsonPath);
+    verifyIsLayer1WithMetadata(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
+    verifyIsLayer1WithMetadata(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
+    Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
+  }
 
-    DescriptorDigest descriptorDigest1 =
-        DescriptorDigest.fromHash(
-            "8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad");
-    DescriptorDigest descriptorDigest2 =
-        DescriptorDigest.fromHash(
-            "6f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef");
+  @Test
+  public void testWriteUncompressedWithLayerEntries_retrieveByLayerEntries()
+      throws IOException, CacheCorruptedException {
+    Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    LayerEntry layerEntry1 =
-        new LayerEntry(Paths.get("some", "file"), AbsoluteUnixPath.get("/extraction/path/1"));
-    LayerEntry layerEntry2 =
-        new LayerEntry(
-            Paths.get("some", "other", "file"), AbsoluteUnixPath.get("/extraction/path/1"));
-    LayerEntry layerEntry3 =
-        new LayerEntry(Paths.get("another", "file"), AbsoluteUnixPath.get("/extraction/path/2"));
-    LayerEntry layerEntry4 =
-        new LayerEntry(
-            Paths.get("yet", "another", "file"), AbsoluteUnixPath.get("/extraction/path/2"));
+    verifyIsLayer1WithMetadata(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
+    verifyIsLayer1WithMetadata(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
+    Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
 
-    LayerMetadata layerMetadata1 =
-        LayerMetadata.from(
-            ImmutableList.of(layerEntry1, layerEntry2, layerEntry3, layerEntry4),
-            FileTime.from(Instant.now()));
-    LayerMetadata layerMetadata2 =
-        LayerMetadata.from(
-            ImmutableList.of(layerEntry3, layerEntry4), FileTime.from(Instant.EPOCH));
+    // A source file modification results in the cached layer to be out-of-date and not retrieved.
+    Files.setLastModifiedTime(
+        layerEntries1.get(0).getSourceFile(), FileTime.from(Instant.now().plusSeconds(1)));
+    Assert.assertFalse(cache.retrieve(layerEntries1).isPresent());
+  }
 
-    DescriptorDigest mockDiffId =
-        DescriptorDigest.fromHash(
-            "91e0cae00b86c289b33fee303a807ae72dd9f0315c16b74e6ab0cdbe9d996c10");
+  @Test
+  public void testRetrieveWithTwoEntriesInCache() throws IOException, CacheCorruptedException {
+    Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    // Layers ABA.
-    List<CachedLayerWithMetadata> cachedLayersWithMetadata =
-        Arrays.asList(
-            new CachedLayerWithMetadata(
-                new CachedLayer(
-                    Paths.get("nonexistent"), new BlobDescriptor(descriptorDigest1), mockDiffId),
-                layerMetadata1),
-            new CachedLayerWithMetadata(
-                new CachedLayer(
-                    Paths.get("nonexistent"), new BlobDescriptor(descriptorDigest2), mockDiffId),
-                layerMetadata2),
-            new CachedLayerWithMetadata(
-                new CachedLayer(
-                    Paths.get("nonexistent"), new BlobDescriptor(descriptorDigest1), mockDiffId),
-                layerMetadata2));
+    verifyIsLayer1WithMetadata(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
+    verifyIsLayer2WithMetadata(cache.writeUncompressedLayer(layerBlob2, layerEntries2));
+    verifyIsLayer1WithMetadata(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
+    verifyIsLayer2WithMetadata(cache.retrieve(layerDigest2).orElseThrow(AssertionError::new));
+    verifyIsLayer1WithMetadata(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
+    verifyIsLayer2WithMetadata(cache.retrieve(layerEntries2).orElseThrow(AssertionError::new));
+  }
 
-    // Saves the new layers to the cache metadata.
-    try (Cache cache = Cache.init(cacheDirectory)) {
-      cache.addCachedLayersWithMetadataToMetadata(cachedLayersWithMetadata);
-    }
+  /**
+   * Verifies that {@code cacheEntry} corresponds to the first fake layer in {@link #setUp}, and
+   * that no metadata was written.
+   *
+   * @param cacheEntry the {@link CacheEntry} to verify
+   * @throws IOException if an I/O exception occurs
+   */
+  private void verifyIsLayer1NoMetadata(CacheEntry cacheEntry) throws IOException {
+    verifyIsLayer1(cacheEntry);
+    Assert.assertFalse(cacheEntry.getMetadataBlob().isPresent());
+  }
 
-    // Reload the cache and check that all digests are unique.
-    try (Cache cache = Cache.init(cacheDirectory)) {
-      Set<DescriptorDigest> encounteredDigests = new HashSet<>();
-      for (CachedLayerWithMetadata layer : cache.getMetadata().getLayers()) {
-        DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
-        Assert.assertFalse(encounteredDigests.contains(layerDigest));
-        encounteredDigests.add(layerDigest);
-      }
+  /**
+   * Verifies that {@code cacheEntry} corresponds to the first fake layer in {@link #setUp}, and
+   * that its metadata was written.
+   *
+   * @param cacheEntry the {@link CacheEntry} to verify
+   * @throws IOException if an I/O exception occurs
+   */
+  private void verifyIsLayer1WithMetadata(CacheEntry cacheEntry) throws IOException {
+    verifyIsLayer1(cacheEntry);
+    Assert.assertTrue(cacheEntry.getMetadataBlob().isPresent());
+    Assert.assertEquals(
+        Blobs.writeToString(LastModifiedTimeMetadata.generateMetadata(layerEntries1)),
+        Blobs.writeToString(cacheEntry.getMetadataBlob().get()));
+  }
 
-      // The layer metadata for layer with digest descriptorDigest1 should be layerMetadata2.
-      CachedLayerWithMetadata descriptorDigest1Layer =
-          cache.getMetadata().getLayers().get(descriptorDigest1);
-      Assert.assertNotNull(descriptorDigest1Layer);
-      LayerMetadata layerMetadata = descriptorDigest1Layer.getMetadata();
-      Assert.assertNotNull(layerMetadata);
-      Assert.assertEquals(2, layerMetadata.getEntries().size());
-      Assert.assertEquals(FileTime.from(Instant.EPOCH), layerMetadata.getLastModifiedTime());
-      Assert.assertEquals(
-          ImmutableList.of(
-              layerEntry3.getAbsoluteSourceFileString(), layerEntry4.getAbsoluteSourceFileString()),
-          layerMetadata
-              .getEntries()
-              .stream()
-              .map(LayerMetadataEntry::getAbsoluteSourceFileString)
-              .collect(ImmutableList.toImmutableList()));
-      Assert.assertEquals(
-          ImmutableList.of(
-              layerEntry3.getAbsoluteExtractionPathString(),
-              layerEntry4.getAbsoluteExtractionPathString()),
-          layerMetadata
-              .getEntries()
-              .stream()
-              .map(LayerMetadataEntry::getAbsoluteExtractionPathString)
-              .collect(ImmutableList.toImmutableList()));
-    }
+  /**
+   * Verifies that {@code cacheEntry} corresponds to the first fake layer in {@link #setUp}. Does
+   * not check the metadata.
+   *
+   * @param cacheEntry the {@link CacheEntry} to verify
+   * @throws IOException if an I/O exception occurs
+   */
+  private void verifyIsLayer1(CacheEntry cacheEntry) throws IOException {
+    Assert.assertEquals("layerBlob1", Blobs.writeToString(decompress(cacheEntry.getLayerBlob())));
+    Assert.assertEquals(layerDigest1, cacheEntry.getLayerDigest());
+    Assert.assertEquals(layerDiffId1, cacheEntry.getLayerDiffId());
+    Assert.assertEquals(layerSize1, cacheEntry.getLayerSize());
+  }
+
+  /**
+   * Verifies that {@code cacheEntry} corresponds to the second fake layer in {@link #setUp}, and
+   * that its metadata was written.
+   *
+   * @param cacheEntry the {@link CacheEntry} to verify
+   * @throws IOException if an I/O exception occurs
+   */
+  private void verifyIsLayer2WithMetadata(CacheEntry cacheEntry) throws IOException {
+    Assert.assertEquals("layerBlob2", Blobs.writeToString(decompress(cacheEntry.getLayerBlob())));
+    Assert.assertEquals(layerDigest2, cacheEntry.getLayerDigest());
+    Assert.assertEquals(layerDiffId2, cacheEntry.getLayerDiffId());
+    Assert.assertEquals(layerSize2, cacheEntry.getLayerSize());
+    Assert.assertTrue(cacheEntry.getMetadataBlob().isPresent());
+    Assert.assertEquals(
+        Blobs.writeToString(LastModifiedTimeMetadata.generateMetadata(layerEntries2)),
+        Blobs.writeToString(cacheEntry.getMetadataBlob().get()));
   }
 }

@@ -20,11 +20,10 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
-import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Futures;
@@ -77,16 +76,13 @@ class PushContainerConfigurationStep
 
   private PushBlobStep afterBuildConfigurationFutureFuture()
       throws ExecutionException, IOException {
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
-      Image<CachedLayer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+      Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
       Blob containerConfigurationBlob =
           new ImageToJsonTranslator(image).getContainerConfigurationBlob();
-      CountingDigestOutputStream digestOutputStream =
-          new CountingDigestOutputStream(ByteStreams.nullOutputStream());
-      containerConfigurationBlob.writeTo(digestOutputStream);
-
-      BlobDescriptor blobDescriptor = digestOutputStream.toBlobDescriptor();
+      BlobDescriptor blobDescriptor =
+          containerConfigurationBlob.writeTo(ByteStreams.nullOutputStream());
 
       return new PushBlobStep(
           listeningExecutorService,

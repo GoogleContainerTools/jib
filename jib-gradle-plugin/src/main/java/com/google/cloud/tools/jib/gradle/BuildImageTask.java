@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import java.io.IOException;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -69,7 +70,9 @@ public class BuildImageTask extends DefaultTask implements JibTask {
   }
 
   @TaskAction
-  public void buildImage() throws InvalidImageReferenceException {
+  public void buildImage()
+      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
+          BuildStepsExecutionException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
@@ -91,10 +94,10 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
             CredentialRetrieverFactory.forImage(
-                targetImage, gradleProjectProperties.getEventEmitter()));
+                targetImage, gradleProjectProperties.getEventDispatcher()));
     Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            gradleProjectProperties.getEventEmitter(),
+            gradleProjectProperties.getEventDispatcher(),
             "jib.to.auth.username",
             "jib.to.auth.password",
             jibExtension.getTo().getAuth());
@@ -133,12 +136,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
             .build();
 
-    try {
-      BuildStepsRunner.forBuildImage(buildConfiguration).build(helpfulSuggestions);
-
-    } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
-      throw new GradleException(ex.getMessage(), ex.getCause());
-    }
+    BuildStepsRunner.forBuildImage(buildConfiguration).build(helpfulSuggestions);
   }
 
   @Override

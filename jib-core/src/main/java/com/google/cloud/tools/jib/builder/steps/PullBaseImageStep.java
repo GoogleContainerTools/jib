@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.builder.TimerEventEmitter;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithAuthorization;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
@@ -47,9 +47,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -105,23 +103,23 @@ class PullBaseImageStep
           LayerCountMismatchException, ExecutionException, BadContainerConfigurationFormatException,
           RegistryAuthenticationFailedException {
     buildConfiguration
-        .getEventEmitter()
-        .emit(
+        .getEventDispatcher()
+        .dispatch(
             LogEvent.lifecycle(
                 "Getting base image "
                     + buildConfiguration.getBaseImageConfiguration().getImage()
                     + "..."));
 
-    try (TimerEventEmitter ignored =
-        new TimerEventEmitter(buildConfiguration.getEventEmitter(), DESCRIPTION)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // First, try with no credentials.
       try {
         return new BaseImageWithAuthorization(pullBaseImage(null), null);
 
       } catch (RegistryUnauthorizedException ex) {
         buildConfiguration
-            .getEventEmitter()
-            .emit(
+            .getEventDispatcher()
+            .dispatch(
                 LogEvent.lifecycle(
                     "The base image requires auth. Trying again for "
                         + buildConfiguration.getBaseImageConfiguration().getImage()
@@ -150,15 +148,15 @@ class PullBaseImageStep
           // See https://docs.docker.com/registry/spec/auth/token
           RegistryAuthenticator registryAuthenticator =
               RegistryAuthenticator.initializer(
-                      buildConfiguration.getEventEmitter(),
+                      buildConfiguration.getEventDispatcher(),
                       buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
                       buildConfiguration.getBaseImageConfiguration().getImageRepository())
                   .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
                   .initialize();
           if (registryAuthenticator == null) {
             buildConfiguration
-                .getEventEmitter()
-                .emit(
+                .getEventDispatcher()
+                .dispatch(
                     LogEvent.error(
                         "Failed to retrieve authentication challenge for registry that required token authentication"));
             throw registryUnauthorizedException;
@@ -213,12 +211,10 @@ class PullBaseImageStep
                   + Blobs.writeToString(JsonTemplateMapper.toBlob(v22ManifestTemplate)));
         }
 
-        ByteArrayOutputStream containerConfigurationOutputStream = new ByteArrayOutputStream();
-        registryClient.pullBlob(
-            v22ManifestTemplate.getContainerConfiguration().getDigest(),
-            containerConfigurationOutputStream);
         String containerConfigurationString =
-            new String(containerConfigurationOutputStream.toByteArray(), StandardCharsets.UTF_8);
+            Blobs.writeToString(
+                registryClient.pullBlob(
+                    v22ManifestTemplate.getContainerConfiguration().getDigest()));
 
         ContainerConfigurationTemplate containerConfigurationTemplate =
             JsonTemplateMapper.readJson(

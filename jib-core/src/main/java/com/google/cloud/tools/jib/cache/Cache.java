@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,128 +16,130 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.cache.json.CacheMetadataTemplate;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.common.annotations.VisibleForTesting;
-import java.io.Closeable;
+import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
-import java.util.List;
+import java.nio.file.attribute.FileTime;
+import java.util.Optional;
+import javax.annotation.concurrent.Immutable;
 
-/** Manages a cache. Implementation is thread-safe. */
-public class Cache implements Closeable {
+/**
+ * Cache for storing data to be shared between Jib executions.
+ *
+ * <p>Uses the default cache storage engine ({@link DefaultCacheStorage}), layer entries as the
+ * selector ({@link LayerEntriesSelector}), and last modified time as the metadata.
+ *
+ * <p>This class is immutable and safe to use across threads.
+ */
+@Immutable
+public class Cache {
 
   /**
-   * Initializes a cache with a directory. This also loads the cache metadata if it exists in the
-   * directory.
+   * Initializes the cache using {@code cacheDirectory} for storage.
    *
-   * @param cacheDirectory the directory to use for the cache.
-   * @return the initialized cache.
-   * @throws NotDirectoryException if {@code cacheDirectory} is not a directory.
-   * @throws CacheMetadataCorruptedException if loading the cache metadata fails.
+   * @param cacheDirectory the directory for the cache. Creates the directory if it does not exist.
+   * @return a new {@link Cache}
+   * @throws IOException if an I/O exception occurs
    */
-  public static Cache init(Path cacheDirectory)
-      throws NotDirectoryException, CacheMetadataCorruptedException {
-    if (!Files.isDirectory(cacheDirectory)) {
-      throw new NotDirectoryException("The cache can only write to a directory");
-    }
-    CacheMetadata cacheMetadata = loadCacheMetadata(cacheDirectory);
-
-    return new Cache(cacheDirectory, cacheMetadata);
+  public static Cache withDirectory(Path cacheDirectory) throws IOException {
+    Files.createDirectories(cacheDirectory);
+    return new Cache(DefaultCacheStorage.withDirectory(cacheDirectory));
   }
 
-  private static CacheMetadata loadCacheMetadata(Path cacheDirectory)
-      throws CacheMetadataCorruptedException {
-    Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
+  private final CacheStorage cacheStorage;
 
-    if (!Files.exists(cacheMetadataJsonFile)) {
-      return CacheMetadata.builder().build();
-    }
-
-    try {
-      CacheMetadataTemplate cacheMetadataJson =
-          JsonTemplateMapper.readJsonFromFileWithLock(
-              cacheMetadataJsonFile, CacheMetadataTemplate.class);
-      return CacheMetadataTranslator.fromTemplate(cacheMetadataJson, cacheDirectory);
-    } catch (IOException ex) {
-      // The cache metadata is probably corrupted.
-      throw new CacheMetadataCorruptedException(ex);
-    }
-  }
-
-  /** The path to the root of the cache. */
-  private final Path cacheDirectory;
-
-  /** The metadata that corresponds to the cache at {@link #cacheDirectory}. */
-  private final CacheMetadata cacheMetadata;
-
-  /** Builds the updated cache metadata to save back to the cache. */
-  private final CacheMetadata.Builder cacheMetadataBuilder;
-
-  private Cache(Path cacheDirectory, CacheMetadata cacheMetadata) {
-    this.cacheDirectory = cacheDirectory;
-    this.cacheMetadata = cacheMetadata;
-    cacheMetadataBuilder = cacheMetadata.newAppendingBuilder();
+  private Cache(CacheStorage cacheStorage) {
+    this.cacheStorage = cacheStorage;
   }
 
   /**
-   * Finishes the use of the cache by flushing any unsaved changes.
+   * Saves a cache entry with a compressed layer {@link Blob}. Use {@link
+   * #writeUncompressedLayer(Blob, ImmutableList)} to save a cache entry with an uncompressed layer
+   * {@link Blob} and include a selector and metadata.
    *
-   * @throws IOException if saving the cache metadata fails.
+   * @param compressedLayerBlob the compressed layer {@link Blob}
+   * @return the {@link CacheEntry} for the written layer
+   * @throws IOException if an I/O exception occurs
    */
-  @Override
-  public void close() throws IOException {
-    saveCacheMetadata(cacheDirectory);
+  public CacheEntry writeCompressedLayer(Blob compressedLayerBlob) throws IOException {
+    return cacheStorage.write(compressedLayerBlob);
   }
 
   /**
-   * Adds the cached layer to the cache metadata. This is <b>NOT</b> thread-safe.
+   * Saves a cache entry with an uncompressed layer {@link Blob}, an additional selector digest, and
+   * a metadata {@link Blob}. Use {@link #writeCompressedLayer(Blob)} to save a compressed layer
+   * {@link Blob}.
    *
-   * @param cachedLayers the layers to add
+   * @param uncompressedLayerBlob the layer {@link Blob}
+   * @param layerEntries the layer entries that make up the layer
+   * @return the {@link CacheEntry} for the written layer and metadata
+   * @throws IOException if an I/O exception occurs
    */
-  public void addCachedLayersToMetadata(List<CachedLayer> cachedLayers) {
-    for (CachedLayer cachedLayer : cachedLayers) {
-      cacheMetadataBuilder.addLayer(new CachedLayerWithMetadata(cachedLayer, null));
-    }
+  public CacheEntry writeUncompressedLayer(
+      Blob uncompressedLayerBlob, ImmutableList<LayerEntry> layerEntries) throws IOException {
+    return cacheStorage.write(
+        new UncompressedCacheWrite(
+            uncompressedLayerBlob,
+            LayerEntriesSelector.generateSelector(layerEntries),
+            LastModifiedTimeMetadata.generateMetadata(layerEntries)));
   }
 
   /**
-   * Adds the cached layer to the cache metadata. This is <b>NOT</b> thread-safe.
+   * Retrieves the {@link CacheEntry} that was built from the {@code layerEntries}. The last
+   * modified time of the {@code layerEntries} must match the last modified time as stored by the
+   * metadata of the {@link CacheEntry}.
    *
-   * @param cachedLayersWithMetadata the layers to add
+   * @param layerEntries the layer entries to match against
+   * @return a {@link CacheEntry} that was built from {@code layerEntries}, if found
+   * @throws IOException if an I/O exception occurs
+   * @throws CacheCorruptedException if the cache is corrupted
    */
-  public void addCachedLayersWithMetadataToMetadata(
-      List<CachedLayerWithMetadata> cachedLayersWithMetadata) {
-    for (CachedLayerWithMetadata cachedLayerWithMetadata : cachedLayersWithMetadata) {
-      cacheMetadataBuilder.addLayer(cachedLayerWithMetadata);
+  public Optional<CacheEntry> retrieve(ImmutableList<LayerEntry> layerEntries)
+      throws IOException, CacheCorruptedException {
+    Optional<DescriptorDigest> optionalSelectedLayerDigest =
+        cacheStorage.select(LayerEntriesSelector.generateSelector(layerEntries));
+    if (!optionalSelectedLayerDigest.isPresent()) {
+      return Optional.empty();
     }
+
+    Optional<CacheEntry> optionalCacheEntry =
+        cacheStorage.retrieve(optionalSelectedLayerDigest.get());
+    if (!optionalCacheEntry.isPresent()) {
+      return Optional.empty();
+    }
+
+    CacheEntry cacheEntry = optionalCacheEntry.get();
+
+    Optional<FileTime> optionalRetrievedLastModifiedTime =
+        LastModifiedTimeMetadata.getLastModifiedTime(cacheEntry);
+    if (!optionalRetrievedLastModifiedTime.isPresent()) {
+      return Optional.empty();
+    }
+
+    FileTime retrievedLastModifiedTime = optionalRetrievedLastModifiedTime.get();
+    FileTime expectedLastModifiedTime = LastModifiedTimeMetadata.getLastModifiedTime(layerEntries);
+
+    if (!expectedLastModifiedTime.equals(retrievedLastModifiedTime)) {
+      return Optional.empty();
+    }
+
+    return Optional.of(cacheEntry);
   }
 
-  @VisibleForTesting
-  Path getCacheDirectory() {
-    return cacheDirectory;
-  }
-
-  @VisibleForTesting
-  CacheMetadata getMetadata() {
-    return cacheMetadata;
-  }
-
-  @VisibleForTesting
-  CacheMetadata getUpdatedMetadata() {
-    return cacheMetadataBuilder.build();
-  }
-
-  /** Saves the updated cache metadata back to the cache. */
-  private void saveCacheMetadata(Path cacheDirectory) throws IOException {
-    Path cacheMetadataJsonFile = cacheDirectory.resolve(CacheFiles.METADATA_FILENAME);
-
-    CacheMetadataTemplate cacheMetadataJson =
-        CacheMetadataTranslator.toTemplate(cacheMetadataBuilder.build());
-
-    Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(cacheMetadataJson), cacheMetadataJsonFile);
+  /**
+   * Retrieves the {@link CacheEntry} for the layer with digest {@code layerDigest}.
+   *
+   * @param layerDigest the layer digest
+   * @return the {@link CacheEntry} referenced by the layer digest, if found
+   * @throws CacheCorruptedException if the cache was found to be corrupted
+   * @throws IOException if an I/O exception occurs
+   */
+  public Optional<CacheEntry> retrieve(DescriptorDigest layerDigest)
+      throws IOException, CacheCorruptedException {
+    return cacheStorage.retrieve(layerDigest);
   }
 }

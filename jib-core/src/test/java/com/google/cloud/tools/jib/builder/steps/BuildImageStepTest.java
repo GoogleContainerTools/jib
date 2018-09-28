@@ -16,12 +16,12 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
+import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.cache.CacheEntry;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -30,9 +30,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.nio.file.Paths;
 import java.security.DigestException;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import org.junit.Assert;
@@ -47,7 +47,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BuildImageStepTest {
 
-  @Mock private EventEmitter mockEventEmitter;
+  @Mock private EventDispatcher mockEventDispatcher;
   @Mock private BuildConfiguration mockBuildConfiguration;
   @Mock private ContainerConfiguration mockContainerConfiguration;
   @Mock private PullBaseImageStep mockPullBaseImageStep;
@@ -64,13 +64,35 @@ public class BuildImageStepTest {
     testDescriptorDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    CachedLayerWithMetadata testCachedLayer =
-        new CachedLayerWithMetadata(
-            new CachedLayer(
-                Paths.get(""), new BlobDescriptor(testDescriptorDigest), testDescriptorDigest),
-            null);
+    CacheEntry testCacheEntry =
+        new CacheEntry() {
+          @Override
+          public DescriptorDigest getLayerDigest() {
+            return testDescriptorDigest;
+          }
 
-    Mockito.when(mockBuildConfiguration.getEventEmitter()).thenReturn(mockEventEmitter);
+          @Override
+          public DescriptorDigest getLayerDiffId() {
+            return testDescriptorDigest;
+          }
+
+          @Override
+          public long getLayerSize() {
+            return 0;
+          }
+
+          @Override
+          public Blob getLayerBlob() {
+            return Blobs.from("ignored");
+          }
+
+          @Override
+          public Optional<Blob> getMetadataBlob() {
+            return Optional.empty();
+          }
+        };
+
+    Mockito.when(mockBuildConfiguration.getEventDispatcher()).thenReturn(mockEventDispatcher);
     Mockito.when(mockBuildConfiguration.getContainerConfiguration())
         .thenReturn(mockContainerConfiguration);
     Mockito.when(mockBuildConfiguration.getToolName()).thenReturn("jib");
@@ -104,7 +126,7 @@ public class BuildImageStepTest {
             .addHistory(emptyLayerHistory)
             .build();
     Mockito.when(mockPullAndCacheBaseImageLayerStep.getFuture())
-        .thenReturn(Futures.immediateFuture(testCachedLayer));
+        .thenReturn(Futures.immediateFuture(testCacheEntry));
     Mockito.when(mockPullAndCacheBaseImageLayersStep.getFuture())
         .thenReturn(
             Futures.immediateFuture(
@@ -117,7 +139,7 @@ public class BuildImageStepTest {
             Futures.immediateFuture(
                 new PullBaseImageStep.BaseImageWithAuthorization(baseImage, null)));
     Mockito.when(mockBuildAndCacheApplicationLayerStep.getFuture())
-        .thenReturn(Futures.immediateFuture(testCachedLayer));
+        .thenReturn(Futures.immediateFuture(testCacheEntry));
   }
 
   @Test
@@ -132,7 +154,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep));
-    Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(
         testDescriptorDigest, image.getLayers().asList().get(0).getBlobDescriptor().getDigest());
   }
@@ -154,7 +176,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep));
-    Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(
         ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE", "MY_ENV", "MY_ENV_VALUE"),
         image.getEnvironment());
@@ -180,7 +202,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep));
-    Image<CachedLayer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
 
     // Make sure history is as expected
     HistoryEntry expectedAddedBaseLayerHistory =
