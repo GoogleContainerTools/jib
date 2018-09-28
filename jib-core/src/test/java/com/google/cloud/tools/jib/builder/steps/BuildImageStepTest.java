@@ -214,7 +214,7 @@ public class BuildImageStepTest {
         HistoryEntry.builder()
             .setCreationTimestamp(Instant.EPOCH)
             .setAuthor("Jib")
-            .setCreatedBy("jib")
+            .setCreatedBy("jib:unknown-version")
             .build();
 
     // Base layers (1 non-empty propagated, 2 empty propagated, 2 non-empty generated)

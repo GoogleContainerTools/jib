@@ -162,7 +162,7 @@ class BuildImageStep
 
       // Add built layers/configuration
       // Note: ProjectInfo.VERSION may be null in tests
-      String version = ProjectInfo.VERSION == null ? "" : (":" + ProjectInfo.VERSION);
+      String version = ProjectInfo.VERSION == null ? "unknown-version" : ProjectInfo.VERSION;
       for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
           buildAndCacheApplicationLayerSteps) {
         imageBuilder.addLayer(
@@ -171,7 +171,7 @@ class BuildImageStep
             HistoryEntry.builder()
                 .setCreationTimestamp(layerCreationTime)
                 .setAuthor("Jib")
-                .setCreatedBy(buildConfiguration.getToolName() + version)
+                .setCreatedBy(buildConfiguration.getToolName() + ":" + version)
                 .build());
       }
       if (containerConfiguration != null) {
