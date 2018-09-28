@@ -23,7 +23,7 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 
-/** Extension object that configures the base image. */
+/** Object in {@link JibExtension} that configures the base image. */
 public class BaseImageParameters {
 
   private final AuthParameters auth;

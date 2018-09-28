@@ -26,7 +26,7 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
-/** Extension object that configures the target image. */
+/** Object in {@link JibExtension} that configures the target image. */
 public class TargetImageParameters {
 
   private final AuthParameters auth;
