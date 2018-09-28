@@ -117,12 +117,12 @@ class MavenLayerConfigurations {
    * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,
    * and {@code basePathInContainer} is {@code /etc}, then the image will have {@code /etc/passwd}.
    *
-   * @param sourceRoot root directory whose contents will be copied
+   * @param sourceRoot root directory whose contents will be added
    * @param pathFilter only the files satisfying the filter will be added, unless the files are
    *     empty directories
-   * @param basePathInContainer directory in the layer into which the source contents
+   * @param basePathInContainer directory in the layer into which the source contents are added
    * @param addFileToLayer function that should add the file to the layer; the function gets the
-   *     path of the source file (may be directory) and the final destination path in the layer
+   *     path of the source file (may be a directory) and the final destination path in the layer
    * @throws IOException error while listing directories
    * @throws NotDirectoryException if {@code sourceRoot} is not a directory
    */
