@@ -108,7 +108,11 @@ public class DockerClient {
       String output = CharStreams.toString(stdout);
 
       if (dockerProcess.waitFor() != 0) {
-        throw new IOException("'docker load' command failed with output: " + output);
+        try (InputStreamReader stderr =
+            new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
+          throw new IOException(
+              "'docker load' command failed with output: " + CharStreams.toString(stderr));
+        }
       }
 
       return output;
