@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,6 +31,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -41,13 +43,13 @@ public class DockerContextMojoTest {
 
   private DockerContextMojo mojo;
   private String appRoot = "/app";
+  private File outputFolder;
+  @Mock MavenProject project;
+  @Mock Build build;
 
   @Before
   public void setUp() throws IOException {
-    File outputFolder = projectRoot.newFolder("target");
-
-    MavenProject project = Mockito.mock(MavenProject.class);
-    Build build = Mockito.mock(Build.class);
+    outputFolder = projectRoot.newFolder("target");
     Mockito.when(project.getBuild()).thenReturn(build);
     Mockito.when(build.getOutputDirectory()).thenReturn(outputFolder.toString());
 
@@ -138,5 +140,123 @@ public class DockerContextMojoTest {
     Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
     List<String> lines = Files.readAllLines(dockerfile);
     return lines.stream().filter(line -> line.startsWith("ENTRYPOINT")).findFirst().get();
+  }
+
+  private String getBaseImage() throws IOException {
+    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
+    List<String> lines = Files.readAllLines(dockerfile);
+    return lines.stream().filter(line -> line.startsWith("FROM")).findFirst().get();
+  }
+
+  @Test
+  public void testBaseImage_nonWarPackaging() throws MojoExecutionException, IOException {
+    mojo.execute();
+
+    Assert.assertEquals("FROM gcr.io/distroless/java", getBaseImage());
+  }
+
+  @Test
+  public void testBaseImage_warPackaging() throws MojoExecutionException, IOException {
+    Mockito.doReturn("war").when(project).getPackaging();
+    Mockito.doReturn("final-name").when(build).getFinalName();
+    projectRoot.newFolder("final-name", "WEB-INF", "lib");
+    projectRoot.newFolder("final-name", "WEB-INF", "classes");
+    Mockito.doReturn(projectRoot.getRoot().toString()).when(build).getDirectory();
+    mojo.execute();
+
+    Assert.assertEquals("FROM gcr.io/distroless/java/jetty", getBaseImage());
+  }
+
+  @Test
+  public void testBaseImage_nonDefault() throws MojoExecutionException, IOException {
+    Mockito.doReturn("war").when(project).getPackaging();
+    Mockito.doReturn("final-name").when(build).getFinalName();
+    mojo =
+        new DockerContextMojo() {
+          @Override
+          MavenProject getProject() {
+            return project;
+          }
+
+          @Override
+          Path getExtraDirectory() {
+            return projectRoot.getRoot().toPath();
+          }
+
+          @Override
+          String getMainClass() {
+            return "MainClass";
+          }
+
+          @Override
+          String getBaseImage() {
+            return "tomcat:8.5-jre8-alpine";
+          }
+
+          @Override
+          String getAppRoot() {
+            return appRoot;
+          }
+        };
+    mojo.targetDir = outputFolder.toString();
+
+    projectRoot.newFolder("final-name", "WEB-INF", "lib");
+    projectRoot.newFolder("final-name", "WEB-INF", "classes");
+    Mockito.doReturn(projectRoot.getRoot().toString()).when(build).getDirectory();
+    mojo.execute();
+
+    Assert.assertEquals("FROM tomcat:8.5-jre8-alpine", getBaseImage());
+  }
+
+  @Test
+  public void testEntrypoint_defaultWarPackaging() throws MojoExecutionException, IOException {
+    Mockito.doReturn("war").when(project).getPackaging();
+    Mockito.doReturn("final-name").when(build).getFinalName();
+    projectRoot.newFolder("final-name", "WEB-INF", "lib");
+    projectRoot.newFolder("final-name", "WEB-INF", "classes");
+    Mockito.doReturn(projectRoot.getRoot().toString()).when(build).getDirectory();
+    mojo.execute();
+
+    Assert.assertEquals("ENTRYPOINT [\"java\",\"-jar\",\"/jetty/start.jar\"]", getEntrypoint());
+  }
+
+  @Test
+  public void testEntrypoint_warPackaging() throws MojoExecutionException, IOException {
+    Mockito.doReturn("war").when(project).getPackaging();
+    Mockito.doReturn("final-name").when(build).getFinalName();
+    projectRoot.newFolder("final-name", "WEB-INF", "lib");
+    projectRoot.newFolder("final-name", "WEB-INF", "classes");
+    Mockito.doReturn(projectRoot.getRoot().toString()).when(build).getDirectory();
+    mojo =
+        new DockerContextMojo() {
+          @Override
+          MavenProject getProject() {
+            return project;
+          }
+
+          @Override
+          Path getExtraDirectory() {
+            return projectRoot.getRoot().toPath();
+          }
+
+          @Override
+          String getMainClass() {
+            return "MainClass";
+          }
+
+          @Override
+          List<String> getEntrypoint() {
+            return ImmutableList.of("catalina.sh", "run");
+          }
+
+          @Override
+          String getAppRoot() {
+            return appRoot;
+          }
+        };
+    mojo.targetDir = outputFolder.toString();
+    mojo.execute();
+
+    Assert.assertEquals("ENTRYPOINT [\"catalina.sh\",\"run\"]", getEntrypoint());
   }
 }

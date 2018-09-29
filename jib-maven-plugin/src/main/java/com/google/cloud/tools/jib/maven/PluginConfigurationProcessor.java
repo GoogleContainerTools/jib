@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -43,7 +44,9 @@ class PluginConfigurationProcessor {
 
   /**
    * Gets the value of the {@code <container><appRoot>} parameter. Throws {@link
-   * MojoExecutionException} if it is not an absolute path in Unix-style.
+   * MojoExecutionException} if it is not an absolute path in Unix-style. If this parameter is null,
+   * {@code JavaLayerConfigurations.DEFAULT_WEBAPP_ROOT} is returned for war packaging, {@code
+   * JavaLayerConfigurations.DEFAULT_ROOT} is returned otherwise.
    *
    * @param jibPluginConfiguration the Jib plugin configuration
    * @return the app root value
@@ -52,12 +55,49 @@ class PluginConfigurationProcessor {
   static AbsoluteUnixPath getAppRootChecked(JibPluginConfiguration jibPluginConfiguration)
       throws MojoExecutionException {
     String appRoot = jibPluginConfiguration.getAppRoot();
+    if (appRoot == null) {
+      appRoot =
+          isWarPackaging(jibPluginConfiguration)
+              ? JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT
+              : JavaLayerConfigurations.DEFAULT_APP_ROOT;
+    }
     try {
       return AbsoluteUnixPath.get(appRoot);
     } catch (IllegalArgumentException ex) {
       throw new MojoExecutionException(
           "<container><appRoot> is not an absolute Unix-style path: " + appRoot);
     }
+  }
+
+  /**
+   * Gets the value of the {@code <to><image>} parameter. If this parameter is null,
+   * "gcr.io/distroless/java/jetty" is returned for war packaging, "gcr.io/distroless/java" is
+   * returned otherwise.
+   *
+   * @param jibPluginConfiguration the Jib plugin configuration
+   * @return the base image value
+   */
+  static String getBaseImage(JibPluginConfiguration jibPluginConfiguration) {
+    String baseImage = jibPluginConfiguration.getBaseImage();
+    if (baseImage == null) {
+      baseImage =
+          isWarPackaging(jibPluginConfiguration)
+              ? "gcr.io/distroless/java/jetty"
+              : "gcr.io/distroless/java";
+    }
+    return baseImage;
+  }
+
+  /**
+   * Returns true if the maven packaging type is "war"
+   *
+   * @param jibPluginConfiguration the Jib plugin configuration
+   * @return true if the maven packaging type is "war"
+   */
+  private static boolean isWarPackaging(JibPluginConfiguration jibPluginConfiguration) {
+    return jibPluginConfiguration.getProject() != null
+        && jibPluginConfiguration.getProject().getPackaging() != null
+        && jibPluginConfiguration.getProject().getPackaging().equals("war");
   }
 
   /** Disables annoying Apache HTTP client logging. */
@@ -92,7 +132,7 @@ class PluginConfigurationProcessor {
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     disableHttpLogging();
-    ImageReference baseImage = parseImageReference(jibPluginConfiguration.getBaseImage(), "from");
+    ImageReference baseImage = parseImageReference(getBaseImage(jibPluginConfiguration), "from");
 
     // Checks Maven settings for registry credentials.
     if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
@@ -131,18 +171,7 @@ class PluginConfigurationProcessor {
         ImageConfiguration.builder(baseImage)
             .setCredentialRetrievers(defaultCredentialRetrievers.asList());
 
-    List<String> entrypoint = jibPluginConfiguration.getEntrypoint();
-    if (entrypoint.isEmpty()) {
-      String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
-      entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(
-              getAppRootChecked(jibPluginConfiguration),
-              jibPluginConfiguration.getJvmFlags(),
-              mainClass);
-    } else if (jibPluginConfiguration.getMainClass() != null
-        || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
-      logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
-    }
+    List<String> entrypoint = computeEntrypoint(logger, jibPluginConfiguration, projectProperties);
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()
             .setEntrypoint(entrypoint)
@@ -230,5 +259,48 @@ class PluginConfigurationProcessor {
 
   boolean isBaseImageCredentialPresent() {
     return isBaseImageCredentialPresent;
+  }
+
+  /**
+   * Compute the container entrypoint, in this order :
+   *
+   * <ol>
+   *   <li>the user specified one, if set
+   *   <li>for a war project, the jetty default one
+   *   <li>for a jar project, by resolving the main class
+   * </ol>
+   *
+   * @param logger the logger used to display messages.
+   * @param jibPluginConfiguration the {@link JibPluginConfiguration} providing the configuration
+   *     data
+   * @param projectProperties used for providing additional information
+   * @return the entrypoint
+   * @throws MojoExecutionException if the http timeout system property is misconfigured
+   */
+  static List<String> computeEntrypoint(
+      Log logger,
+      JibPluginConfiguration jibPluginConfiguration,
+      MavenProjectProperties projectProperties)
+      throws MojoExecutionException {
+
+    List<String> entrypoint = jibPluginConfiguration.getEntrypoint();
+    if (!entrypoint.isEmpty()) {
+      if (jibPluginConfiguration.getMainClass() != null
+          || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
+        logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
+      }
+    } else {
+      if (isWarPackaging(jibPluginConfiguration)) {
+        entrypoint = JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
+      } else {
+        String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
+        entrypoint =
+            JavaEntrypointConstructor.makeDefaultEntrypoint(
+                getAppRootChecked(jibPluginConfiguration),
+                jibPluginConfiguration.getJvmFlags(),
+                mainClass);
+      }
+    }
+    return entrypoint;
   }
 }

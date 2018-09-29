@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
@@ -76,14 +75,8 @@ public class DockerContextMojo extends JibPluginConfiguration {
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
 
-    List<String> entrypoint = getEntrypoint();
-    if (entrypoint.isEmpty()) {
-      String mainClass = mavenProjectProperties.getMainClass(this);
-      entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(appRoot, getJvmFlags(), mainClass);
-    } else if (getMainClass() != null || !getJvmFlags().isEmpty()) {
-      getLog().warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
-    }
+    List<String> entrypoint =
+        PluginConfigurationProcessor.computeEntrypoint(getLog(), this, mavenProjectProperties);
 
     try {
       // Validate port input, but don't save the output because we don't want the ranges expanded
@@ -91,7 +84,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
       ExposedPortsParser.parse(getExposedPorts());
 
       new JavaDockerContextGenerator(mavenProjectProperties.getJavaLayerConfigurations())
-          .setBaseImage(getBaseImage())
+          .setBaseImage(PluginConfigurationProcessor.getBaseImage(this))
           .setEntrypoint(entrypoint)
           .setJavaArguments(getArgs())
           .setExposedPorts(getExposedPorts())

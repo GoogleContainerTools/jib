@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
@@ -88,15 +87,12 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /**
-   * Configuration for {@code from} parameter, where image by default is {@code
-   * gcr.io/distroless/java}.
-   */
+  /** Configuration for {@code from} parameter, */
   public static class FromConfiguration {
 
     @Nullable
     @Parameter(required = true)
-    private String image = "gcr.io/distroless/java";
+    private String image;
 
     @Nullable @Parameter private String credHelper;
 
@@ -142,7 +138,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private Map<String, String> labels = Collections.emptyMap();
 
-    @Parameter private String appRoot = JavaLayerConfigurations.DEFAULT_APP_ROOT;
+    @Nullable @Parameter private String appRoot;
   }
 
   @Nullable
@@ -203,11 +199,12 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the configured base image reference
    */
+  @Nullable
   String getBaseImage() {
     if (System.getProperty(PropertyNames.FROM_IMAGE) != null) {
       return System.getProperty(PropertyNames.FROM_IMAGE);
     }
-    return Preconditions.checkNotNull(Preconditions.checkNotNull(from).image);
+    return Preconditions.checkNotNull(from).image;
   }
 
   /**
@@ -385,6 +382,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the configured app root directory
    */
+  @Nullable
   String getAppRoot() {
     if (System.getProperty(PropertyNames.CONTAINER_APP_ROOT) != null) {
       return System.getProperty(PropertyNames.CONTAINER_APP_ROOT);

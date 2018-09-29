@@ -48,12 +48,6 @@ public class JibPlugin implements Plugin<Project> {
   @VisibleForTesting static final String DEFAULT_WAR_FROM_IMAGE = "gcr.io/distroless/java/jetty";
 
   /**
-   * The default app root in the image for WAR. For example, if this is set to {@code
-   * /jetty/webapps/ROOT}, dependency JARs will be in {@code /jetty/webapps/ROOT/WEB-INF/lib}.
-   */
-  @VisibleForTesting static final String DEFAULT_WEB_APP_ROOT = "/jetty/webapps/ROOT";
-
-  /**
    * Collects all project dependencies of the style "compile project(':mylib')" for any kind of
    * configuration [compile, runtime, etc]. It potentially will collect common test libraries in
    * configs like [test, integrationTest, etc], but it's either that or filter based on a
@@ -129,7 +123,9 @@ public class JibPlugin implements Plugin<Project> {
                 jibExtension.getFrom().setImage(DEFAULT_WAR_FROM_IMAGE);
               }
               if (jibExtension.getContainer().getAppRoot().isEmpty()) {
-                jibExtension.getContainer().setAppRoot(DEFAULT_WEB_APP_ROOT);
+                jibExtension
+                    .getContainer()
+                    .setAppRoot(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT);
               }
               ExplodedWarTask explodedWarTask =
                   (ExplodedWarTask)
