@@ -29,7 +29,7 @@ import org.gradle.api.tasks.Optional;
  * <p>{@code image} (required) is the image reference and {@code credHelper} (optional) is the name
  * (after {@code docker-credential} of the credential helper for accessing the {@code image}.
  */
-interface ImageParameters {
+public interface ImageParameters {
 
   @Input
   @Nullable
