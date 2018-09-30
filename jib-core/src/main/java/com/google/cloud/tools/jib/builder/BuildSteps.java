@@ -158,12 +158,15 @@ public class BuildSteps {
 
     if (buildConfiguration.getContainerConfiguration() != null) {
       buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
-      buildConfiguration
-          .getEventDispatcher()
-          .dispatch(
-              LogEvent.lifecycle(
-                  "Container entrypoint set to "
-                      + buildConfiguration.getContainerConfiguration().getEntrypoint()));
+      String eventMessage;
+      if (buildConfiguration.getContainerConfiguration().isEntrypointInferredFromBaseImage()) {
+        eventMessage = "Container entrypoint inferred from base image";
+      } else {
+        eventMessage =
+            "Container entrypoint set to "
+                + buildConfiguration.getContainerConfiguration().getEntrypoint();
+      }
+      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(eventMessage));
     }
 
     return imageDigest;

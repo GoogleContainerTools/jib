@@ -40,6 +40,7 @@ import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
@@ -180,6 +181,9 @@ class PluginConfigurationProcessor {
         Jib.from(baseImage)
             .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
             .setEntrypoint(entrypoint)
+            .setEntrypointInferredFromBaseImage(entrypoint == null)
+            .setProgramArgumentsInferredFromBaseImage(
+                entrypoint == null && jibPluginConfiguration.getArgs().isEmpty())
             .setProgramArguments(jibPluginConfiguration.getArgs())
             .setEnvironment(jibPluginConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(jibPluginConfiguration.getExposedPorts()))
@@ -258,7 +262,7 @@ class PluginConfigurationProcessor {
    *
    * <ol>
    *   <li>the user specified one, if set
-   *   <li>for a WAR project, the Jetty default one
+   *   <li>for a WAR project, null (it must be inferred from base image)
    *   <li>for a non-WAR project, by resolving the main class
    * </ol>
    *
@@ -270,6 +274,7 @@ class PluginConfigurationProcessor {
    * @throws MojoExecutionException if resolving the main class fails or the app root parameter is
    *     not an absolute path in Unix-style
    */
+  @Nullable
   static List<String> computeEntrypoint(
       Log logger,
       JibPluginConfiguration jibPluginConfiguration,
@@ -284,7 +289,7 @@ class PluginConfigurationProcessor {
     }
 
     if (isWarPackaging(jibPluginConfiguration)) {
-      return JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
+      return null;
     }
 
     String mainClass = projectProperties.getMainClass(jibPluginConfiguration);

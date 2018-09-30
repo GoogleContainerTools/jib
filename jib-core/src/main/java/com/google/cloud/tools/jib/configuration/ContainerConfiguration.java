@@ -43,6 +43,8 @@ public class ContainerConfiguration {
     @Nullable private ImmutableList<Port> exposedPorts;
     @Nullable private ImmutableMap<String, String> labels;
     @Nullable private String user;
+    private boolean isEntrypointInferredFromBaseImage = false;
+    private boolean isProgramArgumentsInferredFromBaseImage = false;
 
     /**
      * Sets the image creation time.
@@ -138,6 +140,29 @@ public class ContainerConfiguration {
     }
 
     /**
+     * Sets if the entrypoint must be inferred from base image
+     *
+     * @param entrypointInferredFromBaseImage the flag
+     * @return this
+     */
+    public Builder setEntrypointInferredFromBaseImage(boolean entrypointInferredFromBaseImage) {
+      this.isEntrypointInferredFromBaseImage = entrypointInferredFromBaseImage;
+      return this;
+    }
+
+    /**
+     * Sets if the program arguments must be inferred from base image
+     *
+     * @param programArgumentsInferredFromBaseImage the flag
+     * @return this
+     */
+    public Builder setProgramArgumentsInferredFromBaseImage(
+        boolean programArgumentsInferredFromBaseImage) {
+      this.isProgramArgumentsInferredFromBaseImage = programArgumentsInferredFromBaseImage;
+      return this;
+    }
+
+    /**
      * Sets the user and group to run the container as. {@code user} can be a username or UID along
      * with an optional groupname or GID. The following are all valid: {@code user}, {@code uid},
      * {@code user:group}, {@code uid:gid}, {@code uid:group}, {@code user:gid}.
@@ -157,7 +182,15 @@ public class ContainerConfiguration {
      */
     public ContainerConfiguration build() {
       return new ContainerConfiguration(
-          creationTime, entrypoint, programArguments, environmentMap, exposedPorts, labels, user);
+          creationTime,
+          entrypoint,
+          programArguments,
+          environmentMap,
+          exposedPorts,
+          labels,
+          isEntrypointInferredFromBaseImage,
+          isProgramArgumentsInferredFromBaseImage,
+              user);
     }
 
     private Builder() {}
@@ -179,6 +212,8 @@ public class ContainerConfiguration {
   @Nullable private final ImmutableList<Port> exposedPorts;
   @Nullable private final ImmutableMap<String, String> labels;
   @Nullable private final String user;
+  private boolean isEntrypointInferredFromBaseImage;
+  private boolean isProgramArgumentsInferredFromBaseImage;
 
   private ContainerConfiguration(
       Instant creationTime,
@@ -187,6 +222,8 @@ public class ContainerConfiguration {
       @Nullable ImmutableMap<String, String> environmentMap,
       @Nullable ImmutableList<Port> exposedPorts,
       @Nullable ImmutableMap<String, String> labels,
+      boolean isEntrypointInferredFromBaseImage,
+      boolean isProgramArgumentsInferredFromBaseImage,
       @Nullable String user) {
     this.creationTime = creationTime;
     this.entrypoint = entrypoint;
@@ -195,6 +232,8 @@ public class ContainerConfiguration {
     this.exposedPorts = exposedPorts;
     this.labels = labels;
     this.user = user;
+    this.isEntrypointInferredFromBaseImage = isEntrypointInferredFromBaseImage;
+    this.isProgramArgumentsInferredFromBaseImage = isProgramArgumentsInferredFromBaseImage;
   }
 
   public Instant getCreationTime() {
@@ -231,6 +270,14 @@ public class ContainerConfiguration {
     return labels;
   }
 
+  public boolean isEntrypointInferredFromBaseImage() {
+    return isEntrypointInferredFromBaseImage;
+  }
+
+  public boolean isProgramArgumentsInferredFromBaseImage() {
+    return isProgramArgumentsInferredFromBaseImage;
+  }
+
   @Override
   @VisibleForTesting
   public boolean equals(Object other) {
@@ -247,13 +294,27 @@ public class ContainerConfiguration {
         && Objects.equals(environmentMap, otherContainerConfiguration.environmentMap)
         && Objects.equals(exposedPorts, otherContainerConfiguration.exposedPorts)
         && Objects.equals(labels, otherContainerConfiguration.labels)
-        && Objects.equals(user, otherContainerConfiguration.user);
+        && Objects.equals(user, otherContainerConfiguration.user)
+        && Objects.equals(
+            isEntrypointInferredFromBaseImage,
+            otherContainerConfiguration.isEntrypointInferredFromBaseImage)
+        && Objects.equals(
+            isProgramArgumentsInferredFromBaseImage,
+            otherContainerConfiguration.isProgramArgumentsInferredFromBaseImage);
   }
 
   @Override
   @VisibleForTesting
   public int hashCode() {
     return Objects.hash(
-        creationTime, entrypoint, programArguments, environmentMap, exposedPorts, labels, user);
+        creationTime,
+        entrypoint,
+        programArguments,
+        environmentMap,
+        exposedPorts,
+        labels,
+        isEntrypointInferredFromBaseImage,
+        isProgramArgumentsInferredFromBaseImage,
+            user);
   }
 }

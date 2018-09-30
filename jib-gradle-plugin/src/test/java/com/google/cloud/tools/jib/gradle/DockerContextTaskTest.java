@@ -84,16 +84,28 @@ public class DockerContextTaskTest {
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/resources:/classes:/libs/*\",\"MainClass\"]",
         getEntrypoint());
+    Assert.assertEquals("CMD []", getCmd());
   }
 
   @Test
-  public void testEntrypoint_defaultWebAppRoot() throws IOException {
+  public void testEntrypoint_inferredEntrypoint() throws IOException {
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/");
     project.getPluginManager().apply("war");
 
     task.generateDockerContext();
 
-    Assert.assertEquals("ENTRYPOINT [\"java\",\"-jar\",\"/jetty/start.jar\"]", getEntrypoint());
+    try {
+      getEntrypoint();
+      Assert.fail();
+    } catch (NoSuchElementException e) {
+      Assert.assertEquals("No value present", e.getMessage());
+    }
+    try {
+      getCmd();
+      Assert.fail();
+    } catch (NoSuchElementException e) {
+      Assert.assertEquals("No value present", e.getMessage());
+    }
   }
 
   @Test
@@ -160,6 +172,12 @@ public class DockerContextTaskTest {
     Path dockerfile = projectRoot.getRoot().toPath().resolve("build/jib-docker-context/Dockerfile");
     List<String> lines = Files.readAllLines(dockerfile);
     return lines.stream().filter(line -> line.startsWith("ENTRYPOINT")).findFirst().get();
+  }
+
+  private String getCmd() throws IOException {
+    Path dockerfile = projectRoot.getRoot().toPath().resolve("build/jib-docker-context/Dockerfile");
+    List<String> lines = Files.readAllLines(dockerfile);
+    return lines.stream().filter(line -> line.startsWith("CMD")).findFirst().get();
   }
 
   private String getUser() throws IOException {

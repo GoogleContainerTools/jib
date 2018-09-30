@@ -86,6 +86,7 @@ public class DockerContextMojoTest {
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/app/resources:/app/classes:/app/libs/*\",\"MainClass\"]",
         getEntrypoint());
+    Assert.assertEquals("CMD []", getCmd());
   }
 
   @Test
@@ -96,6 +97,7 @@ public class DockerContextMojoTest {
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/resources:/classes:/libs/*\",\"MainClass\"]",
         getEntrypoint());
+    Assert.assertEquals("CMD []", getCmd());
   }
 
   @Test
@@ -206,7 +208,18 @@ public class DockerContextMojoTest {
     Mockito.doReturn(projectRoot.getRoot().toString()).when(build).getDirectory();
     mojo.execute();
 
-    Assert.assertEquals("ENTRYPOINT [\"java\",\"-jar\",\"/jetty/start.jar\"]", getEntrypoint());
+    try {
+      getEntrypoint();
+      Assert.fail();
+    } catch (NoSuchElementException e) {
+      Assert.assertEquals("No value present", e.getMessage());
+    }
+    try {
+      getCmd();
+      Assert.fail();
+    } catch (NoSuchElementException e) {
+      Assert.assertEquals("No value present", e.getMessage());
+    }
   }
 
   @Test
@@ -245,7 +258,7 @@ public class DockerContextMojoTest {
         };
     mojo.targetDir = outputFolder.toString();
     mojo.execute();
-
+    Assert.assertEquals("CMD []", getCmd());
     Assert.assertEquals("ENTRYPOINT [\"catalina.sh\",\"run\"]", getEntrypoint());
   }
 
@@ -332,5 +345,11 @@ public class DockerContextMojoTest {
     Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
     List<String> lines = Files.readAllLines(dockerfile);
     return lines.stream().filter(line -> line.startsWith("FROM")).findFirst().get();
+  }
+
+  private String getCmd() throws IOException {
+    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
+    List<String> lines = Files.readAllLines(dockerfile);
+    return lines.stream().filter(line -> line.startsWith("CMD")).findFirst().get();
   }
 }

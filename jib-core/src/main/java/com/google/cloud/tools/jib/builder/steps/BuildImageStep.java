@@ -176,8 +176,14 @@ class BuildImageStep
         imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());
         imageBuilder.setCreated(containerConfiguration.getCreationTime());
         imageBuilder.setUser(containerConfiguration.getUser());
-        imageBuilder.setEntrypoint(containerConfiguration.getEntrypoint());
-        imageBuilder.setProgramArguments(containerConfiguration.getProgramArguments());
+        imageBuilder.setEntrypoint(
+            containerConfiguration.isEntrypointInferredFromBaseImage()
+                ? baseImage.getEntrypoint()
+                : containerConfiguration.getEntrypoint());
+        imageBuilder.setProgramArguments(
+            containerConfiguration.isProgramArgumentsInferredFromBaseImage()
+                ? baseImage.getJavaArguments()
+                : containerConfiguration.getProgramArguments());
         imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());
         imageBuilder.addLabels(containerConfiguration.getLabels());
       }
