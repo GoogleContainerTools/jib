@@ -107,11 +107,11 @@ public class JibExtension {
     extraDirectory.set(resolveDefaultExtraDirectory(project.getProjectDir().toPath()));
   }
 
-  public void from(Action<? super ImageParameters> action) {
+  public void from(Action<BaseImageParameters> action) {
     action.execute(from);
   }
 
-  public void to(Action<? super ImageParameters> action) {
+  public void to(Action<TargetImageParameters> action) {
     action.execute(to);
   }
 
