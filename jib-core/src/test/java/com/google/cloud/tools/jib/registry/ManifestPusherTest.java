@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponseException;
+import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -51,6 +53,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ManifestPusherTest {
 
   @Mock private Response mockResponse;
+  @Mock private EventDispatcher mockEventDispatcher;
 
   private Path v22manifestJsonFile;
   private V22ManifestTemplate fakeManifestTemplate;
@@ -66,7 +69,8 @@ public class ManifestPusherTest {
         new ManifestPusher(
             new RegistryEndpointRequestProperties("someServerUrl", "someImageName"),
             fakeManifestTemplate,
-            "test-image-tag");
+            "test-image-tag",
+            mockEventDispatcher);
   }
 
   @Test
@@ -85,7 +89,7 @@ public class ManifestPusherTest {
   }
 
   @Test
-  public void testHandleResponse_valid() throws IOException, UnexpectedImageDigestException {
+  public void testHandleResponse_valid() throws IOException {
     DescriptorDigest expectedDigest =
         JsonTemplateMapper.toBlob(fakeManifestTemplate)
             .writeTo(ByteStreams.nullOutputStream())
@@ -104,14 +108,9 @@ public class ManifestPusherTest {
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Collections.emptyList());
 
-    try {
-      testManifestPusher.handleResponse(mockResponse);
-      Assert.fail();
-
-    } catch (UnexpectedImageDigestException ex) {
-      Assert.assertEquals(
-          "Expected image digest " + expectedDigest + ", but received: ", ex.getMessage());
-    }
+    Assert.assertEquals(expectedDigest, testManifestPusher.handleResponse(mockResponse));
+    Mockito.verify(mockEventDispatcher)
+        .dispatch(LogEvent.warn("Expected image digest " + expectedDigest + ", but received none"));
   }
 
   @Test
@@ -123,14 +122,10 @@ public class ManifestPusherTest {
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Arrays.asList("too", "many"));
 
-    try {
-      testManifestPusher.handleResponse(mockResponse);
-      Assert.fail();
-
-    } catch (UnexpectedImageDigestException ex) {
-      Assert.assertEquals(
-          "Expected image digest " + expectedDigest + ", but received: too, many", ex.getMessage());
-    }
+    Assert.assertEquals(expectedDigest, testManifestPusher.handleResponse(mockResponse));
+    Mockito.verify(mockEventDispatcher)
+        .dispatch(
+            LogEvent.warn("Expected image digest " + expectedDigest + ", but received: too, many"));
   }
 
   @Test
@@ -142,14 +137,10 @@ public class ManifestPusherTest {
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Collections.singletonList("not valid"));
 
-    try {
-      testManifestPusher.handleResponse(mockResponse);
-      Assert.fail();
-
-    } catch (UnexpectedImageDigestException ex) {
-      Assert.assertEquals(
-          "Expected image digest " + expectedDigest + ", but received: not valid", ex.getMessage());
-    }
+    Assert.assertEquals(expectedDigest, testManifestPusher.handleResponse(mockResponse));
+    Mockito.verify(mockEventDispatcher)
+        .dispatch(
+            LogEvent.warn("Expected image digest " + expectedDigest + ", but received: not valid"));
   }
 
   @Test

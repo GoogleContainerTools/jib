@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpResponseException;
+import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -30,6 +32,7 @@ import java.net.URL;
 import java.security.DigestException;
 import java.util.Collections;
 import java.util.List;
+import java.util.StringJoiner;
 import org.apache.http.HttpStatus;
 
 /** Pushes an image's manifest. */
@@ -38,17 +41,42 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   /** Response header containing digest of pushed image. */
   private static final String RESPONSE_DIGEST_HEADER = "Docker-Content-Digest";
 
+  /**
+   * Makes the warning for when the registry responds with an image digest that is not the expected
+   * digest of the image.
+   *
+   * @param expectedDigest the expected image digest
+   * @param receivedDigests the received image digests
+   * @return the warning message
+   */
+  private static String makeUnexpectedImageDigestWarning(
+      DescriptorDigest expectedDigest, List<String> receivedDigests) {
+    if (receivedDigests.size() == 0) {
+      return "Expected image digest " + expectedDigest + ", but received none";
+    }
+
+    StringJoiner message =
+        new StringJoiner(", ", "Expected image digest " + expectedDigest + ", but received: ", "");
+    for (String receivedDigest : receivedDigests) {
+      message.add(receivedDigest);
+    }
+    return message.toString();
+  }
+
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final BuildableManifestTemplate manifestTemplate;
   private final String imageTag;
+  private final EventDispatcher eventDispatcher;
 
   ManifestPusher(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       BuildableManifestTemplate manifestTemplate,
-      String imageTag) {
+      String imageTag,
+      EventDispatcher eventDispatcher) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.manifestTemplate = manifestTemplate;
     this.imageTag = imageTag;
+    this.eventDispatcher = eventDispatcher;
   }
 
   @Override
@@ -92,8 +120,7 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   }
 
   @Override
-  public DescriptorDigest handleResponse(Response response)
-      throws IOException, UnexpectedImageDigestException {
+  public DescriptorDigest handleResponse(Response response) throws IOException {
     // Checks if the image digest is as expected.
     DescriptorDigest expectedDigest =
         JsonTemplateMapper.toBlob(manifestTemplate)
@@ -113,7 +140,10 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
       }
     }
 
-    throw new UnexpectedImageDigestException(expectedDigest, receivedDigests);
+    // The received digest is not as expected. Warns about this.
+    eventDispatcher.dispatch(
+        LogEvent.warn(makeUnexpectedImageDigestWarning(expectedDigest, receivedDigests)));
+    return expectedDigest;
   }
 
   @Override
