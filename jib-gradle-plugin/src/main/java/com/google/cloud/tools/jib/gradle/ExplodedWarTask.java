@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import java.io.File;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
 import org.gradle.api.tasks.OutputDirectory;
@@ -24,7 +25,7 @@ import org.gradle.api.tasks.Sync;
 /** Gradle task that explodes a WAR file into a directory. */
 public class ExplodedWarTask extends Sync {
 
-  @Nullable private Path explodedWarDirectory;
+  @Nullable private File explodedWarDirectory;
 
   public void setWarFile(Path warFile) {
     from(getProject().zipTree(warFile));
@@ -36,13 +37,13 @@ public class ExplodedWarTask extends Sync {
    * @param explodedWarDirectory the directory where to extract the WAR file
    */
   public void setExplodedWarDirectory(Path explodedWarDirectory) {
-    this.explodedWarDirectory = explodedWarDirectory;
+    this.explodedWarDirectory = explodedWarDirectory.toFile();
     into(explodedWarDirectory);
   }
 
   @OutputDirectory
   @Nullable
-  public Path getExplodedWarDirectory() {
+  public File getExplodedWarDirectory() {
     return explodedWarDirectory;
   }
 }
