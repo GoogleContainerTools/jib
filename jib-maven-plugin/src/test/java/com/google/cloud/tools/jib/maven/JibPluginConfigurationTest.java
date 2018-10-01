@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,14 +29,7 @@ public class JibPluginConfigurationTest {
 
   private JibPluginConfiguration testPluginConfiguration;
 
-  @Before
-  public void setup() {
-    testPluginConfiguration =
-        new JibPluginConfiguration() {
-          @Override
-          public void execute() {}
-        };
-
+  private static void clearProperties() {
     System.clearProperty("jib.from.image");
     System.clearProperty("jib.from.credHelper");
     System.clearProperty("image");
@@ -52,6 +46,21 @@ public class JibPluginConfigurationTest {
     System.clearProperty("jib.container.mainClass");
     System.clearProperty("jib.container.ports");
     System.clearProperty("jib.container.useCurrentTimestamp");
+  }
+
+  @Before
+  public void setup() {
+    clearProperties();
+    testPluginConfiguration =
+        new JibPluginConfiguration() {
+          @Override
+          public void execute() {}
+        };
+  }
+
+  @After
+  public void teardown() {
+    clearProperties();
   }
 
   @Test
