@@ -36,7 +36,7 @@ import javax.annotation.Nullable;
 public class ConfigurationPropertyValidator {
 
   /** Matches key-value pairs in the form of "key=value" */
-  private static Pattern environmentPattern = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
+  private static final Pattern environmentPattern = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
 
   /**
    * Gets a {@link Credential} from a username and password. First tries system properties, then
@@ -166,7 +166,7 @@ public class ConfigurationPropertyValidator {
    * @return the list of parsed values
    */
   public static List<String> parseListProperty(String property) {
-    List<String> result = new ArrayList<>();
+    List<String> items = new ArrayList<>();
     boolean shouldEscape = false;
     int startIndex = 0;
     int endIndex = 0;
@@ -179,15 +179,15 @@ public class ConfigurationPropertyValidator {
 
       if (property.charAt(endIndex) == ',') {
         // Split on non-escaped comma
-        result.add(property.substring(startIndex, endIndex));
+        items.add(property.substring(startIndex, endIndex));
         startIndex = endIndex + 1;
       } else if (property.charAt(endIndex) == '\\') {
         // Found a backslash, ignore next character
         shouldEscape = true;
       }
     }
-    result.add(property.substring(startIndex, endIndex));
-    return result;
+    items.add(property.substring(startIndex));
+    return items;
   }
 
   private ConfigurationPropertyValidator() {}

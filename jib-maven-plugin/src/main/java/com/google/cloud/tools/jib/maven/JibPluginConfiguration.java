@@ -42,13 +42,17 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 abstract class JibPluginConfiguration extends AbstractMojo {
 
   /** Names of system properties used to set configuration via commandline. */
-  private static class PropertyNames {
+  static class PropertyNames {
     private static final String fromImage = "jib.from.image";
     private static final String fromCredHelper = "jib.from.credHelper";
+    static final String fromAuthUsername = "jib.from.auth.username";
+    static final String fromAuthPassword = "jib.from.auth.password";
     private static final String toImage = "image";
     private static final String toImageAlternate = "jib.to.image";
     private static final String toTags = "jib.to.tags";
     private static final String toCredHelper = "jib.to.credHelper";
+    static final String toAuthUsername = "jib.to.auth.username";
+    static final String toAuthPassword = "jib.to.auth.password";
     private static final String containerAppRoot = "jib.container.appRoot";
     private static final String containerArgs = "jib.container.args";
     private static final String containerEntrypoint = "jib.container.entrypoint";
@@ -59,6 +63,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     private static final String containerMainClass = "jib.container.mainClass";
     private static final String containerPorts = "jib.container.ports";
     private static final String containerUseCurrentTimestamp = "jib.container.useCurrentTimestamp";
+    private static final String useOnlyProjectCache = "jib.useOnlyProjectCache";
+    private static final String allowInsecureRegistries = "jib.allowInsecureRegistries";
+    private static final String extraDirectory = "jib.extraDirectory";
+    private static final String skip = "jib.skip";
   }
 
   /** Used to configure {@code from.auth} and {@code to.auth} parameters. */
@@ -178,10 +186,13 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Parameter private ContainerParameters container = new ContainerParameters();
 
-  @Parameter(defaultValue = "false", required = true, property = "jib.useOnlyProjectCache")
+  @Parameter(defaultValue = "false", required = true, property = PropertyNames.useOnlyProjectCache)
   private boolean useOnlyProjectCache;
 
-  @Parameter(defaultValue = "false", required = true, property = "jib.allowInsecureRegistries")
+  @Parameter(
+      defaultValue = "false",
+      required = true,
+      property = PropertyNames.allowInsecureRegistries)
   private boolean allowInsecureRegistries;
 
   // this parameter is cloned in FilesMojo
@@ -189,10 +200,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(
       defaultValue = "${project.basedir}/src/main/jib",
       required = true,
-      property = "jib.extraDirectory")
+      property = PropertyNames.extraDirectory)
   private File extraDirectory;
 
-  @Parameter(defaultValue = "false", property = "jib.skip")
+  @Parameter(defaultValue = "false", property = PropertyNames.skip)
   private boolean skip;
 
   @Nullable @Component protected SettingsDecrypter settingsDecrypter;

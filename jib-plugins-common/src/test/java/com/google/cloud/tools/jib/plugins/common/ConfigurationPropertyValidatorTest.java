@@ -169,6 +169,7 @@ public class ConfigurationPropertyValidatorTest {
       ConfigurationPropertyValidator.parseMapProperty("not valid");
       Assert.fail();
     } catch (IllegalArgumentException ignored) {
+      // pass
     }
   }
 }

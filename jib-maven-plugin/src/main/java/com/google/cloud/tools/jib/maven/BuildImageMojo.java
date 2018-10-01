@@ -99,8 +99,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
     Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
             mavenProjectProperties.getEventDispatcher(),
-            "jib.to.auth.username",
-            "jib.to.auth.password",
+            JibPluginConfiguration.PropertyNames.toAuthUsername,
+            JibPluginConfiguration.PropertyNames.toAuthPassword,
             getTargetImageAuth());
     if (optionalToCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(
