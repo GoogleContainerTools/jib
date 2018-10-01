@@ -115,7 +115,7 @@ public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<D
     // Gets the image manifest to generate the image digest.
     ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
     BlobDescriptor containerConfigurationBlobDescriptor =
-        new ImageToJsonTranslator(image)
+        imageToJsonTranslator
             .getContainerConfigurationBlob()
             .writeTo(ByteStreams.nullOutputStream());
     BuildableManifestTemplate manifestTemplate =

@@ -221,7 +221,8 @@ public class RegistryClient {
       throws IOException, RegistryException {
     return Verify.verifyNotNull(
         callRegistryEndpoint(
-            new ManifestPusher(registryEndpointRequestProperties, manifestTemplate, imageTag)));
+            new ManifestPusher(
+                registryEndpointRequestProperties, manifestTemplate, imageTag, eventDispatcher)));
   }
 
   /**
