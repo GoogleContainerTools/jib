@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
 import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -95,10 +94,8 @@ public class TarImage implements TargetImage {
   }
 
   @Override
-  public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
-    return BuildSteps.forBuildToTar(
-        outputFile, buildConfiguration, TargetImage.getCacheInitializer(buildConfiguration));
+  public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
+    return BuildSteps.forBuildToTar(outputFile, buildConfiguration);
   }
 
   /**

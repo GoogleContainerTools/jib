@@ -125,9 +125,7 @@ public class RegistryImage implements SourceImage, TargetImage {
   }
 
   @Override
-  public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
-    return BuildSteps.forBuildToDockerRegistry(
-        buildConfiguration, TargetImage.getCacheInitializer(buildConfiguration));
+  public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
+    return BuildSteps.forBuildToDockerRegistry(buildConfiguration);
   }
 }

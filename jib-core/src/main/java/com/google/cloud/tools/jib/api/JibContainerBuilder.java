@@ -312,8 +312,9 @@ public class JibContainerBuilder {
    * @return the built container(s)
    * @throws CacheDirectoryCreationException if a directory to be used for the cache could not be
    *     created
-   * @throws InterruptedException if the execution was interrupted
    * @throws ExecutionException if an exception occurred during execution
+   * @throws InterruptedException if the execution was interrupted
+   * @throws IOException if an I/O exception occurs
    */
   public JibContainer containerize(Containerizer containerizer)
       throws InterruptedException, ExecutionException, IOException,
