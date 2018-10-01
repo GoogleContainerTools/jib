@@ -261,7 +261,7 @@ public class GradleLayerConfigurationsTest {
             mockProject,
             mockLogger,
             extraFilesDirectory,
-            AbsoluteUnixPath.get(JibPlugin.DEFAULT_APP_ROOT));
+            AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_APP_ROOT));
 
     assertExtractionPathsUnordered(
         Arrays.asList(

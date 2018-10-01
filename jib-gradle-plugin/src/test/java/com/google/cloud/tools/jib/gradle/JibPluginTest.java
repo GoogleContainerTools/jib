@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -226,7 +227,7 @@ public class JibPluginTest {
             .getJib()
             .getBaseImage());
     Assert.assertEquals(
-        JibPlugin.DEFAULT_APP_ROOT,
+        JavaLayerConfigurations.DEFAULT_APP_ROOT,
         ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
             .getJib()
             .getContainer()

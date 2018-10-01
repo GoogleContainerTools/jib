@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,12 +46,6 @@ public class JibPlugin implements Plugin<Project> {
 
   @VisibleForTesting static final String DEFAULT_FROM_IMAGE = "gcr.io/distroless/java";
   @VisibleForTesting static final String DEFAULT_WAR_FROM_IMAGE = "gcr.io/distroless/java/jetty";
-
-  /**
-   * The default app root in the image. For example, if this is set to {@code /app}, dependency JARs
-   * will be in {@code /app/libs}.
-   */
-  @VisibleForTesting static final String DEFAULT_APP_ROOT = "/app";
 
   /**
    * The default app root in the image for WAR. For example, if this is set to {@code
@@ -152,7 +147,7 @@ public class JibPlugin implements Plugin<Project> {
                 jibExtension.getFrom().setImage(DEFAULT_FROM_IMAGE);
               }
               if (jibExtension.getContainer().getAppRoot().isEmpty()) {
-                jibExtension.getContainer().setAppRoot(DEFAULT_APP_ROOT);
+                jibExtension.getContainer().setAppRoot(JavaLayerConfigurations.DEFAULT_APP_ROOT);
               }
               // Have all tasks depend on the 'classes' task.
               dependsOnTask = projectAfterEvaluation.getTasks().getByPath("classes");
