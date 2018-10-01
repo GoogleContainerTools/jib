@@ -28,6 +28,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.plugins.BasePlugin;
+import org.gradle.api.tasks.bundling.War;
 import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
@@ -40,6 +41,21 @@ public class JibPlugin implements Plugin<Project> {
   @VisibleForTesting static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
   @VisibleForTesting static final String DOCKER_CONTEXT_TASK_NAME = "jibExportDockerContext";
   @VisibleForTesting static final String FILES_TASK_NAME = "_jibSkaffoldFiles";
+  @VisibleForTesting static final String EXPLODED_WAR_TASK_NAME = "jibExplodedWar";
+
+  @VisibleForTesting static final String DEFAULT_FROM_IMAGE = "gcr.io/distroless/java";
+  @VisibleForTesting static final String DEFAULT_WEBAPP_FROM_IMAGE = "gcr.io/distroless/java/jetty";
+  /**
+   * The default app root in the image. For example, if this is set to {@code "/app"}, dependency
+   * JARs will be in {@code "/app/libs"}.
+   */
+  @VisibleForTesting static final String DEFAULT_APP_ROOT = "/app";
+
+  /**
+   * The default webapp root in the image. For example, if this is set to {@code
+   * "/jetty/webapps/ROOT"}, dependency JARs will be in {@code "/jetty/webapps/ROOT/WEB-INF/lib"}.
+   */
+  @VisibleForTesting static final String DEFAULT_WEBAPP_ROOT = "/jetty/webapps/ROOT";
 
   /**
    * Collects all project dependencies of the style "compile project(':mylib')" for any kind of
@@ -108,14 +124,43 @@ public class JibPlugin implements Plugin<Project> {
 
     project.afterEvaluate(
         projectAfterEvaluation -> {
+          // TODO move this to a seperate place
           try {
-            // Has all tasks depend on the 'classes' task.
-            Task classesTask = projectAfterEvaluation.getTasks().getByPath("classes");
-            buildImageTask.dependsOn(classesTask);
-            dockerContextTask.dependsOn(classesTask);
-            buildDockerTask.dependsOn(classesTask);
-            buildTarTask.dependsOn(classesTask);
-            filesTask.dependsOn(classesTask);
+            War warTask = GradleProjectProperties.getWarTask(project);
+            final Task dependsOnTask;
+            if (warTask != null) {
+              if (jibExtension.getFrom().getImage() == null) {
+                jibExtension.getFrom().setImage(DEFAULT_WEBAPP_FROM_IMAGE);
+              }
+              if (jibExtension.getContainer().getAppRoot().isEmpty()) {
+                jibExtension.getContainer().setAppRoot(DEFAULT_WEBAPP_ROOT);
+              }
+              // Has all tasks depend on the 'exploded war' task.
+              ExplodedWarTask explodedWarTask =
+                  (ExplodedWarTask)
+                      project
+                          .getTasks()
+                          .create(EXPLODED_WAR_TASK_NAME, ExplodedWarTask.class)
+                          .dependsOn(warTask);
+              explodedWarTask.setWarFile(warTask.getArchivePath());
+              explodedWarTask.setExplodedWarDirectory(
+                  GradleProjectProperties.getExplodedWarDirectory(projectAfterEvaluation));
+              dependsOnTask = explodedWarTask;
+            } else {
+              if (jibExtension.getFrom().getImage() == null) {
+                jibExtension.getFrom().setImage(DEFAULT_FROM_IMAGE);
+              }
+              if (jibExtension.getContainer().getAppRoot().isEmpty()) {
+                jibExtension.getContainer().setAppRoot(DEFAULT_APP_ROOT);
+              }
+              // Has all tasks depend on the 'classes' task.
+              dependsOnTask = projectAfterEvaluation.getTasks().getByPath("classes");
+            }
+            buildImageTask.dependsOn(dependsOnTask);
+            dockerContextTask.dependsOn(dependsOnTask);
+            buildDockerTask.dependsOn(dependsOnTask);
+            buildTarTask.dependsOn(dependsOnTask);
+            filesTask.dependsOn(dependsOnTask);
 
             // Find project dependencies and add a dependency to their assemble task. We make sure
             // to only add the dependency after BasePlugin is evaluated as otherwise the assemble

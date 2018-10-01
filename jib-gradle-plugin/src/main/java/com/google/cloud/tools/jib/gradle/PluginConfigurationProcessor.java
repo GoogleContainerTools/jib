@@ -123,18 +123,7 @@ class PluginConfigurationProcessor {
         ImageConfiguration.builder(baseImage)
             .setCredentialRetrievers(defaultCredentialRetrievers.asList());
 
-    List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
-    if (entrypoint.isEmpty()) {
-      String mainClass = projectProperties.getMainClass(jibExtension);
-      entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(
-              getAppRootChecked(jibExtension),
-              jibExtension.getContainer().getJvmFlags(),
-              mainClass);
-    } else if (jibExtension.getContainer().getMainClass() != null
-        || !jibExtension.getContainer().getJvmFlags().isEmpty()) {
-      logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
-    }
+    List<String> entrypoint = computeEntrypoint(logger, jibExtension, projectProperties);
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()
             .setEntrypoint(entrypoint)
@@ -169,6 +158,43 @@ class PluginConfigurationProcessor {
         baseImageConfigurationBuilder,
         containerConfigurationBuilder,
         optionalFromCredential.isPresent());
+  }
+
+  /**
+   * Compute the container entrypoint, in this order :
+   *
+   * <ol>
+   *   <li>the user specified one, if set
+   *   <li>for a war project, the jetty default one
+   *   <li>for a jar project, by resolving the main class
+   * </ol>
+   *
+   * @param logger the logger used to display messages.
+   * @param jibExtension the {@link JibExtension} providing the configuration data
+   * @param projectProperties used for providing additional information
+   * @return the entrypoint
+   */
+  static List<String> computeEntrypoint(
+      Logger logger, JibExtension jibExtension, GradleProjectProperties projectProperties) {
+    List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
+    if (!entrypoint.isEmpty()) {
+      if (jibExtension.getContainer().getMainClass() != null
+          || !jibExtension.getContainer().getJvmFlags().isEmpty()) {
+        logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
+      }
+    } else {
+      if (projectProperties.isWarProject()) {
+        entrypoint = JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
+      } else {
+        String mainClass = projectProperties.getMainClass(jibExtension);
+        entrypoint =
+            JavaEntrypointConstructor.makeDefaultEntrypoint(
+                AbsoluteUnixPath.get(jibExtension.getContainer().getAppRoot()),
+                jibExtension.getContainer().getJvmFlags(),
+                mainClass);
+      }
+    }
+    return entrypoint;
   }
 
   private final BuildConfiguration.Builder buildConfigurationBuilder;

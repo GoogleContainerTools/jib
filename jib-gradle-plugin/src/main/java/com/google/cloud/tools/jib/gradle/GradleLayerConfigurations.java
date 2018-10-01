@@ -17,11 +17,13 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -40,8 +42,17 @@ class GradleLayerConfigurations {
   /** Name of the `main` {@link SourceSet} to use as source files. */
   private static final String MAIN_SOURCE_SET_NAME = "main";
 
+  /** The filename suffix for a maven/gradle snapshot dependency */
+  private static final String SNAPSHOT = "SNAPSHOT";
+  /** The standard directory name containing libs, classes, web.xml, etc... in a War Project */
+  private static final String WEB_INF = "WEB-INF";
+  /** The standard directory name containing libs and snapshot-libs in a War Project */
+  private static final String WEB_INF_LIB = WEB_INF + "/lib/";
+  /** The standard directory name containing classes and some resources in a War Project */
+  private static final String WEB_INF_CLASSES = WEB_INF + "/classes/";
+
   /**
-   * Resolves the source files configuration for a Gradle {@link Project}.
+   * Resolves the {@link JavaLayerConfigurations} for a Gradle {@link Project}.
    *
    * @param project the Gradle {@link Project}
    * @param logger the logger for providing feedback about the resolution
@@ -51,6 +62,27 @@ class GradleLayerConfigurations {
    * @throws IOException if an I/O exception occurred during resolution
    */
   static JavaLayerConfigurations getForProject(
+      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
+      throws IOException {
+    if (GradleProjectProperties.getWarTask(project) != null) {
+      logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
+      return getForWarProject(project, logger, extraDirectory, appRoot);
+    } else {
+      return getForNonWarProject(project, logger, extraDirectory, appRoot);
+    }
+  }
+
+  /**
+   * Resolves the {@link JavaLayerConfigurations} for a non-war Gradle {@link Project}.
+   *
+   * @param project the Gradle {@link Project}
+   * @param logger the logger for providing feedback about the resolution
+   * @param extraDirectory path to the directory for the extra files layer
+   * @param appRoot root directory in the image where the app will be placed
+   * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
+   * @throws IOException if an I/O exception occurred during resolution
+   */
+  private static JavaLayerConfigurations getForNonWarProject(
       Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
       throws IOException {
     JavaPluginConvention javaPluginConvention =
@@ -91,7 +123,7 @@ class GradleLayerConfigurations {
       if (resourcesOutputDirectory.equals(dependencyFile.toPath())) {
         continue;
       }
-      if (dependencyFile.getName().contains("SNAPSHOT")) {
+      if (dependencyFile.getName().contains(SNAPSHOT)) {
         snapshotDependenciesFiles.add(dependencyFile.toPath());
       } else {
         dependenciesFiles.add(dependencyFile.toPath());
@@ -125,6 +157,105 @@ class GradleLayerConfigurations {
     }
     for (Path file : classesFiles) {
       layerBuilder.addClassFile(file, classesExtractionPath.resolve(file.getFileName()));
+    }
+    for (Path file : extraFiles) {
+      layerBuilder.addExtraFile(file, AbsoluteUnixPath.get("/").resolve(file.getFileName()));
+    }
+    return layerBuilder.build();
+  }
+
+  /**
+   * Resolves the {@link JavaLayerConfigurations} for a War Gradle {@link Project}.
+   *
+   * @param project the Gradle {@link Project}
+   * @param logger the build logger for providing feedback about the resolution
+   * @param extraDirectory path to the directory for the extra files layer
+   * @param appRoot root directory in the image where the app will be placed
+   * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
+   * @throws IOException if an I/O exception occurred during resolution
+   */
+  private static JavaLayerConfigurations getForWarProject(
+      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
+      throws IOException {
+    List<Path> dependenciesFiles = new ArrayList<>();
+    List<Path> snapshotDependenciesFiles = new ArrayList<>();
+    List<Path> resourcesFiles = new ArrayList<>();
+    List<Path> resourcesWebInfFiles = new ArrayList<>();
+    List<Path> extraFiles = new ArrayList<>();
+
+    Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
+
+    Path libOutputDirectory = explodedWarPath.resolve(WEB_INF_LIB);
+    try (Stream<Path> dependencyFileStream = Files.list(libOutputDirectory)) {
+      dependencyFileStream.forEach(
+          path -> {
+            if (path.toString().contains(SNAPSHOT)) {
+              snapshotDependenciesFiles.add(path);
+            } else {
+              dependenciesFiles.add(path);
+            }
+          });
+    }
+    // All files except classes and libs in resources
+    try (Stream<Path> fileStream = Files.list(explodedWarPath)) {
+      fileStream.filter(path -> !path.endsWith(WEB_INF)).forEach(resourcesFiles::add);
+    }
+    // Some files in WEB-INF need to be in resources directory (e.g. web.xml, ...)
+    Path webinfOutputDirectory = explodedWarPath.resolve(WEB_INF);
+    try (Stream<Path> fileStream = Files.list(webinfOutputDirectory)) {
+      fileStream
+          .filter(path -> !path.endsWith("classes") && !path.endsWith("lib"))
+          .forEach(resourcesWebInfFiles::add);
+    }
+
+    // Adds all the extra files.
+    if (Files.exists(extraDirectory)) {
+      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(extraDirectory)) {
+        extraFiles = extraFilesLayerDirectoryFiles.collect(Collectors.toList());
+      }
+    }
+
+    Builder layerBuilder = JavaLayerConfigurations.builder();
+    AbsoluteUnixPath dependenciesExtractionPath = appRoot.resolve(WEB_INF_LIB);
+    AbsoluteUnixPath classesExtractionPath = appRoot.resolve(WEB_INF_CLASSES);
+    AbsoluteUnixPath webInfExtractionPath = appRoot.resolve(WEB_INF);
+
+    // For "WEB-INF/classes", *.class in class layer, other files and empty directories in resource
+    // layer
+    Path srcWebInfClasses = explodedWarPath.resolve(WEB_INF_CLASSES);
+    new DirectoryWalker(srcWebInfClasses)
+        .walk(
+            path -> {
+              if (FileSystems.getDefault().getPathMatcher("glob:**.class").matches(path)) {
+                layerBuilder.addClassFile(
+                    path, classesExtractionPath.resolve(srcWebInfClasses.relativize(path)));
+
+              } else if (Files.isDirectory(path)) {
+                try (Stream<Path> dirStream = Files.list(path)) {
+                  if (!dirStream.findAny().isPresent()) {
+                    // The directory is empty
+                    layerBuilder.addResourceFile(
+                        path, classesExtractionPath.resolve(srcWebInfClasses.relativize(path)));
+                  }
+                }
+              } else {
+                layerBuilder.addResourceFile(
+                    path, classesExtractionPath.resolve(srcWebInfClasses.relativize(path)));
+              }
+            });
+
+    for (Path file : dependenciesFiles) {
+      layerBuilder.addDependencyFile(file, dependenciesExtractionPath.resolve(file.getFileName()));
+    }
+    for (Path file : snapshotDependenciesFiles) {
+      layerBuilder.addSnapshotDependencyFile(
+          file, dependenciesExtractionPath.resolve(file.getFileName()));
+    }
+    for (Path file : resourcesFiles) {
+      layerBuilder.addResourceFile(file, appRoot.resolve(file.getFileName()));
+    }
+    for (Path file : resourcesWebInfFiles) {
+      layerBuilder.addResourceFile(file, webInfExtractionPath.resolve(file.getFileName()));
     }
     for (Path file : extraFiles) {
       layerBuilder.addExtraFile(file, AbsoluteUnixPath.get("/").resolve(file.getFileName()));
