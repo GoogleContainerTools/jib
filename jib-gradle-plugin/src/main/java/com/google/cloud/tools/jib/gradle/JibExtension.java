@@ -97,6 +97,7 @@ public class JibExtension {
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     extraDirectory = objectFactory.property(Path.class);
 
+    // Sets defaults.
     jvmFlags.set(Collections.emptyList());
     args.set(Collections.emptyList());
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);

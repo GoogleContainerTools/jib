@@ -49,7 +49,7 @@ class PluginConfigurationProcessor {
    * Gets the value of the {@code container.appRoot} parameter. Throws {@link GradleException} if it
    * is not an absolute path in Unix-style.
    *
-   * @param jibExtension the Jib plugin extension
+   * @param jibExtension the {@link JibExtension} providing the configuration data
    * @return the app root value
    * @throws GradleException if the app root is not an absolute path in Unix-style
    */
@@ -85,7 +85,7 @@ class PluginConfigurationProcessor {
    * setting up the base image reference/authorization, container configuration, cache
    * configuration, and layer configuration.
    *
-   * @param logger the logger used to display messages.
+   * @param logger the logger used to display messages
    * @param jibExtension the {@link JibExtension} providing the configuration data
    * @param projectProperties used for providing additional information
    * @return a new {@link PluginConfigurationProcessor} containing pre-configured builders
@@ -161,40 +161,36 @@ class PluginConfigurationProcessor {
   }
 
   /**
-   * Compute the container entrypoint, in this order :
+   * Compute the container entrypoint, in this order:
    *
    * <ol>
    *   <li>the user specified one, if set
-   *   <li>for a war project, the jetty default one
-   *   <li>for a jar project, by resolving the main class
+   *   <li>for a WAR project, the Jetty default one
+   *   <li>for a non-WAR project, by resolving the main class
    * </ol>
    *
-   * @param logger the logger used to display messages.
+   * @param logger the logger used to display messages
    * @param jibExtension the {@link JibExtension} providing the configuration data
    * @param projectProperties used for providing additional information
    * @return the entrypoint
    */
   static List<String> computeEntrypoint(
       Logger logger, JibExtension jibExtension, GradleProjectProperties projectProperties) {
-    List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
-    if (!entrypoint.isEmpty()) {
-      if (jibExtension.getContainer().getMainClass() != null
-          || !jibExtension.getContainer().getJvmFlags().isEmpty()) {
+    ContainerParameters parameters = jibExtension.getContainer();
+    if (!parameters.getEntrypoint().isEmpty()) {
+      if (parameters.getMainClass() != null || !parameters.getJvmFlags().isEmpty()) {
         logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
       }
-    } else {
-      if (projectProperties.isWarProject()) {
-        entrypoint = JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
-      } else {
-        String mainClass = projectProperties.getMainClass(jibExtension);
-        entrypoint =
-            JavaEntrypointConstructor.makeDefaultEntrypoint(
-                AbsoluteUnixPath.get(jibExtension.getContainer().getAppRoot()),
-                jibExtension.getContainer().getJvmFlags(),
-                mainClass);
-      }
+      return parameters.getEntrypoint();
     }
-    return entrypoint;
+
+    if (projectProperties.isWarProject()) {
+      return JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
+    }
+
+    String mainClass = projectProperties.getMainClass(jibExtension);
+    return JavaEntrypointConstructor.makeDefaultEntrypoint(
+        AbsoluteUnixPath.get(parameters.getAppRoot()), parameters.getJvmFlags(), mainClass);
   }
 
   private final BuildConfiguration.Builder buildConfigurationBuilder;

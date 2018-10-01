@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -85,7 +84,7 @@ public class DockerContextTaskTest {
   }
 
   @Test
-  public void testEntrypoint_defaultWebappRoot() throws IOException, URISyntaxException {
+  public void testEntrypoint_defaultWebAppRoot() throws IOException {
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/");
     project.getPluginManager().apply("war");
 

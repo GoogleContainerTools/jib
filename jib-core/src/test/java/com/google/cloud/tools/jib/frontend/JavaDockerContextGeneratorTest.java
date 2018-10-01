@@ -167,7 +167,7 @@ public class JavaDockerContextGeneratorTest {
   }
 
   @Test
-  public void testMakeDockerfileWithWebapp() throws IOException {
+  public void testMakeDockerfileWithWebApp() throws IOException {
     String expectedBaseImage = "tomcat:8.5-jre8-alpine";
     AbsoluteUnixPath exepectedAppRoot = AbsoluteUnixPath.get("/usr/local/tomcat/webapps/ROOT/");
 
@@ -197,7 +197,7 @@ public class JavaDockerContextGeneratorTest {
     // Need to split/rejoin the string here to avoid cross-platform troubles
     List<String> sampleDockerfile =
         Resources.readLines(
-            Resources.getResource("webappSampleDockerfile"), StandardCharsets.UTF_8);
+            Resources.getResource("webAppSampleDockerfile"), StandardCharsets.UTF_8);
     Assert.assertEquals(String.join("\n", sampleDockerfile), dockerfile);
   }
 }
