@@ -47,8 +47,7 @@ class MavenLayerConfigurations {
    */
   static JavaLayerConfigurations getForProject(
       MavenProject project, Path extraDirectory, AbsoluteUnixPath appRoot) throws IOException {
-    // Since 'jar' is the default packaging type it is not required, so it can be null
-    if (project.getPackaging() != null && project.getPackaging().equals("war")) {
+    if ("war".equals(project.getPackaging())) {
       return getForWarProject(project, extraDirectory, appRoot);
     } else {
       return getForNonWarProject(project, extraDirectory, appRoot);
@@ -123,49 +122,49 @@ class MavenLayerConfigurations {
   private static JavaLayerConfigurations getForWarProject(
       MavenProject project, Path extraDirectory, AbsoluteUnixPath appRoot) throws IOException {
 
+    // TODO explode the WAR file rather than using this directory. The contents of the final WAR may
+    // be different from this directory (it's possible to include or exclude files when packaging a
+    // WAR).
     Path explodedWarPath =
         Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
-    AbsoluteUnixPath dependenciesExtractionPath =
-        appRoot.resolve(JavaLayerConfigurations.WEB_INF_LIB_RELATIVE_PATH);
-    AbsoluteUnixPath classesExtractionPath =
-        appRoot.resolve(JavaLayerConfigurations.WEB_INF_CLASSES_RELATIVE_PATH);
+    AbsoluteUnixPath dependenciesExtractionPath = appRoot.resolve("WEB-INF/lib/");
+    AbsoluteUnixPath classesExtractionPath = appRoot.resolve("WEB-INF/classes/");
 
     Builder layerBuilder = JavaLayerConfigurations.builder();
 
     // Gets all the dependencies.
     Predicate<Path> isSnapshotDependency =
         path -> path.toString().contains(JavaLayerConfigurations.SNAPSHOT_FILENAME_SUFFIX);
-    addFilesToLayer(
-        explodedWarPath.resolve(JavaLayerConfigurations.WEB_INF_LIB_RELATIVE_PATH),
-        isSnapshotDependency,
-        dependenciesExtractionPath,
-        layerBuilder::addSnapshotDependencyFile);
-    addFilesToLayer(
-        explodedWarPath.resolve(JavaLayerConfigurations.WEB_INF_LIB_RELATIVE_PATH),
-        isSnapshotDependency.negate(),
-        dependenciesExtractionPath,
-        layerBuilder::addDependencyFile);
+    if (Files.exists(explodedWarPath.resolve("WEB-INF/lib"))) {
+      addFilesToLayer(
+          explodedWarPath.resolve("WEB-INF/lib/"),
+          isSnapshotDependency,
+          dependenciesExtractionPath,
+          layerBuilder::addSnapshotDependencyFile);
+      addFilesToLayer(
+          explodedWarPath.resolve("WEB-INF/lib/"),
+          isSnapshotDependency.negate(),
+          dependenciesExtractionPath,
+          layerBuilder::addDependencyFile);
+    }
 
     // Gets the classes files in the 'WEB-INF/classes' output directory.
-    Predicate<Path> isClassFile = path -> path.toString().endsWith(CLASS_EXTENSION);
-    addFilesToLayer(
-        explodedWarPath.resolve(JavaLayerConfigurations.WEB_INF_CLASSES_RELATIVE_PATH),
-        isClassFile,
-        classesExtractionPath,
-        layerBuilder::addClassFile);
+    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(CLASS_EXTENSION);
+    if (Files.exists(explodedWarPath.resolve("WEB-INF/classes"))) {
+      addFilesToLayer(
+          explodedWarPath.resolve("WEB-INF/classes/"),
+          isClassFile,
+          classesExtractionPath,
+          layerBuilder::addClassFile);
+    }
 
     // Gets the resources
     Predicate<Path> isResources =
         path -> {
-          boolean inWebInfClasses =
-              path.startsWith(
-                  explodedWarPath.resolve(JavaLayerConfigurations.WEB_INF_CLASSES_RELATIVE_PATH));
-          boolean inWebInfLib =
-              path.startsWith(
-                  explodedWarPath.resolve(JavaLayerConfigurations.WEB_INF_LIB_RELATIVE_PATH));
-          boolean isClass = path.toString().endsWith(CLASS_EXTENSION);
+          boolean inWebInfClasses = path.startsWith(explodedWarPath.resolve("WEB-INF/classes/"));
+          boolean inWebInfLib = path.startsWith(explodedWarPath.resolve("WEB-INF/lib/"));
 
-          return (!inWebInfClasses && !inWebInfLib) || (inWebInfClasses && !isClass);
+          return (!inWebInfClasses && !inWebInfLib) || (inWebInfClasses && !isClassFile.test(path));
         };
     addFilesToLayer(explodedWarPath, isResources, appRoot, layerBuilder::addResourceFile);
 

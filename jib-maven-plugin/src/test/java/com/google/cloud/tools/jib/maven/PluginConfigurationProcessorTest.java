@@ -60,6 +60,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getArgs();
     Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getExposedPorts();
     Mockito.doReturn("/app").when(mockJibPluginConfiguration).getAppRoot();
+    Mockito.doReturn(mavenProject).when(mockJibPluginConfiguration).getProject();
 
     Mockito.doReturn(JavaLayerConfigurations.builder().build())
         .when(mockProjectProperties)
@@ -90,7 +91,6 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testPluginConfigurationProcessor_warPackaging()
       throws MojoExecutionException, InvalidImageReferenceException {
-    Mockito.doReturn(mavenProject).when(mockJibPluginConfiguration).getProject();
     Mockito.doReturn("war").when(mavenProject).getPackaging();
 
     PluginConfigurationProcessor processor =

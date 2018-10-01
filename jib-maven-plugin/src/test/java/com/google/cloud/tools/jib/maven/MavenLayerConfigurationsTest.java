@@ -70,6 +70,33 @@ public class MavenLayerConfigurationsTest {
         expectedPaths, entries, LayerEntry::getAbsoluteExtractionPathString);
   }
 
+  private static void assertNonDefaultAppRoot(JavaLayerConfigurations configuration) {
+    assertExtractionPathsUnordered(
+        Arrays.asList(
+            "/my/app/libs/dependency-1.0.0.jar",
+            "/my/app/libs/libraryA.jar",
+            "/my/app/libs/libraryB.jar"),
+        configuration.getDependencyLayerEntries());
+    assertExtractionPathsUnordered(
+        Arrays.asList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
+        configuration.getSnapshotDependencyLayerEntries());
+    assertExtractionPathsUnordered(
+        Arrays.asList(
+            "/my/app/resources/directory/somefile",
+            "/my/app/resources/resourceA",
+            "/my/app/resources/resourceB",
+            "/my/app/resources/world"),
+        configuration.getResourceLayerEntries());
+    assertExtractionPathsUnordered(
+        Arrays.asList(
+            "/my/app/classes/HelloWorld.class",
+            "/my/app/classes/package/some.class",
+            "/my/app/classes/some.class"),
+        configuration.getClassLayerEntries());
+    assertExtractionPathsUnordered(
+        Arrays.asList("/a/b/bar", "/c/cat", "/foo"), configuration.getExtraFilesLayerEntries());
+  }
+
   @Rule public final TestRepository testRepository = new TestRepository();
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -164,7 +191,7 @@ public class MavenLayerConfigurationsTest {
     JavaLayerConfigurations configuration =
         MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, appRoot);
 
-    assert_nonDefaultAppRoot(configuration);
+    assertNonDefaultAppRoot(configuration);
   }
 
   @Test
@@ -371,33 +398,6 @@ public class MavenLayerConfigurationsTest {
     JavaLayerConfigurations configuration =
         MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, appRoot);
 
-    assert_nonDefaultAppRoot(configuration);
-  }
-
-  private void assert_nonDefaultAppRoot(JavaLayerConfigurations configuration) {
-    assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/my/app/libs/dependency-1.0.0.jar",
-            "/my/app/libs/libraryA.jar",
-            "/my/app/libs/libraryB.jar"),
-        configuration.getDependencyLayerEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-        configuration.getSnapshotDependencyLayerEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/my/app/resources/directory/somefile",
-            "/my/app/resources/resourceA",
-            "/my/app/resources/resourceB",
-            "/my/app/resources/world"),
-        configuration.getResourceLayerEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/my/app/classes/HelloWorld.class",
-            "/my/app/classes/package/some.class",
-            "/my/app/classes/some.class"),
-        configuration.getClassLayerEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList("/a/b/bar", "/c/cat", "/foo"), configuration.getExtraFilesLayerEntries());
+    assertNonDefaultAppRoot(configuration);
   }
 }

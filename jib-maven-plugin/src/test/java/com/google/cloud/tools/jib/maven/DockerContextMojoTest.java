@@ -44,8 +44,8 @@ public class DockerContextMojoTest {
   private DockerContextMojo mojo;
   private String appRoot = "/app";
   private File outputFolder;
-  @Mock MavenProject project;
-  @Mock Build build;
+  private @Mock MavenProject project;
+  private @Mock Build build;
 
   @Before
   public void setUp() throws IOException {

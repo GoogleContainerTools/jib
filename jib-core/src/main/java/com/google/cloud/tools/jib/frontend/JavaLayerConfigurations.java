@@ -190,12 +190,6 @@ public class JavaLayerConfigurations {
 
   /** The filename suffix for a maven/gradle snapshot dependency */
   public static final String SNAPSHOT_FILENAME_SUFFIX = "SNAPSHOT";
-  /** The standard directory name containing libs, classes, web.xml, etc... in a War Project */
-  public static final String WEB_INF_RELATIVE_PATH = "WEB-INF";
-  /** The standard directory name containing libs and snapshot-libs in a War Project */
-  public static final String WEB_INF_LIB_RELATIVE_PATH = WEB_INF_RELATIVE_PATH + "/lib/";
-  /** The standard directory name containing classes and some resources in a War Project */
-  public static final String WEB_INF_CLASSES_RELATIVE_PATH = WEB_INF_RELATIVE_PATH + "/classes/";
 
   private final ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap;
 

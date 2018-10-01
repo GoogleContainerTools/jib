@@ -45,8 +45,8 @@ class PluginConfigurationProcessor {
   /**
    * Gets the value of the {@code <container><appRoot>} parameter. Throws {@link
    * MojoExecutionException} if it is not an absolute path in Unix-style. If this parameter is null,
-   * {@code JavaLayerConfigurations.DEFAULT_WEBAPP_ROOT} is returned for war packaging, {@code
-   * JavaLayerConfigurations.DEFAULT_ROOT} is returned otherwise.
+   * {@link JavaLayerConfigurations#DEFAULT_WEB_APP_ROOT} is returned for WAR packaging, {@link
+   * JavaLayerConfigurations#DEFAULT_APP_ROOT} is returned otherwise.
    *
    * @param jibPluginConfiguration the Jib plugin configuration
    * @return the app root value
@@ -95,9 +95,7 @@ class PluginConfigurationProcessor {
    * @return true if the maven packaging type is "war"
    */
   private static boolean isWarPackaging(JibPluginConfiguration jibPluginConfiguration) {
-    return jibPluginConfiguration.getProject() != null
-        && jibPluginConfiguration.getProject().getPackaging() != null
-        && jibPluginConfiguration.getProject().getPackaging().equals("war");
+    return "war".equals(jibPluginConfiguration.getProject().getPackaging());
   }
 
   /** Disables annoying Apache HTTP client logging. */
@@ -283,24 +281,18 @@ class PluginConfigurationProcessor {
       MavenProjectProperties projectProperties)
       throws MojoExecutionException {
 
-    List<String> entrypoint = jibPluginConfiguration.getEntrypoint();
-    if (!entrypoint.isEmpty()) {
+    if (!jibPluginConfiguration.getEntrypoint().isEmpty()) {
       if (jibPluginConfiguration.getMainClass() != null
           || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
         logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
       }
-    } else {
-      if (isWarPackaging(jibPluginConfiguration)) {
-        entrypoint = JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
-      } else {
-        String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
-        entrypoint =
-            JavaEntrypointConstructor.makeDefaultEntrypoint(
-                getAppRootChecked(jibPluginConfiguration),
-                jibPluginConfiguration.getJvmFlags(),
-                mainClass);
-      }
+      return jibPluginConfiguration.getEntrypoint();
     }
-    return entrypoint;
+    if (isWarPackaging(jibPluginConfiguration)) {
+      return JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
+    }
+    String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
+    return JavaEntrypointConstructor.makeDefaultEntrypoint(
+        getAppRootChecked(jibPluginConfiguration), jibPluginConfiguration.getJvmFlags(), mainClass);
   }
 }
