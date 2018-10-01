@@ -18,8 +18,6 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
@@ -121,8 +119,7 @@ public class BuildStepsIntegrationTest {
 
   @Test
   public void testSteps_forBuildToDockerRegistry()
-      throws IOException, InterruptedException, ExecutionException,
-          CacheDirectoryCreationException {
+      throws IOException, InterruptedException, ExecutionException {
     BuildSteps buildImageSteps =
         BuildSteps.forBuildToDockerRegistry(
             getBuildConfigurationBuilder(
@@ -146,8 +143,7 @@ public class BuildStepsIntegrationTest {
 
   @Test
   public void testSteps_forBuildToDockerRegistry_multipleTags()
-      throws IOException, InterruptedException, ExecutionException,
-          CacheDirectoryCreationException {
+      throws IOException, InterruptedException, ExecutionException {
     BuildSteps buildImageSteps =
         BuildSteps.forBuildToDockerRegistry(
             getBuildConfigurationBuilder(
@@ -186,8 +182,7 @@ public class BuildStepsIntegrationTest {
 
   @Test
   public void testSteps_forBuildToDockerRegistry_dockerHubBaseImage()
-      throws InvalidImageReferenceException, IOException, InterruptedException,
-          CacheDirectoryCreationException, ExecutionException {
+      throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException {
     BuildSteps.forBuildToDockerRegistry(
             getBuildConfigurationBuilder(
                     ImageReference.parse("openjdk:8-jre-alpine"),
@@ -203,8 +198,7 @@ public class BuildStepsIntegrationTest {
 
   @Test
   public void testSteps_forBuildToDockerDaemon()
-      throws IOException, InterruptedException, ExecutionException,
-          CacheDirectoryCreationException {
+      throws IOException, InterruptedException, ExecutionException {
     String imageReference = "testdocker";
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
@@ -220,8 +214,7 @@ public class BuildStepsIntegrationTest {
 
   @Test
   public void testSteps_forBuildToDockerDaemon_multipleTags()
-      throws IOException, InterruptedException, ExecutionException,
-          CacheDirectoryCreationException {
+      throws IOException, InterruptedException, ExecutionException {
     String imageReference = "testdocker";
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
@@ -246,8 +239,7 @@ public class BuildStepsIntegrationTest {
 
   @Test
   public void testSteps_forBuildToTarball()
-      throws IOException, InterruptedException, ExecutionException,
-          CacheDirectoryCreationException {
+      throws IOException, InterruptedException, ExecutionException {
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
                 ImageReference.of("gcr.io", "distroless/java", "latest"),
@@ -281,8 +273,8 @@ public class BuildStepsIntegrationTest {
         .setBaseImageConfiguration(baseImageConfiguration)
         .setTargetImageConfiguration(targetImageConfiguration)
         .setContainerConfiguration(containerConfiguration)
-        .setBaseImageLayersCacheConfiguration(CacheConfiguration.forPath(cacheDirectory))
-        .setApplicationLayersCacheConfiguration(CacheConfiguration.forPath(cacheDirectory))
+        .setBaseImageLayersCacheDirectory(cacheDirectory)
+        .setApplicationLayersCacheDirectory(cacheDirectory)
         .setAllowInsecureRegistries(true)
         .setLayerConfigurations(fakeLayerConfigurations)
         .setToolName("jib-integration-test");

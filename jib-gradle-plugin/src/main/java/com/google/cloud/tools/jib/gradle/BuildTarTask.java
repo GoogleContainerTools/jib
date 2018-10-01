@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -98,8 +97,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildTar()
-      throws InvalidImageReferenceException, BuildStepsExecutionException, IOException,
-          CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, BuildStepsExecutionException, IOException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);

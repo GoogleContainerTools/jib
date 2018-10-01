@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
@@ -101,7 +100,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(helpfulSuggestions);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException | InvalidImageReferenceException | IOException ex) {
+    } catch (InvalidImageReferenceException | IOException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {
