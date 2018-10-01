@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
@@ -67,8 +66,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildDocker()
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          BuildStepsExecutionException {
+      throws InvalidImageReferenceException, IOException, BuildStepsExecutionException {
     if (!new DockerClient().isDockerInstalled()) {
       throw new GradleException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));

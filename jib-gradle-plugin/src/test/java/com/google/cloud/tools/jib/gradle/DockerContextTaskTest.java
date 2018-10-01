@@ -39,22 +39,25 @@ public class DockerContextTaskTest {
 
   @Rule public final TemporaryFolder projectRoot = new TemporaryFolder();
 
-  @Mock private ContainerParameters ContainerParameters;
+  @Mock private ContainerParameters containerParameters;
 
   private DockerContextTask task;
+  private Project project;
 
   @Before
   public void setUp() throws IOException {
+    projectRoot.newFolder("build", "jib-exploded-war", "WEB-INF", "lib");
+    projectRoot.newFolder("build", "jib-exploded-war", "WEB-INF", "classes");
     projectRoot.newFolder("build", "jib-docker-context");
 
     JibExtension jibExtension = Mockito.mock(JibExtension.class);
-    Mockito.when(jibExtension.getContainer()).thenReturn(ContainerParameters);
+    Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
     Mockito.when(jibExtension.getExtraDirectoryPath()).thenReturn(projectRoot.getRoot().toPath());
     Mockito.when(jibExtension.getContainer().getMainClass()).thenReturn("MainClass");
     Mockito.when(jibExtension.getBaseImage()).thenReturn("base image");
-    Mockito.when(ContainerParameters.getAppRoot()).thenReturn("/app");
+    Mockito.when(containerParameters.getAppRoot()).thenReturn("/app");
 
-    Project project = ProjectBuilder.builder().withProjectDir(projectRoot.getRoot()).build();
+    project = ProjectBuilder.builder().withProjectDir(projectRoot.getRoot()).build();
     project.getPluginManager().apply("java");
 
     task = project.getTasks().create("jibExportDockerContext", DockerContextTask.class);
@@ -72,7 +75,7 @@ public class DockerContextTaskTest {
 
   @Test
   public void testEntrypoint_nonDefaultAppRoot() throws IOException {
-    Mockito.when(ContainerParameters.getAppRoot()).thenReturn("/");
+    Mockito.when(containerParameters.getAppRoot()).thenReturn("/");
     task.generateDockerContext();
 
     Assert.assertEquals(
@@ -81,8 +84,18 @@ public class DockerContextTaskTest {
   }
 
   @Test
+  public void testEntrypoint_defaultWebAppRoot() throws IOException {
+    Mockito.when(containerParameters.getAppRoot()).thenReturn("/");
+    project.getPluginManager().apply("war");
+
+    task.generateDockerContext();
+
+    Assert.assertEquals("ENTRYPOINT [\"java\",\"-jar\",\"/jetty/start.jar\"]", getEntrypoint());
+  }
+
+  @Test
   public void testGenerateDockerContext_errorOnNonAbsoluteAppRoot() {
-    Mockito.when(ContainerParameters.getAppRoot()).thenReturn("relative/path");
+    Mockito.when(containerParameters.getAppRoot()).thenReturn("relative/path");
 
     try {
       task.generateDockerContext();
@@ -95,7 +108,7 @@ public class DockerContextTaskTest {
 
   @Test
   public void testGenerateDockerContext_errorOnWindowsAppRoot() {
-    Mockito.when(ContainerParameters.getAppRoot()).thenReturn("\\windows\\path");
+    Mockito.when(containerParameters.getAppRoot()).thenReturn("\\windows\\path");
 
     try {
       task.generateDockerContext();
@@ -108,7 +121,7 @@ public class DockerContextTaskTest {
 
   @Test
   public void testGenerateDockerContext_errorOnWindowsAppRootWithDriveLetter() {
-    Mockito.when(ContainerParameters.getAppRoot()).thenReturn("C:\\windows\\path");
+    Mockito.when(containerParameters.getAppRoot()).thenReturn("C:\\windows\\path");
 
     try {
       task.generateDockerContext();
