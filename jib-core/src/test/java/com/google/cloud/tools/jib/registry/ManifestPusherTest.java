@@ -20,8 +20,10 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -32,18 +34,23 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import org.apache.http.HttpStatus;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link ManifestPusher}. */
 @RunWith(MockitoJUnitRunner.class)
 public class ManifestPusherTest {
+
+  @Mock private Response mockResponse;
 
   private Path v22manifestJsonFile;
   private V22ManifestTemplate fakeManifestTemplate;
@@ -78,8 +85,71 @@ public class ManifestPusherTest {
   }
 
   @Test
-  public void testHandleResponse() {
-    Assert.assertNull(testManifestPusher.handleResponse(Mockito.mock(Response.class)));
+  public void testHandleResponse_valid() throws IOException, UnexpectedImageDigestException {
+    DescriptorDigest expectedDigest =
+        JsonTemplateMapper.toBlob(fakeManifestTemplate)
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest();
+    Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
+        .thenReturn(Collections.singletonList(expectedDigest.toString()));
+    Assert.assertEquals(expectedDigest, testManifestPusher.handleResponse(mockResponse));
+  }
+
+  @Test
+  public void testHandleResponse_noDigest() throws IOException {
+    DescriptorDigest expectedDigest =
+        JsonTemplateMapper.toBlob(fakeManifestTemplate)
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest();
+    Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
+        .thenReturn(Collections.emptyList());
+
+    try {
+      testManifestPusher.handleResponse(mockResponse);
+      Assert.fail();
+
+    } catch (UnexpectedImageDigestException ex) {
+      Assert.assertEquals(
+          "Expected image digest " + expectedDigest + ", but received: ", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testHandleResponse_multipleDigests() throws IOException {
+    DescriptorDigest expectedDigest =
+        JsonTemplateMapper.toBlob(fakeManifestTemplate)
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest();
+    Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
+        .thenReturn(Arrays.asList("too", "many"));
+
+    try {
+      testManifestPusher.handleResponse(mockResponse);
+      Assert.fail();
+
+    } catch (UnexpectedImageDigestException ex) {
+      Assert.assertEquals(
+          "Expected image digest " + expectedDigest + ", but received: too, many", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testHandleResponse_invalidDigest() throws IOException {
+    DescriptorDigest expectedDigest =
+        JsonTemplateMapper.toBlob(fakeManifestTemplate)
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest();
+    Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
+        .thenReturn(Collections.singletonList("not valid"));
+
+    try {
+      testManifestPusher.handleResponse(mockResponse);
+      Assert.fail();
+
+    } catch (UnexpectedImageDigestException ex) {
+      Assert.assertEquals(
+          "Expected image digest " + expectedDigest + ", but received: not valid", ex.getMessage());
+    }
   }
 
   @Test

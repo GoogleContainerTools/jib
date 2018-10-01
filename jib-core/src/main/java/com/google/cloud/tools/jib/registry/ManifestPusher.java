@@ -20,16 +20,23 @@ import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.io.ByteStreams;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.DigestException;
 import java.util.Collections;
 import java.util.List;
 import org.apache.http.HttpStatus;
 
 /** Pushes an image's manifest. */
-class ManifestPusher implements RegistryEndpointProvider<Void> {
+class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
+
+  /** Response header containing digest of pushed image. */
+  private static final String RESPONSE_DIGEST_HEADER = "Docker-Content-Digest";
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final BuildableManifestTemplate manifestTemplate;
@@ -56,7 +63,7 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
   }
 
   @Override
-  public Void handleHttpResponseException(HttpResponseException httpResponseException)
+  public DescriptorDigest handleHttpResponseException(HttpResponseException httpResponseException)
       throws HttpResponseException, RegistryErrorException {
     // docker registry 2.0 and 2.1 returns:
     //   400 Bad Request
@@ -85,8 +92,28 @@ class ManifestPusher implements RegistryEndpointProvider<Void> {
   }
 
   @Override
-  public Void handleResponse(Response response) {
-    return null;
+  public DescriptorDigest handleResponse(Response response)
+      throws IOException, UnexpectedImageDigestException {
+    // Checks if the image digest is as expected.
+    DescriptorDigest expectedDigest =
+        JsonTemplateMapper.toBlob(manifestTemplate)
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest();
+
+    List<String> receivedDigests = response.getHeader(RESPONSE_DIGEST_HEADER);
+    if (receivedDigests.size() == 1) {
+      try {
+        DescriptorDigest receivedDigest = DescriptorDigest.fromDigest(receivedDigests.get(0));
+        if (expectedDigest.equals(receivedDigest)) {
+          return expectedDigest;
+        }
+
+      } catch (DigestException ex) {
+        // Invalid digest.
+      }
+    }
+
+    throw new UnexpectedImageDigestException(expectedDigest, receivedDigests);
   }
 
   @Override
