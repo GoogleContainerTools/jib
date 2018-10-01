@@ -111,7 +111,7 @@ public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<D
           .writeTo(outputStream);
     }
 
-    // TODO: Consolide image digest generation with PushImageStep and WriteTarFileStep.
+    // TODO: Consolide image digest generation with PushImageStep and LoadDockerStep.
     // Gets the image manifest to generate the image digest.
     ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
     BlobDescriptor containerConfigurationBlobDescriptor =
