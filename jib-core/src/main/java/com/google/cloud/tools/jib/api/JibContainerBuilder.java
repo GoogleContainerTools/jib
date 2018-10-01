@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
@@ -303,8 +302,7 @@ public class JibContainerBuilder {
   }
 
   @VisibleForTesting
-  BuildConfiguration toBuildConfiguration(TargetImage targetImage)
-      throws IOException, CacheDirectoryCreationException {
+  BuildConfiguration.Builder toBuildConfiguration(TargetImage targetImage) {
     BuildConfiguration.Builder buildConfigurationBuilder = BuildConfiguration.builder();
 
     buildConfigurationBuilder
@@ -316,7 +314,7 @@ public class JibContainerBuilder {
     // TODO: Allow users to configure this.
     buildConfigurationBuilder.setToolName("jib-core");
 
-    return buildConfigurationBuilder.build();
+    return buildConfigurationBuilder;
   }
 
   @VisibleForTesting

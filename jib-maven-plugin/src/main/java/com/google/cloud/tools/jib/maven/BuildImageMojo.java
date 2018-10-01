@@ -148,7 +148,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
       BuildStepsRunner.forBuildImage(buildConfiguration).build(helpfulSuggestions);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException | IOException ex) {
+    } catch (IOException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {

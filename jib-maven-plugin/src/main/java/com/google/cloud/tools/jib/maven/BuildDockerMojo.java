@@ -101,7 +101,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(helpfulSuggestions);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException | InvalidImageReferenceException | IOException ex) {
+    } catch (InvalidImageReferenceException | IOException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {

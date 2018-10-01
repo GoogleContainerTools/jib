@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
@@ -162,13 +162,13 @@ class PluginConfigurationProcessor {
             .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());
-    CacheConfiguration applicationLayersCacheConfiguration =
-        CacheConfiguration.forPath(projectProperties.getCacheDirectory());
-    buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
-        applicationLayersCacheConfiguration);
+    buildConfigurationBuilder.setApplicationLayersCacheDirectory(
+        projectProperties.getCacheDirectory());
+    buildConfigurationBuilder.setBaseImageLayersCacheDirectory(
+        Containerizer.DEFAULT_BASE_CACHE_DIRECTORY);
     if (jibPluginConfiguration.getUseOnlyProjectCache()) {
-      buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
-          applicationLayersCacheConfiguration);
+      buildConfigurationBuilder.setBaseImageLayersCacheDirectory(
+          projectProperties.getCacheDirectory());
     }
 
     return new PluginConfigurationProcessor(
