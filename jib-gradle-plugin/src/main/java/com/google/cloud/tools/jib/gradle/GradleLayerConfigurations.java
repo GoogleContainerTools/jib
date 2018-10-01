@@ -42,23 +42,17 @@ class GradleLayerConfigurations {
   /** Name of the `main` {@link SourceSet} to use as source files. */
   private static final String MAIN_SOURCE_SET_NAME = "main";
 
-  /** The filename suffix for a maven/gradle snapshot dependency */
+  /** The filename suffix for snapshot dependency JARs. */
   private static final String SNAPSHOT = "SNAPSHOT";
-  /** The standard directory name containing libs, classes, web.xml, etc... in a War Project */
-  private static final String WEB_INF = "WEB-INF";
-  /** The standard directory name containing libs and snapshot-libs in a War Project */
-  private static final String WEB_INF_LIB = WEB_INF + "/lib/";
-  /** The standard directory name containing classes and some resources in a War Project */
-  private static final String WEB_INF_CLASSES = WEB_INF + "/classes/";
 
   /**
    * Resolves the {@link JavaLayerConfigurations} for a Gradle {@link Project}.
    *
    * @param project the Gradle {@link Project}
    * @param logger the logger for providing feedback about the resolution
-   * @param extraDirectory path to the directory for the extra files layer
+   * @param extraDirectory path to the source directory for the extra files layer
    * @param appRoot root directory in the image where the app will be placed
-   * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
+   * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
   static JavaLayerConfigurations getForProject(
@@ -77,9 +71,9 @@ class GradleLayerConfigurations {
    *
    * @param project the Gradle {@link Project}
    * @param logger the logger for providing feedback about the resolution
-   * @param extraDirectory path to the directory for the extra files layer
+   * @param extraDirectory path to the source directory for the extra files layer
    * @param appRoot root directory in the image where the app will be placed
-   * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
+   * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
   private static JavaLayerConfigurations getForNonWarProject(
@@ -169,9 +163,9 @@ class GradleLayerConfigurations {
    *
    * @param project the Gradle {@link Project}
    * @param logger the build logger for providing feedback about the resolution
-   * @param extraDirectory path to the directory for the extra files layer
+   * @param extraDirectory path to the source directory for the extra files layer
    * @param appRoot root directory in the image where the app will be placed
-   * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
+   * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
   private static JavaLayerConfigurations getForWarProject(
@@ -185,7 +179,7 @@ class GradleLayerConfigurations {
 
     Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
 
-    Path libOutputDirectory = explodedWarPath.resolve(WEB_INF_LIB);
+    Path libOutputDirectory = explodedWarPath.resolve("WEB-INF/lib");
     try (Stream<Path> dependencyFileStream = Files.list(libOutputDirectory)) {
       dependencyFileStream.forEach(
           path -> {
@@ -196,13 +190,15 @@ class GradleLayerConfigurations {
             }
           });
     }
-    // All files except classes and libs in resources
+
+    // First, all files except WEB-INF go into the resources layer.
     try (Stream<Path> fileStream = Files.list(explodedWarPath)) {
-      fileStream.filter(path -> !path.endsWith(WEB_INF)).forEach(resourcesFiles::add);
+      fileStream.filter(path -> !path.endsWith("WEB-INF")).forEach(resourcesFiles::add);
     }
-    // Some files in WEB-INF need to be in resources directory (e.g. web.xml, ...)
-    Path webinfOutputDirectory = explodedWarPath.resolve(WEB_INF);
-    try (Stream<Path> fileStream = Files.list(webinfOutputDirectory)) {
+    // Some files in WEB-INF/ (e.g. web.xml, ...) need to go into the resources layer. However,
+    // don't add or look into WEB-INF/classes and WEB-INF/lib.
+    Path webInfOutputDirectory = explodedWarPath.resolve("WEB-INF");
+    try (Stream<Path> fileStream = Files.list(webInfOutputDirectory)) {
       fileStream
           .filter(path -> !path.endsWith("classes") && !path.endsWith("lib"))
           .forEach(resourcesWebInfFiles::add);
@@ -216,31 +212,31 @@ class GradleLayerConfigurations {
     }
 
     Builder layerBuilder = JavaLayerConfigurations.builder();
-    AbsoluteUnixPath dependenciesExtractionPath = appRoot.resolve(WEB_INF_LIB);
-    AbsoluteUnixPath classesExtractionPath = appRoot.resolve(WEB_INF_CLASSES);
-    AbsoluteUnixPath webInfExtractionPath = appRoot.resolve(WEB_INF);
+    AbsoluteUnixPath dependenciesExtractionPath = appRoot.resolve("WEB-INF/lib");
+    AbsoluteUnixPath classesExtractionPath = appRoot.resolve("WEB-INF/classes");
+    AbsoluteUnixPath webInfExtractionPath = appRoot.resolve("WEB-INF");
 
-    // For "WEB-INF/classes", *.class in class layer, other files and empty directories in resource
-    // layer
-    Path srcWebInfClasses = explodedWarPath.resolve(WEB_INF_CLASSES);
-    new DirectoryWalker(srcWebInfClasses)
+    // For "WEB-INF/classes", *.class go into the class layer. All other files and empty directories
+    // go into the resource layer.
+    Path webInfClasses = explodedWarPath.resolve("WEB-INF/classes");
+    new DirectoryWalker(webInfClasses)
         .walk(
             path -> {
+              AbsoluteUnixPath pathInContainer =
+                  classesExtractionPath.resolve(webInfClasses.relativize(path));
+
               if (FileSystems.getDefault().getPathMatcher("glob:**.class").matches(path)) {
-                layerBuilder.addClassFile(
-                    path, classesExtractionPath.resolve(srcWebInfClasses.relativize(path)));
+                layerBuilder.addClassFile(path, pathInContainer);
 
               } else if (Files.isDirectory(path)) {
-                try (Stream<Path> dirStream = Files.list(path)) {
-                  if (!dirStream.findAny().isPresent()) {
+                try (Stream<Path> stream = Files.list(path)) {
+                  if (!stream.findAny().isPresent()) {
                     // The directory is empty
-                    layerBuilder.addResourceFile(
-                        path, classesExtractionPath.resolve(srcWebInfClasses.relativize(path)));
+                    layerBuilder.addResourceFile(path, pathInContainer);
                   }
                 }
               } else {
-                layerBuilder.addResourceFile(
-                    path, classesExtractionPath.resolve(srcWebInfClasses.relativize(path)));
+                layerBuilder.addResourceFile(path, pathInContainer);
               }
             });
 

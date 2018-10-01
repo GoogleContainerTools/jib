@@ -44,18 +44,19 @@ public class JibPlugin implements Plugin<Project> {
   @VisibleForTesting static final String EXPLODED_WAR_TASK_NAME = "jibExplodedWar";
 
   @VisibleForTesting static final String DEFAULT_FROM_IMAGE = "gcr.io/distroless/java";
-  @VisibleForTesting static final String DEFAULT_WEBAPP_FROM_IMAGE = "gcr.io/distroless/java/jetty";
+  @VisibleForTesting static final String DEFAULT_WAR_FROM_IMAGE = "gcr.io/distroless/java/jetty";
+
   /**
-   * The default app root in the image. For example, if this is set to {@code "/app"}, dependency
-   * JARs will be in {@code "/app/libs"}.
+   * The default app root in the image. For example, if this is set to {@code /app}, dependency JARs
+   * will be in {@code /app/libs}.
    */
   @VisibleForTesting static final String DEFAULT_APP_ROOT = "/app";
 
   /**
-   * The default webapp root in the image. For example, if this is set to {@code
-   * "/jetty/webapps/ROOT"}, dependency JARs will be in {@code "/jetty/webapps/ROOT/WEB-INF/lib"}.
+   * The default app root in the image for WAR. For example, if this is set to {@code
+   * /jetty/webapps/ROOT}, dependency JARs will be in {@code /jetty/webapps/ROOT/WEB-INF/lib}.
    */
-  @VisibleForTesting static final String DEFAULT_WEBAPP_ROOT = "/jetty/webapps/ROOT";
+  @VisibleForTesting static final String DEFAULT_WEB_APP_ROOT = "/jetty/webapps/ROOT";
 
   /**
    * Collects all project dependencies of the style "compile project(':mylib')" for any kind of
@@ -124,27 +125,27 @@ public class JibPlugin implements Plugin<Project> {
 
     project.afterEvaluate(
         projectAfterEvaluation -> {
-          // TODO move this to a seperate place
+          // TODO move this to a separate place
           try {
             War warTask = GradleProjectProperties.getWarTask(project);
-            final Task dependsOnTask;
+            Task dependsOnTask;
             if (warTask != null) {
               if (jibExtension.getFrom().getImage() == null) {
-                jibExtension.getFrom().setImage(DEFAULT_WEBAPP_FROM_IMAGE);
+                jibExtension.getFrom().setImage(DEFAULT_WAR_FROM_IMAGE);
               }
               if (jibExtension.getContainer().getAppRoot().isEmpty()) {
-                jibExtension.getContainer().setAppRoot(DEFAULT_WEBAPP_ROOT);
+                jibExtension.getContainer().setAppRoot(DEFAULT_WEB_APP_ROOT);
               }
-              // Has all tasks depend on the 'exploded war' task.
               ExplodedWarTask explodedWarTask =
                   (ExplodedWarTask)
                       project
                           .getTasks()
                           .create(EXPLODED_WAR_TASK_NAME, ExplodedWarTask.class)
                           .dependsOn(warTask);
-              explodedWarTask.setWarFile(warTask.getArchivePath());
+              explodedWarTask.setWarFile(warTask.getArchivePath().toPath());
               explodedWarTask.setExplodedWarDirectory(
                   GradleProjectProperties.getExplodedWarDirectory(projectAfterEvaluation));
+              // Have all tasks depend on the 'jibExplodedWar' task.
               dependsOnTask = explodedWarTask;
             } else {
               if (jibExtension.getFrom().getImage() == null) {
@@ -153,7 +154,7 @@ public class JibPlugin implements Plugin<Project> {
               if (jibExtension.getContainer().getAppRoot().isEmpty()) {
                 jibExtension.getContainer().setAppRoot(DEFAULT_APP_ROOT);
               }
-              // Has all tasks depend on the 'classes' task.
+              // Have all tasks depend on the 'classes' task.
               dependsOnTask = projectAfterEvaluation.getTasks().getByPath("classes");
             }
             buildImageTask.dependsOn(dependsOnTask);

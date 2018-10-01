@@ -97,7 +97,7 @@ public class GradleLayerConfigurationsTest {
   }
 
   @Mock private Project mockProject;
-  @Mock private Project mockWebappProject;
+  @Mock private Project mockWebAppProject;
   @Mock private Convention mockConvention;
   @Mock private JavaPluginConvention mockJavaPluginConvention;
   @Mock private WarPluginConvention mockWarPluginConvention;
@@ -136,7 +136,7 @@ public class GradleLayerConfigurationsTest {
     Mockito.when(mockMainSourceSetOutput.getClassesDirs()).thenReturn(classesFileCollection);
     Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir.toFile());
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
-    // We can't commit an empty directory in Git, so it's created if it does not exist
+    // We can't commit an empty directory in Git, so create (if not exist).
     Path emptyDirectory =
         Paths.get(Resources.getResource("webapp").toURI())
             .resolve("jib-exploded-war/WEB-INF/classes/empty_dir");
@@ -288,19 +288,19 @@ public class GradleLayerConfigurationsTest {
   @Test
   public void testWebApp() throws URISyntaxException, IOException {
     Path webappDirectory = Paths.get(Resources.getResource("webapp").toURI());
-    Mockito.when(mockWebappProject.getBuildDir()).thenReturn(webappDirectory.toFile());
-    Mockito.when(mockWebappProject.getConvention()).thenReturn(mockConvention);
+    Mockito.when(mockWebAppProject.getBuildDir()).thenReturn(webappDirectory.toFile());
+    Mockito.when(mockWebAppProject.getConvention()).thenReturn(mockConvention);
     Mockito.when(mockConvention.findPlugin(WarPluginConvention.class))
         .thenReturn(mockWarPluginConvention);
-    Mockito.when(mockWarPluginConvention.getProject()).thenReturn(mockWebappProject);
-    Mockito.when(mockWebappProject.getTasks()).thenReturn(taskContainer);
+    Mockito.when(mockWarPluginConvention.getProject()).thenReturn(mockWebAppProject);
+    Mockito.when(mockWebAppProject.getTasks()).thenReturn(taskContainer);
     Mockito.when(taskContainer.findByName("war")).thenReturn(war);
 
     Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
 
     JavaLayerConfigurations configuration =
         GradleLayerConfigurations.getForProject(
-            mockWebappProject, mockLogger, extraFilesDirectory, AbsoluteUnixPath.get("/my/app"));
+            mockWebAppProject, mockLogger, extraFilesDirectory, AbsoluteUnixPath.get("/my/app"));
     ImmutableList<Path> expectedDependenciesFiles =
         ImmutableList.of(
             webappDirectory.resolve("jib-exploded-war/WEB-INF/lib/dependency-1.0.0.jar"));
@@ -319,6 +319,14 @@ public class GradleLayerConfigurationsTest {
         ImmutableList.of(
             webappDirectory.resolve("jib-exploded-war/WEB-INF/classes/HelloWorld.class"),
             webappDirectory.resolve("jib-exploded-war/WEB-INF/classes/package/Other.class"));
+    ImmutableList<Path> expectedExtraFiles =
+        ImmutableList.of(
+            extraFilesDirectory.resolve("a"),
+            extraFilesDirectory.resolve("a/b"),
+            extraFilesDirectory.resolve("a/b/bar"),
+            extraFilesDirectory.resolve("c"),
+            extraFilesDirectory.resolve("c/cat"),
+            extraFilesDirectory.resolve("foo"));
 
     assertSourcePathsUnordered(
         expectedDependenciesFiles, configuration.getDependencyLayerEntries());
@@ -326,9 +334,7 @@ public class GradleLayerConfigurationsTest {
         expectedSnapshotDependenciesFiles, configuration.getSnapshotDependencyLayerEntries());
     assertSourcePathsUnordered(expectedResourcesFiles, configuration.getResourceLayerEntries());
     assertSourcePathsUnordered(expectedClassesFiles, configuration.getClassLayerEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        configuration.getExtraFilesLayerEntries());
+    assertSourcePathsUnordered(expectedExtraFiles, configuration.getExtraFilesLayerEntries());
 
     assertExtractionPathsUnordered(
         Arrays.asList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
@@ -358,22 +364,22 @@ public class GradleLayerConfigurationsTest {
   @Test
   public void testWebApp_defaultWebAppRoot() throws URISyntaxException, IOException {
     Path webappDirectory = Paths.get(Resources.getResource("webapp").toURI());
-    Mockito.when(mockWebappProject.getBuildDir()).thenReturn(webappDirectory.toFile());
-    Mockito.when(mockWebappProject.getConvention()).thenReturn(mockConvention);
+    Mockito.when(mockWebAppProject.getBuildDir()).thenReturn(webappDirectory.toFile());
+    Mockito.when(mockWebAppProject.getConvention()).thenReturn(mockConvention);
     Mockito.when(mockConvention.findPlugin(WarPluginConvention.class))
         .thenReturn(mockWarPluginConvention);
-    Mockito.when(mockWarPluginConvention.getProject()).thenReturn(mockWebappProject);
-    Mockito.when(mockWebappProject.getTasks()).thenReturn(taskContainer);
+    Mockito.when(mockWarPluginConvention.getProject()).thenReturn(mockWebAppProject);
+    Mockito.when(mockWebAppProject.getTasks()).thenReturn(taskContainer);
     Mockito.when(taskContainer.findByName("war")).thenReturn(war);
 
     Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
 
     JavaLayerConfigurations configuration =
         GradleLayerConfigurations.getForProject(
-            mockWebappProject,
+            mockWebAppProject,
             mockLogger,
             extraFilesDirectory,
-            AbsoluteUnixPath.get(JibPlugin.DEFAULT_WEBAPP_ROOT));
+            AbsoluteUnixPath.get(JibPlugin.DEFAULT_WEB_APP_ROOT));
 
     assertExtractionPathsUnordered(
         Arrays.asList("/jetty/webapps/ROOT/WEB-INF/lib/dependency-1.0.0.jar"),
