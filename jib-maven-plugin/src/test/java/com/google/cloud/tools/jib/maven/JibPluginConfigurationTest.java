@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,6 +35,23 @@ public class JibPluginConfigurationTest {
           @Override
           public void execute() {}
         };
+
+    System.clearProperty("jib.from.image");
+    System.clearProperty("jib.from.credHelper");
+    System.clearProperty("image");
+    System.clearProperty("jib.to.image");
+    System.clearProperty("jib.to.tags");
+    System.clearProperty("jib.to.credHelper");
+    System.clearProperty("jib.container.appRoot");
+    System.clearProperty("jib.container.args");
+    System.clearProperty("jib.container.entrypoint");
+    System.clearProperty("jib.container.environment");
+    System.clearProperty("jib.container.format");
+    System.clearProperty("jib.container.jvmFlags");
+    System.clearProperty("jib.container.labels");
+    System.clearProperty("jib.container.mainClass");
+    System.clearProperty("jib.container.ports");
+    System.clearProperty("jib.container.useCurrentTimestamp");
   }
 
   @Test
@@ -49,5 +69,52 @@ public class JibPluginConfigurationTest {
         "<to><auth><password>",
         testPluginConfiguration.getTargetImageAuth().getPasswordPropertyDescriptor());
     Assert.assertEquals("/app", testPluginConfiguration.getAppRoot());
+  }
+
+  @Test
+  public void testSystemProperties() {
+    System.setProperty("jib.from.image", "fromImage");
+    Assert.assertEquals("fromImage", testPluginConfiguration.getBaseImage());
+    System.setProperty("jib.from.credHelper", "credHelper");
+    Assert.assertEquals("credHelper", testPluginConfiguration.getBaseImageCredentialHelperName());
+
+    System.setProperty("image", "toImage");
+    Assert.assertEquals("toImage", testPluginConfiguration.getTargetImage());
+    System.clearProperty("image");
+    System.setProperty("jib.to.image", "toImage2");
+    Assert.assertEquals("toImage2", testPluginConfiguration.getTargetImage());
+    System.setProperty("jib.to.tags", "tag1,tag2,tag3");
+    Assert.assertEquals(
+        ImmutableSet.of("tag1", "tag2", "tag3"),
+        testPluginConfiguration.getTargetImageAdditionalTags());
+    System.setProperty("jib.to.credHelper", "credHelper");
+    Assert.assertEquals("credHelper", testPluginConfiguration.getTargetImageCredentialHelperName());
+
+    System.setProperty("jib.container.appRoot", "appRoot");
+    Assert.assertEquals("appRoot", testPluginConfiguration.getAppRoot());
+    System.setProperty("jib.container.args", "arg1,arg2,arg3");
+    Assert.assertEquals(
+        ImmutableList.of("arg1", "arg2", "arg3"), testPluginConfiguration.getArgs());
+    System.setProperty("jib.container.entrypoint", "entry1,entry2,entry3");
+    Assert.assertEquals(
+        ImmutableList.of("entry1", "entry2", "entry3"), testPluginConfiguration.getEntrypoint());
+    System.setProperty("jib.container.environment", "env1=val1,env2=val2");
+    Assert.assertEquals(
+        ImmutableMap.of("env1", "val1", "env2", "val2"), testPluginConfiguration.getEnvironment());
+    System.setProperty("jib.container.format", "format");
+    Assert.assertEquals("format", testPluginConfiguration.getFormat());
+    System.setProperty("jib.container.jvmFlags", "flag1,flag2,flag3");
+    Assert.assertEquals(
+        ImmutableList.of("flag1", "flag2", "flag3"), testPluginConfiguration.getJvmFlags());
+    System.setProperty("jib.container.labels", "label1=val1,label2=val2");
+    Assert.assertEquals(
+        ImmutableMap.of("label1", "val1", "label2", "val2"), testPluginConfiguration.getLabels());
+    System.setProperty("jib.container.mainClass", "main");
+    Assert.assertEquals("main", testPluginConfiguration.getMainClass());
+    System.setProperty("jib.container.ports", "port1,port2,port3");
+    Assert.assertEquals(
+        ImmutableList.of("port1", "port2", "port3"), testPluginConfiguration.getExposedPorts());
+    System.setProperty("jib.container.useCurrentTimestamp", "true");
+    Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
   }
 }
