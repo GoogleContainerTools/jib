@@ -167,7 +167,7 @@ public class JibPluginTest {
         (ExplodedWarTask) rootProject.getTasks().getByPath(":" + JibPlugin.EXPLODED_WAR_TASK_NAME);
     Assert.assertEquals(
         rootProject.getBuildDir().toPath().resolve(ProjectProperties.EXPLODED_WAR_DIRECTORY_NAME),
-        explodedWarTask.getExplodedWarDirectory());
+        explodedWarTask.getExplodedWarDirectory().toPath());
 
     Assert.assertEquals(
         explodedWarTask,
