@@ -67,8 +67,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildDocker()
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          BuildStepsExecutionException {
+      throws InvalidImageReferenceException, IOException,
+      BuildStepsExecutionException {
     if (!new DockerClient().isDockerInstalled()) {
       throw new GradleException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));

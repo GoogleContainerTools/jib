@@ -17,8 +17,12 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.filesystem.UserCacheHome;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,6 +31,14 @@ import javax.annotation.Nullable;
 /** Configures how to containerize. */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class Containerizer {
+
+  /**
+   * The default directory for caching the base image layers, in {@code [user cache
+   * home]/google-cloud-tools-java/jib}.
+   */
+  // TODO: Reduce scope once plugins are migrated to use the new Jib Core API.
+  public static final Path DEFAULT_BASE_CACHE_DIRECTORY =
+      UserCacheHome.getCacheHome().resolve("google-cloud-tools-java").resolve("jib");
 
   /**
    * Gets a new {@link Containerizer} that containerizes to a container registry.
@@ -61,7 +73,8 @@ public class Containerizer {
 
   private final TargetImage targetImage;
   @Nullable private ExecutorService executorService;
-  @Nullable private CacheConfiguration cacheConfiguration;
+  private Path baseImageLayersCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
+  @Nullable private Path applicationLayersCacheDirectory;
   @Nullable private EventHandlers eventHandlers;
 
   /** Instantiate with {@link #to}. */
@@ -81,9 +94,29 @@ public class Containerizer {
     return this;
   }
 
-  // TODO: Rethink this method.
-  public Containerizer setCacheConfiguration(CacheConfiguration cacheConfiguration) {
-    this.cacheConfiguration = cacheConfiguration;
+  /**
+   * Sets the directory to use for caching base image layers. This cache can (and should) be shared
+   * between multiple images. The default base image layers cache directory is {@code [user cache
+   * home]/google-cloud-tools-java/jib} ({@link #DEFAULT_BASE_CACHE_DIRECTORY}. This directory can
+   * be the same directory used for {@link #setApplicationLayersCache}.
+   *
+   * @param cacheDirectory the cache directory
+   * @return this
+   */
+  public Containerizer setBaseImageLayersCache(Path cacheDirectory) {
+    baseImageLayersCacheDirectory = cacheDirectory;
+    return this;
+  }
+  /**
+   * Sets the directory to use for caching application layers. This cache can be shared between
+   * multiple images. If not set, a temporary directory will be used as the application layers
+   * cache. This directory can be the same directory used for {@link #setBaseImageLayersCache}.
+   *
+   * @param cacheDirectory the cache directory
+   * @return this
+   */
+  public Containerizer setApplicationLayersCache(Path cacheDirectory) {
+    applicationLayersCacheDirectory = cacheDirectory;
     return this;
   }
 
@@ -106,8 +139,23 @@ public class Containerizer {
     return Optional.ofNullable(executorService);
   }
 
-  Optional<CacheConfiguration> getCacheConfiguration() {
-    return Optional.ofNullable(cacheConfiguration);
+  Path getBaseImageLayersCacheDirectory() {
+    return baseImageLayersCacheDirectory;
+  }
+
+  Path getApplicationLayersCacheDirectory() throws CacheDirectoryCreationException {
+    if (applicationLayersCacheDirectory == null) {
+      // Uses a temporary directory if application layers cache directory is not set.
+      try {
+        Path temporaryDirectory = Files.createTempDirectory(null);
+        temporaryDirectory.toFile().deleteOnExit();
+        this.applicationLayersCacheDirectory = temporaryDirectory;
+
+      } catch (IOException ex) {
+        throw new CacheDirectoryCreationException(ex);
+      }
+    }
+    return applicationLayersCacheDirectory;
   }
 
   Optional<EventHandlers> getEventHandlers() {
