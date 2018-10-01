@@ -27,7 +27,7 @@ public class ExplodedWarTask extends Sync {
   @Nullable private Path explodedWarDirectory;
 
   public void setWarFile(Path warFile) {
-    from(getProject().zipTree(warFile.toFile()));
+    from(getProject().zipTree(warFile));
   }
 
   /**

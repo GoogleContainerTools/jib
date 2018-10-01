@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -225,12 +224,12 @@ class GradleLayerConfigurations {
               AbsoluteUnixPath pathInContainer =
                   classesExtractionPath.resolve(webInfClasses.relativize(path));
 
-              if (FileSystems.getDefault().getPathMatcher("glob:**.class").matches(path)) {
+              if (path.getFileName().toString().endsWith(".class")) {
                 layerBuilder.addClassFile(path, pathInContainer);
 
               } else if (Files.isDirectory(path)) {
-                try (Stream<Path> stream = Files.list(path)) {
-                  if (!stream.findAny().isPresent()) {
+                try (Stream<Path> fileStream = Files.list(path)) {
+                  if (!fileStream.findAny().isPresent()) {
                     // The directory is empty
                     layerBuilder.addResourceFile(path, pathInContainer);
                   }
