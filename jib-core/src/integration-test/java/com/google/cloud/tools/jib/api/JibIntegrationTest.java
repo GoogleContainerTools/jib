@@ -16,7 +16,53 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import java.io.IOException;
+import java.util.concurrent.ExecutionException;
+import org.junit.Assert;
+import org.junit.Test;
+
 /** Integration tests for {@link Jib}. */
 public class JibIntegrationTest {
 
+  /**
+   * Pulls a built image and attempts to run it.
+   *
+   * @param imageReference the image reference of the built image
+   * @return the container output
+   * @throws IOException if an I/O exception occurs
+   * @throws InterruptedException if the process was interrupted
+   */
+  private static String pullAndRunBuiltImage(String imageReference)
+      throws IOException, InterruptedException {
+    new Command("docker", "pull", imageReference).run();
+    return new Command("docker", "run", "--rm", imageReference).run();
+  }
+
+  @Test
+  public void testBasic_helloWorld()
+      throws InvalidImageReferenceException, InterruptedException, ExecutionException,
+          CacheDirectoryCreationException, IOException {
+    ImageReference targetImageReference =
+        ImageReference.of(
+            "gcr.io",
+            IntegrationTestingConfiguration.getGCPProject() + "/core",
+            "basic-helloworld");
+    JibContainer jibContainer =
+        Jib.from("busybox")
+            .setEntrypoint("echo", "Hello World")
+            .containerize(
+                Containerizer.to(
+                    RegistryImage.named(targetImageReference)
+                        .addCredentialRetriever(
+                            CredentialRetrieverFactory.forImage(targetImageReference)
+                                .dockerConfig())));
+
+    Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
+  }
 }
