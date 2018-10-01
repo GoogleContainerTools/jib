@@ -35,6 +35,9 @@ import javax.annotation.Nullable;
 /** Validator for plugin configuration parameters and system properties. */
 public class ConfigurationPropertyValidator {
 
+  /** Matches key-value pairs in the form of "key=value" */
+  private static Pattern environmentPattern = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
+
   /**
    * Gets a {@link Credential} from a username and password. First tries system properties, then
    * tries build configuration, otherwise returns null.
@@ -142,8 +145,6 @@ public class ConfigurationPropertyValidator {
    * @return the map of parsed values
    */
   public static Map<String, String> parseMapProperty(String property) {
-    // Matches key-value pairs in the form of "key=value"
-    Pattern environmentPattern = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
     Map<String, String> result = new HashMap<>();
 
     // Split on non-escaped commas
@@ -166,22 +167,23 @@ public class ConfigurationPropertyValidator {
    */
   public static List<String> parseListProperty(String property) {
     List<String> result = new ArrayList<>();
-    boolean evenConsecutiveEscapes = true;
+    boolean shouldEscape = false;
     int startIndex = 0;
     int endIndex = 0;
     for (; endIndex < property.length(); endIndex++) {
-      // Split here if the comma isn't being escaped
-      if (property.charAt(endIndex) == ',' && evenConsecutiveEscapes) {
-        result.add(property.substring(startIndex, endIndex));
-        startIndex = endIndex + 1;
+      // If previously encountered a backslash, skip this character
+      if (shouldEscape) {
+        shouldEscape = false;
+        continue;
       }
 
-      // Keep track of even/odd number of '\' in a row (even means each '\' is escaped, odd means
-      // one may be escaping a comma)
-      if (property.charAt(endIndex) == '\\') {
-        evenConsecutiveEscapes = !evenConsecutiveEscapes;
-      } else {
-        evenConsecutiveEscapes = true;
+      if (property.charAt(endIndex) == ',') {
+        // Split on non-escaped comma
+        result.add(property.substring(startIndex, endIndex));
+        startIndex = endIndex + 1;
+      } else if (property.charAt(endIndex) == '\\') {
+        // Found a backslash, ignore next character
+        shouldEscape = true;
       }
     }
     result.add(property.substring(startIndex, endIndex));
