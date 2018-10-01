@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -31,7 +32,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -321,10 +321,10 @@ public class JibContainerBuilder {
           CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         toBuildConfiguration(BuildConfiguration.builder(), containerizer);
-    containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();
+    DescriptorDigest imageDigest =
+        containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();
 
-    // TODO: Add actual container digests.
-    return new JibContainer(new HashSet<>());
+    return new JibContainer(imageDigest);
   }
 
   /**

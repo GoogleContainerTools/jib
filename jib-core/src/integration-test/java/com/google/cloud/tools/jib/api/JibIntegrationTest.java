@@ -16,23 +16,7 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+/** Integration tests for {@link Jib}. */
+public class JibIntegrationTest {
 
-/** The container built by Jib. */
-public class JibContainer {
-
-  private final DescriptorDigest imageDigest;
-
-  JibContainer(DescriptorDigest imageDigest) {
-    this.imageDigest = imageDigest;
-  }
-
-  /**
-   * Gets the digest of the container image built by Jib.
-   *
-   * @return the image digest
-   */
-  DescriptorDigest getDigest() {
-    return imageDigest;
-  }
 }
