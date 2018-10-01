@@ -179,15 +179,17 @@ class GradleLayerConfigurations {
     Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
 
     Path libOutputDirectory = explodedWarPath.resolve("WEB-INF/lib");
-    try (Stream<Path> dependencyFileStream = Files.list(libOutputDirectory)) {
-      dependencyFileStream.forEach(
-          path -> {
-            if (path.toString().contains(SNAPSHOT)) {
-              snapshotDependenciesFiles.add(path);
-            } else {
-              dependenciesFiles.add(path);
-            }
-          });
+    if (Files.exists(libOutputDirectory)) {
+      try (Stream<Path> dependencyFileStream = Files.list(libOutputDirectory)) {
+        dependencyFileStream.forEach(
+            path -> {
+              if (path.toString().contains(SNAPSHOT)) {
+                snapshotDependenciesFiles.add(path);
+              } else {
+                dependenciesFiles.add(path);
+              }
+            });
+      }
     }
 
     // First, all files except WEB-INF go into the resources layer.
@@ -197,10 +199,12 @@ class GradleLayerConfigurations {
     // Some files in WEB-INF/ (e.g. web.xml, ...) need to go into the resources layer. However,
     // don't add or look into WEB-INF/classes and WEB-INF/lib.
     Path webInfOutputDirectory = explodedWarPath.resolve("WEB-INF");
-    try (Stream<Path> fileStream = Files.list(webInfOutputDirectory)) {
-      fileStream
-          .filter(path -> !path.endsWith("classes") && !path.endsWith("lib"))
-          .forEach(resourcesWebInfFiles::add);
+    if (Files.exists(webInfOutputDirectory)) {
+      try (Stream<Path> fileStream = Files.list(webInfOutputDirectory)) {
+        fileStream
+            .filter(path -> !path.endsWith("classes") && !path.endsWith("lib"))
+            .forEach(resourcesWebInfFiles::add);
+      }
     }
 
     // Adds all the extra files.
@@ -218,26 +222,28 @@ class GradleLayerConfigurations {
     // For "WEB-INF/classes", *.class go into the class layer. All other files and empty directories
     // go into the resource layer.
     Path webInfClasses = explodedWarPath.resolve("WEB-INF/classes");
-    new DirectoryWalker(webInfClasses)
-        .walk(
-            path -> {
-              AbsoluteUnixPath pathInContainer =
-                  classesExtractionPath.resolve(webInfClasses.relativize(path));
+    if (Files.exists(webInfClasses)) {
+      new DirectoryWalker(webInfClasses)
+          .walk(
+              path -> {
+                AbsoluteUnixPath pathInContainer =
+                    classesExtractionPath.resolve(webInfClasses.relativize(path));
 
-              if (path.getFileName().toString().endsWith(".class")) {
-                layerBuilder.addClassFile(path, pathInContainer);
+                if (path.getFileName().toString().endsWith(".class")) {
+                  layerBuilder.addClassFile(path, pathInContainer);
 
-              } else if (Files.isDirectory(path)) {
-                try (Stream<Path> fileStream = Files.list(path)) {
-                  if (!fileStream.findAny().isPresent()) {
-                    // The directory is empty
-                    layerBuilder.addResourceFile(path, pathInContainer);
+                } else if (Files.isDirectory(path)) {
+                  try (Stream<Path> fileStream = Files.list(path)) {
+                    if (!fileStream.findAny().isPresent()) {
+                      // The directory is empty
+                      layerBuilder.addResourceFile(path, pathInContainer);
+                    }
                   }
+                } else {
+                  layerBuilder.addResourceFile(path, pathInContainer);
                 }
-              } else {
-                layerBuilder.addResourceFile(path, pathInContainer);
-              }
-            });
+              });
+    }
 
     for (Path file : dependenciesFiles) {
       layerBuilder.addDependencyFile(file, dependenciesExtractionPath.resolve(file.getFileName()));
