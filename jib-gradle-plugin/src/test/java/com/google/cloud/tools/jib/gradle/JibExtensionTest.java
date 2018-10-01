@@ -44,7 +44,7 @@ public class JibExtensionTest {
 
   @Test
   public void testFrom() {
-    Assert.assertEquals(null, testJibExtension.getFrom().getImage());
+    Assert.assertNull(testJibExtension.getFrom().getImage());
     Assert.assertNull(testJibExtension.getFrom().getCredHelper());
 
     testJibExtension.from(

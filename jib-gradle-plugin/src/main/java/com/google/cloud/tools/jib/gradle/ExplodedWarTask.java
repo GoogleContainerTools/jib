@@ -22,18 +22,19 @@ import javax.annotation.Nullable;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.Sync;
 
-/** This Gradle Task explodes a War file into a directory */
+/** Gradle task that explodes a WAR file into a directory. */
 public class ExplodedWarTask extends Sync {
+
   @Nullable private File explodedWarDirectory;
 
-  public void setWarFile(File warFile) {
+  public void setWarFile(Path warFile) {
     from(getProject().zipTree(warFile));
   }
 
   /**
-   * Sets the output directory of Sync Task
+   * Sets the exploded WAR output directory of this {@link Sync} task.
    *
-   * @param explodedWarDirectory the directory where to extract the war file
+   * @param explodedWarDirectory the directory where to extract the WAR file
    */
   public void setExplodedWarDirectory(Path explodedWarDirectory) {
     this.explodedWarDirectory = explodedWarDirectory.toFile();

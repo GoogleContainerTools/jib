@@ -44,7 +44,7 @@ public class PluginConfigurationProcessorTest {
   @Mock private GradleProjectProperties mockProjectProperties;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     Mockito.doReturn("gcr.io/distroless/java").when(mockJibExtension).getBaseImage();
     Mockito.doReturn(mockBaseImageParameters).when(mockJibExtension).getFrom();
     Mockito.doReturn(new AuthParameters("mock")).when(mockBaseImageParameters).getAuth();
@@ -136,7 +136,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testWebappEntrypoint_default() throws InvalidImageReferenceException {
+  public void testWebAppEntrypoint_default() throws InvalidImageReferenceException {
     Mockito.doReturn(true).when(mockProjectProperties).isWarProject();
 
     PluginConfigurationProcessor processor =
