@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
@@ -61,10 +62,8 @@ public class BuildConfigurationTest {
     ImmutableList<Port> expectedExposedPorts = ImmutableList.of(Port.tcp(1000), Port.tcp(2000));
     Map<String, String> expectedLabels = ImmutableMap.of("key1", "value1", "key2", "value2");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
-    CacheConfiguration expectedApplicationLayersCacheConfiguration =
-        CacheConfiguration.forPath(Paths.get("application/layers"));
-    CacheConfiguration expectedBaseImageLayersCacheConfiguration =
-        CacheConfiguration.forPath(Paths.get("base/image/layers"));
+    Path expectedApplicationLayersCacheDirectory = Paths.get("application/layers");
+    Path expectedBaseImageLayersCacheDirectory = Paths.get("base/image/layers");
     List<LayerConfiguration> expectedLayerConfigurations =
         Collections.singletonList(
             LayerConfiguration.builder()
@@ -98,8 +97,8 @@ public class BuildConfigurationTest {
             .setTargetImageConfiguration(targetImageConfiguration)
             .setAdditionalTargetImageTags(additionalTargetImageTags)
             .setContainerConfiguration(containerConfiguration)
-            .setApplicationLayersCacheConfiguration(expectedApplicationLayersCacheConfiguration)
-            .setBaseImageLayersCacheConfiguration(expectedBaseImageLayersCacheConfiguration)
+            .setApplicationLayersCacheDirectory(expectedApplicationLayersCacheDirectory)
+            .setBaseImageLayersCacheDirectory(expectedBaseImageLayersCacheDirectory)
             .setTargetFormat(OCIManifestTemplate.class)
             .setAllowInsecureRegistries(true)
             .setLayerConfigurations(expectedLayerConfigurations)
@@ -143,11 +142,11 @@ public class BuildConfigurationTest {
     Assert.assertEquals(expectedLabels, buildConfiguration.getContainerConfiguration().getLabels());
     Assert.assertEquals(expectedTargetFormat, buildConfiguration.getTargetFormat());
     Assert.assertEquals(
-        expectedApplicationLayersCacheConfiguration,
-        buildConfigurationBuilder.getApplicationLayersCacheConfiguration());
+        expectedApplicationLayersCacheDirectory,
+        buildConfigurationBuilder.getApplicationLayersCacheDirectory());
     Assert.assertEquals(
-        expectedBaseImageLayersCacheConfiguration,
-        buildConfigurationBuilder.getBaseImageLayersCacheConfiguration());
+        expectedBaseImageLayersCacheDirectory,
+        buildConfigurationBuilder.getBaseImageLayersCacheDirectory());
     Assert.assertTrue(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(expectedLayerConfigurations, buildConfiguration.getLayerConfigurations());
     Assert.assertEquals(
@@ -156,7 +155,7 @@ public class BuildConfigurationTest {
   }
 
   @Test
-  public void testBuilder_default() throws IOException, CacheDirectoryCreationException {
+  public void testBuilder_default() throws IOException {
     // These are required and don't have defaults.
     String expectedBaseImageServerUrl = "someserver";
     String expectedBaseImageName = "baseimage";
@@ -178,19 +177,19 @@ public class BuildConfigurationTest {
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder()
             .setBaseImageConfiguration(baseImageConfiguration)
-            .setTargetImageConfiguration(targetImageConfiguration);
+            .setTargetImageConfiguration(targetImageConfiguration)
+            .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
+            .setApplicationLayersCacheDirectory(Paths.get("ignored"));
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertEquals(ImmutableSet.of("targettag"), buildConfiguration.getAllTargetImageTags());
     Assert.assertEquals(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
-    Assert.assertNotNull(buildConfigurationBuilder.getApplicationLayersCacheConfiguration());
-    Assert.assertNotEquals(
-        CacheConfiguration.forDefaultUserLevelCacheDirectory().getCacheDirectory(),
-        buildConfigurationBuilder.getApplicationLayersCacheConfiguration().getCacheDirectory());
-    Assert.assertNotNull(buildConfigurationBuilder.getBaseImageLayersCacheConfiguration());
+    Assert.assertNotNull(buildConfigurationBuilder.getApplicationLayersCacheDirectory());
     Assert.assertEquals(
-        CacheConfiguration.forDefaultUserLevelCacheDirectory().getCacheDirectory(),
-        buildConfigurationBuilder.getBaseImageLayersCacheConfiguration().getCacheDirectory());
+        Paths.get("ignored"), buildConfigurationBuilder.getApplicationLayersCacheDirectory());
+    Assert.assertNotNull(buildConfigurationBuilder.getBaseImageLayersCacheDirectory());
+    Assert.assertEquals(
+        Paths.get("ignored"), buildConfigurationBuilder.getBaseImageLayersCacheDirectory());
     Assert.assertNull(buildConfiguration.getContainerConfiguration());
     Assert.assertFalse(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
@@ -198,17 +197,33 @@ public class BuildConfigurationTest {
   }
 
   @Test
-  public void testBuilder_missingValues() throws IOException, CacheDirectoryCreationException {
+  public void testBuilder_missingValues() throws IOException {
     // Target image is missing
     try {
       BuildConfiguration.builder()
           .setBaseImageConfiguration(
               ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
+          .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
+          .setApplicationLayersCacheDirectory(Paths.get("ignored"))
           .build();
       Assert.fail("Build configuration should not be built with missing values");
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals("target image configuration is required but not set", ex.getMessage());
+    }
+
+    // Two required fields missing
+    try {
+      BuildConfiguration.builder()
+          .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
+          .setApplicationLayersCacheDirectory(Paths.get("ignored"))
+          .build();
+      Assert.fail("Build configuration should not be built with missing values");
+
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals(
+          "base image configuration and target image configuration are required but not set",
+          ex.getMessage());
     }
 
     // All required fields missing
@@ -218,7 +233,8 @@ public class BuildConfigurationTest {
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
-          "base image configuration is required but not set and target image configuration is required but not set",
+          "base image configuration, target image configuration, base image layers cache directory, "
+              + "and application layers cache directory are required but not set",
           ex.getMessage());
     }
   }

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -115,12 +116,9 @@ public class RegistryClient {
         return "";
       }
 
-      String version = RegistryClient.class.getPackage().getImplementationVersion();
       StringBuilder userAgentBuilder = new StringBuilder();
       userAgentBuilder.append("jib");
-      if (version != null) {
-        userAgentBuilder.append(" ").append(version);
-      }
+      userAgentBuilder.append(" ").append(ProjectInfo.VERSION);
       if (userAgentSuffix != null) {
         userAgentBuilder.append(" ").append(userAgentSuffix);
       }

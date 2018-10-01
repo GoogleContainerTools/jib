@@ -86,7 +86,7 @@ public class CredentialRetrieverFactoryTest {
   public void testDockerCredentialHelper() throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         new CredentialRetrieverFactory(
-            ImageReference.of("registry", null, null),
+            ImageReference.of("registry", "repository", null),
             mockEventDispatcher,
             getTestFactory(
                 "registry", Paths.get("docker-credential-helper"), mockDockerCredentialHelper));
@@ -105,7 +105,7 @@ public class CredentialRetrieverFactoryTest {
   public void testInferCredentialHelper() throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         new CredentialRetrieverFactory(
-            ImageReference.of("something.gcr.io", null, null),
+            ImageReference.of("something.gcr.io", "repository", null),
             mockEventDispatcher,
             getTestFactory(
                 "something.gcr.io",
@@ -126,7 +126,7 @@ public class CredentialRetrieverFactoryTest {
   public void testInferCredentialHelper_warn() throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         new CredentialRetrieverFactory(
-            ImageReference.of("something.amazonaws.com", null, null),
+            ImageReference.of("something.amazonaws.com", "repository", null),
             mockEventDispatcher,
             getTestFactory(
                 "something.amazonaws.com",
@@ -145,7 +145,7 @@ public class CredentialRetrieverFactoryTest {
   public void testDockerConfig() throws IOException, CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         CredentialRetrieverFactory.forImage(
-            ImageReference.of("registry", null, null), mockEventDispatcher);
+            ImageReference.of("registry", "repository", null), mockEventDispatcher);
 
     Mockito.when(mockDockerConfigCredentialRetriever.retrieve())
         .thenReturn(Optional.of(FAKE_CREDENTIALS));

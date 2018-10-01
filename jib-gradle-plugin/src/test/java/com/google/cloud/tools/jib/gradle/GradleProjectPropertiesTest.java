@@ -93,7 +93,7 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testIsWarProject() {
-    Assert.assertFalse(gradleProjectProperties.isWarProject());
+    Assert.assertTrue(gradleProjectProperties.isWarProject());
   }
 
   @Test

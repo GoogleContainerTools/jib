@@ -71,8 +71,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildImage()
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          BuildStepsExecutionException {
+      throws InvalidImageReferenceException, IOException,
+      BuildStepsExecutionException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);

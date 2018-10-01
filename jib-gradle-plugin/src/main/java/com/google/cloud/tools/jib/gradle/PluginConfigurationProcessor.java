@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
+import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
@@ -123,18 +123,7 @@ class PluginConfigurationProcessor {
         ImageConfiguration.builder(baseImage)
             .setCredentialRetrievers(defaultCredentialRetrievers.asList());
 
-    List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
-    if (entrypoint.isEmpty()) {
-      String mainClass = projectProperties.getMainClass(jibExtension);
-      entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(
-              getAppRootChecked(jibExtension),
-              jibExtension.getContainer().getJvmFlags(),
-              mainClass);
-    } else if (jibExtension.getContainer().getMainClass() != null
-        || !jibExtension.getContainer().getJvmFlags().isEmpty()) {
-      logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
-    }
+    List<String> entrypoint = computeEntrypoint(logger, jibExtension, projectProperties);
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()
             .setEntrypoint(entrypoint)
@@ -155,13 +144,13 @@ class PluginConfigurationProcessor {
             .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());
-    CacheConfiguration applicationLayersCacheConfiguration =
-        CacheConfiguration.forPath(projectProperties.getCacheDirectory());
-    buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
-        applicationLayersCacheConfiguration);
+    buildConfigurationBuilder.setApplicationLayersCacheDirectory(
+        projectProperties.getCacheDirectory());
+    buildConfigurationBuilder.setBaseImageLayersCacheDirectory(
+        Containerizer.DEFAULT_BASE_CACHE_DIRECTORY);
     if (jibExtension.getUseOnlyProjectCache()) {
-      buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
-          applicationLayersCacheConfiguration);
+      buildConfigurationBuilder.setBaseImageLayersCacheDirectory(
+          projectProperties.getCacheDirectory());
     }
 
     return new PluginConfigurationProcessor(
@@ -169,6 +158,43 @@ class PluginConfigurationProcessor {
         baseImageConfigurationBuilder,
         containerConfigurationBuilder,
         optionalFromCredential.isPresent());
+  }
+
+  /**
+   * Compute the container entrypoint, in this order :
+   *
+   * <ol>
+   *   <li>the user specified one, if set
+   *   <li>for a war project, the jetty default one
+   *   <li>for a jar project, by resolving the main class
+   * </ol>
+   *
+   * @param logger the logger used to display messages.
+   * @param jibExtension the {@link JibExtension} providing the configuration data
+   * @param projectProperties used for providing additional information
+   * @return the entrypoint
+   */
+  static List<String> computeEntrypoint(
+      Logger logger, JibExtension jibExtension, GradleProjectProperties projectProperties) {
+    List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
+    if (!entrypoint.isEmpty()) {
+      if (jibExtension.getContainer().getMainClass() != null
+          || !jibExtension.getContainer().getJvmFlags().isEmpty()) {
+        logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
+      }
+    } else {
+      if (projectProperties.isWarProject()) {
+        entrypoint = JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
+      } else {
+        String mainClass = projectProperties.getMainClass(jibExtension);
+        entrypoint =
+            JavaEntrypointConstructor.makeDefaultEntrypoint(
+                AbsoluteUnixPath.get(jibExtension.getContainer().getAppRoot()),
+                jibExtension.getContainer().getJvmFlags(),
+                mainClass);
+      }
+    }
+    return entrypoint;
   }
 
   private final BuildConfiguration.Builder buildConfigurationBuilder;

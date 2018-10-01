@@ -98,8 +98,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildTar()
-      throws InvalidImageReferenceException, BuildStepsExecutionException, IOException,
-          CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, BuildStepsExecutionException, IOException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);

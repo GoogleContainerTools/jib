@@ -310,33 +310,42 @@ public class JibContainerBuilder {
    *
    * @param containerizer the {@link Containerizer} that configures how to containerize
    * @return the built container(s)
-   * @throws CacheDirectoryCreationException if a directory to be used for the cache could not be created
+   * @throws CacheDirectoryCreationException if a directory to be used for the cache could not be
+   *     created
    * @throws InterruptedException if the execution was interrupted
    * @throws ExecutionException if an exception occurred during execution
    */
   public JibContainer containerize(Containerizer containerizer)
-      throws InterruptedException, ExecutionException, IOException, CacheDirectoryCreationException {
-    BuildConfiguration buildConfiguration = toBuildConfiguration(containerizer);
+      throws InterruptedException, ExecutionException, IOException,
+          CacheDirectoryCreationException {
+    BuildConfiguration buildConfiguration =
+        toBuildConfiguration(BuildConfiguration.builder(), containerizer);
     containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();
 
     // TODO: Add actual container digests.
     return new JibContainer(new HashSet<>());
   }
 
+  /**
+   * Builds a {@link BuildConfiguration} using this and a {@link Containerizer}.
+   *
+   * @param buildConfigurationBuilder the {@link BuildConfiguration.Builder} to use
+   * @param containerizer the {@link Containerizer}
+   * @return the {@link BuildConfiguration}
+   * @throws CacheDirectoryCreationException if a cache directory could not be created
+   * @throws IOException if an I/O exception occurs
+   */
   @VisibleForTesting
-  BuildConfiguration toBuildConfiguration(Containerizer containerizer)
-      throws IOException, CacheDirectoryCreationException {
-    BuildConfiguration.Builder buildConfigurationBuilder = BuildConfiguration.builder();
-
+  BuildConfiguration toBuildConfiguration(
+      BuildConfiguration.Builder buildConfigurationBuilder, Containerizer containerizer)
+      throws CacheDirectoryCreationException, IOException {
     buildConfigurationBuilder
         .setBaseImageConfiguration(baseImage.toImageConfiguration())
         .setTargetImageConfiguration(containerizer.getTargetImage().toImageConfiguration())
+        .setBaseImageLayersCacheDirectory(containerizer.getBaseImageLayersCacheDirectory())
+        .setApplicationLayersCacheDirectory(containerizer.getApplicationLayersCacheDirectory())
         .setContainerConfiguration(toContainerConfiguration())
         .setLayerConfigurations(layerConfigurations);
-
-    // TODO: Add set cache configuration.
-    buildConfigurationBuilder.setBaseImageLayersCacheConfiguration();
-    buildConfigurationBuilder.setApplicationLayersCacheConfiguration();
 
     if (containerizer.getExecutorService().isPresent()) {
       buildConfigurationBuilder.setExecutorService(containerizer.getExecutorService().get());

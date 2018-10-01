@@ -23,12 +23,15 @@ import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
@@ -51,8 +54,8 @@ public class BuildConfiguration {
     @Nullable private ImageConfiguration targetImageConfiguration;
     private ImmutableSet<String> additionalTargetImageTags = ImmutableSet.of();
     @Nullable private ContainerConfiguration containerConfiguration;
-    @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
-    @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
+    @Nullable private Path applicationLayersCacheDirectory;
+    @Nullable private Path baseImageLayersCacheDirectory;
     private boolean allowInsecureRegistries = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
@@ -113,24 +116,22 @@ public class BuildConfiguration {
     /**
      * Sets the location of the cache for storing application layers.
      *
-     * @param applicationLayersCacheConfiguration the application layers {@link CacheConfiguration}
+     * @param applicationLayersCacheDirectory the application layers cache directory
      * @return this
      */
-    public Builder setApplicationLayersCacheConfiguration(
-        @Nullable CacheConfiguration applicationLayersCacheConfiguration) {
-      this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
+    public Builder setApplicationLayersCacheDirectory(Path applicationLayersCacheDirectory) {
+      this.applicationLayersCacheDirectory = applicationLayersCacheDirectory;
       return this;
     }
 
     /**
      * Sets the location of the cache for storing base image layers.
      *
-     * @param baseImageLayersCacheConfiguration the base image layers {@link CacheConfiguration}
+     * @param baseImageLayersCacheDirectory the base image layers cache directory
      * @return this
      */
-    public Builder setBaseImageLayersCacheConfiguration(
-        @Nullable CacheConfiguration baseImageLayersCacheConfiguration) {
-      this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
+    public Builder setBaseImageLayersCacheDirectory(Path baseImageLayersCacheDirectory) {
+      this.baseImageLayersCacheDirectory = baseImageLayersCacheDirectory;
       return this;
     }
 
@@ -206,24 +207,26 @@ public class BuildConfiguration {
      *
      * @return the corresponding build configuration
      * @throws IOException if an I/O exception occurs
-     * @throws CacheDirectoryCreationException if failed to create the configured cache directories
      */
-    public BuildConfiguration build() throws IOException, CacheDirectoryCreationException {
+    public BuildConfiguration build() throws IOException {
       // Validates the parameters.
-      List<String> errorMessages = new ArrayList<>();
+      List<String> missingFields = new ArrayList<>();
       if (baseImageConfiguration == null) {
-        errorMessages.add("base image configuration is required but not set");
+        missingFields.add("base image configuration");
       }
       if (targetImageConfiguration == null) {
-        errorMessages.add("target image configuration is required but not set");
+        missingFields.add("target image configuration");
+      }
+      if (baseImageLayersCacheDirectory == null) {
+        missingFields.add("base image layers cache directory");
+      }
+      if (applicationLayersCacheDirectory == null) {
+        missingFields.add("application layers cache directory");
       }
 
-      switch (errorMessages.size()) {
+      switch (missingFields.size()) {
         case 0: // No errors
-          if (baseImageConfiguration == null || targetImageConfiguration == null) {
-            throw new IllegalStateException("Required fields should not be null");
-          }
-          if (baseImageConfiguration.getImage().usesDefaultTag()) {
+          if (Preconditions.checkNotNull(baseImageConfiguration).getImage().usesDefaultTag()) {
             eventDispatcher.dispatch(
                 LogEvent.warn(
                     "Base image '"
@@ -235,21 +238,13 @@ public class BuildConfiguration {
             executorService = Executors.newCachedThreadPool();
           }
 
-          if (baseImageLayersCacheConfiguration == null) {
-            baseImageLayersCacheConfiguration =
-                CacheConfiguration.forDefaultUserLevelCacheDirectory();
-          }
-          if (applicationLayersCacheConfiguration == null) {
-            applicationLayersCacheConfiguration = CacheConfiguration.makeTemporary();
-          }
-
           return new BuildConfiguration(
               baseImageConfiguration,
-              targetImageConfiguration,
+              Preconditions.checkNotNull(targetImageConfiguration),
               additionalTargetImageTags,
               containerConfiguration,
-              Cache.withDirectory(baseImageLayersCacheConfiguration.getCacheDirectory()),
-              Cache.withDirectory(applicationLayersCacheConfiguration.getCacheDirectory()),
+              Cache.withDirectory(Preconditions.checkNotNull(baseImageLayersCacheDirectory)),
+              Cache.withDirectory(Preconditions.checkNotNull(applicationLayersCacheDirectory)),
               targetFormat,
               allowInsecureRegistries,
               layerConfigurations,
@@ -258,27 +253,32 @@ public class BuildConfiguration {
               executorService);
 
         case 1:
-          throw new IllegalStateException(errorMessages.get(0));
+          throw new IllegalStateException(missingFields.get(0) + " is required but not set");
 
         case 2:
-          throw new IllegalStateException(errorMessages.get(0) + " and " + errorMessages.get(1));
+          throw new IllegalStateException(
+              missingFields.get(0) + " and " + missingFields.get(1) + " are required but not set");
 
         default:
-          // Should never reach here.
-          throw new IllegalStateException();
+          missingFields.add("and " + missingFields.remove(missingFields.size() - 1));
+          StringJoiner errorMessage = new StringJoiner(", ", "", " are required but not set");
+          for (String missingField : missingFields) {
+            errorMessage.add(missingField);
+          }
+          throw new IllegalStateException(errorMessage.toString());
       }
     }
 
     @Nullable
     @VisibleForTesting
-    CacheConfiguration getBaseImageLayersCacheConfiguration() {
-      return baseImageLayersCacheConfiguration;
+    Path getBaseImageLayersCacheDirectory() {
+      return baseImageLayersCacheDirectory;
     }
 
     @Nullable
     @VisibleForTesting
-    CacheConfiguration getApplicationLayersCacheConfiguration() {
-      return applicationLayersCacheConfiguration;
+    Path getApplicationLayersCacheDirectory() {
+      return applicationLayersCacheDirectory;
     }
   }
 

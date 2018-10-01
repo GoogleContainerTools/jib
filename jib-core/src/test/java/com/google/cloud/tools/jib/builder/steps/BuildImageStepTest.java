@@ -214,20 +214,20 @@ public class BuildImageStepTest {
         HistoryEntry.builder()
             .setCreationTimestamp(Instant.EPOCH)
             .setAuthor("Jib")
-            .setCreatedBy("jib")
+            .setCreatedBy("jib:null")
             .build();
 
     // Base layers (1 non-empty propagated, 2 empty propagated, 2 non-empty generated)
-    Assert.assertEquals(image.getHistory().get(0), nonEmptyLayerHistory);
-    Assert.assertEquals(image.getHistory().get(1), emptyLayerHistory);
-    Assert.assertEquals(image.getHistory().get(2), emptyLayerHistory);
-    Assert.assertEquals(image.getHistory().get(3), expectedAddedBaseLayerHistory);
-    Assert.assertEquals(image.getHistory().get(4), expectedAddedBaseLayerHistory);
+    Assert.assertEquals(nonEmptyLayerHistory, image.getHistory().get(0));
+    Assert.assertEquals(emptyLayerHistory, image.getHistory().get(1));
+    Assert.assertEquals(emptyLayerHistory, image.getHistory().get(2));
+    Assert.assertEquals(expectedAddedBaseLayerHistory, image.getHistory().get(3));
+    Assert.assertEquals(expectedAddedBaseLayerHistory, image.getHistory().get(4));
 
     // Application layers (3 generated)
-    Assert.assertEquals(image.getHistory().get(5), expectedApplicationLayerHistory);
-    Assert.assertEquals(image.getHistory().get(6), expectedApplicationLayerHistory);
-    Assert.assertEquals(image.getHistory().get(7), expectedApplicationLayerHistory);
+    Assert.assertEquals(expectedApplicationLayerHistory, image.getHistory().get(5));
+    Assert.assertEquals(expectedApplicationLayerHistory, image.getHistory().get(6));
+    Assert.assertEquals(expectedApplicationLayerHistory, image.getHistory().get(7));
 
     // Should be exactly 8 total
     Assert.assertEquals(8, image.getHistory().size());

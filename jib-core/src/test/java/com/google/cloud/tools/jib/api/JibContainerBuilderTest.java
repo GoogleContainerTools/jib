@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -38,12 +39,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link JibContainerBuilder}. */
 @RunWith(MockitoJUnitRunner.class)
 public class JibContainerBuilderTest {
 
+  @Spy private BuildConfiguration.Builder spyBuildConfigurationBuilder;
   @Mock private LayerConfiguration mockLayerConfiguration1;
   @Mock private LayerConfiguration mockLayerConfiguration2;
   @Mock private CredentialRetriever mockCredentialRetriever;
@@ -110,13 +113,16 @@ public class JibContainerBuilderTest {
             .addCredential("username", "password");
     Containerizer containerizer =
         Containerizer.to(targetImage)
+            .setBaseImageLayersCache(Paths.get("base/image/layers"))
+            .setApplicationLayersCache(Paths.get("application/layers"))
             .setExecutorService(mockExecutorService)
             .setEventHandlers(new EventHandlers().add(mockJibEventConsumer));
 
     JibContainerBuilder jibContainerBuilder =
         Jib.from(baseImage)
             .setLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2));
-    BuildConfiguration buildConfiguration = jibContainerBuilder.toBuildConfiguration(containerizer);
+    BuildConfiguration buildConfiguration =
+        jibContainerBuilder.toBuildConfiguration(spyBuildConfigurationBuilder, containerizer);
 
     Assert.assertEquals(
         jibContainerBuilder.toContainerConfiguration(),
@@ -145,13 +151,18 @@ public class JibContainerBuilderTest {
             .retrieve()
             .orElseThrow(AssertionError::new));
 
+    Mockito.verify(spyBuildConfigurationBuilder)
+        .setBaseImageLayersCacheDirectory(Paths.get("base/image/layers"));
+    Mockito.verify(spyBuildConfigurationBuilder)
+        .setApplicationLayersCacheDirectory(Paths.get("application/layers"));
+
     Assert.assertEquals(
         Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2),
         buildConfiguration.getLayerConfigurations());
 
     Assert.assertEquals(mockExecutorService, buildConfiguration.getExecutorService());
 
-    buildConfiguration.getEventEmitter().emit(mockJibEvent);
+    buildConfiguration.getEventDispatcher().dispatch(mockJibEvent);
     Mockito.verify(mockJibEventConsumer).accept(mockJibEvent);
 
     Assert.assertEquals("jib-core", buildConfiguration.getToolName());

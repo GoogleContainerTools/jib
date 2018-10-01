@@ -44,7 +44,7 @@ public class JibExtensionTest {
 
   @Test
   public void testFrom() {
-    Assert.assertEquals("gcr.io/distroless/java", testJibExtension.getFrom().getImage());
+    Assert.assertEquals(null, testJibExtension.getFrom().getImage());
     Assert.assertNull(testJibExtension.getFrom().getCredHelper());
 
     testJibExtension.from(
@@ -87,7 +87,7 @@ public class JibExtensionTest {
     Assert.assertEquals(V22ManifestTemplate.class, testJibExtension.getContainer().getFormat());
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getPorts());
     Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getLabels());
-    Assert.assertEquals("/app", testJibExtension.getContainer().getAppRoot());
+    Assert.assertEquals("", testJibExtension.getContainer().getAppRoot());
 
     testJibExtension.container(
         container -> {
