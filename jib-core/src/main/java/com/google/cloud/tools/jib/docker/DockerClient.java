@@ -41,7 +41,7 @@ public class DockerClient {
    * @return a new {@link DockerClient}
    */
   public static DockerClient newClient() {
-    return new DockerClient(defaultProcessBuilder(DEFAULT_DOCKER_CLIENT));
+    return new DockerClient(defaultProcessBuilderFactory(DEFAULT_DOCKER_CLIENT));
   }
 
   /**
@@ -51,7 +51,7 @@ public class DockerClient {
    * @return a new {@link DockerClient}
    */
   public static DockerClient newClient(Path dockerExecutable) {
-    return new DockerClient(defaultProcessBuilder(dockerExecutable.toString()));
+    return new DockerClient(defaultProcessBuilderFactory(dockerExecutable.toString()));
   }
 
   /**
@@ -61,7 +61,7 @@ public class DockerClient {
    * @param dockerExecutable path to {@code docker}
    * @return the default {@link ProcessBuilder} factory for running a {@code docker} subcommand
    */
-  private static Function<List<String>, ProcessBuilder> defaultProcessBuilder(
+  private static Function<List<String>, ProcessBuilder> defaultProcessBuilderFactory(
       String dockerExecutable) {
     return dockerSubCommand -> {
       List<String> dockerCommand = new ArrayList<>(1 + dockerSubCommand.size());
