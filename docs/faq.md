@@ -148,11 +148,11 @@ See [Extended Usage](../jib-maven-plugin#extended-usage) for the `<container><fo
 
 See [Extended Usage](../jib-gradle-plugin#extended-usage) for the `container.format` configuration.
 
-### Can I define a custom entrypoint?
+### Can I define a custom entrypoint at runtime?
 
-The plugin attaches a default entrypoint that will run your application automatically.
+Normally, the plugin sets a default entrypoint for java applications, or lets you configure a custom entrypoint using the `container.entrypoint` configuration parameter.
 
-When running the image, you can override this default entrypoint with your own custom command.
+You can also override the default/configured entrypoint by defining a custom entrypoint when running the container.
 
 See [`docker run --entrypoint` reference](https://docs.docker.com/engine/reference/run/#entrypoint-default-command-to-execute-at-runtime) for running the image with Docker and overriding the entrypoint command.
 
@@ -165,6 +165,11 @@ Jib packages your Java application into the following paths on the image:
 * `/app/libs/` contains all the dependency artifacts
 * `/app/resources/` contains all the resource files
 * `/app/classes/` contains all the classes files
+* the contents of the extra directory (default `src/main/jib`) are placed in the container's root directory (`/`)
+
+### I want more control over which files to place in the extra directory/where they end up in the container
+
+TODO
 
 ### I need to RUN commands like `apt-get`.
 
