@@ -48,8 +48,8 @@ public class ContainerParameters {
   @Input
   @Optional
   public boolean getUseCurrentTimestamp() {
-    if (System.getProperty(PropertyNames.containerUseCurrentTimestamp) != null) {
-      return Boolean.getBoolean(PropertyNames.containerUseCurrentTimestamp);
+    if (System.getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP) != null) {
+      return Boolean.getBoolean(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
     }
     return useCurrentTimestamp;
   }
@@ -61,9 +61,9 @@ public class ContainerParameters {
   @Input
   @Optional
   public List<String> getEntrypoint() {
-    if (System.getProperty(PropertyNames.containerEntrypoint) != null) {
+    if (System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT) != null) {
       return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.containerEntrypoint));
+          System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT));
     }
     return entrypoint;
   }
@@ -75,9 +75,9 @@ public class ContainerParameters {
   @Input
   @Optional
   public List<String> getJvmFlags() {
-    if (System.getProperty(PropertyNames.containerJvmFlags) != null) {
+    if (System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS) != null) {
       return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.containerJvmFlags));
+          System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS));
     }
     return jvmFlags;
   }
@@ -89,9 +89,9 @@ public class ContainerParameters {
   @Input
   @Optional
   public Map<String, String> getEnvironment() {
-    if (System.getProperty(PropertyNames.containerEnvironment) != null) {
+    if (System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT) != null) {
       return ConfigurationPropertyValidator.parseMapProperty(
-          System.getProperty(PropertyNames.containerEnvironment));
+          System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT));
     }
     return environment;
   }
@@ -104,8 +104,8 @@ public class ContainerParameters {
   @Nullable
   @Optional
   public String getMainClass() {
-    if (System.getProperty(PropertyNames.containerMainClass) != null) {
-      return System.getProperty(PropertyNames.containerMainClass);
+    if (System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS);
     }
     return mainClass;
   }
@@ -117,9 +117,9 @@ public class ContainerParameters {
   @Input
   @Optional
   public List<String> getArgs() {
-    if (System.getProperty(PropertyNames.containerArgs) != null) {
+    if (System.getProperty(PropertyNames.CONTAINER_ARGS) != null) {
       return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.containerArgs));
+          System.getProperty(PropertyNames.CONTAINER_ARGS));
     }
     return args;
   }
@@ -131,8 +131,8 @@ public class ContainerParameters {
   @Input
   @Optional
   public Class<? extends BuildableManifestTemplate> getFormat() {
-    if (System.getProperty(PropertyNames.containerFormat) != null) {
-      return ImageFormat.valueOf(System.getProperty(PropertyNames.containerFormat))
+    if (System.getProperty(PropertyNames.CONTAINER_FORMAT) != null) {
+      return ImageFormat.valueOf(System.getProperty(PropertyNames.CONTAINER_FORMAT))
           .getManifestTemplateClass();
     }
     return Preconditions.checkNotNull(format).getManifestTemplateClass();
@@ -145,9 +145,9 @@ public class ContainerParameters {
   @Input
   @Optional
   public List<String> getPorts() {
-    if (System.getProperty(PropertyNames.containerPorts) != null) {
+    if (System.getProperty(PropertyNames.CONTAINER_PORTS) != null) {
       return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.containerPorts));
+          System.getProperty(PropertyNames.CONTAINER_PORTS));
     }
     return ports;
   }
@@ -159,9 +159,9 @@ public class ContainerParameters {
   @Input
   @Optional
   public Map<String, String> getLabels() {
-    if (System.getProperty(PropertyNames.containerLabels) != null) {
+    if (System.getProperty(PropertyNames.CONTAINER_LABELS) != null) {
       return ConfigurationPropertyValidator.parseMapProperty(
-          System.getProperty(PropertyNames.containerLabels));
+          System.getProperty(PropertyNames.CONTAINER_LABELS));
     }
     return labels;
   }
@@ -173,8 +173,8 @@ public class ContainerParameters {
   @Input
   @Optional
   public String getAppRoot() {
-    if (System.getProperty(PropertyNames.containerAppRoot) != null) {
-      return System.getProperty(PropertyNames.containerAppRoot);
+    if (System.getProperty(PropertyNames.CONTAINER_APP_ROOT) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_APP_ROOT);
     }
     return appRoot;
   }

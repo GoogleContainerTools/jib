@@ -38,8 +38,8 @@ public class BaseImageParameters implements ImageParameters {
   @Nullable
   @Override
   public String getImage() {
-    if (System.getProperty(PropertyNames.fromImage) != null) {
-      return System.getProperty(PropertyNames.fromImage);
+    if (System.getProperty(PropertyNames.FROM_IMAGE) != null) {
+      return System.getProperty(PropertyNames.FROM_IMAGE);
     }
     return image;
   }
@@ -52,8 +52,8 @@ public class BaseImageParameters implements ImageParameters {
   @Nullable
   @Override
   public String getCredHelper() {
-    if (System.getProperty(PropertyNames.fromCredHelper) != null) {
-      return System.getProperty(PropertyNames.fromCredHelper);
+    if (System.getProperty(PropertyNames.FROM_CRED_HELPER) != null) {
+      return System.getProperty(PropertyNames.FROM_CRED_HELPER);
     }
     return credHelper;
   }

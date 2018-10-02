@@ -134,8 +134,8 @@ public class JibExtension {
   @Input
   @Optional
   boolean getUseOnlyProjectCache() {
-    if (System.getProperty(PropertyNames.useOnlyProjectCache) != null) {
-      return Boolean.getBoolean(PropertyNames.useOnlyProjectCache);
+    if (System.getProperty(PropertyNames.USE_ONLY_PROJECT_CACHE) != null) {
+      return Boolean.getBoolean(PropertyNames.USE_ONLY_PROJECT_CACHE);
     }
     return useOnlyProjectCache.get();
   }
@@ -143,8 +143,8 @@ public class JibExtension {
   @Input
   @Optional
   boolean getAllowInsecureRegistries() {
-    if (System.getProperty(PropertyNames.allowInsecureRegistries) != null) {
-      return Boolean.getBoolean(PropertyNames.allowInsecureRegistries);
+    if (System.getProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES) != null) {
+      return Boolean.getBoolean(PropertyNames.ALLOW_INSECURE_REGISTRIES);
     }
     return allowInsecureRegistries.get();
   }
@@ -153,8 +153,8 @@ public class JibExtension {
   String getExtraDirectory() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    if (System.getProperty(PropertyNames.extraDirectory) != null) {
-      return System.getProperty(PropertyNames.extraDirectory);
+    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY) != null) {
+      return System.getProperty(PropertyNames.EXTRA_DIRECTORY);
     }
     return extraDirectory.get().toString();
   }
@@ -162,8 +162,8 @@ public class JibExtension {
   @Internal
   Path getExtraDirectoryPath() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
-    if (System.getProperty(PropertyNames.extraDirectory) != null) {
-      return Paths.get(System.getProperty(PropertyNames.extraDirectory));
+    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY) != null) {
+      return Paths.get(System.getProperty(PropertyNames.EXTRA_DIRECTORY));
     }
     return extraDirectory.get();
   }
