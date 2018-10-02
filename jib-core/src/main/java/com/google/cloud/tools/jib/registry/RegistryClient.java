@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Verify;
 import java.io.IOException;
 import java.net.URL;
 import javax.annotation.Nullable;
@@ -212,13 +213,16 @@ public class RegistryClient {
    *
    * @param manifestTemplate the image manifest
    * @param imageTag the tag to push on
+   * @return the digest of the pushed image
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  public void pushManifest(BuildableManifestTemplate manifestTemplate, String imageTag)
+  public DescriptorDigest pushManifest(BuildableManifestTemplate manifestTemplate, String imageTag)
       throws IOException, RegistryException {
-    callRegistryEndpoint(
-        new ManifestPusher(registryEndpointRequestProperties, manifestTemplate, imageTag));
+    return Verify.verifyNotNull(
+        callRegistryEndpoint(
+            new ManifestPusher(
+                registryEndpointRequestProperties, manifestTemplate, imageTag, eventDispatcher)));
   }
 
   /**

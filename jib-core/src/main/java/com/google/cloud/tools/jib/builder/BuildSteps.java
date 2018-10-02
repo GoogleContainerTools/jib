@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.builder;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
@@ -33,7 +34,16 @@ public class BuildSteps {
   @FunctionalInterface
   private interface StepsRunnerConsumer {
 
-    void accept(StepsRunner stepsRunner) throws ExecutionException, InterruptedException;
+    /**
+     * Runs a {@link StepsRunner}.
+     *
+     * @param stepsRunner the {@link StepsRunner} to run
+     * @return the digest of the built image
+     * @throws ExecutionException if an exception occurs during execution
+     * @throws InterruptedException if the execution is interrupted
+     */
+    DescriptorDigest accept(StepsRunner stepsRunner)
+        throws ExecutionException, InterruptedException;
   }
 
   /**
@@ -127,12 +137,20 @@ public class BuildSteps {
     return buildConfiguration;
   }
 
-  public void run() throws InterruptedException, ExecutionException {
+  /**
+   * Executes the build.
+   *
+   * @return the built image digest
+   * @throws InterruptedException if the execution is interrupted
+   * @throws ExecutionException if an exception occurs during execution
+   */
+  public DescriptorDigest run() throws InterruptedException, ExecutionException {
     buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
 
+    DescriptorDigest imageDigest;
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
-      stepsRunnerConsumer.accept(new StepsRunner(buildConfiguration));
+      imageDigest = stepsRunnerConsumer.accept(new StepsRunner(buildConfiguration));
     }
 
     if (buildConfiguration.getContainerConfiguration() != null) {
@@ -144,5 +162,7 @@ public class BuildSteps {
                   "Container entrypoint set to "
                       + buildConfiguration.getContainerConfiguration().getEntrypoint()));
     }
+
+    return imageDigest;
   }
 }
