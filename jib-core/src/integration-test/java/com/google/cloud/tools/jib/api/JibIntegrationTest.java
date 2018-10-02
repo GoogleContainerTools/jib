@@ -64,5 +64,9 @@ public class JibIntegrationTest {
                                 .dockerConfig())));
 
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
+    Assert.assertEquals(
+        "Hello World\n",
+        pullAndRunBuiltImage(
+            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
   }
 }
