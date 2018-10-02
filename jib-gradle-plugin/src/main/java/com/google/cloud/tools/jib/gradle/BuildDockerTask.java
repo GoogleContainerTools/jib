@@ -115,7 +115,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
             .build();
 
-    BuildStepsRunner.forBuildToDockerDaemon(DOCKER_CLIENT, buildConfiguration).build(helpfulSuggestions);
+    BuildStepsRunner.forBuildToDockerDaemon(DOCKER_CLIENT, buildConfiguration)
+        .build(helpfulSuggestions);
   }
 
   @Override

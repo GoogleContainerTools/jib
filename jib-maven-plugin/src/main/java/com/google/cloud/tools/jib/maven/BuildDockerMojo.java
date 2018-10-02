@@ -99,7 +99,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
               .build();
 
-      BuildStepsRunner.forBuildToDockerDaemon(DOCKER_CLIENT, buildConfiguration).build(helpfulSuggestions);
+      BuildStepsRunner.forBuildToDockerDaemon(DOCKER_CLIENT, buildConfiguration)
+          .build(helpfulSuggestions);
       getLog().info("");
 
     } catch (InvalidImageReferenceException | IOException ex) {
