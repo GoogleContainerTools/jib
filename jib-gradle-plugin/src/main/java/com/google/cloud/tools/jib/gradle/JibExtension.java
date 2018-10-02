@@ -16,18 +16,11 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.image.ImageFormat;
-import com.google.common.base.Preconditions;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
-import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
@@ -76,10 +69,6 @@ public class JibExtension {
   private final Property<Boolean> useOnlyProjectCache;
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<Path> extraDirectory;
-  private final ListProperty<String> jvmFlags;
-  private final Property<String> mainClass;
-  private final ListProperty<String> args;
-  private final Property<ImageFormat> format;
 
   public JibExtension(Project project) {
     ObjectFactory objectFactory = project.getObjects();
@@ -88,18 +77,11 @@ public class JibExtension {
     to = objectFactory.newInstance(TargetImageParameters.class, "jib.to");
     container = objectFactory.newInstance(ContainerParameters.class);
 
-    jvmFlags = objectFactory.listProperty(String.class);
-    mainClass = objectFactory.property(String.class);
-    args = objectFactory.listProperty(String.class);
-    format = objectFactory.property(ImageFormat.class);
-
     useOnlyProjectCache = objectFactory.property(Boolean.class);
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     extraDirectory = objectFactory.property(Path.class);
 
     // Sets defaults.
-    jvmFlags.set(Collections.emptyList());
-    args.set(Collections.emptyList());
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
     extraDirectory.set(resolveDefaultExtraDirectory(project.getProjectDir().toPath()));
@@ -117,26 +99,6 @@ public class JibExtension {
     action.execute(container);
   }
 
-  public void setJvmFlags(List<String> jvmFlags) {
-    this.jvmFlags.set(jvmFlags);
-  }
-
-  public void setMainClass(String mainClass) {
-    this.mainClass.set(mainClass);
-  }
-
-  public void setArgs(List<String> args) {
-    this.args.set(args);
-  }
-
-  public void setFormat(ImageFormat format) {
-    this.format.set(format);
-  }
-
-  public void setUseOnlyProjectCache(boolean useOnlyProjectCache) {
-    this.useOnlyProjectCache.set(useOnlyProjectCache);
-  }
-
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
     this.allowInsecureRegistries.set(allowInsecureRegistries);
   }
@@ -145,15 +107,8 @@ public class JibExtension {
     this.extraDirectory.set(extraDirectory.toPath());
   }
 
-  @Internal
-  String getBaseImage() {
-    return Preconditions.checkNotNull(from.getImage());
-  }
-
-  @Internal
-  @Nullable
-  String getTargetImage() {
-    return to.getImage();
+  void setUseOnlyProjectCache(boolean useOnlyProjectCache) {
+    this.useOnlyProjectCache.set(useOnlyProjectCache);
   }
 
   @Nested
@@ -172,30 +127,6 @@ public class JibExtension {
   @Optional
   public ContainerParameters getContainer() {
     return container;
-  }
-
-  @Internal
-  @Optional
-  Map<String, String> getEnvironment() {
-    return container.getEnvironment();
-  }
-
-  @Internal
-  @Optional
-  List<String> getExposedPorts() {
-    return container.getPorts();
-  }
-
-  @Internal
-  @Optional
-  Map<String, String> getLabels() {
-    return container.getLabels();
-  }
-
-  @Internal
-  @Optional
-  boolean getUseCurrentTimestamp() {
-    return container.getUseCurrentTimestamp();
   }
 
   @Input

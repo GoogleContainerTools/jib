@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
+import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -98,7 +99,8 @@ class PluginConfigurationProcessor {
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     disableHttpLogging();
-    ImageReference baseImage = ImageReference.parse(jibExtension.getBaseImage());
+    ImageReference baseImage =
+        ImageReference.parse(Preconditions.checkNotNull(jibExtension.getFrom().getImage()));
 
     if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
       logger.warn(
@@ -127,11 +129,11 @@ class PluginConfigurationProcessor {
     ContainerConfiguration.Builder containerConfigurationBuilder =
         ContainerConfiguration.builder()
             .setEntrypoint(entrypoint)
-            .setEnvironment(jibExtension.getEnvironment())
+            .setEnvironment(jibExtension.getContainer().getEnvironment())
             .setProgramArguments(jibExtension.getContainer().getArgs())
-            .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
-            .setLabels(jibExtension.getLabels());
-    if (jibExtension.getUseCurrentTimestamp()) {
+            .setExposedPorts(ExposedPortsParser.parse(jibExtension.getContainer().getPorts()))
+            .setLabels(jibExtension.getContainer().getLabels());
+    if (jibExtension.getContainer().getUseCurrentTimestamp()) {
       logger.warn(
           "Setting image creation time to current time; your image may not be reproducible.");
       containerConfigurationBuilder.setCreationTime(Instant.now());

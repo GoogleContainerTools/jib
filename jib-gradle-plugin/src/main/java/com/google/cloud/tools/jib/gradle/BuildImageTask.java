@@ -78,7 +78,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
         GradleProjectProperties.getForProject(
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
 
-    if (Strings.isNullOrEmpty(jibExtension.getTargetImage())) {
+    if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
       throw new GradleException(
           HelpfulSuggestions.forToNotConfigured(
               "Missing target image parameter",
@@ -87,7 +87,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               "gradle jib --image <your image name>"));
     }
 
-    ImageReference targetImage = ImageReference.parse(jibExtension.getTargetImage());
+    ImageReference targetImage = ImageReference.parse(jibExtension.getTo().getImage());
 
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(

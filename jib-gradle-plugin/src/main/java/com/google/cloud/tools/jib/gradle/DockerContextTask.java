@@ -101,6 +101,7 @@ public class DockerContextTask extends DefaultTask implements JibTask {
   @TaskAction
   public void generateDockerContext() {
     Preconditions.checkNotNull(jibExtension);
+    Preconditions.checkNotNull(jibExtension.getFrom().getImage());
     JibSystemProperties.checkHttpTimeoutProperty();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
@@ -119,14 +120,14 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     try {
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
-      ExposedPortsParser.parse(jibExtension.getExposedPorts());
+      ExposedPortsParser.parse(jibExtension.getContainer().getPorts());
 
       new JavaDockerContextGenerator(gradleProjectProperties.getJavaLayerConfigurations())
-          .setBaseImage(jibExtension.getBaseImage())
+          .setBaseImage(jibExtension.getFrom().getImage())
           .setEntrypoint(entrypoint)
           .setJavaArguments(jibExtension.getContainer().getArgs())
-          .setExposedPorts(jibExtension.getExposedPorts())
-          .setLabels(jibExtension.getLabels())
+          .setExposedPorts(jibExtension.getContainer().getPorts())
+          .setLabels(jibExtension.getContainer().getLabels())
           .generate(Paths.get(targetDir));
 
       getLogger().lifecycle("Created Docker context at " + targetDir);
