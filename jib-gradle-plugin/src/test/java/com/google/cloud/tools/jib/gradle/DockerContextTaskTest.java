@@ -40,6 +40,7 @@ public class DockerContextTaskTest {
   @Rule public final TemporaryFolder projectRoot = new TemporaryFolder();
 
   @Mock private ContainerParameters containerParameters;
+  @Mock private BaseImageParameters baseImageParameters;
 
   private DockerContextTask task;
   private Project project;
@@ -54,7 +55,8 @@ public class DockerContextTaskTest {
     Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
     Mockito.when(jibExtension.getExtraDirectoryPath()).thenReturn(projectRoot.getRoot().toPath());
     Mockito.when(jibExtension.getContainer().getMainClass()).thenReturn("MainClass");
-    Mockito.when(jibExtension.getBaseImage()).thenReturn("base image");
+    Mockito.when(jibExtension.getFrom()).thenReturn(baseImageParameters);
+    Mockito.when(baseImageParameters.getImage()).thenReturn("base image");
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/app");
 
     project = ProjectBuilder.builder().withProjectDir(projectRoot.getRoot()).build();

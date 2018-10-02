@@ -45,7 +45,7 @@ public class PluginConfigurationProcessorTest {
 
   @Before
   public void setUp() {
-    Mockito.doReturn("gcr.io/distroless/java").when(mockJibExtension).getBaseImage();
+    Mockito.doReturn("gcr.io/distroless/java").when(mockBaseImageParameters).getImage();
     Mockito.doReturn(mockBaseImageParameters).when(mockJibExtension).getFrom();
     Mockito.doReturn(new AuthParameters("mock")).when(mockBaseImageParameters).getAuth();
     Mockito.doReturn(mockContainerParameters).when(mockJibExtension).getContainer();

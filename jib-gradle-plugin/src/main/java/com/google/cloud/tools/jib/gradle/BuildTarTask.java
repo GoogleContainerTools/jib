@@ -109,7 +109,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
     ImageReference targetImage =
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-            jibExtension.getTargetImage(),
+            jibExtension.getTo().getImage(),
             gradleProjectProperties.getEventDispatcher(),
             getProject().getName(),
             getProject().getVersion().toString(),

@@ -86,7 +86,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     ImageReference targetImage =
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-            jibExtension.getTargetImage(),
+            jibExtension.getTo().getImage(),
             gradleProjectProperties.getEventDispatcher(),
             getProject().getName(),
             getProject().getVersion().toString(),

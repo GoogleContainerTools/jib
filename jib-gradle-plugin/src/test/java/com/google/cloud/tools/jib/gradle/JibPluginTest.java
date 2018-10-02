@@ -205,7 +205,8 @@ public class JibPluginTest {
         JibPlugin.DEFAULT_WAR_FROM_IMAGE,
         ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
             .getJib()
-            .getBaseImage());
+            .getFrom()
+            .getImage());
     Assert.assertEquals(
         JibPlugin.DEFAULT_WEB_APP_ROOT,
         ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
@@ -225,7 +226,8 @@ public class JibPluginTest {
         JibPlugin.DEFAULT_FROM_IMAGE,
         ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
             .getJib()
-            .getBaseImage());
+            .getFrom()
+            .getImage());
     Assert.assertEquals(
         JavaLayerConfigurations.DEFAULT_APP_ROOT,
         ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
