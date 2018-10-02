@@ -51,7 +51,7 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
    */
   private static String makeUnexpectedImageDigestWarning(
       DescriptorDigest expectedDigest, List<String> receivedDigests) {
-    if (receivedDigests.size() == 0) {
+    if (receivedDigests.isEmpty()) {
       return "Expected image digest " + expectedDigest + ", but received none";
     }
 
