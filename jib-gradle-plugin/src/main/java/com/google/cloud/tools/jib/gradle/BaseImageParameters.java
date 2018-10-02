@@ -22,6 +22,7 @@ import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
+import org.gradle.api.tasks.Optional;
 
 /** Object in {@link JibExtension} that configures the base image. */
 public class BaseImageParameters {
@@ -38,6 +39,7 @@ public class BaseImageParameters {
 
   @Input
   @Nullable
+  @Optional
   public String getImage() {
     return image;
   }
@@ -48,6 +50,7 @@ public class BaseImageParameters {
 
   @Input
   @Nullable
+  @Optional
   public String getCredHelper() {
     return credHelper;
   }
@@ -57,6 +60,7 @@ public class BaseImageParameters {
   }
 
   @Nested
+  @Optional
   public AuthParameters getAuth() {
     return auth;
   }

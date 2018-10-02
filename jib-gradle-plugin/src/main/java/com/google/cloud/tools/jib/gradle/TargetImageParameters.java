@@ -42,6 +42,7 @@ public class TargetImageParameters {
 
   @Input
   @Nullable
+  @Optional
   public String getImage() {
     return image;
   }
@@ -62,6 +63,7 @@ public class TargetImageParameters {
 
   @Input
   @Nullable
+  @Optional
   public String getCredHelper() {
     return credHelper;
   }
@@ -71,6 +73,7 @@ public class TargetImageParameters {
   }
 
   @Nested
+  @Optional
   public AuthParameters getAuth() {
     return auth;
   }
