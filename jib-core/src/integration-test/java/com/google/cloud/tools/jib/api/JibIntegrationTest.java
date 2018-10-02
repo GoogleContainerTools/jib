@@ -25,7 +25,9 @@ import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -45,8 +47,18 @@ public class JibIntegrationTest {
    */
   private static String pullAndRunBuiltImage(String imageReference)
       throws IOException, InterruptedException {
-    new Command("docker", "pull", imageReference).run();
+    localRegistry.pull(imageReference);
     return new Command("docker", "run", "--rm", imageReference).run();
+  }
+
+  @Before
+  public void setUp() {
+    System.setProperty("sendCredentialsOverHttp", "true");
+  }
+
+  @After
+  public void tearDown() {
+    System.clearProperty("sendCredentialsOverHttp");
   }
 
   @Test
