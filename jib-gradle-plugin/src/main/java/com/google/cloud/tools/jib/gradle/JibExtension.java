@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;

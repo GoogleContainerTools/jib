@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;

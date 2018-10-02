@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
 import java.util.Set;

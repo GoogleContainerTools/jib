@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -99,8 +100,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
     Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
             mavenProjectProperties.getEventDispatcher(),
-            JibPluginConfiguration.PropertyNames.toAuthUsername,
-            JibPluginConfiguration.PropertyNames.toAuthPassword,
+            PropertyNames.toAuthUsername,
+            PropertyNames.toAuthPassword,
             getTargetImageAuth());
     if (optionalToCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(

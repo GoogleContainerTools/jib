@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -40,34 +41,6 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 
 /** Defines the configuration parameters for Jib. Jib {@link Mojo}s should extend this class. */
 abstract class JibPluginConfiguration extends AbstractMojo {
-
-  /** Names of system properties used to set configuration via commandline. */
-  static class PropertyNames {
-    private static final String fromImage = "jib.from.image";
-    private static final String fromCredHelper = "jib.from.credHelper";
-    static final String fromAuthUsername = "jib.from.auth.username";
-    static final String fromAuthPassword = "jib.from.auth.password";
-    private static final String toImage = "image";
-    private static final String toImageAlternate = "jib.to.image";
-    private static final String toTags = "jib.to.tags";
-    private static final String toCredHelper = "jib.to.credHelper";
-    static final String toAuthUsername = "jib.to.auth.username";
-    static final String toAuthPassword = "jib.to.auth.password";
-    private static final String containerAppRoot = "jib.container.appRoot";
-    private static final String containerArgs = "jib.container.args";
-    private static final String containerEntrypoint = "jib.container.entrypoint";
-    private static final String containerEnvironment = "jib.container.environment";
-    private static final String containerFormat = "jib.container.format";
-    private static final String containerJvmFlags = "jib.container.jvmFlags";
-    private static final String containerLabels = "jib.container.labels";
-    private static final String containerMainClass = "jib.container.mainClass";
-    private static final String containerPorts = "jib.container.ports";
-    private static final String containerUseCurrentTimestamp = "jib.container.useCurrentTimestamp";
-    private static final String useOnlyProjectCache = "jib.useOnlyProjectCache";
-    private static final String allowInsecureRegistries = "jib.allowInsecureRegistries";
-    private static final String extraDirectory = "jib.extraDirectory";
-    private static final String skip = "jib.skip";
-  }
 
   /** Used to configure {@code from.auth} and {@code to.auth} parameters. */
   public static class AuthConfiguration implements AuthProperty {
@@ -259,11 +232,11 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   String getTargetImage() {
-    if (System.getProperty(PropertyNames.toImage) != null) {
-      return System.getProperty(PropertyNames.toImage);
-    }
     if (System.getProperty(PropertyNames.toImageAlternate) != null) {
       return System.getProperty(PropertyNames.toImageAlternate);
+    }
+    if (System.getProperty(PropertyNames.toImage) != null) {
+      return System.getProperty(PropertyNames.toImage);
     }
     return to.image;
   }
