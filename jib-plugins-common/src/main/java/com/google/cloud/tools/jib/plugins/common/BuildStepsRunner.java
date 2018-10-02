@@ -96,7 +96,8 @@ public class BuildStepsRunner {
    * @param buildConfiguration the configuration parameters for the build
    * @return a {@link BuildStepsRunner} for building to a Docker daemon
    */
-  public static BuildStepsRunner forBuildToDockerDaemon(DockerClient dockerClient, BuildConfiguration buildConfiguration) {
+  public static BuildStepsRunner forBuildToDockerDaemon(
+      DockerClient dockerClient, BuildConfiguration buildConfiguration) {
     return new BuildStepsRunner(
         BuildSteps.forBuildToDockerDaemon(dockerClient, buildConfiguration),
         buildMessageWithTargetImageReferences(
