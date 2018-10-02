@@ -13,6 +13,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
 [I need to RUN commands like `apt-get`.](#i-need-to-run-commands-like-apt-get)\
 [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)\
+[I want more control over which files to place in the extra directory/where they end up in the container](#i-want-more-control-over-which-files-to-place-in-the-extra-directory/where-they-end-up-in-the-container)\
 [Can I build to a local Docker daemon?](#can-i-build-to-a-local-docker-daemon)\
 [I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
 [How do I configure a proxy?](#how-do-i-configure-a-proxy)\
@@ -167,10 +168,6 @@ Jib packages your Java application into the following paths on the image:
 * `/app/classes/` contains all the classes files
 * the contents of the extra directory (default `src/main/jib`) are placed in the container's root directory (`/`)
 
-### I want more control over which files to place in the extra directory/where they end up in the container
-
-TODO
-
 ### I need to RUN commands like `apt-get`.
 
 Running commands like `apt-get` slows down the container build process. We **do not recommend or support** running commands as part of the build.
@@ -206,6 +203,10 @@ jib.from.image = 'custom-base-image'
 ### Can I ADD a custom directory to the image?
 
 We currently support adding a custom directory with an **incubating** feature. This feature may change in later versions. If your application needs to use custom files, place them into the `src/main/jib` folder. Files placed here will be added to the filesystem of the container. For example, `src/main/jib/foo/bar` would add `/foo/bar` into the container filesystem.
+
+### I want more control over which files to place in the extra directory/where they end up in the container
+
+
 
 ### Can I build to a local Docker daemon?
 
