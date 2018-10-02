@@ -40,6 +40,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
+  private static final DockerClient DOCKER_CLIENT = DockerClient.newClient();
+
   @Nullable private JibExtension jibExtension;
 
   /**
@@ -67,7 +69,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   @TaskAction
   public void buildDocker()
       throws InvalidImageReferenceException, IOException, BuildStepsExecutionException {
-    if (!new DockerClient().isDockerInstalled()) {
+    if (!DOCKER_CLIENT.isDockerInstalled()) {
       throw new GradleException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
@@ -113,7 +115,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
             .build();
 
-    BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(helpfulSuggestions);
+    BuildStepsRunner.forBuildToDockerDaemon(DOCKER_CLIENT, buildConfiguration).build(helpfulSuggestions);
   }
 
   @Override

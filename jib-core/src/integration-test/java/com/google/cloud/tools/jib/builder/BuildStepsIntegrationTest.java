@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
@@ -205,7 +206,7 @@ public class BuildStepsIntegrationTest {
                 ImageReference.of("gcr.io", "distroless/java", "latest"),
                 ImageReference.of(null, imageReference, null))
             .build();
-    BuildSteps.forBuildToDockerDaemon(buildConfiguration).run();
+    BuildSteps.forBuildToDockerDaemon(DockerClient.newClient(), buildConfiguration).run();
 
     assertDockerInspect(imageReference);
     Assert.assertEquals(
@@ -222,7 +223,7 @@ public class BuildStepsIntegrationTest {
                 ImageReference.of(null, imageReference, null))
             .setAdditionalTargetImageTags(ImmutableSet.of("testtag2", "testtag3"))
             .build();
-    BuildSteps.forBuildToDockerDaemon(buildConfiguration).run();
+    BuildSteps.forBuildToDockerDaemon(DockerClient.newClient(), buildConfiguration).run();
 
     assertDockerInspect(imageReference);
     Assert.assertEquals(

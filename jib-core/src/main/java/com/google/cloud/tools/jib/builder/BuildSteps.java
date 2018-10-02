@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
@@ -65,10 +66,12 @@ public class BuildSteps {
   /**
    * All the steps to build to Docker daemon
    *
+   * @param dockerClient the {@link DockerClient} for running {@code docker} commands
    * @param buildConfiguration the configuration parameters for the build
    * @return a new {@link BuildSteps} for building to a Docker daemon
    */
-  public static BuildSteps forBuildToDockerDaemon(BuildConfiguration buildConfiguration) {
+  public static BuildSteps forBuildToDockerDaemon(
+      DockerClient dockerClient, BuildConfiguration buildConfiguration) {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_DAEMON,
         buildConfiguration,
@@ -79,7 +82,7 @@ public class BuildSteps {
                 .runBuildAndCacheApplicationLayerSteps()
                 .runBuildImageStep()
                 .runFinalizingBuildStep()
-                .runLoadDockerStep()
+                .runLoadDockerStep(dockerClient)
                 .waitOnLoadDockerStep());
   }
 
