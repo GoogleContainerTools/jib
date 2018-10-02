@@ -23,6 +23,8 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +38,7 @@ import javax.annotation.Nullable;
 public class ConfigurationPropertyValidator {
 
   /** Matches key-value pairs in the form of "key=value" */
-  private static final Pattern environmentPattern = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
+  private static final Pattern ENVIRONMENT_PATTERN = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
 
   /**
    * Gets a {@link Credential} from a username and password. First tries system properties, then
@@ -150,13 +152,13 @@ public class ConfigurationPropertyValidator {
     // Split on non-escaped commas
     List<String> entries = parseListProperty(property);
     for (String entry : entries) {
-      Matcher matcher = environmentPattern.matcher(entry);
+      Matcher matcher = ENVIRONMENT_PATTERN.matcher(entry);
       if (!matcher.matches()) {
         throw new IllegalArgumentException("'" + entry + "' is not a valid key-value pair");
       }
       result.put(matcher.group("name"), matcher.group("value"));
     }
-    return result;
+    return ImmutableMap.copyOf(result);
   }
 
   /**
@@ -167,27 +169,19 @@ public class ConfigurationPropertyValidator {
    */
   public static List<String> parseListProperty(String property) {
     List<String> items = new ArrayList<>();
-    boolean shouldEscape = false;
     int startIndex = 0;
-    int endIndex = 0;
-    for (; endIndex < property.length(); endIndex++) {
-      // If previously encountered a backslash, skip this character
-      if (shouldEscape) {
-        shouldEscape = false;
-        continue;
-      }
-
+    for (int endIndex = 0; endIndex < property.length(); endIndex++) {
       if (property.charAt(endIndex) == ',') {
         // Split on non-escaped comma
         items.add(property.substring(startIndex, endIndex));
         startIndex = endIndex + 1;
       } else if (property.charAt(endIndex) == '\\') {
         // Found a backslash, ignore next character
-        shouldEscape = true;
+        endIndex++;
       }
     }
     items.add(property.substring(startIndex));
-    return items;
+    return ImmutableList.copyOf(items);
   }
 
   private ConfigurationPropertyValidator() {}

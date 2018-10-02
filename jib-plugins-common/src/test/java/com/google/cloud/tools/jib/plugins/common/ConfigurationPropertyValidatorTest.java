@@ -163,8 +163,8 @@ public class ConfigurationPropertyValidatorTest {
     Assert.assertEquals(
         ImmutableMap.of("abc", "def"), ConfigurationPropertyValidator.parseMapProperty("abc=def"));
     Assert.assertEquals(
-        ImmutableMap.of("abc", "def", "gh\\,i", "j\\\\\\,kl", "mno", "pqr"),
-        ConfigurationPropertyValidator.parseMapProperty("abc=def,gh\\,i=j\\\\\\,kl,mno=pqr"));
+        ImmutableMap.of("abc", "def", "gh\\,i", "j\\\\\\,kl", "mno", "", "pqr", "stu"),
+        ConfigurationPropertyValidator.parseMapProperty("abc=def,gh\\,i=j\\\\\\,kl,mno=,pqr=stu"));
     try {
       ConfigurationPropertyValidator.parseMapProperty("not valid");
       Assert.fail();
