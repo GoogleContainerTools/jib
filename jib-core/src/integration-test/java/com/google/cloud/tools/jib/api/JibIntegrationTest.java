@@ -17,18 +17,23 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 /** Integration tests for {@link Jib}. */
 public class JibIntegrationTest {
+
+  @ClassRule
+  public static final LocalRegistry localRegistry = new LocalRegistry(5000, "username", "password");
 
   /**
    * Pulls a built image and attempts to run it.
@@ -49,19 +54,16 @@ public class JibIntegrationTest {
       throws InvalidImageReferenceException, InterruptedException, ExecutionException,
           CacheDirectoryCreationException, IOException {
     ImageReference targetImageReference =
-        ImageReference.of(
-            "gcr.io",
-            IntegrationTestingConfiguration.getGCPProject() + "/core",
-            "basic-helloworld");
+        ImageReference.of("localhost:5000", "jib-core", "basic-helloworld");
     JibContainer jibContainer =
         Jib.from("busybox")
             .setEntrypoint("echo", "Hello World")
             .containerize(
                 Containerizer.to(
-                    RegistryImage.named(targetImageReference)
-                        .addCredentialRetriever(
-                            CredentialRetrieverFactory.forImage(targetImageReference)
-                                .dockerConfig())));
+                        RegistryImage.named(targetImageReference)
+                            .addCredentialRetriever(
+                                () -> Optional.of(Credential.basic("username", "password"))))
+                    .setAllowInsecureRegistries(true));
 
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
     Assert.assertEquals(

@@ -346,7 +346,8 @@ public class JibContainerBuilder {
         .setBaseImageLayersCacheDirectory(containerizer.getBaseImageLayersCacheDirectory())
         .setApplicationLayersCacheDirectory(containerizer.getApplicationLayersCacheDirectory())
         .setContainerConfiguration(toContainerConfiguration())
-        .setLayerConfigurations(layerConfigurations);
+        .setLayerConfigurations(layerConfigurations)
+        .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries());
 
     if (containerizer.getExecutorService().isPresent()) {
       buildConfigurationBuilder.setExecutorService(containerizer.getExecutorService().get());
