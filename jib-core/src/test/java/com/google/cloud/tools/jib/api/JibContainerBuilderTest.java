@@ -104,8 +104,7 @@ public class JibContainerBuilderTest {
 
   @Test
   public void testToBuildConfiguration()
-      throws InvalidImageReferenceException, CredentialRetrievalException, IOException,
-          CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, CredentialRetrievalException, IOException, CacheDirectoryCreationException {
     RegistryImage baseImage =
         RegistryImage.named("base/image").addCredentialRetriever(mockCredentialRetriever);
     RegistryImage targetImage =

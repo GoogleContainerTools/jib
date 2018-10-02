@@ -21,6 +21,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -91,12 +92,14 @@ public class BuildStepsRunner {
   /**
    * Creates a runner to build to the Docker daemon. Creates a directory for the cache, if needed.
    *
+   * @param dockerClient the {@link DockerClient} for running {@code docker} commands
    * @param buildConfiguration the configuration parameters for the build
    * @return a {@link BuildStepsRunner} for building to a Docker daemon
    */
-  public static BuildStepsRunner forBuildToDockerDaemon(BuildConfiguration buildConfiguration) {
+  public static BuildStepsRunner forBuildToDockerDaemon(
+      DockerClient dockerClient, BuildConfiguration buildConfiguration) {
     return new BuildStepsRunner(
-        BuildSteps.forBuildToDockerDaemon(buildConfiguration),
+        BuildSteps.forBuildToDockerDaemon(dockerClient, buildConfiguration),
         buildMessageWithTargetImageReferences(
             buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
         buildMessageWithTargetImageReferences(

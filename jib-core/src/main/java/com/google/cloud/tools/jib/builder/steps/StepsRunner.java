@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.base.Preconditions;
@@ -178,10 +179,11 @@ public class StepsRunner {
     return this;
   }
 
-  public StepsRunner runLoadDockerStep() {
+  public StepsRunner runLoadDockerStep(DockerClient dockerClient) {
     loadDockerStep =
         new LoadDockerStep(
             listeningExecutorService,
+            dockerClient,
             buildConfiguration,
             Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep),
             Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps),

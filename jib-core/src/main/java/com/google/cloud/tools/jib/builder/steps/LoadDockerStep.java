@@ -42,6 +42,7 @@ import java.util.concurrent.ExecutionException;
 /** Adds image layers to a tarball and loads into Docker daemon. */
 class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorDigest> {
 
+  private final DockerClient dockerClient;
   private final BuildConfiguration buildConfiguration;
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
   private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
@@ -52,11 +53,13 @@ class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<Descriptor
 
   LoadDockerStep(
       ListeningExecutorService listeningExecutorService,
+      DockerClient dockerClient,
       BuildConfiguration buildConfiguration,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
       ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps,
       BuildImageStep buildImageStep) {
     this.listeningExecutorService = listeningExecutorService;
+    this.dockerClient = dockerClient;
     this.buildConfiguration = buildConfiguration;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
@@ -100,7 +103,6 @@ class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<Descriptor
     buildConfiguration
         .getEventDispatcher()
         .dispatch(LogEvent.lifecycle("Loading to Docker daemon..."));
-    DockerClient dockerClient = new DockerClient();
     dockerClient.load(new ImageToTarballTranslator(image).toTarballBlob(targetImageReference));
 
     // Tags the image with all the additional tags, skipping the one 'docker load' already loaded.

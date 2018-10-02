@@ -42,6 +42,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
+  private static final DockerClient DOCKER_CLIENT = DockerClient.newClient();
+
   @Override
   public void execute() throws MojoExecutionException {
     if (isSkipped()) {
@@ -53,7 +55,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       return;
     }
 
-    if (!new DockerClient().isDockerInstalled()) {
+    if (!DOCKER_CLIENT.isDockerInstalled()) {
       throw new MojoExecutionException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
@@ -97,7 +99,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
               .build();
 
-      BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(helpfulSuggestions);
+      BuildStepsRunner.forBuildToDockerDaemon(DOCKER_CLIENT, buildConfiguration)
+          .build(helpfulSuggestions);
       getLog().info("");
 
     } catch (InvalidImageReferenceException | IOException ex) {
