@@ -21,6 +21,8 @@ import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
@@ -142,6 +144,32 @@ public class ConfigurationPropertyValidatorTest {
           null, mockEventDispatcher, "%#&///*@(", "%$#//&*@($", helpfulSuggestions);
       Assert.fail();
     } catch (InvalidImageReferenceException ignored) {
+    }
+  }
+
+  @Test
+  public void testParseListProperty() {
+    Assert.assertEquals(
+        ImmutableList.of("abc"), ConfigurationPropertyValidator.parseListProperty("abc"));
+    Assert.assertEquals(
+        ImmutableList.of("abcd", "efg\\,hi\\\\", "", "\\jkl\\,", "\\\\\\,mnop", ""),
+        ConfigurationPropertyValidator.parseListProperty(
+            "abcd,efg\\,hi\\\\,,\\jkl\\,,\\\\\\,mnop,"));
+    Assert.assertEquals(ImmutableList.of(""), ConfigurationPropertyValidator.parseListProperty(""));
+  }
+
+  @Test
+  public void testParseMapProperty() {
+    Assert.assertEquals(
+        ImmutableMap.of("abc", "def"), ConfigurationPropertyValidator.parseMapProperty("abc=def"));
+    Assert.assertEquals(
+        ImmutableMap.of("abc", "def", "gh\\,i", "j\\\\\\,kl", "mno", "", "pqr", "stu"),
+        ConfigurationPropertyValidator.parseMapProperty("abc=def,gh\\,i=j\\\\\\,kl,mno=,pqr=stu"));
+    try {
+      ConfigurationPropertyValidator.parseMapProperty("not valid");
+      Assert.fail();
+    } catch (IllegalArgumentException ignored) {
+      // pass
     }
   }
 }
