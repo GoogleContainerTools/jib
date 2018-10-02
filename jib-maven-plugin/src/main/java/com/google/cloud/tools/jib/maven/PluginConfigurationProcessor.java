@@ -110,8 +110,8 @@ class PluginConfigurationProcessor {
     Optional<Credential> optionalFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
             projectProperties.getEventDispatcher(),
-            "jib.from.auth.username",
-            "jib.from.auth.password",
+            JibPluginConfiguration.PropertyNames.fromAuthUsername,
+            JibPluginConfiguration.PropertyNames.fromAuthPassword,
             jibPluginConfiguration.getBaseImageAuth());
     if (optionalFromCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(

@@ -23,11 +23,22 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 /** Validator for plugin configuration parameters and system properties. */
 public class ConfigurationPropertyValidator {
+
+  /** Matches key-value pairs in the form of "key=value" */
+  private static final Pattern ENVIRONMENT_PATTERN = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
 
   /**
    * Gets a {@link Credential} from a username and password. First tries system properties, then
@@ -126,6 +137,51 @@ public class ConfigurationPropertyValidator {
     } else {
       return ImageReference.parse(targetImage);
     }
+  }
+
+  /**
+   * Parses a string in the form of "key1=value1,key2=value2,..." into a map.
+   *
+   * @param property the map string to parse, with entries separated by "," and key-value pairs
+   *     separated by "="
+   * @return the map of parsed values
+   */
+  public static Map<String, String> parseMapProperty(String property) {
+    Map<String, String> result = new HashMap<>();
+
+    // Split on non-escaped commas
+    List<String> entries = parseListProperty(property);
+    for (String entry : entries) {
+      Matcher matcher = ENVIRONMENT_PATTERN.matcher(entry);
+      if (!matcher.matches()) {
+        throw new IllegalArgumentException("'" + entry + "' is not a valid key-value pair");
+      }
+      result.put(matcher.group("name"), matcher.group("value"));
+    }
+    return ImmutableMap.copyOf(result);
+  }
+
+  /**
+   * Parses a comma-separated string into a list. Ignores commas escaped with "\".
+   *
+   * @param property the comma-separated string
+   * @return the list of parsed values
+   */
+  public static List<String> parseListProperty(String property) {
+    List<String> items = new ArrayList<>();
+    int startIndex = 0;
+    for (int endIndex = 0; endIndex < property.length(); endIndex++) {
+      if (property.charAt(endIndex) == ',') {
+        // Split on non-escaped comma
+        items.add(property.substring(startIndex, endIndex));
+        startIndex = endIndex + 1;
+      } else if (property.charAt(endIndex) == '\\') {
+        // Found a backslash, ignore next character
+        endIndex++;
+      }
+    }
+    items.add(property.substring(startIndex));
+    return ImmutableList.copyOf(items);
   }
 
   private ConfigurationPropertyValidator() {}
