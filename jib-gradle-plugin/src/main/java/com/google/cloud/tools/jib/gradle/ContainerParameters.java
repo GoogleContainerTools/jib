@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.common.base.Preconditions;
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +47,9 @@ public class ContainerParameters {
   @Input
   @Optional
   public boolean getUseCurrentTimestamp() {
+    if (System.getProperty(PropertyNames.containerUseCurrentTimestamp) != null) {
+      return Boolean.getBoolean(PropertyNames.containerUseCurrentTimestamp);
+    }
     return useCurrentTimestamp;
   }
 
@@ -56,6 +60,10 @@ public class ContainerParameters {
   @Input
   @Optional
   public List<String> getEntrypoint() {
+    if (System.getProperty(PropertyNames.containerEntrypoint) != null) {
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.containerEntrypoint));
+    }
     return entrypoint;
   }
 
@@ -66,6 +74,10 @@ public class ContainerParameters {
   @Input
   @Optional
   public List<String> getJvmFlags() {
+    if (System.getProperty(PropertyNames.containerJvmFlags) != null) {
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.containerJvmFlags));
+    }
     return jvmFlags;
   }
 
@@ -76,6 +88,10 @@ public class ContainerParameters {
   @Input
   @Optional
   public Map<String, String> getEnvironment() {
+    if (System.getProperty(PropertyNames.containerEnvironment) != null) {
+      return ConfigurationPropertyValidator.parseMapProperty(
+          System.getProperty(PropertyNames.containerEnvironment));
+    }
     return environment;
   }
 
@@ -87,6 +103,9 @@ public class ContainerParameters {
   @Nullable
   @Optional
   public String getMainClass() {
+    if (System.getProperty(PropertyNames.containerMainClass) != null) {
+      return System.getProperty(PropertyNames.containerMainClass);
+    }
     return mainClass;
   }
 
@@ -97,6 +116,10 @@ public class ContainerParameters {
   @Input
   @Optional
   public List<String> getArgs() {
+    if (System.getProperty(PropertyNames.containerArgs) != null) {
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.containerArgs));
+    }
     return args;
   }
 
@@ -107,6 +130,10 @@ public class ContainerParameters {
   @Input
   @Optional
   public Class<? extends BuildableManifestTemplate> getFormat() {
+    if (System.getProperty(PropertyNames.containerFormat) != null) {
+      return ImageFormat.valueOf(System.getProperty(PropertyNames.containerFormat))
+          .getManifestTemplateClass();
+    }
     return Preconditions.checkNotNull(format).getManifestTemplateClass();
   }
 
@@ -117,6 +144,10 @@ public class ContainerParameters {
   @Input
   @Optional
   public List<String> getPorts() {
+    if (System.getProperty(PropertyNames.containerPorts) != null) {
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.containerPorts));
+    }
     return ports;
   }
 
@@ -127,6 +158,10 @@ public class ContainerParameters {
   @Input
   @Optional
   public Map<String, String> getLabels() {
+    if (System.getProperty(PropertyNames.containerLabels) != null) {
+      return ConfigurationPropertyValidator.parseMapProperty(
+          System.getProperty(PropertyNames.containerLabels));
+    }
     return labels;
   }
 
@@ -137,6 +172,9 @@ public class ContainerParameters {
   @Input
   @Optional
   public String getAppRoot() {
+    if (System.getProperty(PropertyNames.containerAppRoot) != null) {
+      return System.getProperty(PropertyNames.containerAppRoot);
+    }
     return appRoot;
   }
 

@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -42,6 +44,9 @@ public class TargetImageParameters implements ImageParameters {
   @Nullable
   @Override
   public String getImage() {
+    if (System.getProperty(PropertyNames.toImage) != null) {
+      return System.getProperty(PropertyNames.toImage);
+    }
     return image;
   }
 
@@ -53,6 +58,11 @@ public class TargetImageParameters implements ImageParameters {
   @Input
   @Optional
   public Set<String> getTags() {
+    if (System.getProperty(PropertyNames.toTags) != null) {
+      return ImmutableSet.copyOf(
+          ConfigurationPropertyValidator.parseListProperty(
+              System.getProperty(PropertyNames.toTags)));
+    }
     return tags;
   }
 
@@ -63,6 +73,9 @@ public class TargetImageParameters implements ImageParameters {
   @Nullable
   @Override
   public String getCredHelper() {
+    if (System.getProperty(PropertyNames.toCredHelper) != null) {
+      return System.getProperty(PropertyNames.toCredHelper);
+    }
     return credHelper;
   }
 
@@ -73,6 +86,7 @@ public class TargetImageParameters implements ImageParameters {
 
   @Override
   public AuthParameters getAuth() {
+    // System properties are handled in ConfigurationPropertyValidator
     return auth;
   }
 

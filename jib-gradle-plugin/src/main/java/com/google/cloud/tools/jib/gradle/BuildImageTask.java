@@ -96,8 +96,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
             gradleProjectProperties.getEventDispatcher(),
-            "jib.to.auth.username",
-            "jib.to.auth.password",
+            PropertyNames.toAuthUsername,
+            PropertyNames.toAuthPassword,
             jibExtension.getTo().getAuth());
     optionalToCredential.ifPresent(
         toCredential ->

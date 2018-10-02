@@ -37,6 +37,9 @@ public class BaseImageParameters implements ImageParameters {
   @Nullable
   @Override
   public String getImage() {
+    if (System.getProperty(PropertyNames.fromImage) != null) {
+      return System.getProperty(PropertyNames.fromImage);
+    }
     return image;
   }
 
@@ -48,6 +51,9 @@ public class BaseImageParameters implements ImageParameters {
   @Nullable
   @Override
   public String getCredHelper() {
+    if (System.getProperty(PropertyNames.fromCredHelper) != null) {
+      return System.getProperty(PropertyNames.fromCredHelper);
+    }
     return credHelper;
   }
 
@@ -58,6 +64,7 @@ public class BaseImageParameters implements ImageParameters {
 
   @Override
   public AuthParameters getAuth() {
+    // System properties are handled in ConfigurationPropertyValidator
     return auth;
   }
 
