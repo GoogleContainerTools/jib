@@ -151,11 +151,11 @@ public class JibExtension {
     }
   }
 
-  public void from(Action<? super ImageParameters> action) {
+  public void from(Action<? super BaseImageParameters> action) {
     action.execute(from);
   }
 
-  public void to(Action<? super ImageParameters> action) {
+  public void to(Action<? super TargetImageParameters> action) {
     action.execute(to);
   }
 
