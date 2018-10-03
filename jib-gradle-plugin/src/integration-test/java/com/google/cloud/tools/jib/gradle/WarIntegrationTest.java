@@ -29,7 +29,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 /** Integration tests for building WAR images. */
-public class WarTest {
+public class WarIntegrationTest {
 
   @ClassRule
   public static final TestProject jettyServlet25Project = new TestProject("war_jetty_servlet25");
