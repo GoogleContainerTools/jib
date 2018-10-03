@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -40,34 +41,6 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 
 /** Defines the configuration parameters for Jib. Jib {@link Mojo}s should extend this class. */
 abstract class JibPluginConfiguration extends AbstractMojo {
-
-  /** Names of system properties used to set configuration via commandline. */
-  static class PropertyNames {
-    private static final String fromImage = "jib.from.image";
-    private static final String fromCredHelper = "jib.from.credHelper";
-    static final String fromAuthUsername = "jib.from.auth.username";
-    static final String fromAuthPassword = "jib.from.auth.password";
-    private static final String toImage = "image";
-    private static final String toImageAlternate = "jib.to.image";
-    private static final String toTags = "jib.to.tags";
-    private static final String toCredHelper = "jib.to.credHelper";
-    static final String toAuthUsername = "jib.to.auth.username";
-    static final String toAuthPassword = "jib.to.auth.password";
-    private static final String containerAppRoot = "jib.container.appRoot";
-    private static final String containerArgs = "jib.container.args";
-    private static final String containerEntrypoint = "jib.container.entrypoint";
-    private static final String containerEnvironment = "jib.container.environment";
-    private static final String containerFormat = "jib.container.format";
-    private static final String containerJvmFlags = "jib.container.jvmFlags";
-    private static final String containerLabels = "jib.container.labels";
-    private static final String containerMainClass = "jib.container.mainClass";
-    private static final String containerPorts = "jib.container.ports";
-    private static final String containerUseCurrentTimestamp = "jib.container.useCurrentTimestamp";
-    private static final String useOnlyProjectCache = "jib.useOnlyProjectCache";
-    private static final String allowInsecureRegistries = "jib.allowInsecureRegistries";
-    private static final String extraDirectory = "jib.extraDirectory";
-    private static final String skip = "jib.skip";
-  }
 
   /** Used to configure {@code from.auth} and {@code to.auth} parameters. */
   public static class AuthConfiguration implements AuthProperty {
@@ -186,13 +159,16 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Parameter private ContainerParameters container = new ContainerParameters();
 
-  @Parameter(defaultValue = "false", required = true, property = PropertyNames.useOnlyProjectCache)
+  @Parameter(
+      defaultValue = "false",
+      required = true,
+      property = PropertyNames.USE_ONLY_PROJECT_CACHE)
   private boolean useOnlyProjectCache;
 
   @Parameter(
       defaultValue = "false",
       required = true,
-      property = PropertyNames.allowInsecureRegistries)
+      property = PropertyNames.ALLOW_INSECURE_REGISTRIES)
   private boolean allowInsecureRegistries;
 
   // this parameter is cloned in FilesMojo
@@ -200,10 +176,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(
       defaultValue = "${project.basedir}/src/main/jib",
       required = true,
-      property = PropertyNames.extraDirectory)
+      property = PropertyNames.EXTRA_DIRECTORY)
   private File extraDirectory;
 
-  @Parameter(defaultValue = "false", property = PropertyNames.skip)
+  @Parameter(defaultValue = "false", property = PropertyNames.SKIP)
   private boolean skip;
 
   @Nullable @Component protected SettingsDecrypter settingsDecrypter;
@@ -228,8 +204,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured base image reference
    */
   String getBaseImage() {
-    if (System.getProperty(PropertyNames.fromImage) != null) {
-      return System.getProperty(PropertyNames.fromImage);
+    if (System.getProperty(PropertyNames.FROM_IMAGE) != null) {
+      return System.getProperty(PropertyNames.FROM_IMAGE);
     }
     return Preconditions.checkNotNull(Preconditions.checkNotNull(from).image);
   }
@@ -241,8 +217,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   String getBaseImageCredentialHelperName() {
-    if (System.getProperty(PropertyNames.fromCredHelper) != null) {
-      return System.getProperty(PropertyNames.fromCredHelper);
+    if (System.getProperty(PropertyNames.FROM_CRED_HELPER) != null) {
+      return System.getProperty(PropertyNames.FROM_CRED_HELPER);
     }
     return Preconditions.checkNotNull(from).credHelper;
   }
@@ -259,11 +235,11 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   String getTargetImage() {
-    if (System.getProperty(PropertyNames.toImage) != null) {
-      return System.getProperty(PropertyNames.toImage);
+    if (System.getProperty(PropertyNames.TO_IMAGE_ALTERNATE) != null) {
+      return System.getProperty(PropertyNames.TO_IMAGE_ALTERNATE);
     }
-    if (System.getProperty(PropertyNames.toImageAlternate) != null) {
-      return System.getProperty(PropertyNames.toImageAlternate);
+    if (System.getProperty(PropertyNames.TO_IMAGE) != null) {
+      return System.getProperty(PropertyNames.TO_IMAGE);
     }
     return to.image;
   }
@@ -274,10 +250,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured extra tags.
    */
   Set<String> getTargetImageAdditionalTags() {
-    if (System.getProperty(PropertyNames.toTags) != null) {
+    if (System.getProperty(PropertyNames.TO_TAGS) != null) {
       return ImmutableSet.copyOf(
           ConfigurationPropertyValidator.parseListProperty(
-              System.getProperty(PropertyNames.toTags)));
+              System.getProperty(PropertyNames.TO_TAGS)));
     }
     return new HashSet<>(to.tags);
   }
@@ -289,8 +265,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   String getTargetImageCredentialHelperName() {
-    if (System.getProperty(PropertyNames.toCredHelper) != null) {
-      return System.getProperty(PropertyNames.toCredHelper);
+    if (System.getProperty(PropertyNames.TO_CRED_HELPER) != null) {
+      return System.getProperty(PropertyNames.TO_CRED_HELPER);
     }
     return Preconditions.checkNotNull(to).credHelper;
   }
@@ -306,8 +282,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * @return {@code true} if the build should use the current timestamp, {@code false} if not
    */
   boolean getUseCurrentTimestamp() {
-    if (System.getProperty(PropertyNames.containerUseCurrentTimestamp) != null) {
-      return Boolean.getBoolean(PropertyNames.containerUseCurrentTimestamp);
+    if (System.getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP) != null) {
+      return Boolean.getBoolean(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
     }
     return container.useCurrentTimestamp;
   }
@@ -318,9 +294,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured entrypoint
    */
   List<String> getEntrypoint() {
-    if (System.getProperty(PropertyNames.containerEntrypoint) != null) {
+    if (System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT) != null) {
       return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.containerEntrypoint));
+          System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT));
     }
     return container.entrypoint;
   }
@@ -331,9 +307,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured jvm flags
    */
   List<String> getJvmFlags() {
-    if (System.getProperty(PropertyNames.containerJvmFlags) != null) {
+    if (System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS) != null) {
       return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.containerJvmFlags));
+          System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS));
     }
     return container.jvmFlags;
   }
@@ -345,9 +321,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   Map<String, String> getEnvironment() {
-    if (System.getProperty(PropertyNames.containerEnvironment) != null) {
+    if (System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT) != null) {
       return ConfigurationPropertyValidator.parseMapProperty(
-          System.getProperty(PropertyNames.containerEnvironment));
+          System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT));
     }
     return container.environment;
   }
@@ -359,8 +335,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   String getMainClass() {
-    if (System.getProperty(PropertyNames.containerMainClass) != null) {
-      return System.getProperty(PropertyNames.containerMainClass);
+    if (System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS);
     }
     return container.mainClass;
   }
@@ -371,9 +347,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured main arguments
    */
   List<String> getArgs() {
-    if (System.getProperty(PropertyNames.containerArgs) != null) {
+    if (System.getProperty(PropertyNames.CONTAINER_ARGS) != null) {
       return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.containerArgs));
+          System.getProperty(PropertyNames.CONTAINER_ARGS));
     }
     return container.args;
   }
@@ -384,9 +360,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured exposed ports
    */
   List<String> getExposedPorts() {
-    if (System.getProperty(PropertyNames.containerPorts) != null) {
+    if (System.getProperty(PropertyNames.CONTAINER_PORTS) != null) {
       return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.containerPorts));
+          System.getProperty(PropertyNames.CONTAINER_PORTS));
     }
     return container.ports;
   }
@@ -397,9 +373,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured labels
    */
   Map<String, String> getLabels() {
-    if (System.getProperty(PropertyNames.containerLabels) != null) {
+    if (System.getProperty(PropertyNames.CONTAINER_LABELS) != null) {
       return ConfigurationPropertyValidator.parseMapProperty(
-          System.getProperty(PropertyNames.containerLabels));
+          System.getProperty(PropertyNames.CONTAINER_LABELS));
     }
     return container.labels;
   }
@@ -410,8 +386,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured app root directory
    */
   String getAppRoot() {
-    if (System.getProperty(PropertyNames.containerAppRoot) != null) {
-      return System.getProperty(PropertyNames.containerAppRoot);
+    if (System.getProperty(PropertyNames.CONTAINER_APP_ROOT) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_APP_ROOT);
     }
     return container.appRoot;
   }
@@ -422,8 +398,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured container image format
    */
   String getFormat() {
-    if (System.getProperty(PropertyNames.containerFormat) != null) {
-      return System.getProperty(PropertyNames.containerFormat);
+    if (System.getProperty(PropertyNames.CONTAINER_FORMAT) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_FORMAT);
     }
     return Preconditions.checkNotNull(container.format);
   }

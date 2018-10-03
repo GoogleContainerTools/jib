@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.List;
@@ -113,8 +114,8 @@ class PluginConfigurationProcessor {
     Optional<Credential> optionalFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
             projectProperties.getEventDispatcher(),
-            "jib.from.auth.username",
-            "jib.from.auth.password",
+            PropertyNames.FROM_AUTH_USERNAME,
+            PropertyNames.FROM_AUTH_PASSWORD,
             jibExtension.getFrom().getAuth());
     optionalFromCredential.ifPresent(
         fromCredential ->

@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -96,8 +97,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
             gradleProjectProperties.getEventDispatcher(),
-            "jib.to.auth.username",
-            "jib.to.auth.password",
+            PropertyNames.TO_AUTH_USERNAME,
+            PropertyNames.TO_AUTH_PASSWORD,
             jibExtension.getTo().getAuth());
     optionalToCredential.ifPresent(
         toCredential ->

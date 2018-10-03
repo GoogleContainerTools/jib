@@ -16,8 +16,10 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
@@ -132,12 +134,18 @@ public class JibExtension {
   @Input
   @Optional
   boolean getUseOnlyProjectCache() {
+    if (System.getProperty(PropertyNames.USE_ONLY_PROJECT_CACHE) != null) {
+      return Boolean.getBoolean(PropertyNames.USE_ONLY_PROJECT_CACHE);
+    }
     return useOnlyProjectCache.get();
   }
 
   @Input
   @Optional
   boolean getAllowInsecureRegistries() {
+    if (System.getProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES) != null) {
+      return Boolean.getBoolean(PropertyNames.ALLOW_INSECURE_REGISTRIES);
+    }
     return allowInsecureRegistries.get();
   }
 
@@ -145,12 +153,18 @@ public class JibExtension {
   String getExtraDirectory() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
+    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY) != null) {
+      return System.getProperty(PropertyNames.EXTRA_DIRECTORY);
+    }
     return extraDirectory.get().toString();
   }
 
   @Internal
   Path getExtraDirectoryPath() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
+    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY) != null) {
+      return Paths.get(System.getProperty(PropertyNames.EXTRA_DIRECTORY));
+    }
     return extraDirectory.get();
   }
 }

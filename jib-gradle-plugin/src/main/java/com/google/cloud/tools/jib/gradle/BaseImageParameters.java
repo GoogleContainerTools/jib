@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
@@ -41,6 +42,9 @@ public class BaseImageParameters {
   @Nullable
   @Optional
   public String getImage() {
+    if (System.getProperty(PropertyNames.FROM_IMAGE) != null) {
+      return System.getProperty(PropertyNames.FROM_IMAGE);
+    }
     return image;
   }
 
@@ -52,6 +56,9 @@ public class BaseImageParameters {
   @Nullable
   @Optional
   public String getCredHelper() {
+    if (System.getProperty(PropertyNames.FROM_CRED_HELPER) != null) {
+      return System.getProperty(PropertyNames.FROM_CRED_HELPER);
+    }
     return credHelper;
   }
 
@@ -62,6 +69,7 @@ public class BaseImageParameters {
   @Nested
   @Optional
   public AuthParameters getAuth() {
+    // System properties are handled in ConfigurationPropertyValidator
     return auth;
   }
 
