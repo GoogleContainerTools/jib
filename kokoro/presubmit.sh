@@ -10,7 +10,7 @@ export PATH=$PATH:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/b
 docker stop $(docker ps --all --quiet) || true
 docker kill $(docker ps --all --quiet) || true
 
-sed -i.bkp -e 's/\("credsStore": \)"osxkeychain"/\1""/' ~/.docker/config.json
+touch ~/.docker/config.json
 
 cd github/jib
 
