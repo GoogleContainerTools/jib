@@ -13,7 +13,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
 [I need to RUN commands like `apt-get`.](#i-need-to-run-commands-like-apt-get)\
 [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)\
-[I want more control over which files to place in the extra directory/where they end up in the container](#i-want-more-control-over-which-files-to-place-in-the-extra-directory/where-they-end-up-in-the-container)\
+[I want more control over which files to place in the extra directory/where they end up in the container](#i-want-more-control-over-which-files-to-place-in-the-extra-directory-where-they-end-up-in-the-container)\
 [Can I build to a local Docker daemon?](#can-i-build-to-a-local-docker-daemon)\
 [I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
 [How do I configure a proxy?](#how-do-i-configure-a-proxy)\
