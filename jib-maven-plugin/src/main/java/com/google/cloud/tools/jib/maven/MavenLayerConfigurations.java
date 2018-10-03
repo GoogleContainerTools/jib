@@ -34,8 +34,6 @@ import org.apache.maven.project.MavenProject;
 
 /** Builds {@link JavaLayerConfigurations} based on inputs from a {@link MavenProject}. */
 class MavenLayerConfigurations {
-  public static final String CLASS_EXTENSION = ".class";
-
   /**
    * Resolves the {@link JavaLayerConfigurations} for a {@link MavenProject}.
    *
@@ -90,7 +88,7 @@ class MavenLayerConfigurations {
     Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
 
     // Gets the classes files in the 'classes' output directory.
-    Predicate<Path> isClassFile = path -> path.toString().endsWith(CLASS_EXTENSION);
+    Predicate<Path> isClassFile = path -> path.toString().endsWith(".class");
     addFilesToLayer(
         classesOutputDirectory, isClassFile, classesExtractionPath, layerBuilder::addClassFile);
 
@@ -124,7 +122,8 @@ class MavenLayerConfigurations {
 
     // TODO explode the WAR file rather than using this directory. The contents of the final WAR may
     // be different from this directory (it's possible to include or exclude files when packaging a
-    // WAR).
+    // WAR). Also the exploded WAR directory is configurable with and may not be at
+    // build.getFinalName().
     Path explodedWarPath =
         Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
     AbsoluteUnixPath dependenciesExtractionPath = appRoot.resolve("WEB-INF/lib/");
@@ -149,7 +148,7 @@ class MavenLayerConfigurations {
     }
 
     // Gets the classes files in the 'WEB-INF/classes' output directory.
-    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(CLASS_EXTENSION);
+    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     if (Files.exists(explodedWarPath.resolve("WEB-INF/classes"))) {
       addFilesToLayer(
           explodedWarPath.resolve("WEB-INF/classes/"),

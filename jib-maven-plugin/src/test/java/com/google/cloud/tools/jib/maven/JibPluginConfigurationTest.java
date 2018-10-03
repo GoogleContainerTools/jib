@@ -77,7 +77,7 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals(
         "<to><auth><password>",
         testPluginConfiguration.getTargetImageAuth().getPasswordPropertyDescriptor());
-    Assert.assertNull(testPluginConfiguration.getAppRoot());
+    Assert.assertEquals("", testPluginConfiguration.getAppRoot());
   }
 
   @Test

@@ -251,7 +251,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetAppRootChecked_defaultNonWarPackaging() throws MojoExecutionException {
-    Mockito.doReturn(null).when(mockJibPluginConfiguration).getAppRoot();
+    Mockito.doReturn("").when(mockJibPluginConfiguration).getAppRoot();
     Mockito.doReturn(mavenProject).when(mockJibPluginConfiguration).getProject();
     Mockito.doReturn(null).when(mavenProject).getPackaging();
 
@@ -262,7 +262,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetAppRootChecked_defaultJarPackaging() throws MojoExecutionException {
-    Mockito.doReturn(null).when(mockJibPluginConfiguration).getAppRoot();
+    Mockito.doReturn("").when(mockJibPluginConfiguration).getAppRoot();
     Mockito.doReturn(mavenProject).when(mockJibPluginConfiguration).getProject();
     Mockito.doReturn("jar").when(mavenProject).getPackaging();
 
@@ -273,7 +273,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetAppRootChecked_defaultWarPackaging() throws MojoExecutionException {
-    Mockito.doReturn(null).when(mockJibPluginConfiguration).getAppRoot();
+    Mockito.doReturn("").when(mockJibPluginConfiguration).getAppRoot();
     Mockito.doReturn(mavenProject).when(mockJibPluginConfiguration).getProject();
     Mockito.doReturn("war").when(mavenProject).getPackaging();
 

@@ -41,12 +41,20 @@ import org.apache.maven.plugin.logging.Log;
 
 /** Configures and provides builders for the image building goals. */
 class PluginConfigurationProcessor {
+  /**
+   * Returns true if the maven packaging type is "war"
+   *
+   * @param jibPluginConfiguration the Jib plugin configuration
+   * @return true if the maven packaging type is "war"
+   */
+  private static boolean isWarPackaging(JibPluginConfiguration jibPluginConfiguration) {
+    return "war".equals(jibPluginConfiguration.getProject().getPackaging());
+  }
 
   /**
-   * Gets the value of the {@code <container><appRoot>} parameter. Throws {@link
-   * MojoExecutionException} if it is not an absolute path in Unix-style. If this parameter is null,
-   * {@link JavaLayerConfigurations#DEFAULT_WEB_APP_ROOT} is returned for WAR packaging, {@link
-   * JavaLayerConfigurations#DEFAULT_APP_ROOT} is returned otherwise.
+   * Gets the value of the {@code <container><appRoot>} parameter. If the parameter is empty,
+   * returns {@link JavaLayerConfigurations#DEFAULT_WEB_APP_ROOT} for project with WAR packaging or
+   * {@link JavaLayerConfigurations#DEFAULT_APP_ROOT} for other packaging.
    *
    * @param jibPluginConfiguration the Jib plugin configuration
    * @return the app root value
@@ -55,7 +63,7 @@ class PluginConfigurationProcessor {
   static AbsoluteUnixPath getAppRootChecked(JibPluginConfiguration jibPluginConfiguration)
       throws MojoExecutionException {
     String appRoot = jibPluginConfiguration.getAppRoot();
-    if (appRoot == null) {
+    if (appRoot.isEmpty()) {
       appRoot =
           isWarPackaging(jibPluginConfiguration)
               ? JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT
@@ -70,9 +78,9 @@ class PluginConfigurationProcessor {
   }
 
   /**
-   * Gets the value of the {@code <to><image>} parameter. If this parameter is null,
-   * "gcr.io/distroless/java/jetty" is returned for war packaging, "gcr.io/distroless/java" is
-   * returned otherwise.
+   * Gets the value of the {@code <from><image>} parameter. If the parameter is null, returns
+   * "gcr.io/distroless/java/jetty" for projects with WAR packaging or "gcr.io/distroless/java" for
+   * other packaging.
    *
    * @param jibPluginConfiguration the Jib plugin configuration
    * @return the base image value
@@ -80,22 +88,11 @@ class PluginConfigurationProcessor {
   static String getBaseImage(JibPluginConfiguration jibPluginConfiguration) {
     String baseImage = jibPluginConfiguration.getBaseImage();
     if (baseImage == null) {
-      baseImage =
-          isWarPackaging(jibPluginConfiguration)
-              ? "gcr.io/distroless/java/jetty"
-              : "gcr.io/distroless/java";
+      return isWarPackaging(jibPluginConfiguration)
+          ? "gcr.io/distroless/java/jetty"
+          : "gcr.io/distroless/java";
     }
     return baseImage;
-  }
-
-  /**
-   * Returns true if the maven packaging type is "war"
-   *
-   * @param jibPluginConfiguration the Jib plugin configuration
-   * @return true if the maven packaging type is "war"
-   */
-  private static boolean isWarPackaging(JibPluginConfiguration jibPluginConfiguration) {
-    return "war".equals(jibPluginConfiguration.getProject().getPackaging());
   }
 
   /** Disables annoying Apache HTTP client logging. */
@@ -220,6 +217,42 @@ class PluginConfigurationProcessor {
     }
   }
 
+  /**
+   * Compute the container entrypoint, in this order :
+   *
+   * <ol>
+   *   <li>the user specified one, if set
+   *   <li>for a war project, the jetty default one
+   *   <li>for a jar project, by resolving the main class
+   * </ol>
+   *
+   * @param logger the logger used to display messages.
+   * @param jibPluginConfiguration the {@link JibPluginConfiguration} providing the configuration
+   *     data
+   * @param projectProperties used for providing additional information
+   * @return the entrypoint
+   * @throws MojoExecutionException if the http timeout system property is misconfigured
+   */
+  static List<String> computeEntrypoint(
+      Log logger,
+      JibPluginConfiguration jibPluginConfiguration,
+      MavenProjectProperties projectProperties)
+      throws MojoExecutionException {
+    if (!jibPluginConfiguration.getEntrypoint().isEmpty()) {
+      if (jibPluginConfiguration.getMainClass() != null
+          || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
+        logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
+      }
+      return jibPluginConfiguration.getEntrypoint();
+    }
+    if (isWarPackaging(jibPluginConfiguration)) {
+      return JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
+    }
+    String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
+    return JavaEntrypointConstructor.makeDefaultEntrypoint(
+        getAppRootChecked(jibPluginConfiguration), jibPluginConfiguration.getJvmFlags(), mainClass);
+  }
+
   private final BuildConfiguration.Builder buildConfigurationBuilder;
   private final ImageConfiguration.Builder baseImageConfigurationBuilder;
   private final ContainerConfiguration.Builder containerConfigurationBuilder;
@@ -257,42 +290,5 @@ class PluginConfigurationProcessor {
 
   boolean isBaseImageCredentialPresent() {
     return isBaseImageCredentialPresent;
-  }
-
-  /**
-   * Compute the container entrypoint, in this order :
-   *
-   * <ol>
-   *   <li>the user specified one, if set
-   *   <li>for a war project, the jetty default one
-   *   <li>for a jar project, by resolving the main class
-   * </ol>
-   *
-   * @param logger the logger used to display messages.
-   * @param jibPluginConfiguration the {@link JibPluginConfiguration} providing the configuration
-   *     data
-   * @param projectProperties used for providing additional information
-   * @return the entrypoint
-   * @throws MojoExecutionException if the http timeout system property is misconfigured
-   */
-  static List<String> computeEntrypoint(
-      Log logger,
-      JibPluginConfiguration jibPluginConfiguration,
-      MavenProjectProperties projectProperties)
-      throws MojoExecutionException {
-
-    if (!jibPluginConfiguration.getEntrypoint().isEmpty()) {
-      if (jibPluginConfiguration.getMainClass() != null
-          || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
-        logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
-      }
-      return jibPluginConfiguration.getEntrypoint();
-    }
-    if (isWarPackaging(jibPluginConfiguration)) {
-      return JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
-    }
-    String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
-    return JavaEntrypointConstructor.makeDefaultEntrypoint(
-        getAppRootChecked(jibPluginConfiguration), jibPluginConfiguration.getJvmFlags(), mainClass);
   }
 }

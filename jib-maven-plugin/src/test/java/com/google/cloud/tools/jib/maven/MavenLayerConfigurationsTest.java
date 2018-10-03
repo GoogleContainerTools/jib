@@ -400,4 +400,52 @@ public class MavenLayerConfigurationsTest {
 
     assertNonDefaultAppRoot(configuration);
   }
+
+  @Test
+  public void testGetForWarProject_noErrorIfWebInfDoesNotExist()
+      throws IOException, URISyntaxException {
+    temporaryFolder.newFolder("final-name");
+    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
+    Mockito.when(mockBuild.getDirectory())
+        .thenReturn(temporaryFolder.getRoot().toPath().toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
+    AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
+
+    Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
+
+    MavenLayerConfigurations.getForProject(
+        mockMavenProject, extraFilesDirectory, appRoot); // should pass
+  }
+
+  @Test
+  public void testGetForWarProject_noErrorIfWebInfLibDoesNotExist()
+      throws IOException, URISyntaxException {
+    temporaryFolder.newFolder("final-name", "WEB-INF", "classes");
+    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
+    Mockito.when(mockBuild.getDirectory())
+        .thenReturn(temporaryFolder.getRoot().toPath().toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
+    AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
+
+    Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
+
+    MavenLayerConfigurations.getForProject(
+        mockMavenProject, extraFilesDirectory, appRoot); // should pass
+  }
+
+  @Test
+  public void testGetForWarProject_noErrorIfWebInfClassesDoesNotExist()
+      throws IOException, URISyntaxException {
+    temporaryFolder.newFolder("final-name", "WEB-INF", "lib");
+    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
+    Mockito.when(mockBuild.getDirectory())
+        .thenReturn(temporaryFolder.getRoot().toPath().toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
+    AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
+
+    Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
+
+    MavenLayerConfigurations.getForProject(
+        mockMavenProject, extraFilesDirectory, appRoot); // should pass
+  }
 }

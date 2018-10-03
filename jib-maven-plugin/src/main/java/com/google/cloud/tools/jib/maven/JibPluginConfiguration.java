@@ -138,7 +138,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private Map<String, String> labels = Collections.emptyMap();
 
-    @Nullable @Parameter private String appRoot;
+    @Parameter private String appRoot = "";
   }
 
   @Nullable
