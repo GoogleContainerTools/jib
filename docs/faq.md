@@ -241,7 +241,7 @@ mvn compile resources:copy-resources jib:build
 
 #### Gradle
 
-The same can be accomplished in Gradle by using a copy task. In your `build.gradle`:
+The same can be accomplished in Gradle by using a `Copy` task. In your `build.gradle`:
 
 ```groovy
 task setupExtraDir(type: Copy) {
