@@ -13,6 +13,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
 [I need to RUN commands like `apt-get`.](#i-need-to-run-commands-like-apt-get)\
 [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)\
+[I need to add files generated during the build process to a custom directory on the image.](#i-need-to-add-files-generated-during-the-build-process-to-a-custom-directory-on-the-image)\
 [Can I build to a local Docker daemon?](#can-i-build-to-a-local-docker-daemon)\
 [I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
 [How do I configure a proxy?](#how-do-i-configure-a-proxy)\
@@ -148,15 +149,9 @@ See [Extended Usage](../jib-maven-plugin#extended-usage) for the `<container><fo
 
 See [Extended Usage](../jib-gradle-plugin#extended-usage) for the `container.format` configuration.
 
-### Can I define a custom entrypoint?
+### Can I define a custom entrypoint at runtime?
 
-The plugin attaches a default entrypoint that will run your application automatically.
-
-When running the image, you can override this default entrypoint with your own custom command.
-
-See [`docker run --entrypoint` reference](https://docs.docker.com/engine/reference/run/#entrypoint-default-command-to-execute-at-runtime) for running the image with Docker and overriding the entrypoint command.
-
-See [Define a Command and Arguments for a Container](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/) for running the image in a [Kubernetes](https://kubernetes.io/) Pod and overriding the entrypoint command.
+Normally, the plugin sets a default entrypoint for java applications, or lets you configure a custom entrypoint using the `container.entrypoint` configuration parameter. You can also override the default/configured entrypoint by defining a custom entrypoint when running the container. See [`docker run --entrypoint` reference](https://docs.docker.com/engine/reference/run/#entrypoint-default-command-to-execute-at-runtime) for running the image with Docker and overriding the entrypoint command, or see [Define a Command and Arguments for a Container](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/) for running the image in a [Kubernetes](https://kubernetes.io/) Pod and overriding the entrypoint command.
 
 ### Where is the application in the container filesystem?
 
@@ -165,6 +160,7 @@ Jib packages your Java application into the following paths on the image:
 * `/app/libs/` contains all the dependency artifacts
 * `/app/resources/` contains all the resource files
 * `/app/classes/` contains all the classes files
+* the contents of the extra directory (default `src/main/jib`) are placed relative to the container's root directory (`/`)
 
 ### I need to RUN commands like `apt-get`.
 
@@ -201,6 +197,70 @@ jib.from.image = 'custom-base-image'
 ### Can I ADD a custom directory to the image?
 
 We currently support adding a custom directory with an **incubating** feature. This feature may change in later versions. If your application needs to use custom files, place them into the `src/main/jib` folder. Files placed here will be added to the filesystem of the container. For example, `src/main/jib/foo/bar` would add `/foo/bar` into the container filesystem.
+
+### I need to add files generated during the build process to a custom directory on the image.
+
+If the current extra directory design doesn't meet your needs (e.g. you need to set up the extra files directory with files generated during the build process), you can use additional goals/tasks to create the extra directory as part of your build.
+
+<details>
+<summary>File copying examples</summary>
+<p>
+
+#### Maven
+
+In Maven, you can use the `maven-resources-plugin` to copy files to your extra directory. For example, if you generate files in `target/generated/files` and want to add them to `/my/files` on the container, you can add the following to your `pom.xml`:
+
+```xml
+<plugins>
+  ...
+  <plugin>
+    <artifact>jib-maven-plugin</artifact>
+    ...
+    <configuration>
+      <extraDirectory>${project.basedir}/target/extra-directory/</extraDirectory>
+    </configuration>
+  </plugin>
+  ...
+  <plugin>
+    <artifact>maven-resources-plugin</artifact>
+    <version>3.1.0</version>
+    <configuration>
+      <outputDirectory>${project.basedir}/target/extra-directory/my/files</outputDirectory>
+      <resources>
+        <resource>
+          <directory>${project.basedir}/target/generated/files</directory>
+        </resource>
+      </resources>
+    </configuration>
+  </plugin>
+  ...
+</plugins>
+```
+
+The `copy-resources` goal will run automatically before compile, so if you are copying files from your build output to the extra directory, you will need to either set the life-cycle phase to `post-compile` or later, or run the goal manually:
+
+```sh
+mvn compile resources:copy-resources jib:build
+```
+
+#### Gradle
+
+The same can be accomplished in Gradle by using a `Copy` task. In your `build.gradle`:
+
+```groovy
+jib.extraDirectory = file('build/extra-directory')
+
+task setupExtraDir(type: Copy) {
+  from file('build/generated/files')
+  into file('build/extra-directory/my/files')
+}
+tasks.jib.dependsOn setupExtraDir
+```
+
+The files will be copied to your extra directory when you run the `jib` task.
+
+</p>
+</details>
 
 ### Can I build to a local Docker daemon?
 
