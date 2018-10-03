@@ -151,9 +151,7 @@ See [Extended Usage](../jib-gradle-plugin#extended-usage) for the `container.for
 
 ### Can I define a custom entrypoint at runtime?
 
-Normally, the plugin sets a default entrypoint for java applications, or lets you configure a custom entrypoint using the `container.entrypoint` configuration parameter.
-
-You can also override the default/configured entrypoint by defining a custom entrypoint when running the container.
+Normally, the plugin sets a default entrypoint for java applications, or lets you configure a custom entrypoint using the `container.entrypoint` configuration parameter. You can also override the default/configured entrypoint by defining a custom entrypoint when running the container.
 
 See [`docker run --entrypoint` reference](https://docs.docker.com/engine/reference/run/#entrypoint-default-command-to-execute-at-runtime) for running the image with Docker and overriding the entrypoint command.
 
@@ -206,7 +204,50 @@ We currently support adding a custom directory with an **incubating** feature. T
 
 ### I want more control over which files to place in the extra directory/where they end up in the container
 
+If the current extra directory design doesn't meet your needs (e.g. the extra files you want are generated outside the extra directory, and you want a different directory structure in the container), you can use additional goals/tasks to move the files to the configured extra directory between compile time and package time.
 
+#### Maven
+
+In Maven, you can use the `maven-resources-plugin` to copy files to your extra directory. In your `pom.xml`:
+
+```xml
+<plugins>
+  ...
+  <plugin>
+    <artifact>maven-resources-plugin</artifact>
+    <version>3.1.0</version>
+    <configuration>
+      <outputDirectory>${basedir}/src/main/jib/</outputDirectory>
+      <resources>
+        <resource>
+          <directory>files/you/want/in/extra/directory</directory>
+        </resource>
+      </resources>
+    </configuration>
+  </plugin>
+  ...
+</plugins>
+```
+
+Then run the goal between compiling and building the image to prepare the directory for building, either by setting the lifecycle phase, or by running the goal via command-line:
+
+```sh
+mvn compile resources:copy-resources jib:build
+```
+
+#### Gradle
+
+The same can be accomplished in Gradle by using a copy task. In your `build.gradle`:
+
+```groovy
+task setupExtraDir(type: Copy) {
+  from file('files/you/want/in/extra/directory')
+  into file('src/main/jib/')
+}
+tasks.jib.dependsOn setupExtraDir
+```
+
+The files will be copied to your extra directory when you run the `jib` task.
 
 ### Can I build to a local Docker daemon?
 
