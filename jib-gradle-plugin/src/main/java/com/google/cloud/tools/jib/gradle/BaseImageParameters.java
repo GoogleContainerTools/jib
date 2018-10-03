@@ -20,9 +20,12 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Nested;
+import org.gradle.api.tasks.Optional;
 
-/** {@link ImageParameters} that configure the base image. */
-public class BaseImageParameters implements ImageParameters {
+/** Object in {@link JibExtension} that configures the base image. */
+public class BaseImageParameters {
 
   private final AuthParameters auth;
 
@@ -34,34 +37,34 @@ public class BaseImageParameters implements ImageParameters {
     auth = objectFactory.newInstance(AuthParameters.class, imageDescriptor + ".auth");
   }
 
+  @Input
   @Nullable
-  @Override
+  @Optional
   public String getImage() {
     return image;
   }
 
-  @Override
   public void setImage(String image) {
     this.image = image;
   }
 
+  @Input
   @Nullable
-  @Override
+  @Optional
   public String getCredHelper() {
     return credHelper;
   }
 
-  @Override
   public void setCredHelper(String credHelper) {
     this.credHelper = credHelper;
   }
 
-  @Override
+  @Nested
+  @Optional
   public AuthParameters getAuth() {
     return auth;
   }
 
-  @Override
   public void auth(Action<? super AuthParameters> action) {
     action.execute(auth);
   }
