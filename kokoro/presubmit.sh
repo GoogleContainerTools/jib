@@ -10,7 +10,7 @@ export PATH=$PATH:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/b
 docker stop $(docker ps --all --quiet) || true
 docker kill $(docker ps --all --quiet) || true
 
-touch ${USER_HOME}/.docker/config.json
+touch ${HOME}/.docker/config.json
 
 cd github/jib
 
