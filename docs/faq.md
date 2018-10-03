@@ -206,6 +206,10 @@ We currently support adding a custom directory with an **incubating** feature. T
 
 If the current extra directory design doesn't meet your needs (e.g. the extra files you want are generated outside the extra directory, and you want a different directory structure in the container), you can use additional goals/tasks to move the files to the configured extra directory between compile time and package time.
 
+<details>
+<summary>File copying examples</summary>
+<p>
+
 #### Maven
 
 In Maven, you can use the `maven-resources-plugin` to copy files to your extra directory. In your `pom.xml`:
@@ -248,6 +252,9 @@ tasks.jib.dependsOn setupExtraDir
 ```
 
 The files will be copied to your extra directory when you run the `jib` task.
+
+</p>
+</details>
 
 ### Can I build to a local Docker daemon?
 
