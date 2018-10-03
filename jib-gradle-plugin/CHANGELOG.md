@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Properties for each configuration parameter, allowing any parameter to be set via commandline ([#1083](https://github.com/GoogleContainerTools/jib/issues/1083))
+
 ### Changed
 
 - Removed deprecated `jib.jvmFlags`, `jib.mainClass`, `jib.args`, and `jib.format` in favor of the equivalents under `jib.container` ([#461](https://github.com/GoogleContainerTools/jib/issues/461))

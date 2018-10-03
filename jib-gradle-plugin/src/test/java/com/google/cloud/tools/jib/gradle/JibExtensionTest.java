@@ -19,11 +19,14 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.Collections;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,13 +36,37 @@ public class JibExtensionTest {
 
   private JibExtension testJibExtension;
 
+  private static void clearProperties() {
+    System.clearProperty("jib.from.image");
+    System.clearProperty("jib.from.credHelper");
+    System.clearProperty("jib.to.image");
+    System.clearProperty("jib.to.tags");
+    System.clearProperty("jib.to.credHelper");
+    System.clearProperty("jib.container.appRoot");
+    System.clearProperty("jib.container.args");
+    System.clearProperty("jib.container.entrypoint");
+    System.clearProperty("jib.container.environment");
+    System.clearProperty("jib.container.format");
+    System.clearProperty("jib.container.jvmFlags");
+    System.clearProperty("jib.container.labels");
+    System.clearProperty("jib.container.mainClass");
+    System.clearProperty("jib.container.ports");
+    System.clearProperty("jib.container.useCurrentTimestamp");
+  }
+
   @Before
   public void setUp() {
+    clearProperties();
     Project fakeProject = ProjectBuilder.builder().build();
     testJibExtension =
         fakeProject
             .getExtensions()
             .create(JibPlugin.JIB_EXTENSION_NAME, JibExtension.class, fakeProject);
+  }
+
+  @After
+  public void teardown() {
+    clearProperties();
   }
 
   @Test
@@ -113,6 +140,53 @@ public class JibExtensionTest {
         ImmutableMap.of("label1", "value1", "label2", "value2"), container.getLabels());
     Assert.assertEquals(OCIManifestTemplate.class, container.getFormat());
     Assert.assertEquals("some invalid appRoot value", container.getAppRoot());
+  }
+
+  @Test
+  public void testProperties() {
+    System.setProperty("jib.from.image", "fromImage");
+    Assert.assertEquals("fromImage", testJibExtension.getFrom().getImage());
+    System.setProperty("jib.from.credHelper", "credHelper");
+    Assert.assertEquals("credHelper", testJibExtension.getFrom().getCredHelper());
+
+    System.setProperty("jib.to.image", "toImage");
+    Assert.assertEquals("toImage", testJibExtension.getTo().getImage());
+    System.setProperty("jib.to.tags", "tag1,tag2,tag3");
+    Assert.assertEquals(
+        ImmutableSet.of("tag1", "tag2", "tag3"), testJibExtension.getTo().getTags());
+    System.setProperty("jib.to.credHelper", "credHelper");
+    Assert.assertEquals("credHelper", testJibExtension.getTo().getCredHelper());
+
+    System.setProperty("jib.container.appRoot", "appRoot");
+    Assert.assertEquals("appRoot", testJibExtension.getContainer().getAppRoot());
+    System.setProperty("jib.container.args", "arg1,arg2,arg3");
+    Assert.assertEquals(
+        ImmutableList.of("arg1", "arg2", "arg3"), testJibExtension.getContainer().getArgs());
+    System.setProperty("jib.container.entrypoint", "entry1,entry2,entry3");
+    Assert.assertEquals(
+        ImmutableList.of("entry1", "entry2", "entry3"),
+        testJibExtension.getContainer().getEntrypoint());
+    System.setProperty("jib.container.environment", "env1=val1,env2=val2");
+    Assert.assertEquals(
+        ImmutableMap.of("env1", "val1", "env2", "val2"),
+        testJibExtension.getContainer().getEnvironment());
+    System.setProperty("jib.container.format", "OCI");
+    Assert.assertEquals(
+        ImageFormat.OCI.getManifestTemplateClass(), testJibExtension.getContainer().getFormat());
+    System.setProperty("jib.container.jvmFlags", "flag1,flag2,flag3");
+    Assert.assertEquals(
+        ImmutableList.of("flag1", "flag2", "flag3"), testJibExtension.getContainer().getJvmFlags());
+    System.setProperty("jib.container.labels", "label1=val1,label2=val2");
+    Assert.assertEquals(
+        ImmutableMap.of("label1", "val1", "label2", "val2"),
+        testJibExtension.getContainer().getLabels());
+    System.setProperty("jib.container.mainClass", "main");
+    Assert.assertEquals("main", testJibExtension.getContainer().getMainClass());
+    System.setProperty("jib.container.ports", "port1,port2,port3");
+    Assert.assertEquals(
+        ImmutableList.of("port1", "port2", "port3"), testJibExtension.getContainer().getPorts());
+    System.setProperty("jib.container.useCurrentTimestamp", "true");
+    Assert.assertTrue(testJibExtension.getContainer().getUseCurrentTimestamp());
   }
 
   @Test
