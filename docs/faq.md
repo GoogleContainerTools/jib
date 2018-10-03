@@ -13,7 +13,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
 [I need to RUN commands like `apt-get`.](#i-need-to-run-commands-like-apt-get)\
 [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)\
-[I want more control over which files to place in the extra directory/where they end up in the container](#i-want-more-control-over-which-files-to-place-in-the-extra-directory-where-they-end-up-in-the-container)\
+[I want more control over which files to place in the extra directory/where they end up in the container](#i-want-more-control-over-which-files-to-place-in-the-extra-directory)\
 [Can I build to a local Docker daemon?](#can-i-build-to-a-local-docker-daemon)\
 [I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
 [How do I configure a proxy?](#how-do-i-configure-a-proxy)\
@@ -202,7 +202,7 @@ jib.from.image = 'custom-base-image'
 
 We currently support adding a custom directory with an **incubating** feature. This feature may change in later versions. If your application needs to use custom files, place them into the `src/main/jib` folder. Files placed here will be added to the filesystem of the container. For example, `src/main/jib/foo/bar` would add `/foo/bar` into the container filesystem.
 
-### I want more control over which files to place in the extra directory/where they end up in the container
+### <a id="i-want-more-control-over-which-files-to-place-in-the-extra-directory"></a>I want more control over which files to place in the extra directory/where they end up in the container
 
 If the current extra directory design doesn't meet your needs (e.g. the extra files you want are generated outside the extra directory, and you want a different directory structure in the container), you can use additional goals/tasks to move the files to the configured extra directory between compile time and package time.
 
