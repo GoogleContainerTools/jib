@@ -382,7 +382,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the configured app root directory
    */
-  @Nullable
   String getAppRoot() {
     if (System.getProperty(PropertyNames.CONTAINER_APP_ROOT) != null) {
       return System.getProperty(PropertyNames.CONTAINER_APP_ROOT);

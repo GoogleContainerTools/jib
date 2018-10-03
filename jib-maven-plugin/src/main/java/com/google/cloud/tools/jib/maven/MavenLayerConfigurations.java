@@ -122,8 +122,8 @@ class MavenLayerConfigurations {
 
     // TODO explode the WAR file rather than using this directory. The contents of the final WAR may
     // be different from this directory (it's possible to include or exclude files when packaging a
-    // WAR). Also the exploded WAR directory is configurable with and may not be at
-    // build.getFinalName().
+    // WAR). Also the exploded WAR directory is configurable with <webappDirectory> and may not be
+    // at build.getFinalName().
     Path explodedWarPath =
         Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
     AbsoluteUnixPath dependenciesExtractionPath = appRoot.resolve("WEB-INF/lib/");
