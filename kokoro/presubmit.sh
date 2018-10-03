@@ -12,6 +12,9 @@ docker kill $(docker ps --all --quiet) || true
 
 cd github/jib
 
+# Docker is trying to use locked keychain?
+security unlock-keychain
+
 (cd jib-core; ./gradlew clean build integrationTest --info --stacktrace)
 (cd jib-plugins-common; ./gradlew clean build --info --stacktrace)
 (cd jib-maven-plugin; ./mvnw clean install -B -U -X)
