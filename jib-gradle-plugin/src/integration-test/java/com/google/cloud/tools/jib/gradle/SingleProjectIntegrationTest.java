@@ -32,8 +32,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-/** Integration tests for building simple project images. */
-public class SimpleProjectIntegrationTest {
+/** Integration tests for building single project images. */
+public class SingleProjectIntegrationTest {
 
   @ClassRule
   public static final LocalRegistry localRegistry1 =
