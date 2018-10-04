@@ -31,7 +31,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 /** Integration tests for building WAR images. */
-public class WarIntegrationTest {
+public class WarProjectIntegrationTest {
 
   @ClassRule public static final TestProject servlet25Project = new TestProject("war_servlet25");
 
