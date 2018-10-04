@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -34,6 +35,7 @@ public class WarIntegrationTest {
   @ClassRule
   public static final TestProject jettyServlet25Project = new TestProject("war_jetty_servlet25");
 
+  @Nullable
   private static String getContent(URL url) throws InterruptedException {
     for (int i = 0; i < 40; i++) {
       Thread.sleep(500);
