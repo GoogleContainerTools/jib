@@ -41,7 +41,7 @@ public class SimpleProjectIntegrationTest {
 
   @ClassRule
   public static final LocalRegistry localRegistry2 =
-      new LocalRegistry(6000, "testuser", "testpassword");
+      new LocalRegistry(6000, "testuser2", "testpassword2");
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
