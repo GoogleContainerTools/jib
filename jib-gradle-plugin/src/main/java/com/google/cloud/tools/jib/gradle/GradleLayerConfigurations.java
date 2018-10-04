@@ -63,7 +63,7 @@ class GradleLayerConfigurations {
   }
 
   /**
-   * Resolves the {@link JavaLayerConfigurations} for a non-war Gradle {@link Project}.
+   * Resolves the {@link JavaLayerConfigurations} for a non-WAR Gradle {@link Project}.
    *
    * @param project the Gradle {@link Project}
    * @param logger the logger for providing feedback about the resolution
