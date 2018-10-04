@@ -364,7 +364,7 @@ public class GradleLayerConfigurationsTest {
             mockWebAppProject,
             mockLogger,
             extraFilesDirectory,
-            AbsoluteUnixPath.get(JibPlugin.DEFAULT_WEB_APP_ROOT));
+            AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT));
 
     assertExtractionPathsUnordered(
         Arrays.asList("/jetty/webapps/ROOT/WEB-INF/lib/dependency-1.0.0.jar"),
@@ -400,7 +400,7 @@ public class GradleLayerConfigurationsTest {
         mockWebAppProject,
         mockLogger,
         extraFilesDirectory,
-        AbsoluteUnixPath.get(JibPlugin.DEFAULT_WEB_APP_ROOT)); // should pass
+        AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT)); // should pass
   }
 
   @Test
@@ -412,7 +412,7 @@ public class GradleLayerConfigurationsTest {
         mockWebAppProject,
         mockLogger,
         extraFilesDirectory,
-        AbsoluteUnixPath.get(JibPlugin.DEFAULT_WEB_APP_ROOT)); // should pass
+        AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT)); // should pass
   }
 
   @Test
@@ -424,7 +424,7 @@ public class GradleLayerConfigurationsTest {
         mockWebAppProject,
         mockLogger,
         extraFilesDirectory,
-        AbsoluteUnixPath.get(JibPlugin.DEFAULT_WEB_APP_ROOT)); // should pass
+        AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT)); // should pass
   }
 
   private void setUpWarProject(Path webAppDirectory) {

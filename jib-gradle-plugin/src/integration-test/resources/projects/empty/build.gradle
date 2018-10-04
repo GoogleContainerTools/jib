@@ -1,5 +1,5 @@
 plugins {
-    id 'com.google.cloud.tools.jib'
+  id 'com.google.cloud.tools.jib'
 }
 
 // Applies the java plugin after Jib to make sure it works in this order.
@@ -9,23 +9,23 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 
 jib {
-    to {
-        image = System.getProperty("_TARGET_IMAGE")
-        credHelper = 'gcr'
-    }
-    container {
-        ports = ['1000/tcp', '2000-2003/udp']
-        labels = [key1:'value1', key2:'value2']
-    }
-    // Does not have tests use user-level cache for base image layers.
-    useOnlyProjectCache = true
+  to {
+    image = System.getProperty("_TARGET_IMAGE")
+    credHelper = 'gcr'
+  }
+  container {
+    ports = ['1000/tcp', '2000-2003/udp']
+    labels = [key1:'value1', key2:'value2']
+  }
+  // Does not have tests use user-level cache for base image layers.
+  useOnlyProjectCache = true
 }
 
 def additionalTag = System.getProperty("_ADDITIONAL_TAG")
 if (additionalTag != null && !additionalTag.isEmpty()) {
-    jib.to.tags = [System.getProperty("_ADDITIONAL_TAG")]
+  jib.to.tags = [System.getProperty("_ADDITIONAL_TAG")]
 }

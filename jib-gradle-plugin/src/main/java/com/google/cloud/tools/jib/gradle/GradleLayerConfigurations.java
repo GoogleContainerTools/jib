@@ -41,9 +41,6 @@ class GradleLayerConfigurations {
   /** Name of the `main` {@link SourceSet} to use as source files. */
   private static final String MAIN_SOURCE_SET_NAME = "main";
 
-  /** The filename suffix for snapshot dependency JARs. */
-  private static final String SNAPSHOT = "SNAPSHOT";
-
   /**
    * Resolves the {@link JavaLayerConfigurations} for a Gradle {@link Project}.
    *
@@ -116,7 +113,7 @@ class GradleLayerConfigurations {
       if (resourcesOutputDirectory.equals(dependencyFile.toPath())) {
         continue;
       }
-      if (dependencyFile.getName().contains(SNAPSHOT)) {
+      if (dependencyFile.getName().contains(JavaLayerConfigurations.SNAPSHOT_FILENAME_SUFFIX)) {
         snapshotDependenciesFiles.add(dependencyFile.toPath());
       } else {
         dependenciesFiles.add(dependencyFile.toPath());
@@ -183,7 +180,7 @@ class GradleLayerConfigurations {
       try (Stream<Path> dependencyFileStream = Files.list(libOutputDirectory)) {
         dependencyFileStream.forEach(
             path -> {
-              if (path.toString().contains(SNAPSHOT)) {
+              if (path.toString().contains(JavaLayerConfigurations.SNAPSHOT_FILENAME_SUFFIX)) {
                 snapshotDependenciesFiles.add(path);
               } else {
                 dependenciesFiles.add(path);

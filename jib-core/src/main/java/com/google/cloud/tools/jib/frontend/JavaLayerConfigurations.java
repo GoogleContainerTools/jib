@@ -182,6 +182,15 @@ public class JavaLayerConfigurations {
    */
   public static final String DEFAULT_APP_ROOT = "/app";
 
+  /**
+   * The default webapp root in the image. For example, if this is set to {@code
+   * "/jetty/webapps/ROOT"}, dependency JARs will be in {@code "/jetty/webapps/ROOT/WEB-INF/lib"}.
+   */
+  public static final String DEFAULT_WEB_APP_ROOT = "/jetty/webapps/ROOT";
+
+  /** The filename suffix for a maven/gradle snapshot dependency */
+  public static final String SNAPSHOT_FILENAME_SUFFIX = "SNAPSHOT";
+
   private final ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap;
 
   private JavaLayerConfigurations(

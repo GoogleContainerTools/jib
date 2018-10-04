@@ -1,5 +1,6 @@
 plugins {
   id 'java'
+  id 'war'
   id 'com.google.cloud.tools.jib'
 }
 
@@ -10,8 +11,19 @@ repositories {
   mavenCentral()
 }
 
+configurations {
+  moreLibs
+}
+
 dependencies {
-  compile files('libs/dependency-1.0.0.jar')
+  providedCompile 'javax.servlet:servlet-api:2.5'
+  moreLibs 'javax.annotation:javax.annotation-api:1.2' // random extra JAR
+}
+
+war {
+  from ('src/extra_static')
+  from ('src/extra_js', { into 'js' })
+  classpath configurations.moreLibs
 }
 
 jib {
@@ -19,13 +31,6 @@ jib {
     image = System.getProperty("_TARGET_IMAGE")
     credHelper = 'gcr'
   }
-  container {
-    useCurrentTimestamp = true
-    args = ['An argument.']
-    ports = ['1000/tcp', '2000-2003/udp']
-    labels = [key1:'value1', key2:'value2']
-  }
-  extraDirectory = file('src/main/custom-extra-dir')
 
   // Does not have tests use user-level cache for base image layers.
   useOnlyProjectCache = true
