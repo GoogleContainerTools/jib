@@ -92,10 +92,10 @@ class LayerEntriesSelector {
   }
 
   /**
-   * Converts a list of {@link LayerEntry}s into a list of {@link LayerEntriesTemplate}. The list is
+   * Converts a list of {@link LayerEntry}s into a list of {@link LayerEntryTemplate}. The list is
    * sorted by source file first, then extraction path (see {@link LayerEntryTemplate#compareTo}).
    *
-   * @param layerEntries
+   * @param layerEntries the list of {@link LayerEntry} to convert
    * @return list of {@link LayerEntryTemplate} after sorting
    */
   @VisibleForTesting
