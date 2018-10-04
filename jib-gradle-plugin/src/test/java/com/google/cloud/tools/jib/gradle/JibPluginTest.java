@@ -208,7 +208,7 @@ public class JibPluginTest {
             .getFrom()
             .getImage());
     Assert.assertEquals(
-        JibPlugin.DEFAULT_WEB_APP_ROOT,
+        JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT,
         ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
             .getJib()
             .getContainer()
