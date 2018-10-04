@@ -32,7 +32,7 @@ public class JibContainer {
    *
    * @return the image digest
    */
-  DescriptorDigest getDigest() {
+  public DescriptorDigest getDigest() {
     return imageDigest;
   }
 }
