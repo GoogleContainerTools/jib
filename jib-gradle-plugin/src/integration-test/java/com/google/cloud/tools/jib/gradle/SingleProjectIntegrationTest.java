@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,8 +32,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-/** Integration tests for {@link JibPlugin}. */
-public class JibPluginIntegrationTest {
+/** Integration tests for building single project images. */
+public class SingleProjectIntegrationTest {
 
   @ClassRule
   public static final LocalRegistry localRegistry1 =
@@ -44,44 +43,7 @@ public class JibPluginIntegrationTest {
   public static final LocalRegistry localRegistry2 =
       new LocalRegistry(6000, "testuser2", "testpassword2");
 
-  @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
-
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
-
-  @ClassRule
-  public static final TestProject multiprojectTestProject = new TestProject("multiproject");
-
-  @ClassRule
-  public static final TestProject defaultTargetTestProject = new TestProject("default-target");
-
-  @Before
-  public void setup() throws IOException, InterruptedException {
-    // Pull distroless and push to local registry so we can test 'from' credentials
-    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
-  }
-
-  private static String buildAndRunComplex(
-      String imageReference, String username, String password, LocalRegistry targetRegistry)
-      throws IOException, InterruptedException {
-    BuildResult buildResult =
-        simpleTestProject.build(
-            "clean",
-            "jib",
-            "-D_TARGET_IMAGE=" + imageReference,
-            "-D_TARGET_USERNAME=" + username,
-            "-D_TARGET_PASSWORD=" + password,
-            "-DsendCredentialsOverHttp=true",
-            "-b=complex-build.gradle");
-
-    JibRunHelper.assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
-
-    targetRegistry.pull(imageReference);
-    assertDockerInspect(imageReference);
-    String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
-    return new Command("docker", "run", "--rm", imageReference).run();
-  }
 
   /**
    * Asserts that the creation time of the simple test project is set. If the time parsed from the
@@ -129,29 +91,33 @@ public class JibPluginIntegrationTest {
                 + "            }"));
   }
 
-  @Test
-  public void testBuild_empty() throws IOException, InterruptedException {
-    String targetImage =
-        "gcr.io/"
-            + IntegrationTestingConfiguration.getGCPProject()
-            + "/emptyimage:gradle"
-            + System.nanoTime();
-    Assert.assertEquals("", JibRunHelper.buildAndRun(emptyTestProject, targetImage));
-    assertDockerInspect(targetImage);
-    JibRunHelper.assertCreationTimeEpoch(targetImage);
+  private static String buildAndRunComplex(
+      String imageReference, String username, String password, LocalRegistry targetRegistry)
+      throws IOException, InterruptedException {
+    BuildResult buildResult =
+        simpleTestProject.build(
+            "clean",
+            "jib",
+            "-D_TARGET_IMAGE=" + imageReference,
+            "-D_TARGET_USERNAME=" + username,
+            "-D_TARGET_PASSWORD=" + password,
+            "-DsendCredentialsOverHttp=true",
+            "-b=complex-build.gradle");
+
+    JibRunHelper.assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
+
+    targetRegistry.pull(imageReference);
+    assertDockerInspect(imageReference);
+    String history = new Command("docker", "history", imageReference).run();
+    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+    return new Command("docker", "run", "--rm", imageReference).run();
   }
 
-  @Test
-  public void testBuild_multipleTags()
-      throws IOException, InterruptedException, InvalidImageReferenceException {
-    String targetImage =
-        "gcr.io/"
-            + IntegrationTestingConfiguration.getGCPProject()
-            + "/multitag-image:gradle"
-            + System.nanoTime();
-    JibRunHelper.buildAndRunAdditionalTag(
-        emptyTestProject, targetImage, "gradle-2" + System.nanoTime(), "");
-    assertDockerInspect(targetImage);
+  @Before
+  public void setup() throws IOException, InterruptedException {
+    // Pull distroless and push to local registry so we can test 'from' credentials
+    localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
   }
 
   @Test
@@ -183,22 +149,6 @@ public class JibPluginIntegrationTest {
   }
 
   @Test
-  public void testBuild_defaultTarget() {
-    // Test error when 'to' is missing
-    try {
-      defaultTargetTestProject.build("clean", "jib", "-x=classes");
-      Assert.fail();
-    } catch (UnexpectedBuildFailure ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
-              "Missing target image parameter, perhaps you should add a 'jib.to.image' "
-                  + "configuration parameter to your build.gradle or set the parameter via the "
-                  + "commandline (e.g. 'gradle jib --image <your image name>')."));
-    }
-  }
-
-  @Test
   public void testBuild_complex() throws IOException, InterruptedException {
     String targetImage = "localhost:6000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
@@ -219,16 +169,6 @@ public class JibPluginIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_empty() throws IOException, InterruptedException {
-    String targetImage = "emptyimage:gradle" + System.nanoTime();
-    Assert.assertEquals("", JibRunHelper.buildToDockerDaemonAndRun(emptyTestProject, targetImage));
-    Assert.assertEquals(
-        "1970-01-01T00:00:00Z",
-        new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
-    assertDockerInspect(targetImage);
-  }
-
-  @Test
   public void testDockerDaemon_simple() throws IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
@@ -237,36 +177,6 @@ public class JibPluginIntegrationTest {
         JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     assertDockerInspect(targetImage);
-  }
-
-  @Test
-  public void testDockerDaemon_defaultTarget() throws IOException, InterruptedException {
-    Assert.assertEquals(
-        "Hello, world. An argument.\n",
-        JibRunHelper.buildToDockerDaemonAndRun(
-            defaultTargetTestProject, "default-target-name:default-target-version"));
-    assertDockerInspect("default-target-name:default-target-version");
-  }
-
-  @Test
-  public void testBuildTar_simple() throws IOException, InterruptedException {
-    String targetImage = "simpleimage:gradle" + System.nanoTime();
-
-    String outputPath =
-        simpleTestProject.getProjectRoot().resolve("build").resolve("jib-image.tar").toString();
-    Instant beforeBuild = Instant.now();
-    BuildResult buildResult =
-        simpleTestProject.build("clean", "jibBuildTar", "-D_TARGET_IMAGE=" + targetImage);
-
-    JibRunHelper.assertBuildSuccess(buildResult, "jibBuildTar", "Built image tarball at ");
-    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(outputPath));
-
-    new Command("docker", "load", "--input", outputPath).run();
-    Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n",
-        new Command("docker", "run", "--rm", targetImage).run());
-    assertDockerInspect(targetImage);
-    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
 
   @Test
@@ -325,17 +235,23 @@ public class JibPluginIntegrationTest {
   }
 
   @Test
-  public void testMultiProject() {
-    BuildResult buildResult =
-        multiprojectTestProject.build("clean", ":a_packaged:jibExportDockerContext", "--info");
+  public void testBuildTar_simple() throws IOException, InterruptedException {
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
 
-    BuildTask classesTask = buildResult.task(":a_packaged:classes");
-    BuildTask jibTask = buildResult.task(":a_packaged:jibExportDockerContext");
-    Assert.assertNotNull(classesTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, classesTask.getOutcome());
-    Assert.assertNotNull(jibTask);
-    Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
-    Assert.assertThat(
-        buildResult.getOutput(), CoreMatchers.containsString("Created Docker context at "));
+    String outputPath =
+        simpleTestProject.getProjectRoot().resolve("build").resolve("jib-image.tar").toString();
+    Instant beforeBuild = Instant.now();
+    BuildResult buildResult =
+        simpleTestProject.build("clean", "jibBuildTar", "-D_TARGET_IMAGE=" + targetImage);
+
+    JibRunHelper.assertBuildSuccess(buildResult, "jibBuildTar", "Built image tarball at ");
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(outputPath));
+
+    new Command("docker", "load", "--input", outputPath).run();
+    Assert.assertEquals(
+        "Hello, world. An argument.\nfoo\ncat\n",
+        new Command("docker", "run", "--rm", targetImage).run());
+    assertDockerInspect(targetImage);
+    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
 }
