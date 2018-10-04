@@ -1,10 +1,14 @@
 plugins {
-  id 'java'
+  id 'java-library'
   id 'checkstyle'
   id 'com.github.sherter.google-java-format' version '0.7.1'
   id 'net.ltgt.apt' version '0.13'
   id 'net.ltgt.errorprone' version '0.0.13'
   id 'biz.aQute.bnd.builder' version '4.0.0'
+
+  // For release.
+  id 'maven'
+  id 'net.researchgate.release' version '2.7.0'
 }
 
 group 'com.google.cloud.tools'
@@ -29,21 +33,21 @@ sourceSets {
 }
 
 configurations {
-  integrationTestCompile.extendsFrom testCompile
+  integrationTestImplementation.extendsFrom testImplementation
   integrationTestRuntime.extendsFrom testRuntime
 }
 
 dependencies {
   // Make sure these are consistent with jib-maven-plugin.
-  compile 'com.google.http-client:google-http-client:1.23.0'
-  compile 'org.apache.commons:commons-compress:1.17'
-  compile 'com.google.guava:guava:23.5-jre'
-  compile 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
-  compile 'org.javassist:javassist:3.22.0-GA'
+  implementation 'com.google.http-client:google-http-client:1.23.0'
+  implementation 'org.apache.commons:commons-compress:1.17'
+  implementation 'com.google.guava:guava:23.5-jre'
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
+  implementation 'org.javassist:javassist:3.22.0-GA'
 
-  testCompile 'junit:junit:4.12'
-  testCompile 'org.mockito:mockito-core:2.12.0'
-  testCompile 'org.slf4j:slf4j-api:1.7.25'
+  testImplementation 'junit:junit:4.12'
+  testImplementation 'org.mockito:mockito-core:2.12.0'
+  testImplementation 'org.slf4j:slf4j-api:1.7.25'
 
   // NullAway errorprone plugin
   apt 'com.uber.nullaway:nullaway:0.4.2'
@@ -124,3 +128,93 @@ checkstyle {
   maxWarnings = 0
 }
 /* CHECKSTYLE */
+
+/* RELEASE */
+task sourceJar(type: Jar) {
+  from sourceSets.main.allJava
+  classifier 'sources'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  from javadoc.destinationDir
+  classifier 'javadoc'
+}
+
+task writePom {
+  project.afterEvaluate {
+    def outputFile = file("${project.buildDir}/pom/${project.name}-${project.version}.pom")
+    outputs.file outputFile
+
+    doLast {
+      pom {
+        project {
+          name 'Jib Core'
+          description 'Build container images.'
+          url 'https://github.com/GoogleContainerTools/jib'
+          inceptionYear '2018'
+
+          scm {
+            url 'https://github.com/GoogleContainerTools/jib'
+            connection 'scm:https://github.com/GoogleContainerTools/jib.git'
+            developerConnection 'scm:git://github.com/GoogleContainerTools/jib.git'
+          }
+
+          licenses {
+            license {
+              name 'The Apache Software License, Version 2.0'
+              url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+              distribution 'repo'
+            }
+          }
+
+          developers {
+            developer {
+              id 'coollog'
+              name 'Qingyang Chen'
+              email 'qingyangc@google.com'
+            }
+            developer {
+              id 'loosebazooka'
+              name 'Appu Goundan'
+              email 'appu@google.com'
+            }
+            developer {
+              id 'TadCordle'
+              name 'Tad Cordle'
+              email 'tcordle@google.com'
+            }
+            developer {
+              id 'chanseokoh'
+              name 'Chanseok Oh'
+              email 'chanseok@google.com'
+            }
+            developer {
+              id 'briandealwis'
+              name 'Brian de Alwis'
+              email 'bdealwis@google.com'
+            }
+          }
+        }
+      }.writeTo(outputFile)
+    }
+  }
+}
+
+// For Kokoro sign and releases
+task prepareRelease(type: Copy) {
+  from jar
+  from sourceJar
+  from javadocJar
+  from writePom
+  into "${project.buildDir}/release-artifacts"
+  dependsOn build
+  dependsOn cleanPrepareRelease
+}
+// Release plugin (git release commits and version updates)
+release {
+  tagTemplate = 'v$version-core'
+  git {
+    requireBranch = /^core_release_v\d+.*$/  //regex
+  }
+}
+/* RELEASE */
