@@ -1,37 +1,37 @@
 plugins {
-    id 'java'
-    id 'war'
-    id 'com.google.cloud.tools.jib'
+  id 'java'
+  id 'war'
+  id 'com.google.cloud.tools.jib'
 }
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 
 configurations {
-    moreLibs
+  moreLibs
 }
 
 dependencies {
-    providedCompile 'javax.servlet:servlet-api:2.5'
-    moreLibs 'javax.annotation:javax.annotation-api:1.2' // random extra JAR
+  providedCompile 'javax.servlet:servlet-api:2.5'
+  moreLibs 'javax.annotation:javax.annotation-api:1.2' // random extra JAR
 }
 
 war {
-    from ('src/extra_static')
-    from ('src/extra_js', { into 'js' })
-    classpath configurations.moreLibs
+  from ('src/extra_static')
+  from ('src/extra_js', { into 'js' })
+  classpath configurations.moreLibs
 }
 
 jib {
-    to {
-        image = System.getProperty("_TARGET_IMAGE")
-        credHelper = 'gcr'
-    }
+  to {
+    image = System.getProperty("_TARGET_IMAGE")
+    credHelper = 'gcr'
+  }
 
-    // Does not have tests use user-level cache for base image layers.
-    useOnlyProjectCache = true
+  // Does not have tests use user-level cache for base image layers.
+  useOnlyProjectCache = true
 }
