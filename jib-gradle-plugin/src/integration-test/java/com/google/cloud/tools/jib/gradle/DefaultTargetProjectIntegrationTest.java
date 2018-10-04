@@ -24,7 +24,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-/** Integration tests for building empty project images. */
+/** Integration tests for building "default-target" project images. */
 public class DefaultTargetProjectIntegrationTest {
 
   @ClassRule
