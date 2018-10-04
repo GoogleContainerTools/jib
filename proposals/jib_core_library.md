@@ -12,19 +12,28 @@ Design for Jib Core as a Java library for building container images.
 
 `Jib` - the main entrypoint for using Jib Core
 
-- `JibContainerBuilder from(String baseImageReference)`
-- `JibContainerBuilder from(ImageReference baseImageReference)`
-- `JibContainerBuilder from(RegistryImage baseImage)`
-- `static Containerizer to(RegistryImage)`
-- `static Containerizer to(DockerDaemonImage)`
-- `static Containerizer to(TarImage)`
+- `static JibContainerBuilder from(String baseImageReference)`
+- `static JibContainerBuilder from(ImageReference baseImageReference)`
+- `static JibContainerBuilder from(RegistryImage baseImage)`
 
 `JibContainerBuilder` - configures the container to build
 
-- `JibContainerBuilder addLayer(List<Path> files, Path pathInContainer)`
+- `JibContainerBuilder addLayer(List<Path> files, String directoryInContainer)`
+
+  Adds a new layer that will consists of the files referred to by `files`, each of which is copied into the `directoryInContainer`. Regardless of the directory nesting of files in `files`, they will be copied into the same level inside the container. Each `Path` object in `files` must represent a file, not a directory.
+
+  ```java
+      container.addLayer(
+        Arrays.asList(
+          Paths.get("/a/b/c.txt"),
+          Paths.get("/a/b.txt"),
+          Paths.get("/a/c.txt")),
+        "/root");
+      // container will have /root/b.txt, and /root/c.txt (from /a/c.txt)
+  ```
+
 - `JibContainerBuilder addLayer(LayerConfiguration)`
 - `JibContainerBuilder setLayers(List<LayerConfiguration>/LayerConfiguration...)`
-
 - `JibContainerBuilder setEntrypoint(List<String>/String...)`
 - `JibContainerBuilder setProgramArguments(List<String>/String...)`
 - `JibContainerBuilder setEnvironment(Map<String, String> environmentMap)`
@@ -55,6 +64,9 @@ Three `TargetImage` types (`RegistryImage`, `DockerDaemonImage`, and `TarImage`)
 - `static Builder named(ImageReference/String)`
 
 `Containerizer` - configures how and where to containerize to
+- `static Containerizer to(RegistryImage)`
+- `static Containerizer to(DockerDaemonImage)`
+- `static Containerizer to(TarImage)`
 - `Containerizer setExecutorService(ExecutorService)`
 - `Containerizer setCacheConfiguration(CacheConfiguration)`
 - `Containerizer setEventHandlers(EventHandlers)`
@@ -62,12 +74,11 @@ Three `TargetImage` types (`RegistryImage`, `DockerDaemonImage`, and `TarImage`)
 ## Simple example
 
 ```java
-Jib.from("busybox")
-   // TODO: this doesn't seem right, especially if multiple files are in the .addLayer call (are they cat'ed, or is /helloworld.sh a directory?)
-   .addLayer(Arrays.asList(Paths.get("helloworld.sh")), "/helloworld.sh") 
+Jib.from("busybox")   
+   .addLayer(Arrays.asList(Paths.get("helloworld.sh")), "/") 
    .setEntrypoint("/helloworld.sh")
    .containerize(
-       Jib.to(RegistryImage.named("coollog/jibtestimage")
+       Containerizer.to(RegistryImage.named("coollog/jibtestimage")
                            .setCredential("coollog", "notmyrealpassword")));
 ```
 
@@ -100,5 +111,5 @@ Jib.from("busybox")
       .addExposedPort(Port.tcp(8080));
 
     // Throws an exception if the image couldn't be build.
-    JibContainer result = javaImage.containerize(Jib.to(destination));
+    JibContainer result = javaImage.containerize(Containerizer.to(destination));
   ```
