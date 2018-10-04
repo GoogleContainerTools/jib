@@ -35,7 +35,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 /** Static factories for various {@link CredentialRetriever}s. */
 public class CredentialRetrieverFactory {
@@ -63,7 +62,8 @@ public class CredentialRetrieverFactory {
    */
   public static CredentialRetrieverFactory forImage(
       ImageReference imageReference, EventDispatcher eventDispatcher) {
-    return new CredentialRetrieverFactory(imageReference, eventDispatcher);
+    return new CredentialRetrieverFactory(
+        imageReference, eventDispatcher, DockerCredentialHelper::new);
   }
 
   /**
@@ -73,22 +73,18 @@ public class CredentialRetrieverFactory {
    * @return a new {@link CredentialRetrieverFactory}
    */
   public static CredentialRetrieverFactory forImage(ImageReference imageReference) {
-    return new CredentialRetrieverFactory(imageReference, null);
+    return new CredentialRetrieverFactory(
+        imageReference, ignored -> {}, DockerCredentialHelper::new);
   }
 
-  @Nullable private final EventDispatcher eventDispatcher;
+  private final EventDispatcher eventDispatcher;
   private final ImageReference imageReference;
   private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
-
-  private CredentialRetrieverFactory(
-      ImageReference imageReference, @Nullable EventDispatcher eventDispatcher) {
-    this(imageReference, eventDispatcher, DockerCredentialHelper::new);
-  }
 
   @VisibleForTesting
   CredentialRetrieverFactory(
       ImageReference imageReference,
-      @Nullable EventDispatcher eventDispatcher,
+      EventDispatcher eventDispatcher,
       DockerCredentialHelperFactory dockerCredentialHelperFactory) {
     this.imageReference = imageReference;
     this.eventDispatcher = eventDispatcher;

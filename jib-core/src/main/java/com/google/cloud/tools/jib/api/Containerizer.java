@@ -133,7 +133,7 @@ public class Containerizer {
   }
 
   /**
-   * Sets whether or not to allow communication over HTTP (as opposed to HTTPS by default).
+   * Sets whether or not to allow communication over HTTP/insecure HTTPS.
    *
    * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
    * @return this

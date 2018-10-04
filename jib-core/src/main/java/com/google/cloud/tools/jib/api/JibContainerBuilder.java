@@ -349,14 +349,14 @@ public class JibContainerBuilder {
         .setLayerConfigurations(layerConfigurations)
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries());
 
-    if (containerizer.getExecutorService().isPresent()) {
-      buildConfigurationBuilder.setExecutorService(containerizer.getExecutorService().get());
-    }
+    containerizer.getExecutorService().ifPresent(buildConfigurationBuilder::setExecutorService);
 
-    if (containerizer.getEventHandlers().isPresent()) {
-      buildConfigurationBuilder.setEventDispatcher(
-          new DefaultEventDispatcher(containerizer.getEventHandlers().get()));
-    }
+    containerizer
+        .getEventHandlers()
+        .ifPresent(
+            eventHandlers ->
+                buildConfigurationBuilder.setEventDispatcher(
+                    new DefaultEventDispatcher(eventHandlers)));
 
     // TODO: Allow users to configure this.
     buildConfigurationBuilder.setToolName("jib-core");
