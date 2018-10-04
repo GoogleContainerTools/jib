@@ -14,10 +14,10 @@ set -x
 cd ${KOKORO_GFILE_DIR}
 
 # Finds the latest ubuntu/release-sign build directory.
-LAST_BUILD=$(ls prod/jib/maven/ubuntu/release-sign/ | sort -rV | head -1)
+LAST_BUILD=$(ls prod/jib/core/ubuntu/release-sign/ | sort -rV | head -1)
 
 # Finds the bundled jar file in the latest signed artifact directory.
-BUNDLED_JAR_FILE=$(find `pwd`/prod/jib/maven/ubuntu/release-sign/${LAST_BUILD}/* -type f \( -iname \*-bundle.jar \))
+BUNDLED_JAR_FILE=$(find `pwd`/prod/jib/core/ubuntu/release-sign/${LAST_BUILD}/* -type f \( -iname \*-bundle.jar \))
 
 # Usage: GetSessionID <variable name>
 # Uses the environment variable CREDENTIALS.
