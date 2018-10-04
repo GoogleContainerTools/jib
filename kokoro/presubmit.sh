@@ -12,7 +12,7 @@ docker kill $(docker ps --all --quiet) || true
 
 cd github/jib
 
-rm /usr/local/bin/docker-credential-osxkeychain
+rm /usr/local/bin/docker-credential-osxkeychain || true
 
 (cd jib-core; ./gradlew clean build integrationTest --info --stacktrace)
 (cd jib-plugins-common; ./gradlew clean build --info --stacktrace)
