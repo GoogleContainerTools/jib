@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.NoSuchElementException;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
@@ -96,6 +97,25 @@ public class DockerContextTaskTest {
   }
 
   @Test
+  public void testUser() throws IOException {
+    Mockito.when(containerParameters.getUser()).thenReturn("tomcat");
+    task.generateDockerContext();
+
+    Assert.assertEquals("USER tomcat", getUser());
+  }
+
+  @Test
+  public void testUser_null() throws IOException {
+    Mockito.when(containerParameters.getUser()).thenReturn(null);
+    task.generateDockerContext();
+    try {
+      getUser();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+    }
+  }
+
+  @Test
   public void testGenerateDockerContext_errorOnNonAbsoluteAppRoot() {
     Mockito.when(containerParameters.getAppRoot()).thenReturn("relative/path");
 
@@ -139,5 +159,11 @@ public class DockerContextTaskTest {
     Path dockerfile = projectRoot.getRoot().toPath().resolve("build/jib-docker-context/Dockerfile");
     List<String> lines = Files.readAllLines(dockerfile);
     return lines.stream().filter(line -> line.startsWith("ENTRYPOINT")).findFirst().get();
+  }
+
+  private String getUser() throws IOException {
+    Path dockerfile = projectRoot.getRoot().toPath().resolve("build/jib-docker-context/Dockerfile");
+    List<String> lines = Files.readAllLines(dockerfile);
+    return lines.stream().filter(line -> line.startsWith("USER")).findFirst().get();
   }
 }

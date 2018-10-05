@@ -199,6 +199,28 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testUser() throws MojoExecutionException {
+    Mockito.doReturn("customUser").when(mockJibPluginConfiguration).getUser();
+
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            mockLog, mockJibPluginConfiguration, mockProjectProperties);
+    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
+
+    Assert.assertEquals("customUser", configuration.getUser());
+  }
+
+  @Test
+  public void testUser_null() throws MojoExecutionException {
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            mockLog, mockJibPluginConfiguration, mockProjectProperties);
+    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
+
+    Assert.assertNull(configuration.getUser());
+  }
+
+  @Test
   public void testGetAppRootChecked() throws MojoExecutionException {
     Mockito.doReturn("/some/root").when(mockJibPluginConfiguration).getAppRoot();
 

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.NoSuchElementException;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
@@ -246,6 +247,79 @@ public class DockerContextMojoTest {
     mojo.execute();
 
     Assert.assertEquals("ENTRYPOINT [\"catalina.sh\",\"run\"]", getEntrypoint());
+  }
+
+  @Test
+  public void testUser() throws IOException, MojoExecutionException {
+    mojo =
+        new DockerContextMojo() {
+          @Override
+          MavenProject getProject() {
+            return project;
+          }
+
+          @Override
+          Path getExtraDirectory() {
+            return projectRoot.getRoot().toPath();
+          }
+
+          @Override
+          String getMainClass() {
+            return "MainClass";
+          }
+
+          @Override
+          String getBaseImage() {
+            return "tomcat:8.5-jre8-alpine";
+          }
+
+          @Override
+          String getUser() {
+            return "tomcat";
+          }
+        };
+    mojo.targetDir = outputFolder.toString();
+    mojo.execute();
+    Assert.assertEquals("USER tomcat", getUser());
+  }
+
+  @Test
+  public void testUser_null() throws IOException, MojoExecutionException {
+    mojo =
+        new DockerContextMojo() {
+          @Override
+          MavenProject getProject() {
+            return project;
+          }
+
+          @Override
+          Path getExtraDirectory() {
+            return projectRoot.getRoot().toPath();
+          }
+
+          @Override
+          String getMainClass() {
+            return "MainClass";
+          }
+
+          @Override
+          String getBaseImage() {
+            return "tomcat:8.5-jre8-alpine";
+          }
+        };
+    mojo.targetDir = outputFolder.toString();
+    mojo.execute();
+    try {
+      getUser();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+    }
+  }
+
+  private String getUser() throws IOException {
+    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
+    List<String> lines = Files.readAllLines(dockerfile);
+    return lines.stream().filter(line -> line.startsWith("USER")).findFirst().get();
   }
 
   private String getEntrypoint() throws IOException {

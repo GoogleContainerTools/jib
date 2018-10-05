@@ -101,6 +101,7 @@ public class BuildImageStepTest {
     Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(ImmutableList.of());
     Mockito.when(mockContainerConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
+    Mockito.when(mockContainerConfiguration.getUser()).thenReturn("root");
 
     nonEmptyLayerHistory =
         HistoryEntry.builder()
@@ -184,6 +185,7 @@ public class BuildImageStepTest {
         ImmutableMap.of("base.label", "base.label.value", "my.label", "my.label.value"),
         image.getLabels());
     Assert.assertEquals("/base/working/directory", image.getWorkingDirectory());
+    Assert.assertEquals("root", image.getUser());
 
     Assert.assertEquals(image.getHistory().get(0), nonEmptyLayerHistory);
     Assert.assertEquals(image.getHistory().get(1), emptyLayerHistory);

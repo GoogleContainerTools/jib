@@ -46,6 +46,7 @@ public class JibPluginConfigurationTest {
     System.clearProperty("jib.container.mainClass");
     System.clearProperty("jib.container.ports");
     System.clearProperty("jib.container.useCurrentTimestamp");
+    System.clearProperty("jib.container.user");
   }
 
   @Before
@@ -125,5 +126,7 @@ public class JibPluginConfigurationTest {
         ImmutableList.of("port1", "port2", "port3"), testPluginConfiguration.getExposedPorts());
     System.setProperty("jib.container.useCurrentTimestamp", "true");
     Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
+    System.setProperty("jib.container.user", "myUser");
+    Assert.assertEquals("myUser", testPluginConfiguration.getUser());
   }
 }
