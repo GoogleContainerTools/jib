@@ -18,13 +18,10 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
-import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -76,23 +73,6 @@ public class BuildImageMojoIntegrationTest {
   private static String getGcrImageReference(String label) {
     String nameBase = "gcr.io/" + IntegrationTestingConfiguration.getGCPProject() + '/';
     return nameBase + label + System.nanoTime();
-  }
-
-  @Nullable
-  private static String getContent(URL url) throws InterruptedException {
-    for (int i = 0; i < 40; i++) {
-      Thread.sleep(500);
-      try {
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-          try (InputStream in = connection.getInputStream()) {
-            return Blobs.writeToString(Blobs.from(in));
-          }
-        }
-      } catch (IOException ex) {
-      }
-    }
-    return null;
   }
 
   /**
@@ -362,14 +342,14 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_jettyServlet25()
       throws VerificationException, IOException, InterruptedException {
     buildAndRunWar("jetty-servlet25:maven", "pom.xml");
-    Assert.assertEquals("Hello world", getContent(new URL("http://localhost:8080/hello")));
+    HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080/hello"));
   }
 
   @Test
   public void testExecute_tomcatServlet25()
       throws VerificationException, IOException, InterruptedException {
     buildAndRunWar("tomcat-servlet25:maven", "pom-tomcat.xml");
-    Assert.assertEquals("Hello world", getContent(new URL("http://localhost:8080/hello")));
+    HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080/hello"));
   }
 
   private void buildAndRunWar(String label, String pomXml)

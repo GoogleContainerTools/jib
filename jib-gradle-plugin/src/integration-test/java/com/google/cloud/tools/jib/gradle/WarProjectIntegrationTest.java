@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.Assert;
@@ -61,25 +63,69 @@ public class WarProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_jettyServlet25Project() throws IOException, InterruptedException {
-    buildAndRunDetached(servlet25Project, "war_jetty_servlet25:gradle", "build.gradle");
-
-    Assert.assertEquals("Hello world", getContent(new URL("http://localhost:8080/hello")));
+  public void testBuild_jettyServlet25() throws IOException, InterruptedException {
+    verifyBuildAndRun(servlet25Project, "war_jetty_servlet25:gradle", "build.gradle");
   }
 
   @Test
-  public void testBuild_tomcatServlet25Project() throws IOException, InterruptedException {
-    buildAndRunDetached(servlet25Project, "war_tomcat_servlet25:gradle", "build-tomcat.gradle");
-
-    Assert.assertEquals("Hello world", getContent(new URL("http://localhost:8080/hello")));
+  public void testBuild_tomcatServlet25() throws IOException, InterruptedException {
+    verifyBuildAndRun(servlet25Project, "war_tomcat_servlet25:gradle", "build-tomcat.gradle");
   }
 
-  private void buildAndRunDetached(TestProject project, String label, String gradleBuildFile)
+  @Test
+  public void testDockerContext_jettyServlet25() throws IOException, InterruptedException {
+    String expectedDockerContext =
+        "FROM gcr.io/distroless/java/jetty\n"
+            + "\n"
+            + "COPY libs /\n"
+            + "COPY resources /\n"
+            + "COPY classes /\n"
+            + "\n"
+            + "ENTRYPOINT [\"java\",\"-jar\",\"/jetty/start.jar\"]\n"
+            + "CMD []";
+    verifyDockerContextBuildAndRun(expectedDockerContext, "build.gradle");
+  }
+
+  @Test
+  public void testDockerContext_tomcatServlet25() throws IOException, InterruptedException {
+    String expectedDockerContext =
+        "FROM tomcat:8.5-jre8-alpine\n"
+            + "\n"
+            + "COPY libs /\n"
+            + "COPY resources /\n"
+            + "COPY classes /\n"
+            + "\n"
+            + "ENTRYPOINT [\"catalina.sh\",\"run\"]\n"
+            + "CMD []";
+    verifyDockerContextBuildAndRun(expectedDockerContext, "build-tomcat.gradle");
+  }
+
+  private void verifyBuildAndRun(TestProject project, String label, String gradleBuildFile)
       throws IOException, InterruptedException {
     String nameBase = "gcr.io/" + IntegrationTestingConfiguration.getGCPProject() + '/';
     String targetImage = nameBase + label + System.nanoTime();
     String output =
         JibRunHelper.buildAndRun(project, targetImage, gradleBuildFile, "--detach", "-p8080:8080");
     containerName = output.trim();
+
+    Assert.assertEquals("Hello world", getContent(new URL("http://localhost:8080/hello")));
+  }
+
+  private void verifyDockerContextBuildAndRun(String expectedDockerfile, String gradleBuildFile)
+      throws IOException, InterruptedException {
+    servlet25Project.build("clean", "jibExportDockerContext", "-b=" + gradleBuildFile);
+
+    Path dockerContext =
+        servlet25Project.getProjectRoot().resolve("build").resolve("jib-docker-context");
+    Assert.assertTrue(Files.exists(dockerContext));
+    String dockerfile = String.join("\n", Files.readAllLines(dockerContext.resolve("Dockerfile")));
+    Assert.assertEquals(expectedDockerfile, dockerfile);
+
+    String imageName = "jib/integration-test" + System.nanoTime();
+    new Command("docker", "build", "-t", imageName, dockerContext.toString()).run();
+    containerName =
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", imageName).run().trim();
+
+    Assert.assertEquals("Hello world", getContent(new URL("http://localhost:8080/hello")));
   }
 }

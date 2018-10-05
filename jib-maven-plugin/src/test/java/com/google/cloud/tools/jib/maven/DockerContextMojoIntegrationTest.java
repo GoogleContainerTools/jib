@@ -18,11 +18,15 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import javax.annotation.Nullable;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -40,6 +44,18 @@ public class DockerContextMojoIntegrationTest {
 
   @ClassRule
   public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
+
+  @ClassRule
+  public static final TestProject servlet25Project = new TestProject(testPlugin, "war_servlet25");
+
+  @Nullable private String detachedContainerName;
+
+  @After
+  public void tearDown() throws IOException, InterruptedException {
+    if (detachedContainerName != null) {
+      new Command("docker", "stop", detachedContainerName).run();
+    }
+  }
 
   @Test
   public void testExecute() throws VerificationException, IOException, InterruptedException {
@@ -77,7 +93,59 @@ public class DockerContextMojoIntegrationTest {
         new Command("docker", "run", "--rm", imageName).run());
   }
 
+  @Test
   public void testExecute_skipJibGoal() throws VerificationException, IOException {
     SkippedGoalVerifier.verifyGoalIsSkipped(skippedTestProject, BuildDockerMojo.GOAL_NAME);
+  }
+
+  @Test
+  public void testExecute_jettyServlet25()
+      throws VerificationException, IOException, InterruptedException {
+    String expectedDockerfile =
+        "FROM gcr.io/distroless/java/jetty\n"
+            + "\n"
+            + "COPY libs /\n"
+            + "COPY resources /\n"
+            + "COPY classes /\n"
+            + "\n"
+            + "ENTRYPOINT [\"java\",\"-jar\",\"/jetty/start.jar\"]\n"
+            + "CMD []";
+    verifyWarBuildAndRun(expectedDockerfile, "pom.xml");
+  }
+
+  @Test
+  public void testExecute_tomcatServlet25()
+      throws VerificationException, IOException, InterruptedException {
+    String expectedDockerfile =
+        "FROM tomcat:8.5-jre8-alpine\n"
+            + "\n"
+            + "COPY libs /\n"
+            + "COPY resources /\n"
+            + "COPY classes /\n"
+            + "\n"
+            + "ENTRYPOINT [\"catalina.sh\",\"run\"]\n"
+            + "CMD []";
+    verifyWarBuildAndRun(expectedDockerfile, "pom-tomcat.xml");
+  }
+
+  private void verifyWarBuildAndRun(String expectedDockerfile, String pomXml)
+      throws VerificationException, IOException, InterruptedException {
+    Verifier verifier = new Verifier(servlet25Project.getProjectRoot().toString());
+    verifier.setAutoclean(false);
+    verifier.addCliOption("--file=" + pomXml);
+    verifier.executeGoals(Arrays.asList("clean", "package", "jib:exportDockerContext"));
+
+    Path dockerContext =
+        servlet25Project.getProjectRoot().resolve("target").resolve("jib-docker-context");
+    Assert.assertTrue(Files.exists(dockerContext));
+    String dockerfile = String.join("\n", Files.readAllLines(dockerContext.resolve("Dockerfile")));
+    Assert.assertEquals(expectedDockerfile, dockerfile);
+
+    String imageName = "jib/integration-test" + System.nanoTime();
+    new Command("docker", "build", "-t", imageName, dockerContext.toString()).run();
+    detachedContainerName =
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", imageName).run().trim();
+
+    HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080/hello"));
   }
 }
