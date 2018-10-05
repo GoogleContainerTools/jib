@@ -110,7 +110,7 @@ class MavenLayerConfigurations {
   }
 
   /**
-   * Resolves the source files configuration for a War {@link MavenProject}.
+   * Resolves the {@link JavaLayerConfigurations} for a WAR {@link MavenProject}.
    *
    * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
