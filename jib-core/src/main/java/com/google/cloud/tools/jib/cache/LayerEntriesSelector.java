@@ -24,6 +24,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,10 +42,12 @@ import java.util.Objects;
  *   {
  *     "sourceFile": "source/file/for/layer/entry/1",
  *     "extractionPath": "/extraction/path/for/layer/entry/1"
+ *     "modifyTime": "2018-10-03T15:48:32.416152Z"
  *   },
  *   {
  *     "sourceFile": "source/file/for/layer/entry/2",
  *     "extractionPath": "/extraction/path/for/layer/entry/2"
+ *     "modifyTime": "2018-10-03T15:48:32.416152Z"
  *   }
  * ]
  * }</pre>
@@ -56,11 +60,13 @@ class LayerEntriesSelector {
 
     private final String sourceFile;
     private final String extractionPath;
+    private final String modifyTime;
 
     @VisibleForTesting
-    LayerEntryTemplate(LayerEntry layerEntry) {
+    LayerEntryTemplate(LayerEntry layerEntry, String modifyTime) {
       sourceFile = layerEntry.getAbsoluteSourceFileString();
       extractionPath = layerEntry.getAbsoluteExtractionPathString();
+      this.modifyTime = modifyTime;
     }
 
     @Override
@@ -69,7 +75,12 @@ class LayerEntriesSelector {
       if (sourceFileComparison != 0) {
         return sourceFileComparison;
       }
-      return extractionPath.compareTo(otherLayerEntryTemplate.extractionPath);
+      int extractionPathComparison =
+          extractionPath.compareTo(otherLayerEntryTemplate.extractionPath);
+      if (extractionPathComparison != 0) {
+        return extractionPathComparison;
+      }
+      return modifyTime.compareTo(otherLayerEntryTemplate.modifyTime);
     }
 
     @Override
@@ -82,12 +93,13 @@ class LayerEntriesSelector {
       }
       LayerEntryTemplate otherLayerEntryTemplate = (LayerEntryTemplate) other;
       return sourceFile.equals(otherLayerEntryTemplate.sourceFile)
-          && extractionPath.equals(otherLayerEntryTemplate.extractionPath);
+          && extractionPath.equals(otherLayerEntryTemplate.extractionPath)
+          && modifyTime.equals(otherLayerEntryTemplate.modifyTime);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(sourceFile, extractionPath);
+      return Objects.hash(sourceFile, extractionPath, extractionPath);
     }
   }
 
@@ -99,10 +111,15 @@ class LayerEntriesSelector {
    * @return list of {@link LayerEntryTemplate} after sorting
    */
   @VisibleForTesting
-  static List<LayerEntryTemplate> toSortedJsonTemplates(List<LayerEntry> layerEntries) {
+  static List<LayerEntryTemplate> toSortedJsonTemplates(List<LayerEntry> layerEntries)
+      throws IOException {
     List<LayerEntryTemplate> jsonTemplates = new ArrayList<>();
     for (LayerEntry entry : layerEntries) {
-      jsonTemplates.add(new LayerEntryTemplate(entry));
+      String modifiedTime =
+          Files.exists(entry.getSourceFile())
+              ? Files.getLastModifiedTime(entry.getSourceFile()).toString()
+              : Instant.EPOCH.toString();
+      jsonTemplates.add(new LayerEntryTemplate(entry, modifiedTime));
     }
     Collections.sort(jsonTemplates);
     return jsonTemplates;

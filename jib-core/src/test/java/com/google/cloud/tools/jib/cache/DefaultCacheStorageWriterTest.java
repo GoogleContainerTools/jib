@@ -79,7 +79,6 @@ public class DefaultCacheStorageWriterTest {
             .write(compress(uncompressedLayerBlob));
 
     verifyCacheEntry(cacheEntry, uncompressedLayerBlob);
-    Assert.assertFalse(cacheEntry.getMetadataBlob().isPresent());
   }
 
   @Test
@@ -87,26 +86,17 @@ public class DefaultCacheStorageWriterTest {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
     DescriptorDigest layerDigest = getCompressedBlobDescriptor(uncompressedLayerBlob).getDigest();
     DescriptorDigest selector = getDigest(Blobs.from("selector"));
-    Blob metadataBlob = Blobs.from("metadata");
 
     CacheEntry cacheEntry =
         new DefaultCacheStorageWriter(defaultCacheStorageFiles)
-            .write(new UncompressedCacheWrite(uncompressedLayerBlob, selector, metadataBlob));
+            .write(new UncompressedCacheWrite(uncompressedLayerBlob, selector));
 
     verifyCacheEntry(cacheEntry, uncompressedLayerBlob);
-
-    // Verifies cacheEntry is correct.
-    Assert.assertTrue(cacheEntry.getMetadataBlob().isPresent());
-    Assert.assertArrayEquals(
-        Blobs.writeToByteArray(metadataBlob),
-        Blobs.writeToByteArray(cacheEntry.getMetadataBlob().get()));
 
     // Verifies that the files are present.
     Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
     Assert.assertTrue(Files.exists(selectorFile));
     Assert.assertEquals(layerDigest.getHash(), Blobs.writeToString(Blobs.from(selectorFile)));
-    Assert.assertTrue(
-        Files.exists(defaultCacheStorageFiles.getMetadataFile(cacheEntry.getLayerDigest())));
   }
 
   private void verifyCacheEntry(CacheEntry cacheEntry, Blob uncompressedLayerBlob)
