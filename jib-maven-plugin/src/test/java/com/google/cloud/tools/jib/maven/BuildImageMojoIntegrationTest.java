@@ -18,12 +18,12 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
-import com.google.common.io.ByteStreams;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -73,9 +73,9 @@ public class BuildImageMojoIntegrationTest {
   @ClassRule
   public static final TestProject servlet25Project = new TestProject(testPlugin, "war_servlet25");
 
-  private static String getGcrImageReference(String imageName) {
-    String repository = "gcr.io/" + IntegrationTestingConfiguration.getGCPProject() + '/';
-    return repository + imageName + System.nanoTime();
+  private static String getGcrImageReference(String label) {
+    String nameBase = "gcr.io/" + IntegrationTestingConfiguration.getGCPProject() + '/';
+    return nameBase + label + System.nanoTime();
   }
 
   @Nullable
@@ -85,9 +85,9 @@ public class BuildImageMojoIntegrationTest {
       try {
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-          ByteArrayOutputStream out = new ByteArrayOutputStream();
-          ByteStreams.copy(connection.getInputStream(), out);
-          return new String(out.toByteArray(), StandardCharsets.UTF_8);
+          try (InputStream in = connection.getInputStream()) {
+            return Blobs.writeToString(Blobs.from(in));
+          }
         }
       } catch (IOException ex) {
       }
@@ -237,7 +237,7 @@ public class BuildImageMojoIntegrationTest {
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
   }
 
-  private String detachedContainerName;
+  @Nullable private String detachedContainerName;
 
   @Before
   public void setUp() throws IOException, InterruptedException {
@@ -372,9 +372,9 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals("Hello world", getContent(new URL("http://localhost:8080/hello")));
   }
 
-  private void buildAndRunWar(String imageName, String pomXml)
+  private void buildAndRunWar(String label, String pomXml)
       throws VerificationException, IOException, InterruptedException {
-    String targetImage = getGcrImageReference(imageName);
+    String targetImage = getGcrImageReference(label);
 
     Verifier verifier = new Verifier(servlet25Project.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
