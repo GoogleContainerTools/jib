@@ -64,10 +64,6 @@ jar {
   }
 }
 
-task wrapper(type: Wrapper) {
-  gradleVersion = '4.6'
-}
-
 // Integration tests must be run explicitly
 task integrationTest(type: Test) {
   testClassesDirs = sourceSets.integrationTest.output.classesDirs
