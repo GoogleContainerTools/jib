@@ -136,18 +136,6 @@ public class DockerContextMojoTest {
     }
   }
 
-  private String getEntrypoint() throws IOException {
-    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
-    List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("ENTRYPOINT")).findFirst().get();
-  }
-
-  private String getBaseImage() throws IOException {
-    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
-    List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("FROM")).findFirst().get();
-  }
-
   @Test
   public void testBaseImage_nonWarPackaging() throws MojoExecutionException, IOException {
     mojo.execute();
@@ -258,5 +246,17 @@ public class DockerContextMojoTest {
     mojo.execute();
 
     Assert.assertEquals("ENTRYPOINT [\"catalina.sh\",\"run\"]", getEntrypoint());
+  }
+
+  private String getEntrypoint() throws IOException {
+    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
+    List<String> lines = Files.readAllLines(dockerfile);
+    return lines.stream().filter(line -> line.startsWith("ENTRYPOINT")).findFirst().get();
+  }
+
+  private String getBaseImage() throws IOException {
+    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
+    List<String> lines = Files.readAllLines(dockerfile);
+    return lines.stream().filter(line -> line.startsWith("FROM")).findFirst().get();
   }
 }
