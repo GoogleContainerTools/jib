@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.CacheEntry;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -186,6 +187,27 @@ class BuildImageStep
                 : containerConfiguration.getProgramArguments());
         imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());
         imageBuilder.addLabels(containerConfiguration.getLabels());
+
+        if (containerConfiguration.isEntrypointInferredFromBaseImage()
+            && baseImage.getEntrypoint() != null) {
+          buildConfiguration
+              .getEventDispatcher()
+              .dispatch(
+                  LogEvent.lifecycle(
+                      "Container entrypoint set to "
+                          + baseImage.getEntrypoint()
+                          + " (inherited from base image)"));
+        }
+        if (containerConfiguration.isProgramArgumentsInferredFromBaseImage()
+            && baseImage.getJavaArguments() != null) {
+          buildConfiguration
+              .getEventDispatcher()
+              .dispatch(
+                  LogEvent.lifecycle(
+                      "Container program arguments set to "
+                          + baseImage.getJavaArguments()
+                          + " (inherited from base image)"));
+        }
       }
 
       // Gets the container configuration content descriptor.
