@@ -66,7 +66,7 @@ public class RegistryImage implements SourceImage, TargetImage {
   }
 
   private final ImageReference imageReference;
-  private List<CredentialRetriever> credentialRetrievers = new ArrayList<>();
+  private final List<CredentialRetriever> credentialRetrievers = new ArrayList<>();
 
   /** Instantiate with {@link #named}. */
   private RegistryImage(ImageReference imageReference) {

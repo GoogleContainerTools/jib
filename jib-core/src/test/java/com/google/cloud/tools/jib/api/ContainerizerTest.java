@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import org.junit.Assert;
@@ -50,6 +51,7 @@ public class ContainerizerTest {
   private void verifyTo(Containerizer containerizer, TargetImage expectedTargetImage)
       throws CacheDirectoryCreationException {
     Assert.assertSame(expectedTargetImage, containerizer.getTargetImage());
+    Assert.assertTrue(containerizer.getAdditionalTags().isEmpty());
     Assert.assertFalse(containerizer.getExecutorService().isPresent());
     Assert.assertFalse(containerizer.getEventHandlers().isPresent());
     Assert.assertEquals(
@@ -62,6 +64,8 @@ public class ContainerizerTest {
     Assert.assertEquals("jib-core", containerizer.getToolName());
 
     containerizer
+        .addAdditionalTag("tag1")
+        .addAdditionalTag("tag2")
         .setExecutorService(mockExecutorService)
         .setEventHandlers(mockEventHandlers)
         .setBaseImageLayersCache(Paths.get("base/image/layers"))
@@ -70,6 +74,7 @@ public class ContainerizerTest {
         .setToolName("tool");
 
     Assert.assertSame(expectedTargetImage, containerizer.getTargetImage());
+    Assert.assertEquals(ImmutableSet.of("tag1", "tag2"), containerizer.getAdditionalTags());
     Assert.assertTrue(containerizer.getExecutorService().isPresent());
     Assert.assertEquals(mockExecutorService, containerizer.getExecutorService().get());
     Assert.assertTrue(containerizer.getEventHandlers().isPresent());

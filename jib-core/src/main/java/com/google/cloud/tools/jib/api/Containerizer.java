@@ -20,10 +20,14 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.UserCacheHome;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
@@ -74,6 +78,7 @@ public class Containerizer {
   }
 
   private final TargetImage targetImage;
+  private final Set<String> additionalTags = new HashSet<>();
   @Nullable private ExecutorService executorService;
   private Path baseImageLayersCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
   @Nullable private Path applicationLayersCacheDirectory;
@@ -84,6 +89,24 @@ public class Containerizer {
   /** Instantiate with {@link #to}. */
   private Containerizer(TargetImage targetImage) {
     this.targetImage = targetImage;
+  }
+
+  /**
+   * Adds an additional tag to tag the target image with. For example, the following would
+   * containerize to both {@code gcr.io/my-project/my-image:tag} and {@code
+   * gcr.io/my-project/my-image:tag2}:
+   *
+   * <pre>{@code
+   * Containerizer.to(RegistryImage.named("gcr.io/my-project/my-image:tag")).addAdditionalTag("tag2");
+   * }</pre>
+   *
+   * @param additionalTag the additional tag to push to
+   * @return this
+   */
+  public Containerizer addAdditionalTag(String additionalTag) {
+    Preconditions.checkArgument(ImageReference.isValidTag(additionalTag));
+    additionalTags.add(additionalTag);
+    return this;
   }
 
   /**
@@ -160,6 +183,10 @@ public class Containerizer {
 
   TargetImage getTargetImage() {
     return targetImage;
+  }
+
+  Set<String> getAdditionalTags() {
+    return additionalTags;
   }
 
   Optional<ExecutorService> getExecutorService() {

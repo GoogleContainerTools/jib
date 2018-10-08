@@ -370,6 +370,7 @@ public class JibContainerBuilder {
     buildConfigurationBuilder
         .setBaseImageConfiguration(baseImage.toImageConfiguration())
         .setTargetImageConfiguration(containerizer.getTargetImage().toImageConfiguration())
+        .setAdditionalTargetImageTags(containerizer.getAdditionalTags())
         .setBaseImageLayersCacheDirectory(containerizer.getBaseImageLayersCacheDirectory())
         .setApplicationLayersCacheDirectory(containerizer.getApplicationLayersCacheDirectory())
         .setContainerConfiguration(toContainerConfiguration())

@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -156,6 +157,8 @@ public class JibContainerBuilderTest {
             .retrieve()
             .orElseThrow(AssertionError::new));
 
+    Assert.assertEquals(ImmutableSet.of("latest"), buildConfiguration.getAllTargetImageTags());
+
     Mockito.verify(spyBuildConfigurationBuilder)
         .setBaseImageLayersCacheDirectory(Paths.get("base/image/layers"));
     Mockito.verify(spyBuildConfigurationBuilder)
@@ -175,13 +178,23 @@ public class JibContainerBuilderTest {
     Assert.assertSame(
         ImageFormat.Docker.getManifestTemplateClass(), buildConfiguration.getTargetFormat());
 
+    Assert.assertEquals("jib-core", buildConfiguration.getToolName());
+
     // Change jibContainerBuilder.
 
     buildConfiguration =
         jibContainerBuilder
             .setFormat(ImageFormat.OCI)
-            .toBuildConfiguration(spyBuildConfigurationBuilder, containerizer);
+            .toBuildConfiguration(
+                spyBuildConfigurationBuilder,
+                containerizer
+                    .addAdditionalTag("tag1")
+                    .addAdditionalTag("tag2")
+                    .setToolName("toolName"));
     Assert.assertSame(
         ImageFormat.OCI.getManifestTemplateClass(), buildConfiguration.getTargetFormat());
+    Assert.assertEquals(
+        ImmutableSet.of("latest", "tag1", "tag2"), buildConfiguration.getAllTargetImageTags());
+    Assert.assertEquals("toolName", buildConfiguration.getToolName());
   }
 }
