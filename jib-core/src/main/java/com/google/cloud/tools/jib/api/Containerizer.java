@@ -20,10 +20,14 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.UserCacheHome;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
@@ -39,6 +43,8 @@ public class Containerizer {
   // TODO: Reduce scope once plugins are migrated to use the new Jib Core API.
   public static final Path DEFAULT_BASE_CACHE_DIRECTORY =
       UserCacheHome.getCacheHome().resolve("google-cloud-tools-java").resolve("jib");
+
+  private static final String DEFAULT_TOOL_NAME = "jib-core";
 
   /**
    * Gets a new {@link Containerizer} that containerizes to a container registry.
@@ -72,15 +78,35 @@ public class Containerizer {
   }
 
   private final TargetImage targetImage;
+  private final Set<String> additionalTags = new HashSet<>();
   @Nullable private ExecutorService executorService;
   private Path baseImageLayersCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
   @Nullable private Path applicationLayersCacheDirectory;
   @Nullable private EventHandlers eventHandlers;
   private boolean allowInsecureRegistries = false;
+  private String toolName = DEFAULT_TOOL_NAME;
 
   /** Instantiate with {@link #to}. */
   private Containerizer(TargetImage targetImage) {
     this.targetImage = targetImage;
+  }
+
+  /**
+   * Adds an additional tag to tag the target image with. For example, the following would
+   * containerize to both {@code gcr.io/my-project/my-image:tag} and {@code
+   * gcr.io/my-project/my-image:tag2}:
+   *
+   * <pre>{@code
+   * Containerizer.to(RegistryImage.named("gcr.io/my-project/my-image:tag")).addAdditionalTag("tag2");
+   * }</pre>
+   *
+   * @param tag the additional tag to push to
+   * @return this
+   */
+  public Containerizer addAdditionalTag(String tag) {
+    Preconditions.checkArgument(ImageReference.isValidTag(tag));
+    additionalTags.add(tag);
+    return this;
   }
 
   /**
@@ -143,8 +169,24 @@ public class Containerizer {
     return this;
   }
 
+  /**
+   * Sets the name of the tool that is using Jib Core. This will be sent as part of the {@code
+   * User-Agent} in registry requests. Defaults to {@code jib-core}.
+   *
+   * @param toolName the name of the tool using this library
+   * @return this
+   */
+  public Containerizer setToolName(String toolName) {
+    this.toolName = toolName;
+    return this;
+  }
+
   TargetImage getTargetImage() {
     return targetImage;
+  }
+
+  Set<String> getAdditionalTags() {
+    return additionalTags;
   }
 
   Optional<ExecutorService> getExecutorService() {
@@ -176,5 +218,9 @@ public class Containerizer {
 
   boolean getAllowInsecureRegistries() {
     return allowInsecureRegistries;
+  }
+
+  String getToolName() {
+    return toolName;
   }
 }
