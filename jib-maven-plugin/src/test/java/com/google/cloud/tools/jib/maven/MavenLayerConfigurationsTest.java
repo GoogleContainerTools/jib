@@ -79,7 +79,9 @@ public class MavenLayerConfigurationsTest {
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
+            "/my/app/resources/directory",
             "/my/app/resources/directory/somefile",
+            "/my/app/resources/package",
             "/my/app/resources/resourceA",
             "/my/app/resources/resourceB",
             "/my/app/resources/world"),
@@ -87,11 +89,14 @@ public class MavenLayerConfigurationsTest {
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/classes/HelloWorld.class",
+            "/my/app/classes/directory",
+            "/my/app/classes/package",
             "/my/app/classes/package/some.class",
             "/my/app/classes/some.class"),
         configuration.getClassLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/a/b/bar", "/c/cat", "/foo"), configuration.getExtraFilesLayerEntries());
+        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
+        configuration.getExtraFilesLayerEntries());
   }
 
   @Rule public final TestRepository testRepository = new TestRepository();
@@ -140,13 +145,17 @@ public class MavenLayerConfigurationsTest {
     Path applicationDirectory = Paths.get(Resources.getResource("application").toURI());
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
+            applicationDirectory.resolve("output/directory"),
             applicationDirectory.resolve("output/directory/somefile"),
+            applicationDirectory.resolve("output/package"),
             applicationDirectory.resolve("output/resourceA"),
             applicationDirectory.resolve("output/resourceB"),
             applicationDirectory.resolve("output/world"));
     ImmutableList<Path> expectedClassesFiles =
         ImmutableList.of(
             applicationDirectory.resolve("output/HelloWorld.class"),
+            applicationDirectory.resolve("output/directory"),
+            applicationDirectory.resolve("output/package"),
             applicationDirectory.resolve("output/package/some.class"),
             applicationDirectory.resolve("output/some.class"));
 
@@ -172,7 +181,10 @@ public class MavenLayerConfigurationsTest {
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
+            extraFilesDirectory.resolve("a"),
+            extraFilesDirectory.resolve("a/b"),
             extraFilesDirectory.resolve("a/b/bar"),
+            extraFilesDirectory.resolve("c"),
             extraFilesDirectory.resolve("c/cat"),
             extraFilesDirectory.resolve("foo"));
 
@@ -213,19 +225,28 @@ public class MavenLayerConfigurationsTest {
             outputPath.resolve("final-name/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"));
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
+            outputPath.resolve("final-name/META-INF"),
             outputPath.resolve("final-name/META-INF/context.xml"),
             outputPath.resolve("final-name/Test.jsp"),
+            outputPath.resolve("final-name/WEB-INF"),
+            outputPath.resolve("final-name/WEB-INF/classes"),
             outputPath.resolve("final-name/WEB-INF/classes/empty_dir"),
+            outputPath.resolve("final-name/WEB-INF/classes/package"),
             outputPath.resolve("final-name/WEB-INF/classes/package/test.properties"),
+            outputPath.resolve("final-name/WEB-INF/lib"),
             outputPath.resolve("final-name/WEB-INF/web.xml"));
     ImmutableList<Path> expectedClassesFiles =
         ImmutableList.of(
             outputPath.resolve("final-name/WEB-INF/classes/HelloWorld.class"),
-            outputPath.resolve("final-name/WEB-INF/classes/empty_dir"), // Not sure about that
+            outputPath.resolve("final-name/WEB-INF/classes/empty_dir"),
+            outputPath.resolve("final-name/WEB-INF/classes/package"),
             outputPath.resolve("final-name/WEB-INF/classes/package/Other.class"));
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
+            extraFilesDirectory.resolve("a"),
+            extraFilesDirectory.resolve("a/b"),
             extraFilesDirectory.resolve("a/b/bar"),
+            extraFilesDirectory.resolve("c"),
             extraFilesDirectory.resolve("c/cat"),
             extraFilesDirectory.resolve("foo"));
 
@@ -245,20 +266,27 @@ public class MavenLayerConfigurationsTest {
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
+            "/my/app/META-INF",
             "/my/app/META-INF/context.xml",
             "/my/app/Test.jsp",
+            "/my/app/WEB-INF",
+            "/my/app/WEB-INF/classes",
             "/my/app/WEB-INF/classes/empty_dir",
+            "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/test.properties",
+            "/my/app/WEB-INF/lib",
             "/my/app/WEB-INF/web.xml"),
         configuration.getResourceLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/WEB-INF/classes/HelloWorld.class",
-            "/my/app/WEB-INF/classes/empty_dir", // Not sure about that
+            "/my/app/WEB-INF/classes/empty_dir",
+            "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/Other.class"),
         configuration.getClassLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/a/b/bar", "/c/cat", "/foo"), configuration.getExtraFilesLayerEntries());
+        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
+        configuration.getExtraFilesLayerEntries());
   }
 
   @Test

@@ -25,10 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
@@ -75,58 +71,6 @@ class GradleLayerConfigurations {
   private static JavaLayerConfigurations getForNonWarProject(
       Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
       throws IOException {
-    JavaPluginConvention javaPluginConvention =
-        project.getConvention().getPlugin(JavaPluginConvention.class);
-
-    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
-
-    List<Path> dependenciesFiles = new ArrayList<>();
-    List<Path> snapshotDependenciesFiles = new ArrayList<>();
-    List<Path> classesFiles = new ArrayList<>();
-    List<Path> extraFiles = new ArrayList<>();
-
-    // Adds each file in each classes output directory to the classes files list.
-    FileCollection classesOutputDirectories = mainSourceSet.getOutput().getClassesDirs();
-    logger.info("Adding corresponding output directories of source sets to image");
-    for (File classesOutputDirectory : classesOutputDirectories) {
-      if (Files.notExists(classesOutputDirectory.toPath())) {
-        logger.info("\t'" + classesOutputDirectory + "' (not found, skipped)");
-        continue;
-      }
-      logger.info("\t'" + classesOutputDirectory + "'");
-      try (Stream<Path> classFileStream = Files.list(classesOutputDirectory.toPath())) {
-        classFileStream.forEach(classesFiles::add);
-      }
-    }
-    if (classesFiles.isEmpty()) {
-      logger.warn("No classes files were found - did you compile your project?");
-    }
-
-    Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-
-    // Adds all other files to the dependencies files list.
-    FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
-    // Removes the classes output directories.
-    allFiles = allFiles.minus(classesOutputDirectories);
-    for (File dependencyFile : allFiles) {
-      // Removes the resources output directory.
-      if (resourcesOutputDirectory.equals(dependencyFile.toPath())) {
-        continue;
-      }
-      if (dependencyFile.getName().contains("SNAPSHOT")) {
-        snapshotDependenciesFiles.add(dependencyFile.toPath());
-      } else {
-        dependenciesFiles.add(dependencyFile.toPath());
-      }
-    }
-
-    // Adds all the extra files.
-    if (Files.exists(extraDirectory)) {
-      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(extraDirectory)) {
-        extraFiles = extraFilesLayerDirectoryFiles.collect(Collectors.toList());
-      }
-    }
-
     AbsoluteUnixPath dependenciesExtractionPath =
         appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
     AbsoluteUnixPath resourcesExtractionPath =
@@ -135,22 +79,56 @@ class GradleLayerConfigurations {
         appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
 
     Builder layerBuilder = JavaLayerConfigurations.builder();
-    for (Path file : dependenciesFiles) {
-      layerBuilder.addDependencyFile(file, dependenciesExtractionPath.resolve(file.getFileName()));
+
+    JavaPluginConvention javaPluginConvention =
+        project.getConvention().getPlugin(JavaPluginConvention.class);
+    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
+
+    FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
+    FileCollection classesDirectories = mainSourceSet.getOutput().getClassesDirs();
+    Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
+
+    // Adds class files.
+    logger.info("Adding corresponding output directories of source sets to image");
+    classesDirectories
+        .filter(file -> !file.exists())
+        .forEach(file -> logger.info("\t'" + file + "' (not found, skipped)"));
+
+    FileCollection existingClassesDirectories = classesDirectories.filter(File::exists);
+    for (File classesOutputDirectory : existingClassesDirectories) {
+      layerBuilder.addClassFile(classesOutputDirectory.toPath(), classesExtractionPath);
     }
-    for (Path file : snapshotDependenciesFiles) {
-      layerBuilder.addSnapshotDependencyFile(
-          file, dependenciesExtractionPath.resolve(file.getFileName()));
+    if (existingClassesDirectories.isEmpty()) {
+      logger.warn("No classes files were found - did you compile your project?");
     }
+
     if (Files.exists(resourcesOutputDirectory)) {
       layerBuilder.addResourceFile(resourcesOutputDirectory, resourcesExtractionPath);
     }
-    for (Path file : classesFiles) {
-      layerBuilder.addClassFile(file, classesExtractionPath.resolve(file.getFileName()));
+
+    // Adds dependency files.
+    FileCollection dependencies =
+        allFiles
+            // Removes the classes output directories.
+            .minus(classesDirectories)
+            // Removes the resources output directory.
+            .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
+    for (File file : dependencies) {
+      Path dependencyFile = file.toPath();
+      AbsoluteUnixPath pathInContainer =
+          dependenciesExtractionPath.resolve(dependencyFile.getFileName());
+      if (dependencyFile.getFileName().toString().contains("SNAPSHOT")) {
+        layerBuilder.addSnapshotDependencyFile(dependencyFile, pathInContainer);
+      } else {
+        layerBuilder.addDependencyFile(dependencyFile, pathInContainer);
+      }
     }
-    for (Path file : extraFiles) {
-      layerBuilder.addExtraFile(file, AbsoluteUnixPath.get("/").resolve(file.getFileName()));
+
+    // Adds all the extra files.
+    if (Files.exists(extraDirectory)) {
+      layerBuilder.addExtraFilesRoot(extraDirectory, path -> true, AbsoluteUnixPath.get("/"));
     }
+
     return layerBuilder.build();
   }
 

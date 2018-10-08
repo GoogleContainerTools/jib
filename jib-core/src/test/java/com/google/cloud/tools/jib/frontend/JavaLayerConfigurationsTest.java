@@ -7,19 +7,33 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link JavaLayerConfigurations}. */
+@RunWith(MockitoJUnitRunner.class)
 public class JavaLayerConfigurationsTest {
+
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Mock private JavaLayerConfigurations.Builder.EntryAdder fileToLayerAdder;
 
   private static JavaLayerConfigurations createFakeConfigurations() throws IOException {
     return JavaLayerConfigurations.builder()
@@ -202,5 +216,132 @@ public class JavaLayerConfigurationsTest {
     Assert.assertEquals(expectedResourcesLayer, configurations.getResourceLayerEntries());
     Assert.assertEquals(expectedClassesLayer, configurations.getClassLayerEntries());
     Assert.assertEquals(expectedExtraLayer, configurations.getExtraFilesLayerEntries());
+  }
+
+  @Test
+  public void testAddFilesRoot_file() throws IOException {
+    temporaryFolder.newFile("file");
+
+    Path sourceRoot = temporaryFolder.getRoot().toPath();
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
+
+    JavaLayerConfigurations.Builder.addFilesRoot(
+        sourceRoot, path -> true, basePath, fileToLayerAdder);
+    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("file"), basePath.resolve("file"));
+    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+  }
+
+  @Test
+  public void testAddFilesRoot_emptyDirectory() throws IOException {
+    temporaryFolder.newFolder("leaf");
+
+    Path sourceRoot = temporaryFolder.getRoot().toPath();
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
+
+    JavaLayerConfigurations.Builder.addFilesRoot(
+        sourceRoot, path -> true, basePath, fileToLayerAdder);
+    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("leaf"), basePath.resolve("leaf"));
+    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+  }
+
+  @Test
+  public void testAddFilesRoot_nonEmptyDirectoryIgnored() throws IOException {
+    temporaryFolder.newFolder("non-empty", "leaf");
+
+    Path sourceRoot = temporaryFolder.getRoot().toPath();
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
+
+    JavaLayerConfigurations.Builder.addFilesRoot(
+        sourceRoot, path -> true, basePath, fileToLayerAdder);
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("non-empty"), basePath.resolve("non-empty"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("non-empty/leaf"), basePath.resolve("non-empty/leaf"));
+    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+  }
+
+  @Test
+  public void testAddFilesRoot_filter() throws IOException {
+    temporaryFolder.newFile("non-target");
+    temporaryFolder.newFolder("sub");
+    temporaryFolder.newFile("sub/target");
+
+    Path sourceRoot = temporaryFolder.getRoot().toPath();
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
+
+    Predicate<Path> nameIsTarget = path -> "target".equals(path.getFileName().toString());
+    JavaLayerConfigurations.Builder.addFilesRoot(
+        sourceRoot, nameIsTarget, basePath, fileToLayerAdder);
+    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("sub"), basePath.resolve("sub"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("sub/target"), basePath.resolve("sub/target"));
+    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+  }
+
+  @Test
+  public void testAddFilesRoot_emptyDirectoryForced() throws IOException {
+    temporaryFolder.newFolder("sub", "leaf");
+
+    Path sourceRoot = temporaryFolder.getRoot().toPath();
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
+
+    JavaLayerConfigurations.Builder.addFilesRoot(
+        sourceRoot, path -> false, basePath, fileToLayerAdder);
+    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("sub"), basePath.resolve("sub"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("sub/leaf"), basePath.resolve("sub/leaf"));
+    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+  }
+
+  @Test
+  public void testAddFilesRoot_fileAsSource() throws IOException {
+    Path sourceFile = temporaryFolder.newFile("foo").toPath();
+
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
+    try {
+      JavaLayerConfigurations.Builder.addFilesRoot(
+          sourceFile, path -> true, basePath, fileToLayerAdder);
+      Assert.fail();
+    } catch (NotDirectoryException ex) {
+      Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("foo is not a directory"));
+    }
+  }
+
+  @Test
+  public void testAddFilesRoot_complex() throws IOException {
+    temporaryFolder.newFile("A.class");
+    temporaryFolder.newFile("B.java");
+    temporaryFolder.newFolder("example", "dir");
+    temporaryFolder.newFile("example/dir/C.class");
+    temporaryFolder.newFile("example/C.class");
+    temporaryFolder.newFolder("test", "resources", "leaf");
+    temporaryFolder.newFile("test/resources/D.java");
+    temporaryFolder.newFile("test/D.class");
+
+    Path sourceRoot = temporaryFolder.getRoot().toPath();
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/base");
+
+    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+
+    JavaLayerConfigurations.Builder.addFilesRoot(
+        sourceRoot, isClassFile, basePath, fileToLayerAdder);
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("A.class"), basePath.resolve("A.class"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("example"), basePath.resolve("example"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("example/dir"), basePath.resolve("example/dir"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("example/dir/C.class"), basePath.resolve("example/dir/C.class"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("example/C.class"), basePath.resolve("example/C.class"));
+    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("test"), basePath.resolve("test"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("test/resources"), basePath.resolve("test/resources"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("test/resources/leaf"), basePath.resolve("test/resources/leaf"));
+    Mockito.verify(fileToLayerAdder)
+        .add(sourceRoot.resolve("test/D.class"), basePath.resolve("test/D.class"));
+    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
   }
 }

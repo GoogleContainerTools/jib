@@ -18,15 +18,19 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /** Builds {@link LayerConfiguration}s for a Java application. */
 public class JavaLayerConfigurations {
@@ -59,6 +63,49 @@ public class JavaLayerConfigurations {
 
   /** Builds with each layer's files. */
   public static class Builder {
+
+    @FunctionalInterface
+    @VisibleForTesting
+    static interface EntryAdder {
+
+      void add(Path sourcePath, AbsoluteUnixPath pathInContainer) throws IOException;
+    }
+
+    /**
+     * Adds files to a layer selectively and recursively. {@code sourceRoot} must be a directory.
+     * Empty directories will always be added regardless of {@code pathFilter}, except for {@code
+     * sourceRoot}. If {@code sourceRoot} is empty, nothing will be added.
+     *
+     * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
+     * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,
+     * and {@code basePathInContainer} is {@code /etc}, then the image will have {@code
+     * /etc/passwd}.
+     *
+     * @param sourceRoot root directory whose contents will be added
+     * @param pathFilter only the files satisfying the filter will be added, unless the files are
+     *     directories
+     * @param basePathInContainer directory in the layer into which the source contents are added
+     * @param entryAdder function that should add the file to the layer; the function gets the path
+     *     of the source file (may be a directory) and the final destination path in the layer
+     * @throws IOException error while listing directories
+     * @throws NotDirectoryException if {@code sourceRoot} is not a directory
+     */
+    @VisibleForTesting
+    static void addFilesRoot(
+        Path sourceRoot,
+        Predicate<Path> pathFilter,
+        AbsoluteUnixPath basePathInContainer,
+        EntryAdder entryAdder)
+        throws IOException {
+
+      new DirectoryWalker(sourceRoot)
+          .filterRoot()
+          .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
+          .walk(
+              path -> {
+                entryAdder.add(path, basePathInContainer.resolve(sourceRoot.relativize(path)));
+              });
+    }
 
     private final Map<LayerType, LayerConfiguration.Builder> layerBuilders =
         new EnumMap<>(LayerType.class);
@@ -158,6 +205,146 @@ public class JavaLayerConfigurations {
         throws IOException {
       Preconditions.checkNotNull(layerBuilders.get(LayerType.EXTRA_FILES))
           .addEntryRecursive(sourceFile, pathInContainer);
+      return this;
+    }
+
+    /**
+     * Adds files to the dependency layer selectively and recursively. {@code sourceRoot} must be a
+     * directory. Empty directories will always be added regardless of {@code pathFilter}, except
+     * for {@code sourceRoot}. If {@code sourceRoot} is empty, nothing will be added.
+     *
+     * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
+     * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,
+     * and {@code basePathInContainer} is {@code /etc}, then the image will have {@code
+     * /etc/passwd}.
+     *
+     * @param sourceRoot root directory whose contents will be added
+     * @param pathFilter only the files satisfying the filter will be added, unless the files are
+     *     directories
+     * @param basePathInContainer directory in the layer into which the source contents are added
+     * @param entryAdder function that should add the file to the layer; the function gets the path
+     *     of the source file (may be a directory) and the final destination path in the layer
+     * @throws IOException error while listing directories
+     * @throws NotDirectoryException if {@code sourceRoot} is not a directory
+     */
+    public Builder addDependenciesRoot(
+        Path sourceRoot, Predicate<Path> pathFilter, AbsoluteUnixPath basePathInContainer)
+        throws IOException {
+      LayerConfiguration.Builder builder =
+          Preconditions.checkNotNull(layerBuilders.get(LayerType.DEPENDENCIES));
+      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder::addEntry);
+      return this;
+    }
+
+    /**
+     * Adds files to the snapshot dependency layer selectively and recursively. {@code sourceRoot}
+     * must be a directory. Empty directories will always be added regardless of {@code pathFilter},
+     * except for {@code sourceRoot}. If {@code sourceRoot} is empty, nothing will be added.
+     *
+     * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
+     * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,
+     * and {@code basePathInContainer} is {@code /etc}, then the image will have {@code
+     * /etc/passwd}.
+     *
+     * @param sourceRoot root directory whose contents will be added
+     * @param pathFilter only the files satisfying the filter will be added, unless the files are
+     *     directories
+     * @param basePathInContainer directory in the layer into which the source contents are added
+     * @param entryAdder function that should add the file to the layer; the function gets the path
+     *     of the source file (may be a directory) and the final destination path in the layer
+     * @throws IOException error while listing directories
+     * @throws NotDirectoryException if {@code sourceRoot} is not a directory
+     */
+    public Builder addSnapshotDependenciesRoot(
+        Path sourceRoot, Predicate<Path> pathFilter, AbsoluteUnixPath basePathInContainer)
+        throws IOException {
+      LayerConfiguration.Builder builder =
+          Preconditions.checkNotNull(layerBuilders.get(LayerType.SNAPSHOT_DEPENDENCIES));
+      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder::addEntry);
+      return this;
+    }
+
+    /**
+     * Adds files to the resource layer selectively and recursively. {@code sourceRoot} must be a
+     * directory. Empty directories will always be added regardless of {@code pathFilter}, except
+     * for {@code sourceRoot}. If {@code sourceRoot} is empty, nothing will be added.
+     *
+     * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
+     * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,
+     * and {@code basePathInContainer} is {@code /etc}, then the image will have {@code
+     * /etc/passwd}.
+     *
+     * @param sourceRoot root directory whose contents will be added
+     * @param pathFilter only the files satisfying the filter will be added, unless the files are
+     *     directories
+     * @param basePathInContainer directory in the layer into which the source contents are added
+     * @param entryAdder function that should add the file to the layer; the function gets the path
+     *     of the source file (may be a directory) and the final destination path in the layer
+     * @throws IOException error while listing directories
+     * @throws NotDirectoryException if {@code sourceRoot} is not a directory
+     */
+    public Builder addResourcesRoot(
+        Path sourceRoot, Predicate<Path> pathFilter, AbsoluteUnixPath basePathInContainer)
+        throws IOException {
+      LayerConfiguration.Builder builder =
+          Preconditions.checkNotNull(layerBuilders.get(LayerType.RESOURCES));
+      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder::addEntry);
+      return this;
+    }
+
+    /**
+     * Adds files to the classes layer selectively and recursively. {@code sourceRoot} must be a
+     * directory. Empty directories will always be added regardless of {@code pathFilter}, except
+     * for {@code sourceRoot}. If {@code sourceRoot} is empty, nothing will be added.
+     *
+     * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
+     * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,
+     * and {@code basePathInContainer} is {@code /etc}, then the image will have {@code
+     * /etc/passwd}.
+     *
+     * @param sourceRoot root directory whose contents will be added
+     * @param pathFilter only the files satisfying the filter will be added, unless the files are
+     *     directories
+     * @param basePathInContainer directory in the layer into which the source contents are added
+     * @param entryAdder function that should add the file to the layer; the function gets the path
+     *     of the source file (may be a directory) and the final destination path in the layer
+     * @throws IOException error while listing directories
+     * @throws NotDirectoryException if {@code sourceRoot} is not a directory
+     */
+    public Builder addClassesRoot(
+        Path sourceRoot, Predicate<Path> pathFilter, AbsoluteUnixPath basePathInContainer)
+        throws IOException {
+      LayerConfiguration.Builder builder =
+          Preconditions.checkNotNull(layerBuilders.get(LayerType.CLASSES));
+      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder::addEntry);
+      return this;
+    }
+
+    /**
+     * Adds files to the extra files layer selectively and recursively. {@code sourceRoot} must be a
+     * directory. Empty directories will always be added regardless of {@code pathFilter}, except
+     * for {@code sourceRoot}. If {@code sourceRoot} is empty, nothing will be added.
+     *
+     * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
+     * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,
+     * and {@code basePathInContainer} is {@code /etc}, then the image will have {@code
+     * /etc/passwd}.
+     *
+     * @param sourceRoot root directory whose contents will be added
+     * @param pathFilter only the files satisfying the filter will be added, unless the files are
+     *     directories
+     * @param basePathInContainer directory in the layer into which the source contents are added
+     * @param entryAdder function that should add the file to the layer; the function gets the path
+     *     of the source file (may be a directory) and the final destination path in the layer
+     * @throws IOException error while listing directories
+     * @throws NotDirectoryException if {@code sourceRoot} is not a directory
+     */
+    public Builder addExtraFilesRoot(
+        Path sourceRoot, Predicate<Path> pathFilter, AbsoluteUnixPath basePathInContainer)
+        throws IOException {
+      LayerConfiguration.Builder builder =
+          Preconditions.checkNotNull(layerBuilders.get(LayerType.EXTRA_FILES));
+      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder::addEntry);
       return this;
     }
 

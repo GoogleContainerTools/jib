@@ -87,21 +87,15 @@ class MavenLayerConfigurations {
 
     // Gets the classes files in the 'classes' output directory.
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-    JavaLayerConfigurationsHelper.addFilesToLayer(
-        classesOutputDirectory, isClassFile, classesExtractionPath, layerBuilder::addClassFile);
+    layerBuilder.addClassesRoot(classesOutputDirectory, isClassFile, classesExtractionPath);
 
     // Gets the resources files in the 'classes' output directory.
-    JavaLayerConfigurationsHelper.addFilesToLayer(
-        classesOutputDirectory,
-        isClassFile.negate(),
-        resourcesExtractionPath,
-        layerBuilder::addResourceFile);
+    layerBuilder.addResourcesRoot(
+        classesOutputDirectory, isClassFile.negate(), resourcesExtractionPath);
 
     // Adds all the extra files.
     if (Files.exists(extraDirectory)) {
-      AbsoluteUnixPath extractionBase = AbsoluteUnixPath.get("/");
-      JavaLayerConfigurationsHelper.addFilesToLayer(
-          extraDirectory, path -> true, extractionBase, layerBuilder::addExtraFile);
+      layerBuilder.addExtraFilesRoot(extraDirectory, path -> true, AbsoluteUnixPath.get("/"));
     }
 
     return layerBuilder.build();

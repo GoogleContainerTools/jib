@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.CacheEntry;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -119,6 +120,13 @@ class BuildImageStep
 
   private Image<Layer> afterCacheEntrySteps()
       throws ExecutionException, LayerPropertyNotFoundException {
+    if (true) {
+      Image<Layer> baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();
+      String messageTemplate = "Container entrypoint set to %s (inherited from base image)";
+      buildConfiguration
+          .getEventDispatcher()
+          .dispatch(LogEvent.info(String.format(messageTemplate, baseImage.getEntrypoint())));
+    }
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // Constructs the image.
