@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalExcept
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -63,7 +64,8 @@ public class JibContainerBuilderTest {
             .setEnvironment(ImmutableMap.of("name", "value"))
             .setExposedPorts(Arrays.asList(Port.tcp(1234), Port.udp(5678)))
             .setLabels(ImmutableMap.of("key", "value"))
-            .setProgramArguments(Arrays.asList("program", "arguments"));
+            .setProgramArguments(Arrays.asList("program", "arguments"))
+            .setCreationTime(Instant.ofEpochMilli(1000));
 
     ContainerConfiguration containerConfiguration = jibContainerBuilder.toContainerConfiguration();
     Assert.assertEquals(Arrays.asList("entry", "point"), containerConfiguration.getEntrypoint());
@@ -74,6 +76,7 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(ImmutableMap.of("key", "value"), containerConfiguration.getLabels());
     Assert.assertEquals(
         Arrays.asList("program", "arguments"), containerConfiguration.getProgramArguments());
+    Assert.assertEquals(Instant.ofEpochMilli(1000), containerConfiguration.getCreationTime());
   }
 
   @Test
@@ -101,6 +104,7 @@ public class JibContainerBuilderTest {
         ImmutableMap.of("key", "value", "added", "label"), containerConfiguration.getLabels());
     Assert.assertEquals(
         Arrays.asList("program", "arguments"), containerConfiguration.getProgramArguments());
+    Assert.assertEquals(Instant.EPOCH, containerConfiguration.getCreationTime());
   }
 
   @Test
@@ -121,8 +125,7 @@ public class JibContainerBuilderTest {
 
     JibContainerBuilder jibContainerBuilder =
         Jib.from(baseImage)
-            .setLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2))
-            .setFormat(ImageFormat.OCI);
+            .setLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2));
     BuildConfiguration buildConfiguration =
         jibContainerBuilder.toBuildConfiguration(spyBuildConfigurationBuilder, containerizer);
 
@@ -169,6 +172,15 @@ public class JibContainerBuilderTest {
 
     Assert.assertEquals("jib-core", buildConfiguration.getToolName());
 
+    Assert.assertSame(
+        ImageFormat.Docker.getManifestTemplateClass(), buildConfiguration.getTargetFormat());
+
+    // Change jibContainerBuilder.
+
+    buildConfiguration =
+        jibContainerBuilder
+            .setFormat(ImageFormat.OCI)
+            .toBuildConfiguration(spyBuildConfigurationBuilder, containerizer);
     Assert.assertSame(
         ImageFormat.OCI.getManifestTemplateClass(), buildConfiguration.getTargetFormat());
   }

@@ -30,6 +30,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -66,6 +67,7 @@ public class JibContainerBuilder {
   @Nullable private ImmutableList<String> entrypoint;
   @Nullable private ImmutableList<String> programArguments;
   private ImageFormat imageFormat = ImageFormat.Docker;
+  private Instant creationTime = Instant.EPOCH;
 
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(SourceImage baseImage) {
@@ -320,6 +322,17 @@ public class JibContainerBuilder {
   }
 
   /**
+   * Sets the image creation time. The default is {@link Instant#EPOCH}.
+   *
+   * @param creationTime the image creation time
+   * @return this
+   */
+  public JibContainerBuilder setCreationTime(Instant creationTime) {
+    this.creationTime = creationTime;
+    return this;
+  }
+
+  /**
    * Builds the container(s).
    *
    * @param containerizer the {@link Containerizer} that configures how to containerize
@@ -387,6 +400,7 @@ public class JibContainerBuilder {
         .setEnvironment(environment)
         .setExposedPorts(ports)
         .setLabels(labels)
+        .setCreationTime(creationTime)
         .build();
   }
 }
