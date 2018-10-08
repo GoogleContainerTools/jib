@@ -51,6 +51,7 @@ Three `TargetImage` types (`RegistryImage`, `DockerDaemonImage`, and `TarImage`)
 - `Containerizer setExecutorService(ExecutorService)`
 - `Containerizer setCacheConfiguration(CacheConfiguration)`
 - `Containerizer setEventHandlers(EventHandlers)`
+- `Containerizer setAllowInsecureRegistries(boolean)`
 
 ## For Java containers
 
