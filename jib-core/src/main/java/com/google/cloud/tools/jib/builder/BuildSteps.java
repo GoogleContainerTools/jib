@@ -159,7 +159,7 @@ public class BuildSteps {
     if (buildConfiguration.getContainerConfiguration() != null) {
       buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
 
-      if (!buildConfiguration.getContainerConfiguration().isEntrypointInferredFromBaseImage()) {
+      if (buildConfiguration.getContainerConfiguration().getEntrypoint() != null) {
         buildConfiguration
             .getEventDispatcher()
             .dispatch(

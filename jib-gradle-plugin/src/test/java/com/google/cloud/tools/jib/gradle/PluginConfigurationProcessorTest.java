@@ -200,8 +200,6 @@ public class PluginConfigurationProcessorTest {
     Assert.assertEquals(
         "/my/app/resources:/my/app/classes:/my/app/libs/*",
         buildConfiguration.getContainerConfiguration().getEntrypoint().get(2));
-    Assert.assertFalse(buildConfiguration.getContainerConfiguration().isEntrypointInferredFromBaseImage());
-    Assert.assertFalse(buildConfiguration.getContainerConfiguration().isProgramArgumentsInferredFromBaseImage());
   }
 
   @Test
@@ -217,8 +215,6 @@ public class PluginConfigurationProcessorTest {
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Assert.assertTrue(buildConfiguration.getContainerConfiguration().isEntrypointInferredFromBaseImage());
-    Assert.assertTrue(buildConfiguration.getContainerConfiguration().isProgramArgumentsInferredFromBaseImage());
   }
 
   @Test

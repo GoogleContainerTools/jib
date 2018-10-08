@@ -191,8 +191,10 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_entrypointInferred() throws ExecutionException, InterruptedException {
-    Mockito.when(mockContainerConfiguration.isEntrypointInferredFromBaseImage()).thenReturn(true);
+  public void test_inheritedEntrypoint() throws ExecutionException, InterruptedException {
+    Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(null);
+    Mockito.when(mockContainerConfiguration.getProgramArguments())
+        .thenReturn(ImmutableList.of("test"));
 
     BuildImageStep buildImageStep =
         new BuildImageStep(
@@ -207,13 +209,14 @@ public class BuildImageStepTest {
     Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
-    Assert.assertEquals(ImmutableList.of(), image.getJavaArguments());
+    Assert.assertEquals(ImmutableList.of("test"), image.getJavaArguments());
   }
 
   @Test
-  public void test_programArgumentsInferred() throws ExecutionException, InterruptedException {
-    Mockito.when(mockContainerConfiguration.isProgramArgumentsInferredFromBaseImage())
-        .thenReturn(true);
+  public void test_inheritedEntrypointAndProgramArguments()
+      throws ExecutionException, InterruptedException {
+    Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(null);
+    Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(ImmutableList.of());
 
     BuildImageStep buildImageStep =
         new BuildImageStep(
@@ -227,7 +230,24 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStep));
     Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
 
-    Assert.assertEquals(ImmutableList.of(), image.getEntrypoint());
+    Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
+    Assert.assertEquals(ImmutableList.of("catalina.sh", "run"), image.getJavaArguments());
+
+    Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(null);
+
+    buildImageStep =
+        new BuildImageStep(
+            MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
+            mockBuildConfiguration,
+            mockPullBaseImageStep,
+            mockPullAndCacheBaseImageLayersStep,
+            ImmutableList.of(
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep));
+    image = buildImageStep.getFuture().get().getFuture().get();
+
+    Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
     Assert.assertEquals(ImmutableList.of("catalina.sh", "run"), image.getJavaArguments());
   }
 

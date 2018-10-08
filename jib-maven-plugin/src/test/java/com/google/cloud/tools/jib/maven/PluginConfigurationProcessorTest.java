@@ -131,14 +131,15 @@ public class PluginConfigurationProcessorTest {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
             mockLog, mockJibPluginConfiguration, mockProjectProperties);
+    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
+
+    Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
     BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Assert.assertFalse(buildConfiguration.getContainerConfiguration().isEntrypointInferredFromBaseImage());
-    Assert.assertFalse(buildConfiguration.getContainerConfiguration().isProgramArgumentsInferredFromBaseImage());
     Mockito.verifyZeroInteractions(mockLog);
   }
 
@@ -153,12 +154,13 @@ public class PluginConfigurationProcessorTest {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
             mockLog, mockJibPluginConfiguration, mockProjectProperties);
+    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
+
+    Assert.assertNull(configuration.getEntrypoint());
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
     BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Assert.assertTrue(buildConfiguration.getContainerConfiguration().isEntrypointInferredFromBaseImage());
-    Assert.assertTrue(buildConfiguration.getContainerConfiguration().isProgramArgumentsInferredFromBaseImage());
     Mockito.verifyZeroInteractions(mockLog);
   }
 
@@ -179,8 +181,6 @@ public class PluginConfigurationProcessorTest {
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Assert.assertFalse(buildConfiguration.getContainerConfiguration().isEntrypointInferredFromBaseImage());
-    Assert.assertFalse(buildConfiguration.getContainerConfiguration().isProgramArgumentsInferredFromBaseImage());
     Mockito.verifyZeroInteractions(mockLog);
   }
 

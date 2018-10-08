@@ -174,22 +174,27 @@ class BuildImageStep
                 .build());
       }
       if (containerConfiguration != null) {
+        boolean shouldInheritEntrypoint = containerConfiguration.getEntrypoint() == null;
+        boolean shouldInheritProgramArguments =
+            containerConfiguration.getEntrypoint() == null
+                && (containerConfiguration.getProgramArguments() == null
+                    || containerConfiguration.getProgramArguments().isEmpty());
+
         imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());
         imageBuilder.setCreated(containerConfiguration.getCreationTime());
         imageBuilder.setUser(containerConfiguration.getUser());
         imageBuilder.setEntrypoint(
-            containerConfiguration.isEntrypointInferredFromBaseImage()
+            shouldInheritEntrypoint
                 ? baseImage.getEntrypoint()
                 : containerConfiguration.getEntrypoint());
         imageBuilder.setProgramArguments(
-            containerConfiguration.isProgramArgumentsInferredFromBaseImage()
+            shouldInheritProgramArguments
                 ? baseImage.getJavaArguments()
                 : containerConfiguration.getProgramArguments());
         imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());
         imageBuilder.addLabels(containerConfiguration.getLabels());
 
-        if (containerConfiguration.isEntrypointInferredFromBaseImage()
-            && baseImage.getEntrypoint() != null) {
+        if (shouldInheritEntrypoint && baseImage.getEntrypoint() != null) {
           buildConfiguration
               .getEventDispatcher()
               .dispatch(
@@ -198,8 +203,7 @@ class BuildImageStep
                           + baseImage.getEntrypoint()
                           + " (inherited from base image)"));
         }
-        if (containerConfiguration.isProgramArgumentsInferredFromBaseImage()
-            && baseImage.getJavaArguments() != null) {
+        if (shouldInheritProgramArguments && baseImage.getJavaArguments() != null) {
           buildConfiguration
               .getEventDispatcher()
               .dispatch(

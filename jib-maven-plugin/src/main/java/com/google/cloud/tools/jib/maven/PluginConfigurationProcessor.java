@@ -181,9 +181,6 @@ class PluginConfigurationProcessor {
         Jib.from(baseImage)
             .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
             .setEntrypoint(entrypoint)
-            .setEntrypointInferredFromBaseImage(entrypoint == null)
-            .setProgramArgumentsInferredFromBaseImage(
-                entrypoint == null && jibPluginConfiguration.getArgs().isEmpty())
             .setProgramArguments(jibPluginConfiguration.getArgs())
             .setEnvironment(jibPluginConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(jibPluginConfiguration.getExposedPorts()))
@@ -262,7 +259,7 @@ class PluginConfigurationProcessor {
    *
    * <ol>
    *   <li>the user specified one, if set
-   *   <li>for a WAR project, null (it must be inferred from base image)
+   *   <li>for a WAR project, null (it must be inherited from base image)
    *   <li>for a non-WAR project, by resolving the main class
    * </ol>
    *
