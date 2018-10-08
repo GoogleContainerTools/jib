@@ -16,10 +16,8 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEvent;
-import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
@@ -51,12 +49,10 @@ public class MainClassResolverTest {
   @Mock private ProjectProperties mockProjectProperties;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
-  private final EventHandlers fakeEventHandlers =
-      new EventHandlers().add(JibEventType.ALL, mockJibEventConsumer);
-
   @Before
   public void setup() {
-    Mockito.when(mockProjectProperties.getEventHandlers()).thenReturn(fakeEventHandlers);
+    Mockito.when(mockProjectProperties.getEventHandlers())
+        .thenReturn(new EventHandlers().add(mockJibEventConsumer));
     Mockito.when(mockProjectProperties.getPluginName()).thenReturn("plugin");
     Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations())
@@ -65,8 +61,6 @@ public class MainClassResolverTest {
 
   @Test
   public void testResolveMainClass() throws MainClassInferenceException {
-    new DefaultEventDispatcher(mockProjectProperties.getEventHandlers())
-        .dispatch(LogEvent.info("hmmm"));
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("some.main.class");
     Assert.assertEquals(
         "some.main.class", MainClassResolver.resolveMainClass(null, mockProjectProperties));
