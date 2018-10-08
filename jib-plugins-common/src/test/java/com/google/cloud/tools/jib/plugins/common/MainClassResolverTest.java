@@ -16,7 +16,10 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.event.JibEvent;
+import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
@@ -28,6 +31,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,15 +45,18 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MainClassResolverTest {
 
-  @Mock private EventDispatcher mockEventDispatcher;
+  private static final Path FAKE_CLASSES_PATH = Paths.get("a/b/c");
+
+  @Mock private Consumer<JibEvent> mockJibEventConsumer;
   @Mock private ProjectProperties mockProjectProperties;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
-  private final Path FAKE_CLASSES_PATH = Paths.get("a/b/c");
+  private final EventHandlers fakeEventHandlers =
+      new EventHandlers().add(JibEventType.ALL, mockJibEventConsumer);
 
   @Before
   public void setup() {
-    Mockito.when(mockProjectProperties.getEventDispatcher()).thenReturn(mockEventDispatcher);
+    Mockito.when(mockProjectProperties.getEventHandlers()).thenReturn(fakeEventHandlers);
     Mockito.when(mockProjectProperties.getPluginName()).thenReturn("plugin");
     Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations())
@@ -58,6 +65,8 @@ public class MainClassResolverTest {
 
   @Test
   public void testResolveMainClass() throws MainClassInferenceException {
+    new DefaultEventDispatcher(mockProjectProperties.getEventHandlers())
+        .dispatch(LogEvent.info("hmmm"));
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("some.main.class");
     Assert.assertEquals(
         "some.main.class", MainClassResolver.resolveMainClass(null, mockProjectProperties));
@@ -73,8 +82,8 @@ public class MainClassResolverTest {
             ImmutableList.of(new LayerEntry(FAKE_CLASSES_PATH, AbsoluteUnixPath.get("/ignored"))));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockEventDispatcher)
-        .dispatch(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
+    Mockito.verify(mockJibEventConsumer)
+        .accept(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
   }
 
   @Test
@@ -91,8 +100,8 @@ public class MainClassResolverTest {
                 .collect(ImmutableList.toImmutableList()));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockEventDispatcher)
-        .dispatch(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
+    Mockito.verify(mockJibEventConsumer)
+        .accept(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
   }
 
   @Test
@@ -128,8 +137,8 @@ public class MainClassResolverTest {
                 new LayerEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockEventDispatcher)
-        .dispatch(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
+    Mockito.verify(mockJibEventConsumer)
+        .accept(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
   }
 
   @Test

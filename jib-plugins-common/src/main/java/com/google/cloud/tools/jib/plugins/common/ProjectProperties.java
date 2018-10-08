@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
@@ -33,7 +33,7 @@ public interface ProjectProperties {
    */
   String EXPLODED_WAR_DIRECTORY_NAME = "jib-exploded-war";
 
-  EventDispatcher getEventDispatcher();
+  EventHandlers getEventHandlers();
 
   String getPluginName();
 

@@ -130,12 +130,11 @@ public class ContainerParameters {
 
   @Input
   @Optional
-  public Class<? extends BuildableManifestTemplate> getFormat() {
+  public ImageFormat getFormat() {
     if (System.getProperty(PropertyNames.CONTAINER_FORMAT) != null) {
-      return ImageFormat.valueOf(System.getProperty(PropertyNames.CONTAINER_FORMAT))
-          .getManifestTemplateClass();
+      return ImageFormat.valueOf(System.getProperty(PropertyNames.CONTAINER_FORMAT));
     }
-    return Preconditions.checkNotNull(format).getManifestTemplateClass();
+    return Preconditions.checkNotNull(format);
   }
 
   public void setFormat(ImageFormat format) {
