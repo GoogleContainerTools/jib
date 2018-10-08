@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEvent;
+import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
@@ -120,7 +121,8 @@ public class JibContainerBuilderTest {
 
     JibContainerBuilder jibContainerBuilder =
         Jib.from(baseImage)
-            .setLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2));
+            .setLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2))
+            .setFormat(ImageFormat.OCI);
     BuildConfiguration buildConfiguration =
         jibContainerBuilder.toBuildConfiguration(spyBuildConfigurationBuilder, containerizer);
 
@@ -166,5 +168,8 @@ public class JibContainerBuilderTest {
     Mockito.verify(mockJibEventConsumer).accept(mockJibEvent);
 
     Assert.assertEquals("jib-core", buildConfiguration.getToolName());
+
+    Assert.assertSame(
+        ImageFormat.OCI.getManifestTemplateClass(), buildConfiguration.getTargetFormat());
   }
 }

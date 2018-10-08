@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -64,6 +65,7 @@ public class JibContainerBuilder {
   private Map<String, String> labels = new HashMap<>();
   @Nullable private ImmutableList<String> entrypoint;
   @Nullable private ImmutableList<String> programArguments;
+  private ImageFormat imageFormat = ImageFormat.Docker;
 
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(SourceImage baseImage) {
@@ -306,6 +308,18 @@ public class JibContainerBuilder {
   }
 
   /**
+   * Sets the format to build the container as. Use {@link ImageFormat#Docker} for Docker V2.2 or
+   * {@link ImageFormat#OCI} for OCI.
+   *
+   * @param imageFormat the {@link ImageFormat}
+   * @return this
+   */
+  public JibContainerBuilder setFormat(ImageFormat imageFormat) {
+    this.imageFormat = imageFormat;
+    return this;
+  }
+
+  /**
    * Builds the container(s).
    *
    * @param containerizer the {@link Containerizer} that configures how to containerize
@@ -347,6 +361,7 @@ public class JibContainerBuilder {
         .setApplicationLayersCacheDirectory(containerizer.getApplicationLayersCacheDirectory())
         .setContainerConfiguration(toContainerConfiguration())
         .setLayerConfigurations(layerConfigurations)
+        .setTargetFormat(imageFormat.getManifestTemplateClass())
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries());
 
     containerizer.getExecutorService().ifPresent(buildConfigurationBuilder::setExecutorService);
