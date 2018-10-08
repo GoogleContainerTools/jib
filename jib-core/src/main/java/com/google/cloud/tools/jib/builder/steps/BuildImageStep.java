@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /** Builds a model {@link Image}. */
 class BuildImageStep
@@ -174,48 +175,60 @@ class BuildImageStep
                 .build());
       }
       if (containerConfiguration != null) {
-        boolean shouldInheritEntrypoint = containerConfiguration.getEntrypoint() == null;
-        boolean shouldInheritProgramArguments =
-            containerConfiguration.getEntrypoint() == null
-                && (containerConfiguration.getProgramArguments() == null
-                    || containerConfiguration.getProgramArguments().isEmpty());
-
         imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());
         imageBuilder.setCreated(containerConfiguration.getCreationTime());
         imageBuilder.setUser(containerConfiguration.getUser());
-        imageBuilder.setEntrypoint(
-            shouldInheritEntrypoint
-                ? baseImage.getEntrypoint()
-                : containerConfiguration.getEntrypoint());
-        imageBuilder.setProgramArguments(
-            shouldInheritProgramArguments
-                ? baseImage.getJavaArguments()
-                : containerConfiguration.getProgramArguments());
+        imageBuilder.setEntrypoint(computeEntrypoint(baseImage, containerConfiguration));
+        imageBuilder.setProgramArguments(computeProgramArguments(baseImage, containerConfiguration));
         imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());
         imageBuilder.addLabels(containerConfiguration.getLabels());
-
-        if (shouldInheritEntrypoint && baseImage.getEntrypoint() != null) {
-          buildConfiguration
-              .getEventDispatcher()
-              .dispatch(
-                  LogEvent.lifecycle(
-                      "Container entrypoint set to "
-                          + baseImage.getEntrypoint()
-                          + " (inherited from base image)"));
-        }
-        if (shouldInheritProgramArguments && baseImage.getJavaArguments() != null) {
-          buildConfiguration
-              .getEventDispatcher()
-              .dispatch(
-                  LogEvent.lifecycle(
-                      "Container program arguments set to "
-                          + baseImage.getJavaArguments()
-                          + " (inherited from base image)"));
-        }
       }
 
       // Gets the container configuration content descriptor.
       return imageBuilder.build();
     }
+  }
+
+  @Nullable
+  private ImmutableList<String> computeEntrypoint(
+      Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
+    boolean shouldInheritEntrypoint = containerConfiguration.getEntrypoint() == null;
+
+    if (shouldInheritEntrypoint && baseImage.getEntrypoint() != null) {
+      buildConfiguration
+          .getEventDispatcher()
+          .dispatch(
+              LogEvent.lifecycle(
+                  "Container entrypoint set to "
+                      + baseImage.getEntrypoint()
+                      + " (inherited from base image)"));
+    }
+
+    return shouldInheritEntrypoint
+        ? baseImage.getEntrypoint()
+        : containerConfiguration.getEntrypoint();
+  }
+
+  @Nullable
+  private ImmutableList<String> computeProgramArguments(
+      Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
+    boolean shouldInheritProgramArguments =
+        containerConfiguration.getEntrypoint() == null
+            && (containerConfiguration.getProgramArguments() == null
+                || containerConfiguration.getProgramArguments().isEmpty());
+
+    if (shouldInheritProgramArguments && baseImage.getJavaArguments() != null) {
+      buildConfiguration
+          .getEventDispatcher()
+          .dispatch(
+              LogEvent.lifecycle(
+                  "Container program arguments set to "
+                      + baseImage.getJavaArguments()
+                      + " (inherited from base image)"));
+    }
+
+    return shouldInheritProgramArguments
+        ? baseImage.getJavaArguments()
+        : containerConfiguration.getProgramArguments();
   }
 }
