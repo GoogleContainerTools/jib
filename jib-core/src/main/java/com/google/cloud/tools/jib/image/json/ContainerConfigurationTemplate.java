@@ -215,6 +215,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     return config.WorkingDir;
   }
 
+  @Nullable
+  String getContainerUser() {
+    return config.User;
+  }
+
   @VisibleForTesting
   DescriptorDigest getLayerDiffId(int index) {
     return rootfs.diff_ids.get(index);

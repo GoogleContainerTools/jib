@@ -193,9 +193,10 @@ public class JavaDockerContextGenerator {
   }
 
   /**
-   * Sets the username or UID which the process in the container should run as.
+   * Sets the user name (or UID) and optionally the user group (or GID) which the process in the
+   * container should run as.
    *
-   * @param user the username or UID.
+   * @param user the username and optionally the user group.
    * @return this
    */
   public JavaDockerContextGenerator setUser(@Nullable String user) {
@@ -311,7 +312,7 @@ public class JavaDockerContextGenerator {
    * LABEL [key1]="[value1]" \
    *     [key2]="[value2]" \
    *     [...]
-   * USER [user or UID]
+   * USER [user name (or UID) and optionally user group (or GID)]
    * ENTRYPOINT java [jvm flags] -cp [classpaths] [main class]
    * CMD [main class args]
    * }</pre>

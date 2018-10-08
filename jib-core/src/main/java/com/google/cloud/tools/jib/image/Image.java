@@ -91,9 +91,10 @@ public class Image<T extends Layer> {
     }
 
     /**
-     * Sets the username or UID which the process in the container should run as.
+     * Sets the user name (or UID) and optionally the user group (or GID) which the process in the
+     * container should run as.
      *
-     * @param user the username or UID
+     * @param user the username and optionally the user group
      * @return this
      */
     public Builder<T> setUser(@Nullable String user) {
