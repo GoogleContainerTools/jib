@@ -188,9 +188,6 @@ public class JavaLayerConfigurations {
    */
   public static final String DEFAULT_WEB_APP_ROOT = "/jetty/webapps/ROOT";
 
-  /** The filename suffix for a maven/gradle snapshot dependency */
-  public static final String SNAPSHOT_FILENAME_SUFFIX = "SNAPSHOT";
-
   private final ImmutableMap<LayerType, LayerConfiguration> layerConfigurationMap;
 
   private JavaLayerConfigurations(
