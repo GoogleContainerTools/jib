@@ -100,12 +100,12 @@ public class Containerizer {
    * Containerizer.to(RegistryImage.named("gcr.io/my-project/my-image:tag")).addAdditionalTag("tag2");
    * }</pre>
    *
-   * @param additionalTag the additional tag to push to
+   * @param tag the additional tag to push to
    * @return this
    */
-  public Containerizer addAdditionalTag(String additionalTag) {
-    Preconditions.checkArgument(ImageReference.isValidTag(additionalTag));
-    additionalTags.add(additionalTag);
+  public Containerizer addAdditionalTag(String tag) {
+    Preconditions.checkArgument(ImageReference.isValidTag(tag));
+    additionalTags.add(tag);
     return this;
   }
 
