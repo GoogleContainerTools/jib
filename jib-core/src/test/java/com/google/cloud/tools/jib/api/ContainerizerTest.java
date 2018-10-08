@@ -58,12 +58,16 @@ public class ContainerizerTest {
     Assert.assertNotEquals(
         Containerizer.DEFAULT_BASE_CACHE_DIRECTORY,
         containerizer.getApplicationLayersCacheDirectory());
+    Assert.assertFalse(containerizer.getAllowInsecureRegistries());
+    Assert.assertEquals("jib-core", containerizer.getToolName());
 
     containerizer
         .setExecutorService(mockExecutorService)
         .setEventHandlers(mockEventHandlers)
         .setBaseImageLayersCache(Paths.get("base/image/layers"))
-        .setApplicationLayersCache(Paths.get("application/layers"));
+        .setApplicationLayersCache(Paths.get("application/layers"))
+        .setAllowInsecureRegistries(true)
+        .setToolName("tool");
 
     Assert.assertSame(expectedTargetImage, containerizer.getTargetImage());
     Assert.assertTrue(containerizer.getExecutorService().isPresent());
@@ -74,5 +78,7 @@ public class ContainerizerTest {
         Paths.get("base/image/layers"), containerizer.getBaseImageLayersCacheDirectory());
     Assert.assertEquals(
         Paths.get("application/layers"), containerizer.getApplicationLayersCacheDirectory());
+    Assert.assertTrue(containerizer.getAllowInsecureRegistries());
+    Assert.assertEquals("tool", containerizer.getToolName());
   }
 }

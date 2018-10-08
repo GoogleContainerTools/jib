@@ -375,7 +375,8 @@ public class JibContainerBuilder {
         .setContainerConfiguration(toContainerConfiguration())
         .setLayerConfigurations(layerConfigurations)
         .setTargetFormat(imageFormat.getManifestTemplateClass())
-        .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries());
+        .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
+        .setToolName(containerizer.getToolName());
 
     containerizer.getExecutorService().ifPresent(buildConfigurationBuilder::setExecutorService);
 
@@ -385,9 +386,6 @@ public class JibContainerBuilder {
             eventHandlers ->
                 buildConfigurationBuilder.setEventDispatcher(
                     new DefaultEventDispatcher(eventHandlers)));
-
-    // TODO: Allow users to configure this.
-    buildConfigurationBuilder.setToolName("jib-core");
 
     return buildConfigurationBuilder.build();
   }

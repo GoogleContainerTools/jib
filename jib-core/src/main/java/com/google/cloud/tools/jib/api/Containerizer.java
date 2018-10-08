@@ -40,6 +40,8 @@ public class Containerizer {
   public static final Path DEFAULT_BASE_CACHE_DIRECTORY =
       UserCacheHome.getCacheHome().resolve("google-cloud-tools-java").resolve("jib");
 
+  private static final String DEFAULT_TOOL_NAME = "jib-core";
+
   /**
    * Gets a new {@link Containerizer} that containerizes to a container registry.
    *
@@ -77,6 +79,7 @@ public class Containerizer {
   @Nullable private Path applicationLayersCacheDirectory;
   @Nullable private EventHandlers eventHandlers;
   private boolean allowInsecureRegistries = false;
+  private String toolName = DEFAULT_TOOL_NAME;
 
   /** Instantiate with {@link #to}. */
   private Containerizer(TargetImage targetImage) {
@@ -143,6 +146,18 @@ public class Containerizer {
     return this;
   }
 
+  /**
+   * Sets the name of the tool that is using Jib Core. This will be sent as part of the {@code
+   * User-Agent} in registry requests. Defaults to {@code jib-core}.
+   *
+   * @param toolName the name of the tool using this library
+   * @return this
+   */
+  public Containerizer setToolName(String toolName) {
+    this.toolName = toolName;
+    return this;
+  }
+
   TargetImage getTargetImage() {
     return targetImage;
   }
@@ -176,5 +191,9 @@ public class Containerizer {
 
   boolean getAllowInsecureRegistries() {
     return allowInsecureRegistries;
+  }
+
+  String getToolName() {
+    return toolName;
   }
 }
