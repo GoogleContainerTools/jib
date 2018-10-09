@@ -216,7 +216,7 @@ public class BuildImageStepTest {
   public void test_inheritedEntrypointAndProgramArguments()
       throws ExecutionException, InterruptedException {
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(null);
-    Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(ImmutableList.of());
+    Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(null);
 
     BuildImageStep buildImageStep =
         new BuildImageStep(
@@ -229,23 +229,6 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStep,
                 mockBuildAndCacheApplicationLayerStep));
     Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
-
-    Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
-    Assert.assertEquals(ImmutableList.of("catalina.sh", "run"), image.getJavaArguments());
-
-    Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(null);
-
-    buildImageStep =
-        new BuildImageStep(
-            MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
-            mockBuildConfiguration,
-            mockPullBaseImageStep,
-            mockPullAndCacheBaseImageLayersStep,
-            ImmutableList.of(
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep));
-    image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
     Assert.assertEquals(ImmutableList.of("catalina.sh", "run"), image.getJavaArguments());

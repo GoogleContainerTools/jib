@@ -336,20 +336,20 @@ public class DockerContextMojoTest {
   }
 
   private String getEntrypoint() throws IOException {
-    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
-    List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("ENTRYPOINT")).findFirst().get();
+    return getDockerfileLine("ENTRYPOINT");
   }
 
   private String getBaseImage() throws IOException {
-    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
-    List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("FROM")).findFirst().get();
+    return getDockerfileLine("FROM");
   }
 
   private String getCmd() throws IOException {
+    return getDockerfileLine("CMD");
+  }
+
+  private String getDockerfileLine(String command) throws IOException {
     Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
     List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("CMD")).findFirst().get();
+    return lines.stream().filter(line -> line.startsWith(command)).findFirst().get();
   }
 }

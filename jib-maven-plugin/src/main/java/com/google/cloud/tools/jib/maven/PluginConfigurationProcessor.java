@@ -173,6 +173,8 @@ class PluginConfigurationProcessor {
         jibPluginConfiguration.getBaseImageCredentialHelperName());
 
     List<String> entrypoint = computeEntrypoint(logger, jibPluginConfiguration, projectProperties);
+    List<String> programArguments =
+            computeProgramArguments(entrypoint, jibPluginConfiguration.getArgs());
 
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     defaultCredentialRetrievers.asList().forEach(baseImage::addCredentialRetriever);
@@ -181,7 +183,7 @@ class PluginConfigurationProcessor {
         Jib.from(baseImage)
             .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
             .setEntrypoint(entrypoint)
-            .setProgramArguments(jibPluginConfiguration.getArgs())
+            .setProgramArguments(programArguments)
             .setEnvironment(jibPluginConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(jibPluginConfiguration.getExposedPorts()))
             .setLabels(jibPluginConfiguration.getLabels())
@@ -294,9 +296,26 @@ class PluginConfigurationProcessor {
         getAppRootChecked(jibPluginConfiguration), jibPluginConfiguration.getJvmFlags(), mainClass);
   }
 
+  /**
+   * Compute the container program arguments. If entrypoint is inherited (null), program arguments
+   * must be inherited (null) if empty (used for Tomcat base images).
+   *
+   * @param entrypoint the container entrypoint
+   * @param containerArgs the container arguments
+   * @return the entrypoint
+   */
+  @Nullable
+  static List<String> computeProgramArguments(
+      @Nullable List<String> entrypoint, List<String> containerArgs) {
+    if (entrypoint == null && containerArgs.isEmpty()) {
+      return null;
+    } else {
+      return containerArgs;
+    }
+  }
+
   private final JibContainerBuilder jibContainerBuilder;
   private final ImageReference baseImageReference;
-
   private final MavenSettingsServerCredentials mavenSettingsServerCredentials;
   private final boolean isBaseImageCredentialPresent;
 

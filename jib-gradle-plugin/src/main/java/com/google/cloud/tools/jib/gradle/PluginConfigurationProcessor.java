@@ -130,6 +130,7 @@ class PluginConfigurationProcessor {
     defaultCredentialRetrievers.setCredentialHelperSuffix(jibExtension.getFrom().getCredHelper());
 
     List<String> entrypoint = computeEntrypoint(logger, jibExtension, projectProperties);
+    List<String> programArguments = computeProgramArguments(entrypoint, jibExtension);
 
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     defaultCredentialRetrievers.asList().forEach(baseImage::addCredentialRetriever);
@@ -139,6 +140,7 @@ class PluginConfigurationProcessor {
             .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
             .setEntrypoint(entrypoint)
             .setEnvironment(jibExtension.getContainer().getEnvironment())
+            .setProgramArguments(programArguments)
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getContainer().getPorts()))
             .setProgramArguments(jibExtension.getContainer().getArgs())
             .setLabels(jibExtension.getContainer().getLabels())
@@ -201,6 +203,24 @@ class PluginConfigurationProcessor {
     String mainClass = projectProperties.getMainClass(jibExtension);
     return JavaEntrypointConstructor.makeDefaultEntrypoint(
         AbsoluteUnixPath.get(parameters.getAppRoot()), parameters.getJvmFlags(), mainClass);
+  }
+
+  /**
+   * Compute the container program arguments. If entrypoint is inherited (null), program arguments
+   * must be inherited (null) if empty (used for Tomcat base images).
+   *
+   * @param entrypoint the container entrypoint
+   * @param jibExtension the {@link JibExtension} providing the configuration data
+   * @return the entrypoint
+   */
+  @Nullable
+  static List<String> computeProgramArguments(
+      @Nullable List<String> entrypoint, JibExtension jibExtension) {
+    if (entrypoint == null && jibExtension.getContainer().getArgs().isEmpty()) {
+      return null;
+    } else {
+      return jibExtension.getContainer().getArgs();
+    }
   }
 
   private final JibContainerBuilder jibContainerBuilder;

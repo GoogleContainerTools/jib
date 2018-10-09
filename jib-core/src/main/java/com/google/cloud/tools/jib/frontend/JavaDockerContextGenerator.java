@@ -132,8 +132,8 @@ public class JavaDockerContextGenerator {
 
   @Nullable private String baseImage;
   @Nullable private List<String> entrypoint = Collections.emptyList();
+  @Nullable private List<String> programArguments = Collections.emptyList();
   @Nullable private String user;
-  private List<String> programArguments = Collections.emptyList();
   private Map<String, String> environment = Collections.emptyMap();
   private List<String> exposedPorts = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();
@@ -208,7 +208,7 @@ public class JavaDockerContextGenerator {
    * @param programArguments the list of arguments to append to {@code ENTRYPOINT}
    * @return this
    */
-  public JavaDockerContextGenerator setProgramArguments(List<String> programArguments) {
+  public JavaDockerContextGenerator setProgramArguments(@Nullable List<String> programArguments) {
     this.programArguments = programArguments;
     return this;
   }
@@ -341,7 +341,7 @@ public class JavaDockerContextGenerator {
     if (entrypoint != null) {
       dockerfile.append("\nENTRYPOINT ").append(objectMapper.writeValueAsString(entrypoint));
     }
-    if (entrypoint != null || !programArguments.isEmpty()) {
+    if (programArguments != null) {
       dockerfile.append("\nCMD ").append(objectMapper.writeValueAsString(programArguments));
     }
     if (user != null) {

@@ -214,8 +214,7 @@ class BuildImageStep
       Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
     boolean shouldInheritProgramArguments =
         containerConfiguration.getEntrypoint() == null
-            && (containerConfiguration.getProgramArguments() == null
-                || containerConfiguration.getProgramArguments().isEmpty());
+            && containerConfiguration.getProgramArguments() == null;
 
     if (shouldInheritProgramArguments && baseImage.getJavaArguments() != null) {
       buildConfiguration
