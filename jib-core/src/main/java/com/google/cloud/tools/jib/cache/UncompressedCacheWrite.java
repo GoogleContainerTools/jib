@@ -22,8 +22,7 @@ import java.util.Optional;
 import javax.annotation.concurrent.Immutable;
 
 /**
- * Represents uncompressed layer data to write to the cache, along with an additional selector
- * digest and metadata.
+ * Represents uncompressed layer data to write to the cache with an additional selector digest.
  *
  * <p><b>Implementation is immutable and thread-safe.</b>
  */
@@ -32,12 +31,10 @@ class UncompressedCacheWrite {
 
   private final Blob uncompressedLayerBlob;
   private final DescriptorDigest selector;
-  private final Blob metadataBlob;
 
-  UncompressedCacheWrite(Blob uncompressedLayerBlob, DescriptorDigest selector, Blob metadataBlob) {
+  UncompressedCacheWrite(Blob uncompressedLayerBlob, DescriptorDigest selector) {
     this.uncompressedLayerBlob = uncompressedLayerBlob;
     this.selector = selector;
-    this.metadataBlob = metadataBlob;
   }
 
   /**
@@ -60,16 +57,5 @@ class UncompressedCacheWrite {
    */
   Optional<DescriptorDigest> getSelector() {
     return Optional.ofNullable(selector);
-  }
-
-  /**
-   * Gets the optional {@link Blob} to write as the arbitrary layer metadata.
-   *
-   * <p>For example, the metadata could contain last modified time, layer types, layer sources, etc.
-   *
-   * @return the metadata {@link Blob}
-   */
-  Optional<Blob> getMetadataBlob() {
-    return Optional.ofNullable(metadataBlob);
   }
 }

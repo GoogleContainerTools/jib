@@ -41,13 +41,6 @@ public class DefaultCacheStorageFilesTest {
   }
 
   @Test
-  public void testIsMetadataFile() {
-    Assert.assertTrue(DefaultCacheStorageFiles.isMetadataFile(Paths.get("metadata")));
-    Assert.assertTrue(DefaultCacheStorageFiles.isMetadataFile(Paths.get("is", "metadata")));
-    Assert.assertFalse(DefaultCacheStorageFiles.isMetadataFile(Paths.get("not.metadata")));
-  }
-
-  @Test
   public void testGetDiffId() throws DigestException, CacheCorruptedException {
     Assert.assertEquals(
         DescriptorDigest.fromHash(
@@ -119,27 +112,6 @@ public class DefaultCacheStorageFilesTest {
     Assert.assertEquals(
         "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
         testDefaultCacheStorageFiles.getLayerFilename(diffId));
-  }
-
-  @Test
-  public void testGetMetadataFile() throws DigestException {
-    DescriptorDigest layerDigest =
-        DescriptorDigest.fromHash(
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-
-    Assert.assertEquals(
-        Paths.get(
-            "cache",
-            "directory",
-            "layers",
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            "metadata"),
-        testDefaultCacheStorageFiles.getMetadataFile(layerDigest));
-  }
-
-  @Test
-  public void testGetMetadataFilename() {
-    Assert.assertEquals("metadata", testDefaultCacheStorageFiles.getMetadataFilename());
   }
 
   @Test

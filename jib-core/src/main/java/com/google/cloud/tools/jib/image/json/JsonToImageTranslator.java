@@ -142,7 +142,7 @@ public class JsonToImageTranslator {
     }
 
     if (containerConfigurationTemplate.getContainerCmd() != null) {
-      imageBuilder.setJavaArguments(containerConfigurationTemplate.getContainerCmd());
+      imageBuilder.setProgramArguments(containerConfigurationTemplate.getContainerCmd());
     }
 
     if (containerConfigurationTemplate.getContainerExposedPorts() != null) {

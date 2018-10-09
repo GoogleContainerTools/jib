@@ -173,9 +173,8 @@ class DefaultCacheStorageWriter {
    * <p>The {@link UncompressedCacheWrite} is written out to the cache directory in the form:
    *
    * <ul>
-   *   <li>The {@link UncompressedCacheWrite#getUncompressedLayerBlob} and {@link
-   *       UncompressedCacheWrite#getMetadataBlob} are written to the layer directory under the
-   *       layers directory corresponding to the layer blob.
+   *   <li>The {@link UncompressedCacheWrite#getUncompressedLayerBlob} is written to the layer
+   *       directory under the layers directory corresponding to the layer blob.
    *   <li>The {@link UncompressedCacheWrite#getSelector} is written to the selector file under the
    *       selectors directory.
    * </ul>
@@ -200,12 +199,6 @@ class DefaultCacheStorageWriter {
           writeUncompressedLayerBlobToDirectory(
               uncompressedCacheWrite.getUncompressedLayerBlob(), temporaryLayerDirectory);
 
-      // Writes the metadata to the temporary directory.
-      if (uncompressedCacheWrite.getMetadataBlob().isPresent()) {
-        writeMetadataBlobToDirectory(
-            uncompressedCacheWrite.getMetadataBlob().get(), temporaryLayerDirectory);
-      }
-
       // Moves the temporary directory to the final location.
       moveIfDoesNotExist(
           temporaryLayerDirectory,
@@ -220,10 +213,6 @@ class DefaultCacheStorageWriter {
               .setLayerDiffId(writtenLayer.layerDiffId)
               .setLayerSize(writtenLayer.layerSize)
               .setLayerBlob(Blobs.from(layerFile));
-      if (uncompressedCacheWrite.getMetadataBlob().isPresent()) {
-        Path metadataFile = defaultCacheStorageFiles.getMetadataFile(writtenLayer.layerDigest);
-        cacheEntryBuilder.setMetadataBlob(Blobs.from(metadataFile)).build();
-      }
 
       // Write the selector file.
       if (uncompressedCacheWrite.getSelector().isPresent()) {
@@ -298,19 +287,6 @@ class DefaultCacheStorageWriter {
 
       return new WrittenLayer(layerDigest, layerDiffId, layerSize);
     }
-  }
-
-  /**
-   * Writes the {@code metadataBlob} to the {@code layerDirectory}.
-   *
-   * @param metadataBlob the metadata {@link Blob}
-   * @param layerDirectory the directory for the layer the metadata is for
-   * @throws IOException if an I/O exception occurs
-   */
-  private void writeMetadataBlobToDirectory(Blob metadataBlob, Path layerDirectory)
-      throws IOException {
-    Path metadataFile = layerDirectory.resolve(defaultCacheStorageFiles.getMetadataFilename());
-    Blobs.writeToFileWithLock(metadataBlob, metadataFile);
   }
 
   /**

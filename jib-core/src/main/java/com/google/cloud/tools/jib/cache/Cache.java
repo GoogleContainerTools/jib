@@ -23,15 +23,14 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
 import java.util.Optional;
 import javax.annotation.concurrent.Immutable;
 
 /**
  * Cache for storing data to be shared between Jib executions.
  *
- * <p>Uses the default cache storage engine ({@link DefaultCacheStorage}), layer entries as the
- * selector ({@link LayerEntriesSelector}), and last modified time as the metadata.
+ * <p>Uses the default cache storage engine ({@link DefaultCacheStorage}) with layer entries as the
+ * selector ({@link LayerEntriesSelector}).
  *
  * <p>This class is immutable and safe to use across threads.
  */
@@ -59,7 +58,7 @@ public class Cache {
   /**
    * Saves a cache entry with a compressed layer {@link Blob}. Use {@link
    * #writeUncompressedLayer(Blob, ImmutableList)} to save a cache entry with an uncompressed layer
-   * {@link Blob} and include a selector and metadata.
+   * {@link Blob} and include a selector.
    *
    * @param compressedLayerBlob the compressed layer {@link Blob}
    * @return the {@link CacheEntry} for the written layer
@@ -70,28 +69,23 @@ public class Cache {
   }
 
   /**
-   * Saves a cache entry with an uncompressed layer {@link Blob}, an additional selector digest, and
-   * a metadata {@link Blob}. Use {@link #writeCompressedLayer(Blob)} to save a compressed layer
-   * {@link Blob}.
+   * Saves a cache entry with an uncompressed layer {@link Blob} and an additional selector digest.
+   * Use {@link #writeCompressedLayer(Blob)} to save a compressed layer {@link Blob}.
    *
    * @param uncompressedLayerBlob the layer {@link Blob}
    * @param layerEntries the layer entries that make up the layer
-   * @return the {@link CacheEntry} for the written layer and metadata
+   * @return the {@link CacheEntry} for the written layer
    * @throws IOException if an I/O exception occurs
    */
   public CacheEntry writeUncompressedLayer(
       Blob uncompressedLayerBlob, ImmutableList<LayerEntry> layerEntries) throws IOException {
     return cacheStorage.write(
         new UncompressedCacheWrite(
-            uncompressedLayerBlob,
-            LayerEntriesSelector.generateSelector(layerEntries),
-            LastModifiedTimeMetadata.generateMetadata(layerEntries)));
+            uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries)));
   }
 
   /**
-   * Retrieves the {@link CacheEntry} that was built from the {@code layerEntries}. The last
-   * modified time of the {@code layerEntries} must match the last modified time as stored by the
-   * metadata of the {@link CacheEntry}.
+   * Retrieves the {@link CacheEntry} that was built from the {@code layerEntries}.
    *
    * @param layerEntries the layer entries to match against
    * @return a {@link CacheEntry} that was built from {@code layerEntries}, if found
@@ -106,28 +100,7 @@ public class Cache {
       return Optional.empty();
     }
 
-    Optional<CacheEntry> optionalCacheEntry =
-        cacheStorage.retrieve(optionalSelectedLayerDigest.get());
-    if (!optionalCacheEntry.isPresent()) {
-      return Optional.empty();
-    }
-
-    CacheEntry cacheEntry = optionalCacheEntry.get();
-
-    Optional<FileTime> optionalRetrievedLastModifiedTime =
-        LastModifiedTimeMetadata.getLastModifiedTime(cacheEntry);
-    if (!optionalRetrievedLastModifiedTime.isPresent()) {
-      return Optional.empty();
-    }
-
-    FileTime retrievedLastModifiedTime = optionalRetrievedLastModifiedTime.get();
-    FileTime expectedLastModifiedTime = LastModifiedTimeMetadata.getLastModifiedTime(layerEntries);
-
-    if (!expectedLastModifiedTime.equals(retrievedLastModifiedTime)) {
-      return Optional.empty();
-    }
-
-    return Optional.of(cacheEntry);
+    return cacheStorage.retrieve(optionalSelectedLayerDigest.get());
   }
 
   /**
