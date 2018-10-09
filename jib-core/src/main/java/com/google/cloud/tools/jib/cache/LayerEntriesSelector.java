@@ -42,12 +42,12 @@ import java.util.Objects;
  *   {
  *     "sourceFile": "source/file/for/layer/entry/1",
  *     "extractionPath": "/extraction/path/for/layer/entry/1"
- *     "modifyTime": "2018-10-03T15:48:32.416152Z"
+ *     "lastModifiedTime": "2018-10-03T15:48:32.416152Z"
  *   },
  *   {
  *     "sourceFile": "source/file/for/layer/entry/2",
  *     "extractionPath": "/extraction/path/for/layer/entry/2"
- *     "modifyTime": "2018-10-03T15:48:32.416152Z"
+ *     "lastModifiedTime": "2018-10-03T15:48:32.416152Z"
  *   }
  * ]
  * }</pre>
@@ -60,13 +60,16 @@ class LayerEntriesSelector {
 
     private final String sourceFile;
     private final String extractionPath;
-    private final String modifyTime;
+    private final Instant lastModifiedTime;
 
     @VisibleForTesting
-    LayerEntryTemplate(LayerEntry layerEntry, String modifyTime) {
+    LayerEntryTemplate(LayerEntry layerEntry) throws IOException {
       sourceFile = layerEntry.getAbsoluteSourceFileString();
       extractionPath = layerEntry.getAbsoluteExtractionPathString();
-      this.modifyTime = modifyTime;
+      lastModifiedTime =
+          Files.exists(layerEntry.getSourceFile())
+              ? Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant()
+              : Instant.EPOCH;
     }
 
     @Override
@@ -80,7 +83,7 @@ class LayerEntriesSelector {
       if (extractionPathComparison != 0) {
         return extractionPathComparison;
       }
-      return modifyTime.compareTo(otherLayerEntryTemplate.modifyTime);
+      return lastModifiedTime.compareTo(otherLayerEntryTemplate.lastModifiedTime);
     }
 
     @Override
@@ -94,7 +97,7 @@ class LayerEntriesSelector {
       LayerEntryTemplate otherLayerEntryTemplate = (LayerEntryTemplate) other;
       return sourceFile.equals(otherLayerEntryTemplate.sourceFile)
           && extractionPath.equals(otherLayerEntryTemplate.extractionPath)
-          && modifyTime.equals(otherLayerEntryTemplate.modifyTime);
+          && lastModifiedTime.equals(otherLayerEntryTemplate.lastModifiedTime);
     }
 
     @Override
@@ -115,11 +118,7 @@ class LayerEntriesSelector {
       throws IOException {
     List<LayerEntryTemplate> jsonTemplates = new ArrayList<>();
     for (LayerEntry entry : layerEntries) {
-      String modifiedTime =
-          Files.exists(entry.getSourceFile())
-              ? Files.getLastModifiedTime(entry.getSourceFile()).toString()
-              : Instant.EPOCH.toString();
-      jsonTemplates.add(new LayerEntryTemplate(entry, modifiedTime));
+      jsonTemplates.add(new LayerEntryTemplate(entry));
     }
     Collections.sort(jsonTemplates);
     return jsonTemplates;

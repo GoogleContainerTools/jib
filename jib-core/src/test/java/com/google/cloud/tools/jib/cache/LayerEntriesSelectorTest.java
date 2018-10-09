@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.time.Instant;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -52,7 +51,15 @@ public class LayerEntriesSelectorTest {
       ImmutableList<LayerEntry> layerEntries) {
     return layerEntries
         .stream()
-        .map(layerEntry -> new LayerEntryTemplate(layerEntry, Instant.EPOCH.toString()))
+        .map(
+            layerEntry -> {
+              try {
+                return new LayerEntryTemplate(layerEntry);
+              } catch (IOException ex) {
+                Assert.fail(ex.getMessage());
+                return null;
+              }
+            })
         .collect(ImmutableList.toImmutableList());
   }
 
@@ -67,8 +74,7 @@ public class LayerEntriesSelectorTest {
   public void testToSortedJsonTemplates() throws IOException {
     Assert.assertEquals(
         toLayerEntryTemplates(IN_ORDER_LAYER_ENTRIES),
-        ImmutableList.copyOf(
-            LayerEntriesSelector.toSortedJsonTemplates(OUT_OF_ORDER_LAYER_ENTRIES)));
+        LayerEntriesSelector.toSortedJsonTemplates(OUT_OF_ORDER_LAYER_ENTRIES));
   }
 
   @Test

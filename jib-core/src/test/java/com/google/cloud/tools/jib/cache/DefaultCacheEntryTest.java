@@ -64,7 +64,7 @@ public class DefaultCacheEntryTest {
   }
 
   @Test
-  public void testBuilder_Pass() throws IOException {
+  public void testBuilder_pass() throws IOException {
     DefaultCacheEntry.Builder cacheEntryBuilder =
         DefaultCacheEntry.builder()
             .setLayerDigest(mockLayerDigest)
