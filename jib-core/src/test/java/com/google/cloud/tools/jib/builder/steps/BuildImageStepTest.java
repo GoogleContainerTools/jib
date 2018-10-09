@@ -32,7 +32,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.security.DigestException;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import org.junit.Assert;
@@ -84,11 +83,6 @@ public class BuildImageStepTest {
           @Override
           public Blob getLayerBlob() {
             return Blobs.from("ignored");
-          }
-
-          @Override
-          public Optional<Blob> getMetadataBlob() {
-            return Optional.empty();
           }
         };
 

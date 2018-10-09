@@ -95,16 +95,6 @@ class DefaultCacheStorageReader {
               .setLayerBlob(Blobs.from(fileInLayerDirectory))
               .setLayerDiffId(DefaultCacheStorageFiles.getDiffId(fileInLayerDirectory))
               .setLayerSize(Files.size(fileInLayerDirectory));
-
-        } else if (DefaultCacheStorageFiles.isMetadataFile(fileInLayerDirectory)) {
-          if (cacheEntryBuilder.hasMetadataBlob()) {
-            throw new CacheCorruptedException(
-                "Multiple metadata files found for layer with digest "
-                    + layerDigest.getHash()
-                    + " in directory: "
-                    + layerDirectory);
-          }
-          cacheEntryBuilder.setMetadataBlob(Blobs.from(fileInLayerDirectory));
         }
       }
     }
