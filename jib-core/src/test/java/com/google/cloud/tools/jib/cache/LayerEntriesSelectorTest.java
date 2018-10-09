@@ -24,9 +24,13 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /** Tests for {@link LayerEntriesSelector}. */
 public class LayerEntriesSelectorTest {
@@ -61,6 +65,29 @@ public class LayerEntriesSelectorTest {
               }
             })
         .collect(ImmutableList.toImmutableList());
+  }
+
+  @Test
+  public void testLayerEntryTemplate_fileModified() throws IOException {
+    TemporaryFolder temporaryFolder = new TemporaryFolder();
+    temporaryFolder.create();
+    Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
+    LayerEntry layerEntry = new LayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
+
+    LayerEntryTemplate layerEntryTemplate = new LayerEntryTemplate(layerEntry);
+    DescriptorDigest expectedSelector =
+        JsonTemplateMapper.toBlob(ImmutableList.of(layerEntryTemplate))
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest();
+
+    // Verify that modifying the file generates a different selector
+    Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
+    layerEntryTemplate = new LayerEntryTemplate(layerEntry);
+    Assert.assertNotEquals(
+        expectedSelector,
+        JsonTemplateMapper.toBlob(ImmutableList.of(layerEntryTemplate))
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest());
   }
 
   @Test

@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Last modified time of layer entries is now stored in selectors instead of metadata file in cache ([#1073](https://github.com/GoogleContainerTools/jib/issues/1073))
 - Removed deprecated `<jvmFlags>`, `<mainClass>`, `<args>`, and `<format>` in favor of the equivalents under `<container>` ([#461](https://github.com/GoogleContainerTools/jib/issues/461))
 - `jib:exportDockerContext` generates different directory layout and `Dockerfile`.
 
