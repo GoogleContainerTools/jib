@@ -25,12 +25,15 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEvent;
+import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
@@ -62,7 +65,8 @@ public class JibContainerBuilderTest {
             .setEnvironment(ImmutableMap.of("name", "value"))
             .setExposedPorts(Arrays.asList(Port.tcp(1234), Port.udp(5678)))
             .setLabels(ImmutableMap.of("key", "value"))
-            .setProgramArguments(Arrays.asList("program", "arguments"));
+            .setProgramArguments(Arrays.asList("program", "arguments"))
+            .setCreationTime(Instant.ofEpochMilli(1000));
 
     ContainerConfiguration containerConfiguration = jibContainerBuilder.toContainerConfiguration();
     Assert.assertEquals(Arrays.asList("entry", "point"), containerConfiguration.getEntrypoint());
@@ -73,6 +77,7 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(ImmutableMap.of("key", "value"), containerConfiguration.getLabels());
     Assert.assertEquals(
         Arrays.asList("program", "arguments"), containerConfiguration.getProgramArguments());
+    Assert.assertEquals(Instant.ofEpochMilli(1000), containerConfiguration.getCreationTime());
   }
 
   @Test
@@ -100,6 +105,7 @@ public class JibContainerBuilderTest {
         ImmutableMap.of("key", "value", "added", "label"), containerConfiguration.getLabels());
     Assert.assertEquals(
         Arrays.asList("program", "arguments"), containerConfiguration.getProgramArguments());
+    Assert.assertEquals(Instant.EPOCH, containerConfiguration.getCreationTime());
   }
 
   @Test
@@ -151,6 +157,8 @@ public class JibContainerBuilderTest {
             .retrieve()
             .orElseThrow(AssertionError::new));
 
+    Assert.assertEquals(ImmutableSet.of("latest"), buildConfiguration.getAllTargetImageTags());
+
     Mockito.verify(spyBuildConfigurationBuilder)
         .setBaseImageLayersCacheDirectory(Paths.get("base/image/layers"));
     Mockito.verify(spyBuildConfigurationBuilder)
@@ -166,5 +174,26 @@ public class JibContainerBuilderTest {
     Mockito.verify(mockJibEventConsumer).accept(mockJibEvent);
 
     Assert.assertEquals("jib-core", buildConfiguration.getToolName());
+
+    Assert.assertSame(
+        ImageFormat.Docker.getManifestTemplateClass(), buildConfiguration.getTargetFormat());
+
+    Assert.assertEquals("jib-core", buildConfiguration.getToolName());
+
+    // Changes jibContainerBuilder.
+    buildConfiguration =
+        jibContainerBuilder
+            .setFormat(ImageFormat.OCI)
+            .toBuildConfiguration(
+                spyBuildConfigurationBuilder,
+                containerizer
+                    .withAdditionalTag("tag1")
+                    .withAdditionalTag("tag2")
+                    .setToolName("toolName"));
+    Assert.assertSame(
+        ImageFormat.OCI.getManifestTemplateClass(), buildConfiguration.getTargetFormat());
+    Assert.assertEquals(
+        ImmutableSet.of("latest", "tag1", "tag2"), buildConfiguration.getAllTargetImageTags());
+    Assert.assertEquals("toolName", buildConfiguration.getToolName());
   }
 }
