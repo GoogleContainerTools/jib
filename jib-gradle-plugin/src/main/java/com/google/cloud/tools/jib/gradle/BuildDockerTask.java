@@ -19,10 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.DockerDaemonImage;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventDispatcher;
@@ -75,7 +72,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildDocker()
-      throws InvalidImageReferenceException, IOException, BuildStepsExecutionException, CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
+          CacheDirectoryCreationException {
     if (!DOCKER_CLIENT.isDockerInstalled()) {
       throw new GradleException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
@@ -91,7 +89,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
 
-    EventDispatcher eventDispatcher = new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
     ImageReference targetImageReference =
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
             jibExtension.getTo().getImage(),
@@ -121,7 +120,12 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .build();
 
     BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
-        .build(jibContainerBuilder, containerizer, eventDispatcher, gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(), helpfulSuggestions);
+        .build(
+            jibContainerBuilder,
+            containerizer,
+            eventDispatcher,
+            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+            helpfulSuggestions);
   }
 
   @Override

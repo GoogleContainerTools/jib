@@ -71,12 +71,11 @@ class GradleProjectProperties implements ProjectProperties {
 
   private static EventHandlers makeEventHandlers(Logger logger) {
     LogEventHandler logEventHandler = new LogEventHandler(logger);
-    return
-        new EventHandlers()
-            .add(JibEventType.LOGGING, logEventHandler)
-            .add(
-                JibEventType.TIMING,
-                new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message))));
+    return new EventHandlers()
+        .add(JibEventType.LOGGING, logEventHandler)
+        .add(
+            JibEventType.TIMING,
+            new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message))));
   }
 
   @Nullable

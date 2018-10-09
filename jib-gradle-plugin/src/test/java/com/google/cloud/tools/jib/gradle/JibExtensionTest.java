@@ -17,8 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.image.ImageFormat;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -111,7 +109,7 @@ public class JibExtensionTest {
     Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getEnvironment());
     Assert.assertNull(testJibExtension.getContainer().getMainClass());
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getArgs());
-    Assert.assertEquals(V22ManifestTemplate.class, testJibExtension.getContainer().getFormat());
+    Assert.assertSame(ImageFormat.Docker, testJibExtension.getContainer().getFormat());
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getPorts());
     Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getLabels());
     Assert.assertEquals("", testJibExtension.getContainer().getAppRoot());
@@ -138,7 +136,7 @@ public class JibExtensionTest {
     Assert.assertEquals(Arrays.asList("1000", "2000-2010", "3000"), container.getPorts());
     Assert.assertEquals(
         ImmutableMap.of("label1", "value1", "label2", "value2"), container.getLabels());
-    Assert.assertEquals(OCIManifestTemplate.class, container.getFormat());
+    Assert.assertSame(ImageFormat.OCI, container.getFormat());
     Assert.assertEquals("some invalid appRoot value", container.getAppRoot());
   }
 
@@ -171,8 +169,7 @@ public class JibExtensionTest {
         ImmutableMap.of("env1", "val1", "env2", "val2"),
         testJibExtension.getContainer().getEnvironment());
     System.setProperty("jib.container.format", "OCI");
-    Assert.assertEquals(
-        ImageFormat.OCI.getManifestTemplateClass(), testJibExtension.getContainer().getFormat());
+    Assert.assertSame(ImageFormat.OCI, testJibExtension.getContainer().getFormat());
     System.setProperty("jib.container.jvmFlags", "flag1,flag2,flag3");
     Assert.assertEquals(
         ImmutableList.of("flag1", "flag2", "flag3"), testJibExtension.getContainer().getJvmFlags());

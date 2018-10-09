@@ -19,9 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventDispatcher;
@@ -77,7 +75,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildImage()
-      throws InvalidImageReferenceException, IOException, BuildStepsExecutionException, CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
+          CacheDirectoryCreationException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
@@ -96,11 +95,11 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     ImageReference targetImageReference = ImageReference.parse(jibExtension.getTo().getImage());
 
-    EventDispatcher eventDispatcher = new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(
-                targetImageReference, eventDispatcher));
+            CredentialRetrieverFactory.forImage(targetImageReference, eventDispatcher));
     Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
             eventDispatcher,
@@ -134,7 +133,13 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
             .build();
 
-    BuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags()).build(jibContainerBuilder, containerizer, eventDispatcher, gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(), helpfulSuggestions);
+    BuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
+        .build(
+            jibContainerBuilder,
+            containerizer,
+            eventDispatcher,
+            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+            helpfulSuggestions);
   }
 
   @Override

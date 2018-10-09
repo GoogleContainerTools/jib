@@ -22,8 +22,6 @@ import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventDispatcher;
@@ -114,7 +112,8 @@ class PluginConfigurationProcessor {
           "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
               + "this on a public network!");
     }
-    EventDispatcher eventDispatcher = new DefaultEventDispatcher(projectProperties.getEventHandlers());
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(projectProperties.getEventHandlers());
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
             CredentialRetrieverFactory.forImage(baseImageReference, eventDispatcher));
@@ -134,36 +133,39 @@ class PluginConfigurationProcessor {
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     defaultCredentialRetrievers.asList().forEach(baseImage::addCredentialRetriever);
 
-    JibContainerBuilder jibContainerBuilder = Jib.from(baseImage)
-        .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
-        .setEntrypoint(entrypoint)
-        .setEnvironment(jibExtension.getContainer().getEnvironment())
-        .setExposedPorts(ExposedPortsParser.parse(jibExtension.getContainer().getPorts()))
-        .setProgramArguments(jibExtension.getContainer().getArgs())
-        .setLabels(jibExtension.getContainer().getLabels())
-        .setFormat(jibExtension.getContainer().getFormat());
+    JibContainerBuilder jibContainerBuilder =
+        Jib.from(baseImage)
+            .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
+            .setEntrypoint(entrypoint)
+            .setEnvironment(jibExtension.getContainer().getEnvironment())
+            .setExposedPorts(ExposedPortsParser.parse(jibExtension.getContainer().getPorts()))
+            .setProgramArguments(jibExtension.getContainer().getArgs())
+            .setLabels(jibExtension.getContainer().getLabels())
+            .setFormat(jibExtension.getContainer().getFormat());
     if (jibExtension.getContainer().getUseCurrentTimestamp()) {
       logger.warn(
           "Setting image creation time to current time; your image may not be reproducible.");
       jibContainerBuilder.setCreationTime(Instant.now());
     }
 
-    Consumer<Containerizer> containerizerConsumer = containerizer -> {
-      containerizer.setToolName(GradleProjectProperties.TOOL_NAME)
-          .setEventHandlers(projectProperties.getEventHandlers())
-          .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
-          .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
-          .setApplicationLayersCache(projectProperties.getCacheDirectory());
+    Consumer<Containerizer> containerizerConsumer =
+        containerizer -> {
+          containerizer
+              .setToolName(GradleProjectProperties.TOOL_NAME)
+              .setEventHandlers(projectProperties.getEventHandlers())
+              .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
+              .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
+              .setApplicationLayersCache(projectProperties.getCacheDirectory());
 
-      if (jibExtension.getUseOnlyProjectCache()) {
-        containerizer.setBaseImageLayersCache(projectProperties.getCacheDirectory());
-      }
-    };
+          if (jibExtension.getUseOnlyProjectCache()) {
+            containerizer.setBaseImageLayersCache(projectProperties.getCacheDirectory());
+          }
+        };
 
     return new PluginConfigurationProcessor(
         jibContainerBuilder,
-        baseImageReference,
         containerizerConsumer,
+        baseImageReference,
         optionalFromCredential.isPresent());
   }
 
@@ -201,18 +203,18 @@ class PluginConfigurationProcessor {
   }
 
   private final JibContainerBuilder jibContainerBuilder;
-  private final ImageReference baseImageReference;
   private final Consumer<Containerizer> containerizerConsumer;
+  private final ImageReference baseImageReference;
   private final boolean isBaseImageCredentialPresent;
 
   private PluginConfigurationProcessor(
       JibContainerBuilder jibContainerBuilder,
-      ImageReference baseImageReference,
       Consumer<Containerizer> containerizerConsumer,
+      ImageReference baseImageReference,
       boolean isBaseImageCredentialPresent) {
     this.jibContainerBuilder = jibContainerBuilder;
-    this.baseImageReference = baseImageReference;
     this.containerizerConsumer = containerizerConsumer;
+    this.baseImageReference = baseImageReference;
     this.isBaseImageCredentialPresent = isBaseImageCredentialPresent;
   }
 
@@ -220,12 +222,12 @@ class PluginConfigurationProcessor {
     return jibContainerBuilder;
   }
 
-  ImageReference getBaseImageReference() {
-    return baseImageReference;
-  }
-
   void configureContainerizer(Containerizer containerizer) {
     containerizerConsumer.accept(containerizer);
+  }
+
+  ImageReference getBaseImageReference() {
+    return baseImageReference;
   }
 
   boolean isBaseImageCredentialPresent() {

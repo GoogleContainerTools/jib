@@ -17,12 +17,9 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.Containerizer;
-import com.google.cloud.tools.jib.api.DockerDaemonImage;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.TarImage;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
@@ -105,7 +102,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildTar()
-      throws InvalidImageReferenceException, BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
+      throws InvalidImageReferenceException, BuildStepsExecutionException, IOException,
+          CacheDirectoryCreationException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
@@ -116,7 +114,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
 
-    EventDispatcher eventDispatcher = new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
     ImageReference targetImageReference =
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
             jibExtension.getTo().getImage(),
@@ -146,7 +145,12 @@ public class BuildTarTask extends DefaultTask implements JibTask {
             .build();
 
     BuildStepsRunner.forBuildTar(tarOutputPath)
-        .build(jibContainerBuilder, containerizer, eventDispatcher, gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(), helpfulSuggestions);
+        .build(
+            jibContainerBuilder,
+            containerizer,
+            eventDispatcher,
+            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+            helpfulSuggestions);
   }
 
   @Override
