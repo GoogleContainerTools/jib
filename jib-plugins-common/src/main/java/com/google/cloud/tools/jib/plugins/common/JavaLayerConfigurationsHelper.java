@@ -28,9 +28,9 @@ import java.util.function.Predicate;
 public class JavaLayerConfigurationsHelper {
 
   public static JavaLayerConfigurations fromExplodedWar(
-      Path explodedWar, AbsoluteUnixPath appRoot, Path extraDirectory) throws IOException {
-    Path webInfClasses = explodedWar.resolve("WEB-INF/classes");
+      Path explodedWar, AbsoluteUnixPath appRoot, Path extraFilesDirectory) throws IOException {
     Path webInfLib = explodedWar.resolve("WEB-INF/lib");
+    Path webInfClasses = explodedWar.resolve("WEB-INF/classes");
 
     AbsoluteUnixPath dependenciesExtractionPath = appRoot.resolve("WEB-INF/lib");
     AbsoluteUnixPath classesExtractionPath = appRoot.resolve("WEB-INF/classes");
@@ -38,8 +38,8 @@ public class JavaLayerConfigurationsHelper {
     Builder layerBuilder = JavaLayerConfigurations.builder();
 
     // Gets all the dependencies.
-    Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
     if (Files.exists(webInfLib)) {
+      Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
       layerBuilder.addDependenciesRoot(webInfLib, isSnapshot.negate(), dependenciesExtractionPath);
       layerBuilder.addSnapshotDependenciesRoot(webInfLib, isSnapshot, dependenciesExtractionPath);
     }
@@ -61,8 +61,8 @@ public class JavaLayerConfigurationsHelper {
     layerBuilder.addResourcesRoot(explodedWar, isResource, appRoot);
 
     // Adds all the extra files.
-    if (Files.exists(extraDirectory)) {
-      layerBuilder.addExtraFilesRoot(extraDirectory, path -> true, AbsoluteUnixPath.get("/"));
+    if (Files.exists(extraFilesDirectory)) {
+      layerBuilder.addExtraFilesRoot(extraFilesDirectory, path -> true, AbsoluteUnixPath.get("/"));
     }
 
     return layerBuilder.build();

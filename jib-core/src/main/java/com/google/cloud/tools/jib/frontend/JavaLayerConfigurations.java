@@ -97,14 +97,12 @@ public class JavaLayerConfigurations {
         AbsoluteUnixPath basePathInContainer,
         EntryAdder entryAdder)
         throws IOException {
-
       new DirectoryWalker(sourceRoot)
           .filterRoot()
           .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
           .walk(
-              path -> {
-                entryAdder.add(path, basePathInContainer.resolve(sourceRoot.relativize(path)));
-              });
+              path ->
+                  entryAdder.add(path, basePathInContainer.resolve(sourceRoot.relativize(path))));
     }
 
     private final Map<LayerType, LayerConfiguration.Builder> layerBuilders =
@@ -211,7 +209,7 @@ public class JavaLayerConfigurations {
     /**
      * Adds files to the dependency layer selectively and recursively. {@code sourceRoot} must be a
      * directory. Empty directories will always be added regardless of {@code pathFilter}, except
-     * for {@code sourceRoot}. If {@code sourceRoot} is empty, nothing will be added.
+     * that {@code sourceRoot} will never be added.
      *
      * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
      * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,
@@ -222,8 +220,7 @@ public class JavaLayerConfigurations {
      * @param pathFilter only the files satisfying the filter will be added, unless the files are
      *     directories
      * @param basePathInContainer directory in the layer into which the source contents are added
-     * @param entryAdder function that should add the file to the layer; the function gets the path
-     *     of the source file (may be a directory) and the final destination path in the layer
+     * @return this
      * @throws IOException error while listing directories
      * @throws NotDirectoryException if {@code sourceRoot} is not a directory
      */
@@ -239,7 +236,7 @@ public class JavaLayerConfigurations {
     /**
      * Adds files to the snapshot dependency layer selectively and recursively. {@code sourceRoot}
      * must be a directory. Empty directories will always be added regardless of {@code pathFilter},
-     * except for {@code sourceRoot}. If {@code sourceRoot} is empty, nothing will be added.
+     * except that {@code sourceRoot} will never be added.
      *
      * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
      * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,
@@ -250,8 +247,7 @@ public class JavaLayerConfigurations {
      * @param pathFilter only the files satisfying the filter will be added, unless the files are
      *     directories
      * @param basePathInContainer directory in the layer into which the source contents are added
-     * @param entryAdder function that should add the file to the layer; the function gets the path
-     *     of the source file (may be a directory) and the final destination path in the layer
+     * @return this
      * @throws IOException error while listing directories
      * @throws NotDirectoryException if {@code sourceRoot} is not a directory
      */
@@ -267,7 +263,7 @@ public class JavaLayerConfigurations {
     /**
      * Adds files to the resource layer selectively and recursively. {@code sourceRoot} must be a
      * directory. Empty directories will always be added regardless of {@code pathFilter}, except
-     * for {@code sourceRoot}. If {@code sourceRoot} is empty, nothing will be added.
+     * that {@code sourceRoot} will never be added.
      *
      * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
      * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,
@@ -278,8 +274,7 @@ public class JavaLayerConfigurations {
      * @param pathFilter only the files satisfying the filter will be added, unless the files are
      *     directories
      * @param basePathInContainer directory in the layer into which the source contents are added
-     * @param entryAdder function that should add the file to the layer; the function gets the path
-     *     of the source file (may be a directory) and the final destination path in the layer
+     * @return this
      * @throws IOException error while listing directories
      * @throws NotDirectoryException if {@code sourceRoot} is not a directory
      */
@@ -295,7 +290,7 @@ public class JavaLayerConfigurations {
     /**
      * Adds files to the classes layer selectively and recursively. {@code sourceRoot} must be a
      * directory. Empty directories will always be added regardless of {@code pathFilter}, except
-     * for {@code sourceRoot}. If {@code sourceRoot} is empty, nothing will be added.
+     * that {@code sourceRoot} will never be added.
      *
      * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
      * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,
@@ -306,8 +301,7 @@ public class JavaLayerConfigurations {
      * @param pathFilter only the files satisfying the filter will be added, unless the files are
      *     directories
      * @param basePathInContainer directory in the layer into which the source contents are added
-     * @param entryAdder function that should add the file to the layer; the function gets the path
-     *     of the source file (may be a directory) and the final destination path in the layer
+     * @return this
      * @throws IOException error while listing directories
      * @throws NotDirectoryException if {@code sourceRoot} is not a directory
      */
@@ -323,7 +317,7 @@ public class JavaLayerConfigurations {
     /**
      * Adds files to the extra files layer selectively and recursively. {@code sourceRoot} must be a
      * directory. Empty directories will always be added regardless of {@code pathFilter}, except
-     * for {@code sourceRoot}. If {@code sourceRoot} is empty, nothing will be added.
+     * that {@code sourceRoot} will never be added.
      *
      * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
      * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,
@@ -334,8 +328,7 @@ public class JavaLayerConfigurations {
      * @param pathFilter only the files satisfying the filter will be added, unless the files are
      *     directories
      * @param basePathInContainer directory in the layer into which the source contents are added
-     * @param entryAdder function that should add the file to the layer; the function gets the path
-     *     of the source file (may be a directory) and the final destination path in the layer
+     * @return this
      * @throws IOException error while listing directories
      * @throws NotDirectoryException if {@code sourceRoot} is not a directory
      */
