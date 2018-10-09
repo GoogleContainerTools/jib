@@ -76,6 +76,7 @@ public class Containerizer {
   private Path baseImageLayersCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
   @Nullable private Path applicationLayersCacheDirectory;
   @Nullable private EventHandlers eventHandlers;
+  private boolean allowInsecureRegistries = false;
 
   /** Instantiate with {@link #to}. */
   private Containerizer(TargetImage targetImage) {
@@ -131,6 +132,17 @@ public class Containerizer {
     return this;
   }
 
+  /**
+   * Sets whether or not to allow communication over HTTP/insecure HTTPS.
+   *
+   * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
+   * @return this
+   */
+  public Containerizer setAllowInsecureRegistries(boolean allowInsecureRegistries) {
+    this.allowInsecureRegistries = allowInsecureRegistries;
+    return this;
+  }
+
   TargetImage getTargetImage() {
     return targetImage;
   }
@@ -160,5 +172,9 @@ public class Containerizer {
 
   Optional<EventHandlers> getEventHandlers() {
     return Optional.ofNullable(eventHandlers);
+  }
+
+  boolean getAllowInsecureRegistries() {
+    return allowInsecureRegistries;
   }
 }

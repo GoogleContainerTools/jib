@@ -32,11 +32,20 @@ import org.junit.Assert;
 /** Helper class to run integration tests. */
 public class JibRunHelper {
 
+  static String buildAndRun(TestProject testProject, String imageReference)
+      throws IOException, InterruptedException {
+    return buildAndRun(testProject, imageReference, "build.gradle");
+  }
+
   static String buildAndRun(
-      TestProject testProject, String imageReference, String... extraRunArguments)
+      TestProject testProject,
+      String imageReference,
+      String gradleBuildFile,
+      String... extraRunArguments)
       throws IOException, InterruptedException {
     BuildResult buildResult =
-        testProject.build("clean", "jib", "-D_TARGET_IMAGE=" + imageReference);
+        testProject.build(
+            "clean", "jib", "-D_TARGET_IMAGE=" + imageReference, "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
@@ -79,28 +88,6 @@ public class JibRunHelper {
   }
 
   /**
-   * Pulls a built image and attempts to run it. Also verifies the container configuration and
-   * history of the built image.
-   *
-   * @param imageReference the image reference of the built image
-   * @param extraRunArguments extra arguments passed to {@code docker run}
-   * @return the container output
-   * @throws IOException if an I/O exception occurs
-   * @throws InterruptedException if the process was interrupted
-   */
-  private static String pullAndRunBuiltImage(String imageReference, String... extraRunArguments)
-      throws IOException, InterruptedException {
-    new Command("docker", "pull", imageReference).run();
-    String history = new Command("docker", "history", imageReference).run();
-    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
-
-    List<String> command = new ArrayList<>(Arrays.asList("docker", "run", "--rm"));
-    command.addAll(Arrays.asList(extraRunArguments));
-    command.add(imageReference);
-    return new Command(command).run();
-  }
-
-  /**
    * Asserts that the test project build output indicates a success.
    *
    * @param buildResult the builds results of the project under test
@@ -123,5 +110,27 @@ public class JibRunHelper {
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
+  }
+
+  /**
+   * Pulls a built image and attempts to run it. Also verifies the container configuration and
+   * history of the built image.
+   *
+   * @param imageReference the image reference of the built image
+   * @param extraRunArguments extra arguments passed to {@code docker run}
+   * @return the container output
+   * @throws IOException if an I/O exception occurs
+   * @throws InterruptedException if the process was interrupted
+   */
+  private static String pullAndRunBuiltImage(String imageReference, String... extraRunArguments)
+      throws IOException, InterruptedException {
+    new Command("docker", "pull", imageReference).run();
+    String history = new Command("docker", "history", imageReference).run();
+    Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+
+    List<String> command = new ArrayList<>(Arrays.asList("docker", "run", "--rm"));
+    command.addAll(Arrays.asList(extraRunArguments));
+    command.add(imageReference);
+    return new Command(command).run();
   }
 }

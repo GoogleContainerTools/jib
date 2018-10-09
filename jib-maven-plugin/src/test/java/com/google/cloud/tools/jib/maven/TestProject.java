@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.maven.it.util.ResourceExtractor;
 import org.junit.rules.TemporaryFolder;
 
@@ -29,27 +31,30 @@ public class TestProject extends TemporaryFolder implements Closeable {
 
   private static final String PROJECTS_PATH_IN_RESOURCES = "/projects/";
 
+  private static boolean isPomXml(Path path) {
+    String filename = path.getFileName().toString();
+    return filename.startsWith("pom") && filename.endsWith(".xml");
+  }
+
   private final TestPlugin testPlugin;
   private final String projectDir;
-  private final String pomFilename;
 
   private Path projectRoot;
 
   /** Initialize to a specific project directory. */
   public TestProject(TestPlugin testPlugin, String projectDir) {
-    this(testPlugin, projectDir, "pom.xml");
-  }
-
-  /** Initialize to a specific project directory with a non-default pom.xml. */
-  TestProject(TestPlugin testPlugin, String projectDir, String pomFilename) {
     this.testPlugin = testPlugin;
     this.projectDir = projectDir;
-    this.pomFilename = pomFilename;
   }
 
   /** Get the project root resolved as a real path */
   public Path getProjectRoot() throws IOException {
     return projectRoot.toRealPath();
+  }
+
+  @Override
+  public void close() {
+    after();
   }
 
   @Override
@@ -66,16 +71,14 @@ public class TestProject extends TemporaryFolder implements Closeable {
             .toPath();
 
     // Puts the correct plugin version into the test project pom.xml.
-    Path pomXml = projectRoot.resolve(pomFilename);
-    Files.write(
-        pomXml,
-        new String(Files.readAllBytes(pomXml), StandardCharsets.UTF_8)
-            .replace("@@PluginVersion@@", testPlugin.getVersion())
-            .getBytes(StandardCharsets.UTF_8));
-  }
-
-  @Override
-  public void close() {
-    after();
+    try (Stream<Path> files = Files.list(projectRoot)) {
+      for (Path pomXml : files.filter(TestProject::isPomXml).collect(Collectors.toList())) {
+        Files.write(
+            pomXml,
+            new String(Files.readAllBytes(pomXml), StandardCharsets.UTF_8)
+                .replace("@@PluginVersion@@", testPlugin.getVersion())
+                .getBytes(StandardCharsets.UTF_8));
+      }
+    }
   }
 }

@@ -34,6 +34,7 @@ import org.apache.maven.project.MavenProject;
 
 /** Builds {@link JavaLayerConfigurations} based on inputs from a {@link MavenProject}. */
 class MavenLayerConfigurations {
+
   /**
    * Resolves the {@link JavaLayerConfigurations} for a {@link MavenProject}.
    *
@@ -53,7 +54,7 @@ class MavenLayerConfigurations {
   }
 
   /**
-   * Resolves the source files configuration for a non-war {@link MavenProject}.
+   * Resolves the {@link JavaLayerConfigurations} for a non-WAR {@link MavenProject}.
    *
    * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
@@ -109,7 +110,7 @@ class MavenLayerConfigurations {
   }
 
   /**
-   * Resolves the source files configuration for a War {@link MavenProject}.
+   * Resolves the {@link JavaLayerConfigurations} for a WAR {@link MavenProject}.
    *
    * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
@@ -126,22 +127,25 @@ class MavenLayerConfigurations {
     // at build.getFinalName().
     Path explodedWarPath =
         Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
-    AbsoluteUnixPath dependenciesExtractionPath = appRoot.resolve("WEB-INF/lib/");
-    AbsoluteUnixPath classesExtractionPath = appRoot.resolve("WEB-INF/classes/");
+    Path webInfClasses = explodedWarPath.resolve("WEB-INF/classes");
+    Path webInfLib = explodedWarPath.resolve("WEB-INF/lib");
+
+    AbsoluteUnixPath dependenciesExtractionPath = appRoot.resolve("WEB-INF/lib");
+    AbsoluteUnixPath classesExtractionPath = appRoot.resolve("WEB-INF/classes");
 
     Builder layerBuilder = JavaLayerConfigurations.builder();
 
     // Gets all the dependencies.
     Predicate<Path> isSnapshotDependency =
         path -> path.toString().contains(JavaLayerConfigurations.SNAPSHOT_FILENAME_SUFFIX);
-    if (Files.exists(explodedWarPath.resolve("WEB-INF/lib"))) {
+    if (Files.exists(webInfLib)) {
       addFilesToLayer(
-          explodedWarPath.resolve("WEB-INF/lib/"),
+          webInfLib,
           isSnapshotDependency,
           dependenciesExtractionPath,
           layerBuilder::addSnapshotDependencyFile);
       addFilesToLayer(
-          explodedWarPath.resolve("WEB-INF/lib/"),
+          webInfLib,
           isSnapshotDependency.negate(),
           dependenciesExtractionPath,
           layerBuilder::addDependencyFile);
@@ -149,23 +153,20 @@ class MavenLayerConfigurations {
 
     // Gets the classes files in the 'WEB-INF/classes' output directory.
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-    if (Files.exists(explodedWarPath.resolve("WEB-INF/classes"))) {
+    if (Files.exists(webInfClasses)) {
       addFilesToLayer(
-          explodedWarPath.resolve("WEB-INF/classes/"),
-          isClassFile,
-          classesExtractionPath,
-          layerBuilder::addClassFile);
+          webInfClasses, isClassFile, classesExtractionPath, layerBuilder::addClassFile);
     }
 
-    // Gets the resources
-    Predicate<Path> isResources =
+    // Gets the resources.
+    Predicate<Path> isResource =
         path -> {
-          boolean inWebInfClasses = path.startsWith(explodedWarPath.resolve("WEB-INF/classes/"));
-          boolean inWebInfLib = path.startsWith(explodedWarPath.resolve("WEB-INF/lib/"));
+          boolean inWebInfClasses = path.startsWith(webInfClasses);
+          boolean inWebInfLib = path.startsWith(webInfLib);
 
           return (!inWebInfClasses && !inWebInfLib) || (inWebInfClasses && !isClassFile.test(path));
         };
-    addFilesToLayer(explodedWarPath, isResources, appRoot, layerBuilder::addResourceFile);
+    addFilesToLayer(explodedWarPath, isResource, appRoot, layerBuilder::addResourceFile);
 
     // Adds all the extra files.
     if (Files.exists(extraDirectory)) {

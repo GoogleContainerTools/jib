@@ -14,6 +14,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 0.9.12
+
+### Fixed
+
+- `Cannot access 'image': it is public in <anonymous>` error ([#1060](https://github.com/GoogleContainerTools/jib/issues/1060))
+
 ## 0.9.11
 
 ### Added

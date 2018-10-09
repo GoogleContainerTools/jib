@@ -41,11 +41,12 @@ import org.apache.maven.plugin.logging.Log;
 
 /** Configures and provides builders for the image building goals. */
 class PluginConfigurationProcessor {
+
   /**
-   * Returns true if the maven packaging type is "war"
+   * Returns true if the Maven packaging type is "war".
    *
    * @param jibPluginConfiguration the Jib plugin configuration
-   * @return true if the maven packaging type is "war"
+   * @return true if the Maven packaging type is "war"
    */
   private static boolean isWarPackaging(JibPluginConfiguration jibPluginConfiguration) {
     return "war".equals(jibPluginConfiguration.getProject().getPackaging());
@@ -218,12 +219,12 @@ class PluginConfigurationProcessor {
   }
 
   /**
-   * Compute the container entrypoint, in this order :
+   * Compute the container entrypoint, in this order:
    *
    * <ol>
    *   <li>the user specified one, if set
-   *   <li>for a war project, the jetty default one
-   *   <li>for a jar project, by resolving the main class
+   *   <li>for a WAR project, the Jetty default one
+   *   <li>for a non-WAR project, by resolving the main class
    * </ol>
    *
    * @param logger the logger used to display messages.
@@ -231,7 +232,8 @@ class PluginConfigurationProcessor {
    *     data
    * @param projectProperties used for providing additional information
    * @return the entrypoint
-   * @throws MojoExecutionException if the http timeout system property is misconfigured
+   * @throws MojoExecutionException if resolving the main class fails or the app root parameter is
+   *     not an absolute path in Unix-style
    */
   static List<String> computeEntrypoint(
       Log logger,
@@ -245,9 +247,11 @@ class PluginConfigurationProcessor {
       }
       return jibPluginConfiguration.getEntrypoint();
     }
+
     if (isWarPackaging(jibPluginConfiguration)) {
       return JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
     }
+
     String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
     return JavaEntrypointConstructor.makeDefaultEntrypoint(
         getAppRootChecked(jibPluginConfiguration), jibPluginConfiguration.getJvmFlags(), mainClass);

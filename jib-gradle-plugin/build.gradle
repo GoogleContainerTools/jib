@@ -78,10 +78,6 @@ dependencies {
   errorprone 'com.google.errorprone:error_prone_core:2.2.0'
 }
 
-task wrapper(type: Wrapper) {
-  gradleVersion = '4.6'
-}
-
 // Integration tests must be run explicitly
 task integrationTest(type: Test) {
   testClassesDirs = sourceSets.integrationTest.output.classesDirs

@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.frontend;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.JibEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.CredentialHelperNotFoundException;
@@ -61,17 +62,24 @@ public class CredentialRetrieverFactory {
    */
   public static CredentialRetrieverFactory forImage(
       ImageReference imageReference, EventDispatcher eventDispatcher) {
-    return new CredentialRetrieverFactory(imageReference, eventDispatcher);
+    return new CredentialRetrieverFactory(
+        imageReference, eventDispatcher, DockerCredentialHelper::new);
+  }
+
+  /**
+   * Creates a new {@link CredentialRetrieverFactory} for an image.
+   *
+   * @param imageReference the image the credential are for
+   * @return a new {@link CredentialRetrieverFactory}
+   */
+  public static CredentialRetrieverFactory forImage(ImageReference imageReference) {
+    return new CredentialRetrieverFactory(
+        imageReference, ignored -> {}, DockerCredentialHelper::new);
   }
 
   private final EventDispatcher eventDispatcher;
   private final ImageReference imageReference;
   private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
-
-  private CredentialRetrieverFactory(
-      ImageReference imageReference, EventDispatcher eventDispatcher) {
-    this(imageReference, eventDispatcher, DockerCredentialHelper::new);
-  }
 
   @VisibleForTesting
   CredentialRetrieverFactory(
@@ -119,13 +127,13 @@ public class CredentialRetrieverFactory {
    */
   public CredentialRetriever dockerCredentialHelper(Path credentialHelper) {
     return () -> {
-      eventDispatcher.dispatch(LogEvent.info("Checking credentials from " + credentialHelper));
+      dispatchEvent(LogEvent.info("Checking credentials from " + credentialHelper));
 
       try {
         return Optional.of(retrieveFromDockerCredentialHelper(credentialHelper));
 
       } catch (CredentialHelperUnhandledServerUrlException ex) {
-        eventDispatcher.dispatch(
+        dispatchEvent(
             LogEvent.info(
                 "No credentials for " + imageReference.getRegistry() + " in " + credentialHelper));
         return Optional.empty();
@@ -169,9 +177,9 @@ public class CredentialRetrieverFactory {
             | CredentialHelperUnhandledServerUrlException ex) {
           if (ex.getMessage() != null) {
             // Warns the user that the specified (or inferred) credential helper cannot be used.
-            eventDispatcher.dispatch(LogEvent.warn(ex.getMessage()));
+            dispatchEvent(LogEvent.warn(ex.getMessage()));
             if (ex.getCause() != null && ex.getCause().getMessage() != null) {
-              eventDispatcher.dispatch(LogEvent.info("  Caused by: " + ex.getCause().getMessage()));
+              dispatchEvent(LogEvent.info("  Caused by: " + ex.getCause().getMessage()));
             }
           }
 
@@ -214,14 +222,14 @@ public class CredentialRetrieverFactory {
       try {
         Optional<Credential> dockerConfigCredentials = dockerConfigCredentialRetriever.retrieve();
         if (dockerConfigCredentials.isPresent()) {
-          eventDispatcher.dispatch(
+          dispatchEvent(
               LogEvent.info(
                   "Using credentials from Docker config for " + imageReference.getRegistry()));
           return dockerConfigCredentials;
         }
 
       } catch (IOException ex) {
-        eventDispatcher.dispatch(LogEvent.info("Unable to parse Docker config"));
+        dispatchEvent(LogEvent.info("Unable to parse Docker config"));
       }
       return Optional.empty();
     };
@@ -239,7 +247,14 @@ public class CredentialRetrieverFactory {
   }
 
   private void logGotCredentialsFrom(String credentialSource) {
-    eventDispatcher.dispatch(
+    dispatchEvent(
         LogEvent.info("Using " + credentialSource + " for " + imageReference.getRegistry()));
+  }
+
+  private void dispatchEvent(JibEvent jibEvent) {
+    if (eventDispatcher == null) {
+      return;
+    }
+    eventDispatcher.dispatch(jibEvent);
   }
 }

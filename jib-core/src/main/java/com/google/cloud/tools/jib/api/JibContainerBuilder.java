@@ -18,10 +18,13 @@ package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -31,6 +34,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /**
@@ -301,20 +305,63 @@ public class JibContainerBuilder {
     return this;
   }
 
-  @VisibleForTesting
-  BuildConfiguration.Builder toBuildConfiguration(TargetImage targetImage) {
-    BuildConfiguration.Builder buildConfigurationBuilder = BuildConfiguration.builder();
+  /**
+   * Builds the container(s).
+   *
+   * @param containerizer the {@link Containerizer} that configures how to containerize
+   * @return the built container(s)
+   * @throws CacheDirectoryCreationException if a directory to be used for the cache could not be
+   *     created
+   * @throws ExecutionException if an exception occurred during execution
+   * @throws InterruptedException if the execution was interrupted
+   * @throws IOException if an I/O exception occurs
+   */
+  public JibContainer containerize(Containerizer containerizer)
+      throws InterruptedException, ExecutionException, IOException,
+          CacheDirectoryCreationException {
+    BuildConfiguration buildConfiguration =
+        toBuildConfiguration(BuildConfiguration.builder(), containerizer);
+    DescriptorDigest imageDigest =
+        containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();
 
+    return new JibContainer(imageDigest);
+  }
+
+  /**
+   * Builds a {@link BuildConfiguration} using this and a {@link Containerizer}.
+   *
+   * @param buildConfigurationBuilder the {@link BuildConfiguration.Builder} to use
+   * @param containerizer the {@link Containerizer}
+   * @return the {@link BuildConfiguration}
+   * @throws CacheDirectoryCreationException if a cache directory could not be created
+   * @throws IOException if an I/O exception occurs
+   */
+  @VisibleForTesting
+  BuildConfiguration toBuildConfiguration(
+      BuildConfiguration.Builder buildConfigurationBuilder, Containerizer containerizer)
+      throws CacheDirectoryCreationException, IOException {
     buildConfigurationBuilder
         .setBaseImageConfiguration(baseImage.toImageConfiguration())
-        .setTargetImageConfiguration(targetImage.toImageConfiguration())
+        .setTargetImageConfiguration(containerizer.getTargetImage().toImageConfiguration())
+        .setBaseImageLayersCacheDirectory(containerizer.getBaseImageLayersCacheDirectory())
+        .setApplicationLayersCacheDirectory(containerizer.getApplicationLayersCacheDirectory())
         .setContainerConfiguration(toContainerConfiguration())
-        .setLayerConfigurations(layerConfigurations);
+        .setLayerConfigurations(layerConfigurations)
+        .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries());
+
+    containerizer.getExecutorService().ifPresent(buildConfigurationBuilder::setExecutorService);
+
+    containerizer
+        .getEventHandlers()
+        .ifPresent(
+            eventHandlers ->
+                buildConfigurationBuilder.setEventDispatcher(
+                    new DefaultEventDispatcher(eventHandlers)));
 
     // TODO: Allow users to configure this.
     buildConfigurationBuilder.setToolName("jib-core");
 
-    return buildConfigurationBuilder;
+    return buildConfigurationBuilder.build();
   }
 
   @VisibleForTesting

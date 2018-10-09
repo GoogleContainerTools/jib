@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
 /** Immutable configuration options for the builder process. */
@@ -62,6 +64,7 @@ public class BuildConfiguration {
         jibEvent -> {
           /* No-op EventDispatcher. */
         };
+    @Nullable private ExecutorService executorService;
 
     private Builder() {}
 
@@ -188,6 +191,18 @@ public class BuildConfiguration {
     }
 
     /**
+     * Sets the {@link ExecutorService} Jib executes on. By default, Jib uses {@link
+     * Executors#newCachedThreadPool}.
+     *
+     * @param executorService the {@link ExecutorService}
+     * @return this
+     */
+    public Builder setExecutorService(ExecutorService executorService) {
+      this.executorService = executorService;
+      return this;
+    }
+
+    /**
      * Builds a new {@link BuildConfiguration} using the parameters passed into the builder.
      *
      * @return the corresponding build configuration
@@ -219,6 +234,10 @@ public class BuildConfiguration {
                         + "' does not use a specific image digest - build may not be reproducible"));
           }
 
+          if (executorService == null) {
+            executorService = Executors.newCachedThreadPool();
+          }
+
           return new BuildConfiguration(
               baseImageConfiguration,
               Preconditions.checkNotNull(targetImageConfiguration),
@@ -230,7 +249,8 @@ public class BuildConfiguration {
               allowInsecureRegistries,
               layerConfigurations,
               toolName,
-              eventDispatcher);
+              eventDispatcher,
+              executorService);
 
         case 1:
           throw new IllegalStateException(missingFields.get(0) + " is required but not set");
@@ -282,6 +302,7 @@ public class BuildConfiguration {
   private final ImmutableList<LayerConfiguration> layerConfigurations;
   private final String toolName;
   private final EventDispatcher eventDispatcher;
+  private final ExecutorService executorService;
 
   /** Instantiate with {@link #builder}. */
   private BuildConfiguration(
@@ -295,7 +316,8 @@ public class BuildConfiguration {
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
       String toolName,
-      EventDispatcher eventDispatcher) {
+      EventDispatcher eventDispatcher,
+      ExecutorService executorService) {
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
     this.additionalTargetImageTags = additionalTargetImageTags;
@@ -307,6 +329,7 @@ public class BuildConfiguration {
     this.layerConfigurations = layerConfigurations;
     this.toolName = toolName;
     this.eventDispatcher = eventDispatcher;
+    this.executorService = executorService;
   }
 
   public ImageConfiguration getBaseImageConfiguration() {
@@ -340,6 +363,10 @@ public class BuildConfiguration {
 
   public EventDispatcher getEventDispatcher() {
     return eventDispatcher;
+  }
+
+  public ExecutorService getExecutorService() {
+    return executorService;
   }
 
   /**
