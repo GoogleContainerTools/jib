@@ -1,19 +1,20 @@
 sudo: false
 language: java
 matrix:
+  fast_finish: true
   include:
   - name: 'Java 8'
     jdk: oraclejdk8
-  - name: 'Java 11'
-    jdk: openjdk11
+#  - name: 'Java 11'
+#    jdk: openjdk11
 
 before_script:
 # required to avoid test failures from `Picked up _JAVA_OPTIONS: ...` message
 - unset _JAVA_OPTIONS
 script:
-- (cd jib-core; ./gradlew --console=plain --stacktrace build)
-- (cd jib-plugins-common; ./gradlew --console=plain --stacktrace build)
-- (cd jib-gradle-plugin; ./gradlew --console=plain --stacktrace build)
+- (cd jib-core; ./gradlew --console=plain --fail-fast --info --stacktrace build)
+- (cd jib-plugins-common; ./gradlew --console=plain --fail-fast --info --stacktrace build)
+- (cd jib-gradle-plugin; ./gradlew --console=plain --fail-fast --info --stacktrace build)
 - (cd jib-maven-plugin; ./mvnw -B fmt:check package -U)
 
 before_cache:
