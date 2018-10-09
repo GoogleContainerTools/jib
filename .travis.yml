@@ -10,7 +10,7 @@ matrix:
     jdk: oraclejdk8
 
 script:
-- (cd jib-core; ./gradlew --stacktrace build integrationTest)
+- (cd jib-core; ./gradlew --stacktrace build)
 - (cd jib-plugins-common; ./gradlew --stacktrace build)
 - (cd jib-gradle-plugin; ./gradlew --stacktrace build)
 # unset _JAVA_OPTIONS to avoid spurious test failures
