@@ -1,8 +1,9 @@
 sudo: false
 language: java
 env:
-- TERM=dumb         # for gradle
-- _JAVA_OPTIONS=    # to avoid test failures from `Picked up _JAVA_OPTIONS: ...` message
+  global:
+  - TERM=dumb         # for gradle
+  - _JAVA_OPTIONS=    # to avoid test failures from `Picked up _JAVA_OPTIONS: ...` message
 matrix:
   fast_finish: true
   include:
