@@ -176,7 +176,7 @@ class BuildImageStep
         imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());
         imageBuilder.setCreated(containerConfiguration.getCreationTime());
         imageBuilder.setEntrypoint(containerConfiguration.getEntrypoint());
-        imageBuilder.setJavaArguments(containerConfiguration.getProgramArguments());
+        imageBuilder.setProgramArguments(containerConfiguration.getProgramArguments());
         imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());
         imageBuilder.addLabels(containerConfiguration.getLabels());
       }

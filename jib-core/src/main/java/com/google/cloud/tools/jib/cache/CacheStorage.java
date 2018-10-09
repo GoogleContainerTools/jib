@@ -25,9 +25,8 @@ import java.util.Set;
 /**
  * Interface for queries to a cache storage engine.
  *
- * <p>The cache storage engine stores layer data in compressed form, along with optional metadata.
- * These entries are read out as {@link CacheEntry}s. Cache entries can be retrieved by the layer
- * digest.
+ * <p>The cache storage engine stores layer data in compressed form. These entries are read out as
+ * {@link CacheEntry}s. Cache entries can be retrieved by the layer digest.
  *
  * <p>The cache entries can also be queried by an arbitrarily-defined selector (in digest format).
  * The selectors do not need to be unique. An example of a selector could be the digest of the list

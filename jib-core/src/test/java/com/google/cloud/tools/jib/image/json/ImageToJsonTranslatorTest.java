@@ -58,7 +58,7 @@ public class ImageToJsonTranslatorTest {
     testImageBuilder.addEnvironmentVariable("VAR1", "VAL1");
     testImageBuilder.addEnvironmentVariable("VAR2", "VAL2");
     testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
-    testImageBuilder.setJavaArguments(Arrays.asList("arg1", "arg2"));
+    testImageBuilder.setProgramArguments(Arrays.asList("arg1", "arg2"));
     testImageBuilder.setExposedPorts(
         ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)));
     testImageBuilder.addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));

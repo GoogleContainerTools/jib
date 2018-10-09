@@ -125,7 +125,7 @@ public class DockerContextTask extends DefaultTask implements JibTask {
       new JavaDockerContextGenerator(gradleProjectProperties.getJavaLayerConfigurations())
           .setBaseImage(jibExtension.getFrom().getImage())
           .setEntrypoint(entrypoint)
-          .setJavaArguments(jibExtension.getContainer().getArgs())
+          .setProgramArguments(jibExtension.getContainer().getArgs())
           .setExposedPorts(jibExtension.getContainer().getPorts())
           .setLabels(jibExtension.getContainer().getLabels())
           .generate(Paths.get(targetDir));
