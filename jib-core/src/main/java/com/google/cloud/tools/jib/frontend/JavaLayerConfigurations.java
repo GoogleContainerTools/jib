@@ -64,13 +64,6 @@ public class JavaLayerConfigurations {
   /** Builds with each layer's files. */
   public static class Builder {
 
-    @FunctionalInterface
-    @VisibleForTesting
-    static interface EntryAdder {
-
-      void add(Path sourcePath, AbsoluteUnixPath pathInContainer) throws IOException;
-    }
-
     /**
      * Adds files to a layer selectively and recursively. {@code sourceRoot} must be a directory.
      * Empty directories will always be added regardless of {@code pathFilter}, except for {@code
