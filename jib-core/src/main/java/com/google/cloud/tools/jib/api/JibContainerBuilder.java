@@ -310,8 +310,8 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets the format to build the container as. Use {@link ImageFormat#Docker} for Docker V2.2 or
-   * {@link ImageFormat#OCI} for OCI.
+   * Sets the format to build the container image as. Use {@link ImageFormat#Docker} for Docker V2.2
+   * or {@link ImageFormat#OCI} for OCI.
    *
    * @param imageFormat the {@link ImageFormat}
    * @return this
@@ -322,9 +322,9 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets the image creation time. The default is {@link Instant#EPOCH}.
+   * Sets the container image creation time. The default is {@link Instant#EPOCH}.
    *
-   * @param creationTime the image creation time
+   * @param creationTime the container image creation time
    * @return this
    */
   public JibContainerBuilder setCreationTime(Instant creationTime) {

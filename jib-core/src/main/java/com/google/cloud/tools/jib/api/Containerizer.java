@@ -97,13 +97,13 @@ public class Containerizer {
    * gcr.io/my-project/my-image:tag2}:
    *
    * <pre>{@code
-   * Containerizer.to(RegistryImage.named("gcr.io/my-project/my-image:tag")).addAdditionalTag("tag2");
+   * Containerizer.to(RegistryImage.named("gcr.io/my-project/my-image:tag")).addTag("tag2");
    * }</pre>
    *
    * @param tag the additional tag to push to
    * @return this
    */
-  public Containerizer addAdditionalTag(String tag) {
+  public Containerizer addTag(String tag) {
     Preconditions.checkArgument(ImageReference.isValidTag(tag));
     additionalTags.add(tag);
     return this;
@@ -171,7 +171,8 @@ public class Containerizer {
 
   /**
    * Sets the name of the tool that is using Jib Core. This will be sent as part of the {@code
-   * User-Agent} in registry requests. Defaults to {@code jib-core}.
+   * User-Agent} in registry requests and set as the {@code created_by} in the container layer
+   * history. Defaults to {@code jib-core}.
    *
    * @param toolName the name of the tool using this library
    * @return this

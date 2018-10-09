@@ -180,17 +180,13 @@ public class JibContainerBuilderTest {
 
     Assert.assertEquals("jib-core", buildConfiguration.getToolName());
 
-    // Change jibContainerBuilder.
-
+    // Changes jibContainerBuilder.
     buildConfiguration =
         jibContainerBuilder
             .setFormat(ImageFormat.OCI)
             .toBuildConfiguration(
                 spyBuildConfigurationBuilder,
-                containerizer
-                    .addAdditionalTag("tag1")
-                    .addAdditionalTag("tag2")
-                    .setToolName("toolName"));
+                containerizer.addTag("tag1").addTag("tag2").setToolName("toolName"));
     Assert.assertSame(
         ImageFormat.OCI.getManifestTemplateClass(), buildConfiguration.getTargetFormat());
     Assert.assertEquals(
