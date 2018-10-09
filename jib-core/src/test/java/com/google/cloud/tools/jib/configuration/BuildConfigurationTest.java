@@ -57,7 +57,7 @@ public class BuildConfigurationTest {
         Collections.singletonList(() -> Optional.of(Credential.basic("username", "password")));
     Instant expectedCreationTime = Instant.ofEpochSecond(10000);
     List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
-    List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
+    List<String> expectedProgramArguments = Arrays.asList("arg1", "arg2");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
     ImmutableList<Port> expectedExposedPorts = ImmutableList.of(Port.tcp(1000), Port.tcp(2000));
     Map<String, String> expectedLabels = ImmutableMap.of("key1", "value1", "key2", "value2");
@@ -86,7 +86,7 @@ public class BuildConfigurationTest {
         ContainerConfiguration.builder()
             .setCreationTime(expectedCreationTime)
             .setEntrypoint(expectedEntrypoint)
-            .setProgramArguments(expectedJavaArguments)
+            .setProgramArguments(expectedProgramArguments)
             .setEnvironment(expectedEnvironment)
             .setExposedPorts(expectedExposedPorts)
             .setLabels(expectedLabels)
@@ -133,7 +133,7 @@ public class BuildConfigurationTest {
             .retrieve()
             .orElseThrow(AssertionError::new));
     Assert.assertEquals(
-        expectedJavaArguments,
+        expectedProgramArguments,
         buildConfiguration.getContainerConfiguration().getProgramArguments());
     Assert.assertEquals(
         expectedEnvironment, buildConfiguration.getContainerConfiguration().getEnvironmentMap());
