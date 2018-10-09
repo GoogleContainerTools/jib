@@ -118,13 +118,13 @@ public class JavaLayerConfigurationsHelperTest {
             "/my/app/WEB-INF/lib",
             "/my/app/WEB-INF/web.xml"),
         configuration.getResourceLayerEntries());
-    //    assertExtractionPathsUnordered(
-    //        Arrays.asList(
-    //            "/my/app/WEB-INF/classes/HelloWorld.class",
-    //            "/my/app/WEB-INF/classes/empty_dir",
-    //            "/my/app/WEB-INF/classes/package",
-    //            "/my/app/WEB-INF/classes/package/Other.class"),
-    //        configuration.getClassLayerEntries());
+    assertExtractionPathsUnordered(
+        Arrays.asList(
+            "/my/app/WEB-INF/classes/HelloWorld.class",
+            "/my/app/WEB-INF/classes/empty_dir",
+            "/my/app/WEB-INF/classes/package",
+            "/my/app/WEB-INF/classes/package/Other.class"),
+        configuration.getClassLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
         configuration.getExtraFilesLayerEntries());

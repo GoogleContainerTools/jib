@@ -33,7 +33,7 @@ public class JavaLayerConfigurationsTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Mock private JavaLayerConfigurations.Builder.EntryAdder fileToLayerAdder;
+  @Mock private LayerConfiguration.Builder layerBuilder;
 
   private static JavaLayerConfigurations createFakeConfigurations() throws IOException {
     return JavaLayerConfigurations.builder()
@@ -225,10 +225,9 @@ public class JavaLayerConfigurationsTest {
     Path sourceRoot = temporaryFolder.getRoot().toPath();
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
 
-    JavaLayerConfigurations.Builder.addFilesRoot(
-        sourceRoot, path -> true, basePath, fileToLayerAdder);
-    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("file"), basePath.resolve("file"));
-    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+    JavaLayerConfigurations.Builder.addFilesRoot(sourceRoot, path -> true, basePath, layerBuilder);
+    Mockito.verify(layerBuilder).addEntry(sourceRoot.resolve("file"), basePath.resolve("file"));
+    Mockito.verifyNoMoreInteractions(layerBuilder);
   }
 
   @Test
@@ -238,10 +237,9 @@ public class JavaLayerConfigurationsTest {
     Path sourceRoot = temporaryFolder.getRoot().toPath();
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
 
-    JavaLayerConfigurations.Builder.addFilesRoot(
-        sourceRoot, path -> true, basePath, fileToLayerAdder);
-    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("leaf"), basePath.resolve("leaf"));
-    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+    JavaLayerConfigurations.Builder.addFilesRoot(sourceRoot, path -> true, basePath, layerBuilder);
+    Mockito.verify(layerBuilder).addEntry(sourceRoot.resolve("leaf"), basePath.resolve("leaf"));
+    Mockito.verifyNoMoreInteractions(layerBuilder);
   }
 
   @Test
@@ -251,13 +249,12 @@ public class JavaLayerConfigurationsTest {
     Path sourceRoot = temporaryFolder.getRoot().toPath();
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
 
-    JavaLayerConfigurations.Builder.addFilesRoot(
-        sourceRoot, path -> true, basePath, fileToLayerAdder);
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("non-empty"), basePath.resolve("non-empty"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("non-empty/leaf"), basePath.resolve("non-empty/leaf"));
-    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+    JavaLayerConfigurations.Builder.addFilesRoot(sourceRoot, path -> true, basePath, layerBuilder);
+    Mockito.verify(layerBuilder)
+        .addEntry(sourceRoot.resolve("non-empty"), basePath.resolve("non-empty"));
+    Mockito.verify(layerBuilder)
+        .addEntry(sourceRoot.resolve("non-empty/leaf"), basePath.resolve("non-empty/leaf"));
+    Mockito.verifyNoMoreInteractions(layerBuilder);
   }
 
   @Test
@@ -270,12 +267,11 @@ public class JavaLayerConfigurationsTest {
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
 
     Predicate<Path> nameIsTarget = path -> "target".equals(path.getFileName().toString());
-    JavaLayerConfigurations.Builder.addFilesRoot(
-        sourceRoot, nameIsTarget, basePath, fileToLayerAdder);
-    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("sub"), basePath.resolve("sub"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("sub/target"), basePath.resolve("sub/target"));
-    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+    JavaLayerConfigurations.Builder.addFilesRoot(sourceRoot, nameIsTarget, basePath, layerBuilder);
+    Mockito.verify(layerBuilder).addEntry(sourceRoot.resolve("sub"), basePath.resolve("sub"));
+    Mockito.verify(layerBuilder)
+        .addEntry(sourceRoot.resolve("sub/target"), basePath.resolve("sub/target"));
+    Mockito.verifyNoMoreInteractions(layerBuilder);
   }
 
   @Test
@@ -285,12 +281,11 @@ public class JavaLayerConfigurationsTest {
     Path sourceRoot = temporaryFolder.getRoot().toPath();
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
 
-    JavaLayerConfigurations.Builder.addFilesRoot(
-        sourceRoot, path -> false, basePath, fileToLayerAdder);
-    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("sub"), basePath.resolve("sub"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("sub/leaf"), basePath.resolve("sub/leaf"));
-    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+    JavaLayerConfigurations.Builder.addFilesRoot(sourceRoot, path -> false, basePath, layerBuilder);
+    Mockito.verify(layerBuilder).addEntry(sourceRoot.resolve("sub"), basePath.resolve("sub"));
+    Mockito.verify(layerBuilder)
+        .addEntry(sourceRoot.resolve("sub/leaf"), basePath.resolve("sub/leaf"));
+    Mockito.verifyNoMoreInteractions(layerBuilder);
   }
 
   @Test
@@ -300,7 +295,7 @@ public class JavaLayerConfigurationsTest {
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
     try {
       JavaLayerConfigurations.Builder.addFilesRoot(
-          sourceFile, path -> true, basePath, fileToLayerAdder);
+          sourceFile, path -> true, basePath, layerBuilder);
       Assert.fail();
     } catch (NotDirectoryException ex) {
       Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("foo is not a directory"));
@@ -323,25 +318,26 @@ public class JavaLayerConfigurationsTest {
 
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
 
-    JavaLayerConfigurations.Builder.addFilesRoot(
-        sourceRoot, isClassFile, basePath, fileToLayerAdder);
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("A.class"), basePath.resolve("A.class"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("example"), basePath.resolve("example"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("example/dir"), basePath.resolve("example/dir"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("example/dir/C.class"), basePath.resolve("example/dir/C.class"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("example/C.class"), basePath.resolve("example/C.class"));
-    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("test"), basePath.resolve("test"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("test/resources"), basePath.resolve("test/resources"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("test/resources/leaf"), basePath.resolve("test/resources/leaf"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("test/D.class"), basePath.resolve("test/D.class"));
-    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
+    JavaLayerConfigurations.Builder.addFilesRoot(sourceRoot, isClassFile, basePath, layerBuilder);
+    Mockito.verify(layerBuilder)
+        .addEntry(sourceRoot.resolve("A.class"), basePath.resolve("A.class"));
+    Mockito.verify(layerBuilder)
+        .addEntry(sourceRoot.resolve("example"), basePath.resolve("example"));
+    Mockito.verify(layerBuilder)
+        .addEntry(sourceRoot.resolve("example/dir"), basePath.resolve("example/dir"));
+    Mockito.verify(layerBuilder)
+        .addEntry(
+            sourceRoot.resolve("example/dir/C.class"), basePath.resolve("example/dir/C.class"));
+    Mockito.verify(layerBuilder)
+        .addEntry(sourceRoot.resolve("example/C.class"), basePath.resolve("example/C.class"));
+    Mockito.verify(layerBuilder).addEntry(sourceRoot.resolve("test"), basePath.resolve("test"));
+    Mockito.verify(layerBuilder)
+        .addEntry(sourceRoot.resolve("test/resources"), basePath.resolve("test/resources"));
+    Mockito.verify(layerBuilder)
+        .addEntry(
+            sourceRoot.resolve("test/resources/leaf"), basePath.resolve("test/resources/leaf"));
+    Mockito.verify(layerBuilder)
+        .addEntry(sourceRoot.resolve("test/D.class"), basePath.resolve("test/D.class"));
+    Mockito.verifyNoMoreInteractions(layerBuilder);
   }
 }

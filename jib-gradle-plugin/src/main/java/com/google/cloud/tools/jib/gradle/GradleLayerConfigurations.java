@@ -107,20 +107,17 @@ class GradleLayerConfigurations {
     }
 
     // Adds dependency files.
-    FileCollection dependencies =
+    FileCollection dependencyFiles =
         allFiles
-            // Removes the classes output directories.
             .minus(classesDirectories)
-            // Removes the resources output directory.
             .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
-    for (File file : dependencies) {
-      Path dependencyFile = file.toPath();
+    for (File dependencyFile : dependencyFiles) {
       AbsoluteUnixPath pathInContainer =
-          dependenciesExtractionPath.resolve(dependencyFile.getFileName());
-      if (dependencyFile.getFileName().toString().contains("SNAPSHOT")) {
-        layerBuilder.addSnapshotDependencyFile(dependencyFile, pathInContainer);
+          dependenciesExtractionPath.resolve(dependencyFile.getName());
+      if (dependencyFile.getName().contains("SNAPSHOT")) {
+        layerBuilder.addSnapshotDependencyFile(dependencyFile.toPath(), pathInContainer);
       } else {
-        layerBuilder.addDependencyFile(dependencyFile, pathInContainer);
+        layerBuilder.addDependencyFile(dependencyFile.toPath(), pathInContainer);
       }
     }
 
