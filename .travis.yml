@@ -1,0 +1,12 @@
+sudo: false
+language: java
+jdk: oraclejdk8
+script:
+- (cd jib-core; ./gradlew build)
+- (cd jib-plugins-common; ./gradlew build)
+- (cd jib-gradle-plugin; ./gradlew build)
+- (cd jib-maven-plugin; ./mvnw fmt:check package -U)
+cache:
+  directories:
+  - $HOME/.m2
+  - $HOME/.gradle
