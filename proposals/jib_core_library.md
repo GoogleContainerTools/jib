@@ -50,7 +50,7 @@ Three `TargetImage` types (`RegistryImage`, `DockerDaemonImage`, and `TarImage`)
 - `static Containerizer to(RegistryImage)`
 - `static Containerizer to(DockerDaemonImage)`
 - `static Containerizer to(TarImage)`
-- `Containerizer addAdditionalTag(String tag)`
+- `Containerizer addTag(String tag)`
 - `Containerizer setExecutorService(ExecutorService)`
 - `Containerizer setCacheConfiguration(CacheConfiguration)`
 - `Containerizer setEventHandlers(EventHandlers)`
