@@ -1,6 +1,10 @@
 sudo: false
 language: java
-jdk: oraclejdk8
+matrix:
+- name: 'Java 8'
+  jdk: oraclejdk8
+- name: 'Java 11'
+  jdk: openjdk11
 script:
 - (cd jib-core; ./gradlew build)
 - (cd jib-plugins-common; ./gradlew build)
