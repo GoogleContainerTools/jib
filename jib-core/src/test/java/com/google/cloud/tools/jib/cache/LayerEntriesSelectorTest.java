@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -101,17 +103,22 @@ public class LayerEntriesSelectorTest {
   }
 
   @Test
-  public void testGenerateSelector_fileModified() throws IOException, InterruptedException {
+  public void testGenerateSelector_fileModified() throws IOException {
     Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
     Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
+    Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
     LayerEntry layerEntry = new LayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
     DescriptorDigest expectedSelector =
         LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry));
 
     // Verify that changing modified time generates a different selector
-    Thread.sleep(1000);
-    Files.write(layerFile, "goodbye".getBytes(StandardCharsets.UTF_8));
+    Files.setLastModifiedTime(layerFile, FileTime.from(Instant.ofEpochSecond(1)));
     Assert.assertNotEquals(
+        expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry)));
+
+    // Verify that changing modified time back generates same selector
+    Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
+    Assert.assertEquals(
         expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry)));
   }
 }
