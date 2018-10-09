@@ -5,12 +5,21 @@ matrix:
   jdk: oraclejdk8
 - name: 'Java 11'
   jdk: openjdk11
+
+before_script:
+# required to avoid test failures from `Picked up _JAVA_OPTIONS: ...` message
+- unset _JAVA_OPTIONS
 script:
 - (cd jib-core; ./gradlew build)
 - (cd jib-plugins-common; ./gradlew build)
 - (cd jib-gradle-plugin; ./gradlew build)
 - (cd jib-maven-plugin; ./mvnw fmt:check package -U)
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 cache:
   directories:
   - $HOME/.m2
-  - $HOME/.gradle
+  - $HOME/.gradle/caches/
+  - $HOME/.gradle/wrapper/
