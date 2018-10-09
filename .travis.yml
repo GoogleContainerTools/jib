@@ -15,7 +15,7 @@ script:
 - (cd jib-core; ./gradlew --console=plain --info --stacktrace build)
 - (cd jib-plugins-common; ./gradlew --console=plain --info --stacktrace build)
 - (cd jib-gradle-plugin; ./gradlew --console=plain --info --stacktrace build)
-- (cd jib-maven-plugin; ./mvnw -B fmt:check verify -U)
+- (cd jib-maven-plugin; ./mvnw -B verify -U)
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
