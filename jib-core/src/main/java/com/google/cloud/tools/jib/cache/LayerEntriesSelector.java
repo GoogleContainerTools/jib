@@ -66,10 +66,7 @@ class LayerEntriesSelector {
     LayerEntryTemplate(LayerEntry layerEntry) throws IOException {
       sourceFile = layerEntry.getAbsoluteSourceFileString();
       extractionPath = layerEntry.getAbsoluteExtractionPathString();
-      lastModifiedTime =
-          Files.exists(layerEntry.getSourceFile())
-              ? Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant()
-              : Instant.EPOCH;
+      lastModifiedTime = Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant();
     }
 
     @Override
