@@ -22,8 +22,7 @@ usage()
 # $1 = directory
 # $2... = build command
 doBuild() {
-  (directory="$1"; shift; echo ">>> (cd $directory; $*)"; \
-    if [ -z "$dryRun" ]; then cd "$directory" && eval '"$@"'; fi)
+  (directory="$1"; shift; echo ">>> (cd $directory; $*)"; [ -z "$dryRun" ] && cd "$directory" && eval '"$@"')
 }
 
 while getopts qen c; do
