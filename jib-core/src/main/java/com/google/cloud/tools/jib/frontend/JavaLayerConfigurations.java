@@ -85,8 +85,7 @@ public class JavaLayerConfigurations {
      * @param pathFilter only the files satisfying the filter will be added, unless the files are
      *     directories
      * @param basePathInContainer directory in the layer into which the source contents are added
-     * @param entryAdder function that should add the file to the layer; the function gets the path
-     *     of the source file (may be a directory) and the final destination path in the layer
+     * @param layerBuilder the {@link LayerConfiguration.Builder}
      * @throws IOException error while listing directories
      * @throws NotDirectoryException if {@code sourceRoot} is not a directory
      */
@@ -95,14 +94,15 @@ public class JavaLayerConfigurations {
         Path sourceRoot,
         Predicate<Path> pathFilter,
         AbsoluteUnixPath basePathInContainer,
-        EntryAdder entryAdder)
+        LayerConfiguration.Builder layerBuilder)
         throws IOException {
       new DirectoryWalker(sourceRoot)
           .filterRoot()
           .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
           .walk(
               path ->
-                  entryAdder.add(path, basePathInContainer.resolve(sourceRoot.relativize(path))));
+                  layerBuilder.addEntry(
+                      path, basePathInContainer.resolve(sourceRoot.relativize(path))));
     }
 
     private final Map<LayerType, LayerConfiguration.Builder> layerBuilders =
@@ -229,7 +229,7 @@ public class JavaLayerConfigurations {
         throws IOException {
       LayerConfiguration.Builder builder =
           Preconditions.checkNotNull(layerBuilders.get(LayerType.DEPENDENCIES));
-      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder::addEntry);
+      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder);
       return this;
     }
 
@@ -256,7 +256,7 @@ public class JavaLayerConfigurations {
         throws IOException {
       LayerConfiguration.Builder builder =
           Preconditions.checkNotNull(layerBuilders.get(LayerType.SNAPSHOT_DEPENDENCIES));
-      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder::addEntry);
+      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder);
       return this;
     }
 
@@ -283,7 +283,7 @@ public class JavaLayerConfigurations {
         throws IOException {
       LayerConfiguration.Builder builder =
           Preconditions.checkNotNull(layerBuilders.get(LayerType.RESOURCES));
-      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder::addEntry);
+      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder);
       return this;
     }
 
@@ -310,7 +310,7 @@ public class JavaLayerConfigurations {
         throws IOException {
       LayerConfiguration.Builder builder =
           Preconditions.checkNotNull(layerBuilders.get(LayerType.CLASSES));
-      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder::addEntry);
+      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder);
       return this;
     }
 
@@ -337,7 +337,7 @@ public class JavaLayerConfigurations {
         throws IOException {
       LayerConfiguration.Builder builder =
           Preconditions.checkNotNull(layerBuilders.get(LayerType.EXTRA_FILES));
-      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder::addEntry);
+      addFilesRoot(sourceRoot, pathFilter, basePathInContainer, builder);
       return this;
     }
 
