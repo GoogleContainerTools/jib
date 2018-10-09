@@ -3,7 +3,6 @@ language: java
 env:
   global:
   - TERM=dumb         # for gradle
-  - _JAVA_OPTIONS=    # to avoid test failures from `Picked up _JAVA_OPTIONS: ...` message
 matrix:
   fast_finish: true
   include:
@@ -16,7 +15,8 @@ script:
 - (cd jib-core; ./gradlew --stacktrace build)
 - (cd jib-plugins-common; ./gradlew --stacktrace build)
 - (cd jib-gradle-plugin; ./gradlew --stacktrace build)
-- (cd jib-maven-plugin; ./mvnw -B verify -U)
+# unset _JAVA_OPTIONS to avoid spurious test failures
+- (cd jib-maven-plugin; unset _JAVA_OPTIONS; ./mvnw -B verify -U)
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
