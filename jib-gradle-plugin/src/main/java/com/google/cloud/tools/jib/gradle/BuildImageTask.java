@@ -122,7 +122,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     Containerizer containerizer = Containerizer.to(targetImage);
     pluginConfigurationProcessor.configureContainerizer(containerizer);
-    jibExtension.getTo().getTags().forEach(containerizer::addAdditionalTag);
+    jibExtension.getTo().getTags().forEach(containerizer::withAdditionalTag);
 
     HelpfulSuggestions helpfulSuggestions =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension)
