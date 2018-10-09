@@ -1,5 +1,8 @@
 sudo: false
 language: java
+env:
+- TERM=dumb         # for gradle
+- _JAVA_OPTIONS=    # to avoid test failures from `Picked up _JAVA_OPTIONS: ...` message
 matrix:
   fast_finish: true
   include:
@@ -8,13 +11,10 @@ matrix:
 #  - name: 'Java 11'
 #    jdk: openjdk11
 
-before_script:
-# required to avoid test failures from `Picked up _JAVA_OPTIONS: ...` message
-- unset _JAVA_OPTIONS
 script:
-- (cd jib-core; ./gradlew --console=plain --scan --stacktrace build)
-- (cd jib-plugins-common; ./gradlew --console=plain --scan --stacktrace build)
-- (cd jib-gradle-plugin; ./gradlew --console=plain --scan --stacktrace build)
+- (cd jib-core; ./gradlew --stacktrace build)
+- (cd jib-plugins-common; ./gradlew --stacktrace build)
+- (cd jib-gradle-plugin; ./gradlew --stacktrace build)
 - (cd jib-maven-plugin; ./mvnw -B verify -U)
 
 before_cache:
