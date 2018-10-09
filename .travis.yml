@@ -1,10 +1,11 @@
 sudo: false
 language: java
 matrix:
-- name: 'Java 8'
-  jdk: oraclejdk8
-- name: 'Java 11'
-  jdk: openjdk11
+  include:
+  - name: 'Java 8'
+    jdk: oraclejdk8
+  - name: 'Java 11'
+    jdk: openjdk11
 
 before_script:
 # required to avoid test failures from `Picked up _JAVA_OPTIONS: ...` message
