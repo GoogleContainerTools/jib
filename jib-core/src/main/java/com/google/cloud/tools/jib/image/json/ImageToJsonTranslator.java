@@ -130,7 +130,7 @@ public class ImageToJsonTranslator {
     template.setContainerEntrypoint(image.getEntrypoint());
 
     // Sets the main method arguments.
-    template.setContainerCmd(image.getJavaArguments());
+    template.setContainerCmd(image.getProgramArguments());
 
     // Sets the exposed ports.
     template.setContainerExposedPorts(portListToMap(image.getExposedPorts()));

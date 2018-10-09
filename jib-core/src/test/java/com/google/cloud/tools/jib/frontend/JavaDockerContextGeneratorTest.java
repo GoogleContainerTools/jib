@@ -122,7 +122,7 @@ public class JavaDockerContextGeneratorTest {
     String expectedBaseImage = "somebaseimage";
     List<String> expectedJvmFlags = Arrays.asList("-flag", "another\"Flag");
     String expectedMainClass = "SomeMainClass";
-    List<String> expectedJavaArguments = Arrays.asList("arg1", "arg2");
+    List<String> expectedProgramArguments = Arrays.asList("arg1", "arg2");
     Map<String, String> expectedEnv = ImmutableMap.of("key1", "value1", "key2", "value2");
     List<String> exposedPorts = Arrays.asList("1000/tcp", "2000-2010/udp");
     Map<String, String> expectedLabels =
@@ -154,7 +154,7 @@ public class JavaDockerContextGeneratorTest {
             .setEntrypoint(
                 JavaEntrypointConstructor.makeDefaultEntrypoint(
                     AbsoluteUnixPath.get("/app"), expectedJvmFlags, expectedMainClass))
-            .setJavaArguments(expectedJavaArguments)
+            .setProgramArguments(expectedProgramArguments)
             .setEnvironment(expectedEnv)
             .setExposedPorts(exposedPorts)
             .setLabels(expectedLabels)
