@@ -12,10 +12,10 @@ before_script:
 # required to avoid test failures from `Picked up _JAVA_OPTIONS: ...` message
 - unset _JAVA_OPTIONS
 script:
-- (cd jib-core; ./gradlew --console=plain --fail-fast --info --stacktrace build)
-- (cd jib-plugins-common; ./gradlew --console=plain --fail-fast --info --stacktrace build)
-- (cd jib-gradle-plugin; ./gradlew --console=plain --fail-fast --info --stacktrace build)
-- (cd jib-maven-plugin; ./mvnw -B fmt:check package -U)
+- (cd jib-core; ./gradlew --console=plain --info --stacktrace build)
+- (cd jib-plugins-common; ./gradlew --console=plain --info --stacktrace build)
+- (cd jib-gradle-plugin; ./gradlew --console=plain --info --stacktrace build)
+- (cd jib-maven-plugin; ./mvnw -B fmt:check verify -U)
 
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
