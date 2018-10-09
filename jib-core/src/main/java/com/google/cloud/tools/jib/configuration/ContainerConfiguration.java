@@ -138,10 +138,11 @@ public class ContainerConfiguration {
     }
 
     /**
-     * Sets the user name (or UID) and optionally the user group (or GID) which the process in the
-     * container should run as.
+     * Sets the user and group to run the container as. {@code user} can be a username or UID along
+     * with an optional groupname or GID. The following are all valid: {@code user}, {@code uid},
+     * {@code user:group}, {@code uid:gid}, {@code uid:group}, {@code user:gid}.
      *
-     * @param user the username and optionally the user group
+     * @param user the username/UID and optionally the groupname/GID
      * @return this
      */
     public Builder setUser(@Nullable String user) {
