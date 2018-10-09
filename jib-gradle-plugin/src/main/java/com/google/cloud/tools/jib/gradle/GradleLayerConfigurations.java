@@ -71,13 +71,6 @@ class GradleLayerConfigurations {
   private static JavaLayerConfigurations getForNonWarProject(
       Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
       throws IOException {
-    AbsoluteUnixPath dependenciesExtractionPath =
-        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
-    AbsoluteUnixPath resourcesExtractionPath =
-        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
-    AbsoluteUnixPath classesExtractionPath =
-        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
-
     Builder layerBuilder = JavaLayerConfigurations.builder();
 
     JavaPluginConvention javaPluginConvention =
@@ -96,14 +89,22 @@ class GradleLayerConfigurations {
 
     FileCollection existingClassesDirectories = classesDirectories.filter(File::exists);
     for (File classesOutputDirectory : existingClassesDirectories) {
-      layerBuilder.addClassFile(classesOutputDirectory.toPath(), classesExtractionPath);
+      layerBuilder.addFilesRoot(
+          JavaLayerConfigurations.LayerType.CLASSES,
+          classesOutputDirectory.toPath(),
+          path -> true,
+          appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE));
     }
     if (existingClassesDirectories.isEmpty()) {
       logger.warn("No classes files were found - did you compile your project?");
     }
 
     if (Files.exists(resourcesOutputDirectory)) {
-      layerBuilder.addResourceFile(resourcesOutputDirectory, resourcesExtractionPath);
+      layerBuilder.addFilesRoot(
+          JavaLayerConfigurations.LayerType.RESOURCES,
+          resourcesOutputDirectory,
+          path -> true,
+          appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE));
     }
 
     // Adds dependency files.
@@ -113,17 +114,30 @@ class GradleLayerConfigurations {
             .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
     for (File dependencyFile : dependencyFiles) {
       AbsoluteUnixPath pathInContainer =
-          dependenciesExtractionPath.resolve(dependencyFile.getName());
+          appRoot
+              .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE)
+              .resolve(dependencyFile.getName());
+
       if (dependencyFile.getName().contains("SNAPSHOT")) {
-        layerBuilder.addSnapshotDependencyFile(dependencyFile.toPath(), pathInContainer);
+        layerBuilder.addFile(
+            JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES,
+            dependencyFile.toPath(),
+            pathInContainer);
       } else {
-        layerBuilder.addDependencyFile(dependencyFile.toPath(), pathInContainer);
+        layerBuilder.addFile(
+            JavaLayerConfigurations.LayerType.DEPENDENCIES,
+            dependencyFile.toPath(),
+            pathInContainer);
       }
     }
 
     // Adds all the extra files.
     if (Files.exists(extraDirectory)) {
-      layerBuilder.addExtraFilesRoot(extraDirectory, path -> true, AbsoluteUnixPath.get("/"));
+      layerBuilder.addFilesRoot(
+          JavaLayerConfigurations.LayerType.EXTRA_FILES,
+          extraDirectory,
+          path -> true,
+          AbsoluteUnixPath.get("/"));
     }
 
     return layerBuilder.build();

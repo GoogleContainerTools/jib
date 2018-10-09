@@ -32,22 +32,31 @@ public class JavaLayerConfigurationsHelper {
     Path webInfLib = explodedWar.resolve("WEB-INF/lib");
     Path webInfClasses = explodedWar.resolve("WEB-INF/classes");
 
-    AbsoluteUnixPath dependenciesExtractionPath = appRoot.resolve("WEB-INF/lib");
-    AbsoluteUnixPath classesExtractionPath = appRoot.resolve("WEB-INF/classes");
-
     Builder layerBuilder = JavaLayerConfigurations.builder();
 
     // Gets all the dependencies.
     if (Files.exists(webInfLib)) {
       Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
-      layerBuilder.addDependenciesRoot(webInfLib, isSnapshot.negate(), dependenciesExtractionPath);
-      layerBuilder.addSnapshotDependenciesRoot(webInfLib, isSnapshot, dependenciesExtractionPath);
+      layerBuilder.addFilesRoot(
+          JavaLayerConfigurations.LayerType.DEPENDENCIES,
+          webInfLib,
+          isSnapshot.negate(),
+          appRoot.resolve("WEB-INF/lib"));
+      layerBuilder.addFilesRoot(
+          JavaLayerConfigurations.LayerType.DEPENDENCIES,
+          webInfLib,
+          isSnapshot,
+          appRoot.resolve("WEB-INF/lib"));
     }
 
     // Gets the classes files in the 'WEB-INF/classes' output directory.
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     if (Files.exists(webInfClasses)) {
-      layerBuilder.addClassesRoot(webInfClasses, isClassFile, classesExtractionPath);
+      layerBuilder.addFilesRoot(
+          JavaLayerConfigurations.LayerType.CLASSES,
+          webInfClasses,
+          isClassFile,
+          appRoot.resolve("WEB-INF/classes"));
     }
 
     // Gets the resources.
@@ -58,11 +67,16 @@ public class JavaLayerConfigurationsHelper {
 
           return (!inWebInfClasses && !inWebInfLib) || (inWebInfClasses && !isClassFile.test(path));
         };
-    layerBuilder.addResourcesRoot(explodedWar, isResource, appRoot);
+    layerBuilder.addFilesRoot(
+        JavaLayerConfigurations.LayerType.RESOURCES, explodedWar, isResource, appRoot);
 
     // Adds all the extra files.
     if (Files.exists(extraFilesDirectory)) {
-      layerBuilder.addExtraFilesRoot(extraFilesDirectory, path -> true, AbsoluteUnixPath.get("/"));
+      layerBuilder.addFilesRoot(
+          JavaLayerConfigurations.LayerType.EXTRA_FILES,
+          extraFilesDirectory,
+          path -> true,
+          AbsoluteUnixPath.get("/"));
     }
 
     return layerBuilder.build();
