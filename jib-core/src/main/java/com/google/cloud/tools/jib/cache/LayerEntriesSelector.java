@@ -102,7 +102,7 @@ class LayerEntriesSelector {
 
     @Override
     public int hashCode() {
-      return Objects.hash(sourceFile, extractionPath, extractionPath);
+      return Objects.hash(sourceFile, extractionPath, lastModifiedTime);
     }
   }
 
@@ -112,6 +112,7 @@ class LayerEntriesSelector {
    *
    * @param layerEntries the list of {@link LayerEntry} to convert
    * @return list of {@link LayerEntryTemplate} after sorting
+   * @throws IOException if checking the file creation time of a layer entry fails
    */
   @VisibleForTesting
   static List<LayerEntryTemplate> toSortedJsonTemplates(List<LayerEntry> layerEntries)
