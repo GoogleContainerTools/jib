@@ -179,7 +179,8 @@ class BuildImageStep
         imageBuilder.setCreated(containerConfiguration.getCreationTime());
         imageBuilder.setUser(containerConfiguration.getUser());
         imageBuilder.setEntrypoint(computeEntrypoint(baseImage, containerConfiguration));
-        imageBuilder.setProgramArguments(computeProgramArguments(baseImage, containerConfiguration));
+        imageBuilder.setProgramArguments(
+            computeProgramArguments(baseImage, containerConfiguration));
         imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());
         imageBuilder.addLabels(containerConfiguration.getLabels());
       }
@@ -216,18 +217,18 @@ class BuildImageStep
         containerConfiguration.getEntrypoint() == null
             && containerConfiguration.getProgramArguments() == null;
 
-    if (shouldInheritProgramArguments && baseImage.getJavaArguments() != null) {
+    if (shouldInheritProgramArguments && baseImage.getProgramArguments() != null) {
       buildConfiguration
           .getEventDispatcher()
           .dispatch(
               LogEvent.lifecycle(
                   "Container program arguments set to "
-                      + baseImage.getJavaArguments()
+                      + baseImage.getProgramArguments()
                       + " (inherited from base image)"));
     }
 
     return shouldInheritProgramArguments
-        ? baseImage.getJavaArguments()
+        ? baseImage.getProgramArguments()
         : containerConfiguration.getProgramArguments();
   }
 }

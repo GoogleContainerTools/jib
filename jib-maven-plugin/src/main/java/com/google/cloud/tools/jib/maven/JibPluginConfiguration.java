@@ -128,7 +128,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private String mainClass;
 
-    @Parameter private List<String> args = Collections.emptyList();
+    @Nullable @Parameter private List<String> args = null;
 
     @Nullable
     @Parameter(required = true)
@@ -357,6 +357,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the configured main arguments
    */
+  @Nullable
   List<String> getArgs() {
     if (System.getProperty(PropertyNames.CONTAINER_ARGS) != null) {
       return ConfigurationPropertyValidator.parseListProperty(

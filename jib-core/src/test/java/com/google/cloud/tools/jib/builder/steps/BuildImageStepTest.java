@@ -117,7 +117,7 @@ public class BuildImageStepTest {
             .addLabel("base.label", "base.label.value")
             .setWorkingDirectory("/base/working/directory")
             .setEntrypoint(ImmutableList.of("baseImageEntrypoint"))
-            .setJavaArguments(ImmutableList.of("catalina.sh", "run"))
+            .setProgramArguments(ImmutableList.of("catalina.sh", "run"))
             .addHistory(nonEmptyLayerHistory)
             .addHistory(emptyLayerHistory)
             .addHistory(emptyLayerHistory)
@@ -187,7 +187,7 @@ public class BuildImageStepTest {
     Assert.assertEquals(image.getHistory().get(1), emptyLayerHistory);
     Assert.assertEquals(image.getHistory().get(2), emptyLayerHistory);
     Assert.assertEquals(ImmutableList.of(), image.getEntrypoint());
-    Assert.assertEquals(ImmutableList.of(), image.getJavaArguments());
+    Assert.assertEquals(ImmutableList.of(), image.getProgramArguments());
   }
 
   @Test
@@ -209,7 +209,7 @@ public class BuildImageStepTest {
     Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
-    Assert.assertEquals(ImmutableList.of("test"), image.getJavaArguments());
+    Assert.assertEquals(ImmutableList.of("test"), image.getProgramArguments());
   }
 
   @Test
@@ -231,7 +231,7 @@ public class BuildImageStepTest {
     Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
-    Assert.assertEquals(ImmutableList.of("catalina.sh", "run"), image.getJavaArguments());
+    Assert.assertEquals(ImmutableList.of("catalina.sh", "run"), image.getProgramArguments());
   }
 
   @Test

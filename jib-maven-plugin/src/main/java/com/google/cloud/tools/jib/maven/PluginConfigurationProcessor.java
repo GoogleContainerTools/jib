@@ -38,6 +38,7 @@ import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -297,18 +298,18 @@ class PluginConfigurationProcessor {
   }
 
   /**
-   * Compute the container program arguments. If entrypoint is inherited (null), program arguments
-   * must be inherited (null) if empty (used for Tomcat base images).
+   * Compute the container program arguments. If the entrypoint is not inherited, program arguments
+   * must not be inherited .
    *
    * @param entrypoint the container entrypoint
    * @param containerArgs the container arguments
-   * @return the entrypoint
+   * @return the program arguments
    */
   @Nullable
   static List<String> computeProgramArguments(
       @Nullable List<String> entrypoint, List<String> containerArgs) {
-    if (entrypoint == null && containerArgs.isEmpty()) {
-      return null;
+    if (entrypoint != null && containerArgs == null) {
+      return Collections.EMPTY_LIST;
     } else {
       return containerArgs;
     }

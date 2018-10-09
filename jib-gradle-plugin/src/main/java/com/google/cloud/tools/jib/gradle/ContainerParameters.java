@@ -38,7 +38,7 @@ public class ContainerParameters {
   private Map<String, String> environment = Collections.emptyMap();
   private List<String> entrypoint = Collections.emptyList();
   @Nullable private String mainClass;
-  private List<String> args = Collections.emptyList();
+  @Nullable private List<String> args = null;
   private ImageFormat format = ImageFormat.Docker;
   private List<String> ports = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();
@@ -115,6 +115,7 @@ public class ContainerParameters {
   }
 
   @Input
+  @Nullable
   @Optional
   public List<String> getArgs() {
     if (System.getProperty(PropertyNames.CONTAINER_ARGS) != null) {

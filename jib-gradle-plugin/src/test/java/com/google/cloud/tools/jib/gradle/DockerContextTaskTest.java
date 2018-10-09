@@ -90,6 +90,7 @@ public class DockerContextTaskTest {
   @Test
   public void testEntrypoint_inheritedEntrypoint() throws IOException {
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/");
+    Mockito.when(containerParameters.getArgs()).thenCallRealMethod();
     project.getPluginManager().apply("war");
 
     task.generateDockerContext();
