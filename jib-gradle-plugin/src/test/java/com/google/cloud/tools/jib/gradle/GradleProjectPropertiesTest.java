@@ -49,7 +49,6 @@ public class GradleProjectPropertiesTest {
   @Mock private Convention mockConvention;
   @Mock private WarPluginConvention mockWarPluginConvection;
   @Mock private TaskContainer mockTaskContainer;
-  @Mock private EventHandlers mockEventHandlers;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
   private Manifest manifest;
@@ -67,7 +66,7 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockJar.getManifest()).thenReturn(manifest);
 
     gradleProjectProperties =
-        new GradleProjectProperties(mockProject, mockEventHandlers, mockJavaLayerConfigurations);
+        new GradleProjectProperties(mockProject, new EventHandlers(), mockJavaLayerConfigurations);
   }
 
   @Test
