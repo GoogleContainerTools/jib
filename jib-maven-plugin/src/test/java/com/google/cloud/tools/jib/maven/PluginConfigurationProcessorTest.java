@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -51,23 +52,22 @@ public class PluginConfigurationProcessorTest {
 
   @Before
   public void setUp() throws Exception {
-    Mockito.doReturn(mockMavenSession).when(mockJibPluginConfiguration).getSession();
-    Mockito.doReturn(mockMavenSettings).when(mockMavenSession).getSettings();
+    Mockito.when(mockJibPluginConfiguration.getSession()).thenReturn(mockMavenSession);
+    Mockito.when(mockMavenSession.getSettings()).thenReturn(mockMavenSettings);
 
-    Mockito.doReturn(new AuthConfiguration()).when(mockJibPluginConfiguration).getBaseImageAuth();
-    Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getEntrypoint();
-    Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getJvmFlags();
-    Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getArgs();
-    Mockito.doReturn(Collections.emptyList()).when(mockJibPluginConfiguration).getExposedPorts();
-    Mockito.doReturn("/app").when(mockJibPluginConfiguration).getAppRoot();
-    Mockito.doReturn(mavenProject).when(mockJibPluginConfiguration).getProject();
+    Mockito.when(mockJibPluginConfiguration.getBaseImageAuth()).thenReturn(new AuthConfiguration());
+    Mockito.when(mockJibPluginConfiguration.getEntrypoint()).thenReturn(Collections.emptyList());
+    Mockito.when(mockJibPluginConfiguration.getJvmFlags()).thenReturn(Collections.emptyList());
+    Mockito.when(mockJibPluginConfiguration.getArgs()).thenReturn(Collections.emptyList());
+    Mockito.when(mockJibPluginConfiguration.getExposedPorts()).thenReturn(Collections.emptyList());
+    Mockito.when(mockJibPluginConfiguration.getAppRoot()).thenReturn("/app");
+    Mockito.when(mockJibPluginConfiguration.getProject()).thenReturn(mavenProject);
 
-    Mockito.doReturn(JavaLayerConfigurations.builder().build())
-        .when(mockProjectProperties)
-        .getJavaLayerConfigurations();
-    Mockito.doReturn("java.lang.Object")
-        .when(mockProjectProperties)
-        .getMainClass(mockJibPluginConfiguration);
+    Mockito.when(mockProjectProperties.getJavaLayerConfigurations())
+        .thenReturn(JavaLayerConfigurations.builder().build());
+    Mockito.when(mockProjectProperties.getMainClass(mockJibPluginConfiguration))
+        .thenReturn("java.lang.Object");
+    Mockito.when(mockProjectProperties.getEventHandlers()).thenReturn(new EventHandlers());
   }
 
   /** Test with our default mocks, which try to mimic the bare Maven configuration. */

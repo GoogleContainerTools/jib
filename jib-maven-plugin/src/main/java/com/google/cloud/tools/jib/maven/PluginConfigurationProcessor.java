@@ -143,7 +143,8 @@ class PluginConfigurationProcessor {
             Preconditions.checkNotNull(jibPluginConfiguration.getSession()).getSettings(),
             jibPluginConfiguration.getSettingsDecrypter(),
             logger);
-    EventDispatcher eventDispatcher = new DefaultEventDispatcher(projectProperties.getEventHandlers());
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(projectProperties.getEventHandlers());
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
             CredentialRetrieverFactory.forImage(baseImage, eventDispatcher));
