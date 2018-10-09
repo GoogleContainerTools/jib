@@ -64,8 +64,8 @@ public class ContainerizerTest {
     Assert.assertEquals("jib-core", containerizer.getToolName());
 
     containerizer
-        .addTag("tag1")
-        .addTag("tag2")
+        .withAdditionalTag("tag1")
+        .withAdditionalTag("tag2")
         .setExecutorService(mockExecutorService)
         .setEventHandlers(mockEventHandlers)
         .setBaseImageLayersCache(Paths.get("base/image/layers"))

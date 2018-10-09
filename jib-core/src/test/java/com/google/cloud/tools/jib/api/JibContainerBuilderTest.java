@@ -186,7 +186,10 @@ public class JibContainerBuilderTest {
             .setFormat(ImageFormat.OCI)
             .toBuildConfiguration(
                 spyBuildConfigurationBuilder,
-                containerizer.addTag("tag1").addTag("tag2").setToolName("toolName"));
+                containerizer
+                    .withAdditionalTag("tag1")
+                    .withAdditionalTag("tag2")
+                    .setToolName("toolName"));
     Assert.assertSame(
         ImageFormat.OCI.getManifestTemplateClass(), buildConfiguration.getTargetFormat());
     Assert.assertEquals(
