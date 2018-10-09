@@ -1,14 +1,16 @@
 sudo: false
+git:
+  depth: 3
 language: java
 env:
   global:
   - TERM=dumb         # for gradle
 matrix:
-  fast_finish: true
   include:
   - name: 'Java 8'
     jdk: oraclejdk8
 
+install: true
 script:
 - (cd jib-core; ./gradlew --stacktrace build)
 - (cd jib-plugins-common; ./gradlew --stacktrace build)
