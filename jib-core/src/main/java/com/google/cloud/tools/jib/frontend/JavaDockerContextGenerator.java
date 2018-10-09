@@ -181,7 +181,7 @@ public class JavaDockerContextGenerator {
   }
 
   /**
-   * Sets the entrypoint to be used as the {@code ENTRYPOINT}
+   * Sets the entrypoint to be used as the {@code ENTRYPOINT}.
    *
    * @param entrypoint the entrypoint
    * @return this
@@ -203,7 +203,7 @@ public class JavaDockerContextGenerator {
   }
 
   /**
-   * Sets the environment variables
+   * Sets the environment variables.
    *
    * @param environment map from the environment variable name to value
    * @return this
@@ -225,7 +225,7 @@ public class JavaDockerContextGenerator {
   }
 
   /**
-   * Sets the labels
+   * Sets the labels.
    *
    * @param labels the map of labels
    * @return this
