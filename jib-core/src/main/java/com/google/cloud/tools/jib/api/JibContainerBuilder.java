@@ -68,6 +68,7 @@ public class JibContainerBuilder {
   @Nullable private ImmutableList<String> programArguments;
   private ImageFormat imageFormat = ImageFormat.Docker;
   private Instant creationTime = Instant.EPOCH;
+  @Nullable private String user;
 
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(SourceImage baseImage) {
@@ -333,6 +334,28 @@ public class JibContainerBuilder {
   }
 
   /**
+   * Sets the user and group to run the container as. {@code user} can be a username or UID along with an optional groupname or GID.
+   *
+   * The following are valid formats for {@code user}
+   *
+   * <ul>
+   *   <li>{@code user}</li>
+   *   <li>{@code uid}</li>
+   *   <li>{@code user:group}</li>
+   *   <li>{@code uid:gid}</li>
+   *   <li>{@code uid:group}</li>
+   *   <li>{@code user:gid}</li>
+   * </ul>
+   *
+   * @param user the user to run the container as
+   * @return this
+   */
+  public JibContainerBuilder setUser(String user) {
+    this.user = user;
+    return this;
+  }
+
+  /**
    * Builds the container(s).
    *
    * @param containerizer the {@link Containerizer} that configures how to containerize
@@ -400,6 +423,7 @@ public class JibContainerBuilder {
         .setExposedPorts(ports)
         .setLabels(labels)
         .setCreationTime(creationTime)
+        .setUser(user)
         .build();
   }
 }
