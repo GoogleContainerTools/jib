@@ -66,7 +66,8 @@ public class JibContainerBuilderTest {
             .setExposedPorts(Arrays.asList(Port.tcp(1234), Port.udp(5678)))
             .setLabels(ImmutableMap.of("key", "value"))
             .setProgramArguments(Arrays.asList("program", "arguments"))
-            .setCreationTime(Instant.ofEpochMilli(1000));
+            .setCreationTime(Instant.ofEpochMilli(1000))
+            .setUser("user");
 
     ContainerConfiguration containerConfiguration = jibContainerBuilder.toContainerConfiguration();
     Assert.assertEquals(Arrays.asList("entry", "point"), containerConfiguration.getEntrypoint());
@@ -78,6 +79,7 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(
         Arrays.asList("program", "arguments"), containerConfiguration.getProgramArguments());
     Assert.assertEquals(Instant.ofEpochMilli(1000), containerConfiguration.getCreationTime());
+    Assert.assertEquals("user", containerConfiguration.getUser());
   }
 
   @Test

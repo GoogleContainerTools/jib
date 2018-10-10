@@ -113,34 +113,36 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-<<<<<<< HEAD
-  public void testEntrypoint_warningOnJvmFlags()
+  public void testUser()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-=======
-  public void testUser() throws InvalidImageReferenceException {
     Mockito.doReturn("customUser").when(mockContainerParameters).getUser();
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
             mockLogger, mockJibExtension, mockProjectProperties);
-    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processor.getJibContainerBuilder());
 
-    Assert.assertEquals("customUser", configuration.getUser());
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertEquals("customUser", buildConfiguration.getContainerConfiguration().getUser());
   }
 
   @Test
-  public void testUser_null() throws InvalidImageReferenceException {
+  public void testUser_null()
+      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
             mockLogger, mockJibExtension, mockProjectProperties);
-    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processor.getJibContainerBuilder());
 
-    Assert.assertNull(configuration.getUser());
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertNull(buildConfiguration.getContainerConfiguration().getUser());
   }
 
   @Test
-  public void testEntrypoint_warningOnJvmFlags() throws InvalidImageReferenceException {
->>>>>>> master
+  public void testEntrypoint_warningOnJvmFlags()
+      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
         .when(mockContainerParameters)
         .getEntrypoint();
