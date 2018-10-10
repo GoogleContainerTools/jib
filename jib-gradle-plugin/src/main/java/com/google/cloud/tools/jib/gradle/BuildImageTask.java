@@ -28,10 +28,10 @@ import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
+import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
-import com.google.cloud.tools.jib.plugins.common.NBuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -133,7 +133,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
             .build();
 
-    NBuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
+    BuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
         .build(
             jibContainerBuilder,
             containerizer,
