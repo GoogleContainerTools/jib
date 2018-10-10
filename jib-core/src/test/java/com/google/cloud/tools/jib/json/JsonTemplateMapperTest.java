@@ -149,7 +149,7 @@ public class JsonTemplateMapperTest {
   }
 
   @Test
-  public void testToBlob_listOfJson() throws IOException, URISyntaxException, DigestException {
+  public void testToBlob_listOfJson() throws IOException, URISyntaxException {
     Path jsonFile = Paths.get(Resources.getResource("json/basic_list.json").toURI());
 
     String jsonString = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
