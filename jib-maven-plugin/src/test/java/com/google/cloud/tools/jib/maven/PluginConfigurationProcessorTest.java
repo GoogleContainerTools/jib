@@ -76,6 +76,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(mockJibPluginConfiguration.getExposedPorts()).thenReturn(Collections.emptyList());
     Mockito.when(mockJibPluginConfiguration.getAppRoot()).thenReturn("/app");
     Mockito.when(mockJibPluginConfiguration.getProject()).thenReturn(mavenProject);
+    Mockito.when(mockJibPluginConfiguration.getFormat()).thenReturn("Docker");
 
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations())
         .thenReturn(JavaLayerConfigurations.builder().build());
