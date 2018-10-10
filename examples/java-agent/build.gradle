@@ -1,0 +1,54 @@
+plugins {
+  id 'java'
+  id 'com.google.cloud.tools.jib' version '0.9.11'
+  id 'de.undercouch.download' version '3.4.0'
+}
+
+ext {
+  // where to download the Stackdriver Debugger agent https://cloud.google.com/debugger/docs/setup/java
+  stackdriverDebuggerAgentUrl = 'https://storage.googleapis.com/cloud-debugger/compute-java/debian-wheezy/cdbg_java_agent_gce.tar.gz'
+
+  // where to place the Cloud Debugger agent in the container
+  stackdriverDebuggerLocation = '/opt/cdbg'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile 'com.google.guava:guava:23.6-jre'
+}
+
+// Download and extract the Cloud Debugger Java Agent
+task downloadAgent(type: Download) {
+  src stackdriverDebuggerAgentUrl
+  dest new File(buildDir, 'cdbg_java_agent_gce.tar.gz')
+}
+task extractAgent(dependsOn: downloadAgent, type: Copy) {
+    from tarTree(downloadAgent.dest)
+    into new File(buildDir, 'agent' + stackdriverDebuggerLocation)
+}
+
+jib {
+  to {
+    image = 'gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib'
+  }
+  extraDirectory = new File(buildDir, 'agent')
+  container {
+    jvmFlags = [
+        '-agentpath:' + stackdriverDebuggerLocation + '/cdbg_java_agent.so',
+        '-Dcom.google.cdbg.module=' + project.name,
+        '-Dcom.google.cdbg.version=' + version]
+        // if not running on Compute Engine, must download and copy a service key
+        // (https://cloud.google.com/debugger/docs/setup/java#local)
+        // -Dcom.google.cdbg.auth.serviceaccount.enable=true
+        // -Dcom.google.cdbg.auth.serviceaccount.jsonfile=/opt/cdbg/gcp-svc.json
+  }
+}
+
+defaultTasks 'extractAgent'
+
