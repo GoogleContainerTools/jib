@@ -211,14 +211,14 @@ public class DockerContextMojoTest {
     try {
       getEntrypoint();
       Assert.fail();
-    } catch (NoSuchElementException e) {
-      Assert.assertEquals("No value present", e.getMessage());
+    } catch (NoSuchElementException ex) {
+      // pass
     }
     try {
       getCmd();
       Assert.fail();
-    } catch (NoSuchElementException e) {
-      Assert.assertEquals("No value present", e.getMessage());
+    } catch (NoSuchElementException ex) {
+      // pass
     }
   }
 
@@ -326,13 +326,12 @@ public class DockerContextMojoTest {
       getUser();
       Assert.fail();
     } catch (NoSuchElementException ex) {
+      // pass
     }
   }
 
   private String getUser() throws IOException {
-    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
-    List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("USER")).findFirst().get();
+    return getDockerfileLine("USER");
   }
 
   private String getEntrypoint() throws IOException {

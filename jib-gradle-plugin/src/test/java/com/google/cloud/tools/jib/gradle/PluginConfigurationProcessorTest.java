@@ -203,7 +203,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testWebAppEntrypoint_inferredFromBaseImage()
+  public void testWebAppEntrypoint_inheritedFromBaseImage()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     Mockito.when(mockProjectProperties.isWarProject()).thenReturn(true);
 

@@ -137,18 +137,18 @@ public class ContainerConfiguration {
       return this;
     }
 
-      /**
-       * Sets the user and group to run the container as. {@code user} can be a username or UID along
-       * with an optional groupname or GID. The following are all valid: {@code user}, {@code uid},
-       * {@code user:group}, {@code uid:gid}, {@code uid:group}, {@code user:gid}.
-       *
-       * @param user the username/UID and optionally the groupname/GID
-       * @return this
-       */
-      public Builder setUser(@Nullable String user) {
-          this.user = user;
-          return this;
-      }
+    /**
+     * Sets the user and group to run the container as. {@code user} can be a username or UID along
+     * with an optional groupname or GID. The following are all valid: {@code user}, {@code uid},
+     * {@code user:group}, {@code uid:gid}, {@code uid:group}, {@code user:gid}.
+     *
+     * @param user the username/UID and optionally the groupname/GID
+     * @return this
+     */
+    public Builder setUser(@Nullable String user) {
+      this.user = user;
+      return this;
+    }
 
     /**
      * Builds the {@link ContainerConfiguration}.

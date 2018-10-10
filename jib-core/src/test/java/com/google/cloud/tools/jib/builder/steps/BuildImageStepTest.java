@@ -235,6 +235,28 @@ public class BuildImageStepTest {
   }
 
   @Test
+  public void test_notInheritedProgramArguments() throws ExecutionException, InterruptedException {
+    Mockito.when(mockContainerConfiguration.getEntrypoint())
+        .thenReturn(ImmutableList.of("myEntrypoint"));
+    Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(null);
+
+    BuildImageStep buildImageStep =
+        new BuildImageStep(
+            MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
+            mockBuildConfiguration,
+            mockPullBaseImageStep,
+            mockPullAndCacheBaseImageLayersStep,
+            ImmutableList.of(
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep));
+    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+
+    Assert.assertEquals(ImmutableList.of("myEntrypoint"), image.getEntrypoint());
+    Assert.assertNull(image.getProgramArguments());
+  }
+
+  @Test
   public void test_generateHistoryObjects() throws ExecutionException, InterruptedException {
     BuildImageStep buildImageStep =
         new BuildImageStep(

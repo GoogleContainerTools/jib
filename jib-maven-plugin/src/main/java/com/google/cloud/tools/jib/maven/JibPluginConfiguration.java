@@ -128,7 +128,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private String mainClass;
 
-    @Nullable @Parameter private List<String> args = null;
+    @Nullable @Parameter private List<String> args;
 
     @Nullable
     @Parameter(required = true)

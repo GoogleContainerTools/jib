@@ -38,7 +38,6 @@ import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -174,8 +173,6 @@ class PluginConfigurationProcessor {
         jibPluginConfiguration.getBaseImageCredentialHelperName());
 
     List<String> entrypoint = computeEntrypoint(logger, jibPluginConfiguration, projectProperties);
-    List<String> programArguments =
-            computeProgramArguments(entrypoint, jibPluginConfiguration.getArgs());
 
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     defaultCredentialRetrievers.asList().forEach(baseImage::addCredentialRetriever);
@@ -184,7 +181,7 @@ class PluginConfigurationProcessor {
         Jib.from(baseImage)
             .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
             .setEntrypoint(entrypoint)
-            .setProgramArguments(programArguments)
+            .setProgramArguments(jibPluginConfiguration.getArgs())
             .setEnvironment(jibPluginConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(jibPluginConfiguration.getExposedPorts()))
             .setLabels(jibPluginConfiguration.getLabels())
@@ -295,24 +292,6 @@ class PluginConfigurationProcessor {
     String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
     return JavaEntrypointConstructor.makeDefaultEntrypoint(
         getAppRootChecked(jibPluginConfiguration), jibPluginConfiguration.getJvmFlags(), mainClass);
-  }
-
-  /**
-   * Compute the container program arguments. If the entrypoint is not inherited, program arguments
-   * must not be inherited .
-   *
-   * @param entrypoint the container entrypoint
-   * @param containerArgs the container arguments
-   * @return the program arguments
-   */
-  @Nullable
-  static List<String> computeProgramArguments(
-      @Nullable List<String> entrypoint, List<String> containerArgs) {
-    if (entrypoint != null && containerArgs == null) {
-      return Collections.EMPTY_LIST;
-    } else {
-      return containerArgs;
-    }
   }
 
   private final JibContainerBuilder jibContainerBuilder;

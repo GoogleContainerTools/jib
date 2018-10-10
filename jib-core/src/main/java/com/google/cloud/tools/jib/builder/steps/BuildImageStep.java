@@ -190,45 +190,58 @@ class BuildImageStep
     }
   }
 
+  /**
+   * Computes the image entrypoint. If {@link ContainerConfiguration#getEntrypoint()} is null, the
+   * entrypoint is inherited from the base image. Otherwise {@link
+   * ContainerConfiguration#getEntrypoint()} is returned.
+   *
+   * @param baseImage the base image
+   * @param containerConfiguration the container configuration
+   * @return the container entrypoint
+   */
   @Nullable
   private ImmutableList<String> computeEntrypoint(
       Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
-    boolean shouldInheritEntrypoint = containerConfiguration.getEntrypoint() == null;
-
-    if (shouldInheritEntrypoint && baseImage.getEntrypoint() != null) {
-      buildConfiguration
-          .getEventDispatcher()
-          .dispatch(
-              LogEvent.lifecycle(
-                  "Container entrypoint set to "
-                      + baseImage.getEntrypoint()
-                      + " (inherited from base image)"));
+    if (baseImage.getEntrypoint() == null || containerConfiguration.getEntrypoint() != null) {
+      return containerConfiguration.getEntrypoint();
     }
 
-    return shouldInheritEntrypoint
-        ? baseImage.getEntrypoint()
-        : containerConfiguration.getEntrypoint();
+    buildConfiguration
+        .getEventDispatcher()
+        .dispatch(
+            LogEvent.lifecycle(
+                "Container entrypoint set to "
+                    + baseImage.getEntrypoint()
+                    + " (inherited from base image)"));
+    return baseImage.getEntrypoint();
   }
 
+  /**
+   * Computes the image program arguments. If {@link ContainerConfiguration#getEntrypoint()} and
+   * {@link ContainerConfiguration#getProgramArguments()} are null, the program arguments are
+   * inherited from the base image. Otherwise {@link ContainerConfiguration#getProgramArguments()}
+   * is returned.
+   *
+   * @param baseImage the base image
+   * @param containerConfiguration the container configuration
+   * @return the container program arguments
+   */
   @Nullable
   private ImmutableList<String> computeProgramArguments(
       Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
-    boolean shouldInheritProgramArguments =
-        containerConfiguration.getEntrypoint() == null
-            && containerConfiguration.getProgramArguments() == null;
-
-    if (shouldInheritProgramArguments && baseImage.getProgramArguments() != null) {
-      buildConfiguration
-          .getEventDispatcher()
-          .dispatch(
-              LogEvent.lifecycle(
-                  "Container program arguments set to "
-                      + baseImage.getProgramArguments()
-                      + " (inherited from base image)"));
+    if (baseImage.getProgramArguments() == null
+        || containerConfiguration.getEntrypoint() != null
+        || containerConfiguration.getProgramArguments() != null) {
+      return containerConfiguration.getProgramArguments();
     }
 
-    return shouldInheritProgramArguments
-        ? baseImage.getProgramArguments()
-        : containerConfiguration.getProgramArguments();
+    buildConfiguration
+        .getEventDispatcher()
+        .dispatch(
+            LogEvent.lifecycle(
+                "Container program arguments set to "
+                    + baseImage.getProgramArguments()
+                    + " (inherited from base image)"));
+    return baseImage.getProgramArguments();
   }
 }

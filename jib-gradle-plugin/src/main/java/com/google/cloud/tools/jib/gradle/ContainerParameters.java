@@ -38,7 +38,7 @@ public class ContainerParameters {
   private Map<String, String> environment = Collections.emptyMap();
   private List<String> entrypoint = Collections.emptyList();
   @Nullable private String mainClass;
-  @Nullable private List<String> args = null;
+  @Nullable private List<String> args;
   private ImageFormat format = ImageFormat.Docker;
   private List<String> ports = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();

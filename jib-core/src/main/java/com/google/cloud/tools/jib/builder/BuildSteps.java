@@ -158,7 +158,7 @@ public class BuildSteps {
 
     if (buildConfiguration.getContainerConfiguration() != null) {
       buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
-
+      // TODO refactor below
       if (buildConfiguration.getContainerConfiguration().getEntrypoint() != null) {
         buildConfiguration
             .getEventDispatcher()
