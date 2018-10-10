@@ -30,7 +30,6 @@ import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
-import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
@@ -184,8 +183,7 @@ class PluginConfigurationProcessor {
             .setEnvironment(jibPluginConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(jibPluginConfiguration.getExposedPorts()))
             .setProgramArguments(jibPluginConfiguration.getArgs())
-            .setLabels(jibPluginConfiguration.getLabels())
-            .setFormat(ImageFormat.valueOf(jibPluginConfiguration.getFormat()));
+            .setLabels(jibPluginConfiguration.getLabels());
     if (jibPluginConfiguration.getUseCurrentTimestamp()) {
       logger.warn(
           "Setting image creation time to current time; your image may not be reproducible.");

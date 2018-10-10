@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
@@ -76,7 +77,6 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(mockJibPluginConfiguration.getExposedPorts()).thenReturn(Collections.emptyList());
     Mockito.when(mockJibPluginConfiguration.getAppRoot()).thenReturn("/app");
     Mockito.when(mockJibPluginConfiguration.getProject()).thenReturn(mavenProject);
-    Mockito.when(mockJibPluginConfiguration.getFormat()).thenReturn("Docker");
 
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations())
         .thenReturn(JavaLayerConfigurations.builder().build());
@@ -109,7 +109,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testPluginConfigurationProcessor_warPackaging()
       throws MojoExecutionException, InvalidImageReferenceException {
-    Mockito.doReturn("war").when(mavenProject).getPackaging();
+    Mockito.when(mavenProject.getPackaging()).thenReturn("war");
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -125,9 +125,8 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint()
       throws MojoExecutionException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
-        .when(mockJibPluginConfiguration)
-        .getEntrypoint();
+    Mockito.when(mockJibPluginConfiguration.getEntrypoint())
+        .thenReturn(Arrays.asList("custom", "entrypoint"));
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -145,9 +144,9 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_defaultWarPackaging()
       throws MojoExecutionException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Mockito.doReturn(ImmutableList.of()).when(mockJibPluginConfiguration).getEntrypoint();
-    Mockito.doReturn(mavenProject).when(mockJibPluginConfiguration).getProject();
-    Mockito.doReturn("war").when(mavenProject).getPackaging();
+    Mockito.when(mockJibPluginConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
+    Mockito.when(mockJibPluginConfiguration.getProject()).thenReturn(mavenProject);
+    Mockito.when(mavenProject.getPackaging()).thenReturn("war");
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -165,9 +164,9 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_defaulNonWarPackaging()
       throws MojoExecutionException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Mockito.doReturn(ImmutableList.of()).when(mockJibPluginConfiguration).getEntrypoint();
-    Mockito.doReturn(mavenProject).when(mockJibPluginConfiguration).getProject();
-    Mockito.doReturn(null).when(mavenProject).getPackaging();
+    Mockito.when(mockJibPluginConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
+    Mockito.when(mockJibPluginConfiguration.getProject()).thenReturn(mavenProject);
+    Mockito.when(mavenProject.getPackaging()).thenReturn(null);
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -185,10 +184,10 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_warningOnJvmFlags()
       throws MojoExecutionException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
-        .when(mockJibPluginConfiguration)
-        .getEntrypoint();
-    Mockito.doReturn(Arrays.asList("jvmFlag")).when(mockJibPluginConfiguration).getJvmFlags();
+    Mockito.when(mockJibPluginConfiguration.getEntrypoint())
+        .thenReturn(Arrays.asList("custom", "entrypoint"));
+    Mockito.when(mockJibPluginConfiguration.getJvmFlags())
+        .thenReturn(Collections.singletonList("jvmFlag"));
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -207,10 +206,9 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypoint_warningOnMainclass()
       throws MojoExecutionException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
-        .when(mockJibPluginConfiguration)
-        .getEntrypoint();
-    Mockito.doReturn("java.util.Object").when(mockJibPluginConfiguration).getMainClass();
+    Mockito.when(mockJibPluginConfiguration.getEntrypoint())
+        .thenReturn(Arrays.asList("custom", "entrypoint"));
+    Mockito.when(mockJibPluginConfiguration.getMainClass()).thenReturn("java.util.Object");
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -229,24 +227,25 @@ public class PluginConfigurationProcessorTest {
   public void testEntrypointClasspath_nonDefaultAppRoot()
       throws MojoExecutionException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Mockito.doReturn("/my/app").when(mockJibPluginConfiguration).getAppRoot();
+    Mockito.when(mockJibPluginConfiguration.getAppRoot()).thenReturn("/my/app");
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
             mockLog, mockJibPluginConfiguration, mockProjectProperties);
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
 
+    ContainerConfiguration containerConfiguration =
+        getBuildConfiguration(jibContainerBuilder).getContainerConfiguration();
+    Assert.assertNotNull(containerConfiguration);
+    Assert.assertNotNull(containerConfiguration.getEntrypoint());
     Assert.assertEquals(
         "/my/app/resources:/my/app/classes:/my/app/libs/*",
-        getBuildConfiguration(jibContainerBuilder)
-            .getContainerConfiguration()
-            .getEntrypoint()
-            .get(2));
+        containerConfiguration.getEntrypoint().get(2));
   }
 
   @Test
   public void testGetAppRootChecked() throws MojoExecutionException {
-    Mockito.doReturn("/some/root").when(mockJibPluginConfiguration).getAppRoot();
+    Mockito.when(mockJibPluginConfiguration.getAppRoot()).thenReturn("/some/root");
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/some/root"),
@@ -255,7 +254,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetAppRootChecked_errorOnNonAbsolutePath() {
-    Mockito.doReturn("relative/path").when(mockJibPluginConfiguration).getAppRoot();
+    Mockito.when(mockJibPluginConfiguration.getAppRoot()).thenReturn("relative/path");
 
     try {
       PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration);
@@ -269,7 +268,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetAppRootChecked_errorOnWindowsPath() {
-    Mockito.doReturn("\\windows\\path").when(mockJibPluginConfiguration).getAppRoot();
+    Mockito.when(mockJibPluginConfiguration.getAppRoot()).thenReturn("\\windows\\path");
 
     try {
       PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration);
@@ -283,7 +282,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetAppRootChecked_errorOnWindowsPathWithDriveLetter() {
-    Mockito.doReturn("C:\\windows\\path").when(mockJibPluginConfiguration).getAppRoot();
+    Mockito.when(mockJibPluginConfiguration.getAppRoot()).thenReturn("C:\\windows\\path");
 
     try {
       PluginConfigurationProcessor.getAppRootChecked(mockJibPluginConfiguration);
@@ -297,9 +296,9 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetAppRootChecked_defaultNonWarPackaging() throws MojoExecutionException {
-    Mockito.doReturn("").when(mockJibPluginConfiguration).getAppRoot();
-    Mockito.doReturn(mavenProject).when(mockJibPluginConfiguration).getProject();
-    Mockito.doReturn(null).when(mavenProject).getPackaging();
+    Mockito.when(mockJibPluginConfiguration.getAppRoot()).thenReturn("");
+    Mockito.when(mockJibPluginConfiguration.getProject()).thenReturn(mavenProject);
+    Mockito.when(mavenProject.getPackaging()).thenReturn(null);
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/app"),
@@ -308,9 +307,9 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetAppRootChecked_defaultJarPackaging() throws MojoExecutionException {
-    Mockito.doReturn("").when(mockJibPluginConfiguration).getAppRoot();
-    Mockito.doReturn(mavenProject).when(mockJibPluginConfiguration).getProject();
-    Mockito.doReturn("jar").when(mavenProject).getPackaging();
+    Mockito.when(mockJibPluginConfiguration.getAppRoot()).thenReturn("");
+    Mockito.when(mockJibPluginConfiguration.getProject()).thenReturn(mavenProject);
+    Mockito.when(mavenProject.getPackaging()).thenReturn("jar");
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/app"),
@@ -319,9 +318,9 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetAppRootChecked_defaultWarPackaging() throws MojoExecutionException {
-    Mockito.doReturn("").when(mockJibPluginConfiguration).getAppRoot();
-    Mockito.doReturn(mavenProject).when(mockJibPluginConfiguration).getProject();
-    Mockito.doReturn("war").when(mavenProject).getPackaging();
+    Mockito.when(mockJibPluginConfiguration.getAppRoot()).thenReturn("");
+    Mockito.when(mockJibPluginConfiguration.getProject()).thenReturn(mavenProject);
+    Mockito.when(mavenProject.getPackaging()).thenReturn("war");
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/jetty/webapps/ROOT"),
@@ -330,8 +329,8 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetBaseImage_defaultWarPackaging() {
-    Mockito.doReturn(mavenProject).when(mockJibPluginConfiguration).getProject();
-    Mockito.doReturn("war").when(mavenProject).getPackaging();
+    Mockito.when(mockJibPluginConfiguration.getProject()).thenReturn(mavenProject);
+    Mockito.when(mavenProject.getPackaging()).thenReturn("war");
 
     Assert.assertEquals(
         "gcr.io/distroless/java/jetty",
@@ -340,8 +339,8 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetBaseImage_defaultNonWarPackaging() {
-    Mockito.doReturn(mavenProject).when(mockJibPluginConfiguration).getProject();
-    Mockito.doReturn(null).when(mavenProject).getPackaging();
+    Mockito.when(mockJibPluginConfiguration.getProject()).thenReturn(mavenProject);
+    Mockito.when(mavenProject.getPackaging()).thenReturn(null);
 
     Assert.assertEquals(
         "gcr.io/distroless/java",
@@ -350,7 +349,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetBaseImage_nonDefault() {
-    Mockito.doReturn("tomcat").when(mockJibPluginConfiguration).getBaseImage();
+    Mockito.when(mockJibPluginConfiguration.getBaseImage()).thenReturn("tomcat");
 
     Assert.assertEquals(
         "tomcat", PluginConfigurationProcessor.getBaseImage(mockJibPluginConfiguration));

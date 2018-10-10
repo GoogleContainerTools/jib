@@ -128,7 +128,9 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     try {
       JibContainerBuilder jibContainerBuilder =
-          pluginConfigurationProcessor.getJibContainerBuilder();
+          pluginConfigurationProcessor
+              .getJibContainerBuilder()
+              .setFormat(ImageFormat.valueOf(getFormat()));
       Containerizer containerizer = Containerizer.to(targetImage);
       pluginConfigurationProcessor.configureContainerizer(containerizer);
       getTargetImageAdditionalTags().forEach(containerizer::withAdditionalTag);
