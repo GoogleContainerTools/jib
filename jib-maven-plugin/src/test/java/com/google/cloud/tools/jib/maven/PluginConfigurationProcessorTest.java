@@ -93,9 +93,11 @@ public class PluginConfigurationProcessorTest {
         PluginConfigurationProcessor.processCommonConfiguration(
             mockLog, mockJibPluginConfiguration, mockProjectProperties);
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
+    BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
-        getBuildConfiguration(jibContainerBuilder).getContainerConfiguration().getEntrypoint());
+        buildConfiguration.getContainerConfiguration().getEntrypoint());
 
     Assert.assertEquals(
         ImageReference.parse("gcr.io/distroless/java").toString(),
@@ -130,10 +132,11 @@ public class PluginConfigurationProcessorTest {
         PluginConfigurationProcessor.processCommonConfiguration(
             mockLog, mockJibPluginConfiguration, mockProjectProperties);
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
-
+    BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
-        getBuildConfiguration(jibContainerBuilder).getContainerConfiguration().getEntrypoint());
+        buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verifyZeroInteractions(mockLog);
   }
 
@@ -149,10 +152,11 @@ public class PluginConfigurationProcessorTest {
         PluginConfigurationProcessor.processCommonConfiguration(
             mockLog, mockJibPluginConfiguration, mockProjectProperties);
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
-
+    BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("java", "-jar", "/jetty/start.jar"),
-        getBuildConfiguration(jibContainerBuilder).getContainerConfiguration().getEntrypoint());
+        buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verifyZeroInteractions(mockLog);
   }
 
@@ -168,10 +172,11 @@ public class PluginConfigurationProcessorTest {
         PluginConfigurationProcessor.processCommonConfiguration(
             mockLog, mockJibPluginConfiguration, mockProjectProperties);
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
-
+    BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
-        getBuildConfiguration(jibContainerBuilder).getContainerConfiguration().getEntrypoint());
+        buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verifyZeroInteractions(mockLog);
   }
 
@@ -188,10 +193,11 @@ public class PluginConfigurationProcessorTest {
         PluginConfigurationProcessor.processCommonConfiguration(
             mockLog, mockJibPluginConfiguration, mockProjectProperties);
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
-
+    BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
-        getBuildConfiguration(jibContainerBuilder).getContainerConfiguration().getEntrypoint());
+        buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verify(mockLog)
         .warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
   }
@@ -209,10 +215,11 @@ public class PluginConfigurationProcessorTest {
         PluginConfigurationProcessor.processCommonConfiguration(
             mockLog, mockJibPluginConfiguration, mockProjectProperties);
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
-
+    BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
-        getBuildConfiguration(jibContainerBuilder).getContainerConfiguration().getEntrypoint());
+        buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verify(mockLog)
         .warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
   }
