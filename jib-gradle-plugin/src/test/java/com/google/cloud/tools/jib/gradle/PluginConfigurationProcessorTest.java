@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -61,13 +60,12 @@ public class PluginConfigurationProcessorTest {
 
   @Before
   public void setUp() {
-    Mockito.doReturn("gcr.io/distroless/java").when(mockBaseImageParameters).getImage();
+    Mockito.when(mockBaseImageParameters.getImage()).thenReturn("gcr.io/distroless/java");
     Mockito.when(mockJibExtension.getFrom()).thenReturn(mockBaseImageParameters);
     Mockito.when(mockBaseImageParameters.getAuth()).thenReturn(new AuthParameters("mock"));
     Mockito.when(mockJibExtension.getContainer()).thenReturn(mockContainerParameters);
     Mockito.when(mockContainerParameters.getEntrypoint()).thenReturn(Collections.emptyList());
     Mockito.when(mockContainerParameters.getAppRoot()).thenReturn("/app");
-    Mockito.when(mockContainerParameters.getFormat()).thenReturn(ImageFormat.Docker);
 
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations())
         .thenReturn(JavaLayerConfigurations.builder().build());
@@ -95,9 +93,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-    Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
-        .when(mockContainerParameters)
-        .getEntrypoint();
+    Mockito.when(mockContainerParameters.getEntrypoint())
+        .thenReturn(Arrays.asList("custom", "entrypoint"));
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -115,7 +112,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testUser()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-    Mockito.doReturn("customUser").when(mockContainerParameters).getUser();
+    Mockito.when(mockContainerParameters.getUser()).thenReturn("customUser");
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -143,9 +140,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_warningOnJvmFlags()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-    Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
-        .when(mockContainerParameters)
-        .getEntrypoint();
+    Mockito.when(mockContainerParameters.getEntrypoint())
+        .thenReturn(Arrays.asList("custom", "entrypoint"));
     Mockito.when(mockContainerParameters.getJvmFlags())
         .thenReturn(Collections.singletonList("jvmFlag"));
 
@@ -166,10 +162,9 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_warningOnMainclass()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-    Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
-        .when(mockContainerParameters)
-        .getEntrypoint();
-    Mockito.doReturn("java.util.Object").when(mockContainerParameters).getMainClass();
+    Mockito.when(mockContainerParameters.getEntrypoint())
+        .thenReturn(Arrays.asList("custom", "entrypoint"));
+    Mockito.when(mockContainerParameters.getMainClass()).thenReturn("java.util.Object");
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -188,7 +183,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypointClasspath_nonDefaultAppRoot()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-    Mockito.doReturn("/my/app").when(mockContainerParameters).getAppRoot();
+    Mockito.when(mockContainerParameters.getAppRoot()).thenReturn("/my/app");
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -226,7 +221,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetAppRootChecked() {
-    Mockito.doReturn("/some/root").when(mockContainerParameters).getAppRoot();
+    Mockito.when(mockContainerParameters.getAppRoot()).thenReturn("/some/root");
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/some/root"),
@@ -235,7 +230,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetAppRootChecked_errorOnNonAbsolutePath() {
-    Mockito.doReturn("relative/path").when(mockContainerParameters).getAppRoot();
+    Mockito.when(mockContainerParameters.getAppRoot()).thenReturn("relative/path");
 
     try {
       PluginConfigurationProcessor.getAppRootChecked(mockJibExtension);
@@ -248,7 +243,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetAppRootChecked_errorOnWindowsPath() {
-    Mockito.doReturn("\\windows\\path").when(mockContainerParameters).getAppRoot();
+    Mockito.when(mockContainerParameters.getAppRoot()).thenReturn("\\windows\\path");
 
     try {
       PluginConfigurationProcessor.getAppRootChecked(mockJibExtension);
@@ -261,7 +256,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetAppRootChecked_errorOnWindowsPathWithDriveLetter() {
-    Mockito.doReturn("C:\\windows\\path").when(mockContainerParameters).getAppRoot();
+    Mockito.when(mockContainerParameters.getAppRoot()).thenReturn("C:\\windows\\path");
 
     try {
       PluginConfigurationProcessor.getAppRootChecked(mockJibExtension);

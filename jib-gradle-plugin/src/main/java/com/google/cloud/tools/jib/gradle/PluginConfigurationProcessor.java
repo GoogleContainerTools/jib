@@ -141,7 +141,6 @@ class PluginConfigurationProcessor {
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getContainer().getPorts()))
             .setProgramArguments(jibExtension.getContainer().getArgs())
             .setLabels(jibExtension.getContainer().getLabels())
-            .setFormat(jibExtension.getContainer().getFormat())
             .setUser(jibExtension.getContainer().getUser());
     if (jibExtension.getContainer().getUseCurrentTimestamp()) {
       logger.warn(
