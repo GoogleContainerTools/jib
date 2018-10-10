@@ -43,6 +43,7 @@ public class ContainerParameters {
   private List<String> ports = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();
   private String appRoot = "";
+  @Nullable private String user;
 
   @Input
   @Optional
@@ -179,5 +180,19 @@ public class ContainerParameters {
 
   public void setAppRoot(String appRoot) {
     this.appRoot = appRoot;
+  }
+
+  @Input
+  @Nullable
+  @Optional
+  public String getUser() {
+    if (System.getProperty(PropertyNames.CONTAINER_USER) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_USER);
+    }
+    return user;
+  }
+
+  public void setUser(String user) {
+    this.user = user;
   }
 }

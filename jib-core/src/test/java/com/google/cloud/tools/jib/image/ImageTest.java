@@ -53,6 +53,7 @@ public class ImageTest {
             .setEntrypoint(Arrays.asList("some", "command"))
             .setProgramArguments(Arrays.asList("arg1", "arg2"))
             .setExposedPorts(ImmutableList.of(Port.tcp(1000), Port.tcp(2000)))
+            .setUser("john")
             .addLayer(mockLayer)
             .build();
 
@@ -64,5 +65,6 @@ public class ImageTest {
     Assert.assertEquals(Arrays.asList("some", "command"), image.getEntrypoint());
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), image.getProgramArguments());
     Assert.assertEquals(ImmutableList.of(Port.tcp(1000), Port.tcp(2000)), image.getExposedPorts());
+    Assert.assertEquals("john", image.getUser());
   }
 }

@@ -175,6 +175,7 @@ class BuildImageStep
       if (containerConfiguration != null) {
         imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());
         imageBuilder.setCreated(containerConfiguration.getCreationTime());
+        imageBuilder.setUser(containerConfiguration.getUser());
         imageBuilder.setEntrypoint(containerConfiguration.getEntrypoint());
         imageBuilder.setProgramArguments(containerConfiguration.getProgramArguments());
         imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());

@@ -63,6 +63,7 @@ public class ImageToJsonTranslatorTest {
         ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)));
     testImageBuilder.addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
     testImageBuilder.setWorkingDirectory("/some/workspace");
+    testImageBuilder.setUser("tomcat");
 
     DescriptorDigest fakeDigest =
         DescriptorDigest.fromDigest(

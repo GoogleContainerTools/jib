@@ -98,4 +98,10 @@ public class ContainerConfigurationTest {
     ContainerConfiguration.builder().setEnvironment(new TreeMap<>());
     ContainerConfiguration.builder().setEnvironment(new Hashtable<>());
   }
+
+  @Test
+  public void testBuilder_user() {
+    ContainerConfiguration configuration = ContainerConfiguration.builder().setUser("john").build();
+    Assert.assertEquals("john", configuration.getUser());
+  }
 }

@@ -113,8 +113,34 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+<<<<<<< HEAD
   public void testEntrypoint_warningOnJvmFlags()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
+=======
+  public void testUser() throws InvalidImageReferenceException {
+    Mockito.doReturn("customUser").when(mockContainerParameters).getUser();
+
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            mockLogger, mockJibExtension, mockProjectProperties);
+    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
+
+    Assert.assertEquals("customUser", configuration.getUser());
+  }
+
+  @Test
+  public void testUser_null() throws InvalidImageReferenceException {
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            mockLogger, mockJibExtension, mockProjectProperties);
+    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
+
+    Assert.assertNull(configuration.getUser());
+  }
+
+  @Test
+  public void testEntrypoint_warningOnJvmFlags() throws InvalidImageReferenceException {
+>>>>>>> master
     Mockito.doReturn(Arrays.asList("custom", "entrypoint"))
         .when(mockContainerParameters)
         .getEntrypoint();
