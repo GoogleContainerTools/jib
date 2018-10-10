@@ -334,17 +334,18 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets the user and group to run the container as. {@code user} can be a username or UID along with an optional groupname or GID.
+   * Sets the user and group to run the container as. {@code user} can be a username or UID along
+   * with an optional groupname or GID.
    *
-   * The following are valid formats for {@code user}
+   * <p>The following are valid formats for {@code user}
    *
    * <ul>
-   *   <li>{@code user}</li>
-   *   <li>{@code uid}</li>
-   *   <li>{@code user:group}</li>
-   *   <li>{@code uid:gid}</li>
-   *   <li>{@code uid:group}</li>
-   *   <li>{@code user:gid}</li>
+   *   <li>{@code user}
+   *   <li>{@code uid}
+   *   <li>{@code user:group}
+   *   <li>{@code uid:gid}
+   *   <li>{@code uid:group}
+   *   <li>{@code user:gid}
    * </ul>
    *
    * @param user the user to run the container as
