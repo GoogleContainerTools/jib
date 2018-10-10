@@ -44,7 +44,6 @@ import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 
-// TODO: This should replace BuildStepsRunner once jib-maven-plugin is changed to use this.
 /** Runs a {@link BuildSteps} and builds helpful error messages. */
 public class BuildStepsRunner {
 
