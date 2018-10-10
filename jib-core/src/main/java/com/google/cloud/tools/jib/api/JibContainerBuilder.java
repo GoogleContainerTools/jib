@@ -351,7 +351,7 @@ public class JibContainerBuilder {
    * @param user the user to run the container as
    * @return this
    */
-  public JibContainerBuilder setUser(String user) {
+  public JibContainerBuilder setUser(@Nullable String user) {
     this.user = user;
     return this;
   }
