@@ -112,6 +112,7 @@ public class DockerContextTaskTest {
       getUser();
       Assert.fail();
     } catch (NoSuchElementException ex) {
+      // pass
     }
   }
 
