@@ -52,6 +52,7 @@ public class JibExtensionTest {
     System.clearProperty("jib.container.mainClass");
     System.clearProperty("jib.container.ports");
     System.clearProperty("jib.container.useCurrentTimestamp");
+    System.clearProperty("jib.container.user");
   }
 
   @Before
@@ -187,6 +188,8 @@ public class JibExtensionTest {
         ImmutableList.of("port1", "port2", "port3"), testJibExtension.getContainer().getPorts());
     System.setProperty("jib.container.useCurrentTimestamp", "true");
     Assert.assertTrue(testJibExtension.getContainer().getUseCurrentTimestamp());
+    System.setProperty("jib.container.user", "myUser");
+    Assert.assertEquals("myUser", testJibExtension.getContainer().getUser());
   }
 
   @Test

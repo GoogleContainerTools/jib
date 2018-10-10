@@ -133,6 +133,7 @@ public class JavaDockerContextGenerator {
 
   @Nullable private String baseImage;
   private List<String> entrypoint = Collections.emptyList();
+  @Nullable private String user;
   private List<String> programArguments = Collections.emptyList();
   private Map<String, String> environment = Collections.emptyMap();
   private List<String> exposedPorts = Collections.emptyList();
@@ -188,6 +189,17 @@ public class JavaDockerContextGenerator {
    */
   public JavaDockerContextGenerator setEntrypoint(List<String> entrypoint) {
     this.entrypoint = entrypoint;
+    return this;
+  }
+
+  /**
+   * Sets the user for the {@code USER} directive.
+   *
+   * @param user the username/UID and optionally the groupname/GID
+   * @return this
+   */
+  public JavaDockerContextGenerator setUser(@Nullable String user) {
+    this.user = user;
     return this;
   }
 
@@ -299,6 +311,7 @@ public class JavaDockerContextGenerator {
    * LABEL [key1]="[value1]" \
    *     [key2]="[value2]" \
    *     [...]
+   * USER [user name (or UID) and optionally user group (or GID)]
    * ENTRYPOINT java [jvm flags] -cp [classpaths] [main class]
    * CMD [main class args]
    * }</pre>
@@ -331,6 +344,9 @@ public class JavaDockerContextGenerator {
         .append(objectMapper.writeValueAsString(entrypoint))
         .append("\nCMD ")
         .append(objectMapper.writeValueAsString(programArguments));
+    if (user != null) {
+      dockerfile.append("\nUSER ").append(user);
+    }
     return dockerfile.toString();
   }
 }

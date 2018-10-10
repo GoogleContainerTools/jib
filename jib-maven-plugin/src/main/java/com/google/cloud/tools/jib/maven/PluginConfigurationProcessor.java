@@ -174,7 +174,8 @@ class PluginConfigurationProcessor {
             .setProgramArguments(jibPluginConfiguration.getArgs())
             .setEnvironment(jibPluginConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(jibPluginConfiguration.getExposedPorts()))
-            .setLabels(jibPluginConfiguration.getLabels());
+            .setLabels(jibPluginConfiguration.getLabels())
+            .setUser(jibPluginConfiguration.getUser());
     if (jibPluginConfiguration.getUseCurrentTimestamp()) {
       logger.warn(
           "Setting image creation time to current time; your image may not be reproducible.");

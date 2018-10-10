@@ -41,6 +41,7 @@ public class Image<T extends Layer> {
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private ImmutableList<Port> exposedPorts;
     @Nullable private String workingDirectory;
+    @Nullable private String user;
 
     /**
      * Sets the image creation time.
@@ -86,6 +87,17 @@ public class Image<T extends Layer> {
      */
     public Builder<T> setEntrypoint(@Nullable List<String> entrypoint) {
       this.entrypoint = (entrypoint == null) ? null : ImmutableList.copyOf(entrypoint);
+      return this;
+    }
+
+    /**
+     * Sets the user/group to run the container as.
+     *
+     * @param user the username/UID and optionally the groupname/GID
+     * @return this
+     */
+    public Builder<T> setUser(@Nullable String user) {
+      this.user = user;
       return this;
     }
 
@@ -181,7 +193,8 @@ public class Image<T extends Layer> {
           programArguments,
           exposedPorts,
           labelsBuilder.build(),
-          workingDirectory);
+          workingDirectory,
+          user);
     }
   }
 
@@ -216,6 +229,9 @@ public class Image<T extends Layer> {
   /** Working directory on the container configuration */
   @Nullable private final String workingDirectory;
 
+  /** User on the container configuration */
+  @Nullable private final String user;
+
   private Image(
       @Nullable Instant created,
       ImageLayers<T> layers,
@@ -225,7 +241,8 @@ public class Image<T extends Layer> {
       @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableList<Port> exposedPorts,
       @Nullable ImmutableMap<String, String> labels,
-      @Nullable String workingDirectory) {
+      @Nullable String workingDirectory,
+      @Nullable String user) {
     this.created = created;
     this.layers = layers;
     this.history = history;
@@ -235,6 +252,7 @@ public class Image<T extends Layer> {
     this.exposedPorts = exposedPorts;
     this.labels = labels;
     this.workingDirectory = workingDirectory;
+    this.user = user;
   }
 
   @Nullable
@@ -270,6 +288,11 @@ public class Image<T extends Layer> {
   @Nullable
   public String getWorkingDirectory() {
     return workingDirectory;
+  }
+
+  @Nullable
+  public String getUser() {
+    return user;
   }
 
   public ImmutableList<T> getLayers() {
