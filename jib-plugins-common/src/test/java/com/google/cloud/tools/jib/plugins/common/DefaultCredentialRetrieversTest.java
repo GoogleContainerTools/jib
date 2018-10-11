@@ -41,7 +41,6 @@ public class DefaultCredentialRetrieversTest {
 
   @Mock private CredentialRetrieverFactory mockCredentialRetrieverFactory;
   @Mock private CredentialRetriever mockDockerCredentialHelperCredentialRetriever;
-  @Mock private CredentialRetriever mockDockerCredentialHelperCredentialRetrieverPath;
   @Mock private CredentialRetriever mockKnownCredentialRetriever;
   @Mock private CredentialRetriever mockInferredCredentialRetriever;
   @Mock private CredentialRetriever mockInferCredentialHelperCredentialRetriever;
@@ -54,8 +53,6 @@ public class DefaultCredentialRetrieversTest {
   public void setUp() {
     Mockito.when(mockCredentialRetrieverFactory.dockerCredentialHelper(Mockito.anyString()))
         .thenReturn(mockDockerCredentialHelperCredentialRetriever);
-    Mockito.when(mockCredentialRetrieverFactory.dockerCredentialHelper(Mockito.any(Path.class)))
-        .thenReturn(mockDockerCredentialHelperCredentialRetrieverPath);
     Mockito.when(mockCredentialRetrieverFactory.known(knownCredential, "credentialSource"))
         .thenReturn(mockKnownCredentialRetriever);
     Mockito.when(
@@ -110,11 +107,12 @@ public class DefaultCredentialRetrieversTest {
             .asList();
     Assert.assertEquals(
         Arrays.asList(
-            mockDockerCredentialHelperCredentialRetrieverPath,
+            mockDockerCredentialHelperCredentialRetriever,
             mockInferCredentialHelperCredentialRetriever,
             mockDockerConfigCredentialRetriever),
         credentialRetrievers);
 
-    Mockito.verify(mockCredentialRetrieverFactory).dockerCredentialHelper(fakeCredentialHelperPath);
+    Mockito.verify(mockCredentialRetrieverFactory)
+        .dockerCredentialHelper(fakeCredentialHelperPath.toString());
   }
 }
