@@ -4,39 +4,43 @@
 set -e
 
 Colorize() {
-	echo "$(tput setff $2)$1$(tput sgr0)"
+  echo "$(tput setff $2)$1$(tput sgr0)"
 }
 
 EchoRed() {
-	echo "$(tput setaf 1; tput bold)$1$(tput sgr0)"
+  echo "$(tput setaf 1; tput bold)$1$(tput sgr0)"
 }
 EchoGreen() {
-	echo "$(tput setaf 2; tput bold)$1$(tput sgr0)"
+  echo "$(tput setaf 2; tput bold)$1$(tput sgr0)"
 }
 
 Die() {
-	EchoRed "$1"
-	exit 1
+  EchoRed "$1"
+  exit 1
 }
 
 DieUsage() {
-    Die "Usage: ./scripts/prepare_release.sh <release version>"
+  Die "Usage: ./prepare_release.sh <release version> [<post-release-version>]"
 }
 
 # Usage: CheckVersion <version>
 CheckVersion() {
-    [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || Die "Version not in ###.###.### format."
+  [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+)?$ ]] || Die "Version: $1 not in ###.###.###[-XXX] format."
 }
 
-[ $# -ne 2 ] || DieUsage
+[ $# -ne 2 ] || [ $# -ne 3 ] || DieUsage
 
 EchoGreen '===== RELEASE SETUP SCRIPT ====='
 
 VERSION=$1
 CheckVersion ${VERSION}
+if [ $2 ]; then
+  POST_RELEASE_VERSION=$2
+  CheckVersion ${POST_RELEASE_VERSION}
+fi
 
 if [[ $(git status -uno --porcelain) ]]; then
-    Die 'There are uncommitted changes.'
+  Die 'There are uncommitted changes.'
 fi
 
 # Runs integration tests.
@@ -47,7 +51,7 @@ BRANCH=core_release_v${VERSION}
 git checkout -b ${BRANCH}
 
 # Changes the version for release and creates the commits/tags.
-echo | ./gradlew release -PreleaseVersion=${VERSION}
+echo | ./gradlew release -Prelease.releaseVersion=${VERSION} ${POST_RELEASE_VERSION:+"-Prelease.newVersion=${POST_RELEASE_VERSION}"}
 
 # Pushes the release branch and tag to Github.
 git push origin ${BRANCH}
