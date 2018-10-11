@@ -77,9 +77,13 @@ class GradleLayerConfigurations {
         project.getConvention().getPlugin(JavaPluginConvention.class);
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
 
-    FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
     FileCollection classesDirectories = mainSourceSet.getOutput().getClassesDirs();
     Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
+    FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
+    FileCollection dependencyFiles =
+        allFiles
+            .minus(classesDirectories)
+            .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
 
     // Adds class files.
     logger.info("Adding corresponding output directories of source sets to image");
@@ -99,6 +103,7 @@ class GradleLayerConfigurations {
       logger.warn("No classes files were found - did you compile your project?");
     }
 
+    // Adds resource files.
     if (Files.exists(resourcesOutputDirectory)) {
       layerBuilder.addDirectoryContents(
           JavaLayerConfigurations.LayerType.RESOURCES,
@@ -108,27 +113,18 @@ class GradleLayerConfigurations {
     }
 
     // Adds dependency files.
-    FileCollection dependencyFiles =
-        allFiles
-            .minus(classesDirectories)
-            .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
     for (File dependencyFile : dependencyFiles) {
-      AbsoluteUnixPath pathInContainer =
+      JavaLayerConfigurations.LayerType layerType =
+          dependencyFile.getName().contains("SNAPSHOT")
+              ? JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES
+              : JavaLayerConfigurations.LayerType.DEPENDENCIES;
+
+      layerBuilder.addFile(
+          layerType,
+          dependencyFile.toPath(),
           appRoot
               .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE)
-              .resolve(dependencyFile.getName());
-
-      if (dependencyFile.getName().contains("SNAPSHOT")) {
-        layerBuilder.addFile(
-            JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES,
-            dependencyFile.toPath(),
-            pathInContainer);
-      } else {
-        layerBuilder.addFile(
-            JavaLayerConfigurations.LayerType.DEPENDENCIES,
-            dependencyFile.toPath(),
-            pathInContainer);
-      }
+              .resolve(dependencyFile.getName()));
     }
 
     // Adds all the extra files.

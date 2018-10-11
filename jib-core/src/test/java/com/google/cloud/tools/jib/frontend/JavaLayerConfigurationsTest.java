@@ -270,7 +270,7 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testAddFilesRoot_file() throws IOException {
+  public void testAddDirectoryContents_file() throws IOException {
     temporaryFolder.newFile("file");
 
     Path sourceRoot = temporaryFolder.getRoot().toPath();
@@ -287,7 +287,7 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testAddFilesRoot_emptyDirectory() throws IOException {
+  public void testAddDirectoryContents_emptyDirectory() throws IOException {
     temporaryFolder.newFolder("leaf");
 
     Path sourceRoot = temporaryFolder.getRoot().toPath();
@@ -304,7 +304,7 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testAddFilesRoot_directoriesAdded() throws IOException {
+  public void testAddDirectoryContents_directoriesAdded() throws IOException {
     temporaryFolder.newFolder("non-empty", "leaf");
 
     Path sourceRoot = temporaryFolder.getRoot().toPath();
@@ -324,7 +324,7 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testAddFilesRoot_filter() throws IOException {
+  public void testAddDirectoryContents_filter() throws IOException {
     temporaryFolder.newFile("non-target");
     temporaryFolder.newFolder("sub");
     temporaryFolder.newFile("sub/target");
@@ -346,7 +346,7 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testAddFilesRoot_directoriesForced() throws IOException {
+  public void testAddDirectoryContents_directoriesForced() throws IOException {
     temporaryFolder.newFolder("sub", "leaf");
 
     Path sourceRoot = temporaryFolder.getRoot().toPath();
@@ -365,7 +365,7 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testAddFilesRoot_fileAsSource() throws IOException {
+  public void testAddDirectoryContents_fileAsSourceRoot() throws IOException {
     Path sourceFile = temporaryFolder.newFile("foo").toPath();
 
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
@@ -373,7 +373,6 @@ public class JavaLayerConfigurationsTest {
     try {
       builder.addDirectoryContents(
           JavaLayerConfigurations.LayerType.DEPENDENCIES, sourceFile, path -> true, basePath);
-
       Assert.fail();
     } catch (NotDirectoryException ex) {
       Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("foo is not a directory"));
@@ -381,7 +380,7 @@ public class JavaLayerConfigurationsTest {
   }
 
   @Test
-  public void testAddFilesRoot_complex() throws IOException {
+  public void testAddDirectoryContents_complex() throws IOException {
     temporaryFolder.newFile("A.class");
     temporaryFolder.newFile("B.java");
     temporaryFolder.newFolder("example", "dir");

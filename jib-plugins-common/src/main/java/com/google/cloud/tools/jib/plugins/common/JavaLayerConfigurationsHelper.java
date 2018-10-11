@@ -81,4 +81,6 @@ public class JavaLayerConfigurationsHelper {
 
     return layerBuilder.build();
   }
+
+  private JavaLayerConfigurationsHelper() {}
 }

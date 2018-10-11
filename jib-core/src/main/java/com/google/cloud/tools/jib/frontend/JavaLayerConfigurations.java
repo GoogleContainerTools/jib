@@ -92,9 +92,9 @@ public class JavaLayerConfigurations {
     }
 
     /**
-     * Adds files to a layer selectively and recursively. {@code sourceRoot} must be a directory.
-     * Empty directories will always be added regardless of {@code pathFilter}, except that {@code
-     * sourceRoot} is never added.
+     * Adds directory contents to a layer selectively and recursively. {@code sourceRoot} must be a
+     * directory. Empty directories will always be added regardless of {@code pathFilter}, except
+     * that {@code sourceRoot} is never added.
      *
      * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
      * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,

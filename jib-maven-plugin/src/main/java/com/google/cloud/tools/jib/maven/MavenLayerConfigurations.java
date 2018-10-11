@@ -74,17 +74,12 @@ class MavenLayerConfigurations {
     // Gets all the dependencies.
     for (Artifact artifact : project.getArtifacts()) {
       Path artifactPath = artifact.getFile().toPath();
-      if (artifact.isSnapshot()) {
-        layerBuilder.addFile(
-            JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES,
-            artifactPath,
-            dependenciesExtractionPath.resolve(artifactPath.getFileName()));
-      } else {
-        layerBuilder.addFile(
-            JavaLayerConfigurations.LayerType.DEPENDENCIES,
-            artifactPath,
-            dependenciesExtractionPath.resolve(artifactPath.getFileName()));
-      }
+      JavaLayerConfigurations.LayerType layerType =
+          artifact.isSnapshot()
+              ? JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES
+              : JavaLayerConfigurations.LayerType.DEPENDENCIES;
+      layerBuilder.addFile(
+          layerType, artifactPath, dependenciesExtractionPath.resolve(artifactPath.getFileName()));
     }
 
     Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
