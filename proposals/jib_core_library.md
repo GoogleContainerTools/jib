@@ -28,6 +28,7 @@ Design for Jib Core as a Java library for building container images.
 - `JibContainerBuilder addLabel(String key, String value)`
 - `JibContainerBuilder setFormat(ImageFormat)`
 - `JibContainerBuilder setCreationTime(Instant creationTime)`
+- `JibContainerBuilder setUser(String user)`
 - `JibContainer containerize(Containerizer)`
 
 Three `TargetImage` types (`RegistryImage`, `DockerDaemonImage`, and `TarImage`) define the 3 different targets Jib can build to.

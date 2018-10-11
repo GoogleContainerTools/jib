@@ -3,40 +3,36 @@
 
 set -e
 
-Colorize() {
-	echo "$(tput setff $2)$1$(tput sgr0)"
-}
-
 EchoRed() {
-	echo "$(tput setaf 1; tput bold)$1$(tput sgr0)"
+  echo "$(tput setaf 1; tput bold)$1$(tput sgr0)"
 }
 EchoGreen() {
-	echo "$(tput setaf 2; tput bold)$1$(tput sgr0)"
+  echo "$(tput setaf 2; tput bold)$1$(tput sgr0)"
 }
 
 Die() {
-	EchoRed "$1"
-	exit 1
+  EchoRed "$1"
+  exit 1
 }
 
 DieUsage() {
-    Die "Usage: ./scripts/prepare_release.sh <release version>"
+  Die "Usage: ./scripts/prepare_release.sh <release version> [<post-release-version>]"
 }
 
 # Usage: CheckVersion <version>
 CheckVersion() {
-    [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || Die "Version not in ###.###.### format."
+  [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+)?$ ]] || Die "Version: $1 not in ###.###.###[-XXX] format."
 }
 
 # Usage: IncrementVersion <version>
 IncrementVersion() {
-    local version=$1
-    local minorVersion=$(echo $version | sed 's/[0-9][0-9]*\.[0-9][0-9]*\.\([0-9][0-9]\)*/\1/')
-    local nextMinorVersion=$((minorVersion+1))
-    echo $version | sed "s/\([0-9][0-9]*\.[0-9][0-9]*\)\.[0-9][0-9]*/\1.$nextMinorVersion/"
+  local version=$1
+  local minorVersion=$(echo $version | sed 's/[0-9][0-9]*\.[0-9][0-9]*\.\([0-9][0-9]\)*/\1/')
+  local nextMinorVersion=$((minorVersion+1))
+  echo $version | sed "s/\([0-9][0-9]*\.[0-9][0-9]*\)\.[0-9][0-9]*/\1.$nextMinorVersion/"
 }
 
-[ $# -ne 2 ] || DieUsage
+[ $# -ne 1 ] && [ $# -ne 2 ] && DieUsage
 
 EchoGreen '===== RELEASE SETUP SCRIPT ====='
 
@@ -47,7 +43,7 @@ NEXT_VERSION=$(IncrementVersion $VERSION)
 CheckVersion ${NEXT_VERSION}
 
 if [[ $(git status -uno --porcelain) ]]; then
-    Die 'There are uncommitted changes.'
+  Die 'There are uncommitted changes.'
 fi
 
 # Runs integration tests.

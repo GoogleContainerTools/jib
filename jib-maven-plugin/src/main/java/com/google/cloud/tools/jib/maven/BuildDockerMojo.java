@@ -90,7 +90,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       JibContainerBuilder jibContainerBuilder =
           pluginConfigurationProcessor.getJibContainerBuilder();
       Containerizer containerizer = Containerizer.to(targetImage);
-      getTargetImageAdditionalTags().forEach(containerizer::withAdditionalTag);
+      PluginConfigurationProcessor.configureContainerizer(
+          containerizer, this, mavenProjectProperties);
 
       HelpfulSuggestions helpfulSuggestions =
           mavenHelpfulSuggestionsBuilder

@@ -34,12 +34,12 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
@@ -183,32 +183,61 @@ class PluginConfigurationProcessor {
             .setEnvironment(jibPluginConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(jibPluginConfiguration.getExposedPorts()))
             .setProgramArguments(jibPluginConfiguration.getArgs())
-            .setLabels(jibPluginConfiguration.getLabels());
+            .setLabels(jibPluginConfiguration.getLabels())
+            .setUser(jibPluginConfiguration.getUser());
     if (jibPluginConfiguration.getUseCurrentTimestamp()) {
       logger.warn(
           "Setting image creation time to current time; your image may not be reproducible.");
       jibContainerBuilder.setCreationTime(Instant.now());
     }
 
-    Consumer<Containerizer> containerizerConsumer =
-        containerizer -> {
-          containerizer
-              .setToolName(MavenProjectProperties.TOOL_NAME)
-              .setEventHandlers(projectProperties.getEventHandlers())
-              .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
-              .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
-              .setApplicationLayersCache(projectProperties.getCacheDirectory());
-          if (jibPluginConfiguration.getUseOnlyProjectCache()) {
-            containerizer.setBaseImageLayersCache(projectProperties.getCacheDirectory());
-          }
-        };
+    BuildConfiguration.Builder buildConfigurationBuilder =
+        BuildConfiguration.builder()
+            .setToolName(MavenProjectProperties.TOOL_NAME)
+            .setEventDispatcher(eventDispatcher)
+            .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
+            .setLayerConfigurations(
+                projectProperties.getJavaLayerConfigurations().getLayerConfigurations());
+    buildConfigurationBuilder.setApplicationLayersCacheDirectory(
+        projectProperties.getCacheDirectory());
+    buildConfigurationBuilder.setBaseImageLayersCacheDirectory(
+        Containerizer.DEFAULT_BASE_CACHE_DIRECTORY);
+    if (jibPluginConfiguration.getUseOnlyProjectCache()) {
+      buildConfigurationBuilder.setBaseImageLayersCacheDirectory(
+          projectProperties.getCacheDirectory());
+    }
 
     return new PluginConfigurationProcessor(
         jibContainerBuilder,
-        containerizerConsumer,
         baseImageReference,
         mavenSettingsServerCredentials,
         optionalFromCredential.isPresent());
+  }
+
+  /**
+   * Configures a {@link Containerizer} with values pulled from project properties/build
+   * configuration.
+   *
+   * @param containerizer the {@link Containerizer} to configure
+   * @param jibPluginConfiguration the build configuration
+   * @param projectProperties the project properties
+   */
+  static void configureContainerizer(
+      Containerizer containerizer,
+      JibPluginConfiguration jibPluginConfiguration,
+      ProjectProperties projectProperties) {
+    containerizer
+        .setToolName(MavenProjectProperties.TOOL_NAME)
+        .setEventHandlers(projectProperties.getEventHandlers())
+        .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
+        .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
+        .setApplicationLayersCache(projectProperties.getCacheDirectory());
+
+    jibPluginConfiguration.getTargetImageAdditionalTags().forEach(containerizer::withAdditionalTag);
+
+    if (jibPluginConfiguration.getUseOnlyProjectCache()) {
+      containerizer.setBaseImageLayersCache(projectProperties.getCacheDirectory());
+    }
   }
 
   /**
@@ -264,7 +293,6 @@ class PluginConfigurationProcessor {
   }
 
   private final JibContainerBuilder jibContainerBuilder;
-  private final Consumer<Containerizer> containerizerConsumer;
   private final ImageReference baseImageReference;
 
   private final MavenSettingsServerCredentials mavenSettingsServerCredentials;
@@ -272,12 +300,10 @@ class PluginConfigurationProcessor {
 
   private PluginConfigurationProcessor(
       JibContainerBuilder jibContainerBuilder,
-      Consumer<Containerizer> containerizerConsumer,
       ImageReference baseImageReference,
       MavenSettingsServerCredentials mavenSettingsServerCredentials,
       boolean isBaseImageCredentialPresent) {
     this.jibContainerBuilder = jibContainerBuilder;
-    this.containerizerConsumer = containerizerConsumer;
     this.baseImageReference = baseImageReference;
     this.mavenSettingsServerCredentials = mavenSettingsServerCredentials;
     this.isBaseImageCredentialPresent = isBaseImageCredentialPresent;
@@ -285,10 +311,6 @@ class PluginConfigurationProcessor {
 
   JibContainerBuilder getJibContainerBuilder() {
     return jibContainerBuilder;
-  }
-
-  void configureContainerizer(Containerizer containerizer) {
-    containerizerConsumer.accept(containerizer);
   }
 
   ImageReference getBaseImageReference() {

@@ -61,6 +61,7 @@ public class ContainerConfigurationTemplateTest {
             ImmutableMap.of()));
     containerConfigJson.setContainerLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
     containerConfigJson.setContainerWorkingDir("/some/workspace");
+    containerConfigJson.setContainerUser("tomcat");
 
     containerConfigJson.addLayerDiffId(
         DescriptorDigest.fromDigest(

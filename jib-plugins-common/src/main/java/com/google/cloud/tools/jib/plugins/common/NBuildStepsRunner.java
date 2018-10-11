@@ -172,11 +172,12 @@ public class NBuildStepsRunner {
    * @param eventDispatcher the {@link EventDispatcher}
    * @param layerConfigurations the list of {@link LayerConfiguration}s
    * @param helpfulSuggestions suggestions to use in help messages for exceptions
+   * @return the built {@link JibContainer}
    * @throws BuildStepsExecutionException if another exception is thrown during the build
    * @throws IOException if an I/O exception occurs
    * @throws CacheDirectoryCreationException if the cache directory could not be created
    */
-  public void build(
+  public JibContainer build(
       JibContainerBuilder jibContainerBuilder,
       Containerizer containerizer,
       EventDispatcher eventDispatcher,
@@ -208,6 +209,8 @@ public class NBuildStepsRunner {
 
       eventDispatcher.dispatch(LogEvent.lifecycle(""));
       eventDispatcher.dispatch(LogEvent.lifecycle(successMessage));
+
+      return jibContainer;
 
     } catch (ExecutionException executionException) {
       Throwable exceptionDuringBuildSteps = executionException.getCause();
@@ -261,5 +264,7 @@ public class NBuildStepsRunner {
       // TODO: Add more suggestions for various build failures.
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
     }
+
+    throw new IllegalStateException("unreachable");
   }
 }

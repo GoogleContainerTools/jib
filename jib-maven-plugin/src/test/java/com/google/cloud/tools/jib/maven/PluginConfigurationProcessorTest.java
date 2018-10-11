@@ -244,6 +244,36 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testUser()
+      throws MojoExecutionException, IOException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
+    Mockito.when(mockJibPluginConfiguration.getUser()).thenReturn("customUser");
+
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            mockLog, mockJibPluginConfiguration, mockProjectProperties);
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processor.getJibContainerBuilder());
+
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertEquals("customUser", buildConfiguration.getContainerConfiguration().getUser());
+  }
+
+  @Test
+  public void testUser_null()
+      throws MojoExecutionException, IOException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
+            mockLog, mockJibPluginConfiguration, mockProjectProperties);
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processor.getJibContainerBuilder());
+
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertNull(buildConfiguration.getContainerConfiguration().getUser());
+  }
+
+  @Test
   public void testGetAppRootChecked() throws MojoExecutionException {
     Mockito.when(mockJibPluginConfiguration.getAppRoot()).thenReturn("/some/root");
 

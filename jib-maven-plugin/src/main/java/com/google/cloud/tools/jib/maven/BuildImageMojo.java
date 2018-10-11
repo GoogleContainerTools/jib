@@ -130,10 +130,12 @@ public class BuildImageMojo extends JibPluginConfiguration {
       JibContainerBuilder jibContainerBuilder =
           pluginConfigurationProcessor
               .getJibContainerBuilder()
+              // Only uses possibly non-Docker formats for build to registry.
               .setFormat(ImageFormat.valueOf(getFormat()));
+
       Containerizer containerizer = Containerizer.to(targetImage);
-      pluginConfigurationProcessor.configureContainerizer(containerizer);
-      getTargetImageAdditionalTags().forEach(containerizer::withAdditionalTag);
+      PluginConfigurationProcessor.configureContainerizer(
+          containerizer, this, mavenProjectProperties);
 
       HelpfulSuggestions helpfulSuggestions =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this)

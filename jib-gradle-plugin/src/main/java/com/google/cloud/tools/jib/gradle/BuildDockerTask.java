@@ -108,8 +108,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     JibContainerBuilder jibContainerBuilder = pluginConfigurationProcessor.getJibContainerBuilder();
 
     Containerizer containerizer = Containerizer.to(targetImage);
-    pluginConfigurationProcessor.configureContainerizer(containerizer);
-    jibExtension.getTo().getTags().forEach(containerizer::withAdditionalTag);
+    PluginConfigurationProcessor.configureContainerizer(
+        containerizer, jibExtension, gradleProjectProperties);
 
     HelpfulSuggestions helpfulSuggestions =
         gradleHelpfulSuggestionsBuilder

@@ -118,11 +118,15 @@ public class BuildImageTask extends DefaultTask implements JibTask {
         PluginConfigurationProcessor.processCommonConfiguration(
             getLogger(), jibExtension, gradleProjectProperties);
 
-    JibContainerBuilder jibContainerBuilder = pluginConfigurationProcessor.getJibContainerBuilder();
+    JibContainerBuilder jibContainerBuilder =
+        pluginConfigurationProcessor
+            .getJibContainerBuilder()
+            // Only uses possibly non-Docker formats for build to registry.
+            .setFormat(jibExtension.getContainer().getFormat());
 
     Containerizer containerizer = Containerizer.to(targetImage);
-    pluginConfigurationProcessor.configureContainerizer(containerizer);
-    jibExtension.getTo().getTags().forEach(containerizer::withAdditionalTag);
+    PluginConfigurationProcessor.configureContainerizer(
+        containerizer, jibExtension, gradleProjectProperties);
 
     HelpfulSuggestions helpfulSuggestions =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension)

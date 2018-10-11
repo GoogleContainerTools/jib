@@ -88,7 +88,8 @@ public class BuildTarMojo extends JibPluginConfiguration {
       JibContainerBuilder jibContainerBuilder =
           pluginConfigurationProcessor.getJibContainerBuilder();
       Containerizer containerizer = Containerizer.to(targetImage);
-      pluginConfigurationProcessor.configureContainerizer(containerizer);
+      PluginConfigurationProcessor.configureContainerizer(
+          containerizer, this, mavenProjectProperties);
 
       HelpfulSuggestions helpfulSuggestions =
           mavenHelpfulSuggestionsBuilder

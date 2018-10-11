@@ -34,12 +34,12 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.logging.Level;
 import org.gradle.api.GradleException;
 import org.gradle.api.logging.Logger;
@@ -141,32 +141,31 @@ class PluginConfigurationProcessor {
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getContainer().getPorts()))
             .setProgramArguments(jibExtension.getContainer().getArgs())
             .setLabels(jibExtension.getContainer().getLabels())
-            .setFormat(jibExtension.getContainer().getFormat());
+            .setUser(jibExtension.getContainer().getUser());
     if (jibExtension.getContainer().getUseCurrentTimestamp()) {
       logger.warn(
           "Setting image creation time to current time; your image may not be reproducible.");
       jibContainerBuilder.setCreationTime(Instant.now());
     }
 
-    Consumer<Containerizer> containerizerConsumer =
-        containerizer -> {
-          containerizer
-              .setToolName(GradleProjectProperties.TOOL_NAME)
-              .setEventHandlers(projectProperties.getEventHandlers())
-              .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
-              .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
-              .setApplicationLayersCache(projectProperties.getCacheDirectory());
-
-          if (jibExtension.getUseOnlyProjectCache()) {
-            containerizer.setBaseImageLayersCache(projectProperties.getCacheDirectory());
-          }
-        };
-
     return new PluginConfigurationProcessor(
-        jibContainerBuilder,
-        containerizerConsumer,
-        baseImageReference,
-        optionalFromCredential.isPresent());
+        jibContainerBuilder, baseImageReference, optionalFromCredential.isPresent());
+  }
+
+  static void configureContainerizer(
+      Containerizer containerizer, JibExtension jibExtension, ProjectProperties projectProperties) {
+    containerizer
+        .setToolName(GradleProjectProperties.TOOL_NAME)
+        .setEventHandlers(projectProperties.getEventHandlers())
+        .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
+        .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
+        .setApplicationLayersCache(projectProperties.getCacheDirectory());
+
+    jibExtension.getTo().getTags().forEach(containerizer::withAdditionalTag);
+
+    if (jibExtension.getUseOnlyProjectCache()) {
+      containerizer.setBaseImageLayersCache(projectProperties.getCacheDirectory());
+    }
   }
 
   /**
@@ -203,27 +202,20 @@ class PluginConfigurationProcessor {
   }
 
   private final JibContainerBuilder jibContainerBuilder;
-  private final Consumer<Containerizer> containerizerConsumer;
   private final ImageReference baseImageReference;
   private final boolean isBaseImageCredentialPresent;
 
   private PluginConfigurationProcessor(
       JibContainerBuilder jibContainerBuilder,
-      Consumer<Containerizer> containerizerConsumer,
       ImageReference baseImageReference,
       boolean isBaseImageCredentialPresent) {
     this.jibContainerBuilder = jibContainerBuilder;
-    this.containerizerConsumer = containerizerConsumer;
     this.baseImageReference = baseImageReference;
     this.isBaseImageCredentialPresent = isBaseImageCredentialPresent;
   }
 
   JibContainerBuilder getJibContainerBuilder() {
     return jibContainerBuilder;
-  }
-
-  void configureContainerizer(Containerizer containerizer) {
-    containerizerConsumer.accept(containerizer);
   }
 
   ImageReference getBaseImageReference() {

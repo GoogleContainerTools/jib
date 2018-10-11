@@ -134,7 +134,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     JibContainerBuilder jibContainerBuilder = pluginConfigurationProcessor.getJibContainerBuilder();
 
     Containerizer containerizer = Containerizer.to(targetImage);
-    pluginConfigurationProcessor.configureContainerizer(containerizer);
+    PluginConfigurationProcessor.configureContainerizer(
+        containerizer, jibExtension, gradleProjectProperties);
 
     HelpfulSuggestions helpfulSuggestions =
         gradleHelpfulSuggestionsBuilder
