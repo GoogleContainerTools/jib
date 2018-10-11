@@ -13,7 +13,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -24,6 +26,24 @@ import org.junit.rules.TemporaryFolder;
 public class JavaLayerConfigurationsTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  private static <T> void assertLayerEntriesUnordered(
+      List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
+    List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
+    List<T> actual = entries.stream().map(fieldSelector).sorted().collect(Collectors.toList());
+    Assert.assertEquals(expected, actual);
+  }
+
+  private static void assertSourcePathsUnordered(
+      List<Path> expectedPaths, List<LayerEntry> entries) {
+    assertLayerEntriesUnordered(expectedPaths, entries, LayerEntry::getSourceFile);
+  }
+
+  private static void assertExtractionPathsUnordered(
+      List<String> expectedPaths, List<LayerEntry> entries) {
+    assertLayerEntriesUnordered(
+        expectedPaths, entries, LayerEntry::getAbsoluteExtractionPathString);
+  }
 
   private static JavaLayerConfigurations createFakeConfigurations() {
     return JavaLayerConfigurations.builder()
@@ -259,11 +279,11 @@ public class JavaLayerConfigurationsTest {
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
             .addFilesRoot(
-                JavaLayerConfigurations.LayerType.CLASSES, sourceRoot, path -> true, basePath)
+                JavaLayerConfigurations.LayerType.EXTRA_FILES, sourceRoot, path -> true, basePath)
             .build();
     Assert.assertEquals(
         Arrays.asList(new LayerEntry(sourceRoot.resolve("file"), basePath.resolve("file"))),
-        configurations.getClassLayerEntries());
+        configurations.getExtraFilesLayerEntries());
   }
 
   @Test
@@ -293,14 +313,14 @@ public class JavaLayerConfigurationsTest {
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
             .addFilesRoot(
-                JavaLayerConfigurations.LayerType.CLASSES, sourceRoot, path -> true, basePath)
+                JavaLayerConfigurations.LayerType.RESOURCES, sourceRoot, path -> true, basePath)
             .build();
     Assert.assertEquals(
         Arrays.asList(
             new LayerEntry(sourceRoot.resolve("non-empty"), basePath.resolve("non-empty")),
             new LayerEntry(
                 sourceRoot.resolve("non-empty/leaf"), basePath.resolve("non-empty/leaf"))),
-        configurations.getClassLayerEntries());
+        configurations.getResourceLayerEntries());
   }
 
   @Test
@@ -316,13 +336,13 @@ public class JavaLayerConfigurationsTest {
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
             .addFilesRoot(
-                JavaLayerConfigurations.LayerType.CLASSES, sourceRoot, nameIsTarget, basePath)
+                JavaLayerConfigurations.LayerType.DEPENDENCIES, sourceRoot, nameIsTarget, basePath)
             .build();
     Assert.assertEquals(
         Arrays.asList(
             new LayerEntry(sourceRoot.resolve("sub"), basePath.resolve("sub")),
             new LayerEntry(sourceRoot.resolve("sub/target"), basePath.resolve("sub/target"))),
-        configurations.getClassLayerEntries());
+        configurations.getDependencyLayerEntries());
   }
 
   @Test
@@ -335,13 +355,13 @@ public class JavaLayerConfigurationsTest {
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
             .addFilesRoot(
-                JavaLayerConfigurations.LayerType.CLASSES, sourceRoot, path -> false, basePath)
+                JavaLayerConfigurations.LayerType.EXTRA_FILES, sourceRoot, path -> false, basePath)
             .build();
     Assert.assertEquals(
         Arrays.asList(
             new LayerEntry(sourceRoot.resolve("sub"), basePath.resolve("sub")),
             new LayerEntry(sourceRoot.resolve("sub/leaf"), basePath.resolve("sub/leaf"))),
-        configurations.getClassLayerEntries());
+        configurations.getExtraFilesLayerEntries());
   }
 
   @Test
@@ -349,10 +369,10 @@ public class JavaLayerConfigurationsTest {
     Path sourceFile = temporaryFolder.newFile("foo").toPath();
 
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
+    JavaLayerConfigurations.Builder builder = JavaLayerConfigurations.builder();
     try {
-      JavaLayerConfigurations.builder()
-          .addFilesRoot(
-              JavaLayerConfigurations.LayerType.CLASSES, sourceFile, path -> true, basePath);
+      builder.addFilesRoot(
+          JavaLayerConfigurations.LayerType.DEPENDENCIES, sourceFile, path -> true, basePath);
 
       Assert.fail();
     } catch (NotDirectoryException ex) {
@@ -379,34 +399,32 @@ public class JavaLayerConfigurationsTest {
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
             .addFilesRoot(
-                JavaLayerConfigurations.LayerType.CLASSES, sourceRoot, isClassFile, basePath)
+                JavaLayerConfigurations.LayerType.EXTRA_FILES, sourceRoot, isClassFile, basePath)
             .build();
-    Assert.assertEquals(
-        Arrays.asList(new LayerEntry(sourceRoot.resolve("file"), basePath.resolve("file"))),
-        configurations.getClassLayerEntries());
 
-    //    Mockito.verify(layerBuilder)
-    //        .addEntry(sourceRoot.resolve("A.class"), basePath.resolve("A.class"));
-    //    Mockito.verify(layerBuilder)
-    //        .addEntry(sourceRoot.resolve("example"), basePath.resolve("example"));
-    //    Mockito.verify(layerBuilder)
-    //        .addEntry(sourceRoot.resolve("example/dir"), basePath.resolve("example/dir"));
-    //    Mockito.verify(layerBuilder)
-    //        .addEntry(
-    //            sourceRoot.resolve("example/dir/C.class"),
-    // basePath.resolve("example/dir/C.class"));
-    //    Mockito.verify(layerBuilder)
-    //        .addEntry(sourceRoot.resolve("example/C.class"), basePath.resolve("example/C.class"));
-    //    Mockito.verify(layerBuilder).addEntry(sourceRoot.resolve("test"),
-    // basePath.resolve("test"));
-    //    Mockito.verify(layerBuilder)
-    //        .addEntry(sourceRoot.resolve("test/resources"), basePath.resolve("test/resources"));
-    //    Mockito.verify(layerBuilder)
-    //        .addEntry(
-    //            sourceRoot.resolve("test/resources/leaf"),
-    // basePath.resolve("test/resources/leaf"));
-    //    Mockito.verify(layerBuilder)
-    //        .addEntry(sourceRoot.resolve("test/D.class"), basePath.resolve("test/D.class"));
-    //    Mockito.verifyNoMoreInteractions(layerBuilder);
+    assertSourcePathsUnordered(
+        Arrays.asList(
+            sourceRoot.resolve("A.class"),
+            sourceRoot.resolve("example"),
+            sourceRoot.resolve("example/dir"),
+            sourceRoot.resolve("example/dir/C.class"),
+            sourceRoot.resolve("example/C.class"),
+            sourceRoot.resolve("test"),
+            sourceRoot.resolve("test/resources"),
+            sourceRoot.resolve("test/resources/leaf"),
+            sourceRoot.resolve("test/D.class")),
+        configurations.getExtraFilesLayerEntries());
+    assertExtractionPathsUnordered(
+        Arrays.asList(
+            "/base/A.class",
+            "/base/example",
+            "/base/example/dir",
+            "/base/example/dir/C.class",
+            "/base/example/C.class",
+            "/base/test",
+            "/base/test/resources",
+            "/base/test/resources/leaf",
+            "/base/test/D.class"),
+        configurations.getExtraFilesLayerEntries());
   }
 }

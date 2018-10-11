@@ -75,11 +75,15 @@ class MavenLayerConfigurations {
     for (Artifact artifact : project.getArtifacts()) {
       Path artifactPath = artifact.getFile().toPath();
       if (artifact.isSnapshot()) {
-        layerBuilder.addSnapshotDependencyFile(
-            artifactPath, dependenciesExtractionPath.resolve(artifactPath.getFileName()));
+        layerBuilder.addFile(
+            JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES,
+            artifactPath,
+            dependenciesExtractionPath.resolve(artifactPath.getFileName()));
       } else {
-        layerBuilder.addDependencyFile(
-            artifactPath, dependenciesExtractionPath.resolve(artifactPath.getFileName()));
+        layerBuilder.addFile(
+            JavaLayerConfigurations.LayerType.DEPENDENCIES,
+            artifactPath,
+            dependenciesExtractionPath.resolve(artifactPath.getFileName()));
       }
     }
 
@@ -87,15 +91,26 @@ class MavenLayerConfigurations {
 
     // Gets the classes files in the 'classes' output directory.
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-    layerBuilder.addClassesRoot(classesOutputDirectory, isClassFile, classesExtractionPath);
+    layerBuilder.addFilesRoot(
+        JavaLayerConfigurations.LayerType.CLASSES,
+        classesOutputDirectory,
+        isClassFile,
+        classesExtractionPath);
 
     // Gets the resources files in the 'classes' output directory.
-    layerBuilder.addResourcesRoot(
-        classesOutputDirectory, isClassFile.negate(), resourcesExtractionPath);
+    layerBuilder.addFilesRoot(
+        JavaLayerConfigurations.LayerType.RESOURCES,
+        classesOutputDirectory,
+        isClassFile.negate(),
+        resourcesExtractionPath);
 
     // Adds all the extra files.
     if (Files.exists(extraDirectory)) {
-      layerBuilder.addExtraFilesRoot(extraDirectory, path -> true, AbsoluteUnixPath.get("/"));
+      layerBuilder.addFilesRoot(
+          JavaLayerConfigurations.LayerType.EXTRA_FILES,
+          extraDirectory,
+          path -> true,
+          AbsoluteUnixPath.get("/"));
     }
 
     return layerBuilder.build();

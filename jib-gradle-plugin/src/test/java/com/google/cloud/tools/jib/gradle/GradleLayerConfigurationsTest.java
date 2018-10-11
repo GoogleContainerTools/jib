@@ -164,13 +164,11 @@ public class GradleLayerConfigurationsTest {
             applicationDirectory.resolve("dependencies/dependencyX-1.0.0-SNAPSHOT.jar"));
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
-            applicationDirectory.resolve("resources"),
             applicationDirectory.resolve("resources/resourceA"),
             applicationDirectory.resolve("resources/resourceB"),
             applicationDirectory.resolve("resources/world"));
     ImmutableList<Path> expectedClassesFiles =
         ImmutableList.of(
-            applicationDirectory.resolve("classes"),
             applicationDirectory.resolve("classes/HelloWorld.class"),
             applicationDirectory.resolve("classes/some.class"));
     ImmutableList<Path> expectedExtraFiles = ImmutableList.of();
@@ -244,14 +242,12 @@ public class GradleLayerConfigurationsTest {
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
-            "/my/app/resources",
             "/my/app/resources/resourceA",
             "/my/app/resources/resourceB",
             "/my/app/resources/world"),
         configuration.getResourceLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/my/app/classes", "/my/app/classes/HelloWorld.class", "/my/app/classes/some.class"),
+        Arrays.asList("/my/app/classes/HelloWorld.class", "/my/app/classes/some.class"),
         configuration.getClassLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
@@ -276,13 +272,10 @@ public class GradleLayerConfigurationsTest {
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
-            "/app/resources",
-            "/app/resources/resourceA",
-            "/app/resources/resourceB",
-            "/app/resources/world"),
+            "/app/resources/resourceA", "/app/resources/resourceB", "/app/resources/world"),
         configuration.getResourceLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/app/classes", "/app/classes/HelloWorld.class", "/app/classes/some.class"),
+        Arrays.asList("/app/classes/HelloWorld.class", "/app/classes/some.class"),
         configuration.getClassLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),

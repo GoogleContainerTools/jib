@@ -43,7 +43,7 @@ public class JavaLayerConfigurationsHelper {
           isSnapshot.negate(),
           appRoot.resolve("WEB-INF/lib"));
       layerBuilder.addFilesRoot(
-          JavaLayerConfigurations.LayerType.DEPENDENCIES,
+          JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES,
           webInfLib,
           isSnapshot,
           appRoot.resolve("WEB-INF/lib"));
