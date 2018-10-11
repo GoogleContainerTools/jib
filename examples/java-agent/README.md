@@ -1,7 +1,5 @@
 This SparkJava-based example builds a container image that includes the [Stackdriver Debugger Java Agent](https://cloud.google.com/debugger/docs/).
-This project assumes the resulting image will be run inside Google CLoud Platform. To run outside of
-GCP, follow the Stackdrive Debugger instructions to [create and download service account
-credentials](https://cloud.google.com/debugger/docs/setup/java#local). 
+This project assumes the resulting image will be run inside Google Cloud Platform.
 
 To build the image:
 
