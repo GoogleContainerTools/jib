@@ -18,18 +18,20 @@ Design for Jib Core as a Java library for building container images.
 
 `JibContainerBuilder` - configures the container to build
 
-- `JibContainerBuilder addLayer(List<Path> files, String directoryInContainer)`
+- `JibContainerBuilder addLayer(List<Path> files, AbsoluteUnixPath directoryInContainer)`
 
-  Adds a new layer that will consists of the files referred to by `files`, each of which is copied into the `directoryInContainer`. Regardless of the directory nesting of files in `files`, they will be copied into the same level inside the container. Each `Path` object in `files` must represent a file, not a directory.
+  Adds a new layer that will consists of the files referred to by `files`, each of which is copied into the `directoryInContainer`. Regardless of the directory nesting of files in `files`, they will be copied into the same level inside the container. If a directory is in the list of `files`, the directory and its contents will be recursively copied into the container
 
   ```java
       container.addLayer(
         Arrays.asList(
           Paths.get("/a/b/c.txt"),
           Paths.get("/a/b.txt"),
-          Paths.get("/a/c.txt")),
-        "/root");
-      // container will have /root/b.txt, and /root/c.txt (from /a/c.txt)
+          Paths.get("/a/c.txt"),
+          Paths.get("/d") // With /d/a.txt, /d/b.txt
+          ),
+        AbsoluteUnixPath.get("/root"));
+      // container will have /root/d/a.txt, /root/d/b.txt, /root/b.txt, /root/c.txt (from /a/c.txt)
   ```
 
 - `JibContainerBuilder addLayer(LayerConfiguration)`
@@ -103,8 +105,8 @@ Jib.from("busybox")
   	RegistryImage destination = RegistryImage.named("gcr.io/myuser/my-java-container:latest");
 
     JibContainerBuilder javaImage = JavaContainerBuilder.builder()
-      .addDependencies(Lists.newArrayList(Paths.get("/my/filesystem/lib/my-dependency.jar")))      
-      .addClasses(Lists.newArrayList(Paths.get("/my/filesystem/target/com/google/FooMain.class")))
+      .addDependencies(Arrays.asList(Paths.get("/my/filesystem/lib/my-dependency.jar")))
+      .addClasses(Arrays.asList(Paths.get("/my/filesystem/target/com/google/FooMain.class")))
       .setMainClass("com.google.FooMain")
       .toContainerBuilder()
       // Add other customization to the image, maybe some labels
