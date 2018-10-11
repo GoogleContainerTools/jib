@@ -116,7 +116,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
               defaultCredentialRetrievers.setInferredCredential(
                   toCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE));
     }
-    defaultCredentialRetrievers.setCredentialHelperSuffix(getTargetImageCredentialHelperName());
+    defaultCredentialRetrievers.setCredentialHelper(getTargetImageCredentialHelperName());
 
     ImageConfiguration targetImageConfiguration =
         ImageConfiguration.builder(targetImage)

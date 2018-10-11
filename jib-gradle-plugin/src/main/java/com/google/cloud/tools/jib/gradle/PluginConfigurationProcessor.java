@@ -120,7 +120,7 @@ class PluginConfigurationProcessor {
     optionalFromCredential.ifPresent(
         fromCredential ->
             defaultCredentialRetrievers.setKnownCredential(fromCredential, "jib.from.auth"));
-    defaultCredentialRetrievers.setCredentialHelperSuffix(jibExtension.getFrom().getCredHelper());
+    defaultCredentialRetrievers.setCredentialHelper(jibExtension.getFrom().getCredHelper());
 
     ImageConfiguration.Builder baseImageConfigurationBuilder =
         ImageConfiguration.builder(baseImage)

@@ -160,7 +160,7 @@ class PluginConfigurationProcessor {
               defaultCredentialRetrievers.setInferredCredential(
                   fromCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE));
     }
-    defaultCredentialRetrievers.setCredentialHelperSuffix(
+    defaultCredentialRetrievers.setCredentialHelper(
         jibPluginConfiguration.getBaseImageCredentialHelperName());
 
     ImageConfiguration.Builder baseImageConfiguration =

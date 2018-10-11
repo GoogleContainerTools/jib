@@ -19,11 +19,15 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -33,8 +37,11 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class DefaultCredentialRetrieversTest {
 
+  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   @Mock private CredentialRetrieverFactory mockCredentialRetrieverFactory;
   @Mock private CredentialRetriever mockDockerCredentialHelperCredentialRetriever;
+  @Mock private CredentialRetriever mockDockerCredentialHelperCredentialRetrieverPath;
   @Mock private CredentialRetriever mockKnownCredentialRetriever;
   @Mock private CredentialRetriever mockInferredCredentialRetriever;
   @Mock private CredentialRetriever mockInferCredentialHelperCredentialRetriever;
@@ -47,6 +54,8 @@ public class DefaultCredentialRetrieversTest {
   public void setUp() {
     Mockito.when(mockCredentialRetrieverFactory.dockerCredentialHelper(Mockito.anyString()))
         .thenReturn(mockDockerCredentialHelperCredentialRetriever);
+    Mockito.when(mockCredentialRetrieverFactory.dockerCredentialHelper(Mockito.any(Path.class)))
+        .thenReturn(mockDockerCredentialHelperCredentialRetrieverPath);
     Mockito.when(mockCredentialRetrieverFactory.known(knownCredential, "credentialSource"))
         .thenReturn(mockKnownCredentialRetriever);
     Mockito.when(
@@ -74,7 +83,7 @@ public class DefaultCredentialRetrieversTest {
         DefaultCredentialRetrievers.init(mockCredentialRetrieverFactory)
             .setKnownCredential(knownCredential, "credentialSource")
             .setInferredCredential(inferredCredential, "inferredCredentialSource")
-            .setCredentialHelperSuffix("credentialHelperSuffix")
+            .setCredentialHelper("credentialHelperSuffix")
             .asList();
     Assert.assertEquals(
         Arrays.asList(
@@ -90,5 +99,22 @@ public class DefaultCredentialRetrieversTest {
         .known(inferredCredential, "inferredCredentialSource");
     Mockito.verify(mockCredentialRetrieverFactory)
         .dockerCredentialHelper("docker-credential-credentialHelperSuffix");
+  }
+
+  @Test
+  public void testInitAsList_credentialHelperPath() throws IOException {
+    Path fakeCredentialHelperPath = temporaryFolder.newFile("fake-credHelper").toPath();
+    List<CredentialRetriever> credentialRetrievers =
+        DefaultCredentialRetrievers.init(mockCredentialRetrieverFactory)
+            .setCredentialHelper(fakeCredentialHelperPath.toString())
+            .asList();
+    Assert.assertEquals(
+        Arrays.asList(
+            mockDockerCredentialHelperCredentialRetrieverPath,
+            mockInferCredentialHelperCredentialRetriever,
+            mockDockerConfigCredentialRetriever),
+        credentialRetrievers);
+
+    Mockito.verify(mockCredentialRetrieverFactory).dockerCredentialHelper(fakeCredentialHelperPath);
   }
 }
