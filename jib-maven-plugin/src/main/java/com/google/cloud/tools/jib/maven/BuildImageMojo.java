@@ -31,7 +31,7 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
-import com.google.cloud.tools.jib.plugins.common.NBuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -146,7 +146,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
               .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
               .build();
 
-      NBuildStepsRunner.forBuildImage(targetImageReference, getTargetImageAdditionalTags())
+      BuildStepsRunner.forBuildImage(targetImageReference, getTargetImageAdditionalTags())
           .build(
               jibContainerBuilder,
               containerizer,

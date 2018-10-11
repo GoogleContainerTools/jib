@@ -29,7 +29,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
-import com.google.cloud.tools.jib.plugins.common.NBuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -119,7 +119,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .setTargetImageReference(targetImageReference)
             .build();
 
-    NBuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
+    BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
         .build(
             jibContainerBuilder,
             containerizer,

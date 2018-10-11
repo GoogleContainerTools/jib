@@ -29,7 +29,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
-import com.google.cloud.tools.jib.plugins.common.NBuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -101,7 +101,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               .setTargetImageReference(targetImageReference)
               .build();
 
-      NBuildStepsRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
+      BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
           .build(
               jibContainerBuilder,
               containerizer,
