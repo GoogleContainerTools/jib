@@ -49,10 +49,6 @@ jib {
         '-agentpath:' + stackdriverDebuggerLocation + '/cdbg_java_agent.so=--logtostderr=1',
         '-Dcom.google.cdbg.module=' + project.name,
         '-Dcom.google.cdbg.version=' + version]
-        // when running outside of Google Cloud Platform, must provide a service account
-        // (https://cloud.google.com/debugger/docs/setup/java#local)
-        // -Dcom.google.cdbg.auth.serviceaccount.enable=true
-        // -Dcom.google.cdbg.auth.serviceaccount.jsonfile=path/to/gcp-svc.json
   }
 }
 

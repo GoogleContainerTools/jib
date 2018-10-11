@@ -82,9 +82,6 @@
               <jvmFlag>-agentpath:${stackdriver-debugger-agent-location}/cdbg_java_agent.so=--logtostderr=1</jvmFlag>
               <jvmFlag>-Dcom.google.cdbg.module=${project.artifactId}</jvmFlag>
               <jvmFlag>-Dcom.google.cdbg.version=${project.version}</jvmFlag>
-              <!-- if not running on Compute Engine, must download and copy 
-                a service key (https://cloud.google.com/debugger/docs/setup/java#local) -Dcom.google.cdbg.auth.serviceaccount.enable=true 
-                -Dcom.google.cdbg.auth.serviceaccount.jsonfile=/opt/cdbg/gcp-svc.json -->
             </jvmFlags>
           </container>
         </configuration>
