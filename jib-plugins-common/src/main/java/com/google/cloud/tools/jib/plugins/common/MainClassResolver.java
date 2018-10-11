@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -72,8 +73,7 @@ public class MainClassResolver {
 
     Preconditions.checkNotNull(mainClass);
     if (!isValidJavaClass(mainClass)) {
-      projectProperties
-          .getEventDispatcher()
+      new DefaultEventDispatcher(projectProperties.getEventHandlers())
           .dispatch(LogEvent.warn("'mainClass' is not a valid Java class : " + mainClass));
     }
 
@@ -96,8 +96,7 @@ public class MainClassResolver {
 
   @Nullable
   private static String getMainClassFromJar(ProjectProperties projectProperties) {
-    projectProperties
-        .getEventDispatcher()
+    new DefaultEventDispatcher(projectProperties.getEventHandlers())
         .dispatch(
             LogEvent.info(
                 "Searching for main class... Add a 'mainClass' configuration to '"
@@ -108,8 +107,7 @@ public class MainClassResolver {
 
   private static String findMainClassInClassFiles(ProjectProperties projectProperties)
       throws MainClassInferenceException {
-    projectProperties
-        .getEventDispatcher()
+    new DefaultEventDispatcher(projectProperties.getEventHandlers())
         .dispatch(
             LogEvent.debug(
                 "Could not find a valid main class specified in "
@@ -125,7 +123,10 @@ public class MainClassResolver {
             .collect(ImmutableList.toImmutableList());
 
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(classesSourceFiles, projectProperties.getEventDispatcher()).find();
+        new MainClassFinder(
+                classesSourceFiles,
+                new DefaultEventDispatcher(projectProperties.getEventHandlers()))
+            .find();
 
     switch (mainClassFinderResult.getType()) {
       case MAIN_CLASS_FOUND:

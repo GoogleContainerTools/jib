@@ -318,7 +318,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the configured environment variables
    */
-  @Nullable
   Map<String, String> getEnvironment() {
     if (System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT) != null) {
       return ConfigurationPropertyValidator.parseMapProperty(
