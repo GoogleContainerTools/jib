@@ -2,13 +2,10 @@ sudo: false
 git:
   depth: 3
 language: java
+jdk: openjdk8
 env:
   global:
   - TERM=dumb         # for gradle
-matrix:
-  include:
-  - name: 'Java 8'
-    jdk: oraclejdk8
 
 install: true
 script:
@@ -18,9 +15,14 @@ script:
 # unset _JAVA_OPTIONS to avoid spurious test failures
 - (cd jib-maven-plugin; unset _JAVA_OPTIONS; ./mvnw -B verify -U)
 
+# cobbled together from
+#   https://docs.travis-ci.com/user/languages/java/#projects-using-gradle
+#   https://github.com/blox/blox/pull/338#issuecomment-358556137
 before_cache:
   - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+  - rm -fr $HOME/.gradle/caches/*/fileHashes/
+  - rm -fr $HOME/.gradle/caches/jars-3/
 cache:
   directories:
   - $HOME/.m2
