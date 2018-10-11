@@ -52,5 +52,7 @@ jib {
   }
 }
 
-defaultTasks 'extractAgent', 'jib'
-
+tasks.jib.dependsOn extractAgent
+tasks.jibDockerBuild.dependsOn extractAgent
+tasks.jibBuildTar.dependsOn extractAgent
+defaultTasks 'jib'
