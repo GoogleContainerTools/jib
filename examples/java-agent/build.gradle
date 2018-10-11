@@ -2,6 +2,7 @@ plugins {
   id 'java'
   id 'com.google.cloud.tools.jib' version '0.9.11'
   id 'de.undercouch.download' version '3.4.0'
+  id "com.gorylenko.gradle-git-properties" version "1.5.2"
 }
 
 ext {
