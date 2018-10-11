@@ -28,10 +28,10 @@ import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
-import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -126,26 +126,26 @@ public class BuildImageMojo extends JibPluginConfiguration {
     RegistryImage targetImage = RegistryImage.named(targetImageReference);
     defaultCredentialRetrievers.asList().forEach(targetImage::addCredentialRetriever);
 
+    JibContainerBuilder jibContainerBuilder =
+        pluginConfigurationProcessor
+            .getJibContainerBuilder()
+            // Only uses possibly non-Docker formats for build to registry.
+            .setFormat(ImageFormat.valueOf(getFormat()));
+
+    Containerizer containerizer = Containerizer.to(targetImage);
+    PluginConfigurationProcessor.configureContainerizer(
+        containerizer, this, mavenProjectProperties);
+
+    HelpfulSuggestions helpfulSuggestions =
+        new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this)
+            .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
+            .setBaseImageHasConfiguredCredentials(
+                pluginConfigurationProcessor.isBaseImageCredentialPresent())
+            .setTargetImageReference(targetImageReference)
+            .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
+            .build();
+
     try {
-      JibContainerBuilder jibContainerBuilder =
-          pluginConfigurationProcessor
-              .getJibContainerBuilder()
-              // Only uses possibly non-Docker formats for build to registry.
-              .setFormat(ImageFormat.valueOf(getFormat()));
-
-      Containerizer containerizer = Containerizer.to(targetImage);
-      PluginConfigurationProcessor.configureContainerizer(
-          containerizer, this, mavenProjectProperties);
-
-      HelpfulSuggestions helpfulSuggestions =
-          new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this)
-              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-              .setBaseImageHasConfiguredCredentials(
-                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
-              .setTargetImageReference(targetImageReference)
-              .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
-              .build();
-
       BuildStepsRunner.forBuildImage(targetImageReference, getTargetImageAdditionalTags())
           .build(
               jibContainerBuilder,
