@@ -180,9 +180,9 @@ class PluginConfigurationProcessor {
         Jib.from(baseImage)
             .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
             .setEntrypoint(entrypoint)
+            .setProgramArguments(jibPluginConfiguration.getArgs())
             .setEnvironment(jibPluginConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(jibPluginConfiguration.getExposedPorts()))
-            .setProgramArguments(jibPluginConfiguration.getArgs())
             .setLabels(jibPluginConfiguration.getLabels())
             .setUser(jibPluginConfiguration.getUser());
     if (jibPluginConfiguration.getUseCurrentTimestamp()) {

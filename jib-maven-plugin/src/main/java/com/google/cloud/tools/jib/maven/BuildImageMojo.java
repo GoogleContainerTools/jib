@@ -126,26 +126,26 @@ public class BuildImageMojo extends JibPluginConfiguration {
     RegistryImage targetImage = RegistryImage.named(targetImageReference);
     defaultCredentialRetrievers.asList().forEach(targetImage::addCredentialRetriever);
 
+    JibContainerBuilder jibContainerBuilder =
+        pluginConfigurationProcessor
+            .getJibContainerBuilder()
+            // Only uses possibly non-Docker formats for build to registry.
+            .setFormat(ImageFormat.valueOf(getFormat()));
+
+    Containerizer containerizer = Containerizer.to(targetImage);
+    PluginConfigurationProcessor.configureContainerizer(
+        containerizer, this, mavenProjectProperties);
+
+    HelpfulSuggestions helpfulSuggestions =
+        new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this)
+            .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
+            .setBaseImageHasConfiguredCredentials(
+                pluginConfigurationProcessor.isBaseImageCredentialPresent())
+            .setTargetImageReference(targetImageReference)
+            .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
+            .build();
+
     try {
-      JibContainerBuilder jibContainerBuilder =
-          pluginConfigurationProcessor
-              .getJibContainerBuilder()
-              // Only uses possibly non-Docker formats for build to registry.
-              .setFormat(ImageFormat.valueOf(getFormat()));
-
-      Containerizer containerizer = Containerizer.to(targetImage);
-      PluginConfigurationProcessor.configureContainerizer(
-          containerizer, this, mavenProjectProperties);
-
-      HelpfulSuggestions helpfulSuggestions =
-          new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this)
-              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-              .setBaseImageHasConfiguredCredentials(
-                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
-              .setTargetImageReference(targetImageReference)
-              .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
-              .build();
-
       NBuildStepsRunner.forBuildImage(targetImageReference, getTargetImageAdditionalTags())
           .build(
               jibContainerBuilder,
