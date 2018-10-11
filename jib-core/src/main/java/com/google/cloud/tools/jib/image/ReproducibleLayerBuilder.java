@@ -114,7 +114,7 @@ public class ReproducibleLayerBuilder {
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     for (TarArchiveEntry entry : sortedFilesystemEntries) {
       // Strips out all non-reproducible elements from tar archive entries.
-      entry.setModTime(0);
+      entry.setModTime(1000);
       entry.setGroupId(0);
       entry.setUserId(0);
       entry.setUserName("");
