@@ -10,6 +10,9 @@ ext {
 
   // where to place the Cloud Debugger agent in the container
   stackdriverDebuggerLocation = '/opt/cdbg'
+
+  // location for jib extras, including the Java agent
+  jibExtraDirectory = "${buildDir}/jib-agents"
 }
 
 sourceCompatibility = 1.8
@@ -26,29 +29,29 @@ dependencies {
 // Download and extract the Cloud Debugger Java Agent
 task downloadAgent(type: Download) {
   src stackdriverDebuggerAgentUrl
-  dest new File(buildDir, 'cdbg_java_agent_gce.tar.gz')
+  dest "${buildDir}/cdbg_java_agent_gce.tar.gz"
 }
 task extractAgent(dependsOn: downloadAgent, type: Copy) {
-    from tarTree(downloadAgent.dest)
-    into new File(buildDir, 'agent' + stackdriverDebuggerLocation)
+  from tarTree(downloadAgent.dest)
+  into "${jibExtraDirectory}/${stackdriverDebuggerLocation}"
 }
 
 jib {
   to {
     image = 'gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib'
   }
-  extraDirectory = new File(buildDir, 'agent')
+  extraDirectory = file(jibExtraDirectory)
   container {
     jvmFlags = [
         '-agentpath:' + stackdriverDebuggerLocation + '/cdbg_java_agent.so',
         '-Dcom.google.cdbg.module=' + project.name,
         '-Dcom.google.cdbg.version=' + version]
-        // if not running on Compute Engine, must download and copy a service key
+        // when running outside of Google Cloud Platform, must provide a service account
         // (https://cloud.google.com/debugger/docs/setup/java#local)
         // -Dcom.google.cdbg.auth.serviceaccount.enable=true
-        // -Dcom.google.cdbg.auth.serviceaccount.jsonfile=/opt/cdbg/gcp-svc.json
+        // -Dcom.google.cdbg.auth.serviceaccount.jsonfile=path/to/gcp-svc.json
   }
 }
 
-defaultTasks 'extractAgent'
+defaultTasks 'extractAgent', 'jib'
 
