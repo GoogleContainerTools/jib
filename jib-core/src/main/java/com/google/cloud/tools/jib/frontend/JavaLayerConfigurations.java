@@ -110,7 +110,7 @@ public class JavaLayerConfigurations {
      * @throws IOException error while listing directories
      * @throws NotDirectoryException if {@code sourceRoot} is not a directory
      */
-    public Builder addFilesRoot(
+    public Builder addDirectoryContents(
         LayerType layerType,
         Path sourceRoot,
         Predicate<Path> pathFilter,

@@ -278,7 +278,7 @@ public class JavaLayerConfigurationsTest {
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addFilesRoot(
+            .addDirectoryContents(
                 JavaLayerConfigurations.LayerType.EXTRA_FILES, sourceRoot, path -> true, basePath)
             .build();
     Assert.assertEquals(
@@ -295,7 +295,7 @@ public class JavaLayerConfigurationsTest {
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addFilesRoot(
+            .addDirectoryContents(
                 JavaLayerConfigurations.LayerType.CLASSES, sourceRoot, path -> true, basePath)
             .build();
     Assert.assertEquals(
@@ -312,7 +312,7 @@ public class JavaLayerConfigurationsTest {
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addFilesRoot(
+            .addDirectoryContents(
                 JavaLayerConfigurations.LayerType.RESOURCES, sourceRoot, path -> true, basePath)
             .build();
     Assert.assertEquals(
@@ -335,7 +335,7 @@ public class JavaLayerConfigurationsTest {
     Predicate<Path> nameIsTarget = path -> "target".equals(path.getFileName().toString());
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addFilesRoot(
+            .addDirectoryContents(
                 JavaLayerConfigurations.LayerType.DEPENDENCIES, sourceRoot, nameIsTarget, basePath)
             .build();
     Assert.assertEquals(
@@ -354,7 +354,7 @@ public class JavaLayerConfigurationsTest {
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addFilesRoot(
+            .addDirectoryContents(
                 JavaLayerConfigurations.LayerType.EXTRA_FILES, sourceRoot, path -> false, basePath)
             .build();
     Assert.assertEquals(
@@ -371,7 +371,7 @@ public class JavaLayerConfigurationsTest {
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
     JavaLayerConfigurations.Builder builder = JavaLayerConfigurations.builder();
     try {
-      builder.addFilesRoot(
+      builder.addDirectoryContents(
           JavaLayerConfigurations.LayerType.DEPENDENCIES, sourceFile, path -> true, basePath);
 
       Assert.fail();
@@ -398,7 +398,7 @@ public class JavaLayerConfigurationsTest {
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addFilesRoot(
+            .addDirectoryContents(
                 JavaLayerConfigurations.LayerType.EXTRA_FILES, sourceRoot, isClassFile, basePath)
             .build();
 

@@ -89,7 +89,7 @@ class GradleLayerConfigurations {
 
     FileCollection existingClassesDirectories = classesDirectories.filter(File::exists);
     for (File classesOutputDirectory : existingClassesDirectories) {
-      layerBuilder.addFilesRoot(
+      layerBuilder.addDirectoryContents(
           JavaLayerConfigurations.LayerType.CLASSES,
           classesOutputDirectory.toPath(),
           path -> true,
@@ -100,7 +100,7 @@ class GradleLayerConfigurations {
     }
 
     if (Files.exists(resourcesOutputDirectory)) {
-      layerBuilder.addFilesRoot(
+      layerBuilder.addDirectoryContents(
           JavaLayerConfigurations.LayerType.RESOURCES,
           resourcesOutputDirectory,
           path -> true,
@@ -133,7 +133,7 @@ class GradleLayerConfigurations {
 
     // Adds all the extra files.
     if (Files.exists(extraDirectory)) {
-      layerBuilder.addFilesRoot(
+      layerBuilder.addDirectoryContents(
           JavaLayerConfigurations.LayerType.EXTRA_FILES,
           extraDirectory,
           path -> true,

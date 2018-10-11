@@ -37,12 +37,12 @@ public class JavaLayerConfigurationsHelper {
     // Gets all the dependencies.
     if (Files.exists(webInfLib)) {
       Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
-      layerBuilder.addFilesRoot(
+      layerBuilder.addDirectoryContents(
           JavaLayerConfigurations.LayerType.DEPENDENCIES,
           webInfLib,
           isSnapshot.negate(),
           appRoot.resolve("WEB-INF/lib"));
-      layerBuilder.addFilesRoot(
+      layerBuilder.addDirectoryContents(
           JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES,
           webInfLib,
           isSnapshot,
@@ -52,7 +52,7 @@ public class JavaLayerConfigurationsHelper {
     // Gets the classes files in the 'WEB-INF/classes' output directory.
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     if (Files.exists(webInfClasses)) {
-      layerBuilder.addFilesRoot(
+      layerBuilder.addDirectoryContents(
           JavaLayerConfigurations.LayerType.CLASSES,
           webInfClasses,
           isClassFile,
@@ -67,12 +67,12 @@ public class JavaLayerConfigurationsHelper {
 
           return (!inWebInfClasses && !inWebInfLib) || (inWebInfClasses && !isClassFile.test(path));
         };
-    layerBuilder.addFilesRoot(
+    layerBuilder.addDirectoryContents(
         JavaLayerConfigurations.LayerType.RESOURCES, explodedWar, isResource, appRoot);
 
     // Adds all the extra files.
     if (Files.exists(extraFilesDirectory)) {
-      layerBuilder.addFilesRoot(
+      layerBuilder.addDirectoryContents(
           JavaLayerConfigurations.LayerType.EXTRA_FILES,
           extraFilesDirectory,
           path -> true,
