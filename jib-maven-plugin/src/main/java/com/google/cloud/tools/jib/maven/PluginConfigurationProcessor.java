@@ -21,6 +21,8 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
@@ -141,12 +143,14 @@ class PluginConfigurationProcessor {
             Preconditions.checkNotNull(jibPluginConfiguration.getSession()).getSettings(),
             jibPluginConfiguration.getSettingsDecrypter(),
             logger);
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(projectProperties.getEventHandlers());
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(baseImage, projectProperties.getEventDispatcher()));
+            CredentialRetrieverFactory.forImage(baseImage, eventDispatcher));
     Optional<Credential> optionalFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            projectProperties.getEventDispatcher(),
+            eventDispatcher,
             PropertyNames.FROM_AUTH_USERNAME,
             PropertyNames.FROM_AUTH_PASSWORD,
             jibPluginConfiguration.getBaseImageAuth());
@@ -185,7 +189,7 @@ class PluginConfigurationProcessor {
     BuildConfiguration.Builder buildConfigurationBuilder =
         BuildConfiguration.builder()
             .setToolName(MavenProjectProperties.TOOL_NAME)
-            .setEventDispatcher(projectProperties.getEventDispatcher())
+            .setEventDispatcher(eventDispatcher)
             .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());

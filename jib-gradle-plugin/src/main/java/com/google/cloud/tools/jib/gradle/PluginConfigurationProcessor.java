@@ -18,10 +18,13 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.Jib;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
@@ -31,6 +34,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
 import java.time.Instant;
@@ -100,7 +104,7 @@ class PluginConfigurationProcessor {
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     disableHttpLogging();
-    ImageReference baseImage =
+    ImageReference baseImageReference =
         ImageReference.parse(Preconditions.checkNotNull(jibExtension.getFrom().getImage()));
 
     if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
@@ -108,12 +112,14 @@ class PluginConfigurationProcessor {
           "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
               + "this on a public network!");
     }
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(projectProperties.getEventHandlers());
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(baseImage, projectProperties.getEventDispatcher()));
+            CredentialRetrieverFactory.forImage(baseImageReference, eventDispatcher));
     Optional<Credential> optionalFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            projectProperties.getEventDispatcher(),
+            eventDispatcher,
             PropertyNames.FROM_AUTH_USERNAME,
             PropertyNames.FROM_AUTH_PASSWORD,
             jibExtension.getFrom().getAuth());
@@ -122,46 +128,44 @@ class PluginConfigurationProcessor {
             defaultCredentialRetrievers.setKnownCredential(fromCredential, "jib.from.auth"));
     defaultCredentialRetrievers.setCredentialHelperSuffix(jibExtension.getFrom().getCredHelper());
 
-    ImageConfiguration.Builder baseImageConfigurationBuilder =
-        ImageConfiguration.builder(baseImage)
-            .setCredentialRetrievers(defaultCredentialRetrievers.asList());
-
     List<String> entrypoint = computeEntrypoint(logger, jibExtension, projectProperties);
-    ContainerConfiguration.Builder containerConfigurationBuilder =
-        ContainerConfiguration.builder()
+
+    RegistryImage baseImage = RegistryImage.named(baseImageReference);
+    defaultCredentialRetrievers.asList().forEach(baseImage::addCredentialRetriever);
+
+    JibContainerBuilder jibContainerBuilder =
+        Jib.from(baseImage)
+            .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
             .setEntrypoint(entrypoint)
             .setEnvironment(jibExtension.getContainer().getEnvironment())
-            .setProgramArguments(jibExtension.getContainer().getArgs())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getContainer().getPorts()))
+            .setProgramArguments(jibExtension.getContainer().getArgs())
             .setLabels(jibExtension.getContainer().getLabels())
             .setUser(jibExtension.getContainer().getUser());
     if (jibExtension.getContainer().getUseCurrentTimestamp()) {
       logger.warn(
           "Setting image creation time to current time; your image may not be reproducible.");
-      containerConfigurationBuilder.setCreationTime(Instant.now());
-    }
-
-    BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder()
-            .setToolName(GradleProjectProperties.TOOL_NAME)
-            .setEventDispatcher(projectProperties.getEventDispatcher())
-            .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
-            .setLayerConfigurations(
-                projectProperties.getJavaLayerConfigurations().getLayerConfigurations());
-    buildConfigurationBuilder.setApplicationLayersCacheDirectory(
-        projectProperties.getCacheDirectory());
-    buildConfigurationBuilder.setBaseImageLayersCacheDirectory(
-        Containerizer.DEFAULT_BASE_CACHE_DIRECTORY);
-    if (jibExtension.getUseOnlyProjectCache()) {
-      buildConfigurationBuilder.setBaseImageLayersCacheDirectory(
-          projectProperties.getCacheDirectory());
+      jibContainerBuilder.setCreationTime(Instant.now());
     }
 
     return new PluginConfigurationProcessor(
-        buildConfigurationBuilder,
-        baseImageConfigurationBuilder,
-        containerConfigurationBuilder,
-        optionalFromCredential.isPresent());
+        jibContainerBuilder, baseImageReference, optionalFromCredential.isPresent());
+  }
+
+  static void configureContainerizer(
+      Containerizer containerizer, JibExtension jibExtension, ProjectProperties projectProperties) {
+    containerizer
+        .setToolName(GradleProjectProperties.TOOL_NAME)
+        .setEventHandlers(projectProperties.getEventHandlers())
+        .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
+        .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
+        .setApplicationLayersCache(projectProperties.getCacheDirectory());
+
+    jibExtension.getTo().getTags().forEach(containerizer::withAdditionalTag);
+
+    if (jibExtension.getUseOnlyProjectCache()) {
+      containerizer.setBaseImageLayersCache(projectProperties.getCacheDirectory());
+    }
   }
 
   /**
@@ -197,32 +201,25 @@ class PluginConfigurationProcessor {
         AbsoluteUnixPath.get(parameters.getAppRoot()), parameters.getJvmFlags(), mainClass);
   }
 
-  private final BuildConfiguration.Builder buildConfigurationBuilder;
-  private final ImageConfiguration.Builder baseImageConfigurationBuilder;
-  private final ContainerConfiguration.Builder containerConfigurationBuilder;
+  private final JibContainerBuilder jibContainerBuilder;
+  private final ImageReference baseImageReference;
   private final boolean isBaseImageCredentialPresent;
 
   private PluginConfigurationProcessor(
-      BuildConfiguration.Builder buildConfigurationBuilder,
-      ImageConfiguration.Builder baseImageConfigurationBuilder,
-      ContainerConfiguration.Builder containerConfigurationBuilder,
+      JibContainerBuilder jibContainerBuilder,
+      ImageReference baseImageReference,
       boolean isBaseImageCredentialPresent) {
-    this.buildConfigurationBuilder = buildConfigurationBuilder;
-    this.baseImageConfigurationBuilder = baseImageConfigurationBuilder;
-    this.containerConfigurationBuilder = containerConfigurationBuilder;
+    this.jibContainerBuilder = jibContainerBuilder;
+    this.baseImageReference = baseImageReference;
     this.isBaseImageCredentialPresent = isBaseImageCredentialPresent;
   }
 
-  BuildConfiguration.Builder getBuildConfigurationBuilder() {
-    return buildConfigurationBuilder;
+  JibContainerBuilder getJibContainerBuilder() {
+    return jibContainerBuilder;
   }
 
-  ImageConfiguration.Builder getBaseImageConfigurationBuilder() {
-    return baseImageConfigurationBuilder;
-  }
-
-  ContainerConfiguration.Builder getContainerConfigurationBuilder() {
-    return containerConfigurationBuilder;
+  ImageReference getBaseImageReference() {
+    return baseImageReference;
   }
 
   boolean isBaseImageCredentialPresent() {

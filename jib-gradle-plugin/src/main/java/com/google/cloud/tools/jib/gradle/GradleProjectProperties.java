@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
@@ -63,7 +61,7 @@ class GradleProjectProperties implements ProjectProperties {
     try {
       return new GradleProjectProperties(
           project,
-          makeEventDispatcher(logger),
+          makeEventHandlers(logger),
           GradleLayerConfigurations.getForProject(project, logger, extraDirectory, appRoot));
 
     } catch (IOException ex) {
@@ -71,14 +69,13 @@ class GradleProjectProperties implements ProjectProperties {
     }
   }
 
-  private static EventDispatcher makeEventDispatcher(Logger logger) {
+  private static EventHandlers makeEventHandlers(Logger logger) {
     LogEventHandler logEventHandler = new LogEventHandler(logger);
-    return new DefaultEventDispatcher(
-        new EventHandlers()
-            .add(JibEventType.LOGGING, logEventHandler)
-            .add(
-                JibEventType.TIMING,
-                new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message)))));
+    return new EventHandlers()
+        .add(JibEventType.LOGGING, logEventHandler)
+        .add(
+            JibEventType.TIMING,
+            new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message))));
   }
 
   @Nullable
@@ -96,16 +93,16 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   private final Project project;
-  private final EventDispatcher eventDispatcher;
+  private final EventHandlers eventHandlers;
   private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   GradleProjectProperties(
       Project project,
-      EventDispatcher eventDispatcher,
+      EventHandlers eventHandlers,
       JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
-    this.eventDispatcher = eventDispatcher;
+    this.eventHandlers = eventHandlers;
     this.javaLayerConfigurations = javaLayerConfigurations;
   }
 
@@ -115,8 +112,8 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public EventDispatcher getEventDispatcher() {
-    return eventDispatcher;
+  public EventHandlers getEventHandlers() {
+    return eventHandlers;
   }
 
   @Override
