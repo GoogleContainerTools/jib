@@ -95,8 +95,8 @@ public class DefaultCredentialRetrievers {
    * Sets the known credential helper. May either be a path to a credential helper executable, or a
    * credential helper suffix (following {@code docker-credential-}).
    *
-   * @param credentialHelper the known credential helper suffix (following {@code
-   *     docker-credential-})
+   * @param credentialHelper the path to a credential helper, or a credential helper suffix
+   *     (following {@code docker-credential-}) if the path doesn't exist.
    * @return this
    */
   public DefaultCredentialRetrievers setCredentialHelper(@Nullable String credentialHelper) {
