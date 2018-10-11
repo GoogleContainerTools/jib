@@ -23,7 +23,8 @@ repositories {
 }
 
 dependencies {
-  compile 'com.google.guava:guava:23.6-jre'
+	compile "com.sparkjava:spark-core:2.7.2"
+	compile "org.slf4j:slf4j-simple:1.7.21"
 }
 
 // Download and extract the Cloud Debugger Java Agent
@@ -42,8 +43,9 @@ jib {
   }
   extraDirectory = file(jibExtraDirectory)
   container {
+    ports = ['4567']
     jvmFlags = [
-        '-agentpath:' + stackdriverDebuggerLocation + '/cdbg_java_agent.so',
+        '-agentpath:' + stackdriverDebuggerLocation + '/cdbg_java_agent.so=--logtostderr=1',
         '-Dcom.google.cdbg.module=' + project.name,
         '-Dcom.google.cdbg.version=' + version]
         // when running outside of Google Cloud Platform, must provide a service account

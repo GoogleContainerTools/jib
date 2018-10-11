@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>example</groupId>
-  <artifactId>helloworld</artifactId>
+  <artifactId>java-agent</artifactId>
   <version>1</version>
 
   <properties>
@@ -10,10 +10,11 @@
     <jib-maven-plugin.version>0.9.11</jib-maven-plugin.version>
     <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
     <download-maven-plugin.version>1.4.1</download-maven-plugin.version>
+    <git-commit-id-plugin.version>2.2.5</git-commit-id-plugin.version>
 
     <!-- agents will be extracted relative to this build location -->
-    <agent-extraction-root>${project.build.directory}/agents</agent-extraction-root>
-    
+    <agent-extraction-root>${project.build.directory}/jib-agents</agent-extraction-root>
+
     <!-- location of Stackdriver Debugger Java Agent https://cloud.google.com/debugger/docs/setup/java -->
     <stackdriver-debugger-agent-url>https://storage.googleapis.com/cloud-debugger/compute-java/debian-wheezy/cdbg_java_agent_gce.tar.gz</stackdriver-debugger-agent-url>
 
@@ -23,9 +24,14 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>23.6-jre</version>
+      <groupId>com.sparkjava</groupId>
+      <artifactId>spark-core</artifactId>
+      <version>2.7.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.7.21</version>
     </dependency>
   </dependencies>
 
@@ -41,6 +47,25 @@
         </configuration>
       </plugin>
 
+      <plugin>
+        <groupId>pl.project13.maven</groupId>
+        <artifactId>git-commit-id-plugin</artifactId>
+        <version>${git-commit-id-plugin.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>revision</goal>
+            </goals>
+            <!-- *NOTE*: The default phase of revision is initialize, but 
+              in case you want to change it, you can do so by adding the phase here -->
+            <phase>initialize</phase>
+            <configuration>
+              <generateGitPropertiesFile>true</generateGitPropertiesFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <!-- Jib -->
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
@@ -52,17 +77,14 @@
           </to>
           <extraDirectory>${agent-extraction-root}</extraDirectory>
           <container>
+            <ports>4567</ports>
             <jvmFlags>
-              <jvmFlag>-agentpath:${stackdriver-debugger-agent-location}/cdbg_java_agent.so</jvmFlag>
+              <jvmFlag>-agentpath:${stackdriver-debugger-agent-location}/cdbg_java_agent.so=--logtostderr=1</jvmFlag>
               <jvmFlag>-Dcom.google.cdbg.module=${project.artifactId}</jvmFlag>
               <jvmFlag>-Dcom.google.cdbg.version=${project.version}</jvmFlag>
-              <!--
-                 if not running on Compute Engine, must download and copy a service key
-                 (https://cloud.google.com/debugger/docs/setup/java#local)
-                 
-                -Dcom.google.cdbg.auth.serviceaccount.enable=true
-                -Dcom.google.cdbg.auth.serviceaccount.jsonfile=/opt/cdbg/gcp-svc.json
-              -->
+              <!-- if not running on Compute Engine, must download and copy 
+                a service key (https://cloud.google.com/debugger/docs/setup/java#local) -Dcom.google.cdbg.auth.serviceaccount.enable=true 
+                -Dcom.google.cdbg.auth.serviceaccount.jsonfile=/opt/cdbg/gcp-svc.json -->
             </jvmFlags>
           </container>
         </configuration>
@@ -70,7 +92,7 @@
           <execution>
             <phase>package</phase>
             <goals>
-              <goal>dockerBuild</goal>
+              <goal>build</goal>
             </goals>
           </execution>
         </executions>

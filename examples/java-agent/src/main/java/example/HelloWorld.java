@@ -16,21 +16,10 @@
 
 package example;
 
-import com.google.common.io.Resources;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import static spark.Spark.get;
 
 public class HelloWorld {
-
-  public static void main(String[] args) throws URISyntaxException, IOException {
-    Path worldFile = Paths.get(Resources.getResource("world").toURI());
-    String world = new String(Files.readAllBytes(worldFile), StandardCharsets.UTF_8);
-
-    System.out.println("Hello " + world);
+  public static void main(String[] args) {
+    get("/hello", (req, res) -> "Hello World");
   }
 }
