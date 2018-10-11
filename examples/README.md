@@ -24,6 +24,6 @@ See [spring-boot-kubernetes](spring-boot-kubernetes) for containerizing a [Sprin
 
 See [micronaut](micronaut) for containerizing a [Micronaut framework](https://micronaut.io/) Groovy/Java application.
 
-### Java Agents example
+### Java agents example
 
-See [java-agent](java-agent) for launching with a Java agent.
+See [java-agent](java-agent) for launching with the Stackdriver Debugger Java agent.
