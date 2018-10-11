@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.image.ImageFormat;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
@@ -44,6 +43,7 @@ public class ContainerParameters {
   private List<String> ports = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();
   private String appRoot = "";
+  @Nullable private String user;
 
   @Input
   @Optional
@@ -130,12 +130,11 @@ public class ContainerParameters {
 
   @Input
   @Optional
-  public Class<? extends BuildableManifestTemplate> getFormat() {
+  public ImageFormat getFormat() {
     if (System.getProperty(PropertyNames.CONTAINER_FORMAT) != null) {
-      return ImageFormat.valueOf(System.getProperty(PropertyNames.CONTAINER_FORMAT))
-          .getManifestTemplateClass();
+      return ImageFormat.valueOf(System.getProperty(PropertyNames.CONTAINER_FORMAT));
     }
-    return Preconditions.checkNotNull(format).getManifestTemplateClass();
+    return Preconditions.checkNotNull(format);
   }
 
   public void setFormat(ImageFormat format) {
@@ -181,5 +180,19 @@ public class ContainerParameters {
 
   public void setAppRoot(String appRoot) {
     this.appRoot = appRoot;
+  }
+
+  @Input
+  @Nullable
+  @Optional
+  public String getUser() {
+    if (System.getProperty(PropertyNames.CONTAINER_USER) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_USER);
+    }
+    return user;
+  }
+
+  public void setUser(String user) {
+    this.user = user;
   }
 }

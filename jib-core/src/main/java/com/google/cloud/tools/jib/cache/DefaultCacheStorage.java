@@ -31,7 +31,6 @@ import java.util.Set;
  * layers/
  *   <layer digest>/
  *     <layer diff ID>
- *     metadata
  *   ...
  * selectors/
  *   <selector digest>
@@ -40,7 +39,7 @@ import java.util.Set;
  *
  * Layers entries are stored in their own directories under the {@code layers/} directory. Each
  * layer directory is named by the layer digest. Inside each layer directory, the layer contents
- * file is named by the layer diff ID, and the metadata is the {@code metadata} file.
+ * file is named by the layer diff ID.
  *
  * <p>Selectors are stored in the {@code selectors/} directory. Each selector file is named by the
  * selector digest. The contents of a selector file is the digest of the layer it selects.

@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -71,7 +72,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       ImageReference targetImage =
           ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
               getTargetImage(),
-              mavenProjectProperties.getEventDispatcher(),
+              new DefaultEventDispatcher(mavenProjectProperties.getEventHandlers()),
               getProject().getName(),
               getProject().getVersion(),
               mavenHelpfulSuggestionsBuilder.build());

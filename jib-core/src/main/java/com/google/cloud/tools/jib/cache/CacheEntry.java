@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import java.util.Optional;
 
 /**
  * Represents a cache entry for a layer stored in the cache. <b>Implementations must be
@@ -55,13 +54,4 @@ public interface CacheEntry {
    * @return the layer {@link Blob}
    */
   Blob getLayerBlob();
-
-  /**
-   * Gets the optional metadata blob for the layer. The metadata is in the same format as supplied
-   * when writing to the cache with {@link UncompressedCacheWrite}. This {@link Blob} should be able
-   * to be used multiple times.
-   *
-   * @return the metadata {@link Blob}
-   */
-  Optional<Blob> getMetadataBlob();
 }

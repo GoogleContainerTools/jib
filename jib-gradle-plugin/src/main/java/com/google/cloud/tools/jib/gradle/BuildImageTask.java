@@ -16,18 +16,22 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.RegistryImage;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
-import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.NBuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -71,7 +75,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildImage()
-      throws InvalidImageReferenceException, IOException, BuildStepsExecutionException {
+      throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
+          CacheDirectoryCreationException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
@@ -88,15 +93,16 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               "gradle jib --image <your image name>"));
     }
 
-    ImageReference targetImage = ImageReference.parse(jibExtension.getTo().getImage());
+    ImageReference targetImageReference = ImageReference.parse(jibExtension.getTo().getImage());
 
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(
-                targetImage, gradleProjectProperties.getEventDispatcher()));
+            CredentialRetrieverFactory.forImage(targetImageReference, eventDispatcher));
     Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            gradleProjectProperties.getEventDispatcher(),
+            eventDispatcher,
             PropertyNames.TO_AUTH_USERNAME,
             PropertyNames.TO_AUTH_PASSWORD,
             jibExtension.getTo().getAuth());
@@ -105,37 +111,39 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             defaultCredentialRetrievers.setKnownCredential(toCredential, "jib.to.auth"));
     defaultCredentialRetrievers.setCredentialHelperSuffix(jibExtension.getTo().getCredHelper());
 
-    ImageConfiguration targetImageConfiguration =
-        ImageConfiguration.builder(targetImage)
-            .setCredentialRetrievers(defaultCredentialRetrievers.asList())
-            .build();
+    RegistryImage targetImage = RegistryImage.named(targetImageReference);
+    defaultCredentialRetrievers.asList().forEach(targetImage::addCredentialRetriever);
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
             getLogger(), jibExtension, gradleProjectProperties);
 
-    BuildConfiguration buildConfiguration =
+    JibContainerBuilder jibContainerBuilder =
         pluginConfigurationProcessor
-            .getBuildConfigurationBuilder()
-            .setBaseImageConfiguration(
-                pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
-            .setTargetImageConfiguration(targetImageConfiguration)
-            .setAdditionalTargetImageTags(jibExtension.getTo().getTags())
-            .setContainerConfiguration(
-                pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
-            .setTargetFormat(jibExtension.getContainer().getFormat())
-            .build();
+            .getJibContainerBuilder()
+            // Only uses possibly non-Docker formats for build to registry.
+            .setFormat(jibExtension.getContainer().getFormat());
+
+    Containerizer containerizer = Containerizer.to(targetImage);
+    PluginConfigurationProcessor.configureContainerizer(
+        containerizer, jibExtension, gradleProjectProperties);
 
     HelpfulSuggestions helpfulSuggestions =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension)
-            .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+            .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
             .setBaseImageHasConfiguredCredentials(
                 pluginConfigurationProcessor.isBaseImageCredentialPresent())
-            .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+            .setTargetImageReference(targetImageReference)
             .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
             .build();
 
-    BuildStepsRunner.forBuildImage(buildConfiguration).build(helpfulSuggestions);
+    NBuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
+        .build(
+            jibContainerBuilder,
+            containerizer,
+            eventDispatcher,
+            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+            helpfulSuggestions);
   }
 
   @Override

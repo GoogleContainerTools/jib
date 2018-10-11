@@ -24,49 +24,62 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /** Tests for {@link LayerEntriesSelector}. */
 public class LayerEntriesSelectorTest {
 
-  private static final LayerEntry TEST_LAYER_ENTRY_1 =
-      new LayerEntry(Paths.get("source", "file"), AbsoluteUnixPath.get("/extraction/path"));
-  private static final LayerEntry TEST_LAYER_ENTRY_2 =
-      new LayerEntry(Paths.get("source", "file", "two"), AbsoluteUnixPath.get("/extraction/path"));
-  private static final LayerEntry TEST_LAYER_ENTRY_3 =
-      new LayerEntry(Paths.get("source", "gile"), AbsoluteUnixPath.get("/extraction/path"));
-  private static final LayerEntry TEST_LAYER_ENTRY_4 =
-      new LayerEntry(Paths.get("source", "gile"), AbsoluteUnixPath.get("/extraction/patha"));
-
-  private static final ImmutableList<LayerEntry> OUT_OF_ORDER_LAYER_ENTRIES =
-      ImmutableList.of(
-          TEST_LAYER_ENTRY_4, TEST_LAYER_ENTRY_2, TEST_LAYER_ENTRY_3, TEST_LAYER_ENTRY_1);
-  private static final ImmutableList<LayerEntry> IN_ORDER_LAYER_ENTRIES =
-      ImmutableList.of(
-          TEST_LAYER_ENTRY_1, TEST_LAYER_ENTRY_2, TEST_LAYER_ENTRY_3, TEST_LAYER_ENTRY_4);
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  private ImmutableList<LayerEntry> outOfOrderLayerEntries;
+  private ImmutableList<LayerEntry> inOrderLayerEntries;
 
   private static ImmutableList<LayerEntryTemplate> toLayerEntryTemplates(
-      ImmutableList<LayerEntry> layerEntries) {
-    return layerEntries
-        .stream()
-        .map(LayerEntryTemplate::new)
-        .collect(ImmutableList.toImmutableList());
+      ImmutableList<LayerEntry> layerEntries) throws IOException {
+    ImmutableList.Builder<LayerEntryTemplate> builder = ImmutableList.builder();
+    for (LayerEntry layerEntry : layerEntries) {
+      builder.add(new LayerEntryTemplate(layerEntry));
+    }
+    return builder.build();
+  }
+
+  @Before
+  public void setUp() throws IOException {
+    Path folder = temporaryFolder.newFolder().toPath();
+    Path file1 = Files.createDirectory(folder.resolve("files"));
+    Path file2 = Files.createFile(folder.resolve("files").resolve("two"));
+    Path file3 = Files.createFile(folder.resolve("gile"));
+
+    LayerEntry testLayerEntry1 = new LayerEntry(file1, AbsoluteUnixPath.get("/extraction/path"));
+    LayerEntry testLayerEntry2 = new LayerEntry(file2, AbsoluteUnixPath.get("/extraction/path"));
+    LayerEntry testLayerEntry3 = new LayerEntry(file3, AbsoluteUnixPath.get("/extraction/path"));
+    LayerEntry testLayerEntry4 = new LayerEntry(file3, AbsoluteUnixPath.get("/extraction/patha"));
+    outOfOrderLayerEntries =
+        ImmutableList.of(testLayerEntry4, testLayerEntry2, testLayerEntry3, testLayerEntry1);
+    inOrderLayerEntries =
+        ImmutableList.of(testLayerEntry1, testLayerEntry2, testLayerEntry3, testLayerEntry4);
   }
 
   @Test
-  public void testLayerEntryTemplate_compareTo() {
+  public void testLayerEntryTemplate_compareTo() throws IOException {
     Assert.assertEquals(
-        toLayerEntryTemplates(IN_ORDER_LAYER_ENTRIES),
-        ImmutableList.sortedCopyOf(toLayerEntryTemplates(OUT_OF_ORDER_LAYER_ENTRIES)));
+        toLayerEntryTemplates(inOrderLayerEntries),
+        ImmutableList.sortedCopyOf(toLayerEntryTemplates(outOfOrderLayerEntries)));
   }
 
   @Test
-  public void testToSortedJsonTemplates() {
+  public void testToSortedJsonTemplates() throws IOException {
     Assert.assertEquals(
-        toLayerEntryTemplates(IN_ORDER_LAYER_ENTRIES),
-        LayerEntriesSelector.toSortedJsonTemplates(OUT_OF_ORDER_LAYER_ENTRIES));
+        toLayerEntryTemplates(inOrderLayerEntries),
+        LayerEntriesSelector.toSortedJsonTemplates(outOfOrderLayerEntries));
   }
 
   @Test
@@ -82,10 +95,30 @@ public class LayerEntriesSelectorTest {
   @Test
   public void testGenerateSelector() throws IOException {
     DescriptorDigest expectedSelector =
-        JsonTemplateMapper.toBlob(toLayerEntryTemplates(IN_ORDER_LAYER_ENTRIES))
+        JsonTemplateMapper.toBlob(toLayerEntryTemplates(inOrderLayerEntries))
             .writeTo(ByteStreams.nullOutputStream())
             .getDigest();
     Assert.assertEquals(
-        expectedSelector, LayerEntriesSelector.generateSelector(OUT_OF_ORDER_LAYER_ENTRIES));
+        expectedSelector, LayerEntriesSelector.generateSelector(outOfOrderLayerEntries));
+  }
+
+  @Test
+  public void testGenerateSelector_fileModified() throws IOException {
+    Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
+    Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
+    Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
+    LayerEntry layerEntry = new LayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
+    DescriptorDigest expectedSelector =
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry));
+
+    // Verify that changing modified time generates a different selector
+    Files.setLastModifiedTime(layerFile, FileTime.from(Instant.ofEpochSecond(1)));
+    Assert.assertNotEquals(
+        expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry)));
+
+    // Verify that changing modified time back generates same selector
+    Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
+    Assert.assertEquals(
+        expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry)));
   }
 }

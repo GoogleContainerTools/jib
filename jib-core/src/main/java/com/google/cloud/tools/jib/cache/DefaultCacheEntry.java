@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.base.Preconditions;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Default implementation of {@link CacheEntry}. */
@@ -32,7 +31,6 @@ class DefaultCacheEntry implements CacheEntry {
     @Nullable private DescriptorDigest layerDiffId;
     private long layerSize = -1;
     @Nullable private Blob layerBlob;
-    @Nullable private Blob metadataBlob;
 
     private Builder() {}
 
@@ -56,17 +54,8 @@ class DefaultCacheEntry implements CacheEntry {
       return this;
     }
 
-    Builder setMetadataBlob(@Nullable Blob metadataBlob) {
-      this.metadataBlob = metadataBlob;
-      return this;
-    }
-
     boolean hasLayerBlob() {
       return layerBlob != null;
-    }
-
-    boolean hasMetadataBlob() {
-      return metadataBlob != null;
     }
 
     CacheEntry build() {
@@ -74,8 +63,7 @@ class DefaultCacheEntry implements CacheEntry {
           Preconditions.checkNotNull(layerDigest, "layerDigest required"),
           Preconditions.checkNotNull(layerDiffId, "layerDiffId required"),
           layerSize,
-          Preconditions.checkNotNull(layerBlob, "layerBlob required"),
-          metadataBlob);
+          Preconditions.checkNotNull(layerBlob, "layerBlob required"));
     }
   }
 
@@ -92,19 +80,13 @@ class DefaultCacheEntry implements CacheEntry {
   private final DescriptorDigest layerDiffId;
   private final long layerSize;
   private final Blob layerBlob;
-  @Nullable private final Blob metadataBlob;
 
   private DefaultCacheEntry(
-      DescriptorDigest layerDigest,
-      DescriptorDigest layerDiffId,
-      long layerSize,
-      Blob layerBlob,
-      @Nullable Blob metadataBlob) {
+      DescriptorDigest layerDigest, DescriptorDigest layerDiffId, long layerSize, Blob layerBlob) {
     this.layerDigest = layerDigest;
     this.layerDiffId = layerDiffId;
     this.layerSize = layerSize;
     this.layerBlob = layerBlob;
-    this.metadataBlob = metadataBlob;
   }
 
   @Override
@@ -125,10 +107,5 @@ class DefaultCacheEntry implements CacheEntry {
   @Override
   public Blob getLayerBlob() {
     return layerBlob;
-  }
-
-  @Override
-  public Optional<Blob> getMetadataBlob() {
-    return Optional.ofNullable(metadataBlob);
   }
 }
