@@ -3,10 +3,6 @@
 
 set -e
 
-Colorize() {
-  echo "$(tput setff $2)$1$(tput sgr0)"
-}
-
 EchoRed() {
   echo "$(tput setaf 1; tput bold)$1$(tput sgr0)"
 }
@@ -28,13 +24,13 @@ CheckVersion() {
   [[ $1 =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+)?$ ]] || Die "Version: $1 not in ###.###.###[-XXX] format."
 }
 
-[ $# -ne 2 ] || [ $# -ne 3 ] || DieUsage
+[ $# -ne 1 ] && [ $# -ne 2 ] && DieUsage
 
 EchoGreen '===== RELEASE SETUP SCRIPT ====='
 
 VERSION=$1
 CheckVersion ${VERSION}
-if [ $2 ]; then
+if [ -n "$2" ]; then
   POST_RELEASE_VERSION=$2
   CheckVersion ${POST_RELEASE_VERSION}
 fi
