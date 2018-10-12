@@ -43,7 +43,19 @@ public class BuildDockerMojoIntegrationTest {
       new TestProject(testPlugin, "default-target");
 
   @ClassRule
-  public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
+  public static final TestProject brokenUserTestProject =
+      new TestProject(testPlugin, "broken_user");
+
+  private static void buildToDockerDaemon(Path projectRoot, String imageReference)
+      throws VerificationException {
+    Verifier verifier = new Verifier(projectRoot.toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
+    verifier.setAutoclean(false);
+    verifier.executeGoal("package");
+
+    verifier.executeGoal("jib:dockerBuild");
+    verifier.verifyErrorFreeLog();
+  }
 
   /**
    * Builds and runs jib:buildDocker on a project at {@code projectRoot} pushing to {@code
@@ -51,13 +63,7 @@ public class BuildDockerMojoIntegrationTest {
    */
   private static String buildToDockerDaemonAndRun(Path projectRoot, String imageReference)
       throws VerificationException, IOException, InterruptedException {
-    Verifier verifier = new Verifier(projectRoot.toString());
-    verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
-    verifier.setAutoclean(false);
-    verifier.executeGoal("package");
-
-    verifier.executeGoal("jib:" + BuildDockerMojo.GOAL_NAME);
-    verifier.verifyErrorFreeLog();
+    buildToDockerDaemon(projectRoot, imageReference);
 
     String dockerInspect = new Command("docker", "inspect", imageReference).run();
     Assert.assertThat(
@@ -116,6 +122,26 @@ public class BuildDockerMojoIntegrationTest {
 
   @Test
   public void testExecute_skipJibGoal() throws VerificationException, IOException {
-    SkippedGoalVerifier.verifyGoalIsSkipped(skippedTestProject, BuildDockerMojo.GOAL_NAME);
+    SkippedGoalVerifier.verifyGoalIsSkipped(emptyTestProject, BuildDockerMojo.GOAL_NAME);
+  }
+
+  @Test
+  public void testExecute_userNumeric()
+      throws VerificationException, IOException, InterruptedException {
+    String targetImage = "emptyimage:maven" + System.nanoTime();
+    buildToDockerDaemon(emptyTestProject.getProjectRoot(), targetImage);
+    Assert.assertEquals(
+        "12345:54321",
+        new Command("docker", "inspect", "-f", "{{.Config.User}}", targetImage).run().trim());
+  }
+
+  @Test
+  public void testExecute_userNames()
+      throws VerificationException, IOException, InterruptedException {
+    String targetImage = "brokenuserimage:maven" + System.nanoTime();
+    buildToDockerDaemon(brokenUserTestProject.getProjectRoot(), targetImage);
+    Assert.assertEquals(
+        "myuser:mygroup",
+        new Command("docker", "inspect", "-f", "{{.Config.User}}", targetImage).run().trim());
   }
 }

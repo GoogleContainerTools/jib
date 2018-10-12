@@ -92,4 +92,13 @@ public class EmptyProjectIntegrationTest {
         new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
     assertDockerInspect(targetImage);
   }
+
+  @Test
+  public void testDockerDaemon_userNumeric() throws IOException, InterruptedException {
+    String targetImage = "emptyimage:gradle" + System.nanoTime();
+    JibRunHelper.buildToDockerDaemon(emptyTestProject, targetImage);
+    Assert.assertEquals(
+        "12345:54321",
+        new Command("docker", "inspect", "-f", "{{.Config.User}}", targetImage).run().trim());
+  }
 }
