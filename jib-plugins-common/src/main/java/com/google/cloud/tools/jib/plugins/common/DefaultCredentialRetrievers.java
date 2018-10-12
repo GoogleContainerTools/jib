@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
+import java.io.FileNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -97,7 +98,7 @@ public class DefaultCredentialRetrievers {
    * credential helper suffix (following {@code docker-credential-}).
    *
    * @param credentialHelper the path to a credential helper, or a credential helper suffix
-   *     (following {@code docker-credential-}) if the path doesn't exist.
+   *     (following {@code docker-credential-}).
    * @return this
    */
   public DefaultCredentialRetrievers setCredentialHelper(@Nullable String credentialHelper) {
@@ -109,17 +110,24 @@ public class DefaultCredentialRetrievers {
    * Makes a list of {@link CredentialRetriever}s.
    *
    * @return the list of {@link CredentialRetriever}s
+   * @throws FileNotFoundException if a credential helper path is specified, but the file doesn't
+   *     exist
    */
-  public List<CredentialRetriever> asList() {
+  public List<CredentialRetriever> asList() throws FileNotFoundException {
     List<CredentialRetriever> credentialRetrievers = new ArrayList<>();
     if (knownCredentialRetriever != null) {
       credentialRetrievers.add(knownCredentialRetriever);
     }
     if (credentialHelper != null) {
-      if (credentialHelper.contains(FileSystems.getDefault().getSeparator())
-          && Files.exists(Paths.get(credentialHelper))) {
-        credentialRetrievers.add(
-            credentialRetrieverFactory.dockerCredentialHelper(credentialHelper));
+      // If credential helper contains file separator, treat as path; otherwise treat as suffix
+      if (credentialHelper.contains(FileSystems.getDefault().getSeparator())) {
+        if (Files.exists(Paths.get(credentialHelper))) {
+          credentialRetrievers.add(
+              credentialRetrieverFactory.dockerCredentialHelper(credentialHelper));
+        } else {
+          throw new FileNotFoundException(
+              "Specified credential helper was not found: " + credentialHelper);
+        }
       } else {
         credentialRetrievers.add(
             credentialRetrieverFactory.dockerCredentialHelper(
