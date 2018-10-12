@@ -105,22 +105,6 @@ public class DefaultCacheStorageReaderTest {
     Assert.assertEquals(layerDiffId, optionalCacheEntry.get().getLayerDiffId());
     Assert.assertEquals("layerBlob".length(), optionalCacheEntry.get().getLayerSize());
     Assert.assertEquals("layerBlob", Blobs.writeToString(optionalCacheEntry.get().getLayerBlob()));
-    Assert.assertFalse(optionalCacheEntry.get().getMetadataBlob().isPresent());
-
-    // Adds a metadata file.
-    Blobs.writeToFileWithLock(
-        Blobs.from("metadata"), defaultCacheStorageFiles.getMetadataFile(layerDigest));
-
-    // Checks that the CacheEntry is retrieved correctly with the metadata.
-    optionalCacheEntry = defaultCacheStorageReader.retrieve(layerDigest);
-    Assert.assertTrue(optionalCacheEntry.isPresent());
-    Assert.assertEquals(layerDigest, optionalCacheEntry.get().getLayerDigest());
-    Assert.assertEquals(layerDiffId, optionalCacheEntry.get().getLayerDiffId());
-    Assert.assertEquals("layerBlob".length(), optionalCacheEntry.get().getLayerSize());
-    Assert.assertEquals("layerBlob", Blobs.writeToString(optionalCacheEntry.get().getLayerBlob()));
-    Assert.assertTrue(optionalCacheEntry.get().getMetadataBlob().isPresent());
-    Assert.assertEquals(
-        "metadata", Blobs.writeToString(optionalCacheEntry.get().getMetadataBlob().get()));
 
     // Checks that multiple .layer files means the cache is corrupted.
     Files.createFile(defaultCacheStorageFiles.getLayerFile(layerDigest, layerDigest));

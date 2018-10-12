@@ -25,10 +25,12 @@ import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -64,6 +66,9 @@ public class JibContainerBuilder {
   private Map<String, String> labels = new HashMap<>();
   @Nullable private ImmutableList<String> entrypoint;
   @Nullable private ImmutableList<String> programArguments;
+  private ImageFormat imageFormat = ImageFormat.Docker;
+  private Instant creationTime = Instant.EPOCH;
+  @Nullable private String user;
 
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(SourceImage baseImage) {
@@ -306,6 +311,52 @@ public class JibContainerBuilder {
   }
 
   /**
+   * Sets the format to build the container image as. Use {@link ImageFormat#Docker} for Docker V2.2
+   * or {@link ImageFormat#OCI} for OCI.
+   *
+   * @param imageFormat the {@link ImageFormat}
+   * @return this
+   */
+  public JibContainerBuilder setFormat(ImageFormat imageFormat) {
+    this.imageFormat = imageFormat;
+    return this;
+  }
+
+  /**
+   * Sets the container image creation time. The default is {@link Instant#EPOCH}.
+   *
+   * @param creationTime the container image creation time
+   * @return this
+   */
+  public JibContainerBuilder setCreationTime(Instant creationTime) {
+    this.creationTime = creationTime;
+    return this;
+  }
+
+  /**
+   * Sets the user and group to run the container as. {@code user} can be a username or UID along
+   * with an optional groupname or GID.
+   *
+   * <p>The following are valid formats for {@code user}
+   *
+   * <ul>
+   *   <li>{@code user}
+   *   <li>{@code uid}
+   *   <li>{@code user:group}
+   *   <li>{@code uid:gid}
+   *   <li>{@code uid:group}
+   *   <li>{@code user:gid}
+   * </ul>
+   *
+   * @param user the user to run the container as
+   * @return this
+   */
+  public JibContainerBuilder setUser(@Nullable String user) {
+    this.user = user;
+    return this;
+  }
+
+  /**
    * Builds the container(s).
    *
    * @param containerizer the {@link Containerizer} that configures how to containerize
@@ -343,11 +394,14 @@ public class JibContainerBuilder {
     buildConfigurationBuilder
         .setBaseImageConfiguration(baseImage.toImageConfiguration())
         .setTargetImageConfiguration(containerizer.getTargetImage().toImageConfiguration())
+        .setAdditionalTargetImageTags(containerizer.getAdditionalTags())
         .setBaseImageLayersCacheDirectory(containerizer.getBaseImageLayersCacheDirectory())
         .setApplicationLayersCacheDirectory(containerizer.getApplicationLayersCacheDirectory())
         .setContainerConfiguration(toContainerConfiguration())
         .setLayerConfigurations(layerConfigurations)
-        .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries());
+        .setTargetFormat(imageFormat.getManifestTemplateClass())
+        .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
+        .setToolName(containerizer.getToolName());
 
     containerizer.getExecutorService().ifPresent(buildConfigurationBuilder::setExecutorService);
 
@@ -357,9 +411,6 @@ public class JibContainerBuilder {
             eventHandlers ->
                 buildConfigurationBuilder.setEventDispatcher(
                     new DefaultEventDispatcher(eventHandlers)));
-
-    // TODO: Allow users to configure this.
-    buildConfigurationBuilder.setToolName("jib-core");
 
     return buildConfigurationBuilder.build();
   }
@@ -372,6 +423,8 @@ public class JibContainerBuilder {
         .setEnvironment(environment)
         .setExposedPorts(ports)
         .setLabels(labels)
+        .setCreationTime(creationTime)
+        .setUser(user)
         .build();
   }
 }

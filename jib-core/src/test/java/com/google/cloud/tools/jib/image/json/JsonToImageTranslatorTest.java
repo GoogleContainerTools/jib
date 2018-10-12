@@ -183,5 +183,6 @@ public class JsonToImageTranslatorTest {
     Assert.assertEquals("/some/workspace", image.getWorkingDirectory());
     Assert.assertEquals(
         ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)), image.getExposedPorts());
+    Assert.assertEquals("tomcat", image.getUser());
   }
 }

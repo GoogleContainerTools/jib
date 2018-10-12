@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
@@ -66,7 +64,7 @@ public class MavenProjectProperties implements ProjectProperties {
     try {
       return new MavenProjectProperties(
           project,
-          makeEventDispatcher(log),
+          makeEventHandlers(log),
           MavenLayerConfigurations.getForProject(project, extraDirectory, appRoot));
 
     } catch (IOException ex) {
@@ -78,24 +76,23 @@ public class MavenProjectProperties implements ProjectProperties {
     }
   }
 
-  private static EventDispatcher makeEventDispatcher(Log log) {
-    return new DefaultEventDispatcher(
-        new EventHandlers()
-            .add(JibEventType.LOGGING, new LogEventHandler(log))
-            .add(JibEventType.TIMING, new TimerEventHandler(log::debug)));
+  private static EventHandlers makeEventHandlers(Log log) {
+    return new EventHandlers()
+        .add(JibEventType.LOGGING, new LogEventHandler(log))
+        .add(JibEventType.TIMING, new TimerEventHandler(log::debug));
   }
 
   private final MavenProject project;
-  private final EventDispatcher eventDispatcher;
+  private final EventHandlers eventHandlers;
   private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   MavenProjectProperties(
       MavenProject project,
-      EventDispatcher eventDispatcher,
+      EventHandlers eventHandlers,
       JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
-    this.eventDispatcher = eventDispatcher;
+    this.eventHandlers = eventHandlers;
     this.javaLayerConfigurations = javaLayerConfigurations;
   }
 
@@ -105,8 +102,8 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public EventDispatcher getEventDispatcher() {
-    return eventDispatcher;
+  public EventHandlers getEventHandlers() {
+    return eventHandlers;
   }
 
   @Override

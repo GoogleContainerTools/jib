@@ -38,9 +38,10 @@ public class Image<T extends Layer> {
 
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
-    @Nullable private ImmutableList<String> javaArguments;
+    @Nullable private ImmutableList<String> programArguments;
     @Nullable private ImmutableList<Port> exposedPorts;
     @Nullable private String workingDirectory;
+    @Nullable private String user;
 
     /**
      * Sets the image creation time.
@@ -90,13 +91,25 @@ public class Image<T extends Layer> {
     }
 
     /**
-     * Sets the items in the "Cmd" field in the container configuration (i.e. the main args).
+     * Sets the user/group to run the container as.
      *
-     * @param javaArguments the list of main args to add
+     * @param user the username/UID and optionally the groupname/GID
      * @return this
      */
-    public Builder<T> setJavaArguments(@Nullable List<String> javaArguments) {
-      this.javaArguments = (javaArguments == null) ? null : ImmutableList.copyOf(javaArguments);
+    public Builder<T> setUser(@Nullable String user) {
+      this.user = user;
+      return this;
+    }
+
+    /**
+     * Sets the items in the "Cmd" field in the container configuration.
+     *
+     * @param programArguments the list of arguments to append to the image entrypoint
+     * @return this
+     */
+    public Builder<T> setProgramArguments(@Nullable List<String> programArguments) {
+      this.programArguments =
+          (programArguments == null) ? null : ImmutableList.copyOf(programArguments);
       return this;
     }
 
@@ -177,10 +190,11 @@ public class Image<T extends Layer> {
           historyBuilder.build(),
           environmentBuilder.build(),
           entrypoint,
-          javaArguments,
+          programArguments,
           exposedPorts,
           labelsBuilder.build(),
-          workingDirectory);
+          workingDirectory,
+          user);
     }
   }
 
@@ -203,8 +217,8 @@ public class Image<T extends Layer> {
   /** Initial command to run when running the image. */
   @Nullable private final ImmutableList<String> entrypoint;
 
-  /** Arguments to pass into main when running the image. */
-  @Nullable private final ImmutableList<String> javaArguments;
+  /** Arguments to append to the image entrypoint when running the image. */
+  @Nullable private final ImmutableList<String> programArguments;
 
   /** Ports that the container listens on. */
   @Nullable private final ImmutableList<Port> exposedPorts;
@@ -215,25 +229,30 @@ public class Image<T extends Layer> {
   /** Working directory on the container configuration */
   @Nullable private final String workingDirectory;
 
+  /** User on the container configuration */
+  @Nullable private final String user;
+
   private Image(
       @Nullable Instant created,
       ImageLayers<T> layers,
       ImmutableList<HistoryEntry> history,
       @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
-      @Nullable ImmutableList<String> javaArguments,
+      @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableList<Port> exposedPorts,
       @Nullable ImmutableMap<String, String> labels,
-      @Nullable String workingDirectory) {
+      @Nullable String workingDirectory,
+      @Nullable String user) {
     this.created = created;
     this.layers = layers;
     this.history = history;
     this.environment = environment;
     this.entrypoint = entrypoint;
-    this.javaArguments = javaArguments;
+    this.programArguments = programArguments;
     this.exposedPorts = exposedPorts;
     this.labels = labels;
     this.workingDirectory = workingDirectory;
+    this.user = user;
   }
 
   @Nullable
@@ -252,8 +271,8 @@ public class Image<T extends Layer> {
   }
 
   @Nullable
-  public ImmutableList<String> getJavaArguments() {
-    return javaArguments;
+  public ImmutableList<String> getProgramArguments() {
+    return programArguments;
   }
 
   @Nullable
@@ -269,6 +288,11 @@ public class Image<T extends Layer> {
   @Nullable
   public String getWorkingDirectory() {
     return workingDirectory;
+  }
+
+  @Nullable
+  public String getUser() {
+    return user;
   }
 
   public ImmutableList<T> getLayers() {

@@ -16,9 +16,13 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.DockerDaemonImage;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -68,42 +72,45 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
-      ImageReference targetImage =
+      EventDispatcher eventDispatcher =
+          new DefaultEventDispatcher(mavenProjectProperties.getEventHandlers());
+      ImageReference targetImageReference =
           ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
               getTargetImage(),
-              mavenProjectProperties.getEventDispatcher(),
+              eventDispatcher,
               getProject().getName(),
               getProject().getVersion(),
               mavenHelpfulSuggestionsBuilder.build());
+      DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfiguration(
               getLog(), this, mavenProjectProperties);
 
-      BuildConfiguration buildConfiguration =
-          pluginConfigurationProcessor
-              .getBuildConfigurationBuilder()
-              .setBaseImageConfiguration(
-                  pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
-              .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
-              .setAdditionalTargetImageTags(getTargetImageAdditionalTags())
-              .setContainerConfiguration(
-                  pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
-              .build();
+      JibContainerBuilder jibContainerBuilder =
+          pluginConfigurationProcessor.getJibContainerBuilder();
+      Containerizer containerizer = Containerizer.to(targetImage);
+      PluginConfigurationProcessor.configureContainerizer(
+          containerizer, this, mavenProjectProperties);
 
       HelpfulSuggestions helpfulSuggestions =
           mavenHelpfulSuggestionsBuilder
-              .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
               .setBaseImageHasConfiguredCredentials(
                   pluginConfigurationProcessor.isBaseImageCredentialPresent())
-              .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+              .setTargetImageReference(targetImageReference)
               .build();
 
-      BuildStepsRunner.forBuildToDockerDaemon(DOCKER_CLIENT, buildConfiguration)
-          .build(helpfulSuggestions);
+      BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
+          .build(
+              jibContainerBuilder,
+              containerizer,
+              eventDispatcher,
+              mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              helpfulSuggestions);
       getLog().info("");
 
-    } catch (InvalidImageReferenceException | IOException ex) {
+    } catch (InvalidImageReferenceException | IOException | CacheDirectoryCreationException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {

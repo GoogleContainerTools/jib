@@ -139,6 +139,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private Map<String, String> labels = Collections.emptyMap();
 
     @Parameter private String appRoot = "";
+
+    @Nullable @Parameter private String user;
   }
 
   @Nullable
@@ -316,7 +318,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the configured environment variables
    */
-  @Nullable
   Map<String, String> getEnvironment() {
     if (System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT) != null) {
       return ConfigurationPropertyValidator.parseMapProperty(
@@ -336,6 +337,19 @@ abstract class JibPluginConfiguration extends AbstractMojo {
       return System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS);
     }
     return container.mainClass;
+  }
+
+  /**
+   * Gets the username or UID which the process in the container should run as.
+   *
+   * @return the configured main class name
+   */
+  @Nullable
+  String getUser() {
+    if (System.getProperty(PropertyNames.CONTAINER_USER) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_USER);
+    }
+    return container.user;
   }
 
   /**

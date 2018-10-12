@@ -32,7 +32,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.security.DigestException;
 import java.time.Instant;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import org.junit.Assert;
@@ -85,11 +84,6 @@ public class BuildImageStepTest {
           public Blob getLayerBlob() {
             return Blobs.from("ignored");
           }
-
-          @Override
-          public Optional<Blob> getMetadataBlob() {
-            return Optional.empty();
-          }
         };
 
     Mockito.when(mockBuildConfiguration.getEventDispatcher()).thenReturn(mockEventDispatcher);
@@ -101,6 +95,7 @@ public class BuildImageStepTest {
     Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(ImmutableList.of());
     Mockito.when(mockContainerConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
+    Mockito.when(mockContainerConfiguration.getUser()).thenReturn("root");
 
     nonEmptyLayerHistory =
         HistoryEntry.builder()
@@ -184,6 +179,7 @@ public class BuildImageStepTest {
         ImmutableMap.of("base.label", "base.label.value", "my.label", "my.label.value"),
         image.getLabels());
     Assert.assertEquals("/base/working/directory", image.getWorkingDirectory());
+    Assert.assertEquals("root", image.getUser());
 
     Assert.assertEquals(image.getHistory().get(0), nonEmptyLayerHistory);
     Assert.assertEquals(image.getHistory().get(1), emptyLayerHistory);

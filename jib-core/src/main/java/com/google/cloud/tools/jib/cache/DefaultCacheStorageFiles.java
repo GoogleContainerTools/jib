@@ -24,7 +24,6 @@ import java.security.DigestException;
 class DefaultCacheStorageFiles {
 
   private static final String LAYERS_DIRECTORY = "layers";
-  private static final String METADATA_FILENAME = "metadata";
   private static final String SELECTORS_DIRECTORY = "selectors";
   private static final String TEMPORARY_DIRECTORY = "tmp";
   private static final String TEMPORARY_LAYER_FILE_NAME = ".tmp.layer";
@@ -37,16 +36,6 @@ class DefaultCacheStorageFiles {
    */
   static boolean isLayerFile(Path file) {
     return file.getFileName().toString().length() == DescriptorDigest.HASH_LENGTH;
-  }
-
-  /**
-   * Returns whether or not {@code file} is a metadata file.
-   *
-   * @param file the file to check
-   * @return {@code true} if {@code file} is a metadata file; {@code false} otherwise
-   */
-  static boolean isMetadataFile(Path file) {
-    return METADATA_FILENAME.equals(file.getFileName().toString());
   }
 
   /**
@@ -93,25 +82,6 @@ class DefaultCacheStorageFiles {
    */
   String getLayerFilename(DescriptorDigest layerDiffId) {
     return layerDiffId.getHash();
-  }
-
-  /**
-   * Resolves the layer metadata file.
-   *
-   * @param layerDigest the layer digest
-   * @return the layer metadata file
-   */
-  Path getMetadataFile(DescriptorDigest layerDigest) {
-    return getLayerDirectory(layerDigest).resolve(METADATA_FILENAME);
-  }
-
-  /**
-   * Gets the filename for the metadata file.
-   *
-   * @return the filename for the metadata file
-   */
-  String getMetadataFilename() {
-    return METADATA_FILENAME;
   }
 
   /**

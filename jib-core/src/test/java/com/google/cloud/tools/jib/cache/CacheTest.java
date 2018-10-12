@@ -158,8 +158,8 @@ public class CacheTest {
       throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1NoMetadata(cache.writeCompressedLayer(compress(layerBlob1)));
-    verifyIsLayer1NoMetadata(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
+    verifyIsLayer1(cache.writeCompressedLayer(compress(layerBlob1)));
+    verifyIsLayer1(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
   }
 
@@ -168,8 +168,8 @@ public class CacheTest {
       throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1WithMetadata(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
-    verifyIsLayer1WithMetadata(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
+    verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
+    verifyIsLayer1(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
   }
 
@@ -178,8 +178,8 @@ public class CacheTest {
       throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1WithMetadata(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
-    verifyIsLayer1WithMetadata(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
+    verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
+    verifyIsLayer1(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
 
     // A source file modification results in the cached layer to be out-of-date and not retrieved.
@@ -192,44 +192,16 @@ public class CacheTest {
   public void testRetrieveWithTwoEntriesInCache() throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1WithMetadata(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
-    verifyIsLayer2WithMetadata(cache.writeUncompressedLayer(layerBlob2, layerEntries2));
-    verifyIsLayer1WithMetadata(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
-    verifyIsLayer2WithMetadata(cache.retrieve(layerDigest2).orElseThrow(AssertionError::new));
-    verifyIsLayer1WithMetadata(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
-    verifyIsLayer2WithMetadata(cache.retrieve(layerEntries2).orElseThrow(AssertionError::new));
+    verifyIsLayer1(cache.writeUncompressedLayer(layerBlob1, layerEntries1));
+    verifyIsLayer2(cache.writeUncompressedLayer(layerBlob2, layerEntries2));
+    verifyIsLayer1(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
+    verifyIsLayer2(cache.retrieve(layerDigest2).orElseThrow(AssertionError::new));
+    verifyIsLayer1(cache.retrieve(layerEntries1).orElseThrow(AssertionError::new));
+    verifyIsLayer2(cache.retrieve(layerEntries2).orElseThrow(AssertionError::new));
   }
 
   /**
-   * Verifies that {@code cacheEntry} corresponds to the first fake layer in {@link #setUp}, and
-   * that no metadata was written.
-   *
-   * @param cacheEntry the {@link CacheEntry} to verify
-   * @throws IOException if an I/O exception occurs
-   */
-  private void verifyIsLayer1NoMetadata(CacheEntry cacheEntry) throws IOException {
-    verifyIsLayer1(cacheEntry);
-    Assert.assertFalse(cacheEntry.getMetadataBlob().isPresent());
-  }
-
-  /**
-   * Verifies that {@code cacheEntry} corresponds to the first fake layer in {@link #setUp}, and
-   * that its metadata was written.
-   *
-   * @param cacheEntry the {@link CacheEntry} to verify
-   * @throws IOException if an I/O exception occurs
-   */
-  private void verifyIsLayer1WithMetadata(CacheEntry cacheEntry) throws IOException {
-    verifyIsLayer1(cacheEntry);
-    Assert.assertTrue(cacheEntry.getMetadataBlob().isPresent());
-    Assert.assertEquals(
-        Blobs.writeToString(LastModifiedTimeMetadata.generateMetadata(layerEntries1)),
-        Blobs.writeToString(cacheEntry.getMetadataBlob().get()));
-  }
-
-  /**
-   * Verifies that {@code cacheEntry} corresponds to the first fake layer in {@link #setUp}. Does
-   * not check the metadata.
+   * Verifies that {@code cacheEntry} corresponds to the first fake layer in {@link #setUp}.
    *
    * @param cacheEntry the {@link CacheEntry} to verify
    * @throws IOException if an I/O exception occurs
@@ -242,20 +214,15 @@ public class CacheTest {
   }
 
   /**
-   * Verifies that {@code cacheEntry} corresponds to the second fake layer in {@link #setUp}, and
-   * that its metadata was written.
+   * Verifies that {@code cacheEntry} corresponds to the second fake layer in {@link #setUp}.
    *
    * @param cacheEntry the {@link CacheEntry} to verify
    * @throws IOException if an I/O exception occurs
    */
-  private void verifyIsLayer2WithMetadata(CacheEntry cacheEntry) throws IOException {
+  private void verifyIsLayer2(CacheEntry cacheEntry) throws IOException {
     Assert.assertEquals("layerBlob2", Blobs.writeToString(decompress(cacheEntry.getLayerBlob())));
     Assert.assertEquals(layerDigest2, cacheEntry.getLayerDigest());
     Assert.assertEquals(layerDiffId2, cacheEntry.getLayerDiffId());
     Assert.assertEquals(layerSize2, cacheEntry.getLayerSize());
-    Assert.assertTrue(cacheEntry.getMetadataBlob().isPresent());
-    Assert.assertEquals(
-        Blobs.writeToString(LastModifiedTimeMetadata.generateMetadata(layerEntries2)),
-        Blobs.writeToString(cacheEntry.getMetadataBlob().get()));
   }
 }

@@ -182,8 +182,7 @@ public class DockerClientTest {
   }
 
   @Test
-  public void testTag_fail()
-      throws InterruptedException, IOException, InvalidImageReferenceException {
+  public void testTag_fail() throws InterruptedException, InvalidImageReferenceException {
     DockerClient testDockerClient =
         new DockerClient(
             subcommand -> {
