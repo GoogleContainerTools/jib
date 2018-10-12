@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Removed deprecated `<jvmFlags>`, `<mainClass>`, `<args>`, and `<format>` in favor of the equivalents under `<container>` ([#461](https://github.com/GoogleContainerTools/jib/issues/461))
-- `jib:exportDockerContext` generates different directory layout and `Dockerfile`.
+- `jib:exportDockerContext` generates different directory layout and `Dockerfile`
 - `container.user` configuration parameter to configure the user and group to run the container as ([#1029](https://github.com/GoogleContainerTools/jib/issues/1029))
 
 ### Fixed
