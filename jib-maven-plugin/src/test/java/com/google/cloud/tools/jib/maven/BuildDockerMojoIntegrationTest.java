@@ -42,15 +42,12 @@ public class BuildDockerMojoIntegrationTest {
   public static final TestProject defaultTargetTestProject =
       new TestProject(testPlugin, "default-target");
 
-  @ClassRule
-  public static final TestProject brokenUserTestProject =
-      new TestProject(testPlugin, "broken_user");
-
-  private static void buildToDockerDaemon(Path projectRoot, String imageReference)
+  private static void buildToDockerDaemon(Path projectRoot, String imageReference, String pomXml)
       throws VerificationException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setAutoclean(false);
+    verifier.addCliOption("--file=" + pomXml);
     verifier.executeGoal("package");
 
     verifier.executeGoal("jib:dockerBuild");
@@ -63,7 +60,7 @@ public class BuildDockerMojoIntegrationTest {
    */
   private static String buildToDockerDaemonAndRun(Path projectRoot, String imageReference)
       throws VerificationException, IOException, InterruptedException {
-    buildToDockerDaemon(projectRoot, imageReference);
+    buildToDockerDaemon(projectRoot, imageReference, "pom.xml");
 
     String dockerInspect = new Command("docker", "inspect", imageReference).run();
     Assert.assertThat(
@@ -129,7 +126,7 @@ public class BuildDockerMojoIntegrationTest {
   public void testExecute_userNumeric()
       throws VerificationException, IOException, InterruptedException {
     String targetImage = "emptyimage:maven" + System.nanoTime();
-    buildToDockerDaemon(emptyTestProject.getProjectRoot(), targetImage);
+    buildToDockerDaemon(emptyTestProject.getProjectRoot(), targetImage, "pom.xml");
     Assert.assertEquals(
         "12345:54321",
         new Command("docker", "inspect", "-f", "{{.Config.User}}", targetImage).run().trim());
@@ -139,7 +136,7 @@ public class BuildDockerMojoIntegrationTest {
   public void testExecute_userNames()
       throws VerificationException, IOException, InterruptedException {
     String targetImage = "brokenuserimage:maven" + System.nanoTime();
-    buildToDockerDaemon(brokenUserTestProject.getProjectRoot(), targetImage);
+    buildToDockerDaemon(emptyTestProject.getProjectRoot(), targetImage, "pom-broken-user.xml");
     Assert.assertEquals(
         "myuser:mygroup",
         new Command("docker", "inspect", "-f", "{{.Config.User}}", targetImage).run().trim());

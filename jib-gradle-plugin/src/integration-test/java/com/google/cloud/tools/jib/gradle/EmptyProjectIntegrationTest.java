@@ -96,9 +96,18 @@ public class EmptyProjectIntegrationTest {
   @Test
   public void testDockerDaemon_userNumeric() throws IOException, InterruptedException {
     String targetImage = "emptyimage:gradle" + System.nanoTime();
-    JibRunHelper.buildToDockerDaemon(emptyTestProject, targetImage);
+    JibRunHelper.buildToDockerDaemon(emptyTestProject, targetImage, "build.gradle");
     Assert.assertEquals(
         "12345:54321",
+        new Command("docker", "inspect", "-f", "{{.Config.User}}", targetImage).run().trim());
+  }
+
+  @Test
+  public void testDockerDaemon_userNames() throws IOException, InterruptedException {
+    String targetImage = "brokenuserimage:gradle" + System.nanoTime();
+    JibRunHelper.buildToDockerDaemon(emptyTestProject, targetImage, "build-broken-user.gradle");
+    Assert.assertEquals(
+        "myuser:mygroup",
         new Command("docker", "inspect", "-f", "{{.Config.User}}", targetImage).run().trim());
   }
 }
