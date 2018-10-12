@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -115,7 +116,7 @@ public class DefaultCredentialRetrievers {
       credentialRetrievers.add(knownCredentialRetriever);
     }
     if (credentialHelper != null) {
-      if ((credentialHelper.contains("/") || credentialHelper.contains("\\"))
+      if ((credentialHelper.contains(FileSystems.getDefault().getSeparator()))
           && Files.exists(Paths.get(credentialHelper))) {
         credentialRetrievers.add(
             credentialRetrieverFactory.dockerCredentialHelper(credentialHelper));
