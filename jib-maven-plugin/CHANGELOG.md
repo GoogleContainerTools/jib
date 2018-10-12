@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Removed deprecated `<jvmFlags>`, `<mainClass>`, `<args>`, and `<format>` in favor of the equivalents under `<container>` ([#461](https://github.com/GoogleContainerTools/jib/issues/461))
-- `jib:exportDockerContext` generates different directory layout in `target/jib-docker-context` than before, and the content of the generated `Dockerfile` has also been changed accordingly
+- `jib:exportDockerContext` generates different directory layout and `Dockerfile` to enable WAR support ([#1007](https://github.com/GoogleContainerTools/jib/pull/1007))
 - File timestamps in the build image are set to 1 second since the epoch (hence 1970-01-01T00:00:01Z) to resolve compatibility with applications on Java 6 or below where the epoch means nonexistent or I/O errors; previously they were set to the epoch ([#1079](https://github.com/GoogleContainerTools/jib/issues/1079))
 
 ### Fixed
