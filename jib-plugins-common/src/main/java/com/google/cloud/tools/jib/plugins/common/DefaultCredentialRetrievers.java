@@ -116,7 +116,7 @@ public class DefaultCredentialRetrievers {
       credentialRetrievers.add(knownCredentialRetriever);
     }
     if (credentialHelper != null) {
-      if ((credentialHelper.contains(FileSystems.getDefault().getSeparator()))
+      if (credentialHelper.contains(FileSystems.getDefault().getSeparator())
           && Files.exists(Paths.get(credentialHelper))) {
         credentialRetrievers.add(
             credentialRetrieverFactory.dockerCredentialHelper(credentialHelper));
