@@ -75,15 +75,25 @@ public class JibRunHelper {
     assertCreationTimeEpoch(additionalImageReference);
   }
 
-  static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
+  static void buildToDockerDaemon(
+      TestProject testProject, String imageReference, String gradleBuildFile)
       throws IOException, InterruptedException {
     BuildResult buildResult =
-        testProject.build("clean", "jibDockerBuild", "-D_TARGET_IMAGE=" + imageReference);
+        testProject.build(
+            "clean",
+            "jibDockerBuild",
+            "-D_TARGET_IMAGE=" + imageReference,
+            "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+  }
+
+  static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
+      throws IOException, InterruptedException {
+    buildToDockerDaemon(testProject, imageReference, "build.gradle");
     return new Command("docker", "run", "--rm", imageReference).run();
   }
 
