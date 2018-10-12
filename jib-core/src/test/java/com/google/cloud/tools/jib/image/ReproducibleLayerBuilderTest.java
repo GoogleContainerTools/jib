@@ -34,6 +34,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
+import java.time.Instant;
+import java.util.Date;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.hamcrest.CoreMatchers;
@@ -178,6 +180,27 @@ public class ReproducibleLayerBuilderTest {
     byte[] reproducedLayerContent = Blobs.writeToByteArray(reproduced);
 
     Assert.assertThat(layerContent, CoreMatchers.is(reproducedLayerContent));
+  }
+
+  @Test
+  public void testBuild_timestamp() throws IOException {
+    Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
+
+    Blob blob =
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"))))
+            .build();
+
+    Path tarFile = temporaryFolder.newFile().toPath();
+    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
+      blob.writeTo(out);
+    }
+
+    // Reads the file back.
+    try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
+      Assert.assertEquals(
+          Date.from(Instant.EPOCH.plusSeconds(1)), in.getNextEntry().getLastModifiedDate());
+    }
   }
 
   private Path createFile(Path root, String filename, String content, long lastModifiedTime)
