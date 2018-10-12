@@ -103,8 +103,7 @@ public class JavaLayerConfigurations {
      *
      * @param layerType the layer to add files into
      * @param sourceRoot root directory whose contents will be added
-     * @param pathFilter only the files satisfying the filter will be added, unless the files are
-     *     directories
+     * @param pathFilter filter that determines which files (not directories) should be added
      * @param basePathInContainer directory in the layer into which the source contents are added
      * @return this
      * @throws IOException error while listing directories
