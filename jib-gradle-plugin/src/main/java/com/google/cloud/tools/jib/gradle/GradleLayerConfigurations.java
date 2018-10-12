@@ -77,29 +77,29 @@ class GradleLayerConfigurations {
         project.getConvention().getPlugin(JavaPluginConvention.class);
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
 
-    FileCollection classesDirectories = mainSourceSet.getOutput().getClassesDirs();
+    FileCollection classesOutputDirectories = mainSourceSet.getOutput().getClassesDirs();
     Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
     FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
     FileCollection dependencyFiles =
         allFiles
-            .minus(classesDirectories)
+            .minus(classesOutputDirectories)
             .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
 
     // Adds class files.
     logger.info("Adding corresponding output directories of source sets to image");
-    classesDirectories
-        .filter(file -> !file.exists())
-        .forEach(file -> logger.info("\t'" + file + "' (not found, skipped)"));
-
-    FileCollection existingClassesDirectories = classesDirectories.filter(File::exists);
-    for (File classesOutputDirectory : existingClassesDirectories) {
+    for (File classesOutputDirectory : classesOutputDirectories) {
+      if (Files.notExists(classesOutputDirectory.toPath())) {
+        logger.info("\t'" + classesOutputDirectory + "' (not found, skipped)");
+        continue;
+      }
+      logger.info("\t'" + classesOutputDirectory + "'");
       layerBuilder.addDirectoryContents(
           JavaLayerConfigurations.LayerType.CLASSES,
           classesOutputDirectory.toPath(),
           path -> true,
           appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE));
     }
-    if (existingClassesDirectories.isEmpty()) {
+    if (classesOutputDirectories.filter(File::exists).isEmpty()) {
       logger.warn("No classes files were found - did you compile your project?");
     }
 
