@@ -18,10 +18,12 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.JibContainer;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -33,8 +35,11 @@ import com.google.cloud.tools.jib.registry.RegistryErrorException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
@@ -62,14 +67,14 @@ public class BuildStepsRunner {
   }
 
   private static String buildMessageWithTargetImageReferences(
-      BuildConfiguration buildConfiguration, String prefix, String suffix) {
-    String targetRegistry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
-    String targetRepository = buildConfiguration.getTargetImageConfiguration().getImageRepository();
-
+      ImageReference targetImageReference,
+      Set<String> additionalTags,
+      String prefix,
+      String suffix) {
     StringJoiner successMessageBuilder = new StringJoiner(", ", prefix, suffix);
-    for (String tag : buildConfiguration.getAllTargetImageTags()) {
-      successMessageBuilder.add(
-          colorCyan(ImageReference.of(targetRegistry, targetRepository, tag).toString()));
+    successMessageBuilder.add(colorCyan(targetImageReference.toString()));
+    for (String tag : additionalTags) {
+      successMessageBuilder.add(colorCyan(targetImageReference.withTag(tag).toString()));
     }
     return successMessageBuilder.toString();
   }
@@ -77,46 +82,46 @@ public class BuildStepsRunner {
   /**
    * Creates a runner to build an image. Creates a directory for the cache, if needed.
    *
-   * @param buildConfiguration the configuration parameters for the build
+   * @param targetImageReference the target image reference
+   * @param additionalTags additional tags to push to
    * @return a {@link BuildStepsRunner} for building to a registry
    */
-  public static BuildStepsRunner forBuildImage(BuildConfiguration buildConfiguration) {
+  public static BuildStepsRunner forBuildImage(
+      ImageReference targetImageReference, Set<String> additionalTags) {
     return new BuildStepsRunner(
-        BuildSteps.forBuildToDockerRegistry(buildConfiguration),
         buildMessageWithTargetImageReferences(
-            buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, "..."),
+            targetImageReference,
+            additionalTags,
+            STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY,
+            "..."),
         buildMessageWithTargetImageReferences(
-            buildConfiguration, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, ""));
+            targetImageReference, additionalTags, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, ""));
   }
 
   /**
    * Creates a runner to build to the Docker daemon. Creates a directory for the cache, if needed.
    *
-   * @param dockerClient the {@link DockerClient} for running {@code docker} commands
-   * @param buildConfiguration the configuration parameters for the build
+   * @param targetImageReference the target image reference
+   * @param additionalTags additional tags to push to
    * @return a {@link BuildStepsRunner} for building to a Docker daemon
    */
   public static BuildStepsRunner forBuildToDockerDaemon(
-      DockerClient dockerClient, BuildConfiguration buildConfiguration) {
+      ImageReference targetImageReference, Set<String> additionalTags) {
     return new BuildStepsRunner(
-        BuildSteps.forBuildToDockerDaemon(dockerClient, buildConfiguration),
         buildMessageWithTargetImageReferences(
-            buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
+            targetImageReference, additionalTags, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
         buildMessageWithTargetImageReferences(
-            buildConfiguration, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, ""));
+            targetImageReference, additionalTags, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, ""));
   }
 
   /**
    * Creates a runner to build an image tarball. Creates a directory for the cache, if needed.
    *
    * @param outputPath the path to output the tarball to
-   * @param buildConfiguration the configuration parameters for the build
    * @return a {@link BuildStepsRunner} for building a tarball
    */
-  public static BuildStepsRunner forBuildTar(
-      Path outputPath, BuildConfiguration buildConfiguration) {
+  public static BuildStepsRunner forBuildTar(Path outputPath) {
     return new BuildStepsRunner(
-        BuildSteps.forBuildToTar(outputPath, buildConfiguration),
         String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
         String.format(SUCCESS_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()));
   }
@@ -149,13 +154,11 @@ public class BuildStepsRunner {
     return Character.toUpperCase(string.charAt(0)) + string.substring(1);
   }
 
-  private final BuildSteps buildSteps;
   private final String startupMessage;
   private final String successMessage;
 
   @VisibleForTesting
-  BuildStepsRunner(BuildSteps buildSteps, String startupMessage, String successMessage) {
-    this.buildSteps = buildSteps;
+  BuildStepsRunner(String startupMessage, String successMessage) {
     this.startupMessage = startupMessage;
     this.successMessage = successMessage;
   }
@@ -163,13 +166,24 @@ public class BuildStepsRunner {
   /**
    * Runs the {@link BuildSteps}.
    *
+   * @param jibContainerBuilder the {@link JibContainerBuilder}
+   * @param containerizer the {@link Containerizer}
+   * @param eventDispatcher the {@link EventDispatcher}
+   * @param layerConfigurations the list of {@link LayerConfiguration}s
    * @param helpfulSuggestions suggestions to use in help messages for exceptions
+   * @return the built {@link JibContainer}
    * @throws BuildStepsExecutionException if another exception is thrown during the build
+   * @throws IOException if an I/O exception occurs
+   * @throws CacheDirectoryCreationException if the cache directory could not be created
    */
-  public void build(HelpfulSuggestions helpfulSuggestions) throws BuildStepsExecutionException {
+  public JibContainer build(
+      JibContainerBuilder jibContainerBuilder,
+      Containerizer containerizer,
+      EventDispatcher eventDispatcher,
+      List<LayerConfiguration> layerConfigurations,
+      HelpfulSuggestions helpfulSuggestions)
+      throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
     try {
-      EventDispatcher eventDispatcher = buildSteps.getBuildConfiguration().getEventDispatcher();
-
       eventDispatcher.dispatch(LogEvent.lifecycle(""));
       eventDispatcher.dispatch(LogEvent.lifecycle(startupMessage));
 
@@ -177,8 +191,7 @@ public class BuildStepsRunner {
       eventDispatcher.dispatch(
           LogEvent.info("Containerizing application with the following files:"));
 
-      for (LayerConfiguration layerConfiguration :
-          buildSteps.getBuildConfiguration().getLayerConfigurations()) {
+      for (LayerConfiguration layerConfiguration : layerConfigurations) {
         if (layerConfiguration.getLayerEntries().isEmpty()) {
           continue;
         }
@@ -191,10 +204,12 @@ public class BuildStepsRunner {
         }
       }
 
-      buildSteps.run();
+      JibContainer jibContainer = jibContainerBuilder.containerize(containerizer);
 
       eventDispatcher.dispatch(LogEvent.lifecycle(""));
       eventDispatcher.dispatch(LogEvent.lifecycle(successMessage));
+
+      return jibContainer;
 
     } catch (ExecutionException executionException) {
       Throwable exceptionDuringBuildSteps = executionException.getCause();
@@ -248,5 +263,7 @@ public class BuildStepsRunner {
       // TODO: Add more suggestions for various build failures.
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
     }
+
+    throw new IllegalStateException("unreachable");
   }
 }
