@@ -35,6 +35,7 @@ import com.google.cloud.tools.jib.plugins.common.NBuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
@@ -124,7 +125,11 @@ public class BuildImageMojo extends JibPluginConfiguration {
     defaultCredentialRetrievers.setCredentialHelper(getTargetImageCredentialHelperName());
 
     RegistryImage targetImage = RegistryImage.named(targetImageReference);
-    defaultCredentialRetrievers.asList().forEach(targetImage::addCredentialRetriever);
+    try {
+      defaultCredentialRetrievers.asList().forEach(targetImage::addCredentialRetriever);
+    } catch (FileNotFoundException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+    }
 
     JibContainerBuilder jibContainerBuilder =
         pluginConfigurationProcessor
