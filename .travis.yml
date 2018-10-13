@@ -2,7 +2,8 @@ sudo: false
 git:
   depth: 3
 language: java
-jdk: openjdk8
+# using `openjdk8` leads to javadoc errors
+jdk: oraclejdk8
 env:
   global:
   - TERM=dumb         # for gradle
