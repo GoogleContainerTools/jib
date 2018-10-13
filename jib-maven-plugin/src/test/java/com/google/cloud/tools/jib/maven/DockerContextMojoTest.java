@@ -86,7 +86,12 @@ public class DockerContextMojoTest {
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/app/resources:/app/classes:/app/libs/*\",\"MainClass\"]",
         getEntrypoint());
-    Assert.assertEquals("CMD []", getCmd());
+    try {
+      getCmd();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+      // pass
+    }
   }
 
   @Test
@@ -97,7 +102,12 @@ public class DockerContextMojoTest {
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/resources:/classes:/libs/*\",\"MainClass\"]",
         getEntrypoint());
-    Assert.assertEquals("CMD []", getCmd());
+    try {
+      getCmd();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+      // pass
+    }
   }
 
   @Test
@@ -258,8 +268,13 @@ public class DockerContextMojoTest {
         };
     mojo.targetDir = outputFolder.toString();
     mojo.execute();
-    Assert.assertEquals("CMD []", getCmd());
     Assert.assertEquals("ENTRYPOINT [\"catalina.sh\",\"run\"]", getEntrypoint());
+    try {
+      getCmd();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+      // pass
+    }
   }
 
   @Test

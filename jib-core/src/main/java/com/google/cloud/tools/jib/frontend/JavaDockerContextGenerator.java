@@ -343,9 +343,6 @@ public class JavaDockerContextGenerator {
     }
     if (programArguments != null) {
       dockerfile.append("\nCMD ").append(objectMapper.writeValueAsString(programArguments));
-    } else if (entrypoint != null) {
-      // Do not inherit CMD from base image if ENTRYPOINT is not inherited
-      dockerfile.append("\nCMD []");
     }
     if (user != null) {
       dockerfile.append("\nUSER ").append(user);

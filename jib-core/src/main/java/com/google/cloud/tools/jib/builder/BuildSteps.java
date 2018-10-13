@@ -158,7 +158,8 @@ public class BuildSteps {
 
     if (buildConfiguration.getContainerConfiguration() != null) {
       buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
-      // TODO refactor below
+      // TODO refactor code to also log ENTRYPOINT and CMD when inheriting them in this code,
+      // instead of logging them elsewhere.
       if (buildConfiguration.getContainerConfiguration().getEntrypoint() != null) {
         buildConfiguration
             .getEventDispatcher()

@@ -85,7 +85,12 @@ public class DockerContextTaskTest {
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/resources:/classes:/libs/*\",\"MainClass\"]",
         getEntrypoint());
-    Assert.assertEquals("CMD []", getCmd());
+    try {
+      getCmd();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+      // pass
+    }
   }
 
   @Test

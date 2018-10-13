@@ -131,12 +131,13 @@ public class PluginConfigurationProcessorTest {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
             mockLog, mockJibPluginConfiguration, mockProjectProperties);
-    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
-    Assert.assertEquals(Arrays.asList("custom", "entrypoint"), configuration.getEntrypoint());
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
     BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertEquals(
+        Arrays.asList("custom", "entrypoint"),
+        buildConfiguration.getContainerConfiguration().getEntrypoint());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
@@ -154,11 +155,10 @@ public class PluginConfigurationProcessorTest {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
             mockLog, mockJibPluginConfiguration, mockProjectProperties);
-    ContainerConfiguration configuration = processor.getContainerConfigurationBuilder().build();
 
-    Assert.assertNull(configuration.getEntrypoint());
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
     BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
+    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verifyZeroInteractions(mockLog);
