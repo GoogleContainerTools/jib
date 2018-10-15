@@ -37,6 +37,7 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
+import java.io.FileNotFoundException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -168,13 +169,17 @@ class PluginConfigurationProcessor {
               defaultCredentialRetrievers.setInferredCredential(
                   fromCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE));
     }
-    defaultCredentialRetrievers.setCredentialHelperSuffix(
+    defaultCredentialRetrievers.setCredentialHelper(
         jibPluginConfiguration.getBaseImageCredentialHelperName());
 
     List<String> entrypoint = computeEntrypoint(logger, jibPluginConfiguration, projectProperties);
 
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
-    defaultCredentialRetrievers.asList().forEach(baseImage::addCredentialRetriever);
+    try {
+      defaultCredentialRetrievers.asList().forEach(baseImage::addCredentialRetriever);
+    } catch (FileNotFoundException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+    }
 
     JibContainerBuilder jibContainerBuilder =
         Jib.from(baseImage)
