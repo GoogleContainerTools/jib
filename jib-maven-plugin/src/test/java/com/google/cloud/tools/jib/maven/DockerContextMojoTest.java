@@ -86,6 +86,12 @@ public class DockerContextMojoTest {
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/app/resources:/app/classes:/app/libs/*\",\"MainClass\"]",
         getEntrypoint());
+    try {
+      getCmd();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+      // pass
+    }
   }
 
   @Test
@@ -96,6 +102,12 @@ public class DockerContextMojoTest {
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/resources:/classes:/libs/*\",\"MainClass\"]",
         getEntrypoint());
+    try {
+      getCmd();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+      // pass
+    }
   }
 
   @Test
@@ -206,7 +218,18 @@ public class DockerContextMojoTest {
     Mockito.doReturn(projectRoot.getRoot().toString()).when(build).getDirectory();
     mojo.execute();
 
-    Assert.assertEquals("ENTRYPOINT [\"java\",\"-jar\",\"/jetty/start.jar\"]", getEntrypoint());
+    try {
+      getEntrypoint();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+      // pass
+    }
+    try {
+      getCmd();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+      // pass
+    }
   }
 
   @Test
@@ -245,8 +268,13 @@ public class DockerContextMojoTest {
         };
     mojo.targetDir = outputFolder.toString();
     mojo.execute();
-
     Assert.assertEquals("ENTRYPOINT [\"catalina.sh\",\"run\"]", getEntrypoint());
+    try {
+      getCmd();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+      // pass
+    }
   }
 
   @Test
@@ -313,24 +341,29 @@ public class DockerContextMojoTest {
       getUser();
       Assert.fail();
     } catch (NoSuchElementException ex) {
+      // pass
     }
   }
 
   private String getUser() throws IOException {
-    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
-    List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("USER")).findFirst().get();
+    return getDockerfileLine("USER");
   }
 
   private String getEntrypoint() throws IOException {
-    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
-    List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("ENTRYPOINT")).findFirst().get();
+    return getDockerfileLine("ENTRYPOINT");
   }
 
   private String getBaseImage() throws IOException {
+    return getDockerfileLine("FROM");
+  }
+
+  private String getCmd() throws IOException {
+    return getDockerfileLine("CMD");
+  }
+
+  private String getDockerfileLine(String command) throws IOException {
     Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
     List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("FROM")).findFirst().get();
+    return lines.stream().filter(line -> line.startsWith(command)).findFirst().get();
   }
 }

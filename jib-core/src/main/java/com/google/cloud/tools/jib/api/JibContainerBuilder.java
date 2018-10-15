@@ -162,8 +162,10 @@ public class JibContainerBuilder {
    * @param entrypoint a list of the entrypoint command
    * @return this
    */
-  public JibContainerBuilder setEntrypoint(List<String> entrypoint) {
-    this.entrypoint = ImmutableList.copyOf(entrypoint);
+  public JibContainerBuilder setEntrypoint(@Nullable List<String> entrypoint) {
+    if (entrypoint != null) {
+      this.entrypoint = ImmutableList.copyOf(entrypoint);
+    }
     return this;
   }
 
@@ -194,8 +196,10 @@ public class JibContainerBuilder {
    * @param programArguments a list of program argument tokens
    * @return this
    */
-  public JibContainerBuilder setProgramArguments(List<String> programArguments) {
-    this.programArguments = ImmutableList.copyOf(programArguments);
+  public JibContainerBuilder setProgramArguments(@Nullable List<String> programArguments) {
+    if (programArguments != null) {
+      this.programArguments = ImmutableList.copyOf(programArguments);
+    }
     return this;
   }
 

@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.CacheEntry;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /** Builds a model {@link Image}. */
 class BuildImageStep
@@ -176,8 +178,9 @@ class BuildImageStep
         imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());
         imageBuilder.setCreated(containerConfiguration.getCreationTime());
         imageBuilder.setUser(containerConfiguration.getUser());
-        imageBuilder.setEntrypoint(containerConfiguration.getEntrypoint());
-        imageBuilder.setProgramArguments(containerConfiguration.getProgramArguments());
+        imageBuilder.setEntrypoint(computeEntrypoint(baseImage, containerConfiguration));
+        imageBuilder.setProgramArguments(
+            computeProgramArguments(baseImage, containerConfiguration));
         imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());
         imageBuilder.addLabels(containerConfiguration.getLabels());
       }
@@ -185,5 +188,60 @@ class BuildImageStep
       // Gets the container configuration content descriptor.
       return imageBuilder.build();
     }
+  }
+
+  /**
+   * Computes the image entrypoint. If {@link ContainerConfiguration#getEntrypoint()} is null, the
+   * entrypoint is inherited from the base image. Otherwise {@link
+   * ContainerConfiguration#getEntrypoint()} is returned.
+   *
+   * @param baseImage the base image
+   * @param containerConfiguration the container configuration
+   * @return the container entrypoint
+   */
+  @Nullable
+  private ImmutableList<String> computeEntrypoint(
+      Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
+    if (baseImage.getEntrypoint() == null || containerConfiguration.getEntrypoint() != null) {
+      return containerConfiguration.getEntrypoint();
+    }
+
+    buildConfiguration
+        .getEventDispatcher()
+        .dispatch(
+            LogEvent.lifecycle(
+                "Container entrypoint set to "
+                    + baseImage.getEntrypoint()
+                    + " (inherited from base image)"));
+    return baseImage.getEntrypoint();
+  }
+
+  /**
+   * Computes the image program arguments. If {@link ContainerConfiguration#getEntrypoint()} and
+   * {@link ContainerConfiguration#getProgramArguments()} are null, the program arguments are
+   * inherited from the base image. Otherwise {@link ContainerConfiguration#getProgramArguments()}
+   * is returned.
+   *
+   * @param baseImage the base image
+   * @param containerConfiguration the container configuration
+   * @return the container program arguments
+   */
+  @Nullable
+  private ImmutableList<String> computeProgramArguments(
+      Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
+    if (baseImage.getProgramArguments() == null
+        || containerConfiguration.getEntrypoint() != null
+        || containerConfiguration.getProgramArguments() != null) {
+      return containerConfiguration.getProgramArguments();
+    }
+
+    buildConfiguration
+        .getEventDispatcher()
+        .dispatch(
+            LogEvent.lifecycle(
+                "Container program arguments set to "
+                    + baseImage.getProgramArguments()
+                    + " (inherited from base image)"));
+    return baseImage.getProgramArguments();
   }
 }

@@ -116,6 +116,8 @@ public class BuildImageStepTest {
             .addEnvironment(ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE"))
             .addLabel("base.label", "base.label.value")
             .setWorkingDirectory("/base/working/directory")
+            .setEntrypoint(ImmutableList.of("baseImageEntrypoint"))
+            .setProgramArguments(ImmutableList.of("catalina.sh", "run"))
             .addHistory(nonEmptyLayerHistory)
             .addHistory(emptyLayerHistory)
             .addHistory(emptyLayerHistory)
@@ -184,6 +186,74 @@ public class BuildImageStepTest {
     Assert.assertEquals(image.getHistory().get(0), nonEmptyLayerHistory);
     Assert.assertEquals(image.getHistory().get(1), emptyLayerHistory);
     Assert.assertEquals(image.getHistory().get(2), emptyLayerHistory);
+    Assert.assertEquals(ImmutableList.of(), image.getEntrypoint());
+    Assert.assertEquals(ImmutableList.of(), image.getProgramArguments());
+  }
+
+  @Test
+  public void test_inheritedEntrypoint() throws ExecutionException, InterruptedException {
+    Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(null);
+    Mockito.when(mockContainerConfiguration.getProgramArguments())
+        .thenReturn(ImmutableList.of("test"));
+
+    BuildImageStep buildImageStep =
+        new BuildImageStep(
+            MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
+            mockBuildConfiguration,
+            mockPullBaseImageStep,
+            mockPullAndCacheBaseImageLayersStep,
+            ImmutableList.of(
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep));
+    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+
+    Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
+    Assert.assertEquals(ImmutableList.of("test"), image.getProgramArguments());
+  }
+
+  @Test
+  public void test_inheritedEntrypointAndProgramArguments()
+      throws ExecutionException, InterruptedException {
+    Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(null);
+    Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(null);
+
+    BuildImageStep buildImageStep =
+        new BuildImageStep(
+            MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
+            mockBuildConfiguration,
+            mockPullBaseImageStep,
+            mockPullAndCacheBaseImageLayersStep,
+            ImmutableList.of(
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep));
+    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+
+    Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
+    Assert.assertEquals(ImmutableList.of("catalina.sh", "run"), image.getProgramArguments());
+  }
+
+  @Test
+  public void test_notInheritedProgramArguments() throws ExecutionException, InterruptedException {
+    Mockito.when(mockContainerConfiguration.getEntrypoint())
+        .thenReturn(ImmutableList.of("myEntrypoint"));
+    Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(null);
+
+    BuildImageStep buildImageStep =
+        new BuildImageStep(
+            MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
+            mockBuildConfiguration,
+            mockPullBaseImageStep,
+            mockPullAndCacheBaseImageLayersStep,
+            ImmutableList.of(
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep,
+                mockBuildAndCacheApplicationLayerStep));
+    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+
+    Assert.assertEquals(ImmutableList.of("myEntrypoint"), image.getEntrypoint());
+    Assert.assertNull(image.getProgramArguments());
   }
 
   @Test

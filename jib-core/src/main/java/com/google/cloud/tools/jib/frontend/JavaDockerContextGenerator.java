@@ -89,7 +89,6 @@ public class JavaDockerContextGenerator {
    * @param listBuilder the {@link ImmutableList.Builder} to add to
    * @param layerEntries the layer entries
    * @param directoryInContext the directory in the context to put the source files for the layer
-   * @param extractionPath the extraction path to extract the directory to
    */
   private static void addIfNotEmpty(
       ImmutableList.Builder<CopyDirective> listBuilder,
@@ -132,9 +131,9 @@ public class JavaDockerContextGenerator {
   private final ImmutableList<CopyDirective> copyDirectives;
 
   @Nullable private String baseImage;
-  private List<String> entrypoint = Collections.emptyList();
+  @Nullable private List<String> entrypoint = Collections.emptyList();
+  @Nullable private List<String> programArguments = Collections.emptyList();
   @Nullable private String user;
-  private List<String> programArguments = Collections.emptyList();
   private Map<String, String> environment = Collections.emptyMap();
   private List<String> exposedPorts = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();
@@ -187,7 +186,7 @@ public class JavaDockerContextGenerator {
    * @param entrypoint the entrypoint
    * @return this
    */
-  public JavaDockerContextGenerator setEntrypoint(List<String> entrypoint) {
+  public JavaDockerContextGenerator setEntrypoint(@Nullable List<String> entrypoint) {
     this.entrypoint = entrypoint;
     return this;
   }
@@ -209,7 +208,7 @@ public class JavaDockerContextGenerator {
    * @param programArguments the list of arguments to append to {@code ENTRYPOINT}
    * @return this
    */
-  public JavaDockerContextGenerator setProgramArguments(List<String> programArguments) {
+  public JavaDockerContextGenerator setProgramArguments(@Nullable List<String> programArguments) {
     this.programArguments = programArguments;
     return this;
   }
@@ -339,11 +338,12 @@ public class JavaDockerContextGenerator {
 
     dockerfile.append(mapToDockerfileString(environment, "ENV"));
     dockerfile.append(mapToDockerfileString(labels, "LABEL"));
-    dockerfile
-        .append("\nENTRYPOINT ")
-        .append(objectMapper.writeValueAsString(entrypoint))
-        .append("\nCMD ")
-        .append(objectMapper.writeValueAsString(programArguments));
+    if (entrypoint != null) {
+      dockerfile.append("\nENTRYPOINT ").append(objectMapper.writeValueAsString(entrypoint));
+    }
+    if (programArguments != null) {
+      dockerfile.append("\nCMD ").append(objectMapper.writeValueAsString(programArguments));
+    }
     if (user != null) {
       dockerfile.append("\nUSER ").append(user);
     }

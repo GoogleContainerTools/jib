@@ -59,6 +59,7 @@ public class DockerContextTaskTest {
     Mockito.when(jibExtension.getFrom()).thenReturn(baseImageParameters);
     Mockito.when(baseImageParameters.getImage()).thenReturn("base image");
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/app");
+    Mockito.when(containerParameters.getArgs()).thenCallRealMethod();
 
     project = ProjectBuilder.builder().withProjectDir(projectRoot.getRoot()).build();
     project.getPluginManager().apply("java");
@@ -84,16 +85,34 @@ public class DockerContextTaskTest {
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/resources:/classes:/libs/*\",\"MainClass\"]",
         getEntrypoint());
+    try {
+      getCmd();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+      // pass
+    }
   }
 
   @Test
-  public void testEntrypoint_defaultWebAppRoot() throws IOException {
+  public void testEntrypoint_inheritedEntrypoint() throws IOException {
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/");
+    Mockito.when(containerParameters.getArgs()).thenCallRealMethod();
     project.getPluginManager().apply("war");
 
     task.generateDockerContext();
 
-    Assert.assertEquals("ENTRYPOINT [\"java\",\"-jar\",\"/jetty/start.jar\"]", getEntrypoint());
+    try {
+      getEntrypoint();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+      // pass
+    }
+    try {
+      getCmd();
+      Assert.fail();
+    } catch (NoSuchElementException ex) {
+      // pass
+    }
   }
 
   @Test
@@ -156,15 +175,21 @@ public class DockerContextTaskTest {
     }
   }
 
-  private String getEntrypoint() throws IOException {
-    Path dockerfile = projectRoot.getRoot().toPath().resolve("build/jib-docker-context/Dockerfile");
-    List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("ENTRYPOINT")).findFirst().get();
+  private String getUser() throws IOException {
+    return getDockerfileLine("USER");
   }
 
-  private String getUser() throws IOException {
+  private String getEntrypoint() throws IOException {
+    return getDockerfileLine("ENTRYPOINT");
+  }
+
+  private String getCmd() throws IOException {
+    return getDockerfileLine("CMD");
+  }
+
+  private String getDockerfileLine(String command) throws IOException {
     Path dockerfile = projectRoot.getRoot().toPath().resolve("build/jib-docker-context/Dockerfile");
     List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("USER")).findFirst().get();
+    return lines.stream().filter(line -> line.startsWith(command)).findFirst().get();
   }
 }
