@@ -31,20 +31,18 @@ public class BuildSteps {
   private static final String DESCRIPTION_FOR_DOCKER_DAEMON = "Building image to Docker daemon";
   private static final String DESCRIPTION_FOR_TARBALL = "Building image tarball";
 
-  /** Accepts {@link StepsRunner} by running the appropriate steps. */
+  /** Runs appropriate steps to build an image. */
   @FunctionalInterface
-  private interface StepsRunnerConsumer {
+  private interface ImageBuildRunnable {
 
     /**
-     * Runs a {@link StepsRunner}.
+     * Builds an image and returns its digest.
      *
-     * @param stepsRunner the {@link StepsRunner} to run
      * @return the digest of the built image
      * @throws ExecutionException if an exception occurs during execution
      * @throws InterruptedException if the execution is interrupted
      */
-    DescriptorDigest accept(StepsRunner stepsRunner)
-        throws ExecutionException, InterruptedException;
+    DescriptorDigest build() throws ExecutionException, InterruptedException;
   }
 
   /**
@@ -57,8 +55,8 @@ public class BuildSteps {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_REGISTRY,
         buildConfiguration,
-        stepsRunner ->
-            stepsRunner
+        () ->
+            new StepsRunner(buildConfiguration)
                 .runRetrieveTargetRegistryCredentialsStep()
                 .runAuthenticatePushStep()
                 .runPullBaseImageStep()
@@ -85,8 +83,8 @@ public class BuildSteps {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_DAEMON,
         buildConfiguration,
-        stepsRunner ->
-            stepsRunner
+        () ->
+            new StepsRunner(buildConfiguration)
                 .runPullBaseImageStep()
                 .runPullAndCacheBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()
@@ -107,8 +105,8 @@ public class BuildSteps {
     return new BuildSteps(
         DESCRIPTION_FOR_TARBALL,
         buildConfiguration,
-        stepsRunner ->
-            stepsRunner
+        () ->
+            new StepsRunner(buildConfiguration)
                 .runPullBaseImageStep()
                 .runPullAndCacheBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()
@@ -120,20 +118,20 @@ public class BuildSteps {
 
   private final String description;
   private final BuildConfiguration buildConfiguration;
-  private final StepsRunnerConsumer stepsRunnerConsumer;
+  private final ImageBuildRunnable imageBuildRunnable;
 
   /**
    * @param description a description of what the steps do
    * @param buildConfiguration the configuration parameters for the build
-   * @param stepsRunnerConsumer accepts a {@link StepsRunner} by running the necessary steps
+   * @param imageBuildRunnable runs the necessary steps to build an image
    */
   private BuildSteps(
       String description,
       BuildConfiguration buildConfiguration,
-      StepsRunnerConsumer stepsRunnerConsumer) {
+      ImageBuildRunnable imageBuildRunnable) {
     this.description = description;
     this.buildConfiguration = buildConfiguration;
-    this.stepsRunnerConsumer = stepsRunnerConsumer;
+    this.imageBuildRunnable = imageBuildRunnable;
   }
 
   public BuildConfiguration getBuildConfiguration() {
@@ -153,7 +151,7 @@ public class BuildSteps {
     DescriptorDigest imageDigest;
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
-      imageDigest = stepsRunnerConsumer.accept(new StepsRunner(buildConfiguration));
+      imageDigest = imageBuildRunnable.build();
     }
 
     if (buildConfiguration.getContainerConfiguration() != null) {
