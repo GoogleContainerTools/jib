@@ -131,8 +131,8 @@ public class JavaDockerContextGenerator {
   private final ImmutableList<CopyDirective> copyDirectives;
 
   @Nullable private String baseImage;
-  @Nullable private List<String> entrypoint = Collections.emptyList();
-  @Nullable private List<String> programArguments = Collections.emptyList();
+  @Nullable private List<String> entrypoint;
+  @Nullable private List<String> programArguments;
   @Nullable private String user;
   private Map<String, String> environment = Collections.emptyMap();
   private List<String> exposedPorts = Collections.emptyList();

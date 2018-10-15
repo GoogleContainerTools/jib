@@ -163,9 +163,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setEntrypoint(@Nullable List<String> entrypoint) {
-    if (entrypoint != null) {
-      this.entrypoint = ImmutableList.copyOf(entrypoint);
-    }
+    this.entrypoint = entrypoint == null ? null : ImmutableList.copyOf(entrypoint);
     return this;
   }
 
@@ -197,9 +195,8 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setProgramArguments(@Nullable List<String> programArguments) {
-    if (programArguments != null) {
-      this.programArguments = ImmutableList.copyOf(programArguments);
-    }
+    this.programArguments =
+        programArguments == null ? null : ImmutableList.copyOf(programArguments);
     return this;
   }
 
