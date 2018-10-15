@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.CacheEntry;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
@@ -202,18 +203,19 @@ class BuildImageStep
   @Nullable
   private ImmutableList<String> computeEntrypoint(
       Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
-    if (baseImage.getEntrypoint() == null || containerConfiguration.getEntrypoint() != null) {
-      return containerConfiguration.getEntrypoint();
-    }
+    boolean shouldInherit =
+        baseImage.getEntrypoint() != null && containerConfiguration.getEntrypoint() == null;
 
-    buildConfiguration
-        .getEventDispatcher()
-        .dispatch(
-            LogEvent.lifecycle(
-                "Container entrypoint set to "
-                    + baseImage.getEntrypoint()
-                    + " (inherited from base image)"));
-    return baseImage.getEntrypoint();
+    ImmutableList<String> entrypointToUse =
+        shouldInherit ? baseImage.getEntrypoint() : containerConfiguration.getEntrypoint();
+
+    String logSuffix = shouldInherit ? " (inherited from base image)" : "";
+    EventDispatcher eventDispatcher = buildConfiguration.getEventDispatcher();
+    eventDispatcher.dispatch(LogEvent.lifecycle(""));
+    eventDispatcher.dispatch(
+        LogEvent.lifecycle("Container entrypoint set to " + entrypointToUse + logSuffix));
+
+    return entrypointToUse;
   }
 
   /**
@@ -229,19 +231,24 @@ class BuildImageStep
   @Nullable
   private ImmutableList<String> computeProgramArguments(
       Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
-    if (baseImage.getProgramArguments() == null
-        || containerConfiguration.getEntrypoint() != null
-        || containerConfiguration.getProgramArguments() != null) {
-      return containerConfiguration.getProgramArguments();
-    }
+    boolean shouldInherit =
+        baseImage.getProgramArguments() != null
+            // Inherit CMD only when inheriting ENTRYPOINT.
+            && containerConfiguration.getEntrypoint() == null
+            && containerConfiguration.getProgramArguments() == null;
 
+    ImmutableList<String> programArgumentsToUse =
+        shouldInherit
+            ? baseImage.getProgramArguments()
+            : containerConfiguration.getProgramArguments();
+
+    String logSuffix = shouldInherit ? " (inherited from base image)" : "";
     buildConfiguration
         .getEventDispatcher()
         .dispatch(
             LogEvent.lifecycle(
-                "Container program arguments set to "
-                    + baseImage.getProgramArguments()
-                    + " (inherited from base image)"));
-    return baseImage.getProgramArguments();
+                "Container program arguments set to " + programArgumentsToUse + logSuffix));
+
+    return programArgumentsToUse;
   }
 }
