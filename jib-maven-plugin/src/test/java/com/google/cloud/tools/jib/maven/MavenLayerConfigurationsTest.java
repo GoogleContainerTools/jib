@@ -25,19 +25,16 @@ import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
-import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Build;
 import org.apache.maven.project.MavenProject;
-import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -82,7 +79,9 @@ public class MavenLayerConfigurationsTest {
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
+            "/my/app/resources/directory",
             "/my/app/resources/directory/somefile",
+            "/my/app/resources/package",
             "/my/app/resources/resourceA",
             "/my/app/resources/resourceB",
             "/my/app/resources/world"),
@@ -90,11 +89,14 @@ public class MavenLayerConfigurationsTest {
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/classes/HelloWorld.class",
+            "/my/app/classes/directory",
+            "/my/app/classes/package",
             "/my/app/classes/package/some.class",
             "/my/app/classes/some.class"),
         configuration.getClassLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/a/b/bar", "/c/cat", "/foo"), configuration.getExtraFilesLayerEntries());
+        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
+        configuration.getExtraFilesLayerEntries());
   }
 
   @Rule public final TestRepository testRepository = new TestRepository();
@@ -102,8 +104,6 @@ public class MavenLayerConfigurationsTest {
 
   @Mock private MavenProject mockMavenProject;
   @Mock private Build mockBuild;
-
-  @Mock private MavenLayerConfigurations.FileToLayerAdder fileToLayerAdder;
 
   private Path extraFilesDirectory;
 
@@ -145,13 +145,17 @@ public class MavenLayerConfigurationsTest {
     Path applicationDirectory = Paths.get(Resources.getResource("application").toURI());
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
+            applicationDirectory.resolve("output/directory"),
             applicationDirectory.resolve("output/directory/somefile"),
+            applicationDirectory.resolve("output/package"),
             applicationDirectory.resolve("output/resourceA"),
             applicationDirectory.resolve("output/resourceB"),
             applicationDirectory.resolve("output/world"));
     ImmutableList<Path> expectedClassesFiles =
         ImmutableList.of(
             applicationDirectory.resolve("output/HelloWorld.class"),
+            applicationDirectory.resolve("output/directory"),
+            applicationDirectory.resolve("output/package"),
             applicationDirectory.resolve("output/package/some.class"),
             applicationDirectory.resolve("output/some.class"));
 
@@ -177,7 +181,10 @@ public class MavenLayerConfigurationsTest {
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
+            extraFilesDirectory.resolve("a"),
+            extraFilesDirectory.resolve("a/b"),
             extraFilesDirectory.resolve("a/b/bar"),
+            extraFilesDirectory.resolve("c"),
             extraFilesDirectory.resolve("c/cat"),
             extraFilesDirectory.resolve("foo"));
 
@@ -192,132 +199,6 @@ public class MavenLayerConfigurationsTest {
         MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, appRoot);
 
     assertNonDefaultAppRoot(configuration);
-  }
-
-  @Test
-  public void testIsEmptyDirectory() throws IOException {
-    Assert.assertTrue(
-        MavenLayerConfigurations.isEmptyDirectory(temporaryFolder.getRoot().toPath()));
-  }
-
-  @Test
-  public void testIsEmptyDirectory_file() throws IOException {
-    Assert.assertFalse(
-        MavenLayerConfigurations.isEmptyDirectory(temporaryFolder.newFile().toPath()));
-  }
-
-  @Test
-  public void testIsEmptyDirectory_nonExistent() throws IOException {
-    Assert.assertFalse(MavenLayerConfigurations.isEmptyDirectory(Paths.get("non/existent")));
-  }
-
-  @Test
-  public void testAddFilesToLayer_file() throws IOException {
-    temporaryFolder.newFile("file");
-
-    Path sourceRoot = temporaryFolder.getRoot().toPath();
-    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
-
-    MavenLayerConfigurations.addFilesToLayer(sourceRoot, path -> true, basePath, fileToLayerAdder);
-    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("file"), basePath.resolve("file"));
-    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
-  }
-
-  @Test
-  public void testAddFilesToLayer_emptyDirectory() throws IOException {
-    temporaryFolder.newFolder("leaf");
-
-    Path sourceRoot = temporaryFolder.getRoot().toPath();
-    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
-
-    MavenLayerConfigurations.addFilesToLayer(sourceRoot, path -> true, basePath, fileToLayerAdder);
-    Mockito.verify(fileToLayerAdder).add(sourceRoot.resolve("leaf"), basePath.resolve("leaf"));
-    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
-  }
-
-  @Test
-  public void testAddFilesToLayer_nonEmptyDirectoryIgnored() throws IOException {
-    temporaryFolder.newFolder("non-empty", "leaf");
-
-    Path sourceRoot = temporaryFolder.getRoot().toPath();
-    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
-
-    MavenLayerConfigurations.addFilesToLayer(sourceRoot, path -> true, basePath, fileToLayerAdder);
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("non-empty/leaf"), basePath.resolve("non-empty/leaf"));
-    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
-  }
-
-  @Test
-  public void testAddFilesToLayer_filter() throws IOException {
-    temporaryFolder.newFile("non-target");
-    temporaryFolder.newFolder("sub");
-    temporaryFolder.newFile("sub/target");
-
-    Path sourceRoot = temporaryFolder.getRoot().toPath();
-    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
-
-    Predicate<Path> nameIsTarget = path -> "target".equals(path.getFileName().toString());
-    MavenLayerConfigurations.addFilesToLayer(sourceRoot, nameIsTarget, basePath, fileToLayerAdder);
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("sub/target"), basePath.resolve("sub/target"));
-    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
-  }
-
-  @Test
-  public void testAddFilesToLayer_emptyDirectoryForced() throws IOException {
-    temporaryFolder.newFolder("sub", "leaf");
-
-    Path sourceRoot = temporaryFolder.getRoot().toPath();
-    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/path/in/container");
-
-    MavenLayerConfigurations.addFilesToLayer(sourceRoot, path -> false, basePath, fileToLayerAdder);
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("sub/leaf"), basePath.resolve("sub/leaf"));
-    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
-  }
-
-  @Test
-  public void testAddFilesToLayer_fileAsSource() throws IOException {
-    Path sourceFile = temporaryFolder.newFile("foo").toPath();
-
-    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
-    try {
-      MavenLayerConfigurations.addFilesToLayer(
-          sourceFile, path -> true, basePath, fileToLayerAdder);
-    } catch (NotDirectoryException ex) {
-      Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("foo is not a directory"));
-    }
-  }
-
-  @Test
-  public void testAddFilesToLayer_complex() throws IOException {
-    temporaryFolder.newFile("A.class");
-    temporaryFolder.newFile("B.java");
-    temporaryFolder.newFolder("example", "dir");
-    temporaryFolder.newFile("example/dir/C.class");
-    temporaryFolder.newFile("example/C.class");
-    temporaryFolder.newFolder("test", "resources", "leaf");
-    temporaryFolder.newFile("test/resources/D.java");
-    temporaryFolder.newFile("test/D.class");
-
-    Path sourceRoot = temporaryFolder.getRoot().toPath();
-    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/base");
-
-    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-
-    MavenLayerConfigurations.addFilesToLayer(sourceRoot, isClassFile, basePath, fileToLayerAdder);
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("A.class"), basePath.resolve("A.class"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("example/dir/C.class"), basePath.resolve("example/dir/C.class"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("example/C.class"), basePath.resolve("example/C.class"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("test/resources/leaf"), basePath.resolve("test/resources/leaf"));
-    Mockito.verify(fileToLayerAdder)
-        .add(sourceRoot.resolve("test/D.class"), basePath.resolve("test/D.class"));
-    Mockito.verifyNoMoreInteractions(fileToLayerAdder);
   }
 
   private Artifact makeArtifact(Path path) {
@@ -344,19 +225,28 @@ public class MavenLayerConfigurationsTest {
             outputPath.resolve("final-name/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"));
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
+            outputPath.resolve("final-name/META-INF"),
             outputPath.resolve("final-name/META-INF/context.xml"),
             outputPath.resolve("final-name/Test.jsp"),
+            outputPath.resolve("final-name/WEB-INF"),
+            outputPath.resolve("final-name/WEB-INF/classes"),
             outputPath.resolve("final-name/WEB-INF/classes/empty_dir"),
+            outputPath.resolve("final-name/WEB-INF/classes/package"),
             outputPath.resolve("final-name/WEB-INF/classes/package/test.properties"),
+            outputPath.resolve("final-name/WEB-INF/lib"),
             outputPath.resolve("final-name/WEB-INF/web.xml"));
     ImmutableList<Path> expectedClassesFiles =
         ImmutableList.of(
             outputPath.resolve("final-name/WEB-INF/classes/HelloWorld.class"),
-            outputPath.resolve("final-name/WEB-INF/classes/empty_dir"), // Not sure about that
+            outputPath.resolve("final-name/WEB-INF/classes/empty_dir"),
+            outputPath.resolve("final-name/WEB-INF/classes/package"),
             outputPath.resolve("final-name/WEB-INF/classes/package/Other.class"));
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
+            extraFilesDirectory.resolve("a"),
+            extraFilesDirectory.resolve("a/b"),
             extraFilesDirectory.resolve("a/b/bar"),
+            extraFilesDirectory.resolve("c"),
             extraFilesDirectory.resolve("c/cat"),
             extraFilesDirectory.resolve("foo"));
 
@@ -376,20 +266,27 @@ public class MavenLayerConfigurationsTest {
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
+            "/my/app/META-INF",
             "/my/app/META-INF/context.xml",
             "/my/app/Test.jsp",
+            "/my/app/WEB-INF",
+            "/my/app/WEB-INF/classes",
             "/my/app/WEB-INF/classes/empty_dir",
+            "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/test.properties",
+            "/my/app/WEB-INF/lib",
             "/my/app/WEB-INF/web.xml"),
         configuration.getResourceLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/WEB-INF/classes/HelloWorld.class",
-            "/my/app/WEB-INF/classes/empty_dir", // Not sure about that
+            "/my/app/WEB-INF/classes/empty_dir",
+            "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/Other.class"),
         configuration.getClassLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/a/b/bar", "/c/cat", "/foo"), configuration.getExtraFilesLayerEntries());
+        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
+        configuration.getExtraFilesLayerEntries());
   }
 
   @Test

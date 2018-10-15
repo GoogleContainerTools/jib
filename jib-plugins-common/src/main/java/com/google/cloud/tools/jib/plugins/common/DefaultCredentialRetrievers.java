@@ -20,6 +20,10 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
+import java.io.FileNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -56,7 +60,7 @@ public class DefaultCredentialRetrievers {
 
   @Nullable private CredentialRetriever knownCredentialRetriever;
   @Nullable private CredentialRetriever inferredCredentialRetriever;
-  @Nullable private String credentialHelperSuffix;
+  @Nullable private String credentialHelper;
 
   private DefaultCredentialRetrievers(CredentialRetrieverFactory credentialRetrieverFactory) {
     this.credentialRetrieverFactory = credentialRetrieverFactory;
@@ -90,15 +94,15 @@ public class DefaultCredentialRetrievers {
   }
 
   /**
-   * Sets the suffix for a known credential helper.
+   * Sets the known credential helper. May either be a path to a credential helper executable, or a
+   * credential helper suffix (following {@code docker-credential-}).
    *
-   * @param credentialHelperSuffix the known credential helper suffix (following {@code
-   *     docker-credential-})
+   * @param credentialHelper the path to a credential helper, or a credential helper suffix
+   *     (following {@code docker-credential-}).
    * @return this
    */
-  public DefaultCredentialRetrievers setCredentialHelperSuffix(
-      @Nullable String credentialHelperSuffix) {
-    this.credentialHelperSuffix = credentialHelperSuffix;
+  public DefaultCredentialRetrievers setCredentialHelper(@Nullable String credentialHelper) {
+    this.credentialHelper = credentialHelper;
     return this;
   }
 
@@ -106,16 +110,29 @@ public class DefaultCredentialRetrievers {
    * Makes a list of {@link CredentialRetriever}s.
    *
    * @return the list of {@link CredentialRetriever}s
+   * @throws FileNotFoundException if a credential helper path is specified, but the file doesn't
+   *     exist
    */
-  public List<CredentialRetriever> asList() {
+  public List<CredentialRetriever> asList() throws FileNotFoundException {
     List<CredentialRetriever> credentialRetrievers = new ArrayList<>();
     if (knownCredentialRetriever != null) {
       credentialRetrievers.add(knownCredentialRetriever);
     }
-    if (credentialHelperSuffix != null) {
-      credentialRetrievers.add(
-          credentialRetrieverFactory.dockerCredentialHelper(
-              DockerCredentialHelper.CREDENTIAL_HELPER_PREFIX + credentialHelperSuffix));
+    if (credentialHelper != null) {
+      // If credential helper contains file separator, treat as path; otherwise treat as suffix
+      if (credentialHelper.contains(FileSystems.getDefault().getSeparator())) {
+        if (Files.exists(Paths.get(credentialHelper))) {
+          credentialRetrievers.add(
+              credentialRetrieverFactory.dockerCredentialHelper(credentialHelper));
+        } else {
+          throw new FileNotFoundException(
+              "Specified credential helper was not found: " + credentialHelper);
+        }
+      } else {
+        credentialRetrievers.add(
+            credentialRetrieverFactory.dockerCredentialHelper(
+                DockerCredentialHelper.CREDENTIAL_HELPER_PREFIX + credentialHelper));
+      }
     }
     if (inferredCredentialRetriever != null) {
       credentialRetrievers.add(inferredCredentialRetriever);

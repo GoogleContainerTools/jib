@@ -17,18 +17,15 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
+import com.google.cloud.tools.jib.plugins.common.JavaLayerConfigurationsHelper;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
@@ -75,58 +72,6 @@ class GradleLayerConfigurations {
   private static JavaLayerConfigurations getForNonWarProject(
       Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
       throws IOException {
-    JavaPluginConvention javaPluginConvention =
-        project.getConvention().getPlugin(JavaPluginConvention.class);
-
-    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
-
-    List<Path> dependenciesFiles = new ArrayList<>();
-    List<Path> snapshotDependenciesFiles = new ArrayList<>();
-    List<Path> classesFiles = new ArrayList<>();
-    List<Path> extraFiles = new ArrayList<>();
-
-    // Adds each file in each classes output directory to the classes files list.
-    FileCollection classesOutputDirectories = mainSourceSet.getOutput().getClassesDirs();
-    logger.info("Adding corresponding output directories of source sets to image");
-    for (File classesOutputDirectory : classesOutputDirectories) {
-      if (Files.notExists(classesOutputDirectory.toPath())) {
-        logger.info("\t'" + classesOutputDirectory + "' (not found, skipped)");
-        continue;
-      }
-      logger.info("\t'" + classesOutputDirectory + "'");
-      try (Stream<Path> classFileStream = Files.list(classesOutputDirectory.toPath())) {
-        classFileStream.forEach(classesFiles::add);
-      }
-    }
-    if (classesFiles.isEmpty()) {
-      logger.warn("No classes files were found - did you compile your project?");
-    }
-
-    Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-
-    // Adds all other files to the dependencies files list.
-    FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
-    // Removes the classes output directories.
-    allFiles = allFiles.minus(classesOutputDirectories);
-    for (File dependencyFile : allFiles) {
-      // Removes the resources output directory.
-      if (resourcesOutputDirectory.equals(dependencyFile.toPath())) {
-        continue;
-      }
-      if (dependencyFile.getName().contains(JavaLayerConfigurations.SNAPSHOT_FILENAME_SUFFIX)) {
-        snapshotDependenciesFiles.add(dependencyFile.toPath());
-      } else {
-        dependenciesFiles.add(dependencyFile.toPath());
-      }
-    }
-
-    // Adds all the extra files.
-    if (Files.exists(extraDirectory)) {
-      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(extraDirectory)) {
-        extraFiles = extraFilesLayerDirectoryFiles.collect(Collectors.toList());
-      }
-    }
-
     AbsoluteUnixPath dependenciesExtractionPath =
         appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
     AbsoluteUnixPath resourcesExtractionPath =
@@ -135,27 +80,61 @@ class GradleLayerConfigurations {
         appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
 
     Builder layerBuilder = JavaLayerConfigurations.builder();
-    for (Path file : dependenciesFiles) {
-      layerBuilder.addDependencyFile(file, dependenciesExtractionPath.resolve(file.getFileName()));
+
+    JavaPluginConvention javaPluginConvention =
+        project.getConvention().getPlugin(JavaPluginConvention.class);
+    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
+
+    FileCollection classesOutputDirectories = mainSourceSet.getOutput().getClassesDirs();
+    Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
+    FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
+    FileCollection dependencyFiles =
+        allFiles
+            .minus(classesOutputDirectories)
+            .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
+
+    // Adds class files.
+    logger.info("Adding corresponding output directories of source sets to image");
+    for (File classesOutputDirectory : classesOutputDirectories) {
+      if (Files.notExists(classesOutputDirectory.toPath())) {
+        logger.info("\t'" + classesOutputDirectory + "' (not found, skipped)");
+        continue;
+      }
+      logger.info("\t'" + classesOutputDirectory + "'");
+      layerBuilder.addDirectoryContents(
+          LayerType.CLASSES, classesOutputDirectory.toPath(), path -> true, classesExtractionPath);
     }
-    for (Path file : snapshotDependenciesFiles) {
-      layerBuilder.addSnapshotDependencyFile(
-          file, dependenciesExtractionPath.resolve(file.getFileName()));
+    if (classesOutputDirectories.filter(File::exists).isEmpty()) {
+      logger.warn("No classes files were found - did you compile your project?");
     }
+
+    // Adds resource files.
     if (Files.exists(resourcesOutputDirectory)) {
-      layerBuilder.addResourceFile(resourcesOutputDirectory, resourcesExtractionPath);
+      layerBuilder.addDirectoryContents(
+          LayerType.RESOURCES, resourcesOutputDirectory, path -> true, resourcesExtractionPath);
     }
-    for (Path file : classesFiles) {
-      layerBuilder.addClassFile(file, classesExtractionPath.resolve(file.getFileName()));
+
+    // Adds dependency files.
+    for (File dependencyFile : dependencyFiles) {
+      boolean isSnapshot = dependencyFile.getName().contains("SNAPSHOT");
+      LayerType layerType = isSnapshot ? LayerType.SNAPSHOT_DEPENDENCIES : LayerType.DEPENDENCIES;
+      layerBuilder.addFile(
+          layerType,
+          dependencyFile.toPath(),
+          dependenciesExtractionPath.resolve(dependencyFile.getName()));
     }
-    for (Path file : extraFiles) {
-      layerBuilder.addExtraFile(file, AbsoluteUnixPath.get("/").resolve(file.getFileName()));
+
+    // Adds all the extra files.
+    if (Files.exists(extraDirectory)) {
+      layerBuilder.addDirectoryContents(
+          LayerType.EXTRA_FILES, extraDirectory, path -> true, AbsoluteUnixPath.get("/"));
     }
+
     return layerBuilder.build();
   }
 
   /**
-   * Resolves the {@link JavaLayerConfigurations} for a War Gradle {@link Project}.
+   * Resolves the {@link JavaLayerConfigurations} for a WAR Gradle {@link Project}.
    *
    * @param project the Gradle {@link Project}
    * @param logger the build logger for providing feedback about the resolution
@@ -167,98 +146,8 @@ class GradleLayerConfigurations {
   private static JavaLayerConfigurations getForWarProject(
       Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
       throws IOException {
-    List<Path> dependenciesFiles = new ArrayList<>();
-    List<Path> snapshotDependenciesFiles = new ArrayList<>();
-    List<Path> resourcesFiles = new ArrayList<>();
-    List<Path> resourcesWebInfFiles = new ArrayList<>();
-    List<Path> extraFiles = new ArrayList<>();
-
     Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
-
-    Path libOutputDirectory = explodedWarPath.resolve("WEB-INF/lib");
-    if (Files.exists(libOutputDirectory)) {
-      try (Stream<Path> dependencyFileStream = Files.list(libOutputDirectory)) {
-        dependencyFileStream.forEach(
-            path -> {
-              if (path.toString().contains(JavaLayerConfigurations.SNAPSHOT_FILENAME_SUFFIX)) {
-                snapshotDependenciesFiles.add(path);
-              } else {
-                dependenciesFiles.add(path);
-              }
-            });
-      }
-    }
-
-    // First, all files except WEB-INF go into the resources layer.
-    try (Stream<Path> fileStream = Files.list(explodedWarPath)) {
-      fileStream.filter(path -> !path.endsWith("WEB-INF")).forEach(resourcesFiles::add);
-    }
-    // Some files in WEB-INF/ (e.g. web.xml, ...) need to go into the resources layer. However,
-    // don't add or look into WEB-INF/classes and WEB-INF/lib.
-    Path webInfOutputDirectory = explodedWarPath.resolve("WEB-INF");
-    if (Files.exists(webInfOutputDirectory)) {
-      try (Stream<Path> fileStream = Files.list(webInfOutputDirectory)) {
-        fileStream
-            .filter(path -> !path.endsWith("classes") && !path.endsWith("lib"))
-            .forEach(resourcesWebInfFiles::add);
-      }
-    }
-
-    // Adds all the extra files.
-    if (Files.exists(extraDirectory)) {
-      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(extraDirectory)) {
-        extraFiles = extraFilesLayerDirectoryFiles.collect(Collectors.toList());
-      }
-    }
-
-    Builder layerBuilder = JavaLayerConfigurations.builder();
-    AbsoluteUnixPath dependenciesExtractionPath = appRoot.resolve("WEB-INF/lib");
-    AbsoluteUnixPath classesExtractionPath = appRoot.resolve("WEB-INF/classes");
-    AbsoluteUnixPath webInfExtractionPath = appRoot.resolve("WEB-INF");
-
-    // For "WEB-INF/classes", *.class go into the class layer. All other files and empty directories
-    // go into the resource layer.
-    Path webInfClasses = explodedWarPath.resolve("WEB-INF/classes");
-    if (Files.exists(webInfClasses)) {
-      new DirectoryWalker(webInfClasses)
-          .walk(
-              path -> {
-                AbsoluteUnixPath pathInContainer =
-                    classesExtractionPath.resolve(webInfClasses.relativize(path));
-
-                if (path.getFileName().toString().endsWith(".class")) {
-                  layerBuilder.addClassFile(path, pathInContainer);
-
-                } else if (Files.isDirectory(path)) {
-                  try (Stream<Path> fileStream = Files.list(path)) {
-                    if (!fileStream.findAny().isPresent()) {
-                      // The directory is empty
-                      layerBuilder.addResourceFile(path, pathInContainer);
-                    }
-                  }
-                } else {
-                  layerBuilder.addResourceFile(path, pathInContainer);
-                }
-              });
-    }
-
-    for (Path file : dependenciesFiles) {
-      layerBuilder.addDependencyFile(file, dependenciesExtractionPath.resolve(file.getFileName()));
-    }
-    for (Path file : snapshotDependenciesFiles) {
-      layerBuilder.addSnapshotDependencyFile(
-          file, dependenciesExtractionPath.resolve(file.getFileName()));
-    }
-    for (Path file : resourcesFiles) {
-      layerBuilder.addResourceFile(file, appRoot.resolve(file.getFileName()));
-    }
-    for (Path file : resourcesWebInfFiles) {
-      layerBuilder.addResourceFile(file, webInfExtractionPath.resolve(file.getFileName()));
-    }
-    for (Path file : extraFiles) {
-      layerBuilder.addExtraFile(file, AbsoluteUnixPath.get("/").resolve(file.getFileName()));
-    }
-    return layerBuilder.build();
+    return JavaLayerConfigurationsHelper.fromExplodedWar(explodedWarPath, appRoot, extraDirectory);
   }
 
   private GradleLayerConfigurations() {}
