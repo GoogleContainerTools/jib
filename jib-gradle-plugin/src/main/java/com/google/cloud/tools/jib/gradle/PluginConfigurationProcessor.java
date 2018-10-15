@@ -42,6 +42,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Level;
+import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
 import org.gradle.api.logging.Logger;
 import org.gradle.internal.logging.events.LogEvent;
@@ -139,6 +140,7 @@ class PluginConfigurationProcessor {
             .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
             .setEntrypoint(entrypoint)
             .setEnvironment(jibExtension.getContainer().getEnvironment())
+            .setProgramArguments(jibExtension.getContainer().getArgs())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getContainer().getPorts()))
             .setProgramArguments(jibExtension.getContainer().getArgs())
             .setLabels(jibExtension.getContainer().getLabels())
@@ -174,7 +176,7 @@ class PluginConfigurationProcessor {
    *
    * <ol>
    *   <li>the user specified one, if set
-   *   <li>for a WAR project, the Jetty default one
+   *   <li>for a WAR project, null (it must be inherited from base image)
    *   <li>for a non-WAR project, by resolving the main class
    * </ol>
    *
@@ -183,6 +185,7 @@ class PluginConfigurationProcessor {
    * @param projectProperties used for providing additional information
    * @return the entrypoint
    */
+  @Nullable
   static List<String> computeEntrypoint(
       Logger logger, JibExtension jibExtension, GradleProjectProperties projectProperties) {
     ContainerParameters parameters = jibExtension.getContainer();
@@ -194,7 +197,7 @@ class PluginConfigurationProcessor {
     }
 
     if (projectProperties.isWarProject()) {
-      return JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
+      return null;
     }
 
     String mainClass = projectProperties.getMainClass(jibExtension);

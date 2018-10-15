@@ -41,6 +41,7 @@ import java.io.FileNotFoundException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 
@@ -263,7 +264,7 @@ class PluginConfigurationProcessor {
    *
    * <ol>
    *   <li>the user specified one, if set
-   *   <li>for a WAR project, the Jetty default one
+   *   <li>for a WAR project, null (it must be inherited from base image)
    *   <li>for a non-WAR project, by resolving the main class
    * </ol>
    *
@@ -275,6 +276,7 @@ class PluginConfigurationProcessor {
    * @throws MojoExecutionException if resolving the main class fails or the app root parameter is
    *     not an absolute path in Unix-style
    */
+  @Nullable
   static List<String> computeEntrypoint(
       Log logger,
       JibPluginConfiguration jibPluginConfiguration,
@@ -289,7 +291,7 @@ class PluginConfigurationProcessor {
     }
 
     if (isWarPackaging(jibPluginConfiguration)) {
-      return JavaEntrypointConstructor.makeDistrolessJettyEntrypoint();
+      return null;
     }
 
     String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
@@ -299,7 +301,6 @@ class PluginConfigurationProcessor {
 
   private final JibContainerBuilder jibContainerBuilder;
   private final ImageReference baseImageReference;
-
   private final MavenSettingsServerCredentials mavenSettingsServerCredentials;
   private final boolean isBaseImageCredentialPresent;
 

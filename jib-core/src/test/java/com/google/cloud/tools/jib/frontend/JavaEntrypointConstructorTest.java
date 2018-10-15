@@ -73,10 +73,4 @@ public class JavaEntrypointConstructorTest {
             AbsoluteUnixPath.get("/my/app"), Collections.emptyList(), "Main");
     Assert.assertEquals("/my/app/resources:/my/app/classes:/my/app/libs/*", entrypoint.get(2));
   }
-
-  @Test
-  public void testMakeDistrolessJettyEntrypoint() {
-    List<String> expected = Arrays.asList("java", "-jar", "/jetty/start.jar");
-    Assert.assertEquals(expected, JavaEntrypointConstructor.makeDistrolessJettyEntrypoint());
-  }
 }
