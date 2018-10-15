@@ -282,12 +282,13 @@ class PluginConfigurationProcessor {
       JibPluginConfiguration jibPluginConfiguration,
       MavenProjectProperties projectProperties)
       throws MojoExecutionException {
-    if (!jibPluginConfiguration.getEntrypoint().isEmpty()) {
+    List<String> entrypointParameter = jibPluginConfiguration.getEntrypoint();
+    if (entrypointParameter != null && !entrypointParameter.isEmpty()) {
       if (jibPluginConfiguration.getMainClass() != null
           || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
         logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
       }
-      return jibPluginConfiguration.getEntrypoint();
+      return entrypointParameter;
     }
 
     if (isWarPackaging(jibPluginConfiguration)) {

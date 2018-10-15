@@ -120,7 +120,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private boolean useCurrentTimestamp = false;
 
-    @Parameter private List<String> entrypoint = Collections.emptyList();
+    @Nullable @Parameter private List<String> entrypoint;
 
     @Parameter private List<String> jvmFlags = Collections.emptyList();
 
@@ -292,6 +292,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the configured entrypoint
    */
+  @Nullable
   List<String> getEntrypoint() {
     if (System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT) != null) {
       return ConfigurationPropertyValidator.parseListProperty(

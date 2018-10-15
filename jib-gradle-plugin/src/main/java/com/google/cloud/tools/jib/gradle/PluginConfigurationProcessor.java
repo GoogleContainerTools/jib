@@ -139,10 +139,9 @@ class PluginConfigurationProcessor {
         Jib.from(baseImage)
             .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
             .setEntrypoint(entrypoint)
+            .setProgramArguments(jibExtension.getContainer().getArgs())
             .setEnvironment(jibExtension.getContainer().getEnvironment())
-            .setProgramArguments(jibExtension.getContainer().getArgs())
             .setExposedPorts(ExposedPortsParser.parse(jibExtension.getContainer().getPorts()))
-            .setProgramArguments(jibExtension.getContainer().getArgs())
             .setLabels(jibExtension.getContainer().getLabels())
             .setUser(jibExtension.getContainer().getUser());
     if (jibExtension.getContainer().getUseCurrentTimestamp()) {
@@ -189,7 +188,7 @@ class PluginConfigurationProcessor {
   static List<String> computeEntrypoint(
       Logger logger, JibExtension jibExtension, GradleProjectProperties projectProperties) {
     ContainerParameters parameters = jibExtension.getContainer();
-    if (!parameters.getEntrypoint().isEmpty()) {
+    if (parameters.getEntrypoint() != null && !parameters.getEntrypoint().isEmpty()) {
       if (parameters.getMainClass() != null || !parameters.getJvmFlags().isEmpty()) {
         logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
       }

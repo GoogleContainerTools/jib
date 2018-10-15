@@ -36,7 +36,7 @@ public class ContainerParameters {
   private boolean useCurrentTimestamp = false;
   private List<String> jvmFlags = Collections.emptyList();
   private Map<String, String> environment = Collections.emptyMap();
-  private List<String> entrypoint = Collections.emptyList();
+  @Nullable private List<String> entrypoint;
   @Nullable private String mainClass;
   @Nullable private List<String> args;
   private ImageFormat format = ImageFormat.Docker;
@@ -59,6 +59,7 @@ public class ContainerParameters {
   }
 
   @Input
+  @Nullable
   @Optional
   public List<String> getEntrypoint() {
     if (System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT) != null) {
