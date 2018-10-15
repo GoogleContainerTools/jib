@@ -37,6 +37,7 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
+import java.io.FileNotFoundException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -99,7 +100,7 @@ class PluginConfigurationProcessor {
    */
   static PluginConfigurationProcessor processCommonConfiguration(
       Logger logger, JibExtension jibExtension, GradleProjectProperties projectProperties)
-      throws InvalidImageReferenceException, NumberFormatException {
+      throws InvalidImageReferenceException, NumberFormatException, FileNotFoundException {
     JibSystemProperties.checkHttpTimeoutProperty();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
@@ -126,7 +127,7 @@ class PluginConfigurationProcessor {
     optionalFromCredential.ifPresent(
         fromCredential ->
             defaultCredentialRetrievers.setKnownCredential(fromCredential, "jib.from.auth"));
-    defaultCredentialRetrievers.setCredentialHelperSuffix(jibExtension.getFrom().getCredHelper());
+    defaultCredentialRetrievers.setCredentialHelper(jibExtension.getFrom().getCredHelper());
 
     List<String> entrypoint = computeEntrypoint(logger, jibExtension, projectProperties);
 

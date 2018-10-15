@@ -109,7 +109,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     optionalToCredential.ifPresent(
         toCredential ->
             defaultCredentialRetrievers.setKnownCredential(toCredential, "jib.to.auth"));
-    defaultCredentialRetrievers.setCredentialHelperSuffix(jibExtension.getTo().getCredHelper());
+    defaultCredentialRetrievers.setCredentialHelper(jibExtension.getTo().getCredHelper());
 
     RegistryImage targetImage = RegistryImage.named(targetImageReference);
     defaultCredentialRetrievers.asList().forEach(targetImage::addCredentialRetriever);

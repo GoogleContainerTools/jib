@@ -1,0 +1,119 @@
+<project>
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>example</groupId>
+  <artifactId>java-agent</artifactId>
+  <version>1</version>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jib-maven-plugin.version>0.9.11</jib-maven-plugin.version>
+    <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
+    <download-maven-plugin.version>1.4.1</download-maven-plugin.version>
+    <git-commit-id-plugin.version>2.2.5</git-commit-id-plugin.version>
+
+    <!-- agents will be extracted relative to this build location -->
+    <agent-extraction-root>${project.build.directory}/jib-agents</agent-extraction-root>
+
+    <!-- location of Stackdriver Debugger Java Agent https://cloud.google.com/debugger/docs/setup/java -->
+    <stackdriver-debugger-agent-url>https://storage.googleapis.com/cloud-debugger/compute-java/debian-wheezy/cdbg_java_agent_gce.tar.gz</stackdriver-debugger-agent-url>
+
+    <!-- where to place the Stackdriver Debugger Java Agent in the container -->
+    <stackdriver-debugger-agent-location>/opt/cdbg</stackdriver-debugger-agent-location>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.sparkjava</groupId>
+      <artifactId>spark-core</artifactId>
+      <version>2.7.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.7.21</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven-compiler-plugin.version}</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>pl.project13.maven</groupId>
+        <artifactId>git-commit-id-plugin</artifactId>
+        <version>${git-commit-id-plugin.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>revision</goal>
+            </goals>
+            <!-- *NOTE*: The default phase of revision is initialize, but 
+              in case you want to change it, you can do so by adding the phase here -->
+            <phase>initialize</phase>
+            <configuration>
+              <generateGitPropertiesFile>true</generateGitPropertiesFile>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Jib -->
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <version>${jib-maven-plugin.version}</version>
+        <configuration>
+          <to>
+            <image>gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib</image>
+          </to>
+          <extraDirectory>${agent-extraction-root}</extraDirectory>
+          <container>
+            <ports>4567</ports>
+            <jvmFlags>
+              <jvmFlag>-agentpath:${stackdriver-debugger-agent-location}/cdbg_java_agent.so=--logtostderr=1</jvmFlag>
+              <jvmFlag>-Dcom.google.cdbg.module=${project.artifactId}</jvmFlag>
+              <jvmFlag>-Dcom.google.cdbg.version=${project.version}</jvmFlag>
+            </jvmFlags>
+          </container>
+        </configuration>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>build</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>com.googlecode.maven-download-plugin</groupId>
+        <artifactId>download-maven-plugin</artifactId>
+        <version>${download-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <id>install-stackdriver-debugger</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>wget</goal>
+            </goals>
+            <configuration>
+              <url>${stackdriver-debugger-agent-url}</url>
+              <unpack>true</unpack>
+              <outputDirectory>${agent-extraction-root}/${stackdriver-debugger-agent-location}</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
