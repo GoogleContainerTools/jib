@@ -51,10 +51,6 @@
           </to>
           <container>
             <appRoot>/usr/local/tomcat/webapps/ROOT</appRoot>
-            <entrypoint>
-              <arg>catalina.sh</arg>
-              <arg>run</arg>
-            </entrypoint>
           </container>
           <!-- Does not have tests use user-level cache for base image layers. -->
           <useOnlyProjectCache>true</useOnlyProjectCache>

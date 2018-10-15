@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.NoSuchElementException;
+import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
@@ -75,7 +75,7 @@ public class DockerContextTaskTest {
 
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/app/resources:/app/classes:/app/libs/*\",\"MainClass\"]",
-        getEntrypoint());
+        getDockerfileLine("ENTRYPOINT"));
   }
 
   @Test
@@ -85,13 +85,8 @@ public class DockerContextTaskTest {
 
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/resources:/classes:/libs/*\",\"MainClass\"]",
-        getEntrypoint());
-    try {
-      getCmd();
-      Assert.fail();
-    } catch (NoSuchElementException ex) {
-      // pass
-    }
+        getDockerfileLine("ENTRYPOINT"));
+    Assert.assertNull(getDockerfileLine("CMD"));
   }
 
   @Test
@@ -102,18 +97,8 @@ public class DockerContextTaskTest {
 
     task.generateDockerContext();
 
-    try {
-      getEntrypoint();
-      Assert.fail();
-    } catch (NoSuchElementException ex) {
-      // pass
-    }
-    try {
-      getCmd();
-      Assert.fail();
-    } catch (NoSuchElementException ex) {
-      // pass
-    }
+    Assert.assertNull(getDockerfileLine("ENTRYPOINT"));
+    Assert.assertNull(getDockerfileLine("CMD"));
   }
 
   @Test
@@ -121,19 +106,14 @@ public class DockerContextTaskTest {
     Mockito.when(containerParameters.getUser()).thenReturn("tomcat");
     task.generateDockerContext();
 
-    Assert.assertEquals("USER tomcat", getUser());
+    Assert.assertEquals("USER tomcat", getDockerfileLine("USER"));
   }
 
   @Test
   public void testUser_null() throws IOException {
     Mockito.when(containerParameters.getUser()).thenReturn(null);
     task.generateDockerContext();
-    try {
-      getUser();
-      Assert.fail();
-    } catch (NoSuchElementException ex) {
-      // pass
-    }
+    Assert.assertNull(getDockerfileLine("USER"));
   }
 
   @Test
@@ -176,21 +156,10 @@ public class DockerContextTaskTest {
     }
   }
 
-  private String getUser() throws IOException {
-    return getDockerfileLine("USER");
-  }
-
-  private String getEntrypoint() throws IOException {
-    return getDockerfileLine("ENTRYPOINT");
-  }
-
-  private String getCmd() throws IOException {
-    return getDockerfileLine("CMD");
-  }
-
+  @Nullable
   private String getDockerfileLine(String command) throws IOException {
     Path dockerfile = projectRoot.getRoot().toPath().resolve("build/jib-docker-context/Dockerfile");
     List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith(command)).findFirst().get();
+    return lines.stream().filter(line -> line.startsWith(command)).findFirst().orElse(null);
   }
 }

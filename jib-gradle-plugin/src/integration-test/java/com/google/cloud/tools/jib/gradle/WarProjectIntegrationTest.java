@@ -79,10 +79,7 @@ public class WarProjectIntegrationTest {
             + "\n"
             + "COPY libs /\n"
             + "COPY resources /\n"
-            + "COPY classes /\n"
-            + "\n"
-            + "ENTRYPOINT [\"java\",\"-jar\",\"/jetty/start.jar\"]\n"
-            + "CMD []";
+            + "COPY classes /";
     verifyDockerContextBuildAndRun(expectedDockerContext, "build.gradle");
   }
 
@@ -93,10 +90,7 @@ public class WarProjectIntegrationTest {
             + "\n"
             + "COPY libs /\n"
             + "COPY resources /\n"
-            + "COPY classes /\n"
-            + "\n"
-            + "ENTRYPOINT [\"catalina.sh\",\"run\"]\n"
-            + "CMD []";
+            + "COPY classes /";
     verifyDockerContextBuildAndRun(expectedDockerContext, "build-tomcat.gradle");
   }
 

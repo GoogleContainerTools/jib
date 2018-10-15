@@ -32,10 +32,7 @@ jib {
     image = System.getProperty("_TARGET_IMAGE")
     credHelper = 'gcr'
   }
-  container {
-    appRoot = '/usr/local/tomcat/webapps/ROOT'
-    entrypoint = ['catalina.sh', 'run']
-  }
+  container.appRoot = '/usr/local/tomcat/webapps/ROOT'
 
   // Does not have tests use user-level cache for base image layers.
   useOnlyProjectCache = true
