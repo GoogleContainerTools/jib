@@ -164,7 +164,6 @@ public class GradleLayerConfigurationsTest {
             applicationDirectory.resolve("dependencies/dependencyX-1.0.0-SNAPSHOT.jar"));
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
-            applicationDirectory.resolve("resources"),
             applicationDirectory.resolve("resources/resourceA"),
             applicationDirectory.resolve("resources/resourceB"),
             applicationDirectory.resolve("resources/world"));
@@ -243,7 +242,6 @@ public class GradleLayerConfigurationsTest {
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
-            "/my/app/resources",
             "/my/app/resources/resourceA",
             "/my/app/resources/resourceB",
             "/my/app/resources/world"),
@@ -274,10 +272,7 @@ public class GradleLayerConfigurationsTest {
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
-            "/app/resources",
-            "/app/resources/resourceA",
-            "/app/resources/resourceB",
-            "/app/resources/world"),
+            "/app/resources/resourceA", "/app/resources/resourceB", "/app/resources/world"),
         configuration.getResourceLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/app/classes/HelloWorld.class", "/app/classes/some.class"),
@@ -306,12 +301,18 @@ public class GradleLayerConfigurationsTest {
             webAppDirectory.resolve("jib-exploded-war/META-INF"),
             webAppDirectory.resolve("jib-exploded-war/META-INF/context.xml"),
             webAppDirectory.resolve("jib-exploded-war/Test.jsp"),
+            webAppDirectory.resolve("jib-exploded-war/WEB-INF"),
+            webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes"),
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/empty_dir"),
+            webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/package"),
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/package/test.properties"),
+            webAppDirectory.resolve("jib-exploded-war/WEB-INF/lib"),
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/web.xml"));
     ImmutableList<Path> expectedClassesFiles =
         ImmutableList.of(
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/HelloWorld.class"),
+            webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/empty_dir"),
+            webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/package"),
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/package/Other.class"));
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
@@ -341,13 +342,19 @@ public class GradleLayerConfigurationsTest {
             "/my/app/META-INF",
             "/my/app/META-INF/context.xml",
             "/my/app/Test.jsp",
+            "/my/app/WEB-INF",
+            "/my/app/WEB-INF/classes",
             "/my/app/WEB-INF/classes/empty_dir",
+            "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/test.properties",
+            "/my/app/WEB-INF/lib",
             "/my/app/WEB-INF/web.xml"),
         configuration.getResourceLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/WEB-INF/classes/HelloWorld.class",
+            "/my/app/WEB-INF/classes/empty_dir",
+            "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/Other.class"),
         configuration.getClassLayerEntries());
     assertExtractionPathsUnordered(
@@ -377,13 +384,19 @@ public class GradleLayerConfigurationsTest {
             "/jetty/webapps/ROOT/META-INF",
             "/jetty/webapps/ROOT/META-INF/context.xml",
             "/jetty/webapps/ROOT/Test.jsp",
+            "/jetty/webapps/ROOT/WEB-INF",
+            "/jetty/webapps/ROOT/WEB-INF/classes",
             "/jetty/webapps/ROOT/WEB-INF/classes/empty_dir",
+            "/jetty/webapps/ROOT/WEB-INF/classes/package",
             "/jetty/webapps/ROOT/WEB-INF/classes/package/test.properties",
+            "/jetty/webapps/ROOT/WEB-INF/lib",
             "/jetty/webapps/ROOT/WEB-INF/web.xml"),
         configuration.getResourceLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/jetty/webapps/ROOT/WEB-INF/classes/HelloWorld.class",
+            "/jetty/webapps/ROOT/WEB-INF/classes/empty_dir",
+            "/jetty/webapps/ROOT/WEB-INF/classes/package",
             "/jetty/webapps/ROOT/WEB-INF/classes/package/Other.class"),
         configuration.getClassLayerEntries());
     assertExtractionPathsUnordered(
