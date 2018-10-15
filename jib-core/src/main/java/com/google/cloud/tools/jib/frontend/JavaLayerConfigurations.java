@@ -36,7 +36,7 @@ import java.util.function.Predicate;
 public class JavaLayerConfigurations {
 
   /** Represents the different types of layers for a Java application. */
-  public enum LayerType {
+  public static enum LayerType {
     DEPENDENCIES("dependencies"),
     SNAPSHOT_DEPENDENCIES("snapshot dependencies"),
     RESOURCES("resources"),
@@ -92,9 +92,9 @@ public class JavaLayerConfigurations {
     }
 
     /**
-     * Adds directory contents to a layer selectively and recursively. {@code sourceRoot} must be a
-     * directory. Empty directories will always be added regardless of {@code pathFilter}, except
-     * that {@code sourceRoot} is never added.
+     * Adds directory contents to a layer selectively (via {@code pathFilter}) and recursively.
+     * {@code sourceRoot} must be a directory. Empty directories will always be added regardless of
+     * {@code pathFilter}, except that {@code sourceRoot} is never added.
      *
      * <p>The contents of {@code sourceRoot} will be placed into {@code basePathInContainer}. For
      * example, if {@code sourceRoot} is {@code /usr/home}, {@code /usr/home/passwd} exists locally,

@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,51 +33,40 @@ public class JavaLayerConfigurationsHelper {
     Path webInfLib = explodedWar.resolve("WEB-INF/lib");
     Path webInfClasses = explodedWar.resolve("WEB-INF/classes");
 
+    Predicate<Path> nameHasSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
+    Predicate<Path> isSnapshotDependency =
+        path -> path.startsWith(webInfLib) && nameHasSnapshot.test(path);
+    Predicate<Path> isNonSnapshotDependency =
+        path -> path.startsWith(webInfLib) && !nameHasSnapshot.test(path);
+    Predicate<Path> isClassFile =
+        path -> path.startsWith(webInfClasses) && path.getFileName().toString().endsWith(".class");
+    Predicate<Path> isResource =
+        (isSnapshotDependency.or(isNonSnapshotDependency).or(isClassFile)).negate();
+
     Builder layerBuilder = JavaLayerConfigurations.builder();
 
     // Gets all the dependencies.
     if (Files.exists(webInfLib)) {
-      Predicate<Path> isSnapshot = path -> path.getFileName().toString().contains("SNAPSHOT");
+      AbsoluteUnixPath basePathInContainer = appRoot.resolve("WEB-INF/lib");
       layerBuilder.addDirectoryContents(
-          JavaLayerConfigurations.LayerType.DEPENDENCIES,
-          webInfLib,
-          isSnapshot.negate(),
-          appRoot.resolve("WEB-INF/lib"));
+          LayerType.DEPENDENCIES, webInfLib, isNonSnapshotDependency, basePathInContainer);
       layerBuilder.addDirectoryContents(
-          JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES,
-          webInfLib,
-          isSnapshot,
-          appRoot.resolve("WEB-INF/lib"));
+          LayerType.SNAPSHOT_DEPENDENCIES, webInfLib, isSnapshotDependency, basePathInContainer);
     }
 
     // Gets the classes files in the 'WEB-INF/classes' output directory.
-    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     if (Files.exists(webInfClasses)) {
       layerBuilder.addDirectoryContents(
-          JavaLayerConfigurations.LayerType.CLASSES,
-          webInfClasses,
-          isClassFile,
-          appRoot.resolve("WEB-INF/classes"));
+          LayerType.CLASSES, webInfClasses, isClassFile, appRoot.resolve("WEB-INF/classes"));
     }
 
     // Gets the resources.
-    Predicate<Path> isResource =
-        path -> {
-          boolean inWebInfClasses = path.startsWith(webInfClasses);
-          boolean inWebInfLib = path.startsWith(webInfLib);
-
-          return (!inWebInfClasses && !inWebInfLib) || (inWebInfClasses && !isClassFile.test(path));
-        };
-    layerBuilder.addDirectoryContents(
-        JavaLayerConfigurations.LayerType.RESOURCES, explodedWar, isResource, appRoot);
+    layerBuilder.addDirectoryContents(LayerType.RESOURCES, explodedWar, isResource, appRoot);
 
     // Adds all the extra files.
     if (Files.exists(extraFilesDirectory)) {
       layerBuilder.addDirectoryContents(
-          JavaLayerConfigurations.LayerType.EXTRA_FILES,
-          extraFilesDirectory,
-          path -> true,
-          AbsoluteUnixPath.get("/"));
+          LayerType.EXTRA_FILES, extraFilesDirectory, path -> true, AbsoluteUnixPath.get("/"));
     }
 
     return layerBuilder.build();

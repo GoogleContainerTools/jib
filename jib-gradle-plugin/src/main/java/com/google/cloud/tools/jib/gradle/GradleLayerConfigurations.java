@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import com.google.cloud.tools.jib.plugins.common.JavaLayerConfigurationsHelper;
 import java.io.File;
 import java.io.IOException;
@@ -94,7 +95,7 @@ class GradleLayerConfigurations {
       }
       logger.info("\t'" + classesOutputDirectory + "'");
       layerBuilder.addDirectoryContents(
-          JavaLayerConfigurations.LayerType.CLASSES,
+          LayerType.CLASSES,
           classesOutputDirectory.toPath(),
           path -> true,
           appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE));
@@ -106,7 +107,7 @@ class GradleLayerConfigurations {
     // Adds resource files.
     if (Files.exists(resourcesOutputDirectory)) {
       layerBuilder.addDirectoryContents(
-          JavaLayerConfigurations.LayerType.RESOURCES,
+          LayerType.RESOURCES,
           resourcesOutputDirectory,
           path -> true,
           appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE));
@@ -116,8 +117,8 @@ class GradleLayerConfigurations {
     for (File dependencyFile : dependencyFiles) {
       JavaLayerConfigurations.LayerType layerType =
           dependencyFile.getName().contains("SNAPSHOT")
-              ? JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES
-              : JavaLayerConfigurations.LayerType.DEPENDENCIES;
+              ? LayerType.SNAPSHOT_DEPENDENCIES
+              : LayerType.DEPENDENCIES;
 
       layerBuilder.addFile(
           layerType,
@@ -130,10 +131,7 @@ class GradleLayerConfigurations {
     // Adds all the extra files.
     if (Files.exists(extraDirectory)) {
       layerBuilder.addDirectoryContents(
-          JavaLayerConfigurations.LayerType.EXTRA_FILES,
-          extraDirectory,
-          path -> true,
-          AbsoluteUnixPath.get("/"));
+          LayerType.EXTRA_FILES, extraDirectory, path -> true, AbsoluteUnixPath.get("/"));
     }
 
     return layerBuilder.build();

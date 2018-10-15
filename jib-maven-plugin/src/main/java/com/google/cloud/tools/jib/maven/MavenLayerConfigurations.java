@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import com.google.cloud.tools.jib.plugins.common.JavaLayerConfigurationsHelper;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -75,9 +76,7 @@ class MavenLayerConfigurations {
     for (Artifact artifact : project.getArtifacts()) {
       Path artifactPath = artifact.getFile().toPath();
       JavaLayerConfigurations.LayerType layerType =
-          artifact.isSnapshot()
-              ? JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES
-              : JavaLayerConfigurations.LayerType.DEPENDENCIES;
+          artifact.isSnapshot() ? LayerType.SNAPSHOT_DEPENDENCIES : LayerType.DEPENDENCIES;
       layerBuilder.addFile(
           layerType, artifactPath, dependenciesExtractionPath.resolve(artifactPath.getFileName()));
     }
@@ -87,25 +86,16 @@ class MavenLayerConfigurations {
     // Gets the classes files in the 'classes' output directory.
     Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
     layerBuilder.addDirectoryContents(
-        JavaLayerConfigurations.LayerType.CLASSES,
-        classesOutputDirectory,
-        isClassFile,
-        classesExtractionPath);
+        LayerType.CLASSES, classesOutputDirectory, isClassFile, classesExtractionPath);
 
     // Gets the resources files in the 'classes' output directory.
     layerBuilder.addDirectoryContents(
-        JavaLayerConfigurations.LayerType.RESOURCES,
-        classesOutputDirectory,
-        isClassFile.negate(),
-        resourcesExtractionPath);
+        LayerType.RESOURCES, classesOutputDirectory, isClassFile.negate(), resourcesExtractionPath);
 
     // Adds all the extra files.
     if (Files.exists(extraDirectory)) {
       layerBuilder.addDirectoryContents(
-          JavaLayerConfigurations.LayerType.EXTRA_FILES,
-          extraDirectory,
-          path -> true,
-          AbsoluteUnixPath.get("/"));
+          LayerType.EXTRA_FILES, extraDirectory, path -> true, AbsoluteUnixPath.get("/"));
     }
 
     return layerBuilder.build();

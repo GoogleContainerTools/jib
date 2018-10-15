@@ -2,6 +2,7 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
@@ -48,25 +49,18 @@ public class JavaLayerConfigurationsTest {
   private static JavaLayerConfigurations createFakeConfigurations() {
     return JavaLayerConfigurations.builder()
         .addFile(
-            JavaLayerConfigurations.LayerType.DEPENDENCIES,
+            LayerType.DEPENDENCIES,
             Paths.get("dependency"),
             AbsoluteUnixPath.get("/dependency/path"))
         .addFile(
-            JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES,
+            LayerType.SNAPSHOT_DEPENDENCIES,
             Paths.get("snapshot dependency"),
             AbsoluteUnixPath.get("/snapshots"))
         .addFile(
-            JavaLayerConfigurations.LayerType.RESOURCES,
-            Paths.get("resource"),
-            AbsoluteUnixPath.get("/resources/here"))
+            LayerType.RESOURCES, Paths.get("resource"), AbsoluteUnixPath.get("/resources/here"))
+        .addFile(LayerType.CLASSES, Paths.get("class"), AbsoluteUnixPath.get("/classes/go/here"))
         .addFile(
-            JavaLayerConfigurations.LayerType.CLASSES,
-            Paths.get("class"),
-            AbsoluteUnixPath.get("/classes/go/here"))
-        .addFile(
-            JavaLayerConfigurations.LayerType.EXTRA_FILES,
-            Paths.get("extra file"),
-            AbsoluteUnixPath.get("/some/extras"))
+            LayerType.EXTRA_FILES, Paths.get("extra file"), AbsoluteUnixPath.get("/some/extras"))
         .build();
   }
 
@@ -75,7 +69,7 @@ public class JavaLayerConfigurationsTest {
     JavaLayerConfigurations javaLayerConfigurations = createFakeConfigurations();
 
     List<String> expectedLabels = new ArrayList<>();
-    for (JavaLayerConfigurations.LayerType layerType : JavaLayerConfigurations.LayerType.values()) {
+    for (LayerType layerType : LayerType.values()) {
       expectedLabels.add(layerType.getName());
     }
     List<String> actualLabels = new ArrayList<>();
@@ -116,26 +110,14 @@ public class JavaLayerConfigurationsTest {
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
+            .addFile(LayerType.DEPENDENCIES, sourceDirectory, AbsoluteUnixPath.get("/libs/dir"))
             .addFile(
-                JavaLayerConfigurations.LayerType.DEPENDENCIES,
-                sourceDirectory,
-                AbsoluteUnixPath.get("/libs/dir"))
-            .addFile(
-                JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES,
+                LayerType.SNAPSHOT_DEPENDENCIES,
                 sourceDirectory,
                 AbsoluteUnixPath.get("/snapshots/target"))
-            .addFile(
-                JavaLayerConfigurations.LayerType.RESOURCES,
-                sourceDirectory,
-                AbsoluteUnixPath.get("/resources"))
-            .addFile(
-                JavaLayerConfigurations.LayerType.CLASSES,
-                sourceDirectory,
-                AbsoluteUnixPath.get("/classes/here"))
-            .addFile(
-                JavaLayerConfigurations.LayerType.EXTRA_FILES,
-                sourceDirectory,
-                AbsoluteUnixPath.get("/extra/files"))
+            .addFile(LayerType.RESOURCES, sourceDirectory, AbsoluteUnixPath.get("/resources"))
+            .addFile(LayerType.CLASSES, sourceDirectory, AbsoluteUnixPath.get("/classes/here"))
+            .addFile(LayerType.EXTRA_FILES, sourceDirectory, AbsoluteUnixPath.get("/extra/files"))
             .build();
 
     Assert.assertEquals(
@@ -162,26 +144,14 @@ public class JavaLayerConfigurationsTest {
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
+            .addFile(LayerType.DEPENDENCIES, sourceFile, AbsoluteUnixPath.get("/libs/file"))
             .addFile(
-                JavaLayerConfigurations.LayerType.DEPENDENCIES,
-                sourceFile,
-                AbsoluteUnixPath.get("/libs/file"))
-            .addFile(
-                JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES,
+                LayerType.SNAPSHOT_DEPENDENCIES,
                 sourceFile,
                 AbsoluteUnixPath.get("/snapshots/target/file"))
-            .addFile(
-                JavaLayerConfigurations.LayerType.RESOURCES,
-                sourceFile,
-                AbsoluteUnixPath.get("/resources-file"))
-            .addFile(
-                JavaLayerConfigurations.LayerType.CLASSES,
-                sourceFile,
-                AbsoluteUnixPath.get("/classes/file"))
-            .addFile(
-                JavaLayerConfigurations.LayerType.EXTRA_FILES,
-                sourceFile,
-                AbsoluteUnixPath.get("/some/file"))
+            .addFile(LayerType.RESOURCES, sourceFile, AbsoluteUnixPath.get("/resources-file"))
+            .addFile(LayerType.CLASSES, sourceFile, AbsoluteUnixPath.get("/classes/file"))
+            .addFile(LayerType.EXTRA_FILES, sourceFile, AbsoluteUnixPath.get("/some/file"))
             .build();
 
     Assert.assertEquals(
@@ -207,38 +177,28 @@ public class JavaLayerConfigurationsTest {
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
+            .addFile(LayerType.RESOURCES, Paths.get("test.jsp"), appRoot.resolve("test.jsp"))
+            .addFile(LayerType.RESOURCES, Paths.get("META-INF/"), appRoot.resolve("META-INF/"))
             .addFile(
-                JavaLayerConfigurations.LayerType.RESOURCES,
-                Paths.get("test.jsp"),
-                appRoot.resolve("test.jsp"))
-            .addFile(
-                JavaLayerConfigurations.LayerType.RESOURCES,
-                Paths.get("META-INF/"),
-                appRoot.resolve("META-INF/"))
-            .addFile(
-                JavaLayerConfigurations.LayerType.RESOURCES,
+                LayerType.RESOURCES,
                 Paths.get("context.xml"),
                 appRoot.resolve("WEB-INF/context.xml"))
             .addFile(
-                JavaLayerConfigurations.LayerType.RESOURCES,
-                Paths.get("sub_dir/"),
-                appRoot.resolve("WEB-INF/sub_dir/"))
+                LayerType.RESOURCES, Paths.get("sub_dir/"), appRoot.resolve("WEB-INF/sub_dir/"))
             .addFile(
-                JavaLayerConfigurations.LayerType.DEPENDENCIES,
+                LayerType.DEPENDENCIES,
                 Paths.get("myLib.jar"),
                 appRoot.resolve("WEB-INF/lib/myLib.jar"))
             .addFile(
-                JavaLayerConfigurations.LayerType.SNAPSHOT_DEPENDENCIES,
+                LayerType.SNAPSHOT_DEPENDENCIES,
                 Paths.get("my-SNAPSHOT.jar"),
                 appRoot.resolve("WEB-INF/lib/my-SNAPSHOT.jar"))
             .addFile(
-                JavaLayerConfigurations.LayerType.CLASSES,
+                LayerType.CLASSES,
                 Paths.get("test.class"),
                 appRoot.resolve("WEB-INF/classes/test.class"))
             .addFile(
-                JavaLayerConfigurations.LayerType.EXTRA_FILES,
-                Paths.get("extra.file"),
-                AbsoluteUnixPath.get("/extra.file"))
+                LayerType.EXTRA_FILES, Paths.get("extra.file"), AbsoluteUnixPath.get("/extra.file"))
             .build();
 
     ImmutableList<LayerEntry> expectedDependenciesLayer =
@@ -278,8 +238,7 @@ public class JavaLayerConfigurationsTest {
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addDirectoryContents(
-                JavaLayerConfigurations.LayerType.EXTRA_FILES, sourceRoot, path -> true, basePath)
+            .addDirectoryContents(LayerType.EXTRA_FILES, sourceRoot, path -> true, basePath)
             .build();
     Assert.assertEquals(
         Arrays.asList(new LayerEntry(sourceRoot.resolve("file"), basePath.resolve("file"))),
@@ -295,8 +254,7 @@ public class JavaLayerConfigurationsTest {
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addDirectoryContents(
-                JavaLayerConfigurations.LayerType.CLASSES, sourceRoot, path -> true, basePath)
+            .addDirectoryContents(LayerType.CLASSES, sourceRoot, path -> true, basePath)
             .build();
     Assert.assertEquals(
         Arrays.asList(new LayerEntry(sourceRoot.resolve("leaf"), basePath.resolve("leaf"))),
@@ -312,8 +270,7 @@ public class JavaLayerConfigurationsTest {
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addDirectoryContents(
-                JavaLayerConfigurations.LayerType.RESOURCES, sourceRoot, path -> true, basePath)
+            .addDirectoryContents(LayerType.RESOURCES, sourceRoot, path -> true, basePath)
             .build();
     Assert.assertEquals(
         Arrays.asList(
@@ -335,8 +292,7 @@ public class JavaLayerConfigurationsTest {
     Predicate<Path> nameIsTarget = path -> "target".equals(path.getFileName().toString());
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addDirectoryContents(
-                JavaLayerConfigurations.LayerType.DEPENDENCIES, sourceRoot, nameIsTarget, basePath)
+            .addDirectoryContents(LayerType.DEPENDENCIES, sourceRoot, nameIsTarget, basePath)
             .build();
     Assert.assertEquals(
         Arrays.asList(
@@ -354,8 +310,7 @@ public class JavaLayerConfigurationsTest {
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addDirectoryContents(
-                JavaLayerConfigurations.LayerType.EXTRA_FILES, sourceRoot, path -> false, basePath)
+            .addDirectoryContents(LayerType.EXTRA_FILES, sourceRoot, path -> false, basePath)
             .build();
     Assert.assertEquals(
         Arrays.asList(
@@ -371,8 +326,7 @@ public class JavaLayerConfigurationsTest {
     AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
     JavaLayerConfigurations.Builder builder = JavaLayerConfigurations.builder();
     try {
-      builder.addDirectoryContents(
-          JavaLayerConfigurations.LayerType.DEPENDENCIES, sourceFile, path -> true, basePath);
+      builder.addDirectoryContents(LayerType.DEPENDENCIES, sourceFile, path -> true, basePath);
       Assert.fail();
     } catch (NotDirectoryException ex) {
       Assert.assertThat(ex.getMessage(), CoreMatchers.containsString("foo is not a directory"));
@@ -397,8 +351,7 @@ public class JavaLayerConfigurationsTest {
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
-            .addDirectoryContents(
-                JavaLayerConfigurations.LayerType.EXTRA_FILES, sourceRoot, isClassFile, basePath)
+            .addDirectoryContents(LayerType.EXTRA_FILES, sourceRoot, isClassFile, basePath)
             .build();
 
     assertSourcePathsUnordered(
