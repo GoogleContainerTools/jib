@@ -127,6 +127,7 @@ public class DockerContextTask extends DefaultTask implements JibTask {
           .setEntrypoint(entrypoint)
           .setProgramArguments(jibExtension.getContainer().getArgs())
           .setExposedPorts(jibExtension.getContainer().getPorts())
+          .setEnvironment(jibExtension.getContainer().getEnvironment())
           .setLabels(jibExtension.getContainer().getLabels())
           .setUser(jibExtension.getContainer().getUser())
           .generate(Paths.get(targetDir));
