@@ -202,18 +202,20 @@ class BuildImageStep
   @Nullable
   private ImmutableList<String> computeEntrypoint(
       Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
-    if (baseImage.getEntrypoint() == null || containerConfiguration.getEntrypoint() != null) {
-      return containerConfiguration.getEntrypoint();
+    boolean shouldInherit =
+        baseImage.getEntrypoint() != null && containerConfiguration.getEntrypoint() == null;
+
+    ImmutableList<String> entrypointToUse =
+        shouldInherit ? baseImage.getEntrypoint() : containerConfiguration.getEntrypoint();
+
+    if (entrypointToUse != null) {
+      String logSuffix = shouldInherit ? " (inherited from base image)" : "";
+      String message = "Container entrypoint set to " + entrypointToUse + logSuffix;
+      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
+      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(message));
     }
 
-    buildConfiguration
-        .getEventDispatcher()
-        .dispatch(
-            LogEvent.lifecycle(
-                "Container entrypoint set to "
-                    + baseImage.getEntrypoint()
-                    + " (inherited from base image)"));
-    return baseImage.getEntrypoint();
+    return entrypointToUse;
   }
 
   /**
@@ -229,19 +231,23 @@ class BuildImageStep
   @Nullable
   private ImmutableList<String> computeProgramArguments(
       Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
-    if (baseImage.getProgramArguments() == null
-        || containerConfiguration.getEntrypoint() != null
-        || containerConfiguration.getProgramArguments() != null) {
-      return containerConfiguration.getProgramArguments();
+    boolean shouldInherit =
+        baseImage.getProgramArguments() != null
+            // Inherit CMD only when inheriting ENTRYPOINT.
+            && containerConfiguration.getEntrypoint() == null
+            && containerConfiguration.getProgramArguments() == null;
+
+    ImmutableList<String> programArgumentsToUse =
+        shouldInherit
+            ? baseImage.getProgramArguments()
+            : containerConfiguration.getProgramArguments();
+
+    if (programArgumentsToUse != null) {
+      String logSuffix = shouldInherit ? " (inherited from base image)" : "";
+      String message = "Container program arguments set to " + programArgumentsToUse + logSuffix;
+      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(message));
     }
 
-    buildConfiguration
-        .getEventDispatcher()
-        .dispatch(
-            LogEvent.lifecycle(
-                "Container program arguments set to "
-                    + baseImage.getProgramArguments()
-                    + " (inherited from base image)"));
-    return baseImage.getProgramArguments();
+    return programArgumentsToUse;
   }
 }
