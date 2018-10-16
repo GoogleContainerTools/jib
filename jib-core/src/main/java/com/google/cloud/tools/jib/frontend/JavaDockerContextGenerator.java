@@ -139,7 +139,7 @@ public class JavaDockerContextGenerator {
   @Nullable private String baseImage;
   private List<String> entrypoint = Collections.emptyList();
   private List<String> javaArguments = Collections.emptyList();
-  private Map<String, String> environment = Collections.emptyMap();
+  @Nullable private Map<String, String> environment;
   private List<String> exposedPorts = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();
 
@@ -226,7 +226,7 @@ public class JavaDockerContextGenerator {
    * @param environment map from the environment variable name to value
    * @return this
    */
-  public JavaDockerContextGenerator setEnvironment(Map<String, String> environment) {
+  public JavaDockerContextGenerator setEnvironment(@Nullable Map<String, String> environment) {
     this.environment = environment;
     return this;
   }
@@ -348,7 +348,9 @@ public class JavaDockerContextGenerator {
       dockerfile.append("\nEXPOSE ").append(port);
     }
 
-    dockerfile.append(mapToDockerfileString(environment, "ENV"));
+    if (environment != null) {
+      dockerfile.append(mapToDockerfileString(environment, "ENV"));
+    }
     dockerfile.append(mapToDockerfileString(labels, "LABEL"));
     dockerfile
         .append("\nENTRYPOINT ")

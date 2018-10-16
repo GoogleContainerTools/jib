@@ -16,11 +16,13 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
@@ -72,6 +74,11 @@ public class DockerContextMojoTest {
           @Override
           String getAppRoot() {
             return appRoot;
+          }
+
+          @Override
+          Map<String, String> getEnvironment() {
+            return ImmutableMap.of("envKey", "envVal");
           }
         };
     mojo.targetDir = outputFolder.toString();
@@ -133,6 +140,15 @@ public class DockerContextMojoTest {
           "<container><appRoot> is not an absolute Unix-style path: C:\\windows\\path",
           ex.getMessage());
     }
+  }
+
+  @Test
+  public void testGeneratedDockerContext_env() throws MojoExecutionException, IOException {
+    mojo.execute();
+    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
+    List<String> lines = Files.readAllLines(dockerfile);
+    String envLine = lines.stream().filter(line -> line.startsWith("ENV")).findFirst().get();
+    Assert.assertEquals("ENV envKey=\"envVal\"", envLine);
   }
 
   private String getEntrypoint() throws IOException {
