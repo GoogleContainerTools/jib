@@ -22,7 +22,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Adds environment variable configuration to Docker context generator ([#890](https://github.com/GoogleContainerTools/jib/issues/890))
+- Adds environment variable configuration to Docker context generator ([#890 (comment)](https://github.com/GoogleContainerTools/jib/issues/890#issuecomment-430227555))
 
 ## 0.9.12
 
