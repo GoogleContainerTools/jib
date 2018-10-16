@@ -26,7 +26,6 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -203,7 +202,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testWebAppEntrypoint_default()
+  public void testWebAppEntrypoint_inheritedFromBaseImage()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     Mockito.when(mockProjectProperties.isWarProject()).thenReturn(true);
 
@@ -214,9 +213,7 @@ public class PluginConfigurationProcessorTest {
         getBuildConfiguration(processor.getJibContainerBuilder());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertEquals(
-        ImmutableList.of("java", "-jar", "/jetty/start.jar"),
-        buildConfiguration.getContainerConfiguration().getEntrypoint());
+    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
   }
 
   @Test

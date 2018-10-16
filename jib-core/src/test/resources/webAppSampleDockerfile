@@ -7,4 +7,3 @@ COPY classes /
 COPY root /
 
 ENTRYPOINT ["catalina.sh","run"]
-CMD []

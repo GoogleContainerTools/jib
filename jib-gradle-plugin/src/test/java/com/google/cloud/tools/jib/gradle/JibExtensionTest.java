@@ -109,7 +109,7 @@ public class JibExtensionTest {
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getJvmFlags());
     Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getEnvironment());
     Assert.assertNull(testJibExtension.getContainer().getMainClass());
-    Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getArgs());
+    Assert.assertNull(testJibExtension.getContainer().getArgs());
     Assert.assertSame(ImageFormat.Docker, testJibExtension.getContainer().getFormat());
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getPorts());
     Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getLabels());

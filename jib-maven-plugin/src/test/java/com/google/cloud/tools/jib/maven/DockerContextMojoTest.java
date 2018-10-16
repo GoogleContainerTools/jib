@@ -17,12 +17,14 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Map;
+import javax.annotation.Nullable;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
@@ -54,28 +56,7 @@ public class DockerContextMojoTest {
     Mockito.when(project.getBuild()).thenReturn(build);
     Mockito.when(build.getOutputDirectory()).thenReturn(outputFolder.toString());
 
-    mojo =
-        new DockerContextMojo() {
-          @Override
-          MavenProject getProject() {
-            return project;
-          }
-
-          @Override
-          Path getExtraDirectory() {
-            return projectRoot.getRoot().toPath();
-          }
-
-          @Override
-          String getMainClass() {
-            return "MainClass";
-          }
-
-          @Override
-          String getAppRoot() {
-            return appRoot;
-          }
-        };
+    mojo = new BaseDockerContextMojo();
     mojo.targetDir = outputFolder.toString();
   }
 
@@ -85,7 +66,8 @@ public class DockerContextMojoTest {
 
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/app/resources:/app/classes:/app/libs/*\",\"MainClass\"]",
-        getEntrypoint());
+        getDockerfileLine("ENTRYPOINT"));
+    Assert.assertNull(getDockerfileLine("CMD"));
   }
 
   @Test
@@ -95,7 +77,8 @@ public class DockerContextMojoTest {
 
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/resources:/classes:/libs/*\",\"MainClass\"]",
-        getEntrypoint());
+        getDockerfileLine("ENTRYPOINT"));
+    Assert.assertNull(getDockerfileLine("CMD"));
   }
 
   @Test
@@ -138,10 +121,15 @@ public class DockerContextMojoTest {
   }
 
   @Test
+  public void testGeneratedDockerContext_env() throws MojoExecutionException, IOException {
+    mojo.execute();
+    Assert.assertEquals("ENV envKey=\"envVal\"", getDockerfileLine("ENV"));
+  }
+
   public void testBaseImage_nonWarPackaging() throws MojoExecutionException, IOException {
     mojo.execute();
 
-    Assert.assertEquals("FROM gcr.io/distroless/java", getBaseImage());
+    Assert.assertEquals("FROM gcr.io/distroless/java", getDockerfileLine("FROM"));
   }
 
   @Test
@@ -153,7 +141,7 @@ public class DockerContextMojoTest {
     Mockito.doReturn(projectRoot.getRoot().toString()).when(build).getDirectory();
     mojo.execute();
 
-    Assert.assertEquals("FROM gcr.io/distroless/java/jetty", getBaseImage());
+    Assert.assertEquals("FROM gcr.io/distroless/java/jetty", getDockerfileLine("FROM"));
   }
 
   @Test
@@ -161,30 +149,10 @@ public class DockerContextMojoTest {
     Mockito.doReturn("war").when(project).getPackaging();
     Mockito.doReturn("final-name").when(build).getFinalName();
     mojo =
-        new DockerContextMojo() {
-          @Override
-          MavenProject getProject() {
-            return project;
-          }
-
-          @Override
-          Path getExtraDirectory() {
-            return projectRoot.getRoot().toPath();
-          }
-
-          @Override
-          String getMainClass() {
-            return "MainClass";
-          }
-
+        new BaseDockerContextMojo() {
           @Override
           String getBaseImage() {
             return "tomcat:8.5-jre8-alpine";
-          }
-
-          @Override
-          String getAppRoot() {
-            return appRoot;
           }
         };
     mojo.targetDir = outputFolder.toString();
@@ -194,7 +162,7 @@ public class DockerContextMojoTest {
     Mockito.doReturn(projectRoot.getRoot().toString()).when(build).getDirectory();
     mojo.execute();
 
-    Assert.assertEquals("FROM tomcat:8.5-jre8-alpine", getBaseImage());
+    Assert.assertEquals("FROM tomcat:8.5-jre8-alpine", getDockerfileLine("FROM"));
   }
 
   @Test
@@ -206,7 +174,8 @@ public class DockerContextMojoTest {
     Mockito.doReturn(projectRoot.getRoot().toString()).when(build).getDirectory();
     mojo.execute();
 
-    Assert.assertEquals("ENTRYPOINT [\"java\",\"-jar\",\"/jetty/start.jar\"]", getEntrypoint());
+    Assert.assertNull(getDockerfileLine("ENTRYPOINT"));
+    Assert.assertNull(getDockerfileLine("CMD"));
   }
 
   @Test
@@ -217,62 +186,22 @@ public class DockerContextMojoTest {
     projectRoot.newFolder("final-name", "WEB-INF", "classes");
     Mockito.doReturn(projectRoot.getRoot().toString()).when(build).getDirectory();
     mojo =
-        new DockerContextMojo() {
-          @Override
-          MavenProject getProject() {
-            return project;
-          }
-
-          @Override
-          Path getExtraDirectory() {
-            return projectRoot.getRoot().toPath();
-          }
-
-          @Override
-          String getMainClass() {
-            return "MainClass";
-          }
-
+        new BaseDockerContextMojo() {
           @Override
           List<String> getEntrypoint() {
             return ImmutableList.of("catalina.sh", "run");
           }
-
-          @Override
-          String getAppRoot() {
-            return appRoot;
-          }
         };
     mojo.targetDir = outputFolder.toString();
     mojo.execute();
-
-    Assert.assertEquals("ENTRYPOINT [\"catalina.sh\",\"run\"]", getEntrypoint());
+    Assert.assertEquals("ENTRYPOINT [\"catalina.sh\",\"run\"]", getDockerfileLine("ENTRYPOINT"));
+    Assert.assertNull(getDockerfileLine("CMD"));
   }
 
   @Test
   public void testUser() throws IOException, MojoExecutionException {
     mojo =
-        new DockerContextMojo() {
-          @Override
-          MavenProject getProject() {
-            return project;
-          }
-
-          @Override
-          Path getExtraDirectory() {
-            return projectRoot.getRoot().toPath();
-          }
-
-          @Override
-          String getMainClass() {
-            return "MainClass";
-          }
-
-          @Override
-          String getBaseImage() {
-            return "tomcat:8.5-jre8-alpine";
-          }
-
+        new BaseDockerContextMojo() {
           @Override
           String getUser() {
             return "tomcat";
@@ -280,57 +209,49 @@ public class DockerContextMojoTest {
         };
     mojo.targetDir = outputFolder.toString();
     mojo.execute();
-    Assert.assertEquals("USER tomcat", getUser());
+    Assert.assertEquals("USER tomcat", getDockerfileLine("USER"));
   }
 
   @Test
   public void testUser_null() throws IOException, MojoExecutionException {
-    mojo =
-        new DockerContextMojo() {
-          @Override
-          MavenProject getProject() {
-            return project;
-          }
-
-          @Override
-          Path getExtraDirectory() {
-            return projectRoot.getRoot().toPath();
-          }
-
-          @Override
-          String getMainClass() {
-            return "MainClass";
-          }
-
-          @Override
-          String getBaseImage() {
-            return "tomcat:8.5-jre8-alpine";
-          }
-        };
+    mojo = new BaseDockerContextMojo();
     mojo.targetDir = outputFolder.toString();
     mojo.execute();
-    try {
-      getUser();
-      Assert.fail();
-    } catch (NoSuchElementException ex) {
+    Assert.assertNull(getDockerfileLine("USER"));
+  }
+
+  private class BaseDockerContextMojo extends DockerContextMojo {
+
+    @Override
+    MavenProject getProject() {
+      return project;
+    }
+
+    @Override
+    Path getExtraDirectory() {
+      return projectRoot.getRoot().toPath();
+    }
+
+    @Override
+    String getMainClass() {
+      return "MainClass";
+    }
+
+    @Override
+    String getAppRoot() {
+      return appRoot;
+    }
+
+    @Override
+    Map<String, String> getEnvironment() {
+      return ImmutableMap.of("envKey", "envVal");
     }
   }
 
-  private String getUser() throws IOException {
+  @Nullable
+  private String getDockerfileLine(String command) throws IOException {
     Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
     List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("USER")).findFirst().get();
-  }
-
-  private String getEntrypoint() throws IOException {
-    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
-    List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("ENTRYPOINT")).findFirst().get();
-  }
-
-  private String getBaseImage() throws IOException {
-    Path dockerfile = projectRoot.getRoot().toPath().resolve("target/Dockerfile");
-    List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("FROM")).findFirst().get();
+    return lines.stream().filter(line -> line.startsWith(command)).findFirst().orElse(null);
   }
 }

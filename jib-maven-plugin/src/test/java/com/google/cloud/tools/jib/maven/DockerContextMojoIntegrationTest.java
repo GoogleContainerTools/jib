@@ -106,10 +106,7 @@ public class DockerContextMojoIntegrationTest {
             + "\n"
             + "COPY libs /\n"
             + "COPY resources /\n"
-            + "COPY classes /\n"
-            + "\n"
-            + "ENTRYPOINT [\"java\",\"-jar\",\"/jetty/start.jar\"]\n"
-            + "CMD []";
+            + "COPY classes /";
     verifyWarBuildAndRun(expectedDockerfile, "pom.xml");
   }
 
@@ -121,10 +118,7 @@ public class DockerContextMojoIntegrationTest {
             + "\n"
             + "COPY libs /\n"
             + "COPY resources /\n"
-            + "COPY classes /\n"
-            + "\n"
-            + "ENTRYPOINT [\"catalina.sh\",\"run\"]\n"
-            + "CMD []";
+            + "COPY classes /";
     verifyWarBuildAndRun(expectedDockerfile, "pom-tomcat.xml");
   }
 
