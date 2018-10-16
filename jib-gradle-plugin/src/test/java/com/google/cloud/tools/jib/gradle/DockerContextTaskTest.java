@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -54,6 +55,8 @@ public class DockerContextTaskTest {
 
     JibExtension jibExtension = Mockito.mock(JibExtension.class);
     Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
+    Mockito.when(containerParameters.getEnvironment())
+        .thenReturn(ImmutableMap.of("envKey", "envVal"));
     Mockito.when(jibExtension.getExtraDirectoryPath())
         .thenReturn(projectRoot.newFolder("src", "main", "jib").toPath());
     Mockito.when(jibExtension.getContainer().getMainClass()).thenReturn("MainClass");
@@ -154,6 +157,12 @@ public class DockerContextTaskTest {
           "container.appRoot is not an absolute Unix-style path: C:\\windows\\path",
           ex.getMessage());
     }
+  }
+
+  @Test
+  public void testGenerateDockerContext_env() throws IOException {
+    task.generateDockerContext();
+    Assert.assertEquals("ENV envKey=\"envVal\"", getDockerfileLine("ENV"));
   }
 
   @Nullable
