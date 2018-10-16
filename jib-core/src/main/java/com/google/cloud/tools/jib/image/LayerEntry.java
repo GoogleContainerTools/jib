@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -36,10 +37,11 @@ public class LayerEntry {
 
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
+  private final int permissions;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
-   * system.
+   * system with default permissions ({@code 755} for directories, {@code 644} for files).
    *
    * <p>For example, {@code new LayerEntry(Paths.get("HelloWorld.class"),
    * AbsoluteUnixPath.get("/app/classes/HelloWorld.class"))} adds a file {@code HelloWorld.class} to
@@ -56,6 +58,22 @@ public class LayerEntry {
   public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
+    this.permissions = Files.isDirectory(sourceFile) ? 0755 : 0644;
+  }
+
+  /**
+   * Instantiates with a source file and the path to place the source file in the container file
+   * system.
+   *
+   * @param sourceFile the source file to add to the layer
+   * @param extractionPath the path in the container file system corresponding to the {@code
+   *     sourceFile}
+   * @param permissions the file permissions on the container
+   */
+  public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath, int permissions) {
+    this.sourceFile = sourceFile;
+    this.extractionPath = extractionPath;
+    this.permissions = permissions;
   }
 
   /**
@@ -79,6 +97,15 @@ public class LayerEntry {
    */
   public AbsoluteUnixPath getExtractionPath() {
     return extractionPath;
+  }
+
+  /**
+   * Gets the file permissions on the container.
+   *
+   * @return the file permissions on the container
+   */
+  public int getPermissions() {
+    return permissions;
   }
 
   // TODO: Remove these get...String methods.

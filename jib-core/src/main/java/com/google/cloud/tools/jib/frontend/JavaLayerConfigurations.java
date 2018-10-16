@@ -36,7 +36,7 @@ import java.util.function.Predicate;
 public class JavaLayerConfigurations {
 
   /** Represents the different types of layers for a Java application. */
-  public static enum LayerType {
+  public enum LayerType {
     DEPENDENCIES("dependencies"),
     SNAPSHOT_DEPENDENCIES("snapshot dependencies"),
     RESOURCES("resources"),
@@ -50,7 +50,7 @@ public class JavaLayerConfigurations {
      *
      * @param name name to set for the layer; does not affect the contents of the layer
      */
-    private LayerType(String name) {
+    LayerType(String name) {
       this.name = name;
     }
 
@@ -123,6 +123,43 @@ public class JavaLayerConfigurations {
           .walk(
               path ->
                   builder.addEntry(path, basePathInContainer.resolve(sourceRoot.relativize(path))));
+      return this;
+    }
+
+    /**
+     * Adds directory contents to a layer selectively (via {@code pathFilter}) and recursively.
+     * {@code sourceRoot} must be a directory. Empty directories will always be added regardless of
+     * {@code pathFilter}, except that {@code sourceRoot} is never added. Permissions are specified
+     * via {@code permissionsMap}, which maps from extraction path on the container to file
+     * permissions.
+     *
+     * @param sourceRoot root directory whose contents will be added
+     * @param basePathInContainer directory in the layer into which the source contents are added
+     * @param permissionsMap the map from absolute path on container to file permission
+     * @return this
+     * @throws IOException error while listing directories
+     * @throws NotDirectoryException if {@code sourceRoot} is not a directory
+     */
+    public Builder addExtraDirectoryContents(
+        Path sourceRoot, AbsoluteUnixPath basePathInContainer, Map<Path, Integer> permissionsMap)
+        throws IOException {
+      LayerConfiguration.Builder builder =
+          Preconditions.checkNotNull(layerBuilders.get(LayerType.EXTRA_FILES));
+
+      new DirectoryWalker(sourceRoot)
+          .filterRoot()
+          .walk(
+              path -> {
+                Path pathOnContainer = sourceRoot.relativize(path);
+                if (permissionsMap.containsKey(pathOnContainer)) {
+                  builder.addEntry(
+                      path,
+                      basePathInContainer.resolve(pathOnContainer),
+                      permissionsMap.get(pathOnContainer));
+                } else {
+                  builder.addEntry(path, basePathInContainer.resolve(pathOnContainer));
+                }
+              });
       return this;
     }
 

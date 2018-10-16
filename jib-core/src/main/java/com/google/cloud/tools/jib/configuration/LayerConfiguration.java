@@ -71,6 +71,21 @@ public class LayerConfiguration {
     }
 
     /**
+     * Adds an entry to the layer. Only adds the single source file to the exact path in the
+     * container file system with the given permissions.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param permissions the file permissions on the container
+     * @return this
+     */
+    public Builder addEntry(Path sourceFile, AbsoluteUnixPath pathInContainer, int permissions) {
+      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions));
+      return this;
+    }
+
+    /**
      * Adds an entry to the layer. If the source file is a directory, the directory and its contents
      * will be added recursively.
      *

@@ -100,9 +100,11 @@ public class ReproducibleLayerBuilder {
     for (LayerEntry layerEntry : layerEntries) {
       // Adds the entries to uniqueTarArchiveEntries, which makes sure all entries are unique and
       // adds parent directories for each extraction path.
-      uniqueTarArchiveEntries.add(
+      TarArchiveEntry entry =
           new TarArchiveEntry(
-              layerEntry.getSourceFile().toFile(), layerEntry.getAbsoluteExtractionPathString()));
+              layerEntry.getSourceFile().toFile(), layerEntry.getAbsoluteExtractionPathString());
+      entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions());
+      uniqueTarArchiveEntries.add(entry);
     }
 
     // Gets the entries sorted by extraction path.

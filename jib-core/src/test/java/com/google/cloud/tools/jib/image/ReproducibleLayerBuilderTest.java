@@ -203,6 +203,38 @@ public class ReproducibleLayerBuilderTest {
     }
   }
 
+  @Test
+  public void testBuild_permissions() throws IOException {
+    Path testRoot = temporaryFolder.getRoot().toPath();
+    Path folder = Files.createDirectories(testRoot.resolve("files1"));
+    Path fileA = createFile(testRoot, "fileA", "abc", 54321);
+    Path fileB = createFile(testRoot, "fileB", "def", 54321);
+
+    Blob blob =
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(
+                    new LayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA")),
+                    new LayerEntry(fileB, AbsoluteUnixPath.get("/somewhere/fileB"), 0123),
+                    new LayerEntry(folder, AbsoluteUnixPath.get("/somewhere/folder"), 0456)))
+            .build();
+
+    Path tarFile = temporaryFolder.newFile().toPath();
+    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
+      blob.writeTo(out);
+    }
+
+    try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
+      // Root folder (default folder permissions)
+      Assert.assertEquals(040755, in.getNextTarEntry().getMode());
+      // fileA (default file permissions)
+      Assert.assertEquals(0100644, in.getNextTarEntry().getMode());
+      // fileB (custom file permissions)
+      Assert.assertEquals(0100123, in.getNextTarEntry().getMode());
+      // folder (custom folder permissions)
+      Assert.assertEquals(040456, in.getNextTarEntry().getMode());
+    }
+  }
+
   private Path createFile(Path root, String filename, String content, long lastModifiedTime)
       throws IOException {
 
