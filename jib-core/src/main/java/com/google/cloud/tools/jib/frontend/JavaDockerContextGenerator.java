@@ -29,7 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -135,8 +134,8 @@ public class JavaDockerContextGenerator {
   @Nullable private List<String> programArguments;
   @Nullable private Map<String, String> environment;
   @Nullable private String user;
-  private List<String> exposedPorts = Collections.emptyList();
-  private Map<String, String> labels = Collections.emptyMap();
+  @Nullable private List<String> exposedPorts;
+  @Nullable private Map<String, String> labels;
 
   /**
    * Constructs a Docker context generator for a Java application.
@@ -230,7 +229,7 @@ public class JavaDockerContextGenerator {
    * @param exposedPorts the list of port numbers/port ranges to expose
    * @return this
    */
-  public JavaDockerContextGenerator setExposedPorts(List<String> exposedPorts) {
+  public JavaDockerContextGenerator setExposedPorts(@Nullable List<String> exposedPorts) {
     this.exposedPorts = exposedPorts;
     return this;
   }
@@ -241,7 +240,7 @@ public class JavaDockerContextGenerator {
    * @param labels the map of labels
    * @return this
    */
-  public JavaDockerContextGenerator setLabels(Map<String, String> labels) {
+  public JavaDockerContextGenerator setLabels(@Nullable Map<String, String> labels) {
     this.labels = labels;
     return this;
   }
@@ -332,14 +331,18 @@ public class JavaDockerContextGenerator {
     }
 
     dockerfile.append("\n");
-    for (String port : exposedPorts) {
-      dockerfile.append("\nEXPOSE ").append(port);
+    if (exposedPorts != null) {
+      for (String port : exposedPorts) {
+        dockerfile.append("\nEXPOSE ").append(port);
+      }
     }
 
     if (environment != null) {
       dockerfile.append(mapToDockerfileString(environment, "ENV"));
     }
-    dockerfile.append(mapToDockerfileString(labels, "LABEL"));
+    if (labels != null) {
+      dockerfile.append(mapToDockerfileString(labels, "LABEL"));
+    }
     if (entrypoint != null) {
       dockerfile.append("\nENTRYPOINT ").append(objectMapper.writeValueAsString(entrypoint));
     }
