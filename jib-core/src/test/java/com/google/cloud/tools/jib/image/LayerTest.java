@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,31 +27,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class LayerTest {
 
-  @Mock private Blob mockUncompressedBlob;
   @Mock private DescriptorDigest mockDescriptorDigest;
   @Mock private BlobDescriptor mockBlobDescriptor;
   @Mock private DescriptorDigest mockDiffId;
-
-  @Test
-  public void testNew_unwritten() throws LayerPropertyNotFoundException {
-    Layer layer = new UnwrittenLayer(mockUncompressedBlob);
-
-    Assert.assertEquals(mockUncompressedBlob, layer.getBlob());
-
-    try {
-      layer.getBlobDescriptor();
-      Assert.fail("Blob descriptor should not be available for unwritten layer");
-    } catch (LayerPropertyNotFoundException ex) {
-      Assert.assertEquals("Blob descriptor not available for unwritten layer", ex.getMessage());
-    }
-
-    try {
-      layer.getDiffId();
-      Assert.fail("Diff ID should not be available for unwritten layer");
-    } catch (LayerPropertyNotFoundException ex) {
-      Assert.assertEquals("Diff ID not available for unwritten layer", ex.getMessage());
-    }
-  }
 
   @Test
   public void testNew_reference() throws LayerPropertyNotFoundException {

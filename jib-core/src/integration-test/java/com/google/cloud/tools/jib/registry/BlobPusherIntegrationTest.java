@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.EmptyJibLogger;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import java.security.DigestException;
@@ -30,7 +30,7 @@ import org.junit.Test;
 public class BlobPusherIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
+  private static final EventDispatcher EVENT_DISPATCHER = jibEvent -> {};
 
   @Test
   public void testPush()
@@ -43,7 +43,7 @@ public class BlobPusherIntegrationTest {
             "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c");
 
     RegistryClient registryClient =
-        RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "testimage")
+        RegistryClient.factory(EVENT_DISPATCHER, "localhost:5000", "testimage")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     Assert.assertFalse(registryClient.pushBlob(testBlobDigest, testBlob, null));

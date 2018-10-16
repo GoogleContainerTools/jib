@@ -19,16 +19,14 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
+import com.google.cloud.tools.jib.plugins.common.JavaLayerConfigurationsHelper;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.function.Predicate;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
 
@@ -36,7 +34,7 @@ import org.apache.maven.project.MavenProject;
 class MavenLayerConfigurations {
 
   /**
-   * Resolves the source files configuration for a {@link MavenProject}.
+   * Resolves the {@link JavaLayerConfigurations} for a {@link MavenProject}.
    *
    * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
@@ -46,81 +44,82 @@ class MavenLayerConfigurations {
    */
   static JavaLayerConfigurations getForProject(
       MavenProject project, Path extraDirectory, AbsoluteUnixPath appRoot) throws IOException {
-    Path classesSourceDirectory = Paths.get(project.getBuild().getSourceDirectory());
-    Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
+    if ("war".equals(project.getPackaging())) {
+      return getForWarProject(project, extraDirectory, appRoot);
+    } else {
+      return getForNonWarProject(project, extraDirectory, appRoot);
+    }
+  }
 
-    List<Path> dependenciesFiles = new ArrayList<>();
-    List<Path> snapshotDependenciesFiles = new ArrayList<>();
-    List<Path> resourcesFiles = new ArrayList<>();
-    List<Path> classesFiles = new ArrayList<>();
-    List<Path> extraFiles = new ArrayList<>();
+  /**
+   * Resolves the {@link JavaLayerConfigurations} for a non-WAR {@link MavenProject}.
+   *
+   * @param project the {@link MavenProject}
+   * @param extraDirectory path to the directory for the extra files layer
+   * @param appRoot root directory in the image where the app will be placed
+   * @return a {@link JavaLayerConfigurations} for the project
+   * @throws IOException if collecting the project files fails
+   */
+  private static JavaLayerConfigurations getForNonWarProject(
+      MavenProject project, Path extraDirectory, AbsoluteUnixPath appRoot) throws IOException {
+
+    AbsoluteUnixPath dependenciesExtractionPath =
+        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
+    AbsoluteUnixPath resourcesExtractionPath =
+        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
+    AbsoluteUnixPath classesExtractionPath =
+        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
+
+    Builder layerBuilder = JavaLayerConfigurations.builder();
 
     // Gets all the dependencies.
     for (Artifact artifact : project.getArtifacts()) {
-      if (artifact.isSnapshot()) {
-        snapshotDependenciesFiles.add(artifact.getFile().toPath());
-      } else {
-        dependenciesFiles.add(artifact.getFile().toPath());
-      }
+      Path artifactPath = artifact.getFile().toPath();
+      LayerType layerType =
+          artifact.isSnapshot() ? LayerType.SNAPSHOT_DEPENDENCIES : LayerType.DEPENDENCIES;
+      layerBuilder.addFile(
+          layerType, artifactPath, dependenciesExtractionPath.resolve(artifactPath.getFileName()));
     }
 
-    // Gets the classes files in the 'classes' output directory. It finds the files that are classes
-    // files by matching them against the .java source files. All other files are deemed resources.
-    try (Stream<Path> classFileStream = Files.list(classesOutputDirectory)) {
-      classFileStream.forEach(
-          classFile -> {
-            /*
-             * Adds classFile to classesFiles if it is a .class file or is a directory that also
-             * exists in the classes source directory; otherwise, adds file to resourcesFiles.
-             */
-            if (Files.isDirectory(classFile)
-                && Files.exists(
-                    classesSourceDirectory.resolve(classesOutputDirectory.relativize(classFile)))) {
-              classesFiles.add(classFile);
-              return;
-            }
+    Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
 
-            if (FileSystems.getDefault().getPathMatcher("glob:**.class").matches(classFile)) {
-              classesFiles.add(classFile);
-              return;
-            }
+    // Gets the classes files in the 'classes' output directory.
+    Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+    layerBuilder.addDirectoryContents(
+        LayerType.CLASSES, classesOutputDirectory, isClassFile, classesExtractionPath);
 
-            resourcesFiles.add(classFile);
-          });
-    }
+    // Gets the resources files in the 'classes' output directory.
+    layerBuilder.addDirectoryContents(
+        LayerType.RESOURCES, classesOutputDirectory, isClassFile.negate(), resourcesExtractionPath);
 
     // Adds all the extra files.
     if (Files.exists(extraDirectory)) {
-      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(extraDirectory)) {
-        extraFiles = extraFilesLayerDirectoryFiles.collect(Collectors.toList());
-
-      } catch (IOException ex) {
-        throw new IOException("Failed to list directory for extra files: " + extraDirectory, ex);
-      }
+      layerBuilder.addDirectoryContents(
+          LayerType.EXTRA_FILES, extraDirectory, path -> true, AbsoluteUnixPath.get("/"));
     }
 
-    // Sort all files by path for consistent ordering.
-    Collections.sort(dependenciesFiles);
-    Collections.sort(snapshotDependenciesFiles);
-    Collections.sort(resourcesFiles);
-    Collections.sort(classesFiles);
-    Collections.sort(extraFiles);
+    return layerBuilder.build();
+  }
 
-    return JavaLayerConfigurations.builder()
-        .setDependencyFiles(
-            dependenciesFiles,
-            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE))
-        .setSnapshotDependencyFiles(
-            snapshotDependenciesFiles,
-            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE))
-        .setResourceFiles(
-            resourcesFiles,
-            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE))
-        .setClassFiles(
-            classesFiles,
-            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE))
-        .setExtraFiles(extraFiles, AbsoluteUnixPath.get("/"))
-        .build();
+  /**
+   * Resolves the {@link JavaLayerConfigurations} for a WAR {@link MavenProject}.
+   *
+   * @param project the {@link MavenProject}
+   * @param extraDirectory path to the directory for the extra files layer
+   * @param appRoot root directory in the image where the app will be placed
+   * @return a {@link JavaLayerConfigurations} for the project
+   * @throws IOException if collecting the project files fails
+   */
+  private static JavaLayerConfigurations getForWarProject(
+      MavenProject project, Path extraDirectory, AbsoluteUnixPath appRoot) throws IOException {
+
+    // TODO explode the WAR file rather than using this directory. The contents of the final WAR may
+    // be different from this directory (it's possible to include or exclude files when packaging a
+    // WAR). Also the exploded WAR directory is configurable with <webappDirectory> and may not be
+    // at build.getFinalName().
+    Path explodedWarPath =
+        Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
+    return JavaLayerConfigurationsHelper.fromExplodedWar(explodedWarPath, appRoot, extraDirectory);
   }
 
   private MavenLayerConfigurations() {}

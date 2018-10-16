@@ -77,6 +77,20 @@ public class TarStreamBuilder {
     archiveMap.put(entry, Blobs.from(outputStream -> outputStream.write(contents)));
   }
 
+  /**
+   * Adds a blob to the archive. Note that this should be used with non-file {@link Blob}s; for
+   * adding files to the archive, use {@link #addTarArchiveEntry}.
+   *
+   * @param blob the {@link Blob} to add to the tarball
+   * @param size the size (in bytes) of {@code blob}
+   * @param name the name of the entry (i.e. filename)
+   */
+  public void addBlobEntry(Blob blob, long size, String name) {
+    TarArchiveEntry entry = new TarArchiveEntry(name);
+    entry.setSize(size);
+    archiveMap.put(entry, blob);
+  }
+
   /** @return a new {@link Blob} that can stream the uncompressed tarball archive BLOB. */
   public Blob toBlob() {
     return Blobs.from(this::writeEntriesAsTarArchive);

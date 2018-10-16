@@ -17,13 +17,15 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.builder.BuildSteps;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,7 +66,7 @@ public class RegistryImage implements SourceImage, TargetImage {
   }
 
   private final ImageReference imageReference;
-  private List<CredentialRetriever> credentialRetrievers = new ArrayList<>();
+  private final List<CredentialRetriever> credentialRetrievers = new ArrayList<>();
 
   /** Instantiate with {@link #named}. */
   private RegistryImage(ImageReference imageReference) {
@@ -115,11 +117,15 @@ public class RegistryImage implements SourceImage, TargetImage {
     return this;
   }
 
-  ImageReference getImageReference() {
-    return imageReference;
+  @Override
+  public ImageConfiguration toImageConfiguration() {
+    return ImageConfiguration.builder(imageReference)
+        .setCredentialRetrievers(credentialRetrievers)
+        .build();
   }
 
-  List<CredentialRetriever> getCredentialRetrievers() {
-    return Collections.unmodifiableList(credentialRetrievers);
+  @Override
+  public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
+    return BuildSteps.forBuildToDockerRegistry(buildConfiguration);
   }
 }

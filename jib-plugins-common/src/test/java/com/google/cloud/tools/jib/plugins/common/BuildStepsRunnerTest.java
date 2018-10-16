@@ -18,24 +18,17 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.junit.Assert;
@@ -60,7 +53,7 @@ public class BuildStepsRunnerTest {
           false,
           "baseImageCredHelperConfiguration",
           registry -> "baseImageAuthConfiguration " + registry,
-          ImageReference.of("toRegistry", "toRepository", null),
+          ImageReference.of("toRegistry", "torepository", null),
           false,
           "targetImageCredHelperConfiguration",
           registry -> "targetImageAuthConfiguration " + registry,
@@ -70,70 +63,50 @@ public class BuildStepsRunnerTest {
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Mock private BuildSteps mockBuildSteps;
-  @Mock private JibLogger mockBuildLogger;
+  @Mock private JibContainerBuilder mockJibContainerBuilder;
+  @Mock private Containerizer mockContainerizer;
+  @Mock private EventDispatcher mockEventDispatcher;
   @Mock private RegistryUnauthorizedException mockRegistryUnauthorizedException;
   @Mock private RegistryCredentialsNotSentException mockRegistryCredentialsNotSentException;
   @Mock private HttpResponseException mockHttpResponseException;
   @Mock private ExecutionException mockExecutionException;
-  @Mock private BuildConfiguration mockBuildConfiguration;
 
   private BuildStepsRunner testBuildImageStepsRunner;
 
   @Before
   public void setUpMocks() {
-    testBuildImageStepsRunner = new BuildStepsRunner(mockBuildSteps, "ignored", "ignored");
-
-    Mockito.when(mockBuildSteps.getBuildConfiguration()).thenReturn(mockBuildConfiguration);
-    Mockito.when(mockBuildConfiguration.getBuildLogger()).thenReturn(mockBuildLogger);
-    Mockito.when(mockBuildConfiguration.getLayerConfigurations())
-        .thenReturn(
-            ImmutableList.of(
-                LayerConfiguration.builder()
-                    .addEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))
-                    .build(),
-                LayerConfiguration.builder()
-                    .addEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))
-                    .build(),
-                LayerConfiguration.builder()
-                    .addEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))
-                    .build()));
+    testBuildImageStepsRunner = new BuildStepsRunner("ignored", "ignored");
   }
 
   @Test
-  public void testBuildImage_pass() throws BuildStepsExecutionException {
-    testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
-  }
-
-  @Test
-  public void testBuildImage_cacheMetadataCorruptedException()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
-    CacheMetadataCorruptedException mockCacheMetadataCorruptedException =
-        Mockito.mock(CacheMetadataCorruptedException.class);
-    Mockito.doThrow(mockCacheMetadataCorruptedException).when(mockBuildSteps).run();
-
-    try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
-
-    } catch (BuildStepsExecutionException ex) {
-      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forCacheNeedsClean(), ex.getMessage());
-      Assert.assertEquals(mockCacheMetadataCorruptedException, ex.getCause());
-    }
+  public void testBuildImage_pass()
+      throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
+    testBuildImageStepsRunner.build(
+        mockJibContainerBuilder,
+        mockContainerizer,
+        mockEventDispatcher,
+        Collections.emptyList(),
+        TEST_HELPFUL_SUGGESTIONS);
   }
 
   @Test
   public void testBuildImage_executionException_httpHostConnectException()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+      throws InterruptedException, ExecutionException, IOException,
+          CacheDirectoryCreationException {
     HttpHostConnectException mockHttpHostConnectException =
         Mockito.mock(HttpHostConnectException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockHttpHostConnectException);
-    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
+    Mockito.doThrow(mockExecutionException)
+        .when(mockJibContainerBuilder)
+        .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(
+          mockJibContainerBuilder,
+          mockContainerizer,
+          mockEventDispatcher,
+          Collections.emptyList(),
+          TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
@@ -144,14 +117,21 @@ public class BuildStepsRunnerTest {
 
   @Test
   public void testBuildImage_executionException_unknownHostException()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+      throws InterruptedException, ExecutionException, IOException,
+          CacheDirectoryCreationException {
     UnknownHostException mockUnknownHostException = Mockito.mock(UnknownHostException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockUnknownHostException);
-    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
+    Mockito.doThrow(mockExecutionException)
+        .when(mockJibContainerBuilder)
+        .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(
+          mockJibContainerBuilder,
+          mockContainerizer,
+          mockEventDispatcher,
+          Collections.emptyList(),
+          TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
@@ -162,15 +142,22 @@ public class BuildStepsRunnerTest {
 
   @Test
   public void testBuildImage_executionException_insecureRegistryException()
-      throws InterruptedException, ExecutionException, CacheDirectoryNotOwnedException,
-          CacheMetadataCorruptedException, IOException, CacheDirectoryCreationException {
+      throws InterruptedException, ExecutionException, IOException,
+          CacheDirectoryCreationException {
     InsecureRegistryException mockInsecureRegistryException =
         Mockito.mock(InsecureRegistryException.class);
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockInsecureRegistryException);
-    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
+    Mockito.doThrow(mockExecutionException)
+        .when(mockJibContainerBuilder)
+        .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(
+          mockJibContainerBuilder,
+          mockContainerizer,
+          mockEventDispatcher,
+          Collections.emptyList(),
+          TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
@@ -181,8 +168,8 @@ public class BuildStepsRunnerTest {
 
   @Test
   public void testBuildImage_executionException_registryUnauthorizedException_statusCodeForbidden()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+      throws InterruptedException, ExecutionException, IOException,
+          CacheDirectoryCreationException {
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
     Mockito.when(mockRegistryUnauthorizedException.getImageReference())
@@ -191,10 +178,17 @@ public class BuildStepsRunnerTest {
         .thenReturn(HttpStatusCodes.STATUS_CODE_FORBIDDEN);
 
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
-    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
+    Mockito.doThrow(mockExecutionException)
+        .when(mockJibContainerBuilder)
+        .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(
+          mockJibContainerBuilder,
+          mockContainerizer,
+          mockEventDispatcher,
+          Collections.emptyList(),
+          TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
@@ -207,8 +201,8 @@ public class BuildStepsRunnerTest {
 
   @Test
   public void testBuildImage_executionException_registryUnauthorizedException_noCredentials()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+      throws InterruptedException, ExecutionException, IOException,
+          CacheDirectoryCreationException {
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
     Mockito.when(mockRegistryUnauthorizedException.getRegistry()).thenReturn("someregistry");
@@ -216,10 +210,17 @@ public class BuildStepsRunnerTest {
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
 
     Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
-    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
+    Mockito.doThrow(mockExecutionException)
+        .when(mockJibContainerBuilder)
+        .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(
+          mockJibContainerBuilder,
+          mockContainerizer,
+          mockEventDispatcher,
+          Collections.emptyList(),
+          TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
@@ -232,14 +233,21 @@ public class BuildStepsRunnerTest {
 
   @Test
   public void testBuildImage_executionException_registryCredentialsNotSentException()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+      throws InterruptedException, ExecutionException, IOException,
+          CacheDirectoryCreationException {
     Mockito.when(mockExecutionException.getCause())
         .thenReturn(mockRegistryCredentialsNotSentException);
-    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
+    Mockito.doThrow(mockExecutionException)
+        .when(mockJibContainerBuilder)
+        .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(
+          mockJibContainerBuilder,
+          mockContainerizer,
+          mockEventDispatcher,
+          Collections.emptyList(),
+          TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
@@ -250,88 +258,26 @@ public class BuildStepsRunnerTest {
 
   @Test
   public void testBuildImage_executionException_other()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+      throws InterruptedException, ExecutionException, IOException,
+          CacheDirectoryCreationException {
     Throwable throwable = new Throwable();
     Mockito.when(mockExecutionException.getCause()).thenReturn(throwable);
-    Mockito.doThrow(mockExecutionException).when(mockBuildSteps).run();
+    Mockito.doThrow(mockExecutionException)
+        .when(mockJibContainerBuilder)
+        .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
+      testBuildImageStepsRunner.build(
+          mockJibContainerBuilder,
+          mockContainerizer,
+          mockEventDispatcher,
+          Collections.emptyList(),
+          TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.none(), ex.getMessage());
       Assert.assertEquals(throwable, ex.getCause());
-    }
-  }
-
-  @Test
-  public void testBuildImage_otherException()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
-    IOException ioException = new IOException();
-    Mockito.doThrow(ioException).when(mockBuildSteps).run();
-
-    try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
-
-    } catch (BuildStepsExecutionException ex) {
-      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.none(), ex.getMessage());
-      Assert.assertEquals(ioException, ex.getCause());
-    }
-  }
-
-  @Test
-  public void testBuildImage_cacheDirectoryNotOwnedException_needsClean()
-      throws InterruptedException, ExecutionException, CacheDirectoryNotOwnedException,
-          CacheMetadataCorruptedException, IOException, CacheDirectoryCreationException {
-    Path expectedCacheDirectory = Paths.get("some/path");
-
-    CacheDirectoryNotOwnedException mockCacheDirectoryNotOwnedException =
-        Mockito.mock(CacheDirectoryNotOwnedException.class);
-    Mockito.when(mockCacheDirectoryNotOwnedException.getCacheDirectory())
-        .thenReturn(expectedCacheDirectory);
-    Mockito.doThrow(mockCacheDirectoryNotOwnedException).when(mockBuildSteps).run();
-
-    Mockito.when(mockBuildConfiguration.getApplicationLayersCacheConfiguration())
-        .thenReturn(CacheConfiguration.forPath(expectedCacheDirectory));
-
-    try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
-
-    } catch (BuildStepsExecutionException ex) {
-      Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forCacheNeedsClean(), ex.getMessage());
-      Assert.assertEquals(mockCacheDirectoryNotOwnedException, ex.getCause());
-    }
-  }
-
-  @Test
-  public void testBuildImage_cacheDirectoryNotOwnedException()
-      throws InterruptedException, ExecutionException, CacheDirectoryNotOwnedException,
-          CacheMetadataCorruptedException, IOException, CacheDirectoryCreationException {
-    Path expectedCacheDirectory = Paths.get("some/path");
-
-    CacheDirectoryNotOwnedException mockCacheDirectoryNotOwnedException =
-        Mockito.mock(CacheDirectoryNotOwnedException.class);
-    Mockito.when(mockCacheDirectoryNotOwnedException.getCacheDirectory())
-        .thenReturn(expectedCacheDirectory);
-    Mockito.doThrow(mockCacheDirectoryNotOwnedException).when(mockBuildSteps).run();
-
-    Mockito.when(mockBuildConfiguration.getApplicationLayersCacheConfiguration())
-        .thenReturn(CacheConfiguration.forPath(Paths.get("another/path")));
-
-    try {
-      testBuildImageStepsRunner.build(TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
-
-    } catch (BuildStepsExecutionException ex) {
-      Assert.assertEquals(
-          TEST_HELPFUL_SUGGESTIONS.forCacheDirectoryNotOwned(expectedCacheDirectory),
-          ex.getMessage());
-      Assert.assertEquals(mockCacheDirectoryNotOwnedException, ex.getCause());
     }
   }
 }

@@ -1,0 +1,58 @@
+plugins {
+  id 'java'
+  id 'com.google.cloud.tools.jib' version '0.9.12'
+  id 'de.undercouch.download' version '3.4.0'
+  id "com.gorylenko.gradle-git-properties" version "1.5.2"
+}
+
+ext {
+  // where to download the Stackdriver Debugger agent https://cloud.google.com/debugger/docs/setup/java
+  stackdriverDebuggerAgentUrl = 'https://storage.googleapis.com/cloud-debugger/compute-java/debian-wheezy/cdbg_java_agent_gce.tar.gz'
+
+  // where to place the Cloud Debugger agent in the container
+  stackdriverDebuggerLocation = '/opt/cdbg'
+
+  // location for jib extras, including the Java agent
+  jibExtraDirectory = "${buildDir}/jib-agents"
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile "com.sparkjava:spark-core:2.7.2"
+  compile "org.slf4j:slf4j-simple:1.7.21"
+}
+
+// Download and extract the Cloud Debugger Java Agent
+task downloadAgent(type: Download) {
+  src stackdriverDebuggerAgentUrl
+  dest "${buildDir}/cdbg_java_agent_gce.tar.gz"
+}
+task extractAgent(dependsOn: downloadAgent, type: Copy) {
+  from tarTree(downloadAgent.dest)
+  into "${jibExtraDirectory}/${stackdriverDebuggerLocation}"
+}
+
+jib {
+  to {
+    image = 'gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib'
+  }
+  extraDirectory = file(jibExtraDirectory)
+  container {
+    ports = ['4567']
+    jvmFlags = [
+        '-agentpath:' + stackdriverDebuggerLocation + '/cdbg_java_agent.so=--logtostderr=1',
+        '-Dcom.google.cdbg.module=' + project.name,
+        '-Dcom.google.cdbg.version=' + version]
+  }
+}
+
+tasks.jib.dependsOn extractAgent
+tasks.jibDockerBuild.dependsOn extractAgent
+tasks.jibBuildTar.dependsOn extractAgent
+defaultTasks 'jib'

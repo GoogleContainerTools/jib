@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -41,6 +42,7 @@ public class ContainerConfiguration {
     @Nullable private ImmutableMap<String, String> environmentMap;
     @Nullable private ImmutableList<Port> exposedPorts;
     @Nullable private ImmutableMap<String, String> labels;
+    @Nullable private String user;
 
     /**
      * Sets the image creation time.
@@ -136,13 +138,26 @@ public class ContainerConfiguration {
     }
 
     /**
+     * Sets the user and group to run the container as. {@code user} can be a username or UID along
+     * with an optional groupname or GID. The following are all valid: {@code user}, {@code uid},
+     * {@code user:group}, {@code uid:gid}, {@code uid:group}, {@code user:gid}.
+     *
+     * @param user the username/UID and optionally the groupname/GID
+     * @return this
+     */
+    public Builder setUser(@Nullable String user) {
+      this.user = user;
+      return this;
+    }
+
+    /**
      * Builds the {@link ContainerConfiguration}.
      *
      * @return the corresponding {@link ContainerConfiguration}
      */
     public ContainerConfiguration build() {
       return new ContainerConfiguration(
-          creationTime, entrypoint, programArguments, environmentMap, exposedPorts, labels);
+          creationTime, entrypoint, programArguments, environmentMap, exposedPorts, labels, user);
     }
 
     private Builder() {}
@@ -163,6 +178,7 @@ public class ContainerConfiguration {
   @Nullable private final ImmutableMap<String, String> environmentMap;
   @Nullable private final ImmutableList<Port> exposedPorts;
   @Nullable private final ImmutableMap<String, String> labels;
+  @Nullable private final String user;
 
   private ContainerConfiguration(
       Instant creationTime,
@@ -170,13 +186,15 @@ public class ContainerConfiguration {
       @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableMap<String, String> environmentMap,
       @Nullable ImmutableList<Port> exposedPorts,
-      @Nullable ImmutableMap<String, String> labels) {
+      @Nullable ImmutableMap<String, String> labels,
+      @Nullable String user) {
     this.creationTime = creationTime;
     this.entrypoint = entrypoint;
     this.programArguments = programArguments;
     this.environmentMap = environmentMap;
     this.exposedPorts = exposedPorts;
     this.labels = labels;
+    this.user = user;
   }
 
   public Instant getCreationTime() {
@@ -204,7 +222,38 @@ public class ContainerConfiguration {
   }
 
   @Nullable
+  public String getUser() {
+    return user;
+  }
+
+  @Nullable
   public ImmutableMap<String, String> getLabels() {
     return labels;
+  }
+
+  @Override
+  @VisibleForTesting
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof ContainerConfiguration)) {
+      return false;
+    }
+    ContainerConfiguration otherContainerConfiguration = (ContainerConfiguration) other;
+    return creationTime.equals(otherContainerConfiguration.creationTime)
+        && Objects.equals(entrypoint, otherContainerConfiguration.entrypoint)
+        && Objects.equals(programArguments, otherContainerConfiguration.programArguments)
+        && Objects.equals(environmentMap, otherContainerConfiguration.environmentMap)
+        && Objects.equals(exposedPorts, otherContainerConfiguration.exposedPorts)
+        && Objects.equals(labels, otherContainerConfiguration.labels)
+        && Objects.equals(user, otherContainerConfiguration.user);
+  }
+
+  @Override
+  @VisibleForTesting
+  public int hashCode() {
+    return Objects.hash(
+        creationTime, entrypoint, programArguments, environmentMap, exposedPorts, labels, user);
   }
 }

@@ -5,11 +5,38 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Properties for each configuration parameter, allowing any parameter to be set via commandline ([#1083](https://github.com/GoogleContainerTools/jib/issues/1083))
+- `jib.to.credHelper` and `jib.from.credHelper` can be used to specify a credential helper suffix or a full path to a credential helper executable ([#925](https://github.com/GoogleContainerTools/jib/issues/925))
+- `container.user` configuration parameter to configure the user and group to run the container as ([#1029](https://github.com/GoogleContainerTools/jib/issues/1029))
+- Preliminary support for building images for WAR projects ([#431](https://github.com/GoogleContainerTools/jib/issues/431))
+
+### Changed
+
+- Removed deprecated `jib.jvmFlags`, `jib.mainClass`, `jib.args`, and `jib.format` in favor of the equivalents under `jib.container` ([#461](https://github.com/GoogleContainerTools/jib/issues/461))
+- `jibExportDockerContext` generates different directory layout and `Dockerfile` to enable WAR support ([#1007](https://github.com/GoogleContainerTools/jib/pull/1007))
+- File timestamps in the built image are set to 1 second since the epoch (hence 1970-01-01T00:00:01Z) to resolve compatibility with applications on Java 6 or below where the epoch means nonexistent or I/O errors; previously they were set to the epoch ([#1079](https://github.com/GoogleContainerTools/jib/issues/1079))
+
+### Fixed
+
+## 0.9.13
+
+### Fixed
+
+- Adds environment variable configuration to Docker context generator ([#890 (comment)](https://github.com/GoogleContainerTools/jib/issues/890#issuecomment-430227555))
+
+## 0.9.12
+
+### Fixed
+
+- `Cannot access 'image': it is public in <anonymous>` error ([#1060](https://github.com/GoogleContainerTools/jib/issues/1060))
+
+## 0.9.11
+
+### Added
+
 - `container.environment` configuration parameter to configure environment variables ([#890](https://github.com/GoogleContainerTools/jib/issues/890))
 - `container.appRoot` configuration parameter to configure app root in the image ([#984](https://github.com/GoogleContainerTools/jib/pull/984))
 - `jib.to.tags` (list) defines additional tags to push to ([#978](https://github.com/GoogleContainerTools/jib/pull/978))
-
-### Changed
 
 ### Fixed
 

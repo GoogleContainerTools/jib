@@ -1,0 +1,25 @@
+plugins {
+  id 'com.google.cloud.tools.jib'
+}
+
+// Applies the java plugin after Jib to make sure it works in this order.
+apply plugin: 'java'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+}
+
+jib {
+  to {
+    image = System.getProperty("_TARGET_IMAGE")
+    credHelper = 'gcr'
+  }
+  container {
+    user = 'myuser:mygroup'
+  }
+  // Does not have tests use user-level cache for base image layers.
+  useOnlyProjectCache = true
+}

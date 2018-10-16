@@ -16,10 +16,13 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,7 +35,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ConfigurationPropertyValidatorTest {
 
-  @Mock private JibLogger mockLogger;
+  @Mock private EventDispatcher mockEventDispatcher;
   @Mock private AuthProperty mockAuth;
   @Mock private ImageReference mockImageReference;
 
@@ -49,7 +52,7 @@ public class ConfigurationPropertyValidatorTest {
     Credential expected = Credential.basic("abcde", "12345");
     Optional<Credential> actual =
         ConfigurationPropertyValidator.getImageCredential(
-            mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
+            mockEventDispatcher, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertTrue(actual.isPresent());
     Assert.assertEquals(expected.toString(), actual.get().toString());
 
@@ -59,17 +62,17 @@ public class ConfigurationPropertyValidatorTest {
     expected = Credential.basic("vwxyz", "98765");
     actual =
         ConfigurationPropertyValidator.getImageCredential(
-            mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
+            mockEventDispatcher, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertTrue(actual.isPresent());
     Assert.assertEquals(expected.toString(), actual.get().toString());
-    Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
+    Mockito.verify(mockEventDispatcher, Mockito.never()).dispatch(LogEvent.warn(Mockito.any()));
 
     // Auth completely missing
     Mockito.when(mockAuth.getUsername()).thenReturn(null);
     Mockito.when(mockAuth.getPassword()).thenReturn(null);
     actual =
         ConfigurationPropertyValidator.getImageCredential(
-            mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
+            mockEventDispatcher, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertFalse(actual.isPresent());
 
     // Password missing
@@ -77,20 +80,22 @@ public class ConfigurationPropertyValidatorTest {
     Mockito.when(mockAuth.getPassword()).thenReturn(null);
     actual =
         ConfigurationPropertyValidator.getImageCredential(
-            mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
+            mockEventDispatcher, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertFalse(actual.isPresent());
-    Mockito.verify(mockLogger)
-        .warn("pass is missing from build configuration; ignoring auth section.");
+    Mockito.verify(mockEventDispatcher)
+        .dispatch(
+            LogEvent.warn("pass is missing from build configuration; ignoring auth section."));
 
     // Username missing
     Mockito.when(mockAuth.getUsername()).thenReturn(null);
     Mockito.when(mockAuth.getPassword()).thenReturn("98765");
     actual =
         ConfigurationPropertyValidator.getImageCredential(
-            mockLogger, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
+            mockEventDispatcher, "jib.test.auth.user", "jib.test.auth.pass", mockAuth);
     Assert.assertFalse(actual.isPresent());
-    Mockito.verify(mockLogger)
-        .warn("user is missing from build configuration; ignoring auth section.");
+    Mockito.verify(mockEventDispatcher)
+        .dispatch(
+            LogEvent.warn("user is missing from build configuration; ignoring auth section."));
   }
 
   @Test
@@ -114,29 +119,57 @@ public class ConfigurationPropertyValidatorTest {
     // Target configured
     ImageReference result =
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-            "a/b:c", mockLogger, "project-name", "project-version", helpfulSuggestions);
+            "a/b:c", mockEventDispatcher, "project-name", "project-version", helpfulSuggestions);
     Assert.assertEquals("a/b", result.getRepository());
     Assert.assertEquals("c", result.getTag());
-    Mockito.verify(mockLogger, Mockito.never()).lifecycle(Mockito.any());
+    Mockito.verify(mockEventDispatcher, Mockito.never())
+        .dispatch(LogEvent.lifecycle(Mockito.any()));
 
     // Target not configured
     result =
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-            null, mockLogger, "project-name", "project-version", helpfulSuggestions);
+            null, mockEventDispatcher, "project-name", "project-version", helpfulSuggestions);
     Assert.assertEquals("project-name", result.getRepository());
     Assert.assertEquals("project-version", result.getTag());
-    Mockito.verify(mockLogger)
-        .lifecycle(
-            "Tagging image with generated image reference project-name:project-version. If you'd "
-                + "like to specify a different tag, you can set the to parameter in your "
-                + "build.txt, or use the --to=<MY IMAGE> commandline flag.");
+    Mockito.verify(mockEventDispatcher)
+        .dispatch(
+            LogEvent.lifecycle(
+                "Tagging image with generated image reference project-name:project-version. If you'd "
+                    + "like to specify a different tag, you can set the to parameter in your "
+                    + "build.txt, or use the --to=<MY IMAGE> commandline flag."));
 
     // Generated tag invalid
     try {
       ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-          null, mockLogger, "%#&///*@(", "%$#//&*@($", helpfulSuggestions);
+          null, mockEventDispatcher, "%#&///*@(", "%$#//&*@($", helpfulSuggestions);
       Assert.fail();
     } catch (InvalidImageReferenceException ignored) {
+    }
+  }
+
+  @Test
+  public void testParseListProperty() {
+    Assert.assertEquals(
+        ImmutableList.of("abc"), ConfigurationPropertyValidator.parseListProperty("abc"));
+    Assert.assertEquals(
+        ImmutableList.of("abcd", "efg\\,hi\\\\", "", "\\jkl\\,", "\\\\\\,mnop", ""),
+        ConfigurationPropertyValidator.parseListProperty(
+            "abcd,efg\\,hi\\\\,,\\jkl\\,,\\\\\\,mnop,"));
+    Assert.assertEquals(ImmutableList.of(""), ConfigurationPropertyValidator.parseListProperty(""));
+  }
+
+  @Test
+  public void testParseMapProperty() {
+    Assert.assertEquals(
+        ImmutableMap.of("abc", "def"), ConfigurationPropertyValidator.parseMapProperty("abc=def"));
+    Assert.assertEquals(
+        ImmutableMap.of("abc", "def", "gh\\,i", "j\\\\\\,kl", "mno", "", "pqr", "stu"),
+        ConfigurationPropertyValidator.parseMapProperty("abc=def,gh\\,i=j\\\\\\,kl,mno=,pqr=stu"));
+    try {
+      ConfigurationPropertyValidator.parseMapProperty("not valid");
+      Assert.fail();
+    } catch (IllegalArgumentException ignored) {
+      // pass
     }
   }
 }

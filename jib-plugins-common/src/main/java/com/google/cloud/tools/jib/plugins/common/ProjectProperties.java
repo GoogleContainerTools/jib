@@ -16,8 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
@@ -28,10 +27,13 @@ public interface ProjectProperties {
   /** Directory name for the cache. The directory will be relative to the build output directory. */
   String CACHE_DIRECTORY_NAME = "jib-cache";
 
-  EventEmitter getEventEmitter();
+  /**
+   * Directory name for the exploded WAR. The directory will be relative to the build output
+   * directory.
+   */
+  String EXPLODED_WAR_DIRECTORY_NAME = "jib-exploded-war";
 
-  // TODO: Remove
-  JibLogger getLogger();
+  EventHandlers getEventHandlers();
 
   String getPluginName();
 

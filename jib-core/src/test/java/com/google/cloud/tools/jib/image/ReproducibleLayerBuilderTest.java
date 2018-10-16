@@ -34,6 +34,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
+import java.time.Instant;
+import java.util.Date;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.hamcrest.CoreMatchers;
@@ -106,11 +108,11 @@ public class ReproducibleLayerBuilderTest {
                 .getLayerEntries());
 
     // Writes the layer tar to a temporary file.
-    UnwrittenLayer unwrittenLayer = layerBuilder.build();
+    Blob unwrittenBlob = layerBuilder.build();
     Path temporaryFile = temporaryFolder.newFile().toPath();
     try (OutputStream temporaryFileOutputStream =
         new BufferedOutputStream(Files.newOutputStream(temporaryFile))) {
-      unwrittenLayer.getBlob().writeTo(temporaryFileOutputStream);
+      unwrittenBlob.writeTo(temporaryFileOutputStream);
     }
 
     // Reads the file back.
@@ -166,20 +168,39 @@ public class ReproducibleLayerBuilderTest {
                 ImmutableList.of(
                     new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA")),
                     new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"))))
-            .build()
-            .getBlob();
+            .build();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
                     new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB")),
                     new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"))))
-            .build()
-            .getBlob();
+            .build();
 
     byte[] layerContent = Blobs.writeToByteArray(layer);
     byte[] reproducedLayerContent = Blobs.writeToByteArray(reproduced);
 
     Assert.assertThat(layerContent, CoreMatchers.is(reproducedLayerContent));
+  }
+
+  @Test
+  public void testBuild_timestamp() throws IOException {
+    Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
+
+    Blob blob =
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"))))
+            .build();
+
+    Path tarFile = temporaryFolder.newFile().toPath();
+    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
+      blob.writeTo(out);
+    }
+
+    // Reads the file back.
+    try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
+      Assert.assertEquals(
+          Date.from(Instant.EPOCH.plusSeconds(1)), in.getNextEntry().getLastModifiedDate());
+    }
   }
 
   private Path createFile(Path root, String filename, String content, long lastModifiedTime)

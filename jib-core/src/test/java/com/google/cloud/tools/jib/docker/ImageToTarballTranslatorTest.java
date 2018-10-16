@@ -19,12 +19,12 @@ package com.google.cloud.tools.jib.docker;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.docker.json.DockerLoadManifestEntryTemplate;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
@@ -42,9 +43,17 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link ImageToTarballTranslator}. */
+@RunWith(MockitoJUnitRunner.class)
 public class ImageToTarballTranslatorTest {
+
+  @Mock private Layer mockLayer1;
+  @Mock private Layer mockLayer2;
 
   @Test
   public void testToTarballBlob()
@@ -52,6 +61,8 @@ public class ImageToTarballTranslatorTest {
           LayerPropertyNotFoundException, DigestException {
     Path fileA = Paths.get(Resources.getResource("fileA").toURI());
     Path fileB = Paths.get(Resources.getResource("fileB").toURI());
+    long fileASize = Files.size(fileA);
+    long fileBSize = Files.size(fileB);
 
     DescriptorDigest fakeDigestA =
         DescriptorDigest.fromHash(
@@ -60,11 +71,15 @@ public class ImageToTarballTranslatorTest {
         DescriptorDigest.fromHash(
             "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc6");
 
-    Image<CachedLayer> testImage =
-        Image.<CachedLayer>builder()
-            .addLayer(new CachedLayer(fileA, new BlobDescriptor(fakeDigestA), fakeDigestA))
-            .addLayer(new CachedLayer(fileB, new BlobDescriptor(fakeDigestB), fakeDigestB))
-            .build();
+    Mockito.when(mockLayer1.getBlob()).thenReturn(Blobs.from(fileA));
+    Mockito.when(mockLayer1.getBlobDescriptor())
+        .thenReturn(new BlobDescriptor(fileASize, fakeDigestA));
+    Mockito.when(mockLayer1.getDiffId()).thenReturn(fakeDigestA);
+    Mockito.when(mockLayer2.getBlob()).thenReturn(Blobs.from(fileB));
+    Mockito.when(mockLayer2.getBlobDescriptor())
+        .thenReturn(new BlobDescriptor(fileBSize, fakeDigestB));
+    Mockito.when(mockLayer2.getDiffId()).thenReturn(fakeDigestB);
+    Image<Layer> testImage = Image.builder().addLayer(mockLayer1).addLayer(mockLayer2).build();
 
     Blob tarballBlob =
         new ImageToTarballTranslator(testImage).toTarballBlob(ImageReference.parse("my/image:tag"));
@@ -75,7 +90,7 @@ public class ImageToTarballTranslatorTest {
             new TarArchiveInputStream(tarballBytesStream)) {
       // Verifies layer with fileA was added.
       TarArchiveEntry headerFileALayer = tarArchiveInputStream.getNextTarEntry();
-      Assert.assertEquals("fileA", headerFileALayer.getName());
+      Assert.assertEquals(fakeDigestA.getHash() + ".tar.gz", headerFileALayer.getName());
       String fileAString =
           CharStreams.toString(
               new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
@@ -83,7 +98,7 @@ public class ImageToTarballTranslatorTest {
 
       // Verifies layer with fileB was added.
       TarArchiveEntry headerFileBLayer = tarArchiveInputStream.getNextTarEntry();
-      Assert.assertEquals("fileB", headerFileBLayer.getName());
+      Assert.assertEquals(fakeDigestB.getHash() + ".tar.gz", headerFileBLayer.getName());
       String fileBString =
           CharStreams.toString(
               new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));

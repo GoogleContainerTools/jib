@@ -16,13 +16,17 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import org.gradle.api.Action;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Nested;
+import org.gradle.api.tasks.Optional;
 
-/** {@link ImageParameters} that configure the base image. */
-public class BaseImageParameters implements ImageParameters {
+/** Object in {@link JibExtension} that configures the base image. */
+public class BaseImageParameters {
 
   private final AuthParameters auth;
 
@@ -34,34 +38,41 @@ public class BaseImageParameters implements ImageParameters {
     auth = objectFactory.newInstance(AuthParameters.class, imageDescriptor + ".auth");
   }
 
+  @Input
   @Nullable
-  @Override
+  @Optional
   public String getImage() {
+    if (System.getProperty(PropertyNames.FROM_IMAGE) != null) {
+      return System.getProperty(PropertyNames.FROM_IMAGE);
+    }
     return image;
   }
 
-  @Override
   public void setImage(String image) {
     this.image = image;
   }
 
+  @Input
   @Nullable
-  @Override
+  @Optional
   public String getCredHelper() {
+    if (System.getProperty(PropertyNames.FROM_CRED_HELPER) != null) {
+      return System.getProperty(PropertyNames.FROM_CRED_HELPER);
+    }
     return credHelper;
   }
 
-  @Override
   public void setCredHelper(String credHelper) {
     this.credHelper = credHelper;
   }
 
-  @Override
+  @Nested
+  @Optional
   public AuthParameters getAuth() {
+    // System properties are handled in ConfigurationPropertyValidator
     return auth;
   }
 
-  @Override
   public void auth(Action<? super AuthParameters> action) {
     action.execute(auth);
   }

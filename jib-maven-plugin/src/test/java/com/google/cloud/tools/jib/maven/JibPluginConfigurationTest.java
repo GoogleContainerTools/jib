@@ -16,33 +16,52 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.JibLogger;
-import java.io.File;
-import java.nio.file.Paths;
-import java.util.Arrays;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link JibPluginConfiguration}. */
-@RunWith(MockitoJUnitRunner.class)
 public class JibPluginConfigurationTest {
-
-  @Mock private JibLogger mockLogger;
 
   private JibPluginConfiguration testPluginConfiguration;
 
+  private static void clearProperties() {
+    System.clearProperty("jib.from.image");
+    System.clearProperty("jib.from.credHelper");
+    System.clearProperty("image");
+    System.clearProperty("jib.to.image");
+    System.clearProperty("jib.to.tags");
+    System.clearProperty("jib.to.credHelper");
+    System.clearProperty("jib.container.appRoot");
+    System.clearProperty("jib.container.args");
+    System.clearProperty("jib.container.entrypoint");
+    System.clearProperty("jib.container.environment");
+    System.clearProperty("jib.container.format");
+    System.clearProperty("jib.container.jvmFlags");
+    System.clearProperty("jib.container.labels");
+    System.clearProperty("jib.container.mainClass");
+    System.clearProperty("jib.container.ports");
+    System.clearProperty("jib.container.useCurrentTimestamp");
+    System.clearProperty("jib.container.user");
+  }
+
   @Before
   public void setup() {
+    clearProperties();
     testPluginConfiguration =
         new JibPluginConfiguration() {
           @Override
           public void execute() {}
         };
+  }
+
+  @After
+  public void teardown() {
+    clearProperties();
   }
 
   @Test
@@ -59,35 +78,55 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals(
         "<to><auth><password>",
         testPluginConfiguration.getTargetImageAuth().getPasswordPropertyDescriptor());
-    Assert.assertEquals("/app", testPluginConfiguration.getAppRoot());
+    Assert.assertEquals("", testPluginConfiguration.getAppRoot());
   }
 
   @Test
-  public void testHandleDeprecatedParameters() {
-    testPluginConfiguration.handleDeprecatedParameters(mockLogger);
-    Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
+  public void testSystemProperties() {
+    System.setProperty("jib.from.image", "fromImage");
+    Assert.assertEquals("fromImage", testPluginConfiguration.getBaseImage());
+    System.setProperty("jib.from.credHelper", "credHelper");
+    Assert.assertEquals("credHelper", testPluginConfiguration.getBaseImageCredentialHelperName());
 
-    testPluginConfiguration.setJvmFlags(Arrays.asList("jvmFlag1", "jvmFlag2"));
-    testPluginConfiguration.setMainClass("mainClass");
-    testPluginConfiguration.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
-    testPluginConfiguration.setFormat("OCI");
-    testPluginConfiguration.setExtraDirectory(new File("some/path"));
-
-    testPluginConfiguration.handleDeprecatedParameters(mockLogger);
-
-    String expectedOutput =
-        "There are deprecated parameters used in the build configuration. Please make the "
-            + "following changes to your pom.xml to avoid issues in the future:\n"
-            + "  <jvmFlags> -> <container><jvmFlags>\n"
-            + "  <mainClass> -> <container><mainClass>\n"
-            + "  <args> -> <container><args>\n"
-            + "  <format> -> <container><format>\n";
-    Mockito.verify(mockLogger).warn(expectedOutput);
+    System.setProperty("image", "toImage");
+    Assert.assertEquals("toImage", testPluginConfiguration.getTargetImage());
+    System.clearProperty("image");
+    System.setProperty("jib.to.image", "toImage2");
+    Assert.assertEquals("toImage2", testPluginConfiguration.getTargetImage());
+    System.setProperty("jib.to.tags", "tag1,tag2,tag3");
     Assert.assertEquals(
-        Arrays.asList("jvmFlag1", "jvmFlag2"), testPluginConfiguration.getJvmFlags());
-    Assert.assertEquals("mainClass", testPluginConfiguration.getMainClass());
-    Assert.assertEquals(Arrays.asList("arg1", "arg2", "arg3"), testPluginConfiguration.getArgs());
-    Assert.assertEquals("OCI", testPluginConfiguration.getFormat());
-    Assert.assertEquals(Paths.get("some/path"), testPluginConfiguration.getExtraDirectory());
+        ImmutableSet.of("tag1", "tag2", "tag3"),
+        testPluginConfiguration.getTargetImageAdditionalTags());
+    System.setProperty("jib.to.credHelper", "credHelper");
+    Assert.assertEquals("credHelper", testPluginConfiguration.getTargetImageCredentialHelperName());
+
+    System.setProperty("jib.container.appRoot", "appRoot");
+    Assert.assertEquals("appRoot", testPluginConfiguration.getAppRoot());
+    System.setProperty("jib.container.args", "arg1,arg2,arg3");
+    Assert.assertEquals(
+        ImmutableList.of("arg1", "arg2", "arg3"), testPluginConfiguration.getArgs());
+    System.setProperty("jib.container.entrypoint", "entry1,entry2,entry3");
+    Assert.assertEquals(
+        ImmutableList.of("entry1", "entry2", "entry3"), testPluginConfiguration.getEntrypoint());
+    System.setProperty("jib.container.environment", "env1=val1,env2=val2");
+    Assert.assertEquals(
+        ImmutableMap.of("env1", "val1", "env2", "val2"), testPluginConfiguration.getEnvironment());
+    System.setProperty("jib.container.format", "format");
+    Assert.assertEquals("format", testPluginConfiguration.getFormat());
+    System.setProperty("jib.container.jvmFlags", "flag1,flag2,flag3");
+    Assert.assertEquals(
+        ImmutableList.of("flag1", "flag2", "flag3"), testPluginConfiguration.getJvmFlags());
+    System.setProperty("jib.container.labels", "label1=val1,label2=val2");
+    Assert.assertEquals(
+        ImmutableMap.of("label1", "val1", "label2", "val2"), testPluginConfiguration.getLabels());
+    System.setProperty("jib.container.mainClass", "main");
+    Assert.assertEquals("main", testPluginConfiguration.getMainClass());
+    System.setProperty("jib.container.ports", "port1,port2,port3");
+    Assert.assertEquals(
+        ImmutableList.of("port1", "port2", "port3"), testPluginConfiguration.getExposedPorts());
+    System.setProperty("jib.container.useCurrentTimestamp", "true");
+    Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
+    System.setProperty("jib.container.user", "myUser");
+    Assert.assertEquals("myUser", testPluginConfiguration.getUser());
   }
 }

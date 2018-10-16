@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,9 +31,11 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.annotation.Nullable;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -55,10 +58,6 @@ public class BuildImageMojoIntegrationTest {
   public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
 
   @ClassRule
-  public static final TestProject complexTestProject =
-      new TestProject(testPlugin, "simple", "pom-complex.xml");
-
-  @ClassRule
   public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
 
   @ClassRule
@@ -67,6 +66,14 @@ public class BuildImageMojoIntegrationTest {
   @ClassRule
   public static final TestProject defaultTargetTestProject =
       new TestProject(testPlugin, "default-target");
+
+  @ClassRule
+  public static final TestProject servlet25Project = new TestProject(testPlugin, "war_servlet25");
+
+  private static String getGcrImageReference(String label) {
+    String nameBase = "gcr.io/" + IntegrationTestingConfiguration.getGCPProject() + '/';
+    return nameBase + label + System.nanoTime();
+  }
 
   /**
    * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
@@ -81,21 +88,16 @@ public class BuildImageMojoIntegrationTest {
     verifier.executeGoals(Arrays.asList("clean", "compile"));
 
     // Builds twice, and checks if the second build took less time.
-    verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
+    verifier.executeGoal("jib:build");
     float timeOne = getBuildTimeFromVerifierLog(verifier);
 
     if (runTwice) {
       verifier.resetStreams();
-      verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
+      verifier.executeGoal("jib:build");
       float timeTwo = getBuildTimeFromVerifierLog(verifier);
 
-      Assert.assertTrue(
-          "First build time ("
-              + timeOne
-              + ") is not greater than second build time ("
-              + timeTwo
-              + ")",
-          timeOne > timeTwo);
+      String failMessage = "First build time (%s) is not greater than second build time (%s)";
+      Assert.assertTrue(String.format(failMessage, timeOne, timeTwo), timeOne > timeTwo);
     }
 
     verifier.verifyErrorFreeLog();
@@ -112,9 +114,7 @@ public class BuildImageMojoIntegrationTest {
     verifier.setSystemProperty("_ADDITIONAL_TAG", additionalTag);
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
-    verifier.executeGoals(Arrays.asList("clean", "compile"));
-
-    verifier.executeGoal("jib:" + BuildImageMojo.GOAL_NAME);
+    verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
     verifier.verifyErrorFreeLog();
 
     String additionalImageReference =
@@ -134,7 +134,7 @@ public class BuildImageMojoIntegrationTest {
       String imageReference, String username, String password, LocalRegistry targetRegistry)
       throws VerificationException, IOException, InterruptedException {
     Instant before = Instant.now();
-    Verifier verifier = new Verifier(complexTestProject.getProjectRoot().toString());
+    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setSystemProperty("_TARGET_USERNAME", username);
     verifier.setSystemProperty("_TARGET_PASSWORD", password);
@@ -217,26 +217,31 @@ public class BuildImageMojoIntegrationTest {
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
   }
 
+  @Nullable private String detachedContainerName;
+
   @Before
-  public void setup() throws IOException, InterruptedException {
+  public void setUp() throws IOException, InterruptedException {
     // Pull distroless to local registry so we can test 'from' credentials
     localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
   }
 
+  @After
+  public void tearDown() throws IOException, InterruptedException {
+    if (detachedContainerName != null) {
+      new Command("docker", "stop", detachedContainerName).run();
+    }
+  }
+
   @Test
   public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
-    String targetImage =
-        "gcr.io/"
-            + IntegrationTestingConfiguration.getGCPProject()
-            + "/simpleimage:maven"
-            + System.nanoTime();
+    String targetImage = getGcrImageReference("simpleimage:maven");
 
     // Test empty output error
     try {
       Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
       verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
       verifier.setAutoclean(false);
-      verifier.executeGoals(Arrays.asList("clean", "jib:" + BuildImageMojo.GOAL_NAME));
+      verifier.executeGoals(Arrays.asList("clean", "jib:build"));
       Assert.fail();
 
     } catch (VerificationException ex) {
@@ -275,12 +280,7 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_empty() throws InterruptedException, IOException, VerificationException {
-    String targetImage =
-        "gcr.io/"
-            + IntegrationTestingConfiguration.getGCPProject()
-            + "/emptyimage:maven"
-            + System.nanoTime();
-
+    String targetImage = getGcrImageReference("emptyimage:maven");
     Assert.assertEquals("", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, false));
     assertCreationTimeEpoch(targetImage);
   }
@@ -289,11 +289,7 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_multipleTags()
       throws IOException, InterruptedException, InvalidImageReferenceException,
           VerificationException {
-    String targetImage =
-        "gcr.io/"
-            + IntegrationTestingConfiguration.getGCPProject()
-            + "/multitag-image:maven"
-            + System.nanoTime();
+    String targetImage = getGcrImageReference("multitag-image:maven");
     Assert.assertEquals(
         "",
         buildAndRunAdditionalTag(
@@ -306,7 +302,7 @@ public class BuildImageMojoIntegrationTest {
     try {
       Verifier verifier = new Verifier(defaultTargetTestProject.getProjectRoot().toString());
       verifier.setAutoclean(false);
-      verifier.executeGoals(Arrays.asList("clean", "jib:" + BuildImageMojo.GOAL_NAME));
+      verifier.executeGoals(Arrays.asList("clean", "jib:build"));
       Assert.fail();
 
     } catch (VerificationException ex) {
@@ -340,5 +336,35 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_skipJibGoal() throws VerificationException, IOException {
     SkippedGoalVerifier.verifyGoalIsSkipped(skippedTestProject, BuildImageMojo.GOAL_NAME);
+  }
+
+  @Test
+  public void testExecute_jettyServlet25()
+      throws VerificationException, IOException, InterruptedException {
+    buildAndRunWar("jetty-servlet25:maven", "pom.xml");
+    HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080/hello"));
+  }
+
+  @Test
+  public void testExecute_tomcatServlet25()
+      throws VerificationException, IOException, InterruptedException {
+    buildAndRunWar("tomcat-servlet25:maven", "pom-tomcat.xml");
+    HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080/hello"));
+  }
+
+  private void buildAndRunWar(String label, String pomXml)
+      throws VerificationException, IOException, InterruptedException {
+    String targetImage = getGcrImageReference(label);
+
+    Verifier verifier = new Verifier(servlet25Project.getProjectRoot().toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    verifier.setAutoclean(false);
+    verifier.addCliOption("-X");
+    verifier.addCliOption("--file=" + pomXml);
+    verifier.executeGoals(Arrays.asList("clean", "package", "jib:build"));
+    verifier.verifyErrorFreeLog();
+
+    detachedContainerName =
+        new Command("docker", "run", "--rm", "--detach", "-p8080:8080", targetImage).run().trim();
   }
 }

@@ -19,15 +19,13 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
+import com.google.cloud.tools.jib.plugins.common.JavaLayerConfigurationsHelper;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
@@ -41,31 +39,61 @@ class GradleLayerConfigurations {
   private static final String MAIN_SOURCE_SET_NAME = "main";
 
   /**
-   * Resolves the source files configuration for a Gradle {@link Project}.
+   * Resolves the {@link JavaLayerConfigurations} for a Gradle {@link Project}.
    *
    * @param project the Gradle {@link Project}
    * @param logger the logger for providing feedback about the resolution
-   * @param extraDirectory path to the directory for the extra files layer
+   * @param extraDirectory path to the source directory for the extra files layer
    * @param appRoot root directory in the image where the app will be placed
-   * @return a {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
+   * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
   static JavaLayerConfigurations getForProject(
       Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
       throws IOException {
+    if (GradleProjectProperties.getWarTask(project) != null) {
+      logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
+      return getForWarProject(project, logger, extraDirectory, appRoot);
+    } else {
+      return getForNonWarProject(project, logger, extraDirectory, appRoot);
+    }
+  }
+
+  /**
+   * Resolves the {@link JavaLayerConfigurations} for a non-WAR Gradle {@link Project}.
+   *
+   * @param project the Gradle {@link Project}
+   * @param logger the logger for providing feedback about the resolution
+   * @param extraDirectory path to the source directory for the extra files layer
+   * @param appRoot root directory in the image where the app will be placed
+   * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
+   * @throws IOException if an I/O exception occurred during resolution
+   */
+  private static JavaLayerConfigurations getForNonWarProject(
+      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
+      throws IOException {
+    AbsoluteUnixPath dependenciesExtractionPath =
+        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
+    AbsoluteUnixPath resourcesExtractionPath =
+        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
+    AbsoluteUnixPath classesExtractionPath =
+        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
+
+    Builder layerBuilder = JavaLayerConfigurations.builder();
+
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
-
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
 
-    List<Path> dependenciesFiles = new ArrayList<>();
-    List<Path> snapshotDependenciesFiles = new ArrayList<>();
-    List<Path> resourcesFiles = new ArrayList<>();
-    List<Path> classesFiles = new ArrayList<>();
-    List<Path> extraFiles = new ArrayList<>();
-
-    // Adds each file in each classes output directory to the classes files list.
     FileCollection classesOutputDirectories = mainSourceSet.getOutput().getClassesDirs();
+    Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
+    FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
+    FileCollection dependencyFiles =
+        allFiles
+            .minus(classesOutputDirectories)
+            .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
+
+    // Adds class files.
     logger.info("Adding corresponding output directories of source sets to image");
     for (File classesOutputDirectory : classesOutputDirectories) {
       if (Files.notExists(classesOutputDirectory.toPath())) {
@@ -73,67 +101,53 @@ class GradleLayerConfigurations {
         continue;
       }
       logger.info("\t'" + classesOutputDirectory + "'");
-      try (Stream<Path> classFileStream = Files.list(classesOutputDirectory.toPath())) {
-        classFileStream.forEach(classesFiles::add);
-      }
+      layerBuilder.addDirectoryContents(
+          LayerType.CLASSES, classesOutputDirectory.toPath(), path -> true, classesExtractionPath);
     }
-    if (classesFiles.isEmpty()) {
+    if (classesOutputDirectories.filter(File::exists).isEmpty()) {
       logger.warn("No classes files were found - did you compile your project?");
     }
 
-    // Adds each file in the resources output directory to the resources files list.
-    Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
+    // Adds resource files.
     if (Files.exists(resourcesOutputDirectory)) {
-      try (Stream<Path> resourceFileStream = Files.list(resourcesOutputDirectory)) {
-        resourceFileStream.forEach(resourcesFiles::add);
-      }
+      layerBuilder.addDirectoryContents(
+          LayerType.RESOURCES, resourcesOutputDirectory, path -> true, resourcesExtractionPath);
     }
 
-    // Adds all other files to the dependencies files list.
-    FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
-    // Removes the classes output directories.
-    allFiles = allFiles.minus(classesOutputDirectories);
-    for (File dependencyFile : allFiles) {
-      // Removes the resources output directory.
-      if (resourcesOutputDirectory.equals(dependencyFile.toPath())) {
-        continue;
-      }
-      if (dependencyFile.getName().contains("SNAPSHOT")) {
-        snapshotDependenciesFiles.add(dependencyFile.toPath());
-      } else {
-        dependenciesFiles.add(dependencyFile.toPath());
-      }
+    // Adds dependency files.
+    for (File dependencyFile : dependencyFiles) {
+      boolean isSnapshot = dependencyFile.getName().contains("SNAPSHOT");
+      LayerType layerType = isSnapshot ? LayerType.SNAPSHOT_DEPENDENCIES : LayerType.DEPENDENCIES;
+      layerBuilder.addFile(
+          layerType,
+          dependencyFile.toPath(),
+          dependenciesExtractionPath.resolve(dependencyFile.getName()));
     }
 
     // Adds all the extra files.
     if (Files.exists(extraDirectory)) {
-      try (Stream<Path> extraFilesLayerDirectoryFiles = Files.list(extraDirectory)) {
-        extraFiles = extraFilesLayerDirectoryFiles.collect(Collectors.toList());
-      }
+      layerBuilder.addDirectoryContents(
+          LayerType.EXTRA_FILES, extraDirectory, path -> true, AbsoluteUnixPath.get("/"));
     }
 
-    // Sorts all files by path for consistent ordering.
-    Collections.sort(dependenciesFiles);
-    Collections.sort(snapshotDependenciesFiles);
-    Collections.sort(resourcesFiles);
-    Collections.sort(classesFiles);
-    Collections.sort(extraFiles);
+    return layerBuilder.build();
+  }
 
-    return JavaLayerConfigurations.builder()
-        .setDependencyFiles(
-            dependenciesFiles,
-            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE))
-        .setSnapshotDependencyFiles(
-            snapshotDependenciesFiles,
-            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE))
-        .setResourceFiles(
-            resourcesFiles,
-            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE))
-        .setClassFiles(
-            classesFiles,
-            appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE))
-        .setExtraFiles(extraFiles, AbsoluteUnixPath.get("/"))
-        .build();
+  /**
+   * Resolves the {@link JavaLayerConfigurations} for a WAR Gradle {@link Project}.
+   *
+   * @param project the Gradle {@link Project}
+   * @param logger the build logger for providing feedback about the resolution
+   * @param extraDirectory path to the source directory for the extra files layer
+   * @param appRoot root directory in the image where the app will be placed
+   * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
+   * @throws IOException if an I/O exception occurred during resolution
+   */
+  private static JavaLayerConfigurations getForWarProject(
+      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
+      throws IOException {
+    Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
+    return JavaLayerConfigurationsHelper.fromExplodedWar(explodedWarPath, appRoot, extraDirectory);
   }
 
   private GradleLayerConfigurations() {}

@@ -16,15 +16,11 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
-import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import java.io.IOException;
+import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
@@ -35,28 +31,32 @@ public class BuildSteps {
   private static final String DESCRIPTION_FOR_DOCKER_DAEMON = "Building image to Docker daemon";
   private static final String DESCRIPTION_FOR_TARBALL = "Building image tarball";
 
-  /** Accepts {@link StepsRunner} by running the appropriate steps. */
+  /** Runs appropriate steps to build an image. */
   @FunctionalInterface
-  private interface StepsRunnerConsumer {
+  private interface ImageBuildRunnable {
 
-    void accept(StepsRunner stepsRunner) throws ExecutionException, InterruptedException;
+    /**
+     * Builds an image and returns its digest.
+     *
+     * @return the digest of the built image
+     * @throws ExecutionException if an exception occurs during execution
+     * @throws InterruptedException if the execution is interrupted
+     */
+    DescriptorDigest build() throws ExecutionException, InterruptedException;
   }
 
   /**
    * All the steps to build an image to a Docker registry.
    *
    * @param buildConfiguration the configuration parameters for the build
-   * @param cachesInitializer the {@link Caches.Initializer} used to setup the cache
    * @return a new {@link BuildSteps} for building to a registry
    */
-  public static BuildSteps forBuildToDockerRegistry(
-      BuildConfiguration buildConfiguration, Caches.Initializer cachesInitializer) {
+  public static BuildSteps forBuildToDockerRegistry(BuildConfiguration buildConfiguration) {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_REGISTRY,
         buildConfiguration,
-        cachesInitializer,
-        stepsRunner ->
-            stepsRunner
+        () ->
+            new StepsRunner(buildConfiguration)
                 .runRetrieveTargetRegistryCredentialsStep()
                 .runAuthenticatePushStep()
                 .runPullBaseImageStep()
@@ -74,24 +74,23 @@ public class BuildSteps {
   /**
    * All the steps to build to Docker daemon
    *
+   * @param dockerClient the {@link DockerClient} for running {@code docker} commands
    * @param buildConfiguration the configuration parameters for the build
-   * @param cachesInitializer the {@link Caches.Initializer} used to setup the cache
    * @return a new {@link BuildSteps} for building to a Docker daemon
    */
   public static BuildSteps forBuildToDockerDaemon(
-      BuildConfiguration buildConfiguration, Caches.Initializer cachesInitializer) {
+      DockerClient dockerClient, BuildConfiguration buildConfiguration) {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_DAEMON,
         buildConfiguration,
-        cachesInitializer,
-        stepsRunner ->
-            stepsRunner
+        () ->
+            new StepsRunner(buildConfiguration)
                 .runPullBaseImageStep()
                 .runPullAndCacheBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()
                 .runBuildImageStep()
                 .runFinalizingBuildStep()
-                .runLoadDockerStep()
+                .runLoadDockerStep(dockerClient)
                 .waitOnLoadDockerStep());
   }
 
@@ -100,19 +99,14 @@ public class BuildSteps {
    *
    * @param outputPath the path to output the tarball to
    * @param buildConfiguration the configuration parameters for the build
-   * @param cachesInitializer the {@link Caches.Initializer} used to setup the cache
    * @return a new {@link BuildSteps} for building a tarball
    */
-  public static BuildSteps forBuildToTar(
-      Path outputPath,
-      BuildConfiguration buildConfiguration,
-      Caches.Initializer cachesInitializer) {
+  public static BuildSteps forBuildToTar(Path outputPath, BuildConfiguration buildConfiguration) {
     return new BuildSteps(
         DESCRIPTION_FOR_TARBALL,
         buildConfiguration,
-        cachesInitializer,
-        stepsRunner ->
-            stepsRunner
+        () ->
+            new StepsRunner(buildConfiguration)
                 .runPullBaseImageStep()
                 .runPullAndCacheBaseImageLayersStep()
                 .runBuildAndCacheApplicationLayerSteps()
@@ -124,56 +118,56 @@ public class BuildSteps {
 
   private final String description;
   private final BuildConfiguration buildConfiguration;
-  private final Caches.Initializer cachesInitializer;
-  private final StepsRunnerConsumer stepsRunnerConsumer;
+  private final ImageBuildRunnable imageBuildRunnable;
 
   /**
    * @param description a description of what the steps do
-   * @param stepsRunnerConsumer accepts a {@link StepsRunner} by running the necessary steps
+   * @param buildConfiguration the configuration parameters for the build
+   * @param imageBuildRunnable runs the necessary steps to build an image
    */
   private BuildSteps(
       String description,
       BuildConfiguration buildConfiguration,
-      Caches.Initializer cachesInitializer,
-      StepsRunnerConsumer stepsRunnerConsumer) {
+      ImageBuildRunnable imageBuildRunnable) {
     this.description = description;
     this.buildConfiguration = buildConfiguration;
-    this.cachesInitializer = cachesInitializer;
-    this.stepsRunnerConsumer = stepsRunnerConsumer;
+    this.imageBuildRunnable = imageBuildRunnable;
   }
 
   public BuildConfiguration getBuildConfiguration() {
     return buildConfiguration;
   }
 
-  public void run()
-      throws InterruptedException, ExecutionException, CacheMetadataCorruptedException, IOException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
-    buildConfiguration.getBuildLogger().lifecycle("");
+  /**
+   * Executes the build.
+   *
+   * @return the built image digest
+   * @throws InterruptedException if the execution is interrupted
+   * @throws ExecutionException if an exception occurs during execution
+   */
+  public DescriptorDigest run() throws InterruptedException, ExecutionException {
+    buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
 
-    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
-      try (Caches caches = cachesInitializer.init()) {
-        Cache baseImageLayersCache = caches.getBaseCache();
-        Cache applicationLayersCache = caches.getApplicationCache();
-
-        StepsRunner stepsRunner =
-            new StepsRunner(buildConfiguration, baseImageLayersCache, applicationLayersCache);
-        stepsRunnerConsumer.accept(stepsRunner);
-
-        // Writes the cached layers to the cache metadata.
-        baseImageLayersCache.addCachedLayersToMetadata(stepsRunner.getCachedBaseImageLayers());
-        applicationLayersCache.addCachedLayersWithMetadataToMetadata(
-            stepsRunner.getCachedApplicationLayers());
-      }
+    DescriptorDigest imageDigest;
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
+      imageDigest = imageBuildRunnable.build();
     }
 
     if (buildConfiguration.getContainerConfiguration() != null) {
-      buildConfiguration.getBuildLogger().lifecycle("");
-      buildConfiguration
-          .getBuildLogger()
-          .lifecycle(
-              "Container entrypoint set to "
-                  + buildConfiguration.getContainerConfiguration().getEntrypoint());
+      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
+      // TODO refactor code to also log ENTRYPOINT and CMD when inheriting them in this code,
+      // instead of logging them elsewhere.
+      if (buildConfiguration.getContainerConfiguration().getEntrypoint() != null) {
+        buildConfiguration
+            .getEventDispatcher()
+            .dispatch(
+                LogEvent.lifecycle(
+                    "Container entrypoint set to "
+                        + buildConfiguration.getContainerConfiguration().getEntrypoint()));
+      }
     }
+
+    return imageDigest;
   }
 }

@@ -29,7 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -58,9 +57,6 @@ public class JavaDockerContextGenerator {
   private static final String SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY = "snapshot-libs";
   private static final String RESOURCES_LAYER_DIRECTORY = "resources";
   private static final String CLASSES_LAYER_DIRECTORY = "classes";
-  // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
-  // snapshot dependencies, resources, and classes layers). Should copy files in the right
-  private static final String EXPLODED_WAR_LAYER_DIRECTORY = "exploded-war";
   private static final String EXTRA_FILES_LAYER_DIRECTORY = "root";
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -93,18 +89,16 @@ public class JavaDockerContextGenerator {
    * @param listBuilder the {@link ImmutableList.Builder} to add to
    * @param layerEntries the layer entries
    * @param directoryInContext the directory in the context to put the source files for the layer
-   * @param extractionPath the extraction path to extract the directory to
    */
   private static void addIfNotEmpty(
       ImmutableList.Builder<CopyDirective> listBuilder,
       ImmutableList<LayerEntry> layerEntries,
-      String directoryInContext,
-      AbsoluteUnixPath extractionPath) {
+      String directoryInContext) {
     if (layerEntries.isEmpty()) {
       return;
     }
 
-    listBuilder.add(new CopyDirective(layerEntries, directoryInContext, extractionPath));
+    listBuilder.add(new CopyDirective(layerEntries, directoryInContext, AbsoluteUnixPath.get("/")));
   }
 
   /**
@@ -137,9 +131,10 @@ public class JavaDockerContextGenerator {
   private final ImmutableList<CopyDirective> copyDirectives;
 
   @Nullable private String baseImage;
-  private List<String> entrypoint = Collections.emptyList();
-  private List<String> javaArguments = Collections.emptyList();
+  @Nullable private List<String> entrypoint;
+  @Nullable private List<String> programArguments;
   @Nullable private Map<String, String> environment;
+  @Nullable private String user;
   private List<String> exposedPorts = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();
 
@@ -153,36 +148,23 @@ public class JavaDockerContextGenerator {
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getDependencyLayerEntries(),
-        DEPENDENCIES_LAYER_DIRECTORY,
-        javaLayerConfigurations.getDependencyExtractionPath());
+        DEPENDENCIES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getSnapshotDependencyLayerEntries(),
-        SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY,
-        javaLayerConfigurations.getSnapshotDependencyExtractionPath());
+        SNAPSHOT_DEPENDENCIES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getResourceLayerEntries(),
-        RESOURCES_LAYER_DIRECTORY,
-        javaLayerConfigurations.getResourceExtractionPath());
+        RESOURCES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getClassLayerEntries(),
-        CLASSES_LAYER_DIRECTORY,
-        javaLayerConfigurations.getClassExtractionPath());
-    // TODO: remove this once we put files in WAR into the relevant layers (i.e., dependencies,
-    // snapshot dependencies, resources, and classes layers). Should copy files in the right
-    // directories. (For example, "resources" will go into the webapp root.)
-    addIfNotEmpty(
-        copyDirectivesBuilder,
-        javaLayerConfigurations.getExplodedWarEntries(),
-        EXPLODED_WAR_LAYER_DIRECTORY,
-        javaLayerConfigurations.getExplodedWarExtractionPath());
+        CLASSES_LAYER_DIRECTORY);
     addIfNotEmpty(
         copyDirectivesBuilder,
         javaLayerConfigurations.getExtraFilesLayerEntries(),
-        EXTRA_FILES_LAYER_DIRECTORY,
-        javaLayerConfigurations.getExtraFilesExtractionPath());
+        EXTRA_FILES_LAYER_DIRECTORY);
     copyDirectives = copyDirectivesBuilder.build();
   }
 
@@ -190,7 +172,7 @@ public class JavaDockerContextGenerator {
    * Sets the base image for the {@code FROM} directive. This must be called before {@link
    * #generate}.
    *
-   * @param baseImage the base image.
+   * @param baseImage the base image
    * @return this
    */
   public JavaDockerContextGenerator setBaseImage(String baseImage) {
@@ -201,27 +183,38 @@ public class JavaDockerContextGenerator {
   /**
    * Sets the entrypoint to be used as the {@code ENTRYPOINT}.
    *
-   * @param entrypoint the entrypoint.
+   * @param entrypoint the entrypoint
    * @return this
    */
-  public JavaDockerContextGenerator setEntrypoint(List<String> entrypoint) {
+  public JavaDockerContextGenerator setEntrypoint(@Nullable List<String> entrypoint) {
     this.entrypoint = entrypoint;
+    return this;
+  }
+
+  /**
+   * Sets the user for the {@code USER} directive.
+   *
+   * @param user the username/UID and optionally the groupname/GID
+   * @return this
+   */
+  public JavaDockerContextGenerator setUser(@Nullable String user) {
+    this.user = user;
     return this;
   }
 
   /**
    * Sets the arguments used in the {@code CMD}.
    *
-   * @param javaArguments the list of arguments to pass into main.
+   * @param programArguments the list of arguments to append to {@code ENTRYPOINT}
    * @return this
    */
-  public JavaDockerContextGenerator setJavaArguments(List<String> javaArguments) {
-    this.javaArguments = javaArguments;
+  public JavaDockerContextGenerator setProgramArguments(@Nullable List<String> programArguments) {
+    this.programArguments = programArguments;
     return this;
   }
 
   /**
-   * Sets the environment variables
+   * Sets the environment variables.
    *
    * @param environment map from the environment variable name to value
    * @return this
@@ -243,7 +236,7 @@ public class JavaDockerContextGenerator {
   }
 
   /**
-   * Sets the labels
+   * Sets the labels.
    *
    * @param labels the map of labels
    * @return this
@@ -280,19 +273,13 @@ public class JavaDockerContextGenerator {
 
       // Copies the source files to the directoryInContext.
       for (LayerEntry layerEntry : copyDirective.layerEntries) {
-        // This resolves the path to copy the source file to in the {@code directory}.
-        // For example, for a 'baseDirectory' of 'target/jib-docker-context/classes', a
-        // 'baseExtractionPath' of '/app/classes', and an 'actualExtractionPath' of
-        // '/app/classes/com/test/HelloWorld.class', the resolved destination would be
-        // 'target/jib-docker-context/classes/com/test/HelloWorld.class'.
-        Path baseExtractionPath = Paths.get(copyDirective.extractionPath.toString());
-        Path relativeEntryPath =
-            baseExtractionPath.relativize(Paths.get(layerEntry.getExtractionPath().toString()));
-        Path destination = directoryInContext.resolve(relativeEntryPath);
+        String noLeadingSlash = layerEntry.getAbsoluteExtractionPathString().substring(1);
+        Path destination = directoryInContext.resolve(noLeadingSlash);
 
         if (Files.isDirectory(layerEntry.getSourceFile())) {
           Files.createDirectories(destination);
         } else {
+          Files.createDirectories(destination.getParent());
           Files.copy(layerEntry.getSourceFile(), destination);
         }
       }
@@ -309,11 +296,11 @@ public class JavaDockerContextGenerator {
    * <pre>{@code
    * FROM [base image]
    *
-   * COPY libs [path/to/dependencies/]
-   * COPY snapshot-libs [path/to/dependencies/]
-   * COPY resources [path/to/resources/]
-   * COPY classes [path/to/classes/]
-   * COPY root [path/to/root/]
+   * COPY libs /
+   * COPY snapshot-libs /
+   * COPY resources /
+   * COPY classes /
+   * COPY root /
    *
    * EXPOSE [port]
    * [More EXPOSE instructions, if necessary]
@@ -323,6 +310,7 @@ public class JavaDockerContextGenerator {
    * LABEL [key1]="[value1]" \
    *     [key2]="[value2]" \
    *     [...]
+   * USER [user name (or UID) and optionally user group (or GID)]
    * ENTRYPOINT java [jvm flags] -cp [classpaths] [main class]
    * CMD [main class args]
    * }</pre>
@@ -352,11 +340,15 @@ public class JavaDockerContextGenerator {
       dockerfile.append(mapToDockerfileString(environment, "ENV"));
     }
     dockerfile.append(mapToDockerfileString(labels, "LABEL"));
-    dockerfile
-        .append("\nENTRYPOINT ")
-        .append(objectMapper.writeValueAsString(entrypoint))
-        .append("\nCMD ")
-        .append(objectMapper.writeValueAsString(javaArguments));
+    if (entrypoint != null) {
+      dockerfile.append("\nENTRYPOINT ").append(objectMapper.writeValueAsString(entrypoint));
+    }
+    if (programArguments != null) {
+      dockerfile.append("\nCMD ").append(objectMapper.writeValueAsString(programArguments));
+    }
+    if (user != null) {
+      dockerfile.append("\nUSER ").append(user);
+    }
     return dockerfile.toString();
   }
 }

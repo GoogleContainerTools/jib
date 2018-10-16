@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -34,7 +34,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
-// TODO: This is probably not necessary anymore either.
 /**
  * Authenticates push to a target registry using Docker Token Authentication.
  *
@@ -72,9 +71,9 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
   public Authorization call()
       throws ExecutionException, RegistryAuthenticationFailedException, IOException,
           RegistryException {
-    try (Timer ignored =
-        new Timer(
-            buildConfiguration.getBuildLogger(),
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(
+            buildConfiguration.getEventDispatcher(),
             String.format(
                 DESCRIPTION,
                 buildConfiguration.getTargetImageConfiguration().getImageRegistry()))) {
@@ -87,7 +86,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
 
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticator.initializer(
-                  buildConfiguration.getBuildLogger(),
+                  buildConfiguration.getEventDispatcher(),
                   buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
                   buildConfiguration.getTargetImageConfiguration().getImageRepository())
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())

@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
@@ -102,10 +101,11 @@ public class DockerContextTask extends DefaultTask implements JibTask {
   @TaskAction
   public void generateDockerContext() {
     Preconditions.checkNotNull(jibExtension);
-
-    GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
-    jibExtension.handleDeprecatedParameters(gradleJibLogger);
+    Preconditions.checkNotNull(jibExtension.getFrom().getImage());
     JibSystemProperties.checkHttpTimeoutProperty();
+
+    // TODO: Instead of disabling logging, have authentication credentials be provided
+    PluginConfigurationProcessor.disableHttpLogging();
 
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
@@ -113,30 +113,26 @@ public class DockerContextTask extends DefaultTask implements JibTask {
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
     String targetDir = getTargetDir();
 
-    List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
-    if (entrypoint.isEmpty()) {
-      String mainClass = gradleProjectProperties.getMainClass(jibExtension);
-      entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(
-              appRoot, jibExtension.getJvmFlags(), mainClass);
-    } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
-      gradleJibLogger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
-    }
+    List<String> entrypoint =
+        PluginConfigurationProcessor.computeEntrypoint(
+            getLogger(), jibExtension, gradleProjectProperties);
 
     try {
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
-      ExposedPortsParser.parse(jibExtension.getExposedPorts());
+      ExposedPortsParser.parse(jibExtension.getContainer().getPorts());
 
       new JavaDockerContextGenerator(gradleProjectProperties.getJavaLayerConfigurations())
-          .setBaseImage(jibExtension.getBaseImage())
+          .setBaseImage(jibExtension.getFrom().getImage())
           .setEntrypoint(entrypoint)
-          .setJavaArguments(jibExtension.getArgs())
-          .setExposedPorts(jibExtension.getExposedPorts())
-          .setLabels(jibExtension.getLabels())
+          .setProgramArguments(jibExtension.getContainer().getArgs())
+          .setExposedPorts(jibExtension.getContainer().getPorts())
+          .setEnvironment(jibExtension.getContainer().getEnvironment())
+          .setLabels(jibExtension.getContainer().getLabels())
+          .setUser(jibExtension.getContainer().getUser())
           .generate(Paths.get(targetDir));
 
-      gradleJibLogger.lifecycle("Created Docker context at " + targetDir);
+      getLogger().lifecycle("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new GradleException(

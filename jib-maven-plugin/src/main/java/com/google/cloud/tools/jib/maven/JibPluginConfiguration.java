@@ -16,12 +16,12 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -87,15 +87,12 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /**
-   * Configuration for {@code from} parameter, where image by default is {@code
-   * gcr.io/distroless/java}.
-   */
+  /** Configuration for {@code from} parameter, */
   public static class FromConfiguration {
 
     @Nullable
     @Parameter(required = true)
-    private String image = "gcr.io/distroless/java";
+    private String image;
 
     @Nullable @Parameter private String credHelper;
 
@@ -123,7 +120,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private boolean useCurrentTimestamp = false;
 
-    @Parameter private List<String> entrypoint = Collections.emptyList();
+    @Nullable @Parameter private List<String> entrypoint;
 
     @Parameter private List<String> jvmFlags = Collections.emptyList();
 
@@ -131,7 +128,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private String mainClass;
 
-    @Parameter private List<String> args = Collections.emptyList();
+    @Nullable @Parameter private List<String> args;
 
     @Nullable
     @Parameter(required = true)
@@ -141,7 +138,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private Map<String, String> labels = Collections.emptyMap();
 
-    @Parameter private String appRoot = JavaLayerConfigurations.DEFAULT_APP_ROOT;
+    @Parameter private String appRoot = "";
+
+    @Nullable @Parameter private String user;
   }
 
   @Nullable
@@ -154,31 +153,31 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Parameter private FromConfiguration from = new FromConfiguration();
 
-  @Parameter(property = "image")
-  private ToConfiguration to = new ToConfiguration();
+  @Parameter private ToConfiguration to = new ToConfiguration();
 
   @Parameter private ContainerParameters container = new ContainerParameters();
 
-  @Deprecated @Parameter private List<String> jvmFlags = Collections.emptyList();
-
-  @Deprecated @Nullable @Parameter private String mainClass;
-
-  @Deprecated @Parameter private List<String> args = Collections.emptyList();
-
-  @Deprecated @Nullable @Parameter private String format;
-
-  @Parameter(defaultValue = "false", required = true)
+  @Parameter(
+      defaultValue = "false",
+      required = true,
+      property = PropertyNames.USE_ONLY_PROJECT_CACHE)
   private boolean useOnlyProjectCache;
 
-  @Parameter(defaultValue = "false", required = true)
+  @Parameter(
+      defaultValue = "false",
+      required = true,
+      property = PropertyNames.ALLOW_INSECURE_REGISTRIES)
   private boolean allowInsecureRegistries;
 
   // this parameter is cloned in FilesMojo
   @Nullable
-  @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
+  @Parameter(
+      defaultValue = "${project.basedir}/src/main/jib",
+      required = true,
+      property = PropertyNames.EXTRA_DIRECTORY)
   private File extraDirectory;
 
-  @Parameter(defaultValue = "false", property = "jib.skip")
+  @Parameter(defaultValue = "false", property = PropertyNames.SKIP)
   private boolean skip;
 
   @Nullable @Component protected SettingsDecrypter settingsDecrypter;
@@ -189,44 +188,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     from.auth.setPropertyDescriptors("<from><auth>");
   }
 
-  /**
-   * Warns about deprecated parameters in use.
-   *
-   * @param logger The logger used to print the warnings
-   */
-  void handleDeprecatedParameters(JibLogger logger) {
-    StringBuilder deprecatedParams = new StringBuilder();
-    if (!jvmFlags.isEmpty()) {
-      deprecatedParams.append("  <jvmFlags> -> <container><jvmFlags>\n");
-      if (container.jvmFlags.isEmpty()) {
-        container.jvmFlags = jvmFlags;
-      }
-    }
-    if (!Strings.isNullOrEmpty(mainClass)) {
-      deprecatedParams.append("  <mainClass> -> <container><mainClass>\n");
-      if (Strings.isNullOrEmpty(container.mainClass)) {
-        container.mainClass = mainClass;
-      }
-    }
-    if (!args.isEmpty()) {
-      deprecatedParams.append("  <args> -> <container><args>\n");
-      if (container.args.isEmpty()) {
-        container.args = args;
-      }
-    }
-    if (!Strings.isNullOrEmpty(format)) {
-      deprecatedParams.append("  <format> -> <container><format>\n");
-      container.format = format;
-    }
-
-    if (deprecatedParams.length() > 0) {
-      logger.warn(
-          "There are deprecated parameters used in the build configuration. Please make the "
-              + "following changes to your pom.xml to avoid issues in the future:\n"
-              + deprecatedParams);
-    }
-  }
-
   MavenSession getSession() {
     return Preconditions.checkNotNull(session);
   }
@@ -235,76 +196,224 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(project);
   }
 
+  /**
+   * Gets the base image reference.
+   *
+   * @return the configured base image reference
+   */
+  @Nullable
   String getBaseImage() {
-    return Preconditions.checkNotNull(Preconditions.checkNotNull(from).image);
+    if (System.getProperty(PropertyNames.FROM_IMAGE) != null) {
+      return System.getProperty(PropertyNames.FROM_IMAGE);
+    }
+    return Preconditions.checkNotNull(from).image;
   }
 
+  /**
+   * Gets the base image credential helper.
+   *
+   * @return the configured base image credential helper name
+   */
   @Nullable
   String getBaseImageCredentialHelperName() {
+    if (System.getProperty(PropertyNames.FROM_CRED_HELPER) != null) {
+      return System.getProperty(PropertyNames.FROM_CRED_HELPER);
+    }
     return Preconditions.checkNotNull(from).credHelper;
   }
 
   AuthConfiguration getBaseImageAuth() {
+    // System properties are handled in ConfigurationPropertyValidator
     return from.auth;
   }
 
+  /**
+   * Gets the target image reference.
+   *
+   * @return the configured target image reference
+   */
   @Nullable
   String getTargetImage() {
+    if (System.getProperty(PropertyNames.TO_IMAGE_ALTERNATE) != null) {
+      return System.getProperty(PropertyNames.TO_IMAGE_ALTERNATE);
+    }
+    if (System.getProperty(PropertyNames.TO_IMAGE) != null) {
+      return System.getProperty(PropertyNames.TO_IMAGE);
+    }
     return to.image;
   }
 
+  /**
+   * Gets the additional target image tags.
+   *
+   * @return the configured extra tags.
+   */
   Set<String> getTargetImageAdditionalTags() {
+    if (System.getProperty(PropertyNames.TO_TAGS) != null) {
+      return ImmutableSet.copyOf(
+          ConfigurationPropertyValidator.parseListProperty(
+              System.getProperty(PropertyNames.TO_TAGS)));
+    }
     return new HashSet<>(to.tags);
   }
 
+  /**
+   * Gets the target image credential helper.
+   *
+   * @return the configured target image credential helper name
+   */
   @Nullable
   String getTargetImageCredentialHelperName() {
+    if (System.getProperty(PropertyNames.TO_CRED_HELPER) != null) {
+      return System.getProperty(PropertyNames.TO_CRED_HELPER);
+    }
     return Preconditions.checkNotNull(to).credHelper;
   }
 
   AuthConfiguration getTargetImageAuth() {
+    // System properties are handled in ConfigurationPropertyValidator
     return to.auth;
   }
 
+  /**
+   * Gets whether or not to use the current timestamp for the container build.
+   *
+   * @return {@code true} if the build should use the current timestamp, {@code false} if not
+   */
   boolean getUseCurrentTimestamp() {
+    if (System.getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP) != null) {
+      return Boolean.getBoolean(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
+    }
     return container.useCurrentTimestamp;
   }
 
+  /**
+   * Gets the configured entrypoint.
+   *
+   * @return the configured entrypoint
+   */
+  @Nullable
   List<String> getEntrypoint() {
+    if (System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT) != null) {
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT));
+    }
     return container.entrypoint;
   }
 
+  /**
+   * Gets the configured jvm flags.
+   *
+   * @return the configured jvm flags
+   */
   List<String> getJvmFlags() {
+    if (System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS) != null) {
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS));
+    }
     return container.jvmFlags;
   }
 
-  @Nullable
+  /**
+   * Gets the configured environment variables.
+   *
+   * @return the configured environment variables
+   */
   Map<String, String> getEnvironment() {
+    if (System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT) != null) {
+      return ConfigurationPropertyValidator.parseMapProperty(
+          System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT));
+    }
     return container.environment;
   }
 
+  /**
+   * Gets the name of the main class.
+   *
+   * @return the configured main class name
+   */
   @Nullable
   String getMainClass() {
+    if (System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS);
+    }
     return container.mainClass;
   }
 
+  /**
+   * Gets the username or UID which the process in the container should run as.
+   *
+   * @return the configured main class name
+   */
+  @Nullable
+  String getUser() {
+    if (System.getProperty(PropertyNames.CONTAINER_USER) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_USER);
+    }
+    return container.user;
+  }
+
+  /**
+   * Gets the configured main arguments.
+   *
+   * @return the configured main arguments
+   */
+  @Nullable
   List<String> getArgs() {
+    if (System.getProperty(PropertyNames.CONTAINER_ARGS) != null) {
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.CONTAINER_ARGS));
+    }
     return container.args;
   }
 
+  /**
+   * Gets the configured exposed ports.
+   *
+   * @return the configured exposed ports
+   */
   List<String> getExposedPorts() {
+    if (System.getProperty(PropertyNames.CONTAINER_PORTS) != null) {
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.CONTAINER_PORTS));
+    }
     return container.ports;
   }
 
+  /**
+   * Gets the configured labels.
+   *
+   * @return the configured labels
+   */
   Map<String, String> getLabels() {
+    if (System.getProperty(PropertyNames.CONTAINER_LABELS) != null) {
+      return ConfigurationPropertyValidator.parseMapProperty(
+          System.getProperty(PropertyNames.CONTAINER_LABELS));
+    }
     return container.labels;
   }
 
+  /**
+   * Gets the configured app root directory.
+   *
+   * @return the configured app root directory
+   */
   String getAppRoot() {
+    if (System.getProperty(PropertyNames.CONTAINER_APP_ROOT) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_APP_ROOT);
+    }
     return container.appRoot;
   }
 
+  /**
+   * Gets the configured container image format.
+   *
+   * @return the configured container image format
+   */
   String getFormat() {
+    if (System.getProperty(PropertyNames.CONTAINER_FORMAT) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_FORMAT);
+    }
     return Preconditions.checkNotNull(container.format);
   }
 
@@ -327,26 +436,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   SettingsDecrypter getSettingsDecrypter() {
     return Preconditions.checkNotNull(settingsDecrypter);
-  }
-
-  @VisibleForTesting
-  void setJvmFlags(List<String> jvmFlags) {
-    this.jvmFlags = jvmFlags;
-  }
-
-  @VisibleForTesting
-  void setMainClass(String mainClass) {
-    this.mainClass = mainClass;
-  }
-
-  @VisibleForTesting
-  void setArgs(List<String> args) {
-    this.args = args;
-  }
-
-  @VisibleForTesting
-  void setFormat(String format) {
-    this.format = format;
   }
 
   @VisibleForTesting

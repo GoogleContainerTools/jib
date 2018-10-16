@@ -17,17 +17,15 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.cache.Caches;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
@@ -51,6 +49,8 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Integration tests for {@link BuildSteps}. */
 public class BuildStepsIntegrationTest {
@@ -103,7 +103,7 @@ public class BuildStepsIntegrationTest {
     Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
   }
 
-  private static final TestJibLogger logger = new TestJibLogger();
+  private static final Logger logger = LoggerFactory.getLogger(BuildStepsIntegrationTest.class);
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -121,35 +121,42 @@ public class BuildStepsIntegrationTest {
 
   @Test
   public void testSteps_forBuildToDockerRegistry()
-      throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+      throws IOException, InterruptedException, ExecutionException {
     BuildSteps buildImageSteps =
-        getBuildSteps(
+        BuildSteps.forBuildToDockerRegistry(
             getBuildConfigurationBuilder(
                     ImageReference.of("gcr.io", "distroless/java", "latest"),
                     ImageReference.of("localhost:5000", "testimage", "testtag"))
                 .build());
 
     long lastTime = System.nanoTime();
-    buildImageSteps.run();
+    DescriptorDigest imageDigest1 = buildImageSteps.run();
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
     lastTime = System.nanoTime();
-    buildImageSteps.run();
+    DescriptorDigest imageDigest2 = buildImageSteps.run();
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+
+    Assert.assertEquals(imageDigest1, imageDigest2);
 
     String imageReference = "localhost:5000/testimage:testtag";
     localRegistry.pull(imageReference);
     assertDockerInspect(imageReference);
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
+
+    String imageReferenceByDigest = "localhost:5000/testimage@" + imageDigest1;
+    localRegistry.pull(imageReferenceByDigest);
+    assertDockerInspect(imageReferenceByDigest);
+    Assert.assertEquals(
+        "Hello, world. An argument.\n",
+        new Command("docker", "run", "--rm", imageReferenceByDigest).run());
   }
 
   @Test
   public void testSteps_forBuildToDockerRegistry_multipleTags()
-      throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+      throws IOException, InterruptedException, ExecutionException {
     BuildSteps buildImageSteps =
-        getBuildSteps(
+        BuildSteps.forBuildToDockerRegistry(
             getBuildConfigurationBuilder(
                     ImageReference.of("gcr.io", "distroless/java", "latest"),
                     ImageReference.of("localhost:5000", "testimage", "testtag"))
@@ -186,10 +193,8 @@ public class BuildStepsIntegrationTest {
 
   @Test
   public void testSteps_forBuildToDockerRegistry_dockerHubBaseImage()
-      throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException,
-          CacheDirectoryCreationException, CacheMetadataCorruptedException,
-          CacheDirectoryNotOwnedException {
-    getBuildSteps(
+      throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException {
+    BuildSteps.forBuildToDockerRegistry(
             getBuildConfigurationBuilder(
                     ImageReference.parse("openjdk:8-jre-alpine"),
                     ImageReference.of("localhost:5000", "testimage", "testtag"))
@@ -204,19 +209,14 @@ public class BuildStepsIntegrationTest {
 
   @Test
   public void testSteps_forBuildToDockerDaemon()
-      throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+      throws IOException, InterruptedException, ExecutionException {
     String imageReference = "testdocker";
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
                 ImageReference.of("gcr.io", "distroless/java", "latest"),
                 ImageReference.of(null, imageReference, null))
             .build();
-    Path cacheDirectory = temporaryFolder.newFolder().toPath();
-    BuildSteps.forBuildToDockerDaemon(
-            buildConfiguration,
-            new Caches.Initializer(cacheDirectory, false, cacheDirectory, false))
-        .run();
+    BuildSteps.forBuildToDockerDaemon(DockerClient.newClient(), buildConfiguration).run();
 
     assertDockerInspect(imageReference);
     Assert.assertEquals(
@@ -225,8 +225,7 @@ public class BuildStepsIntegrationTest {
 
   @Test
   public void testSteps_forBuildToDockerDaemon_multipleTags()
-      throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+      throws IOException, InterruptedException, ExecutionException {
     String imageReference = "testdocker";
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
@@ -234,11 +233,7 @@ public class BuildStepsIntegrationTest {
                 ImageReference.of(null, imageReference, null))
             .setAdditionalTargetImageTags(ImmutableSet.of("testtag2", "testtag3"))
             .build();
-    Path cacheDirectory = temporaryFolder.newFolder().toPath();
-    BuildSteps.forBuildToDockerDaemon(
-            buildConfiguration,
-            new Caches.Initializer(cacheDirectory, false, cacheDirectory, false))
-        .run();
+    BuildSteps.forBuildToDockerDaemon(DockerClient.newClient(), buildConfiguration).run();
 
     assertDockerInspect(imageReference);
     Assert.assertEquals(
@@ -255,34 +250,22 @@ public class BuildStepsIntegrationTest {
 
   @Test
   public void testSteps_forBuildToTarball()
-      throws IOException, InterruptedException, CacheMetadataCorruptedException, ExecutionException,
-          CacheDirectoryNotOwnedException, CacheDirectoryCreationException {
+      throws IOException, InterruptedException, ExecutionException {
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
                 ImageReference.of("gcr.io", "distroless/java", "latest"),
                 ImageReference.of(null, "testtar", null))
             .build();
     Path outputPath = temporaryFolder.newFolder().toPath().resolve("test.tar");
-    Path cacheDirectory = temporaryFolder.newFolder().toPath();
-    BuildSteps.forBuildToTar(
-            outputPath,
-            buildConfiguration,
-            new Caches.Initializer(cacheDirectory, false, cacheDirectory, false))
-        .run();
+    BuildSteps.forBuildToTar(outputPath, buildConfiguration).run();
 
     new Command("docker", "load", "--input", outputPath.toString()).run();
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", "testtar").run());
   }
 
-  private BuildSteps getBuildSteps(BuildConfiguration buildConfiguration) throws IOException {
-    Path cacheDirectory = temporaryFolder.newFolder().toPath();
-    return BuildSteps.forBuildToDockerRegistry(
-        buildConfiguration, new Caches.Initializer(cacheDirectory, false, cacheDirectory, false));
-  }
-
   private BuildConfiguration.Builder getBuildConfigurationBuilder(
-      ImageReference baseImage, ImageReference targetImage) {
+      ImageReference baseImage, ImageReference targetImage) throws IOException {
     ImageConfiguration baseImageConfiguration = ImageConfiguration.builder(baseImage).build();
     ImageConfiguration targetImageConfiguration = ImageConfiguration.builder(targetImage).build();
     ContainerConfiguration containerConfiguration =
@@ -296,10 +279,13 @@ public class BuildStepsIntegrationTest {
                 ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
             .setLabels(ImmutableMap.of("key1", "value1", "key2", "value2"))
             .build();
-    return BuildConfiguration.builder(logger)
+    Path cacheDirectory = temporaryFolder.newFolder().toPath();
+    return BuildConfiguration.builder()
         .setBaseImageConfiguration(baseImageConfiguration)
         .setTargetImageConfiguration(targetImageConfiguration)
         .setContainerConfiguration(containerConfiguration)
+        .setBaseImageLayersCacheDirectory(cacheDirectory)
+        .setApplicationLayersCacheDirectory(cacheDirectory)
         .setAllowInsecureRegistries(true)
         .setLayerConfigurations(fakeLayerConfigurations)
         .setToolName("jib-integration-test");

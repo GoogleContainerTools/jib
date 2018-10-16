@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,23 +33,46 @@ import java.util.function.Function;
 /** Calls out to the {@code docker} CLI. */
 public class DockerClient {
 
+  private static final String DEFAULT_DOCKER_CLIENT = "docker";
+
   /**
-   * @param dockerSubCommand the subcommand to run after {@code docker}
+   * Instantiates with the default {@code docker} executable.
+   *
+   * @return a new {@link DockerClient}
+   */
+  public static DockerClient newClient() {
+    return new DockerClient(defaultProcessBuilderFactory(DEFAULT_DOCKER_CLIENT));
+  }
+
+  /**
+   * Instantiates with a custom {@code docker} executable.
+   *
+   * @param dockerExecutable path to {@code docker}
+   * @return a new {@link DockerClient}
+   */
+  public static DockerClient newClient(Path dockerExecutable) {
+    return new DockerClient(defaultProcessBuilderFactory(dockerExecutable.toString()));
+  }
+
+  /**
+   * Gets a function that takes a {@code docker} subcommand and gives back a {@link ProcessBuilder}
+   * for that {@code docker} command.
+   *
+   * @param dockerExecutable path to {@code docker}
    * @return the default {@link ProcessBuilder} factory for running a {@code docker} subcommand
    */
-  private static ProcessBuilder defaultProcessBuilder(List<String> dockerSubCommand) {
-    List<String> dockerCommand = new ArrayList<>(1 + dockerSubCommand.size());
-    dockerCommand.add("docker");
-    dockerCommand.addAll(dockerSubCommand);
-    return new ProcessBuilder(dockerCommand);
+  private static Function<List<String>, ProcessBuilder> defaultProcessBuilderFactory(
+      String dockerExecutable) {
+    return dockerSubCommand -> {
+      List<String> dockerCommand = new ArrayList<>(1 + dockerSubCommand.size());
+      dockerCommand.add(dockerExecutable);
+      dockerCommand.addAll(dockerSubCommand);
+      return new ProcessBuilder(dockerCommand);
+    };
   }
 
   /** Factory for generating the {@link ProcessBuilder} for running {@code docker} commands. */
   private final Function<List<String>, ProcessBuilder> processBuilderFactory;
-
-  public DockerClient() {
-    this(DockerClient::defaultProcessBuilder);
-  }
 
   @VisibleForTesting
   DockerClient(Function<List<String>, ProcessBuilder> processBuilderFactory) {
@@ -108,7 +132,11 @@ public class DockerClient {
       String output = CharStreams.toString(stdout);
 
       if (dockerProcess.waitFor() != 0) {
-        throw new IOException("'docker load' command failed with output: " + output);
+        try (InputStreamReader stderr =
+            new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
+          throw new IOException(
+              "'docker load' command failed with output: " + CharStreams.toString(stderr));
+        }
       }
 
       return output;

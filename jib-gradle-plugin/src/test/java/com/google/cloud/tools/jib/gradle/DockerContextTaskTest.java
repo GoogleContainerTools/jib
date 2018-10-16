@@ -16,10 +16,12 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
@@ -39,22 +41,31 @@ public class DockerContextTaskTest {
 
   @Rule public final TemporaryFolder projectRoot = new TemporaryFolder();
 
-  @Mock private ContainerParameters ContainerParameters;
+  @Mock private ContainerParameters containerParameters;
+  @Mock private BaseImageParameters baseImageParameters;
 
   private DockerContextTask task;
+  private Project project;
 
   @Before
   public void setUp() throws IOException {
+    projectRoot.newFolder("build", "jib-exploded-war", "WEB-INF", "lib");
+    projectRoot.newFolder("build", "jib-exploded-war", "WEB-INF", "classes");
     projectRoot.newFolder("build", "jib-docker-context");
 
     JibExtension jibExtension = Mockito.mock(JibExtension.class);
-    Mockito.when(jibExtension.getContainer()).thenReturn(ContainerParameters);
-    Mockito.when(jibExtension.getExtraDirectoryPath()).thenReturn(projectRoot.getRoot().toPath());
-    Mockito.when(jibExtension.getMainClass()).thenReturn("MainClass");
-    Mockito.when(jibExtension.getBaseImage()).thenReturn("base image");
-    Mockito.when(ContainerParameters.getAppRoot()).thenReturn("/app");
+    Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
+    Mockito.when(containerParameters.getEnvironment())
+        .thenReturn(ImmutableMap.of("envKey", "envVal"));
+    Mockito.when(jibExtension.getExtraDirectoryPath())
+        .thenReturn(projectRoot.newFolder("src", "main", "jib").toPath());
+    Mockito.when(jibExtension.getContainer().getMainClass()).thenReturn("MainClass");
+    Mockito.when(jibExtension.getFrom()).thenReturn(baseImageParameters);
+    Mockito.when(baseImageParameters.getImage()).thenReturn("base image");
+    Mockito.when(containerParameters.getAppRoot()).thenReturn("/app");
+    Mockito.when(containerParameters.getArgs()).thenCallRealMethod();
 
-    Project project = ProjectBuilder.builder().withProjectDir(projectRoot.getRoot()).build();
+    project = ProjectBuilder.builder().withProjectDir(projectRoot.getRoot()).build();
     project.getPluginManager().apply("java");
 
     task = project.getTasks().create("jibExportDockerContext", DockerContextTask.class);
@@ -67,22 +78,50 @@ public class DockerContextTaskTest {
 
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/app/resources:/app/classes:/app/libs/*\",\"MainClass\"]",
-        getEntrypoint());
+        getDockerfileLine("ENTRYPOINT"));
   }
 
   @Test
   public void testEntrypoint_nonDefaultAppRoot() throws IOException {
-    Mockito.when(ContainerParameters.getAppRoot()).thenReturn("/");
+    Mockito.when(containerParameters.getAppRoot()).thenReturn("/");
     task.generateDockerContext();
 
     Assert.assertEquals(
         "ENTRYPOINT [\"java\",\"-cp\",\"/resources:/classes:/libs/*\",\"MainClass\"]",
-        getEntrypoint());
+        getDockerfileLine("ENTRYPOINT"));
+    Assert.assertNull(getDockerfileLine("CMD"));
+  }
+
+  @Test
+  public void testEntrypoint_inheritedEntrypoint() throws IOException {
+    Mockito.when(containerParameters.getAppRoot()).thenReturn("/");
+    Mockito.when(containerParameters.getArgs()).thenCallRealMethod();
+    project.getPluginManager().apply("war");
+
+    task.generateDockerContext();
+
+    Assert.assertNull(getDockerfileLine("ENTRYPOINT"));
+    Assert.assertNull(getDockerfileLine("CMD"));
+  }
+
+  @Test
+  public void testUser() throws IOException {
+    Mockito.when(containerParameters.getUser()).thenReturn("tomcat");
+    task.generateDockerContext();
+
+    Assert.assertEquals("USER tomcat", getDockerfileLine("USER"));
+  }
+
+  @Test
+  public void testUser_null() throws IOException {
+    Mockito.when(containerParameters.getUser()).thenReturn(null);
+    task.generateDockerContext();
+    Assert.assertNull(getDockerfileLine("USER"));
   }
 
   @Test
   public void testGenerateDockerContext_errorOnNonAbsoluteAppRoot() {
-    Mockito.when(ContainerParameters.getAppRoot()).thenReturn("relative/path");
+    Mockito.when(containerParameters.getAppRoot()).thenReturn("relative/path");
 
     try {
       task.generateDockerContext();
@@ -95,7 +134,7 @@ public class DockerContextTaskTest {
 
   @Test
   public void testGenerateDockerContext_errorOnWindowsAppRoot() {
-    Mockito.when(ContainerParameters.getAppRoot()).thenReturn("\\windows\\path");
+    Mockito.when(containerParameters.getAppRoot()).thenReturn("\\windows\\path");
 
     try {
       task.generateDockerContext();
@@ -108,7 +147,7 @@ public class DockerContextTaskTest {
 
   @Test
   public void testGenerateDockerContext_errorOnWindowsAppRootWithDriveLetter() {
-    Mockito.when(ContainerParameters.getAppRoot()).thenReturn("C:\\windows\\path");
+    Mockito.when(containerParameters.getAppRoot()).thenReturn("C:\\windows\\path");
 
     try {
       task.generateDockerContext();
@@ -120,9 +159,16 @@ public class DockerContextTaskTest {
     }
   }
 
-  private String getEntrypoint() throws IOException {
+  @Test
+  public void testGenerateDockerContext_env() throws IOException {
+    task.generateDockerContext();
+    Assert.assertEquals("ENV envKey=\"envVal\"", getDockerfileLine("ENV"));
+  }
+
+  @Nullable
+  private String getDockerfileLine(String command) throws IOException {
     Path dockerfile = projectRoot.getRoot().toPath().resolve("build/jib-docker-context/Dockerfile");
     List<String> lines = Files.readAllLines(dockerfile);
-    return lines.stream().filter(line -> line.startsWith("ENTRYPOINT")).findFirst().get();
+    return lines.stream().filter(line -> line.startsWith(command)).findFirst().orElse(null);
   }
 }

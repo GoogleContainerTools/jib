@@ -18,10 +18,11 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
@@ -43,7 +44,6 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 /** Tests for {@link ImageToJsonTranslator}. */
 public class ImageToJsonTranslatorTest {
@@ -52,24 +52,40 @@ public class ImageToJsonTranslatorTest {
 
   @Before
   public void setUp() throws DigestException, LayerPropertyNotFoundException {
-    Image.Builder<CachedLayer> testImageBuilder = Image.builder();
+    Image.Builder<Layer> testImageBuilder = Image.builder();
 
     testImageBuilder.setCreated(Instant.ofEpochSecond(20));
     testImageBuilder.addEnvironmentVariable("VAR1", "VAL1");
     testImageBuilder.addEnvironmentVariable("VAR2", "VAL2");
     testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
-    testImageBuilder.setJavaArguments(Arrays.asList("arg1", "arg2"));
+    testImageBuilder.setProgramArguments(Arrays.asList("arg1", "arg2"));
     testImageBuilder.setExposedPorts(
         ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)));
     testImageBuilder.addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
     testImageBuilder.setWorkingDirectory("/some/workspace");
+    testImageBuilder.setUser("tomcat");
 
     DescriptorDigest fakeDigest =
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad");
-    CachedLayer fakeLayer =
-        new CachedLayer(Mockito.mock(Path.class), new BlobDescriptor(1000, fakeDigest), fakeDigest);
-    testImageBuilder.addLayer(fakeLayer);
+    testImageBuilder.addLayer(
+        new Layer() {
+
+          @Override
+          public Blob getBlob() throws LayerPropertyNotFoundException {
+            return Blobs.from("ignored");
+          }
+
+          @Override
+          public BlobDescriptor getBlobDescriptor() throws LayerPropertyNotFoundException {
+            return new BlobDescriptor(1000, fakeDigest);
+          }
+
+          @Override
+          public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
+            return fakeDigest;
+          }
+        });
     testImageBuilder.addHistory(
         HistoryEntry.builder()
             .setCreationTimestamp(Instant.EPOCH)

@@ -24,7 +24,6 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Times code execution intervals. Call {@link #lap} at the end of each interval. */
-// TODO: Replace com.google.cloud.tools.jib.Timer with this.
 class Timer implements TimerEvent.Timer {
 
   private final Clock clock;

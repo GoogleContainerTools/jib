@@ -18,15 +18,14 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.JibLogger;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.JibContainer;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.cache.CacheDirectoryNotOwnedException;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.cache.Caches.Initializer;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
@@ -39,6 +38,8 @@ import com.google.common.base.Verify;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
@@ -66,14 +67,14 @@ public class BuildStepsRunner {
   }
 
   private static String buildMessageWithTargetImageReferences(
-      BuildConfiguration buildConfiguration, String prefix, String suffix) {
-    String targetRegistry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
-    String targetRepository = buildConfiguration.getTargetImageConfiguration().getImageRepository();
-
+      ImageReference targetImageReference,
+      Set<String> additionalTags,
+      String prefix,
+      String suffix) {
     StringJoiner successMessageBuilder = new StringJoiner(", ", prefix, suffix);
-    for (String tag : buildConfiguration.getAllTargetImageTags()) {
-      successMessageBuilder.add(
-          colorCyan(ImageReference.of(targetRegistry, targetRepository, tag).toString()));
+    successMessageBuilder.add(colorCyan(targetImageReference.toString()));
+    for (String tag : additionalTags) {
+      successMessageBuilder.add(colorCyan(targetImageReference.withTag(tag).toString()));
     }
     return successMessageBuilder.toString();
   }
@@ -81,74 +82,48 @@ public class BuildStepsRunner {
   /**
    * Creates a runner to build an image. Creates a directory for the cache, if needed.
    *
-   * @param buildConfiguration the configuration parameters for the build
+   * @param targetImageReference the target image reference
+   * @param additionalTags additional tags to push to
    * @return a {@link BuildStepsRunner} for building to a registry
-   * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildImage(BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
+  public static BuildStepsRunner forBuildImage(
+      ImageReference targetImageReference, Set<String> additionalTags) {
     return new BuildStepsRunner(
-        BuildSteps.forBuildToDockerRegistry(
-            buildConfiguration, getCacheInitializer(buildConfiguration)),
         buildMessageWithTargetImageReferences(
-            buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, "..."),
+            targetImageReference,
+            additionalTags,
+            STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY,
+            "..."),
         buildMessageWithTargetImageReferences(
-            buildConfiguration, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, ""));
+            targetImageReference, additionalTags, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY, ""));
   }
 
   /**
    * Creates a runner to build to the Docker daemon. Creates a directory for the cache, if needed.
    *
-   * @param buildConfiguration the configuration parameters for the build
+   * @param targetImageReference the target image reference
+   * @param additionalTags additional tags to push to
    * @return a {@link BuildStepsRunner} for building to a Docker daemon
-   * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildToDockerDaemon(BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
+  public static BuildStepsRunner forBuildToDockerDaemon(
+      ImageReference targetImageReference, Set<String> additionalTags) {
     return new BuildStepsRunner(
-        BuildSteps.forBuildToDockerDaemon(
-            buildConfiguration, getCacheInitializer(buildConfiguration)),
         buildMessageWithTargetImageReferences(
-            buildConfiguration, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
+            targetImageReference, additionalTags, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
         buildMessageWithTargetImageReferences(
-            buildConfiguration, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, ""));
+            targetImageReference, additionalTags, SUCCESS_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, ""));
   }
 
   /**
    * Creates a runner to build an image tarball. Creates a directory for the cache, if needed.
    *
    * @param outputPath the path to output the tarball to
-   * @param buildConfiguration the configuration parameters for the build
    * @return a {@link BuildStepsRunner} for building a tarball
-   * @throws CacheDirectoryCreationException if the {@code cacheDirectory} could not be created
    */
-  public static BuildStepsRunner forBuildTar(Path outputPath, BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
+  public static BuildStepsRunner forBuildTar(Path outputPath) {
     return new BuildStepsRunner(
-        BuildSteps.forBuildToTar(
-            outputPath, buildConfiguration, getCacheInitializer(buildConfiguration)),
         String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
         String.format(SUCCESS_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()));
-  }
-
-  // TODO: Move this up to somewhere where defaults for cache location are provided and ownership is
-  // checked rather than in Caches.Initializer.
-  private static Initializer getCacheInitializer(BuildConfiguration buildConfiguration)
-      throws CacheDirectoryCreationException {
-    CacheConfiguration applicationLayersCacheConfiguration =
-        buildConfiguration.getApplicationLayersCacheConfiguration() == null
-            ? CacheConfiguration.makeTemporary()
-            : buildConfiguration.getApplicationLayersCacheConfiguration();
-    CacheConfiguration baseImageLayersCacheConfiguration =
-        buildConfiguration.getBaseImageLayersCacheConfiguration() == null
-            ? CacheConfiguration.forDefaultUserLevelCacheDirectory()
-            : buildConfiguration.getBaseImageLayersCacheConfiguration();
-
-    return new Initializer(
-        baseImageLayersCacheConfiguration.getCacheDirectory(),
-        applicationLayersCacheConfiguration.shouldEnsureOwnership(),
-        applicationLayersCacheConfiguration.getCacheDirectory(),
-        applicationLayersCacheConfiguration.shouldEnsureOwnership());
   }
 
   private static void handleRegistryUnauthorizedException(
@@ -179,13 +154,11 @@ public class BuildStepsRunner {
     return Character.toUpperCase(string.charAt(0)) + string.substring(1);
   }
 
-  private final BuildSteps buildSteps;
   private final String startupMessage;
   private final String successMessage;
 
   @VisibleForTesting
-  BuildStepsRunner(BuildSteps buildSteps, String startupMessage, String successMessage) {
-    this.buildSteps = buildSteps;
+  BuildStepsRunner(String startupMessage, String successMessage) {
     this.startupMessage = startupMessage;
     this.successMessage = successMessage;
   }
@@ -193,41 +166,50 @@ public class BuildStepsRunner {
   /**
    * Runs the {@link BuildSteps}.
    *
+   * @param jibContainerBuilder the {@link JibContainerBuilder}
+   * @param containerizer the {@link Containerizer}
+   * @param eventDispatcher the {@link EventDispatcher}
+   * @param layerConfigurations the list of {@link LayerConfiguration}s
    * @param helpfulSuggestions suggestions to use in help messages for exceptions
+   * @return the built {@link JibContainer}
    * @throws BuildStepsExecutionException if another exception is thrown during the build
+   * @throws IOException if an I/O exception occurs
+   * @throws CacheDirectoryCreationException if the cache directory could not be created
    */
-  public void build(HelpfulSuggestions helpfulSuggestions) throws BuildStepsExecutionException {
+  public JibContainer build(
+      JibContainerBuilder jibContainerBuilder,
+      Containerizer containerizer,
+      EventDispatcher eventDispatcher,
+      List<LayerConfiguration> layerConfigurations,
+      HelpfulSuggestions helpfulSuggestions)
+      throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
     try {
-      // TODO: This logging should be injected via another logging class.
-      JibLogger buildLogger = buildSteps.getBuildConfiguration().getBuildLogger();
-
-      buildLogger.lifecycle("");
-      buildLogger.lifecycle(startupMessage);
+      eventDispatcher.dispatch(LogEvent.lifecycle(""));
+      eventDispatcher.dispatch(LogEvent.lifecycle(startupMessage));
 
       // Logs the different source files used.
-      buildLogger.info("Containerizing application with the following files:");
+      eventDispatcher.dispatch(
+          LogEvent.info("Containerizing application with the following files:"));
 
-      for (LayerConfiguration layerConfiguration :
-          buildSteps.getBuildConfiguration().getLayerConfigurations()) {
+      for (LayerConfiguration layerConfiguration : layerConfigurations) {
         if (layerConfiguration.getLayerEntries().isEmpty()) {
           continue;
         }
 
-        buildLogger.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":");
+        eventDispatcher.dispatch(
+            LogEvent.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":"));
 
         for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
-          buildLogger.info("\t\t" + layerEntry.getSourceFile());
+          eventDispatcher.dispatch(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
         }
       }
 
-      buildSteps.run();
+      JibContainer jibContainer = jibContainerBuilder.containerize(containerizer);
 
-      buildLogger.lifecycle("");
-      buildLogger.lifecycle(successMessage);
+      eventDispatcher.dispatch(LogEvent.lifecycle(""));
+      eventDispatcher.dispatch(LogEvent.lifecycle(successMessage));
 
-    } catch (CacheMetadataCorruptedException cacheMetadataCorruptedException) {
-      throw new BuildStepsExecutionException(
-          helpfulSuggestions.forCacheNeedsClean(), cacheMetadataCorruptedException);
+      return jibContainer;
 
     } catch (ExecutionException executionException) {
       Throwable exceptionDuringBuildSteps = executionException.getCause();
@@ -277,21 +259,11 @@ public class BuildStepsRunner {
             helpfulSuggestions.none(), executionException.getCause());
       }
 
-    } catch (InterruptedException | IOException | CacheDirectoryCreationException ex) {
+    } catch (InterruptedException ex) {
       // TODO: Add more suggestions for various build failures.
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
-
-    } catch (CacheDirectoryNotOwnedException ex) {
-      String helpfulSuggestion =
-          helpfulSuggestions.forCacheDirectoryNotOwned(ex.getCacheDirectory());
-      CacheConfiguration applicationLayersCacheConfiguration =
-          buildSteps.getBuildConfiguration().getApplicationLayersCacheConfiguration();
-      if (applicationLayersCacheConfiguration != null
-          && ex.getCacheDirectory()
-              .equals(applicationLayersCacheConfiguration.getCacheDirectory())) {
-        helpfulSuggestion = helpfulSuggestions.forCacheNeedsClean();
-      }
-      throw new BuildStepsExecutionException(helpfulSuggestion, ex);
     }
+
+    throw new IllegalStateException("unreachable");
   }
 }

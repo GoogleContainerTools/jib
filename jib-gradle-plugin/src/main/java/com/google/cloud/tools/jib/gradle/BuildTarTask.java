@@ -16,9 +16,12 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.TarImage;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -27,10 +30,11 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Nested;
@@ -97,10 +101,11 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   }
 
   @TaskAction
-  public void buildTar() throws InvalidImageReferenceException {
+  public void buildTar()
+      throws InvalidImageReferenceException, BuildStepsExecutionException, IOException,
+          CacheDirectoryCreationException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    GradleJibLogger gradleJibLogger = new GradleJibLogger(getLogger());
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
@@ -108,44 +113,45 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
-    ImageReference targetImage =
+
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
+    ImageReference targetImageReference =
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-            jibExtension.getTargetImage(),
-            gradleJibLogger,
+            jibExtension.getTo().getImage(),
+            eventDispatcher,
             getProject().getName(),
             getProject().getVersion().toString(),
             gradleHelpfulSuggestionsBuilder.build());
 
+    Path tarOutputPath = Paths.get(getTargetPath());
+    TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarOutputPath);
+
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            gradleJibLogger, jibExtension, gradleProjectProperties);
+            getLogger(), jibExtension, gradleProjectProperties);
 
-    BuildConfiguration buildConfiguration =
-        pluginConfigurationProcessor
-            .getBuildConfigurationBuilder()
-            .setBaseImageConfiguration(
-                pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
-            .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
-            .setContainerConfiguration(
-                pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
-            .build();
+    JibContainerBuilder jibContainerBuilder = pluginConfigurationProcessor.getJibContainerBuilder();
+
+    Containerizer containerizer = Containerizer.to(targetImage);
+    PluginConfigurationProcessor.configureContainerizer(
+        containerizer, jibExtension, gradleProjectProperties);
 
     HelpfulSuggestions helpfulSuggestions =
         gradleHelpfulSuggestionsBuilder
-            .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+            .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
             .setBaseImageHasConfiguredCredentials(
                 pluginConfigurationProcessor.isBaseImageCredentialPresent())
-            .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+            .setTargetImageReference(targetImageReference)
             .build();
 
-    // Uses a directory in the Gradle build cache as the Jib cache.
-    try {
-      BuildStepsRunner.forBuildTar(Paths.get(getTargetPath()), buildConfiguration)
-          .build(helpfulSuggestions);
-
-    } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
-      throw new GradleException(ex.getMessage(), ex.getCause());
-    }
+    BuildStepsRunner.forBuildTar(tarOutputPath)
+        .build(
+            jibContainerBuilder,
+            containerizer,
+            eventDispatcher,
+            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+            helpfulSuggestions);
   }
 
   @Override

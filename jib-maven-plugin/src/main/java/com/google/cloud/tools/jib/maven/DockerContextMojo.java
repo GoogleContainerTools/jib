@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
@@ -61,13 +60,14 @@ public class DockerContextMojo extends JibPluginConfiguration {
       return;
     }
 
-    MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
-    handleDeprecatedParameters(mavenJibLogger);
     try {
       JibSystemProperties.checkHttpTimeoutProperty();
     } catch (NumberFormatException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
     }
+
+    // TODO: Instead of disabling logging, have authentication credentials be provided
+    PluginConfigurationProcessor.disableHttpLogging();
 
     Preconditions.checkNotNull(targetDir);
 
@@ -75,14 +75,8 @@ public class DockerContextMojo extends JibPluginConfiguration {
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
 
-    List<String> entrypoint = getEntrypoint();
-    if (entrypoint.isEmpty()) {
-      String mainClass = mavenProjectProperties.getMainClass(this);
-      entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(appRoot, getJvmFlags(), mainClass);
-    } else if (getMainClass() != null || !getJvmFlags().isEmpty()) {
-      mavenJibLogger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
-    }
+    List<String> entrypoint =
+        PluginConfigurationProcessor.computeEntrypoint(getLog(), this, mavenProjectProperties);
 
     try {
       // Validate port input, but don't save the output because we don't want the ranges expanded
@@ -90,15 +84,16 @@ public class DockerContextMojo extends JibPluginConfiguration {
       ExposedPortsParser.parse(getExposedPorts());
 
       new JavaDockerContextGenerator(mavenProjectProperties.getJavaLayerConfigurations())
-          .setBaseImage(getBaseImage())
+          .setBaseImage(PluginConfigurationProcessor.getBaseImage(this))
           .setEntrypoint(entrypoint)
-          .setJavaArguments(getArgs())
+          .setProgramArguments(getArgs())
           .setExposedPorts(getExposedPorts())
           .setEnvironment(getEnvironment())
           .setLabels(getLabels())
+          .setUser(getUser())
           .generate(Paths.get(targetDir));
 
-      mavenJibLogger.lifecycle("Created Docker context at " + targetDir);
+      getLog().info("Created Docker context at " + targetDir);
 
     } catch (InsecureRecursiveDeleteException ex) {
       throw new MojoExecutionException(

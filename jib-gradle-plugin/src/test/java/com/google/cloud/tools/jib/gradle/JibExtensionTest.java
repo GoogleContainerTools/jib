@@ -16,33 +16,46 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.JibLogger;
 import com.google.cloud.tools.jib.image.ImageFormat;
-import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.Collections;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link JibExtension}. */
-@RunWith(MockitoJUnitRunner.class)
 public class JibExtensionTest {
-
-  @Mock private JibLogger mockLogger;
 
   private JibExtension testJibExtension;
 
+  private static void clearProperties() {
+    System.clearProperty("jib.from.image");
+    System.clearProperty("jib.from.credHelper");
+    System.clearProperty("jib.to.image");
+    System.clearProperty("jib.to.tags");
+    System.clearProperty("jib.to.credHelper");
+    System.clearProperty("jib.container.appRoot");
+    System.clearProperty("jib.container.args");
+    System.clearProperty("jib.container.entrypoint");
+    System.clearProperty("jib.container.environment");
+    System.clearProperty("jib.container.format");
+    System.clearProperty("jib.container.jvmFlags");
+    System.clearProperty("jib.container.labels");
+    System.clearProperty("jib.container.mainClass");
+    System.clearProperty("jib.container.ports");
+    System.clearProperty("jib.container.useCurrentTimestamp");
+    System.clearProperty("jib.container.user");
+  }
+
   @Before
   public void setUp() {
+    clearProperties();
     Project fakeProject = ProjectBuilder.builder().build();
     testJibExtension =
         fakeProject
@@ -50,9 +63,14 @@ public class JibExtensionTest {
             .create(JibPlugin.JIB_EXTENSION_NAME, JibExtension.class, fakeProject);
   }
 
+  @After
+  public void teardown() {
+    clearProperties();
+  }
+
   @Test
   public void testFrom() {
-    Assert.assertEquals("gcr.io/distroless/java", testJibExtension.getFrom().getImage());
+    Assert.assertNull(testJibExtension.getFrom().getImage());
     Assert.assertNull(testJibExtension.getFrom().getCredHelper());
 
     testJibExtension.from(
@@ -91,11 +109,11 @@ public class JibExtensionTest {
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getJvmFlags());
     Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getEnvironment());
     Assert.assertNull(testJibExtension.getContainer().getMainClass());
-    Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getArgs());
-    Assert.assertEquals(V22ManifestTemplate.class, testJibExtension.getContainer().getFormat());
+    Assert.assertNull(testJibExtension.getContainer().getArgs());
+    Assert.assertSame(ImageFormat.Docker, testJibExtension.getContainer().getFormat());
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getPorts());
     Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getLabels());
-    Assert.assertEquals("/app", testJibExtension.getContainer().getAppRoot());
+    Assert.assertEquals("", testJibExtension.getContainer().getAppRoot());
 
     testJibExtension.container(
         container -> {
@@ -119,8 +137,56 @@ public class JibExtensionTest {
     Assert.assertEquals(Arrays.asList("1000", "2000-2010", "3000"), container.getPorts());
     Assert.assertEquals(
         ImmutableMap.of("label1", "value1", "label2", "value2"), container.getLabels());
-    Assert.assertEquals(OCIManifestTemplate.class, container.getFormat());
+    Assert.assertSame(ImageFormat.OCI, container.getFormat());
     Assert.assertEquals("some invalid appRoot value", container.getAppRoot());
+  }
+
+  @Test
+  public void testProperties() {
+    System.setProperty("jib.from.image", "fromImage");
+    Assert.assertEquals("fromImage", testJibExtension.getFrom().getImage());
+    System.setProperty("jib.from.credHelper", "credHelper");
+    Assert.assertEquals("credHelper", testJibExtension.getFrom().getCredHelper());
+
+    System.setProperty("jib.to.image", "toImage");
+    Assert.assertEquals("toImage", testJibExtension.getTo().getImage());
+    System.setProperty("jib.to.tags", "tag1,tag2,tag3");
+    Assert.assertEquals(
+        ImmutableSet.of("tag1", "tag2", "tag3"), testJibExtension.getTo().getTags());
+    System.setProperty("jib.to.credHelper", "credHelper");
+    Assert.assertEquals("credHelper", testJibExtension.getTo().getCredHelper());
+
+    System.setProperty("jib.container.appRoot", "appRoot");
+    Assert.assertEquals("appRoot", testJibExtension.getContainer().getAppRoot());
+    System.setProperty("jib.container.args", "arg1,arg2,arg3");
+    Assert.assertEquals(
+        ImmutableList.of("arg1", "arg2", "arg3"), testJibExtension.getContainer().getArgs());
+    System.setProperty("jib.container.entrypoint", "entry1,entry2,entry3");
+    Assert.assertEquals(
+        ImmutableList.of("entry1", "entry2", "entry3"),
+        testJibExtension.getContainer().getEntrypoint());
+    System.setProperty("jib.container.environment", "env1=val1,env2=val2");
+    Assert.assertEquals(
+        ImmutableMap.of("env1", "val1", "env2", "val2"),
+        testJibExtension.getContainer().getEnvironment());
+    System.setProperty("jib.container.format", "OCI");
+    Assert.assertSame(ImageFormat.OCI, testJibExtension.getContainer().getFormat());
+    System.setProperty("jib.container.jvmFlags", "flag1,flag2,flag3");
+    Assert.assertEquals(
+        ImmutableList.of("flag1", "flag2", "flag3"), testJibExtension.getContainer().getJvmFlags());
+    System.setProperty("jib.container.labels", "label1=val1,label2=val2");
+    Assert.assertEquals(
+        ImmutableMap.of("label1", "val1", "label2", "val2"),
+        testJibExtension.getContainer().getLabels());
+    System.setProperty("jib.container.mainClass", "main");
+    Assert.assertEquals("main", testJibExtension.getContainer().getMainClass());
+    System.setProperty("jib.container.ports", "port1,port2,port3");
+    Assert.assertEquals(
+        ImmutableList.of("port1", "port2", "port3"), testJibExtension.getContainer().getPorts());
+    System.setProperty("jib.container.useCurrentTimestamp", "true");
+    Assert.assertTrue(testJibExtension.getContainer().getUseCurrentTimestamp());
+    System.setProperty("jib.container.user", "myUser");
+    Assert.assertEquals("myUser", testJibExtension.getContainer().getUser());
   }
 
   @Test
@@ -129,32 +195,5 @@ public class JibExtensionTest {
 
     testJibExtension.setUseOnlyProjectCache(true);
     Assert.assertTrue(testJibExtension.getUseOnlyProjectCache());
-  }
-
-  @Test
-  public void testHandleDeprecatedParameters() {
-    testJibExtension.handleDeprecatedParameters(mockLogger);
-    Mockito.verify(mockLogger, Mockito.never()).warn(Mockito.any());
-
-    testJibExtension.setJvmFlags(Arrays.asList("jvmFlag1", "jvmFlag2"));
-    testJibExtension.setMainClass("mainClass");
-    testJibExtension.setArgs(Arrays.asList("arg1", "arg2", "arg3"));
-    testJibExtension.setFormat(ImageFormat.OCI);
-
-    testJibExtension.handleDeprecatedParameters(mockLogger);
-
-    String expectedOutput =
-        "There are deprecated parameters used in the build configuration. Please make the "
-            + "following changes to your build.gradle to avoid issues in the future:\n"
-            + "  jvmFlags -> container.jvmFlags\n"
-            + "  mainClass -> container.mainClass\n"
-            + "  args -> container.args\n"
-            + "  format -> container.format\n"
-            + "You may also wrap the parameters in a container{} block.";
-    Mockito.verify(mockLogger).warn(expectedOutput);
-    Assert.assertEquals(Arrays.asList("jvmFlag1", "jvmFlag2"), testJibExtension.getJvmFlags());
-    Assert.assertEquals("mainClass", testJibExtension.getMainClass());
-    Assert.assertEquals(Arrays.asList("arg1", "arg2", "arg3"), testJibExtension.getArgs());
-    Assert.assertEquals(OCIManifestTemplate.class, testJibExtension.getFormat());
   }
 }

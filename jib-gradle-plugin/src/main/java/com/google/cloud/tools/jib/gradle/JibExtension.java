@@ -16,21 +16,13 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.image.ImageFormat;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.Nullable;
+import java.nio.file.Paths;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
-import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
@@ -66,7 +58,6 @@ import org.gradle.api.tasks.Optional;
 public class JibExtension {
 
   // Defines default configuration values.
-  private static final String DEFAULT_FROM_IMAGE = "gcr.io/distroless/java";
   private static final boolean DEFAULT_USE_ONLY_PROJECT_CACHE = false;
   private static final boolean DEFAULT_ALLOW_INSECURE_REGISTIRIES = false;
 
@@ -81,12 +72,6 @@ public class JibExtension {
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<Path> extraDirectory;
 
-  // TODO: Deprecated parameters; remove these 4
-  private final ListProperty<String> jvmFlags;
-  private final Property<String> mainClass;
-  private final ListProperty<String> args;
-  private final Property<ImageFormat> format;
-
   public JibExtension(Project project) {
     ObjectFactory objectFactory = project.getObjects();
 
@@ -94,93 +79,26 @@ public class JibExtension {
     to = objectFactory.newInstance(TargetImageParameters.class, "jib.to");
     container = objectFactory.newInstance(ContainerParameters.class);
 
-    jvmFlags = objectFactory.listProperty(String.class);
-    mainClass = objectFactory.property(String.class);
-    args = objectFactory.listProperty(String.class);
-    format = objectFactory.property(ImageFormat.class);
-
     useOnlyProjectCache = objectFactory.property(Boolean.class);
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     extraDirectory = objectFactory.property(Path.class);
 
     // Sets defaults.
-    from.setImage(DEFAULT_FROM_IMAGE);
-    jvmFlags.set(Collections.emptyList());
-    args.set(Collections.emptyList());
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
     extraDirectory.set(resolveDefaultExtraDirectory(project.getProjectDir().toPath()));
   }
 
-  /**
-   * Warns about deprecated parameters in use.
-   *
-   * @param logger The logger used to print the warnings
-   */
-  void handleDeprecatedParameters(JibLogger logger) {
-    StringBuilder deprecatedParams = new StringBuilder();
-    if (!jvmFlags.get().isEmpty()) {
-      deprecatedParams.append("  jvmFlags -> container.jvmFlags\n");
-      if (container.getJvmFlags().isEmpty()) {
-        container.setJvmFlags(jvmFlags.get());
-      }
-    }
-    if (!Strings.isNullOrEmpty(mainClass.getOrNull())) {
-      deprecatedParams.append("  mainClass -> container.mainClass\n");
-      if (Strings.isNullOrEmpty(container.getMainClass())) {
-        container.setMainClass(mainClass.getOrNull());
-      }
-    }
-    if (!args.get().isEmpty()) {
-      deprecatedParams.append("  args -> container.args\n");
-      if (container.getArgs().isEmpty()) {
-        container.setArgs(args.get());
-      }
-    }
-    if (format.getOrNull() != null) {
-      deprecatedParams.append("  format -> container.format\n");
-      container.setFormat(format.get());
-    }
-
-    if (deprecatedParams.length() > 0) {
-      logger.warn(
-          "There are deprecated parameters used in the build configuration. Please make the "
-              + "following changes to your build.gradle to avoid issues in the future:\n"
-              + deprecatedParams
-              + "You may also wrap the parameters in a container{} block.");
-    }
-  }
-
-  public void from(Action<? super ImageParameters> action) {
+  public void from(Action<? super BaseImageParameters> action) {
     action.execute(from);
   }
 
-  public void to(Action<? super ImageParameters> action) {
+  public void to(Action<? super TargetImageParameters> action) {
     action.execute(to);
   }
 
   public void container(Action<? super ContainerParameters> action) {
     action.execute(container);
-  }
-
-  public void setJvmFlags(List<String> jvmFlags) {
-    this.jvmFlags.set(jvmFlags);
-  }
-
-  public void setMainClass(String mainClass) {
-    this.mainClass.set(mainClass);
-  }
-
-  public void setArgs(List<String> args) {
-    this.args.set(args);
-  }
-
-  public void setFormat(ImageFormat format) {
-    this.format.set(format);
-  }
-
-  public void setUseOnlyProjectCache(boolean useOnlyProjectCache) {
-    this.useOnlyProjectCache.set(useOnlyProjectCache);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
@@ -191,15 +109,8 @@ public class JibExtension {
     this.extraDirectory.set(extraDirectory.toPath());
   }
 
-  @Internal
-  String getBaseImage() {
-    return Preconditions.checkNotNull(from.getImage());
-  }
-
-  @Internal
-  @Nullable
-  String getTargetImage() {
-    return to.getImage();
+  void setUseOnlyProjectCache(boolean useOnlyProjectCache) {
+    this.useOnlyProjectCache.set(useOnlyProjectCache);
   }
 
   @Nested
@@ -220,68 +131,21 @@ public class JibExtension {
     return container;
   }
 
-  // TODO: Make @Internal (deprecated)
-  @Input
-  @Optional
-  List<String> getJvmFlags() {
-    return container.getJvmFlags();
-  }
-
-  @Internal
-  @Optional
-  Map<String, String> getEnvironment() {
-    return container.getEnvironment();
-  }
-
-  // TODO: Make @Internal (deprecated)
-  @Input
-  @Nullable
-  @Optional
-  String getMainClass() {
-    return container.getMainClass();
-  }
-
-  // TODO: Make @Internal (deprecated)
-  @Input
-  @Optional
-  List<String> getArgs() {
-    return container.getArgs();
-  }
-
-  // TODO: Make @Internal (deprecated)
-  @Input
-  @Optional
-  Class<? extends BuildableManifestTemplate> getFormat() {
-    return container.getFormat();
-  }
-
-  @Internal
-  @Optional
-  List<String> getExposedPorts() {
-    return container.getPorts();
-  }
-
-  @Internal
-  @Optional
-  Map<String, String> getLabels() {
-    return container.getLabels();
-  }
-
-  @Internal
-  @Optional
-  boolean getUseCurrentTimestamp() {
-    return container.getUseCurrentTimestamp();
-  }
-
   @Input
   @Optional
   boolean getUseOnlyProjectCache() {
+    if (System.getProperty(PropertyNames.USE_ONLY_PROJECT_CACHE) != null) {
+      return Boolean.getBoolean(PropertyNames.USE_ONLY_PROJECT_CACHE);
+    }
     return useOnlyProjectCache.get();
   }
 
   @Input
   @Optional
   boolean getAllowInsecureRegistries() {
+    if (System.getProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES) != null) {
+      return Boolean.getBoolean(PropertyNames.ALLOW_INSECURE_REGISTRIES);
+    }
     return allowInsecureRegistries.get();
   }
 
@@ -289,12 +153,18 @@ public class JibExtension {
   String getExtraDirectory() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
+    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY) != null) {
+      return System.getProperty(PropertyNames.EXTRA_DIRECTORY);
+    }
     return extraDirectory.get().toString();
   }
 
   @Internal
   Path getExtraDirectoryPath() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
+    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY) != null) {
+      return Paths.get(System.getProperty(PropertyNames.EXTRA_DIRECTORY));
+    }
     return extraDirectory.get();
   }
 }

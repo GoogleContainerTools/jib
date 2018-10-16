@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -27,7 +29,9 @@ import java.util.Collections;
 import java.util.stream.Collectors;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.UnknownTaskException;
 import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.api.tasks.TaskContainer;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
@@ -59,18 +63,19 @@ public class JibPluginTest {
 
   @Test
   public void testCheckGradleVersion_fail() throws IOException {
-    try {
-      // Copy build file to temp dir
-      Path buildFile = testProjectRoot.getRoot().toPath().resolve("build.gradle");
-      InputStream buildFileContent =
-          getClass().getClassLoader().getResourceAsStream("plugin-test/build.gradle");
-      Files.copy(buildFileContent, buildFile);
+    // Copy build file to temp dir
+    Path buildFile = testProjectRoot.getRoot().toPath().resolve("build.gradle");
+    InputStream buildFileContent =
+        getClass().getClassLoader().getResourceAsStream("plugin-test/build.gradle");
+    Files.copy(buildFileContent, buildFile);
 
-      GradleRunner.create()
-          .withProjectDir(testProjectRoot.getRoot())
-          .withPluginClasspath()
-          .withGradleVersion("4.3")
-          .build();
+    GradleRunner gradleRunner =
+        GradleRunner.create()
+            .withProjectDir(testProjectRoot.getRoot())
+            .withPluginClasspath()
+            .withGradleVersion("4.3");
+    try {
+      gradleRunner.build();
       Assert.fail();
     } catch (UnexpectedBuildFailure ex) {
       Assert.assertTrue(
@@ -147,5 +152,94 @@ public class JibPluginTest {
                   .map(Task::getPath)
                   .collect(Collectors.toSet()));
         });
+  }
+
+  @Test
+  public void testWebAppProject() {
+    Project rootProject =
+        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
+    rootProject.getPluginManager().apply("java");
+    rootProject.getPluginManager().apply("war");
+    rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
+    ((ProjectInternal) rootProject).evaluate();
+    Assert.assertNotNull(rootProject.getTasks().getByPath(":" + JibPlugin.EXPLODED_WAR_TASK_NAME));
+    ExplodedWarTask explodedWarTask =
+        (ExplodedWarTask) rootProject.getTasks().getByPath(":" + JibPlugin.EXPLODED_WAR_TASK_NAME);
+    Assert.assertEquals(
+        rootProject.getBuildDir().toPath().resolve(ProjectProperties.EXPLODED_WAR_DIRECTORY_NAME),
+        explodedWarTask.getExplodedWarDirectory().toPath());
+
+    Assert.assertEquals(
+        explodedWarTask,
+        rootProject
+            .getTasks()
+            .getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME)
+            .getDependsOn()
+            .iterator()
+            .next());
+    Assert.assertEquals(
+        explodedWarTask,
+        rootProject
+            .getTasks()
+            .getByPath(JibPlugin.BUILD_DOCKER_TASK_NAME)
+            .getDependsOn()
+            .iterator()
+            .next());
+    Assert.assertEquals(
+        explodedWarTask,
+        rootProject
+            .getTasks()
+            .getByPath(JibPlugin.BUILD_TAR_TASK_NAME)
+            .getDependsOn()
+            .iterator()
+            .next());
+    Assert.assertEquals(
+        explodedWarTask,
+        rootProject
+            .getTasks()
+            .getByPath(JibPlugin.DOCKER_CONTEXT_TASK_NAME)
+            .getDependsOn()
+            .iterator()
+            .next());
+    Assert.assertEquals(
+        JibPlugin.DEFAULT_WAR_FROM_IMAGE,
+        ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
+            .getJib()
+            .getFrom()
+            .getImage());
+    Assert.assertEquals(
+        JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT,
+        ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
+            .getJib()
+            .getContainer()
+            .getAppRoot());
+  }
+
+  @Test
+  public void testNonWebAppProject() {
+    Project rootProject =
+        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
+    rootProject.getPluginManager().apply("java");
+    rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
+    ((ProjectInternal) rootProject).evaluate();
+    Assert.assertEquals(
+        JibPlugin.DEFAULT_FROM_IMAGE,
+        ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
+            .getJib()
+            .getFrom()
+            .getImage());
+    Assert.assertEquals(
+        JavaLayerConfigurations.DEFAULT_APP_ROOT,
+        ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
+            .getJib()
+            .getContainer()
+            .getAppRoot());
+    TaskContainer tasks = rootProject.getTasks();
+    try {
+      tasks.getByPath(":" + JibPlugin.EXPLODED_WAR_TASK_NAME);
+      Assert.fail();
+    } catch (UnknownTaskException ex) {
+      Assert.assertNotNull(ex.getMessage());
+    }
   }
 }

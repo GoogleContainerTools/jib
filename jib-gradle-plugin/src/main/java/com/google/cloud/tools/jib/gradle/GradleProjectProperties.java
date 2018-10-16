@@ -16,11 +16,9 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.event.DefaultEventEmitter;
-import com.google.cloud.tools.jib.event.EventEmitter;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
@@ -63,9 +61,7 @@ class GradleProjectProperties implements ProjectProperties {
     try {
       return new GradleProjectProperties(
           project,
-          makeEventEmitter(logger),
-          // TODO: Remove
-          new GradleJibLogger(logger),
+          makeEventHandlers(logger),
           GradleLayerConfigurations.getForProject(project, logger, extraDirectory, appRoot));
 
     } catch (IOException ex) {
@@ -73,11 +69,13 @@ class GradleProjectProperties implements ProjectProperties {
     }
   }
 
-  private static EventEmitter makeEventEmitter(Logger logger) {
-    return new DefaultEventEmitter(
-        new EventHandlers()
-            .add(JibEventType.LOGGING, new LogEventHandler(logger))
-            .add(JibEventType.TIMING, new TimerEventHandler(logger::debug)));
+  private static EventHandlers makeEventHandlers(Logger logger) {
+    LogEventHandler logEventHandler = new LogEventHandler(logger);
+    return new EventHandlers()
+        .add(JibEventType.LOGGING, logEventHandler)
+        .add(
+            JibEventType.TIMING,
+            new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message))));
   }
 
   @Nullable
@@ -90,20 +88,21 @@ class GradleProjectProperties implements ProjectProperties {
     return (War) warPluginConvention.getProject().getTasks().findByName("war");
   }
 
+  static Path getExplodedWarDirectory(Project project) {
+    return project.getBuildDir().toPath().resolve(ProjectProperties.EXPLODED_WAR_DIRECTORY_NAME);
+  }
+
   private final Project project;
-  private final EventEmitter eventEmitter;
-  private final GradleJibLogger gradleJibLogger;
+  private final EventHandlers eventHandlers;
   private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   GradleProjectProperties(
       Project project,
-      EventEmitter eventEmitter,
-      GradleJibLogger gradleJibLogger,
+      EventHandlers eventHandlers,
       JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
-    this.eventEmitter = eventEmitter;
-    this.gradleJibLogger = gradleJibLogger;
+    this.eventHandlers = eventHandlers;
     this.javaLayerConfigurations = javaLayerConfigurations;
   }
 
@@ -113,13 +112,8 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public EventEmitter getEventEmitter() {
-    return eventEmitter;
-  }
-
-  @Override
-  public JibLogger getLogger() {
-    return gradleJibLogger;
+  public EventHandlers getEventHandlers() {
+    return eventHandlers;
   }
 
   @Override
@@ -149,8 +143,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public boolean isWarProject() {
-    // TODO: replace with "getWarTask(project) != null" once ready
-    return false;
+    return getWarTask(project) != null;
   }
 
   /**
@@ -160,7 +153,7 @@ class GradleProjectProperties implements ProjectProperties {
    */
   String getMainClass(JibExtension jibExtension) {
     try {
-      return MainClassResolver.resolveMainClass(jibExtension.getMainClass(), this);
+      return MainClassResolver.resolveMainClass(jibExtension.getContainer().getMainClass(), this);
     } catch (MainClassInferenceException ex) {
       throw new GradleException(ex.getMessage(), ex);
     }

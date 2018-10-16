@@ -16,10 +16,13 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.RegistryImage;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageFormat;
@@ -29,8 +32,11 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -81,24 +87,28 @@ public class BuildImageMojo extends JibPluginConfiguration {
               "mvn compile jib:build -Dimage=<your image name>"));
     }
 
-    MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            mavenJibLogger, this, mavenProjectProperties);
+            getLog(), this, mavenProjectProperties);
 
-    ImageReference targetImage =
+    ImageReference targetImageReference =
         PluginConfigurationProcessor.parseImageReference(getTargetImage(), "to");
 
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(mavenProjectProperties.getEventHandlers());
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(targetImage, mavenJibLogger));
+            CredentialRetrieverFactory.forImage(targetImageReference, eventDispatcher));
     Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            mavenJibLogger, "jib.to.auth.username", "jib.to.auth.password", getTargetImageAuth());
+            eventDispatcher,
+            PropertyNames.TO_AUTH_USERNAME,
+            PropertyNames.TO_AUTH_PASSWORD,
+            getTargetImageAuth());
     if (optionalToCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(
           optionalToCredential.get(), "jib-maven-plugin <to><auth> configuration");
@@ -106,45 +116,54 @@ public class BuildImageMojo extends JibPluginConfiguration {
       optionalToCredential =
           pluginConfigurationProcessor
               .getMavenSettingsServerCredentials()
-              .retrieve(targetImage.getRegistry());
+              .retrieve(targetImageReference.getRegistry());
       optionalToCredential.ifPresent(
           toCredential ->
               defaultCredentialRetrievers.setInferredCredential(
                   toCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE));
     }
-    defaultCredentialRetrievers.setCredentialHelperSuffix(getTargetImageCredentialHelperName());
+    defaultCredentialRetrievers.setCredentialHelper(getTargetImageCredentialHelperName());
 
-    ImageConfiguration targetImageConfiguration =
-        ImageConfiguration.builder(targetImage)
-            .setCredentialRetrievers(defaultCredentialRetrievers.asList())
-            .build();
+    RegistryImage targetImage = RegistryImage.named(targetImageReference);
+    try {
+      defaultCredentialRetrievers.asList().forEach(targetImage::addCredentialRetriever);
+    } catch (FileNotFoundException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+    }
 
-    BuildConfiguration buildConfiguration =
+    JibContainerBuilder jibContainerBuilder =
         pluginConfigurationProcessor
-            .getBuildConfigurationBuilder()
-            .setBaseImageConfiguration(
-                pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
-            .setTargetImageConfiguration(targetImageConfiguration)
-            .setAdditionalTargetImageTags(getTargetImageAdditionalTags())
-            .setContainerConfiguration(
-                pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
-            .setTargetFormat(ImageFormat.valueOf(getFormat()).getManifestTemplateClass())
-            .build();
+            .getJibContainerBuilder()
+            // Only uses possibly non-Docker formats for build to registry.
+            .setFormat(ImageFormat.valueOf(getFormat()));
+
+    Containerizer containerizer = Containerizer.to(targetImage);
+    PluginConfigurationProcessor.configureContainerizer(
+        containerizer, this, mavenProjectProperties);
 
     HelpfulSuggestions helpfulSuggestions =
         new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this)
-            .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+            .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
             .setBaseImageHasConfiguredCredentials(
                 pluginConfigurationProcessor.isBaseImageCredentialPresent())
-            .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+            .setTargetImageReference(targetImageReference)
             .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
             .build();
 
     try {
-      BuildStepsRunner.forBuildImage(buildConfiguration).build(helpfulSuggestions);
+      BuildStepsRunner.forBuildImage(targetImageReference, getTargetImageAdditionalTags())
+          .build(
+              jibContainerBuilder,
+              containerizer,
+              eventDispatcher,
+              mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              helpfulSuggestions);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException | BuildStepsExecutionException ex) {
+    } catch (IOException | CacheDirectoryCreationException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+
+    } catch (BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
   }

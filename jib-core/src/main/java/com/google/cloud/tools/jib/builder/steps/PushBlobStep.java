@@ -16,12 +16,13 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
@@ -66,20 +67,20 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
 
   @Override
   public BlobDescriptor call() throws IOException, RegistryException, ExecutionException {
-    try (Timer timer =
-        new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION + blobDescriptor)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(
+            buildConfiguration.getEventDispatcher(), DESCRIPTION + blobDescriptor)) {
       RegistryClient registryClient =
           buildConfiguration
               .newTargetImageRegistryClientFactory()
               .setAuthorization(NonBlockingSteps.get(authenticatePushStep))
               .newRegistryClient();
-      registryClient.setTimer(timer);
 
       // check if the BLOB is available
       if (registryClient.checkBlob(blobDescriptor.getDigest()) != null) {
         buildConfiguration
-            .getBuildLogger()
-            .info("BLOB : " + blobDescriptor + " already exists on registry");
+            .getEventDispatcher()
+            .dispatch(LogEvent.info("BLOB : " + blobDescriptor + " already exists on registry"));
         return blobDescriptor;
       }
 

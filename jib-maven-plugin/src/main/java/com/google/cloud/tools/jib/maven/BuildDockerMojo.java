@@ -16,10 +16,13 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.cache.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.DockerDaemonImage;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -28,6 +31,7 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
+import java.io.IOException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -42,6 +46,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
+  private static final DockerClient DOCKER_CLIENT = DockerClient.newClient();
+
   @Override
   public void execute() throws MojoExecutionException {
     if (isSkipped()) {
@@ -53,12 +59,11 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       return;
     }
 
-    if (!new DockerClient().isDockerInstalled()) {
+    if (!DOCKER_CLIENT.isDockerInstalled()) {
       throw new MojoExecutionException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
-    MavenJibLogger mavenJibLogger = new MavenJibLogger(getLog());
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
@@ -67,43 +72,48 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
-      ImageReference targetImage =
+      EventDispatcher eventDispatcher =
+          new DefaultEventDispatcher(mavenProjectProperties.getEventHandlers());
+      ImageReference targetImageReference =
           ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
               getTargetImage(),
-              mavenJibLogger,
+              eventDispatcher,
               getProject().getName(),
               getProject().getVersion(),
               mavenHelpfulSuggestionsBuilder.build());
+      DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfiguration(
-              mavenJibLogger, this, mavenProjectProperties);
+              getLog(), this, mavenProjectProperties);
 
-      BuildConfiguration buildConfiguration =
-          pluginConfigurationProcessor
-              .getBuildConfigurationBuilder()
-              .setBaseImageConfiguration(
-                  pluginConfigurationProcessor.getBaseImageConfigurationBuilder().build())
-              .setTargetImageConfiguration(ImageConfiguration.builder(targetImage).build())
-              .setAdditionalTargetImageTags(getTargetImageAdditionalTags())
-              .setContainerConfiguration(
-                  pluginConfigurationProcessor.getContainerConfigurationBuilder().build())
-              .build();
+      JibContainerBuilder jibContainerBuilder =
+          pluginConfigurationProcessor.getJibContainerBuilder();
+      Containerizer containerizer = Containerizer.to(targetImage);
+      PluginConfigurationProcessor.configureContainerizer(
+          containerizer, this, mavenProjectProperties);
 
       HelpfulSuggestions helpfulSuggestions =
           mavenHelpfulSuggestionsBuilder
-              .setBaseImageReference(buildConfiguration.getBaseImageConfiguration().getImage())
+              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
               .setBaseImageHasConfiguredCredentials(
                   pluginConfigurationProcessor.isBaseImageCredentialPresent())
-              .setTargetImageReference(buildConfiguration.getTargetImageConfiguration().getImage())
+              .setTargetImageReference(targetImageReference)
               .build();
 
-      BuildStepsRunner.forBuildToDockerDaemon(buildConfiguration).build(helpfulSuggestions);
+      BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
+          .build(
+              jibContainerBuilder,
+              containerizer,
+              eventDispatcher,
+              mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              helpfulSuggestions);
       getLog().info("");
 
-    } catch (CacheDirectoryCreationException
-        | BuildStepsExecutionException
-        | InvalidImageReferenceException ex) {
+    } catch (InvalidImageReferenceException | IOException | CacheDirectoryCreationException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+
+    } catch (BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
   }

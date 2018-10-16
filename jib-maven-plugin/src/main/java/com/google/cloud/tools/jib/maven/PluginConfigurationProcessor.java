@@ -16,32 +16,52 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.Jib;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
-import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
+import java.io.FileNotFoundException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 
 /** Configures and provides builders for the image building goals. */
 class PluginConfigurationProcessor {
 
   /**
-   * Gets the value of the {@code <container><appRoot>} parameter. Throws {@link
-   * MojoExecutionException} if it is not an absolute path in Unix-style.
+   * Returns true if the Maven packaging type is "war".
+   *
+   * @param jibPluginConfiguration the Jib plugin configuration
+   * @return true if the Maven packaging type is "war"
+   */
+  private static boolean isWarPackaging(JibPluginConfiguration jibPluginConfiguration) {
+    return "war".equals(jibPluginConfiguration.getProject().getPackaging());
+  }
+
+  /**
+   * Gets the value of the {@code <container><appRoot>} parameter. If the parameter is empty,
+   * returns {@link JavaLayerConfigurations#DEFAULT_WEB_APP_ROOT} for project with WAR packaging or
+   * {@link JavaLayerConfigurations#DEFAULT_APP_ROOT} for other packaging.
    *
    * @param jibPluginConfiguration the Jib plugin configuration
    * @return the app root value
@@ -50,12 +70,43 @@ class PluginConfigurationProcessor {
   static AbsoluteUnixPath getAppRootChecked(JibPluginConfiguration jibPluginConfiguration)
       throws MojoExecutionException {
     String appRoot = jibPluginConfiguration.getAppRoot();
+    if (appRoot.isEmpty()) {
+      appRoot =
+          isWarPackaging(jibPluginConfiguration)
+              ? JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT
+              : JavaLayerConfigurations.DEFAULT_APP_ROOT;
+    }
     try {
       return AbsoluteUnixPath.get(appRoot);
     } catch (IllegalArgumentException ex) {
       throw new MojoExecutionException(
           "<container><appRoot> is not an absolute Unix-style path: " + appRoot);
     }
+  }
+
+  /**
+   * Gets the value of the {@code <from><image>} parameter. If the parameter is null, returns
+   * "gcr.io/distroless/java/jetty" for projects with WAR packaging or "gcr.io/distroless/java" for
+   * other packaging.
+   *
+   * @param jibPluginConfiguration the Jib plugin configuration
+   * @return the base image value
+   */
+  static String getBaseImage(JibPluginConfiguration jibPluginConfiguration) {
+    String baseImage = jibPluginConfiguration.getBaseImage();
+    if (baseImage == null) {
+      return isWarPackaging(jibPluginConfiguration)
+          ? "gcr.io/distroless/java/jetty"
+          : "gcr.io/distroless/java";
+    }
+    return baseImage;
+  }
+
+  /** Disables annoying Apache HTTP client logging. */
+  static void disableHttpLogging() {
+    System.setProperty(
+        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
   }
 
   /**
@@ -71,11 +122,10 @@ class PluginConfigurationProcessor {
    * @throws MojoExecutionException if the http timeout system property is misconfigured
    */
   static PluginConfigurationProcessor processCommonConfiguration(
-      MavenJibLogger logger,
+      Log logger,
       JibPluginConfiguration jibPluginConfiguration,
       MavenProjectProperties projectProperties)
       throws MojoExecutionException {
-    jibPluginConfiguration.handleDeprecatedParameters(logger);
     try {
       JibSystemProperties.checkHttpTimeoutProperty();
     } catch (NumberFormatException ex) {
@@ -83,9 +133,9 @@ class PluginConfigurationProcessor {
     }
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
-    MavenJibLogger.disableHttpLogging();
-
-    ImageReference baseImage = parseImageReference(jibPluginConfiguration.getBaseImage(), "from");
+    disableHttpLogging();
+    ImageReference baseImageReference =
+        parseImageReference(getBaseImage(jibPluginConfiguration), "from");
 
     // Checks Maven settings for registry credentials.
     if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
@@ -98,78 +148,102 @@ class PluginConfigurationProcessor {
             Preconditions.checkNotNull(jibPluginConfiguration.getSession()).getSettings(),
             jibPluginConfiguration.getSettingsDecrypter(),
             logger);
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(projectProperties.getEventHandlers());
     DefaultCredentialRetrievers defaultCredentialRetrievers =
-        DefaultCredentialRetrievers.init(CredentialRetrieverFactory.forImage(baseImage, logger));
+        DefaultCredentialRetrievers.init(
+            CredentialRetrieverFactory.forImage(baseImageReference, eventDispatcher));
     Optional<Credential> optionalFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            logger,
-            "jib.from.auth.username",
-            "jib.from.auth.password",
+            eventDispatcher,
+            PropertyNames.FROM_AUTH_USERNAME,
+            PropertyNames.FROM_AUTH_PASSWORD,
             jibPluginConfiguration.getBaseImageAuth());
     if (optionalFromCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(
           optionalFromCredential.get(), "jib-maven-plugin <from><auth> configuration");
     } else {
-      optionalFromCredential = mavenSettingsServerCredentials.retrieve(baseImage.getRegistry());
+      optionalFromCredential =
+          mavenSettingsServerCredentials.retrieve(baseImageReference.getRegistry());
       optionalFromCredential.ifPresent(
           fromCredential ->
               defaultCredentialRetrievers.setInferredCredential(
                   fromCredential, MavenSettingsServerCredentials.CREDENTIAL_SOURCE));
     }
-    defaultCredentialRetrievers.setCredentialHelperSuffix(
+    defaultCredentialRetrievers.setCredentialHelper(
         jibPluginConfiguration.getBaseImageCredentialHelperName());
 
-    ImageConfiguration.Builder baseImageConfiguration =
-        ImageConfiguration.builder(baseImage)
-            .setCredentialRetrievers(defaultCredentialRetrievers.asList());
+    List<String> entrypoint = computeEntrypoint(logger, jibPluginConfiguration, projectProperties);
 
-    List<String> entrypoint = jibPluginConfiguration.getEntrypoint();
-    if (entrypoint.isEmpty()) {
-      String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
-      entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(
-              getAppRootChecked(jibPluginConfiguration),
-              jibPluginConfiguration.getJvmFlags(),
-              mainClass);
-    } else if (jibPluginConfiguration.getMainClass() != null
-        || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
-      logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
+    RegistryImage baseImage = RegistryImage.named(baseImageReference);
+    try {
+      defaultCredentialRetrievers.asList().forEach(baseImage::addCredentialRetriever);
+    } catch (FileNotFoundException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
     }
-    ContainerConfiguration.Builder containerConfigurationBuilder =
-        ContainerConfiguration.builder()
+
+    JibContainerBuilder jibContainerBuilder =
+        Jib.from(baseImage)
+            .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
             .setEntrypoint(entrypoint)
             .setProgramArguments(jibPluginConfiguration.getArgs())
             .setEnvironment(jibPluginConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(jibPluginConfiguration.getExposedPorts()))
-            .setLabels(jibPluginConfiguration.getLabels());
+            .setLabels(jibPluginConfiguration.getLabels())
+            .setUser(jibPluginConfiguration.getUser());
     if (jibPluginConfiguration.getUseCurrentTimestamp()) {
       logger.warn(
           "Setting image creation time to current time; your image may not be reproducible.");
-      containerConfigurationBuilder.setCreationTime(Instant.now());
+      jibContainerBuilder.setCreationTime(Instant.now());
     }
 
     BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(logger)
+        BuildConfiguration.builder()
             .setToolName(MavenProjectProperties.TOOL_NAME)
-            .setEventEmitter(projectProperties.getEventEmitter())
+            .setEventDispatcher(eventDispatcher)
             .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
             .setLayerConfigurations(
                 projectProperties.getJavaLayerConfigurations().getLayerConfigurations());
-    CacheConfiguration applicationLayersCacheConfiguration =
-        CacheConfiguration.forPath(projectProperties.getCacheDirectory());
-    buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
-        applicationLayersCacheConfiguration);
+    buildConfigurationBuilder.setApplicationLayersCacheDirectory(
+        projectProperties.getCacheDirectory());
+    buildConfigurationBuilder.setBaseImageLayersCacheDirectory(
+        Containerizer.DEFAULT_BASE_CACHE_DIRECTORY);
     if (jibPluginConfiguration.getUseOnlyProjectCache()) {
-      buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
-          applicationLayersCacheConfiguration);
+      buildConfigurationBuilder.setBaseImageLayersCacheDirectory(
+          projectProperties.getCacheDirectory());
     }
 
     return new PluginConfigurationProcessor(
-        buildConfigurationBuilder,
-        baseImageConfiguration,
-        containerConfigurationBuilder,
+        jibContainerBuilder,
+        baseImageReference,
         mavenSettingsServerCredentials,
         optionalFromCredential.isPresent());
+  }
+
+  /**
+   * Configures a {@link Containerizer} with values pulled from project properties/build
+   * configuration.
+   *
+   * @param containerizer the {@link Containerizer} to configure
+   * @param jibPluginConfiguration the build configuration
+   * @param projectProperties the project properties
+   */
+  static void configureContainerizer(
+      Containerizer containerizer,
+      JibPluginConfiguration jibPluginConfiguration,
+      ProjectProperties projectProperties) {
+    containerizer
+        .setToolName(MavenProjectProperties.TOOL_NAME)
+        .setEventHandlers(projectProperties.getEventHandlers())
+        .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
+        .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
+        .setApplicationLayersCache(projectProperties.getCacheDirectory());
+
+    jibPluginConfiguration.getTargetImageAdditionalTags().forEach(containerizer::withAdditionalTag);
+
+    if (jibPluginConfiguration.getUseOnlyProjectCache()) {
+      containerizer.setBaseImageLayersCache(projectProperties.getCacheDirectory());
+    }
   }
 
   /**
@@ -185,35 +259,69 @@ class PluginConfigurationProcessor {
     }
   }
 
-  private final BuildConfiguration.Builder buildConfigurationBuilder;
-  private final ImageConfiguration.Builder baseImageConfigurationBuilder;
-  private final ContainerConfiguration.Builder containerConfigurationBuilder;
+  /**
+   * Compute the container entrypoint, in this order:
+   *
+   * <ol>
+   *   <li>the user specified one, if set
+   *   <li>for a WAR project, null (it must be inherited from base image)
+   *   <li>for a non-WAR project, by resolving the main class
+   * </ol>
+   *
+   * @param logger the logger used to display messages.
+   * @param jibPluginConfiguration the {@link JibPluginConfiguration} providing the configuration
+   *     data
+   * @param projectProperties used for providing additional information
+   * @return the entrypoint
+   * @throws MojoExecutionException if resolving the main class fails or the app root parameter is
+   *     not an absolute path in Unix-style
+   */
+  @Nullable
+  static List<String> computeEntrypoint(
+      Log logger,
+      JibPluginConfiguration jibPluginConfiguration,
+      MavenProjectProperties projectProperties)
+      throws MojoExecutionException {
+    List<String> entrypointParameter = jibPluginConfiguration.getEntrypoint();
+    if (entrypointParameter != null && !entrypointParameter.isEmpty()) {
+      if (jibPluginConfiguration.getMainClass() != null
+          || !jibPluginConfiguration.getJvmFlags().isEmpty()) {
+        logger.warn("<mainClass> and <jvmFlags> are ignored when <entrypoint> is specified");
+      }
+      return entrypointParameter;
+    }
+
+    if (isWarPackaging(jibPluginConfiguration)) {
+      return null;
+    }
+
+    String mainClass = projectProperties.getMainClass(jibPluginConfiguration);
+    return JavaEntrypointConstructor.makeDefaultEntrypoint(
+        getAppRootChecked(jibPluginConfiguration), jibPluginConfiguration.getJvmFlags(), mainClass);
+  }
+
+  private final JibContainerBuilder jibContainerBuilder;
+  private final ImageReference baseImageReference;
   private final MavenSettingsServerCredentials mavenSettingsServerCredentials;
   private final boolean isBaseImageCredentialPresent;
 
   private PluginConfigurationProcessor(
-      BuildConfiguration.Builder buildConfigurationBuilder,
-      ImageConfiguration.Builder baseImageConfigurationBuilder,
-      ContainerConfiguration.Builder containerConfigurationBuilder,
+      JibContainerBuilder jibContainerBuilder,
+      ImageReference baseImageReference,
       MavenSettingsServerCredentials mavenSettingsServerCredentials,
       boolean isBaseImageCredentialPresent) {
-    this.buildConfigurationBuilder = buildConfigurationBuilder;
-    this.baseImageConfigurationBuilder = baseImageConfigurationBuilder;
-    this.containerConfigurationBuilder = containerConfigurationBuilder;
+    this.jibContainerBuilder = jibContainerBuilder;
+    this.baseImageReference = baseImageReference;
     this.mavenSettingsServerCredentials = mavenSettingsServerCredentials;
     this.isBaseImageCredentialPresent = isBaseImageCredentialPresent;
   }
 
-  BuildConfiguration.Builder getBuildConfigurationBuilder() {
-    return buildConfigurationBuilder;
+  JibContainerBuilder getJibContainerBuilder() {
+    return jibContainerBuilder;
   }
 
-  ImageConfiguration.Builder getBaseImageConfigurationBuilder() {
-    return baseImageConfigurationBuilder;
-  }
-
-  ContainerConfiguration.Builder getContainerConfigurationBuilder() {
-    return containerConfigurationBuilder;
+  ImageReference getBaseImageReference() {
+    return baseImageReference;
   }
 
   MavenSettingsServerCredentials getMavenSettingsServerCredentials() {

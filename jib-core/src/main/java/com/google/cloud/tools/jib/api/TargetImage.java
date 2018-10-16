@@ -17,5 +17,25 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.builder.BuildSteps;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+
 /** Represents a destination for the Jib-built image. */
-interface TargetImage {}
+interface TargetImage {
+
+  /**
+   * Converts into an {@link ImageConfiguration}. For internal use only.
+   *
+   * @return an {@link ImageConfiguration}
+   */
+  ImageConfiguration toImageConfiguration();
+
+  /**
+   * Converts into {@link BuildSteps}. For internal use only.
+   *
+   * @param buildConfiguration the {@link BuildConfiguration} to use
+   * @return {@link BuildSteps}
+   */
+  BuildSteps toBuildSteps(BuildConfiguration buildConfiguration);
+}

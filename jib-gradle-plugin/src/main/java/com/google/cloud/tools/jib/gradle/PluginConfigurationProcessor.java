@@ -16,12 +16,15 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.JibLogger;
+import com.google.api.client.http.HttpTransport;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.Jib;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheConfiguration;
-import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
@@ -31,10 +34,21 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.common.base.Preconditions;
+import java.io.FileNotFoundException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
+import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
+import org.gradle.api.logging.Logger;
+import org.gradle.internal.logging.events.LogEvent;
+import org.gradle.internal.logging.events.OutputEventListener;
+import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
+import org.slf4j.LoggerFactory;
 
 /** Configures and provides builders for the image building tasks. */
 class PluginConfigurationProcessor {
@@ -43,7 +57,7 @@ class PluginConfigurationProcessor {
    * Gets the value of the {@code container.appRoot} parameter. Throws {@link GradleException} if it
    * is not an absolute path in Unix-style.
    *
-   * @param jibExtension the Jib plugin extension
+   * @param jibExtension the {@link JibExtension} providing the configuration data
    * @return the app root value
    * @throws GradleException if the app root is not an absolute path in Unix-style
    */
@@ -56,121 +70,159 @@ class PluginConfigurationProcessor {
     }
   }
 
+  /** Disables annoying Apache HTTP client logging. */
+  static void disableHttpLogging() {
+    // Disables Apache HTTP client logging.
+    OutputEventListenerBackedLoggerContext context =
+        (OutputEventListenerBackedLoggerContext) LoggerFactory.getILoggerFactory();
+    OutputEventListener defaultOutputEventListener = context.getOutputEventListener();
+    context.setOutputEventListener(
+        event -> {
+          LogEvent logEvent = (LogEvent) event;
+          if (!logEvent.getCategory().contains("org.apache")) {
+            defaultOutputEventListener.onOutput(event);
+          }
+        });
+
+    // Disables Google HTTP client logging.
+    java.util.logging.Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
+  }
+
   /**
    * Sets up {@link BuildConfiguration} that is common among the image building tasks. This includes
    * setting up the base image reference/authorization, container configuration, cache
    * configuration, and layer configuration.
    *
-   * @param logger the logger used to display messages.
+   * @param logger the logger used to display messages
    * @param jibExtension the {@link JibExtension} providing the configuration data
    * @param projectProperties used for providing additional information
    * @return a new {@link PluginConfigurationProcessor} containing pre-configured builders
    * @throws InvalidImageReferenceException if parsing the base image configuration fails
    */
   static PluginConfigurationProcessor processCommonConfiguration(
-      JibLogger logger, JibExtension jibExtension, GradleProjectProperties projectProperties)
-      throws InvalidImageReferenceException, NumberFormatException {
-    jibExtension.handleDeprecatedParameters(logger);
+      Logger logger, JibExtension jibExtension, GradleProjectProperties projectProperties)
+      throws InvalidImageReferenceException, NumberFormatException, FileNotFoundException {
     JibSystemProperties.checkHttpTimeoutProperty();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
-    GradleJibLogger.disableHttpLogging();
-
-    ImageReference baseImage = ImageReference.parse(jibExtension.getBaseImage());
+    disableHttpLogging();
+    ImageReference baseImageReference =
+        ImageReference.parse(Preconditions.checkNotNull(jibExtension.getFrom().getImage()));
 
     if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
       logger.warn(
           "Authentication over HTTP is enabled. It is strongly recommended that you do not enable "
               + "this on a public network!");
     }
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(projectProperties.getEventHandlers());
     DefaultCredentialRetrievers defaultCredentialRetrievers =
-        DefaultCredentialRetrievers.init(CredentialRetrieverFactory.forImage(baseImage, logger));
+        DefaultCredentialRetrievers.init(
+            CredentialRetrieverFactory.forImage(baseImageReference, eventDispatcher));
     Optional<Credential> optionalFromCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            logger,
-            "jib.from.auth.username",
-            "jib.from.auth.password",
+            eventDispatcher,
+            PropertyNames.FROM_AUTH_USERNAME,
+            PropertyNames.FROM_AUTH_PASSWORD,
             jibExtension.getFrom().getAuth());
     optionalFromCredential.ifPresent(
         fromCredential ->
             defaultCredentialRetrievers.setKnownCredential(fromCredential, "jib.from.auth"));
-    defaultCredentialRetrievers.setCredentialHelperSuffix(jibExtension.getFrom().getCredHelper());
+    defaultCredentialRetrievers.setCredentialHelper(jibExtension.getFrom().getCredHelper());
 
-    ImageConfiguration.Builder baseImageConfigurationBuilder =
-        ImageConfiguration.builder(baseImage)
-            .setCredentialRetrievers(defaultCredentialRetrievers.asList());
+    List<String> entrypoint = computeEntrypoint(logger, jibExtension, projectProperties);
 
-    List<String> entrypoint = jibExtension.getContainer().getEntrypoint();
-    if (entrypoint.isEmpty()) {
-      String mainClass = projectProperties.getMainClass(jibExtension);
-      entrypoint =
-          JavaEntrypointConstructor.makeDefaultEntrypoint(
-              getAppRootChecked(jibExtension), jibExtension.getJvmFlags(), mainClass);
-    } else if (jibExtension.getMainClass() != null || !jibExtension.getJvmFlags().isEmpty()) {
-      logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
-    }
-    ContainerConfiguration.Builder containerConfigurationBuilder =
-        ContainerConfiguration.builder()
+    RegistryImage baseImage = RegistryImage.named(baseImageReference);
+    defaultCredentialRetrievers.asList().forEach(baseImage::addCredentialRetriever);
+
+    JibContainerBuilder jibContainerBuilder =
+        Jib.from(baseImage)
+            .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
             .setEntrypoint(entrypoint)
-            .setEnvironment(jibExtension.getEnvironment())
-            .setProgramArguments(jibExtension.getArgs())
-            .setExposedPorts(ExposedPortsParser.parse(jibExtension.getExposedPorts()))
-            .setLabels(jibExtension.getLabels());
-    if (jibExtension.getUseCurrentTimestamp()) {
+            .setProgramArguments(jibExtension.getContainer().getArgs())
+            .setEnvironment(jibExtension.getContainer().getEnvironment())
+            .setExposedPorts(ExposedPortsParser.parse(jibExtension.getContainer().getPorts()))
+            .setLabels(jibExtension.getContainer().getLabels())
+            .setUser(jibExtension.getContainer().getUser());
+    if (jibExtension.getContainer().getUseCurrentTimestamp()) {
       logger.warn(
           "Setting image creation time to current time; your image may not be reproducible.");
-      containerConfigurationBuilder.setCreationTime(Instant.now());
-    }
-
-    BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder(logger)
-            .setToolName(GradleProjectProperties.TOOL_NAME)
-            .setEventEmitter(projectProperties.getEventEmitter())
-            .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
-            .setLayerConfigurations(
-                projectProperties.getJavaLayerConfigurations().getLayerConfigurations());
-    CacheConfiguration applicationLayersCacheConfiguration =
-        CacheConfiguration.forPath(projectProperties.getCacheDirectory());
-    buildConfigurationBuilder.setApplicationLayersCacheConfiguration(
-        applicationLayersCacheConfiguration);
-    if (jibExtension.getUseOnlyProjectCache()) {
-      buildConfigurationBuilder.setBaseImageLayersCacheConfiguration(
-          applicationLayersCacheConfiguration);
+      jibContainerBuilder.setCreationTime(Instant.now());
     }
 
     return new PluginConfigurationProcessor(
-        buildConfigurationBuilder,
-        baseImageConfigurationBuilder,
-        containerConfigurationBuilder,
-        optionalFromCredential.isPresent());
+        jibContainerBuilder, baseImageReference, optionalFromCredential.isPresent());
   }
 
-  private final BuildConfiguration.Builder buildConfigurationBuilder;
-  private final ImageConfiguration.Builder baseImageConfigurationBuilder;
-  private final ContainerConfiguration.Builder containerConfigurationBuilder;
+  static void configureContainerizer(
+      Containerizer containerizer, JibExtension jibExtension, ProjectProperties projectProperties) {
+    containerizer
+        .setToolName(GradleProjectProperties.TOOL_NAME)
+        .setEventHandlers(projectProperties.getEventHandlers())
+        .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
+        .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
+        .setApplicationLayersCache(projectProperties.getCacheDirectory());
+
+    jibExtension.getTo().getTags().forEach(containerizer::withAdditionalTag);
+
+    if (jibExtension.getUseOnlyProjectCache()) {
+      containerizer.setBaseImageLayersCache(projectProperties.getCacheDirectory());
+    }
+  }
+
+  /**
+   * Compute the container entrypoint, in this order:
+   *
+   * <ol>
+   *   <li>the user specified one, if set
+   *   <li>for a WAR project, null (it must be inherited from base image)
+   *   <li>for a non-WAR project, by resolving the main class
+   * </ol>
+   *
+   * @param logger the logger used to display messages
+   * @param jibExtension the {@link JibExtension} providing the configuration data
+   * @param projectProperties used for providing additional information
+   * @return the entrypoint
+   */
+  @Nullable
+  static List<String> computeEntrypoint(
+      Logger logger, JibExtension jibExtension, GradleProjectProperties projectProperties) {
+    ContainerParameters parameters = jibExtension.getContainer();
+    if (parameters.getEntrypoint() != null && !parameters.getEntrypoint().isEmpty()) {
+      if (parameters.getMainClass() != null || !parameters.getJvmFlags().isEmpty()) {
+        logger.warn("mainClass and jvmFlags are ignored when entrypoint is specified");
+      }
+      return parameters.getEntrypoint();
+    }
+
+    if (projectProperties.isWarProject()) {
+      return null;
+    }
+
+    String mainClass = projectProperties.getMainClass(jibExtension);
+    return JavaEntrypointConstructor.makeDefaultEntrypoint(
+        AbsoluteUnixPath.get(parameters.getAppRoot()), parameters.getJvmFlags(), mainClass);
+  }
+
+  private final JibContainerBuilder jibContainerBuilder;
+  private final ImageReference baseImageReference;
   private final boolean isBaseImageCredentialPresent;
 
   private PluginConfigurationProcessor(
-      BuildConfiguration.Builder buildConfigurationBuilder,
-      ImageConfiguration.Builder baseImageConfigurationBuilder,
-      ContainerConfiguration.Builder containerConfigurationBuilder,
+      JibContainerBuilder jibContainerBuilder,
+      ImageReference baseImageReference,
       boolean isBaseImageCredentialPresent) {
-    this.buildConfigurationBuilder = buildConfigurationBuilder;
-    this.baseImageConfigurationBuilder = baseImageConfigurationBuilder;
-    this.containerConfigurationBuilder = containerConfigurationBuilder;
+    this.jibContainerBuilder = jibContainerBuilder;
+    this.baseImageReference = baseImageReference;
     this.isBaseImageCredentialPresent = isBaseImageCredentialPresent;
   }
 
-  BuildConfiguration.Builder getBuildConfigurationBuilder() {
-    return buildConfigurationBuilder;
+  JibContainerBuilder getJibContainerBuilder() {
+    return jibContainerBuilder;
   }
 
-  ImageConfiguration.Builder getBaseImageConfigurationBuilder() {
-    return baseImageConfigurationBuilder;
-  }
-
-  ContainerConfiguration.Builder getContainerConfigurationBuilder() {
-    return containerConfigurationBuilder;
+  ImageReference getBaseImageReference() {
+    return baseImageReference;
   }
 
   boolean isBaseImageCredentialPresent() {

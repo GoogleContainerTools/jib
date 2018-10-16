@@ -16,11 +16,10 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithAuthorization;
-import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -39,7 +38,6 @@ class PullAndCacheBaseImageLayersStep
   private static final String DESCRIPTION = "Setting up base image caching";
 
   private final BuildConfiguration buildConfiguration;
-  private final Cache cache;
   private final PullBaseImageStep pullBaseImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
@@ -48,11 +46,9 @@ class PullAndCacheBaseImageLayersStep
   PullAndCacheBaseImageLayersStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      Cache cache,
       PullBaseImageStep pullBaseImageStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
-    this.cache = cache;
     this.pullBaseImageStep = pullBaseImageStep;
 
     listenableFuture =
@@ -67,7 +63,8 @@ class PullAndCacheBaseImageLayersStep
   @Override
   public ImmutableList<PullAndCacheBaseImageLayerStep> call()
       throws ExecutionException, LayerPropertyNotFoundException {
-    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       BaseImageWithAuthorization pullBaseImageStepResult = NonBlockingSteps.get(pullBaseImageStep);
       ImmutableList<Layer> baseImageLayers = pullBaseImageStepResult.getBaseImage().getLayers();
 
@@ -78,7 +75,6 @@ class PullAndCacheBaseImageLayersStep
             new PullAndCacheBaseImageLayerStep(
                 listeningExecutorService,
                 buildConfiguration,
-                cache,
                 layer.getBlobDescriptor().getDigest(),
                 pullBaseImageStepResult.getBaseImageAuthorization()));
       }

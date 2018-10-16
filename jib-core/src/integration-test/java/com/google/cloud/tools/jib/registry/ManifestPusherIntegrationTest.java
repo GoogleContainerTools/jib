@@ -18,12 +18,14 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.EmptyJibLogger;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.security.DigestException;
 import org.junit.Assert;
@@ -34,18 +36,18 @@ import org.junit.Test;
 public class ManifestPusherIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EmptyJibLogger BUILD_LOGGER = new EmptyJibLogger();
+  private static final EventDispatcher EVENT_DISPATCHER = jibEvent -> {};
 
   @Test
   public void testPush_missingBlobs() throws IOException, RegistryException, InterruptedException {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
 
     RegistryClient registryClient =
-        RegistryClient.factory(BUILD_LOGGER, "gcr.io", "distroless/java").newRegistryClient();
+        RegistryClient.factory(EVENT_DISPATCHER, "gcr.io", "distroless/java").newRegistryClient();
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
     registryClient =
-        RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "busybox")
+        RegistryClient.factory(EVENT_DISPATCHER, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     try {
@@ -81,7 +83,7 @@ public class ManifestPusherIntegrationTest {
 
     // Pushes the BLOBs.
     RegistryClient registryClient =
-        RegistryClient.factory(BUILD_LOGGER, "localhost:5000", "testimage")
+        RegistryClient.factory(EVENT_DISPATCHER, "localhost:5000", "testimage")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob, null));
@@ -90,7 +92,7 @@ public class ManifestPusherIntegrationTest {
             testContainerConfigurationBlobDigest, testContainerConfigurationBlob, null));
 
     // Pushes the manifest.
-    registryClient.pushManifest(expectedManifestTemplate, "latest");
+    DescriptorDigest imageDigest = registryClient.pushManifest(expectedManifestTemplate, "latest");
 
     // Pulls the manifest.
     V22ManifestTemplate manifestTemplate =
@@ -100,5 +102,16 @@ public class ManifestPusherIntegrationTest {
     Assert.assertEquals(
         testContainerConfigurationBlobDigest,
         manifestTemplate.getContainerConfiguration().getDigest());
+
+    // Pulls the manifest by digest.
+    V22ManifestTemplate manifestTemplateByDigest =
+        registryClient.pullManifest(imageDigest.toString(), V22ManifestTemplate.class);
+    Assert.assertEquals(
+        JsonTemplateMapper.toBlob(manifestTemplate)
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest(),
+        JsonTemplateMapper.toBlob(manifestTemplateByDigest)
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest());
   }
 }

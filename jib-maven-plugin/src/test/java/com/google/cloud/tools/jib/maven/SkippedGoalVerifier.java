@@ -29,7 +29,7 @@ import org.junit.Assert;
 /** A simple verifier utility to test goal skipping accross all our jib goals. */
 class SkippedGoalVerifier {
 
-  /** Verify that a jib goal is skipped */
+  /** Verifies that a Jib goal is skipped. */
   static void verifyGoalIsSkipped(TestProject testProject, String goal)
       throws VerificationException, IOException {
     Verifier verifier = new Verifier(testProject.getProjectRoot().toString());

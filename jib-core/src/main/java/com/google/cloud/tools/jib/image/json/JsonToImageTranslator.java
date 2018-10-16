@@ -142,7 +142,7 @@ public class JsonToImageTranslator {
     }
 
     if (containerConfigurationTemplate.getContainerCmd() != null) {
-      imageBuilder.setJavaArguments(containerConfigurationTemplate.getContainerCmd());
+      imageBuilder.setProgramArguments(containerConfigurationTemplate.getContainerCmd());
     }
 
     if (containerConfigurationTemplate.getContainerExposedPorts() != null) {
@@ -162,6 +162,7 @@ public class JsonToImageTranslator {
     }
 
     imageBuilder.setWorkingDirectory(containerConfigurationTemplate.getContainerWorkingDir());
+    imageBuilder.setUser(containerConfigurationTemplate.getContainerUser());
 
     return imageBuilder.build();
   }

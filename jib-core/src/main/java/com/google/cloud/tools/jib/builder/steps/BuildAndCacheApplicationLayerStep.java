@@ -16,15 +16,15 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.Timer;
 import com.google.cloud.tools.jib.async.AsyncStep;
+import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.cache.CacheMetadataCorruptedException;
-import com.google.cloud.tools.jib.cache.CacheReader;
-import com.google.cloud.tools.jib.cache.CacheWriter;
-import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
+import com.google.cloud.tools.jib.cache.CacheCorruptedException;
+import com.google.cloud.tools.jib.cache.CacheEntry;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -34,8 +34,7 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
-class BuildAndCacheApplicationLayerStep
-    implements AsyncStep<CachedLayerWithMetadata>, Callable<CachedLayerWithMetadata> {
+class BuildAndCacheApplicationLayerStep implements AsyncStep<CacheEntry>, Callable<CacheEntry> {
 
   private static final String DESCRIPTION = "Building application layers";
 
@@ -44,10 +43,9 @@ class BuildAndCacheApplicationLayerStep
    * classes layers. Optionally adds an extra layer if configured to do so.
    */
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
-      ListeningExecutorService listeningExecutorService,
-      BuildConfiguration buildConfiguration,
-      Cache cache) {
-    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+      ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
           ImmutableList.builderWithExpectedSize(buildConfiguration.getLayerConfigurations().size());
       for (LayerConfiguration layerConfiguration : buildConfiguration.getLayerConfigurations()) {
@@ -61,8 +59,7 @@ class BuildAndCacheApplicationLayerStep
                 layerConfiguration.getName(),
                 listeningExecutorService,
                 buildConfiguration,
-                layerConfiguration,
-                cache));
+                layerConfiguration));
       }
       return buildAndCacheApplicationLayerSteps.build();
     }
@@ -71,53 +68,52 @@ class BuildAndCacheApplicationLayerStep
   private final String layerType;
   private final BuildConfiguration buildConfiguration;
   private final LayerConfiguration layerConfiguration;
-  private final Cache cache;
 
-  private final ListenableFuture<CachedLayerWithMetadata> listenableFuture;
+  private final ListenableFuture<CacheEntry> listenableFuture;
 
   private BuildAndCacheApplicationLayerStep(
       String layerType,
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      LayerConfiguration layerConfiguration,
-      Cache cache) {
+      LayerConfiguration layerConfiguration) {
     this.layerType = layerType;
     this.buildConfiguration = buildConfiguration;
     this.layerConfiguration = layerConfiguration;
-    this.cache = cache;
 
     listenableFuture = listeningExecutorService.submit(this);
   }
 
   @Override
-  public ListenableFuture<CachedLayerWithMetadata> getFuture() {
+  public ListenableFuture<CacheEntry> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public CachedLayerWithMetadata call() throws IOException, CacheMetadataCorruptedException {
+  public CacheEntry call() throws IOException, CacheCorruptedException {
     String description = "Building " + layerType + " layer";
 
-    buildConfiguration.getBuildLogger().lifecycle(description + "...");
+    buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(description + "..."));
 
-    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), description)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
+      Cache cache = buildConfiguration.getApplicationLayersCache();
+
       // Don't build the layer if it exists already.
-      Optional<CachedLayerWithMetadata> optionalCachedLayer =
-          new CacheReader(cache)
-              .getUpToDateLayerByLayerEntries(layerConfiguration.getLayerEntries());
-      if (optionalCachedLayer.isPresent()) {
-        return optionalCachedLayer.get();
+      Optional<CacheEntry> optionalCacheEntry =
+          cache.retrieve(layerConfiguration.getLayerEntries());
+      if (optionalCacheEntry.isPresent()) {
+        return optionalCacheEntry.get();
       }
 
-      CachedLayerWithMetadata cachedLayer =
-          new CacheWriter(cache)
-              .writeLayer(new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()));
+      Blob layerBlob = new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()).build();
+      CacheEntry cacheEntry =
+          cache.writeUncompressedLayer(layerBlob, layerConfiguration.getLayerEntries());
 
       buildConfiguration
-          .getBuildLogger()
-          .debug(description + " built " + cachedLayer.getBlobDescriptor().getDigest());
+          .getEventDispatcher()
+          .dispatch(LogEvent.debug(description + " built " + cacheEntry.getLayerDigest()));
 
-      return cachedLayer;
+      return cacheEntry;
     }
   }
 }

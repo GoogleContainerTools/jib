@@ -16,16 +16,24 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.JibLogger;
-import com.google.cloud.tools.jib.event.EventEmitter;
+import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.StringJoiner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
 /** Immutable configuration options for the builder process. */
@@ -46,22 +54,19 @@ public class BuildConfiguration {
     @Nullable private ImageConfiguration targetImageConfiguration;
     private ImmutableSet<String> additionalTargetImageTags = ImmutableSet.of();
     @Nullable private ContainerConfiguration containerConfiguration;
-    @Nullable private CacheConfiguration applicationLayersCacheConfiguration;
-    @Nullable private CacheConfiguration baseImageLayersCacheConfiguration;
+    @Nullable private Path applicationLayersCacheDirectory;
+    @Nullable private Path baseImageLayersCacheDirectory;
     private boolean allowInsecureRegistries = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
-    private EventEmitter eventEmitter =
+    private EventDispatcher eventDispatcher =
         jibEvent -> {
-          /* No-op EventEmitter. */
+          /* No-op EventDispatcher. */
         };
+    @Nullable private ExecutorService executorService;
 
-    private JibLogger buildLogger;
-
-    private Builder(JibLogger buildLogger) {
-      this.buildLogger = buildLogger;
-    }
+    private Builder() {}
 
     /**
      * Sets the base image configuration.
@@ -111,24 +116,22 @@ public class BuildConfiguration {
     /**
      * Sets the location of the cache for storing application layers.
      *
-     * @param applicationLayersCacheConfiguration the application layers {@link CacheConfiguration}
+     * @param applicationLayersCacheDirectory the application layers cache directory
      * @return this
      */
-    public Builder setApplicationLayersCacheConfiguration(
-        @Nullable CacheConfiguration applicationLayersCacheConfiguration) {
-      this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
+    public Builder setApplicationLayersCacheDirectory(Path applicationLayersCacheDirectory) {
+      this.applicationLayersCacheDirectory = applicationLayersCacheDirectory;
       return this;
     }
 
     /**
      * Sets the location of the cache for storing base image layers.
      *
-     * @param baseImageLayersCacheConfiguration the base image layers {@link CacheConfiguration}
+     * @param baseImageLayersCacheDirectory the base image layers cache directory
      * @return this
      */
-    public Builder setBaseImageLayersCacheConfiguration(
-        @Nullable CacheConfiguration baseImageLayersCacheConfiguration) {
-      this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
+    public Builder setBaseImageLayersCacheDirectory(Path baseImageLayersCacheDirectory) {
+      this.baseImageLayersCacheDirectory = baseImageLayersCacheDirectory;
       return this;
     }
 
@@ -177,13 +180,25 @@ public class BuildConfiguration {
     }
 
     /**
-     * Sets the {@link EventEmitter} to emit events with.
+     * Sets the {@link EventDispatcher} to dispatch events with.
      *
-     * @param eventEmitter the {@link EventEmitter}
+     * @param eventDispatcher the {@link EventDispatcher}
      * @return this
      */
-    public Builder setEventEmitter(EventEmitter eventEmitter) {
-      this.eventEmitter = eventEmitter;
+    public Builder setEventDispatcher(EventDispatcher eventDispatcher) {
+      this.eventDispatcher = eventDispatcher;
+      return this;
+    }
+
+    /**
+     * Sets the {@link ExecutorService} Jib executes on. By default, Jib uses {@link
+     * Executors#newCachedThreadPool}.
+     *
+     * @param executorService the {@link ExecutorService}
+     * @return this
+     */
+    public Builder setExecutorService(ExecutorService executorService) {
+      this.executorService = executorService;
       return this;
     }
 
@@ -191,109 +206,130 @@ public class BuildConfiguration {
      * Builds a new {@link BuildConfiguration} using the parameters passed into the builder.
      *
      * @return the corresponding build configuration
+     * @throws IOException if an I/O exception occurs
      */
-    public BuildConfiguration build() {
+    public BuildConfiguration build() throws IOException {
       // Validates the parameters.
-      List<String> errorMessages = new ArrayList<>();
+      List<String> missingFields = new ArrayList<>();
       if (baseImageConfiguration == null) {
-        errorMessages.add("base image configuration is required but not set");
+        missingFields.add("base image configuration");
       }
       if (targetImageConfiguration == null) {
-        errorMessages.add("target image configuration is required but not set");
+        missingFields.add("target image configuration");
+      }
+      if (baseImageLayersCacheDirectory == null) {
+        missingFields.add("base image layers cache directory");
+      }
+      if (applicationLayersCacheDirectory == null) {
+        missingFields.add("application layers cache directory");
       }
 
-      switch (errorMessages.size()) {
+      switch (missingFields.size()) {
         case 0: // No errors
-          if (baseImageConfiguration == null || targetImageConfiguration == null) {
-            throw new IllegalStateException("Required fields should not be null");
+          if (Preconditions.checkNotNull(baseImageConfiguration).getImage().usesDefaultTag()) {
+            eventDispatcher.dispatch(
+                LogEvent.warn(
+                    "Base image '"
+                        + baseImageConfiguration.getImage()
+                        + "' does not use a specific image digest - build may not be reproducible"));
           }
-          if (baseImageConfiguration.getImage().usesDefaultTag()) {
-            buildLogger.warn(
-                "Base image '"
-                    + baseImageConfiguration.getImage()
-                    + "' does not use a specific image digest - build may not be reproducible");
+
+          if (executorService == null) {
+            executorService = Executors.newCachedThreadPool();
           }
 
           return new BuildConfiguration(
-              buildLogger,
               baseImageConfiguration,
-              targetImageConfiguration,
+              Preconditions.checkNotNull(targetImageConfiguration),
               additionalTargetImageTags,
               containerConfiguration,
-              applicationLayersCacheConfiguration,
-              baseImageLayersCacheConfiguration,
+              Cache.withDirectory(Preconditions.checkNotNull(baseImageLayersCacheDirectory)),
+              Cache.withDirectory(Preconditions.checkNotNull(applicationLayersCacheDirectory)),
               targetFormat,
               allowInsecureRegistries,
               layerConfigurations,
               toolName,
-              eventEmitter);
+              eventDispatcher,
+              executorService);
 
         case 1:
-          throw new IllegalStateException(errorMessages.get(0));
+          throw new IllegalStateException(missingFields.get(0) + " is required but not set");
 
         case 2:
-          throw new IllegalStateException(errorMessages.get(0) + " and " + errorMessages.get(1));
+          throw new IllegalStateException(
+              missingFields.get(0) + " and " + missingFields.get(1) + " are required but not set");
 
         default:
-          // Should never reach here.
-          throw new IllegalStateException();
+          missingFields.add("and " + missingFields.remove(missingFields.size() - 1));
+          StringJoiner errorMessage = new StringJoiner(", ", "", " are required but not set");
+          for (String missingField : missingFields) {
+            errorMessage.add(missingField);
+          }
+          throw new IllegalStateException(errorMessage.toString());
       }
+    }
+
+    @Nullable
+    @VisibleForTesting
+    Path getBaseImageLayersCacheDirectory() {
+      return baseImageLayersCacheDirectory;
+    }
+
+    @Nullable
+    @VisibleForTesting
+    Path getApplicationLayersCacheDirectory() {
+      return applicationLayersCacheDirectory;
     }
   }
 
   /**
    * Creates a new {@link Builder} to build a {@link BuildConfiguration}.
    *
-   * @param jibLogger the logger to log messages during build
    * @return a new {@link Builder}
    */
-  public static Builder builder(JibLogger jibLogger) {
-    return new Builder(jibLogger);
+  public static Builder builder() {
+    return new Builder();
   }
 
-  private final JibLogger buildLogger;
   private final ImageConfiguration baseImageConfiguration;
   private final ImageConfiguration targetImageConfiguration;
   private final ImmutableSet<String> additionalTargetImageTags;
   @Nullable private final ContainerConfiguration containerConfiguration;
-  @Nullable private final CacheConfiguration applicationLayersCacheConfiguration;
-  @Nullable private final CacheConfiguration baseImageLayersCacheConfiguration;
+  private final Cache baseImageLayersCache;
+  private final Cache applicationLayersCache;
   private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
   private final String toolName;
-  private final EventEmitter eventEmitter;
+  private final EventDispatcher eventDispatcher;
+  private final ExecutorService executorService;
 
   /** Instantiate with {@link #builder}. */
   private BuildConfiguration(
-      JibLogger buildLogger,
       ImageConfiguration baseImageConfiguration,
       ImageConfiguration targetImageConfiguration,
       ImmutableSet<String> additionalTargetImageTags,
       @Nullable ContainerConfiguration containerConfiguration,
-      @Nullable CacheConfiguration applicationLayersCacheConfiguration,
-      @Nullable CacheConfiguration baseImageLayersCacheConfiguration,
+      Cache baseImageLayersCache,
+      Cache applicationLayersCache,
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
       String toolName,
-      EventEmitter eventEmitter) {
-    this.buildLogger = buildLogger;
+      EventDispatcher eventDispatcher,
+      ExecutorService executorService) {
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
     this.additionalTargetImageTags = additionalTargetImageTags;
     this.containerConfiguration = containerConfiguration;
-    this.applicationLayersCacheConfiguration = applicationLayersCacheConfiguration;
-    this.baseImageLayersCacheConfiguration = baseImageLayersCacheConfiguration;
+    this.baseImageLayersCache = baseImageLayersCache;
+    this.applicationLayersCache = applicationLayersCache;
     this.targetFormat = targetFormat;
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.layerConfigurations = layerConfigurations;
     this.toolName = toolName;
-    this.eventEmitter = eventEmitter;
-  }
-
-  public JibLogger getBuildLogger() {
-    return buildLogger;
+    this.eventDispatcher = eventDispatcher;
+    this.executorService = executorService;
   }
 
   public ImageConfiguration getBaseImageConfiguration() {
@@ -325,28 +361,29 @@ public class BuildConfiguration {
     return toolName;
   }
 
-  public EventEmitter getEventEmitter() {
-    return eventEmitter;
+  public EventDispatcher getEventDispatcher() {
+    return eventDispatcher;
+  }
+
+  public ExecutorService getExecutorService() {
+    return executorService;
   }
 
   /**
-   * Gets the location of the cache for storing application layers.
+   * Gets the {@link Cache} for base image layers.
    *
-   * @return the application layers {@link CacheConfiguration}, or {@code null} if not set
+   * @return the {@link Cache} for base image layers
    */
-  @Nullable
-  public CacheConfiguration getApplicationLayersCacheConfiguration() {
-    return applicationLayersCacheConfiguration;
+  public Cache getBaseImageLayersCache() {
+    return baseImageLayersCache;
   }
-
   /**
-   * Gets the location of the cache for storing base image layers.
+   * Gets the {@link Cache} for application layers.
    *
-   * @return the base image layers {@link CacheConfiguration}, or {@code null} if not set
+   * @return the {@link Cache} for application layers
    */
-  @Nullable
-  public CacheConfiguration getBaseImageLayersCacheConfiguration() {
-    return baseImageLayersCacheConfiguration;
+  public Cache getApplicationLayersCache() {
+    return applicationLayersCache;
   }
 
   /**
@@ -390,7 +427,7 @@ public class BuildConfiguration {
 
   private RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
     return RegistryClient.factory(
-            getBuildLogger(),
+            getEventDispatcher(),
             imageConfiguration.getImageRegistry(),
             imageConfiguration.getImageRepository())
         .setAllowInsecureRegistries(getAllowInsecureRegistries())

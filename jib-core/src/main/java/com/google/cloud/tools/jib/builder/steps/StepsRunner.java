@@ -17,24 +17,19 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncSteps;
-import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.cache.CachedLayerWithMetadata;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
 /**
@@ -47,8 +42,6 @@ public class StepsRunner {
 
   private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
-  private final Cache baseLayersCache;
-  private final Cache applicationLayersCache;
 
   @Nullable private RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep;
   @Nullable private AuthenticatePushStep authenticatePushStep;
@@ -66,16 +59,13 @@ public class StepsRunner {
   @Nullable private LoadDockerStep loadDockerStep;
   @Nullable private WriteTarFileStep writeTarFileStep;
 
-  public StepsRunner(
-      BuildConfiguration buildConfiguration, Cache baseLayersCache, Cache applicationLayersCache) {
+  public StepsRunner(BuildConfiguration buildConfiguration) {
     this.buildConfiguration = buildConfiguration;
-    this.baseLayersCache = baseLayersCache;
-    this.applicationLayersCache = applicationLayersCache;
 
     ExecutorService executorService =
         JibSystemProperties.isSerializedExecutionEnabled()
             ? MoreExecutors.newDirectExecutorService()
-            : Executors.newCachedThreadPool();
+            : buildConfiguration.getExecutorService();
     listeningExecutorService = MoreExecutors.listeningDecorator(executorService);
   }
 
@@ -105,7 +95,6 @@ public class StepsRunner {
         new PullAndCacheBaseImageLayersStep(
             listeningExecutorService,
             buildConfiguration,
-            baseLayersCache,
             Preconditions.checkNotNull(pullBaseImageStep));
     return this;
   }
@@ -122,8 +111,7 @@ public class StepsRunner {
 
   public StepsRunner runBuildAndCacheApplicationLayerSteps() {
     buildAndCacheApplicationLayerSteps =
-        BuildAndCacheApplicationLayerStep.makeList(
-            listeningExecutorService, buildConfiguration, applicationLayersCache);
+        BuildAndCacheApplicationLayerStep.makeList(listeningExecutorService, buildConfiguration);
     return this;
   }
 
@@ -191,10 +179,11 @@ public class StepsRunner {
     return this;
   }
 
-  public StepsRunner runLoadDockerStep() {
+  public StepsRunner runLoadDockerStep(DockerClient dockerClient) {
     loadDockerStep =
         new LoadDockerStep(
             listeningExecutorService,
+            dockerClient,
             buildConfiguration,
             Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep),
             Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps),
@@ -214,47 +203,15 @@ public class StepsRunner {
     return this;
   }
 
-  public void waitOnPushImageStep() throws ExecutionException, InterruptedException {
-    Preconditions.checkNotNull(pushImageStep).getFuture().get();
+  public DescriptorDigest waitOnPushImageStep() throws ExecutionException, InterruptedException {
+    return Preconditions.checkNotNull(pushImageStep).getFuture().get();
   }
 
-  public void waitOnLoadDockerStep() throws ExecutionException, InterruptedException {
-    Preconditions.checkNotNull(loadDockerStep).getFuture().get();
+  public DescriptorDigest waitOnLoadDockerStep() throws ExecutionException, InterruptedException {
+    return Preconditions.checkNotNull(loadDockerStep).getFuture().get();
   }
 
-  public void waitOnWriteTarFileStep() throws ExecutionException, InterruptedException {
-    Preconditions.checkNotNull(writeTarFileStep).getFuture().get();
-  }
-
-  /**
-   * @return the layers cached by {@link #pullAndCacheBaseImageLayersStep}
-   * @throws ExecutionException if {@link #pullAndCacheBaseImageLayersStep} threw an exception
-   *     during execution
-   */
-  public List<CachedLayer> getCachedBaseImageLayers() throws ExecutionException {
-    ImmutableList<PullAndCacheBaseImageLayerStep> pullAndCacheBaseImageLayerSteps =
-        NonBlockingSteps.get(Preconditions.checkNotNull(pullAndCacheBaseImageLayersStep));
-
-    List<CachedLayer> cachedLayers = new ArrayList<>(pullAndCacheBaseImageLayerSteps.size());
-    for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
-        pullAndCacheBaseImageLayerSteps) {
-      cachedLayers.add(NonBlockingSteps.get(pullAndCacheBaseImageLayerStep));
-    }
-    return cachedLayers;
-  }
-
-  /**
-   * @return the layers cached by {@link #buildAndCacheApplicationLayerSteps}
-   * @throws ExecutionException if {@link #buildAndCacheApplicationLayerSteps} threw an exception
-   *     during execution
-   */
-  public List<CachedLayerWithMetadata> getCachedApplicationLayers() throws ExecutionException {
-    List<CachedLayerWithMetadata> cachedLayersWithMetadata =
-        new ArrayList<>(Preconditions.checkNotNull(buildAndCacheApplicationLayerSteps).size());
-    for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
-        buildAndCacheApplicationLayerSteps) {
-      cachedLayersWithMetadata.add(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
-    }
-    return cachedLayersWithMetadata;
+  public DescriptorDigest waitOnWriteTarFileStep() throws ExecutionException, InterruptedException {
+    return Preconditions.checkNotNull(writeTarFileStep).getFuture().get();
   }
 }

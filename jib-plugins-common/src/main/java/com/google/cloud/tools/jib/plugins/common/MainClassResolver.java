@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
@@ -71,7 +73,8 @@ public class MainClassResolver {
 
     Preconditions.checkNotNull(mainClass);
     if (!isValidJavaClass(mainClass)) {
-      projectProperties.getLogger().warn("'mainClass' is not a valid Java class : " + mainClass);
+      new DefaultEventDispatcher(projectProperties.getEventHandlers())
+          .dispatch(LogEvent.warn("'mainClass' is not a valid Java class : " + mainClass));
     }
 
     return mainClass;
@@ -93,23 +96,23 @@ public class MainClassResolver {
 
   @Nullable
   private static String getMainClassFromJar(ProjectProperties projectProperties) {
-    projectProperties
-        .getLogger()
-        .info(
-            "Searching for main class... Add a 'mainClass' configuration to '"
-                + projectProperties.getPluginName()
-                + "' to improve build speed.");
+    new DefaultEventDispatcher(projectProperties.getEventHandlers())
+        .dispatch(
+            LogEvent.info(
+                "Searching for main class... Add a 'mainClass' configuration to '"
+                    + projectProperties.getPluginName()
+                    + "' to improve build speed."));
     return projectProperties.getMainClassFromJar();
   }
 
   private static String findMainClassInClassFiles(ProjectProperties projectProperties)
       throws MainClassInferenceException {
-    projectProperties
-        .getLogger()
-        .debug(
-            "Could not find a valid main class specified in "
-                + projectProperties.getJarPluginName()
-                + "; attempting to infer main class.");
+    new DefaultEventDispatcher(projectProperties.getEventHandlers())
+        .dispatch(
+            LogEvent.debug(
+                "Could not find a valid main class specified in "
+                    + projectProperties.getJarPluginName()
+                    + "; attempting to infer main class."));
 
     ImmutableList<Path> classesSourceFiles =
         projectProperties
@@ -120,7 +123,10 @@ public class MainClassResolver {
             .collect(ImmutableList.toImmutableList());
 
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(classesSourceFiles, projectProperties.getLogger()).find();
+        new MainClassFinder(
+                classesSourceFiles,
+                new DefaultEventDispatcher(projectProperties.getEventHandlers()))
+            .find();
 
     switch (mainClassFinderResult.getType()) {
       case MAIN_CLASS_FOUND:

@@ -33,6 +33,7 @@
             <tags>${_ADDITIONAL_TAG}</tags>
           </to>
           <container>
+            <user>12345:54321</user>
             <ports>
               <port>1000/tcp</port>
               <port>2000-2003/udp</port>

@@ -16,16 +16,22 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.Timer;
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
+import com.google.cloud.tools.jib.cache.CacheEntry;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,12 +41,34 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /** Builds a model {@link Image}. */
 class BuildImageStep
-    implements AsyncStep<AsyncStep<Image<CachedLayer>>>, Callable<AsyncStep<Image<CachedLayer>>> {
+    implements AsyncStep<AsyncStep<Image<Layer>>>, Callable<AsyncStep<Image<Layer>>> {
 
   private static final String DESCRIPTION = "Building container configuration";
+
+  @VisibleForTesting
+  static Layer cacheEntryToLayer(CacheEntry cacheEntry) {
+    return new Layer() {
+
+      @Override
+      public Blob getBlob() throws LayerPropertyNotFoundException {
+        return cacheEntry.getLayerBlob();
+      }
+
+      @Override
+      public BlobDescriptor getBlobDescriptor() throws LayerPropertyNotFoundException {
+        return new BlobDescriptor(cacheEntry.getLayerSize(), cacheEntry.getLayerDigest());
+      }
+
+      @Override
+      public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
+        return cacheEntry.getLayerDiffId();
+      }
+    };
+  }
 
   private final BuildConfiguration buildConfiguration;
   private final PullBaseImageStep pullBaseImageStep;
@@ -48,7 +76,7 @@ class BuildImageStep
   private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
 
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<AsyncStep<Image<CachedLayer>>> listenableFuture;
+  private final ListenableFuture<AsyncStep<Image<Layer>>> listenableFuture;
 
   BuildImageStep(
       ListeningExecutorService listeningExecutorService,
@@ -69,12 +97,12 @@ class BuildImageStep
   }
 
   @Override
-  public ListenableFuture<AsyncStep<Image<CachedLayer>>> getFuture() {
+  public ListenableFuture<AsyncStep<Image<Layer>>> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public AsyncStep<Image<CachedLayer>> call() throws ExecutionException {
+  public AsyncStep<Image<Layer>> call() throws ExecutionException {
     List<ListenableFuture<?>> dependencies = new ArrayList<>();
 
     for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
@@ -85,17 +113,18 @@ class BuildImageStep
         buildAndCacheApplicationLayerSteps) {
       dependencies.add(buildAndCacheApplicationLayerStep.getFuture());
     }
-    ListenableFuture<Image<CachedLayer>> future =
+    ListenableFuture<Image<Layer>> future =
         Futures.whenAllSucceed(dependencies)
-            .call(this::afterCachedLayersSteps, listeningExecutorService);
+            .call(this::afterCacheEntrySteps, listeningExecutorService);
     return () -> future;
   }
 
-  private Image<CachedLayer> afterCachedLayersSteps()
+  private Image<Layer> afterCacheEntrySteps()
       throws ExecutionException, LayerPropertyNotFoundException {
-    try (Timer ignored = new Timer(buildConfiguration.getBuildLogger(), DESCRIPTION)) {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // Constructs the image.
-      Image.Builder<CachedLayer> imageBuilder = Image.builder();
+      Image.Builder<Layer> imageBuilder = Image.builder();
       Image<Layer> baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();
       ContainerConfiguration containerConfiguration =
           buildConfiguration.getContainerConfiguration();
@@ -104,7 +133,8 @@ class BuildImageStep
       List<PullAndCacheBaseImageLayerStep> baseImageLayers =
           NonBlockingSteps.get(pullAndCacheBaseImageLayersStep);
       for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep : baseImageLayers) {
-        imageBuilder.addLayer(NonBlockingSteps.get(pullAndCacheBaseImageLayerStep));
+        imageBuilder.addLayer(
+            cacheEntryToLayer(NonBlockingSteps.get(pullAndCacheBaseImageLayerStep)));
       }
 
       // Passthrough config and count non-empty history entries
@@ -135,19 +165,22 @@ class BuildImageStep
       // Add built layers/configuration
       for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
           buildAndCacheApplicationLayerSteps) {
-        imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
+        imageBuilder.addLayer(
+            cacheEntryToLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep)));
         imageBuilder.addHistory(
             HistoryEntry.builder()
                 .setCreationTimestamp(layerCreationTime)
                 .setAuthor("Jib")
-                .setCreatedBy(buildConfiguration.getToolName())
+                .setCreatedBy(buildConfiguration.getToolName() + ":" + ProjectInfo.VERSION)
                 .build());
       }
       if (containerConfiguration != null) {
         imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());
         imageBuilder.setCreated(containerConfiguration.getCreationTime());
-        imageBuilder.setEntrypoint(containerConfiguration.getEntrypoint());
-        imageBuilder.setJavaArguments(containerConfiguration.getProgramArguments());
+        imageBuilder.setUser(containerConfiguration.getUser());
+        imageBuilder.setEntrypoint(computeEntrypoint(baseImage, containerConfiguration));
+        imageBuilder.setProgramArguments(
+            computeProgramArguments(baseImage, containerConfiguration));
         imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());
         imageBuilder.addLabels(containerConfiguration.getLabels());
       }
@@ -155,5 +188,60 @@ class BuildImageStep
       // Gets the container configuration content descriptor.
       return imageBuilder.build();
     }
+  }
+
+  /**
+   * Computes the image entrypoint. If {@link ContainerConfiguration#getEntrypoint()} is null, the
+   * entrypoint is inherited from the base image. Otherwise {@link
+   * ContainerConfiguration#getEntrypoint()} is returned.
+   *
+   * @param baseImage the base image
+   * @param containerConfiguration the container configuration
+   * @return the container entrypoint
+   */
+  @Nullable
+  private ImmutableList<String> computeEntrypoint(
+      Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
+    if (baseImage.getEntrypoint() == null || containerConfiguration.getEntrypoint() != null) {
+      return containerConfiguration.getEntrypoint();
+    }
+
+    buildConfiguration
+        .getEventDispatcher()
+        .dispatch(
+            LogEvent.lifecycle(
+                "Container entrypoint set to "
+                    + baseImage.getEntrypoint()
+                    + " (inherited from base image)"));
+    return baseImage.getEntrypoint();
+  }
+
+  /**
+   * Computes the image program arguments. If {@link ContainerConfiguration#getEntrypoint()} and
+   * {@link ContainerConfiguration#getProgramArguments()} are null, the program arguments are
+   * inherited from the base image. Otherwise {@link ContainerConfiguration#getProgramArguments()}
+   * is returned.
+   *
+   * @param baseImage the base image
+   * @param containerConfiguration the container configuration
+   * @return the container program arguments
+   */
+  @Nullable
+  private ImmutableList<String> computeProgramArguments(
+      Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
+    if (baseImage.getProgramArguments() == null
+        || containerConfiguration.getEntrypoint() != null
+        || containerConfiguration.getProgramArguments() != null) {
+      return containerConfiguration.getProgramArguments();
+    }
+
+    buildConfiguration
+        .getEventDispatcher()
+        .dispatch(
+            LogEvent.lifecycle(
+                "Container program arguments set to "
+                    + baseImage.getProgramArguments()
+                    + " (inherited from base image)"));
+    return baseImage.getProgramArguments();
   }
 }
