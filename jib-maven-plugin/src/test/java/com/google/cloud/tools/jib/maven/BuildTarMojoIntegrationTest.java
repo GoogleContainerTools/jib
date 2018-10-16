@@ -52,6 +52,8 @@ public class BuildTarMojoIntegrationTest {
     verifier.executeGoal("jib:" + BuildTarMojo.GOAL_NAME);
     verifier.verifyErrorFreeLog();
 
+    BuildImageMojoIntegrationTest.assertImageDigest(simpleTestProject.getProjectRoot());
+
     new Command(
             "docker",
             "load",

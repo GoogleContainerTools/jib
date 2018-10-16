@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.TarImage;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
@@ -31,8 +32,9 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.FileCollection;
@@ -88,16 +90,26 @@ public class BuildTarTask extends DefaultTask implements JibTask {
    */
   @OutputFile
   public String getOutputFile() {
-    return getTargetPath();
+    return getTarPath().toString();
   }
 
   /**
-   * Returns the output directory for the tarball. By default, it is {@code build/jib-image.tar}.
+   * Returns the location for the tarball. By default, it is {@code build/jib-image.tar}.
+   *
+   * @return the tarball location
+   */
+  private Path getTarPath() {
+    return getProject().getBuildDir().toPath().resolve("jib-image.tar");
+  }
+
+  /**
+   * Returns the output directory for the image digest. By default, it is {@code
+   * build/jib-image.digest}.
    *
    * @return the output directory
    */
-  private String getTargetPath() {
-    return getProject().getBuildDir().toPath().resolve("jib-image.tar").toString();
+  private Path getImageDigestPath() {
+    return getProject().getBuildDir().toPath().resolve("jib-image.digest");
   }
 
   @TaskAction
@@ -124,7 +136,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
             getProject().getVersion().toString(),
             gradleHelpfulSuggestionsBuilder.build());
 
-    Path tarOutputPath = Paths.get(getTargetPath());
+    Path tarOutputPath = getTarPath();
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarOutputPath);
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
@@ -145,13 +157,17 @@ public class BuildTarTask extends DefaultTask implements JibTask {
             .setTargetImageReference(targetImageReference)
             .build();
 
-    BuildStepsRunner.forBuildTar(tarOutputPath)
-        .build(
-            jibContainerBuilder,
-            containerizer,
-            eventDispatcher,
-            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-            helpfulSuggestions);
+    JibContainer container =
+        BuildStepsRunner.forBuildTar(tarOutputPath)
+            .build(
+                jibContainerBuilder,
+                containerizer,
+                eventDispatcher,
+                gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+                helpfulSuggestions);
+
+    String imageDigest = container.getDigest().toString();
+    Files.write(getImageDigestPath(), imageDigest.getBytes(StandardCharsets.UTF_8));
   }
 
   @Override

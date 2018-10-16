@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
@@ -27,6 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.DigestException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.regex.Matcher;
@@ -75,6 +77,17 @@ public class BuildImageMojoIntegrationTest {
     return nameBase + label + System.nanoTime();
   }
 
+  static void assertImageDigest(Path projectRoot) {
+    Path digestPath = projectRoot.resolve("target/jib-image.digest");
+    Assert.assertTrue(Files.exists(digestPath));
+    try {
+      String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
+      DescriptorDigest.fromDigest(digest);
+    } catch (IOException | DigestException ex) {
+      Assert.fail("Invalid jib-image.digest");
+    }
+  }
+
   /**
    * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
@@ -90,6 +103,8 @@ public class BuildImageMojoIntegrationTest {
     // Builds twice, and checks if the second build took less time.
     verifier.executeGoal("jib:build");
     float timeOne = getBuildTimeFromVerifierLog(verifier);
+
+    assertImageDigest(projectRoot);
 
     if (runTwice) {
       verifier.resetStreams();
@@ -116,6 +131,8 @@ public class BuildImageMojoIntegrationTest {
     verifier.addCliOption("-X");
     verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
     verifier.verifyErrorFreeLog();
+
+    assertImageDigest(projectRoot);
 
     String additionalImageReference =
         ImageReference.parse(imageReference).withTag(additionalTag).toString();
@@ -144,6 +161,8 @@ public class BuildImageMojoIntegrationTest {
     verifier.addCliOption("--file=pom-complex.xml");
     verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
     verifier.verifyErrorFreeLog();
+
+    assertImageDigest(simpleTestProject.getProjectRoot());
 
     // Verify output
     targetRegistry.pull(imageReference);

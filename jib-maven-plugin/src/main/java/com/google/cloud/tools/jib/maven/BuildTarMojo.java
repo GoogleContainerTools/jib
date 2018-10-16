@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.TarImage;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
@@ -31,6 +32,8 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -77,8 +80,8 @@ public class BuildTarMojo extends JibPluginConfiguration {
               getProject().getName(),
               getProject().getVersion(),
               mavenHelpfulSuggestionsBuilder.build());
-      Path tarOutputPath =
-          Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.tar");
+      Path buildOutputPath = Paths.get(getProject().getBuild().getDirectory());
+      Path tarOutputPath = buildOutputPath.resolve("jib-image.tar");
       TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarOutputPath);
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
@@ -99,13 +102,19 @@ public class BuildTarMojo extends JibPluginConfiguration {
               .setTargetImageReference(targetImageReference)
               .build();
 
-      BuildStepsRunner.forBuildTar(tarOutputPath)
-          .build(
-              jibContainerBuilder,
-              containerizer,
-              eventDispatcher,
-              mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-              helpfulSuggestions);
+      JibContainer container =
+          BuildStepsRunner.forBuildTar(tarOutputPath)
+              .build(
+                  jibContainerBuilder,
+                  containerizer,
+                  eventDispatcher,
+                  mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+                  helpfulSuggestions);
+
+      Path digestOutputPath = buildOutputPath.resolve("jib-image.digest");
+      String imageDigest = container.getDigest().toString();
+      Files.write(digestOutputPath, imageDigest.getBytes(StandardCharsets.UTF_8));
+
       getLog().info("");
 
     } catch (InvalidImageReferenceException | IOException | CacheDirectoryCreationException ex) {

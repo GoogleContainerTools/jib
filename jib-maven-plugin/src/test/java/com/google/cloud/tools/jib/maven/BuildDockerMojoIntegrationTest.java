@@ -52,6 +52,8 @@ public class BuildDockerMojoIntegrationTest {
 
     verifier.executeGoal("jib:dockerBuild");
     verifier.verifyErrorFreeLog();
+
+    BuildImageMojoIntegrationTest.assertImageDigest(projectRoot);
   }
 
   /**
@@ -79,6 +81,7 @@ public class BuildDockerMojoIntegrationTest {
                 + "                \"key1\": \"value1\",\n"
                 + "                \"key2\": \"value2\"\n"
                 + "            }"));
+
     return new Command("docker", "run", "--rm", imageReference).run();
   }
 
