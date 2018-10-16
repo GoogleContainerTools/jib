@@ -5,6 +5,7 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -14,6 +15,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -377,6 +379,55 @@ public class JavaLayerConfigurationsTest {
             "/base/test/resources",
             "/base/test/resources/leaf",
             "/base/test/D.class"),
+        configurations.getExtraFilesLayerEntries());
+  }
+
+  @Test
+  public void testAddExtraDirectoryContents() throws IOException {
+    temporaryFolder.newFolder("src", "main", "jib");
+    temporaryFolder.newFile("src/main/jib/fileA");
+    temporaryFolder.newFile("src/main/jib/fileB");
+    temporaryFolder.newFile("src/main/jib/fileC");
+    temporaryFolder.newFolder("src", "main", "jib", "folder");
+    temporaryFolder.newFile("src/main/jib/folder/fileD");
+    temporaryFolder.newFile("src/main/jib/folder/fileE");
+    temporaryFolder.newFile("src/main/jib/folder/folder2");
+
+    Map<AbsoluteUnixPath, Integer> permissions =
+        ImmutableMap.of(
+            AbsoluteUnixPath.get("/fileA"),
+            0123,
+            AbsoluteUnixPath.get("/fileB"),
+            0456,
+            AbsoluteUnixPath.get("/folder"),
+            0111,
+            AbsoluteUnixPath.get("/folder/fileD"),
+            0222);
+
+    Path extraDirectory =
+        temporaryFolder.getRoot().toPath().resolve("src").resolve("main").resolve("jib");
+    AbsoluteUnixPath basePath = AbsoluteUnixPath.get("/");
+    JavaLayerConfigurations configurations =
+        JavaLayerConfigurations.builder()
+            .addExtraDirectoryContents(extraDirectory, basePath, permissions)
+            .build();
+
+    Assert.assertEquals(
+        Arrays.asList(
+            new LayerEntry(extraDirectory.resolve("fileA"), basePath.resolve("fileA"), 0123),
+            new LayerEntry(extraDirectory.resolve("fileB"), basePath.resolve("fileB"), 0456),
+            new LayerEntry(extraDirectory.resolve("fileC"), basePath.resolve("fileC")),
+            new LayerEntry(extraDirectory.resolve("folder"), basePath.resolve("folder"), 0111),
+            new LayerEntry(
+                extraDirectory.resolve("folder").resolve("fileD"),
+                basePath.resolve("folder").resolve("fileD"),
+                0222),
+            new LayerEntry(
+                extraDirectory.resolve("folder").resolve("fileE"),
+                basePath.resolve("folder").resolve("fileE")),
+            new LayerEntry(
+                extraDirectory.resolve("folder").resolve("folder2"),
+                basePath.resolve("folder").resolve("folder2"))),
         configurations.getExtraFilesLayerEntries());
   }
 }

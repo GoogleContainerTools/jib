@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.common.base.Preconditions;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -71,6 +72,9 @@ public class LayerEntry {
    * @param permissions the file permissions on the container
    */
   public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath, int permissions) {
+    Preconditions.checkArgument(
+        permissions >= 0 && permissions <= 0777,
+        "File permissions must be between 000 and 777 octal (511 decimal)");
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
     this.permissions = permissions;
@@ -138,11 +142,12 @@ public class LayerEntry {
     }
     LayerEntry otherLayerEntry = (LayerEntry) other;
     return sourceFile.equals(otherLayerEntry.sourceFile)
-        && extractionPath.equals(otherLayerEntry.extractionPath);
+        && extractionPath.equals(otherLayerEntry.extractionPath)
+        && permissions == otherLayerEntry.permissions;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceFile, extractionPath);
+    return Objects.hash(sourceFile, extractionPath, permissions);
   }
 }

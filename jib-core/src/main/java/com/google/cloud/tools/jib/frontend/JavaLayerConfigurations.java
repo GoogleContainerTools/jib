@@ -140,8 +140,11 @@ public class JavaLayerConfigurations {
      * @throws IOException error while listing directories
      * @throws NotDirectoryException if {@code sourceRoot} is not a directory
      */
+    // TODO: Use in plugins
     public Builder addExtraDirectoryContents(
-        Path sourceRoot, AbsoluteUnixPath basePathInContainer, Map<Path, Integer> permissionsMap)
+        Path sourceRoot,
+        AbsoluteUnixPath basePathInContainer,
+        Map<AbsoluteUnixPath, Integer> permissionsMap)
         throws IOException {
       LayerConfiguration.Builder builder =
           Preconditions.checkNotNull(layerBuilders.get(LayerType.EXTRA_FILES));
@@ -150,14 +153,12 @@ public class JavaLayerConfigurations {
           .filterRoot()
           .walk(
               path -> {
-                Path pathOnContainer = sourceRoot.relativize(path);
+                AbsoluteUnixPath pathOnContainer =
+                    basePathInContainer.resolve(sourceRoot.relativize(path));
                 if (permissionsMap.containsKey(pathOnContainer)) {
-                  builder.addEntry(
-                      path,
-                      basePathInContainer.resolve(pathOnContainer),
-                      permissionsMap.get(pathOnContainer));
+                  builder.addEntry(path, pathOnContainer, permissionsMap.get(pathOnContainer));
                 } else {
-                  builder.addEntry(path, basePathInContainer.resolve(pathOnContainer));
+                  builder.addEntry(path, pathOnContainer);
                 }
               });
       return this;
