@@ -88,6 +88,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
           .setEntrypoint(entrypoint)
           .setProgramArguments(getArgs())
           .setExposedPorts(getExposedPorts())
+          .setEnvironment(getEnvironment())
           .setLabels(getLabels())
           .setUser(getUser())
           .generate(Paths.get(targetDir));

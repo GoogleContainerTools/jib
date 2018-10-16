@@ -17,11 +17,13 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -119,6 +121,11 @@ public class DockerContextMojoTest {
   }
 
   @Test
+  public void testGeneratedDockerContext_env() throws MojoExecutionException, IOException {
+    mojo.execute();
+    Assert.assertEquals("ENV envKey=\"envVal\"", getDockerfileLine("ENV"));
+  }
+
   public void testBaseImage_nonWarPackaging() throws MojoExecutionException, IOException {
     mojo.execute();
 
@@ -233,6 +240,11 @@ public class DockerContextMojoTest {
     @Override
     String getAppRoot() {
       return appRoot;
+    }
+
+    @Override
+    Map<String, String> getEnvironment() {
+      return ImmutableMap.of("envKey", "envVal");
     }
   }
 
