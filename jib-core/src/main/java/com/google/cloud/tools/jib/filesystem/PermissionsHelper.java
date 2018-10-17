@@ -17,12 +17,17 @@
 package com.google.cloud.tools.jib.filesystem;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /** Helpers for converting file permissions. */
 public class PermissionsHelper {
+
+  private static final Map<PosixFilePermission, Integer> permissionMap = generatePermissionMap();
 
   /**
    * Converts a set of {@link PosixFilePermission} to its 3-digit octal integer representation.
@@ -32,11 +37,8 @@ public class PermissionsHelper {
    */
   public static int toInt(Set<PosixFilePermission> permissions) {
     int result = 0;
-    PosixFilePermission[] values = PosixFilePermission.values();
-    for (int bit = 0; bit < values.length; bit++) {
-      if (permissions.contains(values[bit])) {
-        result |= 1 << (8 - bit);
-      }
+    for (PosixFilePermission permission : permissions) {
+      result |= permissionMap.get(permission);
     }
     return result;
   }
@@ -49,13 +51,29 @@ public class PermissionsHelper {
    */
   public static Set<PosixFilePermission> toSet(int permissions) {
     Preconditions.checkArgument(
-        permissions >= 0 && permissions <= 511, "Permissions must be between 000 and 777 octal");
-    ImmutableSet.Builder<PosixFilePermission> result = ImmutableSet.builder();
-    for (int bit = 0; bit < 9; bit++) {
-      if ((permissions & (1 << bit)) != 0) {
-        result.add(PosixFilePermission.values()[8 - bit]);
+        permissions >= 0 && permissions <= 0777, "Permissions must be between 000 and 777 octal");
+    HashSet<PosixFilePermission> result = new HashSet<>();
+    for (Entry<PosixFilePermission, Integer> entry : permissionMap.entrySet()) {
+      if ((permissions & entry.getValue()) != 0) {
+        result.add(entry.getKey());
       }
     }
-    return result.build();
+    return result;
   }
+
+  private static Map<PosixFilePermission, Integer> generatePermissionMap() {
+    Map<PosixFilePermission, Integer> result = new HashMap<>();
+    result.put(PosixFilePermission.OWNER_READ, 0b100000000);
+    result.put(PosixFilePermission.OWNER_WRITE, 0b010000000);
+    result.put(PosixFilePermission.OWNER_EXECUTE, 0b001000000);
+    result.put(PosixFilePermission.GROUP_READ, 0b000100000);
+    result.put(PosixFilePermission.GROUP_WRITE, 0b000010000);
+    result.put(PosixFilePermission.GROUP_EXECUTE, 0b000001000);
+    result.put(PosixFilePermission.OTHERS_READ, 0b000000100);
+    result.put(PosixFilePermission.OTHERS_WRITE, 0b000000010);
+    result.put(PosixFilePermission.OTHERS_EXECUTE, 0b000000001);
+    return result;
+  }
+
+  private PermissionsHelper() {}
 }
