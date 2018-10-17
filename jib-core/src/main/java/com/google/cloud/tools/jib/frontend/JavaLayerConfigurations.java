@@ -28,8 +28,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /** Builds {@link LayerConfiguration}s for a Java application. */
@@ -115,15 +117,8 @@ public class JavaLayerConfigurations {
         Predicate<Path> pathFilter,
         AbsoluteUnixPath basePathInContainer)
         throws IOException {
-      LayerConfiguration.Builder builder = Preconditions.checkNotNull(layerBuilders.get(layerType));
-
-      new DirectoryWalker(sourceRoot)
-          .filterRoot()
-          .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
-          .walk(
-              path ->
-                  builder.addEntry(path, basePathInContainer.resolve(sourceRoot.relativize(path))));
-      return this;
+      return addDirectoryContents(
+          layerType, sourceRoot, pathFilter, basePathInContainer, ImmutableMap.of());
     }
 
     /**
@@ -133,7 +128,9 @@ public class JavaLayerConfigurations {
      * via {@code permissionsMap}, which maps from extraction path on the container to file
      * permissions.
      *
+     * @param layerType the layer to add files into
      * @param sourceRoot root directory whose contents will be added
+     * @param pathFilter filter that determines which files (not directories) should be added
      * @param basePathInContainer directory in the layer into which the source contents are added
      * @param permissionsMap the map from absolute path on container to file permission
      * @return this
@@ -141,16 +138,18 @@ public class JavaLayerConfigurations {
      * @throws NotDirectoryException if {@code sourceRoot} is not a directory
      */
     // TODO: Use in plugins
-    public Builder addExtraDirectoryContents(
+    public Builder addDirectoryContents(
+        LayerType layerType,
         Path sourceRoot,
+        Predicate<Path> pathFilter,
         AbsoluteUnixPath basePathInContainer,
-        Map<AbsoluteUnixPath, Integer> permissionsMap)
+        Map<AbsoluteUnixPath, Set<PosixFilePermission>> permissionsMap)
         throws IOException {
-      LayerConfiguration.Builder builder =
-          Preconditions.checkNotNull(layerBuilders.get(LayerType.EXTRA_FILES));
+      LayerConfiguration.Builder builder = Preconditions.checkNotNull(layerBuilders.get(layerType));
 
       new DirectoryWalker(sourceRoot)
           .filterRoot()
+          .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
           .walk(
               path -> {
                 AbsoluteUnixPath pathOnContainer =

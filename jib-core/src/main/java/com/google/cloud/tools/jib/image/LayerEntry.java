@@ -17,10 +17,13 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.common.base.Preconditions;
+import com.google.cloud.tools.jib.filesystem.PermissionsHelper;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.Objects;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -36,13 +39,18 @@ import java.util.Objects;
  */
 public class LayerEntry {
 
+  private static final Set<PosixFilePermission> DEFAULT_FILE_PERMISSIONS =
+      PermissionsHelper.toSet(0644);
+  private static final Set<PosixFilePermission> DEFAULT_FOLDER_PERMISSIONS =
+      PermissionsHelper.toSet(0755);
+
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
-  private final int permissions;
+  private final Set<PosixFilePermission> permissions;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
-   * system with default permissions ({@code 755} for directories, {@code 644} for files).
+   * system.
    *
    * <p>For example, {@code new LayerEntry(Paths.get("HelloWorld.class"),
    * AbsoluteUnixPath.get("/app/classes/HelloWorld.class"))} adds a file {@code HelloWorld.class} to
@@ -55,29 +63,21 @@ public class LayerEntry {
    * @param sourceFile the source file to add to the layer
    * @param extractionPath the path in the container file system corresponding to the {@code
    *     sourceFile}
+   * @param permissions the file permissions on the container. Use {@code null} to use defaults (644
+   *     for files, 755 for directories)
    */
-  public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath) {
+  public LayerEntry(
+      Path sourceFile,
+      AbsoluteUnixPath extractionPath,
+      @Nullable Set<PosixFilePermission> permissions) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
-    this.permissions = Files.isDirectory(sourceFile) ? 0755 : 0644;
-  }
-
-  /**
-   * Instantiates with a source file and the path to place the source file in the container file
-   * system.
-   *
-   * @param sourceFile the source file to add to the layer
-   * @param extractionPath the path in the container file system corresponding to the {@code
-   *     sourceFile}
-   * @param permissions the file permissions on the container
-   */
-  public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath, int permissions) {
-    Preconditions.checkArgument(
-        permissions >= 0 && permissions <= 0777,
-        "File permissions must be between 000 and 777 octal (511 decimal)");
-    this.sourceFile = sourceFile;
-    this.extractionPath = extractionPath;
-    this.permissions = permissions;
+    if (permissions == null) {
+      this.permissions =
+          Files.isDirectory(sourceFile) ? DEFAULT_FOLDER_PERMISSIONS : DEFAULT_FILE_PERMISSIONS;
+    } else {
+      this.permissions = permissions;
+    }
   }
 
   /**
@@ -108,7 +108,7 @@ public class LayerEntry {
    *
    * @return the file permissions on the container
    */
-  public int getPermissions() {
+  public Set<PosixFilePermission> getPermissions() {
     return permissions;
   }
 
@@ -143,7 +143,7 @@ public class LayerEntry {
     LayerEntry otherLayerEntry = (LayerEntry) other;
     return sourceFile.equals(otherLayerEntry.sourceFile)
         && extractionPath.equals(otherLayerEntry.extractionPath)
-        && permissions == otherLayerEntry.permissions;
+        && permissions.equals(otherLayerEntry.permissions);
   }
 
   @Override

@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.filesystem.PermissionsHelper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
@@ -166,14 +167,14 @@ public class ReproducibleLayerBuilderTest {
     Blob layer =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA")),
-                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"))))
+                    new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA"), null),
+                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"), null)))
             .build();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB")),
-                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"))))
+                    new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB"), null),
+                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"), null)))
             .build();
 
     byte[] layerContent = Blobs.writeToByteArray(layer);
@@ -188,7 +189,7 @@ public class ReproducibleLayerBuilderTest {
 
     Blob blob =
         new ReproducibleLayerBuilder(
-                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"))))
+                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"), null)))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -213,9 +214,15 @@ public class ReproducibleLayerBuilderTest {
     Blob blob =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA")),
-                    new LayerEntry(fileB, AbsoluteUnixPath.get("/somewhere/fileB"), 0123),
-                    new LayerEntry(folder, AbsoluteUnixPath.get("/somewhere/folder"), 0456)))
+                    new LayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA"), null),
+                    new LayerEntry(
+                        fileB,
+                        AbsoluteUnixPath.get("/somewhere/fileB"),
+                        PermissionsHelper.toSet(0123)),
+                    new LayerEntry(
+                        folder,
+                        AbsoluteUnixPath.get("/somewhere/folder"),
+                        PermissionsHelper.toSet(0456))))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();

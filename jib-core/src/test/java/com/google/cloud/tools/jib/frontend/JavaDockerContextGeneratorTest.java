@@ -73,7 +73,7 @@ public class JavaDockerContextGeneratorTest {
         .map(
             sourceFile ->
                 new LayerEntry(
-                    sourceFile, extractionRoot.resolve(directory.relativize(sourceFile))))
+                    sourceFile, extractionRoot.resolve(directory.relativize(sourceFile)), null))
         .collect(ImmutableList.toImmutableList());
   }
 
@@ -136,17 +136,19 @@ public class JavaDockerContextGeneratorTest {
 
     Path ignored = Paths.get("ignored");
     Mockito.when(mockJavaLayerConfigurations.getDependencyLayerEntries())
-        .thenReturn(ImmutableList.of(new LayerEntry(ignored, AbsoluteUnixPath.get("/app/libs"))));
+        .thenReturn(
+            ImmutableList.of(new LayerEntry(ignored, AbsoluteUnixPath.get("/app/libs"), null)));
     Mockito.when(mockJavaLayerConfigurations.getSnapshotDependencyLayerEntries())
-        .thenReturn(ImmutableList.of(new LayerEntry(ignored, AbsoluteUnixPath.get("/snapshots"))));
+        .thenReturn(
+            ImmutableList.of(new LayerEntry(ignored, AbsoluteUnixPath.get("/snapshots"), null)));
     Mockito.when(mockJavaLayerConfigurations.getResourceLayerEntries())
         .thenReturn(
-            ImmutableList.of(new LayerEntry(ignored, AbsoluteUnixPath.get("/my/resources"))));
+            ImmutableList.of(new LayerEntry(ignored, AbsoluteUnixPath.get("/my/resources"), null)));
     Mockito.when(mockJavaLayerConfigurations.getClassLayerEntries())
         .thenReturn(
-            ImmutableList.of(new LayerEntry(ignored, AbsoluteUnixPath.get("/my/classes/"))));
+            ImmutableList.of(new LayerEntry(ignored, AbsoluteUnixPath.get("/my/classes/"), null)));
     Mockito.when(mockJavaLayerConfigurations.getExtraFilesLayerEntries())
-        .thenReturn(ImmutableList.of(new LayerEntry(ignored, AbsoluteUnixPath.get("/"))));
+        .thenReturn(ImmutableList.of(new LayerEntry(ignored, AbsoluteUnixPath.get("/"), null)));
 
     String dockerfile =
         new JavaDockerContextGenerator(mockJavaLayerConfigurations)
@@ -174,20 +176,24 @@ public class JavaDockerContextGeneratorTest {
     Mockito.when(mockJavaLayerConfigurations.getDependencyLayerEntries())
         .thenReturn(
             ImmutableList.of(
-                new LayerEntry(Paths.get("ignored"), exepectedAppRoot.resolve("WEB-INF/lib"))));
+                new LayerEntry(
+                    Paths.get("ignored"), exepectedAppRoot.resolve("WEB-INF/lib"), null)));
     Mockito.when(mockJavaLayerConfigurations.getSnapshotDependencyLayerEntries())
         .thenReturn(
             ImmutableList.of(
-                new LayerEntry(Paths.get("ignored"), exepectedAppRoot.resolve("WEB-INF/lib"))));
+                new LayerEntry(
+                    Paths.get("ignored"), exepectedAppRoot.resolve("WEB-INF/lib"), null)));
     Mockito.when(mockJavaLayerConfigurations.getResourceLayerEntries())
-        .thenReturn(ImmutableList.of(new LayerEntry(Paths.get("ignored"), exepectedAppRoot)));
+        .thenReturn(ImmutableList.of(new LayerEntry(Paths.get("ignored"), exepectedAppRoot, null)));
     Mockito.when(mockJavaLayerConfigurations.getClassLayerEntries())
         .thenReturn(
             ImmutableList.of(
-                new LayerEntry(Paths.get("ignored"), exepectedAppRoot.resolve("WEB-INF/classes"))));
+                new LayerEntry(
+                    Paths.get("ignored"), exepectedAppRoot.resolve("WEB-INF/classes"), null)));
     Mockito.when(mockJavaLayerConfigurations.getExtraFilesLayerEntries())
         .thenReturn(
-            ImmutableList.of(new LayerEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/"))));
+            ImmutableList.of(
+                new LayerEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/"), null)));
     String dockerfile =
         new JavaDockerContextGenerator(mockJavaLayerConfigurations)
             .setBaseImage(expectedBaseImage)
