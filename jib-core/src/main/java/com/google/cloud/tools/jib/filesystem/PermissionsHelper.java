@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.filesystem;
 
 import com.google.common.base.Preconditions;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -27,7 +28,21 @@ import java.util.Set;
 /** Helpers for converting file permissions. */
 public class PermissionsHelper {
 
-  private static final Map<PosixFilePermission, Integer> permissionMap = generatePermissionMap();
+  private static final Map<PosixFilePermission, Integer> permissionMap;
+
+  static {
+    Map<PosixFilePermission, Integer> result = new HashMap<>();
+    result.put(PosixFilePermission.OWNER_READ, 0b100000000);
+    result.put(PosixFilePermission.OWNER_WRITE, 0b010000000);
+    result.put(PosixFilePermission.OWNER_EXECUTE, 0b001000000);
+    result.put(PosixFilePermission.GROUP_READ, 0b000100000);
+    result.put(PosixFilePermission.GROUP_WRITE, 0b000010000);
+    result.put(PosixFilePermission.GROUP_EXECUTE, 0b000001000);
+    result.put(PosixFilePermission.OTHERS_READ, 0b000000100);
+    result.put(PosixFilePermission.OTHERS_WRITE, 0b000000010);
+    result.put(PosixFilePermission.OTHERS_EXECUTE, 0b000000001);
+    permissionMap = Collections.unmodifiableMap(result);
+  }
 
   /**
    * Converts a set of {@link PosixFilePermission} to its 3-digit octal integer representation.
@@ -58,20 +73,6 @@ public class PermissionsHelper {
         result.add(entry.getKey());
       }
     }
-    return result;
-  }
-
-  private static Map<PosixFilePermission, Integer> generatePermissionMap() {
-    Map<PosixFilePermission, Integer> result = new HashMap<>();
-    result.put(PosixFilePermission.OWNER_READ, 0b100000000);
-    result.put(PosixFilePermission.OWNER_WRITE, 0b010000000);
-    result.put(PosixFilePermission.OWNER_EXECUTE, 0b001000000);
-    result.put(PosixFilePermission.GROUP_READ, 0b000100000);
-    result.put(PosixFilePermission.GROUP_WRITE, 0b000010000);
-    result.put(PosixFilePermission.GROUP_EXECUTE, 0b000001000);
-    result.put(PosixFilePermission.OTHERS_READ, 0b000000100);
-    result.put(PosixFilePermission.OTHERS_WRITE, 0b000000010);
-    result.put(PosixFilePermission.OTHERS_EXECUTE, 0b000000001);
     return result;
   }
 

@@ -395,14 +395,12 @@ public class JavaLayerConfigurationsTest {
 
   @Test
   public void testAddExtraDirectoryContents() throws IOException {
-    temporaryFolder.newFolder("src", "main", "jib");
+    temporaryFolder.newFolder("src", "main", "jib", "folder", "folder2");
     temporaryFolder.newFile("src/main/jib/fileA");
     temporaryFolder.newFile("src/main/jib/fileB");
     temporaryFolder.newFile("src/main/jib/fileC");
-    temporaryFolder.newFolder("src", "main", "jib", "folder");
     temporaryFolder.newFile("src/main/jib/folder/fileD");
     temporaryFolder.newFile("src/main/jib/folder/fileE");
-    temporaryFolder.newFile("src/main/jib/folder/folder2");
 
     Map<AbsoluteUnixPath, Set<PosixFilePermission>> permissions =
         ImmutableMap.of(
