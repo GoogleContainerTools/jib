@@ -20,14 +20,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 /** Helpers for converting between file permission bits and set of {@link PosixFilePermission}. */
 public class PermissionsHelper {
 
-  private static final Map<PosixFilePermission, Integer> permissionMap =
+  private static final ImmutableMap<PosixFilePermission, Integer> permissionMap =
       ImmutableMap.<PosixFilePermission, Integer>builder()
           .put(PosixFilePermission.OWNER_READ, 0400)
           .put(PosixFilePermission.OWNER_WRITE, 0200)

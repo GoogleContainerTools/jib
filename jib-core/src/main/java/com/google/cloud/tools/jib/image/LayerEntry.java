@@ -17,9 +17,11 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.common.collect.ImmutableSet;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -39,7 +41,7 @@ public class LayerEntry {
 
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
-  @Nullable private final Set<PosixFilePermission> permissions;
+  @Nullable private final ImmutableSet<PosixFilePermission> permissions;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -65,7 +67,7 @@ public class LayerEntry {
       @Nullable Set<PosixFilePermission> permissions) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
-    this.permissions = permissions;
+    this.permissions = permissions == null ? null : ImmutableSet.copyOf(permissions);
   }
 
   /**
@@ -96,9 +98,8 @@ public class LayerEntry {
    *
    * @return the file permissions on the container
    */
-  @Nullable
-  public Set<PosixFilePermission> getPermissions() {
-    return permissions;
+  public Optional<Set<PosixFilePermission>> getPermissions() {
+    return Optional.ofNullable(permissions);
   }
 
   // TODO: Remove these get...String methods.
