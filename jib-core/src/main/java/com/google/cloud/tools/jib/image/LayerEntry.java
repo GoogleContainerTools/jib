@@ -39,9 +39,9 @@ import javax.annotation.Nullable;
  */
 public class LayerEntry {
 
-  private static final Set<PosixFilePermission> DEFAULT_FILE_PERMISSIONS =
+  private static final Set<PosixFilePermission> defaultFilePermissions =
       PermissionsHelper.toSet(0644);
-  private static final Set<PosixFilePermission> DEFAULT_FOLDER_PERMISSIONS =
+  private static final Set<PosixFilePermission> defaultFolderPermissions =
       PermissionsHelper.toSet(0755);
 
   private final Path sourceFile;
@@ -74,7 +74,7 @@ public class LayerEntry {
     this.extractionPath = extractionPath;
     if (permissions == null) {
       this.permissions =
-          Files.isDirectory(sourceFile) ? DEFAULT_FOLDER_PERMISSIONS : DEFAULT_FILE_PERMISSIONS;
+          Files.isDirectory(sourceFile) ? defaultFolderPermissions : defaultFilePermissions;
     } else {
       this.permissions = permissions;
     }

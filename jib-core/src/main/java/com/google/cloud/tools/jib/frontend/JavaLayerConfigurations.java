@@ -33,6 +33,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import javax.annotation.Nullable;
 
 /** Builds {@link LayerConfiguration}s for a Java application. */
 public class JavaLayerConfigurations {
@@ -88,8 +89,32 @@ public class JavaLayerConfigurations {
      * @see LayerConfiguration.Builder#addEntry(Path, AbsoluteUnixPath)
      */
     public Builder addFile(LayerType layerType, Path sourceFile, AbsoluteUnixPath pathInContainer) {
+      addFile(layerType, sourceFile, pathInContainer, null);
+      return this;
+    }
+
+    /**
+     * Adds a file to a layer. Only adds the single source file to the exact path in the container
+     * file system. (If the source file is a directory, does not copy its contents but creates only
+     * the directory.) See {@link LayerConfiguration.Builder#addEntry} for concrete examples about
+     * how the file will be placed in the image.
+     *
+     * @param layerType the layer to add files into
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param permissions the file permissions on the container. Use {@code null} for defaults (644
+     *     for files, 755 for directories)
+     * @return this
+     * @see LayerConfiguration.Builder#addEntry(Path, AbsoluteUnixPath, Set)
+     */
+    public Builder addFile(
+        LayerType layerType,
+        Path sourceFile,
+        AbsoluteUnixPath pathInContainer,
+        @Nullable Set<PosixFilePermission> permissions) {
       Preconditions.checkNotNull(layerBuilders.get(layerType))
-          .addEntry(sourceFile, pathInContainer);
+          .addEntry(sourceFile, pathInContainer, permissions);
       return this;
     }
 
