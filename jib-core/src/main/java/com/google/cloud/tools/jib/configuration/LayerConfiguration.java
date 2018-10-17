@@ -81,7 +81,8 @@ public class LayerConfiguration {
      * @param sourceFile the source file to add to the layer
      * @param pathInContainer the path in the container file system corresponding to the {@code
      *     sourceFile}
-     * @param permissions the file permissions on the container
+     * @param permissions the file permissions on the container. If null, then default permissions
+     *     are used (644 for files, 755 for directories)
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
      */

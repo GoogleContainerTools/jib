@@ -17,8 +17,6 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.filesystem.PermissionsHelper;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Objects;
@@ -39,14 +37,9 @@ import javax.annotation.Nullable;
  */
 public class LayerEntry {
 
-  private static final Set<PosixFilePermission> defaultFilePermissions =
-      PermissionsHelper.toSet(0644);
-  private static final Set<PosixFilePermission> defaultFolderPermissions =
-      PermissionsHelper.toSet(0755);
-
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
-  private final Set<PosixFilePermission> permissions;
+  @Nullable private final Set<PosixFilePermission> permissions;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -72,12 +65,7 @@ public class LayerEntry {
       @Nullable Set<PosixFilePermission> permissions) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
-    if (permissions == null) {
-      this.permissions =
-          Files.isDirectory(sourceFile) ? defaultFolderPermissions : defaultFilePermissions;
-    } else {
-      this.permissions = permissions;
-    }
+    this.permissions = permissions;
   }
 
   /**
@@ -108,6 +96,7 @@ public class LayerEntry {
    *
    * @return the file permissions on the container
    */
+  @Nullable
   public Set<PosixFilePermission> getPermissions() {
     return permissions;
   }
@@ -143,7 +132,7 @@ public class LayerEntry {
     LayerEntry otherLayerEntry = (LayerEntry) other;
     return sourceFile.equals(otherLayerEntry.sourceFile)
         && extractionPath.equals(otherLayerEntry.extractionPath)
-        && permissions.equals(otherLayerEntry.permissions);
+        && Objects.equals(permissions, otherLayerEntry.permissions);
   }
 
   @Override

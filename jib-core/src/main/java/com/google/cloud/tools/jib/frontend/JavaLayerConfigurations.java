@@ -179,11 +179,7 @@ public class JavaLayerConfigurations {
               path -> {
                 AbsoluteUnixPath pathOnContainer =
                     basePathInContainer.resolve(sourceRoot.relativize(path));
-                if (permissionsMap.containsKey(pathOnContainer)) {
-                  builder.addEntry(path, pathOnContainer, permissionsMap.get(pathOnContainer));
-                } else {
-                  builder.addEntry(path, pathOnContainer);
-                }
+                builder.addEntry(path, pathOnContainer, permissionsMap.get(pathOnContainer));
               });
       return this;
     }
