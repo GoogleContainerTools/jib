@@ -32,15 +32,15 @@ public class PermissionsHelper {
 
   static {
     Map<PosixFilePermission, Integer> result = new HashMap<>();
-    result.put(PosixFilePermission.OWNER_READ, 0b100000000);
-    result.put(PosixFilePermission.OWNER_WRITE, 0b010000000);
-    result.put(PosixFilePermission.OWNER_EXECUTE, 0b001000000);
-    result.put(PosixFilePermission.GROUP_READ, 0b000100000);
-    result.put(PosixFilePermission.GROUP_WRITE, 0b000010000);
-    result.put(PosixFilePermission.GROUP_EXECUTE, 0b000001000);
-    result.put(PosixFilePermission.OTHERS_READ, 0b000000100);
-    result.put(PosixFilePermission.OTHERS_WRITE, 0b000000010);
-    result.put(PosixFilePermission.OTHERS_EXECUTE, 0b000000001);
+    result.put(PosixFilePermission.OWNER_READ, 0400);
+    result.put(PosixFilePermission.OWNER_WRITE, 0200);
+    result.put(PosixFilePermission.OWNER_EXECUTE, 0100);
+    result.put(PosixFilePermission.GROUP_READ, 040);
+    result.put(PosixFilePermission.GROUP_WRITE, 020);
+    result.put(PosixFilePermission.GROUP_EXECUTE, 010);
+    result.put(PosixFilePermission.OTHERS_READ, 04);
+    result.put(PosixFilePermission.OTHERS_WRITE, 02);
+    result.put(PosixFilePermission.OTHERS_EXECUTE, 01);
     permissionMap = Collections.unmodifiableMap(result);
   }
 
@@ -51,11 +51,11 @@ public class PermissionsHelper {
    * @return the 3-digit octal integer representation of the set
    */
   public static int toInt(Set<PosixFilePermission> permissions) {
-    int result = 0;
+    int octalPermissions = 0;
     for (PosixFilePermission permission : permissions) {
-      result |= permissionMap.get(permission);
+      octalPermissions |= permissionMap.get(permission);
     }
-    return result;
+    return octalPermissions;
   }
 
   /**
