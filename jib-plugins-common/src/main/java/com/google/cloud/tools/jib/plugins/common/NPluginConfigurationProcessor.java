@@ -113,7 +113,8 @@ public class NPluginConfigurationProcessor {
   public static NPluginConfigurationProcessor processCommonConfiguration(
       RawConfigurations rawConfigurations, ProjectProperties projectProperties)
       throws InvalidImageReferenceException, NumberFormatException, FileNotFoundException,
-          MainClassInferenceException, NotAbsoluteUnixPathException {
+          MainClassInferenceException, NotAbsoluteUnixPathException,
+          InferredAuthRetrievalException {
     JibSystemProperties.checkHttpTimeoutProperty();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided

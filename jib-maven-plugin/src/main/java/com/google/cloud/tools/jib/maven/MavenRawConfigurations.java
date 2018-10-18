@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
+import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.RawConfigurations;
 import com.google.common.base.Preconditions;
 import java.util.List;
@@ -27,12 +28,18 @@ import javax.annotation.Nullable;
 class MavenRawConfigurations implements RawConfigurations {
 
   private final JibPluginConfiguration jibPluginConfiguration;
-  private final EventDispatcher eventDispatcher;
+  private final MavenSettingsServerCredentials mavenSettingsServerCredentials;
 
   public MavenRawConfigurations(
       JibPluginConfiguration jibPluginConfiguration, EventDispatcher eventDispatcher) {
+    Preconditions.checkNotNull(jibPluginConfiguration.getSession());
+
     this.jibPluginConfiguration = jibPluginConfiguration;
-    this.eventDispatcher = eventDispatcher;
+    this.mavenSettingsServerCredentials =
+        new MavenSettingsServerCredentials(
+            jibPluginConfiguration.getSession().getSettings(),
+            jibPluginConfiguration.getSettingsDecrypter(),
+            eventDispatcher);
   }
 
   @Nullable
@@ -103,11 +110,7 @@ class MavenRawConfigurations implements RawConfigurations {
 
   @Nullable
   @Override
-  public AuthProperty getInferredAuth(String authTarget) {
-    new MavenSettingsServerCredentials(
-        Preconditions.checkNotNull(jibPluginConfiguration.getSession()).getSettings(),
-        jibPluginConfiguration.getSettingsDecrypter(),
-        eventDispatcher);
-    return null;
+  public AuthProperty getInferredAuth(String authTarget) throws InferredAuthRetrievalException {
+    return mavenSettingsServerCredentials.retrieve(authTarget).orElse(null);
   }
 }

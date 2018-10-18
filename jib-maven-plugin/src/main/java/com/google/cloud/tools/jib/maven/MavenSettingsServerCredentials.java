@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
+import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -84,7 +85,7 @@ class MavenSettingsServerCredentials {
    * @return the credentials for the registry, or {@link Optional#empty} if none could be retrieved
    * @throws MojoExecutionException if the credentials could not be retrieved
    */
-  Optional<AuthProperty> retrieve(@Nullable String registry) throws MojoExecutionException {
+  Optional<AuthProperty> retrieve(@Nullable String registry) throws InferredAuthRetrievalException {
     if (registry == null) {
       return Optional.empty();
     }
@@ -106,7 +107,7 @@ class MavenSettingsServerCredentials {
       for (SettingsProblem problem : result.getProblems()) {
         if (problem.getSeverity() == SettingsProblem.Severity.ERROR
             || problem.getSeverity() == SettingsProblem.Severity.FATAL) {
-          throw new MojoExecutionException(
+          throw new InferredAuthRetrievalException(
               "Unable to decrypt password for " + registry + ": " + problem);
         }
       }

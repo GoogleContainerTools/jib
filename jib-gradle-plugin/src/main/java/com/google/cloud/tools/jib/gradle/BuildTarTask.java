@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
@@ -108,7 +109,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   @TaskAction
   public void buildTar()
       throws InvalidImageReferenceException, BuildStepsExecutionException, IOException,
-          CacheDirectoryCreationException, MainClassInferenceException {
+          CacheDirectoryCreationException, MainClassInferenceException,
+          InferredAuthRetrievalException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
