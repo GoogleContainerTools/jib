@@ -12,8 +12,8 @@ For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin)
 
 ## Upcoming features
 
-- extensions to make building Java and other language-specific containers easier
-- structured events to handle react to parts of Jib Core's execution
+- Extensions to make building Java and other language-specific containers easier
+- Structured events to handle react to parts of Jib Core's execution
 
 See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
 
