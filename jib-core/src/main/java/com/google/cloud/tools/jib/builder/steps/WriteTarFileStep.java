@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
+import com.google.cloud.tools.jib.event.events.ImageCreatedEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -91,12 +92,11 @@ public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<D
     }
     dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep).getFuture());
     return Futures.whenAllSucceed(dependenciesBuilder.build())
-        .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
+        .call(this::writeTarFile, listeningExecutorService)
         .get();
   }
 
-  private DescriptorDigest afterPushBaseImageLayerFuturesFuture()
-      throws ExecutionException, IOException {
+  private DescriptorDigest writeTarFile() throws ExecutionException, IOException {
     Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
 
     // Builds the image to a tarball.
@@ -121,8 +121,15 @@ public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<D
     BuildableManifestTemplate manifestTemplate =
         imageToJsonTranslator.getManifestTemplate(
             buildConfiguration.getTargetFormat(), containerConfigurationBlobDescriptor);
-    return JsonTemplateMapper.toBlob(manifestTemplate)
-        .writeTo(ByteStreams.nullOutputStream())
-        .getDigest();
+    DescriptorDigest imageDigest =
+        JsonTemplateMapper.toBlob(manifestTemplate)
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest();
+
+    ImageCreatedEvent event =
+        new ImageCreatedEvent(image, imageDigest, containerConfigurationBlobDescriptor.getDigest());
+    buildConfiguration.getEventDispatcher().dispatch(event);
+
+    return imageDigest;
   }
 }

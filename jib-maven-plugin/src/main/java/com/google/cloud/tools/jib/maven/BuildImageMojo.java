@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.api.Containerizer;
-import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
@@ -38,10 +37,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -156,20 +151,13 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .build();
 
     try {
-      JibContainer container =
-          BuildStepsRunner.forBuildImage(targetImageReference, getTargetImageAdditionalTags())
-              .build(
-                  jibContainerBuilder,
-                  containerizer,
-                  eventDispatcher,
-                  mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-                  helpfulSuggestions);
-
-      Path buildOutputPath = Paths.get(getProject().getBuild().getDirectory());
-      Path digestOutputPath = buildOutputPath.resolve("jib-image.digest");
-      String imageDigest = container.getDigest().toString();
-      Files.write(digestOutputPath, imageDigest.getBytes(StandardCharsets.UTF_8));
-
+      BuildStepsRunner.forBuildImage(targetImageReference, getTargetImageAdditionalTags())
+          .build(
+              jibContainerBuilder,
+              containerizer,
+              eventDispatcher,
+              mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              helpfulSuggestions);
       getLog().info("");
 
     } catch (IOException | CacheDirectoryCreationException ex) {

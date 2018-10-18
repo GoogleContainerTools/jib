@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.DockerDaemonImage;
-import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.docker.DockerClient;
@@ -33,9 +32,6 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -123,20 +119,13 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .setTargetImageReference(targetImageReference)
             .build();
 
-    JibContainer container =
-        BuildStepsRunner.forBuildToDockerDaemon(
-                targetImageReference, jibExtension.getTo().getTags())
-            .build(
-                jibContainerBuilder,
-                containerizer,
-                eventDispatcher,
-                gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-                helpfulSuggestions);
-
-    Path buildOutputPath = getProject().getBuildDir().toPath();
-    Path digestOutputPath = buildOutputPath.resolve("jib-image.digest");
-    String imageDigest = container.getDigest().toString();
-    Files.write(digestOutputPath, imageDigest.getBytes(StandardCharsets.UTF_8));
+    BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
+        .build(
+            jibContainerBuilder,
+            containerizer,
+            eventDispatcher,
+            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+            helpfulSuggestions);
   }
 
   @Override

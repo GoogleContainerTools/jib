@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
+import com.google.cloud.tools.jib.event.events.ImageCreatedEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
@@ -124,8 +125,15 @@ class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<Descriptor
     BuildableManifestTemplate manifestTemplate =
         imageToJsonTranslator.getManifestTemplate(
             buildConfiguration.getTargetFormat(), containerConfigurationBlobDescriptor);
-    return JsonTemplateMapper.toBlob(manifestTemplate)
-        .writeTo(ByteStreams.nullOutputStream())
-        .getDigest();
+    DescriptorDigest imageDigest =
+        JsonTemplateMapper.toBlob(manifestTemplate)
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest();
+
+    ImageCreatedEvent event =
+        new ImageCreatedEvent(image, imageDigest, containerConfigurationBlobDescriptor.getDigest());
+    buildConfiguration.getEventDispatcher().dispatch(event);
+
+    return imageDigest;
   }
 }

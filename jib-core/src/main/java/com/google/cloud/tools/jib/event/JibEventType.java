@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event;
 
+import com.google.cloud.tools.jib.event.events.ImageCreatedEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.common.annotations.VisibleForTesting;
@@ -34,6 +35,10 @@ public class JibEventType<E extends JibEvent> {
 
   /** Timer event for timing various part of Jib's execution. */
   public static final JibEventType<TimerEvent> TIMING = new JibEventType<>(TimerEvent.class);
+
+  /** An image was created. */
+  public static final JibEventType<ImageCreatedEvent> IMAGE_CREATION =
+      new JibEventType<>(ImageCreatedEvent.class);
 
   // TODO: Add entries for all JibEvent types.
 

@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.DockerDaemonImage;
-import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.docker.DockerClient;
@@ -33,10 +32,6 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -106,21 +101,13 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               .setTargetImageReference(targetImageReference)
               .build();
 
-      JibContainer container =
-          BuildStepsRunner.forBuildToDockerDaemon(
-                  targetImageReference, getTargetImageAdditionalTags())
-              .build(
-                  jibContainerBuilder,
-                  containerizer,
-                  eventDispatcher,
-                  mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-                  helpfulSuggestions);
-
-      Path buildOutputPath = Paths.get(getProject().getBuild().getDirectory());
-      Path digestOutputPath = buildOutputPath.resolve("jib-image.digest");
-      String imageDigest = container.getDigest().toString();
-      Files.write(digestOutputPath, imageDigest.getBytes(StandardCharsets.UTF_8));
-
+      BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
+          .build(
+              jibContainerBuilder,
+              containerizer,
+              eventDispatcher,
+              mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              helpfulSuggestions);
       getLog().info("");
 
     } catch (InvalidImageReferenceException | IOException | CacheDirectoryCreationException ex) {

@@ -18,10 +18,14 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.events.ImageCreatedEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.Image;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -130,15 +134,16 @@ class PushImageStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorD
               .newRegistryClient();
 
       // Constructs the image.
-      ImageToJsonTranslator imageToJsonTranslator =
-          new ImageToJsonTranslator(NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep)));
+      Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
+      ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
 
       // Gets the image manifest to push.
+      BlobDescriptor containerConfigurationBlobDescriptor =
+          NonBlockingSteps.get(
+              NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep)));
       BuildableManifestTemplate manifestTemplate =
           imageToJsonTranslator.getManifestTemplate(
-              buildConfiguration.getTargetFormat(),
-              NonBlockingSteps.get(
-                  NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep))));
+              buildConfiguration.getTargetFormat(), containerConfigurationBlobDescriptor);
 
       // Pushes to all target image tags.
       List<ListenableFuture<Void>> pushAllTagsFutures = new ArrayList<>();
@@ -158,8 +163,18 @@ class PushImageStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorD
           JsonTemplateMapper.toBlob(manifestTemplate)
               .writeTo(ByteStreams.nullOutputStream())
               .getDigest();
+
+      Callable<DescriptorDigest> afterPushTags =
+          () -> {
+            ImageCreatedEvent event =
+                new ImageCreatedEvent(
+                    image, imageDigest, containerConfigurationBlobDescriptor.getDigest());
+            buildConfiguration.getEventDispatcher().dispatch(event);
+
+            return imageDigest;
+          };
       return Futures.whenAllSucceed(pushAllTagsFutures)
-          .call(() -> imageDigest, listeningExecutorService);
+          .call(afterPushTags, listeningExecutorService);
     }
   }
 }

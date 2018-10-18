@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.Containerizer;
-import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
@@ -37,9 +36,6 @@ import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -141,19 +137,13 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
             .build();
 
-    JibContainer container =
-        BuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
-            .build(
-                jibContainerBuilder,
-                containerizer,
-                eventDispatcher,
-                gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-                helpfulSuggestions);
-
-    Path buildOutputPath = getProject().getBuildDir().toPath();
-    Path digestOutputPath = buildOutputPath.resolve("jib-image.digest");
-    String imageDigest = container.getDigest().toString();
-    Files.write(digestOutputPath, imageDigest.getBytes(StandardCharsets.UTF_8));
+    BuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
+        .build(
+            jibContainerBuilder,
+            containerizer,
+            eventDispatcher,
+            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+            helpfulSuggestions);
   }
 
   @Override

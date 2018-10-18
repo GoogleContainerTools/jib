@@ -54,6 +54,8 @@ public class DockerContextMojoTest {
   public void setUp() throws IOException {
     outputFolder = projectRoot.newFolder("target");
     Mockito.when(project.getBuild()).thenReturn(build);
+    // normally outputDirectory should be under directory
+    Mockito.when(build.getDirectory()).thenReturn(outputFolder.toString());
     Mockito.when(build.getOutputDirectory()).thenReturn(outputFolder.toString());
 
     mojo = new BaseDockerContextMojo();
