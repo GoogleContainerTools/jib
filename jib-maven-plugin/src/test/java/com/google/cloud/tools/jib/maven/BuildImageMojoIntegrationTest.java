@@ -77,14 +77,14 @@ public class BuildImageMojoIntegrationTest {
     return nameBase + label + System.nanoTime();
   }
 
-  static void assertImageDigest(Path projectRoot) {
+  static String assertImageDigest(Path projectRoot) {
     Path digestPath = projectRoot.resolve("target/jib-image.digest");
     Assert.assertTrue(Files.exists(digestPath));
     try {
       String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
-      DescriptorDigest.fromDigest(digest);
+      return DescriptorDigest.fromDigest(digest).toString();
     } catch (IOException | DigestException ex) {
-      Assert.fail("Invalid jib-image.digest");
+      throw new AssertionError("Invalid jib-image.digest");
     }
   }
 
@@ -104,8 +104,6 @@ public class BuildImageMojoIntegrationTest {
     verifier.executeGoal("jib:build");
     float timeOne = getBuildTimeFromVerifierLog(verifier);
 
-    assertImageDigest(projectRoot);
-
     if (runTwice) {
       verifier.resetStreams();
       verifier.executeGoal("jib:build");
@@ -117,7 +115,18 @@ public class BuildImageMojoIntegrationTest {
 
     verifier.verifyErrorFreeLog();
 
-    return pullAndRunBuiltImage(imageReference);
+    String output = pullAndRunBuiltImage(imageReference);
+
+    try {
+      String digest = assertImageDigest(projectRoot);
+      String imageReferenceWithDigest =
+          ImageReference.parse(imageReference).withTag(digest).toString();
+      Assert.assertEquals(output, pullAndRunBuiltImage(imageReferenceWithDigest));
+    } catch (InvalidImageReferenceException ex) {
+      throw new AssertionError("error replacing tag with digest");
+    }
+
+    return output;
   }
 
   private static String buildAndRunAdditionalTag(
@@ -132,14 +141,17 @@ public class BuildImageMojoIntegrationTest {
     verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
     verifier.verifyErrorFreeLog();
 
-    assertImageDigest(projectRoot);
-
     String additionalImageReference =
         ImageReference.parse(imageReference).withTag(additionalTag).toString();
 
     String output = pullAndRunBuiltImage(imageReference);
     String additionalOutput = pullAndRunBuiltImage(additionalImageReference);
     Assert.assertEquals(output, additionalOutput);
+
+    String digest = assertImageDigest(projectRoot);
+    String digestImageReference = ImageReference.parse(imageReference).withTag(digest).toString();
+    String digestOutput = pullAndRunBuiltImage(digestImageReference);
+    Assert.assertEquals(output, digestOutput);
 
     assertCreationTimeEpoch(imageReference);
     assertCreationTimeEpoch(additionalImageReference);
