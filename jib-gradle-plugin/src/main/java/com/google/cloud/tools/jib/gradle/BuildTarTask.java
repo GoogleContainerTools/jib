@@ -127,7 +127,9 @@ public class BuildTarTask extends DefaultTask implements JibTask {
             jibExtension.getTo().getImage(),
             eventDispatcher,
             getProject().getName(),
-            getProject().getVersion().toString(),
+            getProject().getVersion().toString().equals("unspecified")
+                ? "latest"
+                : getProject().getVersion().toString(),
             gradleHelpfulSuggestionsBuilder.build());
 
     Path tarOutputPath = Paths.get(getTargetPath());

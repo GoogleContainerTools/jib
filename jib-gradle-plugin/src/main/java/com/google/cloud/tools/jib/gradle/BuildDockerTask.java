@@ -101,7 +101,9 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             jibExtension.getTo().getImage(),
             eventDispatcher,
             getProject().getName(),
-            getProject().getVersion().toString(),
+            getProject().getVersion().toString().equals("unspecified")
+                ? "latest"
+                : getProject().getVersion().toString(),
             gradleHelpfulSuggestionsBuilder.build());
 
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
