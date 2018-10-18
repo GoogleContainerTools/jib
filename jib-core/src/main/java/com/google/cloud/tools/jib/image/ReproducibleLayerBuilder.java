@@ -41,10 +41,10 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
  */
 public class ReproducibleLayerBuilder {
 
-  private static final ImmutableSet<PosixFilePermission> defaultFilePermissions =
-      PermissionsHelper.toImmutableSet(0644);
-  private static final ImmutableSet<PosixFilePermission> defaultFolderPermissions =
-      PermissionsHelper.toImmutableSet(0755);
+  private static final ImmutableSet<PosixFilePermission> DEFAULT_FILE_PERMISSIONS =
+      PermissionsHelper.toPermissionSet(0644);
+  private static final ImmutableSet<PosixFilePermission> DEFAULT_FOLDER_PERMISSIONS =
+      PermissionsHelper.toPermissionSet(0755);
 
   /**
    * Holds a list of {@link TarArchiveEntry}s with unique extraction paths. The list also includes
@@ -113,17 +113,17 @@ public class ReproducibleLayerBuilder {
           new TarArchiveEntry(
               layerEntry.getSourceFile().toFile(), layerEntry.getAbsoluteExtractionPathString());
 
-      Set<PosixFilePermission> permissions =
+      ImmutableSet<PosixFilePermission> permissions =
           layerEntry
               .getPermissions()
               .orElse(
                   Files.isDirectory(layerEntry.getSourceFile())
-                      ? defaultFolderPermissions
-                      : defaultFilePermissions);
+                      ? DEFAULT_FOLDER_PERMISSIONS
+                      : DEFAULT_FILE_PERMISSIONS);
 
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
-      entry.setMode((entry.getMode() & ~0777) | PermissionsHelper.toInt(permissions));
+      entry.setMode((entry.getMode() & ~0777) | PermissionsHelper.toPermissionBits(permissions));
 
       uniqueTarArchiveEntries.add(entry);
     }

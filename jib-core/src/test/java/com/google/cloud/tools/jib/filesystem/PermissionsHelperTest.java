@@ -26,22 +26,22 @@ public class PermissionsHelperTest {
 
   @Test
   public void testToInt() {
-    Assert.assertEquals(0, PermissionsHelper.toInt(ImmutableSet.of()));
+    Assert.assertEquals(0, PermissionsHelper.toPermissionBits(ImmutableSet.of()));
     Assert.assertEquals(
         0110,
-        PermissionsHelper.toInt(
+        PermissionsHelper.toPermissionBits(
             ImmutableSet.of(PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_EXECUTE)));
     Assert.assertEquals(
         0202,
-        PermissionsHelper.toInt(
+        PermissionsHelper.toPermissionBits(
             ImmutableSet.of(PosixFilePermission.OWNER_WRITE, PosixFilePermission.OTHERS_WRITE)));
     Assert.assertEquals(
         0044,
-        PermissionsHelper.toInt(
+        PermissionsHelper.toPermissionBits(
             ImmutableSet.of(PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ)));
     Assert.assertEquals(
         0644,
-        PermissionsHelper.toInt(
+        PermissionsHelper.toPermissionBits(
             ImmutableSet.of(
                 PosixFilePermission.OWNER_WRITE,
                 PosixFilePermission.OWNER_READ,
@@ -49,7 +49,7 @@ public class PermissionsHelperTest {
                 PosixFilePermission.OTHERS_READ)));
     Assert.assertEquals(
         0755,
-        PermissionsHelper.toInt(
+        PermissionsHelper.toPermissionBits(
             ImmutableSet.of(
                 PosixFilePermission.OWNER_WRITE,
                 PosixFilePermission.OWNER_READ,
@@ -59,28 +59,29 @@ public class PermissionsHelperTest {
                 PosixFilePermission.OTHERS_READ,
                 PosixFilePermission.OTHERS_EXECUTE)));
     Assert.assertEquals(
-        0777, PermissionsHelper.toInt(ImmutableSet.copyOf(PosixFilePermission.values())));
+        0777,
+        PermissionsHelper.toPermissionBits(ImmutableSet.copyOf(PosixFilePermission.values())));
   }
 
   @Test
   public void testToSet() {
-    Assert.assertEquals(ImmutableSet.of(), PermissionsHelper.toImmutableSet(0));
+    Assert.assertEquals(ImmutableSet.of(), PermissionsHelper.toPermissionSet(0));
     Assert.assertEquals(
         ImmutableSet.of(PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_EXECUTE),
-        PermissionsHelper.toImmutableSet(0110));
+        PermissionsHelper.toPermissionSet(0110));
     Assert.assertEquals(
         ImmutableSet.of(PosixFilePermission.OWNER_WRITE, PosixFilePermission.OTHERS_WRITE),
-        PermissionsHelper.toImmutableSet(0202));
+        PermissionsHelper.toPermissionSet(0202));
     Assert.assertEquals(
         ImmutableSet.of(PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ),
-        PermissionsHelper.toImmutableSet(0044));
+        PermissionsHelper.toPermissionSet(0044));
     Assert.assertEquals(
         ImmutableSet.of(
             PosixFilePermission.OWNER_WRITE,
             PosixFilePermission.OWNER_READ,
             PosixFilePermission.GROUP_READ,
             PosixFilePermission.OTHERS_READ),
-        PermissionsHelper.toImmutableSet(0644));
+        PermissionsHelper.toPermissionSet(0644));
     Assert.assertEquals(
         ImmutableSet.of(
             PosixFilePermission.OWNER_WRITE,
@@ -90,8 +91,8 @@ public class PermissionsHelperTest {
             PosixFilePermission.GROUP_EXECUTE,
             PosixFilePermission.OTHERS_READ,
             PosixFilePermission.OTHERS_EXECUTE),
-        PermissionsHelper.toImmutableSet(0755));
+        PermissionsHelper.toPermissionSet(0755));
     Assert.assertEquals(
-        ImmutableSet.copyOf(PosixFilePermission.values()), PermissionsHelper.toImmutableSet(0777));
+        ImmutableSet.copyOf(PosixFilePermission.values()), PermissionsHelper.toPermissionSet(0777));
   }
 }

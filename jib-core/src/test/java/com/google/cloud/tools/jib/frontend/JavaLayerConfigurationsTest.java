@@ -7,7 +7,6 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -406,13 +405,13 @@ public class JavaLayerConfigurationsTest {
     Map<AbsoluteUnixPath, Set<PosixFilePermission>> permissions =
         ImmutableMap.of(
             AbsoluteUnixPath.get("/fileA"),
-            PermissionsHelper.toImmutableSet(0123),
+            PermissionsHelper.toPermissionSet(0123),
             AbsoluteUnixPath.get("/fileB"),
-            PermissionsHelper.toImmutableSet(0456),
+            PermissionsHelper.toPermissionSet(0456),
             AbsoluteUnixPath.get("/folder"),
-            PermissionsHelper.toImmutableSet(0111),
+            PermissionsHelper.toPermissionSet(0111),
             AbsoluteUnixPath.get("/folder/fileD"),
-            PermissionsHelper.toImmutableSet(0222));
+            PermissionsHelper.toPermissionSet(0222));
 
     Path extraDirectory =
         temporaryFolder.getRoot().toPath().resolve("src").resolve("main").resolve("jib");
@@ -428,20 +427,20 @@ public class JavaLayerConfigurationsTest {
             new LayerEntry(
                 extraDirectory.resolve("fileA"),
                 basePath.resolve("fileA"),
-                ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0123))),
+                PermissionsHelper.toPermissionSet(0123)),
             new LayerEntry(
                 extraDirectory.resolve("fileB"),
                 basePath.resolve("fileB"),
-                ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0456))),
+                PermissionsHelper.toPermissionSet(0456)),
             new LayerEntry(extraDirectory.resolve("fileC"), basePath.resolve("fileC"), null),
             new LayerEntry(
                 extraDirectory.resolve("folder"),
                 basePath.resolve("folder"),
-                ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0111))),
+                PermissionsHelper.toPermissionSet(0111)),
             new LayerEntry(
                 extraDirectory.resolve("folder").resolve("fileD"),
                 basePath.resolve("folder").resolve("fileD"),
-                ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0222))),
+                PermissionsHelper.toPermissionSet(0222)),
             new LayerEntry(
                 extraDirectory.resolve("folder").resolve("fileE"),
                 basePath.resolve("folder").resolve("fileE"),
