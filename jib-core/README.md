@@ -4,7 +4,7 @@
 
 # Jib Core - Java library for building containers
 
-Jib Core is a Java library for building Docker and [OCI](https://github.com/opencontainers/image-spec) container images. 
+Jib Core is a Java library for building Docker and [OCI](https://github.com/opencontainers/image-spec) container images.
 
 For information about the Jib project, see the [Jib project README](../README.md).
 For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).
@@ -13,6 +13,9 @@ For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin)
 ## Upcoming features
 
 See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
+
+- extensions to make building Java and other language-specific containers easier
+- structured events to handle react to parts of Jib Core's execution
 
 ## Adding Jib Core to your build
 
@@ -53,6 +56,10 @@ Jib.from("busybox")
 1. [`Containerizer.to`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Containerizer.html#to-com.google.cloud.tools.jib.api.RegistryImage-) creates a new [`Containerizer`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Containerizer.html) configured to push to the `RegistryImage`.
 1. `.containerize` executes the containerization. If successful, the container image will be available at `gcr.io/my-project/hello-from-jib`.
 
+## Tutorials
+
+*None yet available. We welcome contributions for examples and/or tutorials!*
+
 ## API overview
 
 [`Jib`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Jib.html) - the main entrypoint for using Jib Core
@@ -61,6 +68,8 @@ Jib.from("busybox")
 
 [`Containerizer`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Containerizer.html) - configures how and where to containerize to
 
+[`JibContainer`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/JibContainer.html) - information about the built container
+
 Three `TargetImage` types define the 3 different targets Jib can build to:
 - [`RegistryImage`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/RegistryImage.html) - builds to a container registry
 - [`DockerDaemonImage`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/DockerDaemonImage.html) - builds to a Docker daemon
@@ -68,11 +77,11 @@ Three `TargetImage` types define the 3 different targets Jib can build to:
 
 Other useful classes:
 
-- ImageReference
-- LayerConfiguration
-- CredentialRetriever
-- EventHandlers
-- `CredentialRetrieverFactory`
+- [`ImageReference`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/image/ImageReference.html) - represents an image reference and has useful methods for parsing and manipulating image references
+- [`LayerConfiguration`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/configuration/LayerConfiguration.html) - configures a container layer to build
+- [`CredentialRetriever`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/configuration/credentials/CredentialRetriever.html) - implement with custom methods for retrieving credentials for authenticating against a container registry
+- [`CredentialRetrieverFactory`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/frontend/CredentialRetrieverFactory.html) - provides useful `CredentialRetriever`s to retrieve credentials from Docker config and credential helpers
+- [`EventHandlers`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/event/EventHandlers.html) - attach event handlers to handle events dispatched during the container build execution
 
 ## API reference
 
@@ -80,7 +89,17 @@ Other useful classes:
 
 ## How Jib Core works
 
-TODO
+Jib Core implements a general-purpose container builder. The system consists 3 main parts:
+
+- an execution orchestrator that executes an asynchronous pipeline of containerization steps,
+- an image manipulator capable of handling Docker and OCI image formats, and
+- a registry client that implements the [Docker Registry V2 API](https://docs.docker.com/registry/spec/api/).
+
+Some other parts of Jib Core internals include:
+
+- a caching mechanism to speed up builds (configurable with [`Containerizer.setApplicationLayersCache`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Containerizer.html#setApplicationLayersCache-java.nio.file.Path-) and [`Containerizer.setBaseImageLayersCache`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Containerizer.html#setBaseImageLayersCache-java.nio.file.Path-))
+- an eventing system to react to events from Jib Core during its execution
+- support for fully-concurrent multi-threaded executions
 
 ## How Jib Works
 
