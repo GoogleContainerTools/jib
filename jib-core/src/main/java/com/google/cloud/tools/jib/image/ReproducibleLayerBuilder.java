@@ -112,16 +112,13 @@ public class ReproducibleLayerBuilder {
           new TarArchiveEntry(
               layerEntry.getSourceFile().toFile(), layerEntry.getAbsoluteExtractionPathString());
 
-      Set<PosixFilePermission> permissions;
-      if (layerEntry.getPermissions().isPresent()) {
-        permissions = layerEntry.getPermissions().get();
-      } else {
-        if (Files.isDirectory(layerEntry.getSourceFile())) {
-          permissions = defaultFolderPermissions;
-        } else {
-          permissions = defaultFilePermissions;
-        }
-      }
+      Set<PosixFilePermission> permissions =
+          layerEntry
+              .getPermissions()
+              .orElse(
+                  Files.isDirectory(layerEntry.getSourceFile())
+                      ? defaultFolderPermissions
+                      : defaultFilePermissions);
 
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
