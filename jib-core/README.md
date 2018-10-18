@@ -13,7 +13,7 @@ For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin)
 ## Upcoming features
 
 - Extensions to make building Java and other language-specific containers easier
-- Structured events to handle react to parts of Jib Core's execution
+- Structured events to react to parts of Jib Core's execution
 
 See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
 
@@ -58,7 +58,7 @@ Jib.from("busybox")
 
 ## Tutorials
 
-*None yet available. We welcome contributions for examples and/or tutorials!*
+*None yet available. We welcome contributions for examples and tutorials!*
 
 ## API overview
 
@@ -79,7 +79,7 @@ Other useful classes:
 
 - [`ImageReference`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/image/ImageReference.html) - represents an image reference and has useful methods for parsing and manipulating image references
 - [`LayerConfiguration`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/configuration/LayerConfiguration.html) - configures a container layer to build
-- [`CredentialRetriever`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/configuration/credentials/CredentialRetriever.html) - implement with custom methods for retrieving credentials for authenticating against a container registry
+- [`CredentialRetriever`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/configuration/credentials/CredentialRetriever.html) - implement with custom credential retrieval methods for authenticating against a container registry
 - [`CredentialRetrieverFactory`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/frontend/CredentialRetrieverFactory.html) - provides useful `CredentialRetriever`s to retrieve credentials from Docker config and credential helpers
 - [`EventHandlers`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/event/EventHandlers.html) - attach event handlers to handle events dispatched during the container build execution
 
