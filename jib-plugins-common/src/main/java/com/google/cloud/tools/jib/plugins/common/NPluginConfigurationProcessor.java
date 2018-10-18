@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
+// TODO: remove PluginConfigurationProcess classes in Maven and Gradle code, and rename this to
+// PluginConfigurationProcess.
 public class NPluginConfigurationProcessor {
 
   /**

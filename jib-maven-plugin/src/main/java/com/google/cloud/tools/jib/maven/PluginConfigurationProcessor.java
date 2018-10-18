@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import org.apache.maven.plugin.MojoExecutionException;
 
 /** Configures and provides builders for the image building goals. */
+// TODO: remove and use NPluginConfigurationProcess
 class PluginConfigurationProcessor {
 
   /**

@@ -28,6 +28,7 @@ import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
 import org.slf4j.LoggerFactory;
 
 /** Configures and provides builders for the image building tasks. */
+// TODO: remove and use NPluginConfigurationProcess
 class PluginConfigurationProcessor {
 
   /**
