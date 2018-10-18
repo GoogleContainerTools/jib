@@ -1,4 +1,4 @@
-[![experimental](https://img.shields.io/badge/stability-experimental-red.svg)]
+![experimental](https://img.shields.io/badge/stability-experimental-red.svg)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-core)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
@@ -6,16 +6,16 @@
 
 Jib Core is a Java library for building Docker and [OCI](https://github.com/opencontainers/image-spec) container images.
 
-For information about the Jib project, see the [Jib project README](../README.md).
-For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).
+For information about the Jib project, see the [Jib project README](../README.md).\
+For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).\
 For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin).
 
 ## Upcoming features
 
-See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
-
 - extensions to make building Java and other language-specific containers easier
 - structured events to handle react to parts of Jib Core's execution
+
+See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
 
 ## Adding Jib Core to your build
 
@@ -54,7 +54,7 @@ Jib.from("busybox")
 1. [`RegistryImage.named("gcr.io/my-project/hello-from-jib")`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/RegistryImage.html#named-java.lang.String-) creates a new [`RegistryImage`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/RegistryImage.html) configured with `gcr.io/my-project/hello-from-jib` as the target image to push to.
 1. [`.addCredential`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/RegistryImage.html#addCredential-java.lang.String-java.lang.String-) adds the username/password credentials to authenticate the push to `gcr.io/my-project/hello-from-jib`.
 1. [`Containerizer.to`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Containerizer.html#to-com.google.cloud.tools.jib.api.RegistryImage-) creates a new [`Containerizer`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Containerizer.html) configured to push to the `RegistryImage`.
-1. `.containerize` executes the containerization. If successful, the container image will be available at `gcr.io/my-project/hello-from-jib`.
+1. [`.containerize`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/JibContainerBuilder.html#containerize-com.google.cloud.tools.jib.api.Containerizer-) executes the containerization. If successful, the container image will be available at `gcr.io/my-project/hello-from-jib`.
 
 ## Tutorials
 
@@ -98,7 +98,7 @@ Jib Core implements a general-purpose container builder. The system consists 3 m
 Some other parts of Jib Core internals include:
 
 - a caching mechanism to speed up builds (configurable with [`Containerizer.setApplicationLayersCache`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Containerizer.html#setApplicationLayersCache-java.nio.file.Path-) and [`Containerizer.setBaseImageLayersCache`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Containerizer.html#setBaseImageLayersCache-java.nio.file.Path-))
-- an eventing system to react to events from Jib Core during its execution
+- an eventing system to react to events from Jib Core during its execution (add handlers with [`Containerizer.setEventHandlers`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Containerizer.html#setEventHandlers-com.google.cloud.tools.jib.event.EventHandlers-))
 - support for fully-concurrent multi-threaded executions
 
 ## How Jib Works
