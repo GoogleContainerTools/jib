@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.configuration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -90,7 +91,11 @@ public class LayerConfiguration {
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
         @Nullable Set<PosixFilePermission> permissions) {
-      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions));
+      layerEntries.add(
+          new LayerEntry(
+              sourceFile,
+              pathInContainer,
+              permissions == null ? null : ImmutableSet.copyOf(permissions)));
       return this;
     }
 

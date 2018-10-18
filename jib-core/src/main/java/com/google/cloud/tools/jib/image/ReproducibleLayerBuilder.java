@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.filesystem.PermissionsHelper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,10 +41,10 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
  */
 public class ReproducibleLayerBuilder {
 
-  private static final Set<PosixFilePermission> defaultFilePermissions =
-      PermissionsHelper.toSet(0644);
+  private static final ImmutableSet<PosixFilePermission> defaultFilePermissions =
+      ImmutableSet.copyOf(PermissionsHelper.toSet(0644));
   private static final Set<PosixFilePermission> defaultFolderPermissions =
-      PermissionsHelper.toSet(0755);
+      ImmutableSet.copyOf(PermissionsHelper.toSet(0755));
 
   /**
    * Holds a list of {@link TarArchiveEntry}s with unique extraction paths. The list also includes
@@ -116,9 +117,10 @@ public class ReproducibleLayerBuilder {
           layerEntry
               .getPermissions()
               .orElse(
-                  Files.isDirectory(layerEntry.getSourceFile())
-                      ? defaultFolderPermissions
-                      : defaultFilePermissions);
+                  ImmutableSet.copyOf(
+                      Files.isDirectory(layerEntry.getSourceFile())
+                          ? defaultFolderPermissions
+                          : defaultFilePermissions));
 
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.

@@ -22,7 +22,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -64,10 +63,10 @@ public class LayerEntry {
   public LayerEntry(
       Path sourceFile,
       AbsoluteUnixPath extractionPath,
-      @Nullable Set<PosixFilePermission> permissions) {
+      @Nullable ImmutableSet<PosixFilePermission> permissions) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
-    this.permissions = permissions == null ? null : ImmutableSet.copyOf(permissions);
+    this.permissions = permissions;
   }
 
   /**
@@ -98,7 +97,7 @@ public class LayerEntry {
    *
    * @return the file permissions on the container
    */
-  public Optional<Set<PosixFilePermission>> getPermissions() {
+  public Optional<ImmutableSet<PosixFilePermission>> getPermissions() {
     return Optional.ofNullable(permissions);
   }
 

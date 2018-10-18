@@ -7,6 +7,7 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -427,20 +428,20 @@ public class JavaLayerConfigurationsTest {
             new LayerEntry(
                 extraDirectory.resolve("fileA"),
                 basePath.resolve("fileA"),
-                PermissionsHelper.toSet(0123)),
+                ImmutableSet.copyOf(PermissionsHelper.toSet(0123))),
             new LayerEntry(
                 extraDirectory.resolve("fileB"),
                 basePath.resolve("fileB"),
-                PermissionsHelper.toSet(0456)),
+                ImmutableSet.copyOf(PermissionsHelper.toSet(0456))),
             new LayerEntry(extraDirectory.resolve("fileC"), basePath.resolve("fileC"), null),
             new LayerEntry(
                 extraDirectory.resolve("folder"),
                 basePath.resolve("folder"),
-                PermissionsHelper.toSet(0111)),
+                ImmutableSet.copyOf(PermissionsHelper.toSet(0111))),
             new LayerEntry(
                 extraDirectory.resolve("folder").resolve("fileD"),
                 basePath.resolve("folder").resolve("fileD"),
-                PermissionsHelper.toSet(0222)),
+                ImmutableSet.copyOf(PermissionsHelper.toSet(0222))),
             new LayerEntry(
                 extraDirectory.resolve("folder").resolve("fileE"),
                 basePath.resolve("folder").resolve("fileE"),
