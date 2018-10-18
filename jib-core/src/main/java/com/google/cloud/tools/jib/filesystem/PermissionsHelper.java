@@ -20,7 +20,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.EnumSet;
 import java.util.Map.Entry;
+import java.util.Set;
 
 /** Helpers for converting between file permission bits and set of {@link PosixFilePermission}. */
 public class PermissionsHelper {
@@ -45,7 +47,7 @@ public class PermissionsHelper {
    * @param permissions the set of {@link PosixFilePermission}
    * @return the equivalent file permission bits
    */
-  public static int toPermissionBits(ImmutableSet<PosixFilePermission> permissions) {
+  public static int toPermissionBits(Set<PosixFilePermission> permissions) {
     int permissionBits = 0;
     for (PosixFilePermission permission : permissions) {
       permissionBits |= permissionMap.get(permission);
@@ -62,13 +64,13 @@ public class PermissionsHelper {
   public static ImmutableSet<PosixFilePermission> toPermissionSet(int permissions) {
     Preconditions.checkArgument(
         permissions >= 0 && permissions <= 0777, "Permissions must be between 000 and 777 octal");
-    ImmutableSet.Builder<PosixFilePermission> permissionsSetBuilder = ImmutableSet.builder();
+    EnumSet<PosixFilePermission> permissionsSetBuilder = EnumSet.noneOf(PosixFilePermission.class);
     for (Entry<PosixFilePermission, Integer> entry : permissionMap.entrySet()) {
       if ((permissions & entry.getValue()) != 0) {
         permissionsSetBuilder.add(entry.getKey());
       }
     }
-    return permissionsSetBuilder.build();
+    return ImmutableSet.copyOf(permissionsSetBuilder);
   }
 
   private PermissionsHelper() {}
