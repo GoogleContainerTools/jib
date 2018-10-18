@@ -406,13 +406,13 @@ public class JavaLayerConfigurationsTest {
     Map<AbsoluteUnixPath, Set<PosixFilePermission>> permissions =
         ImmutableMap.of(
             AbsoluteUnixPath.get("/fileA"),
-            PermissionsHelper.toSet(0123),
+            PermissionsHelper.toImmutableSet(0123),
             AbsoluteUnixPath.get("/fileB"),
-            PermissionsHelper.toSet(0456),
+            PermissionsHelper.toImmutableSet(0456),
             AbsoluteUnixPath.get("/folder"),
-            PermissionsHelper.toSet(0111),
+            PermissionsHelper.toImmutableSet(0111),
             AbsoluteUnixPath.get("/folder/fileD"),
-            PermissionsHelper.toSet(0222));
+            PermissionsHelper.toImmutableSet(0222));
 
     Path extraDirectory =
         temporaryFolder.getRoot().toPath().resolve("src").resolve("main").resolve("jib");
@@ -428,20 +428,20 @@ public class JavaLayerConfigurationsTest {
             new LayerEntry(
                 extraDirectory.resolve("fileA"),
                 basePath.resolve("fileA"),
-                ImmutableSet.copyOf(PermissionsHelper.toSet(0123))),
+                ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0123))),
             new LayerEntry(
                 extraDirectory.resolve("fileB"),
                 basePath.resolve("fileB"),
-                ImmutableSet.copyOf(PermissionsHelper.toSet(0456))),
+                ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0456))),
             new LayerEntry(extraDirectory.resolve("fileC"), basePath.resolve("fileC"), null),
             new LayerEntry(
                 extraDirectory.resolve("folder"),
                 basePath.resolve("folder"),
-                ImmutableSet.copyOf(PermissionsHelper.toSet(0111))),
+                ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0111))),
             new LayerEntry(
                 extraDirectory.resolve("folder").resolve("fileD"),
                 basePath.resolve("folder").resolve("fileD"),
-                ImmutableSet.copyOf(PermissionsHelper.toSet(0222))),
+                ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0222))),
             new LayerEntry(
                 extraDirectory.resolve("folder").resolve("fileE"),
                 basePath.resolve("folder").resolve("fileE"),

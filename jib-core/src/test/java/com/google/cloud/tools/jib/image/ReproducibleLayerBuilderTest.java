@@ -219,11 +219,11 @@ public class ReproducibleLayerBuilderTest {
                     new LayerEntry(
                         fileB,
                         AbsoluteUnixPath.get("/somewhere/fileB"),
-                        ImmutableSet.copyOf(PermissionsHelper.toSet(0123))),
+                        ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0123))),
                     new LayerEntry(
                         folder,
                         AbsoluteUnixPath.get("/somewhere/folder"),
-                        ImmutableSet.copyOf(PermissionsHelper.toSet(0456)))))
+                        ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0456)))))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();

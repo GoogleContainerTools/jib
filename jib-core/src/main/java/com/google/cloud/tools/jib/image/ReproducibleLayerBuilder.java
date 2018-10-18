@@ -42,9 +42,9 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 public class ReproducibleLayerBuilder {
 
   private static final ImmutableSet<PosixFilePermission> defaultFilePermissions =
-      ImmutableSet.copyOf(PermissionsHelper.toSet(0644));
-  private static final Set<PosixFilePermission> defaultFolderPermissions =
-      ImmutableSet.copyOf(PermissionsHelper.toSet(0755));
+      ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0644));
+  private static final ImmutableSet<PosixFilePermission> defaultFolderPermissions =
+      ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0755));
 
   /**
    * Holds a list of {@link TarArchiveEntry}s with unique extraction paths. The list also includes
@@ -117,10 +117,9 @@ public class ReproducibleLayerBuilder {
           layerEntry
               .getPermissions()
               .orElse(
-                  ImmutableSet.copyOf(
-                      Files.isDirectory(layerEntry.getSourceFile())
-                          ? defaultFolderPermissions
-                          : defaultFilePermissions));
+                  Files.isDirectory(layerEntry.getSourceFile())
+                      ? defaultFolderPermissions
+                      : defaultFilePermissions);
 
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.

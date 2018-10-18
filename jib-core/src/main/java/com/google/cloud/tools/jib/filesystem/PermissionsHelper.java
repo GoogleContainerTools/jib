@@ -18,8 +18,8 @@ package com.google.cloud.tools.jib.filesystem;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.nio.file.attribute.PosixFilePermission;
-import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -59,16 +59,16 @@ public class PermissionsHelper {
    * @param permissions the file permission bits
    * @return the equivalent {@link PosixFilePermission} set
    */
-  public static Set<PosixFilePermission> toSet(int permissions) {
+  public static ImmutableSet<PosixFilePermission> toImmutableSet(int permissions) {
     Preconditions.checkArgument(
         permissions >= 0 && permissions <= 0777, "Permissions must be between 000 and 777 octal");
-    HashSet<PosixFilePermission> result = new HashSet<>();
+    ImmutableSet.Builder<PosixFilePermission> result = ImmutableSet.builder();
     for (Entry<PosixFilePermission, Integer> entry : permissionMap.entrySet()) {
       if ((permissions & entry.getValue()) != 0) {
         result.add(entry.getKey());
       }
     }
-    return result;
+    return result.build();
   }
 
   private PermissionsHelper() {}
