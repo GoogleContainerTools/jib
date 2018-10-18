@@ -32,7 +32,11 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.cloud.tools.jib.plugins.common.RawConfigurations;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -76,13 +80,14 @@ public class BuildImageTask extends DefaultTask implements JibTask {
   @TaskAction
   public void buildImage()
       throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
-          CacheDirectoryCreationException {
+          CacheDirectoryCreationException, MainClassInferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
+    RawConfigurations rawConfigurations = new GradleRawConfigurations(jibExtension);
 
     if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
       throw new GradleException(
@@ -114,36 +119,42 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     RegistryImage targetImage = RegistryImage.named(targetImageReference);
     defaultCredentialRetrievers.asList().forEach(targetImage::addCredentialRetriever);
 
-    PluginConfigurationProcessor pluginConfigurationProcessor =
-        PluginConfigurationProcessor.processCommonConfiguration(
-            getLogger(), jibExtension, gradleProjectProperties);
+    try {
+      NPluginConfigurationProcessor pluginConfigurationProcessor =
+          NPluginConfigurationProcessor.processCommonConfiguration(
+              rawConfigurations, gradleProjectProperties);
 
-    JibContainerBuilder jibContainerBuilder =
-        pluginConfigurationProcessor
-            .getJibContainerBuilder()
-            // Only uses possibly non-Docker formats for build to registry.
-            .setFormat(jibExtension.getContainer().getFormat());
+      JibContainerBuilder jibContainerBuilder =
+          pluginConfigurationProcessor
+              .getJibContainerBuilder()
+              // Only uses possibly non-Docker formats for build to registry.
+              .setFormat(jibExtension.getContainer().getFormat());
 
-    Containerizer containerizer = Containerizer.to(targetImage);
-    PluginConfigurationProcessor.configureContainerizer(
-        containerizer, jibExtension, gradleProjectProperties);
+      Containerizer containerizer = Containerizer.to(targetImage);
+      PluginConfigurationProcessor.configureContainerizer(
+          containerizer, jibExtension, gradleProjectProperties);
 
-    HelpfulSuggestions helpfulSuggestions =
-        new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension)
-            .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-            .setBaseImageHasConfiguredCredentials(
-                pluginConfigurationProcessor.isBaseImageCredentialPresent())
-            .setTargetImageReference(targetImageReference)
-            .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
-            .build();
+      HelpfulSuggestions helpfulSuggestions =
+          new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension)
+              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
+              .setBaseImageHasConfiguredCredentials(
+                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
+              .setTargetImageReference(targetImageReference)
+              .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
+              .build();
 
-    BuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
-        .build(
-            jibContainerBuilder,
-            containerizer,
-            eventDispatcher,
-            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-            helpfulSuggestions);
+      BuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
+          .build(
+              jibContainerBuilder,
+              containerizer,
+              eventDispatcher,
+              gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              helpfulSuggestions);
+
+    } catch (NotAbsoluteUnixPathException ex) {
+      throw new GradleException(
+          "container.appRoot is not an absolute Unix-style path: " + ex.getMessage());
+    }
   }
 
   @Override

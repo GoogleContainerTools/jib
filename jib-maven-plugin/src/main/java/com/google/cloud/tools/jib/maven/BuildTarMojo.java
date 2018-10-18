@@ -29,6 +29,10 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
+import com.google.cloud.tools.jib.plugins.common.RawConfigurations;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -63,13 +67,14 @@ public class BuildTarMojo extends JibPluginConfiguration {
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(mavenProjectProperties.getEventHandlers());
+    RawConfigurations rawConfigurations = new MavenRawConfigurations(this, eventDispatcher);
 
     try {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
-      EventDispatcher eventDispatcher =
-          new DefaultEventDispatcher(mavenProjectProperties.getEventHandlers());
       ImageReference targetImageReference =
           ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
               getTargetImage(),
@@ -81,9 +86,9 @@ public class BuildTarMojo extends JibPluginConfiguration {
           Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.tar");
       TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarOutputPath);
 
-      PluginConfigurationProcessor pluginConfigurationProcessor =
-          PluginConfigurationProcessor.processCommonConfiguration(
-              getLog(), this, mavenProjectProperties);
+      NPluginConfigurationProcessor pluginConfigurationProcessor =
+          NPluginConfigurationProcessor.processCommonConfiguration(
+              rawConfigurations, mavenProjectProperties);
 
       JibContainerBuilder jibContainerBuilder =
           pluginConfigurationProcessor.getJibContainerBuilder();
@@ -108,7 +113,14 @@ public class BuildTarMojo extends JibPluginConfiguration {
               helpfulSuggestions);
       getLog().info("");
 
-    } catch (InvalidImageReferenceException | IOException | CacheDirectoryCreationException ex) {
+    } catch (NotAbsoluteUnixPathException ex) {
+      throw new MojoExecutionException(
+          "<container><appRoot> is not an absolute Unix-style path: " + appRoot);
+
+    } catch (InvalidImageReferenceException
+        | IOException
+        | CacheDirectoryCreationException
+        | MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {

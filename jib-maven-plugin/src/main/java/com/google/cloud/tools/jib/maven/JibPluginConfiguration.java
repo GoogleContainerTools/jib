@@ -46,8 +46,14 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private String username;
     @Nullable @Parameter private String password;
+    @Nullable private String descriptor;
     @Nullable private String usernameDescriptor;
     @Nullable private String passwordDescriptor;
+
+    @Override
+    public String getPropertyDescriptor() {
+      return Preconditions.checkNotNull(descriptor);
+    }
 
     @Override
     public String getUsernamePropertyDescriptor() {
@@ -81,9 +87,10 @@ abstract class JibPluginConfiguration extends AbstractMojo {
       this.password = password;
     }
 
-    private void setPropertyDescriptors(String descriptorPrefix) {
-      usernameDescriptor = descriptorPrefix + "<username>";
-      passwordDescriptor = descriptorPrefix + "<password>";
+    private void setPropertyDescriptor(String descriptor) {
+      this.descriptor = descriptor;
+      usernameDescriptor = descriptor + "<username>";
+      passwordDescriptor = descriptor + "<password>";
     }
   }
 
@@ -184,8 +191,8 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   /** Default constructor handles setting up auth property descriptors. */
   JibPluginConfiguration() {
-    to.auth.setPropertyDescriptors("<to><auth>");
-    from.auth.setPropertyDescriptors("<from><auth>");
+    to.auth.setPropertyDescriptor("<to><auth>");
+    from.auth.setPropertyDescriptor("<from><auth>");
   }
 
   MavenSession getSession() {

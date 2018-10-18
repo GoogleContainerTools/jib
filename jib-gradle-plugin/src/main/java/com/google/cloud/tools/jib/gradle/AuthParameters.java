@@ -32,6 +32,7 @@ public class AuthParameters implements AuthProperty {
 
   @Nullable private String username;
   @Nullable private String password;
+  private String descriptor;
   private String usernameDescriptor;
   private String passwordDescriptor;
 
@@ -42,8 +43,15 @@ public class AuthParameters implements AuthProperty {
    */
   @Inject
   public AuthParameters(String descriptor) {
+    this.descriptor = descriptor;
     this.usernameDescriptor = descriptor + ".username";
     this.passwordDescriptor = descriptor + ".password";
+  }
+
+  @Internal
+  @Override
+  public String getPropertyDescriptor() {
+    return Preconditions.checkNotNull(descriptor);
   }
 
   @Internal

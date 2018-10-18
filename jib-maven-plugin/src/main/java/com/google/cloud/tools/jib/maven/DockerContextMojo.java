@@ -16,11 +16,16 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
+import com.google.cloud.tools.jib.plugins.common.RawConfigurations;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
@@ -62,23 +67,24 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     try {
       JibSystemProperties.checkHttpTimeoutProperty();
-    } catch (NumberFormatException ex) {
-      throw new MojoExecutionException(ex.getMessage(), ex);
-    }
 
-    // TODO: Instead of disabling logging, have authentication credentials be provided
-    PluginConfigurationProcessor.disableHttpLogging();
+      // TODO: Instead of disabling logging, have authentication credentials be provided
+      PluginConfigurationProcessor.disableHttpLogging();
 
-    Preconditions.checkNotNull(targetDir);
+      Preconditions.checkNotNull(targetDir);
 
-    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
-    MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
+      AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
+      MavenProjectProperties mavenProjectProperties =
+          MavenProjectProperties.getForProject(
+              getProject(), getLog(), getExtraDirectory(), appRoot);
+      DefaultEventDispatcher eventDispatcher =
+          new DefaultEventDispatcher(mavenProjectProperties.getEventHandlers());
+      RawConfigurations rawConfigurations = new MavenRawConfigurations(this, eventDispatcher);
 
-    List<String> entrypoint =
-        PluginConfigurationProcessor.computeEntrypoint(getLog(), this, mavenProjectProperties);
+      List<String> entrypoint =
+          NPluginConfigurationProcessor.computeEntrypoint(
+              rawConfigurations, mavenProjectProperties);
 
-    try {
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
       ExposedPortsParser.parse(getExposedPorts());
@@ -109,6 +115,13 @@ public class DockerContextMojo extends JibPluginConfiguration {
           HelpfulSuggestions.suggest(
               "Export Docker context failed", "check if `targetDir` is set correctly"),
           ex);
+
+    } catch (NotAbsoluteUnixPathException ex) {
+      throw new MojoExecutionException(
+          "<container><appRoot> is not an absolute Unix-style path: " + ex.getMessage());
+
+    } catch (MainClassInferenceException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
     }
   }
 }

@@ -29,12 +29,17 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
+import com.google.cloud.tools.jib.plugins.common.RawConfigurations;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Nested;
@@ -103,13 +108,14 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   @TaskAction
   public void buildTar()
       throws InvalidImageReferenceException, BuildStepsExecutionException, IOException,
-          CacheDirectoryCreationException {
+          CacheDirectoryCreationException, MainClassInferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
+    RawConfigurations rawConfigurations = new GradleRawConfigurations(jibExtension);
 
     GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
@@ -127,31 +133,38 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     Path tarOutputPath = Paths.get(getTargetPath());
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarOutputPath);
 
-    PluginConfigurationProcessor pluginConfigurationProcessor =
-        PluginConfigurationProcessor.processCommonConfiguration(
-            getLogger(), jibExtension, gradleProjectProperties);
+    try {
+      NPluginConfigurationProcessor pluginConfigurationProcessor =
+          NPluginConfigurationProcessor.processCommonConfiguration(
+              rawConfigurations, gradleProjectProperties);
 
-    JibContainerBuilder jibContainerBuilder = pluginConfigurationProcessor.getJibContainerBuilder();
+      JibContainerBuilder jibContainerBuilder =
+          pluginConfigurationProcessor.getJibContainerBuilder();
 
-    Containerizer containerizer = Containerizer.to(targetImage);
-    PluginConfigurationProcessor.configureContainerizer(
-        containerizer, jibExtension, gradleProjectProperties);
+      Containerizer containerizer = Containerizer.to(targetImage);
+      PluginConfigurationProcessor.configureContainerizer(
+          containerizer, jibExtension, gradleProjectProperties);
 
-    HelpfulSuggestions helpfulSuggestions =
-        gradleHelpfulSuggestionsBuilder
-            .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-            .setBaseImageHasConfiguredCredentials(
-                pluginConfigurationProcessor.isBaseImageCredentialPresent())
-            .setTargetImageReference(targetImageReference)
-            .build();
+      HelpfulSuggestions helpfulSuggestions =
+          gradleHelpfulSuggestionsBuilder
+              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
+              .setBaseImageHasConfiguredCredentials(
+                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
+              .setTargetImageReference(targetImageReference)
+              .build();
 
-    BuildStepsRunner.forBuildTar(tarOutputPath)
-        .build(
-            jibContainerBuilder,
-            containerizer,
-            eventDispatcher,
-            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-            helpfulSuggestions);
+      BuildStepsRunner.forBuildTar(tarOutputPath)
+          .build(
+              jibContainerBuilder,
+              containerizer,
+              eventDispatcher,
+              gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              helpfulSuggestions);
+
+    } catch (NotAbsoluteUnixPathException ex) {
+      throw new GradleException(
+          "container.appRoot is not an absolute Unix-style path: " + ex.getMessage());
+    }
   }
 
   @Override

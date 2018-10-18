@@ -30,6 +30,10 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
+import com.google.cloud.tools.jib.plugins.common.RawConfigurations;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -73,7 +77,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   @TaskAction
   public void buildDocker()
       throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
-          CacheDirectoryCreationException {
+          CacheDirectoryCreationException, MainClassInferenceException {
     if (!DOCKER_CLIENT.isDockerInstalled()) {
       throw new GradleException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
@@ -85,6 +89,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
+    RawConfigurations rawConfigurations = new GradleRawConfigurations(jibExtension);
 
     GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
@@ -101,31 +106,38 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
 
-    PluginConfigurationProcessor pluginConfigurationProcessor =
-        PluginConfigurationProcessor.processCommonConfiguration(
-            getLogger(), jibExtension, gradleProjectProperties);
+    try {
+      NPluginConfigurationProcessor pluginConfigurationProcessor =
+          NPluginConfigurationProcessor.processCommonConfiguration(
+              rawConfigurations, gradleProjectProperties);
 
-    JibContainerBuilder jibContainerBuilder = pluginConfigurationProcessor.getJibContainerBuilder();
+      JibContainerBuilder jibContainerBuilder =
+          pluginConfigurationProcessor.getJibContainerBuilder();
 
-    Containerizer containerizer = Containerizer.to(targetImage);
-    PluginConfigurationProcessor.configureContainerizer(
-        containerizer, jibExtension, gradleProjectProperties);
+      Containerizer containerizer = Containerizer.to(targetImage);
+      PluginConfigurationProcessor.configureContainerizer(
+          containerizer, jibExtension, gradleProjectProperties);
 
-    HelpfulSuggestions helpfulSuggestions =
-        gradleHelpfulSuggestionsBuilder
-            .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-            .setBaseImageHasConfiguredCredentials(
-                pluginConfigurationProcessor.isBaseImageCredentialPresent())
-            .setTargetImageReference(targetImageReference)
-            .build();
+      HelpfulSuggestions helpfulSuggestions =
+          gradleHelpfulSuggestionsBuilder
+              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
+              .setBaseImageHasConfiguredCredentials(
+                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
+              .setTargetImageReference(targetImageReference)
+              .build();
 
-    BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
-        .build(
-            jibContainerBuilder,
-            containerizer,
-            eventDispatcher,
-            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-            helpfulSuggestions);
+      BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
+          .build(
+              jibContainerBuilder,
+              containerizer,
+              eventDispatcher,
+              gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              helpfulSuggestions);
+
+    } catch (NotAbsoluteUnixPathException ex) {
+      throw new GradleException(
+          "container.appRoot is not an absolute Unix-style path: " + ex.getMessage());
+    }
   }
 
   @Override

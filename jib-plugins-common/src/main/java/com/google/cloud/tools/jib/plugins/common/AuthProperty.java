@@ -28,6 +28,13 @@ public interface AuthProperty {
   String getPassword();
 
   /**
+   * Returns the full descriptor used to configure the {@link AuthProperty}.
+   *
+   * @return the descriptor used to configure the property (e.g. 'jib.to.auth')
+   */
+  String getPropertyDescriptor();
+
+  /**
    * Returns the full descriptor used to configure the {@link AuthProperty}'s username.
    *
    * @return the descriptor used to configure the username property (e.g. 'jib.to.auth.username')
