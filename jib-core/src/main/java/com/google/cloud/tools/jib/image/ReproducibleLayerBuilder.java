@@ -42,9 +42,9 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 public class ReproducibleLayerBuilder {
 
   private static final ImmutableSet<PosixFilePermission> defaultFilePermissions =
-      ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0644));
+      PermissionsHelper.toImmutableSet(0644);
   private static final ImmutableSet<PosixFilePermission> defaultFolderPermissions =
-      ImmutableSet.copyOf(PermissionsHelper.toImmutableSet(0755));
+      PermissionsHelper.toImmutableSet(0755);
 
   /**
    * Holds a list of {@link TarArchiveEntry}s with unique extraction paths. The list also includes

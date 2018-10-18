@@ -26,6 +26,7 @@ import java.util.Set;
 /** Helpers for converting between file permission bits and set of {@link PosixFilePermission}. */
 public class PermissionsHelper {
 
+  /** Maps from a {@link PosixFilePermission} to its corresponding file permission bit. */
   private static final ImmutableMap<PosixFilePermission, Integer> permissionMap =
       ImmutableMap.<PosixFilePermission, Integer>builder()
           .put(PosixFilePermission.OWNER_READ, 0400)
@@ -62,13 +63,13 @@ public class PermissionsHelper {
   public static ImmutableSet<PosixFilePermission> toImmutableSet(int permissions) {
     Preconditions.checkArgument(
         permissions >= 0 && permissions <= 0777, "Permissions must be between 000 and 777 octal");
-    ImmutableSet.Builder<PosixFilePermission> result = ImmutableSet.builder();
+    ImmutableSet.Builder<PosixFilePermission> permissionsSetBuilder = ImmutableSet.builder();
     for (Entry<PosixFilePermission, Integer> entry : permissionMap.entrySet()) {
       if ((permissions & entry.getValue()) != 0) {
-        result.add(entry.getKey());
+        permissionsSetBuilder.add(entry.getKey());
       }
     }
-    return result.build();
+    return permissionsSetBuilder.build();
   }
 
   private PermissionsHelper() {}
