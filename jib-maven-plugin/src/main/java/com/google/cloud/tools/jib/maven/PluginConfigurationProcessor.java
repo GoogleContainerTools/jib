@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import org.apache.maven.plugin.MojoExecutionException;
 
@@ -112,19 +111,6 @@ class PluginConfigurationProcessor {
 
     if (jibPluginConfiguration.getUseOnlyProjectCache()) {
       containerizer.setBaseImageLayersCache(projectProperties.getCacheDirectory());
-    }
-  }
-
-  /**
-   * @param image the image reference string to parse.
-   * @param type name of the parameter being parsed (e.g. "to" or "from").
-   * @return the {@link ImageReference} parsed from {@code from}.
-   */
-  static ImageReference parseImageReference(String image, String type) {
-    try {
-      return ImageReference.parse(image);
-    } catch (InvalidImageReferenceException ex) {
-      throw new IllegalStateException("Parameter '" + type + "' is invalid", ex);
     }
   }
 

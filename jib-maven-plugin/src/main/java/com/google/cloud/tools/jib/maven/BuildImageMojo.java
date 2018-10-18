@@ -104,8 +104,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
           NPluginConfigurationProcessor.processCommonConfiguration(
               rawConfigurations, mavenProjectProperties);
 
-      ImageReference targetImageReference =
-          PluginConfigurationProcessor.parseImageReference(getTargetImage(), "to");
+      ImageReference targetImageReference = ImageReference.parse(getTargetImage());
 
       DefaultCredentialRetrievers defaultCredentialRetrievers =
           DefaultCredentialRetrievers.init(
