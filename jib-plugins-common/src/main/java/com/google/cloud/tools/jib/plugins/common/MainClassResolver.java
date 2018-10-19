@@ -43,10 +43,10 @@ public class MainClassResolver {
    * <p>Warns if main class provided by {@code projectProperties} is not valid, or throws an error
    * if no valid main class is found.
    *
-   * @param mainClass the explicitly configured main class ({@code null} if not configured).
-   * @param projectProperties properties containing plugin information and help messages.
-   * @return the name of the main class to be used for the container entrypoint.
-   * @throws MainClassInferenceException if no valid main class is configured or discovered.
+   * @param mainClass the explicitly configured main class ({@code null} if not configured)
+   * @param projectProperties properties containing plugin information and help messages
+   * @return the name of the main class to be used for the container entrypoint
+   * @throws MainClassInferenceException if no valid main class is configured or discovered
    */
   public static String resolveMainClass(
       @Nullable String mainClass, ProjectProperties projectProperties)

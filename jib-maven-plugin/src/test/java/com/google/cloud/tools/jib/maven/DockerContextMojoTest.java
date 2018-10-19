@@ -25,9 +25,11 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -44,11 +46,12 @@ public class DockerContextMojoTest {
 
   @Rule public final TemporaryFolder projectRoot = new TemporaryFolder();
 
+  @Mock private MavenProject project;
+  @Mock private Build build;
+
   private DockerContextMojo mojo;
   private String appRoot = "/app";
   private File outputFolder;
-  private @Mock MavenProject project;
-  private @Mock Build build;
 
   @Before
   public void setUp() throws IOException {
@@ -245,6 +248,16 @@ public class DockerContextMojoTest {
     @Override
     Map<String, String> getEnvironment() {
       return ImmutableMap.of("envKey", "envVal");
+    }
+
+    @Override
+    MavenSession getSession() {
+      return Mockito.mock(MavenSession.class);
+    }
+
+    @Override
+    SettingsDecrypter getSettingsDecrypter() {
+      return Mockito.mock(SettingsDecrypter.class);
     }
   }
 

@@ -20,6 +20,10 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
+/**
+ * Holds raw plugin configuration parameter values. Acts as a common adapter for heterogeneous
+ * plugin configuration models.
+ */
 public interface RawConfiguration {
 
   @Nullable

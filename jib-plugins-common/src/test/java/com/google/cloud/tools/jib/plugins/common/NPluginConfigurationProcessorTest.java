@@ -168,7 +168,9 @@ public class NPluginConfigurationProcessorTest {
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Mockito.verifyZeroInteractions(logger);
+
+    ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
+    Mockito.verify(logger, Mockito.never()).accept(Mockito.argThat(isLogWarn));
   }
 
   @Test
@@ -333,5 +335,51 @@ public class NPluginConfigurationProcessorTest {
     } catch (NotAbsoluteUnixPathException ex) {
       Assert.assertEquals("C:\\windows\\path", ex.getMessage());
     }
+  }
+
+  @Test
+  public void testGetAppRootChecked_defaultNonWarProject() throws NotAbsoluteUnixPathException {
+    Mockito.when(rawConfiguration.getAppRoot()).thenReturn("");
+    Mockito.when(projectProperties.isWarProject()).thenReturn(false);
+
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/app"),
+        NPluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testGetAppRootChecked_defaultWarProject() throws NotAbsoluteUnixPathException {
+    Mockito.when(rawConfiguration.getAppRoot()).thenReturn("");
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
+
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/jetty/webapps/ROOT"),
+        NPluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testGetBaseImage_defaultNonWarPackaging() {
+    Mockito.when(projectProperties.isWarProject()).thenReturn(false);
+
+    Assert.assertEquals(
+        "gcr.io/distroless/java",
+        NPluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testGetBaseImage_defaultWarProject() {
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
+
+    Assert.assertEquals(
+        "gcr.io/distroless/java/jetty",
+        NPluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testGetBaseImage_nonDefault() {
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn("tomcat");
+
+    Assert.assertEquals(
+        "tomcat", NPluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
   }
 }

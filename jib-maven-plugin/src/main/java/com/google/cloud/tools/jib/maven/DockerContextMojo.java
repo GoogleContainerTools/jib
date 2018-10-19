@@ -56,6 +56,8 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException {
+    Preconditions.checkNotNull(targetDir);
+
     if (isSkipped()) {
       getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
       return;
@@ -70,8 +72,6 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
       // TODO: Instead of disabling logging, have authentication credentials be provided
       PluginConfigurationProcessor.disableHttpLogging();
-
-      Preconditions.checkNotNull(targetDir);
 
       AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
       MavenProjectProperties mavenProjectProperties =

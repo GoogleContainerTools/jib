@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.SettingsProblem;
@@ -67,7 +66,7 @@ class MavenSettingsServerCredentials {
    *
    * @param settings the Maven settings object
    * @param settingsDecrypter the Maven decrypter component
-   * @param log the Maven build logger
+   * @param eventDispatcher the Jib event dispatcher
    */
   MavenSettingsServerCredentials(
       Settings settings,
@@ -82,8 +81,8 @@ class MavenSettingsServerCredentials {
    * Attempts to retrieve credentials for {@code registry} from Maven settings.
    *
    * @param registry the registry
-   * @return the credentials for the registry, or {@link Optional#empty} if none could be retrieved
-   * @throws MojoExecutionException if the credentials could not be retrieved
+   * @return the auth info for the registry, or {@link Optional#empty} if none could be retrieved
+   * @throws InferredAuthRetrievalException if the credentials could not be retrieved
    */
   Optional<AuthProperty> retrieve(@Nullable String registry) throws InferredAuthRetrievalException {
     if (registry == null) {
@@ -115,9 +114,11 @@ class MavenSettingsServerCredentials {
         registryServer = result.getServer();
       }
     } else if (isEncrypted(registryServer.getPassword())) {
-      String warning =
-          "Server password for registry %s appears to be encrypted, but there is no decrypter available";
-      eventDispatcher.dispatch(LogEvent.warn(String.format(warning, registry)));
+      eventDispatcher.dispatch(
+          LogEvent.warn(
+              "Server password for registry "
+                  + registry
+                  + " appears to be encrypted, but there is no decrypter available"));
     }
 
     String username = registryServer.getUsername();

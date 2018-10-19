@@ -20,20 +20,24 @@ import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
-import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
+/** Maven-specific adapter for providing raw configuration parameter values. */
 class MavenRawConfiguration implements RawConfiguration {
 
   private final JibPluginConfiguration jibPluginConfiguration;
   private final MavenSettingsServerCredentials mavenSettingsServerCredentials;
 
-  public MavenRawConfiguration(
+  /**
+   * Creates a raw configuration instances.
+   *
+   * @param jibPluginConfiguration the Jib plugin configuration
+   * @param eventDispatcher Jib event dispatcher
+   */
+  MavenRawConfiguration(
       JibPluginConfiguration jibPluginConfiguration, EventDispatcher eventDispatcher) {
-    Preconditions.checkNotNull(jibPluginConfiguration.getSession());
-
     this.jibPluginConfiguration = jibPluginConfiguration;
     this.mavenSettingsServerCredentials =
         new MavenSettingsServerCredentials(

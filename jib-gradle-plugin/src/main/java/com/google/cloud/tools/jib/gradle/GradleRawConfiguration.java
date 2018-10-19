@@ -22,11 +22,12 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-public class GradleRawConfiguration implements RawConfiguration {
+/** Gradle-specific adapter for providing raw configuration parameter values. */
+class GradleRawConfiguration implements RawConfiguration {
 
   private final JibExtension jibExtension;
 
-  public GradleRawConfiguration(JibExtension jibExtension) {
+  GradleRawConfiguration(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
   }
 

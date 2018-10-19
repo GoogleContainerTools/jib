@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
@@ -31,6 +32,7 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.base.Verify;
 import java.io.FileNotFoundException;
 import java.time.Instant;
 import java.util.List;
@@ -42,13 +44,14 @@ import javax.annotation.Nullable;
 public class NPluginConfigurationProcessor {
 
   /**
-   * Gets the value of the {@code <container><appRoot>} parameter. If the parameter is empty,
-   * returns {@link JavaLayerConfigurations#DEFAULT_WEB_APP_ROOT} for project with WAR packaging or
-   * {@link JavaLayerConfigurations#DEFAULT_APP_ROOT} for other packaging.
+   * Gets the value of the {@code appRoot} parameter. If the parameter is empty, returns {@link
+   * JavaLayerConfigurations#DEFAULT_WEB_APP_ROOT} for WAR projects or {@link
+   * JavaLayerConfigurations#DEFAULT_APP_ROOT} for other projects.
    *
-   * @param jibPluginConfiguration the Jib plugin configuration
+   * @param rawConfiguration raw configuration data
+   * @param projectProperties used for providing additional information
    * @return the app root value
-   * @throws NotAbsoluteUnixPathException
+   * @throws NotAbsoluteUnixPathException if {@code appRoot} value is not an absolute Unix path
    */
   static AbsoluteUnixPath getAppRootChecked(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
@@ -76,15 +79,11 @@ public class NPluginConfigurationProcessor {
    *   <li>for a non-WAR project, by resolving the main class
    * </ol>
    *
-   * @param logger the logger used to display messages.
-   * @param jibPluginConfiguration the {@link JibPluginConfiguration} providing the configuration
-   *     data
+   * @param rawConfiguration raw configuration data
    * @param projectProperties used for providing additional information
    * @return the entrypoint
-   * @throws MainClassInferenceException
-   * @throws NotAbsoluteUnixPathException
-   * @throws MojoExecutionException if resolving the main class fails or the app root parameter is
-   *     not an absolute path in Unix-style
+   * @throws MainClassInferenceException if no valid main class is configured or discovered
+   * @throws NotAbsoluteUnixPathException if {@code appRoot} value is not an absolute Unix path
    */
   @Nullable
   public static List<String> computeEntrypoint(
@@ -116,7 +115,8 @@ public class NPluginConfigurationProcessor {
    * {@code "gcr.io/distroless/java/jetty"} for WAR projects or {@code "gcr.io/distroless/java"} for
    * non-WAR.
    */
-  private static String getBaseImage(
+  @VisibleForTesting
+  static String getBaseImage(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties) {
     String baseImage = rawConfiguration.getFromImage();
     if (baseImage == null) {
@@ -166,8 +166,9 @@ public class NPluginConfigurationProcessor {
       AuthProperty inferredAuth =
           rawConfiguration.getInferredAuth(baseImageReference.getRegistry());
       if (inferredAuth != null) {
-        Credential credential =
-            Credential.basic(inferredAuth.getUsername(), inferredAuth.getPassword());
+        String username = Verify.verifyNotNull(inferredAuth.getUsername());
+        String password = Verify.verifyNotNull(inferredAuth.getPassword());
+        Credential credential = Credential.basic(username, password);
         defaultCredentialRetrievers.setInferredCredential(
             credential, inferredAuth.getPropertyDescriptor());
         optionalFromCredential = Optional.of(credential);
