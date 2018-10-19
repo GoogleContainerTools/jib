@@ -52,9 +52,9 @@ public class NPluginConfigurationProcessor {
    * @throws NotAbsoluteUnixPathException
    */
   static AbsoluteUnixPath getAppRootChecked(
-      RawConfigurations rawConfigurations, ProjectProperties projectProperties)
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws NotAbsoluteUnixPathException {
-    String appRoot = rawConfigurations.getAppRoot();
+    String appRoot = rawConfiguration.getAppRoot();
     if (appRoot.isEmpty()) {
       appRoot =
           projectProperties.isWarProject()
@@ -89,11 +89,11 @@ public class NPluginConfigurationProcessor {
    */
   @Nullable
   public static List<String> computeEntrypoint(
-      RawConfigurations rawConfigurations, ProjectProperties projectProperties)
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws MainClassInferenceException, NotAbsoluteUnixPathException {
-    List<String> entrypointParameter = rawConfigurations.getEntrypoint();
+    List<String> entrypointParameter = rawConfiguration.getEntrypoint();
     if (entrypointParameter != null && !entrypointParameter.isEmpty()) {
-      if (rawConfigurations.getMainClass() != null || !rawConfigurations.getJvmFlags().isEmpty()) {
+      if (rawConfiguration.getMainClass() != null || !rawConfiguration.getJvmFlags().isEmpty()) {
         new DefaultEventDispatcher(projectProperties.getEventHandlers())
             .dispatch(
                 LogEvent.warn("mainClass and jvmFlags are ignored when entrypoint is specified"));
@@ -105,15 +105,15 @@ public class NPluginConfigurationProcessor {
       return null;
     }
 
-    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfigurations, projectProperties);
+    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
     String mainClass =
-        MainClassResolver.resolveMainClass(rawConfigurations.getMainClass(), projectProperties);
+        MainClassResolver.resolveMainClass(rawConfiguration.getMainClass(), projectProperties);
     return JavaEntrypointConstructor.makeDefaultEntrypoint(
-        appRoot, rawConfigurations.getJvmFlags(), mainClass);
+        appRoot, rawConfiguration.getJvmFlags(), mainClass);
   }
 
   public static NPluginConfigurationProcessor processCommonConfiguration(
-      RawConfigurations rawConfigurations, ProjectProperties projectProperties)
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InvalidImageReferenceException, NumberFormatException, FileNotFoundException,
           MainClassInferenceException, NotAbsoluteUnixPathException,
           InferredAuthRetrievalException {
@@ -122,7 +122,7 @@ public class NPluginConfigurationProcessor {
     // TODO: Instead of disabling logging, have authentication credentials be provided
     // disableHttpLogging();
     ImageReference baseImageReference =
-        ImageReference.parse(Preconditions.checkNotNull(rawConfigurations.getFromImage()));
+        ImageReference.parse(Preconditions.checkNotNull(rawConfiguration.getFromImage()));
 
     EventDispatcher eventDispatcher =
         new DefaultEventDispatcher(projectProperties.getEventHandlers());
@@ -140,13 +140,13 @@ public class NPluginConfigurationProcessor {
             eventDispatcher,
             PropertyNames.FROM_AUTH_USERNAME,
             PropertyNames.FROM_AUTH_PASSWORD,
-            rawConfigurations.getFromAuth());
+            rawConfiguration.getFromAuth());
     if (optionalFromCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(
-          optionalFromCredential.get(), rawConfigurations.getFromAuth().getPropertyDescriptor());
+          optionalFromCredential.get(), rawConfiguration.getFromAuth().getPropertyDescriptor());
     } else {
       AuthProperty inferredAuth =
-          rawConfigurations.getInferredAuth(baseImageReference.getRegistry());
+          rawConfiguration.getInferredAuth(baseImageReference.getRegistry());
       if (inferredAuth != null) {
         Credential credential =
             Credential.basic(inferredAuth.getUsername(), inferredAuth.getPassword());
@@ -155,7 +155,7 @@ public class NPluginConfigurationProcessor {
         optionalFromCredential = Optional.of(credential);
       }
     }
-    defaultCredentialRetrievers.setCredentialHelper(rawConfigurations.getFromCredHelper());
+    defaultCredentialRetrievers.setCredentialHelper(rawConfiguration.getFromCredHelper());
 
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     defaultCredentialRetrievers.asList().forEach(baseImage::addCredentialRetriever);
@@ -163,13 +163,13 @@ public class NPluginConfigurationProcessor {
     JibContainerBuilder jibContainerBuilder =
         Jib.from(baseImage)
             .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
-            .setEntrypoint(computeEntrypoint(rawConfigurations, projectProperties))
-            .setProgramArguments(rawConfigurations.getProgramArguments())
-            .setEnvironment(rawConfigurations.getEnvironment())
-            .setExposedPorts(ExposedPortsParser.parse(rawConfigurations.getPorts()))
-            .setLabels(rawConfigurations.getEnvironment())
-            .setUser(rawConfigurations.getUser());
-    if (rawConfigurations.getUseCurrentTimestamp()) {
+            .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
+            .setProgramArguments(rawConfiguration.getProgramArguments())
+            .setEnvironment(rawConfiguration.getEnvironment())
+            .setExposedPorts(ExposedPortsParser.parse(rawConfiguration.getPorts()))
+            .setLabels(rawConfiguration.getEnvironment())
+            .setUser(rawConfiguration.getUser());
+    if (rawConfiguration.getUseCurrentTimestamp()) {
       eventDispatcher.dispatch(
           LogEvent.warn(
               "Setting image creation time to current time; your image may not be reproducible."));

@@ -53,7 +53,7 @@ public class NPluginConfigurationProcessorTest {
         Containerizer.to(RegistryImage.named("ignored")));
   }
 
-  @Mock private RawConfigurations rawConfiguration;
+  @Mock private RawConfiguration rawConfiguration;
   @Mock private ProjectProperties projectProperties;
   @Mock private AuthProperty authProperty;
   @Mock private Consumer<LogEvent> logger;

@@ -34,7 +34,7 @@ import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
-import com.google.cloud.tools.jib.plugins.common.RawConfigurations;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -74,7 +74,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
         MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
     EventDispatcher eventDispatcher =
         new DefaultEventDispatcher(mavenProjectProperties.getEventHandlers());
-    RawConfigurations rawConfigurations = new MavenRawConfigurations(this, eventDispatcher);
+    RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
 
     try {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
@@ -91,7 +91,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
       NPluginConfigurationProcessor pluginConfigurationProcessor =
           NPluginConfigurationProcessor.processCommonConfiguration(
-              rawConfigurations, mavenProjectProperties);
+              rawConfiguration, mavenProjectProperties);
 
       JibContainerBuilder jibContainerBuilder =
           pluginConfigurationProcessor.getJibContainerBuilder();

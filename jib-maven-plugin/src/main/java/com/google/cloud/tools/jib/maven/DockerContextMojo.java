@@ -25,7 +25,7 @@ import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
-import com.google.cloud.tools.jib.plugins.common.RawConfigurations;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
@@ -79,11 +79,10 @@ public class DockerContextMojo extends JibPluginConfiguration {
               getProject(), getLog(), getExtraDirectory(), appRoot);
       DefaultEventDispatcher eventDispatcher =
           new DefaultEventDispatcher(mavenProjectProperties.getEventHandlers());
-      RawConfigurations rawConfigurations = new MavenRawConfigurations(this, eventDispatcher);
+      RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
 
       List<String> entrypoint =
-          NPluginConfigurationProcessor.computeEntrypoint(
-              rawConfigurations, mavenProjectProperties);
+          NPluginConfigurationProcessor.computeEntrypoint(rawConfiguration, mavenProjectProperties);
 
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.

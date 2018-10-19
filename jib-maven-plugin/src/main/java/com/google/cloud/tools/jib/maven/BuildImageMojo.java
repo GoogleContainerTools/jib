@@ -39,7 +39,7 @@ import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
-import com.google.cloud.tools.jib.plugins.common.RawConfigurations;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -98,12 +98,12 @@ public class BuildImageMojo extends JibPluginConfiguration {
         MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
     EventDispatcher eventDispatcher =
         new DefaultEventDispatcher(mavenProjectProperties.getEventHandlers());
-    RawConfigurations rawConfigurations = new MavenRawConfigurations(this, eventDispatcher);
+    RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
 
     try {
       NPluginConfigurationProcessor pluginConfigurationProcessor =
           NPluginConfigurationProcessor.processCommonConfiguration(
-              rawConfigurations, mavenProjectProperties);
+              rawConfiguration, mavenProjectProperties);
 
       ImageReference targetImageReference = ImageReference.parse(getTargetImage());
 
@@ -121,7 +121,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             optionalToCredential.get(), "jib-maven-plugin <to><auth> configuration");
       } else {
         AuthProperty inferredAuth =
-            rawConfigurations.getInferredAuth(targetImageReference.getRegistry());
+            rawConfiguration.getInferredAuth(targetImageReference.getRegistry());
         if (inferredAuth != null) {
           Credential credential =
               Credential.basic(inferredAuth.getUsername(), inferredAuth.getPassword());

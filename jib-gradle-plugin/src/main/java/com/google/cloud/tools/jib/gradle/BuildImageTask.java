@@ -37,7 +37,7 @@ import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
-import com.google.cloud.tools.jib.plugins.common.RawConfigurations;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -89,7 +89,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
-    RawConfigurations rawConfigurations = new GradleRawConfigurations(jibExtension);
+    RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
 
     if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
       throw new GradleException(
@@ -124,7 +124,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     try {
       NPluginConfigurationProcessor pluginConfigurationProcessor =
           NPluginConfigurationProcessor.processCommonConfiguration(
-              rawConfigurations, gradleProjectProperties);
+              rawConfiguration, gradleProjectProperties);
 
       JibContainerBuilder jibContainerBuilder =
           pluginConfigurationProcessor

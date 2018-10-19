@@ -33,7 +33,7 @@ import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
-import com.google.cloud.tools.jib.plugins.common.RawConfigurations;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -117,7 +117,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
-    RawConfigurations rawConfigurations = new GradleRawConfigurations(jibExtension);
+    RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
 
     GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
@@ -140,7 +140,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     try {
       NPluginConfigurationProcessor pluginConfigurationProcessor =
           NPluginConfigurationProcessor.processCommonConfiguration(
-              rawConfigurations, gradleProjectProperties);
+              rawConfiguration, gradleProjectProperties);
 
       JibContainerBuilder jibContainerBuilder =
           pluginConfigurationProcessor.getJibContainerBuilder();

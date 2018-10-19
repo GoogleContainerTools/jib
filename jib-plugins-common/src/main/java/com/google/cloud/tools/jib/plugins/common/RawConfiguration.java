@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-public interface RawConfigurations {
+public interface RawConfiguration {
 
   @Nullable
   String getFromImage();

@@ -17,16 +17,16 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
-import com.google.cloud.tools.jib.plugins.common.RawConfigurations;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-public class GradleRawConfigurations implements RawConfigurations {
+public class GradleRawConfiguration implements RawConfiguration {
 
   private final JibExtension jibExtension;
 
-  public GradleRawConfigurations(JibExtension jibExtension) {
+  public GradleRawConfiguration(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
   }
 

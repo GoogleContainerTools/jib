@@ -24,7 +24,7 @@ import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
-import com.google.cloud.tools.jib.plugins.common.RawConfigurations;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
@@ -115,13 +115,13 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
-    RawConfigurations rawConfigurations = new GradleRawConfigurations(jibExtension);
+    RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
     String targetDir = getTargetDir();
 
     try {
       List<String> entrypoint =
           NPluginConfigurationProcessor.computeEntrypoint(
-              rawConfigurations, gradleProjectProperties);
+              rawConfiguration, gradleProjectProperties);
 
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
