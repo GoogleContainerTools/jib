@@ -101,10 +101,9 @@ public class DefaultCacheStorageReaderTest {
     // Checks that the CacheEntry is retrieved correctly.
     Optional<CachedLayer> optionalCacheEntry = defaultCacheStorageReader.retrieve(layerDigest);
     Assert.assertTrue(optionalCacheEntry.isPresent());
-    Assert.assertEquals(layerDigest, optionalCacheEntry.get().getBlobDescriptor().getDigest());
+    Assert.assertEquals(layerDigest, optionalCacheEntry.get().getDigest());
     Assert.assertEquals(layerDiffId, optionalCacheEntry.get().getDiffId());
-    Assert.assertEquals(
-        "layerBlob".length(), optionalCacheEntry.get().getBlobDescriptor().getSize());
+    Assert.assertEquals("layerBlob".length(), optionalCacheEntry.get().getSize());
     Assert.assertEquals("layerBlob", Blobs.writeToString(optionalCacheEntry.get().getBlob()));
 
     // Checks that multiple .layer files means the cache is corrupted.

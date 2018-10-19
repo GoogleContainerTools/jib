@@ -209,9 +209,9 @@ public class CacheTest {
    */
   private void verifyIsLayer1(CachedLayer cachedLayer) throws IOException {
     Assert.assertEquals("layerBlob1", Blobs.writeToString(decompress(cachedLayer.getBlob())));
-    Assert.assertEquals(layerDigest1, cachedLayer.getBlobDescriptor().getDigest());
+    Assert.assertEquals(layerDigest1, cachedLayer.getDigest());
     Assert.assertEquals(layerDiffId1, cachedLayer.getDiffId());
-    Assert.assertEquals(layerSize1, cachedLayer.getBlobDescriptor().getSize());
+    Assert.assertEquals(layerSize1, cachedLayer.getSize());
   }
 
   /**
@@ -222,8 +222,8 @@ public class CacheTest {
    */
   private void verifyIsLayer2(CachedLayer cachedLayer) throws IOException {
     Assert.assertEquals("layerBlob2", Blobs.writeToString(decompress(cachedLayer.getBlob())));
-    Assert.assertEquals(layerDigest2, cachedLayer.getBlobDescriptor().getDigest());
+    Assert.assertEquals(layerDigest2, cachedLayer.getDigest());
     Assert.assertEquals(layerDiffId2, cachedLayer.getDiffId());
-    Assert.assertEquals(layerSize2, cachedLayer.getBlobDescriptor().getSize());
+    Assert.assertEquals(layerSize2, cachedLayer.getSize());
   }
 }

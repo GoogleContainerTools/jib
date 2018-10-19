@@ -111,9 +111,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
 
       buildConfiguration
           .getEventDispatcher()
-          .dispatch(
-              LogEvent.debug(
-                  description + " built " + cachedLayer.getBlobDescriptor().getDigest()));
+          .dispatch(LogEvent.debug(description + " built " + cachedLayer.getDigest()));
 
       return cachedLayer;
     }

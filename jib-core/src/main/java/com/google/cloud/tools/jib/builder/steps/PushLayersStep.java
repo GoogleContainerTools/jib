@@ -90,8 +90,7 @@ class PushLayersStep
         listeningExecutorService,
         buildConfiguration,
         authenticatePushStep,
-        new BlobDescriptor(
-            cachedLayer.getBlobDescriptor().getSize(), cachedLayer.getBlobDescriptor().getDigest()),
+        new BlobDescriptor(cachedLayer.getSize(), cachedLayer.getDigest()),
         cachedLayer.getBlob());
   }
 }

@@ -182,19 +182,17 @@ public class BuildAndCacheApplicationLayerStepTest {
     // Verifies that the cached layers are up-to-date.
     Assert.assertEquals(
         applicationLayers.get(0).getBlobDescriptor().getDigest(),
-        dependenciesCachedLayer.getBlobDescriptor().getDigest());
+        dependenciesCachedLayer.getDigest());
     Assert.assertEquals(
         applicationLayers.get(1).getBlobDescriptor().getDigest(),
-        snapshotDependenciesCachedLayer.getBlobDescriptor().getDigest());
+        snapshotDependenciesCachedLayer.getDigest());
     Assert.assertEquals(
-        applicationLayers.get(2).getBlobDescriptor().getDigest(),
-        resourcesCachedLayer.getBlobDescriptor().getDigest());
+        applicationLayers.get(2).getBlobDescriptor().getDigest(), resourcesCachedLayer.getDigest());
     Assert.assertEquals(
-        applicationLayers.get(3).getBlobDescriptor().getDigest(),
-        classesCachedLayer.getBlobDescriptor().getDigest());
+        applicationLayers.get(3).getBlobDescriptor().getDigest(), classesCachedLayer.getDigest());
     Assert.assertEquals(
         applicationLayers.get(4).getBlobDescriptor().getDigest(),
-        extraFilesCachedLayer.getBlobDescriptor().getDigest());
+        extraFilesCachedLayer.getDigest());
 
     // Verifies that the cache reader gets the same layers as the newest application layers.
     assertBlobsEqual(applicationLayers.get(0).getBlob(), dependenciesCachedLayer.getBlob());
@@ -238,13 +236,11 @@ public class BuildAndCacheApplicationLayerStepTest {
     // Verifies that the cached layers are up-to-date.
     Assert.assertEquals(
         applicationLayers.get(0).getBlobDescriptor().getDigest(),
-        dependenciesCachedLayer.getBlobDescriptor().getDigest());
+        dependenciesCachedLayer.getDigest());
     Assert.assertEquals(
-        applicationLayers.get(1).getBlobDescriptor().getDigest(),
-        resourcesCachedLayer.getBlobDescriptor().getDigest());
+        applicationLayers.get(1).getBlobDescriptor().getDigest(), resourcesCachedLayer.getDigest());
     Assert.assertEquals(
-        applicationLayers.get(2).getBlobDescriptor().getDigest(),
-        classesCachedLayer.getBlobDescriptor().getDigest());
+        applicationLayers.get(2).getBlobDescriptor().getDigest(), classesCachedLayer.getDigest());
 
     // Verifies that the cache reader gets the same layers as the newest application layers.
     assertBlobsEqual(applicationLayers.get(0).getBlob(), dependenciesCachedLayer.getBlob());

@@ -67,8 +67,18 @@ public class BuildImageStepTest {
     CachedLayer testCachedLayer =
         new CachedLayer() {
           @Override
+          public DescriptorDigest getDigest() {
+            return testDescriptorDigest;
+          }
+
+          @Override
           public DescriptorDigest getDiffId() {
             return testDescriptorDigest;
+          }
+
+          @Override
+          public long getSize() {
+            return 0;
           }
 
           @Override

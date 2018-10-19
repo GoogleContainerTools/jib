@@ -74,9 +74,9 @@ public class DefaultCachedLayerTest {
     cacheEntryBuilder.setLayerBlob(Blobs.from("layerBlob"));
     Assert.assertTrue(cacheEntryBuilder.hasLayerBlob());
     CachedLayer cachedLayer = cacheEntryBuilder.build();
-    Assert.assertEquals(mockLayerDigest, cachedLayer.getBlobDescriptor().getDigest());
+    Assert.assertEquals(mockLayerDigest, cachedLayer.getDigest());
     Assert.assertEquals(mockLayerDiffId, cachedLayer.getDiffId());
-    Assert.assertEquals(1337, cachedLayer.getBlobDescriptor().getSize());
+    Assert.assertEquals(1337, cachedLayer.getSize());
     Assert.assertEquals("layerBlob", Blobs.writeToString(cachedLayer.getBlob()));
   }
 }
