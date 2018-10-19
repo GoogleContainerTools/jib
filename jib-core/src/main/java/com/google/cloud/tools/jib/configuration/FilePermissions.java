@@ -79,14 +79,12 @@ public class FilePermissions {
   }
 
   /**
-   * Takes an integer mode, sets its lowest 9 bits to the corresponding permissions on the {@link
-   * FilePermissions}, and returns the result.
+   * Gets the corresponding permissions bits specified by the {@link FilePermissions}
    *
-   * @param mode the original mode
-   * @return the mode with the permission bits set
+   * @return the permission bits
    */
-  public int applyToFileMode(int mode) {
-    return (mode & ~0777) | permissionBits;
+  public int getPermissionBits() {
+    return permissionBits;
   }
 
   @Override

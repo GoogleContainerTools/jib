@@ -66,12 +66,4 @@ public class FilePermissionsTest {
         FilePermissions.fromPosixFilePermissions(
             ImmutableSet.copyOf(PosixFilePermission.values())));
   }
-
-  @Test
-  public void testApplyToFileMode() {
-    Assert.assertEquals(040123, new FilePermissions(0123).applyToFileMode(040765));
-    Assert.assertEquals(0100456, new FilePermissions(0456).applyToFileMode(0100020));
-    Assert.assertEquals(01234777, new FilePermissions(0777).applyToFileMode(01234000));
-    Assert.assertEquals(0555, new FilePermissions(0555).applyToFileMode(0));
-  }
 }
