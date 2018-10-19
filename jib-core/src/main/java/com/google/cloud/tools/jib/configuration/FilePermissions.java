@@ -25,6 +25,10 @@ import java.util.Set;
 /** Represents read/write/execute file permissions for owner, group, and others. */
 public class FilePermissions {
 
+  public static final FilePermissions DEFAULT_FILE_PERMISSIONS = new FilePermissions(0644);
+
+  public static final FilePermissions DEFAULT_FOLDER_PERMISSIONS = new FilePermissions(0755);
+
   /**
    * Matches an octal string representation of file permissions. From left to right, each digit
    * represents permissions for owner, group, and other.
