@@ -36,6 +36,13 @@ public interface RawConfigurations {
   @Nullable
   List<String> getProgramArguments();
 
+  @Nullable
+  String getMainClass();
+
+  List<String> getJvmFlags();
+
+  String getAppRoot();
+
   Map<String, String> getEnvironment();
 
   List<String> getPorts();
@@ -44,14 +51,6 @@ public interface RawConfigurations {
   String getUser();
 
   boolean getUseCurrentTimestamp();
-
-  List<String> getJvmFlags();
-
-  @Nullable
-  String getMainClass();
-
-  @Nullable
-  String getAppRoot();
 
   @Nullable
   AuthProperty getInferredAuth(String authTarget) throws InferredAuthRetrievalException;

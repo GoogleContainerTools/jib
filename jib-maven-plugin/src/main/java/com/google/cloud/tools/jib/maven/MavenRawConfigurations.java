@@ -71,6 +71,22 @@ class MavenRawConfigurations implements RawConfigurations {
     return jibPluginConfiguration.getArgs();
   }
 
+  @Nullable
+  @Override
+  public String getMainClass() {
+    return jibPluginConfiguration.getMainClass();
+  }
+
+  @Override
+  public List<String> getJvmFlags() {
+    return jibPluginConfiguration.getJvmFlags();
+  }
+
+  @Override
+  public String getAppRoot() {
+    return jibPluginConfiguration.getAppRoot();
+  }
+
   @Override
   public Map<String, String> getEnvironment() {
     return jibPluginConfiguration.getEnvironment();
@@ -90,22 +106,6 @@ class MavenRawConfigurations implements RawConfigurations {
   @Override
   public boolean getUseCurrentTimestamp() {
     return jibPluginConfiguration.getUseCurrentTimestamp();
-  }
-
-  @Override
-  public List<String> getJvmFlags() {
-    return jibPluginConfiguration.getJvmFlags();
-  }
-
-  @Nullable
-  @Override
-  public String getMainClass() {
-    return jibPluginConfiguration.getMainClass();
-  }
-
-  @Override
-  public String getAppRoot() {
-    return jibPluginConfiguration.getAppRoot();
   }
 
   @Nullable

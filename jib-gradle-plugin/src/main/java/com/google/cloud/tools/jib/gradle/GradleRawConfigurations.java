@@ -59,6 +59,22 @@ public class GradleRawConfigurations implements RawConfigurations {
     return jibExtension.getContainer().getArgs();
   }
 
+  @Nullable
+  @Override
+  public String getMainClass() {
+    return jibExtension.getContainer().getMainClass();
+  }
+
+  @Override
+  public List<String> getJvmFlags() {
+    return jibExtension.getContainer().getJvmFlags();
+  }
+
+  @Override
+  public String getAppRoot() {
+    return jibExtension.getContainer().getAppRoot();
+  }
+
   @Override
   public Map<String, String> getEnvironment() {
     return jibExtension.getContainer().getEnvironment();
@@ -78,23 +94,6 @@ public class GradleRawConfigurations implements RawConfigurations {
   @Override
   public boolean getUseCurrentTimestamp() {
     return jibExtension.getContainer().getUseCurrentTimestamp();
-  }
-
-  @Override
-  public List<String> getJvmFlags() {
-    return jibExtension.getContainer().getJvmFlags();
-  }
-
-  @Nullable
-  @Override
-  public String getMainClass() {
-    return jibExtension.getContainer().getMainClass();
-  }
-
-  @Nullable
-  @Override
-  public String getAppRoot() {
-    return jibExtension.getContainer().getAppRoot();
   }
 
   @Nullable
