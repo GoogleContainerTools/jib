@@ -208,10 +208,10 @@ public class CacheTest {
    * @throws IOException if an I/O exception occurs
    */
   private void verifyIsLayer1(CacheEntry cacheEntry) throws IOException {
-    Assert.assertEquals("layerBlob1", Blobs.writeToString(decompress(cacheEntry.getLayerBlob())));
-    Assert.assertEquals(layerDigest1, cacheEntry.getLayerDigest());
-    Assert.assertEquals(layerDiffId1, cacheEntry.getLayerDiffId());
-    Assert.assertEquals(layerSize1, cacheEntry.getLayerSize());
+    Assert.assertEquals("layerBlob1", Blobs.writeToString(decompress(cacheEntry.getBlob())));
+    Assert.assertEquals(layerDigest1, cacheEntry.getBlobDescriptor().getDigest());
+    Assert.assertEquals(layerDiffId1, cacheEntry.getDiffId());
+    Assert.assertEquals(layerSize1, cacheEntry.getBlobDescriptor().getSize());
   }
 
   /**
@@ -221,9 +221,9 @@ public class CacheTest {
    * @throws IOException if an I/O exception occurs
    */
   private void verifyIsLayer2(CacheEntry cacheEntry) throws IOException {
-    Assert.assertEquals("layerBlob2", Blobs.writeToString(decompress(cacheEntry.getLayerBlob())));
-    Assert.assertEquals(layerDigest2, cacheEntry.getLayerDigest());
-    Assert.assertEquals(layerDiffId2, cacheEntry.getLayerDiffId());
-    Assert.assertEquals(layerSize2, cacheEntry.getLayerSize());
+    Assert.assertEquals("layerBlob2", Blobs.writeToString(decompress(cacheEntry.getBlob())));
+    Assert.assertEquals(layerDigest2, cacheEntry.getBlobDescriptor().getDigest());
+    Assert.assertEquals(layerDiffId2, cacheEntry.getDiffId());
+    Assert.assertEquals(layerSize2, cacheEntry.getBlobDescriptor().getSize());
   }
 }

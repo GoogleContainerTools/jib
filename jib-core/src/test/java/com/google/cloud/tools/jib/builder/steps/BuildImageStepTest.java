@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.cache.CacheEntry;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
@@ -66,23 +67,18 @@ public class BuildImageStepTest {
     CacheEntry testCacheEntry =
         new CacheEntry() {
           @Override
-          public DescriptorDigest getLayerDigest() {
+          public DescriptorDigest getDiffId() {
             return testDescriptorDigest;
           }
 
           @Override
-          public DescriptorDigest getLayerDiffId() {
-            return testDescriptorDigest;
-          }
-
-          @Override
-          public long getLayerSize() {
-            return 0;
-          }
-
-          @Override
-          public Blob getLayerBlob() {
+          public Blob getBlob() {
             return Blobs.from("ignored");
+          }
+
+          @Override
+          public BlobDescriptor getBlobDescriptor() {
+            return new BlobDescriptor(0, testDescriptorDigest);
           }
         };
 

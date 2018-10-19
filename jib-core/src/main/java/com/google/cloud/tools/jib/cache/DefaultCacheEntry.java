@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
@@ -76,36 +77,29 @@ class DefaultCacheEntry implements CacheEntry {
     return new Builder();
   }
 
-  private final DescriptorDigest layerDigest;
   private final DescriptorDigest layerDiffId;
-  private final long layerSize;
+  private final BlobDescriptor blobDescriptor;
   private final Blob layerBlob;
 
   private DefaultCacheEntry(
       DescriptorDigest layerDigest, DescriptorDigest layerDiffId, long layerSize, Blob layerBlob) {
-    this.layerDigest = layerDigest;
     this.layerDiffId = layerDiffId;
-    this.layerSize = layerSize;
     this.layerBlob = layerBlob;
+    this.blobDescriptor = new BlobDescriptor(layerSize, layerDigest);
   }
 
   @Override
-  public DescriptorDigest getLayerDigest() {
-    return layerDigest;
-  }
-
-  @Override
-  public DescriptorDigest getLayerDiffId() {
+  public DescriptorDigest getDiffId() {
     return layerDiffId;
   }
 
   @Override
-  public long getLayerSize() {
-    return layerSize;
+  public Blob getBlob() {
+    return layerBlob;
   }
 
   @Override
-  public Blob getLayerBlob() {
-    return layerBlob;
+  public BlobDescriptor getBlobDescriptor() {
+    return blobDescriptor;
   }
 }

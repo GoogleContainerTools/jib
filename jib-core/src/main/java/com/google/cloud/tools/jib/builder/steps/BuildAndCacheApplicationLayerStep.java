@@ -111,7 +111,8 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CacheEntry>, Callab
 
       buildConfiguration
           .getEventDispatcher()
-          .dispatch(LogEvent.debug(description + " built " + cacheEntry.getLayerDigest()));
+          .dispatch(
+              LogEvent.debug(description + " built " + cacheEntry.getBlobDescriptor().getDigest()));
 
       return cacheEntry;
     }
