@@ -22,14 +22,17 @@ import com.google.common.collect.ImmutableMap;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
 
-/** Represents read/write/execute file permissions. */
+/** Represents read/write/execute file permissions for owner, group, and others. */
 public class FilePermissions {
 
-  /** Matches an octal string representation of file permissions. */
-  private static final String octalPattern = "[0-7][0-7][0-7]";
+  /**
+   * Matches an octal string representation of file permissions. From left to right, each digit
+   * represents permissions for owner, group, and other.
+   */
+  private static final String OCTAL_PATTERN = "[0-7][0-7][0-7]";
 
   /** Maps from a {@link PosixFilePermission} to its corresponding file permission bit. */
-  private static final ImmutableMap<PosixFilePermission, Integer> permissionMap =
+  private static final ImmutableMap<PosixFilePermission, Integer> PERMISSION_MAP =
       ImmutableMap.<PosixFilePermission, Integer>builder()
           .put(PosixFilePermission.OWNER_READ, 0400)
           .put(PosixFilePermission.OWNER_WRITE, 0200)
@@ -51,7 +54,7 @@ public class FilePermissions {
    */
   public static FilePermissions fromOctalString(String octalPermissions) {
     Preconditions.checkArgument(
-        octalPermissions.matches(octalPattern),
+        octalPermissions.matches(OCTAL_PATTERN),
         "octalPermissions must be a 3-digit octal number (000-777)");
     return new FilePermissions(Integer.parseInt(octalPermissions, 8));
   }
@@ -66,7 +69,7 @@ public class FilePermissions {
       Set<PosixFilePermission> posixFilePermissions) {
     int permissionBits = 0;
     for (PosixFilePermission permission : posixFilePermissions) {
-      permissionBits |= permissionMap.get(permission);
+      permissionBits |= PERMISSION_MAP.get(permission);
     }
     return new FilePermissions(permissionBits);
   }
@@ -101,6 +104,6 @@ public class FilePermissions {
 
   @Override
   public int hashCode() {
-    return Integer.hashCode(permissionBits);
+    return permissionBits;
   }
 }
