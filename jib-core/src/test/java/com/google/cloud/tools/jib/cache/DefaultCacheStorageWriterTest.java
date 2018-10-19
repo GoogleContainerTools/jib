@@ -74,11 +74,11 @@ public class DefaultCacheStorageWriterTest {
   public void testWrite_compressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
 
-    CacheEntry cacheEntry =
+    CachedLayer cachedLayer =
         new DefaultCacheStorageWriter(defaultCacheStorageFiles)
             .write(compress(uncompressedLayerBlob));
 
-    verifyCacheEntry(cacheEntry, uncompressedLayerBlob);
+    verifyCacheEntry(cachedLayer, uncompressedLayerBlob);
   }
 
   @Test
@@ -87,11 +87,11 @@ public class DefaultCacheStorageWriterTest {
     DescriptorDigest layerDigest = getCompressedBlobDescriptor(uncompressedLayerBlob).getDigest();
     DescriptorDigest selector = getDigest(Blobs.from("selector"));
 
-    CacheEntry cacheEntry =
+    CachedLayer cachedLayer =
         new DefaultCacheStorageWriter(defaultCacheStorageFiles)
             .write(new UncompressedCacheWrite(uncompressedLayerBlob, selector));
 
-    verifyCacheEntry(cacheEntry, uncompressedLayerBlob);
+    verifyCacheEntry(cachedLayer, uncompressedLayerBlob);
 
     // Verifies that the files are present.
     Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
@@ -99,24 +99,24 @@ public class DefaultCacheStorageWriterTest {
     Assert.assertEquals(layerDigest.getHash(), Blobs.writeToString(Blobs.from(selectorFile)));
   }
 
-  private void verifyCacheEntry(CacheEntry cacheEntry, Blob uncompressedLayerBlob)
+  private void verifyCacheEntry(CachedLayer cachedLayer, Blob uncompressedLayerBlob)
       throws IOException {
     BlobDescriptor layerBlobDescriptor = getCompressedBlobDescriptor(uncompressedLayerBlob);
     DescriptorDigest layerDiffId = getDigest(uncompressedLayerBlob);
 
     // Verifies cacheEntry is correct.
     Assert.assertEquals(
-        layerBlobDescriptor.getDigest(), cacheEntry.getBlobDescriptor().getDigest());
-    Assert.assertEquals(layerDiffId, cacheEntry.getDiffId());
-    Assert.assertEquals(layerBlobDescriptor.getSize(), cacheEntry.getBlobDescriptor().getSize());
+        layerBlobDescriptor.getDigest(), cachedLayer.getBlobDescriptor().getDigest());
+    Assert.assertEquals(layerDiffId, cachedLayer.getDiffId());
+    Assert.assertEquals(layerBlobDescriptor.getSize(), cachedLayer.getBlobDescriptor().getSize());
     Assert.assertArrayEquals(
         Blobs.writeToByteArray(uncompressedLayerBlob),
-        Blobs.writeToByteArray(decompress(cacheEntry.getBlob())));
+        Blobs.writeToByteArray(decompress(cachedLayer.getBlob())));
 
     // Verifies that the files are present.
     Assert.assertTrue(
         Files.exists(
             defaultCacheStorageFiles.getLayerFile(
-                cacheEntry.getBlobDescriptor().getDigest(), cacheEntry.getDiffId())));
+                cachedLayer.getBlobDescriptor().getDigest(), cachedLayer.getDiffId())));
   }
 }

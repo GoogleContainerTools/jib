@@ -16,10 +16,26 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Layer;
 
 /**
  * Represents a cache entry for a layer stored in the cache. <b>Implementations must be
  * immutable.</b>
  */
-public interface CacheEntry extends Layer {}
+public interface CachedLayer extends Layer {
+
+  /**
+   * Gets the digest of the layer.
+   *
+   * @return the layer digest
+   */
+  DescriptorDigest getDigest();
+
+  /**
+   * Gets the size of the layer, in bytes.
+   *
+   * @return the layer size
+   */
+  long getSize();
+}

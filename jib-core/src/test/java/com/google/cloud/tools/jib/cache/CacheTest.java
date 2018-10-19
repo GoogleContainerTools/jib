@@ -204,26 +204,26 @@ public class CacheTest {
   /**
    * Verifies that {@code cacheEntry} corresponds to the first fake layer in {@link #setUp}.
    *
-   * @param cacheEntry the {@link CacheEntry} to verify
+   * @param cachedLayer the {@link CachedLayer} to verify
    * @throws IOException if an I/O exception occurs
    */
-  private void verifyIsLayer1(CacheEntry cacheEntry) throws IOException {
-    Assert.assertEquals("layerBlob1", Blobs.writeToString(decompress(cacheEntry.getBlob())));
-    Assert.assertEquals(layerDigest1, cacheEntry.getBlobDescriptor().getDigest());
-    Assert.assertEquals(layerDiffId1, cacheEntry.getDiffId());
-    Assert.assertEquals(layerSize1, cacheEntry.getBlobDescriptor().getSize());
+  private void verifyIsLayer1(CachedLayer cachedLayer) throws IOException {
+    Assert.assertEquals("layerBlob1", Blobs.writeToString(decompress(cachedLayer.getBlob())));
+    Assert.assertEquals(layerDigest1, cachedLayer.getBlobDescriptor().getDigest());
+    Assert.assertEquals(layerDiffId1, cachedLayer.getDiffId());
+    Assert.assertEquals(layerSize1, cachedLayer.getBlobDescriptor().getSize());
   }
 
   /**
    * Verifies that {@code cacheEntry} corresponds to the second fake layer in {@link #setUp}.
    *
-   * @param cacheEntry the {@link CacheEntry} to verify
+   * @param cachedLayer the {@link CachedLayer} to verify
    * @throws IOException if an I/O exception occurs
    */
-  private void verifyIsLayer2(CacheEntry cacheEntry) throws IOException {
-    Assert.assertEquals("layerBlob2", Blobs.writeToString(decompress(cacheEntry.getBlob())));
-    Assert.assertEquals(layerDigest2, cacheEntry.getBlobDescriptor().getDigest());
-    Assert.assertEquals(layerDiffId2, cacheEntry.getDiffId());
-    Assert.assertEquals(layerSize2, cacheEntry.getBlobDescriptor().getSize());
+  private void verifyIsLayer2(CachedLayer cachedLayer) throws IOException {
+    Assert.assertEquals("layerBlob2", Blobs.writeToString(decompress(cachedLayer.getBlob())));
+    Assert.assertEquals(layerDigest2, cachedLayer.getBlobDescriptor().getDigest());
+    Assert.assertEquals(layerDiffId2, cachedLayer.getDiffId());
+    Assert.assertEquals(layerSize2, cachedLayer.getBlobDescriptor().getSize());
   }
 }

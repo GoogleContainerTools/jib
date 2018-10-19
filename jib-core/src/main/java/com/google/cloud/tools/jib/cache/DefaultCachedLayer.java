@@ -22,10 +22,10 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 
-/** Default implementation of {@link CacheEntry}. */
-class DefaultCacheEntry implements CacheEntry {
+/** Default implementation of {@link CachedLayer}. */
+class DefaultCachedLayer implements CachedLayer {
 
-  /** Builds a {@link CacheEntry}. */
+  /** Builds a {@link CachedLayer}. */
   static class Builder {
 
     @Nullable private DescriptorDigest layerDigest;
@@ -59,8 +59,8 @@ class DefaultCacheEntry implements CacheEntry {
       return layerBlob != null;
     }
 
-    CacheEntry build() {
-      return new DefaultCacheEntry(
+    CachedLayer build() {
+      return new DefaultCachedLayer(
           Preconditions.checkNotNull(layerDigest, "layerDigest required"),
           Preconditions.checkNotNull(layerDiffId, "layerDiffId required"),
           layerSize,
@@ -69,7 +69,7 @@ class DefaultCacheEntry implements CacheEntry {
   }
 
   /**
-   * Creates a new {@link Builder} for a {@link CacheEntry}.
+   * Creates a new {@link Builder} for a {@link CachedLayer}.
    *
    * @return the new {@link Builder}
    */
@@ -81,7 +81,7 @@ class DefaultCacheEntry implements CacheEntry {
   private final BlobDescriptor blobDescriptor;
   private final Blob layerBlob;
 
-  private DefaultCacheEntry(
+  private DefaultCachedLayer(
       DescriptorDigest layerDigest, DescriptorDigest layerDiffId, long layerSize, Blob layerBlob) {
     this.layerDiffId = layerDiffId;
     this.layerBlob = layerBlob;
@@ -89,8 +89,18 @@ class DefaultCacheEntry implements CacheEntry {
   }
 
   @Override
+  public DescriptorDigest getDigest() {
+    return blobDescriptor.getDigest();
+  }
+
+  @Override
   public DescriptorDigest getDiffId() {
     return layerDiffId;
+  }
+
+  @Override
+  public long getSize() {
+    return blobDescriptor.getSize();
   }
 
   @Override

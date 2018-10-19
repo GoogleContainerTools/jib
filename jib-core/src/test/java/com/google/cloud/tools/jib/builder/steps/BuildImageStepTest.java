@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.cache.CacheEntry;
+import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.event.EventDispatcher;
@@ -64,8 +64,8 @@ public class BuildImageStepTest {
     testDescriptorDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    CacheEntry testCacheEntry =
-        new CacheEntry() {
+    CachedLayer testCachedLayer =
+        new CachedLayer() {
           @Override
           public DescriptorDigest getDiffId() {
             return testDescriptorDigest;
@@ -119,7 +119,7 @@ public class BuildImageStepTest {
             .addHistory(emptyLayerHistory)
             .build();
     Mockito.when(mockPullAndCacheBaseImageLayerStep.getFuture())
-        .thenReturn(Futures.immediateFuture(testCacheEntry));
+        .thenReturn(Futures.immediateFuture(testCachedLayer));
     Mockito.when(mockPullAndCacheBaseImageLayersStep.getFuture())
         .thenReturn(
             Futures.immediateFuture(
@@ -132,7 +132,7 @@ public class BuildImageStepTest {
             Futures.immediateFuture(
                 new PullBaseImageStep.BaseImageWithAuthorization(baseImage, null)));
     Mockito.when(mockBuildAndCacheApplicationLayerStep.getFuture())
-        .thenReturn(Futures.immediateFuture(testCacheEntry));
+        .thenReturn(Futures.immediateFuture(testCachedLayer));
   }
 
   @Test

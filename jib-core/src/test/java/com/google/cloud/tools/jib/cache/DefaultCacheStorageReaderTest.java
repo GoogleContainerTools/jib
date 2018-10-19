@@ -99,7 +99,7 @@ public class DefaultCacheStorageReaderTest {
         layerBlob, defaultCacheStorageFiles.getLayerFile(layerDigest, layerDiffId));
 
     // Checks that the CacheEntry is retrieved correctly.
-    Optional<CacheEntry> optionalCacheEntry = defaultCacheStorageReader.retrieve(layerDigest);
+    Optional<CachedLayer> optionalCacheEntry = defaultCacheStorageReader.retrieve(layerDigest);
     Assert.assertTrue(optionalCacheEntry.isPresent());
     Assert.assertEquals(layerDigest, optionalCacheEntry.get().getBlobDescriptor().getDigest());
     Assert.assertEquals(layerDiffId, optionalCacheEntry.get().getDiffId());

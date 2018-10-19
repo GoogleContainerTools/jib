@@ -26,9 +26,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link DefaultCacheEntry}. */
+/** Tests for {@link DefaultCachedLayer}. */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultCacheEntryTest {
+public class DefaultCachedLayerTest {
 
   @Mock private DescriptorDigest mockLayerDigest;
   @Mock private DescriptorDigest mockLayerDiffId;
@@ -36,7 +36,7 @@ public class DefaultCacheEntryTest {
   @Test
   public void testBuilder_fail() {
     try {
-      DefaultCacheEntry.builder().build();
+      DefaultCachedLayer.builder().build();
       Assert.fail("missing required");
 
     } catch (NullPointerException ex) {
@@ -44,7 +44,7 @@ public class DefaultCacheEntryTest {
     }
 
     try {
-      DefaultCacheEntry.builder().setLayerDigest(mockLayerDigest).build();
+      DefaultCachedLayer.builder().setLayerDigest(mockLayerDigest).build();
       Assert.fail("missing required");
 
     } catch (NullPointerException ex) {
@@ -52,7 +52,7 @@ public class DefaultCacheEntryTest {
     }
 
     try {
-      DefaultCacheEntry.builder()
+      DefaultCachedLayer.builder()
           .setLayerDigest(mockLayerDigest)
           .setLayerDiffId(mockLayerDiffId)
           .build();
@@ -65,18 +65,18 @@ public class DefaultCacheEntryTest {
 
   @Test
   public void testBuilder_pass() throws IOException {
-    DefaultCacheEntry.Builder cacheEntryBuilder =
-        DefaultCacheEntry.builder()
+    DefaultCachedLayer.Builder cacheEntryBuilder =
+        DefaultCachedLayer.builder()
             .setLayerDigest(mockLayerDigest)
             .setLayerDiffId(mockLayerDiffId)
             .setLayerSize(1337);
     Assert.assertFalse(cacheEntryBuilder.hasLayerBlob());
     cacheEntryBuilder.setLayerBlob(Blobs.from("layerBlob"));
     Assert.assertTrue(cacheEntryBuilder.hasLayerBlob());
-    CacheEntry cacheEntry = cacheEntryBuilder.build();
-    Assert.assertEquals(mockLayerDigest, cacheEntry.getBlobDescriptor().getDigest());
-    Assert.assertEquals(mockLayerDiffId, cacheEntry.getDiffId());
-    Assert.assertEquals(1337, cacheEntry.getBlobDescriptor().getSize());
-    Assert.assertEquals("layerBlob", Blobs.writeToString(cacheEntry.getBlob()));
+    CachedLayer cachedLayer = cacheEntryBuilder.build();
+    Assert.assertEquals(mockLayerDigest, cachedLayer.getBlobDescriptor().getDigest());
+    Assert.assertEquals(mockLayerDiffId, cachedLayer.getDiffId());
+    Assert.assertEquals(1337, cachedLayer.getBlobDescriptor().getSize());
+    Assert.assertEquals("layerBlob", Blobs.writeToString(cachedLayer.getBlob()));
   }
 }
