@@ -17,12 +17,10 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -106,17 +104,9 @@ public class ReproducibleLayerBuilder {
           new TarArchiveEntry(
               layerEntry.getSourceFile().toFile(), layerEntry.getAbsoluteExtractionPathString());
 
-      FilePermissions permissions =
-          layerEntry
-              .getPermissions()
-              .orElse(
-                  Files.isDirectory(layerEntry.getSourceFile())
-                      ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
-                      : FilePermissions.DEFAULT_FILE_PERMISSIONS);
-
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
-      entry.setMode((entry.getMode() & ~0777) | permissions.getPermissionBits());
+      entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
 
       uniqueTarArchiveEntries.add(entry);
     }

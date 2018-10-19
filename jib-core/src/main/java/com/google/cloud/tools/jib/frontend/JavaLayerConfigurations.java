@@ -88,8 +88,7 @@ public class JavaLayerConfigurations {
      * @see LayerConfiguration.Builder#addEntry(Path, AbsoluteUnixPath)
      */
     public Builder addFile(LayerType layerType, Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      addFile(layerType, sourceFile, pathInContainer, null);
-      return this;
+      return addFile(layerType, sourceFile, pathInContainer, null);
     }
 
     /**

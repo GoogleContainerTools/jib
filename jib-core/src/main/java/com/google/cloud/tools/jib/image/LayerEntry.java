@@ -18,9 +18,9 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -39,7 +39,7 @@ public class LayerEntry {
 
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
-  @Nullable private final FilePermissions permissions;
+  private final FilePermissions permissions;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -63,7 +63,12 @@ public class LayerEntry {
       Path sourceFile, AbsoluteUnixPath extractionPath, @Nullable FilePermissions permissions) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
-    this.permissions = permissions;
+    this.permissions =
+        permissions == null
+            ? Files.isDirectory(sourceFile)
+                ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
+                : FilePermissions.DEFAULT_FILE_PERMISSIONS
+            : permissions;
   }
 
   /**
@@ -94,8 +99,8 @@ public class LayerEntry {
    *
    * @return the file permissions on the container
    */
-  public Optional<FilePermissions> getPermissions() {
-    return Optional.ofNullable(permissions);
+  public FilePermissions getPermissions() {
+    return permissions;
   }
 
   // TODO: Remove these get...String methods.

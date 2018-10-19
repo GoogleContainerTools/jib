@@ -67,8 +67,7 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder addEntry(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, null));
-      return this;
+      return addEntry(sourceFile, pathInContainer, null);
     }
 
     /**
