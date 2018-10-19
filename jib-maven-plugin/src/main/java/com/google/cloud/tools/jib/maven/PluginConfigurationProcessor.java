@@ -197,22 +197,6 @@ class PluginConfigurationProcessor {
       jibContainerBuilder.setCreationTime(Instant.now());
     }
 
-    BuildConfiguration.Builder buildConfigurationBuilder =
-        BuildConfiguration.builder()
-            .setToolName(MavenProjectProperties.TOOL_NAME)
-            .setEventDispatcher(eventDispatcher)
-            .setAllowInsecureRegistries(jibPluginConfiguration.getAllowInsecureRegistries())
-            .setLayerConfigurations(
-                projectProperties.getJavaLayerConfigurations().getLayerConfigurations());
-    buildConfigurationBuilder.setApplicationLayersCacheDirectory(
-        projectProperties.getCacheDirectory());
-    buildConfigurationBuilder.setBaseImageLayersCacheDirectory(
-        Containerizer.DEFAULT_BASE_CACHE_DIRECTORY);
-    if (jibPluginConfiguration.getUseOnlyProjectCache()) {
-      buildConfigurationBuilder.setBaseImageLayersCacheDirectory(
-          projectProperties.getCacheDirectory());
-    }
-
     return new PluginConfigurationProcessor(
         jibContainerBuilder,
         baseImageReference,

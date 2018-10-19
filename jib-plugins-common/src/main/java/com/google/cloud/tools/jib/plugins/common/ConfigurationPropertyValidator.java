@@ -110,8 +110,8 @@ public class ConfigurationPropertyValidator {
    *
    * @param targetImage the configured target image reference
    * @param eventDispatcher the {@link EventDispatcher} used to dispatch log events
-   * @param projectName the project name, as determined by the plugin
-   * @param projectVersion the project version, as determined by the plugin
+   * @param generatedName the image name to use if {@code targetImage} is {@code null}
+   * @param generatedTag the tag to use if {@code targetImage} is {@code null}
    * @param helpfulSuggestions used for generating the message notifying the user of the generated
    *     tag
    * @return an {@link ImageReference} parsed from the configured target image, or one of the form
@@ -122,18 +122,18 @@ public class ConfigurationPropertyValidator {
   public static ImageReference getGeneratedTargetDockerTag(
       @Nullable String targetImage,
       EventDispatcher eventDispatcher,
-      String projectName,
-      String projectVersion,
+      String generatedName,
+      String generatedTag,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException {
     if (Strings.isNullOrEmpty(targetImage)) {
       eventDispatcher.dispatch(
-          LogEvent.lifecycle(helpfulSuggestions.forGeneratedTag(projectName, projectVersion)));
+          LogEvent.lifecycle(helpfulSuggestions.forGeneratedTag(generatedName, generatedTag)));
 
       // Try to parse generated tag to verify that project name and version are valid (throws an
       // exception if parse fails)
-      ImageReference.parse(projectName + ":" + projectVersion);
-      return ImageReference.of(null, projectName, projectVersion);
+      ImageReference.parse(generatedName + ":" + generatedTag);
+      return ImageReference.of(null, generatedName, generatedTag);
     } else {
       return ImageReference.parse(targetImage);
     }
