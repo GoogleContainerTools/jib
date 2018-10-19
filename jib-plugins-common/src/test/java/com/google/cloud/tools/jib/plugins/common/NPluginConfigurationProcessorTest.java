@@ -27,7 +27,10 @@ import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.collect.ImmutableList;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -60,7 +63,6 @@ public class NPluginConfigurationProcessorTest {
 
   @Before
   public void setUp() {
-    Mockito.when(rawConfiguration.getFromImage()).thenReturn("gcr.io/distroless/java");
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Collections.emptyList());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
@@ -87,8 +89,25 @@ public class NPluginConfigurationProcessorTest {
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
+
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
     Mockito.verify(logger, Mockito.never()).accept(Mockito.argThat(isLogWarn));
+  }
+
+  @Test
+  public void testPluginConfigurationProcessor_warProjectBaseImage()
+      throws InvalidImageReferenceException, FileNotFoundException, MainClassInferenceException,
+          NotAbsoluteUnixPathException, InferredAuthRetrievalException {
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
+
+    NPluginConfigurationProcessor processor =
+        NPluginConfigurationProcessor.processCommonConfiguration(
+            rawConfiguration, projectProperties);
+
+    Assert.assertEquals(
+        ImageReference.parse("gcr.io/distroless/java/jetty").toString(),
+        processor.getBaseImageReference().toString());
+    Mockito.verifyNoMoreInteractions(logger);
   }
 
   @Test
@@ -108,6 +127,46 @@ public class NPluginConfigurationProcessorTest {
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
+        buildConfiguration.getContainerConfiguration().getEntrypoint());
+    Mockito.verifyZeroInteractions(logger);
+  }
+
+  @Test
+  public void testEntrypoint_defaultWarPackaging()
+      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
+          MainClassInferenceException, NotAbsoluteUnixPathException,
+          InferredAuthRetrievalException {
+    Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
+
+    NPluginConfigurationProcessor processor =
+        NPluginConfigurationProcessor.processCommonConfiguration(
+            rawConfiguration, projectProperties);
+
+    JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
+    BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
+    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
+    Mockito.verifyZeroInteractions(logger);
+  }
+
+  @Test
+  public void testEntrypoint_defaulNonWarPackaging()
+      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
+          MainClassInferenceException, NotAbsoluteUnixPathException,
+          InferredAuthRetrievalException {
+    Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
+    Mockito.when(projectProperties.isWarProject()).thenReturn(false);
+
+    NPluginConfigurationProcessor processor =
+        NPluginConfigurationProcessor.processCommonConfiguration(
+            rawConfiguration, projectProperties);
+    JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
+    BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertEquals(
+        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verifyZeroInteractions(logger);
   }

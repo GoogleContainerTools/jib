@@ -31,7 +31,6 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import com.google.common.base.Preconditions;
 import java.io.FileNotFoundException;
 import java.time.Instant;
 import java.util.List;
@@ -112,6 +111,22 @@ public class NPluginConfigurationProcessor {
         appRoot, rawConfiguration.getJvmFlags(), mainClass);
   }
 
+  /**
+   * Gets the suitable value for the base image. If the raw base image parameter is null, returns
+   * {@code "gcr.io/distroless/java/jetty"} for WAR projects or {@code "gcr.io/distroless/java"} for
+   * non-WAR.
+   */
+  private static String getBaseImage(
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties) {
+    String baseImage = rawConfiguration.getFromImage();
+    if (baseImage == null) {
+      return projectProperties.isWarProject()
+          ? "gcr.io/distroless/java/jetty"
+          : "gcr.io/distroless/java";
+    }
+    return baseImage;
+  }
+
   public static NPluginConfigurationProcessor processCommonConfiguration(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InvalidImageReferenceException, NumberFormatException, FileNotFoundException,
@@ -120,9 +135,12 @@ public class NPluginConfigurationProcessor {
     JibSystemProperties.checkHttpTimeoutProperty();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
+
+    // DON'T FORGET TO RESURRECT THIS!
     // disableHttpLogging();
+    // DON'T FORGET TO RESURRECT THIS!
     ImageReference baseImageReference =
-        ImageReference.parse(Preconditions.checkNotNull(rawConfiguration.getFromImage()));
+        ImageReference.parse(getBaseImage(rawConfiguration, projectProperties));
 
     EventDispatcher eventDispatcher =
         new DefaultEventDispatcher(projectProperties.getEventHandlers());
