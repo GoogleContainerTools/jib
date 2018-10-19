@@ -17,16 +17,14 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.filesystem.PermissionsHelper;
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -40,9 +38,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
  * name) from name-sorted tar archive entries.
  */
 public class ReproducibleLayerBuilder {
-
-  private static final int DEFAULT_FILE_PERMISSIONS = 0644;
-  private static final int DEFAULT_FOLDER_PERMISSIONS = 0755;
 
   /**
    * Holds a list of {@link TarArchiveEntry}s with unique extraction paths. The list also includes
@@ -111,18 +106,17 @@ public class ReproducibleLayerBuilder {
           new TarArchiveEntry(
               layerEntry.getSourceFile().toFile(), layerEntry.getAbsoluteExtractionPathString());
 
-      ImmutableSet<PosixFilePermission> permissions =
+      FilePermissions permissions =
           layerEntry
               .getPermissions()
               .orElse(
-                  PermissionsHelper.toPermissionSet(
-                      Files.isDirectory(layerEntry.getSourceFile())
-                          ? DEFAULT_FOLDER_PERMISSIONS
-                          : DEFAULT_FILE_PERMISSIONS));
+                  Files.isDirectory(layerEntry.getSourceFile())
+                      ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
+                      : FilePermissions.DEFAULT_FILE_PERMISSIONS);
 
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
-      entry.setMode((entry.getMode() & ~0777) | PermissionsHelper.toPermissionBits(permissions));
+      entry.setMode((entry.getMode() & ~0777) | permissions.getPermissionBits());
 
       uniqueTarArchiveEntries.add(entry);
     }

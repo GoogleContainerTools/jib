@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.frontend;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
@@ -28,10 +29,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
@@ -106,13 +105,13 @@ public class JavaLayerConfigurations {
      * @param permissions the file permissions on the container. Use {@code null} for defaults (644
      *     for files, 755 for directories)
      * @return this
-     * @see LayerConfiguration.Builder#addEntry(Path, AbsoluteUnixPath, Set)
+     * @see LayerConfiguration.Builder#addEntry(Path, AbsoluteUnixPath, FilePermissions)
      */
     public Builder addFile(
         LayerType layerType,
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
-        @Nullable Set<PosixFilePermission> permissions) {
+        @Nullable FilePermissions permissions) {
       Preconditions.checkNotNull(layerBuilders.get(layerType))
           .addEntry(sourceFile, pathInContainer, permissions);
       return this;
@@ -168,7 +167,7 @@ public class JavaLayerConfigurations {
         Path sourceRoot,
         Predicate<Path> pathFilter,
         AbsoluteUnixPath basePathInContainer,
-        Map<AbsoluteUnixPath, Set<PosixFilePermission>> permissionsMap)
+        Map<AbsoluteUnixPath, FilePermissions> permissionsMap)
         throws IOException {
       LayerConfiguration.Builder builder = Preconditions.checkNotNull(layerBuilders.get(layerType));
 

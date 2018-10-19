@@ -18,9 +18,9 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.filesystem.PermissionsHelper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
@@ -218,11 +218,11 @@ public class ReproducibleLayerBuilderTest {
                     new LayerEntry(
                         fileB,
                         AbsoluteUnixPath.get("/somewhere/fileB"),
-                        PermissionsHelper.toPermissionSet(0123)),
+                        FilePermissions.fromOctalString("123")),
                     new LayerEntry(
                         folder,
                         AbsoluteUnixPath.get("/somewhere/folder"),
-                        PermissionsHelper.toPermissionSet(0456))))
+                        FilePermissions.fromOctalString("456"))))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();

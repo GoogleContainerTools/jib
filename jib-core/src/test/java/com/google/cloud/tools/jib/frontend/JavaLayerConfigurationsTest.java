@@ -1,8 +1,8 @@
 package com.google.cloud.tools.jib.frontend;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.filesystem.PermissionsHelper;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
@@ -13,12 +13,11 @@ import java.net.URISyntaxException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -89,25 +88,25 @@ public class JavaLayerConfigurationsTest {
     JavaLayerConfigurations javaLayerConfigurations = createFakeConfigurations();
 
     Assert.assertEquals(
-        Arrays.asList(
+        Collections.singletonList(
             new LayerEntry(
                 Paths.get("dependency"), AbsoluteUnixPath.get("/dependency/path"), null)),
         javaLayerConfigurations.getDependencyLayerEntries());
     Assert.assertEquals(
-        Arrays.asList(
+        Collections.singletonList(
             new LayerEntry(
                 Paths.get("snapshot dependency"), AbsoluteUnixPath.get("/snapshots"), null)),
         javaLayerConfigurations.getSnapshotDependencyLayerEntries());
     Assert.assertEquals(
-        Arrays.asList(
+        Collections.singletonList(
             new LayerEntry(Paths.get("resource"), AbsoluteUnixPath.get("/resources/here"), null)),
         javaLayerConfigurations.getResourceLayerEntries());
     Assert.assertEquals(
-        Arrays.asList(
+        Collections.singletonList(
             new LayerEntry(Paths.get("class"), AbsoluteUnixPath.get("/classes/go/here"), null)),
         javaLayerConfigurations.getClassLayerEntries());
     Assert.assertEquals(
-        Arrays.asList(
+        Collections.singletonList(
             new LayerEntry(Paths.get("extra file"), AbsoluteUnixPath.get("/some/extras"), null)),
         javaLayerConfigurations.getExtraFilesLayerEntries());
   }
@@ -129,20 +128,24 @@ public class JavaLayerConfigurationsTest {
             .build();
 
     Assert.assertEquals(
-        Arrays.asList(new LayerEntry(sourceDirectory, AbsoluteUnixPath.get("/libs/dir"), null)),
+        Collections.singletonList(
+            new LayerEntry(sourceDirectory, AbsoluteUnixPath.get("/libs/dir"), null)),
         configurations.getDependencyLayerEntries());
     Assert.assertEquals(
-        Arrays.asList(
+        Collections.singletonList(
             new LayerEntry(sourceDirectory, AbsoluteUnixPath.get("/snapshots/target"), null)),
         configurations.getSnapshotDependencyLayerEntries());
     Assert.assertEquals(
-        Arrays.asList(new LayerEntry(sourceDirectory, AbsoluteUnixPath.get("/resources"), null)),
+        Collections.singletonList(
+            new LayerEntry(sourceDirectory, AbsoluteUnixPath.get("/resources"), null)),
         configurations.getResourceLayerEntries());
     Assert.assertEquals(
-        Arrays.asList(new LayerEntry(sourceDirectory, AbsoluteUnixPath.get("/classes/here"), null)),
+        Collections.singletonList(
+            new LayerEntry(sourceDirectory, AbsoluteUnixPath.get("/classes/here"), null)),
         configurations.getClassLayerEntries());
     Assert.assertEquals(
-        Arrays.asList(new LayerEntry(sourceDirectory, AbsoluteUnixPath.get("/extra/files"), null)),
+        Collections.singletonList(
+            new LayerEntry(sourceDirectory, AbsoluteUnixPath.get("/extra/files"), null)),
         configurations.getExtraFilesLayerEntries());
   }
 
@@ -164,20 +167,24 @@ public class JavaLayerConfigurationsTest {
             .build();
 
     Assert.assertEquals(
-        Arrays.asList(new LayerEntry(sourceFile, AbsoluteUnixPath.get("/libs/file"), null)),
+        Collections.singletonList(
+            new LayerEntry(sourceFile, AbsoluteUnixPath.get("/libs/file"), null)),
         configurations.getDependencyLayerEntries());
     Assert.assertEquals(
-        Arrays.asList(
+        Collections.singletonList(
             new LayerEntry(sourceFile, AbsoluteUnixPath.get("/snapshots/target/file"), null)),
         configurations.getSnapshotDependencyLayerEntries());
     Assert.assertEquals(
-        Arrays.asList(new LayerEntry(sourceFile, AbsoluteUnixPath.get("/resources-file"), null)),
+        Collections.singletonList(
+            new LayerEntry(sourceFile, AbsoluteUnixPath.get("/resources-file"), null)),
         configurations.getResourceLayerEntries());
     Assert.assertEquals(
-        Arrays.asList(new LayerEntry(sourceFile, AbsoluteUnixPath.get("/classes/file"), null)),
+        Collections.singletonList(
+            new LayerEntry(sourceFile, AbsoluteUnixPath.get("/classes/file"), null)),
         configurations.getClassLayerEntries());
     Assert.assertEquals(
-        Arrays.asList(new LayerEntry(sourceFile, AbsoluteUnixPath.get("/some/file"), null)),
+        Collections.singletonList(
+            new LayerEntry(sourceFile, AbsoluteUnixPath.get("/some/file"), null)),
         configurations.getExtraFilesLayerEntries());
   }
 
@@ -254,7 +261,8 @@ public class JavaLayerConfigurationsTest {
             .addDirectoryContents(LayerType.EXTRA_FILES, sourceRoot, path -> true, basePath)
             .build();
     Assert.assertEquals(
-        Arrays.asList(new LayerEntry(sourceRoot.resolve("file"), basePath.resolve("file"), null)),
+        Collections.singletonList(
+            new LayerEntry(sourceRoot.resolve("file"), basePath.resolve("file"), null)),
         configurations.getExtraFilesLayerEntries());
   }
 
@@ -270,7 +278,8 @@ public class JavaLayerConfigurationsTest {
             .addDirectoryContents(LayerType.CLASSES, sourceRoot, path -> true, basePath)
             .build();
     Assert.assertEquals(
-        Arrays.asList(new LayerEntry(sourceRoot.resolve("leaf"), basePath.resolve("leaf"), null)),
+        Collections.singletonList(
+            new LayerEntry(sourceRoot.resolve("leaf"), basePath.resolve("leaf"), null)),
         configurations.getClassLayerEntries());
   }
 
@@ -402,16 +411,16 @@ public class JavaLayerConfigurationsTest {
     temporaryFolder.newFile("src/main/jib/folder/fileD");
     temporaryFolder.newFile("src/main/jib/folder/fileE");
 
-    Map<AbsoluteUnixPath, Set<PosixFilePermission>> permissions =
+    Map<AbsoluteUnixPath, FilePermissions> permissions =
         ImmutableMap.of(
             AbsoluteUnixPath.get("/fileA"),
-            PermissionsHelper.toPermissionSet(0123),
+            FilePermissions.fromOctalString("123"),
             AbsoluteUnixPath.get("/fileB"),
-            PermissionsHelper.toPermissionSet(0456),
+            FilePermissions.fromOctalString("456"),
             AbsoluteUnixPath.get("/folder"),
-            PermissionsHelper.toPermissionSet(0111),
+            FilePermissions.fromOctalString("111"),
             AbsoluteUnixPath.get("/folder/fileD"),
-            PermissionsHelper.toPermissionSet(0222));
+            FilePermissions.fromOctalString("222"));
 
     Path extraDirectory =
         temporaryFolder.getRoot().toPath().resolve("src").resolve("main").resolve("jib");
@@ -427,20 +436,20 @@ public class JavaLayerConfigurationsTest {
             new LayerEntry(
                 extraDirectory.resolve("fileA"),
                 basePath.resolve("fileA"),
-                PermissionsHelper.toPermissionSet(0123)),
+                FilePermissions.fromOctalString("123")),
             new LayerEntry(
                 extraDirectory.resolve("fileB"),
                 basePath.resolve("fileB"),
-                PermissionsHelper.toPermissionSet(0456)),
+                FilePermissions.fromOctalString("456")),
             new LayerEntry(extraDirectory.resolve("fileC"), basePath.resolve("fileC"), null),
             new LayerEntry(
                 extraDirectory.resolve("folder"),
                 basePath.resolve("folder"),
-                PermissionsHelper.toPermissionSet(0111)),
+                FilePermissions.fromOctalString("111")),
             new LayerEntry(
                 extraDirectory.resolve("folder").resolve("fileD"),
                 basePath.resolve("folder").resolve("fileD"),
-                PermissionsHelper.toPermissionSet(0222)),
+                FilePermissions.fromOctalString("222")),
             new LayerEntry(
                 extraDirectory.resolve("folder").resolve("fileE"),
                 basePath.resolve("folder").resolve("fileE"),

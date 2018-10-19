@@ -16,10 +16,9 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.common.collect.ImmutableSet;
 import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -40,7 +39,7 @@ public class LayerEntry {
 
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
-  @Nullable private final ImmutableSet<PosixFilePermission> permissions;
+  @Nullable private final FilePermissions permissions;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -61,9 +60,7 @@ public class LayerEntry {
    *     for files, 755 for directories)
    */
   public LayerEntry(
-      Path sourceFile,
-      AbsoluteUnixPath extractionPath,
-      @Nullable ImmutableSet<PosixFilePermission> permissions) {
+      Path sourceFile, AbsoluteUnixPath extractionPath, @Nullable FilePermissions permissions) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
     this.permissions = permissions;
@@ -97,7 +94,7 @@ public class LayerEntry {
    *
    * @return the file permissions on the container
    */
-  public Optional<ImmutableSet<PosixFilePermission>> getPermissions() {
+  public Optional<FilePermissions> getPermissions() {
     return Optional.ofNullable(permissions);
   }
 
