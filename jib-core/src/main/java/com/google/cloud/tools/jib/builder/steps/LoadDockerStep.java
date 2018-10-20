@@ -16,13 +16,13 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
-import com.google.cloud.tools.jib.event.events.ImageCreatedEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
@@ -41,7 +41,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Adds image layers to a tarball and loads into Docker daemon. */
-class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorDigest> {
+class LoadDockerStep implements AsyncStep<JibContainer>, Callable<JibContainer> {
 
   private final DockerClient dockerClient;
   private final BuildConfiguration buildConfiguration;
@@ -50,7 +50,7 @@ class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<Descriptor
   private final BuildImageStep buildImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<DescriptorDigest> listenableFuture;
+  private final ListenableFuture<JibContainer> listenableFuture;
 
   LoadDockerStep(
       ListeningExecutorService listeningExecutorService,
@@ -73,12 +73,12 @@ class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<Descriptor
   }
 
   @Override
-  public ListenableFuture<DescriptorDigest> getFuture() {
+  public ListenableFuture<JibContainer> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public DescriptorDigest call() throws ExecutionException, InterruptedException {
+  public JibContainer call() throws ExecutionException, InterruptedException {
     ImmutableList.Builder<ListenableFuture<?>> dependenciesBuilder = ImmutableList.builder();
     for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
         NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
@@ -94,7 +94,7 @@ class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<Descriptor
         .get();
   }
 
-  private DescriptorDigest afterPushBaseImageLayerFuturesFuture()
+  private JibContainer afterPushBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, IOException {
     Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
     ImageReference targetImageReference =
@@ -129,11 +129,8 @@ class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<Descriptor
         JsonTemplateMapper.toBlob(manifestTemplate)
             .writeTo(ByteStreams.nullOutputStream())
             .getDigest();
-
-    ImageCreatedEvent event =
-        new ImageCreatedEvent(image, imageDigest, containerConfigurationBlobDescriptor.getDigest());
-    buildConfiguration.getEventDispatcher().dispatch(event);
-
-    return imageDigest;
+    DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
+    
+    return JibContainer.create(imageDigest, imageId);
   }
 }

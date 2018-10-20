@@ -16,11 +16,11 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.async.AsyncSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -203,15 +203,15 @@ public class StepsRunner {
     return this;
   }
 
-  public DescriptorDigest waitOnPushImageStep() throws ExecutionException, InterruptedException {
+  public JibContainer waitOnPushImageStep() throws ExecutionException, InterruptedException {
     return Preconditions.checkNotNull(pushImageStep).getFuture().get();
   }
 
-  public DescriptorDigest waitOnLoadDockerStep() throws ExecutionException, InterruptedException {
+  public JibContainer waitOnLoadDockerStep() throws ExecutionException, InterruptedException {
     return Preconditions.checkNotNull(loadDockerStep).getFuture().get();
   }
 
-  public DescriptorDigest waitOnWriteTarFileStep() throws ExecutionException, InterruptedException {
+  public JibContainer waitOnWriteTarFileStep() throws ExecutionException, InterruptedException {
     return Preconditions.checkNotNull(writeTarFileStep).getFuture().get();
   }
 }

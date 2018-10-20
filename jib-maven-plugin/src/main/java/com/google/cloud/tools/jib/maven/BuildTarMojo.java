@@ -99,7 +99,10 @@ public class BuildTarMojo extends JibPluginConfiguration {
               .setTargetImageReference(targetImageReference)
               .build();
 
+      Path imageDigestOutputPath =
+          Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.digest");
       BuildStepsRunner.forBuildTar(tarOutputPath)
+          .imageDigestOutputPath(imageDigestOutputPath)
           .build(
               jibContainerBuilder,
               containerizer,

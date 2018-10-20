@@ -24,7 +24,6 @@ import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
-import com.google.cloud.tools.jib.plugins.common.WriteImageDigestHandler;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -65,7 +64,7 @@ public class MavenProjectProperties implements ProjectProperties {
     try {
       return new MavenProjectProperties(
           project,
-          makeEventHandlers(project, log),
+          makeEventHandlers(log),
           MavenLayerConfigurations.getForProject(project, extraDirectory, appRoot));
 
     } catch (IOException ex) {
@@ -77,21 +76,10 @@ public class MavenProjectProperties implements ProjectProperties {
     }
   }
 
-  private static EventHandlers makeEventHandlers(MavenProject project, Log log) {
-    LogEventHandler logEventHandler = new LogEventHandler(log);
-    EventHandlers handlers =
-        new EventHandlers()
-            .add(JibEventType.LOGGING, logEventHandler)
-            .add(JibEventType.TIMING, new TimerEventHandler(log::debug));
-
-    // when an image is built, write out the digest
-    Path buildOutputPath = Paths.get(project.getBuild().getDirectory());
-    Path digestOutputPath = buildOutputPath.resolve("jib-image.digest");
-    handlers.add(
-        JibEventType.IMAGE_CREATION,
-        new WriteImageDigestHandler(digestOutputPath, logEventHandler::accept));
-
-    return handlers;
+  private static EventHandlers makeEventHandlers(Log log) {
+    return new EventHandlers()
+        .add(JibEventType.LOGGING, new LogEventHandler(log))
+        .add(JibEventType.TIMING, new TimerEventHandler(log::debug));
   }
 
   private final MavenProject project;

@@ -16,16 +16,14 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.event.events.ImageCreatedEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -42,7 +40,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pushes the final image. Outputs the pushed image digest. */
-class PushImageStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorDigest> {
+class PushImageStep implements AsyncStep<JibContainer>, Callable<JibContainer> {
 
   private static final String DESCRIPTION = "Pushing new image";
 
@@ -55,7 +53,7 @@ class PushImageStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorD
   private final BuildImageStep buildImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<DescriptorDigest> listenableFuture;
+  private final ListenableFuture<JibContainer> listenableFuture;
 
   PushImageStep(
       ListeningExecutorService listeningExecutorService,
@@ -83,12 +81,12 @@ class PushImageStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorD
   }
 
   @Override
-  public ListenableFuture<DescriptorDigest> getFuture() {
+  public ListenableFuture<JibContainer> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public DescriptorDigest call() throws ExecutionException, InterruptedException {
+  public JibContainer call() throws ExecutionException, InterruptedException {
     ImmutableList.Builder<ListenableFuture<?>> dependenciesBuilder = ImmutableList.builder();
     dependenciesBuilder.add(authenticatePushStep.getFuture());
     for (AsyncStep<PushBlobStep> pushBlobStepStep : NonBlockingSteps.get(pushBaseImageLayersStep)) {
@@ -107,7 +105,7 @@ class PushImageStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorD
         .get();
   }
 
-  private ListenableFuture<ListenableFuture<DescriptorDigest>> afterPushSteps()
+  private ListenableFuture<ListenableFuture<JibContainer>> afterPushSteps()
       throws ExecutionException {
     List<ListenableFuture<?>> dependencies = new ArrayList<>();
     for (AsyncStep<PushBlobStep> pushBlobStepStep : NonBlockingSteps.get(pushBaseImageLayersStep)) {
@@ -123,7 +121,7 @@ class PushImageStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorD
         .call(this::afterAllPushed, listeningExecutorService);
   }
 
-  private ListenableFuture<DescriptorDigest> afterAllPushed()
+  private ListenableFuture<JibContainer> afterAllPushed()
       throws ExecutionException, IOException {
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
@@ -134,8 +132,8 @@ class PushImageStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorD
               .newRegistryClient();
 
       // Constructs the image.
-      Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
-      ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
+      ImageToJsonTranslator imageToJsonTranslator =
+          new ImageToJsonTranslator(NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep)));
 
       // Gets the image manifest to push.
       BlobDescriptor containerConfigurationBlobDescriptor =
@@ -163,18 +161,11 @@ class PushImageStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorD
           JsonTemplateMapper.toBlob(manifestTemplate)
               .writeTo(ByteStreams.nullOutputStream())
               .getDigest();
+      DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
+      JibContainer jibContainer = JibContainer.create(imageDigest, imageId);
 
-      Callable<DescriptorDigest> afterPushTags =
-          () -> {
-            ImageCreatedEvent event =
-                new ImageCreatedEvent(
-                    image, imageDigest, containerConfigurationBlobDescriptor.getDigest());
-            buildConfiguration.getEventDispatcher().dispatch(event);
-
-            return imageDigest;
-          };
       return Futures.whenAllSucceed(pushAllTagsFutures)
-          .call(afterPushTags, listeningExecutorService);
+          .call(() -> jibContainer, listeningExecutorService);
     }
   }
 }

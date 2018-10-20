@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
-import com.google.cloud.tools.jib.plugins.common.WriteImageDigestHandler;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
@@ -62,7 +61,7 @@ class GradleProjectProperties implements ProjectProperties {
     try {
       return new GradleProjectProperties(
           project,
-          makeEventHandlers(project, logger),
+          makeEventHandlers(logger),
           GradleLayerConfigurations.getForProject(project, logger, extraDirectory, appRoot));
 
     } catch (IOException ex) {
@@ -70,22 +69,13 @@ class GradleProjectProperties implements ProjectProperties {
     }
   }
 
-  private static EventHandlers makeEventHandlers(Project project, Logger logger) {
+  private static EventHandlers makeEventHandlers(Logger logger) {
     LogEventHandler logEventHandler = new LogEventHandler(logger);
-    EventHandlers handlers =
-        new EventHandlers()
-            .add(JibEventType.LOGGING, logEventHandler)
-            .add(
-                JibEventType.TIMING,
-                new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message))));
-    
-    Path buildOutputPath = project.getBuildDir().toPath();
-    Path digestOutputPath = buildOutputPath.resolve("jib-image.digest");
-    handlers.add(
-        JibEventType.IMAGE_CREATION,
-        new WriteImageDigestHandler(digestOutputPath, logEventHandler::accept));
-
-    return handlers;
+    return new EventHandlers()
+        .add(JibEventType.LOGGING, logEventHandler)
+        .add(
+            JibEventType.TIMING,
+            new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message))));
   }
 
   @Nullable

@@ -16,12 +16,12 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
-import com.google.cloud.tools.jib.event.events.ImageCreatedEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -43,7 +43,7 @@ import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorDigest> {
+public class WriteTarFileStep implements AsyncStep<JibContainer>, Callable<JibContainer> {
 
   private final Path outputPath;
   private final BuildConfiguration buildConfiguration;
@@ -52,7 +52,7 @@ public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<D
   private final BuildImageStep buildImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<DescriptorDigest> listenableFuture;
+  private final ListenableFuture<JibContainer> listenableFuture;
 
   WriteTarFileStep(
       ListeningExecutorService listeningExecutorService,
@@ -75,12 +75,12 @@ public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<D
   }
 
   @Override
-  public ListenableFuture<DescriptorDigest> getFuture() {
+  public ListenableFuture<JibContainer> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public DescriptorDigest call() throws ExecutionException, InterruptedException {
+  public JibContainer call() throws ExecutionException, InterruptedException {
     ImmutableList.Builder<ListenableFuture<?>> dependenciesBuilder = ImmutableList.builder();
     for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
         NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
@@ -96,7 +96,7 @@ public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<D
         .get();
   }
 
-  private DescriptorDigest writeTarFile() throws ExecutionException, IOException {
+  private JibContainer writeTarFile() throws ExecutionException, IOException {
     Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
 
     // Builds the image to a tarball.
@@ -125,11 +125,8 @@ public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<D
         JsonTemplateMapper.toBlob(manifestTemplate)
             .writeTo(ByteStreams.nullOutputStream())
             .getDigest();
+    DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
 
-    ImageCreatedEvent event =
-        new ImageCreatedEvent(image, imageDigest, containerConfigurationBlobDescriptor.getDigest());
-    buildConfiguration.getEventDispatcher().dispatch(event);
-
-    return imageDigest;
+    return JibContainer.create(imageDigest, imageId);
   }
 }

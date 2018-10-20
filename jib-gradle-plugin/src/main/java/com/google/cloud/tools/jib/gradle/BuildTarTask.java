@@ -147,7 +147,9 @@ public class BuildTarTask extends DefaultTask implements JibTask {
             .setTargetImageReference(targetImageReference)
             .build();
 
+    Path imageDigestOutputPath = getProject().getBuildDir().toPath().resolve("jib-image.digest");
     BuildStepsRunner.forBuildTar(tarOutputPath)
+        .imageDigestOutputPath(imageDigestOutputPath)
         .build(
             jibContainerBuilder,
             containerizer,
