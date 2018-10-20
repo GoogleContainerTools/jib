@@ -25,6 +25,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.DigestException;
 import javax.annotation.Nullable;
 import org.junit.After;
 import org.junit.Assert;
@@ -63,12 +64,13 @@ public class WarProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_jettyServlet25() throws IOException, InterruptedException {
+  public void testBuild_jettyServlet25() throws IOException, InterruptedException, DigestException {
     verifyBuildAndRun(servlet25Project, "war_jetty_servlet25:gradle", "build.gradle");
   }
 
   @Test
-  public void testBuild_tomcatServlet25() throws IOException, InterruptedException {
+  public void testBuild_tomcatServlet25()
+      throws IOException, InterruptedException, DigestException {
     verifyBuildAndRun(servlet25Project, "war_tomcat_servlet25:gradle", "build-tomcat.gradle");
   }
 
@@ -95,7 +97,7 @@ public class WarProjectIntegrationTest {
   }
 
   private void verifyBuildAndRun(TestProject project, String label, String gradleBuildFile)
-      throws IOException, InterruptedException {
+      throws IOException, InterruptedException, DigestException {
     String nameBase = "gcr.io/" + IntegrationTestingConfiguration.getGCPProject() + '/';
     String targetImage = nameBase + label + System.nanoTime();
     String output =

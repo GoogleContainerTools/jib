@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.security.DigestException;
 import java.time.Instant;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
@@ -43,7 +44,7 @@ public class BuildDockerMojoIntegrationTest {
       new TestProject(testPlugin, "default-target");
 
   private static void buildToDockerDaemon(Path projectRoot, String imageReference, String pomXml)
-      throws VerificationException {
+      throws VerificationException, DigestException, IOException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setAutoclean(false);
@@ -59,9 +60,11 @@ public class BuildDockerMojoIntegrationTest {
   /**
    * Builds and runs jib:buildDocker on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
+   *
+   * @throws DigestException
    */
   private static String buildToDockerDaemonAndRun(Path projectRoot, String imageReference)
-      throws VerificationException, IOException, InterruptedException {
+      throws VerificationException, IOException, InterruptedException, DigestException {
     buildToDockerDaemon(projectRoot, imageReference, "pom.xml");
 
     String dockerInspect = new Command("docker", "inspect", imageReference).run();
@@ -86,7 +89,8 @@ public class BuildDockerMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
+  public void testExecute_simple()
+      throws VerificationException, IOException, InterruptedException, DigestException {
     String targetImage = "simpleimage:maven" + System.nanoTime();
 
     Instant before = Instant.now();
@@ -100,7 +104,8 @@ public class BuildDockerMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_empty() throws InterruptedException, IOException, VerificationException {
+  public void testExecute_empty()
+      throws InterruptedException, IOException, VerificationException, DigestException {
     String targetImage = "emptyimage:maven" + System.nanoTime();
 
     Assert.assertEquals(
@@ -112,7 +117,7 @@ public class BuildDockerMojoIntegrationTest {
 
   @Test
   public void testExecute_defaultTarget()
-      throws VerificationException, IOException, InterruptedException {
+      throws VerificationException, IOException, InterruptedException, DigestException {
     Assert.assertEquals(
         "Hello, world. An argument.\n",
         buildToDockerDaemonAndRun(
@@ -127,7 +132,7 @@ public class BuildDockerMojoIntegrationTest {
 
   @Test
   public void testExecute_userNumeric()
-      throws VerificationException, IOException, InterruptedException {
+      throws VerificationException, IOException, InterruptedException, DigestException {
     String targetImage = "emptyimage:maven" + System.nanoTime();
     buildToDockerDaemon(emptyTestProject.getProjectRoot(), targetImage, "pom.xml");
     Assert.assertEquals(
@@ -137,7 +142,7 @@ public class BuildDockerMojoIntegrationTest {
 
   @Test
   public void testExecute_userNames()
-      throws VerificationException, IOException, InterruptedException {
+      throws VerificationException, IOException, InterruptedException, DigestException {
     String targetImage = "brokenuserimage:maven" + System.nanoTime();
     buildToDockerDaemon(emptyTestProject.getProjectRoot(), targetImage, "pom-broken-user.xml");
     Assert.assertEquals(

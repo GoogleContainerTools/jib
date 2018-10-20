@@ -38,7 +38,7 @@ import org.junit.Assert;
 public class JibRunHelper {
 
   static String buildAndRun(TestProject testProject, String imageReference)
-      throws IOException, InterruptedException {
+      throws IOException, InterruptedException, DigestException {
     return buildAndRun(testProject, imageReference, "build.gradle");
   }
 
@@ -47,7 +47,7 @@ public class JibRunHelper {
       String imageReference,
       String gradleBuildFile,
       String... extraRunArguments)
-      throws IOException, InterruptedException {
+      throws IOException, InterruptedException, DigestException {
     BuildResult buildResult =
         testProject.build(
             "clean", "jib", "-D_TARGET_IMAGE=" + imageReference, "-b=" + gradleBuildFile);
@@ -60,7 +60,7 @@ public class JibRunHelper {
 
   static void buildAndRunAdditionalTag(
       TestProject testProject, String imageReference, String additionalTag, String expectedOutput)
-      throws InvalidImageReferenceException, IOException, InterruptedException {
+      throws InvalidImageReferenceException, IOException, InterruptedException, DigestException {
     BuildResult buildResult =
         testProject.build(
             "clean",
@@ -84,7 +84,7 @@ public class JibRunHelper {
 
   static void buildToDockerDaemon(
       TestProject testProject, String imageReference, String gradleBuildFile)
-      throws IOException, InterruptedException {
+      throws IOException, InterruptedException, DigestException {
     BuildResult buildResult =
         testProject.build(
             "clean",
@@ -100,7 +100,7 @@ public class JibRunHelper {
   }
 
   static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
-      throws IOException, InterruptedException {
+      throws IOException, InterruptedException, DigestException {
     buildToDockerDaemon(testProject, imageReference, "build.gradle");
     return new Command("docker", "run", "--rm", imageReference).run();
   }
@@ -130,15 +130,11 @@ public class JibRunHelper {
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
   }
 
-  static void assertImageDigest(Path projectRoot) {
+  static String assertImageDigest(Path projectRoot) throws IOException, DigestException {
     Path digestPath = projectRoot.resolve("build/jib-image.digest");
     Assert.assertTrue(Files.exists(digestPath));
-    try {
-      String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
-      DescriptorDigest.fromDigest(digest);
-    } catch (IOException | DigestException ex) {
-      throw new AssertionError("Invalid jib-image.digest", ex);
-    }
+    String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
+    return DescriptorDigest.fromDigest(digest).toString();
   }
 
   /**

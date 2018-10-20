@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.security.DigestException;
 import java.time.Instant;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
@@ -121,7 +122,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_simple() throws IOException, InterruptedException {
+  public void testBuild_simple() throws IOException, InterruptedException, DigestException {
     String targetImage =
         "gcr.io/"
             + IntegrationTestingConfiguration.getGCPProject()
@@ -169,7 +170,7 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_simple() throws IOException, InterruptedException {
+  public void testDockerDaemon_simple() throws IOException, InterruptedException, DigestException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     Assert.assertEquals(

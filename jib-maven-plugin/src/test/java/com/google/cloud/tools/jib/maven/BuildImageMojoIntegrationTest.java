@@ -77,23 +77,21 @@ public class BuildImageMojoIntegrationTest {
     return nameBase + label + System.nanoTime();
   }
 
-  static String assertImageDigest(Path projectRoot) {
+  static String assertImageDigest(Path projectRoot) throws IOException, DigestException {
     Path digestPath = projectRoot.resolve("target/jib-image.digest");
     Assert.assertTrue(Files.exists(digestPath));
-    try {
-      String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
-      return DescriptorDigest.fromDigest(digest).toString();
-    } catch (IOException | DigestException ex) {
-      throw new AssertionError("Invalid jib-image.digest");
-    }
+    String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
+    return DescriptorDigest.fromDigest(digest).toString();
   }
 
   /**
    * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
+   *
+   * @throws DigestException
    */
   private static String buildAndRun(Path projectRoot, String imageReference, boolean runTwice)
-      throws VerificationException, IOException, InterruptedException {
+      throws VerificationException, IOException, InterruptedException, DigestException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setAutoclean(false);
@@ -132,7 +130,7 @@ public class BuildImageMojoIntegrationTest {
   private static String buildAndRunAdditionalTag(
       Path projectRoot, String imageReference, String additionalTag)
       throws VerificationException, InvalidImageReferenceException, IOException,
-          InterruptedException {
+          InterruptedException, DigestException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setSystemProperty("_ADDITIONAL_TAG", additionalTag);
@@ -161,7 +159,7 @@ public class BuildImageMojoIntegrationTest {
 
   private static String buildAndRunComplex(
       String imageReference, String username, String password, LocalRegistry targetRegistry)
-      throws VerificationException, IOException, InterruptedException {
+      throws VerificationException, IOException, InterruptedException, DigestException {
     Instant before = Instant.now();
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
@@ -264,7 +262,8 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
+  public void testExecute_simple()
+      throws VerificationException, IOException, InterruptedException, DigestException {
     String targetImage = getGcrImageReference("simpleimage:maven");
 
     // Test empty output error
@@ -310,7 +309,8 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_empty() throws InterruptedException, IOException, VerificationException {
+  public void testExecute_empty()
+      throws InterruptedException, IOException, VerificationException, DigestException {
     String targetImage = getGcrImageReference("emptyimage:maven");
     Assert.assertEquals("", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, false));
     assertCreationTimeEpoch(targetImage);
@@ -319,7 +319,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_multipleTags()
       throws IOException, InterruptedException, InvalidImageReferenceException,
-          VerificationException {
+          VerificationException, DigestException {
     String targetImage = getGcrImageReference("multitag-image:maven");
     Assert.assertEquals(
         "",
@@ -348,7 +348,7 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_complex()
-      throws IOException, InterruptedException, VerificationException {
+      throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
@@ -357,7 +357,7 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_complex_sameFromAndToRegistry()
-      throws IOException, InterruptedException, VerificationException {
+      throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
