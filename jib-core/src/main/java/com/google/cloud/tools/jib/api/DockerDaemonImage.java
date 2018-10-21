@@ -23,8 +23,11 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Map;
 
 /** Builds to the Docker daemon. */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
@@ -56,6 +59,7 @@ public class DockerDaemonImage implements TargetImage {
 
   private final ImageReference imageReference;
   private Path dockerExecutable = Paths.get("docker");
+  private Map<String, String> dockerEnvironment = Collections.emptyMap();
 
   /** Instantiate with {@link #named}. */
   private DockerDaemonImage(ImageReference imageReference) {
@@ -81,7 +85,7 @@ public class DockerDaemonImage implements TargetImage {
   @Override
   public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
     return BuildSteps.forBuildToDockerDaemon(
-        DockerClient.newClient(dockerExecutable), buildConfiguration);
+        DockerClient.newClient(dockerExecutable, dockerEnvironment), buildConfiguration);
   }
 
   /**
@@ -91,5 +95,23 @@ public class DockerDaemonImage implements TargetImage {
    */
   Path getDockerExecutable() {
     return dockerExecutable;
+  }
+
+  /**
+   * Gets environment variables for the {@code docker} CLI.
+   *
+   * @return the path to the {@code docker} CLI
+   */
+  public Map<String, String> getDockerEnvironment() {
+    return dockerEnvironment;
+  }
+
+  /**
+   * Sets environment variables for the {@code docker} CLI.
+   *
+   * @return the path to the {@code docker} CLI
+   */
+  public void setDockerEnvironment(Map<String, String> dockerEnvironment) {
+    this.dockerEnvironment = dockerEnvironment;
   }
 }

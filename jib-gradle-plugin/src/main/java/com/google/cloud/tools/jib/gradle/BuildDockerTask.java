@@ -31,108 +31,147 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
-import java.io.IOException;
-import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
-/** Builds a container image and exports to the default Docker daemon. */
+import javax.annotation.Nullable;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+
+/**
+ * Builds a container image and exports to the default Docker daemon.
+ */
 public class BuildDockerTask extends DefaultTask implements JibTask {
 
-  private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
+    private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
-  private static final DockerClient DOCKER_CLIENT = DockerClient.newClient();
+    private static final DockerClient DOCKER_CLIENT = DockerClient.newClient();
 
-  @Nullable private JibExtension jibExtension;
+    @Nullable
+    private JibExtension jibExtension;
 
-  /**
-   * This will call the property {@code "jib"} so that it is the same name as the extension. This
-   * way, the user would see error messages for missing configuration with the prefix {@code jib.}.
-   *
-   * @return the {@link JibExtension}.
-   */
-  @Nested
-  @Nullable
-  public JibExtension getJib() {
-    return jibExtension;
-  }
+    @Nullable
+    private Path dockerExecutable;
+    @Nullable
+    private Map<String, String> dockerEnvironment;
 
-  /**
-   * The target image can be overridden with the {@code --image} command line option.
-   *
-   * @param targetImage the name of the 'to' image.
-   */
-  @Option(option = "image", description = "The image reference for the target image")
-  public void setTargetImage(String targetImage) {
-    Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
-  }
-
-  @TaskAction
-  public void buildDocker()
-      throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
-          CacheDirectoryCreationException {
-    if (!DOCKER_CLIENT.isDockerInstalled()) {
-      throw new GradleException(
-          HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
+    /**
+     * This will call the property {@code "jib"} so that it is the same name as the extension. This
+     * way, the user would see error messages for missing configuration with the prefix {@code jib.}.
+     *
+     * @return the {@link JibExtension}.
+     */
+    @Nested
+    @Nullable
+    public JibExtension getJib() {
+        return jibExtension;
     }
 
-    // Asserts required @Input parameters are not null.
-    Preconditions.checkNotNull(jibExtension);
-    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
-    GradleProjectProperties gradleProjectProperties =
-        GradleProjectProperties.getForProject(
-            getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
+    /**
+     * The target image can be overridden with the {@code --image} command line option.
+     *
+     * @param targetImage the name of the 'to' image.
+     */
+    @Option(option = "image", description = "The image reference for the target image")
+    public void setTargetImage(String targetImage) {
+        Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
+    }
 
-    GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
-        new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
+    @TaskAction
+    public void buildDocker()
+            throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
+            CacheDirectoryCreationException {
+        if (!DOCKER_CLIENT.isDockerInstalled()) {
+            throw new GradleException(
+                    HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
+        }
 
-    EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
-    ImageReference targetImageReference =
-        ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-            jibExtension.getTo().getImage(),
-            eventDispatcher,
-            getProject().getName(),
-            getProject().getVersion().toString().equals("unspecified")
-                ? "latest"
-                : getProject().getVersion().toString(),
-            gradleHelpfulSuggestionsBuilder.build());
+        // Asserts required @Input parameters are not null.
+        Preconditions.checkNotNull(jibExtension);
+        AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
+        GradleProjectProperties gradleProjectProperties =
+                GradleProjectProperties.getForProject(
+                        getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
 
-    DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
+        GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
+                new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
 
-    PluginConfigurationProcessor pluginConfigurationProcessor =
-        PluginConfigurationProcessor.processCommonConfiguration(
-            getLogger(), jibExtension, gradleProjectProperties);
+        EventDispatcher eventDispatcher =
+                new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
+        ImageReference targetImageReference =
+                ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+                        jibExtension.getTo().getImage(),
+                        eventDispatcher,
+                        getProject().getName(),
+                        getProject().getVersion().toString().equals("unspecified")
+                                ? "latest"
+                                : getProject().getVersion().toString(),
+                        gradleHelpfulSuggestionsBuilder.build());
 
-    JibContainerBuilder jibContainerBuilder = pluginConfigurationProcessor.getJibContainerBuilder();
+        DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
+        if (dockerExecutable != null) {
+            targetImage.setDockerExecutable(dockerExecutable);
+        }
+        if (dockerEnvironment != null) {
+            targetImage.setDockerEnvironment(dockerEnvironment);
+        }
 
-    Containerizer containerizer = Containerizer.to(targetImage);
-    PluginConfigurationProcessor.configureContainerizer(
-        containerizer, jibExtension, gradleProjectProperties);
+        PluginConfigurationProcessor pluginConfigurationProcessor =
+                PluginConfigurationProcessor.processCommonConfiguration(
+                        getLogger(), jibExtension, gradleProjectProperties);
 
-    HelpfulSuggestions helpfulSuggestions =
-        gradleHelpfulSuggestionsBuilder
-            .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-            .setBaseImageHasConfiguredCredentials(
-                pluginConfigurationProcessor.isBaseImageCredentialPresent())
-            .setTargetImageReference(targetImageReference)
-            .build();
+        JibContainerBuilder jibContainerBuilder = pluginConfigurationProcessor.getJibContainerBuilder();
 
-    BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
-        .build(
-            jibContainerBuilder,
-            containerizer,
-            eventDispatcher,
-            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-            helpfulSuggestions);
-  }
+        Containerizer containerizer = Containerizer.to(targetImage);
+        PluginConfigurationProcessor.configureContainerizer(
+                containerizer, jibExtension, gradleProjectProperties);
 
-  @Override
-  public BuildDockerTask setJibExtension(JibExtension jibExtension) {
-    this.jibExtension = jibExtension;
-    return this;
-  }
+        HelpfulSuggestions helpfulSuggestions =
+                gradleHelpfulSuggestionsBuilder
+                        .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
+                        .setBaseImageHasConfiguredCredentials(
+                                pluginConfigurationProcessor.isBaseImageCredentialPresent())
+                        .setTargetImageReference(targetImageReference)
+                        .build();
+
+        BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
+                .build(
+                        jibContainerBuilder,
+                        containerizer,
+                        eventDispatcher,
+                        gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+                        helpfulSuggestions);
+    }
+
+    @Override
+    public BuildDockerTask setJibExtension(JibExtension jibExtension) {
+        this.jibExtension = jibExtension;
+        return this;
+    }
+
+    @Nullable
+    public Map<String, String> getDockerEnvironment() {
+        return dockerEnvironment;
+    }
+
+    @Input
+    public void setDockerEnvironment(@Nullable Map<String, String> dockerEnvironment) {
+        this.dockerEnvironment = dockerEnvironment;
+    }
+
+    @Nullable
+    public Path getDockerExecutable() {
+        return dockerExecutable;
+    }
+
+    @Input
+    public void setDockerExecutable(@Nullable String dockerExecutable) {
+        this.dockerExecutable = Paths.get(dockerExecutable);
+    }
 }
