@@ -16,6 +16,9 @@ All notable changes to this project will be documented in this file.
 - `jibExportDockerContext` generates different directory layout and `Dockerfile` to enable WAR support ([#1007](https://github.com/GoogleContainerTools/jib/pull/1007))
 - File timestamps in the built image are set to 1 second since the epoch (hence 1970-01-01T00:00:01Z) to resolve compatibility with applications on Java 6 or below where the epoch means nonexistent or I/O errors; previously they were set to the epoch ([#1079](https://github.com/GoogleContainerTools/jib/issues/1079))
 - Sets tag to "latest" instead of "unspecified" if `jib.to.image` and project version are both unspecified when running `jibDockerBuild` or `jibBuildTar` ([#1096](https://github.com/GoogleContainerTools/jib/issues/1096))
+- `jib.extraDirectory` parameter is now a configuration object with a `path` and a `permissions` field ([#794](https://github.com/GoogleContainerTools/jib/issues/794))
+  - `jib.extraDirectory.path` is used in place of the original `jib.extraDirectory` and allows you to configure the extra layer directory
+  - `jib.extraDirectory.permissions` is a map from absolute path on container to the file's permission bits (represented as an octal string)
 
 ### Fixed
 
