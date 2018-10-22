@@ -19,19 +19,14 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.cache.CacheEntry;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -48,27 +43,6 @@ class BuildImageStep
     implements AsyncStep<AsyncStep<Image<Layer>>>, Callable<AsyncStep<Image<Layer>>> {
 
   private static final String DESCRIPTION = "Building container configuration";
-
-  @VisibleForTesting
-  static Layer cacheEntryToLayer(CacheEntry cacheEntry) {
-    return new Layer() {
-
-      @Override
-      public Blob getBlob() throws LayerPropertyNotFoundException {
-        return cacheEntry.getLayerBlob();
-      }
-
-      @Override
-      public BlobDescriptor getBlobDescriptor() throws LayerPropertyNotFoundException {
-        return new BlobDescriptor(cacheEntry.getLayerSize(), cacheEntry.getLayerDigest());
-      }
-
-      @Override
-      public DescriptorDigest getDiffId() throws LayerPropertyNotFoundException {
-        return cacheEntry.getLayerDiffId();
-      }
-    };
-  }
 
   private final BuildConfiguration buildConfiguration;
   private final PullBaseImageStep pullBaseImageStep;
@@ -115,11 +89,11 @@ class BuildImageStep
     }
     ListenableFuture<Image<Layer>> future =
         Futures.whenAllSucceed(dependencies)
-            .call(this::afterCacheEntrySteps, listeningExecutorService);
+            .call(this::afterCachedLayerSteps, listeningExecutorService);
     return () -> future;
   }
 
-  private Image<Layer> afterCacheEntrySteps()
+  private Image<Layer> afterCachedLayerSteps()
       throws ExecutionException, LayerPropertyNotFoundException {
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
@@ -133,8 +107,7 @@ class BuildImageStep
       List<PullAndCacheBaseImageLayerStep> baseImageLayers =
           NonBlockingSteps.get(pullAndCacheBaseImageLayersStep);
       for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep : baseImageLayers) {
-        imageBuilder.addLayer(
-            cacheEntryToLayer(NonBlockingSteps.get(pullAndCacheBaseImageLayerStep)));
+        imageBuilder.addLayer(NonBlockingSteps.get(pullAndCacheBaseImageLayerStep));
       }
 
       // Passthrough config and count non-empty history entries
@@ -165,8 +138,7 @@ class BuildImageStep
       // Add built layers/configuration
       for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
           buildAndCacheApplicationLayerSteps) {
-        imageBuilder.addLayer(
-            cacheEntryToLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep)));
+        imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
         imageBuilder.addHistory(
             HistoryEntry.builder()
                 .setCreationTimestamp(layerCreationTime)

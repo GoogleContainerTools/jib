@@ -64,34 +64,34 @@ class DefaultCacheStorageReader {
   }
 
   /**
-   * Retrieves the {@link CacheEntry} for the layer with digest {@code layerDigest}.
+   * Retrieves the {@link CachedLayer} for the layer with digest {@code layerDigest}.
    *
    * @param layerDigest the layer digest
-   * @return the {@link CacheEntry} referenced by the layer digest, if found
+   * @return the {@link CachedLayer} referenced by the layer digest, if found
    * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */
-  Optional<CacheEntry> retrieve(DescriptorDigest layerDigest)
+  Optional<CachedLayer> retrieve(DescriptorDigest layerDigest)
       throws IOException, CacheCorruptedException {
     Path layerDirectory = defaultCacheStorageFiles.getLayerDirectory(layerDigest);
     if (!Files.exists(layerDirectory)) {
       return Optional.empty();
     }
 
-    DefaultCacheEntry.Builder cacheEntryBuilder =
-        DefaultCacheEntry.builder().setLayerDigest(layerDigest);
+    DefaultCachedLayer.Builder cachedLayerBuilder =
+        DefaultCachedLayer.builder().setLayerDigest(layerDigest);
 
     try (Stream<Path> filesInLayerDirectory = Files.list(layerDirectory)) {
       for (Path fileInLayerDirectory : filesInLayerDirectory.collect(Collectors.toList())) {
         if (DefaultCacheStorageFiles.isLayerFile(fileInLayerDirectory)) {
-          if (cacheEntryBuilder.hasLayerBlob()) {
+          if (cachedLayerBuilder.hasLayerBlob()) {
             throw new CacheCorruptedException(
                 "Multiple layer files found for layer with digest "
                     + layerDigest.getHash()
                     + " in directory: "
                     + layerDirectory);
           }
-          cacheEntryBuilder
+          cachedLayerBuilder
               .setLayerBlob(Blobs.from(fileInLayerDirectory))
               .setLayerDiffId(DefaultCacheStorageFiles.getDiffId(fileInLayerDirectory))
               .setLayerSize(Files.size(fileInLayerDirectory));
@@ -99,7 +99,7 @@ class DefaultCacheStorageReader {
       }
     }
 
-    return Optional.of(cacheEntryBuilder.build());
+    return Optional.of(cachedLayerBuilder.build());
   }
 
   /**

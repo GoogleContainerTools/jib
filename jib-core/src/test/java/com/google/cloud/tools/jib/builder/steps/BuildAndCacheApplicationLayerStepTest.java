@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
-import com.google.cloud.tools.jib.cache.CacheEntry;
+import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.event.EventDispatcher;
@@ -133,9 +133,7 @@ public class BuildAndCacheApplicationLayerStepTest {
 
     for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
         buildAndCacheApplicationLayerSteps) {
-      applicationLayersBuilder.add(
-          BuildImageStep.cacheEntryToLayer(
-              NonBlockingSteps.get(buildAndCacheApplicationLayerStep)));
+      applicationLayersBuilder.add(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
     }
 
     return applicationLayersBuilder.build();
@@ -170,41 +168,38 @@ public class BuildAndCacheApplicationLayerStepTest {
     ImmutableList<LayerEntry> extraFilesLayerEntries =
         fakeLayerConfigurations.get(4).getLayerEntries();
 
-    CacheEntry dependenciesCacheEntry =
+    CachedLayer dependenciesCachedLayer =
         cache.retrieve(dependenciesLayerEntries).orElseThrow(AssertionError::new);
-    CacheEntry snapshotDependenciesCacheEntry =
+    CachedLayer snapshotDependenciesCachedLayer =
         cache.retrieve(snapshotDependenciesLayerEntries).orElseThrow(AssertionError::new);
-    CacheEntry resourcesCacheEntry =
+    CachedLayer resourcesCachedLayer =
         cache.retrieve(resourcesLayerEntries).orElseThrow(AssertionError::new);
-    CacheEntry classesCacheEntry =
+    CachedLayer classesCachedLayer =
         cache.retrieve(classesLayerEntries).orElseThrow(AssertionError::new);
-    CacheEntry extraFilesCacheEntry =
+    CachedLayer extraFilesCachedLayer =
         cache.retrieve(extraFilesLayerEntries).orElseThrow(AssertionError::new);
 
     // Verifies that the cached layers are up-to-date.
     Assert.assertEquals(
         applicationLayers.get(0).getBlobDescriptor().getDigest(),
-        dependenciesCacheEntry.getLayerDigest());
+        dependenciesCachedLayer.getDigest());
     Assert.assertEquals(
         applicationLayers.get(1).getBlobDescriptor().getDigest(),
-        snapshotDependenciesCacheEntry.getLayerDigest());
+        snapshotDependenciesCachedLayer.getDigest());
     Assert.assertEquals(
-        applicationLayers.get(2).getBlobDescriptor().getDigest(),
-        resourcesCacheEntry.getLayerDigest());
+        applicationLayers.get(2).getBlobDescriptor().getDigest(), resourcesCachedLayer.getDigest());
     Assert.assertEquals(
-        applicationLayers.get(3).getBlobDescriptor().getDigest(),
-        classesCacheEntry.getLayerDigest());
+        applicationLayers.get(3).getBlobDescriptor().getDigest(), classesCachedLayer.getDigest());
     Assert.assertEquals(
         applicationLayers.get(4).getBlobDescriptor().getDigest(),
-        extraFilesCacheEntry.getLayerDigest());
+        extraFilesCachedLayer.getDigest());
 
     // Verifies that the cache reader gets the same layers as the newest application layers.
-    assertBlobsEqual(applicationLayers.get(0).getBlob(), dependenciesCacheEntry.getLayerBlob());
-    assertBlobsEqual(
-        applicationLayers.get(1).getBlob(), snapshotDependenciesCacheEntry.getLayerBlob());
-    assertBlobsEqual(applicationLayers.get(2).getBlob(), resourcesCacheEntry.getLayerBlob());
-    assertBlobsEqual(applicationLayers.get(3).getBlob(), classesCacheEntry.getLayerBlob());
-    assertBlobsEqual(applicationLayers.get(4).getBlob(), extraFilesCacheEntry.getLayerBlob());
+    assertBlobsEqual(applicationLayers.get(0).getBlob(), dependenciesCachedLayer.getBlob());
+    assertBlobsEqual(applicationLayers.get(1).getBlob(), snapshotDependenciesCachedLayer.getBlob());
+    assertBlobsEqual(applicationLayers.get(2).getBlob(), resourcesCachedLayer.getBlob());
+    assertBlobsEqual(applicationLayers.get(3).getBlob(), classesCachedLayer.getBlob());
+    assertBlobsEqual(applicationLayers.get(4).getBlob(), extraFilesCachedLayer.getBlob());
   }
 
   @Test
@@ -231,27 +226,25 @@ public class BuildAndCacheApplicationLayerStepTest {
     ImmutableList<LayerEntry> classesLayerEntries =
         fakeLayerConfigurations.get(3).getLayerEntries();
 
-    CacheEntry dependenciesCacheEntry =
+    CachedLayer dependenciesCachedLayer =
         cache.retrieve(dependenciesLayerEntries).orElseThrow(AssertionError::new);
-    CacheEntry resourcesCacheEntry =
+    CachedLayer resourcesCachedLayer =
         cache.retrieve(resourcesLayerEntries).orElseThrow(AssertionError::new);
-    CacheEntry classesCacheEntry =
+    CachedLayer classesCachedLayer =
         cache.retrieve(classesLayerEntries).orElseThrow(AssertionError::new);
 
     // Verifies that the cached layers are up-to-date.
     Assert.assertEquals(
         applicationLayers.get(0).getBlobDescriptor().getDigest(),
-        dependenciesCacheEntry.getLayerDigest());
+        dependenciesCachedLayer.getDigest());
     Assert.assertEquals(
-        applicationLayers.get(1).getBlobDescriptor().getDigest(),
-        resourcesCacheEntry.getLayerDigest());
+        applicationLayers.get(1).getBlobDescriptor().getDigest(), resourcesCachedLayer.getDigest());
     Assert.assertEquals(
-        applicationLayers.get(2).getBlobDescriptor().getDigest(),
-        classesCacheEntry.getLayerDigest());
+        applicationLayers.get(2).getBlobDescriptor().getDigest(), classesCachedLayer.getDigest());
 
     // Verifies that the cache reader gets the same layers as the newest application layers.
-    assertBlobsEqual(applicationLayers.get(0).getBlob(), dependenciesCacheEntry.getLayerBlob());
-    assertBlobsEqual(applicationLayers.get(1).getBlob(), resourcesCacheEntry.getLayerBlob());
-    assertBlobsEqual(applicationLayers.get(2).getBlob(), classesCacheEntry.getLayerBlob());
+    assertBlobsEqual(applicationLayers.get(0).getBlob(), dependenciesCachedLayer.getBlob());
+    assertBlobsEqual(applicationLayers.get(1).getBlob(), resourcesCachedLayer.getBlob());
+    assertBlobsEqual(applicationLayers.get(2).getBlob(), classesCachedLayer.getBlob());
   }
 }
