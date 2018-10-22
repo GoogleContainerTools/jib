@@ -24,7 +24,9 @@ import org.junit.Test;
 
 import java.nio.file.Paths;
 
-/** Tests for {@link DockerDaemonImage}. */
+/**
+ * Tests for {@link DockerDaemonImage}.
+ */
 public class DockerDaemonImageTest {
 
   @Test

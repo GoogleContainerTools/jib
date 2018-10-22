@@ -29,7 +29,9 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 
-/** Builds to the Docker daemon. */
+/**
+ * Builds to the Docker daemon.
+ */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class DockerDaemonImage implements TargetImage {
 
@@ -50,7 +52,8 @@ public class DockerDaemonImage implements TargetImage {
    *
    * @param imageReference the image reference
    * @return a new {@link DockerDaemonImage}
-   * @throws InvalidImageReferenceException if {@code imageReference} is not a valid image reference
+   * @throws InvalidImageReferenceException if {@code imageReference} is not a valid image
+   * reference
    */
   public static DockerDaemonImage named(String imageReference)
       throws InvalidImageReferenceException {
@@ -61,7 +64,9 @@ public class DockerDaemonImage implements TargetImage {
   private Path dockerExecutable = Paths.get("docker");
   private Map<String, String> dockerEnvironment = Collections.emptyMap();
 
-  /** Instantiate with {@link #named}. */
+  /**
+   * Instantiate with {@link #named}.
+   */
   private DockerDaemonImage(ImageReference imageReference) {
     this.imageReference = imageReference;
   }
