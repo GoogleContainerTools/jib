@@ -36,6 +36,7 @@ public class JibContainer {
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
 
+  /** Use {@link #create(DescriptorDigest, DescriptorDigest)} to create instances. */
   private JibContainer(DescriptorDigest imageDigest, DescriptorDigest imageId) {
     this.imageDigest = imageDigest;
     this.imageId = imageId;
