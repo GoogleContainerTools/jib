@@ -31,6 +31,11 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
+import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.Input;
@@ -38,28 +43,17 @@ import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
-import javax.annotation.Nullable;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
-
-/**
- * Builds a container image and exports to the default Docker daemon.
- */
+/** Builds a container image and exports to the default Docker daemon. */
 public class BuildDockerTask extends DefaultTask implements JibTask {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
   private static final DockerClient DOCKER_CLIENT = DockerClient.newClient();
 
-  @Nullable
-  private JibExtension jibExtension;
+  @Nullable private JibExtension jibExtension;
 
-  @Nullable
-  private Path dockerExecutable;
-  @Nullable
-  private Map<String, String> dockerEnvironment;
+  @Nullable private Path dockerExecutable;
+  @Nullable private Map<String, String> dockerEnvironment;
 
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
@@ -86,7 +80,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   @TaskAction
   public void buildDocker()
       throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
-      CacheDirectoryCreationException {
+          CacheDirectoryCreationException {
     if (!DOCKER_CLIENT.isDockerInstalled()) {
       throw new GradleException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));

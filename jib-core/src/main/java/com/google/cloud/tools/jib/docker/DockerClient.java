@@ -96,23 +96,6 @@ public class DockerClient {
   }
 
   /**
-   * Gets a function that takes a {@code docker} subcommand and gives back a {@link ProcessBuilder}
-   * for that {@code docker} command.
-   *
-   * @param dockerExecutable path to {@code docker}
-   * @return the default {@link ProcessBuilder} factory for running a {@code docker} subcommand
-   */
-  private static Function<List<String>, ProcessBuilder> defaultProcessBuilderFactory(
-      String dockerExecutable) {
-    return dockerSubCommand -> {
-      List<String> dockerCommand = new ArrayList<>(1 + dockerSubCommand.size());
-      dockerCommand.add(dockerExecutable);
-      dockerCommand.addAll(dockerSubCommand);
-      return new ProcessBuilder(dockerCommand);
-    };
-  }
-
-  /**
    * Factory for generating the {@link ProcessBuilder} for running {@code docker} commands.
    */
   private final Function<List<String>, ProcessBuilder> processBuilderFactory;
@@ -120,6 +103,11 @@ public class DockerClient {
   @VisibleForTesting
   DockerClient(Function<List<String>, ProcessBuilder> processBuilderFactory) {
     this.processBuilderFactory = processBuilderFactory;
+  }
+
+  @VisibleForTesting
+  Function<List<String>, ProcessBuilder> getProcessBuilderFactory() {
+    return processBuilderFactory;
   }
 
   /**
