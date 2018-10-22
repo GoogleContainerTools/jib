@@ -97,6 +97,11 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public Map<String, String> getLabels() {
+    return jibPluginConfiguration.getLabels();
+  }
+
+  @Override
   public List<String> getPorts() {
     return jibPluginConfiguration.getExposedPorts();
   }

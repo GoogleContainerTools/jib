@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.api.client.repackaged.com.google.common.annotations.VisibleForTesting;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
@@ -114,9 +113,12 @@ public class NPluginConfigurationProcessor {
    * Gets the suitable value for the base image. If the raw base image parameter is null, returns
    * {@code "gcr.io/distroless/java/jetty"} for WAR projects or {@code "gcr.io/distroless/java"} for
    * non-WAR.
+   *
+   * @param rawConfiguration raw configuration data
+   * @param projectProperties used for providing additional information
+   * @return the base image
    */
-  @VisibleForTesting
-  static String getBaseImage(
+  public static String getBaseImage(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties) {
     String baseImage = rawConfiguration.getFromImage();
     if (baseImage == null) {
@@ -160,8 +162,11 @@ public class NPluginConfigurationProcessor {
             PropertyNames.FROM_AUTH_PASSWORD,
             rawConfiguration.getFromAuth());
     if (optionalFromCredential.isPresent()) {
+      // TODO: fix https://github.com/GoogleContainerTools/jib/issues/1177
+      // rawConfiguration.getFromAuth().getPropertyDescriptor() may cause NPE, so using
+      // "from.auth/<from><auth>" as a compromise.
       defaultCredentialRetrievers.setKnownCredential(
-          optionalFromCredential.get(), rawConfiguration.getFromAuth().getPropertyDescriptor());
+          optionalFromCredential.get(), "from.auth/<from><auth>");
     } else {
       AuthProperty inferredAuth =
           rawConfiguration.getInferredAuth(baseImageReference.getRegistry());
@@ -186,7 +191,7 @@ public class NPluginConfigurationProcessor {
             .setProgramArguments(rawConfiguration.getProgramArguments())
             .setEnvironment(rawConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(rawConfiguration.getPorts()))
-            .setLabels(rawConfiguration.getEnvironment())
+            .setLabels(rawConfiguration.getLabels())
             .setUser(rawConfiguration.getUser());
     if (rawConfiguration.getUseCurrentTimestamp()) {
       eventDispatcher.dispatch(

@@ -42,6 +42,7 @@ import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.base.Verify;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
@@ -123,8 +124,9 @@ public class BuildImageMojo extends JibPluginConfiguration {
         AuthProperty inferredAuth =
             rawConfiguration.getInferredAuth(targetImageReference.getRegistry());
         if (inferredAuth != null) {
-          Credential credential =
-              Credential.basic(inferredAuth.getUsername(), inferredAuth.getPassword());
+          String username = Verify.verifyNotNull(inferredAuth.getUsername());
+          String password = Verify.verifyNotNull(inferredAuth.getPassword());
+          Credential credential = Credential.basic(username, password);
           defaultCredentialRetrievers.setInferredCredential(
               credential, inferredAuth.getPropertyDescriptor());
         }

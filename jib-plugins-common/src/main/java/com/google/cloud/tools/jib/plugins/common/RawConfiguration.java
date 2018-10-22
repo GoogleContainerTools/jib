@@ -49,6 +49,8 @@ public interface RawConfiguration {
 
   Map<String, String> getEnvironment();
 
+  Map<String, String> getLabels();
+
   List<String> getPorts();
 
   @Nullable

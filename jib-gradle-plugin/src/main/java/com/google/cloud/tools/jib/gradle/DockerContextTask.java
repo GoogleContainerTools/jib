@@ -105,14 +105,13 @@ public class DockerContextTask extends DefaultTask implements JibTask {
   @TaskAction
   public void generateDockerContext() throws MainClassInferenceException {
     Preconditions.checkNotNull(jibExtension);
-    Preconditions.checkNotNull(jibExtension.getFrom().getImage());
     JibSystemProperties.checkHttpTimeoutProperty();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
     PluginConfigurationProcessor.disableHttpLogging();
 
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
-    GradleProjectProperties gradleProjectProperties =
+    GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
     RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
@@ -120,15 +119,16 @@ public class DockerContextTask extends DefaultTask implements JibTask {
 
     try {
       List<String> entrypoint =
-          NPluginConfigurationProcessor.computeEntrypoint(
-              rawConfiguration, gradleProjectProperties);
+          NPluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties);
+      String baseImage =
+          NPluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
 
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
       ExposedPortsParser.parse(jibExtension.getContainer().getPorts());
 
-      new JavaDockerContextGenerator(gradleProjectProperties.getJavaLayerConfigurations())
-          .setBaseImage(jibExtension.getFrom().getImage())
+      new JavaDockerContextGenerator(projectProperties.getJavaLayerConfigurations())
+          .setBaseImage(baseImage)
           .setEntrypoint(entrypoint)
           .setProgramArguments(jibExtension.getContainer().getArgs())
           .setExposedPorts(jibExtension.getContainer().getPorts())
