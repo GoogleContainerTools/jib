@@ -92,6 +92,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
+    Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -153,16 +154,14 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .build();
 
     try {
-      Path imageDigestOutputPath =
-          Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.digest");
       BuildStepsRunner.forBuildImage(targetImageReference, getTargetImageAdditionalTags())
-          .imageDigestOutputPath(imageDigestOutputPath)
           .build(
               jibContainerBuilder,
               containerizer,
               eventDispatcher,
               mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-              helpfulSuggestions);
+              helpfulSuggestions)
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"));
       getLog().info("");
 
     } catch (IOException | CacheDirectoryCreationException ex) {

@@ -130,11 +130,11 @@ public class JibRunHelper {
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
   }
 
-  static String assertImageDigest(Path projectRoot) throws IOException, DigestException {
+  static void assertImageDigest(Path projectRoot) throws IOException, DigestException {
     Path digestPath = projectRoot.resolve("build/jib-image.digest");
     Assert.assertTrue(Files.exists(digestPath));
     String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
-    return DescriptorDigest.fromDigest(digest).toString();
+    DescriptorDigest.fromDigest(digest);
   }
 
   /**

@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.JibContainer;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
@@ -161,7 +162,7 @@ class PushImageStep implements AsyncStep<JibContainer>, Callable<JibContainer> {
               .writeTo(ByteStreams.nullOutputStream())
               .getDigest();
       DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
-      JibContainer jibContainer = JibContainer.create(imageDigest, imageId);
+      JibContainer jibContainer = JibContainerBuilder.created(imageDigest, imageId);
 
       return Futures.whenAllSucceed(pushAllTagsFutures)
           .call(() -> jibContainer, listeningExecutorService);

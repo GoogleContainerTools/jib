@@ -17,33 +17,27 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 
 /** The container built by Jib. */
 public class JibContainer {
 
-  /**
-   * Create a container.
-   *
-   * @param imageDigest the digest of the registry image manifest
-   * @param imageId digest of the container configuration
-   * @return the new container
-   */
-  public static JibContainer create(DescriptorDigest imageDigest, DescriptorDigest imageId) {
-    return new JibContainer(imageDigest, imageId);
-  }
-
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
 
-  /** Use {@link #create(DescriptorDigest, DescriptorDigest)} to create instances. */
-  private JibContainer(DescriptorDigest imageDigest, DescriptorDigest imageId) {
+  JibContainer(DescriptorDigest imageDigest, DescriptorDigest imageId) {
     this.imageDigest = imageDigest;
     this.imageId = imageId;
   }
 
   /**
-   * Gets the image digest, the digest of the registry image manifest built by Jib.
+   * Gets the image digest, the digest of the registry image manifest built by Jib. This digest can
+   * be used to fetch a specific image from the registry in the form {@code
+   * myregistry/myimage@digest}.
    *
    * @return the image digest
    */
@@ -66,14 +60,24 @@ public class JibContainer {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
+  public boolean equals(Object other) {
+    if (this == other) {
       return true;
     }
-    if (!(obj instanceof JibContainer)) {
+    if (!(other instanceof JibContainer)) {
       return false;
     }
-    JibContainer other = (JibContainer) obj;
-    return Objects.equals(imageDigest, other.imageDigest) && Objects.equals(imageId, other.imageId);
+    JibContainer otherContainer = (JibContainer) other;
+    return imageDigest.equals(otherContainer.imageDigest) && imageId.equals(otherContainer.imageId);
+  }
+
+  /**
+   * Write out the image digest to the given location.
+   *
+   * @param location the location to write the digest
+   * @throws IOException a problem occurred when writing the digest
+   */
+  public void writeImageDigest(Path location) throws IOException {
+    Files.write(location, imageDigest.toString().getBytes(StandardCharsets.UTF_8));
   }
 }

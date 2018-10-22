@@ -86,6 +86,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
+    Path buildOutput = getProject().getBuildDir().toPath();
 
     GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
@@ -122,15 +123,14 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .setTargetImageReference(targetImageReference)
             .build();
 
-    Path imageDigestOutputPath = getProject().getBuildDir().toPath().resolve("jib-image.digest");
     BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
-        .imageDigestOutputPath(imageDigestOutputPath)
         .build(
             jibContainerBuilder,
             containerizer,
             eventDispatcher,
             gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-            helpfulSuggestions);
+            helpfulSuggestions)
+        .writeImageDigest(buildOutput.resolve("jib-image.digest"));
   }
 
   @Override

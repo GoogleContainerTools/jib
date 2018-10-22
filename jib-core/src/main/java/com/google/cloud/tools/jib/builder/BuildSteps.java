@@ -35,7 +35,7 @@ public class BuildSteps {
   private interface ImageBuildRunnable {
 
     /**
-     * Builds an image and returns its digest.
+     * Build an image.
      *
      * @return the built image
      * @throws ExecutionException if an exception occurs during execution

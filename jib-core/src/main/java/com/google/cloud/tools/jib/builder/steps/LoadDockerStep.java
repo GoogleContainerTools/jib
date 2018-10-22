@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.JibContainer;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
@@ -131,6 +132,6 @@ class LoadDockerStep implements AsyncStep<JibContainer>, Callable<JibContainer> 
             .getDigest();
     DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
 
-    return JibContainer.create(imageDigest, imageId);
+    return JibContainerBuilder.created(imageDigest, imageId);
   }
 }

@@ -84,6 +84,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
+    Path buildOutput = getProject().getBuildDir().toPath();
 
     if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
       throw new GradleException(
@@ -138,15 +139,14 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
             .build();
 
-    Path imageDigestOutputPath = getProject().getBuildDir().toPath().resolve("jib-image.digest");
     BuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
-        .imageDigestOutputPath(imageDigestOutputPath)
         .build(
             jibContainerBuilder,
             containerizer,
             eventDispatcher,
             gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-            helpfulSuggestions);
+            helpfulSuggestions)
+        .writeImageDigest(buildOutput.resolve("jib-image.digest"));
   }
 
   @Override

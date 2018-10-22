@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEvent;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -33,6 +34,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.security.DigestException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
@@ -197,5 +199,18 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(
         ImmutableSet.of("latest", "tag1", "tag2"), buildConfiguration.getAllTargetImageTags());
     Assert.assertEquals("toolName", buildConfiguration.getToolName());
+  }
+
+  @Test
+  public void testCreated() throws DigestException {
+    DescriptorDigest digest =
+        DescriptorDigest.fromDigest(
+            "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
+    DescriptorDigest id =
+        DescriptorDigest.fromDigest(
+            "sha256:9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba");
+    JibContainer container = JibContainerBuilder.created(digest, id);
+    Assert.assertEquals(digest, container.getDigest());
+    Assert.assertEquals(id, container.getImageId());
   }
 }

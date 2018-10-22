@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -56,6 +57,16 @@ import javax.annotation.Nullable;
  */
 // TODO: Add tests once containerize() is added.
 public class JibContainerBuilder {
+  /**
+   * Create a container for a given build result. For internal use only.
+   *
+   * @param imageDigest the digest of the registry image manifest
+   * @param imageId digest of the container configuration
+   * @return the new container
+   */
+  public static JibContainer created(DescriptorDigest imageDigest, DescriptorDigest imageId) {
+    return new JibContainer(imageDigest, imageId);
+  }
 
   private final SourceImage baseImage;
 

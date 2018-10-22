@@ -63,6 +63,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
+    Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
 
     try {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
@@ -77,8 +78,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
               getProject().getName(),
               getProject().getVersion(),
               mavenHelpfulSuggestionsBuilder.build());
-      Path tarOutputPath =
-          Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.tar");
+      Path tarOutputPath = buildOutput.resolve("jib-image.tar");
       TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarOutputPath);
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
@@ -99,16 +99,14 @@ public class BuildTarMojo extends JibPluginConfiguration {
               .setTargetImageReference(targetImageReference)
               .build();
 
-      Path imageDigestOutputPath =
-          Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.digest");
       BuildStepsRunner.forBuildTar(tarOutputPath)
-          .imageDigestOutputPath(imageDigestOutputPath)
           .build(
               jibContainerBuilder,
               containerizer,
               eventDispatcher,
               mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-              helpfulSuggestions);
+              helpfulSuggestions)
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"));
       getLog().info("");
 
     } catch (InvalidImageReferenceException | IOException | CacheDirectoryCreationException ex) {

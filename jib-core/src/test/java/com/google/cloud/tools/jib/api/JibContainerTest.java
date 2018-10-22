@@ -17,44 +17,65 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.DigestException;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /** Tests for {@link JibContainer}. */
 public class JibContainerTest {
 
-  private static final String digest1 =
-      "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789";
-  private static final String digest2 =
-      "sha256:9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba";
-  private static final String digest3 =
-      "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210";
+  @Rule public TemporaryFolder temporaryDirectory = new TemporaryFolder();
 
-  @Test
-  public void testCreation() throws DigestException {
-    JibContainer container =
-        JibContainer.create(
-            DescriptorDigest.fromDigest(digest1), DescriptorDigest.fromDigest(digest2));
+  private DescriptorDigest digest1;
+  private DescriptorDigest digest2;
+  private DescriptorDigest digest3;
 
-    Assert.assertEquals(digest1, container.getDigest().toString());
-    Assert.assertEquals(digest2, container.getImageId().toString());
+  @Before
+  public void setUp() throws DigestException {
+    digest1 =
+        DescriptorDigest.fromDigest(
+            "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
+    digest2 =
+        DescriptorDigest.fromDigest(
+            "sha256:9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba");
+    digest3 =
+        DescriptorDigest.fromDigest(
+            "sha256:fedcba9876543210fedcba9876543210fedcba9876543210fedcba9876543210");
   }
 
   @Test
-  public void testEquality() throws DigestException {
-    JibContainer container1 =
-        JibContainer.create(
-            DescriptorDigest.fromDigest(digest1), DescriptorDigest.fromDigest(digest2));
-    JibContainer container2 =
-        JibContainer.create(
-            DescriptorDigest.fromDigest(digest1), DescriptorDigest.fromDigest(digest2));
-    JibContainer container3 =
-        JibContainer.create(
-            DescriptorDigest.fromDigest(digest2), DescriptorDigest.fromDigest(digest3));
+  public void testCreation() {
+    JibContainer container = new JibContainer(digest1, digest2);
+
+    Assert.assertEquals(digest1, container.getDigest());
+    Assert.assertEquals(digest2, container.getImageId());
+  }
+
+  @Test
+  public void testEquality() {
+    JibContainer container1 = new JibContainer(digest1, digest2);
+    JibContainer container2 = new JibContainer(digest1, digest2);
+    JibContainer container3 = new JibContainer(digest2, digest3);
 
     Assert.assertEquals(container1, container2);
     Assert.assertEquals(container1.hashCode(), container2.hashCode());
     Assert.assertNotEquals(container1, container3);
+  }
+
+  @Test
+  public void testWriteImageDigest() throws IOException {
+    Path location = temporaryDirectory.newFile().toPath();
+    JibContainer container = new JibContainer(digest1, digest2);
+    container.writeImageDigest(location);
+
+    String retrieved = new String(Files.readAllBytes(location), StandardCharsets.UTF_8);
+    Assert.assertEquals(digest1.toString(), retrieved);
   }
 }

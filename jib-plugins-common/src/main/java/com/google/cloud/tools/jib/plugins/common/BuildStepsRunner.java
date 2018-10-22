@@ -37,14 +37,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
-import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
 
 /** Runs a {@link BuildSteps} and builds helpful error messages. */
@@ -159,7 +156,6 @@ public class BuildStepsRunner {
 
   private final String startupMessage;
   private final String successMessage;
-  @Nullable private Path imageDigestOutputPath;
 
   @VisibleForTesting
   BuildStepsRunner(String startupMessage, String successMessage) {
@@ -212,12 +208,6 @@ public class BuildStepsRunner {
 
       eventDispatcher.dispatch(LogEvent.lifecycle(""));
       eventDispatcher.dispatch(LogEvent.lifecycle(successMessage));
-
-      // when an image is built, write out the digest
-      if (imageDigestOutputPath != null) {
-        String imageDigest = jibContainer.getDigest().toString();
-        Files.write(imageDigestOutputPath, imageDigest.getBytes(StandardCharsets.UTF_8));
-      }
 
       return jibContainer;
 
@@ -275,17 +265,5 @@ public class BuildStepsRunner {
     }
 
     throw new IllegalStateException("unreachable");
-  }
-
-  /**
-   * Set the location where the image digest will be saved. If {@code null} then digest is not
-   * saved.
-   *
-   * @param imageDigestOutputPath the location to write the image digest or {@code null} to skip
-   * @return this
-   */
-  public BuildStepsRunner imageDigestOutputPath(@Nullable Path imageDigestOutputPath) {
-    this.imageDigestOutputPath = imageDigestOutputPath;
-    return this;
   }
 }

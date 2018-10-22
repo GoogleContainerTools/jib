@@ -69,6 +69,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
+    Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
 
     try {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
@@ -103,16 +104,14 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               .setTargetImageReference(targetImageReference)
               .build();
 
-      Path imageDigestOutputPath =
-          Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.digest");
       BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
-          .imageDigestOutputPath(imageDigestOutputPath)
           .build(
               jibContainerBuilder,
               containerizer,
               eventDispatcher,
               mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-              helpfulSuggestions);
+              helpfulSuggestions)
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"));
       getLog().info("");
 
     } catch (InvalidImageReferenceException | IOException | CacheDirectoryCreationException ex) {

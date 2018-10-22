@@ -60,8 +60,6 @@ public class BuildDockerMojoIntegrationTest {
   /**
    * Builds and runs jib:buildDocker on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
-   *
-   * @throws DigestException
    */
   private static String buildToDockerDaemonAndRun(Path projectRoot, String imageReference)
       throws VerificationException, IOException, InterruptedException, DigestException {
