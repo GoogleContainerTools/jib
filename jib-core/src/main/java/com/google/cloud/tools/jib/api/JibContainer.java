@@ -22,7 +22,13 @@ import java.util.Objects;
 /** The container built by Jib. */
 public class JibContainer {
 
-  /** Create a container. */
+  /**
+   * Create a container.
+   *
+   * @param imageDigest the digest of the registry image manifest
+   * @param imageId digest of the container configuration
+   * @return the new container
+   */
   public static JibContainer create(DescriptorDigest imageDigest, DescriptorDigest imageId) {
     return new JibContainer(imageDigest, imageId);
   }

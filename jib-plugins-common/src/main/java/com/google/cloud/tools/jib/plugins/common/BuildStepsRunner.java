@@ -281,6 +281,7 @@ public class BuildStepsRunner {
    * Set the location where the image digest will be saved. If {@code null} then digest is not
    * saved.
    *
+   * @param imageDigestOutputPath the location to write the image digest or {@code null} to skip
    * @return this
    */
   public BuildStepsRunner imageDigestOutputPath(@Nullable Path imageDigestOutputPath) {

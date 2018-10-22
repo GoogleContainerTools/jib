@@ -121,8 +121,7 @@ class PushImageStep implements AsyncStep<JibContainer>, Callable<JibContainer> {
         .call(this::afterAllPushed, listeningExecutorService);
   }
 
-  private ListenableFuture<JibContainer> afterAllPushed()
-      throws ExecutionException, IOException {
+  private ListenableFuture<JibContainer> afterAllPushed() throws ExecutionException, IOException {
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       RegistryClient registryClient =

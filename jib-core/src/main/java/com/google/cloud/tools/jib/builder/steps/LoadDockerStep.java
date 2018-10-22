@@ -130,7 +130,7 @@ class LoadDockerStep implements AsyncStep<JibContainer>, Callable<JibContainer> 
             .writeTo(ByteStreams.nullOutputStream())
             .getDigest();
     DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
-    
+
     return JibContainer.create(imageDigest, imageId);
   }
 }
