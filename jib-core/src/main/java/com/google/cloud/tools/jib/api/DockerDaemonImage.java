@@ -114,7 +114,8 @@ public class DockerDaemonImage implements TargetImage {
   /**
    * Sets environment variables for the {@code docker} CLI.
    *
-   * @return the path to the {@code docker} CLI
+   * @param dockerEnvironment a map of docker environment variables
+   * 
    */
   public void setDockerEnvironment(Map<String, String> dockerEnvironment) {
     this.dockerEnvironment = dockerEnvironment;
