@@ -98,13 +98,13 @@ public class DefaultCacheStorageReaderTest {
     Blobs.writeToFileWithLock(
         layerBlob, defaultCacheStorageFiles.getLayerFile(layerDigest, layerDiffId));
 
-    // Checks that the CacheEntry is retrieved correctly.
-    Optional<CachedLayer> optionalCacheEntry = defaultCacheStorageReader.retrieve(layerDigest);
-    Assert.assertTrue(optionalCacheEntry.isPresent());
-    Assert.assertEquals(layerDigest, optionalCacheEntry.get().getDigest());
-    Assert.assertEquals(layerDiffId, optionalCacheEntry.get().getDiffId());
-    Assert.assertEquals("layerBlob".length(), optionalCacheEntry.get().getSize());
-    Assert.assertEquals("layerBlob", Blobs.writeToString(optionalCacheEntry.get().getBlob()));
+    // Checks that the CachedLayer is retrieved correctly.
+    Optional<CachedLayer> optionalCachedLayer = defaultCacheStorageReader.retrieve(layerDigest);
+    Assert.assertTrue(optionalCachedLayer.isPresent());
+    Assert.assertEquals(layerDigest, optionalCachedLayer.get().getDigest());
+    Assert.assertEquals(layerDiffId, optionalCachedLayer.get().getDiffId());
+    Assert.assertEquals("layerBlob".length(), optionalCachedLayer.get().getSize());
+    Assert.assertEquals("layerBlob", Blobs.writeToString(optionalCachedLayer.get().getBlob()));
 
     // Checks that multiple .layer files means the cache is corrupted.
     Files.createFile(defaultCacheStorageFiles.getLayerFile(layerDigest, layerDigest));

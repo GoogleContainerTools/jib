@@ -99,10 +99,10 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
       Cache cache = buildConfiguration.getApplicationLayersCache();
 
       // Don't build the layer if it exists already.
-      Optional<CachedLayer> optionalCacheEntry =
+      Optional<CachedLayer> optionalCachedLayer =
           cache.retrieve(layerConfiguration.getLayerEntries());
-      if (optionalCacheEntry.isPresent()) {
-        return optionalCacheEntry.get();
+      if (optionalCachedLayer.isPresent()) {
+        return optionalCachedLayer.get();
       }
 
       Blob layerBlob = new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()).build();

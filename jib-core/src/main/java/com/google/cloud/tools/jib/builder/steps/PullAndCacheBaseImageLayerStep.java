@@ -68,9 +68,9 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
       Cache cache = buildConfiguration.getBaseImageLayersCache();
 
       // Checks if the layer already exists in the cache.
-      Optional<CachedLayer> optionalCacheEntry = cache.retrieve(layerDigest);
-      if (optionalCacheEntry.isPresent()) {
-        return optionalCacheEntry.get();
+      Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerDigest);
+      if (optionalCachedLayer.isPresent()) {
+        return optionalCachedLayer.get();
       }
 
       RegistryClient registryClient =

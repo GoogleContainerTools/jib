@@ -78,20 +78,20 @@ class DefaultCacheStorageReader {
       return Optional.empty();
     }
 
-    DefaultCachedLayer.Builder cacheEntryBuilder =
+    DefaultCachedLayer.Builder cachedLayerBuilder =
         DefaultCachedLayer.builder().setLayerDigest(layerDigest);
 
     try (Stream<Path> filesInLayerDirectory = Files.list(layerDirectory)) {
       for (Path fileInLayerDirectory : filesInLayerDirectory.collect(Collectors.toList())) {
         if (DefaultCacheStorageFiles.isLayerFile(fileInLayerDirectory)) {
-          if (cacheEntryBuilder.hasLayerBlob()) {
+          if (cachedLayerBuilder.hasLayerBlob()) {
             throw new CacheCorruptedException(
                 "Multiple layer files found for layer with digest "
                     + layerDigest.getHash()
                     + " in directory: "
                     + layerDirectory);
           }
-          cacheEntryBuilder
+          cachedLayerBuilder
               .setLayerBlob(Blobs.from(fileInLayerDirectory))
               .setLayerDiffId(DefaultCacheStorageFiles.getDiffId(fileInLayerDirectory))
               .setLayerSize(Files.size(fileInLayerDirectory));
@@ -99,7 +99,7 @@ class DefaultCacheStorageReader {
       }
     }
 
-    return Optional.of(cacheEntryBuilder.build());
+    return Optional.of(cachedLayerBuilder.build());
   }
 
   /**

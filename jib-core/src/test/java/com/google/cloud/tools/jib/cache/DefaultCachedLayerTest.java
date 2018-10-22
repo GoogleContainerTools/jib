@@ -65,15 +65,15 @@ public class DefaultCachedLayerTest {
 
   @Test
   public void testBuilder_pass() throws IOException {
-    DefaultCachedLayer.Builder cacheEntryBuilder =
+    DefaultCachedLayer.Builder cachedLayerBuilder =
         DefaultCachedLayer.builder()
             .setLayerDigest(mockLayerDigest)
             .setLayerDiffId(mockLayerDiffId)
             .setLayerSize(1337);
-    Assert.assertFalse(cacheEntryBuilder.hasLayerBlob());
-    cacheEntryBuilder.setLayerBlob(Blobs.from("layerBlob"));
-    Assert.assertTrue(cacheEntryBuilder.hasLayerBlob());
-    CachedLayer cachedLayer = cacheEntryBuilder.build();
+    Assert.assertFalse(cachedLayerBuilder.hasLayerBlob());
+    cachedLayerBuilder.setLayerBlob(Blobs.from("layerBlob"));
+    Assert.assertTrue(cachedLayerBuilder.hasLayerBlob());
+    CachedLayer cachedLayer = cachedLayerBuilder.build();
     Assert.assertEquals(mockLayerDigest, cachedLayer.getDigest());
     Assert.assertEquals(mockLayerDiffId, cachedLayer.getDiffId());
     Assert.assertEquals(1337, cachedLayer.getSize());

@@ -202,7 +202,7 @@ public class CacheTest {
   }
 
   /**
-   * Verifies that {@code cacheEntry} corresponds to the first fake layer in {@link #setUp}.
+   * Verifies that {@code cachedLayer} corresponds to the first fake layer in {@link #setUp}.
    *
    * @param cachedLayer the {@link CachedLayer} to verify
    * @throws IOException if an I/O exception occurs
@@ -215,7 +215,7 @@ public class CacheTest {
   }
 
   /**
-   * Verifies that {@code cacheEntry} corresponds to the second fake layer in {@link #setUp}.
+   * Verifies that {@code cachedLayer} corresponds to the second fake layer in {@link #setUp}.
    *
    * @param cachedLayer the {@link CachedLayer} to verify
    * @throws IOException if an I/O exception occurs

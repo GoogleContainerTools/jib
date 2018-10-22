@@ -155,7 +155,7 @@ class DefaultCacheStorageWriter {
           temporaryLayerDirectory,
           defaultCacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
 
-      // Updates cacheEntry with the blob information.
+      // Updates cachedLayer with the blob information.
       Path layerFile =
           defaultCacheStorageFiles.getLayerFile(writtenLayer.layerDigest, writtenLayer.layerDiffId);
       return DefaultCachedLayer.builder()
@@ -204,10 +204,10 @@ class DefaultCacheStorageWriter {
           temporaryLayerDirectory,
           defaultCacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
 
-      // Updates cacheEntry with the blob information.
+      // Updates cachedLayer with the blob information.
       Path layerFile =
           defaultCacheStorageFiles.getLayerFile(writtenLayer.layerDigest, writtenLayer.layerDiffId);
-      DefaultCachedLayer.Builder cacheEntryBuilder =
+      DefaultCachedLayer.Builder cachedLayerBuilder =
           DefaultCachedLayer.builder()
               .setLayerDigest(writtenLayer.layerDigest)
               .setLayerDiffId(writtenLayer.layerDiffId)
@@ -219,7 +219,7 @@ class DefaultCacheStorageWriter {
         writeSelector(uncompressedCacheWrite.getSelector().get(), writtenLayer.layerDigest);
       }
 
-      return cacheEntryBuilder.build();
+      return cachedLayerBuilder.build();
     }
   }
 

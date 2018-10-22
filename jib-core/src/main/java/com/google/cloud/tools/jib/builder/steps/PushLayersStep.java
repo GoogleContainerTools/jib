@@ -38,7 +38,7 @@ class PushLayersStep
   private final BuildConfiguration buildConfiguration;
   private final AuthenticatePushStep authenticatePushStep;
   private final AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CachedLayer>>>
-      cacheEntryStep;
+      cachedLayerStep;
 
   private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<ImmutableList<AsyncStep<PushBlobStep>>> listenableFuture;
@@ -48,14 +48,14 @@ class PushLayersStep
       BuildConfiguration buildConfiguration,
       AuthenticatePushStep authenticatePushStep,
       AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CachedLayer>>>
-          cacheEntryStep) {
+          cachedLayerStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.authenticatePushStep = authenticatePushStep;
-    this.cacheEntryStep = cacheEntryStep;
+    this.cachedLayerStep = cachedLayerStep;
 
     listenableFuture =
-        Futures.whenAllSucceed(cacheEntryStep.getFuture()).call(this, listeningExecutorService);
+        Futures.whenAllSucceed(cachedLayerStep.getFuture()).call(this, listeningExecutorService);
   }
 
   @Override
@@ -67,12 +67,12 @@ class PushLayersStep
   public ImmutableList<AsyncStep<PushBlobStep>> call() throws ExecutionException {
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
-      ImmutableList<? extends AsyncStep<? extends CachedLayer>> cacheEntry =
-          NonBlockingSteps.get(cacheEntryStep);
+      ImmutableList<? extends AsyncStep<? extends CachedLayer>> cachedLayer =
+          NonBlockingSteps.get(cachedLayerStep);
 
       // Constructs a PushBlobStep for each layer.
       ImmutableList.Builder<AsyncStep<PushBlobStep>> pushBlobStepsBuilder = ImmutableList.builder();
-      for (AsyncStep<? extends CachedLayer> cachedLayerStep : cacheEntry) {
+      for (AsyncStep<? extends CachedLayer> cachedLayerStep : cachedLayer) {
         ListenableFuture<PushBlobStep> pushBlobStepFuture =
             Futures.whenAllSucceed(cachedLayerStep.getFuture())
                 .call(() -> makePushBlobStep(cachedLayerStep), listeningExecutorService);
@@ -83,9 +83,9 @@ class PushLayersStep
     }
   }
 
-  private PushBlobStep makePushBlobStep(AsyncStep<? extends CachedLayer> cacheEntryStep)
+  private PushBlobStep makePushBlobStep(AsyncStep<? extends CachedLayer> cachedLayerStep)
       throws ExecutionException {
-    CachedLayer cachedLayer = NonBlockingSteps.get(cacheEntryStep);
+    CachedLayer cachedLayer = NonBlockingSteps.get(cachedLayerStep);
     return new PushBlobStep(
         listeningExecutorService,
         buildConfiguration,

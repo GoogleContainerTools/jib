@@ -89,11 +89,11 @@ class BuildImageStep
     }
     ListenableFuture<Image<Layer>> future =
         Futures.whenAllSucceed(dependencies)
-            .call(this::afterCacheEntrySteps, listeningExecutorService);
+            .call(this::afterCachedLayerSteps, listeningExecutorService);
     return () -> future;
   }
 
-  private Image<Layer> afterCacheEntrySteps()
+  private Image<Layer> afterCachedLayerSteps()
       throws ExecutionException, LayerPropertyNotFoundException {
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
