@@ -20,8 +20,9 @@ again.
 Jib comes as 3 components:
 
   - `jib-core`: a library
-  - `jib-maven-plugin`: a Maven plugin that uses `jib-core`
-  - `jib-gradle-plugin`: a Gradle plugin that uses `jib-core`
+  - `jib-plugins-common`: a library with helpers for plugin builders
+  - `jib-maven-plugin`: a Maven plugin that uses `jib-core` and `jib-plugins-common`
+  - `jib-gradle-plugin`: a Gradle plugin that uses `jib-core` and `jib-plugins-common`
 
 To build, use the provided `build.sh` which builds and tests each of the components into your local `~/.m2/repository`.  Note that this script does not run integration tests.
 
@@ -34,10 +35,12 @@ To build, use the provided `build.sh` which builds and tests each of the compone
    If you're a Googler or other corporate contributor,
    use your corporate email address here, not your personal address.
 2. Fork the repository into your own Github account.
+3. We follow the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html)
 3. Please include unit tests (and integration tests if applicable) for all new code.
 4. Make sure all existing tests pass (but see the note below about integration tests).
    * In `jib-core`, run `./gradlew clean goJF build integrationTest`
    * In `jib-gradle-plugin`, run `./gradlew clean goJF build integrationTest`
+   * In `jib-plugins-common`, run `./gradlew clean goJF build`
    * In `jib-maven-plugin`, run `./mvnw clean fmt:format verify -Pintegration-tests`
 5. Associate the change with an existing issue or file a [new issue](../../issues).
 6. Create a pull request!

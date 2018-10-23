@@ -17,14 +17,15 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
 
-/** Default implementation of {@link CacheEntry}. */
-class DefaultCacheEntry implements CacheEntry {
+/** Default implementation of {@link CachedLayer}. */
+class DefaultCachedLayer implements CachedLayer {
 
-  /** Builds a {@link CacheEntry}. */
+  /** Builds a {@link CachedLayer}. */
   static class Builder {
 
     @Nullable private DescriptorDigest layerDigest;
@@ -58,8 +59,8 @@ class DefaultCacheEntry implements CacheEntry {
       return layerBlob != null;
     }
 
-    CacheEntry build() {
-      return new DefaultCacheEntry(
+    CachedLayer build() {
+      return new DefaultCachedLayer(
           Preconditions.checkNotNull(layerDigest, "layerDigest required"),
           Preconditions.checkNotNull(layerDiffId, "layerDiffId required"),
           layerSize,
@@ -68,7 +69,7 @@ class DefaultCacheEntry implements CacheEntry {
   }
 
   /**
-   * Creates a new {@link Builder} for a {@link CacheEntry}.
+   * Creates a new {@link Builder} for a {@link CachedLayer}.
    *
    * @return the new {@link Builder}
    */
@@ -76,36 +77,39 @@ class DefaultCacheEntry implements CacheEntry {
     return new Builder();
   }
 
-  private final DescriptorDigest layerDigest;
   private final DescriptorDigest layerDiffId;
-  private final long layerSize;
+  private final BlobDescriptor blobDescriptor;
   private final Blob layerBlob;
 
-  private DefaultCacheEntry(
+  private DefaultCachedLayer(
       DescriptorDigest layerDigest, DescriptorDigest layerDiffId, long layerSize, Blob layerBlob) {
-    this.layerDigest = layerDigest;
     this.layerDiffId = layerDiffId;
-    this.layerSize = layerSize;
     this.layerBlob = layerBlob;
+    this.blobDescriptor = new BlobDescriptor(layerSize, layerDigest);
   }
 
   @Override
-  public DescriptorDigest getLayerDigest() {
-    return layerDigest;
+  public DescriptorDigest getDigest() {
+    return blobDescriptor.getDigest();
   }
 
   @Override
-  public DescriptorDigest getLayerDiffId() {
+  public DescriptorDigest getDiffId() {
     return layerDiffId;
   }
 
   @Override
-  public long getLayerSize() {
-    return layerSize;
+  public long getSize() {
+    return blobDescriptor.getSize();
   }
 
   @Override
-  public Blob getLayerBlob() {
+  public Blob getBlob() {
     return layerBlob;
+  }
+
+  @Override
+  public BlobDescriptor getBlobDescriptor() {
+    return blobDescriptor;
   }
 }
