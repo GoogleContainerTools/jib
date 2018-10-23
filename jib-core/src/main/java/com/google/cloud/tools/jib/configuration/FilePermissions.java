@@ -86,7 +86,7 @@ public class FilePermissions {
   }
 
   /**
-   * Gets the corresponding permissions bits specified by the {@link FilePermissions}
+   * Gets the corresponding permissions bits specified by the {@link FilePermissions}.
    *
    * @return the permission bits
    */
