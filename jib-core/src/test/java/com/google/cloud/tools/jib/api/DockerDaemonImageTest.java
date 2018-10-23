@@ -19,14 +19,11 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.nio.file.Paths;
-
-/**
- * Tests for {@link DockerDaemonImage}.
- */
+/** Tests for {@link DockerDaemonImage}. */
 public class DockerDaemonImageTest {
 
   @Test

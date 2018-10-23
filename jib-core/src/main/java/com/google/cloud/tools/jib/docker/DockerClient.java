@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.CharStreams;
-
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -29,9 +28,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
-/**
- * Calls out to the {@code docker} CLI.
- */
+/** Calls out to the {@code docker} CLI. */
 public class DockerClient {
 
   private static final String DEFAULT_DOCKER_CLIENT = "docker";
@@ -65,8 +62,8 @@ public class DockerClient {
    * @param dockerEnvironment environment variables for {@code docker}
    * @return a new {@link DockerClient}
    */
-  public static DockerClient newClient(Path dockerExecutable,
-      Map<String, String> dockerEnvironment) {
+  public static DockerClient newClient(
+      Path dockerExecutable, Map<String, String> dockerEnvironment) {
     return new DockerClient(
         defaultProcessBuilderFactory(dockerExecutable.toString(), dockerEnvironment));
   }
@@ -79,8 +76,7 @@ public class DockerClient {
    * @return the default {@link ProcessBuilder} factory for running a {@code docker} subcommand
    */
   private static Function<List<String>, ProcessBuilder> defaultProcessBuilderFactory(
-      String dockerExecutable,
-      Map<String, String> dockerEnvironment) {
+      String dockerExecutable, Map<String, String> dockerEnvironment) {
     return dockerSubCommand -> {
       List<String> dockerCommand = new ArrayList<>(1 + dockerSubCommand.size());
       dockerCommand.add(dockerExecutable);
@@ -95,9 +91,7 @@ public class DockerClient {
     };
   }
 
-  /**
-   * Factory for generating the {@link ProcessBuilder} for running {@code docker} commands.
-   */
+  /** Factory for generating the {@link ProcessBuilder} for running {@code docker} commands. */
   private final Function<List<String>, ProcessBuilder> processBuilderFactory;
 
   @VisibleForTesting
@@ -112,7 +106,7 @@ public class DockerClient {
 
   /**
    * @return {@code true} if Docker is installed on the user's system and accessible as {@code
-   * docker}
+   *     docker}
    */
   public boolean isDockerInstalled() {
     try {
@@ -131,7 +125,8 @@ public class DockerClient {
    * @return stdout from {@code docker}.
    * @throws InterruptedException if the 'docker load' process is interrupted.
    * @throws IOException if streaming the blob to 'docker load' fails.
-   * @see <a href="https://docs.docker.com/engine/reference/commandline/load/">https://docs.docker.com/engine/reference/commandline/load</a>
+   * @see <a
+   *     href="https://docs.docker.com/engine/reference/commandline/load/">https://docs.docker.com/engine/reference/commandline/load</a>
    */
   public String load(Blob imageTarballBlob) throws InterruptedException, IOException {
     // Runs 'docker load'.
@@ -181,7 +176,8 @@ public class DockerClient {
    * @param newImageReference the new image reference
    * @throws InterruptedException if the 'docker tag' process is interrupted.
    * @throws IOException if an I/O exception occurs or {@code docker tag} failed
-   * @see <a href="https://docs.docker.com/engine/reference/commandline/tag/">https://docs.docker.com/engine/reference/commandline/tag/</a>
+   * @see <a
+   *     href="https://docs.docker.com/engine/reference/commandline/tag/">https://docs.docker.com/engine/reference/commandline/tag/</a>
    */
   public void tag(ImageReference originalImageReference, ImageReference newImageReference)
       throws IOException, InterruptedException {
@@ -198,9 +194,7 @@ public class DockerClient {
     }
   }
 
-  /**
-   * Runs a {@code docker} command.
-   */
+  /** Runs a {@code docker} command. */
   private Process docker(String... subCommand) throws IOException {
     return processBuilderFactory.apply(Arrays.asList(subCommand)).start();
   }

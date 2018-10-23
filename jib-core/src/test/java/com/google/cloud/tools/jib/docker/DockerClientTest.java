@@ -44,19 +44,14 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/**
- * Tests for {@link DockerClient}.
- */
+/** Tests for {@link DockerClient}. */
 @RunWith(MockitoJUnitRunner.class)
 public class DockerClientTest {
 
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Mock
-  private ProcessBuilder mockProcessBuilder;
-  @Mock
-  private Process mockProcess;
+  @Mock private ProcessBuilder mockProcessBuilder;
+  @Mock private Process mockProcess;
 
   @Before
   public void setUp() throws IOException {
@@ -194,9 +189,11 @@ public class DockerClientTest {
   @Test
   public void testDefaultClient() {
     DockerClient dc = DockerClient.newClient();
-    Assert.assertEquals(dc.getProcessBuilderFactory().apply(Collections.emptyList()).command(),
+    Assert.assertEquals(
+        dc.getProcessBuilderFactory().apply(Collections.emptyList()).command(),
         Collections.singletonList("docker"));
-    Assert.assertEquals(dc.getProcessBuilderFactory().apply(Collections.emptyList()).environment(),
+    Assert.assertEquals(
+        dc.getProcessBuilderFactory().apply(Collections.emptyList()).environment(),
         System.getenv());
   }
 
@@ -208,10 +205,11 @@ public class DockerClientTest {
     environment.putAll(Collections.singletonMap("Key1", "Value1"));
 
     DockerClient dc = DockerClient.newClient(path, environment);
-    Assert.assertEquals(dc.getProcessBuilderFactory().apply(Collections.emptyList()).command(),
+    Assert.assertEquals(
+        dc.getProcessBuilderFactory().apply(Collections.emptyList()).command(),
         Collections.singletonList(path.toString()));
-    Assert.assertEquals(dc.getProcessBuilderFactory().apply(Collections.emptyList()).environment(),
-        environment);
+    Assert.assertEquals(
+        dc.getProcessBuilderFactory().apply(Collections.emptyList()).environment(), environment);
   }
 
   @Test
