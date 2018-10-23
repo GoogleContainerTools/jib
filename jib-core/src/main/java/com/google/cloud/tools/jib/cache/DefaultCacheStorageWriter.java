@@ -133,10 +133,10 @@ class DefaultCacheStorageWriter {
    * corresponding to the layer blob.
    *
    * @param compressedLayerBlob the compressed layer {@link Blob} to write out
-   * @return the {@link CacheEntry} representing the written entry
+   * @return the {@link CachedLayer} representing the written entry
    * @throws IOException if an I/O exception occurs
    */
-  CacheEntry write(Blob compressedLayerBlob) throws IOException {
+  CachedLayer write(Blob compressedLayerBlob) throws IOException {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(defaultCacheStorageFiles.getLayersDirectory());
 
@@ -155,10 +155,10 @@ class DefaultCacheStorageWriter {
           temporaryLayerDirectory,
           defaultCacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
 
-      // Updates cacheEntry with the blob information.
+      // Updates cachedLayer with the blob information.
       Path layerFile =
           defaultCacheStorageFiles.getLayerFile(writtenLayer.layerDigest, writtenLayer.layerDiffId);
-      return DefaultCacheEntry.builder()
+      return DefaultCachedLayer.builder()
           .setLayerDigest(writtenLayer.layerDigest)
           .setLayerDiffId(writtenLayer.layerDiffId)
           .setLayerSize(writtenLayer.layerSize)
@@ -180,10 +180,10 @@ class DefaultCacheStorageWriter {
    * </ul>
    *
    * @param uncompressedCacheWrite the {@link UncompressedCacheWrite} to write out
-   * @return the {@link CacheEntry} representing the written entry
+   * @return the {@link CachedLayer} representing the written entry
    * @throws IOException if an I/O exception occurs
    */
-  CacheEntry write(UncompressedCacheWrite uncompressedCacheWrite) throws IOException {
+  CachedLayer write(UncompressedCacheWrite uncompressedCacheWrite) throws IOException {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(defaultCacheStorageFiles.getLayersDirectory());
 
@@ -204,11 +204,11 @@ class DefaultCacheStorageWriter {
           temporaryLayerDirectory,
           defaultCacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
 
-      // Updates cacheEntry with the blob information.
+      // Updates cachedLayer with the blob information.
       Path layerFile =
           defaultCacheStorageFiles.getLayerFile(writtenLayer.layerDigest, writtenLayer.layerDiffId);
-      DefaultCacheEntry.Builder cacheEntryBuilder =
-          DefaultCacheEntry.builder()
+      DefaultCachedLayer.Builder cachedLayerBuilder =
+          DefaultCachedLayer.builder()
               .setLayerDigest(writtenLayer.layerDigest)
               .setLayerDiffId(writtenLayer.layerDiffId)
               .setLayerSize(writtenLayer.layerSize)
@@ -219,7 +219,7 @@ class DefaultCacheStorageWriter {
         writeSelector(uncompressedCacheWrite.getSelector().get(), writtenLayer.layerDigest);
       }
 
-      return cacheEntryBuilder.build();
+      return cachedLayerBuilder.build();
     }
   }
 

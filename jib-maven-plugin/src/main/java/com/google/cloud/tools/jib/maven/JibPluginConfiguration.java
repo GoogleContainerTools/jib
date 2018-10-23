@@ -181,7 +181,7 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(
       defaultValue = "${project.basedir}/src/main/jib",
       required = true,
-      property = PropertyNames.EXTRA_DIRECTORY)
+      property = PropertyNames.EXTRA_DIRECTORY_PATH)
   private File extraDirectory;
 
   @Parameter(defaultValue = "false", property = PropertyNames.SKIP)

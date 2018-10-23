@@ -73,7 +73,8 @@ public class MainClassResolverTest {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
         .thenReturn(
-            ImmutableList.of(new LayerEntry(FAKE_CLASSES_PATH, AbsoluteUnixPath.get("/ignored"))));
+            ImmutableList.of(
+                new LayerEntry(FAKE_CLASSES_PATH, AbsoluteUnixPath.get("/ignored"), null)));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockJibEventConsumer)
@@ -90,7 +91,7 @@ public class MainClassResolverTest {
                     Paths.get(Resources.getResource("class-finder-tests/multiple").toURI()))
                 .walk()
                 .stream()
-                .map(path -> new LayerEntry(path, AbsoluteUnixPath.get("/ignored")))
+                .map(path -> new LayerEntry(path, AbsoluteUnixPath.get("/ignored"), null))
                 .collect(ImmutableList.toImmutableList()));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
@@ -108,7 +109,7 @@ public class MainClassResolverTest {
                     Paths.get(Resources.getResource("class-finder-tests/multiple").toURI()))
                 .walk()
                 .stream()
-                .map(path -> new LayerEntry(path, AbsoluteUnixPath.get("/ignored")))
+                .map(path -> new LayerEntry(path, AbsoluteUnixPath.get("/ignored"), null))
                 .collect(ImmutableList.toImmutableList()));
     try {
       MainClassResolver.resolveMainClass(null, mockProjectProperties);
@@ -128,7 +129,7 @@ public class MainClassResolverTest {
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
         .thenReturn(
             ImmutableList.of(
-                new LayerEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))));
+                new LayerEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"), null)));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockJibEventConsumer)
@@ -140,7 +141,7 @@ public class MainClassResolverTest {
     Mockito.when(mockJavaLayerConfigurations.getClassLayerEntries())
         .thenReturn(
             ImmutableList.of(
-                new LayerEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"))));
+                new LayerEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"), null)));
     try {
       MainClassResolver.resolveMainClass(null, mockProjectProperties);
       Assert.fail();

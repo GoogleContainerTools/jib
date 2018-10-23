@@ -16,9 +16,12 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -36,6 +39,7 @@ public class LayerEntry {
 
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
+  private final FilePermissions permissions;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -52,10 +56,19 @@ public class LayerEntry {
    * @param sourceFile the source file to add to the layer
    * @param extractionPath the path in the container file system corresponding to the {@code
    *     sourceFile}
+   * @param permissions the file permissions on the container. Use {@code null} to use defaults (644
+   *     for files, 755 for directories)
    */
-  public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath) {
+  public LayerEntry(
+      Path sourceFile, AbsoluteUnixPath extractionPath, @Nullable FilePermissions permissions) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
+    this.permissions =
+        permissions == null
+            ? Files.isDirectory(sourceFile)
+                ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
+                : FilePermissions.DEFAULT_FILE_PERMISSIONS
+            : permissions;
   }
 
   /**
@@ -79,6 +92,15 @@ public class LayerEntry {
    */
   public AbsoluteUnixPath getExtractionPath() {
     return extractionPath;
+  }
+
+  /**
+   * Gets the file permissions on the container.
+   *
+   * @return the file permissions on the container
+   */
+  public FilePermissions getPermissions() {
+    return permissions;
   }
 
   // TODO: Remove these get...String methods.
@@ -111,11 +133,12 @@ public class LayerEntry {
     }
     LayerEntry otherLayerEntry = (LayerEntry) other;
     return sourceFile.equals(otherLayerEntry.sourceFile)
-        && extractionPath.equals(otherLayerEntry.extractionPath);
+        && extractionPath.equals(otherLayerEntry.extractionPath)
+        && Objects.equals(permissions, otherLayerEntry.permissions);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceFile, extractionPath);
+    return Objects.hash(sourceFile, extractionPath, permissions);
   }
 }

@@ -65,7 +65,8 @@ public class DockerContextTask extends DefaultTask implements JibTask {
   @InputFiles
   public FileCollection getInputFiles() {
     return GradleProjectProperties.getInputFiles(
-        Preconditions.checkNotNull(jibExtension).getExtraDirectoryPath().toFile(), getProject());
+        Preconditions.checkNotNull(jibExtension).getExtraDirectory().getPath().toFile(),
+        getProject());
   }
 
   /**
@@ -113,7 +114,11 @@ public class DockerContextTask extends DefaultTask implements JibTask {
 
       GradleProjectProperties projectProperties =
           GradleProjectProperties.getForProject(
-              getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
+              getProject(),
+              getLogger(),
+              jibExtension.getExtraDirectory().getPath(),
+              jibExtension.getExtraDirectory().getPermissions(),
+              appRoot);
       RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
       String targetDir = getTargetDir();
 

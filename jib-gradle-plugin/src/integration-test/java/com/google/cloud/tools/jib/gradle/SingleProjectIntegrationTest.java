@@ -142,7 +142,7 @@ public class SingleProjectIntegrationTest {
 
     Instant beforeBuild = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n",
+        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
         JibRunHelper.buildAndRun(simpleTestProject, targetImage));
     assertDockerInspect(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
@@ -153,7 +153,7 @@ public class SingleProjectIntegrationTest {
     String targetImage = "localhost:6000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
+        "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
@@ -163,7 +163,7 @@ public class SingleProjectIntegrationTest {
     String targetImage = "localhost:5000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
+        "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
   }
@@ -173,7 +173,7 @@ public class SingleProjectIntegrationTest {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n",
+        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
         JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     assertDockerInspect(targetImage);
@@ -201,7 +201,7 @@ public class SingleProjectIntegrationTest {
 
     assertDockerInspect(imageName);
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n",
+        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
         new Command("docker", "run", "--rm", imageName).run());
 
     // Checks that generating the Docker context again is skipped.
@@ -249,7 +249,7 @@ public class SingleProjectIntegrationTest {
 
     new Command("docker", "load", "--input", outputPath).run();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n",
+        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
         new Command("docker", "run", "--rm", targetImage).run());
     assertDockerInspect(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);

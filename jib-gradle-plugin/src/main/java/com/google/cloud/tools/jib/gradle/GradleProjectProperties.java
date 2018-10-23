@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
@@ -30,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
@@ -55,12 +57,21 @@ class GradleProjectProperties implements ProjectProperties {
 
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(
-      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot) {
+      Project project,
+      Logger logger,
+      Path extraDirectory,
+      Map<String, String> permissions,
+      AbsoluteUnixPath appRoot) {
     try {
       return new GradleProjectProperties(
           project,
           makeEventHandlers(logger),
-          GradleLayerConfigurations.getForProject(project, logger, extraDirectory, appRoot));
+          GradleLayerConfigurations.getForProject(
+              project,
+              logger,
+              extraDirectory,
+              ConfigurationPropertyValidator.convertPermissionsMap(permissions),
+              appRoot));
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);

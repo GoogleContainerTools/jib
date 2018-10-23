@@ -9,7 +9,10 @@ All notable changes to this project will be documented in this file.
 - `jib.to.credHelper` and `jib.from.credHelper` can be used to specify a credential helper suffix or a full path to a credential helper executable ([#925](https://github.com/GoogleContainerTools/jib/issues/925))
 - `container.user` configuration parameter to configure the user and group to run the container as ([#1029](https://github.com/GoogleContainerTools/jib/issues/1029))
 - Preliminary support for building images for WAR projects ([#431](https://github.com/GoogleContainerTools/jib/issues/431))
-
+- `jib.extraDirectory` closure with a `path` and `permissions` field ([#794](https://github.com/GoogleContainerTools/jib/issues/794))
+  - `jib.extraDirectory.path` configures the extra layer directory (still also configurable via `jib.extraDirectory = file(...)`)
+  - `jib.extraDirectory.permissions` is a map from absolute path on container to the file's permission bits (represented as an octal string)
+  
 ### Changed
 
 - Removed deprecated `jib.jvmFlags`, `jib.mainClass`, `jib.args`, and `jib.format` in favor of the equivalents under `jib.container` ([#461](https://github.com/GoogleContainerTools/jib/issues/461))

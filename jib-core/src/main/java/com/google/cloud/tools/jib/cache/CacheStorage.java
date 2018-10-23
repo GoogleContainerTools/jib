@@ -26,7 +26,7 @@ import java.util.Set;
  * Interface for queries to a cache storage engine.
  *
  * <p>The cache storage engine stores layer data in compressed form. These entries are read out as
- * {@link CacheEntry}s. Cache entries can be retrieved by the layer digest.
+ * {@link CachedLayer}s. Cache entries can be retrieved by the layer digest.
  *
  * <p>The cache entries can also be queried by an arbitrarily-defined selector (in digest format).
  * The selectors do not need to be unique. An example of a selector could be the digest of the list
@@ -40,19 +40,19 @@ interface CacheStorage {
    * Saves the {@link UncompressedCacheWrite}.
    *
    * @param uncompressedCacheWrite the {@link UncompressedCacheWrite}
-   * @return the {@link CacheEntry} for the written {@link UncompressedCacheWrite}
+   * @return the {@link CachedLayer} for the written {@link UncompressedCacheWrite}
    * @throws IOException if an I/O exception occurs
    */
-  CacheEntry write(UncompressedCacheWrite uncompressedCacheWrite) throws IOException;
+  CachedLayer write(UncompressedCacheWrite uncompressedCacheWrite) throws IOException;
 
   /**
    * Saves a compressed layer {@link Blob}.
    *
    * @param compressedLayerBlob the compressed layer {@link Blob}
-   * @return the {@link CacheEntry} for the written layer
+   * @return the {@link CachedLayer} for the written layer
    * @throws IOException if an I/O exception occurs
    */
-  CacheEntry write(Blob compressedLayerBlob) throws IOException;
+  CachedLayer write(Blob compressedLayerBlob) throws IOException;
 
   /**
    * Fetches all the layer digests stored.
@@ -64,14 +64,14 @@ interface CacheStorage {
   Set<DescriptorDigest> fetchDigests() throws IOException, CacheCorruptedException;
 
   /**
-   * Retrieves the {@link CacheEntry} for the layer with digest {@code layerDigest}.
+   * Retrieves the {@link CachedLayer} for the layer with digest {@code layerDigest}.
    *
    * @param layerDigest the layer digest
-   * @return the {@link CacheEntry} referenced by the layer digest, if found
+   * @return the {@link CachedLayer} referenced by the layer digest, if found
    * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */
-  Optional<CacheEntry> retrieve(DescriptorDigest layerDigest)
+  Optional<CachedLayer> retrieve(DescriptorDigest layerDigest)
       throws IOException, CacheCorruptedException;
 
   /**
