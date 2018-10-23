@@ -88,31 +88,31 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     TaskCommon.disableHttpLogging();
-    AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
-
-    GradleProjectProperties projectProperties =
-        GradleProjectProperties.getForProject(
-            getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
-    RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
-
-    GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
-        new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
-
-    EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(projectProperties.getEventHandlers());
-    ImageReference targetImageReference =
-        ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-            jibExtension.getTo().getImage(),
-            eventDispatcher,
-            getProject().getName(),
-            getProject().getVersion().toString().equals("unspecified")
-                ? "latest"
-                : getProject().getVersion().toString(),
-            gradleHelpfulSuggestionsBuilder.build());
-
-    DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
 
     try {
+      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
+      GradleProjectProperties projectProperties =
+          GradleProjectProperties.getForProject(
+              getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
+      RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
+
+      GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
+          new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
+
+      EventDispatcher eventDispatcher =
+          new DefaultEventDispatcher(projectProperties.getEventHandlers());
+      ImageReference targetImageReference =
+          ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+              jibExtension.getTo().getImage(),
+              eventDispatcher,
+              getProject().getName(),
+              getProject().getVersion().toString().equals("unspecified")
+                  ? "latest"
+                  : getProject().getVersion().toString(),
+              gradleHelpfulSuggestionsBuilder.build());
+
+      DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
+
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfiguration(
               rawConfiguration, projectProperties);

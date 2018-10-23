@@ -86,44 +86,44 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     TaskCommon.disableHttpLogging();
-    AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
-
-    GradleProjectProperties projectProperties =
-        GradleProjectProperties.getForProject(
-            getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
-    RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
-
-    if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
-      throw new GradleException(
-          HelpfulSuggestions.forToNotConfigured(
-              "Missing target image parameter",
-              "'jib.to.image'",
-              "build.gradle",
-              "gradle jib --image <your image name>"));
-    }
-
-    ImageReference targetImageReference = ImageReference.parse(jibExtension.getTo().getImage());
-
-    EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(projectProperties.getEventHandlers());
-    DefaultCredentialRetrievers defaultCredentialRetrievers =
-        DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(targetImageReference, eventDispatcher));
-    Optional<Credential> optionalToCredential =
-        ConfigurationPropertyValidator.getImageCredential(
-            eventDispatcher,
-            PropertyNames.TO_AUTH_USERNAME,
-            PropertyNames.TO_AUTH_PASSWORD,
-            jibExtension.getTo().getAuth());
-    optionalToCredential.ifPresent(
-        toCredential ->
-            defaultCredentialRetrievers.setKnownCredential(toCredential, "jib.to.auth"));
-    defaultCredentialRetrievers.setCredentialHelper(jibExtension.getTo().getCredHelper());
-
-    RegistryImage targetImage = RegistryImage.named(targetImageReference);
-    defaultCredentialRetrievers.asList().forEach(targetImage::addCredentialRetriever);
 
     try {
+      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
+      GradleProjectProperties projectProperties =
+          GradleProjectProperties.getForProject(
+              getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
+      RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
+
+      if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
+        throw new GradleException(
+            HelpfulSuggestions.forToNotConfigured(
+                "Missing target image parameter",
+                "'jib.to.image'",
+                "build.gradle",
+                "gradle jib --image <your image name>"));
+      }
+
+      ImageReference targetImageReference = ImageReference.parse(jibExtension.getTo().getImage());
+
+      EventDispatcher eventDispatcher =
+          new DefaultEventDispatcher(projectProperties.getEventHandlers());
+      DefaultCredentialRetrievers defaultCredentialRetrievers =
+          DefaultCredentialRetrievers.init(
+              CredentialRetrieverFactory.forImage(targetImageReference, eventDispatcher));
+      Optional<Credential> optionalToCredential =
+          ConfigurationPropertyValidator.getImageCredential(
+              eventDispatcher,
+              PropertyNames.TO_AUTH_USERNAME,
+              PropertyNames.TO_AUTH_PASSWORD,
+              jibExtension.getTo().getAuth());
+      optionalToCredential.ifPresent(
+          toCredential ->
+              defaultCredentialRetrievers.setKnownCredential(toCredential, "jib.to.auth"));
+      defaultCredentialRetrievers.setCredentialHelper(jibExtension.getTo().getCredHelper());
+
+      RegistryImage targetImage = RegistryImage.named(targetImageReference);
+      defaultCredentialRetrievers.asList().forEach(targetImage::addCredentialRetriever);
+
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfiguration(
               rawConfiguration, projectProperties);

@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import org.apache.maven.plugin.MojoExecutionException;
+import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
 
 /** Collection of common methods to share between Gradle tasks. */
 public class MojoCommon {
@@ -30,11 +30,11 @@ public class MojoCommon {
    *
    * @param jibPluginConfiguration the Jib plugin configuration
    * @return the app root value
-   * @throws MojoExecutionException if the app root is not an absolute path in Unix-style
+   * @throws NotAbsoluteUnixPathException if the app root is not an absolute path in Unix-style
    */
   // TODO: find a way to use PluginConfigurationProcessor.getAppRootChecked() instead
   static AbsoluteUnixPath getAppRootChecked(JibPluginConfiguration jibPluginConfiguration)
-      throws MojoExecutionException {
+      throws NotAbsoluteUnixPathException {
     String appRoot = jibPluginConfiguration.getAppRoot();
     if (appRoot.isEmpty()) {
       boolean isWarProject = "war".equals(jibPluginConfiguration.getProject().getPackaging());
@@ -46,8 +46,7 @@ public class MojoCommon {
     try {
       return AbsoluteUnixPath.get(appRoot);
     } catch (IllegalArgumentException ex) {
-      throw new MojoExecutionException(
-          "<container><appRoot> is not an absolute Unix-style path: " + appRoot);
+      throw new NotAbsoluteUnixPathException(appRoot, ex);
     }
   }
 

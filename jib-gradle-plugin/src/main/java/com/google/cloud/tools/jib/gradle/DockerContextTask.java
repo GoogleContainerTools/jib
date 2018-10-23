@@ -107,15 +107,16 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     Preconditions.checkNotNull(jibExtension);
     JibSystemProperties.checkHttpTimeoutProperty();
     TaskCommon.disableHttpLogging();
-    AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
-
-    GradleProjectProperties projectProperties =
-        GradleProjectProperties.getForProject(
-            getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
-    RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
-    String targetDir = getTargetDir();
 
     try {
+      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
+
+      GradleProjectProperties projectProperties =
+          GradleProjectProperties.getForProject(
+              getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
+      RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
+      String targetDir = getTargetDir();
+
       List<String> entrypoint =
           PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties);
       String baseImage =

@@ -70,15 +70,15 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     }
 
     MojoCommon.disableHttpLogging();
-    AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
-
-    MavenProjectProperties projectProperties =
-        MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
-    EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(projectProperties.getEventHandlers());
-    RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
-
     try {
+      AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
+      MavenProjectProperties projectProperties =
+          MavenProjectProperties.getForProject(
+              getProject(), getLog(), getExtraDirectory(), appRoot);
+      EventDispatcher eventDispatcher =
+          new DefaultEventDispatcher(projectProperties.getEventHandlers());
+      RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
+
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
@@ -120,7 +120,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     } catch (NotAbsoluteUnixPathException ex) {
       throw new MojoExecutionException(
-          "<container><appRoot> is not an absolute Unix-style path: " + appRoot);
+          "<container><appRoot> is not an absolute Unix-style path: " + ex.getMessage());
 
     } catch (InvalidImageReferenceException
         | IOException

@@ -95,15 +95,16 @@ public class BuildImageMojo extends JibPluginConfiguration {
     }
 
     MojoCommon.disableHttpLogging();
-    AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
-
-    MavenProjectProperties projectProperties =
-        MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
-    EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(projectProperties.getEventHandlers());
-    RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
-
     try {
+      AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
+
+      MavenProjectProperties projectProperties =
+          MavenProjectProperties.getForProject(
+              getProject(), getLog(), getExtraDirectory(), appRoot);
+      EventDispatcher eventDispatcher =
+          new DefaultEventDispatcher(projectProperties.getEventHandlers());
+      RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
+
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfiguration(
               rawConfiguration, projectProperties);
@@ -168,7 +169,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     } catch (NotAbsoluteUnixPathException ex) {
       throw new MojoExecutionException(
-          "<container><appRoot> is not an absolute Unix-style path: " + appRoot);
+          "<container><appRoot> is not an absolute Unix-style path: " + ex.getMessage());
 
     } catch (InvalidImageReferenceException
         | IOException
