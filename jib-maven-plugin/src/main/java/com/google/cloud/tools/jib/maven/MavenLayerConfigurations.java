@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.function.Predicate;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
@@ -119,7 +120,9 @@ class MavenLayerConfigurations {
     // at build.getFinalName().
     Path explodedWarPath =
         Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
-    return JavaLayerConfigurationsHelper.fromExplodedWar(explodedWarPath, appRoot, extraDirectory);
+    // TODO: Replace Collections.emptyMap() with configured permissions
+    return JavaLayerConfigurationsHelper.fromExplodedWar(
+        explodedWarPath, appRoot, extraDirectory, Collections.emptyMap());
   }
 
   private MavenLayerConfigurations() {}

@@ -43,6 +43,7 @@ public class DockerContextTaskTest {
 
   @Mock private ContainerParameters containerParameters;
   @Mock private BaseImageParameters baseImageParameters;
+  @Mock private ExtraDirectoryParameters extraDirectoryParameters;
 
   private DockerContextTask task;
   private Project project;
@@ -57,13 +58,16 @@ public class DockerContextTaskTest {
     Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
     Mockito.when(containerParameters.getEnvironment())
         .thenReturn(ImmutableMap.of("envKey", "envVal"));
-    Mockito.when(jibExtension.getExtraDirectoryPath())
-        .thenReturn(projectRoot.newFolder("src", "main", "jib").toPath());
-    Mockito.when(jibExtension.getContainer().getMainClass()).thenReturn("MainClass");
-    Mockito.when(jibExtension.getFrom()).thenReturn(baseImageParameters);
-    Mockito.when(baseImageParameters.getImage()).thenReturn("base image");
+    Mockito.when(containerParameters.getMainClass()).thenReturn("MainClass");
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/app");
     Mockito.when(containerParameters.getArgs()).thenCallRealMethod();
+
+    Mockito.when(jibExtension.getFrom()).thenReturn(baseImageParameters);
+    Mockito.when(baseImageParameters.getImage()).thenReturn("base image");
+
+    Mockito.when(jibExtension.getExtraDirectory()).thenReturn(extraDirectoryParameters);
+    Mockito.when(extraDirectoryParameters.getPath())
+        .thenReturn(projectRoot.newFolder("src", "main", "jib").toPath());
 
     project = ProjectBuilder.builder().withProjectDir(projectRoot.getRoot()).build();
     project.getPluginManager().apply("java");
