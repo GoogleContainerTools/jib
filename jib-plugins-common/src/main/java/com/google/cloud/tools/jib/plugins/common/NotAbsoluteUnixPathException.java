@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+/** Indicates that the string path is not in the absolute unix-path style. */
 public class NotAbsoluteUnixPathException extends Exception {
 
   public NotAbsoluteUnixPathException(String appRoot, Throwable ex) {

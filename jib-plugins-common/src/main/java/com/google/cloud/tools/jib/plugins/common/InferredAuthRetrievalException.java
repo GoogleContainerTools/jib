@@ -16,6 +16,11 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+/**
+ * Exception when trying to retrieve an inferred auth info.
+ *
+ * @see RawConfiguration#getInferredAuth(String)
+ */
 public class InferredAuthRetrievalException extends Exception {
 
   public InferredAuthRetrievalException(String message) {
