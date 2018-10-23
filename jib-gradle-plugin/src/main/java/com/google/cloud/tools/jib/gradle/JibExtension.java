@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import java.io.File;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
@@ -105,6 +106,10 @@ public class JibExtension {
 
   public void extraDirectory(Action<? super ExtraDirectoryParameters> action) {
     action.execute(extraDirectory);
+  }
+
+  public void setExtraDirectory(File extraDirectory) {
+    this.extraDirectory.setPath(extraDirectory);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
