@@ -46,6 +46,7 @@ class GradleLayerConfigurations {
    * @param project the Gradle {@link Project}
    * @param logger the logger for providing feedback about the resolution
    * @param extraDirectory path to the source directory for the extra files layer
+   * @param permissions map from path on container to file permissions for extra-layer files
    * @param appRoot root directory in the image where the app will be placed
    * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
@@ -71,6 +72,7 @@ class GradleLayerConfigurations {
    * @param project the Gradle {@link Project}
    * @param logger the logger for providing feedback about the resolution
    * @param extraDirectory path to the source directory for the extra files layer
+   * @param permissions map from path on container to file permissions for extra-layer files
    * @param appRoot root directory in the image where the app will be placed
    * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
@@ -152,7 +154,7 @@ class GradleLayerConfigurations {
    *
    * @param project the Gradle {@link Project}
    * @param extraDirectory path to the source directory for the extra files layer
-   * @param permissions map from path on container to file permissions
+   * @param permissions map from path on container to file permissions for extra-layer files
    * @param appRoot root directory in the image where the app will be placed
    * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution

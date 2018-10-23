@@ -188,8 +188,8 @@ public class ConfigurationPropertyValidator {
   }
 
   /**
-   * Validates and converts a {@code String->String} map to an {@code
-   * AbsoluteUnixPath->FilePermission} map.
+   * Validates and converts a {@code String->String} file-path-to-file-permissions map to an
+   * equivalent {@code AbsoluteUnixPath->FilePermission} map.
    *
    * @param inputMap the map to convert
    * @return the converted map
