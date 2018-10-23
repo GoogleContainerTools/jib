@@ -30,12 +30,12 @@ import org.gradle.api.tasks.Internal;
 /** Object in {@link JibExtension} that configures the extra directory. */
 public class ExtraDirectoryParameters {
 
-  private Path path;
-  private Map<String, String> permissions = Collections.emptyMap();
-
   private static Path resolveDefaultExtraDirectory(Path projectDirectory) {
     return projectDirectory.resolve("src").resolve("main").resolve("jib");
   }
+
+  private Path path;
+  private Map<String, String> permissions = Collections.emptyMap();
 
   @Inject
   public ExtraDirectoryParameters(Path projectDirectory) {
@@ -66,6 +66,13 @@ public class ExtraDirectoryParameters {
     this.path = path.toPath();
   }
 
+  /**
+   * Gets the permissions for files in the extra layer on the container. Maps from absolute path on
+   * the container to a 3-digit octal string representation of the file permission bits (e.g. {@code
+   * "/path/on/container" -> "755"}).
+   *
+   * @return the permissions map from path on container to file permissions
+   */
   @Input
   public Map<String, String> getPermissions() {
     if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS) != null) {
