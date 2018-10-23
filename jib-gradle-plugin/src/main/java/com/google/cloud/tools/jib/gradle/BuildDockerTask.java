@@ -87,8 +87,10 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
-    GradleProjectProperties gradleProjectProperties =
+    TaskCommon.disableHttpLogging();
+    AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
+
+    GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
     RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
@@ -97,7 +99,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
 
     EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
+        new DefaultEventDispatcher(projectProperties.getEventHandlers());
     ImageReference targetImageReference =
         ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
             jibExtension.getTo().getImage(),
@@ -113,14 +115,14 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     try {
       NPluginConfigurationProcessor pluginConfigurationProcessor =
           NPluginConfigurationProcessor.processCommonConfiguration(
-              rawConfiguration, gradleProjectProperties);
+              rawConfiguration, projectProperties);
 
       JibContainerBuilder jibContainerBuilder =
           pluginConfigurationProcessor.getJibContainerBuilder();
 
       Containerizer containerizer = Containerizer.to(targetImage);
-      PluginConfigurationProcessor.configureContainerizer(
-          containerizer, jibExtension, gradleProjectProperties);
+      NPluginConfigurationProcessor.configureContainerizer(
+          containerizer, rawConfiguration, projectProperties, GradleProjectProperties.TOOL_NAME);
 
       HelpfulSuggestions helpfulSuggestions =
           gradleHelpfulSuggestionsBuilder
@@ -135,7 +137,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               jibContainerBuilder,
               containerizer,
               eventDispatcher,
-              gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
               helpfulSuggestions);
 
     } catch (NotAbsoluteUnixPathException ex) {

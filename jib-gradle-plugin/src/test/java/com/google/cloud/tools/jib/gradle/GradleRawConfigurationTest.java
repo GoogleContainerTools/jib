@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -33,6 +34,7 @@ public class GradleRawConfigurationTest {
 
     AuthParameters authParameters = Mockito.mock(AuthParameters.class);
     BaseImageParameters baseImageParameters = Mockito.mock(BaseImageParameters.class);
+    TargetImageParameters targetImageParameters = Mockito.mock(TargetImageParameters.class);
     ContainerParameters containerParameters = Mockito.mock(ContainerParameters.class);
 
     Mockito.when(authParameters.getUsername()).thenReturn("user");
@@ -42,13 +44,20 @@ public class GradleRawConfigurationTest {
     Mockito.when(authParameters.getPasswordPropertyDescriptor()).thenReturn("<to><auth><password>");
 
     Mockito.when(jibExtension.getFrom()).thenReturn(baseImageParameters);
+    Mockito.when(jibExtension.getTo()).thenReturn(targetImageParameters);
     Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
+    Mockito.when(jibExtension.getAllowInsecureRegistries()).thenReturn(true);
+    Mockito.when(jibExtension.getUseOnlyProjectCache()).thenReturn(true);
 
     Mockito.when(baseImageParameters.getCredHelper()).thenReturn("gcr");
     Mockito.when(baseImageParameters.getImage()).thenReturn("openjdk:15");
     Mockito.when(baseImageParameters.getAuth()).thenReturn(authParameters);
 
+    Mockito.when(targetImageParameters.getTags())
+        .thenReturn(new HashSet<>(Arrays.asList("additional", "tags")));
+
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/app/root");
+    Mockito.when(containerParameters.getArgs()).thenReturn(Arrays.asList("--log", "info"));
     Mockito.when(containerParameters.getEntrypoint()).thenReturn(Arrays.asList("java", "Main"));
     Mockito.when(containerParameters.getEnvironment())
         .thenReturn(new HashMap<>(ImmutableMap.of("currency", "dollar")));
@@ -57,7 +66,6 @@ public class GradleRawConfigurationTest {
         .thenReturn(new HashMap<>(ImmutableMap.of("unit", "cm")));
     Mockito.when(containerParameters.getMainClass()).thenReturn("com.example.Main");
     Mockito.when(containerParameters.getPorts()).thenReturn(Arrays.asList("80/tcp", "0"));
-    Mockito.when(containerParameters.getArgs()).thenReturn(Arrays.asList("--log", "info"));
     Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
     Mockito.when(containerParameters.getUser()).thenReturn("admin:wheel");
 
@@ -70,10 +78,11 @@ public class GradleRawConfigurationTest {
     Assert.assertEquals("from.auth.username", fromAuth.getUsernamePropertyDescriptor());
     Assert.assertEquals("<to><auth><password>", fromAuth.getPasswordPropertyDescriptor());
 
+    Assert.assertTrue(rawConfiguration.getAllowInsecureRegistries());
+    Assert.assertEquals("/app/root", rawConfiguration.getAppRoot());
     Assert.assertEquals(Arrays.asList("java", "Main"), rawConfiguration.getEntrypoint());
     Assert.assertEquals(
         new HashMap<>(ImmutableMap.of("currency", "dollar")), rawConfiguration.getEnvironment());
-    Assert.assertEquals("/app/root", rawConfiguration.getAppRoot());
     Assert.assertEquals("gcr", rawConfiguration.getFromCredHelper());
     Assert.assertEquals("openjdk:15", rawConfiguration.getFromImage());
     Assert.assertEquals(Arrays.asList("-cp", "."), rawConfiguration.getJvmFlags());
@@ -81,7 +90,10 @@ public class GradleRawConfigurationTest {
     Assert.assertEquals("com.example.Main", rawConfiguration.getMainClass());
     Assert.assertEquals(Arrays.asList("80/tcp", "0"), rawConfiguration.getPorts());
     Assert.assertEquals(Arrays.asList("--log", "info"), rawConfiguration.getProgramArguments());
+    Assert.assertEquals(
+        new HashSet<>(Arrays.asList("additional", "tags")), rawConfiguration.getToTags());
     Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
+    Assert.assertTrue(rawConfiguration.getUseOnlyProjectCache());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser());
   }
 }

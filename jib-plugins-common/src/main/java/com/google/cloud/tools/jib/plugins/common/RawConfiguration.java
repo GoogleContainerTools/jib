@@ -34,6 +34,8 @@ public interface RawConfiguration {
   @Nullable
   String getFromCredHelper();
 
+  Iterable<String> getToTags();
+
   @Nullable
   List<String> getEntrypoint();
 
@@ -57,6 +59,10 @@ public interface RawConfiguration {
   String getUser();
 
   boolean getUseCurrentTimestamp();
+
+  boolean getAllowInsecureRegistries();
+
+  boolean getUseOnlyProjectCache();
 
   @Nullable
   AuthProperty getInferredAuth(String authTarget) throws InferredAuthRetrievalException;

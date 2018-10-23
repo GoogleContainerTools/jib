@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
@@ -57,19 +58,24 @@ public class MavenRawConfigurationTest {
 
     Mockito.when(jibPluginConfiguration.getSession()).thenReturn(mavenSession);
     Mockito.when(jibPluginConfiguration.getBaseImageAuth()).thenReturn(auth);
+
+    Mockito.when(jibPluginConfiguration.getAllowInsecureRegistries()).thenReturn(true);
     Mockito.when(jibPluginConfiguration.getAppRoot()).thenReturn("/app/root");
+    Mockito.when(jibPluginConfiguration.getArgs()).thenReturn(Arrays.asList("--log", "info"));
+    Mockito.when(jibPluginConfiguration.getBaseImage()).thenReturn("openjdk:15");
+    Mockito.when(jibPluginConfiguration.getBaseImageCredentialHelperName()).thenReturn("gcr");
     Mockito.when(jibPluginConfiguration.getEntrypoint()).thenReturn(Arrays.asList("java", "Main"));
     Mockito.when(jibPluginConfiguration.getEnvironment())
         .thenReturn(new HashMap<>(ImmutableMap.of("currency", "dollar")));
-    Mockito.when(jibPluginConfiguration.getBaseImageCredentialHelperName()).thenReturn("gcr");
-    Mockito.when(jibPluginConfiguration.getBaseImage()).thenReturn("openjdk:15");
+    Mockito.when(jibPluginConfiguration.getExposedPorts()).thenReturn(Arrays.asList("80/tcp", "0"));
     Mockito.when(jibPluginConfiguration.getJvmFlags()).thenReturn(Arrays.asList("-cp", "."));
     Mockito.when(jibPluginConfiguration.getLabels())
         .thenReturn(new HashMap<>(ImmutableMap.of("unit", "cm")));
     Mockito.when(jibPluginConfiguration.getMainClass()).thenReturn("com.example.Main");
-    Mockito.when(jibPluginConfiguration.getExposedPorts()).thenReturn(Arrays.asList("80/tcp", "0"));
-    Mockito.when(jibPluginConfiguration.getArgs()).thenReturn(Arrays.asList("--log", "info"));
+    Mockito.when(jibPluginConfiguration.getTargetImageAdditionalTags())
+        .thenReturn(new HashSet<>(Arrays.asList("additional", "tags")));
     Mockito.when(jibPluginConfiguration.getUseCurrentTimestamp()).thenReturn(true);
+    Mockito.when(jibPluginConfiguration.getUseOnlyProjectCache()).thenReturn(true);
     Mockito.when(jibPluginConfiguration.getUser()).thenReturn("admin:wheel");
 
     MavenRawConfiguration rawConfiguration =
@@ -89,6 +95,9 @@ public class MavenRawConfigurationTest {
     Assert.assertEquals("Maven settings", mavenSettingsAuth.getUsernamePropertyDescriptor());
     Assert.assertEquals("Maven settings", mavenSettingsAuth.getPasswordPropertyDescriptor());
 
+    Assert.assertNull(rawConfiguration.getInferredAuth("unknown registry"));
+
+    Assert.assertTrue(rawConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Arrays.asList("java", "Main"), rawConfiguration.getEntrypoint());
     Assert.assertEquals(
         new HashMap<>(ImmutableMap.of("currency", "dollar")), rawConfiguration.getEnvironment());
@@ -100,7 +109,10 @@ public class MavenRawConfigurationTest {
     Assert.assertEquals("com.example.Main", rawConfiguration.getMainClass());
     Assert.assertEquals(Arrays.asList("80/tcp", "0"), rawConfiguration.getPorts());
     Assert.assertEquals(Arrays.asList("--log", "info"), rawConfiguration.getProgramArguments());
+    Assert.assertEquals(
+        new HashSet<>(Arrays.asList("additional", "tags")), rawConfiguration.getToTags());
     Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
+    Assert.assertTrue(rawConfiguration.getUseOnlyProjectCache());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser());
 
     Mockito.verifyNoMoreInteractions(eventDispatcher);

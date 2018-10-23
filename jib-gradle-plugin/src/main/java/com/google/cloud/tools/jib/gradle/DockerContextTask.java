@@ -106,11 +106,9 @@ public class DockerContextTask extends DefaultTask implements JibTask {
   public void generateDockerContext() throws MainClassInferenceException {
     Preconditions.checkNotNull(jibExtension);
     JibSystemProperties.checkHttpTimeoutProperty();
+    TaskCommon.disableHttpLogging();
+    AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
 
-    // TODO: Instead of disabling logging, have authentication credentials be provided
-    PluginConfigurationProcessor.disableHttpLogging();
-
-    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);

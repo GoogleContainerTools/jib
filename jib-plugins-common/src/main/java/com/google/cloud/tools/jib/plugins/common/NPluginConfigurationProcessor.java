@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
@@ -38,8 +39,6 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-// TODO: remove PluginConfigurationProcess classes in Maven and Gradle code, and rename this to
-// PluginConfigurationProcess.
 public class NPluginConfigurationProcessor {
 
   /**
@@ -137,10 +136,6 @@ public class NPluginConfigurationProcessor {
     JibSystemProperties.checkHttpTimeoutProperty();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided
-
-    // DON'T FORGET TO RESURRECT THIS!
-    // disableHttpLogging();
-    // DON'T FORGET TO RESURRECT THIS!
     ImageReference baseImageReference =
         ImageReference.parse(getBaseImage(rawConfiguration, projectProperties));
 
@@ -202,6 +197,34 @@ public class NPluginConfigurationProcessor {
 
     return new NPluginConfigurationProcessor(
         jibContainerBuilder, baseImageReference, optionalFromCredential.isPresent());
+  }
+
+  /**
+   * Configures a {@link Containerizer} with values pulled from project properties/raw build
+   * configuration.
+   *
+   * @param containerizer the {@link Containerizer} to configure
+   * @param rawConfiguration the raw build configuration
+   * @param projectProperties the project properties
+   * @param toolName tool name to set
+   */
+  public static void configureContainerizer(
+      Containerizer containerizer,
+      RawConfiguration rawConfiguration,
+      ProjectProperties projectProperties,
+      String toolName) {
+    containerizer
+        .setToolName(toolName)
+        .setEventHandlers(projectProperties.getEventHandlers())
+        .setAllowInsecureRegistries(rawConfiguration.getAllowInsecureRegistries())
+        .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
+        .setApplicationLayersCache(projectProperties.getCacheDirectory());
+
+    rawConfiguration.getToTags().forEach(containerizer::withAdditionalTag);
+
+    if (rawConfiguration.getUseOnlyProjectCache()) {
+      containerizer.setBaseImageLayersCache(projectProperties.getCacheDirectory());
+    }
   }
 
   private final JibContainerBuilder jibContainerBuilder;

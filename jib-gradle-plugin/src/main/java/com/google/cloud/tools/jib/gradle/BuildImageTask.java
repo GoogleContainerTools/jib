@@ -85,8 +85,10 @@ public class BuildImageTask extends DefaultTask implements JibTask {
           InferredAuthRetrievalException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
-    GradleProjectProperties gradleProjectProperties =
+    TaskCommon.disableHttpLogging();
+    AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
+
+    GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(
             getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
     RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
@@ -103,7 +105,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     ImageReference targetImageReference = ImageReference.parse(jibExtension.getTo().getImage());
 
     EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
+        new DefaultEventDispatcher(projectProperties.getEventHandlers());
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
             CredentialRetrieverFactory.forImage(targetImageReference, eventDispatcher));
@@ -124,7 +126,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     try {
       NPluginConfigurationProcessor pluginConfigurationProcessor =
           NPluginConfigurationProcessor.processCommonConfiguration(
-              rawConfiguration, gradleProjectProperties);
+              rawConfiguration, projectProperties);
 
       JibContainerBuilder jibContainerBuilder =
           pluginConfigurationProcessor
@@ -133,8 +135,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               .setFormat(jibExtension.getContainer().getFormat());
 
       Containerizer containerizer = Containerizer.to(targetImage);
-      PluginConfigurationProcessor.configureContainerizer(
-          containerizer, jibExtension, gradleProjectProperties);
+      NPluginConfigurationProcessor.configureContainerizer(
+          containerizer, rawConfiguration, projectProperties, GradleProjectProperties.TOOL_NAME);
 
       HelpfulSuggestions helpfulSuggestions =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension)
@@ -150,7 +152,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               jibContainerBuilder,
               containerizer,
               eventDispatcher,
-              gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
               helpfulSuggestions);
 
     } catch (NotAbsoluteUnixPathException ex) {

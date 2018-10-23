@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -111,16 +110,10 @@ public class JibPlugin implements Plugin<Project> {
 
     project.afterEvaluate(
         projectAfterEvaluation -> {
-          // TODO move this to a separate place
           try {
             War warTask = GradleProjectProperties.getWarTask(project);
             Task dependsOnTask;
             if (warTask != null) {
-              if (jibExtension.getContainer().getAppRoot().isEmpty()) {
-                jibExtension
-                    .getContainer()
-                    .setAppRoot(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT);
-              }
               ExplodedWarTask explodedWarTask =
                   (ExplodedWarTask)
                       project
@@ -133,9 +126,6 @@ public class JibPlugin implements Plugin<Project> {
               // Have all tasks depend on the 'jibExplodedWar' task.
               dependsOnTask = explodedWarTask;
             } else {
-              if (jibExtension.getContainer().getAppRoot().isEmpty()) {
-                jibExtension.getContainer().setAppRoot(JavaLayerConfigurations.DEFAULT_APP_ROOT);
-              }
               // Have all tasks depend on the 'classes' task.
               dependsOnTask = projectAfterEvaluation.getTasks().getByPath("classes");
             }

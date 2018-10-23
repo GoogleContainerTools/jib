@@ -17,19 +17,18 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
-import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import java.util.logging.Level;
 import org.gradle.api.GradleException;
+import org.gradle.api.Project;
 import org.gradle.internal.logging.events.LogEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
 import org.slf4j.LoggerFactory;
 
-/** Configures and provides builders for the image building tasks. */
-// TODO: remove and use NPluginConfigurationProcess
-class PluginConfigurationProcessor {
+/** Collection of common methods to share between Gradle tasks. */
+public class TaskCommon {
 
   /**
    * Gets the value of the {@code container.appRoot} parameter. Throws {@link GradleException} if it
@@ -39,8 +38,15 @@ class PluginConfigurationProcessor {
    * @return the app root value
    * @throws GradleException if the app root is not an absolute path in Unix-style
    */
-  static AbsoluteUnixPath getAppRootChecked(JibExtension jibExtension) {
+  // TODO: find a way to use PluginConfigurationProcessor.getAppRootChecked() instead
+  static AbsoluteUnixPath getAppRootChecked(JibExtension jibExtension, Project project) {
     String appRoot = jibExtension.getContainer().getAppRoot();
+    if (appRoot.isEmpty()) {
+      appRoot =
+          GradleProjectProperties.getWarTask(project) != null
+              ? JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT
+              : JavaLayerConfigurations.DEFAULT_APP_ROOT;
+    }
     try {
       return AbsoluteUnixPath.get(appRoot);
     } catch (IllegalArgumentException ex) {
@@ -49,6 +55,7 @@ class PluginConfigurationProcessor {
   }
 
   /** Disables annoying Apache HTTP client logging. */
+  // TODO: Instead of disabling logging, have authentication credentials be provided
   static void disableHttpLogging() {
     // Disables Apache HTTP client logging.
     OutputEventListenerBackedLoggerContext context =
@@ -64,21 +71,5 @@ class PluginConfigurationProcessor {
 
     // Disables Google HTTP client logging.
     java.util.logging.Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
-  }
-
-  static void configureContainerizer(
-      Containerizer containerizer, JibExtension jibExtension, ProjectProperties projectProperties) {
-    containerizer
-        .setToolName(GradleProjectProperties.TOOL_NAME)
-        .setEventHandlers(projectProperties.getEventHandlers())
-        .setAllowInsecureRegistries(jibExtension.getAllowInsecureRegistries())
-        .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
-        .setApplicationLayersCache(projectProperties.getCacheDirectory());
-
-    jibExtension.getTo().getTags().forEach(containerizer::withAdditionalTag);
-
-    if (jibExtension.getUseOnlyProjectCache()) {
-      containerizer.setBaseImageLayersCache(projectProperties.getCacheDirectory());
-    }
   }
 }

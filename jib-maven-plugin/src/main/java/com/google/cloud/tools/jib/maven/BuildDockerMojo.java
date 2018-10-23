@@ -69,11 +69,13 @@ public class BuildDockerMojo extends JibPluginConfiguration {
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
-    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
-    MavenProjectProperties mavenProjectProperties =
+    MojoCommon.disableHttpLogging();
+    AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
+
+    MavenProjectProperties projectProperties =
         MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
     EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(mavenProjectProperties.getEventHandlers());
+        new DefaultEventDispatcher(projectProperties.getEventHandlers());
     RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
 
     try {
@@ -91,13 +93,13 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
       NPluginConfigurationProcessor pluginConfigurationProcessor =
           NPluginConfigurationProcessor.processCommonConfiguration(
-              rawConfiguration, mavenProjectProperties);
+              rawConfiguration, projectProperties);
 
       JibContainerBuilder jibContainerBuilder =
           pluginConfigurationProcessor.getJibContainerBuilder();
       Containerizer containerizer = Containerizer.to(targetImage);
-      PluginConfigurationProcessor.configureContainerizer(
-          containerizer, this, mavenProjectProperties);
+      NPluginConfigurationProcessor.configureContainerizer(
+          containerizer, rawConfiguration, projectProperties, MavenProjectProperties.TOOL_NAME);
 
       HelpfulSuggestions helpfulSuggestions =
           mavenHelpfulSuggestionsBuilder
@@ -112,7 +114,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               jibContainerBuilder,
               containerizer,
               eventDispatcher,
-              mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
               helpfulSuggestions);
       getLog().info("");
 

@@ -69,27 +69,27 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     try {
       JibSystemProperties.checkHttpTimeoutProperty();
+      MojoCommon.disableHttpLogging();
+      AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
 
-      // TODO: Instead of disabling logging, have authentication credentials be provided
-      PluginConfigurationProcessor.disableHttpLogging();
-
-      AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
-      MavenProjectProperties mavenProjectProperties =
+      MavenProjectProperties projectProperties =
           MavenProjectProperties.getForProject(
               getProject(), getLog(), getExtraDirectory(), appRoot);
       DefaultEventDispatcher eventDispatcher =
-          new DefaultEventDispatcher(mavenProjectProperties.getEventHandlers());
+          new DefaultEventDispatcher(projectProperties.getEventHandlers());
       RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
 
       List<String> entrypoint =
-          NPluginConfigurationProcessor.computeEntrypoint(rawConfiguration, mavenProjectProperties);
+          NPluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties);
+      String baseImage =
+          NPluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
 
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
       ExposedPortsParser.parse(getExposedPorts());
 
-      new JavaDockerContextGenerator(mavenProjectProperties.getJavaLayerConfigurations())
-          .setBaseImage(PluginConfigurationProcessor.getBaseImage(this))
+      new JavaDockerContextGenerator(projectProperties.getJavaLayerConfigurations())
+          .setBaseImage(baseImage)
           .setEntrypoint(entrypoint)
           .setProgramArguments(getArgs())
           .setExposedPorts(getExposedPorts())

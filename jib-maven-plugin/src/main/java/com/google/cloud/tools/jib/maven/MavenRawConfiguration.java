@@ -39,7 +39,7 @@ class MavenRawConfiguration implements RawConfiguration {
   MavenRawConfiguration(
       JibPluginConfiguration jibPluginConfiguration, EventDispatcher eventDispatcher) {
     this.jibPluginConfiguration = jibPluginConfiguration;
-    this.mavenSettingsServerCredentials =
+    mavenSettingsServerCredentials =
         new MavenSettingsServerCredentials(
             jibPluginConfiguration.getSession().getSettings(),
             jibPluginConfiguration.getSettingsDecrypter(),
@@ -61,6 +61,11 @@ class MavenRawConfiguration implements RawConfiguration {
   @Override
   public String getFromCredHelper() {
     return jibPluginConfiguration.getBaseImageCredentialHelperName();
+  }
+
+  @Override
+  public Iterable<String> getToTags() {
+    return jibPluginConfiguration.getTargetImageAdditionalTags();
   }
 
   @Nullable
@@ -115,6 +120,16 @@ class MavenRawConfiguration implements RawConfiguration {
   @Override
   public boolean getUseCurrentTimestamp() {
     return jibPluginConfiguration.getUseCurrentTimestamp();
+  }
+
+  @Override
+  public boolean getAllowInsecureRegistries() {
+    return jibPluginConfiguration.getAllowInsecureRegistries();
+  }
+
+  @Override
+  public boolean getUseOnlyProjectCache() {
+    return jibPluginConfiguration.getUseOnlyProjectCache();
   }
 
   @Nullable

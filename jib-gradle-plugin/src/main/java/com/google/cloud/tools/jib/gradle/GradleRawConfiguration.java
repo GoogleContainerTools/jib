@@ -48,6 +48,11 @@ class GradleRawConfiguration implements RawConfiguration {
     return jibExtension.getFrom().getCredHelper();
   }
 
+  @Override
+  public Iterable<String> getToTags() {
+    return jibExtension.getTo().getTags();
+  }
+
   @Nullable
   @Override
   public List<String> getEntrypoint() {
@@ -100,6 +105,16 @@ class GradleRawConfiguration implements RawConfiguration {
   @Override
   public boolean getUseCurrentTimestamp() {
     return jibExtension.getContainer().getUseCurrentTimestamp();
+  }
+
+  @Override
+  public boolean getAllowInsecureRegistries() {
+    return jibExtension.getAllowInsecureRegistries();
+  }
+
+  @Override
+  public boolean getUseOnlyProjectCache() {
+    return jibExtension.getUseOnlyProjectCache();
   }
 
   @Nullable
