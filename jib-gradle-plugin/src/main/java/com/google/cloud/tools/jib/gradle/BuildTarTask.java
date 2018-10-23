@@ -31,7 +31,7 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
-import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
@@ -140,15 +140,15 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarOutputPath);
 
     try {
-      NPluginConfigurationProcessor pluginConfigurationProcessor =
-          NPluginConfigurationProcessor.processCommonConfiguration(
+      PluginConfigurationProcessor pluginConfigurationProcessor =
+          PluginConfigurationProcessor.processCommonConfiguration(
               rawConfiguration, projectProperties);
 
       JibContainerBuilder jibContainerBuilder =
           pluginConfigurationProcessor.getJibContainerBuilder();
 
       Containerizer containerizer = Containerizer.to(targetImage);
-      NPluginConfigurationProcessor.configureContainerizer(
+      PluginConfigurationProcessor.configureContainerizer(
           containerizer, rawConfiguration, projectProperties, GradleProjectProperties.TOOL_NAME);
 
       HelpfulSuggestions helpfulSuggestions =

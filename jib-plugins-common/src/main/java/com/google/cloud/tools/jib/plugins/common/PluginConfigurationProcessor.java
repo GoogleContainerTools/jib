@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-public class NPluginConfigurationProcessor {
+public class PluginConfigurationProcessor {
 
   /**
    * Gets the value of the {@code appRoot} parameter. If the parameter is empty, returns {@link
@@ -128,7 +128,7 @@ public class NPluginConfigurationProcessor {
     return baseImage;
   }
 
-  public static NPluginConfigurationProcessor processCommonConfiguration(
+  public static PluginConfigurationProcessor processCommonConfiguration(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InvalidImageReferenceException, NumberFormatException, FileNotFoundException,
           MainClassInferenceException, NotAbsoluteUnixPathException,
@@ -195,7 +195,7 @@ public class NPluginConfigurationProcessor {
       jibContainerBuilder.setCreationTime(Instant.now());
     }
 
-    return new NPluginConfigurationProcessor(
+    return new PluginConfigurationProcessor(
         jibContainerBuilder, baseImageReference, optionalFromCredential.isPresent());
   }
 
@@ -231,7 +231,7 @@ public class NPluginConfigurationProcessor {
   private final ImageReference baseImageReference;
   private final boolean isBaseImageCredentialPresent;
 
-  private NPluginConfigurationProcessor(
+  private PluginConfigurationProcessor(
       JibContainerBuilder jibContainerBuilder,
       ImageReference baseImageReference,
       boolean isBaseImageCredentialPresent) {

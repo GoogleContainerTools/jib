@@ -44,9 +44,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link NPluginConfigurationProcessor}. */
+/** Tests for {@link PluginConfigurationProcessor}. */
 @RunWith(MockitoJUnitRunner.class)
-public class NPluginConfigurationProcessorTest {
+public class PluginConfigurationProcessorTest {
 
   private static BuildConfiguration getBuildConfiguration(JibContainerBuilder jibContainerBuilder)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
@@ -80,8 +80,8 @@ public class NPluginConfigurationProcessorTest {
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, NotAbsoluteUnixPathException,
           InferredAuthRetrievalException {
-    NPluginConfigurationProcessor processor =
-        NPluginConfigurationProcessor.processCommonConfiguration(
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
@@ -100,8 +100,8 @@ public class NPluginConfigurationProcessorTest {
           NotAbsoluteUnixPathException, InferredAuthRetrievalException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
-    NPluginConfigurationProcessor processor =
-        NPluginConfigurationProcessor.processCommonConfiguration(
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties);
 
     Assert.assertEquals(
@@ -118,8 +118,8 @@ public class NPluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Arrays.asList("custom", "entrypoint"));
 
-    NPluginConfigurationProcessor processor =
-        NPluginConfigurationProcessor.processCommonConfiguration(
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
@@ -139,8 +139,8 @@ public class NPluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
-    NPluginConfigurationProcessor processor =
-        NPluginConfigurationProcessor.processCommonConfiguration(
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties);
 
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
@@ -159,8 +159,8 @@ public class NPluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
-    NPluginConfigurationProcessor processor =
-        NPluginConfigurationProcessor.processCommonConfiguration(
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties);
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
     BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
@@ -180,8 +180,8 @@ public class NPluginConfigurationProcessorTest {
           InferredAuthRetrievalException {
     Mockito.when(rawConfiguration.getUser()).thenReturn("customUser");
 
-    NPluginConfigurationProcessor processor =
-        NPluginConfigurationProcessor.processCommonConfiguration(
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
@@ -195,8 +195,8 @@ public class NPluginConfigurationProcessorTest {
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, NotAbsoluteUnixPathException,
           InferredAuthRetrievalException {
-    NPluginConfigurationProcessor processor =
-        NPluginConfigurationProcessor.processCommonConfiguration(
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
@@ -214,8 +214,8 @@ public class NPluginConfigurationProcessorTest {
         .thenReturn(Arrays.asList("custom", "entrypoint"));
     Mockito.when(rawConfiguration.getJvmFlags()).thenReturn(Collections.singletonList("jvmFlag"));
 
-    NPluginConfigurationProcessor processor =
-        NPluginConfigurationProcessor.processCommonConfiguration(
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
@@ -237,8 +237,8 @@ public class NPluginConfigurationProcessorTest {
         .thenReturn(Arrays.asList("custom", "entrypoint"));
     Mockito.when(rawConfiguration.getMainClass()).thenReturn("java.util.Object");
 
-    NPluginConfigurationProcessor processor =
-        NPluginConfigurationProcessor.processCommonConfiguration(
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
@@ -258,8 +258,8 @@ public class NPluginConfigurationProcessorTest {
           InferredAuthRetrievalException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/my/app");
 
-    NPluginConfigurationProcessor processor =
-        NPluginConfigurationProcessor.processCommonConfiguration(
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
@@ -282,8 +282,8 @@ public class NPluginConfigurationProcessorTest {
           InferredAuthRetrievalException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
-    NPluginConfigurationProcessor processor =
-        NPluginConfigurationProcessor.processCommonConfiguration(
+    PluginConfigurationProcessor processor =
+        PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
@@ -298,7 +298,7 @@ public class NPluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/some/root"),
-        NPluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
   }
 
   @Test
@@ -306,7 +306,7 @@ public class NPluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("relative/path");
 
     try {
-      NPluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
       Assert.fail();
     } catch (NotAbsoluteUnixPathException ex) {
       Assert.assertEquals("relative/path", ex.getMessage());
@@ -318,7 +318,7 @@ public class NPluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("\\windows\\path");
 
     try {
-      NPluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
       Assert.fail();
     } catch (NotAbsoluteUnixPathException ex) {
       Assert.assertEquals("\\windows\\path", ex.getMessage());
@@ -330,7 +330,7 @@ public class NPluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("C:\\windows\\path");
 
     try {
-      NPluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
       Assert.fail();
     } catch (NotAbsoluteUnixPathException ex) {
       Assert.assertEquals("C:\\windows\\path", ex.getMessage());
@@ -344,7 +344,7 @@ public class NPluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/app"),
-        NPluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
   }
 
   @Test
@@ -354,7 +354,7 @@ public class NPluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/jetty/webapps/ROOT"),
-        NPluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
   }
 
   @Test
@@ -363,7 +363,7 @@ public class NPluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         "gcr.io/distroless/java",
-        NPluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
   }
 
   @Test
@@ -372,7 +372,7 @@ public class NPluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         "gcr.io/distroless/java/jetty",
-        NPluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
   }
 
   @Test
@@ -380,6 +380,6 @@ public class NPluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getFromImage()).thenReturn("tomcat");
 
     Assert.assertEquals(
-        "tomcat", NPluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        "tomcat", PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
   }
 }

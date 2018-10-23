@@ -22,7 +22,7 @@ import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
-import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
@@ -117,9 +117,9 @@ public class DockerContextTask extends DefaultTask implements JibTask {
 
     try {
       List<String> entrypoint =
-          NPluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties);
+          PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties);
       String baseImage =
-          NPluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+          PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
 
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.

@@ -36,7 +36,7 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
-import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
@@ -104,8 +104,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
     RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
 
     try {
-      NPluginConfigurationProcessor pluginConfigurationProcessor =
-          NPluginConfigurationProcessor.processCommonConfiguration(
+      PluginConfigurationProcessor pluginConfigurationProcessor =
+          PluginConfigurationProcessor.processCommonConfiguration(
               rawConfiguration, projectProperties);
 
       ImageReference targetImageReference = ImageReference.parse(getTargetImage());
@@ -145,7 +145,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
               .setFormat(ImageFormat.valueOf(getFormat()));
 
       Containerizer containerizer = Containerizer.to(targetImage);
-      NPluginConfigurationProcessor.configureContainerizer(
+      PluginConfigurationProcessor.configureContainerizer(
           containerizer, rawConfiguration, projectProperties, MavenProjectProperties.TOOL_NAME);
 
       HelpfulSuggestions helpfulSuggestions =

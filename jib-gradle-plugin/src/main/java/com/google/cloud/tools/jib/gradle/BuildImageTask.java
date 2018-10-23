@@ -34,7 +34,7 @@ import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
-import com.google.cloud.tools.jib.plugins.common.NPluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
@@ -124,8 +124,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     defaultCredentialRetrievers.asList().forEach(targetImage::addCredentialRetriever);
 
     try {
-      NPluginConfigurationProcessor pluginConfigurationProcessor =
-          NPluginConfigurationProcessor.processCommonConfiguration(
+      PluginConfigurationProcessor pluginConfigurationProcessor =
+          PluginConfigurationProcessor.processCommonConfiguration(
               rawConfiguration, projectProperties);
 
       JibContainerBuilder jibContainerBuilder =
@@ -135,7 +135,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               .setFormat(jibExtension.getContainer().getFormat());
 
       Containerizer containerizer = Containerizer.to(targetImage);
-      NPluginConfigurationProcessor.configureContainerizer(
+      PluginConfigurationProcessor.configureContainerizer(
           containerizer, rawConfiguration, projectProperties, GradleProjectProperties.TOOL_NAME);
 
       HelpfulSuggestions helpfulSuggestions =
