@@ -3,8 +3,6 @@ plugins {
     id "groovy"
     id "io.spring.dependency-management" version "1.0.6.RELEASE"
     id "com.github.johnrengelman.shadow" version "4.0.0"
-    id "net.ltgt.apt-eclipse" version "0.18"
-    id "net.ltgt.apt-idea" version "0.18"
     id "com.google.cloud.tools.jib" version "0.9.12"
 }
 
@@ -24,19 +22,16 @@ dependencyManagement {
 }
 
 dependencies {
-    annotationProcessor "io.micronaut:micronaut-inject-java"
-    annotationProcessor "io.micronaut:micronaut-validation"
     compile "io.micronaut:micronaut-http-client"
     compile "io.micronaut:micronaut-http-server-netty"
-    compile "io.micronaut:micronaut-inject"
+    compile "io.micronaut:micronaut-runtime-groovy"
     compile "io.micronaut:micronaut-validation"
-    compile "io.micronaut:micronaut-runtime"
-    compileOnly "io.micronaut:micronaut-inject-java"
+    compileOnly "io.micronaut:micronaut-inject-groovy"
     runtime "ch.qos.logback:logback-classic:1.2.3"
+    testCompile "io.micronaut:micronaut-inject-groovy"
     testCompile("org.spockframework:spock-core") {
         exclude group: "org.codehaus.groovy", module: "groovy-all"
     }
-    testCompile "io.micronaut:micronaut-inject-groovy"
 }
 
 shadowJar {
@@ -45,9 +40,8 @@ shadowJar {
 
 run.jvmArgs('-noverify', '-XX:TieredStopAtLevel=1')
 
-mainClassName = "example.micronaut.Application"
-compileJava.options.compilerArgs += '-parameters'
-compileTestJava.options.compilerArgs += '-parameters'
+mainClassName = "micronaut.Application"
 
 /** CHANGE THIS TO THE IMAGE YOU WANT TO PUSH TO */
 // jib.to.image = 'gcr.io/PROJECT_ID/micronaut-jib'
+mainClassName = "micronaut.Application"

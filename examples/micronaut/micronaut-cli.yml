@@ -2,4 +2,4 @@ profile: service
 defaultPackage: example.micronaut
 ---
 testFramework: spock
-sourceLanguage: java
+sourceLanguage: groovy
