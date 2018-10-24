@@ -94,6 +94,15 @@ public class FilePermissions {
     return permissionBits;
   }
 
+  /**
+   * Gets the octal string representation of the permissions.
+   *
+   * @return the octal string representation of the permissions
+   */
+  public String toOctalString() {
+    return Integer.toString(permissionBits, 8);
+  }
+
   @Override
   public boolean equals(Object other) {
     if (this == other) {

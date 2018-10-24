@@ -43,13 +43,13 @@ import java.util.Objects;
  *     "sourceFile": "source/file/for/layer/entry/1",
  *     "extractionPath": "/extraction/path/for/layer/entry/1"
  *     "lastModifiedTime": "2018-10-03T15:48:32.416152Z"
- *     "permissions": 511
+ *     "permissions": "777"
  *   },
  *   {
  *     "sourceFile": "source/file/for/layer/entry/2",
  *     "extractionPath": "/extraction/path/for/layer/entry/2"
  *     "lastModifiedTime": "2018-10-03T15:48:32.416152Z"
- *     "permissions": 511
+ *     "permissions": "777"
  *   }
  * ]
  * }</pre>
@@ -63,14 +63,14 @@ class LayerEntriesSelector {
     private final String sourceFile;
     private final String extractionPath;
     private final Instant lastModifiedTime;
-    private final int permissions;
+    private final String permissions;
 
     @VisibleForTesting
     LayerEntryTemplate(LayerEntry layerEntry) throws IOException {
       sourceFile = layerEntry.getAbsoluteSourceFileString();
       extractionPath = layerEntry.getAbsoluteExtractionPathString();
       lastModifiedTime = Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant();
-      permissions = layerEntry.getPermissions().getPermissionBits();
+      permissions = layerEntry.getPermissions().toOctalString();
     }
 
     @Override
@@ -89,7 +89,7 @@ class LayerEntriesSelector {
       if (lastModifiedTimeComparison != 0) {
         return lastModifiedTimeComparison;
       }
-      return Integer.compare(permissions, otherLayerEntryTemplate.permissions);
+      return permissions.compareTo(otherLayerEntryTemplate.permissions);
     }
 
     @Override
@@ -104,7 +104,7 @@ class LayerEntriesSelector {
       return sourceFile.equals(otherLayerEntryTemplate.sourceFile)
           && extractionPath.equals(otherLayerEntryTemplate.extractionPath)
           && lastModifiedTime.equals(otherLayerEntryTemplate.lastModifiedTime)
-          && permissions == otherLayerEntryTemplate.permissions;
+          && permissions.equals(otherLayerEntryTemplate.permissions);
     }
 
     @Override
