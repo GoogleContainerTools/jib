@@ -67,8 +67,8 @@ class LayerEntriesSelector {
 
     @VisibleForTesting
     LayerEntryTemplate(LayerEntry layerEntry) throws IOException {
-      sourceFile = layerEntry.getAbsoluteSourceFileString();
-      extractionPath = layerEntry.getAbsoluteExtractionPathString();
+      sourceFile = layerEntry.getSourceFile().toAbsolutePath().toString();
+      extractionPath = layerEntry.getExtractionPath().toString();
       lastModifiedTime = Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant();
       permissions = layerEntry.getPermissions().toOctalString();
     }
