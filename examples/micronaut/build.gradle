@@ -8,8 +8,8 @@ plugins {
     id "com.google.cloud.tools.jib" version "0.9.12"
 }
 
-version "0.1"
-group "examples.micronaut-jib"
+version '0.1'
+group 'example.micronaut-jib'
 
 repositories {
     mavenLocal()
