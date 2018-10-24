@@ -51,7 +51,7 @@ public class JavaLayerConfigurationsHelperTest {
   private static void assertExtractionPathsUnordered(
       List<String> expectedPaths, List<LayerEntry> entries) {
     assertLayerEntriesUnordered(
-        expectedPaths, entries, LayerEntry::getAbsoluteExtractionPathString);
+        expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
   @Test
