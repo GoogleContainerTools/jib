@@ -45,11 +45,7 @@ public class JibRunHelper {
       throws IOException, InterruptedException {
     BuildResult buildResult =
         testProject.build(
-            "clean",
-            "jib",
-            "-D_TARGET_IMAGE=" + imageReference,
-            "-D_USE_PERMISSIONS=true",
-            "-b=" + gradleBuildFile);
+            "clean", "jib", "-D_TARGET_IMAGE=" + imageReference, "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
@@ -87,7 +83,6 @@ public class JibRunHelper {
             "clean",
             "jibDockerBuild",
             "-D_TARGET_IMAGE=" + imageReference,
-            "-D_USE_PERMISSIONS=true",
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));

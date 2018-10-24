@@ -101,7 +101,6 @@ public class SingleProjectIntegrationTest {
             "-D_TARGET_IMAGE=" + imageReference,
             "-D_TARGET_USERNAME=" + username,
             "-D_TARGET_PASSWORD=" + password,
-            "-D_USE_PERMISSIONS=true",
             "-DsendCredentialsOverHttp=true",
             "-b=complex-build.gradle");
 
@@ -203,15 +202,13 @@ public class SingleProjectIntegrationTest {
         .run();
 
     assertDockerInspect(imageName);
-    Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n",
-        new Command("docker", "run", "--rm", imageName).run());
+    String output = new Command("docker", "run", "--rm", imageName).run();
+    Assert.assertThat(output, CoreMatchers.startsWith("Hello, world. An argument.\n"));
+    Assert.assertThat(output, CoreMatchers.endsWith("foo\ncat\n"));
 
     // Checks that generating the Docker context again is skipped.
     BuildTask upToDateJibDockerContextTask =
-        simpleTestProject
-            .build("jibExportDockerContext", "-D_USE_PERMISSIONS=false")
-            .task(":jibExportDockerContext");
+        simpleTestProject.build("jibExportDockerContext").task(":jibExportDockerContext");
     Assert.assertNotNull(upToDateJibDockerContextTask);
     Assert.assertEquals(TaskOutcome.UP_TO_DATE, upToDateJibDockerContextTask.getOutcome());
 
@@ -225,9 +222,7 @@ public class SingleProjectIntegrationTest {
             .resolve("newfile"));
     try {
       BuildTask reexecutedJibDockerContextTask =
-          simpleTestProject
-              .build("jibExportDockerContext", "-D_USE_PERMISSIONS=false")
-              .task(":jibExportDockerContext");
+          simpleTestProject.build("jibExportDockerContext").task(":jibExportDockerContext");
       Assert.assertNotNull(reexecutedJibDockerContextTask);
       Assert.assertEquals(TaskOutcome.SUCCESS, reexecutedJibDockerContextTask.getOutcome());
 
@@ -249,8 +244,7 @@ public class SingleProjectIntegrationTest {
         simpleTestProject.getProjectRoot().resolve("build").resolve("jib-image.tar").toString();
     Instant beforeBuild = Instant.now();
     BuildResult buildResult =
-        simpleTestProject.build(
-            "clean", "jibBuildTar", "-D_TARGET_IMAGE=" + targetImage, "-D_USE_PERMISSIONS=true");
+        simpleTestProject.build("clean", "jibBuildTar", "-D_TARGET_IMAGE=" + targetImage);
 
     JibRunHelper.assertBuildSuccess(buildResult, "jibBuildTar", "Built image tarball at ");
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(outputPath));
