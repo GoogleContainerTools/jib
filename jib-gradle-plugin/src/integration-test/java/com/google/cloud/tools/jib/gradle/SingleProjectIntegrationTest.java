@@ -181,9 +181,7 @@ public class SingleProjectIntegrationTest {
 
   @Test
   public void testDockerContext() throws IOException, InterruptedException {
-    BuildResult buildResult =
-        simpleTestProject.build(
-            "clean", "jibExportDockerContext", "-D_USE_PERMISSIONS=false", "--info");
+    BuildResult buildResult = simpleTestProject.build("clean", "jibExportDockerContext", "--info");
 
     JibRunHelper.assertBuildSuccess(
         buildResult, "jibExportDockerContext", "Created Docker context at ");
