@@ -8,7 +8,7 @@ plugins {
     id "com.google.cloud.tools.jib" version "0.9.12"
 }
 
-version "0.2"
+version "0.1"
 group "examples.micronaut-jib"
 
 repositories {
