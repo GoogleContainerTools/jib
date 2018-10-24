@@ -16,7 +16,7 @@ This is an example of how to easily build a Docker image for a [Micronaut framew
 ```shell
 ./gradlew jibDockerBuild
 
-docker run -d -p 8080:8080 micronaut-jib:0.1
+docker run -d -p 8080:8080 micronaut-jib:0.2
 ```
 ```shell
 curl localhost:8080/hello
