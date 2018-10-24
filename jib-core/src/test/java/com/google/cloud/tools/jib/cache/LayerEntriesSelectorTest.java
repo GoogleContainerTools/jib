@@ -167,9 +167,8 @@ public class LayerEntriesSelectorTest {
             FilePermissions.fromOctalString("222"));
 
     // Verify that changing permissions generates a different selector
-    DescriptorDigest expectedSelector =
-        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry111));
     Assert.assertNotEquals(
-        expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry222)));
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry111)),
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry222)));
   }
 }
