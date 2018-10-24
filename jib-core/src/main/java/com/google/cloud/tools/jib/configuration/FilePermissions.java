@@ -86,12 +86,21 @@ public class FilePermissions {
   }
 
   /**
-   * Gets the corresponding permissions bits specified by the {@link FilePermissions}
+   * Gets the corresponding permissions bits specified by the {@link FilePermissions}.
    *
    * @return the permission bits
    */
   public int getPermissionBits() {
     return permissionBits;
+  }
+
+  /**
+   * Gets the octal string representation of the permissions.
+   *
+   * @return the octal string representation of the permissions
+   */
+  public String toOctalString() {
+    return Integer.toString(permissionBits, 8);
   }
 
   @Override
