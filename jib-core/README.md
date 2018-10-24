@@ -41,8 +41,8 @@ dependencies {
 
 ```java
 Jib.from("busybox")
-   .addLayer(Arrays.asList(Paths.get("helloworld.sh")), "/") 
-   .setEntrypoint("/helloworld.sh")
+   .addLayer(Arrays.asList(Paths.get("helloworld.sh")), AbsoluteUnixPath.get("/")) 
+   .setEntrypoint("/bin/sh", "-c", "chmod +x /helloworld.sh && /helloworld.sh")
    .containerize(
        Containerizer.to(RegistryImage.named("gcr.io/my-project/hello-from-jib")
                                      .addCredential("myusername", "mypassword")));
