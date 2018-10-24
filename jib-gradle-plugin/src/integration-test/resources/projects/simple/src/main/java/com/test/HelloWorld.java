@@ -42,10 +42,13 @@ public class HelloWorld {
 
     // Prints the contents of the extra files.
     if (Files.exists(Paths.get("/foo"))) {
-      System.out.println(
-          PosixFilePermissions.toString(Files.getPosixFilePermissions(Paths.get("/foo"))));
-      System.out.println(
-          PosixFilePermissions.toString(Files.getPosixFilePermissions(Paths.get("/bar/cat"))));
+      if (System.getenv("usePermissions") != null
+          && System.getenv("usePermissions").equals("true")) {
+        System.out.println(
+            PosixFilePermissions.toString(Files.getPosixFilePermissions(Paths.get("/foo"))));
+        System.out.println(
+            PosixFilePermissions.toString(Files.getPosixFilePermissions(Paths.get("/bar/cat"))));
+      }
       System.out.println(new String(Files.readAllBytes(Paths.get("/foo")), StandardCharsets.UTF_8));
       System.out.println(
           new String(Files.readAllBytes(Paths.get("/bar/cat")), StandardCharsets.UTF_8));

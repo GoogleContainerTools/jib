@@ -101,6 +101,7 @@ public class SingleProjectIntegrationTest {
             "-D_TARGET_IMAGE=" + imageReference,
             "-D_TARGET_USERNAME=" + username,
             "-D_TARGET_PASSWORD=" + password,
+            "-D_USE_PERMISSIONS=true",
             "-DsendCredentialsOverHttp=true",
             "-b=complex-build.gradle");
 
@@ -181,7 +182,9 @@ public class SingleProjectIntegrationTest {
 
   @Test
   public void testDockerContext() throws IOException, InterruptedException {
-    BuildResult buildResult = simpleTestProject.build("clean", "jibExportDockerContext", "--info");
+    BuildResult buildResult =
+        simpleTestProject.build(
+            "clean", "jibExportDockerContext", "-D_USE_PERMISSIONS=false", "--info");
 
     JibRunHelper.assertBuildSuccess(
         buildResult, "jibExportDockerContext", "Created Docker context at ");
@@ -201,12 +204,14 @@ public class SingleProjectIntegrationTest {
 
     assertDockerInspect(imageName);
     Assert.assertEquals(
-        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
+        "Hello, world. An argument.\nfoo\ncat\n",
         new Command("docker", "run", "--rm", imageName).run());
 
     // Checks that generating the Docker context again is skipped.
     BuildTask upToDateJibDockerContextTask =
-        simpleTestProject.build("jibExportDockerContext").task(":jibExportDockerContext");
+        simpleTestProject
+            .build("jibExportDockerContext", "-D_USE_PERMISSIONS=false")
+            .task(":jibExportDockerContext");
     Assert.assertNotNull(upToDateJibDockerContextTask);
     Assert.assertEquals(TaskOutcome.UP_TO_DATE, upToDateJibDockerContextTask.getOutcome());
 
@@ -220,7 +225,9 @@ public class SingleProjectIntegrationTest {
             .resolve("newfile"));
     try {
       BuildTask reexecutedJibDockerContextTask =
-          simpleTestProject.build("jibExportDockerContext").task(":jibExportDockerContext");
+          simpleTestProject
+              .build("jibExportDockerContext", "-D_USE_PERMISSIONS=false")
+              .task(":jibExportDockerContext");
       Assert.assertNotNull(reexecutedJibDockerContextTask);
       Assert.assertEquals(TaskOutcome.SUCCESS, reexecutedJibDockerContextTask.getOutcome());
 
@@ -242,7 +249,8 @@ public class SingleProjectIntegrationTest {
         simpleTestProject.getProjectRoot().resolve("build").resolve("jib-image.tar").toString();
     Instant beforeBuild = Instant.now();
     BuildResult buildResult =
-        simpleTestProject.build("clean", "jibBuildTar", "-D_TARGET_IMAGE=" + targetImage);
+        simpleTestProject.build(
+            "clean", "jibBuildTar", "-D_TARGET_IMAGE=" + targetImage, "-D_USE_PERMISSIONS=true");
 
     JibRunHelper.assertBuildSuccess(buildResult, "jibBuildTar", "Built image tarball at ");
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(outputPath));
