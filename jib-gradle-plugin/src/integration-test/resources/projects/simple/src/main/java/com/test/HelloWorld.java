@@ -24,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermissions;
 
 /** Example class that uses a dependency and a resource file. */
 public class HelloWorld {
@@ -41,6 +42,10 @@ public class HelloWorld {
 
     // Prints the contents of the extra files.
     if (Files.exists(Paths.get("/foo"))) {
+      System.out.println(
+          PosixFilePermissions.toString(Files.getPosixFilePermissions(Paths.get("/foo"))));
+      System.out.println(
+          PosixFilePermissions.toString(Files.getPosixFilePermissions(Paths.get("/bar/cat"))));
       System.out.println(new String(Files.readAllBytes(Paths.get("/foo")), StandardCharsets.UTF_8));
       System.out.println(
           new String(Files.readAllBytes(Paths.get("/bar/cat")), StandardCharsets.UTF_8));

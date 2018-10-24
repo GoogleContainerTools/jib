@@ -16,9 +16,11 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -29,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -182,6 +185,24 @@ public class ConfigurationPropertyValidator {
     }
     items.add(property.substring(startIndex));
     return ImmutableList.copyOf(items);
+  }
+
+  /**
+   * Validates and converts a {@code String->String} file-path-to-file-permissions map to an
+   * equivalent {@code AbsoluteUnixPath->FilePermission} map.
+   *
+   * @param inputMap the map to convert
+   * @return the converted map
+   */
+  public static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsMap(
+      Map<String, String> inputMap) {
+    ImmutableMap.Builder<AbsoluteUnixPath, FilePermissions> permissionsMap = ImmutableMap.builder();
+    for (Entry<String, String> entry : inputMap.entrySet()) {
+      AbsoluteUnixPath key = AbsoluteUnixPath.get(entry.getKey());
+      FilePermissions value = FilePermissions.fromOctalString(entry.getValue());
+      permissionsMap.put(key, value);
+    }
+    return permissionsMap.build();
   }
 
   private ConfigurationPropertyValidator() {}

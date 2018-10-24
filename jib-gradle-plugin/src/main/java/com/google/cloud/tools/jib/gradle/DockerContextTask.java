@@ -61,7 +61,8 @@ public class DockerContextTask extends DefaultTask implements JibTask {
   @InputFiles
   public FileCollection getInputFiles() {
     return GradleProjectProperties.getInputFiles(
-        Preconditions.checkNotNull(jibExtension).getExtraDirectoryPath().toFile(), getProject());
+        Preconditions.checkNotNull(jibExtension).getExtraDirectory().getPath().toFile(),
+        getProject());
   }
 
   /**
@@ -104,13 +105,24 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     Preconditions.checkNotNull(jibExtension.getFrom().getImage());
     JibSystemProperties.checkHttpTimeoutProperty();
 
+    if (!jibExtension.getExtraDirectory().getPermissions().isEmpty()) {
+      getLogger()
+          .warn(
+              "'jib.extraDirectory.permissions' configuration is not supported by Jib Docker "
+                  + "context generator - building using Docker may produce unexpected results.");
+    }
+
     // TODO: Instead of disabling logging, have authentication credentials be provided
     PluginConfigurationProcessor.disableHttpLogging();
 
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
+            getProject(),
+            getLogger(),
+            jibExtension.getExtraDirectory().getPath(),
+            jibExtension.getExtraDirectory().getPermissions(),
+            appRoot);
     String targetDir = getTargetDir();
 
     List<String> entrypoint =

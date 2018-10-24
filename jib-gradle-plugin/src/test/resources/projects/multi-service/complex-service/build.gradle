@@ -17,7 +17,9 @@ jib {
   to {
     image = System.getProperty("_TARGET_IMAGE")
   }
-  extraDirectory = file('src/main/other-jib')
+  extraDirectory {
+    path = file('src/main/other-jib')
+  }
 }
 
 sourceSets {

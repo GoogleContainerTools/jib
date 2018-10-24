@@ -84,7 +84,11 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
+            getProject(),
+            getLogger(),
+            jibExtension.getExtraDirectory().getPath(),
+            jibExtension.getExtraDirectory().getPermissions(),
+            appRoot);
 
     GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
