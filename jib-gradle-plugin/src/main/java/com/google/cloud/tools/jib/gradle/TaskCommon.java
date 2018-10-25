@@ -29,7 +29,7 @@ import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
 import org.slf4j.LoggerFactory;
 
 /** Collection of common methods to share between Gradle tasks. */
-public class TaskCommon {
+class TaskCommon {
 
   /**
    * Gets the value of the {@code container.appRoot} parameter. Throws {@link GradleException} if it
@@ -74,4 +74,6 @@ public class TaskCommon {
     // Disables Google HTTP client logging.
     java.util.logging.Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
   }
+
+  private TaskCommon() {}
 }

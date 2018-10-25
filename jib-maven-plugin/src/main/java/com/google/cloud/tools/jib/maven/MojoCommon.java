@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
 
 /** Collection of common methods to share between Gradle tasks. */
-public class MojoCommon {
+class MojoCommon {
 
   /**
    * Gets the value of the {@code <container><appRoot>} parameter. If the parameter is empty,
@@ -57,4 +57,6 @@ public class MojoCommon {
         "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
     System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
   }
+
+  private MojoCommon() {}
 }
