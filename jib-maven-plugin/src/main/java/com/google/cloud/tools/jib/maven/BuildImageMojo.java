@@ -92,8 +92,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
         MavenProjectProperties.getForProject(
             getProject(),
             getLog(),
-            getExtraDirectoryPath(),
-            getExtraDirectoryPermissions(),
+            PluginConfigurationProcessor.getExtraDirectoryPath(this),
+            PluginConfigurationProcessor.convertPermissionsList(getExtraDirectoryPermissions()),
             appRoot);
 
     PluginConfigurationProcessor pluginConfigurationProcessor =

@@ -23,13 +23,16 @@ import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.AuthConfiguration;
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -387,6 +390,28 @@ public class PluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         "tomcat", PluginConfigurationProcessor.getBaseImage(mockJibPluginConfiguration));
+  }
+
+  @Test
+  public void testConvertPermissionsList() {
+    Assert.assertEquals(
+        ImmutableMap.of(
+            AbsoluteUnixPath.get("/test/folder/file1"),
+            FilePermissions.fromOctalString("123"),
+            AbsoluteUnixPath.get("/test/file2"),
+            FilePermissions.fromOctalString("456")),
+        PluginConfigurationProcessor.convertPermissionsList(
+            ImmutableList.of(
+                new PermissionConfiguration("/test/folder/file1", "123"),
+                new PermissionConfiguration("/test/file2", "456"))));
+
+    try {
+      PluginConfigurationProcessor.convertPermissionsList(
+          ImmutableList.of(new PermissionConfiguration("a path", "not valid permission")));
+      Assert.fail();
+    } catch (IllegalArgumentException ignored) {
+      // pass
+    }
   }
 
   // TODO should test other behaviours

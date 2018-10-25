@@ -105,12 +105,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       this.mode = mode;
     }
 
+    @Nullable
     String getFile() {
-      return Preconditions.checkNotNull(file);
+      return file;
     }
 
+    @Nullable
     String getMode() {
-      return Preconditions.checkNotNull(mode);
+      return mode;
     }
   }
 
@@ -461,20 +463,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the configured extra directory path
    */
+  @Nullable
   Path getExtraDirectoryPath() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH) != null) {
       return Paths.get(System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH));
     }
-    if (extraDirectory.path == null) {
-      return Preconditions.checkNotNull(project)
-          .getBasedir()
-          .toPath()
-          .resolve("src")
-          .resolve("main")
-          .resolve("jib");
-    }
-    return extraDirectory.path.toPath();
+    return extraDirectory.path == null ? null : extraDirectory.path.toPath();
   }
 
   /**

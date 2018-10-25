@@ -69,8 +69,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
         MavenProjectProperties.getForProject(
             getProject(),
             getLog(),
-            getExtraDirectoryPath(),
-            getExtraDirectoryPermissions(),
+            PluginConfigurationProcessor.getExtraDirectoryPath(this),
+            PluginConfigurationProcessor.convertPermissionsList(getExtraDirectoryPermissions()),
             appRoot);
 
     try {

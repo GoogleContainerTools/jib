@@ -76,8 +76,8 @@ public class DockerContextMojo extends JibPluginConfiguration {
         MavenProjectProperties.getForProject(
             getProject(),
             getLog(),
-            getExtraDirectoryPath(),
-            getExtraDirectoryPermissions(),
+            PluginConfigurationProcessor.getExtraDirectoryPath(this),
+            PluginConfigurationProcessor.convertPermissionsList(getExtraDirectoryPermissions()),
             appRoot);
 
     List<String> entrypoint =

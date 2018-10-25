@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventDispatcher;
@@ -32,14 +33,19 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import java.io.FileNotFoundException;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -100,6 +106,49 @@ class PluginConfigurationProcessor {
           : "gcr.io/distroless/java";
     }
     return baseImage;
+  }
+
+  /**
+   * Gets the extra directory path from a {@link JibPluginConfiguration}. Returns {@code (project
+   * dir)/src/main/jib} if null.
+   *
+   * @param jibPluginConfiguration the build configuration
+   * @return the resolved extra directory
+   */
+  static Path getExtraDirectoryPath(JibPluginConfiguration jibPluginConfiguration) {
+    Path extraDirectory = jibPluginConfiguration.getExtraDirectoryPath();
+    if (extraDirectory == null) {
+      return Preconditions.checkNotNull(jibPluginConfiguration.getProject())
+          .getBasedir()
+          .toPath()
+          .resolve("src")
+          .resolve("main")
+          .resolve("jib");
+    }
+    return extraDirectory;
+  }
+
+  /**
+   * Validates and converts a list of {@link PermissionConfiguration} to an equivalent {@code
+   * AbsoluteUnixPath->FilePermission} map.
+   *
+   * @param inputList the list to convert
+   * @return the resulting map
+   */
+  @VisibleForTesting
+  static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsList(
+      List<PermissionConfiguration> inputList) {
+    ImmutableMap.Builder<AbsoluteUnixPath, FilePermissions> permissionsMap = ImmutableMap.builder();
+    for (PermissionConfiguration permission : inputList) {
+      if (permission.getFile() == null || permission.getMode() == null) {
+        throw new IllegalArgumentException(
+            "Incomplete <permission> configuration; requires both <file> and <mode> field.");
+      }
+      AbsoluteUnixPath key = AbsoluteUnixPath.get(permission.getFile());
+      FilePermissions value = FilePermissions.fromOctalString(permission.getMode());
+      permissionsMap.put(key, value);
+    }
+    return permissionsMap.build();
   }
 
   /** Disables annoying Apache HTTP client logging. */
