@@ -56,7 +56,7 @@ public class MavenProjectProperties implements ProjectProperties {
    * @param project the {@link MavenProject} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution
    * @param extraDirectory path to the directory for the extra files layer
-   * @param permissions the list of configured extra layer file permissions
+   * @param permissions map from path on container to file permissions for extra-layer files
    * @param appRoot root directory in the image where the app will be placed
    * @return a MavenProjectProperties from the given project and logger.
    * @throws MojoExecutionException if no class files are found in the output directory.
