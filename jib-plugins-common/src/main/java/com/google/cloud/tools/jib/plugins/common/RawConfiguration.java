@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 /**
  * Holds raw plugin configuration parameter values. Acts as a common adapter for heterogeneous
@@ -26,24 +26,19 @@ import javax.annotation.Nullable;
  */
 public interface RawConfiguration {
 
-  @Nullable
-  String getFromImage();
+  Optional<String> getFromImage();
 
   AuthProperty getFromAuth();
 
-  @Nullable
-  String getFromCredHelper();
+  Optional<String> getFromCredHelper();
 
   Iterable<String> getToTags();
 
-  @Nullable
-  List<String> getEntrypoint();
+  Optional<List<String>> getEntrypoint();
 
-  @Nullable
-  List<String> getProgramArguments();
+  Optional<List<String>> getProgramArguments();
 
-  @Nullable
-  String getMainClass();
+  Optional<String> getMainClass();
 
   List<String> getJvmFlags();
 
@@ -55,8 +50,7 @@ public interface RawConfiguration {
 
   List<String> getPorts();
 
-  @Nullable
-  String getUser();
+  Optional<String> getUser();
 
   boolean getUseCurrentTimestamp();
 
@@ -64,6 +58,5 @@ public interface RawConfiguration {
 
   boolean getUseOnlyProjectCache();
 
-  @Nullable
-  AuthProperty getInferredAuth(String authTarget) throws InferredAuthRetrievalException;
+  Optional<AuthProperty> getInferredAuth(String authTarget) throws InferredAuthRetrievalException;
 }

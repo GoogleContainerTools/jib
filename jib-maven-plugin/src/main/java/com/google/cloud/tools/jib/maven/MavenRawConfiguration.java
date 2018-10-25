@@ -22,7 +22,7 @@ import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 /** Maven-specific adapter for providing raw configuration parameter values. */
 class MavenRawConfiguration implements RawConfiguration {
@@ -46,10 +46,9 @@ class MavenRawConfiguration implements RawConfiguration {
             eventDispatcher);
   }
 
-  @Nullable
   @Override
-  public String getFromImage() {
-    return jibPluginConfiguration.getBaseImage();
+  public Optional<String> getFromImage() {
+    return Optional.ofNullable(jibPluginConfiguration.getBaseImage());
   }
 
   @Override
@@ -57,10 +56,9 @@ class MavenRawConfiguration implements RawConfiguration {
     return jibPluginConfiguration.getBaseImageAuth();
   }
 
-  @Nullable
   @Override
-  public String getFromCredHelper() {
-    return jibPluginConfiguration.getBaseImageCredentialHelperName();
+  public Optional<String> getFromCredHelper() {
+    return Optional.ofNullable(jibPluginConfiguration.getBaseImageCredentialHelperName());
   }
 
   @Override
@@ -68,22 +66,19 @@ class MavenRawConfiguration implements RawConfiguration {
     return jibPluginConfiguration.getTargetImageAdditionalTags();
   }
 
-  @Nullable
   @Override
-  public List<String> getEntrypoint() {
-    return jibPluginConfiguration.getEntrypoint();
+  public Optional<List<String>> getEntrypoint() {
+    return Optional.ofNullable(jibPluginConfiguration.getEntrypoint());
   }
 
-  @Nullable
   @Override
-  public List<String> getProgramArguments() {
-    return jibPluginConfiguration.getArgs();
+  public Optional<List<String>> getProgramArguments() {
+    return Optional.ofNullable(jibPluginConfiguration.getArgs());
   }
 
-  @Nullable
   @Override
-  public String getMainClass() {
-    return jibPluginConfiguration.getMainClass();
+  public Optional<String> getMainClass() {
+    return Optional.ofNullable(jibPluginConfiguration.getMainClass());
   }
 
   @Override
@@ -111,10 +106,9 @@ class MavenRawConfiguration implements RawConfiguration {
     return jibPluginConfiguration.getExposedPorts();
   }
 
-  @Nullable
   @Override
-  public String getUser() {
-    return jibPluginConfiguration.getUser();
+  public Optional<String> getUser() {
+    return Optional.ofNullable(jibPluginConfiguration.getUser());
   }
 
   @Override
@@ -132,9 +126,9 @@ class MavenRawConfiguration implements RawConfiguration {
     return jibPluginConfiguration.getUseOnlyProjectCache();
   }
 
-  @Nullable
   @Override
-  public AuthProperty getInferredAuth(String authTarget) throws InferredAuthRetrievalException {
-    return mavenSettingsServerCredentials.retrieve(authTarget).orElse(null);
+  public Optional<AuthProperty> getInferredAuth(String authTarget)
+      throws InferredAuthRetrievalException {
+    return mavenSettingsServerCredentials.retrieve(authTarget);
   }
 }

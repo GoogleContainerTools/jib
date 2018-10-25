@@ -124,14 +124,15 @@ public class BuildImageMojo extends JibPluginConfiguration {
         defaultCredentialRetrievers.setKnownCredential(
             optionalToCredential.get(), "jib-maven-plugin <to><auth> configuration");
       } else {
-        AuthProperty inferredAuth =
+        Optional<AuthProperty> optionalInferredAuth =
             rawConfiguration.getInferredAuth(targetImageReference.getRegistry());
-        if (inferredAuth != null) {
-          String username = Verify.verifyNotNull(inferredAuth.getUsername());
-          String password = Verify.verifyNotNull(inferredAuth.getPassword());
+        if (optionalInferredAuth.isPresent()) {
+          AuthProperty auth = optionalInferredAuth.get();
+          String username = Verify.verifyNotNull(auth.getUsername());
+          String password = Verify.verifyNotNull(auth.getPassword());
           Credential credential = Credential.basic(username, password);
           defaultCredentialRetrievers.setInferredCredential(
-              credential, inferredAuth.getPropertyDescriptor());
+              credential, auth.getPropertyDescriptor());
         }
       }
       defaultCredentialRetrievers.setCredentialHelper(getTargetImageCredentialHelperName());

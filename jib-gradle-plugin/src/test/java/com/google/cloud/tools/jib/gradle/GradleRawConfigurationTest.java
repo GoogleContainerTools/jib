@@ -80,20 +80,21 @@ public class GradleRawConfigurationTest {
 
     Assert.assertTrue(rawConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals("/app/root", rawConfiguration.getAppRoot());
-    Assert.assertEquals(Arrays.asList("java", "Main"), rawConfiguration.getEntrypoint());
+    Assert.assertEquals(Arrays.asList("java", "Main"), rawConfiguration.getEntrypoint().get());
     Assert.assertEquals(
         new HashMap<>(ImmutableMap.of("currency", "dollar")), rawConfiguration.getEnvironment());
-    Assert.assertEquals("gcr", rawConfiguration.getFromCredHelper());
-    Assert.assertEquals("openjdk:15", rawConfiguration.getFromImage());
+    Assert.assertEquals("gcr", rawConfiguration.getFromCredHelper().get());
+    Assert.assertEquals("openjdk:15", rawConfiguration.getFromImage().get());
     Assert.assertEquals(Arrays.asList("-cp", "."), rawConfiguration.getJvmFlags());
     Assert.assertEquals(new HashMap<>(ImmutableMap.of("unit", "cm")), rawConfiguration.getLabels());
-    Assert.assertEquals("com.example.Main", rawConfiguration.getMainClass());
+    Assert.assertEquals("com.example.Main", rawConfiguration.getMainClass().get());
     Assert.assertEquals(Arrays.asList("80/tcp", "0"), rawConfiguration.getPorts());
-    Assert.assertEquals(Arrays.asList("--log", "info"), rawConfiguration.getProgramArguments());
+    Assert.assertEquals(
+        Arrays.asList("--log", "info"), rawConfiguration.getProgramArguments().get());
     Assert.assertEquals(
         new HashSet<>(Arrays.asList("additional", "tags")), rawConfiguration.getToTags());
     Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
     Assert.assertTrue(rawConfiguration.getUseOnlyProjectCache());
-    Assert.assertEquals("admin:wheel", rawConfiguration.getUser());
+    Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
   }
 }

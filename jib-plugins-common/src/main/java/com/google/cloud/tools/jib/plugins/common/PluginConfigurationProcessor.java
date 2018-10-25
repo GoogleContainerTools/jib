@@ -87,14 +87,15 @@ public class PluginConfigurationProcessor {
   public static List<String> computeEntrypoint(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws MainClassInferenceException, NotAbsoluteUnixPathException {
-    List<String> entrypointParameter = rawConfiguration.getEntrypoint();
-    if (entrypointParameter != null && !entrypointParameter.isEmpty()) {
-      if (rawConfiguration.getMainClass() != null || !rawConfiguration.getJvmFlags().isEmpty()) {
+    Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
+    if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
+      if (rawConfiguration.getMainClass().isPresent()
+          || !rawConfiguration.getJvmFlags().isEmpty()) {
         new DefaultEventDispatcher(projectProperties.getEventHandlers())
             .dispatch(
                 LogEvent.warn("mainClass and jvmFlags are ignored when entrypoint is specified"));
       }
-      return entrypointParameter;
+      return rawEntrypoint.get();
     }
 
     if (projectProperties.isWarProject()) {
@@ -103,7 +104,8 @@ public class PluginConfigurationProcessor {
 
     AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
     String mainClass =
-        MainClassResolver.resolveMainClass(rawConfiguration.getMainClass(), projectProperties);
+        MainClassResolver.resolveMainClass(
+            rawConfiguration.getMainClass().orElse(null), projectProperties);
     return JavaEntrypointConstructor.makeDefaultEntrypoint(
         appRoot, rawConfiguration.getJvmFlags(), mainClass);
   }
@@ -119,13 +121,12 @@ public class PluginConfigurationProcessor {
    */
   public static String getBaseImage(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties) {
-    String baseImage = rawConfiguration.getFromImage();
-    if (baseImage == null) {
-      return projectProperties.isWarProject()
-          ? "gcr.io/distroless/java/jetty"
-          : "gcr.io/distroless/java";
-    }
-    return baseImage;
+    return rawConfiguration
+        .getFromImage()
+        .orElse(
+            projectProperties.isWarProject()
+                ? "gcr.io/distroless/java/jetty"
+                : "gcr.io/distroless/java");
   }
 
   public static PluginConfigurationProcessor processCommonConfiguration(
@@ -163,18 +164,19 @@ public class PluginConfigurationProcessor {
       defaultCredentialRetrievers.setKnownCredential(
           optionalFromCredential.get(), "from.auth/<from><auth>");
     } else {
-      AuthProperty inferredAuth =
+      Optional<AuthProperty> optionalInferredAuth =
           rawConfiguration.getInferredAuth(baseImageReference.getRegistry());
-      if (inferredAuth != null) {
-        String username = Verify.verifyNotNull(inferredAuth.getUsername());
-        String password = Verify.verifyNotNull(inferredAuth.getPassword());
+      if (optionalInferredAuth.isPresent()) {
+        AuthProperty auth = optionalInferredAuth.get();
+        String username = Verify.verifyNotNull(auth.getUsername());
+        String password = Verify.verifyNotNull(auth.getPassword());
         Credential credential = Credential.basic(username, password);
-        defaultCredentialRetrievers.setInferredCredential(
-            credential, inferredAuth.getPropertyDescriptor());
+        defaultCredentialRetrievers.setInferredCredential(credential, auth.getPropertyDescriptor());
         optionalFromCredential = Optional.of(credential);
       }
     }
-    defaultCredentialRetrievers.setCredentialHelper(rawConfiguration.getFromCredHelper());
+    defaultCredentialRetrievers.setCredentialHelper(
+        rawConfiguration.getFromCredHelper().orElse(null));
 
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     defaultCredentialRetrievers.asList().forEach(baseImage::addCredentialRetriever);
@@ -183,11 +185,11 @@ public class PluginConfigurationProcessor {
         Jib.from(baseImage)
             .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
-            .setProgramArguments(rawConfiguration.getProgramArguments())
+            .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(rawConfiguration.getPorts()))
             .setLabels(rawConfiguration.getLabels())
-            .setUser(rawConfiguration.getUser());
+            .setUser(rawConfiguration.getUser().orElse(null));
     if (rawConfiguration.getUseCurrentTimestamp()) {
       eventDispatcher.dispatch(
           LogEvent.warn(

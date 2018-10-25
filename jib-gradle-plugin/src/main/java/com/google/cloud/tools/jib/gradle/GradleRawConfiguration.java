@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 /** Gradle-specific adapter for providing raw configuration parameter values. */
 class GradleRawConfiguration implements RawConfiguration {
@@ -31,10 +31,9 @@ class GradleRawConfiguration implements RawConfiguration {
     this.jibExtension = jibExtension;
   }
 
-  @Nullable
   @Override
-  public String getFromImage() {
-    return jibExtension.getFrom().getImage();
+  public Optional<String> getFromImage() {
+    return Optional.ofNullable(jibExtension.getFrom().getImage());
   }
 
   @Override
@@ -42,10 +41,9 @@ class GradleRawConfiguration implements RawConfiguration {
     return jibExtension.getFrom().getAuth();
   }
 
-  @Nullable
   @Override
-  public String getFromCredHelper() {
-    return jibExtension.getFrom().getCredHelper();
+  public Optional<String> getFromCredHelper() {
+    return Optional.ofNullable(jibExtension.getFrom().getCredHelper());
   }
 
   @Override
@@ -53,22 +51,19 @@ class GradleRawConfiguration implements RawConfiguration {
     return jibExtension.getTo().getTags();
   }
 
-  @Nullable
   @Override
-  public List<String> getEntrypoint() {
-    return jibExtension.getContainer().getEntrypoint();
+  public Optional<List<String>> getEntrypoint() {
+    return Optional.ofNullable(jibExtension.getContainer().getEntrypoint());
   }
 
-  @Nullable
   @Override
-  public List<String> getProgramArguments() {
-    return jibExtension.getContainer().getArgs();
+  public Optional<List<String>> getProgramArguments() {
+    return Optional.ofNullable(jibExtension.getContainer().getArgs());
   }
 
-  @Nullable
   @Override
-  public String getMainClass() {
-    return jibExtension.getContainer().getMainClass();
+  public Optional<String> getMainClass() {
+    return Optional.ofNullable(jibExtension.getContainer().getMainClass());
   }
 
   @Override
@@ -96,10 +91,9 @@ class GradleRawConfiguration implements RawConfiguration {
     return jibExtension.getContainer().getPorts();
   }
 
-  @Nullable
   @Override
-  public String getUser() {
-    return jibExtension.getContainer().getUser();
+  public Optional<String> getUser() {
+    return Optional.ofNullable(jibExtension.getContainer().getUser());
   }
 
   @Override
@@ -117,9 +111,8 @@ class GradleRawConfiguration implements RawConfiguration {
     return jibExtension.getUseOnlyProjectCache();
   }
 
-  @Nullable
   @Override
-  public AuthProperty getInferredAuth(String authTarget) {
-    return null;
+  public Optional<AuthProperty> getInferredAuth(String authTarget) {
+    return Optional.empty();
   }
 }

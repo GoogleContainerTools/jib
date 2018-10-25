@@ -29,11 +29,11 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import com.google.common.collect.ImmutableList;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Optional;
 import java.util.function.Consumer;
 import org.junit.Assert;
 import org.junit.Before;
@@ -64,7 +64,7 @@ public class PluginConfigurationProcessorTest {
   @Before
   public void setUp() {
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
-    Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Collections.emptyList());
+    Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
 
     Mockito.when(projectProperties.getJavaLayerConfigurations())
@@ -116,7 +116,7 @@ public class PluginConfigurationProcessorTest {
           MainClassInferenceException, NotAbsoluteUnixPathException,
           InferredAuthRetrievalException {
     Mockito.when(rawConfiguration.getEntrypoint())
-        .thenReturn(Arrays.asList("custom", "entrypoint"));
+        .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -136,7 +136,7 @@ public class PluginConfigurationProcessorTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
           MainClassInferenceException, NotAbsoluteUnixPathException,
           InferredAuthRetrievalException {
-    Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
+    Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     PluginConfigurationProcessor processor =
@@ -156,7 +156,7 @@ public class PluginConfigurationProcessorTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
           MainClassInferenceException, NotAbsoluteUnixPathException,
           InferredAuthRetrievalException {
-    Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
+    Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
     PluginConfigurationProcessor processor =
@@ -178,7 +178,7 @@ public class PluginConfigurationProcessorTest {
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, NotAbsoluteUnixPathException,
           InferredAuthRetrievalException {
-    Mockito.when(rawConfiguration.getUser()).thenReturn("customUser");
+    Mockito.when(rawConfiguration.getUser()).thenReturn(Optional.of("customUser"));
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -211,7 +211,7 @@ public class PluginConfigurationProcessorTest {
           MainClassInferenceException, NotAbsoluteUnixPathException,
           InferredAuthRetrievalException {
     Mockito.when(rawConfiguration.getEntrypoint())
-        .thenReturn(Arrays.asList("custom", "entrypoint"));
+        .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getJvmFlags()).thenReturn(Collections.singletonList("jvmFlag"));
 
     PluginConfigurationProcessor processor =
@@ -234,8 +234,8 @@ public class PluginConfigurationProcessorTest {
           MainClassInferenceException, NotAbsoluteUnixPathException,
           InferredAuthRetrievalException {
     Mockito.when(rawConfiguration.getEntrypoint())
-        .thenReturn(Arrays.asList("custom", "entrypoint"));
-    Mockito.when(rawConfiguration.getMainClass()).thenReturn("java.util.Object");
+        .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
+    Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -377,7 +377,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetBaseImage_nonDefault() {
-    Mockito.when(rawConfiguration.getFromImage()).thenReturn("tomcat");
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("tomcat"));
 
     Assert.assertEquals(
         "tomcat", PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
