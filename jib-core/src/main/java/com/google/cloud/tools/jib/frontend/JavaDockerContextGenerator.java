@@ -272,7 +272,7 @@ public class JavaDockerContextGenerator {
 
       // Copies the source files to the directoryInContext.
       for (LayerEntry layerEntry : copyDirective.layerEntries) {
-        String noLeadingSlash = layerEntry.getAbsoluteExtractionPathString().substring(1);
+        String noLeadingSlash = layerEntry.getExtractionPath().toString().substring(1);
         Path destination = directoryInContext.resolve(noLeadingSlash);
 
         if (Files.isDirectory(layerEntry.getSourceFile())) {

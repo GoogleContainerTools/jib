@@ -200,9 +200,9 @@ public class SingleProjectIntegrationTest {
         .run();
 
     assertDockerInspect(imageName);
-    Assert.assertEquals(
-        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
-        new Command("docker", "run", "--rm", imageName).run());
+    String output = new Command("docker", "run", "--rm", imageName).run();
+    Assert.assertThat(output, CoreMatchers.startsWith("Hello, world. An argument.\n"));
+    Assert.assertThat(output, CoreMatchers.endsWith("foo\ncat\n"));
 
     // Checks that generating the Docker context again is skipped.
     BuildTask upToDateJibDockerContextTask =

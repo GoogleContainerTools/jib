@@ -109,6 +109,13 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     JibSystemProperties.checkHttpTimeoutProperty();
     TaskCommon.disableHttpLogging();
 
+    if (!jibExtension.getExtraDirectory().getPermissions().isEmpty()) {
+      getLogger()
+          .warn(
+              "'jib.extraDirectory.permissions' configuration is not supported by Jib Docker "
+                  + "context generator - building using Docker may produce unexpected results.");
+    }
+
     try {
       AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
 
