@@ -47,8 +47,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String username;
     @Nullable @Parameter private String password;
     @Nullable private String descriptor;
-    @Nullable private String usernameDescriptor;
-    @Nullable private String passwordDescriptor;
 
     @Override
     public String getPropertyDescriptor() {
@@ -57,12 +55,12 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Override
     public String getUsernamePropertyDescriptor() {
-      return Preconditions.checkNotNull(usernameDescriptor);
+      return Preconditions.checkNotNull(descriptor) + "<username>";
     }
 
     @Override
     public String getPasswordPropertyDescriptor() {
-      return Preconditions.checkNotNull(passwordDescriptor);
+      return Preconditions.checkNotNull(descriptor) + "<password>";
     }
 
     @Override
@@ -89,8 +87,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
     private void setPropertyDescriptor(String descriptor) {
       this.descriptor = descriptor;
-      usernameDescriptor = descriptor + "<username>";
-      passwordDescriptor = descriptor + "<password>";
     }
   }
 
