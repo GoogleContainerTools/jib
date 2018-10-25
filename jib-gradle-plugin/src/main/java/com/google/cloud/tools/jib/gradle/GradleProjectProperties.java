@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
@@ -27,6 +28,7 @@ import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,6 +36,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
@@ -72,7 +75,7 @@ class GradleProjectProperties implements ProjectProperties {
               project,
               logger,
               extraDirectory,
-              ConfigurationPropertyValidator.convertPermissionsMap(permissions),
+              convertPermissionsMap(permissions),
               appRoot));
 
     } catch (IOException ex) {
@@ -192,5 +195,24 @@ class GradleProjectProperties implements ProjectProperties {
     } else {
       return project.files(dependencyFileCollections);
     }
+  }
+
+  /**
+   * Validates and converts a {@code String->String} file-path-to-file-permissions map to an
+   * equivalent {@code AbsoluteUnixPath->FilePermission} map.
+   *
+   * @param inputMap the map to convert
+   * @return the converted map
+   */
+  @VisibleForTesting
+  static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsMap(
+      Map<String, String> inputMap) {
+    ImmutableMap.Builder<AbsoluteUnixPath, FilePermissions> permissionsMap = ImmutableMap.builder();
+    for (Entry<String, String> entry : inputMap.entrySet()) {
+      AbsoluteUnixPath key = AbsoluteUnixPath.get(entry.getKey());
+      FilePermissions value = FilePermissions.fromOctalString(entry.getValue());
+      permissionsMap.put(key, value);
+    }
+    return permissionsMap.build();
   }
 }

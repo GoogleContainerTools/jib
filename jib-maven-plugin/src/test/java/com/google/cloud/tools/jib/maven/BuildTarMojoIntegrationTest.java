@@ -63,7 +63,7 @@ public class BuildTarMojoIntegrationTest {
                 .toString())
         .run();
     Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n",
+        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
         new Command("docker", "run", "--rm", targetImage).run());
 
     Instant buildTime =

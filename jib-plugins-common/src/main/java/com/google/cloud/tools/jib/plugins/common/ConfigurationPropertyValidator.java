@@ -187,23 +187,5 @@ public class ConfigurationPropertyValidator {
     return ImmutableList.copyOf(items);
   }
 
-  /**
-   * Validates and converts a {@code String->String} file-path-to-file-permissions map to an
-   * equivalent {@code AbsoluteUnixPath->FilePermission} map.
-   *
-   * @param inputMap the map to convert
-   * @return the converted map
-   */
-  public static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsMap(
-      Map<String, String> inputMap) {
-    ImmutableMap.Builder<AbsoluteUnixPath, FilePermissions> permissionsMap = ImmutableMap.builder();
-    for (Entry<String, String> entry : inputMap.entrySet()) {
-      AbsoluteUnixPath key = AbsoluteUnixPath.get(entry.getKey());
-      FilePermissions value = FilePermissions.fromOctalString(entry.getValue());
-      permissionsMap.put(key, value);
-    }
-    return permissionsMap.build();
-  }
-
   private ConfigurationPropertyValidator() {}
 }

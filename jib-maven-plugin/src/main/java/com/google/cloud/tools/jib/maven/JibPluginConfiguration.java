@@ -95,6 +95,23 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String file;
 
     @Nullable @Parameter private String mode;
+
+    // Need default constructor for Maven
+    public PermissionConfiguration() {}
+
+    @VisibleForTesting
+    PermissionConfiguration(String file, String mode) {
+      this.file = file;
+      this.mode = mode;
+    }
+
+    String getFile() {
+      return Preconditions.checkNotNull(file);
+    }
+
+    String getMode() {
+      return Preconditions.checkNotNull(mode);
+    }
   }
 
   /** Configuration for {@code from} parameter, */
@@ -471,13 +488,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
               System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS))
           .entrySet()
           .stream()
-          .map(
-              entry -> {
-                PermissionConfiguration configuration = new PermissionConfiguration();
-                configuration.file = entry.getKey();
-                configuration.mode = entry.getValue();
-                return configuration;
-              })
+          .map(entry -> new PermissionConfiguration(entry.getKey(), entry.getValue()))
           .collect(Collectors.toList());
     }
     return extraDirectory.permissions;

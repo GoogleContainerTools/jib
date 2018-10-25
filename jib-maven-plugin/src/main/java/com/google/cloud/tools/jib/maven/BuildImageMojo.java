@@ -90,7 +90,11 @@ public class BuildImageMojo extends JibPluginConfiguration {
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
         MavenProjectProperties.getForProject(
-            getProject(), getLog(), getExtraDirectoryPath(), appRoot);
+            getProject(),
+            getLog(),
+            getExtraDirectoryPath(),
+            getExtraDirectoryPermissions(),
+            appRoot);
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(

@@ -16,8 +16,11 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
@@ -112,5 +115,25 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockTaskContainer.findByName("war")).thenReturn(null);
 
     Assert.assertNull(GradleProjectProperties.getWarTask(mockProject));
+  }
+
+  @Test
+  public void testConvertPermissionsMap() {
+    Assert.assertEquals(
+        ImmutableMap.of(
+            AbsoluteUnixPath.get("/test/folder/file1"),
+            FilePermissions.fromOctalString("123"),
+            AbsoluteUnixPath.get("/test/file2"),
+            FilePermissions.fromOctalString("456")),
+        GradleProjectProperties.convertPermissionsMap(
+            ImmutableMap.of("/test/folder/file1", "123", "/test/file2", "456")));
+
+    try {
+      GradleProjectProperties.convertPermissionsMap(
+          ImmutableMap.of("a path", "not valid permission"));
+      Assert.fail();
+    } catch (IllegalArgumentException ignored) {
+      // pass
+    }
   }
 }

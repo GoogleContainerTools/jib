@@ -174,24 +174,4 @@ public class ConfigurationPropertyValidatorTest {
       // pass
     }
   }
-
-  @Test
-  public void testConvertPermissionsMap() {
-    Assert.assertEquals(
-        ImmutableMap.of(
-            AbsoluteUnixPath.get("/test/folder/file1"),
-            FilePermissions.fromOctalString("123"),
-            AbsoluteUnixPath.get("/test/file2"),
-            FilePermissions.fromOctalString("456")),
-        ConfigurationPropertyValidator.convertPermissionsMap(
-            ImmutableMap.of("/test/folder/file1", "123", "/test/file2", "456")));
-
-    try {
-      ConfigurationPropertyValidator.convertPermissionsMap(
-          ImmutableMap.of("a path", "not valid permission"));
-      Assert.fail();
-    } catch (IllegalArgumentException ignored) {
-      // pass
-    }
-  }
 }

@@ -16,8 +16,13 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -114,5 +119,27 @@ public class MavenProjectPropertiesTest {
   @Test
   public void testIsWarProject() {
     Assert.assertFalse(mavenProjectProperties.isWarProject());
+  }
+
+  @Test
+  public void testConvertPermissionsList() {
+    Assert.assertEquals(
+        ImmutableMap.of(
+            AbsoluteUnixPath.get("/test/folder/file1"),
+            FilePermissions.fromOctalString("123"),
+            AbsoluteUnixPath.get("/test/file2"),
+            FilePermissions.fromOctalString("456")),
+        MavenProjectProperties.convertPermissionsList(
+            ImmutableList.of(
+                new PermissionConfiguration("/test/folder/file1", "123"),
+                new PermissionConfiguration("/test/file2", "456"))));
+
+    try {
+      MavenProjectProperties.convertPermissionsList(
+          ImmutableList.of(new PermissionConfiguration("a path", "not valid permission")));
+      Assert.fail();
+    } catch (IllegalArgumentException ignored) {
+      // pass
+    }
   }
 }
