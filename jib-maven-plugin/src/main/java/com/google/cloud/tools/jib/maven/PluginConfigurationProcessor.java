@@ -142,7 +142,7 @@ class PluginConfigurationProcessor {
     for (PermissionConfiguration permission : inputList) {
       if (permission.getFile() == null || permission.getMode() == null) {
         throw new IllegalArgumentException(
-            "Incomplete <permission> configuration; requires both <file> and <mode> field.");
+            "Incomplete <permission> configuration; requires <file> and <mode> fields to both be non-null.");
       }
       AbsoluteUnixPath key = AbsoluteUnixPath.get(permission.getFile());
       FilePermissions value = FilePermissions.fromOctalString(permission.getMode());
