@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
 import java.util.List;
-import org.apache.maven.project.MavenProject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,7 +31,6 @@ import org.junit.Test;
 public class JibPluginConfigurationTest {
 
   private JibPluginConfiguration testPluginConfiguration;
-  private MavenProject project;
 
   private static void clearProperties() {
     System.clearProperty("jib.from.image");
@@ -63,11 +61,6 @@ public class JibPluginConfigurationTest {
         new JibPluginConfiguration() {
           @Override
           public void execute() {}
-
-          @Override
-          MavenProject getProject() {
-            return project;
-          }
         };
   }
 

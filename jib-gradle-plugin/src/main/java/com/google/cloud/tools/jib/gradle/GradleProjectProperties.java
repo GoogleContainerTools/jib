@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
@@ -72,11 +71,7 @@ class GradleProjectProperties implements ProjectProperties {
           project,
           makeEventHandlers(logger),
           GradleLayerConfigurations.getForProject(
-              project,
-              logger,
-              extraDirectory,
-              convertPermissionsMap(permissions),
-              appRoot));
+              project, logger, extraDirectory, convertPermissionsMap(permissions), appRoot));
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
