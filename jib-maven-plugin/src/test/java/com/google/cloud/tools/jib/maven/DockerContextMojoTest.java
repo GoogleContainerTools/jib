@@ -228,7 +228,7 @@ public class DockerContextMojoTest {
     }
 
     @Override
-    Path getExtraDirectory() {
+    Path getExtraDirectoryPath() {
       return projectRoot.getRoot().toPath();
     }
 

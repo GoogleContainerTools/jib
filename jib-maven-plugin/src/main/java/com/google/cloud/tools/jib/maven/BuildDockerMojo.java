@@ -66,7 +66,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
+        MavenProjectProperties.getForProject(
+            getProject(), getLog(), getExtraDirectoryPath(), appRoot);
 
     try {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =

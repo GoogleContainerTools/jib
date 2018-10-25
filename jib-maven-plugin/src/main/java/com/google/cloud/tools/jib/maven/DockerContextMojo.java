@@ -73,7 +73,8 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
+        MavenProjectProperties.getForProject(
+            getProject(), getLog(), getExtraDirectoryPath(), appRoot);
 
     List<String> entrypoint =
         PluginConfigurationProcessor.computeEntrypoint(getLog(), this, mavenProjectProperties);
