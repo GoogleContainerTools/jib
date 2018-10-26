@@ -21,9 +21,9 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.plugins.common.AppRootInvalidException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
-import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
@@ -115,7 +115,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
               "Export Docker context failed", "check if `targetDir` is set correctly"),
           ex);
 
-    } catch (NotAbsoluteUnixPathException ex) {
+    } catch (AppRootInvalidException ex) {
       throw new MojoExecutionException(
           "<container><appRoot> is not an absolute Unix-style path: " + ex.getMessage());
 

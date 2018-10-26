@@ -20,9 +20,9 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.plugins.common.AppRootInvalidException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
-import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
@@ -166,7 +166,7 @@ public class DockerContextTask extends DefaultTask implements JibTask {
               "check if the command-line option `--jibTargetDir` is set correctly"),
           ex);
 
-    } catch (NotAbsoluteUnixPathException ex) {
+    } catch (AppRootInvalidException ex) {
       throw new GradleException(
           "container.appRoot is not an absolute Unix-style path: " + ex.getMessage());
     }

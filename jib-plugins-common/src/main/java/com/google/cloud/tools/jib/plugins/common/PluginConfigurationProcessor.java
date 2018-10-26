@@ -49,11 +49,11 @@ public class PluginConfigurationProcessor {
    * @param rawConfiguration raw configuration data
    * @param projectProperties used for providing additional information
    * @return the app root value
-   * @throws NotAbsoluteUnixPathException if {@code appRoot} value is not an absolute Unix path
+   * @throws AppRootInvalidException if {@code appRoot} value is not an absolute Unix path
    */
   static AbsoluteUnixPath getAppRootChecked(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
-      throws NotAbsoluteUnixPathException {
+      throws AppRootInvalidException {
     String appRoot = rawConfiguration.getAppRoot();
     if (appRoot.isEmpty()) {
       appRoot =
@@ -64,7 +64,7 @@ public class PluginConfigurationProcessor {
     try {
       return AbsoluteUnixPath.get(appRoot);
     } catch (IllegalArgumentException ex) {
-      throw new NotAbsoluteUnixPathException(appRoot, ex);
+      throw new AppRootInvalidException(appRoot, ex);
     }
   }
 
@@ -81,12 +81,12 @@ public class PluginConfigurationProcessor {
    * @param projectProperties used for providing additional information
    * @return the entrypoint
    * @throws MainClassInferenceException if no valid main class is configured or discovered
-   * @throws NotAbsoluteUnixPathException if {@code appRoot} value is not an absolute Unix path
+   * @throws AppRootInvalidException if {@code appRoot} value is not an absolute Unix path
    */
   @Nullable
   public static List<String> computeEntrypoint(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
-      throws MainClassInferenceException, NotAbsoluteUnixPathException {
+      throws MainClassInferenceException, AppRootInvalidException {
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
     if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
       if (rawConfiguration.getMainClass().isPresent()
@@ -132,8 +132,7 @@ public class PluginConfigurationProcessor {
   public static PluginConfigurationProcessor processCommonConfiguration(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InvalidImageReferenceException, NumberFormatException, FileNotFoundException,
-          MainClassInferenceException, NotAbsoluteUnixPathException,
-          InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
     JibSystemProperties.checkHttpTimeoutProperty();
 
     // TODO: Instead of disabling logging, have authentication credentials be provided

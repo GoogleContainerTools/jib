@@ -78,8 +78,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testPluginConfigurationProcessor_defaults()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, NotAbsoluteUnixPathException,
-          InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties);
@@ -97,7 +96,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testPluginConfigurationProcessor_warProjectBaseImage()
       throws InvalidImageReferenceException, FileNotFoundException, MainClassInferenceException,
-          NotAbsoluteUnixPathException, InferredAuthRetrievalException {
+          AppRootInvalidException, InferredAuthRetrievalException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     PluginConfigurationProcessor processor =
@@ -113,8 +112,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, NotAbsoluteUnixPathException,
-          InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
 
@@ -134,8 +132,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_defaultWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
-          MainClassInferenceException, NotAbsoluteUnixPathException,
-          InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
@@ -154,8 +151,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_defaulNonWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
-          MainClassInferenceException, NotAbsoluteUnixPathException,
-          InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
@@ -176,8 +172,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testUser()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, NotAbsoluteUnixPathException,
-          InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
     Mockito.when(rawConfiguration.getUser()).thenReturn(Optional.of("customUser"));
 
     PluginConfigurationProcessor processor =
@@ -193,8 +188,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testUser_null()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, NotAbsoluteUnixPathException,
-          InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties);
@@ -208,8 +202,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_warningOnJvmFlags()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, NotAbsoluteUnixPathException,
-          InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getJvmFlags()).thenReturn(Collections.singletonList("jvmFlag"));
@@ -231,8 +224,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_warningOnMainclass()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, NotAbsoluteUnixPathException,
-          InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
@@ -254,8 +246,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypointClasspath_nonDefaultAppRoot()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, NotAbsoluteUnixPathException,
-          InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/my/app");
 
     PluginConfigurationProcessor processor =
@@ -278,8 +269,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testWebAppEntrypoint_inheritedFromBaseImage()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, NotAbsoluteUnixPathException,
-          InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     PluginConfigurationProcessor processor =
@@ -293,7 +283,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetAppRootChecked() throws NotAbsoluteUnixPathException {
+  public void testGetAppRootChecked() throws AppRootInvalidException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/some/root");
 
     Assert.assertEquals(
@@ -308,7 +298,7 @@ public class PluginConfigurationProcessorTest {
     try {
       PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
       Assert.fail();
-    } catch (NotAbsoluteUnixPathException ex) {
+    } catch (AppRootInvalidException ex) {
       Assert.assertEquals("relative/path", ex.getMessage());
     }
   }
@@ -320,7 +310,7 @@ public class PluginConfigurationProcessorTest {
     try {
       PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
       Assert.fail();
-    } catch (NotAbsoluteUnixPathException ex) {
+    } catch (AppRootInvalidException ex) {
       Assert.assertEquals("\\windows\\path", ex.getMessage());
     }
   }
@@ -332,13 +322,13 @@ public class PluginConfigurationProcessorTest {
     try {
       PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
       Assert.fail();
-    } catch (NotAbsoluteUnixPathException ex) {
+    } catch (AppRootInvalidException ex) {
       Assert.assertEquals("C:\\windows\\path", ex.getMessage());
     }
   }
 
   @Test
-  public void testGetAppRootChecked_defaultNonWarProject() throws NotAbsoluteUnixPathException {
+  public void testGetAppRootChecked_defaultNonWarProject() throws AppRootInvalidException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("");
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
@@ -348,7 +338,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetAppRootChecked_defaultWarProject() throws NotAbsoluteUnixPathException {
+  public void testGetAppRootChecked_defaultWarProject() throws AppRootInvalidException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("");
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 

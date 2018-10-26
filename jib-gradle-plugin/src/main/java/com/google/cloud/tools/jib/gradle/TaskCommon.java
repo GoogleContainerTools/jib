@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.NotAbsoluteUnixPathException;
+import com.google.cloud.tools.jib.plugins.common.AppRootInvalidException;
 import java.util.logging.Level;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -37,11 +37,11 @@ class TaskCommon {
    *
    * @param jibExtension the {@link JibExtension} providing the configuration data
    * @return the app root value
-   * @throws NotAbsoluteUnixPathException if the app root is not an absolute path in Unix-style
+   * @throws AppRootInvalidException if the app root is not an absolute path in Unix-style
    */
   // TODO: find a way to use PluginConfigurationProcessor.getAppRootChecked() instead
   static AbsoluteUnixPath getAppRootChecked(JibExtension jibExtension, Project project)
-      throws NotAbsoluteUnixPathException {
+      throws AppRootInvalidException {
     String appRoot = jibExtension.getContainer().getAppRoot();
     if (appRoot.isEmpty()) {
       appRoot =
@@ -52,7 +52,7 @@ class TaskCommon {
     try {
       return AbsoluteUnixPath.get(appRoot);
     } catch (IllegalArgumentException ex) {
-      throw new NotAbsoluteUnixPathException(appRoot, ex);
+      throw new AppRootInvalidException(appRoot, ex);
     }
   }
 

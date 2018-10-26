@@ -16,10 +16,13 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-/** Indicates that the string path is not in the absolute unix-path style. */
-public class NotAbsoluteUnixPathException extends Exception {
+/**
+ * Indicates that the container.appRoot config value is invalid (i.e., the path is not in the
+ * absolute unix-path style.
+ */
+public class AppRootInvalidException extends Exception {
 
-  public NotAbsoluteUnixPathException(String appRoot, Throwable ex) {
-    super(appRoot, ex);
+  public AppRootInvalidException(String pathValue, Throwable ex) {
+    super(pathValue, ex);
   }
 }
