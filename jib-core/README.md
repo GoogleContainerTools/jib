@@ -4,11 +4,13 @@
 
 # Jib Core - Java library for building containers
 
-Jib Core is a Java library for building Docker and [OCI](https://github.com/opencontainers/image-spec) container images.
+Jib Core is a Java library for building Docker and [OCI](https://github.com/opencontainers/image-spec) container images. Jib Core implements a general-purpose container builder that can be used to build containers without a Docker daemon, for any purpose. The implementation is pure Java.
 
-For information about the Jib project, see the [Jib project README](../README.md).\
+Jib is also available as plugins for Maven and Gradle. The plugins are specifically for building containers for JVM languages and separate the application into multiple layers to optimize for fast rebuilds.\
 For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).\
 For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin).
+
+For information about the Jib project, see the [Jib project README](../README.md).
 
 ## Upcoming features
 
@@ -42,7 +44,7 @@ dependencies {
 ```java
 Jib.from("busybox")
    .addLayer(Arrays.asList(Paths.get("helloworld.sh")), AbsoluteUnixPath.get("/")) 
-   .setEntrypoint("/bin/sh", "-c", "chmod +x /helloworld.sh && /helloworld.sh")
+   .setEntrypoint("sh", "/helloworld.sh")
    .containerize(
        Containerizer.to(RegistryImage.named("gcr.io/my-project/hello-from-jib")
                                      .addCredential("myusername", "mypassword")));
@@ -50,9 +52,9 @@ Jib.from("busybox")
 
 1. [`Jib.from("busybox")`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Jib.html#from-java.lang.String-) creates a new [`JibContainerBuilder`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/JibContainerBuilder.html) configured with [`busybox`](https://hub.docker.com/_/busybox/) as the base image.
 1. [`.addLayer(...)`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/JibContainerBuilder.html#addLayer-java.util.List-com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath-) configures the `JibContainerBuilder` with a new layer with `helloworld.sh` (local file) to be placed into the container at `/helloworld.sh`.
-1. [`.setEntrypoint("/helloworld.sh")`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/JibContainerBuilder.html#setEntrypoint-java.lang.String...-) sets the entrypoint of the container to `/helloworld.sh`.
+1. [`.setEntrypoint("sh", "/helloworld.sh")`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/JibContainerBuilder.html#setEntrypoint-java.lang.String...-) sets the entrypoint of the container to run `/helloworld.sh`.
 1. [`RegistryImage.named("gcr.io/my-project/hello-from-jib")`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/RegistryImage.html#named-java.lang.String-) creates a new [`RegistryImage`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/RegistryImage.html) configured with `gcr.io/my-project/hello-from-jib` as the target image to push to.
-1. [`.addCredential`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/RegistryImage.html#addCredential-java.lang.String-java.lang.String-) adds the username/password credentials to authenticate the push to `gcr.io/my-project/hello-from-jib`.
+1. [`.addCredential`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/RegistryImage.html#addCredential-java.lang.String-java.lang.String-) adds the username/password credentials to authenticate the push to `gcr.io/my-project/hello-from-jib`. See [`CredentialRetrieverFactory`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/frontend/CredentialRetrieverFactory.html) for common credential retrievers (to retrieve credentials from Docker config or credential helpers, for example). These credential retrievers an be used with [`.addCredentialRetriever`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/RegistryImage.html#addCredentialRetriever-com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever-).
 1. [`Containerizer.to`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Containerizer.html#to-com.google.cloud.tools.jib.api.RegistryImage-) creates a new [`Containerizer`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Containerizer.html) configured to push to the `RegistryImage`.
 1. [`.containerize`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/JibContainerBuilder.html#containerize-com.google.cloud.tools.jib.api.Containerizer-) executes the containerization. If successful, the container image will be available at `gcr.io/my-project/hello-from-jib`.
 
@@ -89,7 +91,7 @@ Other useful classes:
 
 ## How Jib Core works
 
-Jib Core implements a general-purpose container builder. The system consists 3 main parts:
+The Jib Core system consists 3 main parts:
 
 - an execution orchestrator that executes an asynchronous pipeline of containerization steps,
 - an image manipulator capable of handling Docker and OCI image formats, and
