@@ -174,7 +174,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     } catch (AppRootInvalidException ex) {
       throw new GradleException(
-          "container.appRoot is not an absolute Unix-style path: " + ex.getMessage());
+          "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
     }
   }
 

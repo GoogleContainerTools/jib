@@ -170,7 +170,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     } catch (AppRootInvalidException ex) {
       throw new MojoExecutionException(
-          "<container><appRoot> is not an absolute Unix-style path: " + ex.getMessage());
+          "<container><appRoot> is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
 
     } catch (InvalidImageReferenceException
         | IOException

@@ -46,7 +46,7 @@ class MojoCommon {
     try {
       return AbsoluteUnixPath.get(appRoot);
     } catch (IllegalArgumentException ex) {
-      throw new AppRootInvalidException(appRoot, ex);
+      throw new AppRootInvalidException(appRoot, appRoot, ex);
     }
   }
 

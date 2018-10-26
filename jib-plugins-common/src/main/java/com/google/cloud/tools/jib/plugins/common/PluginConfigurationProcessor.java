@@ -39,6 +39,10 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
+/**
+ * Configures and provides {@code JibContainerBuilder} for the image building tasks based on raw
+ * plugin configuration values and project properties.
+ */
 public class PluginConfigurationProcessor {
 
   /**
@@ -64,7 +68,7 @@ public class PluginConfigurationProcessor {
     try {
       return AbsoluteUnixPath.get(appRoot);
     } catch (IllegalArgumentException ex) {
-      throw new AppRootInvalidException(appRoot, ex);
+      throw new AppRootInvalidException(appRoot, appRoot, ex);
     }
   }
 
@@ -163,6 +167,10 @@ public class PluginConfigurationProcessor {
       defaultCredentialRetrievers.setKnownCredential(
           optionalFromCredential.get(), "from.auth/<from><auth>");
     } else {
+      // TODO: this is here only for getting values from Maven settings.xml. Consider passing a
+      // Supplier<AuthProperty> for an inferred credential as an additional argument, rather than
+      // having RawConfigurations.getInferredAuth().
+      // https://github.com/GoogleContainerTools/jib/pull/1163#discussion_r228389684
       Optional<AuthProperty> optionalInferredAuth =
           rawConfiguration.getInferredAuth(baseImageReference.getRegistry());
       if (optionalInferredAuth.isPresent()) {

@@ -117,7 +117,7 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     } catch (AppRootInvalidException ex) {
       throw new MojoExecutionException(
-          "<container><appRoot> is not an absolute Unix-style path: " + ex.getMessage());
+          "<container><appRoot> is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
 
     } catch (MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);

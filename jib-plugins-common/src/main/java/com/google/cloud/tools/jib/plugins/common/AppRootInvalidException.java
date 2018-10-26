@@ -22,7 +22,14 @@ package com.google.cloud.tools.jib.plugins.common;
  */
 public class AppRootInvalidException extends Exception {
 
-  public AppRootInvalidException(String pathValue, Throwable ex) {
-    super(pathValue, ex);
+  private final String invalidAppRoot;
+
+  public AppRootInvalidException(String message, String invalidAppRoot, Throwable ex) {
+    super(message, ex);
+    this.invalidAppRoot = invalidAppRoot;
+  }
+
+  public String getInvalidAppRoot() {
+    return invalidAppRoot;
   }
 }
