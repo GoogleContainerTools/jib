@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.JibContainer;
-import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
@@ -41,7 +39,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pushes the final image. Outputs the pushed image digest. */
-class PushImageStep implements AsyncStep<JibContainer>, Callable<JibContainer> {
+class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
   private static final String DESCRIPTION = "Pushing new image";
 
@@ -54,7 +52,7 @@ class PushImageStep implements AsyncStep<JibContainer>, Callable<JibContainer> {
   private final BuildImageStep buildImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<JibContainer> listenableFuture;
+  private final ListenableFuture<BuildResult> listenableFuture;
 
   PushImageStep(
       ListeningExecutorService listeningExecutorService,
@@ -82,12 +80,12 @@ class PushImageStep implements AsyncStep<JibContainer>, Callable<JibContainer> {
   }
 
   @Override
-  public ListenableFuture<JibContainer> getFuture() {
+  public ListenableFuture<BuildResult> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public JibContainer call() throws ExecutionException, InterruptedException {
+  public BuildResult call() throws ExecutionException, InterruptedException {
     ImmutableList.Builder<ListenableFuture<?>> dependenciesBuilder = ImmutableList.builder();
     dependenciesBuilder.add(authenticatePushStep.getFuture());
     for (AsyncStep<PushBlobStep> pushBlobStepStep : NonBlockingSteps.get(pushBaseImageLayersStep)) {
@@ -106,7 +104,7 @@ class PushImageStep implements AsyncStep<JibContainer>, Callable<JibContainer> {
         .get();
   }
 
-  private ListenableFuture<ListenableFuture<JibContainer>> afterPushSteps()
+  private ListenableFuture<ListenableFuture<BuildResult>> afterPushSteps()
       throws ExecutionException {
     List<ListenableFuture<?>> dependencies = new ArrayList<>();
     for (AsyncStep<PushBlobStep> pushBlobStepStep : NonBlockingSteps.get(pushBaseImageLayersStep)) {
@@ -122,7 +120,7 @@ class PushImageStep implements AsyncStep<JibContainer>, Callable<JibContainer> {
         .call(this::afterAllPushed, listeningExecutorService);
   }
 
-  private ListenableFuture<JibContainer> afterAllPushed() throws ExecutionException, IOException {
+  private ListenableFuture<BuildResult> afterAllPushed() throws ExecutionException, IOException {
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       RegistryClient registryClient =
@@ -162,10 +160,10 @@ class PushImageStep implements AsyncStep<JibContainer>, Callable<JibContainer> {
               .writeTo(ByteStreams.nullOutputStream())
               .getDigest();
       DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
-      JibContainer jibContainer = JibContainerBuilder.created(imageDigest, imageId);
+      BuildResult result = new BuildResult(imageDigest, imageId);
 
       return Futures.whenAllSucceed(pushAllTagsFutures)
-          .call(() -> jibContainer, listeningExecutorService);
+          .call(() -> result, listeningExecutorService);
     }
   }
 }

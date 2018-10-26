@@ -124,13 +124,13 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .build();
 
     BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
+        .writeImageDigest(buildOutput.resolve("jib-image.digest"))
         .build(
             jibContainerBuilder,
             containerizer,
             eventDispatcher,
             gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-            helpfulSuggestions)
-        .writeImageDigest(buildOutput.resolve("jib-image.digest"));
+            helpfulSuggestions);
   }
 
   @Override

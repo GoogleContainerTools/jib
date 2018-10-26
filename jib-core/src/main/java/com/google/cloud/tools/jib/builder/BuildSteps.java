@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.api.JibContainer;
+import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
@@ -41,7 +41,7 @@ public class BuildSteps {
      * @throws ExecutionException if an exception occurs during execution
      * @throws InterruptedException if the execution is interrupted
      */
-    JibContainer build() throws ExecutionException, InterruptedException;
+    BuildResult build() throws ExecutionException, InterruptedException;
   }
 
   /**
@@ -140,11 +140,11 @@ public class BuildSteps {
   /**
    * Executes the build.
    *
-   * @return the built image
+   * @return the build result
    * @throws InterruptedException if the execution is interrupted
    * @throws ExecutionException if an exception occurs during execution
    */
-  public JibContainer run() throws InterruptedException, ExecutionException {
+  public BuildResult run() throws InterruptedException, ExecutionException {
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
       return imageBuildRunnable.build();

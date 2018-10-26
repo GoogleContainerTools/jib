@@ -105,13 +105,13 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               .build();
 
       BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
               jibContainerBuilder,
               containerizer,
               eventDispatcher,
               mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-              helpfulSuggestions)
-          .writeImageDigest(buildOutput.resolve("jib-image.digest"));
+              helpfulSuggestions);
       getLog().info("");
 
     } catch (InvalidImageReferenceException | IOException | CacheDirectoryCreationException ex) {

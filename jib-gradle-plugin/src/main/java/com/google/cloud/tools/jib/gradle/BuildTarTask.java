@@ -139,13 +139,13 @@ public class BuildTarTask extends DefaultTask implements JibTask {
             .build();
 
     BuildStepsRunner.forBuildTar(tarOutputPath)
+        .writeImageDigest(buildOutput.resolve("jib-image.digest"))
         .build(
             jibContainerBuilder,
             containerizer,
             eventDispatcher,
             gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-            helpfulSuggestions)
-        .writeImageDigest(buildOutput.resolve("jib-image.digest"));
+            helpfulSuggestions);
   }
 
   @Override

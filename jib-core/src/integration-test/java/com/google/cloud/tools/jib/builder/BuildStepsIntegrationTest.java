@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.api.JibContainer;
+import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
@@ -130,10 +130,10 @@ public class BuildStepsIntegrationTest {
                 .build());
 
     long lastTime = System.nanoTime();
-    JibContainer image1 = buildImageSteps.run();
+    BuildResult image1 = buildImageSteps.run();
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
     lastTime = System.nanoTime();
-    JibContainer image2 = buildImageSteps.run();
+    BuildResult image2 = buildImageSteps.run();
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     Assert.assertEquals(image1, image2);
@@ -144,7 +144,7 @@ public class BuildStepsIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
 
-    String imageReferenceByDigest = "localhost:5000/testimage@" + image1.getDigest();
+    String imageReferenceByDigest = "localhost:5000/testimage@" + image1.getImageDigest();
     localRegistry.pull(imageReferenceByDigest);
     assertDockerInspect(imageReferenceByDigest);
     Assert.assertEquals(

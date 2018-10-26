@@ -17,10 +17,6 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Objects;
 
 /** The container built by Jib. */
@@ -69,15 +65,5 @@ public class JibContainer {
     }
     JibContainer otherContainer = (JibContainer) other;
     return imageDigest.equals(otherContainer.imageDigest) && imageId.equals(otherContainer.imageId);
-  }
-
-  /**
-   * Write out the image digest to the given location.
-   *
-   * @param location the location to write the digest
-   * @throws IOException a problem occurred when writing the digest
-   */
-  public void writeImageDigest(Path location) throws IOException {
-    Files.write(location, imageDigest.toString().getBytes(StandardCharsets.UTF_8));
   }
 }

@@ -140,13 +140,13 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             .build();
 
     BuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
+        .writeImageDigest(buildOutput.resolve("jib-image.digest"))
         .build(
             jibContainerBuilder,
             containerizer,
             eventDispatcher,
             gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-            helpfulSuggestions)
-        .writeImageDigest(buildOutput.resolve("jib-image.digest"));
+            helpfulSuggestions);
   }
 
   @Override

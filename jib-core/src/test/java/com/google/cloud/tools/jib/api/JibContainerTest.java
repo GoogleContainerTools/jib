@@ -17,10 +17,6 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.DigestException;
 import org.junit.Assert;
 import org.junit.Before;
@@ -67,15 +63,5 @@ public class JibContainerTest {
     Assert.assertEquals(container1, container2);
     Assert.assertEquals(container1.hashCode(), container2.hashCode());
     Assert.assertNotEquals(container1, container3);
-  }
-
-  @Test
-  public void testWriteImageDigest() throws IOException {
-    Path location = temporaryDirectory.newFile().toPath();
-    JibContainer container = new JibContainer(digest1, digest2);
-    container.writeImageDigest(location);
-
-    String retrieved = new String(Files.readAllBytes(location), StandardCharsets.UTF_8);
-    Assert.assertEquals(digest1.toString(), retrieved);
   }
 }

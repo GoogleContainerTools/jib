@@ -155,13 +155,13 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     try {
       BuildStepsRunner.forBuildImage(targetImageReference, getTargetImageAdditionalTags())
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
               jibContainerBuilder,
               containerizer,
               eventDispatcher,
               mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-              helpfulSuggestions)
-          .writeImageDigest(buildOutput.resolve("jib-image.digest"));
+              helpfulSuggestions);
       getLog().info("");
 
     } catch (IOException | CacheDirectoryCreationException ex) {
