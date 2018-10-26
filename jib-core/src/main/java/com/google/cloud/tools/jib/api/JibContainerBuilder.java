@@ -27,13 +27,11 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -58,21 +56,15 @@ import javax.annotation.Nullable;
 // TODO: Add tests once containerize() is added.
 public class JibContainerBuilder {
 
-  private final SourceImage baseImage;
+  private final ContainerConfiguration.Builder containerConfigurationBuilder =
+      ContainerConfiguration.builder();
+  private final BuildConfiguration.Builder buildConfigurationBuilder = BuildConfiguration.builder();
 
   private List<LayerConfiguration> layerConfigurations = new ArrayList<>();
-  private Map<String, String> environment = new HashMap<>();
-  private List<Port> ports = new ArrayList<>();
-  private Map<String, String> labels = new HashMap<>();
-  @Nullable private ImmutableList<String> entrypoint;
-  @Nullable private ImmutableList<String> programArguments;
-  private ImageFormat imageFormat = ImageFormat.Docker;
-  private Instant creationTime = Instant.EPOCH;
-  @Nullable private String user;
 
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(SourceImage baseImage) {
-    this.baseImage = baseImage;
+    buildConfigurationBuilder.setBaseImageConfiguration(baseImage.toImageConfiguration());
   }
 
   /**
@@ -163,7 +155,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setEntrypoint(@Nullable List<String> entrypoint) {
-    this.entrypoint = entrypoint == null ? null : ImmutableList.copyOf(entrypoint);
+    containerConfigurationBuilder.setEntrypoint(entrypoint);
     return this;
   }
 
@@ -195,8 +187,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setProgramArguments(@Nullable List<String> programArguments) {
-    this.programArguments =
-        programArguments == null ? null : ImmutableList.copyOf(programArguments);
+    containerConfigurationBuilder.setProgramArguments(programArguments);
     return this;
   }
 
@@ -225,7 +216,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setEnvironment(Map<String, String> environmentMap) {
-    environment = new HashMap<>(environmentMap);
+    containerConfigurationBuilder.setEnvironment(environmentMap);
     return this;
   }
 
@@ -238,7 +229,7 @@ public class JibContainerBuilder {
    * @see #setEnvironment for more details
    */
   public JibContainerBuilder addEnvironmentVariable(String name, String value) {
-    environment.put(name, value);
+    containerConfigurationBuilder.addEnvironment(name, value);
     return this;
   }
 
@@ -258,7 +249,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setExposedPorts(List<Port> ports) {
-    this.ports = new ArrayList<>(ports);
+    containerConfigurationBuilder.setExposedPorts(ports);
     return this;
   }
 
@@ -281,7 +272,7 @@ public class JibContainerBuilder {
    * @see #setExposedPorts(List) for more details
    */
   public JibContainerBuilder addExposedPort(Port port) {
-    ports.add(port);
+    containerConfigurationBuilder.addExposedPort(port);
     return this;
   }
 
@@ -295,7 +286,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setLabels(Map<String, String> labelMap) {
-    labels = new HashMap<>(labelMap);
+    containerConfigurationBuilder.setLabels(labelMap);
     return this;
   }
 
@@ -307,7 +298,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder addLabel(String key, String value) {
-    labels.put(key, value);
+    containerConfigurationBuilder.addLabel(key, value);
     return this;
   }
 
@@ -319,7 +310,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setFormat(ImageFormat imageFormat) {
-    this.imageFormat = imageFormat;
+    buildConfigurationBuilder.setTargetFormat(imageFormat.getManifestTemplateClass());
     return this;
   }
 
@@ -330,7 +321,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setCreationTime(Instant creationTime) {
-    this.creationTime = creationTime;
+    containerConfigurationBuilder.setCreationTime(creationTime);
     return this;
   }
 
@@ -353,7 +344,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setUser(@Nullable String user) {
-    this.user = user;
+    containerConfigurationBuilder.setUser(user);
     return this;
   }
 
@@ -371,10 +362,9 @@ public class JibContainerBuilder {
   public JibContainer containerize(Containerizer containerizer)
       throws InterruptedException, ExecutionException, IOException,
           CacheDirectoryCreationException {
-    BuildConfiguration buildConfiguration =
-        toBuildConfiguration(BuildConfiguration.builder(), containerizer);
+    configureBuildConfiguration(containerizer);
     DescriptorDigest imageDigest =
-        containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();
+        containerizer.getTargetImage().toBuildSteps(buildConfigurationBuilder.build()).run();
 
     return new JibContainer(imageDigest);
   }
@@ -389,18 +379,15 @@ public class JibContainerBuilder {
    * @throws IOException if an I/O exception occurs
    */
   @VisibleForTesting
-  BuildConfiguration toBuildConfiguration(
-      BuildConfiguration.Builder buildConfigurationBuilder, Containerizer containerizer)
+  BuildConfiguration configureBuildConfiguration(Containerizer containerizer)
       throws CacheDirectoryCreationException, IOException {
     buildConfigurationBuilder
-        .setBaseImageConfiguration(baseImage.toImageConfiguration())
         .setTargetImageConfiguration(containerizer.getTargetImage().toImageConfiguration())
         .setAdditionalTargetImageTags(containerizer.getAdditionalTags())
         .setBaseImageLayersCacheDirectory(containerizer.getBaseImageLayersCacheDirectory())
         .setApplicationLayersCacheDirectory(containerizer.getApplicationLayersCacheDirectory())
-        .setContainerConfiguration(toContainerConfiguration())
+        .setContainerConfiguration(containerConfigurationBuilder.build())
         .setLayerConfigurations(layerConfigurations)
-        .setTargetFormat(imageFormat.getManifestTemplateClass())
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
         .setToolName(containerizer.getToolName());
 
@@ -414,18 +401,5 @@ public class JibContainerBuilder {
                     new DefaultEventDispatcher(eventHandlers)));
 
     return buildConfigurationBuilder.build();
-  }
-
-  @VisibleForTesting
-  ContainerConfiguration toContainerConfiguration() {
-    return ContainerConfiguration.builder()
-        .setEntrypoint(entrypoint)
-        .setProgramArguments(programArguments)
-        .setEnvironment(environment)
-        .setExposedPorts(ports)
-        .setLabels(labels)
-        .setCreationTime(creationTime)
-        .setUser(user)
-        .build();
   }
 }
