@@ -16,20 +16,15 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.api.Containerizer;
-import com.google.cloud.tools.jib.api.DockerDaemonImage;
-import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.AppRootInvalidException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
-import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
@@ -103,31 +98,11 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
 
-      EventDispatcher eventDispatcher =
-          new DefaultEventDispatcher(projectProperties.getEventHandlers());
-      ImageReference targetImageReference =
-          ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-              jibExtension.getTo().getImage(),
-              eventDispatcher,
-              getProject().getName(),
-              getProject().getVersion().toString().equals("unspecified")
-                  ? "latest"
-                  : getProject().getVersion().toString(),
-              gradleHelpfulSuggestionsBuilder.build());
-
-      DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
-
       PluginConfigurationProcessor pluginConfigurationProcessor =
-          PluginConfigurationProcessor.processCommonConfiguration(
-              rawConfiguration, projectProperties);
+          PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
+              rawConfiguration, projectProperties, gradleHelpfulSuggestionsBuilder.build());
 
-      JibContainerBuilder jibContainerBuilder =
-          pluginConfigurationProcessor.getJibContainerBuilder();
-
-      Containerizer containerizer = Containerizer.to(targetImage);
-      PluginConfigurationProcessor.configureContainerizer(
-          containerizer, rawConfiguration, projectProperties, GradleProjectProperties.TOOL_NAME);
-
+      ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =
           gradleHelpfulSuggestionsBuilder
               .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
@@ -138,9 +113,9 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
       BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
           .build(
-              jibContainerBuilder,
-              containerizer,
-              eventDispatcher,
+              pluginConfigurationProcessor.getJibContainerBuilder(),
+              pluginConfigurationProcessor.getContainerizer(),
+              new DefaultEventDispatcher(projectProperties.getEventHandlers()),
               projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
               helpfulSuggestions);
 

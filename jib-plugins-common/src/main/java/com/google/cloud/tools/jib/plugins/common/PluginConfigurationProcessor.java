@@ -17,9 +17,11 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.DockerDaemonImage;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
+import com.google.cloud.tools.jib.api.TarImage;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventDispatcher;
@@ -32,8 +34,12 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -133,65 +139,121 @@ public class PluginConfigurationProcessor {
                 : "gcr.io/distroless/java");
   }
 
-  public static PluginConfigurationProcessor processCommonConfiguration(
-      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
-      throws InvalidImageReferenceException, NumberFormatException, FileNotFoundException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
-    JibSystemProperties.checkHttpTimeoutProperty();
+  public static PluginConfigurationProcessor processCommonConfigurationForDockerDaemonImage(
+      RawConfiguration rawConfiguration,
+      ProjectProperties projectProperties,
+      HelpfulSuggestions helpfulSuggestions)
+      throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
+          InferredAuthRetrievalException, IOException {
+    ImageReference targetImageReference =
+        getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
+    DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
+    Containerizer containerizer = Containerizer.to(targetImage);
 
-    // TODO: Instead of disabling logging, have authentication credentials be provided
-    ImageReference baseImageReference =
-        ImageReference.parse(getBaseImage(rawConfiguration, projectProperties));
+    return processCommonConfiguration(
+        rawConfiguration, projectProperties, containerizer, targetImageReference, false);
+  }
+
+  public static PluginConfigurationProcessor processCommonConfigurationForTarImage(
+      RawConfiguration rawConfiguration,
+      ProjectProperties projectProperties,
+      Path tarImagePath,
+      HelpfulSuggestions helpfulSuggestions)
+      throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
+          InferredAuthRetrievalException, IOException {
+    ImageReference targetImageReference =
+        getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
+    TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
+    Containerizer containerizer = Containerizer.to(targetImage);
+
+    return processCommonConfiguration(
+        rawConfiguration, projectProperties, containerizer, targetImageReference, false);
+  }
+
+  public static PluginConfigurationProcessor processCommonConfigurationForRegistryImage(
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+      throws InferredAuthRetrievalException, InvalidImageReferenceException,
+          MainClassInferenceException, AppRootInvalidException, IOException {
+    Preconditions.checkNotNull(rawConfiguration.getToImage().orElse(null));
+
+    ImageReference targetImageReference =
+        ImageReference.parse(rawConfiguration.getToImage().orElse(null));
+    RegistryImage targetImage = RegistryImage.named(targetImageReference);
 
     EventDispatcher eventDispatcher =
         new DefaultEventDispatcher(projectProperties.getEventHandlers());
+    boolean isTargetImageCredentialPresent =
+        configureImageCredentials(
+            eventDispatcher,
+            targetImageReference,
+            PropertyNames.TO_AUTH_USERNAME,
+            PropertyNames.TO_AUTH_PASSWORD,
+            rawConfiguration.getToAuth(),
+            rawConfiguration.getToCredHelper(),
+            rawConfiguration::getInferredAuth,
+            targetImage,
+            "to.auth/<to><auth>");
+
+    PluginConfigurationProcessor processor =
+        processCommonConfiguration(
+            rawConfiguration,
+            projectProperties,
+            Containerizer.to(targetImage),
+            targetImageReference,
+            isTargetImageCredentialPresent);
+    processor.getJibContainerBuilder().setFormat(rawConfiguration.getImageFormat());
+    return processor;
+  }
+
+  @FunctionalInterface
+  @VisibleForTesting
+  static interface InferredAuthProvider {
+
+    Optional<AuthProperty> getInferredAuth(String registry) throws InferredAuthRetrievalException;
+  };
+
+  @VisibleForTesting
+  static PluginConfigurationProcessor processCommonConfiguration(
+      RawConfiguration rawConfiguration,
+      ProjectProperties projectProperties,
+      Containerizer containerizer,
+      ImageReference targetImageReference,
+      boolean isTargetImageCredentialPresent)
+      throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
+          InferredAuthRetrievalException, IOException {
+    JibSystemProperties.checkHttpTimeoutProperty();
+
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(projectProperties.getEventHandlers());
+
+    ImageReference baseImageReference =
+        ImageReference.parse(getBaseImage(rawConfiguration, projectProperties));
+
     if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
       eventDispatcher.dispatch(
           LogEvent.warn(
               "Authentication over HTTP is enabled. It is strongly recommended that you do not "
                   + "enable this on a public network!"));
     }
-    DefaultCredentialRetrievers defaultCredentialRetrievers =
-        DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(baseImageReference, eventDispatcher));
-    Optional<Credential> optionalFromCredential =
-        ConfigurationPropertyValidator.getImageCredential(
-            eventDispatcher,
-            PropertyNames.FROM_AUTH_USERNAME,
-            PropertyNames.FROM_AUTH_PASSWORD,
-            rawConfiguration.getFromAuth());
-    if (optionalFromCredential.isPresent()) {
-      // TODO: fix https://github.com/GoogleContainerTools/jib/issues/1177
-      // rawConfiguration.getFromAuth().getPropertyDescriptor() may cause NPE, so using
-      // "from.auth/<from><auth>" as a compromise.
-      defaultCredentialRetrievers.setKnownCredential(
-          optionalFromCredential.get(), "from.auth/<from><auth>");
-    } else {
-      // TODO: this is here only for getting values from Maven settings.xml. Consider passing a
-      // Supplier<AuthProperty> for an inferred credential as an additional argument, rather than
-      // having RawConfigurations.getInferredAuth().
-      // https://github.com/GoogleContainerTools/jib/pull/1163#discussion_r228389684
-      Optional<AuthProperty> optionalInferredAuth =
-          rawConfiguration.getInferredAuth(baseImageReference.getRegistry());
-      if (optionalInferredAuth.isPresent()) {
-        AuthProperty auth = optionalInferredAuth.get();
-        String username = Verify.verifyNotNull(auth.getUsername());
-        String password = Verify.verifyNotNull(auth.getPassword());
-        Credential credential = Credential.basic(username, password);
-        defaultCredentialRetrievers.setInferredCredential(credential, auth.getPropertyDescriptor());
-        optionalFromCredential = Optional.of(credential);
-      }
-    }
-    defaultCredentialRetrievers.setCredentialHelper(
-        rawConfiguration.getFromCredHelper().orElse(null));
 
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
-    defaultCredentialRetrievers.asList().forEach(baseImage::addCredentialRetriever);
+    boolean isBaseImageCredentialPresent =
+        configureImageCredentials(
+            eventDispatcher,
+            baseImageReference,
+            PropertyNames.FROM_AUTH_USERNAME,
+            PropertyNames.FROM_AUTH_PASSWORD,
+            rawConfiguration.getFromAuth(),
+            rawConfiguration.getFromCredHelper(),
+            rawConfiguration::getInferredAuth,
+            baseImage,
+            "from.auth/<from><auth>");
 
+    List<String> entrypoint = computeEntrypoint(rawConfiguration, projectProperties);
     JibContainerBuilder jibContainerBuilder =
         Jib.from(baseImage)
             .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
-            .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
+            .setEntrypoint(entrypoint)
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(rawConfiguration.getPorts()))
@@ -204,8 +266,71 @@ public class PluginConfigurationProcessor {
       jibContainerBuilder.setCreationTime(Instant.now());
     }
 
+    PluginConfigurationProcessor.configureContainerizer(
+        containerizer, rawConfiguration, projectProperties);
+
     return new PluginConfigurationProcessor(
-        jibContainerBuilder, baseImageReference, optionalFromCredential.isPresent());
+        jibContainerBuilder,
+        containerizer,
+        baseImageReference,
+        targetImageReference,
+        isBaseImageCredentialPresent,
+        isTargetImageCredentialPresent);
+  }
+
+  private static boolean configureImageCredentials(
+      EventDispatcher eventDispatcher,
+      ImageReference imageReference,
+      String usernamePropertyName,
+      String passwordPropertyName,
+      AuthProperty knownAuth,
+      Optional<String> credHelper,
+      InferredAuthProvider inferredAuthProvider,
+      RegistryImage registryImage,
+      String knownAuthSource)
+      throws FileNotFoundException, InferredAuthRetrievalException {
+    DefaultCredentialRetrievers defaultCredentialRetrievers =
+        DefaultCredentialRetrievers.init(
+            CredentialRetrieverFactory.forImage(imageReference, eventDispatcher));
+    Optional<Credential> optionalToCredential =
+        ConfigurationPropertyValidator.getImageCredential(
+            eventDispatcher, usernamePropertyName, passwordPropertyName, knownAuth);
+    boolean credentialPresent = optionalToCredential.isPresent();
+    if (optionalToCredential.isPresent()) {
+      // TODO: fix https://github.com/GoogleContainerTools/jib/issues/1177
+      // knownAuth.getPropertyDescriptor() may cause NPE. Fix it and remove knownAuthSource.
+      defaultCredentialRetrievers.setKnownCredential(optionalToCredential.get(), knownAuthSource);
+    } else {
+      Optional<AuthProperty> optionalInferredAuth =
+          inferredAuthProvider.getInferredAuth(imageReference.getRegistry());
+      credentialPresent = optionalInferredAuth.isPresent();
+      if (optionalInferredAuth.isPresent()) {
+        AuthProperty auth = optionalInferredAuth.get();
+        String username = Verify.verifyNotNull(auth.getUsername());
+        String password = Verify.verifyNotNull(auth.getPassword());
+        Credential credential = Credential.basic(username, password);
+        defaultCredentialRetrievers.setInferredCredential(credential, auth.getPropertyDescriptor());
+      }
+    }
+    credHelper.ifPresent(defaultCredentialRetrievers::setCredentialHelper);
+    defaultCredentialRetrievers.asList().forEach(registryImage::addCredentialRetriever);
+
+    return credentialPresent;
+  }
+
+  private static ImageReference getGeneratedTargetDockerTag(
+      RawConfiguration rawConfiguration,
+      ProjectProperties projectProperties,
+      HelpfulSuggestions helpfulSuggestions)
+      throws InvalidImageReferenceException {
+    return ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+        rawConfiguration.getToImage().orElse(null),
+        new DefaultEventDispatcher(projectProperties.getEventHandlers()),
+        projectProperties.getName(),
+        projectProperties.getVersion().equals("unspecified")
+            ? "latest"
+            : projectProperties.getVersion(),
+        helpfulSuggestions);
   }
 
   /**
@@ -217,13 +342,12 @@ public class PluginConfigurationProcessor {
    * @param projectProperties the project properties
    * @param toolName tool name to set
    */
-  public static void configureContainerizer(
+  private static void configureContainerizer(
       Containerizer containerizer,
       RawConfiguration rawConfiguration,
-      ProjectProperties projectProperties,
-      String toolName) {
+      ProjectProperties projectProperties) {
     containerizer
-        .setToolName(toolName)
+        .setToolName(projectProperties.getToolName())
         .setEventHandlers(projectProperties.getEventHandlers())
         .setAllowInsecureRegistries(rawConfiguration.getAllowInsecureRegistries())
         .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
@@ -238,26 +362,47 @@ public class PluginConfigurationProcessor {
 
   private final JibContainerBuilder jibContainerBuilder;
   private final ImageReference baseImageReference;
+  private final ImageReference targetImageReference;
   private final boolean isBaseImageCredentialPresent;
+  private final boolean isTargetImageCredentialPresent;
+  private final Containerizer containerizer;
 
   private PluginConfigurationProcessor(
       JibContainerBuilder jibContainerBuilder,
+      Containerizer containerizer,
       ImageReference baseImageReference,
-      boolean isBaseImageCredentialPresent) {
+      ImageReference targetImageReference,
+      boolean isBaseImageCredentialPresent,
+      boolean isTargetImageCredentialPresent) {
     this.jibContainerBuilder = jibContainerBuilder;
+    this.containerizer = containerizer;
     this.baseImageReference = baseImageReference;
+    this.targetImageReference = targetImageReference;
     this.isBaseImageCredentialPresent = isBaseImageCredentialPresent;
+    this.isTargetImageCredentialPresent = isTargetImageCredentialPresent;
   }
 
   public JibContainerBuilder getJibContainerBuilder() {
     return jibContainerBuilder;
   }
 
+  public Containerizer getContainerizer() {
+    return containerizer;
+  }
+
   public ImageReference getBaseImageReference() {
     return baseImageReference;
   }
 
+  public ImageReference getTargetImageReference() {
+    return targetImageReference;
+  }
+
   public boolean isBaseImageCredentialPresent() {
     return isBaseImageCredentialPresent;
+  }
+
+  public boolean isTargetImageCredentialPresent() {
+    return isTargetImageCredentialPresent;
   }
 }

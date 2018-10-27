@@ -105,6 +105,11 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
+  public String getToolName() {
+    return TOOL_NAME;
+  }
+
+  @Override
   public String getPluginName() {
     return PLUGIN_NAME;
   }
@@ -148,5 +153,15 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public boolean isWarProject() {
     return "war".equals(project.getPackaging());
+  }
+
+  @Override
+  public String getName() {
+    return project.getName();
+  }
+
+  @Override
+  public String getVersion() {
+    return project.getVersion();
   }
 }

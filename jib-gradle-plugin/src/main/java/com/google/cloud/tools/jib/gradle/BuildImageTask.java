@@ -16,32 +16,22 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.api.Containerizer;
-import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.AppRootInvalidException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
-import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
-import com.google.cloud.tools.jib.plugins.common.DefaultCredentialRetrievers;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
-import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -107,55 +97,26 @@ public class BuildImageTask extends DefaultTask implements JibTask {
                 "gradle jib --image <your image name>"));
       }
 
-      ImageReference targetImageReference = ImageReference.parse(jibExtension.getTo().getImage());
-
-      EventDispatcher eventDispatcher =
-          new DefaultEventDispatcher(projectProperties.getEventHandlers());
-      DefaultCredentialRetrievers defaultCredentialRetrievers =
-          DefaultCredentialRetrievers.init(
-              CredentialRetrieverFactory.forImage(targetImageReference, eventDispatcher));
-      Optional<Credential> optionalToCredential =
-          ConfigurationPropertyValidator.getImageCredential(
-              eventDispatcher,
-              PropertyNames.TO_AUTH_USERNAME,
-              PropertyNames.TO_AUTH_PASSWORD,
-              jibExtension.getTo().getAuth());
-      optionalToCredential.ifPresent(
-          toCredential ->
-              defaultCredentialRetrievers.setKnownCredential(toCredential, "jib.to.auth"));
-      defaultCredentialRetrievers.setCredentialHelper(jibExtension.getTo().getCredHelper());
-
-      RegistryImage targetImage = RegistryImage.named(targetImageReference);
-      defaultCredentialRetrievers.asList().forEach(targetImage::addCredentialRetriever);
-
       PluginConfigurationProcessor pluginConfigurationProcessor =
-          PluginConfigurationProcessor.processCommonConfiguration(
+          PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
               rawConfiguration, projectProperties);
 
-      JibContainerBuilder jibContainerBuilder =
-          pluginConfigurationProcessor
-              .getJibContainerBuilder()
-              // Only uses possibly non-Docker formats for build to registry.
-              .setFormat(jibExtension.getContainer().getFormat());
-
-      Containerizer containerizer = Containerizer.to(targetImage);
-      PluginConfigurationProcessor.configureContainerizer(
-          containerizer, rawConfiguration, projectProperties, GradleProjectProperties.TOOL_NAME);
-
+      ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension)
               .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
               .setBaseImageHasConfiguredCredentials(
                   pluginConfigurationProcessor.isBaseImageCredentialPresent())
               .setTargetImageReference(targetImageReference)
-              .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
+              .setTargetImageHasConfiguredCredentials(
+                  pluginConfigurationProcessor.isTargetImageCredentialPresent())
               .build();
 
       BuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
           .build(
-              jibContainerBuilder,
-              containerizer,
-              eventDispatcher,
+              pluginConfigurationProcessor.getJibContainerBuilder(),
+              pluginConfigurationProcessor.getContainerizer(),
+              new DefaultEventDispatcher(projectProperties.getEventHandlers()),
               projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
               helpfulSuggestions);
 

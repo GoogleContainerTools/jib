@@ -29,7 +29,6 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,6 +57,8 @@ public class PluginConfigurationProcessorTest {
 
   @Mock private RawConfiguration rawConfiguration;
   @Mock private ProjectProperties projectProperties;
+  @Mock private Containerizer containerizer;
+  @Mock private ImageReference targetImageReference;
   @Mock private AuthProperty authProperty;
   @Mock private Consumer<LogEvent> logger;
 
@@ -81,7 +82,7 @@ public class PluginConfigurationProcessorTest {
           MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            rawConfiguration, projectProperties);
+            rawConfiguration, projectProperties, containerizer, targetImageReference, false);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
@@ -95,13 +96,13 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testPluginConfigurationProcessor_warProjectBaseImage()
-      throws InvalidImageReferenceException, FileNotFoundException, MainClassInferenceException,
-          AppRootInvalidException, InferredAuthRetrievalException {
+      throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
+          InferredAuthRetrievalException, IOException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            rawConfiguration, projectProperties);
+            rawConfiguration, projectProperties, containerizer, targetImageReference, false);
 
     Assert.assertEquals(
         ImageReference.parse("gcr.io/distroless/java/jetty").toString(),
@@ -118,7 +119,7 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            rawConfiguration, projectProperties);
+            rawConfiguration, projectProperties, containerizer, targetImageReference, false);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
 
@@ -138,7 +139,7 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            rawConfiguration, projectProperties);
+            rawConfiguration, projectProperties, containerizer, targetImageReference, false);
 
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
     BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
@@ -157,7 +158,7 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            rawConfiguration, projectProperties);
+            rawConfiguration, projectProperties, containerizer, targetImageReference, false);
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
     BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
@@ -177,7 +178,7 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            rawConfiguration, projectProperties);
+            rawConfiguration, projectProperties, containerizer, targetImageReference, false);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
 
@@ -191,7 +192,7 @@ public class PluginConfigurationProcessorTest {
           MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            rawConfiguration, projectProperties);
+            rawConfiguration, projectProperties, containerizer, targetImageReference, false);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
 
@@ -209,7 +210,7 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            rawConfiguration, projectProperties);
+            rawConfiguration, projectProperties, containerizer, targetImageReference, false);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
 
@@ -231,7 +232,7 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            rawConfiguration, projectProperties);
+            rawConfiguration, projectProperties, containerizer, targetImageReference, false);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
 
@@ -251,7 +252,7 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            rawConfiguration, projectProperties);
+            rawConfiguration, projectProperties, containerizer, targetImageReference, false);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
 
@@ -274,7 +275,7 @@ public class PluginConfigurationProcessorTest {
 
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
-            rawConfiguration, projectProperties);
+            rawConfiguration, projectProperties, containerizer, targetImageReference, false);
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
 

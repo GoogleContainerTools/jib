@@ -126,6 +126,11 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
+  public String getToolName() {
+    return TOOL_NAME;
+  }
+
+  @Override
   public String getPluginName() {
     return PLUGIN_NAME;
   }
@@ -177,5 +182,15 @@ class GradleProjectProperties implements ProjectProperties {
     } else {
       return project.files(dependencyFileCollections);
     }
+  }
+
+  @Override
+  public String getName() {
+    return project.getName();
+  }
+
+  @Override
+  public String getVersion() {
+    return project.getVersion().toString();
   }
 }
