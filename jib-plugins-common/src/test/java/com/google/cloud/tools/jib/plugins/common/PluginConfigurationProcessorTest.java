@@ -30,6 +30,8 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
@@ -68,11 +70,23 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
 
+    Mockito.when(projectProperties.getToolName()).thenReturn("tool");
     Mockito.when(projectProperties.getJavaLayerConfigurations())
         .thenReturn(JavaLayerConfigurations.builder().build());
     Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");
     Mockito.when(projectProperties.getEventHandlers())
         .thenReturn(new EventHandlers().add(JibEventType.LOGGING, logger));
+    Mockito.when(projectProperties.getCacheDirectory()).thenReturn(Paths.get("cache"));
+
+    Mockito.when(containerizer.setToolName(Mockito.anyString())).thenReturn(containerizer);
+    Mockito.when(containerizer.setEventHandlers(Mockito.any(EventHandlers.class)))
+        .thenReturn(containerizer);
+    Mockito.when(containerizer.setAllowInsecureRegistries(Mockito.anyBoolean()))
+        .thenReturn(containerizer);
+    Mockito.when(containerizer.setBaseImageLayersCache(Mockito.any(Path.class)))
+        .thenReturn(containerizer);
+    Mockito.when(containerizer.setApplicationLayersCache(Mockito.any(Path.class)))
+        .thenReturn(containerizer);
   }
 
   /** Test with our default mocks, which try to mimic the bare Gradle configuration. */
