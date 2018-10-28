@@ -31,8 +31,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import org.apache.commons.lang3.StringUtils;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -145,8 +143,12 @@ class BuildImageStep
             HistoryEntry.builder()
                 .setCreationTimestamp(layerCreationTime)
                 .setAuthor("Jib")
-                .setCreatedBy(StringUtils.capitalize(buildAndCacheApplicationLayerStep.getLayerType()) +
-                              " created by " + buildConfiguration.getToolName() + ":" + ProjectInfo.VERSION)
+                .setCreatedBy(
+                    capitalizeFirstLetter(buildAndCacheApplicationLayerStep.getLayerType())
+                        + " created by "
+                        + buildConfiguration.getToolName()
+                        + ":"
+                        + ProjectInfo.VERSION)
                 .build());
       }
       if (containerConfiguration != null) {
@@ -163,6 +165,13 @@ class BuildImageStep
       // Gets the container configuration content descriptor.
       return imageBuilder.build();
     }
+  }
+
+  private static String capitalizeFirstLetter(String string) {
+    if (string.length() == 0) {
+      return string;
+    }
+    return Character.toUpperCase(string.charAt(0)) + string.substring(1);
   }
 
   /**

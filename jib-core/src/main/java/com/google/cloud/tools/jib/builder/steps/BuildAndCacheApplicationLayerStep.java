@@ -92,7 +92,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
     return layerType;
   }
 
-    @Override
+  @Override
   public CachedLayer call() throws IOException, CacheCorruptedException {
     String description = "Building " + layerType + " layer";
 
