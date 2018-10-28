@@ -31,6 +31,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import org.apache.commons.lang3.StringUtils;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -143,7 +145,8 @@ class BuildImageStep
             HistoryEntry.builder()
                 .setCreationTimestamp(layerCreationTime)
                 .setAuthor("Jib")
-                .setCreatedBy(buildConfiguration.getToolName() + ":" + ProjectInfo.VERSION)
+                .setCreatedBy(StringUtils.capitalize(buildAndCacheApplicationLayerStep.getLayerType()) +
+                              " created by " + buildConfiguration.getToolName() + ":" + ProjectInfo.VERSION)
                 .build());
       }
       if (containerConfiguration != null) {

@@ -31,10 +31,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.security.DigestException;
-import java.time.Instant;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,6 +38,12 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+
+import java.security.DigestException;
+import java.time.Instant;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.stream.Stream;
 
 /** Tests for {@link BuildImageStep}. */
 @RunWith(MockitoJUnitRunner.class)
@@ -53,7 +55,10 @@ public class BuildImageStepTest {
   @Mock private PullBaseImageStep mockPullBaseImageStep;
   @Mock private PullAndCacheBaseImageLayersStep mockPullAndCacheBaseImageLayersStep;
   @Mock private PullAndCacheBaseImageLayerStep mockPullAndCacheBaseImageLayerStep;
-  @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStep;
+  @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStepDependencies;
+  @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStepResources;
+  @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStepClasses;
+  @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStepExtraFiles;
 
   private DescriptorDigest testDescriptorDigest;
   private HistoryEntry nonEmptyLayerHistory;
@@ -141,8 +146,24 @@ public class BuildImageStepTest {
         .thenReturn(
             Futures.immediateFuture(
                 new PullBaseImageStep.BaseImageWithAuthorization(baseImage, null)));
-    Mockito.when(mockBuildAndCacheApplicationLayerStep.getFuture())
-        .thenReturn(Futures.immediateFuture(testCachedLayer));
+
+    Stream.of(
+            mockBuildAndCacheApplicationLayerStepClasses,
+            mockBuildAndCacheApplicationLayerStepDependencies,
+            mockBuildAndCacheApplicationLayerStepExtraFiles,
+            mockBuildAndCacheApplicationLayerStepResources)
+        .forEach(
+            layerStep ->
+                Mockito.when(layerStep.getFuture())
+                    .thenReturn(Futures.immediateFuture(testCachedLayer)));
+
+    Mockito.when(mockBuildAndCacheApplicationLayerStepClasses.getLayerType()).thenReturn("classes");
+    Mockito.when(mockBuildAndCacheApplicationLayerStepDependencies.getLayerType())
+        .thenReturn("dependencies");
+    Mockito.when(mockBuildAndCacheApplicationLayerStepExtraFiles.getLayerType())
+        .thenReturn("extra files");
+    Mockito.when(mockBuildAndCacheApplicationLayerStepResources.getLayerType())
+        .thenReturn("resources");
   }
 
   @Test
@@ -154,9 +175,9 @@ public class BuildImageStepTest {
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep));
+                mockBuildAndCacheApplicationLayerStepDependencies,
+                mockBuildAndCacheApplicationLayerStepResources,
+                mockBuildAndCacheApplicationLayerStepClasses));
     Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(
         testDescriptorDigest, image.getLayers().asList().get(0).getBlobDescriptor().getDigest());
@@ -176,9 +197,9 @@ public class BuildImageStepTest {
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep));
+                mockBuildAndCacheApplicationLayerStepDependencies,
+                mockBuildAndCacheApplicationLayerStepResources,
+                mockBuildAndCacheApplicationLayerStepClasses));
     Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(
         ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE", "MY_ENV", "MY_ENV_VALUE"),
@@ -209,9 +230,9 @@ public class BuildImageStepTest {
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep));
+                mockBuildAndCacheApplicationLayerStepDependencies,
+                mockBuildAndCacheApplicationLayerStepResources,
+                mockBuildAndCacheApplicationLayerStepClasses));
     Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
@@ -231,9 +252,9 @@ public class BuildImageStepTest {
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep));
+                mockBuildAndCacheApplicationLayerStepDependencies,
+                mockBuildAndCacheApplicationLayerStepResources,
+                mockBuildAndCacheApplicationLayerStepClasses));
     Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
@@ -253,9 +274,9 @@ public class BuildImageStepTest {
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep));
+                mockBuildAndCacheApplicationLayerStepDependencies,
+                mockBuildAndCacheApplicationLayerStepResources,
+                mockBuildAndCacheApplicationLayerStepClasses));
     Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals(ImmutableList.of("myEntrypoint"), image.getEntrypoint());
@@ -271,9 +292,10 @@ public class BuildImageStepTest {
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep,
-                mockBuildAndCacheApplicationLayerStep));
+                mockBuildAndCacheApplicationLayerStepDependencies,
+                mockBuildAndCacheApplicationLayerStepResources,
+                mockBuildAndCacheApplicationLayerStepClasses,
+                mockBuildAndCacheApplicationLayerStepExtraFiles));
     Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
 
     // Make sure history is as expected
@@ -282,11 +304,33 @@ public class BuildImageStepTest {
             .setCreationTimestamp(Instant.EPOCH)
             .setComment("auto-generated by Jib")
             .build();
-    HistoryEntry expectedApplicationLayerHistory =
+
+    HistoryEntry expectedApplicationLayerHistoryDependencies =
         HistoryEntry.builder()
             .setCreationTimestamp(Instant.EPOCH)
             .setAuthor("Jib")
-            .setCreatedBy("jib:null")
+            .setCreatedBy("Dependencies created by jib:null")
+            .build();
+
+    HistoryEntry expectedApplicationLayerHistoryResources =
+        HistoryEntry.builder()
+            .setCreationTimestamp(Instant.EPOCH)
+            .setAuthor("Jib")
+            .setCreatedBy("Resources created by jib:null")
+            .build();
+
+    HistoryEntry expectedApplicationLayerHistoryClasses =
+        HistoryEntry.builder()
+            .setCreationTimestamp(Instant.EPOCH)
+            .setAuthor("Jib")
+            .setCreatedBy("Classes created by jib:null")
+            .build();
+
+    HistoryEntry expectedApplicationLayerHistoryExtrafiles =
+        HistoryEntry.builder()
+            .setCreationTimestamp(Instant.EPOCH)
+            .setAuthor("Jib")
+            .setCreatedBy("Extra files created by jib:null")
             .build();
 
     // Base layers (1 non-empty propagated, 2 empty propagated, 2 non-empty generated)
@@ -297,11 +341,12 @@ public class BuildImageStepTest {
     Assert.assertEquals(expectedAddedBaseLayerHistory, image.getHistory().get(4));
 
     // Application layers (3 generated)
-    Assert.assertEquals(expectedApplicationLayerHistory, image.getHistory().get(5));
-    Assert.assertEquals(expectedApplicationLayerHistory, image.getHistory().get(6));
-    Assert.assertEquals(expectedApplicationLayerHistory, image.getHistory().get(7));
+    Assert.assertEquals(expectedApplicationLayerHistoryDependencies, image.getHistory().get(5));
+    Assert.assertEquals(expectedApplicationLayerHistoryResources, image.getHistory().get(6));
+    Assert.assertEquals(expectedApplicationLayerHistoryClasses, image.getHistory().get(7));
+    Assert.assertEquals(expectedApplicationLayerHistoryExtrafiles, image.getHistory().get(8));
 
     // Should be exactly 8 total
-    Assert.assertEquals(8, image.getHistory().size());
+    Assert.assertEquals(9, image.getHistory().size());
   }
 }
