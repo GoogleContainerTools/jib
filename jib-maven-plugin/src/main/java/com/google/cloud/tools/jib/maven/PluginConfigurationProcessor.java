@@ -118,14 +118,13 @@ class PluginConfigurationProcessor {
   static Path getExtraDirectoryPath(JibPluginConfiguration jibPluginConfiguration) {
     return jibPluginConfiguration
         .getExtraDirectoryPath()
-        .orElseGet(
-            () ->
-                Preconditions.checkNotNull(jibPluginConfiguration.getProject())
-                    .getBasedir()
-                    .toPath()
-                    .resolve("src")
-                    .resolve("main")
-                    .resolve("jib"));
+        .orElse(
+            Preconditions.checkNotNull(jibPluginConfiguration.getProject())
+                .getBasedir()
+                .toPath()
+                .resolve("src")
+                .resolve("main")
+                .resolve("jib"));
   }
 
   /**
