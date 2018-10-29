@@ -22,8 +22,6 @@ import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
-import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
@@ -153,19 +151,6 @@ class GradleProjectProperties implements ProjectProperties {
   @Override
   public boolean isWarProject() {
     return getWarTask(project) != null;
-  }
-
-  /**
-   * Tries to resolve the main class.
-   *
-   * @throws GradleException if resolving the main class fails.
-   */
-  String getMainClass(JibExtension jibExtension) {
-    try {
-      return MainClassResolver.resolveMainClass(jibExtension.getContainer().getMainClass(), this);
-    } catch (MainClassInferenceException ex) {
-      throw new GradleException(ex.getMessage(), ex);
-    }
   }
 
   /**

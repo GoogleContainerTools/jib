@@ -21,8 +21,6 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
-import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
@@ -157,20 +155,5 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public boolean isWarProject() {
     return "war".equals(project.getPackaging());
-  }
-
-  /**
-   * Tries to resolve the main class.
-   *
-   * @param jibPluginConfiguration the mojo configuration properties.
-   * @return the configured main class, or the inferred main class if none is configured.
-   * @throws MojoExecutionException if resolving the main class fails.
-   */
-  String getMainClass(JibPluginConfiguration jibPluginConfiguration) throws MojoExecutionException {
-    try {
-      return MainClassResolver.resolveMainClass(jibPluginConfiguration.getMainClass(), this);
-    } catch (MainClassInferenceException ex) {
-      throw new MojoExecutionException(ex.getMessage(), ex);
-    }
   }
 }

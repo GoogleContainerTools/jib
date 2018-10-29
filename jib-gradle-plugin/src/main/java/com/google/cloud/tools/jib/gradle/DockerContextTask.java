@@ -20,7 +20,11 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.plugins.common.AppRootInvalidException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
 import java.io.IOException;
@@ -100,10 +104,10 @@ public class DockerContextTask extends DefaultTask implements JibTask {
   }
 
   @TaskAction
-  public void generateDockerContext() {
+  public void generateDockerContext() throws MainClassInferenceException {
     Preconditions.checkNotNull(jibExtension);
-    Preconditions.checkNotNull(jibExtension.getFrom().getImage());
     JibSystemProperties.checkHttpTimeoutProperty();
+    TaskCommon.disableHttpLogging();
 
     if (!jibExtension.getExtraDirectory().getPermissions().isEmpty()) {
       getLogger()
@@ -112,30 +116,30 @@ public class DockerContextTask extends DefaultTask implements JibTask {
                   + "context generator - building using Docker may produce unexpected results.");
     }
 
-    // TODO: Instead of disabling logging, have authentication credentials be provided
-    PluginConfigurationProcessor.disableHttpLogging();
-
-    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
-    GradleProjectProperties gradleProjectProperties =
-        GradleProjectProperties.getForProject(
-            getProject(),
-            getLogger(),
-            jibExtension.getExtraDirectory().getPath(),
-            jibExtension.getExtraDirectory().getPermissions(),
-            appRoot);
-    String targetDir = getTargetDir();
-
-    List<String> entrypoint =
-        PluginConfigurationProcessor.computeEntrypoint(
-            getLogger(), jibExtension, gradleProjectProperties);
-
     try {
+      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
+
+      GradleProjectProperties projectProperties =
+          GradleProjectProperties.getForProject(
+              getProject(),
+              getLogger(),
+              jibExtension.getExtraDirectory().getPath(),
+              jibExtension.getExtraDirectory().getPermissions(),
+              appRoot);
+      RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
+      String targetDir = getTargetDir();
+
+      List<String> entrypoint =
+          PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties);
+      String baseImage =
+          PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
       ExposedPortsParser.parse(jibExtension.getContainer().getPorts());
 
-      new JavaDockerContextGenerator(gradleProjectProperties.getJavaLayerConfigurations())
-          .setBaseImage(jibExtension.getFrom().getImage())
+      new JavaDockerContextGenerator(projectProperties.getJavaLayerConfigurations())
+          .setBaseImage(baseImage)
           .setEntrypoint(entrypoint)
           .setProgramArguments(jibExtension.getContainer().getArgs())
           .setExposedPorts(jibExtension.getContainer().getPorts())
@@ -161,6 +165,10 @@ public class DockerContextTask extends DefaultTask implements JibTask {
               "Export Docker context failed",
               "check if the command-line option `--jibTargetDir` is set correctly"),
           ex);
+
+    } catch (AppRootInvalidException ex) {
+      throw new GradleException(
+          "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
     }
   }
 

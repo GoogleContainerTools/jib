@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -49,7 +48,8 @@ public class JibPluginTest {
           JibPlugin.BUILD_DOCKER_TASK_NAME,
           JibPlugin.DOCKER_CONTEXT_TASK_NAME,
           JibPlugin.BUILD_TAR_TASK_NAME);
-  @Rule public TemporaryFolder testProjectRoot = new TemporaryFolder();
+
+  @Rule public final TemporaryFolder testProjectRoot = new TemporaryFolder();
 
   @Test
   public void testCheckGradleVersion_pass() {
@@ -201,18 +201,6 @@ public class JibPluginTest {
             .getDependsOn()
             .iterator()
             .next());
-    Assert.assertEquals(
-        JibPlugin.DEFAULT_WAR_FROM_IMAGE,
-        ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
-            .getJib()
-            .getFrom()
-            .getImage());
-    Assert.assertEquals(
-        JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT,
-        ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
-            .getJib()
-            .getContainer()
-            .getAppRoot());
   }
 
   @Test
@@ -222,18 +210,6 @@ public class JibPluginTest {
     rootProject.getPluginManager().apply("java");
     rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
     ((ProjectInternal) rootProject).evaluate();
-    Assert.assertEquals(
-        JibPlugin.DEFAULT_FROM_IMAGE,
-        ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
-            .getJib()
-            .getFrom()
-            .getImage());
-    Assert.assertEquals(
-        JavaLayerConfigurations.DEFAULT_APP_ROOT,
-        ((BuildImageTask) rootProject.getTasks().getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME))
-            .getJib()
-            .getContainer()
-            .getAppRoot());
     TaskContainer tasks = rootProject.getTasks();
     try {
       tasks.getByPath(":" + JibPlugin.EXPLODED_WAR_TASK_NAME);
