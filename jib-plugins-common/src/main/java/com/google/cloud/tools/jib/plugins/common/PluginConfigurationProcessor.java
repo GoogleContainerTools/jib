@@ -158,14 +158,14 @@ public class PluginConfigurationProcessor {
     boolean isTargetImageCredentialPresent =
         configureCredentialRetrievers(
             eventDispatcher,
+            targetImage,
             targetImageReference,
             PropertyNames.TO_AUTH_USERNAME,
             PropertyNames.TO_AUTH_PASSWORD,
             rawConfiguration.getToAuth(),
-            rawConfiguration.getToCredHelper(),
+            "to.auth/<to><auth>",
             rawConfiguration::getInferredAuth,
-            targetImage,
-            "to.auth/<to><auth>");
+            rawConfiguration.getToCredHelper());
 
     PluginConfigurationProcessor processor =
         processCommonConfiguration(
@@ -205,14 +205,14 @@ public class PluginConfigurationProcessor {
     boolean isBaseImageCredentialPresent =
         configureCredentialRetrievers(
             eventDispatcher,
+            baseImage,
             baseImageReference,
             PropertyNames.FROM_AUTH_USERNAME,
             PropertyNames.FROM_AUTH_PASSWORD,
             rawConfiguration.getFromAuth(),
-            rawConfiguration.getFromCredHelper(),
+            "from.auth/<from><auth>",
             rawConfiguration::getInferredAuth,
-            baseImage,
-            "from.auth/<from><auth>");
+            rawConfiguration.getFromCredHelper());
 
     JibContainerBuilder jibContainerBuilder =
         Jib.from(baseImage)
@@ -278,14 +278,14 @@ public class PluginConfigurationProcessor {
 
   private static boolean configureCredentialRetrievers(
       EventDispatcher eventDispatcher,
+      RegistryImage registryImage,
       ImageReference imageReference,
       String usernamePropertyName,
       String passwordPropertyName,
       AuthProperty knownAuth,
-      Optional<String> credHelper,
+      String knownAuthSource,
       InferredAuthProvider inferredAuthProvider,
-      RegistryImage registryImage,
-      String knownAuthSource)
+      Optional<String> credHelper)
       throws FileNotFoundException, InferredAuthRetrievalException {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
