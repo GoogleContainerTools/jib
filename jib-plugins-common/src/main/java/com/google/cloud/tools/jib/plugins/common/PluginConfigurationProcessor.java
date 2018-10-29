@@ -183,7 +183,7 @@ public class PluginConfigurationProcessor {
     EventDispatcher eventDispatcher =
         new DefaultEventDispatcher(projectProperties.getEventHandlers());
     boolean isTargetImageCredentialPresent =
-        configureImageCredentials(
+        configureCredentialRetrievers(
             eventDispatcher,
             targetImageReference,
             PropertyNames.TO_AUTH_USERNAME,
@@ -238,7 +238,7 @@ public class PluginConfigurationProcessor {
 
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     boolean isBaseImageCredentialPresent =
-        configureImageCredentials(
+        configureCredentialRetrievers(
             eventDispatcher,
             baseImageReference,
             PropertyNames.FROM_AUTH_USERNAME,
@@ -278,7 +278,7 @@ public class PluginConfigurationProcessor {
         isTargetImageCredentialPresent);
   }
 
-  private static boolean configureImageCredentials(
+  private static boolean configureCredentialRetrievers(
       EventDispatcher eventDispatcher,
       ImageReference imageReference,
       String usernamePropertyName,
