@@ -36,6 +36,7 @@ import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -87,6 +88,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             jibExtension.getExtraDirectory().getPath(),
             jibExtension.getExtraDirectory().getPermissions(),
             appRoot);
+    Path buildOutput = getProject().getBuildDir().toPath();
 
     if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
       throw new GradleException(
@@ -142,6 +144,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
             .build();
 
     BuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
+        .writeImageDigest(buildOutput.resolve("jib-image.digest"))
         .build(
             jibContainerBuilder,
             containerizer,

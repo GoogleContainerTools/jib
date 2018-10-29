@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -89,6 +90,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             jibExtension.getExtraDirectory().getPath(),
             jibExtension.getExtraDirectory().getPermissions(),
             appRoot);
+    Path buildOutput = getProject().getBuildDir().toPath();
 
     GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
         new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
@@ -126,6 +128,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .build();
 
     BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
+        .writeImageDigest(buildOutput.resolve("jib-image.digest"))
         .build(
             jibContainerBuilder,
             containerizer,

@@ -105,6 +105,13 @@ public class DockerContextTask extends DefaultTask implements JibTask {
     Preconditions.checkNotNull(jibExtension.getFrom().getImage());
     JibSystemProperties.checkHttpTimeoutProperty();
 
+    if (!jibExtension.getExtraDirectory().getPermissions().isEmpty()) {
+      getLogger()
+          .warn(
+              "'jib.extraDirectory.permissions' configuration is not supported by Jib Docker "
+                  + "context generator - building using Docker may produce unexpected results.");
+    }
+
     // TODO: Instead of disabling logging, have authentication credentials be provided
     PluginConfigurationProcessor.disableHttpLogging();
 

@@ -152,7 +152,6 @@ public class JibPlugin implements Plugin<Project> {
             dockerContextTask.dependsOn(dependsOnTask);
             buildDockerTask.dependsOn(dependsOnTask);
             buildTarTask.dependsOn(dependsOnTask);
-            filesTask.dependsOn(dependsOnTask);
 
             // Find project dependencies and add a dependency to their assemble task. We make sure
             // to only add the dependency after BasePlugin is evaluated as otherwise the assemble
@@ -170,7 +169,6 @@ public class JibPlugin implements Plugin<Project> {
                         dockerContextTask.dependsOn(assembleTask);
                         buildDockerTask.dependsOn(assembleTask);
                         buildTarTask.dependsOn(assembleTask);
-                        filesTask.dependsOn(assembleTask);
                       });
             }
           } catch (UnknownTaskException ex) {

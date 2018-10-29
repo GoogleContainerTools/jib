@@ -32,6 +32,8 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
@@ -66,7 +68,13 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
     MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(getProject(), getLog(), getExtraDirectory(), appRoot);
+        MavenProjectProperties.getForProject(
+            getProject(),
+            getLog(),
+            PluginConfigurationProcessor.getExtraDirectoryPath(this),
+            PluginConfigurationProcessor.convertPermissionsList(getExtraDirectoryPermissions()),
+            appRoot);
+    Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
 
     try {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
@@ -102,6 +110,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               .build();
 
       BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
               jibContainerBuilder,
               containerizer,

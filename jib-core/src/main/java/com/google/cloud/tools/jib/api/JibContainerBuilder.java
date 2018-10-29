@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
@@ -24,7 +25,6 @@ import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
@@ -349,10 +349,10 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Builds the container(s).
+   * Builds the container.
    *
    * @param containerizer the {@link Containerizer} that configures how to containerize
-   * @return the built container(s)
+   * @return the built container
    * @throws CacheDirectoryCreationException if a directory to be used for the cache could not be
    *     created
    * @throws ExecutionException if an exception occurred during execution
@@ -362,11 +362,10 @@ public class JibContainerBuilder {
   public JibContainer containerize(Containerizer containerizer)
       throws InterruptedException, ExecutionException, IOException,
           CacheDirectoryCreationException {
-    configureBuildConfiguration(containerizer);
-    DescriptorDigest imageDigest =
-        containerizer.getTargetImage().toBuildSteps(buildConfigurationBuilder.build()).run();
-
-    return new JibContainer(imageDigest);
+    BuildConfiguration buildConfiguration =
+        toBuildConfiguration(BuildConfiguration.builder(), containerizer);
+    BuildResult result = containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();
+    return new JibContainer(result.getImageDigest(), result.getImageId());
   }
 
   /**
@@ -379,7 +378,8 @@ public class JibContainerBuilder {
    * @throws IOException if an I/O exception occurs
    */
   @VisibleForTesting
-  BuildConfiguration configureBuildConfiguration(Containerizer containerizer)
+  BuildConfiguration toBuildConfiguration(
+      BuildConfiguration.Builder buildConfigurationBuilder, Containerizer containerizer)
       throws CacheDirectoryCreationException, IOException {
     buildConfigurationBuilder
         .setTargetImageConfiguration(containerizer.getTargetImage().toImageConfiguration())
