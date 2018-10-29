@@ -6,7 +6,9 @@
 
 Jib Core is a Java library for building Docker and [OCI](https://github.com/opencontainers/image-spec) container images. It implements a general-purpose container builder that can be used to build containers without a Docker daemon, for any application. The implementation is pure Java.
 
-Jib is also available as plugins for Maven and Gradle. The plugins are specifically for building containers for JVM languages and separate the application into multiple layers to optimize for fast rebuilds.\
+*The API is currently in alpha and may change substantially.*
+
+Jib Core powers the popular Jib plugins for Maven and Gradle. The plugins build containers specifically for JVM languages and separate the application into multiple layers to optimize for fast rebuilds.\
 For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).\
 For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin).
 
