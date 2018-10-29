@@ -97,10 +97,7 @@ class LayerEntriesSelector {
       if (this == other) {
         return true;
       }
-      if (other == null) {
-        return false;
-      }
-      if (getClass() != other.getClass()) {
+      if (other == null || getClass() != other.getClass()) {
         return false;
       }
       LayerEntryTemplate otherLayerEntryTemplate = (LayerEntryTemplate) other;
