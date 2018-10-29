@@ -52,33 +52,6 @@ import javax.annotation.Nullable;
 public class PluginConfigurationProcessor {
 
   /**
-   * Gets the value of the {@code appRoot} parameter. If the parameter is empty, returns {@link
-   * JavaLayerConfigurations#DEFAULT_WEB_APP_ROOT} for WAR projects or {@link
-   * JavaLayerConfigurations#DEFAULT_APP_ROOT} for other projects.
-   *
-   * @param rawConfiguration raw configuration data
-   * @param projectProperties used for providing additional information
-   * @return the app root value
-   * @throws AppRootInvalidException if {@code appRoot} value is not an absolute Unix path
-   */
-  static AbsoluteUnixPath getAppRootChecked(
-      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
-      throws AppRootInvalidException {
-    String appRoot = rawConfiguration.getAppRoot();
-    if (appRoot.isEmpty()) {
-      appRoot =
-          projectProperties.isWarProject()
-              ? JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT
-              : JavaLayerConfigurations.DEFAULT_APP_ROOT;
-    }
-    try {
-      return AbsoluteUnixPath.get(appRoot);
-    } catch (IllegalArgumentException ex) {
-      throw new AppRootInvalidException(appRoot, appRoot, ex);
-    }
-  }
-
-  /**
    * Compute the container entrypoint, in this order:
    *
    * <ol>
@@ -205,13 +178,6 @@ public class PluginConfigurationProcessor {
     return processor;
   }
 
-  @FunctionalInterface
-  @VisibleForTesting
-  static interface InferredAuthProvider {
-
-    Optional<AuthProperty> getInferredAuth(String registry) throws InferredAuthRetrievalException;
-  };
-
   @VisibleForTesting
   static PluginConfigurationProcessor processCommonConfiguration(
       RawConfiguration rawConfiguration,
@@ -277,6 +243,40 @@ public class PluginConfigurationProcessor {
         isBaseImageCredentialPresent,
         isTargetImageCredentialPresent);
   }
+
+  /**
+   * Gets the value of the {@code appRoot} parameter. If the parameter is empty, returns {@link
+   * JavaLayerConfigurations#DEFAULT_WEB_APP_ROOT} for WAR projects or {@link
+   * JavaLayerConfigurations#DEFAULT_APP_ROOT} for other projects.
+   *
+   * @param rawConfiguration raw configuration data
+   * @param projectProperties used for providing additional information
+   * @return the app root value
+   * @throws AppRootInvalidException if {@code appRoot} value is not an absolute Unix path
+   */
+  @VisibleForTesting
+  static AbsoluteUnixPath getAppRootChecked(
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+      throws AppRootInvalidException {
+    String appRoot = rawConfiguration.getAppRoot();
+    if (appRoot.isEmpty()) {
+      appRoot =
+          projectProperties.isWarProject()
+              ? JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT
+              : JavaLayerConfigurations.DEFAULT_APP_ROOT;
+    }
+    try {
+      return AbsoluteUnixPath.get(appRoot);
+    } catch (IllegalArgumentException ex) {
+      throw new AppRootInvalidException(appRoot, appRoot, ex);
+    }
+  }
+
+  @FunctionalInterface
+  private static interface InferredAuthProvider {
+
+    Optional<AuthProperty> getInferredAuth(String registry) throws InferredAuthRetrievalException;
+  };
 
   private static boolean configureCredentialRetrievers(
       EventDispatcher eventDispatcher,
