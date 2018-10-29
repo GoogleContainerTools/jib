@@ -108,7 +108,7 @@ public class ContainerConfiguration {
         this.exposedPorts = null;
       } else {
         Preconditions.checkArgument(!exposedPorts.contains(null));
-        this.exposedPorts = ImmutableList.copyOf(exposedPorts);
+        this.exposedPorts = new ArrayList<>(exposedPorts);
       }
       return this;
     }
@@ -132,7 +132,7 @@ public class ContainerConfiguration {
       } else {
         Preconditions.checkArgument(!Iterables.any(labels.keySet(), Objects::isNull));
         Preconditions.checkArgument(!Iterables.any(labels.values(), Objects::isNull));
-        this.labels = ImmutableMap.copyOf(labels);
+        this.labels = new HashMap<>(labels);
       }
       return this;
     }
@@ -183,9 +183,9 @@ public class ContainerConfiguration {
           creationTime,
           entrypoint,
           programArguments,
-          ImmutableMap.copyOf(environmentMap),
-          ImmutableList.copyOf(exposedPorts),
-          ImmutableMap.copyOf(labels),
+          environmentMap == null ? null : ImmutableMap.copyOf(environmentMap),
+          exposedPorts == null ? null : ImmutableList.copyOf(exposedPorts),
+          labels == null ? null : ImmutableMap.copyOf(labels),
           user);
     }
 

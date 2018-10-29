@@ -58,12 +58,18 @@ public class JibContainerBuilder {
 
   private final ContainerConfiguration.Builder containerConfigurationBuilder =
       ContainerConfiguration.builder();
-  private final BuildConfiguration.Builder buildConfigurationBuilder = BuildConfiguration.builder();
+  private final BuildConfiguration.Builder buildConfigurationBuilder;
 
   private List<LayerConfiguration> layerConfigurations = new ArrayList<>();
 
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(SourceImage baseImage) {
+    this(baseImage, BuildConfiguration.builder());
+  }
+
+  @VisibleForTesting
+  JibContainerBuilder(SourceImage baseImage, BuildConfiguration.Builder buildConfigurationBuilder) {
+    this.buildConfigurationBuilder = buildConfigurationBuilder;
     buildConfigurationBuilder.setBaseImageConfiguration(baseImage.toImageConfiguration());
   }
 
@@ -362,8 +368,7 @@ public class JibContainerBuilder {
   public JibContainer containerize(Containerizer containerizer)
       throws InterruptedException, ExecutionException, IOException,
           CacheDirectoryCreationException {
-    BuildConfiguration buildConfiguration =
-        toBuildConfiguration(BuildConfiguration.builder(), containerizer);
+    BuildConfiguration buildConfiguration = toBuildConfiguration(containerizer);
     BuildResult result = containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();
     return new JibContainer(result.getImageDigest(), result.getImageId());
   }
@@ -371,15 +376,13 @@ public class JibContainerBuilder {
   /**
    * Builds a {@link BuildConfiguration} using this and a {@link Containerizer}.
    *
-   * @param buildConfigurationBuilder the {@link BuildConfiguration.Builder} to use
    * @param containerizer the {@link Containerizer}
    * @return the {@link BuildConfiguration}
    * @throws CacheDirectoryCreationException if a cache directory could not be created
    * @throws IOException if an I/O exception occurs
    */
   @VisibleForTesting
-  BuildConfiguration toBuildConfiguration(
-      BuildConfiguration.Builder buildConfigurationBuilder, Containerizer containerizer)
+  BuildConfiguration toBuildConfiguration(Containerizer containerizer)
       throws CacheDirectoryCreationException, IOException {
     buildConfigurationBuilder
         .setTargetImageConfiguration(containerizer.getTargetImage().toImageConfiguration())

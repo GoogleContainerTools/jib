@@ -51,9 +51,7 @@ public class PluginConfigurationProcessorTest {
   private static BuildConfiguration getBuildConfiguration(JibContainerBuilder jibContainerBuilder)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     return JibContainerBuilderTestHelper.toBuildConfiguration(
-        jibContainerBuilder,
-        BuildConfiguration.builder(),
-        Containerizer.to(RegistryImage.named("ignored")));
+        jibContainerBuilder, Containerizer.to(RegistryImage.named("ignored")));
   }
 
   @Mock private RawConfiguration rawConfiguration;
