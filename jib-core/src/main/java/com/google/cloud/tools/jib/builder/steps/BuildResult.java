@@ -44,11 +44,14 @@ public class BuildResult {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) return true;
-    if (obj == null) return false;
-    if (getClass() != obj.getClass()) return false;
-    BuildResult otherBuildResult = (BuildResult) obj;
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
+    }
+    if (!(other instanceof BuildResult)) {
+      return false;
+    }
+    BuildResult otherBuildResult = (BuildResult) other;
     return imageDigest.equals(otherBuildResult.imageDigest)
         && imageId.equals(otherBuildResult.imageId);
   }
