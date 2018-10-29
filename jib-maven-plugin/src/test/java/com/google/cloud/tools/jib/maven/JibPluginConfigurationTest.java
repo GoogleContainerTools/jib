@@ -140,9 +140,9 @@ public class JibPluginConfigurationTest {
     System.setProperty("jib.extraDirectory.permissions", "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();
-    Assert.assertEquals("/test/file1", permissions.get(0).getFile());
-    Assert.assertEquals("123", permissions.get(0).getMode());
-    Assert.assertEquals("/another/file", permissions.get(1).getFile());
-    Assert.assertEquals("456", permissions.get(1).getMode());
+    Assert.assertEquals("/test/file1", permissions.get(0).getFile().get());
+    Assert.assertEquals("123", permissions.get(0).getMode().get());
+    Assert.assertEquals("/another/file", permissions.get(1).getFile().get());
+    Assert.assertEquals("456", permissions.get(1).getMode().get());
   }
 }

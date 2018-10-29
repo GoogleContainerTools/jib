@@ -140,13 +140,13 @@ class PluginConfigurationProcessor {
       List<PermissionConfiguration> inputList) {
     HashMap<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
     for (PermissionConfiguration permission : inputList) {
-      if (permission.getFile() == null || permission.getMode() == null) {
+      if (!permission.getFile().isPresent() || !permission.getMode().isPresent()) {
         throw new IllegalArgumentException(
             "Incomplete <permission> configuration; requires <file> and <mode> fields to both be "
                 + "non-null.");
       }
-      AbsoluteUnixPath key = AbsoluteUnixPath.get(permission.getFile());
-      FilePermissions value = FilePermissions.fromOctalString(permission.getMode());
+      AbsoluteUnixPath key = AbsoluteUnixPath.get(permission.getFile().get());
+      FilePermissions value = FilePermissions.fromOctalString(permission.getMode().get());
       permissionsMap.put(key, value);
     }
     return permissionsMap;

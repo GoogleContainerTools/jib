@@ -106,14 +106,12 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       this.mode = mode;
     }
 
-    @Nullable
-    String getFile() {
-      return file;
+    Optional<String> getFile() {
+      return Optional.ofNullable(file);
     }
 
-    @Nullable
-    String getMode() {
-      return mode;
+    Optional<String> getMode() {
+      return Optional.ofNullable(mode);
     }
   }
 
