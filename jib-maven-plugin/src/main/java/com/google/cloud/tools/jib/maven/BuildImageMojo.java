@@ -37,6 +37,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -95,6 +97,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             PluginConfigurationProcessor.getExtraDirectoryPath(this),
             PluginConfigurationProcessor.convertPermissionsList(getExtraDirectoryPermissions()),
             appRoot);
+    Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
         PluginConfigurationProcessor.processCommonConfiguration(
@@ -157,6 +160,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     try {
       BuildStepsRunner.forBuildImage(targetImageReference, getTargetImageAdditionalTags())
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
               jibContainerBuilder,
               containerizer,

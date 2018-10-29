@@ -68,6 +68,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
             PluginConfigurationProcessor.getExtraDirectoryPath(this),
             PluginConfigurationProcessor.convertPermissionsList(getExtraDirectoryPermissions()),
             appRoot);
+    Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
 
     try {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
@@ -82,8 +83,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
               getProject().getName(),
               getProject().getVersion(),
               mavenHelpfulSuggestionsBuilder.build());
-      Path tarOutputPath =
-          Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.tar");
+      Path tarOutputPath = buildOutput.resolve("jib-image.tar");
       TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarOutputPath);
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
@@ -105,6 +105,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
               .build();
 
       BuildStepsRunner.forBuildTar(tarOutputPath)
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
               jibContainerBuilder,
               containerizer,

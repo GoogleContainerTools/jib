@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
+import java.security.DigestException;
 import java.time.Instant;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
@@ -38,9 +39,12 @@ public class BuildTarMojoIntegrationTest {
   /**
    * Builds and runs jib:buildTar on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
+   *
+   * @throws DigestException
    */
   @Test
-  public void testExecute_simple() throws VerificationException, IOException, InterruptedException {
+  public void testExecute_simple()
+      throws VerificationException, IOException, InterruptedException, DigestException {
     String targetImage = "simpleimage:maven" + System.nanoTime();
 
     Instant before = Instant.now();
@@ -51,6 +55,8 @@ public class BuildTarMojoIntegrationTest {
 
     verifier.executeGoal("jib:" + BuildTarMojo.GOAL_NAME);
     verifier.verifyErrorFreeLog();
+
+    BuildImageMojoIntegrationTest.assertImageDigest(simpleTestProject.getProjectRoot());
 
     new Command(
             "docker",
