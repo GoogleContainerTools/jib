@@ -41,6 +41,7 @@ import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -151,7 +152,9 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
               .build();
 
+      Path buildOutput = getProject().getBuildDir().toPath();
       BuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
               jibContainerBuilder,
               containerizer,

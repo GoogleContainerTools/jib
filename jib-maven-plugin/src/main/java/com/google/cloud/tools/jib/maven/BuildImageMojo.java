@@ -44,6 +44,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Verify;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Optional;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -163,7 +165,9 @@ public class BuildImageMojo extends JibPluginConfiguration {
               .setTargetImageHasConfiguredCredentials(optionalToCredential.isPresent())
               .build();
 
+      Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
       BuildStepsRunner.forBuildImage(targetImageReference, getTargetImageAdditionalTags())
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
               jibContainerBuilder,
               containerizer,

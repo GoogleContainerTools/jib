@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - `jib.extraDirectory` closure with a `path` and `permissions` field ([#794](https://github.com/GoogleContainerTools/jib/issues/794))
   - `jib.extraDirectory.path` configures the extra layer directory (still also configurable via `jib.extraDirectory = file(...)`)
   - `jib.extraDirectory.permissions` is a map from absolute path on container to the file's permission bits (represented as an octal string)
+- Image digest is now written to `build/jib-image.digest` ([#933](https://github.com/GoogleContainerTools/jib/issues/933))
   
 ### Changed
 

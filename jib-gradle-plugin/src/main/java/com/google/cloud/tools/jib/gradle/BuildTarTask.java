@@ -37,7 +37,6 @@ import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -95,16 +94,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
    */
   @OutputFile
   public String getOutputFile() {
-    return getTargetPath();
-  }
-
-  /**
-   * Returns the output directory for the tarball. By default, it is {@code build/jib-image.tar}.
-   *
-   * @return the output directory
-   */
-  private String getTargetPath() {
-    return getProject().getBuildDir().toPath().resolve("jib-image.tar").toString();
+    return getTargetPath().toString();
   }
 
   @TaskAction
@@ -142,7 +132,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
                   : getProject().getVersion().toString(),
               gradleHelpfulSuggestionsBuilder.build());
 
-      Path tarOutputPath = Paths.get(getTargetPath());
+      Path tarOutputPath = getTargetPath();
       TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarOutputPath);
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
@@ -164,7 +154,9 @@ public class BuildTarTask extends DefaultTask implements JibTask {
               .setTargetImageReference(targetImageReference)
               .build();
 
+      Path buildOutput = getProject().getBuildDir().toPath();
       BuildStepsRunner.forBuildTar(tarOutputPath)
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
               jibContainerBuilder,
               containerizer,
@@ -182,5 +174,14 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   public BuildTarTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
+  }
+
+  /**
+   * Returns the output directory for the tarball. By default, it is {@code build/jib-image.tar}.
+   *
+   * @return the output directory
+   */
+  private Path getTargetPath() {
+    return getProject().getBuildDir().toPath().resolve("jib-image.tar");
   }
 }

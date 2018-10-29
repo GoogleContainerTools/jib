@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
@@ -25,7 +26,6 @@ import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
@@ -130,13 +130,13 @@ public class BuildStepsIntegrationTest {
                 .build());
 
     long lastTime = System.nanoTime();
-    DescriptorDigest imageDigest1 = buildImageSteps.run();
+    BuildResult image1 = buildImageSteps.run();
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
     lastTime = System.nanoTime();
-    DescriptorDigest imageDigest2 = buildImageSteps.run();
+    BuildResult image2 = buildImageSteps.run();
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
-    Assert.assertEquals(imageDigest1, imageDigest2);
+    Assert.assertEquals(image1, image2);
 
     String imageReference = "localhost:5000/testimage:testtag";
     localRegistry.pull(imageReference);
@@ -144,7 +144,7 @@ public class BuildStepsIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
 
-    String imageReferenceByDigest = "localhost:5000/testimage@" + imageDigest1;
+    String imageReferenceByDigest = "localhost:5000/testimage@" + image1.getImageDigest();
     localRegistry.pull(imageReferenceByDigest);
     assertDockerInspect(imageReferenceByDigest);
     Assert.assertEquals(

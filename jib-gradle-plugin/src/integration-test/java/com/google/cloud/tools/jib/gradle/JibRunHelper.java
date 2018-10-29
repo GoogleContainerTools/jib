@@ -17,9 +17,14 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.DigestException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -33,7 +38,7 @@ import org.junit.Assert;
 public class JibRunHelper {
 
   static String buildAndRun(TestProject testProject, String imageReference)
-      throws IOException, InterruptedException {
+      throws IOException, InterruptedException, DigestException {
     return buildAndRun(testProject, imageReference, "build.gradle");
   }
 
@@ -42,11 +47,12 @@ public class JibRunHelper {
       String imageReference,
       String gradleBuildFile,
       String... extraRunArguments)
-      throws IOException, InterruptedException {
+      throws IOException, InterruptedException, DigestException {
     BuildResult buildResult =
         testProject.build(
             "clean", "jib", "-D_TARGET_IMAGE=" + imageReference, "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
+    assertImageDigest(testProject.getProjectRoot());
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     return pullAndRunBuiltImage(imageReference, extraRunArguments);
@@ -54,7 +60,7 @@ public class JibRunHelper {
 
   static void buildAndRunAdditionalTag(
       TestProject testProject, String imageReference, String additionalTag, String expectedOutput)
-      throws InvalidImageReferenceException, IOException, InterruptedException {
+      throws InvalidImageReferenceException, IOException, InterruptedException, DigestException {
     BuildResult buildResult =
         testProject.build(
             "clean",
@@ -62,6 +68,7 @@ public class JibRunHelper {
             "-D_TARGET_IMAGE=" + imageReference,
             "-D_ADDITIONAL_TAG=" + additionalTag);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
+    assertImageDigest(testProject.getProjectRoot());
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     String additionalImageReference =
@@ -77,7 +84,7 @@ public class JibRunHelper {
 
   static void buildToDockerDaemon(
       TestProject testProject, String imageReference, String gradleBuildFile)
-      throws IOException, InterruptedException {
+      throws IOException, InterruptedException, DigestException {
     BuildResult buildResult =
         testProject.build(
             "clean",
@@ -85,6 +92,7 @@ public class JibRunHelper {
             "-D_TARGET_IMAGE=" + imageReference,
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
+    assertImageDigest(testProject.getProjectRoot());
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     String history = new Command("docker", "history", imageReference).run();
@@ -92,7 +100,7 @@ public class JibRunHelper {
   }
 
   static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
-      throws IOException, InterruptedException {
+      throws IOException, InterruptedException, DigestException {
     buildToDockerDaemon(testProject, imageReference, "build.gradle");
     return new Command("docker", "run", "--rm", imageReference).run();
   }
@@ -120,6 +128,13 @@ public class JibRunHelper {
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
+  }
+
+  static void assertImageDigest(Path projectRoot) throws IOException, DigestException {
+    Path digestPath = projectRoot.resolve("build/jib-image.digest");
+    Assert.assertTrue(Files.exists(digestPath));
+    String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
+    DescriptorDigest.fromDigest(digest);
   }
 
   /**
