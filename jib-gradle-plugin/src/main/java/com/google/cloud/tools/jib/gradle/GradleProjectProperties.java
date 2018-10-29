@@ -16,12 +16,12 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
@@ -32,8 +32,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
@@ -69,11 +71,7 @@ class GradleProjectProperties implements ProjectProperties {
           project,
           makeEventHandlers(logger),
           GradleLayerConfigurations.getForProject(
-              project,
-              logger,
-              extraDirectory,
-              ConfigurationPropertyValidator.convertPermissionsMap(permissions),
-              appRoot));
+              project, logger, extraDirectory, convertPermissionsMap(permissions), appRoot));
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
@@ -192,5 +190,24 @@ class GradleProjectProperties implements ProjectProperties {
     } else {
       return project.files(dependencyFileCollections);
     }
+  }
+
+  /**
+   * Validates and converts a {@code String->String} file-path-to-file-permissions map to an
+   * equivalent {@code AbsoluteUnixPath->FilePermission} map.
+   *
+   * @param stringMap the map to convert (example entry: {@code "/path/on/container" -> "755"})
+   * @return the converted map
+   */
+  @VisibleForTesting
+  static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsMap(
+      Map<String, String> stringMap) {
+    Map<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
+    for (Entry<String, String> entry : stringMap.entrySet()) {
+      AbsoluteUnixPath key = AbsoluteUnixPath.get(entry.getKey());
+      FilePermissions value = FilePermissions.fromOctalString(entry.getValue());
+      permissionsMap.put(key, value);
+    }
+    return permissionsMap;
   }
 }

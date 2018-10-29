@@ -76,6 +76,19 @@
             </labels>
             <format>Docker</format>
           </container>
+          <extraDirectory>
+            <path>${project.basedir}/src/main/jib-custom</path>
+            <permissions>
+              <permission>
+                <file>/foo</file>
+                <mode>755</mode>
+              </permission>
+              <permission>
+                <file>/bar/cat</file>
+                <mode>777</mode>
+              </permission>
+            </permissions>
+          </extraDirectory>
           <allowInsecureRegistries>true</allowInsecureRegistries>
           <useOnlyProjectCache>true</useOnlyProjectCache>
         </configuration>
