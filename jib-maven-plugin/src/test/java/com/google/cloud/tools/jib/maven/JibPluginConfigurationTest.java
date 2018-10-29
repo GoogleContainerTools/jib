@@ -135,7 +135,8 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
 
     System.setProperty("jib.extraDirectory.path", "custom-jib");
-    Assert.assertEquals(Paths.get("custom-jib"), testPluginConfiguration.getExtraDirectoryPath());
+    Assert.assertEquals(
+        Paths.get("custom-jib"), testPluginConfiguration.getExtraDirectoryPath().get());
     System.setProperty("jib.extraDirectory.permissions", "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();

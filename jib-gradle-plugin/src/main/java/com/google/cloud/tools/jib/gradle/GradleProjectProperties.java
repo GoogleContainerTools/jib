@@ -27,12 +27,12 @@ import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -202,12 +202,12 @@ class GradleProjectProperties implements ProjectProperties {
   @VisibleForTesting
   static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsMap(
       Map<String, String> inputMap) {
-    ImmutableMap.Builder<AbsoluteUnixPath, FilePermissions> permissionsMap = ImmutableMap.builder();
+    HashMap<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
     for (Entry<String, String> entry : inputMap.entrySet()) {
       AbsoluteUnixPath key = AbsoluteUnixPath.get(entry.getKey());
       FilePermissions value = FilePermissions.fromOctalString(entry.getValue());
       permissionsMap.put(key, value);
     }
-    return permissionsMap.build();
+    return permissionsMap;
   }
 }

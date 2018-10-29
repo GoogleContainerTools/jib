@@ -29,6 +29,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -463,13 +464,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the configured extra directory path
    */
-  @Nullable
-  Path getExtraDirectoryPath() {
+  Optional<Path> getExtraDirectoryPath() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH) != null) {
-      return Paths.get(System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH));
+      return Optional.of(Paths.get(System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH)));
     }
-    return extraDirectory.path == null ? null : extraDirectory.path.toPath();
+    return extraDirectory.path == null
+        ? Optional.empty()
+        : Optional.of(extraDirectory.path.toPath());
   }
 
   /**

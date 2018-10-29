@@ -40,7 +40,8 @@ class MavenLayerConfigurations {
    *
    * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
-   * @param permissions map from path on container to file permissions for extra-layer files
+   * @param extraDirectoryPermissions map from path on container to file permissions for extra-layer
+   *     files
    * @param appRoot root directory in the image where the app will be placed
    * @return a {@link JavaLayerConfigurations} for the project
    * @throws IOException if collecting the project files fails
@@ -48,13 +49,13 @@ class MavenLayerConfigurations {
   static JavaLayerConfigurations getForProject(
       MavenProject project,
       Path extraDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> permissions,
+      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
       AbsoluteUnixPath appRoot)
       throws IOException {
     if ("war".equals(project.getPackaging())) {
-      return getForWarProject(project, extraDirectory, permissions, appRoot);
+      return getForWarProject(project, extraDirectory, extraDirectoryPermissions, appRoot);
     } else {
-      return getForNonWarProject(project, extraDirectory, permissions, appRoot);
+      return getForNonWarProject(project, extraDirectory, extraDirectoryPermissions, appRoot);
     }
   }
 
@@ -63,7 +64,8 @@ class MavenLayerConfigurations {
    *
    * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
-   * @param permissions map from path on container to file permissions for extra-layer files
+   * @param extraDirectoryPermissions map from path on container to file permissions for extra-layer
+   *     files
    * @param appRoot root directory in the image where the app will be placed
    * @return a {@link JavaLayerConfigurations} for the project
    * @throws IOException if collecting the project files fails
@@ -71,7 +73,7 @@ class MavenLayerConfigurations {
   private static JavaLayerConfigurations getForNonWarProject(
       MavenProject project,
       Path extraDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> permissions,
+      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
       AbsoluteUnixPath appRoot)
       throws IOException {
 
@@ -111,7 +113,7 @@ class MavenLayerConfigurations {
           extraDirectory,
           path -> true,
           AbsoluteUnixPath.get("/"),
-          permissions);
+          extraDirectoryPermissions);
     }
 
     return layerBuilder.build();
@@ -122,7 +124,8 @@ class MavenLayerConfigurations {
    *
    * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
-   * @param permissions map from path on container to file permissions for extra-layer files
+   * @param extraDirectoryPermissions map from path on container to file permissions for extra-layer
+   *     files
    * @param appRoot root directory in the image where the app will be placed
    * @return a {@link JavaLayerConfigurations} for the project
    * @throws IOException if collecting the project files fails
@@ -130,7 +133,7 @@ class MavenLayerConfigurations {
   private static JavaLayerConfigurations getForWarProject(
       MavenProject project,
       Path extraDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> permissions,
+      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
       AbsoluteUnixPath appRoot)
       throws IOException {
 
@@ -140,9 +143,8 @@ class MavenLayerConfigurations {
     // at build.getFinalName().
     Path explodedWarPath =
         Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
-    // TODO: Replace Collections.emptyMap() with configured permissions
     return JavaLayerConfigurationsHelper.fromExplodedWar(
-        explodedWarPath, appRoot, extraDirectory, permissions);
+        explodedWarPath, appRoot, extraDirectory, extraDirectoryPermissions);
   }
 
   private MavenLayerConfigurations() {}

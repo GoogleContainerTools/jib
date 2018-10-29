@@ -36,7 +36,7 @@ public class JavaLayerConfigurationsHelper {
    * @param explodedWar the exploded WAR directory
    * @param appRoot root directory in the image where the app will be placed
    * @param extraFilesDirectory path to the source directory for the extra files layer
-   * @param permissions map from path on container to file permissions
+   * @param extraDirectoryPermissions map from path on container to file permissions
    * @return {@link JavaLayerConfigurations} for the layers for the exploded WAR
    * @throws IOException if adding layer contents fails
    */
@@ -44,7 +44,7 @@ public class JavaLayerConfigurationsHelper {
       Path explodedWar,
       AbsoluteUnixPath appRoot,
       Path extraFilesDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> permissions)
+      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions)
       throws IOException {
     Path webInfLib = explodedWar.resolve("WEB-INF/lib");
     Path webInfClasses = explodedWar.resolve("WEB-INF/classes");
@@ -86,7 +86,7 @@ public class JavaLayerConfigurationsHelper {
           extraFilesDirectory,
           path -> true,
           AbsoluteUnixPath.get("/"),
-          permissions);
+          extraDirectoryPermissions);
     }
 
     return layerBuilder.build();

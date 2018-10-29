@@ -40,10 +40,10 @@ import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -116,16 +116,16 @@ class PluginConfigurationProcessor {
    * @return the resolved extra directory
    */
   static Path getExtraDirectoryPath(JibPluginConfiguration jibPluginConfiguration) {
-    Path extraDirectory = jibPluginConfiguration.getExtraDirectoryPath();
-    if (extraDirectory == null) {
-      return Preconditions.checkNotNull(jibPluginConfiguration.getProject())
-          .getBasedir()
-          .toPath()
-          .resolve("src")
-          .resolve("main")
-          .resolve("jib");
-    }
-    return extraDirectory;
+    return jibPluginConfiguration
+        .getExtraDirectoryPath()
+        .orElseGet(
+            () ->
+                Preconditions.checkNotNull(jibPluginConfiguration.getProject())
+                    .getBasedir()
+                    .toPath()
+                    .resolve("src")
+                    .resolve("main")
+                    .resolve("jib"));
   }
 
   /**
@@ -138,7 +138,7 @@ class PluginConfigurationProcessor {
   @VisibleForTesting
   static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsList(
       List<PermissionConfiguration> inputList) {
-    ImmutableMap.Builder<AbsoluteUnixPath, FilePermissions> permissionsMap = ImmutableMap.builder();
+    HashMap<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
     for (PermissionConfiguration permission : inputList) {
       if (permission.getFile() == null || permission.getMode() == null) {
         throw new IllegalArgumentException(
@@ -149,7 +149,7 @@ class PluginConfigurationProcessor {
       FilePermissions value = FilePermissions.fromOctalString(permission.getMode());
       permissionsMap.put(key, value);
     }
-    return permissionsMap.build();
+    return permissionsMap;
   }
 
   /** Disables annoying Apache HTTP client logging. */
