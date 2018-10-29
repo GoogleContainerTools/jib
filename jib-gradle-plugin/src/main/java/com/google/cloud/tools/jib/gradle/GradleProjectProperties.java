@@ -196,14 +196,14 @@ class GradleProjectProperties implements ProjectProperties {
    * Validates and converts a {@code String->String} file-path-to-file-permissions map to an
    * equivalent {@code AbsoluteUnixPath->FilePermission} map.
    *
-   * @param inputMap the map to convert
+   * @param stringMap the map to convert (example entry: {@code "/path/on/container" -> "755"})
    * @return the converted map
    */
   @VisibleForTesting
   static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsMap(
-      Map<String, String> inputMap) {
-    HashMap<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
-    for (Entry<String, String> entry : inputMap.entrySet()) {
+      Map<String, String> stringMap) {
+    Map<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
+    for (Entry<String, String> entry : stringMap.entrySet()) {
       AbsoluteUnixPath key = AbsoluteUnixPath.get(entry.getKey());
       FilePermissions value = FilePermissions.fromOctalString(entry.getValue());
       permissionsMap.put(key, value);

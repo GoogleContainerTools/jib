@@ -94,7 +94,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   public static class PermissionConfiguration {
 
     @Nullable @Parameter private String file;
-
     @Nullable @Parameter private String mode;
 
     // Need default constructor for Maven
@@ -178,6 +177,12 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
 
+    /**
+     * Allows users to configure {@code path} using just {@code <extraDirectory>} instead of {@code
+     * <extraDirectory><path>}.
+     *
+     * @param path the value to set {@code path} to
+     */
     public void set(File path) {
       this.path = path;
     }

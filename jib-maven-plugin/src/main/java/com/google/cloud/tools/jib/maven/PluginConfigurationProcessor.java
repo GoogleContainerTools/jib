@@ -131,14 +131,14 @@ class PluginConfigurationProcessor {
    * Validates and converts a list of {@link PermissionConfiguration} to an equivalent {@code
    * AbsoluteUnixPath->FilePermission} map.
    *
-   * @param inputList the list to convert
+   * @param permissionList the list to convert
    * @return the resulting map
    */
   @VisibleForTesting
   static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsList(
-      List<PermissionConfiguration> inputList) {
-    HashMap<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
-    for (PermissionConfiguration permission : inputList) {
+      List<PermissionConfiguration> permissionList) {
+    Map<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
+    for (PermissionConfiguration permission : permissionList) {
       if (!permission.getFile().isPresent() || !permission.getMode().isPresent()) {
         throw new IllegalArgumentException(
             "Incomplete <permission> configuration; requires <file> and <mode> fields to both be "
