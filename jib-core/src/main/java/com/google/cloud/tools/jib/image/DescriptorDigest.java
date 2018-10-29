@@ -100,11 +100,16 @@ public class DescriptorDigest {
 
   /** Two digest objects are equal if their digest strings are equal. */
   @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof DescriptorDigest) {
-      return hash.equals(((DescriptorDigest) obj).hash);
+  public boolean equals(Object other) {
+    if (this == other) {
+      return true;
     }
-
-    return false;
+    if (other == null) {
+      return false;
+    }
+    if (getClass() != other.getClass()) {
+      return false;
+    }
+    return hash.equals(((DescriptorDigest) other).hash);
   }
 }

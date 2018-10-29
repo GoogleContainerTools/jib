@@ -108,7 +108,10 @@ public class FilePermissions {
     if (this == other) {
       return true;
     }
-    if (!(other instanceof FilePermissions)) {
+    if (other == null) {
+      return false;
+    }
+    if (getClass() != other.getClass()) {
       return false;
     }
     FilePermissions otherFilePermissions = (FilePermissions) other;

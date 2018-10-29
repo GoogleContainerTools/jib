@@ -64,7 +64,10 @@ public class Credential {
     if (this == other) {
       return true;
     }
-    if (!(other instanceof Credential)) {
+    if (other == null) {
+      return false;
+    }
+    if (getClass() != other.getClass()) {
       return false;
     }
     Credential otherCredential = (Credential) other;

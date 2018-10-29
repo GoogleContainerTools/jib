@@ -138,7 +138,10 @@ public class AbsoluteUnixPath {
     if (this == other) {
       return true;
     }
-    if (!(other instanceof AbsoluteUnixPath)) {
+    if (other == null) {
+      return false;
+    }
+    if (getClass() != other.getClass()) {
       return false;
     }
     AbsoluteUnixPath otherAbsoluteUnixPath = (AbsoluteUnixPath) other;

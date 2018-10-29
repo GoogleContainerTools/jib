@@ -237,7 +237,10 @@ public class ContainerConfiguration {
     if (this == other) {
       return true;
     }
-    if (!(other instanceof ContainerConfiguration)) {
+    if (other == null) {
+      return false;
+    }
+    if (getClass() != other.getClass()) {
       return false;
     }
     ContainerConfiguration otherContainerConfiguration = (ContainerConfiguration) other;

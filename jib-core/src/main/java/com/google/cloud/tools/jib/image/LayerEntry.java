@@ -105,7 +105,10 @@ public class LayerEntry {
     if (this == other) {
       return true;
     }
-    if (!(other instanceof LayerEntry)) {
+    if (other == null) {
+      return false;
+    }
+    if (getClass() != other.getClass()) {
       return false;
     }
     LayerEntry otherLayerEntry = (LayerEntry) other;

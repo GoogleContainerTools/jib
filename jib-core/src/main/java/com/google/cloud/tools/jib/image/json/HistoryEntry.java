@@ -145,15 +145,18 @@ public class HistoryEntry implements JsonTemplate {
     if (this == other) {
       return true;
     }
-    if (other instanceof HistoryEntry) {
-      HistoryEntry otherHistory = (HistoryEntry) other;
-      return Objects.equals(otherHistory.creationTimestamp, creationTimestamp)
-          && Objects.equals(otherHistory.author, author)
-          && Objects.equals(otherHistory.createdBy, createdBy)
-          && Objects.equals(otherHistory.comment, comment)
-          && Objects.equals(otherHistory.emptyLayer, emptyLayer);
+    if (other == null) {
+      return false;
     }
-    return false;
+    if (getClass() != other.getClass()) {
+      return false;
+    }
+    HistoryEntry otherHistory = (HistoryEntry) other;
+    return Objects.equals(otherHistory.creationTimestamp, creationTimestamp)
+        && Objects.equals(otherHistory.author, author)
+        && Objects.equals(otherHistory.createdBy, createdBy)
+        && Objects.equals(otherHistory.comment, comment)
+        && Objects.equals(otherHistory.emptyLayer, emptyLayer);
   }
 
   @Override

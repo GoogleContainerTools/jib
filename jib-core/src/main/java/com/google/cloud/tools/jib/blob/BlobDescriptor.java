@@ -84,16 +84,21 @@ public class BlobDescriptor {
    * </ol>
    */
   @Override
-  public boolean equals(Object obj) {
-    if (obj == this) {
+  public boolean equals(Object other) {
+    if (this == other) {
       return true;
     }
-    if (size < 0 || !(obj instanceof BlobDescriptor)) {
+    if (other == null) {
       return false;
     }
-
-    BlobDescriptor other = (BlobDescriptor) obj;
-    return size == other.getSize() && digest.equals(other.getDigest());
+    if (getClass() != other.getClass()) {
+      return false;
+    }
+    if (size < 0) {
+      return false;
+    }
+    BlobDescriptor otherBlobDescriptor = (BlobDescriptor) other;
+    return size == otherBlobDescriptor.getSize() && digest.equals(otherBlobDescriptor.getDigest());
   }
 
   @Override

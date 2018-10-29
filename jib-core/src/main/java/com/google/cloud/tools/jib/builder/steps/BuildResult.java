@@ -48,7 +48,10 @@ public class BuildResult {
     if (this == other) {
       return true;
     }
-    if (!(other instanceof BuildResult)) {
+    if (other == null) {
+      return false;
+    }
+    if (getClass() != other.getClass()) {
       return false;
     }
     BuildResult otherBuildResult = (BuildResult) other;

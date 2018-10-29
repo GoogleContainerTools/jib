@@ -95,13 +95,15 @@ public class LogEvent implements JibEvent {
   @VisibleForTesting
   @Override
   public boolean equals(Object other) {
-    if (other == this) {
+    if (this == other) {
       return true;
     }
-    if (!(other instanceof LogEvent)) {
+    if (other == null) {
       return false;
     }
-
+    if (getClass() != other.getClass()) {
+      return false;
+    }
     LogEvent otherLogEvent = (LogEvent) other;
     return level == otherLogEvent.level && message.equals(otherLogEvent.message);
   }

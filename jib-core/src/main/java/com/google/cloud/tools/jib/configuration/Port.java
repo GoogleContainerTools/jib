@@ -85,10 +85,13 @@ public class Port {
 
   @Override
   public boolean equals(Object other) {
-    if (other == this) {
+    if (this == other) {
       return true;
     }
-    if (!(other instanceof Port)) {
+    if (other == null) {
+      return false;
+    }
+    if (getClass() != other.getClass()) {
       return false;
     }
     Port otherPort = (Port) other;
