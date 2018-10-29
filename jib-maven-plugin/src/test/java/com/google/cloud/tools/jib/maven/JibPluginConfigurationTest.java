@@ -16,9 +16,12 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.nio.file.Paths;
+import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -47,6 +50,8 @@ public class JibPluginConfigurationTest {
     System.clearProperty("jib.container.ports");
     System.clearProperty("jib.container.useCurrentTimestamp");
     System.clearProperty("jib.container.user");
+    System.clearProperty("jib.extraDirectory.path");
+    System.clearProperty("jib.extraDirectory.permissions");
   }
 
   @Before
@@ -128,5 +133,16 @@ public class JibPluginConfigurationTest {
     Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
     System.setProperty("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
+
+    System.setProperty("jib.extraDirectory.path", "custom-jib");
+    Assert.assertEquals(
+        Paths.get("custom-jib"), testPluginConfiguration.getExtraDirectoryPath().get());
+    System.setProperty("jib.extraDirectory.permissions", "/test/file1=123,/another/file=456");
+    List<PermissionConfiguration> permissions =
+        testPluginConfiguration.getExtraDirectoryPermissions();
+    Assert.assertEquals("/test/file1", permissions.get(0).getFile().get());
+    Assert.assertEquals("123", permissions.get(0).getMode().get());
+    Assert.assertEquals("/another/file", permissions.get(1).getFile().get());
+    Assert.assertEquals("456", permissions.get(1).getMode().get());
   }
 }

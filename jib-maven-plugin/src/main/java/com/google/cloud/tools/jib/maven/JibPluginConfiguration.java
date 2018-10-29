@@ -24,11 +24,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
@@ -39,7 +42,7 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.settings.crypto.SettingsDecrypter;
 
 /** Defines the configuration parameters for Jib. Jib {@link Mojo}s should extend this class. */
-abstract class JibPluginConfiguration extends AbstractMojo {
+public abstract class JibPluginConfiguration extends AbstractMojo {
 
   /** Used to configure {@code from.auth} and {@code to.auth} parameters. */
   public static class AuthConfiguration implements AuthProperty {
@@ -84,6 +87,30 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     private void setPropertyDescriptors(String descriptorPrefix) {
       usernameDescriptor = descriptorPrefix + "<username>";
       passwordDescriptor = descriptorPrefix + "<password>";
+    }
+  }
+
+  /** Used to configure {@code extraDirectory.permissions} parameter. */
+  public static class PermissionConfiguration {
+
+    @Nullable @Parameter private String file;
+    @Nullable @Parameter private String mode;
+
+    // Need default constructor for Maven
+    public PermissionConfiguration() {}
+
+    @VisibleForTesting
+    PermissionConfiguration(String file, String mode) {
+      this.file = file;
+      this.mode = mode;
+    }
+
+    Optional<String> getFile() {
+      return Optional.ofNullable(file);
+    }
+
+    Optional<String> getMode() {
+      return Optional.ofNullable(mode);
     }
   }
 
@@ -143,6 +170,29 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String user;
   }
 
+  /** Configuration for the {@code extraDirectory} parameter. */
+  public static class ExtraDirectoryParameters {
+
+    @Nullable @Parameter private File path;
+
+    @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
+
+    /**
+     * Allows users to configure {@code path} using just {@code <extraDirectory>} instead of {@code
+     * <extraDirectory><path>}.
+     *
+     * @param path the value to set {@code path} to
+     */
+    public void set(File path) {
+      this.path = path;
+    }
+
+    @Nullable
+    public File getPath() {
+      return path;
+    }
+  }
+
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
   MavenSession session;
@@ -157,6 +207,9 @@ abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Parameter private ContainerParameters container = new ContainerParameters();
 
+  // this parameter is cloned in FilesMojo
+  @Parameter private ExtraDirectoryParameters extraDirectory = new ExtraDirectoryParameters();
+
   @Parameter(
       defaultValue = "false",
       required = true,
@@ -168,14 +221,6 @@ abstract class JibPluginConfiguration extends AbstractMojo {
       required = true,
       property = PropertyNames.ALLOW_INSECURE_REGISTRIES)
   private boolean allowInsecureRegistries;
-
-  // this parameter is cloned in FilesMojo
-  @Nullable
-  @Parameter(
-      defaultValue = "${project.basedir}/src/main/jib",
-      required = true,
-      property = PropertyNames.EXTRA_DIRECTORY_PATH)
-  private File extraDirectory;
 
   @Parameter(defaultValue = "false", property = PropertyNames.SKIP)
   private boolean skip;
@@ -417,17 +462,44 @@ abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(container.format);
   }
 
+  /**
+   * Gets the configured extra directory path.
+   *
+   * @return the configured extra directory path
+   */
+  Optional<Path> getExtraDirectoryPath() {
+    // TODO: Should inform user about nonexistent directory if using custom directory.
+    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH) != null) {
+      return Optional.of(Paths.get(System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH)));
+    }
+    return extraDirectory.path == null
+        ? Optional.empty()
+        : Optional.of(extraDirectory.path.toPath());
+  }
+
+  /**
+   * Gets the configured extra layer file permissions.
+   *
+   * @return the configured extra layer file permissions
+   */
+  List<PermissionConfiguration> getExtraDirectoryPermissions() {
+    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS) != null) {
+      return ConfigurationPropertyValidator.parseMapProperty(
+              System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS))
+          .entrySet()
+          .stream()
+          .map(entry -> new PermissionConfiguration(entry.getKey(), entry.getValue()))
+          .collect(Collectors.toList());
+    }
+    return extraDirectory.permissions;
+  }
+
   boolean getUseOnlyProjectCache() {
     return useOnlyProjectCache;
   }
 
   boolean getAllowInsecureRegistries() {
     return allowInsecureRegistries;
-  }
-
-  Path getExtraDirectory() {
-    // TODO: Should inform user about nonexistent directory if using custom directory.
-    return Preconditions.checkNotNull(extraDirectory).toPath();
   }
 
   boolean isSkipped() {
@@ -441,10 +513,5 @@ abstract class JibPluginConfiguration extends AbstractMojo {
   @VisibleForTesting
   void setProject(MavenProject project) {
     this.project = project;
-  }
-
-  @VisibleForTesting
-  void setExtraDirectory(File extraDirectory) {
-    this.extraDirectory = extraDirectory;
   }
 }

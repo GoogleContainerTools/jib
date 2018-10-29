@@ -78,7 +78,7 @@ public class FilesMojoTest {
             projectRoot.resolve("pom.xml"),
             projectRoot.resolve("src/main/java"),
             projectRoot.resolve("src/main/resources"),
-            projectRoot.resolve("src/main/jib")));
+            projectRoot.resolve("src/main/jib-custom")));
   }
 
   @Test
