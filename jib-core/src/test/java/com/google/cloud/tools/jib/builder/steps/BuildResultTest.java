@@ -19,21 +19,44 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.security.DigestException;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /** Tests for {@link BuildResult}. */
 public class BuildResultTest {
 
-  @Test
-  public void testCreated() throws DigestException {
-    DescriptorDigest digest =
+  private DescriptorDigest digest1;
+  private DescriptorDigest digest2;
+  private DescriptorDigest id;
+
+  @Before
+  public void setUp() throws DigestException {
+    digest1 =
         DescriptorDigest.fromDigest(
             "sha256:abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789");
-    DescriptorDigest id =
+    digest2 =
+        DescriptorDigest.fromDigest(
+            "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+    id =
         DescriptorDigest.fromDigest(
             "sha256:9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba");
-    BuildResult container = new BuildResult(digest, id);
-    Assert.assertEquals(digest, container.getImageDigest());
+  }
+
+  @Test
+  public void testCreated() {
+    BuildResult container = new BuildResult(digest1, id);
+    Assert.assertEquals(digest1, container.getImageDigest());
     Assert.assertEquals(id, container.getImageId());
+  }
+
+  @Test
+  public void testEquality() {
+    BuildResult container1 = new BuildResult(digest1, id);
+    BuildResult container2 = new BuildResult(digest1, id);
+    BuildResult container3 = new BuildResult(digest2, id);
+
+    Assert.assertEquals(container1, container2);
+    Assert.assertEquals(container1.hashCode(), container2.hashCode());
+    Assert.assertNotEquals(container1, container3);
   }
 }

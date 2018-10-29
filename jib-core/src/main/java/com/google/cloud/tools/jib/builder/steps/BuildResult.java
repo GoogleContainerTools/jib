@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import java.util.Objects;
 
 /** Used to record the results of a build. */
 public class BuildResult {
@@ -35,5 +36,20 @@ public class BuildResult {
 
   public DescriptorDigest getImageId() {
     return imageId;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(imageDigest, imageId);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
+    BuildResult otherBuildResult = (BuildResult) obj;
+    return imageDigest.equals(otherBuildResult.imageDigest)
+        && imageId.equals(otherBuildResult.imageId);
   }
 }

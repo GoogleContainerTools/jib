@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - `jib.to.credHelper` and `jib.from.credHelper` can be used to specify a credential helper suffix or a full path to a credential helper executable ([#925](https://github.com/GoogleContainerTools/jib/issues/925))
 - `container.user` configuration parameter to configure the user and group to run the container as ([#1029](https://github.com/GoogleContainerTools/jib/issues/1029))
 - Preliminary support for building images for WAR projects ([#431](https://github.com/GoogleContainerTools/jib/issues/431))
+- Image digest is now written to `build/jib-image.digest` ([#1155](https://github.com/GoogleContainerTools/jib/pull/1155))
 
 ### Changed
 
