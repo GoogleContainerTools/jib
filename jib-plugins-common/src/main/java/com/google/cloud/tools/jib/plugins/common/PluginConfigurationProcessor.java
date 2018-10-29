@@ -189,12 +189,11 @@ public class PluginConfigurationProcessor {
           InferredAuthRetrievalException, IOException {
     JibSystemProperties.checkHttpTimeoutProperty();
 
-    EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(projectProperties.getEventHandlers());
-
     ImageReference baseImageReference =
         ImageReference.parse(getBaseImage(rawConfiguration, projectProperties));
 
+    EventDispatcher eventDispatcher =
+        new DefaultEventDispatcher(projectProperties.getEventHandlers());
     if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
       eventDispatcher.dispatch(
           LogEvent.warn(
@@ -215,11 +214,10 @@ public class PluginConfigurationProcessor {
             baseImage,
             "from.auth/<from><auth>");
 
-    List<String> entrypoint = computeEntrypoint(rawConfiguration, projectProperties);
     JibContainerBuilder jibContainerBuilder =
         Jib.from(baseImage)
             .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
-            .setEntrypoint(entrypoint)
+            .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(rawConfiguration.getPorts()))
