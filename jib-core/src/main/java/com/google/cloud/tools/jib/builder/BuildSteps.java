@@ -35,7 +35,7 @@ public class BuildSteps {
   private interface ImageBuildRunnable {
 
     /**
-     * Build an image.
+     * Builds an image.
      *
      * @return the built image
      * @throws ExecutionException if an exception occurs during execution
