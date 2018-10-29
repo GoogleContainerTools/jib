@@ -31,9 +31,8 @@ public class JibContainer {
   }
 
   /**
-   * Gets the image digest, the digest of the registry image manifest built by Jib. This digest can
-   * be used to fetch a specific image from the registry in the form {@code
-   * myregistry/myimage@digest}.
+   * Gets the digest of the registry image manifest built by Jib. This digest can be used to fetch a
+   * specific image from the registry in the form {@code myregistry/myimage@digest}.
    *
    * @return the image digest
    */
@@ -42,7 +41,7 @@ public class JibContainer {
   }
 
   /**
-   * Gets the image ID, the digest of the container configuration built by Jib.
+   * Gets the digest of the container configuration built by Jib.
    *
    * @return the image ID
    */
