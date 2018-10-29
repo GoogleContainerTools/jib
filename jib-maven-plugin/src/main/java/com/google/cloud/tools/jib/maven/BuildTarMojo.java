@@ -70,7 +70,11 @@ public class BuildTarMojo extends JibPluginConfiguration {
       AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
       MavenProjectProperties projectProperties =
           MavenProjectProperties.getForProject(
-              getProject(), getLog(), getExtraDirectory(), appRoot);
+              getProject(),
+              getLog(),
+              MojoCommon.getExtraDirectoryPath(this),
+              MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
+              appRoot);
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
       RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);

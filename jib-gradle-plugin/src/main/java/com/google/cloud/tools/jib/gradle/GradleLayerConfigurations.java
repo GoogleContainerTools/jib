@@ -46,7 +46,8 @@ class GradleLayerConfigurations {
    * @param project the Gradle {@link Project}
    * @param logger the logger for providing feedback about the resolution
    * @param extraDirectory path to the source directory for the extra files layer
-   * @param permissions map from path on container to file permissions for extra-layer files
+   * @param extraDirectoryPermissions map from path on container to file permissions for extra-layer
+   *     files
    * @param appRoot root directory in the image where the app will be placed
    * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
@@ -55,14 +56,15 @@ class GradleLayerConfigurations {
       Project project,
       Logger logger,
       Path extraDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> permissions,
+      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
       AbsoluteUnixPath appRoot)
       throws IOException {
     if (GradleProjectProperties.getWarTask(project) != null) {
       logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
-      return getForWarProject(project, extraDirectory, permissions, appRoot);
+      return getForWarProject(project, extraDirectory, extraDirectoryPermissions, appRoot);
     } else {
-      return getForNonWarProject(project, logger, extraDirectory, permissions, appRoot);
+      return getForNonWarProject(
+          project, logger, extraDirectory, extraDirectoryPermissions, appRoot);
     }
   }
 
@@ -72,7 +74,8 @@ class GradleLayerConfigurations {
    * @param project the Gradle {@link Project}
    * @param logger the logger for providing feedback about the resolution
    * @param extraDirectory path to the source directory for the extra files layer
-   * @param permissions map from path on container to file permissions for extra-layer files
+   * @param extraDirectoryPermissions map from path on container to file permissions for extra-layer
+   *     files
    * @param appRoot root directory in the image where the app will be placed
    * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
@@ -81,7 +84,7 @@ class GradleLayerConfigurations {
       Project project,
       Logger logger,
       Path extraDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> permissions,
+      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
       AbsoluteUnixPath appRoot)
       throws IOException {
     AbsoluteUnixPath dependenciesExtractionPath =
@@ -143,7 +146,7 @@ class GradleLayerConfigurations {
           extraDirectory,
           path -> true,
           AbsoluteUnixPath.get("/"),
-          permissions);
+          extraDirectoryPermissions);
     }
 
     return layerBuilder.build();
@@ -154,7 +157,8 @@ class GradleLayerConfigurations {
    *
    * @param project the Gradle {@link Project}
    * @param extraDirectory path to the source directory for the extra files layer
-   * @param permissions map from path on container to file permissions for extra-layer files
+   * @param extraDirectoryPermissions map from path on container to file permissions for extra-layer
+   *     files
    * @param appRoot root directory in the image where the app will be placed
    * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
@@ -162,12 +166,12 @@ class GradleLayerConfigurations {
   private static JavaLayerConfigurations getForWarProject(
       Project project,
       Path extraDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> permissions,
+      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
       AbsoluteUnixPath appRoot)
       throws IOException {
     Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
     return JavaLayerConfigurationsHelper.fromExplodedWar(
-        explodedWarPath, appRoot, extraDirectory, permissions);
+        explodedWarPath, appRoot, extraDirectory, extraDirectoryPermissions);
   }
 
   private GradleLayerConfigurations() {}

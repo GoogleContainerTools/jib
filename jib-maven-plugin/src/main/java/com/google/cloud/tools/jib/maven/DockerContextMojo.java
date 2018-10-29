@@ -74,7 +74,11 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
       MavenProjectProperties projectProperties =
           MavenProjectProperties.getForProject(
-              getProject(), getLog(), getExtraDirectory(), appRoot);
+              getProject(),
+              getLog(),
+              MojoCommon.getExtraDirectoryPath(this),
+              MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
+              appRoot);
       DefaultEventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
       RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
