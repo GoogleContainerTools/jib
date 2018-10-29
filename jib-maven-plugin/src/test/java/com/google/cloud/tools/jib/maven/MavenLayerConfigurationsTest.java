@@ -28,6 +28,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -161,7 +162,10 @@ public class MavenLayerConfigurationsTest {
 
     JavaLayerConfigurations javaLayerConfigurations =
         MavenLayerConfigurations.getForProject(
-            mockMavenProject, Paths.get("nonexistent/path"), AbsoluteUnixPath.get("/app"));
+            mockMavenProject,
+            Paths.get("nonexistent/path"),
+            Collections.emptyMap(),
+            AbsoluteUnixPath.get("/app"));
     assertSourcePathsUnordered(
         expectedDependenciesFiles, javaLayerConfigurations.getDependencyLayerEntries());
     assertSourcePathsUnordered(
@@ -177,7 +181,8 @@ public class MavenLayerConfigurationsTest {
   public void test_extraFiles() throws IOException {
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
     JavaLayerConfigurations javaLayerConfigurations =
-        MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, appRoot);
+        MavenLayerConfigurations.getForProject(
+            mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot);
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
@@ -196,7 +201,8 @@ public class MavenLayerConfigurationsTest {
   public void testGetForProject_nonDefaultAppRoot() throws IOException {
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
     JavaLayerConfigurations configuration =
-        MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, appRoot);
+        MavenLayerConfigurations.getForProject(
+            mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot);
 
     assertNonDefaultAppRoot(configuration);
   }
@@ -216,7 +222,8 @@ public class MavenLayerConfigurationsTest {
 
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
     JavaLayerConfigurations configuration =
-        MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, appRoot);
+        MavenLayerConfigurations.getForProject(
+            mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot);
 
     ImmutableList<Path> expectedDependenciesFiles =
         ImmutableList.of(outputPath.resolve("final-name/WEB-INF/lib/dependency-1.0.0.jar"));
@@ -296,7 +303,8 @@ public class MavenLayerConfigurationsTest {
 
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
     JavaLayerConfigurations configuration =
-        MavenLayerConfigurations.getForProject(mockMavenProject, extraFilesDirectory, appRoot);
+        MavenLayerConfigurations.getForProject(
+            mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot);
 
     assertNonDefaultAppRoot(configuration);
   }
@@ -311,7 +319,7 @@ public class MavenLayerConfigurationsTest {
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
 
     MavenLayerConfigurations.getForProject(
-        mockMavenProject, extraFilesDirectory, appRoot); // should pass
+        mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot); // should pass
   }
 
   @Test
@@ -324,7 +332,7 @@ public class MavenLayerConfigurationsTest {
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
 
     MavenLayerConfigurations.getForProject(
-        mockMavenProject, extraFilesDirectory, appRoot); // should pass
+        mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot); // should pass
   }
 
   @Test
@@ -337,6 +345,6 @@ public class MavenLayerConfigurationsTest {
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
 
     MavenLayerConfigurations.getForProject(
-        mockMavenProject, extraFilesDirectory, appRoot); // should pass
+        mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot); // should pass
   }
 }

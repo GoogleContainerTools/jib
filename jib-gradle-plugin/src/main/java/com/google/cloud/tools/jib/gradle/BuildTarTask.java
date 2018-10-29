@@ -31,7 +31,6 @@ import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -89,16 +88,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
    */
   @OutputFile
   public String getOutputFile() {
-    return getTargetPath();
-  }
-
-  /**
-   * Returns the output directory for the tarball. By default, it is {@code build/jib-image.tar}.
-   *
-   * @return the output directory
-   */
-  private String getTargetPath() {
-    return getProject().getBuildDir().toPath().resolve("jib-image.tar").toString();
+    return getTargetPath().toString();
   }
 
   @TaskAction
@@ -124,7 +114,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
 
-      Path tarOutputPath = Paths.get(getTargetPath());
+      Path tarOutputPath = getTargetPath();
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForTarImage(
               rawConfiguration,
@@ -140,7 +130,9 @@ public class BuildTarTask extends DefaultTask implements JibTask {
               .setTargetImageReference(pluginConfigurationProcessor.getTargetImageReference())
               .build();
 
+      Path buildOutput = getProject().getBuildDir().toPath();
       BuildStepsRunner.forBuildTar(tarOutputPath)
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
               pluginConfigurationProcessor.getJibContainerBuilder(),
               pluginConfigurationProcessor.getContainerizer(),
@@ -158,5 +150,14 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   public BuildTarTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
+  }
+
+  /**
+   * Returns the output directory for the tarball. By default, it is {@code build/jib-image.tar}.
+   *
+   * @return the output directory
+   */
+  private Path getTargetPath() {
+    return getProject().getBuildDir().toPath().resolve("jib-image.tar");
   }
 }

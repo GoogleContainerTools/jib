@@ -12,12 +12,11 @@
 
 ## What is Jib?
 
-Jib builds Docker and [OCI](https://github.com/opencontainers/image-spec) images for your Java applications and is available as plugins for [Maven](jib-maven-plugin) and [Gradle](jib-gradle-plugin).
+Jib builds Docker and [OCI](https://github.com/opencontainers/image-spec) images for your Java applications. It is available as plugins for [Maven](jib-maven-plugin) and [Gradle](jib-gradle-plugin) and as a Java library.
 
 [Maven](https://maven.apache.org/): See documentation for [jib-maven-plugin](jib-maven-plugin).\
-[Gradle](https://gradle.org/): See documentation for [jib-gradle-plugin](jib-gradle-plugin).
-
-*Jib as a container-building library for Java is work-in-progress. [Watch for updates.](https://github.com/GoogleContainerTools/jib/issues/337)*
+[Gradle](https://gradle.org/): See documentation for [jib-gradle-plugin](jib-gradle-plugin).\
+[Jib Core](jib-core): A general-purpose container-building library for Java.
 
 For more information, check out the [official blog post](https://cloudplatform.googleblog.com/2018/07/introducing-jib-build-java-docker-images-better.html) or watch [this talk](https://www.youtube.com/watch?v=H6gR_Cv4yWI) ([slides](https://speakerdeck.com/coollog/build-containers-faster-with-jib-a-google-image-build-tool-for-java-applications)).
 
@@ -38,6 +37,10 @@ See documentation for using [jib-maven-plugin](jib-maven-plugin#quickstart).
 ### Gradle
 
 See documentation for using [jib-gradle-plugin](jib-gradle-plugin#quickstart).
+
+### Jib Core
+
+See documentation for using [Jib Core](jib-core#adding-jib-core-to-your-build)
 
 ## How Jib Works
 

@@ -42,7 +42,7 @@ import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
-public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorDigest> {
+public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
   private final Path outputPath;
   private final BuildConfiguration buildConfiguration;
@@ -51,7 +51,7 @@ public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<D
   private final BuildImageStep buildImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<DescriptorDigest> listenableFuture;
+  private final ListenableFuture<BuildResult> listenableFuture;
 
   WriteTarFileStep(
       ListeningExecutorService listeningExecutorService,
@@ -74,12 +74,12 @@ public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<D
   }
 
   @Override
-  public ListenableFuture<DescriptorDigest> getFuture() {
+  public ListenableFuture<BuildResult> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public DescriptorDigest call() throws ExecutionException, InterruptedException {
+  public BuildResult call() throws ExecutionException, InterruptedException {
     ImmutableList.Builder<ListenableFuture<?>> dependenciesBuilder = ImmutableList.builder();
     for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
         NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
@@ -91,12 +91,11 @@ public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<D
     }
     dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep).getFuture());
     return Futures.whenAllSucceed(dependenciesBuilder.build())
-        .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
+        .call(this::writeTarFile, listeningExecutorService)
         .get();
   }
 
-  private DescriptorDigest afterPushBaseImageLayerFuturesFuture()
-      throws ExecutionException, IOException {
+  private BuildResult writeTarFile() throws ExecutionException, IOException {
     Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
 
     // Builds the image to a tarball.
@@ -111,7 +110,7 @@ public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<D
           .writeTo(outputStream);
     }
 
-    // TODO: Consolide image digest generation with PushImageStep and LoadDockerStep.
+    // TODO: Consolidate image digest generation with PushImageStep and LoadDockerStep.
     // Gets the image manifest to generate the image digest.
     ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
     BlobDescriptor containerConfigurationBlobDescriptor =
@@ -121,8 +120,12 @@ public class WriteTarFileStep implements AsyncStep<DescriptorDigest>, Callable<D
     BuildableManifestTemplate manifestTemplate =
         imageToJsonTranslator.getManifestTemplate(
             buildConfiguration.getTargetFormat(), containerConfigurationBlobDescriptor);
-    return JsonTemplateMapper.toBlob(manifestTemplate)
-        .writeTo(ByteStreams.nullOutputStream())
-        .getDigest();
+    DescriptorDigest imageDigest =
+        JsonTemplateMapper.toBlob(manifestTemplate)
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest();
+    DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
+
+    return new BuildResult(imageDigest, imageId);
   }
 }

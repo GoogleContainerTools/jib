@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
@@ -57,6 +58,7 @@ public class DockerContextMojoTest {
   public void setUp() throws IOException {
     outputFolder = projectRoot.newFolder("target");
     Mockito.when(project.getBuild()).thenReturn(build);
+    Mockito.when(project.getBasedir()).thenReturn(projectRoot.getRoot());
     Mockito.when(build.getOutputDirectory()).thenReturn(outputFolder.toString());
 
     mojo = new BaseDockerContextMojo();
@@ -231,8 +233,8 @@ public class DockerContextMojoTest {
     }
 
     @Override
-    Path getExtraDirectory() {
-      return projectRoot.getRoot().toPath();
+    Optional<Path> getExtraDirectoryPath() {
+      return Optional.of(projectRoot.getRoot().toPath());
     }
 
     @Override

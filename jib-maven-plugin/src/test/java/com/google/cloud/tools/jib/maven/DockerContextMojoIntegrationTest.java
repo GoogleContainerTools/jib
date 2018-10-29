@@ -88,9 +88,9 @@ public class DockerContextMojoIntegrationTest {
                 + "                \"key2\": \"value2\"\n"
                 + "            }"));
 
-    Assert.assertEquals(
-        "Hello, world. An argument.\nfoo\ncat\n",
-        new Command("docker", "run", "--rm", imageName).run());
+    String output = new Command("docker", "run", "--rm", imageName).run();
+    Assert.assertThat(output, CoreMatchers.startsWith("Hello, world. An argument.\n"));
+    Assert.assertThat(output, CoreMatchers.endsWith("foo\ncat\n"));
   }
 
   @Test

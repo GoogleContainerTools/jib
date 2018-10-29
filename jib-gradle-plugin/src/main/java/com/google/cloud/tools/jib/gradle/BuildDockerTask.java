@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
+import java.nio.file.Path;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -111,7 +112,9 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               .setTargetImageReference(targetImageReference)
               .build();
 
+      Path buildOutput = getProject().getBuildDir().toPath();
       BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
               pluginConfigurationProcessor.getJibContainerBuilder(),
               pluginConfigurationProcessor.getContainerizer(),

@@ -34,6 +34,8 @@ import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -89,7 +91,11 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
       MavenProjectProperties projectProperties =
           MavenProjectProperties.getForProject(
-              getProject(), getLog(), getExtraDirectory(), appRoot);
+              getProject(),
+              getLog(),
+              MojoCommon.getExtraDirectoryPath(this),
+              MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
+              appRoot);
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
       RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
@@ -109,7 +115,9 @@ public class BuildImageMojo extends JibPluginConfiguration {
                   pluginConfigurationProcessor.isTargetImageCredentialPresent())
               .build();
 
+      Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
       BuildStepsRunner.forBuildImage(targetImageReference, getTargetImageAdditionalTags())
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
               pluginConfigurationProcessor.getJibContainerBuilder(),
               pluginConfigurationProcessor.getContainerizer(),
