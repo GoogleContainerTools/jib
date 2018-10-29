@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -77,7 +78,7 @@ public class DockerContextTaskTest {
   }
 
   @Test
-  public void testEntrypoint() throws IOException {
+  public void testEntrypoint() throws IOException, MainClassInferenceException {
     task.generateDockerContext();
 
     Assert.assertEquals(
@@ -86,7 +87,7 @@ public class DockerContextTaskTest {
   }
 
   @Test
-  public void testEntrypoint_nonDefaultAppRoot() throws IOException {
+  public void testEntrypoint_nonDefaultAppRoot() throws IOException, MainClassInferenceException {
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/");
     task.generateDockerContext();
 
@@ -97,7 +98,7 @@ public class DockerContextTaskTest {
   }
 
   @Test
-  public void testEntrypoint_inheritedEntrypoint() throws IOException {
+  public void testEntrypoint_inheritedEntrypoint() throws IOException, MainClassInferenceException {
     Mockito.when(containerParameters.getAppRoot()).thenReturn("/");
     Mockito.when(containerParameters.getArgs()).thenCallRealMethod();
     project.getPluginManager().apply("war");
@@ -109,7 +110,7 @@ public class DockerContextTaskTest {
   }
 
   @Test
-  public void testUser() throws IOException {
+  public void testUser() throws IOException, MainClassInferenceException {
     Mockito.when(containerParameters.getUser()).thenReturn("tomcat");
     task.generateDockerContext();
 
@@ -117,14 +118,15 @@ public class DockerContextTaskTest {
   }
 
   @Test
-  public void testUser_null() throws IOException {
+  public void testUser_null() throws IOException, MainClassInferenceException {
     Mockito.when(containerParameters.getUser()).thenReturn(null);
     task.generateDockerContext();
     Assert.assertNull(getDockerfileLine("USER"));
   }
 
   @Test
-  public void testGenerateDockerContext_errorOnNonAbsoluteAppRoot() {
+  public void testGenerateDockerContext_errorOnNonAbsoluteAppRoot()
+      throws MainClassInferenceException {
     Mockito.when(containerParameters.getAppRoot()).thenReturn("relative/path");
 
     try {
@@ -137,7 +139,7 @@ public class DockerContextTaskTest {
   }
 
   @Test
-  public void testGenerateDockerContext_errorOnWindowsAppRoot() {
+  public void testGenerateDockerContext_errorOnWindowsAppRoot() throws MainClassInferenceException {
     Mockito.when(containerParameters.getAppRoot()).thenReturn("\\windows\\path");
 
     try {
@@ -150,7 +152,8 @@ public class DockerContextTaskTest {
   }
 
   @Test
-  public void testGenerateDockerContext_errorOnWindowsAppRootWithDriveLetter() {
+  public void testGenerateDockerContext_errorOnWindowsAppRootWithDriveLetter()
+      throws MainClassInferenceException {
     Mockito.when(containerParameters.getAppRoot()).thenReturn("C:\\windows\\path");
 
     try {
@@ -164,7 +167,7 @@ public class DockerContextTaskTest {
   }
 
   @Test
-  public void testGenerateDockerContext_env() throws IOException {
+  public void testGenerateDockerContext_env() throws IOException, MainClassInferenceException {
     task.generateDockerContext();
     Assert.assertEquals("ENV envKey=\"envVal\"", getDockerfileLine("ENV"));
   }

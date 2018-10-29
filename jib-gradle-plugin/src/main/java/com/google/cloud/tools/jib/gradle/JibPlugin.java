@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,9 +42,6 @@ public class JibPlugin implements Plugin<Project> {
   @VisibleForTesting static final String DOCKER_CONTEXT_TASK_NAME = "jibExportDockerContext";
   @VisibleForTesting static final String FILES_TASK_NAME = "_jibSkaffoldFiles";
   @VisibleForTesting static final String EXPLODED_WAR_TASK_NAME = "jibExplodedWar";
-
-  @VisibleForTesting static final String DEFAULT_FROM_IMAGE = "gcr.io/distroless/java";
-  @VisibleForTesting static final String DEFAULT_WAR_FROM_IMAGE = "gcr.io/distroless/java/jetty";
 
   /**
    * Collects all project dependencies of the style "compile project(':mylib')" for any kind of
@@ -114,19 +110,10 @@ public class JibPlugin implements Plugin<Project> {
 
     project.afterEvaluate(
         projectAfterEvaluation -> {
-          // TODO move this to a separate place
           try {
             War warTask = GradleProjectProperties.getWarTask(project);
             Task dependsOnTask;
             if (warTask != null) {
-              if (jibExtension.getFrom().getImage() == null) {
-                jibExtension.getFrom().setImage(DEFAULT_WAR_FROM_IMAGE);
-              }
-              if (jibExtension.getContainer().getAppRoot().isEmpty()) {
-                jibExtension
-                    .getContainer()
-                    .setAppRoot(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT);
-              }
               ExplodedWarTask explodedWarTask =
                   (ExplodedWarTask)
                       project
@@ -139,12 +126,6 @@ public class JibPlugin implements Plugin<Project> {
               // Have all tasks depend on the 'jibExplodedWar' task.
               dependsOnTask = explodedWarTask;
             } else {
-              if (jibExtension.getFrom().getImage() == null) {
-                jibExtension.getFrom().setImage(DEFAULT_FROM_IMAGE);
-              }
-              if (jibExtension.getContainer().getAppRoot().isEmpty()) {
-                jibExtension.getContainer().setAppRoot(JavaLayerConfigurations.DEFAULT_APP_ROOT);
-              }
               // Have all tasks depend on the 'classes' task.
               dependsOnTask = projectAfterEvaluation.getTasks().getByPath("classes");
             }

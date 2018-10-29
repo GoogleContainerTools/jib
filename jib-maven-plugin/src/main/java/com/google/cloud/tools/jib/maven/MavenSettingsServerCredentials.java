@@ -16,14 +16,15 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.plugins.common.AuthProperty;
+import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.SettingsProblem;
@@ -58,30 +59,32 @@ class MavenSettingsServerCredentials {
 
   private final Settings settings;
   @Nullable private final SettingsDecrypter settingsDecrypter;
-  private final Log log;
+  private final EventDispatcher eventDispatcher;
 
   /**
    * Create new instance.
    *
    * @param settings the Maven settings object
    * @param settingsDecrypter the Maven decrypter component
-   * @param log the Maven build logger
+   * @param eventDispatcher the Jib event dispatcher
    */
   MavenSettingsServerCredentials(
-      Settings settings, @Nullable SettingsDecrypter settingsDecrypter, Log log) {
+      Settings settings,
+      @Nullable SettingsDecrypter settingsDecrypter,
+      EventDispatcher eventDispatcher) {
     this.settings = settings;
     this.settingsDecrypter = settingsDecrypter;
-    this.log = log;
+    this.eventDispatcher = eventDispatcher;
   }
 
   /**
    * Attempts to retrieve credentials for {@code registry} from Maven settings.
    *
    * @param registry the registry
-   * @return the credentials for the registry, or {@link Optional#empty} if none could be retrieved
-   * @throws MojoExecutionException if the credentials could not be retrieved
+   * @return the auth info for the registry, or {@link Optional#empty} if none could be retrieved
+   * @throws InferredAuthRetrievalException if the credentials could not be retrieved
    */
-  Optional<Credential> retrieve(@Nullable String registry) throws MojoExecutionException {
+  Optional<AuthProperty> retrieve(@Nullable String registry) throws InferredAuthRetrievalException {
     if (registry == null) {
       return Optional.empty();
     }
@@ -103,7 +106,7 @@ class MavenSettingsServerCredentials {
       for (SettingsProblem problem : result.getProblems()) {
         if (problem.getSeverity() == SettingsProblem.Severity.ERROR
             || problem.getSeverity() == SettingsProblem.Severity.FATAL) {
-          throw new MojoExecutionException(
+          throw new InferredAuthRetrievalException(
               "Unable to decrypt password for " + registry + ": " + problem);
         }
       }
@@ -111,13 +114,43 @@ class MavenSettingsServerCredentials {
         registryServer = result.getServer();
       }
     } else if (isEncrypted(registryServer.getPassword())) {
-      log.warn(
-          "Server password for registry "
-              + registry
-              + " appears to be encrypted, but there is no decrypter available");
+      eventDispatcher.dispatch(
+          LogEvent.warn(
+              "Server password for registry "
+                  + registry
+                  + " appears to be encrypted, but there is no decrypter available"));
     }
 
+    String username = registryServer.getUsername();
+    String password = registryServer.getPassword();
+
     return Optional.of(
-        Credential.basic(registryServer.getUsername(), registryServer.getPassword()));
+        new AuthProperty() {
+
+          @Override
+          public String getUsername() {
+            return username;
+          }
+
+          @Override
+          public String getPassword() {
+            return password;
+          }
+
+          @Override
+          public String getPropertyDescriptor() {
+            return CREDENTIAL_SOURCE;
+          }
+
+          @Override
+          public String getUsernamePropertyDescriptor() {
+            return CREDENTIAL_SOURCE;
+          }
+
+          @Override
+          public String getPasswordPropertyDescriptor() {
+            return CREDENTIAL_SOURCE;
+          }
+        });
   }
 }

@@ -16,11 +16,16 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaDockerContextGenerator;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.plugins.common.AppRootInvalidException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.io.InsecureRecursiveDeleteException;
@@ -51,6 +56,8 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException {
+    Preconditions.checkNotNull(targetDir);
+
     if (isSkipped()) {
       getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
       return;
@@ -62,34 +69,31 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     try {
       JibSystemProperties.checkHttpTimeoutProperty();
-    } catch (NumberFormatException ex) {
-      throw new MojoExecutionException(ex.getMessage(), ex);
-    }
+      MojoCommon.disableHttpLogging();
+      AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
 
-    // TODO: Instead of disabling logging, have authentication credentials be provided
-    PluginConfigurationProcessor.disableHttpLogging();
+      MavenProjectProperties projectProperties =
+          MavenProjectProperties.getForProject(
+              getProject(),
+              getLog(),
+              MojoCommon.getExtraDirectoryPath(this),
+              MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
+              appRoot);
+      DefaultEventDispatcher eventDispatcher =
+          new DefaultEventDispatcher(projectProperties.getEventHandlers());
+      RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
 
-    Preconditions.checkNotNull(targetDir);
+      List<String> entrypoint =
+          PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties);
+      String baseImage =
+          PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
 
-    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
-    MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(
-            getProject(),
-            getLog(),
-            PluginConfigurationProcessor.getExtraDirectoryPath(this),
-            PluginConfigurationProcessor.convertPermissionsList(getExtraDirectoryPermissions()),
-            appRoot);
-
-    List<String> entrypoint =
-        PluginConfigurationProcessor.computeEntrypoint(getLog(), this, mavenProjectProperties);
-
-    try {
       // Validate port input, but don't save the output because we don't want the ranges expanded
       // here.
       ExposedPortsParser.parse(getExposedPorts());
 
-      new JavaDockerContextGenerator(mavenProjectProperties.getJavaLayerConfigurations())
-          .setBaseImage(PluginConfigurationProcessor.getBaseImage(this))
+      new JavaDockerContextGenerator(projectProperties.getJavaLayerConfigurations())
+          .setBaseImage(baseImage)
           .setEntrypoint(entrypoint)
           .setProgramArguments(getArgs())
           .setExposedPorts(getExposedPorts())
@@ -114,6 +118,13 @@ public class DockerContextMojo extends JibPluginConfiguration {
           HelpfulSuggestions.suggest(
               "Export Docker context failed", "check if `targetDir` is set correctly"),
           ex);
+
+    } catch (AppRootInvalidException ex) {
+      throw new MojoExecutionException(
+          "<container><appRoot> is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
+
+    } catch (MainClassInferenceException ex) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
     }
   }
 }

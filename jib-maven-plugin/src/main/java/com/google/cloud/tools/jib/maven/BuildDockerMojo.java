@@ -26,10 +26,15 @@ import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.plugins.common.AppRootInvalidException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -66,22 +71,23 @@ public class BuildDockerMojo extends JibPluginConfiguration {
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
-    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(this);
-    MavenProjectProperties mavenProjectProperties =
-        MavenProjectProperties.getForProject(
-            getProject(),
-            getLog(),
-            PluginConfigurationProcessor.getExtraDirectoryPath(this),
-            PluginConfigurationProcessor.convertPermissionsList(getExtraDirectoryPermissions()),
-            appRoot);
-    Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
-
+    MojoCommon.disableHttpLogging();
     try {
+      AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
+      MavenProjectProperties projectProperties =
+          MavenProjectProperties.getForProject(
+              getProject(),
+              getLog(),
+              MojoCommon.getExtraDirectoryPath(this),
+              MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
+              appRoot);
+      EventDispatcher eventDispatcher =
+          new DefaultEventDispatcher(projectProperties.getEventHandlers());
+      RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
+
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
-      EventDispatcher eventDispatcher =
-          new DefaultEventDispatcher(mavenProjectProperties.getEventHandlers());
       ImageReference targetImageReference =
           ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
               getTargetImage(),
@@ -93,13 +99,13 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfiguration(
-              getLog(), this, mavenProjectProperties);
+              rawConfiguration, projectProperties);
 
       JibContainerBuilder jibContainerBuilder =
           pluginConfigurationProcessor.getJibContainerBuilder();
       Containerizer containerizer = Containerizer.to(targetImage);
       PluginConfigurationProcessor.configureContainerizer(
-          containerizer, this, mavenProjectProperties);
+          containerizer, rawConfiguration, projectProperties, MavenProjectProperties.TOOL_NAME);
 
       HelpfulSuggestions helpfulSuggestions =
           mavenHelpfulSuggestionsBuilder
@@ -109,17 +115,26 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               .setTargetImageReference(targetImageReference)
               .build();
 
+      Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
       BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
           .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
               jibContainerBuilder,
               containerizer,
               eventDispatcher,
-              mavenProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
               helpfulSuggestions);
       getLog().info("");
 
-    } catch (InvalidImageReferenceException | IOException | CacheDirectoryCreationException ex) {
+    } catch (AppRootInvalidException ex) {
+      throw new MojoExecutionException(
+          "<container><appRoot> is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
+
+    } catch (InvalidImageReferenceException
+        | IOException
+        | CacheDirectoryCreationException
+        | MainClassInferenceException
+        | InferredAuthRetrievalException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {

@@ -26,10 +26,15 @@ import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.plugins.common.AppRootInvalidException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -74,7 +79,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   @TaskAction
   public void buildDocker()
       throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
-          CacheDirectoryCreationException {
+          CacheDirectoryCreationException, MainClassInferenceException,
+          InferredAuthRetrievalException {
     if (!DOCKER_CLIENT.isDockerInstalled()) {
       throw new GradleException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
@@ -82,59 +88,69 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
-    GradleProjectProperties gradleProjectProperties =
-        GradleProjectProperties.getForProject(
-            getProject(),
-            getLogger(),
-            jibExtension.getExtraDirectory().getPath(),
-            jibExtension.getExtraDirectory().getPermissions(),
-            appRoot);
-    Path buildOutput = getProject().getBuildDir().toPath();
+    TaskCommon.disableHttpLogging();
 
-    GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
-        new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
+    try {
+      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
+      GradleProjectProperties projectProperties =
+          GradleProjectProperties.getForProject(
+              getProject(),
+              getLogger(),
+              jibExtension.getExtraDirectory().getPath(),
+              jibExtension.getExtraDirectory().getPermissions(),
+              appRoot);
+      RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
 
-    EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
-    ImageReference targetImageReference =
-        ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-            jibExtension.getTo().getImage(),
-            eventDispatcher,
-            getProject().getName(),
-            getProject().getVersion().toString().equals("unspecified")
-                ? "latest"
-                : getProject().getVersion().toString(),
-            gradleHelpfulSuggestionsBuilder.build());
+      GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
+          new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
 
-    DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
+      EventDispatcher eventDispatcher =
+          new DefaultEventDispatcher(projectProperties.getEventHandlers());
+      ImageReference targetImageReference =
+          ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+              jibExtension.getTo().getImage(),
+              eventDispatcher,
+              getProject().getName(),
+              getProject().getVersion().toString().equals("unspecified")
+                  ? "latest"
+                  : getProject().getVersion().toString(),
+              gradleHelpfulSuggestionsBuilder.build());
 
-    PluginConfigurationProcessor pluginConfigurationProcessor =
-        PluginConfigurationProcessor.processCommonConfiguration(
-            getLogger(), jibExtension, gradleProjectProperties);
+      DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
 
-    JibContainerBuilder jibContainerBuilder = pluginConfigurationProcessor.getJibContainerBuilder();
+      PluginConfigurationProcessor pluginConfigurationProcessor =
+          PluginConfigurationProcessor.processCommonConfiguration(
+              rawConfiguration, projectProperties);
 
-    Containerizer containerizer = Containerizer.to(targetImage);
-    PluginConfigurationProcessor.configureContainerizer(
-        containerizer, jibExtension, gradleProjectProperties);
+      JibContainerBuilder jibContainerBuilder =
+          pluginConfigurationProcessor.getJibContainerBuilder();
 
-    HelpfulSuggestions helpfulSuggestions =
-        gradleHelpfulSuggestionsBuilder
-            .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-            .setBaseImageHasConfiguredCredentials(
-                pluginConfigurationProcessor.isBaseImageCredentialPresent())
-            .setTargetImageReference(targetImageReference)
-            .build();
+      Containerizer containerizer = Containerizer.to(targetImage);
+      PluginConfigurationProcessor.configureContainerizer(
+          containerizer, rawConfiguration, projectProperties, GradleProjectProperties.TOOL_NAME);
 
-    BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
-        .writeImageDigest(buildOutput.resolve("jib-image.digest"))
-        .build(
-            jibContainerBuilder,
-            containerizer,
-            eventDispatcher,
-            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-            helpfulSuggestions);
+      HelpfulSuggestions helpfulSuggestions =
+          gradleHelpfulSuggestionsBuilder
+              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
+              .setBaseImageHasConfiguredCredentials(
+                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
+              .setTargetImageReference(targetImageReference)
+              .build();
+
+      Path buildOutput = getProject().getBuildDir().toPath();
+      BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
+          .build(
+              jibContainerBuilder,
+              containerizer,
+              eventDispatcher,
+              projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              helpfulSuggestions);
+
+    } catch (AppRootInvalidException ex) {
+      throw new GradleException(
+          "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
+    }
   }
 
   @Override
