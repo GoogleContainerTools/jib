@@ -43,11 +43,13 @@ import java.util.Objects;
  *     "sourceFile": "source/file/for/layer/entry/1",
  *     "extractionPath": "/extraction/path/for/layer/entry/1"
  *     "lastModifiedTime": "2018-10-03T15:48:32.416152Z"
+ *     "permissions": "777"
  *   },
  *   {
  *     "sourceFile": "source/file/for/layer/entry/2",
  *     "extractionPath": "/extraction/path/for/layer/entry/2"
  *     "lastModifiedTime": "2018-10-03T15:48:32.416152Z"
+ *     "permissions": "777"
  *   }
  * ]
  * }</pre>
@@ -61,12 +63,14 @@ class LayerEntriesSelector {
     private final String sourceFile;
     private final String extractionPath;
     private final Instant lastModifiedTime;
+    private final String permissions;
 
     @VisibleForTesting
     LayerEntryTemplate(LayerEntry layerEntry) throws IOException {
-      sourceFile = layerEntry.getAbsoluteSourceFileString();
-      extractionPath = layerEntry.getAbsoluteExtractionPathString();
+      sourceFile = layerEntry.getSourceFile().toAbsolutePath().toString();
+      extractionPath = layerEntry.getExtractionPath().toString();
       lastModifiedTime = Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant();
+      permissions = layerEntry.getPermissions().toOctalString();
     }
 
     @Override
@@ -80,7 +84,12 @@ class LayerEntriesSelector {
       if (extractionPathComparison != 0) {
         return extractionPathComparison;
       }
-      return lastModifiedTime.compareTo(otherLayerEntryTemplate.lastModifiedTime);
+      int lastModifiedTimeComparison =
+          lastModifiedTime.compareTo(otherLayerEntryTemplate.lastModifiedTime);
+      if (lastModifiedTimeComparison != 0) {
+        return lastModifiedTimeComparison;
+      }
+      return permissions.compareTo(otherLayerEntryTemplate.permissions);
     }
 
     @Override
@@ -94,12 +103,13 @@ class LayerEntriesSelector {
       LayerEntryTemplate otherLayerEntryTemplate = (LayerEntryTemplate) other;
       return sourceFile.equals(otherLayerEntryTemplate.sourceFile)
           && extractionPath.equals(otherLayerEntryTemplate.extractionPath)
-          && lastModifiedTime.equals(otherLayerEntryTemplate.lastModifiedTime);
+          && lastModifiedTime.equals(otherLayerEntryTemplate.lastModifiedTime)
+          && permissions.equals(otherLayerEntryTemplate.permissions);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(sourceFile, extractionPath, lastModifiedTime);
+      return Objects.hash(sourceFile, extractionPath, lastModifiedTime, permissions);
     }
   }
 

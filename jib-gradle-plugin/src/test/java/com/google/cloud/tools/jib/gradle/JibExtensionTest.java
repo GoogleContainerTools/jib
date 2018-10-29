@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import org.gradle.api.Project;
@@ -33,6 +34,7 @@ import org.junit.Test;
 public class JibExtensionTest {
 
   private JibExtension testJibExtension;
+  private Project fakeProject;
 
   private static void clearProperties() {
     System.clearProperty("jib.from.image");
@@ -51,12 +53,14 @@ public class JibExtensionTest {
     System.clearProperty("jib.container.ports");
     System.clearProperty("jib.container.useCurrentTimestamp");
     System.clearProperty("jib.container.user");
+    System.clearProperty("jib.extraDirectory.path");
+    System.clearProperty("jib.extraDirectory.permissions");
   }
 
   @Before
   public void setUp() {
     clearProperties();
-    Project fakeProject = ProjectBuilder.builder().build();
+    fakeProject = ProjectBuilder.builder().build();
     testJibExtension =
         fakeProject
             .getExtensions()
@@ -139,6 +143,26 @@ public class JibExtensionTest {
         ImmutableMap.of("label1", "value1", "label2", "value2"), container.getLabels());
     Assert.assertSame(ImageFormat.OCI, container.getFormat());
     Assert.assertEquals("some invalid appRoot value", container.getAppRoot());
+  }
+
+  @Test
+  public void testExtraDirectory() {
+    Assert.assertEquals(
+        fakeProject.getProjectDir().toPath().resolve("src").resolve("main").resolve("jib"),
+        testJibExtension.getExtraDirectory().getPath());
+    Assert.assertEquals(
+        Collections.emptyMap(), testJibExtension.getExtraDirectory().getPermissions());
+
+    testJibExtension.extraDirectory(
+        extraDirectory -> {
+          extraDirectory.setPath(Paths.get("test").resolve("path").toFile());
+          extraDirectory.setPermissions(ImmutableMap.of("file1", "123", "file2", "456"));
+        });
+    Assert.assertEquals(
+        Paths.get("test").resolve("path"), testJibExtension.getExtraDirectory().getPath());
+    Assert.assertEquals(
+        ImmutableMap.of("file1", "123", "file2", "456"),
+        testJibExtension.getExtraDirectory().getPermissions());
   }
 
   @Test

@@ -72,12 +72,9 @@ public class LayerEntry {
   }
 
   /**
-   * Gets the source file.
-   *
-   * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link #getAbsoluteSourceFileString}
-   * instead. This path can be relative or absolute, but {@link #getAbsoluteSourceFileString} can
-   * only be absolute. Callers should rely on {@link #getAbsoluteSourceFileString} for the
-   * serialized form since the serialization could change independently of the path representation.
+   * Gets the source file. The source file may be relative or absolute, so the caller should use
+   * {@code getSourceFile().toAbsolutePath().toString()} for the serialized form since the
+   * serialization could change independently of the path representation.
    *
    * @return the source file
    */
@@ -101,26 +98,6 @@ public class LayerEntry {
    */
   public FilePermissions getPermissions() {
     return permissions;
-  }
-
-  // TODO: Remove these get...String methods.
-  /**
-   * Get the source file as an absolute path in Unix form. The path is made absolute first, if not
-   * already absolute.
-   *
-   * @return the source file path
-   */
-  public String getAbsoluteSourceFileString() {
-    return AbsoluteUnixPath.fromPath(sourceFile.toAbsolutePath()).toString();
-  }
-
-  /**
-   * Gets the extraction path as an absolute path in Unix form.
-   *
-   * @return the extraction path
-   */
-  public String getAbsoluteExtractionPathString() {
-    return extractionPath.toString();
   }
 
   @Override

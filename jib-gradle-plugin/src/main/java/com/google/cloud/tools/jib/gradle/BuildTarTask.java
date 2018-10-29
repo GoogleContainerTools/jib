@@ -77,7 +77,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   @InputFiles
   public FileCollection getInputFiles() {
     return GradleProjectProperties.getInputFiles(
-        Preconditions.checkNotNull(jibExtension).getExtraDirectoryPath().toFile(), getProject());
+        Preconditions.checkNotNull(jibExtension).getExtraDirectory().getPath().toFile(),
+        getProject());
   }
 
   /**
@@ -99,7 +100,11 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
     GradleProjectProperties gradleProjectProperties =
         GradleProjectProperties.getForProject(
-            getProject(), getLogger(), jibExtension.getExtraDirectoryPath(), appRoot);
+            getProject(),
+            getLogger(),
+            jibExtension.getExtraDirectory().getPath(),
+            jibExtension.getExtraDirectory().getPermissions(),
+            appRoot);
     Path buildOutput = getProject().getBuildDir().toPath();
 
     GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =

@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -95,7 +96,7 @@ public class GradleLayerConfigurationsTest {
   private static void assertExtractionPathsUnordered(
       List<String> expectedPaths, List<LayerEntry> entries) {
     assertLayerEntriesUnordered(
-        expectedPaths, entries, LayerEntry::getAbsoluteExtractionPathString);
+        expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -176,7 +177,11 @@ public class GradleLayerConfigurationsTest {
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
     JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockLogger, Paths.get("nonexistent/path"), appRoot);
+            mockProject,
+            mockLogger,
+            Paths.get("nonexistent/path"),
+            Collections.emptyMap(),
+            appRoot);
     assertSourcePathsUnordered(
         expectedDependenciesFiles, javaLayerConfigurations.getDependencyLayerEntries());
     assertSourcePathsUnordered(
@@ -198,7 +203,7 @@ public class GradleLayerConfigurationsTest {
 
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
     GradleLayerConfigurations.getForProject(
-        mockProject, mockLogger, Paths.get("nonexistent/path"), appRoot);
+        mockProject, mockLogger, Paths.get("nonexistent/path"), Collections.emptyMap(), appRoot);
 
     Mockito.verify(mockLogger)
         .info("Adding corresponding output directories of source sets to image");
@@ -210,7 +215,11 @@ public class GradleLayerConfigurationsTest {
   public void test_extraFiles() throws IOException {
     JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockLogger, extraFilesDirectory, AbsoluteUnixPath.get("/app"));
+            mockProject,
+            mockLogger,
+            extraFilesDirectory,
+            Collections.emptyMap(),
+            AbsoluteUnixPath.get("/app"));
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
@@ -229,7 +238,11 @@ public class GradleLayerConfigurationsTest {
   public void testGetForProject_nonDefaultAppRoot() throws IOException {
     JavaLayerConfigurations configuration =
         GradleLayerConfigurations.getForProject(
-            mockProject, mockLogger, extraFilesDirectory, AbsoluteUnixPath.get("/my/app"));
+            mockProject,
+            mockLogger,
+            extraFilesDirectory,
+            Collections.emptyMap(),
+            AbsoluteUnixPath.get("/my/app"));
 
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -261,6 +274,7 @@ public class GradleLayerConfigurationsTest {
             mockProject,
             mockLogger,
             extraFilesDirectory,
+            Collections.emptyMap(),
             AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_APP_ROOT));
 
     assertExtractionPathsUnordered(
@@ -289,7 +303,11 @@ public class GradleLayerConfigurationsTest {
 
     JavaLayerConfigurations configuration =
         GradleLayerConfigurations.getForProject(
-            mockWebAppProject, mockLogger, extraFilesDirectory, AbsoluteUnixPath.get("/my/app"));
+            mockWebAppProject,
+            mockLogger,
+            extraFilesDirectory,
+            Collections.emptyMap(),
+            AbsoluteUnixPath.get("/my/app"));
     ImmutableList<Path> expectedDependenciesFiles =
         ImmutableList.of(
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/lib/dependency-1.0.0.jar"));
@@ -371,6 +389,7 @@ public class GradleLayerConfigurationsTest {
             mockWebAppProject,
             mockLogger,
             extraFilesDirectory,
+            Collections.emptyMap(),
             AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT));
 
     assertExtractionPathsUnordered(
@@ -413,6 +432,7 @@ public class GradleLayerConfigurationsTest {
         mockWebAppProject,
         mockLogger,
         extraFilesDirectory,
+        Collections.emptyMap(),
         AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT)); // should pass
   }
 
@@ -425,6 +445,7 @@ public class GradleLayerConfigurationsTest {
         mockWebAppProject,
         mockLogger,
         extraFilesDirectory,
+        Collections.emptyMap(),
         AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT)); // should pass
   }
 
@@ -437,6 +458,7 @@ public class GradleLayerConfigurationsTest {
         mockWebAppProject,
         mockLogger,
         extraFilesDirectory,
+        Collections.emptyMap(),
         AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT)); // should pass
   }
 

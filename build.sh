@@ -4,6 +4,7 @@
 quickMode=false
 mavenOptions=""
 gradleOptions=""
+dryRun=""
 
 usage()
 {
@@ -13,6 +14,7 @@ usage()
   echo "  providing no target is the same as 'core plugins gradle maven'"
   echo "  -q  quick mode: skip tests, formatting"
   echo "  -e  show error information (mvn: -e, gradle: --stacktrace --info)"
+  echo "  -n  dry run: show what will be performed"
   exit 1
 }
 
@@ -20,15 +22,16 @@ usage()
 # $1 = directory
 # $2... = build command
 doBuild() {
-  (directory="$1"; shift; echo ">>> (cd $directory; $*)"; cd "$directory" && eval '"$@"')
+  (directory="$1"; shift; echo ">>> (cd $directory; $*)"; [ -z "$dryRun" ] && cd "$directory" && eval '"$@"')
 }
 
-while getopts qe c; do
+while getopts qen c; do
   case $c in
   q)  quickMode=true;;
   e)  mavenOptions="$mavenOptions -e"
       gradleOptions="$gradleOptions --stacktrace --info"
       ;;
+  n)  dryRun=true;;
   \?) usage;;
   esac
 done

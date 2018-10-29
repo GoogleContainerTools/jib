@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
@@ -26,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
@@ -44,18 +46,23 @@ class GradleLayerConfigurations {
    * @param project the Gradle {@link Project}
    * @param logger the logger for providing feedback about the resolution
    * @param extraDirectory path to the source directory for the extra files layer
+   * @param permissions map from path on container to file permissions for extra-layer files
    * @param appRoot root directory in the image where the app will be placed
    * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
   static JavaLayerConfigurations getForProject(
-      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
+      Project project,
+      Logger logger,
+      Path extraDirectory,
+      Map<AbsoluteUnixPath, FilePermissions> permissions,
+      AbsoluteUnixPath appRoot)
       throws IOException {
     if (GradleProjectProperties.getWarTask(project) != null) {
       logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
-      return getForWarProject(project, logger, extraDirectory, appRoot);
+      return getForWarProject(project, extraDirectory, permissions, appRoot);
     } else {
-      return getForNonWarProject(project, logger, extraDirectory, appRoot);
+      return getForNonWarProject(project, logger, extraDirectory, permissions, appRoot);
     }
   }
 
@@ -65,12 +72,17 @@ class GradleLayerConfigurations {
    * @param project the Gradle {@link Project}
    * @param logger the logger for providing feedback about the resolution
    * @param extraDirectory path to the source directory for the extra files layer
+   * @param permissions map from path on container to file permissions for extra-layer files
    * @param appRoot root directory in the image where the app will be placed
    * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
   private static JavaLayerConfigurations getForNonWarProject(
-      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
+      Project project,
+      Logger logger,
+      Path extraDirectory,
+      Map<AbsoluteUnixPath, FilePermissions> permissions,
+      AbsoluteUnixPath appRoot)
       throws IOException {
     AbsoluteUnixPath dependenciesExtractionPath =
         appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
@@ -127,7 +139,11 @@ class GradleLayerConfigurations {
     // Adds all the extra files.
     if (Files.exists(extraDirectory)) {
       layerBuilder.addDirectoryContents(
-          LayerType.EXTRA_FILES, extraDirectory, path -> true, AbsoluteUnixPath.get("/"));
+          LayerType.EXTRA_FILES,
+          extraDirectory,
+          path -> true,
+          AbsoluteUnixPath.get("/"),
+          permissions);
     }
 
     return layerBuilder.build();
@@ -137,17 +153,21 @@ class GradleLayerConfigurations {
    * Resolves the {@link JavaLayerConfigurations} for a WAR Gradle {@link Project}.
    *
    * @param project the Gradle {@link Project}
-   * @param logger the build logger for providing feedback about the resolution
    * @param extraDirectory path to the source directory for the extra files layer
+   * @param permissions map from path on container to file permissions for extra-layer files
    * @param appRoot root directory in the image where the app will be placed
    * @return {@link JavaLayerConfigurations} for the layers for the Gradle {@link Project}
    * @throws IOException if an I/O exception occurred during resolution
    */
   private static JavaLayerConfigurations getForWarProject(
-      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot)
+      Project project,
+      Path extraDirectory,
+      Map<AbsoluteUnixPath, FilePermissions> permissions,
+      AbsoluteUnixPath appRoot)
       throws IOException {
     Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
-    return JavaLayerConfigurationsHelper.fromExplodedWar(explodedWarPath, appRoot, extraDirectory);
+    return JavaLayerConfigurationsHelper.fromExplodedWar(
+        explodedWarPath, appRoot, extraDirectory, permissions);
   }
 
   private GradleLayerConfigurations() {}

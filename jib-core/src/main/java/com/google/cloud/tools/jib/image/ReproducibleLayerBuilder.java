@@ -102,7 +102,7 @@ public class ReproducibleLayerBuilder {
       // adds parent directories for each extraction path.
       TarArchiveEntry entry =
           new TarArchiveEntry(
-              layerEntry.getSourceFile().toFile(), layerEntry.getAbsoluteExtractionPathString());
+              layerEntry.getSourceFile().toFile(), layerEntry.getExtractionPath().toString());
 
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.

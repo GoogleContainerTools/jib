@@ -16,42 +16,26 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.Layer;
 
 /**
  * Represents a cache entry for a layer stored in the cache. <b>Implementations must be
  * immutable.</b>
  */
-public interface CacheEntry {
+public interface CachedLayer extends Layer {
 
   /**
    * Gets the digest of the layer.
    *
    * @return the layer digest
    */
-  DescriptorDigest getLayerDigest();
-
-  /**
-   * Gets the diff ID of the layer. The diff ID is the digest of the uncompressed layer contents,
-   * whereas the {@link #getLayerDigest} is the digest of the compressed layer contents.
-   *
-   * @return the layer diff ID
-   */
-  DescriptorDigest getLayerDiffId();
+  DescriptorDigest getDigest();
 
   /**
    * Gets the size of the layer, in bytes.
    *
    * @return the layer size
    */
-  long getLayerSize();
-
-  /**
-   * Gets the {@link Blob} for the layer. This {@link Blob} should be able to be used multiple
-   * times.
-   *
-   * @return the layer {@link Blob}
-   */
-  Blob getLayerBlob();
+  long getSize();
 }

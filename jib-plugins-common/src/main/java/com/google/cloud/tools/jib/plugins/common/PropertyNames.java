@@ -41,6 +41,7 @@ public class PropertyNames {
   public static final String CONTAINER_USE_CURRENT_TIMESTAMP = "jib.container.useCurrentTimestamp";
   public static final String USE_ONLY_PROJECT_CACHE = "jib.useOnlyProjectCache";
   public static final String ALLOW_INSECURE_REGISTRIES = "jib.allowInsecureRegistries";
-  public static final String EXTRA_DIRECTORY = "jib.extraDirectory";
+  public static final String EXTRA_DIRECTORY_PATH = "jib.extraDirectory.path";
+  public static final String EXTRA_DIRECTORY_PERMISSIONS = "jib.extraDirectory.permissions";
   public static final String SKIP = "jib.skip";
 }

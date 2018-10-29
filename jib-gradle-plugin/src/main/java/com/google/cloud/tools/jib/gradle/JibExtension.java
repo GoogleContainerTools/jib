@@ -18,14 +18,11 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 
@@ -52,6 +49,15 @@ import org.gradle.api.tasks.Optional;
  *     format = OCI
  *     appRoot = "/app";
  *   }
+ *   extraDirectory {
+ *     path = file('path/to/extra/dir')
+ *     permissions = [
+ *       '/path/on/container/file1': 744,
+ *       '/path/on/container/file2': 123
+ *     ]
+ *   }
+ *   allowInsecureRegistries = false
+ *   useOnlyProjectCache = false
  * }
  * }</pre>
  */
@@ -61,16 +67,13 @@ public class JibExtension {
   private static final boolean DEFAULT_USE_ONLY_PROJECT_CACHE = false;
   private static final boolean DEFAULT_ALLOW_INSECURE_REGISTIRIES = false;
 
-  private static Path resolveDefaultExtraDirectory(Path projectDirectory) {
-    return projectDirectory.resolve("src").resolve("main").resolve("jib");
-  }
-
   private final BaseImageParameters from;
   private final TargetImageParameters to;
   private final ContainerParameters container;
+  private final ExtraDirectoryParameters extraDirectory;
+
   private final Property<Boolean> useOnlyProjectCache;
   private final Property<Boolean> allowInsecureRegistries;
-  private final Property<Path> extraDirectory;
 
   public JibExtension(Project project) {
     ObjectFactory objectFactory = project.getObjects();
@@ -78,15 +81,15 @@ public class JibExtension {
     from = objectFactory.newInstance(BaseImageParameters.class, "jib.from");
     to = objectFactory.newInstance(TargetImageParameters.class, "jib.to");
     container = objectFactory.newInstance(ContainerParameters.class);
+    extraDirectory =
+        objectFactory.newInstance(ExtraDirectoryParameters.class, project.getProjectDir().toPath());
 
     useOnlyProjectCache = objectFactory.property(Boolean.class);
     allowInsecureRegistries = objectFactory.property(Boolean.class);
-    extraDirectory = objectFactory.property(Path.class);
 
     // Sets defaults.
     useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
-    extraDirectory.set(resolveDefaultExtraDirectory(project.getProjectDir().toPath()));
   }
 
   public void from(Action<? super BaseImageParameters> action) {
@@ -101,12 +104,16 @@ public class JibExtension {
     action.execute(container);
   }
 
-  public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
-    this.allowInsecureRegistries.set(allowInsecureRegistries);
+  public void extraDirectory(Action<? super ExtraDirectoryParameters> action) {
+    action.execute(extraDirectory);
   }
 
   public void setExtraDirectory(File extraDirectory) {
-    this.extraDirectory.set(extraDirectory.toPath());
+    this.extraDirectory.setPath(extraDirectory);
+  }
+
+  public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
+    this.allowInsecureRegistries.set(allowInsecureRegistries);
   }
 
   void setUseOnlyProjectCache(boolean useOnlyProjectCache) {
@@ -131,6 +138,12 @@ public class JibExtension {
     return container;
   }
 
+  @Nested
+  @Optional
+  public ExtraDirectoryParameters getExtraDirectory() {
+    return extraDirectory;
+  }
+
   @Input
   @Optional
   boolean getUseOnlyProjectCache() {
@@ -147,24 +160,5 @@ public class JibExtension {
       return Boolean.getBoolean(PropertyNames.ALLOW_INSECURE_REGISTRIES);
     }
     return allowInsecureRegistries.get();
-  }
-
-  @Input
-  String getExtraDirectory() {
-    // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
-    // String to make them go away.
-    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY) != null) {
-      return System.getProperty(PropertyNames.EXTRA_DIRECTORY);
-    }
-    return extraDirectory.get().toString();
-  }
-
-  @Internal
-  Path getExtraDirectoryPath() {
-    // TODO: Should inform user about nonexistent directory if using custom directory.
-    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY) != null) {
-      return Paths.get(System.getProperty(PropertyNames.EXTRA_DIRECTORY));
-    }
-    return extraDirectory.get();
   }
 }

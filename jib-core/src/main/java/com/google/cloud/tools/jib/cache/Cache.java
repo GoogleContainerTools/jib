@@ -61,10 +61,10 @@ public class Cache {
    * {@link Blob} and include a selector.
    *
    * @param compressedLayerBlob the compressed layer {@link Blob}
-   * @return the {@link CacheEntry} for the written layer
+   * @return the {@link CachedLayer} for the written layer
    * @throws IOException if an I/O exception occurs
    */
-  public CacheEntry writeCompressedLayer(Blob compressedLayerBlob) throws IOException {
+  public CachedLayer writeCompressedLayer(Blob compressedLayerBlob) throws IOException {
     return cacheStorage.write(compressedLayerBlob);
   }
 
@@ -74,10 +74,10 @@ public class Cache {
    *
    * @param uncompressedLayerBlob the layer {@link Blob}
    * @param layerEntries the layer entries that make up the layer
-   * @return the {@link CacheEntry} for the written layer
+   * @return the {@link CachedLayer} for the written layer
    * @throws IOException if an I/O exception occurs
    */
-  public CacheEntry writeUncompressedLayer(
+  public CachedLayer writeUncompressedLayer(
       Blob uncompressedLayerBlob, ImmutableList<LayerEntry> layerEntries) throws IOException {
     return cacheStorage.write(
         new UncompressedCacheWrite(
@@ -85,14 +85,14 @@ public class Cache {
   }
 
   /**
-   * Retrieves the {@link CacheEntry} that was built from the {@code layerEntries}.
+   * Retrieves the {@link CachedLayer} that was built from the {@code layerEntries}.
    *
    * @param layerEntries the layer entries to match against
-   * @return a {@link CacheEntry} that was built from {@code layerEntries}, if found
+   * @return a {@link CachedLayer} that was built from {@code layerEntries}, if found
    * @throws IOException if an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    */
-  public Optional<CacheEntry> retrieve(ImmutableList<LayerEntry> layerEntries)
+  public Optional<CachedLayer> retrieve(ImmutableList<LayerEntry> layerEntries)
       throws IOException, CacheCorruptedException {
     Optional<DescriptorDigest> optionalSelectedLayerDigest =
         cacheStorage.select(LayerEntriesSelector.generateSelector(layerEntries));
@@ -104,14 +104,14 @@ public class Cache {
   }
 
   /**
-   * Retrieves the {@link CacheEntry} for the layer with digest {@code layerDigest}.
+   * Retrieves the {@link CachedLayer} for the layer with digest {@code layerDigest}.
    *
    * @param layerDigest the layer digest
-   * @return the {@link CacheEntry} referenced by the layer digest, if found
+   * @return the {@link CachedLayer} referenced by the layer digest, if found
    * @throws CacheCorruptedException if the cache was found to be corrupted
    * @throws IOException if an I/O exception occurs
    */
-  public Optional<CacheEntry> retrieve(DescriptorDigest layerDigest)
+  public Optional<CachedLayer> retrieve(DescriptorDigest layerDigest)
       throws IOException, CacheCorruptedException {
     return cacheStorage.retrieve(layerDigest);
   }

@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -50,7 +51,7 @@ public class JavaLayerConfigurationsHelperTest {
   private static void assertExtractionPathsUnordered(
       List<String> expectedPaths, List<LayerEntry> entries) {
     assertLayerEntriesUnordered(
-        expectedPaths, entries, LayerEntry::getAbsoluteExtractionPathString);
+        expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
   @Test
@@ -61,13 +62,17 @@ public class JavaLayerConfigurationsHelperTest {
 
     JavaLayerConfigurations configuration =
         JavaLayerConfigurationsHelper.fromExplodedWar(
-            explodedWar, AbsoluteUnixPath.get("/my/app"), extraFilesDirectory);
+            explodedWar,
+            AbsoluteUnixPath.get("/my/app"),
+            extraFilesDirectory,
+            Collections.emptyMap());
 
     assertSourcePathsUnordered(
-        Arrays.asList(explodedWar.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
+        Collections.singletonList(explodedWar.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
         configuration.getDependencyLayerEntries());
     assertSourcePathsUnordered(
-        Arrays.asList(explodedWar.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
+        Collections.singletonList(
+            explodedWar.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
         configuration.getSnapshotDependencyLayerEntries());
     assertSourcePathsUnordered(
         Arrays.asList(
@@ -100,10 +105,10 @@ public class JavaLayerConfigurationsHelperTest {
         configuration.getExtraFilesLayerEntries());
 
     assertExtractionPathsUnordered(
-        Arrays.asList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
+        Collections.singletonList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
         configuration.getDependencyLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
+        Collections.singletonList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(

@@ -149,8 +149,8 @@ public class FilesTask extends DefaultTask {
     printProjectFiles(project);
 
     // Print extra layer
-    if (Files.exists(jibExtension.getExtraDirectoryPath())) {
-      System.out.println(jibExtension.getExtraDirectoryPath());
+    if (Files.exists(jibExtension.getExtraDirectory().getPath())) {
+      System.out.println(jibExtension.getExtraDirectory().getPath());
     }
 
     // Find project dependencies
