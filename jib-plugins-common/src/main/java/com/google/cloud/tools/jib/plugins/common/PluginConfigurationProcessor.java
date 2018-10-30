@@ -153,10 +153,9 @@ public class PluginConfigurationProcessor {
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InferredAuthRetrievalException, InvalidImageReferenceException,
           MainClassInferenceException, AppRootInvalidException, IOException {
-    Preconditions.checkNotNull(rawConfiguration.getToImage().orElse(null));
+    Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
-    ImageReference targetImageReference =
-        ImageReference.parse(rawConfiguration.getToImage().orElse(null));
+    ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
     RegistryImage targetImage = RegistryImage.named(targetImageReference);
 
     EventDispatcher eventDispatcher =
