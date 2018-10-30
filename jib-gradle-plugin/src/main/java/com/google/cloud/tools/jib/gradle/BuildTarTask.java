@@ -25,16 +25,21 @@ import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.plugins.common.AppRootInvalidException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
+import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Nested;
@@ -89,7 +94,86 @@ public class BuildTarTask extends DefaultTask implements JibTask {
    */
   @OutputFile
   public String getOutputFile() {
-    return getTargetPath();
+    return getTargetPath().toString();
+  }
+
+  @TaskAction
+  public void buildTar()
+      throws InvalidImageReferenceException, BuildStepsExecutionException, IOException,
+          CacheDirectoryCreationException, MainClassInferenceException,
+          InferredAuthRetrievalException {
+    // Asserts required @Input parameters are not null.
+    Preconditions.checkNotNull(jibExtension);
+    TaskCommon.disableHttpLogging();
+    try {
+      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
+
+      GradleProjectProperties projectProperties =
+          GradleProjectProperties.getForProject(
+              getProject(),
+              getLogger(),
+              jibExtension.getExtraDirectory().getPath(),
+              jibExtension.getExtraDirectory().getPermissions(),
+              appRoot);
+      RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
+
+      GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
+          new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
+
+      EventDispatcher eventDispatcher =
+          new DefaultEventDispatcher(projectProperties.getEventHandlers());
+      ImageReference targetImageReference =
+          ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
+              jibExtension.getTo().getImage(),
+              eventDispatcher,
+              getProject().getName(),
+              getProject().getVersion().toString().equals("unspecified")
+                  ? "latest"
+                  : getProject().getVersion().toString(),
+              gradleHelpfulSuggestionsBuilder.build());
+
+      Path tarOutputPath = getTargetPath();
+      TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarOutputPath);
+
+      PluginConfigurationProcessor pluginConfigurationProcessor =
+          PluginConfigurationProcessor.processCommonConfiguration(
+              rawConfiguration, projectProperties);
+
+      JibContainerBuilder jibContainerBuilder =
+          pluginConfigurationProcessor.getJibContainerBuilder();
+
+      Containerizer containerizer = Containerizer.to(targetImage);
+      PluginConfigurationProcessor.configureContainerizer(
+          containerizer, rawConfiguration, projectProperties, GradleProjectProperties.TOOL_NAME);
+
+      HelpfulSuggestions helpfulSuggestions =
+          gradleHelpfulSuggestionsBuilder
+              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
+              .setBaseImageHasConfiguredCredentials(
+                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
+              .setTargetImageReference(targetImageReference)
+              .build();
+
+      Path buildOutput = getProject().getBuildDir().toPath();
+      BuildStepsRunner.forBuildTar(tarOutputPath)
+          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
+          .build(
+              jibContainerBuilder,
+              containerizer,
+              eventDispatcher,
+              projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+              helpfulSuggestions);
+
+    } catch (AppRootInvalidException ex) {
+      throw new GradleException(
+          "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
+    }
+  }
+
+  @Override
+  public BuildTarTask setJibExtension(JibExtension jibExtension) {
+    this.jibExtension = jibExtension;
+    return this;
   }
 
   /**
@@ -97,73 +181,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
    *
    * @return the output directory
    */
-  private String getTargetPath() {
-    return getProject().getBuildDir().toPath().resolve("jib-image.tar").toString();
-  }
-
-  @TaskAction
-  public void buildTar()
-      throws InvalidImageReferenceException, BuildStepsExecutionException, IOException,
-          CacheDirectoryCreationException {
-    // Asserts required @Input parameters are not null.
-    Preconditions.checkNotNull(jibExtension);
-    AbsoluteUnixPath appRoot = PluginConfigurationProcessor.getAppRootChecked(jibExtension);
-    GradleProjectProperties gradleProjectProperties =
-        GradleProjectProperties.getForProject(
-            getProject(),
-            getLogger(),
-            jibExtension.getExtraDirectory().getPath(),
-            jibExtension.getExtraDirectory().getPermissions(),
-            appRoot);
-
-    GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
-        new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
-
-    EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(gradleProjectProperties.getEventHandlers());
-    ImageReference targetImageReference =
-        ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-            jibExtension.getTo().getImage(),
-            eventDispatcher,
-            getProject().getName(),
-            getProject().getVersion().toString().equals("unspecified")
-                ? "latest"
-                : getProject().getVersion().toString(),
-            gradleHelpfulSuggestionsBuilder.build());
-
-    Path tarOutputPath = Paths.get(getTargetPath());
-    TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarOutputPath);
-
-    PluginConfigurationProcessor pluginConfigurationProcessor =
-        PluginConfigurationProcessor.processCommonConfiguration(
-            getLogger(), jibExtension, gradleProjectProperties);
-
-    JibContainerBuilder jibContainerBuilder = pluginConfigurationProcessor.getJibContainerBuilder();
-
-    Containerizer containerizer = Containerizer.to(targetImage);
-    PluginConfigurationProcessor.configureContainerizer(
-        containerizer, jibExtension, gradleProjectProperties);
-
-    HelpfulSuggestions helpfulSuggestions =
-        gradleHelpfulSuggestionsBuilder
-            .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-            .setBaseImageHasConfiguredCredentials(
-                pluginConfigurationProcessor.isBaseImageCredentialPresent())
-            .setTargetImageReference(targetImageReference)
-            .build();
-
-    BuildStepsRunner.forBuildTar(tarOutputPath)
-        .build(
-            jibContainerBuilder,
-            containerizer,
-            eventDispatcher,
-            gradleProjectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-            helpfulSuggestions);
-  }
-
-  @Override
-  public BuildTarTask setJibExtension(JibExtension jibExtension) {
-    this.jibExtension = jibExtension;
-    return this;
+  private Path getTargetPath() {
+    return getProject().getBuildDir().toPath().resolve("jib-image.tar");
   }
 }

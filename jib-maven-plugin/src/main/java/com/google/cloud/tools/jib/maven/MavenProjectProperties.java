@@ -16,18 +16,18 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
-import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -54,18 +54,23 @@ public class MavenProjectProperties implements ProjectProperties {
    * @param project the {@link MavenProject} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution
    * @param extraDirectory path to the directory for the extra files layer
+   * @param permissions map from path on container to file permissions for extra-layer files
    * @param appRoot root directory in the image where the app will be placed
    * @return a MavenProjectProperties from the given project and logger.
    * @throws MojoExecutionException if no class files are found in the output directory.
    */
   static MavenProjectProperties getForProject(
-      MavenProject project, Log log, Path extraDirectory, AbsoluteUnixPath appRoot)
+      MavenProject project,
+      Log log,
+      Path extraDirectory,
+      Map<AbsoluteUnixPath, FilePermissions> permissions,
+      AbsoluteUnixPath appRoot)
       throws MojoExecutionException {
     try {
       return new MavenProjectProperties(
           project,
           makeEventHandlers(log),
-          MavenLayerConfigurations.getForProject(project, extraDirectory, appRoot));
+          MavenLayerConfigurations.getForProject(project, extraDirectory, permissions, appRoot));
 
     } catch (IOException ex) {
       throw new MojoExecutionException(
@@ -150,20 +155,5 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public boolean isWarProject() {
     return "war".equals(project.getPackaging());
-  }
-
-  /**
-   * Tries to resolve the main class.
-   *
-   * @param jibPluginConfiguration the mojo configuration properties.
-   * @return the configured main class, or the inferred main class if none is configured.
-   * @throws MojoExecutionException if resolving the main class fails.
-   */
-  String getMainClass(JibPluginConfiguration jibPluginConfiguration) throws MojoExecutionException {
-    try {
-      return MainClassResolver.resolveMainClass(jibPluginConfiguration.getMainClass(), this);
-    } catch (MainClassInferenceException ex) {
-      throw new MojoExecutionException(ex.getMessage(), ex);
-    }
   }
 }

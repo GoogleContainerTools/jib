@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
+import java.security.DigestException;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -75,7 +76,8 @@ public class DefaultTargetProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_defaultTarget() throws IOException, InterruptedException {
+  public void testDockerDaemon_defaultTarget()
+      throws IOException, InterruptedException, DigestException {
     Assert.assertEquals(
         "Hello, world. An argument.\n",
         JibRunHelper.buildToDockerDaemonAndRun(
