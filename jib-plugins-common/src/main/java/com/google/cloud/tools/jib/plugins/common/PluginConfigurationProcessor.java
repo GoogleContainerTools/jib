@@ -51,6 +51,12 @@ import javax.annotation.Nullable;
  */
 public class PluginConfigurationProcessor {
 
+  @FunctionalInterface
+  private interface InferredAuthProvider {
+
+    Optional<AuthProperty> getInferredAuth(String registry) throws InferredAuthRetrievalException;
+  };
+
   /**
    * Compute the container entrypoint, in this order:
    *
@@ -165,7 +171,7 @@ public class PluginConfigurationProcessor {
             rawConfiguration.getToAuth(),
             "to.auth/<to><auth>",
             rawConfiguration::getInferredAuth,
-            rawConfiguration.getToCredHelper());
+            rawConfiguration.getToCredHelper().orElse(null));
 
     PluginConfigurationProcessor processor =
         processCommonConfiguration(
@@ -212,7 +218,7 @@ public class PluginConfigurationProcessor {
             rawConfiguration.getFromAuth(),
             "from.auth/<from><auth>",
             rawConfiguration::getInferredAuth,
-            rawConfiguration.getFromCredHelper());
+            rawConfiguration.getFromCredHelper().orElse(null));
 
     JibContainerBuilder jibContainerBuilder =
         Jib.from(baseImage)
@@ -270,12 +276,7 @@ public class PluginConfigurationProcessor {
     }
   }
 
-  @FunctionalInterface
-  private static interface InferredAuthProvider {
-
-    Optional<AuthProperty> getInferredAuth(String registry) throws InferredAuthRetrievalException;
-  };
-
+  // TODO: find a way to reduce the number of arguments.
   private static boolean configureCredentialRetrievers(
       EventDispatcher eventDispatcher,
       RegistryImage registryImage,
@@ -285,7 +286,7 @@ public class PluginConfigurationProcessor {
       AuthProperty knownAuth,
       String knownAuthSource,
       InferredAuthProvider inferredAuthProvider,
-      Optional<String> credHelper)
+      @Nullable String credHelper)
       throws FileNotFoundException, InferredAuthRetrievalException {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
@@ -296,7 +297,7 @@ public class PluginConfigurationProcessor {
     boolean credentialPresent = optionalToCredential.isPresent();
     if (optionalToCredential.isPresent()) {
       // TODO: fix https://github.com/GoogleContainerTools/jib/issues/1177
-      // knownAuth.getPropertyDescriptor() may cause NPE. Fix it and remove knownAuthSource.
+      // knownAuth.getPropertyDescriptor() may NPE. Fix it and remove the knownAuthSource parameter.
       defaultCredentialRetrievers.setKnownCredential(optionalToCredential.get(), knownAuthSource);
     } else {
       Optional<AuthProperty> optionalInferredAuth =
@@ -310,7 +311,7 @@ public class PluginConfigurationProcessor {
         defaultCredentialRetrievers.setInferredCredential(credential, auth.getPropertyDescriptor());
       }
     }
-    credHelper.ifPresent(defaultCredentialRetrievers::setCredentialHelper);
+    defaultCredentialRetrievers.setCredentialHelper(credHelper);
     defaultCredentialRetrievers.asList().forEach(registryImage::addCredentialRetriever);
 
     return credentialPresent;
