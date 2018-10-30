@@ -343,13 +343,13 @@ public class BuildImageStepTest {
     Assert.assertEquals(expectedAddedBaseLayerHistory, image.getHistory().get(3));
     Assert.assertEquals(expectedAddedBaseLayerHistory, image.getHistory().get(4));
 
-    // Application layers (3 generated)
+    // Application layers (4 generated)
     Assert.assertEquals(expectedApplicationLayerHistoryDependencies, image.getHistory().get(5));
     Assert.assertEquals(expectedApplicationLayerHistoryResources, image.getHistory().get(6));
     Assert.assertEquals(expectedApplicationLayerHistoryClasses, image.getHistory().get(7));
     Assert.assertEquals(expectedApplicationLayerHistoryExtrafiles, image.getHistory().get(8));
 
-    // Should be exactly 8 total
+    // Should be exactly 9 total
     Assert.assertEquals(9, image.getHistory().size());
   }
 }

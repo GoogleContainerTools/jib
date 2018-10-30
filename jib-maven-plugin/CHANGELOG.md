@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - `<to><credHelper>` and `<from><credHelper>` can be used to specify a credential helper suffix or a full path to a credential helper executable ([#925](https://github.com/GoogleContainerTools/jib/issues/925))
 - `container.user` configuration parameter to configure the user and group to run the container as ([#1029](https://github.com/GoogleContainerTools/jib/issues/1029))
 - Preliminary support for building images for WAR projects ([#431](https://github.com/GoogleContainerTools/jib/issues/431))
+- Adds the layer type to the layer history as comments ([#1198](https://github.com/GoogleContainerTools/jib/issues/1198))
 
 ### Changed
 

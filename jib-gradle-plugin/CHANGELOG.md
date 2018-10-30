@@ -12,7 +12,8 @@ All notable changes to this project will be documented in this file.
 - `jib.extraDirectory` closure with a `path` and `permissions` field ([#794](https://github.com/GoogleContainerTools/jib/issues/794))
   - `jib.extraDirectory.path` configures the extra layer directory (still also configurable via `jib.extraDirectory = file(...)`)
   - `jib.extraDirectory.permissions` is a map from absolute path on container to the file's permission bits (represented as an octal string)
-  
+- Adds the layer type to the layer history as comments ([#1198](https://github.com/GoogleContainerTools/jib/issues/1198))
+
 ### Changed
 
 - Removed deprecated `jib.jvmFlags`, `jib.mainClass`, `jib.args`, and `jib.format` in favor of the equivalents under `jib.container` ([#461](https://github.com/GoogleContainerTools/jib/issues/461))
