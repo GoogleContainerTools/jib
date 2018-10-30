@@ -202,7 +202,7 @@ Field | Type | Default | Description
 `to` | [`to`](#to-object) | *Required* | Configures the target image to build your application to.
 `from` | [`from`](#from-object) | See [`from`](#from-object) | Configures the base image to build your application on top of.
 `container` | [`container`](#container-object) | See [`container`](#container-object) | Configures the container that is run from your image.
-`extraDirectory` | [`extraDirectory`](#extradirectory-object) / string | See `extraDirectory` | Configures the directory used to add arbitrary files to the image.
+`extraDirectory` | [`extraDirectory`](#extradirectory-object) / string | `(project-dir)/src/main/jib` | Configures the directory used to add arbitrary files to the image.
 `allowInsecureRegistries` | boolean | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 `skip` | boolean | `false` | If set to true, Jib execution is skipped (useful for multi-module projects). This can also be specified via the `-Djib.skip` command line option.
 `useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Maven projects.
@@ -315,37 +315,32 @@ In this configuration, the image:
 
 You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
-You can configure a different directory by using the `extraDirectory` parameter in your `pom.xml`, either by using the `<extraDirectory><path>` parameter:
-
+You can configure a different directory by using the `<extraDirectory>` parameter in your `pom.xml`:
 ```xml
-<!-- Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib' -->
-<extraDirectory>
-  <path>${project.basedir}/src/main/custom-extra-dir</path>
-</extraDirectory>
+<configuration>
+  <!-- Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib' -->
+  <extraDirectory>${project.basedir}/src/main/custom-extra-dir</extraDirectory>
+</configuration>
 ```
 
-or by setting the path on the `extraDirectory` parameter directly:
+Alternatively, the `<extraDirectory>` parameter can be used as an object to set a custom extra directory, as well as the extra files' permissions on the container:
 
 ```xml
-<!-- Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib' -->
-<extraDirectory>${project.basedir}/src/main/custom-extra-dir</extraDirectory>
-```
-
-The `extraDirectory` parameter can also be used to set the file permissions of files added to the container by specifying the absolute path of the file on the container as well as the octal representation of its file permission bits in the `<extraDirectory><permissions>` field:
-
-```xml
-<extraDirectory>
-  <permissions>
-    <permission>
-      <file>/path/on/container/to/fileA</file>
-      <mode>755</mode> <!-- Read/write/execute for owner, read/execute for group/other -->
-    </permission>
-    <permission>
-      <file>/path/to/another/file</file>
-      <mode>644</mode> <!-- Read/write for owner, read-only for group/other -->
-    </permission>
-  </permissions>
-</extraDirectory>
+<configuration>
+  <extraDirectory>
+    <path>${project.basedir}/src/main/custom-extra-dir</path> <!-- Copies files from 'src/main/custom-extra-dir' -->
+    <permissions>
+      <permission>
+        <file>/path/on/container/to/fileA</file>
+        <mode>755</mode> <!-- Read/write/execute for owner, read/execute for group/other -->
+      </permission>
+      <permission>
+        <file>/path/to/another/file</file>
+        <mode>644</mode> <!-- Read/write for owner, read-only for group/other -->
+      </permission>
+    </permissions>
+  </extraDirectory>
+</configuration>
 ```
 
 ### Authentication Methods
