@@ -261,7 +261,7 @@ You can configure a different directory by using the `jib.extraDirectory` parame
 ```groovy
 jib {
   // Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib'
-  jib.extraDirectory = file('src/main/custom-extra-dir')
+  extraDirectory = file('src/main/custom-extra-dir')
 }
 ```
 
