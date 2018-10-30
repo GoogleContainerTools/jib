@@ -58,9 +58,11 @@ public class JibContainerBuilderTest {
   @Mock private JibEvent mockJibEvent;
 
   @Test
-  public void testToContainerConfiguration_set() throws InvalidImageReferenceException {
+  public void testToBuildConfiguration_containerConfigurationSet()
+      throws InvalidImageReferenceException, CacheDirectoryCreationException, IOException {
+    RegistryImage baseImage = RegistryImage.named("test-image");
     JibContainerBuilder jibContainerBuilder =
-        Jib.from("base/image/reference")
+        new JibContainerBuilder(baseImage, spyBuildConfigurationBuilder)
             .setEntrypoint(Arrays.asList("entry", "point"))
             .setEnvironment(ImmutableMap.of("name", "value"))
             .setExposedPorts(Arrays.asList(Port.tcp(1234), Port.udp(5678)))
@@ -69,7 +71,9 @@ public class JibContainerBuilderTest {
             .setCreationTime(Instant.ofEpochMilli(1000))
             .setUser("user");
 
-    ContainerConfiguration containerConfiguration = jibContainerBuilder.toContainerConfiguration();
+    BuildConfiguration buildConfiguration =
+        jibContainerBuilder.toBuildConfiguration(Containerizer.to(baseImage));
+    ContainerConfiguration containerConfiguration = buildConfiguration.getContainerConfiguration();
     Assert.assertEquals(Arrays.asList("entry", "point"), containerConfiguration.getEntrypoint());
     Assert.assertEquals(
         ImmutableMap.of("name", "value"), containerConfiguration.getEnvironmentMap());
@@ -83,9 +87,11 @@ public class JibContainerBuilderTest {
   }
 
   @Test
-  public void testToContainerConfiguration_add() {
+  public void testToBuildConfiguration_containerConfigurationAdd()
+      throws InvalidImageReferenceException, CacheDirectoryCreationException, IOException {
+    RegistryImage baseImage = RegistryImage.named("test-image");
     JibContainerBuilder jibContainerBuilder =
-        Jib.from(ImageReference.of("base", "image", "reference"))
+        new JibContainerBuilder(baseImage, spyBuildConfigurationBuilder)
             .setEntrypoint("entry", "point")
             .setEnvironment(ImmutableMap.of("name", "value"))
             .addEnvironmentVariable("environment", "variable")
@@ -95,7 +101,9 @@ public class JibContainerBuilderTest {
             .addLabel("added", "label")
             .setProgramArguments("program", "arguments");
 
-    ContainerConfiguration containerConfiguration = jibContainerBuilder.toContainerConfiguration();
+    BuildConfiguration buildConfiguration =
+        jibContainerBuilder.toBuildConfiguration(Containerizer.to(baseImage));
+    ContainerConfiguration containerConfiguration = buildConfiguration.getContainerConfiguration();
     Assert.assertEquals(Arrays.asList("entry", "point"), containerConfiguration.getEntrypoint());
     Assert.assertEquals(
         ImmutableMap.of("name", "value", "environment", "variable"),
@@ -127,13 +135,12 @@ public class JibContainerBuilderTest {
             .setEventHandlers(new EventHandlers().add(mockJibEventConsumer));
 
     JibContainerBuilder jibContainerBuilder =
-        Jib.from(baseImage)
+        new JibContainerBuilder(baseImage, spyBuildConfigurationBuilder)
             .setLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2));
-    BuildConfiguration buildConfiguration =
-        jibContainerBuilder.toBuildConfiguration(spyBuildConfigurationBuilder, containerizer);
+    BuildConfiguration buildConfiguration = jibContainerBuilder.toBuildConfiguration(containerizer);
 
     Assert.assertEquals(
-        jibContainerBuilder.toContainerConfiguration(),
+        spyBuildConfigurationBuilder.build().getContainerConfiguration(),
         buildConfiguration.getContainerConfiguration());
 
     Assert.assertEquals(
@@ -187,7 +194,6 @@ public class JibContainerBuilderTest {
         jibContainerBuilder
             .setFormat(ImageFormat.OCI)
             .toBuildConfiguration(
-                spyBuildConfigurationBuilder,
                 containerizer
                     .withAdditionalTag("tag1")
                     .withAdditionalTag("tag2")
