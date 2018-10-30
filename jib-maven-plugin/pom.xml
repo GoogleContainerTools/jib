@@ -3,7 +3,7 @@
 
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
-  <version>0.9.12-SNAPSHOT</version>
+  <version>0.9.14-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
 
   <name>Jib</name>
@@ -56,7 +56,7 @@
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-compress</artifactId>
-      <version>1.17</version>
+      <version>1.18</version>
       <scope>compile</scope>
     </dependency>
     <dependency>

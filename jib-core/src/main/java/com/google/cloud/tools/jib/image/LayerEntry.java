@@ -16,9 +16,12 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -36,6 +39,7 @@ public class LayerEntry {
 
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
+  private final FilePermissions permissions;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -52,19 +56,25 @@ public class LayerEntry {
    * @param sourceFile the source file to add to the layer
    * @param extractionPath the path in the container file system corresponding to the {@code
    *     sourceFile}
+   * @param permissions the file permissions on the container. Use {@code null} to use defaults (644
+   *     for files, 755 for directories)
    */
-  public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath) {
+  public LayerEntry(
+      Path sourceFile, AbsoluteUnixPath extractionPath, @Nullable FilePermissions permissions) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
+    this.permissions =
+        permissions == null
+            ? Files.isDirectory(sourceFile)
+                ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
+                : FilePermissions.DEFAULT_FILE_PERMISSIONS
+            : permissions;
   }
 
   /**
-   * Gets the source file.
-   *
-   * <p>Do <b>not</b> call {@link Path#toString} on this - use {@link #getAbsoluteSourceFileString}
-   * instead. This path can be relative or absolute, but {@link #getAbsoluteSourceFileString} can
-   * only be absolute. Callers should rely on {@link #getAbsoluteSourceFileString} for the
-   * serialized form since the serialization could change independently of the path representation.
+   * Gets the source file. The source file may be relative or absolute, so the caller should use
+   * {@code getSourceFile().toAbsolutePath().toString()} for the serialized form since the
+   * serialization could change independently of the path representation.
    *
    * @return the source file
    */
@@ -81,24 +91,13 @@ public class LayerEntry {
     return extractionPath;
   }
 
-  // TODO: Remove these get...String methods.
   /**
-   * Get the source file as an absolute path in Unix form. The path is made absolute first, if not
-   * already absolute.
+   * Gets the file permissions on the container.
    *
-   * @return the source file path
+   * @return the file permissions on the container
    */
-  public String getAbsoluteSourceFileString() {
-    return AbsoluteUnixPath.fromPath(sourceFile.toAbsolutePath()).toString();
-  }
-
-  /**
-   * Gets the extraction path as an absolute path in Unix form.
-   *
-   * @return the extraction path
-   */
-  public String getAbsoluteExtractionPathString() {
-    return extractionPath.toString();
+  public FilePermissions getPermissions() {
+    return permissions;
   }
 
   @Override
@@ -111,11 +110,12 @@ public class LayerEntry {
     }
     LayerEntry otherLayerEntry = (LayerEntry) other;
     return sourceFile.equals(otherLayerEntry.sourceFile)
-        && extractionPath.equals(otherLayerEntry.extractionPath);
+        && extractionPath.equals(otherLayerEntry.extractionPath)
+        && Objects.equals(permissions, otherLayerEntry.permissions);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceFile, extractionPath);
+    return Objects.hash(sourceFile, extractionPath, permissions);
   }
 }

@@ -65,12 +65,12 @@ class DefaultCacheStorage implements CacheStorage {
   }
 
   @Override
-  public CacheEntry write(UncompressedCacheWrite uncompressedCacheWrite) throws IOException {
+  public CachedLayer write(UncompressedCacheWrite uncompressedCacheWrite) throws IOException {
     return defaultCacheStorageWriter.write(uncompressedCacheWrite);
   }
 
   @Override
-  public CacheEntry write(Blob compressedLayerBlob) throws IOException {
+  public CachedLayer write(Blob compressedLayerBlob) throws IOException {
     return defaultCacheStorageWriter.write(compressedLayerBlob);
   }
 
@@ -80,7 +80,7 @@ class DefaultCacheStorage implements CacheStorage {
   }
 
   @Override
-  public Optional<CacheEntry> retrieve(DescriptorDigest layerDigest)
+  public Optional<CachedLayer> retrieve(DescriptorDigest layerDigest)
       throws IOException, CacheCorruptedException {
     return defaultCacheStorageReader.retrieve(layerDigest);
   }

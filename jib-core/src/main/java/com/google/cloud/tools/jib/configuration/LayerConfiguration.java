@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 /** Configures how to build a layer in the container image. Instantiate with {@link #builder}. */
 public class LayerConfiguration {
@@ -66,7 +67,25 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder addEntry(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      layerEntries.add(new LayerEntry(sourceFile, pathInContainer));
+      return addEntry(sourceFile, pathInContainer, null);
+    }
+
+    /**
+     * Adds an entry to the layer with the given permissions. Only adds the single source file to
+     * the exact path in the container file system. See {@link Builder#addEntry(Path,
+     * AbsoluteUnixPath)} for more information.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param permissions the file permissions on the container. If null, then default permissions
+     *     are used (644 for files, 755 for directories)
+     * @return this
+     * @see Builder#addEntry(Path, AbsoluteUnixPath)
+     */
+    public Builder addEntry(
+        Path sourceFile, AbsoluteUnixPath pathInContainer, @Nullable FilePermissions permissions) {
+      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions));
       return this;
     }
 

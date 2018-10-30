@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.common.collect.ImmutableList;
@@ -166,14 +167,14 @@ public class ReproducibleLayerBuilderTest {
     Blob layer =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA")),
-                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"))))
+                    new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA"), null),
+                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"), null)))
             .build();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB")),
-                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"))))
+                    new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB"), null),
+                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"), null)))
             .build();
 
     byte[] layerContent = Blobs.writeToByteArray(layer);
@@ -188,7 +189,7 @@ public class ReproducibleLayerBuilderTest {
 
     Blob blob =
         new ReproducibleLayerBuilder(
-                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"))))
+                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"), null)))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -200,6 +201,44 @@ public class ReproducibleLayerBuilderTest {
     try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
       Assert.assertEquals(
           Date.from(Instant.EPOCH.plusSeconds(1)), in.getNextEntry().getLastModifiedDate());
+    }
+  }
+
+  @Test
+  public void testBuild_permissions() throws IOException {
+    Path testRoot = temporaryFolder.getRoot().toPath();
+    Path folder = Files.createDirectories(testRoot.resolve("files1"));
+    Path fileA = createFile(testRoot, "fileA", "abc", 54321);
+    Path fileB = createFile(testRoot, "fileB", "def", 54321);
+
+    Blob blob =
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(
+                    new LayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA"), null),
+                    new LayerEntry(
+                        fileB,
+                        AbsoluteUnixPath.get("/somewhere/fileB"),
+                        FilePermissions.fromOctalString("123")),
+                    new LayerEntry(
+                        folder,
+                        AbsoluteUnixPath.get("/somewhere/folder"),
+                        FilePermissions.fromOctalString("456"))))
+            .build();
+
+    Path tarFile = temporaryFolder.newFile().toPath();
+    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
+      blob.writeTo(out);
+    }
+
+    try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
+      // Root folder (default folder permissions)
+      Assert.assertEquals(040755, in.getNextTarEntry().getMode());
+      // fileA (default file permissions)
+      Assert.assertEquals(0100644, in.getNextTarEntry().getMode());
+      // fileB (custom file permissions)
+      Assert.assertEquals(0100123, in.getNextTarEntry().getMode());
+      // folder (custom folder permissions)
+      Assert.assertEquals(040456, in.getNextTarEntry().getMode());
     }
   }
 

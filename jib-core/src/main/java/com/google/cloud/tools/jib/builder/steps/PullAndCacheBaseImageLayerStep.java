@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
-import com.google.cloud.tools.jib.cache.CacheEntry;
+import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -33,7 +33,7 @@ import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /** Pulls and caches a single base image layer. */
-class PullAndCacheBaseImageLayerStep implements AsyncStep<CacheEntry>, Callable<CacheEntry> {
+class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable<CachedLayer> {
 
   private static final String DESCRIPTION = "Pulling base image layer %s";
 
@@ -41,7 +41,7 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CacheEntry>, Callable<
   private final DescriptorDigest layerDigest;
   private final @Nullable Authorization pullAuthorization;
 
-  private final ListenableFuture<CacheEntry> listenableFuture;
+  private final ListenableFuture<CachedLayer> listenableFuture;
 
   PullAndCacheBaseImageLayerStep(
       ListeningExecutorService listeningExecutorService,
@@ -56,21 +56,21 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CacheEntry>, Callable<
   }
 
   @Override
-  public ListenableFuture<CacheEntry> getFuture() {
+  public ListenableFuture<CachedLayer> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public CacheEntry call() throws IOException, CacheCorruptedException {
+  public CachedLayer call() throws IOException, CacheCorruptedException {
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(
             buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, layerDigest))) {
       Cache cache = buildConfiguration.getBaseImageLayersCache();
 
       // Checks if the layer already exists in the cache.
-      Optional<CacheEntry> optionalCacheEntry = cache.retrieve(layerDigest);
-      if (optionalCacheEntry.isPresent()) {
-        return optionalCacheEntry.get();
+      Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerDigest);
+      if (optionalCachedLayer.isPresent()) {
+        return optionalCachedLayer.get();
       }
 
       RegistryClient registryClient =

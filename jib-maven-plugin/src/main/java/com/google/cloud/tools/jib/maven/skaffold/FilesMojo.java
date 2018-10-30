@@ -16,11 +16,12 @@
 
 package com.google.cloud.tools.jib.maven.skaffold;
 
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryParameters;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -74,16 +75,13 @@ public class FilesMojo extends AbstractMojo {
   @Nullable @Component private ProjectDependenciesResolver projectDependenciesResolver;
 
   // This parameter is cloned from JibPluginConfiguration
-  @Nullable
-  @Parameter(defaultValue = "${project.basedir}/src/main/jib", required = true)
-  private File extraDirectory;
+  @Parameter private ExtraDirectoryParameters extraDirectory = new ExtraDirectoryParameters();
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
     Preconditions.checkNotNull(project);
     Preconditions.checkNotNull(projects);
     Preconditions.checkNotNull(session);
-    Preconditions.checkNotNull(extraDirectory);
     Preconditions.checkNotNull(projectDependenciesResolver);
 
     // print out pom configuration files
@@ -107,7 +105,7 @@ public class FilesMojo extends AbstractMojo {
     // and is expected to run on all projects irrespective of their configuring of the jib plugin).
     if (project.getPlugin(MavenProjectProperties.PLUGIN_KEY) != null) {
       // print out extra directory
-      System.out.println(extraDirectory.getAbsoluteFile().toPath());
+      System.out.println(resolveExtraDirectory());
     }
 
     // Grab non-project SNAPSHOT dependencies for this project
@@ -150,5 +148,18 @@ public class FilesMojo extends AbstractMojo {
     } catch (DependencyResolutionException ex) {
       throw new MojoExecutionException("Failed to resolve dependencies", ex);
     }
+  }
+
+  private Path resolveExtraDirectory() {
+    if (extraDirectory.getPath() == null) {
+      return Preconditions.checkNotNull(project)
+          .getBasedir()
+          .getAbsoluteFile()
+          .toPath()
+          .resolve("src")
+          .resolve("main")
+          .resolve("jib");
+    }
+    return extraDirectory.getPath().getAbsoluteFile().toPath();
   }
 }

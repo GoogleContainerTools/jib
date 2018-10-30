@@ -16,13 +16,12 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
-import com.google.cloud.tools.jib.plugins.common.MainClassResolver;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
@@ -31,7 +30,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.gradle.api.GradleException;
@@ -57,12 +59,17 @@ class GradleProjectProperties implements ProjectProperties {
 
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(
-      Project project, Logger logger, Path extraDirectory, AbsoluteUnixPath appRoot) {
+      Project project,
+      Logger logger,
+      Path extraDirectory,
+      Map<String, String> permissions,
+      AbsoluteUnixPath appRoot) {
     try {
       return new GradleProjectProperties(
           project,
           makeEventHandlers(logger),
-          GradleLayerConfigurations.getForProject(project, logger, extraDirectory, appRoot));
+          GradleLayerConfigurations.getForProject(
+              project, logger, extraDirectory, convertPermissionsMap(permissions), appRoot));
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
@@ -147,19 +154,6 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   /**
-   * Tries to resolve the main class.
-   *
-   * @throws GradleException if resolving the main class fails.
-   */
-  String getMainClass(JibExtension jibExtension) {
-    try {
-      return MainClassResolver.resolveMainClass(jibExtension.getContainer().getMainClass(), this);
-    } catch (MainClassInferenceException ex) {
-      throw new GradleException(ex.getMessage(), ex);
-    }
-  }
-
-  /**
    * Returns the input files for a task.
    *
    * @param extraDirectory the image's configured extra directory
@@ -181,5 +175,24 @@ class GradleProjectProperties implements ProjectProperties {
     } else {
       return project.files(dependencyFileCollections);
     }
+  }
+
+  /**
+   * Validates and converts a {@code String->String} file-path-to-file-permissions map to an
+   * equivalent {@code AbsoluteUnixPath->FilePermission} map.
+   *
+   * @param stringMap the map to convert (example entry: {@code "/path/on/container" -> "755"})
+   * @return the converted map
+   */
+  @VisibleForTesting
+  static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsMap(
+      Map<String, String> stringMap) {
+    Map<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
+    for (Entry<String, String> entry : stringMap.entrySet()) {
+      AbsoluteUnixPath key = AbsoluteUnixPath.get(entry.getKey());
+      FilePermissions value = FilePermissions.fromOctalString(entry.getValue());
+      permissionsMap.put(key, value);
+    }
+    return permissionsMap;
   }
 }

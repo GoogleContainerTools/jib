@@ -40,7 +40,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Adds image layers to a tarball and loads into Docker daemon. */
-class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<DescriptorDigest> {
+class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
   private final DockerClient dockerClient;
   private final BuildConfiguration buildConfiguration;
@@ -49,7 +49,7 @@ class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<Descriptor
   private final BuildImageStep buildImageStep;
 
   private final ListeningExecutorService listeningExecutorService;
-  private final ListenableFuture<DescriptorDigest> listenableFuture;
+  private final ListenableFuture<BuildResult> listenableFuture;
 
   LoadDockerStep(
       ListeningExecutorService listeningExecutorService,
@@ -72,12 +72,12 @@ class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<Descriptor
   }
 
   @Override
-  public ListenableFuture<DescriptorDigest> getFuture() {
+  public ListenableFuture<BuildResult> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public DescriptorDigest call() throws ExecutionException, InterruptedException {
+  public BuildResult call() throws ExecutionException, InterruptedException {
     ImmutableList.Builder<ListenableFuture<?>> dependenciesBuilder = ImmutableList.builder();
     for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
         NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
@@ -93,7 +93,7 @@ class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<Descriptor
         .get();
   }
 
-  private DescriptorDigest afterPushBaseImageLayerFuturesFuture()
+  private BuildResult afterPushBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, IOException {
     Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
     ImageReference targetImageReference =
@@ -124,8 +124,12 @@ class LoadDockerStep implements AsyncStep<DescriptorDigest>, Callable<Descriptor
     BuildableManifestTemplate manifestTemplate =
         imageToJsonTranslator.getManifestTemplate(
             buildConfiguration.getTargetFormat(), containerConfigurationBlobDescriptor);
-    return JsonTemplateMapper.toBlob(manifestTemplate)
-        .writeTo(ByteStreams.nullOutputStream())
-        .getDigest();
+    DescriptorDigest imageDigest =
+        JsonTemplateMapper.toBlob(manifestTemplate)
+            .writeTo(ByteStreams.nullOutputStream())
+            .getDigest();
+    DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
+
+    return new BuildResult(imageDigest, imageId);
   }
 }

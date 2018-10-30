@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.frontend;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
@@ -31,12 +32,13 @@ import java.nio.file.Path;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.function.Predicate;
+import javax.annotation.Nullable;
 
 /** Builds {@link LayerConfiguration}s for a Java application. */
 public class JavaLayerConfigurations {
 
   /** Represents the different types of layers for a Java application. */
-  public static enum LayerType {
+  public enum LayerType {
     DEPENDENCIES("dependencies"),
     SNAPSHOT_DEPENDENCIES("snapshot dependencies"),
     RESOURCES("resources"),
@@ -50,7 +52,7 @@ public class JavaLayerConfigurations {
      *
      * @param name name to set for the layer; does not affect the contents of the layer
      */
-    private LayerType(String name) {
+    LayerType(String name) {
       this.name = name;
     }
 
@@ -86,8 +88,31 @@ public class JavaLayerConfigurations {
      * @see LayerConfiguration.Builder#addEntry(Path, AbsoluteUnixPath)
      */
     public Builder addFile(LayerType layerType, Path sourceFile, AbsoluteUnixPath pathInContainer) {
+      return addFile(layerType, sourceFile, pathInContainer, null);
+    }
+
+    /**
+     * Adds a file to a layer. Only adds the single source file to the exact path in the container
+     * file system. (If the source file is a directory, does not copy its contents but creates only
+     * the directory.) See {@link LayerConfiguration.Builder#addEntry} for concrete examples about
+     * how the file will be placed in the image.
+     *
+     * @param layerType the layer to add files into
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param permissions the file permissions on the container. Use {@code null} for defaults (644
+     *     for files, 755 for directories)
+     * @return this
+     * @see LayerConfiguration.Builder#addEntry(Path, AbsoluteUnixPath, FilePermissions)
+     */
+    public Builder addFile(
+        LayerType layerType,
+        Path sourceFile,
+        AbsoluteUnixPath pathInContainer,
+        @Nullable FilePermissions permissions) {
       Preconditions.checkNotNull(layerBuilders.get(layerType))
-          .addEntry(sourceFile, pathInContainer);
+          .addEntry(sourceFile, pathInContainer, permissions);
       return this;
     }
 
@@ -115,14 +140,45 @@ public class JavaLayerConfigurations {
         Predicate<Path> pathFilter,
         AbsoluteUnixPath basePathInContainer)
         throws IOException {
+      return addDirectoryContents(
+          layerType, sourceRoot, pathFilter, basePathInContainer, ImmutableMap.of());
+    }
+
+    /**
+     * Adds directory contents to a layer selectively (via {@code pathFilter}) and recursively.
+     * {@code sourceRoot} must be a directory. Empty directories will always be added regardless of
+     * {@code pathFilter}, except that {@code sourceRoot} is never added. Permissions are specified
+     * via {@code permissionsMap}, which maps from extraction path on the container to file
+     * permissions.
+     *
+     * @param layerType the layer to add files into
+     * @param sourceRoot root directory whose contents will be added
+     * @param pathFilter filter that determines which files (not directories) should be added
+     * @param basePathInContainer directory in the layer into which the source contents are added
+     * @param permissionsMap the map from absolute path on container to file permission
+     * @return this
+     * @throws IOException error while listing directories
+     * @throws NotDirectoryException if {@code sourceRoot} is not a directory
+     */
+    // TODO: Use in plugins
+    public Builder addDirectoryContents(
+        LayerType layerType,
+        Path sourceRoot,
+        Predicate<Path> pathFilter,
+        AbsoluteUnixPath basePathInContainer,
+        Map<AbsoluteUnixPath, FilePermissions> permissionsMap)
+        throws IOException {
       LayerConfiguration.Builder builder = Preconditions.checkNotNull(layerBuilders.get(layerType));
 
       new DirectoryWalker(sourceRoot)
           .filterRoot()
           .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
           .walk(
-              path ->
-                  builder.addEntry(path, basePathInContainer.resolve(sourceRoot.relativize(path))));
+              path -> {
+                AbsoluteUnixPath pathOnContainer =
+                    basePathInContainer.resolve(sourceRoot.relativize(path));
+                builder.addEntry(path, pathOnContainer, permissionsMap.get(pathOnContainer));
+              });
       return this;
     }
 

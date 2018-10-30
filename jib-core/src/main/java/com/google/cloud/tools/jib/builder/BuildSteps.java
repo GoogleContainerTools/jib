@@ -16,11 +16,10 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
@@ -36,13 +35,13 @@ public class BuildSteps {
   private interface ImageBuildRunnable {
 
     /**
-     * Builds an image and returns its digest.
+     * Builds an image.
      *
-     * @return the digest of the built image
+     * @return the built image
      * @throws ExecutionException if an exception occurs during execution
      * @throws InterruptedException if the execution is interrupted
      */
-    DescriptorDigest build() throws ExecutionException, InterruptedException;
+    BuildResult build() throws ExecutionException, InterruptedException;
   }
 
   /**
@@ -141,33 +140,14 @@ public class BuildSteps {
   /**
    * Executes the build.
    *
-   * @return the built image digest
+   * @return the build result
    * @throws InterruptedException if the execution is interrupted
    * @throws ExecutionException if an exception occurs during execution
    */
-  public DescriptorDigest run() throws InterruptedException, ExecutionException {
-    buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
-
-    DescriptorDigest imageDigest;
+  public BuildResult run() throws InterruptedException, ExecutionException {
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
-      imageDigest = imageBuildRunnable.build();
+      return imageBuildRunnable.build();
     }
-
-    if (buildConfiguration.getContainerConfiguration() != null) {
-      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
-      // TODO refactor code to also log ENTRYPOINT and CMD when inheriting them in this code,
-      // instead of logging them elsewhere.
-      if (buildConfiguration.getContainerConfiguration().getEntrypoint() != null) {
-        buildConfiguration
-            .getEventDispatcher()
-            .dispatch(
-                LogEvent.lifecycle(
-                    "Container entrypoint set to "
-                        + buildConfiguration.getContainerConfiguration().getEntrypoint()));
-      }
-    }
-
-    return imageDigest;
   }
 }

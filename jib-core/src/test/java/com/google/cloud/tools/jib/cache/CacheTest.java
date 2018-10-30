@@ -128,10 +128,11 @@ public class CacheTest {
     layerEntries1 =
         ImmutableList.of(
             new LayerEntry(
-                directory.resolve("source/file"), AbsoluteUnixPath.get("/extraction/path")),
+                directory.resolve("source/file"), AbsoluteUnixPath.get("/extraction/path"), null),
             new LayerEntry(
                 directory.resolve("another/source/file"),
-                AbsoluteUnixPath.get("/another/extraction/path")));
+                AbsoluteUnixPath.get("/another/extraction/path"),
+                null));
 
     layerBlob2 = Blobs.from("layerBlob2");
     layerDigest2 = digestOf(compress(layerBlob2));
@@ -201,28 +202,28 @@ public class CacheTest {
   }
 
   /**
-   * Verifies that {@code cacheEntry} corresponds to the first fake layer in {@link #setUp}.
+   * Verifies that {@code cachedLayer} corresponds to the first fake layer in {@link #setUp}.
    *
-   * @param cacheEntry the {@link CacheEntry} to verify
+   * @param cachedLayer the {@link CachedLayer} to verify
    * @throws IOException if an I/O exception occurs
    */
-  private void verifyIsLayer1(CacheEntry cacheEntry) throws IOException {
-    Assert.assertEquals("layerBlob1", Blobs.writeToString(decompress(cacheEntry.getLayerBlob())));
-    Assert.assertEquals(layerDigest1, cacheEntry.getLayerDigest());
-    Assert.assertEquals(layerDiffId1, cacheEntry.getLayerDiffId());
-    Assert.assertEquals(layerSize1, cacheEntry.getLayerSize());
+  private void verifyIsLayer1(CachedLayer cachedLayer) throws IOException {
+    Assert.assertEquals("layerBlob1", Blobs.writeToString(decompress(cachedLayer.getBlob())));
+    Assert.assertEquals(layerDigest1, cachedLayer.getDigest());
+    Assert.assertEquals(layerDiffId1, cachedLayer.getDiffId());
+    Assert.assertEquals(layerSize1, cachedLayer.getSize());
   }
 
   /**
-   * Verifies that {@code cacheEntry} corresponds to the second fake layer in {@link #setUp}.
+   * Verifies that {@code cachedLayer} corresponds to the second fake layer in {@link #setUp}.
    *
-   * @param cacheEntry the {@link CacheEntry} to verify
+   * @param cachedLayer the {@link CachedLayer} to verify
    * @throws IOException if an I/O exception occurs
    */
-  private void verifyIsLayer2(CacheEntry cacheEntry) throws IOException {
-    Assert.assertEquals("layerBlob2", Blobs.writeToString(decompress(cacheEntry.getLayerBlob())));
-    Assert.assertEquals(layerDigest2, cacheEntry.getLayerDigest());
-    Assert.assertEquals(layerDiffId2, cacheEntry.getLayerDiffId());
-    Assert.assertEquals(layerSize2, cacheEntry.getLayerSize());
+  private void verifyIsLayer2(CachedLayer cachedLayer) throws IOException {
+    Assert.assertEquals("layerBlob2", Blobs.writeToString(decompress(cachedLayer.getBlob())));
+    Assert.assertEquals(layerDigest2, cachedLayer.getDigest());
+    Assert.assertEquals(layerDiffId2, cachedLayer.getDiffId());
+    Assert.assertEquals(layerSize2, cachedLayer.getSize());
   }
 }

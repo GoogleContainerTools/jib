@@ -56,6 +56,7 @@ public interface Layer {
    */
   Blob getBlob() throws LayerPropertyNotFoundException;
 
+  // TODO: Remove this
   /**
    * @return the layer's content {@link BlobDescriptor}
    * @throws LayerPropertyNotFoundException if not available

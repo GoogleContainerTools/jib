@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
@@ -23,13 +24,28 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.function.Predicate;
 
 /** Helper for constructing {@link JavaLayerConfigurations}. */
 public class JavaLayerConfigurationsHelper {
 
+  /**
+   * Constructs a new {@link JavaLayerConfigurations} for a WAR project.
+   *
+   * @param explodedWar the exploded WAR directory
+   * @param appRoot root directory in the image where the app will be placed
+   * @param extraFilesDirectory path to the source directory for the extra files layer
+   * @param extraDirectoryPermissions map from path on container to file permissions
+   * @return {@link JavaLayerConfigurations} for the layers for the exploded WAR
+   * @throws IOException if adding layer contents fails
+   */
   public static JavaLayerConfigurations fromExplodedWar(
-      Path explodedWar, AbsoluteUnixPath appRoot, Path extraFilesDirectory) throws IOException {
+      Path explodedWar,
+      AbsoluteUnixPath appRoot,
+      Path extraFilesDirectory,
+      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions)
+      throws IOException {
     Path webInfLib = explodedWar.resolve("WEB-INF/lib");
     Path webInfClasses = explodedWar.resolve("WEB-INF/classes");
 
@@ -66,7 +82,11 @@ public class JavaLayerConfigurationsHelper {
     // Adds all the extra files.
     if (Files.exists(extraFilesDirectory)) {
       layerBuilder.addDirectoryContents(
-          LayerType.EXTRA_FILES, extraFilesDirectory, path -> true, AbsoluteUnixPath.get("/"));
+          LayerType.EXTRA_FILES,
+          extraFilesDirectory,
+          path -> true,
+          AbsoluteUnixPath.get("/"),
+          extraDirectoryPermissions);
     }
 
     return layerBuilder.build();

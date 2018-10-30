@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.cache.LayerEntriesSelector.LayerEntryTemplate;
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -58,14 +59,41 @@ public class LayerEntriesSelectorTest {
     Path file2 = Files.createFile(folder.resolve("files").resolve("two"));
     Path file3 = Files.createFile(folder.resolve("gile"));
 
-    LayerEntry testLayerEntry1 = new LayerEntry(file1, AbsoluteUnixPath.get("/extraction/path"));
-    LayerEntry testLayerEntry2 = new LayerEntry(file2, AbsoluteUnixPath.get("/extraction/path"));
-    LayerEntry testLayerEntry3 = new LayerEntry(file3, AbsoluteUnixPath.get("/extraction/path"));
-    LayerEntry testLayerEntry4 = new LayerEntry(file3, AbsoluteUnixPath.get("/extraction/patha"));
+    LayerEntry testLayerEntry1 =
+        new LayerEntry(file1, AbsoluteUnixPath.get("/extraction/path"), null);
+    LayerEntry testLayerEntry2 =
+        new LayerEntry(file2, AbsoluteUnixPath.get("/extraction/path"), null);
+    LayerEntry testLayerEntry3 =
+        new LayerEntry(file3, AbsoluteUnixPath.get("/extraction/path"), null);
+    LayerEntry testLayerEntry4 =
+        new LayerEntry(
+            file3,
+            AbsoluteUnixPath.get("/extraction/path"),
+            FilePermissions.fromOctalString("755"));
+    LayerEntry testLayerEntry5 =
+        new LayerEntry(file3, AbsoluteUnixPath.get("/extraction/patha"), null);
+    LayerEntry testLayerEntry6 =
+        new LayerEntry(
+            file3,
+            AbsoluteUnixPath.get("/extraction/patha"),
+            FilePermissions.fromOctalString("755"));
+
     outOfOrderLayerEntries =
-        ImmutableList.of(testLayerEntry4, testLayerEntry2, testLayerEntry3, testLayerEntry1);
+        ImmutableList.of(
+            testLayerEntry4,
+            testLayerEntry2,
+            testLayerEntry6,
+            testLayerEntry3,
+            testLayerEntry1,
+            testLayerEntry5);
     inOrderLayerEntries =
-        ImmutableList.of(testLayerEntry1, testLayerEntry2, testLayerEntry3, testLayerEntry4);
+        ImmutableList.of(
+            testLayerEntry1,
+            testLayerEntry2,
+            testLayerEntry3,
+            testLayerEntry4,
+            testLayerEntry5,
+            testLayerEntry6);
   }
 
   @Test
@@ -107,7 +135,8 @@ public class LayerEntriesSelectorTest {
     Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
     Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
-    LayerEntry layerEntry = new LayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
+    LayerEntry layerEntry =
+        new LayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"), null);
     DescriptorDigest expectedSelector =
         LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry));
 
@@ -120,5 +149,26 @@ public class LayerEntriesSelectorTest {
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
     Assert.assertEquals(
         expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry)));
+  }
+
+  @Test
+  public void testGenerateSelector_permissionsModified() throws IOException {
+    Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
+    Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
+    LayerEntry layerEntry111 =
+        new LayerEntry(
+            layerFile,
+            AbsoluteUnixPath.get("/extraction/path"),
+            FilePermissions.fromOctalString("111"));
+    LayerEntry layerEntry222 =
+        new LayerEntry(
+            layerFile,
+            AbsoluteUnixPath.get("/extraction/path"),
+            FilePermissions.fromOctalString("222"));
+
+    // Verify that changing permissions generates a different selector
+    Assert.assertNotEquals(
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry111)),
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry222)));
   }
 }

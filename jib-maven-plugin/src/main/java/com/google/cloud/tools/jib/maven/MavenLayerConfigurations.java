@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.function.Predicate;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
@@ -38,16 +40,22 @@ class MavenLayerConfigurations {
    *
    * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
+   * @param extraDirectoryPermissions map from path on container to file permissions for extra-layer
+   *     files
    * @param appRoot root directory in the image where the app will be placed
    * @return a {@link JavaLayerConfigurations} for the project
    * @throws IOException if collecting the project files fails
    */
   static JavaLayerConfigurations getForProject(
-      MavenProject project, Path extraDirectory, AbsoluteUnixPath appRoot) throws IOException {
+      MavenProject project,
+      Path extraDirectory,
+      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
+      AbsoluteUnixPath appRoot)
+      throws IOException {
     if ("war".equals(project.getPackaging())) {
-      return getForWarProject(project, extraDirectory, appRoot);
+      return getForWarProject(project, extraDirectory, extraDirectoryPermissions, appRoot);
     } else {
-      return getForNonWarProject(project, extraDirectory, appRoot);
+      return getForNonWarProject(project, extraDirectory, extraDirectoryPermissions, appRoot);
     }
   }
 
@@ -56,12 +64,18 @@ class MavenLayerConfigurations {
    *
    * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
+   * @param extraDirectoryPermissions map from path on container to file permissions for extra-layer
+   *     files
    * @param appRoot root directory in the image where the app will be placed
    * @return a {@link JavaLayerConfigurations} for the project
    * @throws IOException if collecting the project files fails
    */
   private static JavaLayerConfigurations getForNonWarProject(
-      MavenProject project, Path extraDirectory, AbsoluteUnixPath appRoot) throws IOException {
+      MavenProject project,
+      Path extraDirectory,
+      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
+      AbsoluteUnixPath appRoot)
+      throws IOException {
 
     AbsoluteUnixPath dependenciesExtractionPath =
         appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
@@ -95,7 +109,11 @@ class MavenLayerConfigurations {
     // Adds all the extra files.
     if (Files.exists(extraDirectory)) {
       layerBuilder.addDirectoryContents(
-          LayerType.EXTRA_FILES, extraDirectory, path -> true, AbsoluteUnixPath.get("/"));
+          LayerType.EXTRA_FILES,
+          extraDirectory,
+          path -> true,
+          AbsoluteUnixPath.get("/"),
+          extraDirectoryPermissions);
     }
 
     return layerBuilder.build();
@@ -106,12 +124,18 @@ class MavenLayerConfigurations {
    *
    * @param project the {@link MavenProject}
    * @param extraDirectory path to the directory for the extra files layer
+   * @param extraDirectoryPermissions map from path on container to file permissions for extra-layer
+   *     files
    * @param appRoot root directory in the image where the app will be placed
    * @return a {@link JavaLayerConfigurations} for the project
    * @throws IOException if collecting the project files fails
    */
   private static JavaLayerConfigurations getForWarProject(
-      MavenProject project, Path extraDirectory, AbsoluteUnixPath appRoot) throws IOException {
+      MavenProject project,
+      Path extraDirectory,
+      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
+      AbsoluteUnixPath appRoot)
+      throws IOException {
 
     // TODO explode the WAR file rather than using this directory. The contents of the final WAR may
     // be different from this directory (it's possible to include or exclude files when packaging a
@@ -119,7 +143,8 @@ class MavenLayerConfigurations {
     // at build.getFinalName().
     Path explodedWarPath =
         Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
-    return JavaLayerConfigurationsHelper.fromExplodedWar(explodedWarPath, appRoot, extraDirectory);
+    return JavaLayerConfigurationsHelper.fromExplodedWar(
+        explodedWarPath, appRoot, extraDirectory, extraDirectoryPermissions);
   }
 
   private MavenLayerConfigurations() {}
