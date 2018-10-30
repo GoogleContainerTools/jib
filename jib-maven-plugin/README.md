@@ -202,6 +202,7 @@ Field | Type | Default | Description
 `to` | [`to`](#to-object) | *Required* | Configures the target image to build your application to.
 `from` | [`from`](#from-object) | See [`from`](#from-object) | Configures the base image to build your application on top of.
 `container` | [`container`](#container-object) | See [`container`](#container-object) | Configures the container that is run from your image.
+`extraDirectory` | [`extraDirectory`](#extraDirectory-object) / string | See `extraDirectory` | Configures the directory used to add arbitrary files to the image.
 `allowInsecureRegistries` | boolean | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 `skip` | boolean | `false` | If set to true, Jib execution is skipped (useful for multi-module projects). This can also be specified via the `-Djib.skip` command line option.
 `useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Maven projects.
@@ -245,6 +246,13 @@ Property | Type | Default | Description
 `ports` | list | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
 `useCurrentTimestamp` | boolean | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
 `user` | string | *None* | The user and group to run the container as. The value can be a username or UID along with an optional groupname or GID. The following are all valid: `user`, `uid`, `user:group`, `uid:gid`, `uid:group`, `user:gid`.
+
+<a name="extraDirectory-object"></a>`extraDirectory` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
+
+Property | Type
+--- | ---
+`path` | string
+`permissions` | list
 
 You can also configure HTTP connection/read timeouts for registry interactions using the `jib.httpTimeout` system property, configured in milliseconds via commandline (the default is `20000`; you can also set it to `0` for infinite timeout):
 
@@ -307,15 +315,37 @@ In this configuration, the image:
 
 You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
-You can configure a different directory by using the `extraDirectory` parameter in your `pom.xml`:
+You can configure a different directory by using the `extraDirectory` parameter in your `pom.xml`, either by using the `<extraDirectory><path>` parameter:
 
 ```xml
-<configuration>
-  ...
-  <!-- Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib' -->
-  <extraDirectory>${project.basedir}/src/main/custom-extra-dir</extraDirectory>
-  ...
-</configuration>
+<!-- Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib' -->
+<extraDirectory>
+  <path>${project.basedir}/src/main/custom-extra-dir</path>
+</extraDirectory>
+```
+
+or by setting the path on the `extraDirectory` parameter directly:
+
+```xml
+<!-- Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib' -->
+<extraDirectory>${project.basedir}/src/main/custom-extra-dir</extraDirectory>
+```
+
+The `extraDirectory` parameter can also be used to set the file permissions of files added to the container by specifying the absolute path of the file on the container as well as the octal representation of its file permission bits in the `<extraDirectory><permissions>` field:
+
+```xml
+<extraDirectory>
+  <permissions>
+    <permission>
+      <file>/path/on/container/to/fileA</file>
+      <mode>755</mode> <!-- Read/write/execute for owner, read/execute for group/other -->
+    </permission>
+    <permission>
+      <file>/path/to/another/file</file>
+      <mode>644</mode> <!-- Read/write for owner, read-only for group/other -->
+    </permission>
+  </permissions>
+</extraDirectory>
 ```
 
 ### Authentication Methods
