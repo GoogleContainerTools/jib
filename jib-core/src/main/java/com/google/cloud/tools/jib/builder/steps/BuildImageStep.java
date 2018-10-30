@@ -143,12 +143,8 @@ class BuildImageStep
             HistoryEntry.builder()
                 .setCreationTimestamp(layerCreationTime)
                 .setAuthor("Jib")
-                .setCreatedBy(
-                    capitalizeFirstLetter(buildAndCacheApplicationLayerStep.getLayerType())
-                        + " created by "
-                        + buildConfiguration.getToolName()
-                        + ":"
-                        + ProjectInfo.VERSION)
+                .setCreatedBy(buildConfiguration.getToolName() + ":" + ProjectInfo.VERSION)
+                .setComment(buildAndCacheApplicationLayerStep.getLayerType())
                 .build());
       }
       if (containerConfiguration != null) {
@@ -165,13 +161,6 @@ class BuildImageStep
       // Gets the container configuration content descriptor.
       return imageBuilder.build();
     }
-  }
-
-  private static String capitalizeFirstLetter(String string) {
-    if (string.length() == 0) {
-      return string;
-    }
-    return Character.toUpperCase(string.charAt(0)) + string.substring(1);
   }
 
   /**

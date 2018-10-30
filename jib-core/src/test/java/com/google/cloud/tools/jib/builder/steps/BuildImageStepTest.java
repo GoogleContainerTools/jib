@@ -308,28 +308,32 @@ public class BuildImageStepTest {
         HistoryEntry.builder()
             .setCreationTimestamp(Instant.EPOCH)
             .setAuthor("Jib")
-            .setCreatedBy("Dependencies created by jib:null")
+            .setCreatedBy("jib:null")
+            .setComment("dependencies")
             .build();
 
     HistoryEntry expectedApplicationLayerHistoryResources =
         HistoryEntry.builder()
             .setCreationTimestamp(Instant.EPOCH)
             .setAuthor("Jib")
-            .setCreatedBy("Resources created by jib:null")
+            .setCreatedBy("jib:null")
+            .setComment("resources")
             .build();
 
     HistoryEntry expectedApplicationLayerHistoryClasses =
         HistoryEntry.builder()
             .setCreationTimestamp(Instant.EPOCH)
             .setAuthor("Jib")
-            .setCreatedBy("Classes created by jib:null")
+            .setCreatedBy("jib:null")
+            .setComment("classes")
             .build();
 
     HistoryEntry expectedApplicationLayerHistoryExtrafiles =
         HistoryEntry.builder()
             .setCreationTimestamp(Instant.EPOCH)
             .setAuthor("Jib")
-            .setCreatedBy("Extra files created by jib:null")
+            .setCreatedBy("jib:null")
+            .setComment("extra files")
             .build();
 
     // Base layers (1 non-empty propagated, 2 empty propagated, 2 non-empty generated)
