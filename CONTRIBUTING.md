@@ -35,7 +35,7 @@ To build, use the provided `build.sh` which builds and tests each of the compone
    If you're a Googler or other corporate contributor,
    use your corporate email address here, not your personal address.
 2. Fork the repository into your own Github account.
-3. We follow the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html)
+3. We follow our own [Java style guide](STYLE_GUIDE.md) that extends the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html).
 3. Please include unit tests (and integration tests if applicable) for all new code.
 4. Make sure all existing tests pass (but see the note below about integration tests).
    * In `jib-core`, run `./gradlew clean goJF build integrationTest`
