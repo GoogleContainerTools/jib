@@ -144,6 +144,7 @@ class BuildImageStep
                 .setCreationTimestamp(layerCreationTime)
                 .setAuthor("Jib")
                 .setCreatedBy(buildConfiguration.getToolName() + ":" + ProjectInfo.VERSION)
+                .setComment(buildAndCacheApplicationLayerStep.getLayerType())
                 .build());
       }
       if (containerConfiguration != null) {
