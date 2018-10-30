@@ -96,8 +96,8 @@ public class BuildStepsIntegrationTest {
                 + "            }"));
     String dockerConfigEnv =
         new Command("docker", "inspect", "-f", "{{.Config.Env}}", imageReference).run();
-    Assert.assertThat(
-        dockerConfigEnv, CoreMatchers.containsString("env1=envvalue1 env2=envvalue2"));
+    Assert.assertThat(dockerConfigEnv, CoreMatchers.containsString("env1=envvalue1"));
+    Assert.assertThat(dockerConfigEnv, CoreMatchers.containsString("env2=envvalue2"));
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-integration-test"));
     Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));

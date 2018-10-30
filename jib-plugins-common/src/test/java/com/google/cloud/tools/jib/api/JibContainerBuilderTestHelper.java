@@ -24,11 +24,9 @@ import java.io.IOException;
 public class JibContainerBuilderTestHelper {
 
   public static BuildConfiguration toBuildConfiguration(
-      JibContainerBuilder jibContainerBuilder,
-      BuildConfiguration.Builder buildConfigurationBuilder,
-      Containerizer containerizer)
+      JibContainerBuilder jibContainerBuilder, Containerizer containerizer)
       throws IOException, CacheDirectoryCreationException {
-    return jibContainerBuilder.toBuildConfiguration(buildConfigurationBuilder, containerizer);
+    return jibContainerBuilder.toBuildConfiguration(containerizer);
   }
 
   private JibContainerBuilderTestHelper() {}

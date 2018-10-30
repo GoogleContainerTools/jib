@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,9 +41,9 @@ public class ContainerConfiguration {
     private Instant creationTime = DEFAULT_CREATION_TIME;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
-    @Nullable private ImmutableMap<String, String> environmentMap;
-    @Nullable private ImmutableList<Port> exposedPorts;
-    @Nullable private ImmutableMap<String, String> labels;
+    @Nullable private Map<String, String> environmentMap;
+    @Nullable private List<Port> exposedPorts;
+    @Nullable private Map<String, String> labels;
     @Nullable private String user;
 
     /**
@@ -83,9 +85,16 @@ public class ContainerConfiguration {
       } else {
         Preconditions.checkArgument(!Iterables.any(environmentMap.keySet(), Objects::isNull));
         Preconditions.checkArgument(!Iterables.any(environmentMap.values(), Objects::isNull));
-        this.environmentMap = ImmutableMap.copyOf(environmentMap);
+        this.environmentMap = new HashMap<>(environmentMap);
       }
       return this;
+    }
+
+    public void addEnvironment(String name, String value) {
+      if (environmentMap == null) {
+        environmentMap = new HashMap<>();
+      }
+      environmentMap.put(name, value);
     }
 
     /**
@@ -99,9 +108,16 @@ public class ContainerConfiguration {
         this.exposedPorts = null;
       } else {
         Preconditions.checkArgument(!exposedPorts.contains(null));
-        this.exposedPorts = ImmutableList.copyOf(exposedPorts);
+        this.exposedPorts = new ArrayList<>(exposedPorts);
       }
       return this;
+    }
+
+    public void addExposedPort(Port port) {
+      if (exposedPorts == null) {
+        exposedPorts = new ArrayList<>();
+      }
+      exposedPorts.add(port);
     }
 
     /**
@@ -116,9 +132,16 @@ public class ContainerConfiguration {
       } else {
         Preconditions.checkArgument(!Iterables.any(labels.keySet(), Objects::isNull));
         Preconditions.checkArgument(!Iterables.any(labels.values(), Objects::isNull));
-        this.labels = ImmutableMap.copyOf(labels);
+        this.labels = new HashMap<>(labels);
       }
       return this;
+    }
+
+    public void addLabel(String key, String value) {
+      if (labels == null) {
+        labels = new HashMap<>();
+      }
+      labels.put(key, value);
     }
 
     /**
@@ -157,7 +180,13 @@ public class ContainerConfiguration {
      */
     public ContainerConfiguration build() {
       return new ContainerConfiguration(
-          creationTime, entrypoint, programArguments, environmentMap, exposedPorts, labels, user);
+          creationTime,
+          entrypoint,
+          programArguments,
+          environmentMap == null ? null : ImmutableMap.copyOf(environmentMap),
+          exposedPorts == null ? null : ImmutableList.copyOf(exposedPorts),
+          labels == null ? null : ImmutableMap.copyOf(labels),
+          user);
     }
 
     private Builder() {}
