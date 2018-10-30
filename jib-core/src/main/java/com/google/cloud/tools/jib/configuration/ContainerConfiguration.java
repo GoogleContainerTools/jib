@@ -41,7 +41,7 @@ public class ContainerConfiguration {
     private Instant creationTime = DEFAULT_CREATION_TIME;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
-    @Nullable private HashMap<String, String> environmentMap;
+    @Nullable private Map<String, String> environmentMap;
     @Nullable private List<Port> exposedPorts;
     @Nullable private Map<String, String> labels;
     @Nullable private String user;

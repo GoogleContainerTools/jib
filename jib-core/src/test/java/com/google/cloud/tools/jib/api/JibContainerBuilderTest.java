@@ -140,6 +140,10 @@ public class JibContainerBuilderTest {
     BuildConfiguration buildConfiguration = jibContainerBuilder.toBuildConfiguration(containerizer);
 
     Assert.assertEquals(
+        spyBuildConfigurationBuilder.build().getContainerConfiguration(),
+        buildConfiguration.getContainerConfiguration());
+
+    Assert.assertEquals(
         baseImage.toImageConfiguration().getImage().toString(),
         buildConfiguration.getBaseImageConfiguration().getImage().toString());
     Assert.assertEquals(
