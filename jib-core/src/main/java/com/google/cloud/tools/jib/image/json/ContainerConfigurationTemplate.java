@@ -39,6 +39,12 @@ import javax.annotation.Nullable;
  *     "Env": ["/usr/bin/java"],
  *     "Entrypoint": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
  *     "Cmd": ["arg1", "arg2"],
+ *     "Healthcheck": {
+ *       "Test": ["CMD-SHELL", "/usr/bin/check-health localhost"],
+ *       "Interval": 30000000000,
+ *       "Timeout": 10000000000,
+ *       "Retries": 3
+ *     }
  *     "ExposedPorts": { "6000/tcp":{}, "8000/tcp":{}, "9000/tcp":{} },
  *     "Labels": { "com.example.label": "value" },
  *     "WorkingDir": "/home/user/workspace",
@@ -90,6 +96,23 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   /** Layer content digests that are used to build the container filesystem. */
   private final RootFilesystemObjectTemplate rootfs = new RootFilesystemObjectTemplate();
 
+  /** Template for inner JSON object representing the healthcheck configuration. */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private static class HealthCheckObjectTemplate implements JsonTemplate {
+
+    /** The test to perform to check that the container is healthy. */
+    @Nullable private List<String> Test;
+
+    /** Number of nanoseconds to wait between probe attempts. */
+    @Nullable private Integer Interval;
+
+    /** Number of nanoseconds to wait before considering the check to have hung. */
+    @Nullable private Integer Timeout;
+
+    /** The number of consecutive failures needed to consider the container as unhealthy. */
+    @Nullable private Integer Retries;
+  }
+
   /** Template for inner JSON object representing the configuration for running the container. */
   @JsonIgnoreProperties(ignoreUnknown = true)
   private static class ConfigurationObjectTemplate implements JsonTemplate {
@@ -102,6 +125,9 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
     /** Arguments to pass into main. */
     @Nullable private List<String> Cmd;
+
+    /** Healthcheck. */
+    @Nullable private HealthCheckObjectTemplate Healthcheck;
 
     /** Network ports the container exposes. */
     @Nullable private Map<String, Map<?, ?>> ExposedPorts;
