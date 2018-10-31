@@ -32,13 +32,9 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Map;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
@@ -52,8 +48,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
   @Nullable private JibExtension jibExtension;
 
-  @Nullable private Path dockerExecutable;
-  @Nullable private Map<String, String> dockerEnvironment;
+  @Nullable private DockerClient dockerClient;
 
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
@@ -109,11 +104,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             gradleHelpfulSuggestionsBuilder.build());
 
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
-    if (dockerExecutable != null) {
-      targetImage.setDockerExecutable(dockerExecutable);
-    }
-    if (dockerEnvironment != null) {
-      targetImage.setDockerEnvironment(dockerEnvironment);
+    if (dockerClient != null) {
+      targetImage.setDockerClient(dockerClient);
     }
 
     PluginConfigurationProcessor pluginConfigurationProcessor =
@@ -147,25 +139,5 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   public BuildDockerTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
-  }
-
-  @Nullable
-  public Map<String, String> getDockerEnvironment() {
-    return dockerEnvironment;
-  }
-
-  @Input
-  public void setDockerEnvironment(@Nullable Map<String, String> dockerEnvironment) {
-    this.dockerEnvironment = dockerEnvironment;
-  }
-
-  @Nullable
-  public Path getDockerExecutable() {
-    return dockerExecutable;
-  }
-
-  @Input
-  public void setDockerExecutable(@Nullable String dockerExecutable) {
-    this.dockerExecutable = Paths.get(dockerExecutable);
   }
 }

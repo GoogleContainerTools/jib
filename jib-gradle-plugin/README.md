@@ -108,21 +108,6 @@ eval $(minikube docker-env)
 gradle jibDockerBuild
 ```
 
-Alternatively, the environment can be configured in the task with two optional parameters:
-
-```
-jibDockerBuild {
-    dockerExecutable = "/optional/path/to/docker/"
-
-    def envVars = [:]
-        envVars["DOCKER_TLS_VERIFY"] = "1"
-        envVars["DOCKER_HOST"] = "tcp://IP:PORT"
-        envVars["DOCKER_CERT_PATH"] = "/path/to/.minikube/certs"
-        envVars["DOCKER_API_VERSION"] = "1.35"
-    dockerEnvironment = envVars
-}
-```
-
 #### Build an image tarball
 
 You can build and save your image to disk as a tarball with:

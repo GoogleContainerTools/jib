@@ -25,7 +25,11 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /** Calls out to the {@code docker} CLI. */
@@ -82,12 +86,12 @@ public class DockerClient {
       dockerCommand.add(dockerExecutable);
       dockerCommand.addAll(dockerSubCommand);
 
-      ProcessBuilder pb = new ProcessBuilder(dockerCommand);
+      ProcessBuilder processBuilder = new ProcessBuilder(dockerCommand);
 
-      Map<String, String> env = pb.environment();
-      env.putAll(dockerEnvironment);
+      Map<String, String> environment = processBuilder.environment();
+      environment.putAll(dockerEnvironment);
 
-      return pb;
+      return processBuilder;
     };
   }
 
@@ -100,7 +104,7 @@ public class DockerClient {
   }
 
   @VisibleForTesting
-  Function<List<String>, ProcessBuilder> getProcessBuilderFactory() {
+  public Function<List<String>, ProcessBuilder> getProcessBuilderFactory() {
     return processBuilderFactory;
   }
 

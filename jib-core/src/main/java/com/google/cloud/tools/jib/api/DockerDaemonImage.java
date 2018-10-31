@@ -23,10 +23,6 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.Map;
 
 /** Builds to the Docker daemon. */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
@@ -57,23 +53,12 @@ public class DockerDaemonImage implements TargetImage {
   }
 
   private final ImageReference imageReference;
-  private Path dockerExecutable = Paths.get("docker");
-  private Map<String, String> dockerEnvironment = Collections.emptyMap();
+
+  private DockerClient dockerClient = DockerClient.newClient();
 
   /** Instantiate with {@link #named}. */
   private DockerDaemonImage(ImageReference imageReference) {
     this.imageReference = imageReference;
-  }
-
-  /**
-   * Sets the path to the {@code docker} CLI. This is {@code docker} by default.
-   *
-   * @param dockerExecutable the path to the {@code docker} CLI
-   * @return this
-   */
-  public DockerDaemonImage setDockerExecutable(Path dockerExecutable) {
-    this.dockerExecutable = dockerExecutable;
-    return this;
   }
 
   @Override
@@ -83,34 +68,15 @@ public class DockerDaemonImage implements TargetImage {
 
   @Override
   public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
-    return BuildSteps.forBuildToDockerDaemon(
-        DockerClient.newClient(dockerExecutable, dockerEnvironment), buildConfiguration);
+    return BuildSteps.forBuildToDockerDaemon(dockerClient, buildConfiguration);
   }
 
-  /**
-   * Gets the path to the {@code docker} CLI.
-   *
-   * @return the path to the {@code docker} CLI
-   */
-  Path getDockerExecutable() {
-    return dockerExecutable;
+  public DockerClient getDockerClient() {
+    return dockerClient;
   }
 
-  /**
-   * Gets environment variables for the {@code docker} CLI.
-   *
-   * @return the path to the {@code docker} CLI
-   */
-  public Map<String, String> getDockerEnvironment() {
-    return dockerEnvironment;
-  }
-
-  /**
-   * Sets environment variables for the {@code docker} CLI.
-   *
-   * @param dockerEnvironment a map of docker environment variables
-   */
-  public void setDockerEnvironment(Map<String, String> dockerEnvironment) {
-    this.dockerEnvironment = dockerEnvironment;
+  public DockerDaemonImage setDockerClient(DockerClient dockerClient) {
+    this.dockerClient = dockerClient;
+    return this;
   }
 }
