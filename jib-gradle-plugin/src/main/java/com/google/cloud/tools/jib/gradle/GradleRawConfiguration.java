@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import java.util.List;
@@ -44,6 +45,21 @@ class GradleRawConfiguration implements RawConfiguration {
   @Override
   public Optional<String> getFromCredHelper() {
     return Optional.ofNullable(jibExtension.getFrom().getCredHelper());
+  }
+
+  @Override
+  public Optional<String> getToImage() {
+    return Optional.ofNullable(jibExtension.getTo().getImage());
+  }
+
+  @Override
+  public AuthProperty getToAuth() {
+    return jibExtension.getTo().getAuth();
+  }
+
+  @Override
+  public Optional<String> getToCredHelper() {
+    return Optional.ofNullable(jibExtension.getTo().getCredHelper());
   }
 
   @Override
@@ -114,5 +130,10 @@ class GradleRawConfiguration implements RawConfiguration {
   @Override
   public Optional<AuthProperty> getInferredAuth(String authTarget) {
     return Optional.empty();
+  }
+
+  @Override
+  public ImageFormat getImageFormat() {
+    return jibExtension.getContainer().getFormat();
   }
 }
