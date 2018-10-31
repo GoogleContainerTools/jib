@@ -123,7 +123,7 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testInferCredentialHelper_warn() throws CredentialRetrievalException {
+  public void testInferCredentialHelper_info() throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         new CredentialRetrieverFactory(
             ImageReference.of("something.amazonaws.com", "repository", null),
@@ -137,7 +137,7 @@ public class CredentialRetrieverFactoryTest {
     Mockito.when(mockCredentialHelperNotFoundException.getCause())
         .thenReturn(new IOException("the root cause"));
     Assert.assertFalse(credentialRetrieverFactory.inferCredentialHelper().retrieve().isPresent());
-    Mockito.verify(mockEventDispatcher).dispatch(LogEvent.warn("warning"));
+    Mockito.verify(mockEventDispatcher).dispatch(LogEvent.info("warning"));
     Mockito.verify(mockEventDispatcher).dispatch(LogEvent.info("  Caused by: the root cause"));
   }
 
