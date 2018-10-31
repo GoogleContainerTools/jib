@@ -1,18 +1,18 @@
 # Style guide
 
-This style guide and defines specific coding standards and advice for this Java codebase. The rules here are extensions to the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html).
+This style guide defines specific coding standards and advice for this Java codebase. The rules here are extensions to the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html).
 
 Please see the [contributing guide](CONTRIBUTING.md) for general guidance for contributing to this project.
 
 ### Automatic formatting
 
-Automatic formatting should be performed with `./gradlew goJF` or `./mvnw fmt:format`.
+Automatic formatting should be performed with `./gradlew goJF` or `./mvnw fmt:format`. Formatting all projects can be done with `./build.sh format`.
 
 ### Class member order
 
 *Extends [3.4.2](https://google.github.io/styleguide/javaguide.html#s3.4.2-ordering-class-contents)*
 
-Class members should in the following order in decreasing priority:
+Class members should be in the following order, in decreasing priority:
 
 1. Static before non-static
 1. Nested classes/interfaces before fields before constructors before methods
