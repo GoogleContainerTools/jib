@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
@@ -59,6 +60,21 @@ class MavenRawConfiguration implements RawConfiguration {
   @Override
   public Optional<String> getFromCredHelper() {
     return Optional.ofNullable(jibPluginConfiguration.getBaseImageCredentialHelperName());
+  }
+
+  @Override
+  public Optional<String> getToImage() {
+    return Optional.ofNullable(jibPluginConfiguration.getTargetImage());
+  }
+
+  @Override
+  public AuthProperty getToAuth() {
+    return jibPluginConfiguration.getTargetImageAuth();
+  }
+
+  @Override
+  public Optional<String> getToCredHelper() {
+    return Optional.ofNullable(jibPluginConfiguration.getTargetImageCredentialHelperName());
   }
 
   @Override
@@ -130,5 +146,10 @@ class MavenRawConfiguration implements RawConfiguration {
   public Optional<AuthProperty> getInferredAuth(String authTarget)
       throws InferredAuthRetrievalException {
     return mavenSettingsServerCredentials.retrieve(authTarget);
+  }
+
+  @Override
+  public ImageFormat getImageFormat() {
+    return ImageFormat.valueOf(jibPluginConfiguration.getFormat());
   }
 }

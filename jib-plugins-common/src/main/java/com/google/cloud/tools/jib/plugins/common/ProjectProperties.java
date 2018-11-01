@@ -35,6 +35,8 @@ public interface ProjectProperties {
 
   EventHandlers getEventHandlers();
 
+  String getToolName();
+
   String getPluginName();
 
   JavaLayerConfigurations getJavaLayerConfigurations();
@@ -48,4 +50,8 @@ public interface ProjectProperties {
   String getMainClassFromJar();
 
   boolean isWarProject();
+
+  String getName();
+
+  String getVersion();
 }

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.image.ImageFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,9 +29,15 @@ public interface RawConfiguration {
 
   Optional<String> getFromImage();
 
+  Optional<String> getToImage();
+
   AuthProperty getFromAuth();
 
+  AuthProperty getToAuth();
+
   Optional<String> getFromCredHelper();
+
+  Optional<String> getToCredHelper();
 
   Iterable<String> getToTags();
 
@@ -58,5 +65,10 @@ public interface RawConfiguration {
 
   boolean getUseOnlyProjectCache();
 
+  // TODO: This is only for getting values from Maven settings.xml, and in some sense, auth info
+  // from settings.xml is not necessary raw configuration values. Consider removing it.
+  // https://github.com/GoogleContainerTools/jib/pull/1163#discussion_r228389684
   Optional<AuthProperty> getInferredAuth(String authTarget) throws InferredAuthRetrievalException;
+
+  ImageFormat getImageFormat();
 }
