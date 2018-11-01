@@ -51,6 +51,10 @@ public class ContainerConfigurationTemplateTest {
     containerConfigJson.setContainerEnvironment(Arrays.asList("VAR1=VAL1", "VAR2=VAL2"));
     containerConfigJson.setContainerEntrypoint(Arrays.asList("some", "entrypoint", "command"));
     containerConfigJson.setContainerCmd(Arrays.asList("arg1", "arg2"));
+    containerConfigJson.setContainerHealthTest(Arrays.asList("CMD-SHELL", "/checkhealth"));
+    containerConfigJson.setContainerHealthInterval(3000000000L);
+    containerConfigJson.setContainerHealthTimeout(1000000000L);
+    containerConfigJson.setContainerHealthRetries(3);
     containerConfigJson.setContainerExposedPorts(
         ImmutableSortedMap.of(
             "1000/tcp",
@@ -103,6 +107,16 @@ public class ContainerConfigurationTemplateTest {
         Arrays.asList("some", "entrypoint", "command"),
         containerConfigJson.getContainerEntrypoint());
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), containerConfigJson.getContainerCmd());
+
+    Assert.assertEquals(
+        Arrays.asList("CMD-SHELL", "/checkhealth"), containerConfigJson.getContainerHealthTest());
+    Assert.assertNotNull(containerConfigJson.getContainerHealthInterval());
+    Assert.assertEquals(3000000000L, containerConfigJson.getContainerHealthInterval().longValue());
+    Assert.assertNotNull(containerConfigJson.getContainerHealthTimeout());
+    Assert.assertEquals(1000000000L, containerConfigJson.getContainerHealthTimeout().longValue());
+    Assert.assertNotNull(containerConfigJson.getContainerHealthRetries());
+    Assert.assertEquals(3, containerConfigJson.getContainerHealthRetries().intValue());
+
     Assert.assertEquals(
         ImmutableMap.of("key1", "value1", "key2", "value2"),
         containerConfigJson.getContainerLabels());
