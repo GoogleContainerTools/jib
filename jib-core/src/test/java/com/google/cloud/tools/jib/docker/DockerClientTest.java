@@ -197,7 +197,7 @@ public class DockerClientTest {
 
   @Test
   public void testCustomClient() {
-    Path path = Paths.get("/path.to/docker");
+    Path path = Paths.get("/path/to/docker");
     Map<String, String> environment = new HashMap<>();
     environment.putAll(System.getenv());
     environment.put("Key1", "Value1");

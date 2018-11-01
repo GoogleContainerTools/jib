@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.annotations.VisibleForTesting;
 
 /** Builds to the Docker daemon. */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
@@ -71,6 +72,7 @@ public class DockerDaemonImage implements TargetImage {
     return BuildSteps.forBuildToDockerDaemon(dockerClient, buildConfiguration);
   }
 
+  @VisibleForTesting
   public DockerClient getDockerClient() {
     return dockerClient;
   }
