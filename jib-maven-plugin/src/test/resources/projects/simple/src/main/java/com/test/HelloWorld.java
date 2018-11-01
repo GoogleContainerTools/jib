@@ -17,7 +17,6 @@
 package com.test;
 
 import dependency.Greeting;
-
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.net.URISyntaxException;

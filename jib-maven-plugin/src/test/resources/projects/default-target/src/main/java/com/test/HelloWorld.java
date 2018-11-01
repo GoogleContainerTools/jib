@@ -17,7 +17,6 @@
 package com.test;
 
 import dependency.Greeting;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
