@@ -127,6 +127,8 @@ public class PluginConfigurationProcessor {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
+    rawConfiguration.getDockerClientExecutable().ifPresent(targetImage::setDockerExecutable);
+    rawConfiguration.getDockerClientEnvironment().ifPresent(targetImage::setDockerEnvironment);
     Containerizer containerizer = Containerizer.to(targetImage);
 
     return processCommonConfiguration(

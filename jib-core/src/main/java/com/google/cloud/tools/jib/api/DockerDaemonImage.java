@@ -25,6 +25,8 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Map;
 
 /** Builds to the Docker daemon. */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
@@ -55,22 +57,13 @@ public class DockerDaemonImage implements TargetImage {
   }
 
   private final ImageReference imageReference;
+
   private Path dockerExecutable = Paths.get("docker");
+  private Map<String, String> dockerEnvironment = Collections.emptyMap();
 
   /** Instantiate with {@link #named}. */
   private DockerDaemonImage(ImageReference imageReference) {
     this.imageReference = imageReference;
-  }
-
-  /**
-   * Sets the path to the {@code docker} CLI. This is {@code docker} by default.
-   *
-   * @param dockerExecutable the path to the {@code docker} CLI
-   * @return this
-   */
-  public DockerDaemonImage setDockerExecutable(Path dockerExecutable) {
-    this.dockerExecutable = dockerExecutable;
-    return this;
   }
 
   @Override
@@ -80,16 +73,17 @@ public class DockerDaemonImage implements TargetImage {
 
   @Override
   public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
-    return BuildSteps.forBuildToDockerDaemon(
-        DockerClient.newClient(dockerExecutable), buildConfiguration);
+    DockerClient dockerClient = DockerClient.newClient(dockerExecutable, dockerEnvironment);
+    return BuildSteps.forBuildToDockerDaemon(dockerClient, buildConfiguration);
   }
 
-  /**
-   * Gets the path to the {@code docker} CLI.
-   *
-   * @return the path to the {@code docker} CLI
-   */
-  Path getDockerExecutable() {
-    return dockerExecutable;
+  public DockerDaemonImage setDockerExecutable(Path dockerExecutable) {
+    this.dockerExecutable = dockerExecutable;
+    return this;
+  }
+
+  public DockerDaemonImage setDockerEnvironment(Map<String, String> dockerEnvironment) {
+    this.dockerEnvironment = dockerEnvironment;
+    return this;
   }
 }

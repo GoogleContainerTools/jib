@@ -17,9 +17,11 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.nio.file.Paths;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,13 +32,14 @@ public class DockerDaemonImageTest {
   public void testToImageConfiguration() throws InvalidImageReferenceException {
     DockerDaemonImage dockerDaemonImage =
         DockerDaemonImage.named("docker/daemon/image")
-            .setDockerExecutable(Paths.get("docker", "executable"));
+            .setDockerExecutable(Paths.get("docker", "executable"))
+            .setDockerEnvironment(Collections.singletonMap("key", "value"));
     ImageConfiguration imageConfiguration = dockerDaemonImage.toImageConfiguration();
 
     Assert.assertEquals(
         ImageReference.parse("docker/daemon/image").toString(),
         imageConfiguration.getImage().toString());
     Assert.assertEquals(0, imageConfiguration.getCredentialRetrievers().size());
-    Assert.assertEquals(Paths.get("docker", "executable"), dockerDaemonImage.getDockerExecutable());
+    DockerClient.newClient().getProcessBuilderFactory().apply(Collections.emptyList()).command();
   }
 }

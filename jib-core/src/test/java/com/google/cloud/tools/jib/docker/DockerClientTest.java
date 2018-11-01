@@ -26,9 +26,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -179,6 +182,33 @@ public class DockerClientTest {
     Mockito.when(mockProcess.waitFor()).thenReturn(0);
 
     testDockerClient.tag(ImageReference.of(null, "original", null), ImageReference.parse("new"));
+  }
+
+  @Test
+  public void testDefaultClient() {
+    DockerClient testDockerClient = DockerClient.newClient();
+    Assert.assertEquals(
+        Collections.singletonList("docker"),
+        testDockerClient.getProcessBuilderFactory().apply(Collections.emptyList()).command());
+    Assert.assertEquals(
+        System.getenv(),
+        testDockerClient.getProcessBuilderFactory().apply(Collections.emptyList()).environment());
+  }
+
+  @Test
+  public void testCustomClient() {
+    Path path = Paths.get("/path/to/docker");
+    Map<String, String> environment = new HashMap<>();
+    environment.putAll(System.getenv());
+    environment.put("Key1", "Value1");
+
+    DockerClient testDockerClient = DockerClient.newClient(path, environment);
+    Assert.assertEquals(
+        Collections.singletonList(path.toString()),
+        testDockerClient.getProcessBuilderFactory().apply(Collections.emptyList()).command());
+    Assert.assertEquals(
+        environment,
+        testDockerClient.getProcessBuilderFactory().apply(Collections.emptyList()).environment());
   }
 
   @Test

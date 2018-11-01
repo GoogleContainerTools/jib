@@ -33,9 +33,12 @@ import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
@@ -48,6 +51,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   private static final DockerClient DOCKER_CLIENT = DockerClient.newClient();
 
   @Nullable private JibExtension jibExtension;
+
+  @Nullable private DockerClient dockerClient;
 
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
@@ -94,7 +99,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               jibExtension.getExtraDirectory().getPath(),
               jibExtension.getExtraDirectory().getPermissions(),
               appRoot);
-      RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
+      RawConfiguration rawConfiguration =
+          new GradleRawConfiguration(jibExtension, Paths.get("docker"), Collections.emptyMap());
 
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
@@ -132,5 +138,19 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   public BuildDockerTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
+  }
+
+  @Input
+  @Nullable
+  public DockerClient getDockerClient() {
+    return dockerClient;
+  }
+
+  public void setDockerClient(@Nullable DockerClient dockerClient) {
+    this.dockerClient = dockerClient;
+  }
+
+  public DarkerClientParameters getDarkerClient() {
+    return null;
   }
 }

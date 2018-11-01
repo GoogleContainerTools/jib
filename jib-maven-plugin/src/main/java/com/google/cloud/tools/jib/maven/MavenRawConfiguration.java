@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -151,5 +152,15 @@ class MavenRawConfiguration implements RawConfiguration {
   @Override
   public ImageFormat getImageFormat() {
     return ImageFormat.valueOf(jibPluginConfiguration.getFormat());
+  }
+
+  @Override
+  public Optional<Path> getDockerClientExecutable() {
+    return Optional.empty();
+  }
+
+  @Override
+  public Optional<Map<String, String>> getDockerClientEnvironment() {
+    return Optional.empty();
   }
 }
