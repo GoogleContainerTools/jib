@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
@@ -82,7 +83,8 @@ public class ImageToTarballTranslatorTest {
     Image<Layer> testImage = Image.builder().addLayer(mockLayer1).addLayer(mockLayer2).build();
 
     Blob tarballBlob =
-        new ImageToTarballTranslator(testImage).toTarballBlob(ImageReference.parse("my/image:tag"));
+        new ImageToTarballTranslator(testImage, V22ManifestTemplate.class)
+            .toTarballBlob(ImageReference.parse("my/image:tag"));
 
     try (ByteArrayInputStream tarballBytesStream =
             new ByteArrayInputStream(Blobs.writeToByteArray(tarballBlob));

@@ -59,6 +59,10 @@ public class ImageToJsonTranslatorTest {
     testImageBuilder.addEnvironmentVariable("VAR2", "VAL2");
     testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
     testImageBuilder.setProgramArguments(Arrays.asList("arg1", "arg2"));
+    testImageBuilder.setHealthTest(Arrays.asList("CMD-SHELL", "/checkhealth"));
+    testImageBuilder.setHealthInterval(3000000000L);
+    testImageBuilder.setHealthTimeout(1000000000L);
+    testImageBuilder.setHealthRetries(3);
     testImageBuilder.setExposedPorts(
         ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)));
     testImageBuilder.addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
@@ -109,7 +113,8 @@ public class ImageToJsonTranslatorTest {
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Translates the image to the container configuration and writes the JSON string.
-    Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
+    Blob containerConfigurationBlob =
+        imageToJsonTranslator.getContainerConfigurationBlob(V22ManifestTemplate.class);
 
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     containerConfigurationBlob.writeTo(byteArrayOutputStream);
@@ -152,7 +157,8 @@ public class ImageToJsonTranslatorTest {
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Translates the image to the manifest and writes the JSON string.
-    Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
+    Blob containerConfigurationBlob =
+        imageToJsonTranslator.getContainerConfigurationBlob(manifestTemplateClass);
     BlobDescriptor blobDescriptor =
         containerConfigurationBlob.writeTo(ByteStreams.nullOutputStream());
     T manifestTemplate =

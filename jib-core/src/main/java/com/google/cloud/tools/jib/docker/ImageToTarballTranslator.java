@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.docker.json.DockerLoadManifestEntryTemplate;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.Layer;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
@@ -41,14 +42,18 @@ public class ImageToTarballTranslator {
   private static final String LAYER_FILE_EXTENSION = ".tar.gz";
 
   private final Image<Layer> image;
+  private final Class<? extends BuildableManifestTemplate> manifestTemplateClass;
 
   /**
    * Instantiate with an {@link Image}.
    *
-   * @param image the image to convert into a tarball.
+   * @param image the image to convert into a tarball
+   * @param manifestTemplateClass the target format of the container manifest
    */
-  public ImageToTarballTranslator(Image<Layer> image) {
+  public ImageToTarballTranslator(
+      Image<Layer> image, Class<? extends BuildableManifestTemplate> manifestTemplateClass) {
     this.image = image;
+    this.manifestTemplateClass = manifestTemplateClass;
   }
 
   public Blob toTarballBlob(ImageReference imageReference) throws IOException {
@@ -66,7 +71,7 @@ public class ImageToTarballTranslator {
 
     // Adds the container configuration to the tarball.
     Blob containerConfigurationBlob =
-        new ImageToJsonTranslator(image).getContainerConfigurationBlob();
+        new ImageToJsonTranslator(image).getContainerConfigurationBlob(manifestTemplateClass);
     tarStreamBuilder.addByteEntry(
         Blobs.writeToByteArray(containerConfigurationBlob), CONTAINER_CONFIGURATION_JSON_FILE_NAME);
 

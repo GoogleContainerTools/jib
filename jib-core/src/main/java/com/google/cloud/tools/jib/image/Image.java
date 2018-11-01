@@ -39,6 +39,10 @@ public class Image<T extends Layer> {
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
+    @Nullable private ImmutableList<String> healthTest;
+    @Nullable private Long healthInterval;
+    @Nullable private Long healthTimeout;
+    @Nullable private Integer healthRetries;
     @Nullable private ImmutableList<Port> exposedPorts;
     @Nullable private String workingDirectory;
     @Nullable private String user;
@@ -110,6 +114,51 @@ public class Image<T extends Layer> {
     public Builder<T> setProgramArguments(@Nullable List<String> programArguments) {
       this.programArguments =
           (programArguments == null) ? null : ImmutableList.copyOf(programArguments);
+      return this;
+    }
+
+    /**
+     * Sets the command used to check the container's health.
+     *
+     * @param healthTest the list of healthcheck command tokens
+     * @return this
+     */
+    public Builder<T> setHealthTest(@Nullable List<String> healthTest) {
+      this.healthTest = (healthTest == null) ? null : ImmutableList.copyOf(healthTest);
+      return this;
+    }
+
+    /**
+     * Sets the number of nanoseconds to wait between healthcheck attempts.
+     *
+     * @param healthInterval the number of nanoseconds to wait between healthcheck attempts
+     * @return this
+     */
+    public Builder<T> setHealthInterval(@Nullable Long healthInterval) {
+      this.healthInterval = healthInterval;
+      return this;
+    }
+
+    /**
+     * Sets the number of nanoseconds to wait before considering a check to have hung.
+     *
+     * @param healthTimeout number of nanoseconds to wait before considering a check to have hung
+     * @return this
+     */
+    public Builder<T> setHealthTimeout(@Nullable Long healthTimeout) {
+      this.healthTimeout = healthTimeout;
+      return this;
+    }
+
+    /**
+     * Sets the number of consecutive failures needed to consider the container as unhealthy.
+     *
+     * @param healthRetries the number of consecutive failures needed to consider the container as
+     *     unhealthy
+     * @return this
+     */
+    public Builder<T> setHealthRetries(@Nullable Integer healthRetries) {
+      this.healthRetries = healthRetries;
       return this;
     }
 
@@ -191,6 +240,10 @@ public class Image<T extends Layer> {
           environmentBuilder.build(),
           entrypoint,
           programArguments,
+          healthTest,
+          healthInterval,
+          healthTimeout,
+          healthRetries,
           exposedPorts,
           labelsBuilder.build(),
           workingDirectory,
@@ -220,6 +273,13 @@ public class Image<T extends Layer> {
   /** Arguments to append to the image entrypoint when running the image. */
   @Nullable private final ImmutableList<String> programArguments;
 
+  /** Parameters used for performing container healthchecks. */
+  @Nullable private final ImmutableList<String> healthTest;
+
+  @Nullable private final Long healthInterval;
+  @Nullable private final Long healthTimeout;
+  @Nullable private final Integer healthRetries;
+
   /** Ports that the container listens on. */
   @Nullable private final ImmutableList<Port> exposedPorts;
 
@@ -239,6 +299,10 @@ public class Image<T extends Layer> {
       @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> programArguments,
+      @Nullable ImmutableList<String> healthTest,
+      @Nullable Long healthInterval,
+      @Nullable Long healthTimeout,
+      @Nullable Integer healthRetries,
       @Nullable ImmutableList<Port> exposedPorts,
       @Nullable ImmutableMap<String, String> labels,
       @Nullable String workingDirectory,
@@ -249,6 +313,10 @@ public class Image<T extends Layer> {
     this.environment = environment;
     this.entrypoint = entrypoint;
     this.programArguments = programArguments;
+    this.healthTest = healthTest;
+    this.healthInterval = healthInterval;
+    this.healthTimeout = healthTimeout;
+    this.healthRetries = healthRetries;
     this.exposedPorts = exposedPorts;
     this.labels = labels;
     this.workingDirectory = workingDirectory;
@@ -273,6 +341,26 @@ public class Image<T extends Layer> {
   @Nullable
   public ImmutableList<String> getProgramArguments() {
     return programArguments;
+  }
+
+  @Nullable
+  public ImmutableList<String> getHealthTest() {
+    return healthTest;
+  }
+
+  @Nullable
+  public Long getHealthInterval() {
+    return healthInterval;
+  }
+
+  @Nullable
+  public Long getHealthTimeout() {
+    return healthTimeout;
+  }
+
+  @Nullable
+  public Integer getHealthRetries() {
+    return healthRetries;
   }
 
   @Nullable

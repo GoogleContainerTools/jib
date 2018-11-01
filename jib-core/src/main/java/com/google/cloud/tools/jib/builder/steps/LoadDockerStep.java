@@ -103,7 +103,9 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
     buildConfiguration
         .getEventDispatcher()
         .dispatch(LogEvent.lifecycle("Loading to Docker daemon..."));
-    dockerClient.load(new ImageToTarballTranslator(image).toTarballBlob(targetImageReference));
+    dockerClient.load(
+        new ImageToTarballTranslator(image, buildConfiguration.getTargetFormat())
+            .toTarballBlob(targetImageReference));
 
     // Tags the image with all the additional tags, skipping the one 'docker load' already loaded.
     for (String tag : buildConfiguration.getAllTargetImageTags()) {
@@ -119,7 +121,7 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
     ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
     BlobDescriptor containerConfigurationBlobDescriptor =
         imageToJsonTranslator
-            .getContainerConfigurationBlob()
+            .getContainerConfigurationBlob(buildConfiguration.getTargetFormat())
             .writeTo(ByteStreams.nullOutputStream());
     BuildableManifestTemplate manifestTemplate =
         imageToJsonTranslator.getManifestTemplate(
