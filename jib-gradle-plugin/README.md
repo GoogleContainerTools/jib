@@ -352,7 +352,7 @@ jib {
 
 ### WAR Projects
 
-Jib supports creating images for projects that build a WAR. If the Gradle project uses the [WAR Plugin](https://docs.gradle.org/current/userguide/war_plugin.html), Jib will by default use the [distroless Jetty]https://github.com/GoogleContainerTools/distroless/tree/master/java/jetty) image as a base image to deploy the project WAR. No extra configuration is necessary than using the WAR Plugin to make Jib build WAR images.
+Jib supports creating images for projects that build a WAR. If the Gradle project uses the [WAR Plugin](https://docs.gradle.org/current/userguide/war_plugin.html), Jib will by default use the [distroless Jetty]https://github.com/GoogleContainerTools/distroless/tree/master/java/jetty) as a base image to deploy the project WAR. No extra configuration is necessary than using the WAR Plugin to make Jib build WAR images.
 
 Note that Jib will work slightly differently for WAR projects from plain Java projects:
    - `container.mainClass` and `container.jvmFlags` are ignored.
