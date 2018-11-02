@@ -240,7 +240,8 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets the directories that the container will create as a volume. Volumes allows persistent data.
+   * Sets the directories that the container will create as a volume. Volumes allows persistent
+   * data.
    *
    * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#volume">{@code
    * VOLUME} in Dockerfiles</a>.
@@ -254,8 +255,7 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets directories where the process is likely to write. This replaces any previously-set
-   * volume.
+   * Sets directories where the process is likely to write. This replaces any previously-set volume.
    *
    * @param volumes the directory to be create as a volume
    * @return this
