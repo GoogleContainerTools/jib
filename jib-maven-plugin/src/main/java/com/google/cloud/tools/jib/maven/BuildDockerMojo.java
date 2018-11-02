@@ -16,9 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.api.Containerizer;
-import com.google.cloud.tools.jib.api.DockerDaemonImage;
-import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
@@ -29,7 +26,6 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.AppRootInvalidException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
-import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
@@ -88,25 +84,11 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
-      ImageReference targetImageReference =
-          ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-              getTargetImage(),
-              eventDispatcher,
-              getProject().getName(),
-              getProject().getVersion(),
-              mavenHelpfulSuggestionsBuilder.build());
-      DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
-
       PluginConfigurationProcessor pluginConfigurationProcessor =
-          PluginConfigurationProcessor.processCommonConfiguration(
-              rawConfiguration, projectProperties);
+          PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
+              rawConfiguration, projectProperties, mavenHelpfulSuggestionsBuilder.build());
 
-      JibContainerBuilder jibContainerBuilder =
-          pluginConfigurationProcessor.getJibContainerBuilder();
-      Containerizer containerizer = Containerizer.to(targetImage);
-      PluginConfigurationProcessor.configureContainerizer(
-          containerizer, rawConfiguration, projectProperties, MavenProjectProperties.TOOL_NAME);
-
+      ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =
           mavenHelpfulSuggestionsBuilder
               .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
@@ -119,8 +101,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
           .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
-              jibContainerBuilder,
-              containerizer,
+              pluginConfigurationProcessor.getJibContainerBuilder(),
+              pluginConfigurationProcessor.getContainerizer(),
               eventDispatcher,
               projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
               helpfulSuggestions);

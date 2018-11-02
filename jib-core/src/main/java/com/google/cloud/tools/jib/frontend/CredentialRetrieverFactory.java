@@ -177,7 +177,7 @@ public class CredentialRetrieverFactory {
             | CredentialHelperUnhandledServerUrlException ex) {
           if (ex.getMessage() != null) {
             // Warns the user that the specified (or inferred) credential helper cannot be used.
-            dispatchEvent(LogEvent.warn(ex.getMessage()));
+            dispatchEvent(LogEvent.info(ex.getMessage()));
             if (ex.getCause() != null && ex.getCause().getMessage() != null) {
               dispatchEvent(LogEvent.info("  Caused by: " + ex.getCause().getMessage()));
             }

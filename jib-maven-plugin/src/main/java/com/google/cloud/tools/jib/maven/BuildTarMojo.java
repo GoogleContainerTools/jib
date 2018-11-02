@@ -16,19 +16,14 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.api.Containerizer;
-import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.api.TarImage;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.AppRootInvalidException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
-import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
@@ -82,40 +77,28 @@ public class BuildTarMojo extends JibPluginConfiguration {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
-      ImageReference targetImageReference =
-          ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-              getTargetImage(),
-              eventDispatcher,
-              getProject().getName(),
-              getProject().getVersion(),
-              mavenHelpfulSuggestionsBuilder.build());
       Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
       Path tarOutputPath = buildOutput.resolve("jib-image.tar");
-      TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarOutputPath);
-
       PluginConfigurationProcessor pluginConfigurationProcessor =
-          PluginConfigurationProcessor.processCommonConfiguration(
-              rawConfiguration, projectProperties);
-
-      JibContainerBuilder jibContainerBuilder =
-          pluginConfigurationProcessor.getJibContainerBuilder();
-      Containerizer containerizer = Containerizer.to(targetImage);
-      PluginConfigurationProcessor.configureContainerizer(
-          containerizer, rawConfiguration, projectProperties, MavenProjectProperties.TOOL_NAME);
+          PluginConfigurationProcessor.processCommonConfigurationForTarImage(
+              rawConfiguration,
+              projectProperties,
+              tarOutputPath,
+              mavenHelpfulSuggestionsBuilder.build());
 
       HelpfulSuggestions helpfulSuggestions =
           mavenHelpfulSuggestionsBuilder
               .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
               .setBaseImageHasConfiguredCredentials(
                   pluginConfigurationProcessor.isBaseImageCredentialPresent())
-              .setTargetImageReference(targetImageReference)
+              .setTargetImageReference(pluginConfigurationProcessor.getTargetImageReference())
               .build();
 
       BuildStepsRunner.forBuildTar(tarOutputPath)
           .writeImageDigest(buildOutput.resolve("jib-image.digest"))
           .build(
-              jibContainerBuilder,
-              containerizer,
+              pluginConfigurationProcessor.getJibContainerBuilder(),
+              pluginConfigurationProcessor.getContainerizer(),
               eventDispatcher,
               projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
               helpfulSuggestions);
