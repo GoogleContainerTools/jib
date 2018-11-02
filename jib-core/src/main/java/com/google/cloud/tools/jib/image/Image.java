@@ -125,12 +125,12 @@ public class Image<T extends Layer> {
       return this;
     }
 
-      /**
-       * Sets the items in the "Volumes" field in the container configuration.
-       *
-       * @param volumes the list of directories to create a volume.
-       * @return this
-       */
+    /**
+     * Sets the items in the "Volumes" field in the container configuration.
+     *
+     * @param volumes the list of directories to create a volume.
+     * @return this
+     */
     public Builder<T> setVolumes(@Nullable List<String> volumes) {
       this.volumes = (volumes == null) ? null : ImmutableList.copyOf(volumes);
       return this;
