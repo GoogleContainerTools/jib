@@ -24,9 +24,8 @@ import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /** Builds to the Docker daemon. */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
@@ -57,13 +56,34 @@ public class DockerDaemonImage implements TargetImage {
   }
 
   private final ImageReference imageReference;
-
-  private Path dockerExecutable = Paths.get("docker");
-  private Map<String, String> dockerEnvironment = Collections.emptyMap();
+  @Nullable private Path dockerExecutable;
+  @Nullable private Map<String, String> dockerEnvironment;
 
   /** Instantiate with {@link #named}. */
   private DockerDaemonImage(ImageReference imageReference) {
     this.imageReference = imageReference;
+  }
+
+  /**
+   * Sets the path to the {@code docker} CLI. This is {@code docker} by default.
+   *
+   * @param dockerExecutable the path to the {@code docker} CLI
+   * @return this
+   */
+  public DockerDaemonImage setDockerExecutable(Path dockerExecutable) {
+    this.dockerExecutable = dockerExecutable;
+    return this;
+  }
+
+  /**
+   * Sets the additional environment variables to use when running {@link #dockerExecutable docker}.
+   *
+   * @param dockerEnvironment additional environment variables
+   * @return this
+   */
+  public DockerDaemonImage setDockerEnvironment(Map<String, String> dockerEnvironment) {
+    this.dockerEnvironment = dockerEnvironment;
+    return this;
   }
 
   @Override
@@ -75,15 +95,5 @@ public class DockerDaemonImage implements TargetImage {
   public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
     DockerClient dockerClient = DockerClient.newClient(dockerExecutable, dockerEnvironment);
     return BuildSteps.forBuildToDockerDaemon(dockerClient, buildConfiguration);
-  }
-
-  public DockerDaemonImage setDockerExecutable(Path dockerExecutable) {
-    this.dockerExecutable = dockerExecutable;
-    return this;
-  }
-
-  public DockerDaemonImage setDockerEnvironment(Map<String, String> dockerEnvironment) {
-    this.dockerEnvironment = dockerEnvironment;
-    return this;
   }
 }

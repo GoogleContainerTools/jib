@@ -37,10 +37,12 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   GradleRawConfiguration(
-      JibExtension jibExtension, Path dockerClient, Map<String, String> dockerClientEnvironment) {
+      JibExtension jibExtension,
+      @Nullable Path dockerExecutable,
+      @Nullable Map<String, String> dockerEnvironment) {
     this.jibExtension = jibExtension;
-    this.dockerClientExecutable = dockerClient;
-    this.dockerClientEnvironment = dockerClientEnvironment;
+    this.dockerClientExecutable = dockerExecutable;
+    this.dockerClientEnvironment = dockerEnvironment;
   }
 
   @Override

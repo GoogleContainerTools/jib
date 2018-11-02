@@ -26,12 +26,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -185,30 +186,31 @@ public class DockerClientTest {
   }
 
   @Test
-  public void testDefaultClient() {
-    DockerClient testDockerClient = DockerClient.newClient();
+  public void testDefaultProcessorBuilderFactory() {
+    Function<List<String>, ProcessBuilder> processBuilderFactory =
+        DockerClient.defaultProcessBuilderFactory("docker-executable", Collections.emptyMap());
+    processBuilderFactory.apply(Collections.emptyList()).environment();
     Assert.assertEquals(
-        Collections.singletonList("docker"),
-        testDockerClient.getProcessBuilderFactory().apply(Collections.emptyList()).command());
+        Arrays.asList("docker-executable", "sub-command"),
+        processBuilderFactory.apply(Collections.singletonList("sub-command")).command());
     Assert.assertEquals(
-        System.getenv(),
-        testDockerClient.getProcessBuilderFactory().apply(Collections.emptyList()).environment());
+        System.getenv(), processBuilderFactory.apply(Collections.emptyList()).environment());
   }
 
   @Test
-  public void testCustomClient() {
-    Path path = Paths.get("/path/to/docker");
+  public void testDefaultProcessorBuilderFactory_additionalEnvironment() {
     Map<String, String> environment = new HashMap<>();
-    environment.putAll(System.getenv());
     environment.put("Key1", "Value1");
 
-    DockerClient testDockerClient = DockerClient.newClient(path, environment);
+    Function<List<String>, ProcessBuilder> processBuilderFactory =
+        DockerClient.defaultProcessBuilderFactory("", environment);
+
+    Map<String, String> expectedEnvironment = new HashMap<>(System.getenv());
+    expectedEnvironment.putAll(environment);
+
+    processBuilderFactory.apply(Collections.emptyList()).environment();
     Assert.assertEquals(
-        Collections.singletonList(path.toString()),
-        testDockerClient.getProcessBuilderFactory().apply(Collections.emptyList()).command());
-    Assert.assertEquals(
-        environment,
-        testDockerClient.getProcessBuilderFactory().apply(Collections.emptyList()).environment());
+        expectedEnvironment, processBuilderFactory.apply(Collections.emptyList()).environment());
   }
 
   @Test

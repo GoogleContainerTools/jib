@@ -33,13 +33,12 @@ import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
 import javax.annotation.Nullable;
+import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
-import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
@@ -48,11 +47,9 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
-  private static final DockerClient DOCKER_CLIENT = DockerClient.newClient();
-
   @Nullable private JibExtension jibExtension;
 
-  @Nullable private DockerClient dockerClient;
+  private DockerClientParameters dockerClientParameters = new DockerClientParameters();
 
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
@@ -81,7 +78,9 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
       throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
           CacheDirectoryCreationException, MainClassInferenceException,
           InferredAuthRetrievalException {
-    if (!DOCKER_CLIENT.isDockerInstalled()) {
+    DockerClient dockerClient =
+        DockerClient.newClient(dockerClientParameters.getExecutable(), null);
+    if (!dockerClient.isDockerInstalled()) {
       throw new GradleException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
@@ -100,7 +99,10 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               jibExtension.getExtraDirectory().getPermissions(),
               appRoot);
       RawConfiguration rawConfiguration =
-          new GradleRawConfiguration(jibExtension, Paths.get("docker"), Collections.emptyMap());
+          new GradleRawConfiguration(
+              jibExtension,
+              dockerClientParameters.getExecutable(),
+              dockerClientParameters.getEnvironment());
 
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
@@ -140,17 +142,13 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     return this;
   }
 
-  @Input
-  @Nullable
-  public DockerClient getDockerClient() {
-    return dockerClient;
+  @Nested
+  @Optional
+  public DockerClientParameters getDockerClient() {
+    return dockerClientParameters;
   }
 
-  public void setDockerClient(@Nullable DockerClient dockerClient) {
-    this.dockerClient = dockerClient;
-  }
-
-  public DarkerClientParameters getDarkerClient() {
-    return null;
+  public void dockerClient(Action<? super DockerClientParameters> action) {
+    action.execute(dockerClientParameters);
   }
 }

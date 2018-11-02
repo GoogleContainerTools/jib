@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import javax.annotation.Nullable;
 
 /** Calls out to the {@code docker} CLI. */
 public class DockerClient {
@@ -44,32 +45,22 @@ public class DockerClient {
    * @return a new {@link DockerClient}
    */
   public static DockerClient newClient() {
-    return new DockerClient(
-        defaultProcessBuilderFactory(DEFAULT_DOCKER_CLIENT, DEFAULT_DOCKER_ENVIRONMENT));
+    return newClient(null, null);
   }
 
   /**
-   * Instantiates with a custom {@code docker} executable.
+   * Instantiates with a custom {@code docker} executable and environment variables.
    *
-   * @param dockerExecutable path to {@code docker}
-   * @return a new {@link DockerClient}
-   */
-  public static DockerClient newClient(Path dockerExecutable) {
-    return new DockerClient(
-        defaultProcessBuilderFactory(dockerExecutable.toString(), DEFAULT_DOCKER_ENVIRONMENT));
-  }
-
-  /**
-   * Instantiates with a custom {@code docker} executable.
-   *
-   * @param dockerExecutable path to {@code docker}
-   * @param dockerEnvironment environment variables for {@code docker}
+   * @param dockerExecutable path to {@code docker}; {@code docker} if null
+   * @param dockerEnvironment environment variables for {@code docker}; empty environment if null
    * @return a new {@link DockerClient}
    */
   public static DockerClient newClient(
-      Path dockerExecutable, Map<String, String> dockerEnvironment) {
+      @Nullable Path dockerExecutable, @Nullable Map<String, String> dockerEnvironment) {
     return new DockerClient(
-        defaultProcessBuilderFactory(dockerExecutable.toString(), dockerEnvironment));
+        defaultProcessBuilderFactory(
+            dockerExecutable == null ? DEFAULT_DOCKER_CLIENT : dockerExecutable.toString(),
+            dockerEnvironment == null ? DEFAULT_DOCKER_ENVIRONMENT : dockerEnvironment));
   }
 
   /**
@@ -79,7 +70,8 @@ public class DockerClient {
    * @param dockerExecutable path to {@code docker}
    * @return the default {@link ProcessBuilder} factory for running a {@code docker} subcommand
    */
-  private static Function<List<String>, ProcessBuilder> defaultProcessBuilderFactory(
+  @VisibleForTesting
+  static Function<List<String>, ProcessBuilder> defaultProcessBuilderFactory(
       String dockerExecutable, Map<String, String> dockerEnvironment) {
     return dockerSubCommand -> {
       List<String> dockerCommand = new ArrayList<>(1 + dockerSubCommand.size());
@@ -103,11 +95,6 @@ public class DockerClient {
     this.processBuilderFactory = processBuilderFactory;
   }
 
-  @VisibleForTesting
-  public Function<List<String>, ProcessBuilder> getProcessBuilderFactory() {
-    return processBuilderFactory;
-  }
-
   /**
    * @return {@code true} if Docker is installed on the user's system and accessible as {@code
    *     docker}
@@ -125,12 +112,12 @@ public class DockerClient {
   /**
    * Loads an image tarball into the Docker daemon.
    *
+   * @see <a
+   *     href="https://docs.docker.com/engine/reference/commandline/load/">https://docs.docker.com/engine/reference/commandline/load</a>
    * @param imageTarballBlob the built container tarball.
    * @return stdout from {@code docker}.
    * @throws InterruptedException if the 'docker load' process is interrupted.
    * @throws IOException if streaming the blob to 'docker load' fails.
-   * @see <a
-   *     href="https://docs.docker.com/engine/reference/commandline/load/">https://docs.docker.com/engine/reference/commandline/load</a>
    */
   public String load(Blob imageTarballBlob) throws InterruptedException, IOException {
     // Runs 'docker load'.
@@ -178,10 +165,10 @@ public class DockerClient {
    *
    * @param originalImageReference the existing image reference on the Docker daemon
    * @param newImageReference the new image reference
-   * @throws InterruptedException if the 'docker tag' process is interrupted.
-   * @throws IOException if an I/O exception occurs or {@code docker tag} failed
    * @see <a
    *     href="https://docs.docker.com/engine/reference/commandline/tag/">https://docs.docker.com/engine/reference/commandline/tag/</a>
+   * @throws InterruptedException if the 'docker tag' process is interrupted.
+   * @throws IOException if an I/O exception occurs or {@code docker tag} failed
    */
   public void tag(ImageReference originalImageReference, ImageReference newImageReference)
       throws IOException, InterruptedException {
