@@ -235,7 +235,7 @@ Property | Type
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`appRoot` | string | `/app` | The root directory on the container where the app's contents are placed. This property can particularly be useful for WAR packaging projects to work with different Servlet engine base images by placing exploded WAR contents into a certain location in the base image; see the [WAR usage](#war-projects) as an example.
+`appRoot` | string | `/app` | The root directory on the container where the app's contents are placed. Particularly useful for WAR packaging projects to work with different Servlet engine base images by designating where to exploded WAR contents; see the [WAR usage](#war-projects) as an example.
 `args` | list | *None* | Additional program arguments appended to the command to start the container (similar to Docker's [CMD](https://docs.docker.com/engine/reference/builder/#cmd) instruction in relation with [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint)). In the default case where you do not set a custom `entrypoint`, this parameter is effectively the arguments to the main method of your Java application.
 `entrypoint` | list | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored.
 `environment` | map | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
