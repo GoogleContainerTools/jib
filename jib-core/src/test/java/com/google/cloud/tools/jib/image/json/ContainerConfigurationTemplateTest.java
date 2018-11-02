@@ -60,6 +60,9 @@ public class ContainerConfigurationTemplateTest {
             "3000/udp",
             ImmutableMap.of()));
     containerConfigJson.setContainerLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
+    containerConfigJson.setContainerVolumes(
+        ImmutableMap.of(
+            "/var/job-result-data", ImmutableMap.of(), "/var/log/my-app-logs", ImmutableMap.of()));
     containerConfigJson.setContainerWorkingDir("/some/workspace");
     containerConfigJson.setContainerUser("tomcat");
 

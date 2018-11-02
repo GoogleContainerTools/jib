@@ -43,6 +43,7 @@ public class ContainerConfiguration {
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private Map<String, String> environmentMap;
     @Nullable private List<Port> exposedPorts;
+    @Nullable private List<String> volumes;
     @Nullable private Map<String, String> labels;
     @Nullable private String user;
 
@@ -121,6 +122,29 @@ public class ContainerConfiguration {
     }
 
     /**
+     * Sets the container's volumes.
+     *
+     * @param volumes the list of volumes
+     * @return this
+     */
+    public Builder setVolumes(@Nullable List<String> volumes) {
+      if (volumes == null) {
+        this.volumes = null;
+      } else {
+        Preconditions.checkArgument(!volumes.contains(null));
+        this.volumes = new ArrayList<>(volumes);
+      }
+      return this;
+    }
+
+    public void addVolume(String volume) {
+      if (volumes == null) {
+        volumes = new ArrayList<>();
+      }
+      volumes.add(volume);
+    }
+
+    /**
      * Sets the container's labels.
      *
      * @param labels the map of labels
@@ -185,6 +209,7 @@ public class ContainerConfiguration {
           programArguments,
           environmentMap == null ? null : ImmutableMap.copyOf(environmentMap),
           exposedPorts == null ? null : ImmutableList.copyOf(exposedPorts),
+          volumes == null ? null : ImmutableList.copyOf(volumes),
           labels == null ? null : ImmutableMap.copyOf(labels),
           user);
     }
@@ -206,6 +231,7 @@ public class ContainerConfiguration {
   @Nullable private final ImmutableList<String> programArguments;
   @Nullable private final ImmutableMap<String, String> environmentMap;
   @Nullable private final ImmutableList<Port> exposedPorts;
+  @Nullable private final ImmutableList<String> volumes;
   @Nullable private final ImmutableMap<String, String> labels;
   @Nullable private final String user;
 
@@ -215,6 +241,7 @@ public class ContainerConfiguration {
       @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableMap<String, String> environmentMap,
       @Nullable ImmutableList<Port> exposedPorts,
+      @Nullable ImmutableList<String> volumes,
       @Nullable ImmutableMap<String, String> labels,
       @Nullable String user) {
     this.creationTime = creationTime;
@@ -222,6 +249,7 @@ public class ContainerConfiguration {
     this.programArguments = programArguments;
     this.environmentMap = environmentMap;
     this.exposedPorts = exposedPorts;
+    this.volumes = volumes;
     this.labels = labels;
     this.user = user;
   }
@@ -248,6 +276,11 @@ public class ContainerConfiguration {
   @Nullable
   public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
+  }
+
+  @Nullable
+  public ImmutableList<String> getVolumes() {
+    return volumes;
   }
 
   @Nullable

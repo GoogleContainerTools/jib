@@ -31,6 +31,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -61,11 +62,22 @@ public class ImageToJsonTranslator {
     if (exposedPorts == null) {
       return null;
     }
+
+    return listToMap(
+        exposedPorts
+            .stream()
+            .map(port -> port.getPort() + "/" + port.getProtocol())
+            .collect(Collectors.toList()));
+  }
+
+  @Nullable
+  static Map<String, Map<?, ?>> listToMap(@Nullable List<String> list) {
+    if (list == null) {
+      return null;
+    }
     ImmutableSortedMap.Builder<String, Map<?, ?>> result =
         new ImmutableSortedMap.Builder<>(String::compareTo);
-    for (Port port : exposedPorts) {
-      result.put(port.getPort() + "/" + port.getProtocol(), Collections.emptyMap());
-    }
+    list.forEach(value -> result.put(value, Collections.emptyMap()));
     return result.build();
   }
 
@@ -134,6 +146,9 @@ public class ImageToJsonTranslator {
 
     // Sets the exposed ports.
     template.setContainerExposedPorts(portListToMap(image.getExposedPorts()));
+
+    // Sets the volumes.
+    template.setContainerVolumes(listToMap(image.getVolumes()));
 
     // Sets the labels.
     template.setContainerLabels(image.getLabels());

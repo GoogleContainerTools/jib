@@ -118,9 +118,10 @@ class BuildImageStep
           nonEmptyLayerCount++;
         }
       }
-      imageBuilder.addEnvironment(baseImage.getEnvironment());
-      imageBuilder.addLabels(baseImage.getLabels());
-      imageBuilder.setWorkingDirectory(baseImage.getWorkingDirectory());
+      imageBuilder
+          .addEnvironment(baseImage.getEnvironment())
+          .addLabels(baseImage.getLabels())
+          .setWorkingDirectory(baseImage.getWorkingDirectory());
 
       // Add history elements for non-empty layers that don't have one yet
       Instant layerCreationTime =
@@ -138,24 +139,26 @@ class BuildImageStep
       // Add built layers/configuration
       for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
           buildAndCacheApplicationLayerSteps) {
-        imageBuilder.addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep));
-        imageBuilder.addHistory(
-            HistoryEntry.builder()
-                .setCreationTimestamp(layerCreationTime)
-                .setAuthor("Jib")
-                .setCreatedBy(buildConfiguration.getToolName() + ":" + ProjectInfo.VERSION)
-                .setComment(buildAndCacheApplicationLayerStep.getLayerType())
-                .build());
+        imageBuilder
+            .addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep))
+            .addHistory(
+                HistoryEntry.builder()
+                    .setCreationTimestamp(layerCreationTime)
+                    .setAuthor("Jib")
+                    .setCreatedBy(buildConfiguration.getToolName() + ":" + ProjectInfo.VERSION)
+                    .setComment(buildAndCacheApplicationLayerStep.getLayerType())
+                    .build());
       }
       if (containerConfiguration != null) {
-        imageBuilder.addEnvironment(containerConfiguration.getEnvironmentMap());
-        imageBuilder.setCreated(containerConfiguration.getCreationTime());
-        imageBuilder.setUser(containerConfiguration.getUser());
-        imageBuilder.setEntrypoint(computeEntrypoint(baseImage, containerConfiguration));
-        imageBuilder.setProgramArguments(
-            computeProgramArguments(baseImage, containerConfiguration));
-        imageBuilder.setExposedPorts(containerConfiguration.getExposedPorts());
-        imageBuilder.addLabels(containerConfiguration.getLabels());
+        imageBuilder
+            .addEnvironment(containerConfiguration.getEnvironmentMap())
+            .setCreated(containerConfiguration.getCreationTime())
+            .setUser(containerConfiguration.getUser())
+            .setEntrypoint(computeEntrypoint(baseImage, containerConfiguration))
+            .setProgramArguments(computeProgramArguments(baseImage, containerConfiguration))
+            .setExposedPorts(containerConfiguration.getExposedPorts())
+            .setVolumes(containerConfiguration.getVolumes())
+            .addLabels(containerConfiguration.getLabels());
       }
 
       // Gets the container configuration content descriptor.

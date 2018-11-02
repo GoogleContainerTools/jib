@@ -240,6 +240,43 @@ public class JibContainerBuilder {
   }
 
   /**
+   * Sets the directories that the container will create as a volume. Volumes allows persistent data.
+   *
+   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#volume">{@code
+   * VOLUME} in Dockerfiles</a>.
+   *
+   * @param volumes the list of volumes
+   * @return this
+   */
+  public JibContainerBuilder setVolumes(List<String> volumes) {
+    containerConfigurationBuilder.setVolumes(volumes);
+    return this;
+  }
+
+  /**
+   * Sets directories where the process is likely to write. This replaces any previously-set
+   * volume.
+   *
+   * @param volumes the directory to be create as a volume
+   * @return this
+   * @see #setVolumes(List) for more details
+   */
+  public JibContainerBuilder setVolumes(String... volumes) {
+    return setVolumes(Arrays.asList(volumes));
+  }
+
+  /**
+   * Adds a directory where the process is likely to write.
+   *
+   * @param volume a directory to represent a volume.
+   * @return this
+   * @see #setVolumes(List) for more details
+   */
+  public JibContainerBuilder addVolumes(String volume) {
+    containerConfigurationBuilder.addVolume(volume);
+    return this;
+  }
+  /**
    * Sets the ports to expose from the container. Ports exposed will allow ingress traffic. This
    * replaces any previously-set exposed ports.
    *

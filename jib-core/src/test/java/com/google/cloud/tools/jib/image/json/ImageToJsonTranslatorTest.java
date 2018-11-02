@@ -61,6 +61,7 @@ public class ImageToJsonTranslatorTest {
     testImageBuilder.setProgramArguments(Arrays.asList("arg1", "arg2"));
     testImageBuilder.setExposedPorts(
         ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)));
+    testImageBuilder.setVolumes(Arrays.asList("/var/job-result-data", "/var/log/my-app-logs"));
     testImageBuilder.addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
     testImageBuilder.setWorkingDirectory("/some/workspace");
     testImageBuilder.setUser("tomcat");

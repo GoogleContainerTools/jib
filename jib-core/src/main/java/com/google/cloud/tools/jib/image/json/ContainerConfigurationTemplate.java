@@ -40,6 +40,7 @@ import javax.annotation.Nullable;
  *     "Entrypoint": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
  *     "Cmd": ["arg1", "arg2"],
  *     "ExposedPorts": { "6000/tcp":{}, "8000/tcp":{}, "9000/tcp":{} },
+ *     "Volumes":{"/var/job-result-data":{},"/var/log/my-app-logs":{}}}
  *     "Labels": { "com.example.label": "value" },
  *     "WorkingDir": "/home/user/workspace",
  *     "User": "me"
@@ -114,6 +115,9 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
     /** User. */
     @Nullable private String User;
+
+    /** Volumes */
+    @Nullable private Map<String, Map<?, ?>> Volumes;
   }
 
   /**
@@ -162,6 +166,10 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
   public void setContainerUser(@Nullable String user) {
     config.User = user;
+  }
+
+  public void setContainerVolumes(@Nullable Map<String, Map<?, ?>> volumes) {
+    config.Volumes = volumes;
   }
 
   public void addLayerDiffId(DescriptorDigest diffId) {
@@ -218,6 +226,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   @Nullable
   String getContainerUser() {
     return config.User;
+  }
+
+  @Nullable
+  Map<String, Map<?, ?>> getContainerVolumes() {
+    return config.Volumes;
   }
 
   @VisibleForTesting

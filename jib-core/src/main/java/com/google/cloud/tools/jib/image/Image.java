@@ -40,6 +40,7 @@ public class Image<T extends Layer> {
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private ImmutableList<Port> exposedPorts;
+    @Nullable private ImmutableList<String> volumes;
     @Nullable private String workingDirectory;
     @Nullable private String user;
 
@@ -124,6 +125,17 @@ public class Image<T extends Layer> {
       return this;
     }
 
+      /**
+       * Sets the items in the "Volumes" field in the container configuration.
+       *
+       * @param volumes the list of directories to create a volume.
+       * @return this
+       */
+    public Builder<T> setVolumes(@Nullable List<String> volumes) {
+      this.volumes = (volumes == null) ? null : ImmutableList.copyOf(volumes);
+      return this;
+    }
+
     /**
      * Adds items to the "Labels" field in the container configuration.
      *
@@ -192,6 +204,7 @@ public class Image<T extends Layer> {
           entrypoint,
           programArguments,
           exposedPorts,
+          volumes,
           labelsBuilder.build(),
           workingDirectory,
           user);
@@ -223,6 +236,9 @@ public class Image<T extends Layer> {
   /** Ports that the container listens on. */
   @Nullable private final ImmutableList<Port> exposedPorts;
 
+  /** List of directories to mount as volume. */
+  @Nullable private final ImmutableList<String> volumes;
+
   /** Labels on the container configuration */
   @Nullable private final ImmutableMap<String, String> labels;
 
@@ -240,6 +256,7 @@ public class Image<T extends Layer> {
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableList<Port> exposedPorts,
+      @Nullable ImmutableList<String> volumes,
       @Nullable ImmutableMap<String, String> labels,
       @Nullable String workingDirectory,
       @Nullable String user) {
@@ -250,6 +267,7 @@ public class Image<T extends Layer> {
     this.entrypoint = entrypoint;
     this.programArguments = programArguments;
     this.exposedPorts = exposedPorts;
+    this.volumes = volumes;
     this.labels = labels;
     this.workingDirectory = workingDirectory;
     this.user = user;
@@ -278,6 +296,11 @@ public class Image<T extends Layer> {
   @Nullable
   public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
+  }
+
+  @Nullable
+  public ImmutableList<String> getVolumes() {
+    return volumes;
   }
 
   @Nullable
