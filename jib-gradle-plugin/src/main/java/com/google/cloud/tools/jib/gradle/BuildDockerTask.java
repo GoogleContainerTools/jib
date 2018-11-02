@@ -73,6 +73,16 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
   }
 
+  @Nested
+  @Optional
+  public DockerClientParameters getDockerClient() {
+    return dockerClientParameters;
+  }
+
+  public void dockerClient(Action<? super DockerClientParameters> action) {
+    action.execute(dockerClientParameters);
+  }
+
   @TaskAction
   public void buildDocker()
       throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
@@ -137,15 +147,5 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   public BuildDockerTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
-  }
-
-  @Nested
-  @Optional
-  public DockerClientParameters getDockerClient() {
-    return dockerClientParameters;
-  }
-
-  public void dockerClient(Action<? super DockerClientParameters> action) {
-    action.execute(dockerClientParameters);
   }
 }
