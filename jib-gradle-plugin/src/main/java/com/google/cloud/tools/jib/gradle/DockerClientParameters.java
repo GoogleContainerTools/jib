@@ -27,7 +27,7 @@ import org.gradle.api.tasks.Optional;
  * Object in {@link BuildDockerTask} that configures the Docker executable and the additional
  * environment variables to use when executing the executable.
  */
-public class DockerClientParameters {
+class DockerClientParameters {
 
   @Nullable private Path executable;
   @Nullable private Map<String, String> environment;

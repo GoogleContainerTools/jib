@@ -49,7 +49,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
   @Nullable private JibExtension jibExtension;
 
-  private DockerClientParameters dockerClientParameters = new DockerClientParameters();
+  private final DockerClientParameters dockerClientParameters = new DockerClientParameters();
 
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
@@ -99,10 +99,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               jibExtension.getExtraDirectory().getPermissions(),
               appRoot);
       RawConfiguration rawConfiguration =
-          new GradleRawConfiguration(
-              jibExtension,
-              dockerClientParameters.getExecutable(),
-              dockerClientParameters.getEnvironment());
+          new GradleRawConfiguration(jibExtension, dockerClientParameters);
 
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);

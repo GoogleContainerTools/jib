@@ -30,9 +30,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -186,31 +184,29 @@ public class DockerClientTest {
   }
 
   @Test
-  public void testDefaultProcessorBuilderFactory() {
-    Function<List<String>, ProcessBuilder> processBuilderFactory =
-        DockerClient.defaultProcessBuilderFactory("docker-executable", Collections.emptyMap());
-    processBuilderFactory.apply(Collections.emptyList()).environment();
+  public void testDefaultProcessorBuilderFactory_customExecutable() {
+    ProcessBuilder processBuilder =
+        DockerClient.defaultProcessBuilderFactory("docker-executable", Collections.emptyMap())
+            .apply(Arrays.asList("sub", "command"));
+
     Assert.assertEquals(
-        Arrays.asList("docker-executable", "sub-command"),
-        processBuilderFactory.apply(Collections.singletonList("sub-command")).command());
-    Assert.assertEquals(
-        System.getenv(), processBuilderFactory.apply(Collections.emptyList()).environment());
+        Arrays.asList("docker-executable", "sub", "command"), processBuilder.command());
+    Assert.assertEquals(System.getenv(), processBuilder.environment());
   }
 
   @Test
-  public void testDefaultProcessorBuilderFactory_additionalEnvironment() {
+  public void testDefaultProcessorBuilderFactory_customEnvironment() {
     Map<String, String> environment = new HashMap<>();
     environment.put("Key1", "Value1");
-
-    Function<List<String>, ProcessBuilder> processBuilderFactory =
-        DockerClient.defaultProcessBuilderFactory("", environment);
 
     Map<String, String> expectedEnvironment = new HashMap<>(System.getenv());
     expectedEnvironment.putAll(environment);
 
-    processBuilderFactory.apply(Collections.emptyList()).environment();
-    Assert.assertEquals(
-        expectedEnvironment, processBuilderFactory.apply(Collections.emptyList()).environment());
+    ProcessBuilder processBuilder =
+        DockerClient.defaultProcessBuilderFactory("docker", environment)
+            .apply(Collections.emptyList());
+
+    Assert.assertEquals(expectedEnvironment, processBuilder.environment());
   }
 
   @Test

@@ -23,26 +23,20 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 /** Gradle-specific adapter for providing raw configuration parameter values. */
 class GradleRawConfiguration implements RawConfiguration {
 
   private final JibExtension jibExtension;
-  @Nullable private Path dockerClientExecutable;
-  @Nullable private Map<String, String> dockerClientEnvironment;
+  private DockerClientParameters dockerClientParameters;
 
   GradleRawConfiguration(JibExtension jibExtension) {
-    this.jibExtension = jibExtension;
+    this(jibExtension, new DockerClientParameters());
   }
 
-  GradleRawConfiguration(
-      JibExtension jibExtension,
-      @Nullable Path dockerExecutable,
-      @Nullable Map<String, String> dockerEnvironment) {
+  GradleRawConfiguration(JibExtension jibExtension, DockerClientParameters dockerClientParameters) {
     this.jibExtension = jibExtension;
-    this.dockerClientExecutable = dockerExecutable;
-    this.dockerClientEnvironment = dockerEnvironment;
+    this.dockerClientParameters = dockerClientParameters;
   }
 
   @Override
@@ -152,11 +146,11 @@ class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public Optional<Path> getDockerClientExecutable() {
-    return Optional.ofNullable(dockerClientExecutable);
+    return Optional.ofNullable(dockerClientParameters.getExecutable());
   }
 
   @Override
   public Optional<Map<String, String>> getDockerClientEnvironment() {
-    return Optional.ofNullable(dockerClientEnvironment);
+    return Optional.ofNullable(dockerClientParameters.getEnvironment());
   }
 }

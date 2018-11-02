@@ -37,7 +37,6 @@ import javax.annotation.Nullable;
 public class DockerClient {
 
   private static final String DEFAULT_DOCKER_CLIENT = "docker";
-  private static final Map<String, String> DEFAULT_DOCKER_ENVIRONMENT = Collections.emptyMap();
 
   /**
    * Instantiates with the default {@code docker} executable.
@@ -60,7 +59,7 @@ public class DockerClient {
     return new DockerClient(
         defaultProcessBuilderFactory(
             dockerExecutable == null ? DEFAULT_DOCKER_CLIENT : dockerExecutable.toString(),
-            dockerEnvironment == null ? DEFAULT_DOCKER_ENVIRONMENT : dockerEnvironment));
+            dockerEnvironment == null ? Collections.emptyMap() : dockerEnvironment));
   }
 
   /**
@@ -79,7 +78,6 @@ public class DockerClient {
       dockerCommand.addAll(dockerSubCommand);
 
       ProcessBuilder processBuilder = new ProcessBuilder(dockerCommand);
-
       Map<String, String> environment = processBuilder.environment();
       environment.putAll(dockerEnvironment);
 
