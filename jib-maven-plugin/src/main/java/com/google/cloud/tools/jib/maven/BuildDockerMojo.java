@@ -86,7 +86,11 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
-              rawConfiguration, projectProperties, mavenHelpfulSuggestionsBuilder.build());
+              rawConfiguration,
+              projectProperties,
+              null,
+              null,
+              mavenHelpfulSuggestionsBuilder.build());
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =

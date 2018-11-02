@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -28,15 +27,9 @@ import java.util.Optional;
 class GradleRawConfiguration implements RawConfiguration {
 
   private final JibExtension jibExtension;
-  private DockerClientParameters dockerClientParameters;
 
   GradleRawConfiguration(JibExtension jibExtension) {
-    this(jibExtension, new DockerClientParameters());
-  }
-
-  GradleRawConfiguration(JibExtension jibExtension, DockerClientParameters dockerClientParameters) {
     this.jibExtension = jibExtension;
-    this.dockerClientParameters = dockerClientParameters;
   }
 
   @Override
@@ -142,15 +135,5 @@ class GradleRawConfiguration implements RawConfiguration {
   @Override
   public ImageFormat getImageFormat() {
     return jibExtension.getContainer().getFormat();
-  }
-
-  @Override
-  public Optional<Path> getDockerClientExecutable() {
-    return Optional.ofNullable(dockerClientParameters.getExecutable());
-  }
-
-  @Override
-  public Optional<Map<String, String>> getDockerClientEnvironment() {
-    return Optional.ofNullable(dockerClientParameters.getEnvironment());
   }
 }

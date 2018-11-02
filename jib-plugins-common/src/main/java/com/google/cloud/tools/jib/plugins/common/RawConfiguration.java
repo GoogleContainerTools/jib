@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.image.ImageFormat;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,8 +71,4 @@ public interface RawConfiguration {
   Optional<AuthProperty> getInferredAuth(String authTarget) throws InferredAuthRetrievalException;
 
   ImageFormat getImageFormat();
-
-  Optional<Path> getDockerClientExecutable();
-
-  Optional<Map<String, String>> getDockerClientEnvironment();
 }

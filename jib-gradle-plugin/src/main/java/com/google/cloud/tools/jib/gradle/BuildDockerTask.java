@@ -108,15 +108,18 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               jibExtension.getExtraDirectory().getPath(),
               jibExtension.getExtraDirectory().getPermissions(),
               appRoot);
-      RawConfiguration rawConfiguration =
-          new GradleRawConfiguration(jibExtension, dockerClientParameters);
+      RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
 
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
-              rawConfiguration, projectProperties, gradleHelpfulSuggestionsBuilder.build());
+              rawConfiguration,
+              projectProperties,
+              dockerClientParameters.getExecutable(),
+              dockerClientParameters.getEnvironment(),
+              gradleHelpfulSuggestionsBuilder.build());
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =
