@@ -49,4 +49,8 @@ public class DockerClientParameters {
   public Map<String, String> getEnvironment() {
     return environment;
   }
+
+  public void setEnvironment(@Nullable Map<String, String> environment) {
+    this.environment = environment;
+  }
 }

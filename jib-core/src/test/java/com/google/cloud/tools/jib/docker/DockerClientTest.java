@@ -56,15 +56,8 @@ public class DockerClientTest {
   }
 
   @Test
-  public void testIsDockerInstalled_pass() {
-    Assert.assertTrue(new DockerClient(ignored -> mockProcessBuilder).isDockerInstalled());
-  }
-
-  @Test
   public void testIsDockerInstalled_fail() {
-    ProcessBuilder nonexistentProcessBuilder =
-        new ProcessBuilder(Paths.get("path/to/nonexistent/file").toString());
-    Assert.assertFalse(new DockerClient(ignored -> nonexistentProcessBuilder).isDockerInstalled());
+    Assert.assertFalse(DockerClient.isDockerInstalled(Paths.get("path/to/nonexistent/file")));
   }
 
   @Test

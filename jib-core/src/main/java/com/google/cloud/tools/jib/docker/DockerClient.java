@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -39,8 +40,10 @@ public class DockerClient {
   /** Builds a {@link DockerClient}. */
   public static class Builder {
 
-    private Path dockerExecutable = Paths.get("docker");
+    private Path dockerExecutable = DEFAULT_DOCKER_CLIENT;
     private Map<String, String> dockerEnvironment = Collections.emptyMap();
+
+    private Builder() {}
 
     /**
      * Sets a path for a {@code docker} executable.
@@ -70,6 +73,19 @@ public class DockerClient {
   }
 
   /**
+   * Gets a new {@link Builder} for {@link DockerClient}.
+   *
+   * @return a new {@link Builder}
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static DockerClient newDefaultClient() {
+    return builder().build();
+  }
+
+  /**
    * Gets a function that takes a {@code docker} subcommand and gives back a {@link ProcessBuilder}
    * for that {@code docker} command.
    *
@@ -79,6 +95,7 @@ public class DockerClient {
   @VisibleForTesting
   static Function<List<String>, ProcessBuilder> defaultProcessBuilderFactory(
       String dockerExecutable, Map<String, String> dockerEnvironment) {
+    Map<String, String> environmentCopy = new HashMap<>(dockerEnvironment);
     return dockerSubCommand -> {
       List<String> dockerCommand = new ArrayList<>(1 + dockerSubCommand.size());
       dockerCommand.add(dockerExecutable);
@@ -86,11 +103,13 @@ public class DockerClient {
 
       ProcessBuilder processBuilder = new ProcessBuilder(dockerCommand);
       Map<String, String> environment = processBuilder.environment();
-      environment.putAll(dockerEnvironment);
+      environment.putAll(environmentCopy);
 
       return processBuilder;
     };
   }
+
+  private static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
 
   /** Factory for generating the {@link ProcessBuilder} for running {@code docker} commands. */
   private final Function<List<String>, ProcessBuilder> processBuilderFactory;
@@ -112,12 +131,26 @@ public class DockerClient {
   }
 
   /**
-   * @return {@code true} if Docker is installed on the user's system and accessible as {@code
-   *     docker}
+   * Checks if Docker is installed on the user's system and accessible by running the default {@code
+   * docker} command.
+   *
+   * @param dockerExecutable path to the executable to test running
+   * @return {@code true} if Docker is installed on the user's system and accessible
    */
-  public boolean isDockerInstalled() {
+  public static boolean isDefaultDockerInstalled() {
+    return isDockerInstalled(DEFAULT_DOCKER_CLIENT);
+  }
+
+  /**
+   * Checks if Docker is installed on the user's system and accessible by running the given {@code
+   * docker} executable.
+   *
+   * @param dockerExecutable path to the executable to test running
+   * @return {@code true} if Docker is installed on the user's system and accessible
+   */
+  public static boolean isDockerInstalled(Path dockerExecutable) {
     try {
-      docker();
+      new ProcessBuilder(dockerExecutable.toString()).start();
       return true;
 
     } catch (IOException ex) {

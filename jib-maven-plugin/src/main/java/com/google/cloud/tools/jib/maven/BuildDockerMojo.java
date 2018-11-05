@@ -49,8 +49,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
-  private static final DockerClient DOCKER_CLIENT = new DockerClient.Builder().build();
-
   @Override
   public void execute() throws MojoExecutionException {
     if (isSkipped()) {
@@ -62,7 +60,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       return;
     }
 
-    if (!DOCKER_CLIENT.isDockerInstalled()) {
+    if (!DockerClient.isDefaultDockerInstalled()) {
       throw new MojoExecutionException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }

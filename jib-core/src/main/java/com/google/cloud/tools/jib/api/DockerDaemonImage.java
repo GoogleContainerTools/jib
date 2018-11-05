@@ -71,7 +71,7 @@ public class DockerDaemonImage implements TargetImage {
    * @param dockerExecutable the path to the {@code docker} CLI
    * @return this
    */
-  public DockerDaemonImage setDockerExecutable(@Nullable Path dockerExecutable) {
+  public DockerDaemonImage setDockerExecutable(Path dockerExecutable) {
     this.dockerExecutable = dockerExecutable;
     return this;
   }
@@ -82,7 +82,7 @@ public class DockerDaemonImage implements TargetImage {
    * @param dockerEnvironment additional environment variables
    * @return this
    */
-  public DockerDaemonImage setDockerEnvironment(@Nullable Map<String, String> dockerEnvironment) {
+  public DockerDaemonImage setDockerEnvironment(Map<String, String> dockerEnvironment) {
     this.dockerEnvironment = dockerEnvironment;
     return this;
   }
@@ -94,7 +94,7 @@ public class DockerDaemonImage implements TargetImage {
 
   @Override
   public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
-    Builder dockerClientBuilder = new DockerClient.Builder();
+    Builder dockerClientBuilder = DockerClient.builder();
     if (dockerExecutable != null) {
       dockerClientBuilder.setDockerExecutable(dockerExecutable);
     }

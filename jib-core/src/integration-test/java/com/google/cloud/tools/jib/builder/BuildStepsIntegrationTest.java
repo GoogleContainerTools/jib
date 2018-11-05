@@ -216,7 +216,7 @@ public class BuildStepsIntegrationTest {
                 ImageReference.of("gcr.io", "distroless/java", "latest"),
                 ImageReference.of(null, imageReference, null))
             .build();
-    BuildSteps.forBuildToDockerDaemon(new DockerClient.Builder().build(), buildConfiguration).run();
+    BuildSteps.forBuildToDockerDaemon(DockerClient.newDefaultClient(), buildConfiguration).run();
 
     assertDockerInspect(imageReference);
     Assert.assertEquals(
@@ -233,7 +233,7 @@ public class BuildStepsIntegrationTest {
                 ImageReference.of(null, imageReference, null))
             .setAdditionalTargetImageTags(ImmutableSet.of("testtag2", "testtag3"))
             .build();
-    BuildSteps.forBuildToDockerDaemon(new DockerClient.Builder().build(), buildConfiguration).run();
+    BuildSteps.forBuildToDockerDaemon(DockerClient.newDefaultClient(), buildConfiguration).run();
 
     assertDockerInspect(imageReference);
     Assert.assertEquals(
