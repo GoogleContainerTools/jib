@@ -81,6 +81,11 @@ public class DockerClient {
     return new Builder();
   }
 
+  /**
+   * Instantiates with the default {@code docker} executable.
+   *
+   * @return a new {@link DockerClient}
+   */
   public static DockerClient newDefaultClient() {
     return builder().build();
   }
