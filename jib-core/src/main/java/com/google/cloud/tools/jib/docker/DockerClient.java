@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.docker;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -28,8 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -41,7 +40,7 @@ public class DockerClient {
   public static class Builder {
 
     private Path dockerExecutable = DEFAULT_DOCKER_CLIENT;
-    private Map<String, String> dockerEnvironment = Collections.emptyMap();
+    private ImmutableMap<String, String> dockerEnvironment = ImmutableMap.of();
 
     private Builder() {}
 
@@ -62,7 +61,7 @@ public class DockerClient {
      * @param dockerEnvironment environment variables for {@code docker}
      * @return this
      */
-    public Builder setDockerEnvironment(Map<String, String> dockerEnvironment) {
+    public Builder setDockerEnvironment(ImmutableMap<String, String> dockerEnvironment) {
       this.dockerEnvironment = dockerEnvironment;
       return this;
     }
@@ -73,7 +72,7 @@ public class DockerClient {
   }
 
   /**
-   * Gets a new {@link Builder} for {@link DockerClient}.
+   * Gets a new {@link Builder} for {@link DockerClient} with defaults.
    *
    * @return a new {@link Builder}
    */
@@ -99,8 +98,7 @@ public class DockerClient {
    */
   @VisibleForTesting
   static Function<List<String>, ProcessBuilder> defaultProcessBuilderFactory(
-      String dockerExecutable, Map<String, String> dockerEnvironment) {
-    Map<String, String> environmentCopy = new HashMap<>(dockerEnvironment);
+      String dockerExecutable, ImmutableMap<String, String> dockerEnvironment) {
     return dockerSubCommand -> {
       List<String> dockerCommand = new ArrayList<>(1 + dockerSubCommand.size());
       dockerCommand.add(dockerExecutable);
@@ -108,7 +106,7 @@ public class DockerClient {
 
       ProcessBuilder processBuilder = new ProcessBuilder(dockerCommand);
       Map<String, String> environment = processBuilder.environment();
-      environment.putAll(environmentCopy);
+      environment.putAll(dockerEnvironment);
 
       return processBuilder;
     };
@@ -131,7 +129,7 @@ public class DockerClient {
    * @param dockerEnvironment environment variables for {@code docker}
    * @return a new {@link DockerClient}
    */
-  private DockerClient(Path dockerExecutable, Map<String, String> dockerEnvironment) {
+  private DockerClient(Path dockerExecutable, ImmutableMap<String, String> dockerEnvironment) {
     this(defaultProcessBuilderFactory(dockerExecutable.toString(), dockerEnvironment));
   }
 

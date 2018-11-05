@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.DockerClient.Builder;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.collect.ImmutableMap;
 import java.nio.file.Path;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -99,7 +100,7 @@ public class DockerDaemonImage implements TargetImage {
       dockerClientBuilder.setDockerExecutable(dockerExecutable);
     }
     if (dockerEnvironment != null) {
-      dockerClientBuilder.setDockerEnvironment(dockerEnvironment);
+      dockerClientBuilder.setDockerEnvironment(ImmutableMap.copyOf(dockerEnvironment));
     }
     return BuildSteps.forBuildToDockerDaemon(dockerClientBuilder.build(), buildConfiguration);
   }

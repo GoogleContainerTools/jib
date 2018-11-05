@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.docker;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -179,7 +180,7 @@ public class DockerClientTest {
   @Test
   public void testDefaultProcessorBuilderFactory_customExecutable() {
     ProcessBuilder processBuilder =
-        DockerClient.defaultProcessBuilderFactory("docker-executable", Collections.emptyMap())
+        DockerClient.defaultProcessBuilderFactory("docker-executable", ImmutableMap.of())
             .apply(Arrays.asList("sub", "command"));
 
     Assert.assertEquals(
@@ -189,8 +190,7 @@ public class DockerClientTest {
 
   @Test
   public void testDefaultProcessorBuilderFactory_customEnvironment() {
-    Map<String, String> environment = new HashMap<>();
-    environment.put("Key1", "Value1");
+    ImmutableMap<String, String> environment = ImmutableMap.of("Key1", "Value1");
 
     Map<String, String> expectedEnvironment = new HashMap<>(System.getenv());
     expectedEnvironment.putAll(environment);
