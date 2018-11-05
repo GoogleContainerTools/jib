@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.docker.DockerClient.Builder;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.nio.file.Path;
@@ -70,7 +71,7 @@ public class DockerDaemonImage implements TargetImage {
    * @param dockerExecutable the path to the {@code docker} CLI
    * @return this
    */
-  public DockerDaemonImage setDockerExecutable(Path dockerExecutable) {
+  public DockerDaemonImage setDockerExecutable(@Nullable Path dockerExecutable) {
     this.dockerExecutable = dockerExecutable;
     return this;
   }
@@ -81,7 +82,7 @@ public class DockerDaemonImage implements TargetImage {
    * @param dockerEnvironment additional environment variables
    * @return this
    */
-  public DockerDaemonImage setDockerEnvironment(Map<String, String> dockerEnvironment) {
+  public DockerDaemonImage setDockerEnvironment(@Nullable Map<String, String> dockerEnvironment) {
     this.dockerEnvironment = dockerEnvironment;
     return this;
   }
@@ -93,7 +94,13 @@ public class DockerDaemonImage implements TargetImage {
 
   @Override
   public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
-    DockerClient dockerClient = DockerClient.newClient(dockerExecutable, dockerEnvironment);
-    return BuildSteps.forBuildToDockerDaemon(dockerClient, buildConfiguration);
+    Builder dockerClientBuilder = new DockerClient.Builder();
+    if (dockerExecutable != null) {
+      dockerClientBuilder.setDockerExecutable(dockerExecutable);
+    }
+    if (dockerEnvironment != null) {
+      dockerClientBuilder.setDockerEnvironment(dockerEnvironment);
+    }
+    return BuildSteps.forBuildToDockerDaemon(dockerClientBuilder.build(), buildConfiguration);
   }
 }

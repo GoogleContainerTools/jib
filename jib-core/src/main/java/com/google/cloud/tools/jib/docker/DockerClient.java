@@ -25,41 +25,48 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import javax.annotation.Nullable;
 
 /** Calls out to the {@code docker} CLI. */
 public class DockerClient {
 
-  private static final String DEFAULT_DOCKER_CLIENT = "docker";
+  /** Builds a {@link DockerClient}. */
+  public static class Builder {
 
-  /**
-   * Instantiates with the default {@code docker} executable.
-   *
-   * @return a new {@link DockerClient}
-   */
-  public static DockerClient newClient() {
-    return newClient(null, null);
-  }
+    private Path dockerExecutable = Paths.get("docker");
+    private Map<String, String> dockerEnvironment = Collections.emptyMap();
 
-  /**
-   * Instantiates with a custom {@code docker} executable and environment variables.
-   *
-   * @param dockerExecutable path to {@code docker}; {@code docker} if null
-   * @param dockerEnvironment environment variables for {@code docker}; empty environment if null
-   * @return a new {@link DockerClient}
-   */
-  public static DockerClient newClient(
-      @Nullable Path dockerExecutable, @Nullable Map<String, String> dockerEnvironment) {
-    return new DockerClient(
-        defaultProcessBuilderFactory(
-            dockerExecutable == null ? DEFAULT_DOCKER_CLIENT : dockerExecutable.toString(),
-            dockerEnvironment == null ? Collections.emptyMap() : dockerEnvironment));
+    /**
+     * Sets a path for a {@code docker} executable.
+     *
+     * @param dockerExecutable path to {@code docker}
+     * @return this
+     */
+    public Builder setDockerExecutable(Path dockerExecutable) {
+      this.dockerExecutable = dockerExecutable;
+      return this;
+    }
+
+    /**
+     * Sets environment variables to use when executing the {@code docker} executable.
+     *
+     * @param dockerEnvironment environment variables for {@code docker}
+     * @return this
+     */
+    public Builder setDockerEnvironment(Map<String, String> dockerEnvironment) {
+      this.dockerEnvironment = dockerEnvironment;
+      return this;
+    }
+
+    public DockerClient build() {
+      return new DockerClient(dockerExecutable, dockerEnvironment);
+    }
   }
 
   /**
@@ -91,6 +98,17 @@ public class DockerClient {
   @VisibleForTesting
   DockerClient(Function<List<String>, ProcessBuilder> processBuilderFactory) {
     this.processBuilderFactory = processBuilderFactory;
+  }
+
+  /**
+   * Instantiates with a {@code docker} executable and environment variables.
+   *
+   * @param dockerExecutable path to {@code docker}
+   * @param dockerEnvironment environment variables for {@code docker}
+   * @return a new {@link DockerClient}
+   */
+  private DockerClient(Path dockerExecutable, Map<String, String> dockerEnvironment) {
+    this(defaultProcessBuilderFactory(dockerExecutable.toString(), dockerEnvironment));
   }
 
   /**

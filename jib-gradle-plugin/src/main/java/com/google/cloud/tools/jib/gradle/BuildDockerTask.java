@@ -88,9 +88,12 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
       throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
           CacheDirectoryCreationException, MainClassInferenceException,
           InferredAuthRetrievalException {
-    DockerClient dockerClient =
-        DockerClient.newClient(dockerClientParameters.getExecutable(), null);
-    if (!dockerClient.isDockerInstalled()) {
+    Path dockerExecutable = dockerClientParameters.getExecutable();
+    DockerClient.Builder dockerClientBuilder = new DockerClient.Builder();
+    if (dockerExecutable != null) {
+      dockerClientBuilder.setDockerExecutable(dockerExecutable);
+    }
+    if (!dockerClientBuilder.build().isDockerInstalled()) {
       throw new GradleException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
