@@ -273,11 +273,16 @@ public class Image<T extends Layer> {
   /** Arguments to append to the image entrypoint when running the image. */
   @Nullable private final ImmutableList<String> programArguments;
 
-  /** Parameters used for performing container healthchecks. */
+  /** Healthcheck command. */
   @Nullable private final ImmutableList<String> healthTest;
 
+  /** Time between healthcheck runs. */
   @Nullable private final Long healthInterval;
+
+  /** Time until a healthcheck is considered hung. */
   @Nullable private final Long healthTimeout;
+
+  /** Number of retries to allow before failing the healthcheck. */
   @Nullable private final Integer healthRetries;
 
   /** Ports that the container listens on. */
