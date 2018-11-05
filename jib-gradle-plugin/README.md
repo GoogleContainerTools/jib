@@ -193,7 +193,7 @@ Property | Type
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`appRoot` | `String` | `/app` | The root directory on the container where the app's contents are placed. Particularly useful for WAR packaging projects to work with different Servlet engine base images by designating where to exploded WAR contents; see the [WAR usage](#war-projects) as an example.
+`appRoot` | `String` | `/app` | The root directory on the container where the app's contents are placed. Particularly useful for WAR-packaging projects to work with different Servlet engine base images by designating where to put exploded WAR contents; see [WAR usage](#war-projects) as an example.
 `args` | `List<String>` | *None* | Additional program arguments appended to the command to start the container (similar to Docker's [CMD](https://docs.docker.com/engine/reference/builder/#cmd) instruction in relation with [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint)). In the default case where you do not set a custom `entrypoint`, this parameter is effectively the arguments to the main method of your Java application.
 `entrypoint` | `List<String>` | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored.
 `environment` | `Map<String, String>` | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
@@ -352,9 +352,9 @@ jib {
 
 ### WAR Projects
 
-Jib supports creating images for projects that build a WAR. If the Gradle project uses the [WAR Plugin](https://docs.gradle.org/current/userguide/war_plugin.html), Jib will by default use the [distroless Jetty]https://github.com/GoogleContainerTools/distroless/tree/master/java/jetty) as a base image to deploy the project WAR. No extra configuration is necessary than using the WAR Plugin to make Jib build WAR images.
+Jib also containerizes WAR projects. If the Gradle project uses the [WAR Plugin](https://docs.gradle.org/current/userguide/war_plugin.html), Jib will by default use the [distroless Jetty](https://github.com/GoogleContainerTools/distroless/tree/master/java/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than using the WAR Plugin to make Jib build WAR images.
 
-Note that Jib will work slightly differently for WAR projects from plain Java projects:
+Note that Jib will work slightly differently for WAR projects from JAR projects:
    - `container.mainClass` and `container.jvmFlags` are ignored.
    - The WAR will be exploded into `/jetty/webapps/ROOT`, which is the expected WAR location for the distroless Jetty base image.
 

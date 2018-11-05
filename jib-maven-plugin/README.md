@@ -235,7 +235,7 @@ Property | Type
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`appRoot` | string | `/app` | The root directory on the container where the app's contents are placed. Particularly useful for WAR packaging projects to work with different Servlet engine base images by designating where to exploded WAR contents; see the [WAR usage](#war-projects) as an example.
+`appRoot` | string | `/app` | The root directory on the container where the app's contents are placed. Particularly useful for WAR-packaging projects to work with different Servlet engine base images by designating where to put exploded WAR contents; see [WAR usage](#war-projects) as an example.
 `args` | list | *None* | Additional program arguments appended to the command to start the container (similar to Docker's [CMD](https://docs.docker.com/engine/reference/builder/#cmd) instruction in relation with [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint)). In the default case where you do not set a custom `entrypoint`, this parameter is effectively the arguments to the main method of your Java application.
 `entrypoint` | list | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored.
 `environment` | map | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
@@ -441,9 +441,9 @@ If you're considering putting credentials in Maven, we highly *recommend* using 
 
 ### WAR Projects
 
-Jib supports creating images for projects that build a WAR. If the Maven project uses [the `war` packaging type](https://maven.apache.org/plugins/maven-war-plugin/index.html), Jib will by default use the [distroless Jetty]https://github.com/GoogleContainerTools/distroless/tree/master/java/jetty) as a base image to deploy the project WAR. No extra configuration is necessary than having the packaging type to `war`.
+Jib also containerizes WAR projects. If the Maven project uses [the `war` packaging type](https://maven.apache.org/plugins/maven-war-plugin/index.html), Jib will by default use the [distroless Jetty](https://github.com/GoogleContainerTools/distroless/tree/master/java/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than having the packaging type to `war`.
 
-Note that Jib will work slightly differently for WAR projects from plain Java projects:
+Note that Jib will work slightly differently for WAR projects from JAR projects:
    - `<container><mainClass>` and `<container><jvmFlags>` are ignored.
    - The WAR will be exploded into `/jetty/webapps/ROOT`, which is the expected WAR location for the distroless Jetty base image.
 
