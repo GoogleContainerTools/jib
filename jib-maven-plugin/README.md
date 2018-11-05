@@ -441,13 +441,13 @@ If you're considering putting credentials in Maven, we highly *recommend* using 
 
 ### WAR Projects
 
-Jib also containerizes WAR projects. If the Maven project uses [the `war` packaging type](https://maven.apache.org/plugins/maven-war-plugin/index.html), Jib will by default use the [distroless Jetty](https://github.com/GoogleContainerTools/distroless/tree/master/java/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than having the packaging type to `war`.
+Jib also containerizes WAR projects. If the Maven project uses [the `war`-packaging type](https://maven.apache.org/plugins/maven-war-plugin/index.html), Jib will by default use the [distroless Jetty](https://github.com/GoogleContainerTools/distroless/tree/master/java/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than having the packaging type to `war`.
 
 Note that Jib will work slightly differently for WAR projects from JAR projects:
    - `<container><mainClass>` and `<container><jvmFlags>` are ignored.
    - The WAR will be exploded into `/jetty/webapps/ROOT`, which is the expected WAR location for the distroless Jetty base image.
 
-To use a different Servlet engine base image, you can customize `container.appRoot`, `container.entrypoint`, and `container.args`. If you do not set `entrypoint` or `args`, Jib will inherit the `ENTRYPOINT` and `CMD` of the base image, so in many cases, you may need to configure them. However, you will most likely have to set `container.appRoot` to a proper location depending on the base image. Here is an example of using a Tomcat image:
+To use a different Servlet engine base image, you can customize `<container><appRoot>`, `<container><entrypoint>`, and `<container><args>`. If you do not set `entrypoint` or `args`, Jib will inherit the `ENTRYPOINT` and `CMD` of the base image, so in many cases, you may need to configure them. However, you will most likely have to set `<container><appRoot>` to a proper location depending on the base image. Here is an example of using a Tomcat image:
 
 ```xml
 <configuration>
