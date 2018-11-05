@@ -171,7 +171,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | `gcr.io/distroless/java` | The image reference for the base image.
 `auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
-`credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 
 <a name="to-closure"></a>`to` is a closure with the following properties:
 
@@ -179,7 +179,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | *Required* | The image reference for the target image. This can also be specified via the `--image` command line option.
 `auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
-`credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | `List<String>` | *None* | Additional tags to push to.
 
 <a name="auth-closure"></a>`auth` is a closure with the following properties (see [Using Specific Credentials](#using-specific-credentials)):

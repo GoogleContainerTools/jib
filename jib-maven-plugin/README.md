@@ -213,7 +213,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | `gcr.io/distroless/java` | The image reference for the base image.
 `auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
-`credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`credHelper` | string | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 
 <a name="to-object"></a>`to` is an object with the following properties:
 
@@ -221,7 +221,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | string | *Required* | The image reference for the target image. This can also be specified via the `-Dimage` command line option.
 `auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
-`credHelper` | string | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`credHelper` | string | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | list | *None* | Additional tags to push to.
 
 <a name="auth-object"></a>`auth` is an object with the following properties (see [Using Specific Credentials](#using-specific-credentials)):
