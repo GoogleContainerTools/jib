@@ -139,7 +139,6 @@ public class DockerClient {
    * Checks if Docker is installed on the user's system and accessible by running the default {@code
    * docker} command.
    *
-   * @param dockerExecutable path to the executable to test running
    * @return {@code true} if Docker is installed on the user's system and accessible
    */
   public static boolean isDefaultDockerInstalled() {
