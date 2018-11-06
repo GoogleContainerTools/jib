@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -61,7 +62,10 @@ public class ImageToJsonTranslatorTest {
     testImageBuilder.setProgramArguments(Arrays.asList("arg1", "arg2"));
     testImageBuilder.setExposedPorts(
         ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)));
-    testImageBuilder.setVolumes(Arrays.asList("/var/job-result-data", "/var/log/my-app-logs"));
+    testImageBuilder.setVolumes(
+        Arrays.asList(
+            AbsoluteUnixPath.get("/var/job-result-data"),
+            AbsoluteUnixPath.get("/var/log/my-app-logs")));
     testImageBuilder.addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
     testImageBuilder.setWorkingDirectory("/some/workspace");
     testImageBuilder.setUser("tomcat");
@@ -135,6 +139,18 @@ public class ImageToJsonTranslatorTest {
     ImmutableSortedMap<String, Map<?, ?>> expected =
         ImmutableSortedMap.of("1000/tcp", ImmutableMap.of(), "2000/udp", ImmutableMap.of());
     Assert.assertEquals(expected, ImageToJsonTranslator.portListToMap(input));
+  }
+
+  @Test
+  public void testVolumeListToMap() {
+    ImmutableList<AbsoluteUnixPath> input =
+        ImmutableList.of(
+            AbsoluteUnixPath.get("/var/job-result-data"),
+            AbsoluteUnixPath.get("/var/log/my-app-logs"));
+    ImmutableSortedMap<String, Map<?, ?>> expected =
+        ImmutableSortedMap.of(
+            "/var/job-result-data", ImmutableMap.of(), "/var/log/my-app-logs", ImmutableMap.of());
+    Assert.assertEquals(expected, ImageToJsonTranslator.volumesListToMap(input));
   }
 
   @Test
