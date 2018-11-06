@@ -98,7 +98,7 @@ class BuildImageStep
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // Constructs the image.
-      Image.Builder<Layer> imageBuilder = Image.builder();
+      Image.Builder<Layer> imageBuilder = Image.builder(buildConfiguration.getTargetFormat());
       Image<Layer> baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();
       ContainerConfiguration containerConfiguration =
           buildConfiguration.getContainerConfiguration();

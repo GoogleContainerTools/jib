@@ -105,7 +105,7 @@ public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildR
     Files.createDirectories(outputPath.getParent());
     try (OutputStream outputStream =
         new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
-      new ImageToTarballTranslator(image, buildConfiguration.getTargetFormat())
+      new ImageToTarballTranslator(image)
           .toTarballBlob(buildConfiguration.getTargetImageConfiguration().getImage())
           .writeTo(outputStream);
     }
@@ -115,7 +115,7 @@ public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildR
     ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
     BlobDescriptor containerConfigurationBlobDescriptor =
         imageToJsonTranslator
-            .getContainerConfigurationBlob(buildConfiguration.getTargetFormat())
+            .getContainerConfigurationBlob()
             .writeTo(ByteStreams.nullOutputStream());
     BuildableManifestTemplate manifestTemplate =
         imageToJsonTranslator.getManifestTemplate(

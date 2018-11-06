@@ -80,11 +80,11 @@ public class ImageToTarballTranslatorTest {
     Mockito.when(mockLayer2.getBlobDescriptor())
         .thenReturn(new BlobDescriptor(fileBSize, fakeDigestB));
     Mockito.when(mockLayer2.getDiffId()).thenReturn(fakeDigestB);
-    Image<Layer> testImage = Image.builder().addLayer(mockLayer1).addLayer(mockLayer2).build();
+    Image<Layer> testImage =
+        Image.builder(V22ManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();
 
     Blob tarballBlob =
-        new ImageToTarballTranslator(testImage, V22ManifestTemplate.class)
-            .toTarballBlob(ImageReference.parse("my/image:tag"));
+        new ImageToTarballTranslator(testImage).toTarballBlob(ImageReference.parse("my/image:tag"));
 
     try (ByteArrayInputStream tarballBytesStream =
             new ByteArrayInputStream(Blobs.writeToByteArray(tarballBlob));

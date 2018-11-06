@@ -104,12 +104,9 @@ public class ImageToJsonTranslator {
   /**
    * Gets the container configuration as a {@link Blob}.
    *
-   * @param <T> child type of {@link BuildableManifestTemplate}
-   * @param manifestTemplateClass the target format of the container manifest
    * @return the container configuration {@link Blob}
    */
-  public <T extends BuildableManifestTemplate> Blob getContainerConfigurationBlob(
-      Class<T> manifestTemplateClass) {
+  public Blob getContainerConfigurationBlob() {
     // Set up the JSON template.
     ContainerConfigurationTemplate template = new ContainerConfigurationTemplate();
 
@@ -133,7 +130,7 @@ public class ImageToJsonTranslator {
     template.setContainerUser(image.getUser());
 
     // Healthcheck is not supported by OCI
-    if (manifestTemplateClass != OCIManifestTemplate.class) {
+    if (image.getImageFormat() != OCIManifestTemplate.class) {
       template.setContainerHealthTest(image.getHealthTest());
       template.setContainerHealthInterval(image.getHealthInterval());
       template.setContainerHealthTimeout(image.getHealthTimeout());
@@ -147,7 +144,7 @@ public class ImageToJsonTranslator {
   /**
    * Gets the manifest as a JSON template. The {@code containerConfigurationBlobDescriptor} must be
    * the [@link BlobDescriptor} obtained by writing out the container configuration {@link Blob}
-   * returned from {@link #getContainerConfigurationBlob(Class)}.
+   * returned from {@link #getContainerConfigurationBlob()}.
    *
    * @param <T> child type of {@link BuildableManifestTemplate}.
    * @param manifestTemplateClass the JSON template to translate the image to.

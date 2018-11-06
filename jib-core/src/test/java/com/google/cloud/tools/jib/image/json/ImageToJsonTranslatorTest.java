@@ -43,7 +43,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Tests for {@link ImageToJsonTranslator}. */
@@ -51,10 +50,10 @@ public class ImageToJsonTranslatorTest {
 
   private ImageToJsonTranslator imageToJsonTranslator;
 
-  @Before
-  public void setUp() throws DigestException, LayerPropertyNotFoundException {
+  private void setUp(Class<? extends BuildableManifestTemplate> imageFormat)
+      throws DigestException, LayerPropertyNotFoundException {
     Image.Builder<Layer> testImageBuilder =
-        Image.builder()
+        Image.builder(imageFormat)
             .setCreated(Instant.ofEpochSecond(20))
             .addEnvironmentVariable("VAR1", "VAL1")
             .addEnvironmentVariable("VAR2", "VAL2")
@@ -107,14 +106,16 @@ public class ImageToJsonTranslatorTest {
   }
 
   @Test
-  public void testGetContainerConfiguration() throws IOException, URISyntaxException {
+  public void testGetContainerConfiguration()
+      throws IOException, URISyntaxException, DigestException {
+    setUp(V22ManifestTemplate.class);
+
     // Loads the expected JSON string.
     Path jsonFile = Paths.get(Resources.getResource("json/containerconfig.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Translates the image to the container configuration and writes the JSON string.
-    Blob containerConfigurationBlob =
-        imageToJsonTranslator.getContainerConfigurationBlob(V22ManifestTemplate.class);
+    Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
 
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     containerConfigurationBlob.writeTo(byteArrayOutputStream);
@@ -124,12 +125,14 @@ public class ImageToJsonTranslatorTest {
   }
 
   @Test
-  public void testGetManifest_v22() throws URISyntaxException, IOException {
+  public void testGetManifest_v22() throws URISyntaxException, IOException, DigestException {
+    setUp(V22ManifestTemplate.class);
     testGetManifest(V22ManifestTemplate.class, "json/translated_v22manifest.json");
   }
 
   @Test
-  public void testGetManifest_oci() throws URISyntaxException, IOException {
+  public void testGetManifest_oci() throws URISyntaxException, IOException, DigestException {
+    setUp(OCIManifestTemplate.class);
     testGetManifest(OCIManifestTemplate.class, "json/translated_ocimanifest.json");
   }
 
@@ -157,8 +160,7 @@ public class ImageToJsonTranslatorTest {
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Translates the image to the manifest and writes the JSON string.
-    Blob containerConfigurationBlob =
-        imageToJsonTranslator.getContainerConfigurationBlob(manifestTemplateClass);
+    Blob containerConfigurationBlob = imageToJsonTranslator.getContainerConfigurationBlob();
     BlobDescriptor blobDescriptor =
         containerConfigurationBlob.writeTo(ByteStreams.nullOutputStream());
     T manifestTemplate =

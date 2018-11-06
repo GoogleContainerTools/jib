@@ -80,8 +80,7 @@ class PushContainerConfigurationStep
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
       Blob containerConfigurationBlob =
-          new ImageToJsonTranslator(image)
-              .getContainerConfigurationBlob(buildConfiguration.getTargetFormat());
+          new ImageToJsonTranslator(image).getContainerConfigurationBlob();
       BlobDescriptor blobDescriptor =
           containerConfigurationBlob.writeTo(ByteStreams.nullOutputStream());
 
