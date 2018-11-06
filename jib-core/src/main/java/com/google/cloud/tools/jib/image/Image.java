@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /** Represents an image. */
@@ -129,24 +130,36 @@ public class Image<T extends Layer> {
     }
 
     /**
-     * Sets the number of nanoseconds to wait between healthcheck attempts.
+     * Sets the time to wait between healthcheck attempts.
      *
-     * @param healthInterval the number of nanoseconds to wait between healthcheck attempts
+     * @param healthInterval the time duration in the given {@code sourceUnit} to wait between
+     *     healthcheck attempts
+     * @param timeUnit the unit of the {@code healthInterval} argument
      * @return this
      */
-    public Builder<T> setHealthInterval(@Nullable Long healthInterval) {
-      this.healthInterval = healthInterval;
+    public Builder<T> setHealthInterval(@Nullable Long healthInterval, TimeUnit timeUnit) {
+      if (healthInterval == null) {
+        this.healthInterval = null;
+      } else {
+        this.healthInterval = TimeUnit.NANOSECONDS.convert(healthInterval, timeUnit);
+      }
       return this;
     }
 
     /**
-     * Sets the number of nanoseconds to wait before considering a check to have hung.
+     * Sets the time to wait before considering a check to have hung.
      *
-     * @param healthTimeout number of nanoseconds to wait before considering a check to have hung
+     * @param healthTimeout the time duration in the given {@code sourceUnit} to wait before
+     *     considering a check to have hung
+     * @param timeUnit the unit of the {@code healthTimeout} argument
      * @return this
      */
-    public Builder<T> setHealthTimeout(@Nullable Long healthTimeout) {
-      this.healthTimeout = healthTimeout;
+    public Builder<T> setHealthTimeout(@Nullable Long healthTimeout, TimeUnit timeUnit) {
+      if (healthTimeout == null) {
+        this.healthTimeout = null;
+      } else {
+        this.healthTimeout = TimeUnit.NANOSECONDS.convert(healthTimeout, timeUnit);
+      }
       return this;
     }
 

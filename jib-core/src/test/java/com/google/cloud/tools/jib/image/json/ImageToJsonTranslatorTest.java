@@ -41,6 +41,7 @@ import java.security.DigestException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,22 +53,21 @@ public class ImageToJsonTranslatorTest {
 
   @Before
   public void setUp() throws DigestException, LayerPropertyNotFoundException {
-    Image.Builder<Layer> testImageBuilder = Image.builder();
-
-    testImageBuilder.setCreated(Instant.ofEpochSecond(20));
-    testImageBuilder.addEnvironmentVariable("VAR1", "VAL1");
-    testImageBuilder.addEnvironmentVariable("VAR2", "VAL2");
-    testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
-    testImageBuilder.setProgramArguments(Arrays.asList("arg1", "arg2"));
-    testImageBuilder.setHealthTest(Arrays.asList("CMD-SHELL", "/checkhealth"));
-    testImageBuilder.setHealthInterval(3000000000L);
-    testImageBuilder.setHealthTimeout(1000000000L);
-    testImageBuilder.setHealthRetries(3);
-    testImageBuilder.setExposedPorts(
-        ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)));
-    testImageBuilder.addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
-    testImageBuilder.setWorkingDirectory("/some/workspace");
-    testImageBuilder.setUser("tomcat");
+    Image.Builder<Layer> testImageBuilder =
+        Image.builder()
+            .setCreated(Instant.ofEpochSecond(20))
+            .addEnvironmentVariable("VAR1", "VAL1")
+            .addEnvironmentVariable("VAR2", "VAL2")
+            .setEntrypoint(Arrays.asList("some", "entrypoint", "command"))
+            .setProgramArguments(Arrays.asList("arg1", "arg2"))
+            .setHealthTest(Arrays.asList("CMD-SHELL", "/checkhealth"))
+            .setHealthInterval(3L, TimeUnit.SECONDS)
+            .setHealthTimeout(1L, TimeUnit.SECONDS)
+            .setHealthRetries(3)
+            .setExposedPorts(ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)))
+            .addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"))
+            .setWorkingDirectory("/some/workspace")
+            .setUser("tomcat");
 
     DescriptorDigest fakeDigest =
         DescriptorDigest.fromDigest(
