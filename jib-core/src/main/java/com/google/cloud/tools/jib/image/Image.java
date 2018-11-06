@@ -20,10 +20,10 @@ import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /** Represents an image. */
@@ -132,34 +132,22 @@ public class Image<T extends Layer> {
     /**
      * Sets the time to wait between healthcheck attempts.
      *
-     * @param healthInterval the time duration in the given {@code sourceUnit} to wait between
-     *     healthcheck attempts
-     * @param timeUnit the unit of the {@code healthInterval} argument
+     * @param healthInterval the time duration to wait between healthcheck attempts
      * @return this
      */
-    public Builder<T> setHealthInterval(@Nullable Long healthInterval, TimeUnit timeUnit) {
-      if (healthInterval == null) {
-        this.healthInterval = null;
-      } else {
-        this.healthInterval = TimeUnit.NANOSECONDS.convert(healthInterval, timeUnit);
-      }
+    public Builder<T> setHealthInterval(@Nullable Duration healthInterval) {
+      this.healthInterval = healthInterval == null ? null : healthInterval.toNanos();
       return this;
     }
 
     /**
      * Sets the time to wait before considering a check to have hung.
      *
-     * @param healthTimeout the time duration in the given {@code sourceUnit} to wait before
-     *     considering a check to have hung
-     * @param timeUnit the unit of the {@code healthTimeout} argument
+     * @param healthTimeout the time duration to wait before considering a check to have hung
      * @return this
      */
-    public Builder<T> setHealthTimeout(@Nullable Long healthTimeout, TimeUnit timeUnit) {
-      if (healthTimeout == null) {
-        this.healthTimeout = null;
-      } else {
-        this.healthTimeout = TimeUnit.NANOSECONDS.convert(healthTimeout, timeUnit);
-      }
+    public Builder<T> setHealthTimeout(@Nullable Duration healthTimeout) {
+      this.healthTimeout = healthTimeout == null ? null : healthTimeout.toNanos();
       return this;
     }
 

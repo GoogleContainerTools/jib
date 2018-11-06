@@ -38,10 +38,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,8 +61,8 @@ public class ImageToJsonTranslatorTest {
             .setEntrypoint(Arrays.asList("some", "entrypoint", "command"))
             .setProgramArguments(Arrays.asList("arg1", "arg2"))
             .setHealthTest(Arrays.asList("CMD-SHELL", "/checkhealth"))
-            .setHealthInterval(3L, TimeUnit.SECONDS)
-            .setHealthTimeout(1L, TimeUnit.SECONDS)
+            .setHealthInterval(Duration.ofSeconds(3))
+            .setHealthTimeout(Duration.ofSeconds(1))
             .setHealthRetries(3)
             .setExposedPorts(ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)))
             .addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"))
