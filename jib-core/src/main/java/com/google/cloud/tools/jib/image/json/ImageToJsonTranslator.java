@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.image.json;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -31,7 +32,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
@@ -59,26 +60,34 @@ public class ImageToJsonTranslator {
   @VisibleForTesting
   @Nullable
   static Map<String, Map<?, ?>> portListToMap(@Nullable List<Port> exposedPorts) {
-    if (exposedPorts == null) {
-      return null;
-    }
+    return listToMap(exposedPorts, port -> port.getPort() + "/" + port.getProtocol());
+  }
 
-    return listToMap(
-        exposedPorts
-            .stream()
-            .map(port -> port.getPort() + "/" + port.getProtocol())
-            .collect(Collectors.toList()));
+  /**
+   * Converts a list of {@link AbsoluteUnixPath}s to the corresponding container config format for
+   * volumes (e.g. {@code AbsoluteUnixPath().get("/var/log/my-app-logs")} -> {@code
+   * {"/var/log/my-app-logs":{}}}).
+   *
+   * @param volumes the list of {@link AbsoluteUnixPath}s to translate, or {@code null}
+   * @return a sorted map with the string representation of the ports as keys and empty maps as
+   *     values, or {@code null} if {@code exposedPorts} is {@code null}
+   */
+  @VisibleForTesting
+  @Nullable
+  static Map<String, Map<?, ?>> volumesListToMap(@Nullable List<AbsoluteUnixPath> volumes) {
+    return listToMap(volumes, AbsoluteUnixPath::toString);
   }
 
   @Nullable
-  static Map<String, Map<?, ?>> listToMap(@Nullable List<String> list) {
+  static <E> Map<String, Map<?, ?>> listToMap(
+      @Nullable List<E> list, Function<E, String> elementMapper) {
     if (list == null) {
       return null;
     }
-    ImmutableSortedMap.Builder<String, Map<?, ?>> result =
-        new ImmutableSortedMap.Builder<>(String::compareTo);
-    list.forEach(value -> result.put(value, Collections.emptyMap()));
-    return result.build();
+    return list.stream()
+        .collect(
+            ImmutableSortedMap.toImmutableSortedMap(
+                String::compareTo, elementMapper, key -> Collections.emptyMap()));
   }
 
   /**
@@ -148,7 +157,7 @@ public class ImageToJsonTranslator {
     template.setContainerExposedPorts(portListToMap(image.getExposedPorts()));
 
     // Sets the volumes.
-    template.setContainerVolumes(listToMap(image.getVolumes()));
+    template.setContainerVolumes(volumesListToMap(image.getVolumes()));
 
     // Sets the labels.
     template.setContainerLabels(image.getLabels());

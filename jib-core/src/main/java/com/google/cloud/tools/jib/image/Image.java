@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -40,7 +41,7 @@ public class Image<T extends Layer> {
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private ImmutableList<Port> exposedPorts;
-    @Nullable private ImmutableList<String> volumes;
+    @Nullable private ImmutableList<AbsoluteUnixPath> volumes;
     @Nullable private String workingDirectory;
     @Nullable private String user;
 
@@ -131,7 +132,7 @@ public class Image<T extends Layer> {
      * @param volumes the list of directories to create a volume.
      * @return this
      */
-    public Builder<T> setVolumes(@Nullable List<String> volumes) {
+    public Builder<T> setVolumes(@Nullable List<AbsoluteUnixPath> volumes) {
       this.volumes = (volumes == null) ? null : ImmutableList.copyOf(volumes);
       return this;
     }
@@ -236,8 +237,8 @@ public class Image<T extends Layer> {
   /** Ports that the container listens on. */
   @Nullable private final ImmutableList<Port> exposedPorts;
 
-  /** List of directories to mount as volume. */
-  @Nullable private final ImmutableList<String> volumes;
+  /** List of directories to mount as volumes. */
+  @Nullable private final ImmutableList<AbsoluteUnixPath> volumes;
 
   /** Labels on the container configuration */
   @Nullable private final ImmutableMap<String, String> labels;
@@ -256,7 +257,7 @@ public class Image<T extends Layer> {
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableList<Port> exposedPorts,
-      @Nullable ImmutableList<String> volumes,
+      @Nullable ImmutableList<AbsoluteUnixPath> volumes,
       @Nullable ImmutableMap<String, String> labels,
       @Nullable String workingDirectory,
       @Nullable String user) {
@@ -299,7 +300,7 @@ public class Image<T extends Layer> {
   }
 
   @Nullable
-  public ImmutableList<String> getVolumes() {
+  public ImmutableList<AbsoluteUnixPath> getVolumes() {
     return volumes;
   }
 

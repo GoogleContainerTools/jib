@@ -240,39 +240,38 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets the directories that the container will create as a volume. Volumes allows persistent
-   * data.
+   * Sets the directories that may hold externally mounted volumes.
    *
    * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#volume">{@code
    * VOLUME} in Dockerfiles</a>.
    *
-   * @param volumes the list of volumes
+   * @param volumes the list of directories to set as volumes
    * @return this
    */
-  public JibContainerBuilder setVolumes(List<String> volumes) {
+  public JibContainerBuilder setVolumes(List<AbsoluteUnixPath> volumes) {
     containerConfigurationBuilder.setVolumes(volumes);
     return this;
   }
 
   /**
-   * Sets directories where the process is likely to write. This replaces any previously-set volume.
+   * Sets the directories that may hold externally mounted volumes.
    *
-   * @param volumes the directory to be create as a volume
+   * @param volumes the list of directories to set as volumes
    * @return this
    * @see #setVolumes(List) for more details
    */
-  public JibContainerBuilder setVolumes(String... volumes) {
-    return setVolumes(Arrays.asList(volumes));
+  public JibContainerBuilder setVolumes(AbsoluteUnixPath... volumes) {
+    return setVolumes(new ArrayList<>(Arrays.asList(volumes)));
   }
 
   /**
-   * Adds a directory where the process is likely to write.
+   * Adds a directory that may hold externally mounted volume.
    *
    * @param volume a directory to represent a volume.
    * @return this
    * @see #setVolumes(List) for more details
    */
-  public JibContainerBuilder addVolumes(String volume) {
+  public JibContainerBuilder addVolume(AbsoluteUnixPath volume) {
     containerConfigurationBuilder.addVolume(volume);
     return this;
   }

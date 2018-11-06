@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.DigestOnlyLayer;
 import com.google.cloud.tools.jib.image.Image;
@@ -150,6 +151,11 @@ public class JsonToImageTranslator {
           portMapToList(containerConfigurationTemplate.getContainerExposedPorts()));
     }
 
+    if (containerConfigurationTemplate.getContainerVolumes() != null) {
+      imageBuilder.setVolumes(
+          volumeMapToList(containerConfigurationTemplate.getContainerVolumes()));
+    }
+
     if (containerConfigurationTemplate.getContainerEnvironment() != null) {
       for (String environmentVariable : containerConfigurationTemplate.getContainerEnvironment()) {
         Matcher matcher = ENVIRONMENT_PATTERN.matcher(environmentVariable);
@@ -194,6 +200,26 @@ public class JsonToImageTranslator {
       ports.add(Port.parseProtocol(portNumber, protocol));
     }
     return ports.build();
+  }
+
+  /**
+   * Converts a map of volumes strings to a list of {@link AbsoluteUnixPath}s * (e.g. {@code {@code
+   * {"/var/log/my-app-logs":{}}} -> AbsoluteUnixPath().get("/var/log/my-app-logs")}).
+   *
+   * @param volumeMap the map to convert
+   * @return a list of {@link AbsoluteUnixPath}s
+   */
+  @VisibleForTesting
+  static ImmutableList<AbsoluteUnixPath> volumeMapToList(
+      @Nullable Map<String, Map<?, ?>> volumeMap) {
+    if (volumeMap == null) {
+      return ImmutableList.of();
+    }
+    return volumeMap
+        .keySet()
+        .stream()
+        .map(AbsoluteUnixPath::get)
+        .collect(ImmutableList.toImmutableList());
   }
 
   private JsonToImageTranslator() {}

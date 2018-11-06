@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -43,7 +44,7 @@ public class ContainerConfiguration {
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private Map<String, String> environmentMap;
     @Nullable private List<Port> exposedPorts;
-    @Nullable private List<String> volumes;
+    @Nullable private List<AbsoluteUnixPath> volumes;
     @Nullable private Map<String, String> labels;
     @Nullable private String user;
 
@@ -127,7 +128,7 @@ public class ContainerConfiguration {
      * @param volumes the list of volumes
      * @return this
      */
-    public Builder setVolumes(@Nullable List<String> volumes) {
+    public Builder setVolumes(@Nullable List<AbsoluteUnixPath> volumes) {
       if (volumes == null) {
         this.volumes = null;
       } else {
@@ -137,7 +138,7 @@ public class ContainerConfiguration {
       return this;
     }
 
-    public void addVolume(String volume) {
+    public void addVolume(AbsoluteUnixPath volume) {
       if (volumes == null) {
         volumes = new ArrayList<>();
       }
@@ -231,7 +232,7 @@ public class ContainerConfiguration {
   @Nullable private final ImmutableList<String> programArguments;
   @Nullable private final ImmutableMap<String, String> environmentMap;
   @Nullable private final ImmutableList<Port> exposedPorts;
-  @Nullable private final ImmutableList<String> volumes;
+  @Nullable private final ImmutableList<AbsoluteUnixPath> volumes;
   @Nullable private final ImmutableMap<String, String> labels;
   @Nullable private final String user;
 
@@ -241,7 +242,7 @@ public class ContainerConfiguration {
       @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableMap<String, String> environmentMap,
       @Nullable ImmutableList<Port> exposedPorts,
-      @Nullable ImmutableList<String> volumes,
+      @Nullable ImmutableList<AbsoluteUnixPath> volumes,
       @Nullable ImmutableMap<String, String> labels,
       @Nullable String user) {
     this.creationTime = creationTime;
@@ -279,7 +280,7 @@ public class ContainerConfiguration {
   }
 
   @Nullable
-  public ImmutableList<String> getVolumes() {
+  public ImmutableList<AbsoluteUnixPath> getVolumes() {
     return volumes;
   }
 
