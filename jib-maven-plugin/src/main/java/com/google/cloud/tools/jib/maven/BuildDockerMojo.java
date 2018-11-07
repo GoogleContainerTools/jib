@@ -67,7 +67,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
-    MojoCommon.disableHttpLogging();
     try {
       AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
       MavenProjectProperties projectProperties =

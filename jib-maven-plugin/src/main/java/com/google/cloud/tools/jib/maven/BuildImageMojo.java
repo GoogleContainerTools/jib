@@ -85,7 +85,6 @@ public class BuildImageMojo extends JibPluginConfiguration {
               "mvn compile jib:build -Dimage=<your image name>"));
     }
 
-    MojoCommon.disableHttpLogging();
     try {
       AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
 
