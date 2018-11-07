@@ -254,6 +254,22 @@ Property | Type
 `path` | string
 `permissions` | list
 
+#### System Properties
+
+Each of these parameters is configurable via commandline using system properties. Jib's system properties follow the same naming convention as the configuration parameters, with each level separated by dots (i.e. `-Djib.parameterName[.nestedParameter.[...]]=value`). Some examples are below:
+```shell
+mvn compile jib:build \
+    -Djib.to.image=myregistry/myimage:latest \
+    -Djib.to.auth.username=$USERNAME \
+    -Djib.to.auth.password=$PASSWORD
+
+mvn compile jib:dockerBuild \
+    -Djib.container.environment=key1="value1",key2="value2" \
+    -Djib.container.args=arg1,arg2,arg3
+
+mvn jib:buildTar -Djib.useProjectOnlyCache=true
+```
+
 You can also configure HTTP connection/read timeouts for registry interactions using the `jib.httpTimeout` system property, configured in milliseconds via commandline (the default is `20000`; you can also set it to `0` for infinite timeout):
 
 ```shell
