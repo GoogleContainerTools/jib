@@ -44,6 +44,7 @@ import javax.annotation.Nullable;
  *       "Test": ["CMD-SHELL", "/usr/bin/check-health localhost"],
  *       "Interval": 30000000000,
  *       "Timeout": 10000000000,
+ *       "StartPeriod": 0,
  *       "Retries": 3
  *     }
  *     "ExposedPorts": { "6000/tcp":{}, "8000/tcp":{}, "9000/tcp":{} },
@@ -138,6 +139,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     /** Number of nanoseconds to wait before considering the check to have hung. */
     @Nullable private Long Timeout;
 
+    /**
+     * Number of nanoseconds to wait for the container to initialize before starting health-retries.
+     */
+    @Nullable private Long StartPeriod;
+
     /** The number of consecutive failures needed to consider the container as unhealthy. */
     @Nullable private Integer Retries;
   }
@@ -193,6 +199,13 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
       config.Healthcheck = new HealthCheckObjectTemplate();
     }
     Preconditions.checkNotNull(config.Healthcheck).Timeout = timeout;
+  }
+
+  public void setContainerHealthStartPeriod(@Nullable Long startPeriod) {
+    if (config.Healthcheck == null) {
+      config.Healthcheck = new HealthCheckObjectTemplate();
+    }
+    Preconditions.checkNotNull(config.Healthcheck).StartPeriod = startPeriod;
   }
 
   public void setContainerHealthRetries(@Nullable Integer retries) {
@@ -267,6 +280,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   @Nullable
   Long getContainerHealthTimeout() {
     return config.Healthcheck == null ? null : config.Healthcheck.Timeout;
+  }
+
+  @Nullable
+  Long getContainerHealthStartPeriod() {
+    return config.Healthcheck == null ? null : config.Healthcheck.StartPeriod;
   }
 
   @Nullable

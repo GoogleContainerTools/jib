@@ -132,8 +132,12 @@ public class ImageToJsonTranslator {
     // Healthcheck is not supported by OCI
     if (image.getImageFormat() != OCIManifestTemplate.class) {
       template.setContainerHealthTest(image.getHealthTest());
-      template.setContainerHealthInterval(image.getHealthInterval());
-      template.setContainerHealthTimeout(image.getHealthTimeout());
+      template.setContainerHealthInterval(
+          image.getHealthInterval() == null ? null : image.getHealthInterval().toNanos());
+      template.setContainerHealthTimeout(
+          image.getHealthTimeout() == null ? null : image.getHealthTimeout().toNanos());
+      template.setContainerHealthStartPeriod(
+          image.getHealthStartPeriod() == null ? null : image.getHealthStartPeriod().toNanos());
       template.setContainerHealthRetries(image.getHealthRetries());
     }
 

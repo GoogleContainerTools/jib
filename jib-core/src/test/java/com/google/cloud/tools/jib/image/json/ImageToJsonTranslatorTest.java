@@ -62,6 +62,7 @@ public class ImageToJsonTranslatorTest {
             .setHealthTest(Arrays.asList("CMD-SHELL", "/checkhealth"))
             .setHealthInterval(Duration.ofSeconds(3))
             .setHealthTimeout(Duration.ofSeconds(1))
+            .setHealthStartPeriod(Duration.ofSeconds(2))
             .setHealthRetries(3)
             .setExposedPorts(ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)))
             .addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"))

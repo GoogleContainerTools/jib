@@ -43,8 +43,9 @@ public class Image<T extends Layer> {
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private ImmutableList<String> healthTest;
-    @Nullable private Long healthInterval;
-    @Nullable private Long healthTimeout;
+    @Nullable private Duration healthInterval;
+    @Nullable private Duration healthTimeout;
+    @Nullable private Duration healthStartPeriod;
     @Nullable private Integer healthRetries;
     @Nullable private ImmutableList<Port> exposedPorts;
     @Nullable private String workingDirectory;
@@ -142,7 +143,7 @@ public class Image<T extends Layer> {
      * @return this
      */
     public Builder<T> setHealthInterval(@Nullable Duration healthInterval) {
-      this.healthInterval = healthInterval == null ? null : healthInterval.toNanos();
+      this.healthInterval = healthInterval;
       return this;
     }
 
@@ -153,7 +154,18 @@ public class Image<T extends Layer> {
      * @return this
      */
     public Builder<T> setHealthTimeout(@Nullable Duration healthTimeout) {
-      this.healthTimeout = healthTimeout == null ? null : healthTimeout.toNanos();
+      this.healthTimeout = healthTimeout;
+      return this;
+    }
+
+    /**
+     * Sets the time to wait for container to initialize before starting healthcheck retries.
+     *
+     * @param healthStartPeriod the time duration to wait before starting healthcheck retries
+     * @return this
+     */
+    public Builder<T> setHealthStartPeriod(@Nullable Duration healthStartPeriod) {
+      this.healthStartPeriod = healthStartPeriod;
       return this;
     }
 
@@ -251,6 +263,7 @@ public class Image<T extends Layer> {
           healthTest,
           healthInterval,
           healthTimeout,
+          healthStartPeriod,
           healthRetries,
           exposedPorts,
           labelsBuilder.build(),
@@ -289,10 +302,13 @@ public class Image<T extends Layer> {
   @Nullable private final ImmutableList<String> healthTest;
 
   /** Time between healthcheck runs. */
-  @Nullable private final Long healthInterval;
+  @Nullable private final Duration healthInterval;
 
   /** Time until a healthcheck is considered hung. */
-  @Nullable private final Long healthTimeout;
+  @Nullable private final Duration healthTimeout;
+
+  /** Time to wait for container to initialize before starting healthcheck retries. */
+  @Nullable private final Duration healthStartPeriod;
 
   /** Number of retries to allow before failing the healthcheck. */
   @Nullable private final Integer healthRetries;
@@ -318,8 +334,9 @@ public class Image<T extends Layer> {
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableList<String> healthTest,
-      @Nullable Long healthInterval,
-      @Nullable Long healthTimeout,
+      @Nullable Duration healthInterval,
+      @Nullable Duration healthTimeout,
+      @Nullable Duration healthStartPeriod,
       @Nullable Integer healthRetries,
       @Nullable ImmutableList<Port> exposedPorts,
       @Nullable ImmutableMap<String, String> labels,
@@ -335,6 +352,7 @@ public class Image<T extends Layer> {
     this.healthTest = healthTest;
     this.healthInterval = healthInterval;
     this.healthTimeout = healthTimeout;
+    this.healthStartPeriod = healthStartPeriod;
     this.healthRetries = healthRetries;
     this.exposedPorts = exposedPorts;
     this.labels = labels;
@@ -372,13 +390,18 @@ public class Image<T extends Layer> {
   }
 
   @Nullable
-  public Long getHealthInterval() {
+  public Duration getHealthInterval() {
     return healthInterval;
   }
 
   @Nullable
-  public Long getHealthTimeout() {
+  public Duration getHealthTimeout() {
     return healthTimeout;
+  }
+
+  @Nullable
+  public Duration getHealthStartPeriod() {
+    return healthStartPeriod;
   }
 
   @Nullable
