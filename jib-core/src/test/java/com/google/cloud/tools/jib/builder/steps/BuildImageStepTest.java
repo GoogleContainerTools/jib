@@ -123,8 +123,9 @@ public class BuildImageStepTest {
 
     Image<Layer> baseImage =
         Image.builder()
-            .addEnvironment(ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE"))
+            .addEnvironment(ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE", "BASE_ENV_2", "DEFAULT"))
             .addLabel("base.label", "base.label.value")
+            .addLabel("base.label.2", "default")
             .setWorkingDirectory("/base/working/directory")
             .setEntrypoint(ImmutableList.of("baseImageEntrypoint"))
             .setProgramArguments(ImmutableList.of("catalina.sh", "run"))
@@ -186,9 +187,9 @@ public class BuildImageStepTest {
   public void test_propagateBaseImageConfiguration()
       throws ExecutionException, InterruptedException {
     Mockito.when(mockContainerConfiguration.getEnvironmentMap())
-        .thenReturn(ImmutableMap.of("MY_ENV", "MY_ENV_VALUE"));
+        .thenReturn(ImmutableMap.of("MY_ENV", "MY_ENV_VALUE", "BASE_ENV_2", "NEW_VALUE"));
     Mockito.when(mockContainerConfiguration.getLabels())
-        .thenReturn(ImmutableMap.of("my.label", "my.label.value"));
+        .thenReturn(ImmutableMap.of("my.label", "my.label.value", "base.label.2", "new.value"));
     BuildImageStep buildImageStep =
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
@@ -201,10 +202,17 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStepClasses));
     Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(
-        ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE", "MY_ENV", "MY_ENV_VALUE"),
+        ImmutableMap.of(
+            "BASE_ENV", "BASE_ENV_VALUE", "MY_ENV", "MY_ENV_VALUE", "BASE_ENV_2", "NEW_VALUE"),
         image.getEnvironment());
     Assert.assertEquals(
-        ImmutableMap.of("base.label", "base.label.value", "my.label", "my.label.value"),
+        ImmutableMap.of(
+            "base.label",
+            "base.label.value",
+            "my.label",
+            "my.label.value",
+            "base.label.2",
+            "new.value"),
         image.getLabels());
     Assert.assertEquals("/base/working/directory", image.getWorkingDirectory());
     Assert.assertEquals("root", image.getUser());

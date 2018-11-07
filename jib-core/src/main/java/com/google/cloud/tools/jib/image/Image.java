@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -33,8 +34,11 @@ public class Image<T extends Layer> {
 
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
     private final ImmutableList.Builder<HistoryEntry> historyBuilder = ImmutableList.builder();
-    private final ImmutableMap.Builder<String, String> environmentBuilder = ImmutableMap.builder();
-    private final ImmutableMap.Builder<String, String> labelsBuilder = ImmutableMap.builder();
+
+    // Don't use ImmutableMap.Builder because it does not allow for replacing existing keys with new
+    // values.
+    private final Map<String, String> environmentBuilder = new HashMap<>();
+    private final Map<String, String> labelsBuilder = new HashMap<>();
 
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
@@ -188,11 +192,11 @@ public class Image<T extends Layer> {
           created,
           imageLayersBuilder.build(),
           historyBuilder.build(),
-          environmentBuilder.build(),
+          ImmutableMap.copyOf(environmentBuilder),
           entrypoint,
           programArguments,
           exposedPorts,
-          labelsBuilder.build(),
+          ImmutableMap.copyOf(labelsBuilder),
           workingDirectory,
           user);
     }
