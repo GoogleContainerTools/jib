@@ -49,8 +49,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
-  private static final DockerClient DOCKER_CLIENT = DockerClient.newClient();
-
   @Override
   public void execute() throws MojoExecutionException {
     if (isSkipped()) {
@@ -62,7 +60,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       return;
     }
 
-    if (!DOCKER_CLIENT.isDockerInstalled()) {
+    if (!DockerClient.isDefaultDockerInstalled()) {
       throw new MojoExecutionException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
@@ -85,7 +83,11 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
-              rawConfiguration, projectProperties, mavenHelpfulSuggestionsBuilder.build());
+              rawConfiguration,
+              projectProperties,
+              null,
+              null,
+              mavenHelpfulSuggestionsBuilder.build());
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =

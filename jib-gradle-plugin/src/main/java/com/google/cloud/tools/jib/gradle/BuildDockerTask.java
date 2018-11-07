@@ -34,9 +34,11 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
+import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.Nested;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.options.Option;
 
@@ -45,9 +47,9 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
-  private static final DockerClient DOCKER_CLIENT = DockerClient.newClient();
-
   @Nullable private JibExtension jibExtension;
+
+  private final DockerClientParameters dockerClientParameters = new DockerClientParameters();
 
   /**
    * This will call the property {@code "jib"} so that it is the same name as the extension. This
@@ -71,12 +73,27 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     Preconditions.checkNotNull(jibExtension).getTo().setImage(targetImage);
   }
 
+  @Nested
+  @Optional
+  public DockerClientParameters getDockerClient() {
+    return dockerClientParameters;
+  }
+
+  public void dockerClient(Action<? super DockerClientParameters> action) {
+    action.execute(dockerClientParameters);
+  }
+
   @TaskAction
   public void buildDocker()
       throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
           CacheDirectoryCreationException, MainClassInferenceException,
           InferredAuthRetrievalException {
-    if (!DOCKER_CLIENT.isDockerInstalled()) {
+    Path dockerExecutable = dockerClientParameters.getExecutable();
+    boolean isDockerInstalled =
+        dockerExecutable == null
+            ? DockerClient.isDefaultDockerInstalled()
+            : DockerClient.isDockerInstalled(dockerExecutable);
+    if (!isDockerInstalled) {
       throw new GradleException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
@@ -101,7 +118,11 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
-              rawConfiguration, projectProperties, gradleHelpfulSuggestionsBuilder.build());
+              rawConfiguration,
+              projectProperties,
+              dockerClientParameters.getExecutable(),
+              dockerClientParameters.getEnvironment(),
+              gradleHelpfulSuggestionsBuilder.build());
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =

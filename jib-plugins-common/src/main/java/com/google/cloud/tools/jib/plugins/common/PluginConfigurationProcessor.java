@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
@@ -121,12 +122,20 @@ public class PluginConfigurationProcessor {
   public static PluginConfigurationProcessor processCommonConfigurationForDockerDaemonImage(
       RawConfiguration rawConfiguration,
       ProjectProperties projectProperties,
+      @Nullable Path dockerExecutable,
+      @Nullable Map<String, String> dockerEnvironment,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
           InferredAuthRetrievalException, IOException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
+    if (dockerExecutable != null) {
+      targetImage.setDockerExecutable(dockerExecutable);
+    }
+    if (dockerEnvironment != null) {
+      targetImage.setDockerEnvironment(dockerEnvironment);
+    }
     Containerizer containerizer = Containerizer.to(targetImage);
 
     return processCommonConfiguration(
