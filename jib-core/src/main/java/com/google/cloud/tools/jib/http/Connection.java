@@ -78,6 +78,13 @@ public class Connection implements Closeable {
     return url -> new Connection(url, transport);
   }
 
+  static {
+    // Disables annoying Apache HTTP client logging.
+    System.setProperty(
+        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
+  }
+
   private HttpRequestFactory requestFactory;
 
   @Nullable private HttpResponse httpResponse;
