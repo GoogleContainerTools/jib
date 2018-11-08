@@ -3,7 +3,7 @@
 
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
-  <version>0.9.14-SNAPSHOT</version>
+  <version>0.10.0</version>
   <packaging>maven-plugin</packaging>
 
   <name>Jib</name>
