@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.10.0
+
+### Added
+
 - Properties for each configuration parameter, allowing any parameter to be set via commandline ([#1083](https://github.com/GoogleContainerTools/jib/issues/1083))
 - `jib.to.credHelper` and `jib.from.credHelper` can be used to specify a credential helper suffix or a full path to a credential helper executable ([#925](https://github.com/GoogleContainerTools/jib/issues/925))
 - `container.user` configuration parameter to configure the user and group to run the container as ([#1029](https://github.com/GoogleContainerTools/jib/issues/1029))
@@ -22,8 +30,6 @@ All notable changes to this project will be documented in this file.
 - `jibExportDockerContext` generates different directory layout and `Dockerfile` to enable WAR support ([#1007](https://github.com/GoogleContainerTools/jib/pull/1007))
 - File timestamps in the built image are set to 1 second since the epoch (hence 1970-01-01T00:00:01Z) to resolve compatibility with applications on Java 6 or below where the epoch means nonexistent or I/O errors; previously they were set to the epoch ([#1079](https://github.com/GoogleContainerTools/jib/issues/1079))
 - Sets tag to "latest" instead of "unspecified" if `jib.to.image` and project version are both unspecified when running `jibDockerBuild` or `jibBuildTar` ([#1096](https://github.com/GoogleContainerTools/jib/issues/1096))
-
-### Fixed
 
 ## 0.9.13
 
