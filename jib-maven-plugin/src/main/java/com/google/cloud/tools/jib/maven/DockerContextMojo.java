@@ -69,7 +69,6 @@ public class DockerContextMojo extends JibPluginConfiguration {
 
     try {
       JibSystemProperties.checkHttpTimeoutProperty();
-      MojoCommon.disableHttpLogging();
       AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
 
       MavenProjectProperties projectProperties =

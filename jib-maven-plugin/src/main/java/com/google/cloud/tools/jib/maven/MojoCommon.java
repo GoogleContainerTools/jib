@@ -100,13 +100,5 @@ class MojoCommon {
     return permissionsMap;
   }
 
-  /** Disables annoying Apache HTTP client logging. */
-  // TODO: Instead of disabling logging, have authentication credentials be provided
-  static void disableHttpLogging() {
-    System.setProperty(
-        "org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
-    System.setProperty("org.apache.commons.logging.simplelog.defaultlog", "error");
-  }
-
   private MojoCommon() {}
 }

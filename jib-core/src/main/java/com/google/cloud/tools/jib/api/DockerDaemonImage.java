@@ -21,10 +21,13 @@ import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.docker.DockerClient.Builder;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.collect.ImmutableMap;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Map;
+import javax.annotation.Nullable;
 
 /** Builds to the Docker daemon. */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
@@ -55,7 +58,8 @@ public class DockerDaemonImage implements TargetImage {
   }
 
   private final ImageReference imageReference;
-  private Path dockerExecutable = Paths.get("docker");
+  @Nullable private Path dockerExecutable;
+  @Nullable private Map<String, String> dockerEnvironment;
 
   /** Instantiate with {@link #named}. */
   private DockerDaemonImage(ImageReference imageReference) {
@@ -73,6 +77,17 @@ public class DockerDaemonImage implements TargetImage {
     return this;
   }
 
+  /**
+   * Sets the additional environment variables to use when running {@link #dockerExecutable docker}.
+   *
+   * @param dockerEnvironment additional environment variables
+   * @return this
+   */
+  public DockerDaemonImage setDockerEnvironment(Map<String, String> dockerEnvironment) {
+    this.dockerEnvironment = dockerEnvironment;
+    return this;
+  }
+
   @Override
   public ImageConfiguration toImageConfiguration() {
     return ImageConfiguration.builder(imageReference).build();
@@ -80,16 +95,13 @@ public class DockerDaemonImage implements TargetImage {
 
   @Override
   public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
-    return BuildSteps.forBuildToDockerDaemon(
-        DockerClient.newClient(dockerExecutable), buildConfiguration);
-  }
-
-  /**
-   * Gets the path to the {@code docker} CLI.
-   *
-   * @return the path to the {@code docker} CLI
-   */
-  Path getDockerExecutable() {
-    return dockerExecutable;
+    Builder dockerClientBuilder = DockerClient.builder();
+    if (dockerExecutable != null) {
+      dockerClientBuilder.setDockerExecutable(dockerExecutable);
+    }
+    if (dockerEnvironment != null) {
+      dockerClientBuilder.setDockerEnvironment(ImmutableMap.copyOf(dockerEnvironment));
+    }
+    return BuildSteps.forBuildToDockerDaemon(dockerClientBuilder.build(), buildConfiguration);
   }
 }

@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
   - `jib.extraDirectory.permissions` is a map from absolute path on container to the file's permission bits (represented as an octal string)
 - Image digest is now written to `build/jib-image.digest` ([#933](https://github.com/GoogleContainerTools/jib/issues/933))
 - Adds the layer type to the layer history as comments ([#1198](https://github.com/GoogleContainerTools/jib/issues/1198))
+- `jibDockerBuild.dockerClient.executable` and `jibDockerBuild.dockerClient.environment` to set Docker client binary path (defaulting to `docker`) and additional environment variables to apply when running the binary ([#1214](https://github.com/GoogleContainerTools/jib/pull/1214))
 
 ### Changed
 
