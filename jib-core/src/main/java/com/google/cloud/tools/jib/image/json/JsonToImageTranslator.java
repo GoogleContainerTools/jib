@@ -203,18 +203,27 @@ public class JsonToImageTranslator {
   }
 
   /**
-   * Converts a map of volumes strings to a list of {@link AbsoluteUnixPath}s * (e.g. {@code {@code
+   * Converts a map of volumes strings to a list of {@link AbsoluteUnixPath}s (e.g. {@code {@code
    * {"/var/log/my-app-logs":{}}} -> AbsoluteUnixPath().get("/var/log/my-app-logs")}).
    *
    * @param volumeMap the map to convert
    * @return a list of {@link AbsoluteUnixPath}s
    */
   @VisibleForTesting
-  static ImmutableList<AbsoluteUnixPath> volumeMapToList(
-      @Nullable Map<String, Map<?, ?>> volumeMap) {
+  static ImmutableList<AbsoluteUnixPath> volumeMapToList(@Nullable Map<String, Map<?, ?>> volumeMap)
+      throws BadContainerConfigurationFormatException {
     if (volumeMap == null) {
       return ImmutableList.of();
     }
+
+    for (String volume : volumeMap.keySet()) {
+      try {
+        AbsoluteUnixPath.get(volume);
+      } catch (IllegalArgumentException exception) {
+        throw new BadContainerConfigurationFormatException("Invalid volume path: " + volume);
+      }
+    }
+
     return volumeMap
         .keySet()
         .stream()

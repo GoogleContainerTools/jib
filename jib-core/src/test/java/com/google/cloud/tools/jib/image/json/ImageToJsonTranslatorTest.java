@@ -153,6 +153,14 @@ public class ImageToJsonTranslatorTest {
     Assert.assertEquals(expected, ImageToJsonTranslator.volumesListToMap(input));
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testInvalidVolumeListToMap() {
+    ImmutableList<AbsoluteUnixPath> input =
+        ImmutableList.of(AbsoluteUnixPath.get("'/var/job-result-data"));
+
+    ImageToJsonTranslator.volumesListToMap(input);
+  }
+
   @Test
   public void testEnvironmentMapToList() {
     ImmutableMap<String, String> input = ImmutableMap.of("NAME1", "VALUE1", "NAME2", "VALUE2");

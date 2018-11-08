@@ -245,7 +245,7 @@ public class JibContainerBuilder {
    * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#volume">{@code
    * VOLUME} in Dockerfiles</a>.
    *
-   * @param volumes the list of directories to set as volumes
+   * @param volumes the list of directory paths on the container filesystem to set as volumes
    * @return this
    */
   public JibContainerBuilder setVolumes(List<AbsoluteUnixPath> volumes) {
@@ -256,7 +256,7 @@ public class JibContainerBuilder {
   /**
    * Sets the directories that may hold externally mounted volumes.
    *
-   * @param volumes the list of directories to set as volumes
+   * @param volumes the list of directory paths on the container filesystem to set as volumes
    * @return this
    * @see #setVolumes(List) for more details
    */
@@ -265,9 +265,9 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Adds a directory that may hold externally mounted volume.
+   * Adds a directory that may hold an externally mounted volume.
    *
-   * @param volume a directory to represent a volume.
+   * @param volume a directory path on the container filesystem to represent a volume.
    * @return this
    * @see #setVolumes(List) for more details
    */

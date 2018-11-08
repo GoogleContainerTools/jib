@@ -108,6 +108,31 @@ public class JsonToImageTranslatorTest {
   }
 
   @Test
+  public void testvolumeMapToList() throws BadContainerConfigurationFormatException {
+    ImmutableSortedMap<String, Map<?, ?>> input =
+        ImmutableSortedMap.of(
+            "/var/job-result-data", ImmutableMap.of(), "/var/log/my-app-logs", ImmutableMap.of());
+    ImmutableList<AbsoluteUnixPath> expected =
+        ImmutableList.of(
+            AbsoluteUnixPath.get("/var/job-result-data"),
+            AbsoluteUnixPath.get("/var/log/my-app-logs"));
+    Assert.assertEquals(expected, JsonToImageTranslator.volumeMapToList(input));
+
+    ImmutableList<Map<String, Map<?, ?>>> badInputs =
+        ImmutableList.of(
+            ImmutableMap.of("var/job-result-data", ImmutableMap.of()),
+            ImmutableMap.of("log", ImmutableMap.of()),
+            ImmutableMap.of("C:/udp", ImmutableMap.of()));
+    for (Map<String, Map<?, ?>> badInput : badInputs) {
+      try {
+        JsonToImageTranslator.volumeMapToList(badInput);
+        Assert.fail();
+      } catch (BadContainerConfigurationFormatException ignored) {
+      }
+    }
+  }
+
+  @Test
   public void testJsonToImageTranslatorRegex() {
     assertGoodEnvironmentPattern("NAME=VALUE", "NAME", "VALUE");
     assertGoodEnvironmentPattern("A1203921=www=ww", "A1203921", "www=ww");
