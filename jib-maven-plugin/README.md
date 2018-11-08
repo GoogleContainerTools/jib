@@ -193,6 +193,11 @@ You can then build your image with Docker:
 docker build -t myimage my/docker/context/
 ```
 
+### Additional Build Artifacts
+
+As part of an image build, Jib also writes out the _image digest_ to
+`target/jib-image.digest`.
+
 ## Extended Usage
 
 Extended configuration options provide additional options for customizing the image build.
