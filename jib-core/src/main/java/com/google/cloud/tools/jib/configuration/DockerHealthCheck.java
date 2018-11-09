@@ -29,13 +29,13 @@ public class DockerHealthCheck {
   /** Builds the immutable {@link DockerHealthCheck}. */
   public static class Builder {
 
-    private final ImmutableList<String> command;
+    @Nullable private final ImmutableList<String> command;
     @Nullable private Duration interval;
     @Nullable private Duration timeout;
     @Nullable private Duration startPeriod;
     @Nullable private Integer retries;
 
-    private Builder(ImmutableList<String> command) {
+    private Builder(@Nullable ImmutableList<String> command) {
       this.command = command;
     }
 
@@ -105,7 +105,7 @@ public class DockerHealthCheck {
    * @return the new {@link DockerHealthCheck.Builder}
    */
   public static Builder withInheritedCommand() {
-    return new Builder(ImmutableList.of());
+    return new Builder(null);
   }
 
   /**
@@ -143,14 +143,14 @@ public class DockerHealthCheck {
     return new Builder(ImmutableList.of("CMD-SHELL", command));
   }
 
-  private final ImmutableList<String> command;
+  @Nullable private final ImmutableList<String> command;
   @Nullable private final Duration interval;
   @Nullable private final Duration timeout;
   @Nullable private final Duration startPeriod;
   @Nullable private final Integer retries;
 
   private DockerHealthCheck(
-      ImmutableList<String> command,
+      @Nullable ImmutableList<String> command,
       @Nullable Duration interval,
       @Nullable Duration timeout,
       @Nullable Duration startPeriod,
@@ -162,22 +162,52 @@ public class DockerHealthCheck {
     this.retries = retries;
   }
 
-  public List<String> getCommand() {
-    return command;
+  /**
+   * Gets the optional healthcheck command. A missing command means that it will be inherited from
+   * the base image.
+   *
+   * @return the healthcheck command
+   */
+  public Optional<List<String>> getCommand() {
+    return Optional.ofNullable(command);
   }
 
+  /**
+   * Gets the optional healthcheck interval. A missing command means that it will be inherited from
+   * the base image.
+   *
+   * @return the healthcheck interval
+   */
   public Optional<Duration> getInterval() {
     return Optional.ofNullable(interval);
   }
 
+  /**
+   * Gets the optional healthcheck timeout. A missing command means that it will be inherited from
+   * the base image.
+   *
+   * @return the healthcheck timeout
+   */
   public Optional<Duration> getTimeout() {
     return Optional.ofNullable(timeout);
   }
 
+  /**
+   * Gets the optional healthcheck start period. A missing command means that it will be inherited
+   * from the base image.
+   *
+   * @return the healthcheck start period
+   */
   public Optional<Duration> getStartPeriod() {
     return Optional.ofNullable(startPeriod);
   }
 
+  /**
+   * Gets the optional healthcheck retry count. A missing command means that it will be inherited
+   * from the base image.
+   *
+   * @return the healthcheck retry count
+   */
   public Optional<Integer> getRetries() {
     return Optional.ofNullable(retries);
   }

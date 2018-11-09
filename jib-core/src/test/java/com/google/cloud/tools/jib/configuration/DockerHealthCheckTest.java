@@ -34,40 +34,49 @@ public class DockerHealthCheckTest {
             .setRetries(10)
             .build();
 
+    Assert.assertTrue(healthCheck.getInterval().isPresent());
     Assert.assertEquals(Duration.ofNanos(123), healthCheck.getInterval().get());
+    Assert.assertTrue(healthCheck.getTimeout().isPresent());
     Assert.assertEquals(Duration.ofNanos(456), healthCheck.getTimeout().get());
+    Assert.assertTrue(healthCheck.getStartPeriod().isPresent());
     Assert.assertEquals(Duration.ofNanos(789), healthCheck.getStartPeriod().get());
+    Assert.assertTrue(healthCheck.getRetries().isPresent());
     Assert.assertEquals(10, (int) healthCheck.getRetries().get());
   }
 
   @Test
   public void testBuild_propagated() {
     DockerHealthCheck healthCheck = DockerHealthCheck.withInheritedCommand().build();
-    Assert.assertEquals(ImmutableList.of(), healthCheck.getCommand());
+    Assert.assertFalse(healthCheck.getCommand().isPresent());
   }
 
   @Test
   public void testBuild_execArray() {
     DockerHealthCheck healthCheck = DockerHealthCheck.withExecCommand("test", "command").build();
-    Assert.assertEquals(ImmutableList.of("CMD", "test", "command"), healthCheck.getCommand());
+    Assert.assertTrue(healthCheck.getCommand().isPresent());
+    Assert.assertEquals(ImmutableList.of("CMD", "test", "command"), healthCheck.getCommand().get());
   }
 
   @Test
   public void testBuild_execList() {
     DockerHealthCheck healthCheck =
         DockerHealthCheck.withExecCommand(ImmutableList.of("test", "command")).build();
-    Assert.assertEquals(ImmutableList.of("CMD", "test", "command"), healthCheck.getCommand());
+    Assert.assertTrue(healthCheck.getCommand().isPresent());
+    Assert.assertEquals(ImmutableList.of("CMD", "test", "command"), healthCheck.getCommand().get());
   }
 
   @Test
   public void testBuild_shell() {
     DockerHealthCheck healthCheck = DockerHealthCheck.withShellCommand("shell command").build();
-    Assert.assertEquals(ImmutableList.of("CMD-SHELL", "shell command"), healthCheck.getCommand());
+    Assert.assertTrue(healthCheck.getCommand().isPresent());
+    Assert.assertEquals(
+        ImmutableList.of("CMD-SHELL", "shell command"), healthCheck.getCommand().get());
   }
 
   @Test
   public void testDisabled() {
     DockerHealthCheck healthCheck = DockerHealthCheck.disabled();
-    Assert.assertEquals(ImmutableList.of("NONE"), healthCheck.getCommand());
+    Assert.assertTrue(healthCheck.getCommand().isPresent());
+    Assert.assertEquals(ImmutableList.of("NONE"), healthCheck.getCommand().get());
   }
 }
