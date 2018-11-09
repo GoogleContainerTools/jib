@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -44,6 +45,7 @@ public class Image<T extends Layer> {
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private ImmutableList<Port> exposedPorts;
+    @Nullable private ImmutableList<AbsoluteUnixPath> volumes;
     @Nullable private String workingDirectory;
     @Nullable private String user;
 
@@ -129,6 +131,17 @@ public class Image<T extends Layer> {
     }
 
     /**
+     * Sets the items in the "Volumes" field in the container configuration.
+     *
+     * @param volumes the list of directories to create a volume.
+     * @return this
+     */
+    public Builder<T> setVolumes(@Nullable List<AbsoluteUnixPath> volumes) {
+      this.volumes = (volumes == null) ? null : ImmutableList.copyOf(volumes);
+      return this;
+    }
+
+    /**
      * Adds items to the "Labels" field in the container configuration.
      *
      * @param labels the map of labels to add
@@ -196,6 +209,7 @@ public class Image<T extends Layer> {
           entrypoint,
           programArguments,
           exposedPorts,
+          volumes,
           ImmutableMap.copyOf(labelsBuilder),
           workingDirectory,
           user);
@@ -227,6 +241,9 @@ public class Image<T extends Layer> {
   /** Ports that the container listens on. */
   @Nullable private final ImmutableList<Port> exposedPorts;
 
+  /** List of directories to mount as volumes. */
+  @Nullable private final ImmutableList<AbsoluteUnixPath> volumes;
+
   /** Labels on the container configuration */
   @Nullable private final ImmutableMap<String, String> labels;
 
@@ -244,6 +261,7 @@ public class Image<T extends Layer> {
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableList<Port> exposedPorts,
+      @Nullable ImmutableList<AbsoluteUnixPath> volumes,
       @Nullable ImmutableMap<String, String> labels,
       @Nullable String workingDirectory,
       @Nullable String user) {
@@ -254,6 +272,7 @@ public class Image<T extends Layer> {
     this.entrypoint = entrypoint;
     this.programArguments = programArguments;
     this.exposedPorts = exposedPorts;
+    this.volumes = volumes;
     this.labels = labels;
     this.workingDirectory = workingDirectory;
     this.user = user;
@@ -282,6 +301,11 @@ public class Image<T extends Layer> {
   @Nullable
   public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
+  }
+
+  @Nullable
+  public ImmutableList<AbsoluteUnixPath> getVolumes() {
+    return volumes;
   }
 
   @Nullable

@@ -240,6 +240,42 @@ public class JibContainerBuilder {
   }
 
   /**
+   * Sets the directories that may hold externally mounted volumes.
+   *
+   * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#volume">{@code
+   * VOLUME} in Dockerfiles</a>.
+   *
+   * @param volumes the list of directory paths on the container filesystem to set as volumes
+   * @return this
+   */
+  public JibContainerBuilder setVolumes(List<AbsoluteUnixPath> volumes) {
+    containerConfigurationBuilder.setVolumes(volumes);
+    return this;
+  }
+
+  /**
+   * Sets the directories that may hold externally mounted volumes.
+   *
+   * @param volumes the list of directory paths on the container filesystem to set as volumes
+   * @return this
+   * @see #setVolumes(List) for more details
+   */
+  public JibContainerBuilder setVolumes(AbsoluteUnixPath... volumes) {
+    return setVolumes(new ArrayList<>(Arrays.asList(volumes)));
+  }
+
+  /**
+   * Adds a directory that may hold an externally mounted volume.
+   *
+   * @param volume a directory path on the container filesystem to represent a volume.
+   * @return this
+   * @see #setVolumes(List) for more details
+   */
+  public JibContainerBuilder addVolume(AbsoluteUnixPath volume) {
+    containerConfigurationBuilder.addVolume(volume);
+    return this;
+  }
+  /**
    * Sets the ports to expose from the container. Ports exposed will allow ingress traffic. This
    * replaces any previously-set exposed ports.
    *

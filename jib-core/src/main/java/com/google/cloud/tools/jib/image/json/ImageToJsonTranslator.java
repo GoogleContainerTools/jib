@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.image.json;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -31,6 +32,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
@@ -58,15 +60,51 @@ public class ImageToJsonTranslator {
   @VisibleForTesting
   @Nullable
   static Map<String, Map<?, ?>> portListToMap(@Nullable List<Port> exposedPorts) {
-    if (exposedPorts == null) {
+    return listToMap(exposedPorts, port -> port.getPort() + "/" + port.getProtocol());
+  }
+
+  /**
+   * Converts a list of {@link AbsoluteUnixPath}s to the corresponding container config format for
+   * volumes (e.g. {@code AbsoluteUnixPath().get("/var/log/my-app-logs")} -> {@code
+   * {"/var/log/my-app-logs":{}}}).
+   *
+   * @param volumes the list of {@link AbsoluteUnixPath}s to translate, or {@code null}
+   * @return a sorted map with the string representation of the ports as keys and empty maps as
+   *     values, or {@code null} if {@code exposedPorts} is {@code null}
+   */
+  @VisibleForTesting
+  @Nullable
+  static Map<String, Map<?, ?>> volumesListToMap(@Nullable List<AbsoluteUnixPath> volumes) {
+    return listToMap(volumes, AbsoluteUnixPath::toString);
+  }
+
+  /**
+   * Turns a list into a sorted map where each element of the list is mapped to an entry composed by
+   * the key generated with {@code Function<E, String> elementMapper} and an empty map as value.
+   *
+   * <p>This method is needed because the volume object is a direct JSON serialization of the Go
+   * type map[string]struct{} and is represented in JSON as an object mapping its keys to an empty
+   * object.
+   *
+   * <p>Further read at the <a
+   * href="https://github.com/opencontainers/image-spec/blob/master/config.md">image specs.</a>
+   *
+   * @param list the list of elements to be transformed
+   * @param keyMapper the mapper function to generate keys to the map
+   * @param <E> the type of the elements from the list
+   * @return an map
+   */
+  @Nullable
+  private static <E> Map<String, Map<?, ?>> listToMap(
+      @Nullable List<E> list, Function<E, String> keyMapper) {
+    if (list == null) {
       return null;
     }
-    ImmutableSortedMap.Builder<String, Map<?, ?>> result =
-        new ImmutableSortedMap.Builder<>(String::compareTo);
-    for (Port port : exposedPorts) {
-      result.put(port.getPort() + "/" + port.getProtocol(), Collections.emptyMap());
-    }
-    return result.build();
+
+    return list.stream()
+        .collect(
+            ImmutableSortedMap.toImmutableSortedMap(
+                String::compareTo, keyMapper, ignored -> Collections.emptyMap()));
   }
 
   /**
@@ -134,6 +172,9 @@ public class ImageToJsonTranslator {
 
     // Sets the exposed ports.
     template.setContainerExposedPorts(portListToMap(image.getExposedPorts()));
+
+    // Sets the volumes.
+    template.setContainerVolumes(volumesListToMap(image.getVolumes()));
 
     // Sets the labels.
     template.setContainerLabels(image.getLabels());

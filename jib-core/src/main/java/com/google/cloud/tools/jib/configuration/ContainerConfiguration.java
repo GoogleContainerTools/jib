@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -43,6 +44,7 @@ public class ContainerConfiguration {
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private Map<String, String> environmentMap;
     @Nullable private List<Port> exposedPorts;
+    @Nullable private List<AbsoluteUnixPath> volumes;
     @Nullable private Map<String, String> labels;
     @Nullable private String user;
 
@@ -121,6 +123,29 @@ public class ContainerConfiguration {
     }
 
     /**
+     * Sets the container's volumes.
+     *
+     * @param volumes the list of volumes
+     * @return this
+     */
+    public Builder setVolumes(@Nullable List<AbsoluteUnixPath> volumes) {
+      if (volumes == null) {
+        this.volumes = null;
+      } else {
+        Preconditions.checkArgument(!volumes.contains(null));
+        this.volumes = new ArrayList<>(volumes);
+      }
+      return this;
+    }
+
+    public void addVolume(AbsoluteUnixPath volume) {
+      if (volumes == null) {
+        volumes = new ArrayList<>();
+      }
+      volumes.add(volume);
+    }
+
+    /**
      * Sets the container's labels.
      *
      * @param labels the map of labels
@@ -185,6 +210,7 @@ public class ContainerConfiguration {
           programArguments,
           environmentMap == null ? null : ImmutableMap.copyOf(environmentMap),
           exposedPorts == null ? null : ImmutableList.copyOf(exposedPorts),
+          volumes == null ? null : ImmutableList.copyOf(volumes),
           labels == null ? null : ImmutableMap.copyOf(labels),
           user);
     }
@@ -206,6 +232,7 @@ public class ContainerConfiguration {
   @Nullable private final ImmutableList<String> programArguments;
   @Nullable private final ImmutableMap<String, String> environmentMap;
   @Nullable private final ImmutableList<Port> exposedPorts;
+  @Nullable private final ImmutableList<AbsoluteUnixPath> volumes;
   @Nullable private final ImmutableMap<String, String> labels;
   @Nullable private final String user;
 
@@ -215,6 +242,7 @@ public class ContainerConfiguration {
       @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableMap<String, String> environmentMap,
       @Nullable ImmutableList<Port> exposedPorts,
+      @Nullable ImmutableList<AbsoluteUnixPath> volumes,
       @Nullable ImmutableMap<String, String> labels,
       @Nullable String user) {
     this.creationTime = creationTime;
@@ -222,6 +250,7 @@ public class ContainerConfiguration {
     this.programArguments = programArguments;
     this.environmentMap = environmentMap;
     this.exposedPorts = exposedPorts;
+    this.volumes = volumes;
     this.labels = labels;
     this.user = user;
   }
@@ -248,6 +277,11 @@ public class ContainerConfiguration {
   @Nullable
   public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
+  }
+
+  @Nullable
+  public ImmutableList<AbsoluteUnixPath> getVolumes() {
+    return volumes;
   }
 
   @Nullable
