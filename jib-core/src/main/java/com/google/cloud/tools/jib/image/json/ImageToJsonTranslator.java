@@ -81,7 +81,6 @@ public class ImageToJsonTranslator {
   /**
    * Turns a list into a sorted map where each element of the list is mapped to an entry composed by
    * the key generated with {@code Function<E, String> elementMapper} and an empty map as value.
-   * maps.
    *
    * <p>This method is needed because the volume object is a direct JSON serialization of the Go
    * type map[string]struct{} and is represented in JSON as an object mapping its keys to an empty
@@ -90,9 +89,9 @@ public class ImageToJsonTranslator {
    * <p>Further read at the <a
    * href="https://github.com/opencontainers/image-spec/blob/master/config.md">image specs.</a>
    *
-   * @param list the list of elements to be transformed.
-   * @param keyMapper the mapper function to generate keys to the map.
-   * @param <E> the type of the elements from the list.
+   * @param list the list of elements to be transformed
+   * @param keyMapper the mapper function to generate keys to the map
+   * @param <E> the type of the elements from the list
    * @return an map
    */
   @Nullable
