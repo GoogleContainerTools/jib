@@ -152,6 +152,11 @@ You can then build your image with Docker:
 docker build -t myimage my/docker/context/
 ```
 
+### Additional Build Artifacts
+
+As part of an image build, Jib also writes out the _image digest_ to
+`build/jib-image.digest`.
+
 ## Extended Usage
 
 The plugin provides the `jib` extension for configuration with the following options for customizing the image build:
@@ -161,6 +166,7 @@ Field | Type | Default | Description
 `to` | [`to`](#to-closure) | *Required* | Configures the target image to build your application to.
 `from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
 `container` | [`container`](#container-closure) | See [`container`](#container-closure) | Configures the container that is run from your built image.
+`extraDirectory` | [`extraDirectory`](#extradirectory-closure) / `File` | `(project-dir)/src/main/jib` | Configures the directory used to add arbitrary files to the image.
 `allowInsecureRegistries` | `boolean` | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 `useProjectOnlyCache` | `boolean` | `false` | If set to `true`, Jib does not share a cache between different Maven projects.
 
@@ -170,7 +176,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | `gcr.io/distroless/java` | The image reference for the base image.
 `auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
-`credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 
 <a name="to-closure"></a>`to` is a closure with the following properties:
 
@@ -178,7 +184,7 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `image` | `String` | *Required* | The image reference for the target image. This can also be specified via the `--image` command line option.
 `auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
-`credHelper` | `String` | *None* | Suffix for the credential helper that can authenticate pulling the base image (following `docker-credential-`).
+`credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pushing the target image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 `tags` | `List<String>` | *None* | Additional tags to push to.
 
 <a name="auth-closure"></a>`auth` is a closure with the following properties (see [Using Specific Credentials](#using-specific-credentials)):
@@ -192,8 +198,8 @@ Property | Type
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`appRoot` | `String` | `/app` | The root directory on the container where the app's contents are placed. 
-`args` | `List<String>` | *None* | Default main method arguments to run your application with.
+`appRoot` | `String` | `/app` | The root directory on the container where the app's contents are placed. Particularly useful for WAR-packaging projects to work with different Servlet engine base images by designating where to put exploded WAR contents; see [WAR usage](#war-projects) as an example.
+`args` | `List<String>` | *None* | Additional program arguments appended to the command to start the container (similar to Docker's [CMD](https://docs.docker.com/engine/reference/builder/#cmd) instruction in relation with [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint)). In the default case where you do not set a custom `entrypoint`, this parameter is effectively the arguments to the main method of your Java application.
 `entrypoint` | `List<String>` | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored.
 `environment` | `Map<String, String>` | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
@@ -202,6 +208,30 @@ Property | Type | Default | Description
 `mainClass` | `String` | *Inferred\** | The main class to launch your application from.
 `ports` | `List<String>` | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
 `useCurrentTimestamp` | `boolean` | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
+`user` | `String` | *None* | The user and group to run the container as. The value can be a username or UID along with an optional groupname or GID. The following are all valid: `user`, `uid`, `user:group`, `uid:gid`, `uid:group`, `user:gid`.
+
+<a name="extradirectory-closure"></a>`extraDirectory` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
+
+Property | Type
+--- | ---
+`path` | `File`
+`permissions` | `Map<String, String>`
+
+#### System Properties
+
+Each of these parameters is configurable via commandline using system properties. Jib's system properties follow the same naming convention as the configuration parameters, with each level separated by dots (i.e. `-Djib.parameterName[.nestedParameter.[...]]=value`). Some examples are below:
+```shell
+gradle jib \
+    -Djib.to.image=myregistry/myimage:latest \
+    -Djib.to.auth.username=$USERNAME \
+    -Djib.to.auth.password=$PASSWORD
+
+gradle jibDockerBuild \
+    -Djib.container.environment=key1="value1",key2="value2" \
+    -Djib.container.args=arg1,arg2,arg3
+
+gradle jibBuildTar -Djib.useProjectOnlyCache=true
+```
 
 You can also configure HTTP connection/read timeouts for registry interactions using the `jib.httpTimeout` system property, configured in milliseconds via commandline (the default is `20000`; you can also set it to `0` for infinite timeout):
 
@@ -248,14 +278,25 @@ jib {
 
 You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
-You can configure a different directory by using the `extraDirectory` parameter in your `build.gradle`:
+You can configure a different directory by using the `jib.extraDirectory` parameter in your `build.gradle`:
+```groovy
+jib {
+  // Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib'
+  extraDirectory = file('src/main/custom-extra-dir')
+}
+```
+
+Alternatively, the `jib.extraDirectory` parameter can be used as a closure to set a custom extra directory, as well as the extra files' permissions on the container:
 
 ```groovy
 jib {
-  ...
-  // Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib'
-  extraDirectory = file('src/main/custom-extra-dir')
-  ...
+  extraDirectory {
+    path = file('src/main/custom-extra-dir')  // Copies files from 'src/main/custom-extra-dir'
+    permissions = [
+        '/path/on/container/to/fileA': '755',  // Read/write/execute for owner, read/execute for group/other
+        '/path/to/another/file': '644'  // Read/write for owner, read-only for group/other
+    ]
+  }
 }
 ```
 
@@ -327,6 +368,26 @@ jib {
       password = file('keyfile.json').text
     }
   }
+}
+```
+
+### WAR Projects
+
+Jib also containerizes WAR projects. If the Gradle project uses the [WAR Plugin](https://docs.gradle.org/current/userguide/war_plugin.html), Jib will by default use the [distroless Jetty](https://github.com/GoogleContainerTools/distroless/tree/master/java/jetty) as a base image to deploy the project WAR. No extra configuration is necessary other than using the WAR Plugin to make Jib build WAR images.
+
+Note that Jib will work slightly differently for WAR projects from JAR projects:
+   - `container.mainClass` and `container.jvmFlags` are ignored.
+   - The WAR will be exploded into `/jetty/webapps/ROOT`, which is the expected WAR location for the distroless Jetty base image.
+
+To use a different Servlet engine base image, you can customize `container.appRoot`, `container.entrypoint`, and `container.args`. If you do not set `entrypoint` or `args`, Jib will inherit the `ENTRYPOINT` and `CMD` of the base image, so in many cases, you may need to configure them. However, you will most likely have to set `container.appRoot` to a proper location depending on the base image. Here is an example of using a Tomcat image:
+
+```gradle
+jib {
+  from.image = 'tomcat:8.5-jre8-alpine'
+
+  // For demonstration only: this directory in the base image contains a Tomcat default
+  // app (welcome page), so you may first want to delete this directory in the base image.
+  container.appRoot = '/usr/local/tomcat/webapps/ROOT'
 }
 ```
 
