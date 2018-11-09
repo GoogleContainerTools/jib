@@ -216,16 +216,16 @@ public class JsonToImageTranslator {
       return ImmutableList.of();
     }
 
-    ImmutableList.Builder<AbsoluteUnixPath> listBuilder = ImmutableList.builder();
+    ImmutableList.Builder<AbsoluteUnixPath> volumeList = ImmutableList.builder();
     for (String volume : volumeMap.keySet()) {
       try {
-        listBuilder.add(AbsoluteUnixPath.get(volume));
+        volumeList.add(AbsoluteUnixPath.get(volume));
       } catch (IllegalArgumentException exception) {
         throw new BadContainerConfigurationFormatException("Invalid volume path: " + volume);
       }
     }
 
-    return listBuilder.build();
+    return volumeList.build();
   }
 
   private JsonToImageTranslator() {}
