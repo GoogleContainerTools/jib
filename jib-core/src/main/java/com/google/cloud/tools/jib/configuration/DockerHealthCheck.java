@@ -90,7 +90,7 @@ public class DockerHealthCheck {
   }
 
   /**
-   * Creates a disabled {@link DockerHealthCheck}.
+   * Creates a disabled {@link DockerHealthCheck} (corresponds to "NONE" in container config).
    *
    * @return the new {@link DockerHealthCheck}
    */
@@ -100,7 +100,7 @@ public class DockerHealthCheck {
 
   /**
    * Creates a new {@link DockerHealthCheck.Builder} with the command set to be inherited from the
-   * base image.
+   * base image (corresponds to empty list in container config).
    *
    * @return the new {@link DockerHealthCheck.Builder}
    */
@@ -110,7 +110,7 @@ public class DockerHealthCheck {
 
   /**
    * Creates a new {@link DockerHealthCheck.Builder} with the specified healthcheck command to be
-   * directly executed.
+   * directly executed (corresponds to "CMD" in container config).
    *
    * @param command the healthcheck command to execute
    * @return the new {@link DockerHealthCheck.Builder}
@@ -121,7 +121,7 @@ public class DockerHealthCheck {
 
   /**
    * Creates a new {@link DockerHealthCheck.Builder} with the specified healthcheck command to be
-   * directly executed.
+   * directly executed (corresponds to "CMD" in container config).
    *
    * @param command the healthcheck command to execute
    * @return the new {@link DockerHealthCheck.Builder}
@@ -133,8 +133,8 @@ public class DockerHealthCheck {
 
   /**
    * Creates a new {@link DockerHealthCheck.Builder} with the specified healthcheck command to be
-   * run by the container's default shell. This command cannot be run on containers with no default
-   * shell.
+   * run by the container's default shell (corresponds to "CMD-SHELL" in container config). This
+   * command cannot be run on containers with no default shell.
    *
    * @param command the shell command to run
    * @return the new {@link DockerHealthCheck.Builder}
