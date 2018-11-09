@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -169,15 +170,18 @@ public class ImageToJsonTranslator {
     template.setContainerUser(image.getUser());
 
     // Healthcheck is not supported by OCI
-    if (image.getImageFormat() != OCIManifestTemplate.class) {
-      template.setContainerHealthTest(image.getHealthTest());
+    if (image.getImageFormat() != OCIManifestTemplate.class && image.getHealthCheck() != null) {
+      DockerHealthCheck healthCheck = image.getHealthCheck();
+      template.setContainerHealthTest(healthCheck.getCommand().orElse(ImmutableList.of()));
       template.setContainerHealthInterval(
-          image.getHealthInterval() == null ? null : image.getHealthInterval().toNanos());
+          healthCheck.getInterval().isPresent() ? healthCheck.getInterval().get().toNanos() : null);
       template.setContainerHealthTimeout(
-          image.getHealthTimeout() == null ? null : image.getHealthTimeout().toNanos());
+          healthCheck.getTimeout().isPresent() ? healthCheck.getTimeout().get().toNanos() : null);
       template.setContainerHealthStartPeriod(
-          image.getHealthStartPeriod() == null ? null : image.getHealthStartPeriod().toNanos());
-      template.setContainerHealthRetries(image.getHealthRetries());
+          healthCheck.getStartPeriod().isPresent()
+              ? healthCheck.getStartPeriod().get().toNanos()
+              : null);
+      template.setContainerHealthRetries(healthCheck.getRetries().orElse(null));
     }
 
     // Serializes into JSON.

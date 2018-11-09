@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.image.json;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -60,11 +61,13 @@ public class ImageToJsonTranslatorTest {
             .addEnvironmentVariable("VAR2", "VAL2")
             .setEntrypoint(Arrays.asList("some", "entrypoint", "command"))
             .setProgramArguments(Arrays.asList("arg1", "arg2"))
-            .setHealthTest(Arrays.asList("CMD-SHELL", "/checkhealth"))
-            .setHealthInterval(Duration.ofSeconds(3))
-            .setHealthTimeout(Duration.ofSeconds(1))
-            .setHealthStartPeriod(Duration.ofSeconds(2))
-            .setHealthRetries(3)
+            .setHealthCheck(
+                DockerHealthCheck.builderWithShellCommand("/checkhealth")
+                    .setInterval(Duration.ofSeconds(3))
+                    .setTimeout(Duration.ofSeconds(1))
+                    .setStartPeriod(Duration.ofSeconds(2))
+                    .setRetries(3)
+                    .build())
             .setExposedPorts(ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)))
             .setVolumes(
                 Arrays.asList(

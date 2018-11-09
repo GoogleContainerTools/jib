@@ -16,13 +16,13 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -47,11 +47,7 @@ public class Image<T extends Layer> {
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
-    @Nullable private ImmutableList<String> healthTest;
-    @Nullable private Duration healthInterval;
-    @Nullable private Duration healthTimeout;
-    @Nullable private Duration healthStartPeriod;
-    @Nullable private Integer healthRetries;
+    @Nullable private DockerHealthCheck healthCheck;
     @Nullable private ImmutableList<Port> exposedPorts;
     @Nullable private ImmutableList<AbsoluteUnixPath> volumes;
     @Nullable private String workingDirectory;
@@ -132,58 +128,13 @@ public class Image<T extends Layer> {
     }
 
     /**
-     * Sets the command used to check the container's health.
+     * Sets the container's healthcheck configuration.
      *
-     * @param healthTest the list of healthcheck command tokens
+     * @param healthCheck the healthcheck configuration
      * @return this
      */
-    public Builder<T> setHealthTest(@Nullable List<String> healthTest) {
-      this.healthTest = (healthTest == null) ? null : ImmutableList.copyOf(healthTest);
-      return this;
-    }
-
-    /**
-     * Sets the time to wait between healthcheck attempts.
-     *
-     * @param healthInterval the time duration to wait between healthcheck attempts
-     * @return this
-     */
-    public Builder<T> setHealthInterval(@Nullable Duration healthInterval) {
-      this.healthInterval = healthInterval;
-      return this;
-    }
-
-    /**
-     * Sets the time to wait before considering a check to have hung.
-     *
-     * @param healthTimeout the time duration to wait before considering a check to have hung
-     * @return this
-     */
-    public Builder<T> setHealthTimeout(@Nullable Duration healthTimeout) {
-      this.healthTimeout = healthTimeout;
-      return this;
-    }
-
-    /**
-     * Sets the time to wait for container to initialize before starting healthcheck retries.
-     *
-     * @param healthStartPeriod the time duration to wait before starting healthcheck retries
-     * @return this
-     */
-    public Builder<T> setHealthStartPeriod(@Nullable Duration healthStartPeriod) {
-      this.healthStartPeriod = healthStartPeriod;
-      return this;
-    }
-
-    /**
-     * Sets the number of consecutive failures needed to consider the container as unhealthy.
-     *
-     * @param healthRetries the number of consecutive failures needed to consider the container as
-     *     unhealthy
-     * @return this
-     */
-    public Builder<T> setHealthRetries(@Nullable Integer healthRetries) {
-      this.healthRetries = healthRetries;
+    public Builder<T> setHealthCheck(@Nullable DockerHealthCheck healthCheck) {
+      this.healthCheck = healthCheck;
       return this;
     }
 
@@ -277,11 +228,7 @@ public class Image<T extends Layer> {
           ImmutableMap.copyOf(environmentBuilder),
           entrypoint,
           programArguments,
-          healthTest,
-          healthInterval,
-          healthTimeout,
-          healthStartPeriod,
-          healthRetries,
+          healthCheck,
           exposedPorts,
           volumes,
           ImmutableMap.copyOf(labelsBuilder),
@@ -316,20 +263,8 @@ public class Image<T extends Layer> {
   /** Arguments to append to the image entrypoint when running the image. */
   @Nullable private final ImmutableList<String> programArguments;
 
-  /** Healthcheck command. */
-  @Nullable private final ImmutableList<String> healthTest;
-
-  /** Time between healthcheck runs. */
-  @Nullable private final Duration healthInterval;
-
-  /** Time until a healthcheck is considered hung. */
-  @Nullable private final Duration healthTimeout;
-
-  /** Time to wait for container to initialize before starting healthcheck retries. */
-  @Nullable private final Duration healthStartPeriod;
-
-  /** Number of retries to allow before failing the healthcheck. */
-  @Nullable private final Integer healthRetries;
+  /** Healthcheck configuration. */
+  @Nullable private final DockerHealthCheck healthCheck;
 
   /** Ports that the container listens on. */
   @Nullable private final ImmutableList<Port> exposedPorts;
@@ -354,11 +289,7 @@ public class Image<T extends Layer> {
       @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> programArguments,
-      @Nullable ImmutableList<String> healthTest,
-      @Nullable Duration healthInterval,
-      @Nullable Duration healthTimeout,
-      @Nullable Duration healthStartPeriod,
-      @Nullable Integer healthRetries,
+      @Nullable DockerHealthCheck healthCheck,
       @Nullable ImmutableList<Port> exposedPorts,
       @Nullable ImmutableList<AbsoluteUnixPath> volumes,
       @Nullable ImmutableMap<String, String> labels,
@@ -371,11 +302,7 @@ public class Image<T extends Layer> {
     this.environment = environment;
     this.entrypoint = entrypoint;
     this.programArguments = programArguments;
-    this.healthTest = healthTest;
-    this.healthInterval = healthInterval;
-    this.healthTimeout = healthTimeout;
-    this.healthStartPeriod = healthStartPeriod;
-    this.healthRetries = healthRetries;
+    this.healthCheck = healthCheck;
     this.exposedPorts = exposedPorts;
     this.volumes = volumes;
     this.labels = labels;
@@ -408,28 +335,8 @@ public class Image<T extends Layer> {
   }
 
   @Nullable
-  public ImmutableList<String> getHealthTest() {
-    return healthTest;
-  }
-
-  @Nullable
-  public Duration getHealthInterval() {
-    return healthInterval;
-  }
-
-  @Nullable
-  public Duration getHealthTimeout() {
-    return healthTimeout;
-  }
-
-  @Nullable
-  public Duration getHealthStartPeriod() {
-    return healthStartPeriod;
-  }
-
-  @Nullable
-  public Integer getHealthRetries() {
-    return healthRetries;
+  public DockerHealthCheck getHealthCheck() {
+    return healthCheck;
   }
 
   @Nullable
