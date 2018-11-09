@@ -19,39 +19,74 @@ package com.google.cloud.tools.jib.docker;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 /** Calls out to the {@code docker} CLI. */
 public class DockerClient {
 
-  private static final String DEFAULT_DOCKER_CLIENT = "docker";
+  /** Builds a {@link DockerClient}. */
+  public static class Builder {
+
+    private Path dockerExecutable = DEFAULT_DOCKER_CLIENT;
+    private ImmutableMap<String, String> dockerEnvironment = ImmutableMap.of();
+
+    private Builder() {}
+
+    /**
+     * Sets a path for a {@code docker} executable.
+     *
+     * @param dockerExecutable path to {@code docker}
+     * @return this
+     */
+    public Builder setDockerExecutable(Path dockerExecutable) {
+      this.dockerExecutable = dockerExecutable;
+      return this;
+    }
+
+    /**
+     * Sets environment variables to use when executing the {@code docker} executable.
+     *
+     * @param dockerEnvironment environment variables for {@code docker}
+     * @return this
+     */
+    public Builder setDockerEnvironment(ImmutableMap<String, String> dockerEnvironment) {
+      this.dockerEnvironment = dockerEnvironment;
+      return this;
+    }
+
+    public DockerClient build() {
+      return new DockerClient(dockerExecutable, dockerEnvironment);
+    }
+  }
+
+  /**
+   * Gets a new {@link Builder} for {@link DockerClient} with defaults.
+   *
+   * @return a new {@link Builder}
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
 
   /**
    * Instantiates with the default {@code docker} executable.
    *
    * @return a new {@link DockerClient}
    */
-  public static DockerClient newClient() {
-    return new DockerClient(defaultProcessBuilderFactory(DEFAULT_DOCKER_CLIENT));
-  }
-
-  /**
-   * Instantiates with a custom {@code docker} executable.
-   *
-   * @param dockerExecutable path to {@code docker}
-   * @return a new {@link DockerClient}
-   */
-  public static DockerClient newClient(Path dockerExecutable) {
-    return new DockerClient(defaultProcessBuilderFactory(dockerExecutable.toString()));
+  public static DockerClient newDefaultClient() {
+    return builder().build();
   }
 
   /**
@@ -61,15 +96,23 @@ public class DockerClient {
    * @param dockerExecutable path to {@code docker}
    * @return the default {@link ProcessBuilder} factory for running a {@code docker} subcommand
    */
-  private static Function<List<String>, ProcessBuilder> defaultProcessBuilderFactory(
-      String dockerExecutable) {
+  @VisibleForTesting
+  static Function<List<String>, ProcessBuilder> defaultProcessBuilderFactory(
+      String dockerExecutable, ImmutableMap<String, String> dockerEnvironment) {
     return dockerSubCommand -> {
       List<String> dockerCommand = new ArrayList<>(1 + dockerSubCommand.size());
       dockerCommand.add(dockerExecutable);
       dockerCommand.addAll(dockerSubCommand);
-      return new ProcessBuilder(dockerCommand);
+
+      ProcessBuilder processBuilder = new ProcessBuilder(dockerCommand);
+      Map<String, String> environment = processBuilder.environment();
+      environment.putAll(dockerEnvironment);
+
+      return processBuilder;
     };
   }
+
+  private static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
 
   /** Factory for generating the {@link ProcessBuilder} for running {@code docker} commands. */
   private final Function<List<String>, ProcessBuilder> processBuilderFactory;
@@ -80,12 +123,36 @@ public class DockerClient {
   }
 
   /**
-   * @return {@code true} if Docker is installed on the user's system and accessible as {@code
-   *     docker}
+   * Instantiates with a {@code docker} executable and environment variables.
+   *
+   * @param dockerExecutable path to {@code docker}
+   * @param dockerEnvironment environment variables for {@code docker}
+   * @return a new {@link DockerClient}
    */
-  public boolean isDockerInstalled() {
+  private DockerClient(Path dockerExecutable, ImmutableMap<String, String> dockerEnvironment) {
+    this(defaultProcessBuilderFactory(dockerExecutable.toString(), dockerEnvironment));
+  }
+
+  /**
+   * Checks if Docker is installed on the user's system and accessible by running the default {@code
+   * docker} command.
+   *
+   * @return {@code true} if Docker is installed on the user's system and accessible
+   */
+  public static boolean isDefaultDockerInstalled() {
+    return isDockerInstalled(DEFAULT_DOCKER_CLIENT);
+  }
+
+  /**
+   * Checks if Docker is installed on the user's system and accessible by running the given {@code
+   * docker} executable.
+   *
+   * @param dockerExecutable path to the executable to test running
+   * @return {@code true} if Docker is installed on the user's system and accessible
+   */
+  public static boolean isDockerInstalled(Path dockerExecutable) {
     try {
-      docker();
+      new ProcessBuilder(dockerExecutable.toString()).start();
       return true;
 
     } catch (IOException ex) {

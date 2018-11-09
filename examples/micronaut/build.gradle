@@ -3,39 +3,38 @@ plugins {
     id 'groovy'
     id 'io.spring.dependency-management' version '1.0.6.RELEASE'
     id 'net.ltgt.apt-idea' version '0.18'
-    id 'com.google.cloud.tools.jib' version '0.9.12'
+    id 'com.google.cloud.tools.jib' version '0.10.0'
 }
 
 version '0.1'
 group 'example.micronaut-jib'
 
 repositories {
-    mavenLocal()
     mavenCentral()
     maven { url 'https://jcenter.bintray.com' }
 }
 
 dependencyManagement {
     imports {
-        mavenBom 'io.micronaut:bom:1.0.0.M4'
+        mavenBom 'io.micronaut:micronaut-bom:1.0.0'
     }
 }
 
 dependencies {
-    annotationProcessor 'io.micronaut:inject-java'
-    compile 'io.micronaut:http-client'
-    compile 'io.micronaut:http-server-netty'
-    compile 'io.micronaut:runtime-groovy'
-    compile 'io.micronaut:inject'
-    compile 'io.micronaut:runtime'
-    compileOnly 'io.micronaut:inject-groovy'
-    compileOnly 'io.micronaut:inject-java'
+    annotationProcessor 'io.micronaut:micronaut-inject-java'
+    compile 'io.micronaut:micronaut-http-client'
+    compile 'io.micronaut:micronaut-http-server-netty'
+    compile 'io.micronaut:micronaut-runtime-groovy'
+    compile 'io.micronaut:micronaut-inject'
+    compile 'io.micronaut:micronaut-runtime'
+    compileOnly 'io.micronaut:micronaut-inject-groovy'
+    compileOnly 'io.micronaut:micronaut-inject-java'
     runtime 'ch.qos.logback:logback-classic:1.2.3'
-    testCompile 'io.micronaut:inject-groovy'
+    testCompile 'io.micronaut:micronaut-inject-groovy'
     testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
         exclude group: 'org.codehaus.groovy', module: 'groovy-all'
     }
-    testCompile 'io.micronaut:inject-java'
+    testCompile 'io.micronaut:micronaut-inject-java'
 }
 
 compileJava.options.compilerArgs += '-parameters'

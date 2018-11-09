@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.docker;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,6 +30,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -54,15 +57,8 @@ public class DockerClientTest {
   }
 
   @Test
-  public void testIsDockerInstalled_pass() {
-    Assert.assertTrue(new DockerClient(ignored -> mockProcessBuilder).isDockerInstalled());
-  }
-
-  @Test
   public void testIsDockerInstalled_fail() {
-    ProcessBuilder nonexistentProcessBuilder =
-        new ProcessBuilder(Paths.get("path/to/nonexistent/file").toString());
-    Assert.assertFalse(new DockerClient(ignored -> nonexistentProcessBuilder).isDockerInstalled());
+    Assert.assertFalse(DockerClient.isDockerInstalled(Paths.get("path/to/nonexistent/file")));
   }
 
   @Test
@@ -179,6 +175,31 @@ public class DockerClientTest {
     Mockito.when(mockProcess.waitFor()).thenReturn(0);
 
     testDockerClient.tag(ImageReference.of(null, "original", null), ImageReference.parse("new"));
+  }
+
+  @Test
+  public void testDefaultProcessorBuilderFactory_customExecutable() {
+    ProcessBuilder processBuilder =
+        DockerClient.defaultProcessBuilderFactory("docker-executable", ImmutableMap.of())
+            .apply(Arrays.asList("sub", "command"));
+
+    Assert.assertEquals(
+        Arrays.asList("docker-executable", "sub", "command"), processBuilder.command());
+    Assert.assertEquals(System.getenv(), processBuilder.environment());
+  }
+
+  @Test
+  public void testDefaultProcessorBuilderFactory_customEnvironment() {
+    ImmutableMap<String, String> environment = ImmutableMap.of("Key1", "Value1");
+
+    Map<String, String> expectedEnvironment = new HashMap<>(System.getenv());
+    expectedEnvironment.putAll(environment);
+
+    ProcessBuilder processBuilder =
+        DockerClient.defaultProcessBuilderFactory("docker", environment)
+            .apply(Collections.emptyList());
+
+    Assert.assertEquals(expectedEnvironment, processBuilder.environment());
   }
 
   @Test

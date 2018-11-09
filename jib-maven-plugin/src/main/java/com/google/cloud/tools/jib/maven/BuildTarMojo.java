@@ -60,7 +60,6 @@ public class BuildTarMojo extends JibPluginConfiguration {
       return;
     }
 
-    MojoCommon.disableHttpLogging();
     try {
       AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
       MavenProjectProperties projectProperties =

@@ -17,12 +17,14 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -36,8 +38,11 @@ public class Image<T extends Layer> {
     private final Class<? extends BuildableManifestTemplate> imageFormat;
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
     private final ImmutableList.Builder<HistoryEntry> historyBuilder = ImmutableList.builder();
-    private final ImmutableMap.Builder<String, String> environmentBuilder = ImmutableMap.builder();
-    private final ImmutableMap.Builder<String, String> labelsBuilder = ImmutableMap.builder();
+
+    // Don't use ImmutableMap.Builder because it does not allow for replacing existing keys with new
+    // values.
+    private final Map<String, String> environmentBuilder = new HashMap<>();
+    private final Map<String, String> labelsBuilder = new HashMap<>();
 
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
@@ -48,6 +53,7 @@ public class Image<T extends Layer> {
     @Nullable private Duration healthStartPeriod;
     @Nullable private Integer healthRetries;
     @Nullable private ImmutableList<Port> exposedPorts;
+    @Nullable private ImmutableList<AbsoluteUnixPath> volumes;
     @Nullable private String workingDirectory;
     @Nullable private String user;
 
@@ -193,6 +199,17 @@ public class Image<T extends Layer> {
     }
 
     /**
+     * Sets the items in the "Volumes" field in the container configuration.
+     *
+     * @param volumes the list of directories to create a volume.
+     * @return this
+     */
+    public Builder<T> setVolumes(@Nullable List<AbsoluteUnixPath> volumes) {
+      this.volumes = (volumes == null) ? null : ImmutableList.copyOf(volumes);
+      return this;
+    }
+
+    /**
      * Adds items to the "Labels" field in the container configuration.
      *
      * @param labels the map of labels to add
@@ -257,7 +274,7 @@ public class Image<T extends Layer> {
           created,
           imageLayersBuilder.build(),
           historyBuilder.build(),
-          environmentBuilder.build(),
+          ImmutableMap.copyOf(environmentBuilder),
           entrypoint,
           programArguments,
           healthTest,
@@ -266,7 +283,8 @@ public class Image<T extends Layer> {
           healthStartPeriod,
           healthRetries,
           exposedPorts,
-          labelsBuilder.build(),
+          volumes,
+          ImmutableMap.copyOf(labelsBuilder),
           workingDirectory,
           user);
     }
@@ -316,6 +334,9 @@ public class Image<T extends Layer> {
   /** Ports that the container listens on. */
   @Nullable private final ImmutableList<Port> exposedPorts;
 
+  /** List of directories to mount as volumes. */
+  @Nullable private final ImmutableList<AbsoluteUnixPath> volumes;
+
   /** Labels on the container configuration */
   @Nullable private final ImmutableMap<String, String> labels;
 
@@ -339,6 +360,7 @@ public class Image<T extends Layer> {
       @Nullable Duration healthStartPeriod,
       @Nullable Integer healthRetries,
       @Nullable ImmutableList<Port> exposedPorts,
+      @Nullable ImmutableList<AbsoluteUnixPath> volumes,
       @Nullable ImmutableMap<String, String> labels,
       @Nullable String workingDirectory,
       @Nullable String user) {
@@ -355,6 +377,7 @@ public class Image<T extends Layer> {
     this.healthStartPeriod = healthStartPeriod;
     this.healthRetries = healthRetries;
     this.exposedPorts = exposedPorts;
+    this.volumes = volumes;
     this.labels = labels;
     this.workingDirectory = workingDirectory;
     this.user = user;
@@ -412,6 +435,11 @@ public class Image<T extends Layer> {
   @Nullable
   public ImmutableList<Port> getExposedPorts() {
     return exposedPorts;
+  }
+
+  @Nullable
+  public ImmutableList<AbsoluteUnixPath> getVolumes() {
+    return volumes;
   }
 
   @Nullable

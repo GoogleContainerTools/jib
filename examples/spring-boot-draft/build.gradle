@@ -10,7 +10,7 @@ buildscript {
     }
 }
 plugins {
-    id 'com.google.cloud.tools.jib' version '0.9.12'
+    id 'com.google.cloud.tools.jib' version '0.10.0'
 }
 
 apply plugin: 'java'

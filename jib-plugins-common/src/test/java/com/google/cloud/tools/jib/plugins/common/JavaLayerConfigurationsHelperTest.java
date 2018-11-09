@@ -17,8 +17,10 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -31,7 +33,9 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /** Tests for {@link JavaLayerConfigurationsHelper}. */
 public class JavaLayerConfigurationsHelperTest {
@@ -54,45 +58,51 @@ public class JavaLayerConfigurationsHelperTest {
         expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   @Test
   public void testFromExplodedWar() throws URISyntaxException, IOException {
-    Path explodedWar = Paths.get(Resources.getResource("exploded-war").toURI());
-    Files.createDirectories(explodedWar.resolve("WEB-INF/classes/empty_dir"));
+    // Copy test files to a temporary directory that we can safely operate on
+    Path resourceExplodedWar = Paths.get(Resources.getResource("exploded-war").toURI());
+    FileOperations.copy(ImmutableList.of(resourceExplodedWar), temporaryFolder.getRoot().toPath());
+    Path temporaryExplodedWar = temporaryFolder.getRoot().toPath().resolve("exploded-war");
+
+    Files.createDirectories(temporaryExplodedWar.resolve("WEB-INF/classes/empty_dir"));
     Path extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
 
     JavaLayerConfigurations configuration =
         JavaLayerConfigurationsHelper.fromExplodedWar(
-            explodedWar,
+            temporaryExplodedWar,
             AbsoluteUnixPath.get("/my/app"),
             extraFilesDirectory,
             Collections.emptyMap());
 
     assertSourcePathsUnordered(
-        Collections.singletonList(explodedWar.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
+        Collections.singletonList(temporaryExplodedWar.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
         configuration.getDependencyLayerEntries());
     assertSourcePathsUnordered(
         Collections.singletonList(
-            explodedWar.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
+            temporaryExplodedWar.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
         configuration.getSnapshotDependencyLayerEntries());
     assertSourcePathsUnordered(
         Arrays.asList(
-            explodedWar.resolve("META-INF"),
-            explodedWar.resolve("META-INF/context.xml"),
-            explodedWar.resolve("Test.jsp"),
-            explodedWar.resolve("WEB-INF"),
-            explodedWar.resolve("WEB-INF/classes"),
-            explodedWar.resolve("WEB-INF/classes/empty_dir"),
-            explodedWar.resolve("WEB-INF/classes/package"),
-            explodedWar.resolve("WEB-INF/classes/package/test.properties"),
-            explodedWar.resolve("WEB-INF/lib"),
-            explodedWar.resolve("WEB-INF/web.xml")),
+            temporaryExplodedWar.resolve("META-INF"),
+            temporaryExplodedWar.resolve("META-INF/context.xml"),
+            temporaryExplodedWar.resolve("Test.jsp"),
+            temporaryExplodedWar.resolve("WEB-INF"),
+            temporaryExplodedWar.resolve("WEB-INF/classes"),
+            temporaryExplodedWar.resolve("WEB-INF/classes/empty_dir"),
+            temporaryExplodedWar.resolve("WEB-INF/classes/package"),
+            temporaryExplodedWar.resolve("WEB-INF/classes/package/test.properties"),
+            temporaryExplodedWar.resolve("WEB-INF/lib"),
+            temporaryExplodedWar.resolve("WEB-INF/web.xml")),
         configuration.getResourceLayerEntries());
     assertSourcePathsUnordered(
         Arrays.asList(
-            explodedWar.resolve("WEB-INF/classes/HelloWorld.class"),
-            explodedWar.resolve("WEB-INF/classes/empty_dir"),
-            explodedWar.resolve("WEB-INF/classes/package"),
-            explodedWar.resolve("WEB-INF/classes/package/Other.class")),
+            temporaryExplodedWar.resolve("WEB-INF/classes/HelloWorld.class"),
+            temporaryExplodedWar.resolve("WEB-INF/classes/empty_dir"),
+            temporaryExplodedWar.resolve("WEB-INF/classes/package"),
+            temporaryExplodedWar.resolve("WEB-INF/classes/package/Other.class")),
         configuration.getClassLayerEntries());
     assertSourcePathsUnordered(
         Arrays.asList(
