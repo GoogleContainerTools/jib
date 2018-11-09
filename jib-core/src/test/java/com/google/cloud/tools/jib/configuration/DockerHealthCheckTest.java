@@ -27,7 +27,7 @@ public class DockerHealthCheckTest {
   @Test
   public void testBuild_parameters() {
     DockerHealthCheck healthCheck =
-        DockerHealthCheck.withInheritedCommand()
+        DockerHealthCheck.builderWithInheritedCommand()
             .setInterval(Duration.ofNanos(123))
             .setTimeout(Duration.ofNanos(456))
             .setStartPeriod(Duration.ofNanos(789))
@@ -46,13 +46,14 @@ public class DockerHealthCheckTest {
 
   @Test
   public void testBuild_propagated() {
-    DockerHealthCheck healthCheck = DockerHealthCheck.withInheritedCommand().build();
+    DockerHealthCheck healthCheck = DockerHealthCheck.builderWithInheritedCommand().build();
     Assert.assertFalse(healthCheck.getCommand().isPresent());
   }
 
   @Test
   public void testBuild_execArray() {
-    DockerHealthCheck healthCheck = DockerHealthCheck.withExecCommand("test", "command").build();
+    DockerHealthCheck healthCheck =
+        DockerHealthCheck.builderWithExecCommand("test", "command").build();
     Assert.assertTrue(healthCheck.getCommand().isPresent());
     Assert.assertEquals(ImmutableList.of("CMD", "test", "command"), healthCheck.getCommand().get());
   }
@@ -60,14 +61,15 @@ public class DockerHealthCheckTest {
   @Test
   public void testBuild_execList() {
     DockerHealthCheck healthCheck =
-        DockerHealthCheck.withExecCommand(ImmutableList.of("test", "command")).build();
+        DockerHealthCheck.builderWithExecCommand(ImmutableList.of("test", "command")).build();
     Assert.assertTrue(healthCheck.getCommand().isPresent());
     Assert.assertEquals(ImmutableList.of("CMD", "test", "command"), healthCheck.getCommand().get());
   }
 
   @Test
   public void testBuild_shell() {
-    DockerHealthCheck healthCheck = DockerHealthCheck.withShellCommand("shell command").build();
+    DockerHealthCheck healthCheck =
+        DockerHealthCheck.builderWithShellCommand("shell command").build();
     Assert.assertTrue(healthCheck.getCommand().isPresent());
     Assert.assertEquals(
         ImmutableList.of("CMD-SHELL", "shell command"), healthCheck.getCommand().get());

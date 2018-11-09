@@ -104,7 +104,7 @@ public class DockerHealthCheck {
    *
    * @return the new {@link DockerHealthCheck.Builder}
    */
-  public static Builder withInheritedCommand() {
+  public static Builder builderWithInheritedCommand() {
     return new Builder(null);
   }
 
@@ -115,7 +115,7 @@ public class DockerHealthCheck {
    * @param command the healthcheck command to execute
    * @return the new {@link DockerHealthCheck.Builder}
    */
-  public static Builder withExecCommand(List<String> command) {
+  public static Builder builderWithExecCommand(List<String> command) {
     return new Builder(ImmutableList.<String>builder().add("CMD").addAll(command).build());
   }
 
@@ -126,7 +126,7 @@ public class DockerHealthCheck {
    * @param command the healthcheck command to execute
    * @return the new {@link DockerHealthCheck.Builder}
    */
-  public static Builder withExecCommand(String... command) {
+  public static Builder builderWithExecCommand(String... command) {
     return new Builder(
         ImmutableList.<String>builder().add("CMD").addAll(Arrays.asList(command)).build());
   }
@@ -139,7 +139,7 @@ public class DockerHealthCheck {
    * @param command the shell command to run
    * @return the new {@link DockerHealthCheck.Builder}
    */
-  public static Builder withShellCommand(String command) {
+  public static Builder builderWithShellCommand(String command) {
     return new Builder(ImmutableList.of("CMD-SHELL", command));
   }
 
