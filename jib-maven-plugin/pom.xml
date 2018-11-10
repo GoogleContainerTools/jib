@@ -361,10 +361,10 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.22.1</version>
         <configuration>
-          <trimStackTrace>false</trimStackTrace>
           <excludes>
             <exclude>**/*IntegrationTest.java</exclude>
           </excludes>
+          <trimStackTrace>false</trimStackTrace>
         </configuration>
       </plugin>
 
