@@ -156,6 +156,7 @@
               <systemPropertyVariables>
                 <_JIB_DISABLE_USER_AGENT>true</_JIB_DISABLE_USER_AGENT>
               </systemPropertyVariables>
+              <trimStackTrace>false</trimStackTrace>
             </configuration>
             <executions>
               <execution>
@@ -360,6 +361,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.22.1</version>
         <configuration>
+          <trimStackTrace>false</trimStackTrace>
           <excludes>
             <exclude>**/*IntegrationTest.java</exclude>
           </excludes>
