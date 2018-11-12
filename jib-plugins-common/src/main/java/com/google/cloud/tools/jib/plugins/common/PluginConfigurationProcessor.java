@@ -56,7 +56,7 @@ public class PluginConfigurationProcessor {
   private interface InferredAuthProvider {
 
     Optional<AuthProperty> getInferredAuth(String registry) throws InferredAuthRetrievalException;
-  };
+  }
 
   /**
    * Compute the container entrypoint, in this order:
@@ -177,8 +177,11 @@ public class PluginConfigurationProcessor {
             PropertyNames.TO_AUTH_USERNAME,
             PropertyNames.TO_AUTH_PASSWORD,
             rawConfiguration.getToAuth(),
-            "to.auth/<to><auth>",
+            rawConfiguration.getAuthDescriptor("to"),
+            rawConfiguration.getUsernameAuthDescriptor("to"),
+            rawConfiguration.getPasswordAuthDescriptor("to"),
             rawConfiguration::getInferredAuth,
+            rawConfiguration.getInferredAuthDescriptor(),
             rawConfiguration.getToCredHelper().orElse(null));
 
     PluginConfigurationProcessor processor =
@@ -224,8 +227,11 @@ public class PluginConfigurationProcessor {
             PropertyNames.FROM_AUTH_USERNAME,
             PropertyNames.FROM_AUTH_PASSWORD,
             rawConfiguration.getFromAuth(),
-            "from.auth/<from><auth>",
+            rawConfiguration.getAuthDescriptor("from"),
+            rawConfiguration.getUsernameAuthDescriptor("from"),
+            rawConfiguration.getPasswordAuthDescriptor("from"),
             rawConfiguration::getInferredAuth,
+            rawConfiguration.getInferredAuthDescriptor(),
             rawConfiguration.getFromCredHelper().orElse(null));
 
     JibContainerBuilder jibContainerBuilder =
@@ -292,8 +298,11 @@ public class PluginConfigurationProcessor {
       String usernamePropertyName,
       String passwordPropertyName,
       AuthProperty knownAuth,
-      String knownAuthSource,
+      String knownAuthDescriptor,
+      String knownAuthUsernameDescriptor,
+      String knownAuthPasswordDescriptor,
       InferredAuthProvider inferredAuthProvider,
+      String inferredAuthDescriptor,
       @Nullable String credHelper)
       throws FileNotFoundException, InferredAuthRetrievalException {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
@@ -301,12 +310,16 @@ public class PluginConfigurationProcessor {
             CredentialRetrieverFactory.forImage(imageReference, eventDispatcher));
     Optional<Credential> optionalToCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            eventDispatcher, usernamePropertyName, passwordPropertyName, knownAuth);
+            eventDispatcher,
+            usernamePropertyName,
+            passwordPropertyName,
+            knownAuth,
+            knownAuthUsernameDescriptor,
+            knownAuthPasswordDescriptor);
     boolean credentialPresent = optionalToCredential.isPresent();
     if (optionalToCredential.isPresent()) {
-      // TODO: fix https://github.com/GoogleContainerTools/jib/issues/1177
-      // knownAuth.getPropertyDescriptor() may NPE. Fix it and remove the knownAuthSource parameter.
-      defaultCredentialRetrievers.setKnownCredential(optionalToCredential.get(), knownAuthSource);
+      defaultCredentialRetrievers.setKnownCredential(
+          optionalToCredential.get(), knownAuthDescriptor);
     } else {
       Optional<AuthProperty> optionalInferredAuth =
           inferredAuthProvider.getInferredAuth(imageReference.getRegistry());
@@ -316,7 +329,7 @@ public class PluginConfigurationProcessor {
         String username = Verify.verifyNotNull(auth.getUsername());
         String password = Verify.verifyNotNull(auth.getPassword());
         Credential credential = Credential.basic(username, password);
-        defaultCredentialRetrievers.setInferredCredential(credential, auth.getPropertyDescriptor());
+        defaultCredentialRetrievers.setInferredCredential(credential, inferredAuthDescriptor);
       }
     }
     defaultCredentialRetrievers.setCredentialHelper(credHelper);
@@ -347,7 +360,6 @@ public class PluginConfigurationProcessor {
    * @param containerizer the {@link Containerizer} to configure
    * @param rawConfiguration the raw build configuration
    * @param projectProperties the project properties
-   * @param toolName tool name to set
    */
   private static void configureContainerizer(
       Containerizer containerizer,

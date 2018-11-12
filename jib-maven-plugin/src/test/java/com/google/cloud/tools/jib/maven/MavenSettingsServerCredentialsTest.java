@@ -62,7 +62,6 @@ public class MavenSettingsServerCredentialsTest {
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("server1 username", auth.get().getUsername());
     Assert.assertEquals("server1 password", auth.get().getPassword());
-    Assert.assertEquals("Maven settings", auth.get().getPropertyDescriptor());
 
     Mockito.verifyZeroInteractions(mockEventDispatcher);
   }
@@ -114,7 +113,6 @@ public class MavenSettingsServerCredentialsTest {
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("server1 username", auth.get().getUsername());
     Assert.assertEquals("server1 password", auth.get().getPassword());
-    Assert.assertEquals("Maven settings", auth.get().getPropertyDescriptor());
 
     Mockito.verify(mockDecrypter).decrypt(Mockito.any());
     Mockito.verify(mockResult).getProblems();
