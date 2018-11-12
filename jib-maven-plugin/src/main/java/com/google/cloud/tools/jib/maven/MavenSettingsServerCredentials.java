@@ -136,21 +136,6 @@ class MavenSettingsServerCredentials {
           public String getPassword() {
             return password;
           }
-
-          @Override
-          public String getPropertyDescriptor() {
-            return CREDENTIAL_SOURCE;
-          }
-
-          @Override
-          public String getUsernamePropertyDescriptor() {
-            return CREDENTIAL_SOURCE;
-          }
-
-          @Override
-          public String getPasswordPropertyDescriptor() {
-            return CREDENTIAL_SOURCE;
-          }
         });
   }
 }

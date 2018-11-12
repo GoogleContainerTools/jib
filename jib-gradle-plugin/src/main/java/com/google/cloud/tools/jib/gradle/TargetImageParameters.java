@@ -39,8 +39,8 @@ public class TargetImageParameters {
   @Nullable private String credHelper;
 
   @Inject
-  public TargetImageParameters(ObjectFactory objectFactory, String imageDescriptor) {
-    auth = objectFactory.newInstance(AuthParameters.class, imageDescriptor + ".auth");
+  public TargetImageParameters(ObjectFactory objectFactory) {
+    auth = objectFactory.newInstance(AuthParameters.class);
   }
 
   @Input

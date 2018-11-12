@@ -58,6 +58,21 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public String getAuthDescriptor(String source) {
+    return source + ".auth";
+  }
+
+  @Override
+  public String getUsernameAuthDescriptor(String source) {
+    return getAuthDescriptor(source) + ".username";
+  }
+
+  @Override
+  public String getPasswordAuthDescriptor(String source) {
+    return getAuthDescriptor(source) + ".password";
+  }
+
+  @Override
   public Optional<String> getToCredHelper() {
     return Optional.ofNullable(jibExtension.getTo().getCredHelper());
   }
@@ -130,6 +145,11 @@ class GradleRawConfiguration implements RawConfiguration {
   @Override
   public Optional<AuthProperty> getInferredAuth(String authTarget) {
     return Optional.empty();
+  }
+
+  @Override
+  public String getInferredAuthDescriptor() {
+    return "";
   }
 
   @Override
