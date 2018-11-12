@@ -34,12 +34,14 @@ public class MainVerticle extends AbstractVerticle {
     }
 
     private void hello(RoutingContext context) {
+        logger.info("Hello request from {}", context.request().remoteAddress());
         context.response()
                 .putHeader("Content-Type", "text/plain")
                 .end("Hello from Vert.x!");
     }
 
     private void now(RoutingContext context) {
+        logger.info("Time request from {}", context.request().remoteAddress());
         JsonObject data = new JsonObject()
                 .put("powered-by", "vertx")
                 .put("current-time", System.currentTimeMillis());
