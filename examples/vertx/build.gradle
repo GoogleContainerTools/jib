@@ -1,0 +1,25 @@
+plugins {
+    id 'io.vertx.vertx-plugin' version '0.1.0'
+    id 'com.google.cloud.tools.jib' version '0.10.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'io.vertx:vertx-web'
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
+}
+
+vertx {
+    vertxVersion = '3.6.0.CR1'
+    mainVerticle = 'example.vertx.MainVerticle'
+    jvmArgs = ['-Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory']
+}
+
+jib {
+    container {
+        ports = ['8080']
+    }
+}

@@ -1,0 +1,54 @@
+package example.vertx;
+
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class MainVerticle extends AbstractVerticle {
+
+    private final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
+
+    @Override
+    public void start(Future<Void> startFuture) {
+        Router router = Router.router(vertx);
+
+        router.get("/").handler(this::hello);
+        router.get("/time").handler(this::now);
+
+        vertx.createHttpServer()
+                .requestHandler(router)
+                .listen(8080, ar -> {
+                    if (ar.succeeded()) {
+                        startFuture.complete();
+                        logger.info("HTTP server running on port 8080");
+                    } else {
+                        logger.error("Woops", ar.cause());
+                        startFuture.fail(ar.cause());
+                    }
+                });
+    }
+
+    private void hello(RoutingContext context) {
+        context.response()
+                .putHeader("Content-Type", "text/plain")
+                .end("Hello from Vert.x!");
+    }
+
+    private void now(RoutingContext context) {
+        JsonObject data = new JsonObject()
+                .put("powered-by", "vertx")
+                .put("current-time", System.currentTimeMillis());
+        context.response()
+                .putHeader("Content-Type", "application/json")
+                .end(data.encode());
+    }
+
+    public static void main(String[] args) {
+        Vertx.vertx().deployVerticle(new MainVerticle());
+    }
+}

@@ -12,6 +12,10 @@ See [helloworld](helloworld) for containerizing a simple `Hello World` applicati
 
 See [multi-module](multi-module) for containerizing projects with multiple modules.
 
+### Vert.x
+
+See [vertx](vertx) for containerizing [Eclipse Vert.x](https://vertx.io/) applications.
+
 <!-- ### SpringBoot Example 
 
 You can find usage by Gradle or Maven with SpringBoot in [spring-boot](spring-boot-draft#Quickstart) -->
