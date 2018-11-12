@@ -11,6 +11,10 @@ import org.slf4j.LoggerFactory;
 
 public class MainVerticle extends AbstractVerticle {
 
+    public static void main(String[] args) {
+        Vertx.vertx().deployVerticle(new MainVerticle());
+    }
+
     private final Logger logger = LoggerFactory.getLogger(MainVerticle.class);
 
     @Override
@@ -22,13 +26,13 @@ public class MainVerticle extends AbstractVerticle {
 
         vertx.createHttpServer()
                 .requestHandler(router)
-                .listen(8080, ar -> {
-                    if (ar.succeeded()) {
+                .listen(8080, asyncStart -> {
+                    if (asyncStart.succeeded()) {
                         startFuture.complete();
                         logger.info("HTTP server running on port 8080");
                     } else {
-                        logger.error("Woops", ar.cause());
-                        startFuture.fail(ar.cause());
+                        logger.error("Woops", asyncStart.cause());
+                        startFuture.fail(asyncStart.cause());
                     }
                 });
     }
@@ -48,9 +52,5 @@ public class MainVerticle extends AbstractVerticle {
         context.response()
                 .putHeader("Content-Type", "application/json")
                 .end(data.encode());
-    }
-
-    public static void main(String[] args) {
-        Vertx.vertx().deployVerticle(new MainVerticle());
     }
 }
