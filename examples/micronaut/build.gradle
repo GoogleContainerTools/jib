@@ -39,6 +39,7 @@ dependencies {
 
 compileJava.options.compilerArgs += '-parameters'
 compileTestJava.options.compilerArgs += '-parameters'
+run.main = 'example.micronaut.Application'
 
 /** CHANGE THIS TO THE IMAGE YOU WANT TO PUSH TO */
 // jib.to.image = 'gcr.io/PROJECT_ID/micronaut-jib'
