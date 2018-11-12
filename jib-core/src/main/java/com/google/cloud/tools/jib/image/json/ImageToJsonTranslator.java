@@ -80,6 +80,27 @@ public class ImageToJsonTranslator {
   }
 
   /**
+   * Converts the map of environment variables to a list with items in the format "NAME=VALUE".
+   *
+   * @return the list
+   */
+  @VisibleForTesting
+  @Nullable
+  static ImmutableList<String> environmentMapToList(@Nullable Map<String, String> environment) {
+    if (environment == null) {
+      return null;
+    }
+    Preconditions.checkArgument(
+        environment.keySet().stream().noneMatch(key -> key.contains("=")),
+        "Illegal environment variable: name cannot contain '='");
+    return environment
+        .entrySet()
+        .stream()
+        .map(entry -> entry.getKey() + "=" + entry.getValue())
+        .collect(ImmutableList.toImmutableList());
+  }
+
+  /**
    * Turns a list into a sorted map where each element of the list is mapped to an entry composed by
    * the key generated with {@code Function<E, String> elementMapper} and an empty map as value.
    *
@@ -106,27 +127,6 @@ public class ImageToJsonTranslator {
         .collect(
             ImmutableSortedMap.toImmutableSortedMap(
                 String::compareTo, keyMapper, ignored -> Collections.emptyMap()));
-  }
-
-  /**
-   * Converts the map of environment variables to a list with items in the format "NAME=VALUE".
-   *
-   * @return the list
-   */
-  @VisibleForTesting
-  @Nullable
-  static ImmutableList<String> environmentMapToList(@Nullable Map<String, String> environment) {
-    if (environment == null) {
-      return null;
-    }
-    Preconditions.checkArgument(
-        environment.keySet().stream().noneMatch(key -> key.contains("=")),
-        "Illegal environment variable: name cannot contain '='");
-    return environment
-        .entrySet()
-        .stream()
-        .map(entry -> entry.getKey() + "=" + entry.getValue())
-        .collect(ImmutableList.toImmutableList());
   }
 
   private final Image<Layer> image;
@@ -170,7 +170,7 @@ public class ImageToJsonTranslator {
     template.setContainerUser(image.getUser());
 
     // Healthcheck is not supported by OCI
-    if (image.getImageFormat() != OCIManifestTemplate.class && image.getHealthCheck() != null) {
+    if (image.getImageFormat() != OCIManifestTemplate.class) {
       DockerHealthCheck healthCheck = image.getHealthCheck();
       template.setContainerHealthTest(healthCheck.getCommand().orElse(ImmutableList.of()));
       template.setContainerHealthInterval(
