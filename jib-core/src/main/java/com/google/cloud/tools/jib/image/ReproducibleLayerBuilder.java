@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
@@ -67,8 +68,10 @@ public class ReproducibleLayerBuilder {
       // Adds all directories along extraction paths to explicitly set permissions for those
       // directories.
       Path namePath = Paths.get(tarArchiveEntry.getName());
-      if (namePath.getParent() != namePath.getRoot()) {
-        add(new TarArchiveEntry(DIRECTORY_FILE, namePath.getParent().toString()));
+      if (!Objects.equals(namePath.getParent(), namePath.getRoot())) {
+        String parentPath = namePath.getParent().toString();
+        parentPath = parentPath.replace('\\', '/');
+        add(new TarArchiveEntry(DIRECTORY_FILE, parentPath));
       }
 
       entries.add(tarArchiveEntry);
