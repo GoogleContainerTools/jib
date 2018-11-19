@@ -134,12 +134,13 @@ public class JibRunHelper {
     Path digestPath = projectRoot.resolve("build/jib-image.digest");
     Assert.assertTrue(Files.exists(digestPath));
     String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
-    DescriptorDigest.fromDigest(digest);
+    DescriptorDigest digest1 = DescriptorDigest.fromDigest(digest);
 
     Path idPath = projectRoot.resolve("build/jib-image.id");
     Assert.assertTrue(Files.exists(idPath));
     String id = new String(Files.readAllBytes(idPath), StandardCharsets.UTF_8);
-    DescriptorDigest.fromDigest(id);
+    DescriptorDigest digest2 = DescriptorDigest.fromDigest(id);
+    Assert.assertNotEquals(digest1, digest2);
   }
 
   /**

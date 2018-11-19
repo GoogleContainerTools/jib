@@ -129,6 +129,7 @@ public class BuildImageMojoIntegrationTest {
 
       // Test running using image id
       String id = assertImageId(projectRoot);
+      Assert.assertNotEquals(digest, id);
       Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
     } catch (InvalidImageReferenceException ex) {
