@@ -133,6 +133,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
       Path buildOutput = getProject().getBuildDir().toPath();
       BuildStepsRunner.forBuildTar(tarOutputPath)
           .writeImageDigest(buildOutput.resolve("jib-image.digest"))
+          .writeImageId(buildOutput.resolve("jib-image.id"))
           .build(
               pluginConfigurationProcessor.getJibContainerBuilder(),
               pluginConfigurationProcessor.getContainerizer(),

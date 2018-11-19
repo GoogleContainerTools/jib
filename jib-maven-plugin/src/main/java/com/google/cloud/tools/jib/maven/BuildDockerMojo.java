@@ -101,6 +101,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
       BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
           .writeImageDigest(buildOutput.resolve("jib-image.digest"))
+          .writeImageId(buildOutput.resolve("jib-image.id"))
           .build(
               pluginConfigurationProcessor.getJibContainerBuilder(),
               pluginConfigurationProcessor.getContainerizer(),
