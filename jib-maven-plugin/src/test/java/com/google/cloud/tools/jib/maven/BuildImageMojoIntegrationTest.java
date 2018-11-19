@@ -84,11 +84,16 @@ public class BuildImageMojoIntegrationTest {
     return DescriptorDigest.fromDigest(digest).toString();
   }
 
+  static String assertImageId(Path projectRoot) throws IOException, DigestException {
+    Path idPath = projectRoot.resolve("target/jib-image.id");
+    Assert.assertTrue(Files.exists(idPath));
+    String id = new String(Files.readAllBytes(idPath), StandardCharsets.UTF_8);
+    return DescriptorDigest.fromDigest(id).toString();
+  }
+
   /**
    * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
-   *
-   * @throws DigestException
    */
   private static String buildAndRun(Path projectRoot, String imageReference, boolean runTwice)
       throws VerificationException, IOException, InterruptedException, DigestException {
@@ -116,10 +121,17 @@ public class BuildImageMojoIntegrationTest {
     String output = pullAndRunBuiltImage(imageReference);
 
     try {
+      // Test pulling/running using image digest
       String digest = assertImageDigest(projectRoot);
       String imageReferenceWithDigest =
           ImageReference.parse(imageReference).withTag(digest).toString();
       Assert.assertEquals(output, pullAndRunBuiltImage(imageReferenceWithDigest));
+
+      // Test running using image id
+      String id = assertImageId(projectRoot);
+      Assert.assertNotEquals(digest, id);
+      Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
+
     } catch (InvalidImageReferenceException ex) {
       throw new AssertionError("error replacing tag with digest");
     }

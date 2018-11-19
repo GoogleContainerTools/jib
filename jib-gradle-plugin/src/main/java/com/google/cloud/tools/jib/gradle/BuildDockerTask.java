@@ -136,6 +136,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
       Path buildOutput = getProject().getBuildDir().toPath();
       BuildStepsRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
           .writeImageDigest(buildOutput.resolve("jib-image.digest"))
+          .writeImageId(buildOutput.resolve("jib-image.id"))
           .build(
               pluginConfigurationProcessor.getJibContainerBuilder(),
               pluginConfigurationProcessor.getContainerizer(),

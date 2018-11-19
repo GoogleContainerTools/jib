@@ -52,7 +52,7 @@ public class JibRunHelper {
         testProject.build(
             "clean", "jib", "-D_TARGET_IMAGE=" + imageReference, "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    assertImageDigest(testProject.getProjectRoot());
+    assertImageDigestAndId(testProject.getProjectRoot());
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     return pullAndRunBuiltImage(imageReference, extraRunArguments);
@@ -68,7 +68,7 @@ public class JibRunHelper {
             "-D_TARGET_IMAGE=" + imageReference,
             "-D_ADDITIONAL_TAG=" + additionalTag);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
-    assertImageDigest(testProject.getProjectRoot());
+    assertImageDigestAndId(testProject.getProjectRoot());
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     String additionalImageReference =
@@ -92,7 +92,7 @@ public class JibRunHelper {
             "-D_TARGET_IMAGE=" + imageReference,
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
-    assertImageDigest(testProject.getProjectRoot());
+    assertImageDigestAndId(testProject.getProjectRoot());
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
 
     String history = new Command("docker", "history", imageReference).run();
@@ -130,11 +130,17 @@ public class JibRunHelper {
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
   }
 
-  static void assertImageDigest(Path projectRoot) throws IOException, DigestException {
+  static void assertImageDigestAndId(Path projectRoot) throws IOException, DigestException {
     Path digestPath = projectRoot.resolve("build/jib-image.digest");
     Assert.assertTrue(Files.exists(digestPath));
     String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
-    DescriptorDigest.fromDigest(digest);
+    DescriptorDigest digest1 = DescriptorDigest.fromDigest(digest);
+
+    Path idPath = projectRoot.resolve("build/jib-image.id");
+    Assert.assertTrue(Files.exists(idPath));
+    String id = new String(Files.readAllBytes(idPath), StandardCharsets.UTF_8);
+    DescriptorDigest digest2 = DescriptorDigest.fromDigest(id);
+    Assert.assertNotEquals(digest1, digest2);
   }
 
   /**
