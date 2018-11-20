@@ -1,7 +1,6 @@
 # Proposal: Provide feedback on push progress
 
-Relevant issues: #806, #1251
-
+Relevant issues: [#806](https://github.com/GoogleContainerTools/jib/issues/806), [#1251](https://github.com/GoogleContainerTools/jib/issues/1251)
 
 ## Motivation
 
