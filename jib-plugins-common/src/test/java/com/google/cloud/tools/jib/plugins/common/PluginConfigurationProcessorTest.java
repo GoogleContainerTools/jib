@@ -143,6 +143,26 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testComputeEntrypoint_inheritKeyword()
+      throws MainClassInferenceException, AppRootInvalidException {
+    Mockito.when(rawConfiguration.getEntrypoint())
+        .thenReturn(Optional.of(Collections.singletonList("INHERIT")));
+
+    Assert.assertNull(
+        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testComputeEntrypoint_inheritKeywordInNonSingletonList()
+      throws MainClassInferenceException, AppRootInvalidException {
+    Mockito.when(rawConfiguration.getEntrypoint())
+        .thenReturn(Optional.of(Arrays.asList("INHERIT", "")));
+
+    Assert.assertNotNull(
+        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+  }
+
+  @Test
   public void testEntrypoint_defaultWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
           MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
