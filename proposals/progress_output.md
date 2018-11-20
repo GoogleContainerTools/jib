@@ -4,7 +4,13 @@ Relevant issues: [#806](https://github.com/GoogleContainerTools/jib/issues/806),
 
 ## Motivation
 
-Currently, Jib lacks any progress feedback for layer pushes. In cases where layers take a long time to push, this lack of progress indication is a bad user experience. This is especially prevalent for first-time users whose first builds would need to push all the layers, including the large base image layers.
+Currently, Jib lacks any progress feedback for layer pushes. In cases where layers take a long time to push, this lack of progress indication:
+
+- makes it hard to estimate how long the build will take
+- makes it unclear as to whether the build is stuck or will complete in some reasonable amount of time
+- may deter first-time users from continuing to use Jib 
+
+This is especially prevalent for first-time users whose first builds would need to push all the layers, including the large base image layers.
 
 ## Current output
 
