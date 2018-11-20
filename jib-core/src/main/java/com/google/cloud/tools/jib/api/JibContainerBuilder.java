@@ -391,6 +391,17 @@ public class JibContainerBuilder {
   }
 
   /**
+   * Sets the working directory in the container as.
+   *
+   * @param workingDirectory the working directory
+   * @return this
+   */
+  public JibContainerBuilder setWorkingDirectory(@Nullable AbsoluteUnixPath workingDirectory) {
+    containerConfigurationBuilder.setWorkingDirectory(workingDirectory);
+    return this;
+  }
+
+  /**
    * Builds the container.
    *
    * @param containerizer the {@link Containerizer} that configures how to containerize

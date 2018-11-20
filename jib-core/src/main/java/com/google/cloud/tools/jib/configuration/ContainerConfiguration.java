@@ -47,6 +47,7 @@ public class ContainerConfiguration {
     @Nullable private List<AbsoluteUnixPath> volumes;
     @Nullable private Map<String, String> labels;
     @Nullable private String user;
+    @Nullable private AbsoluteUnixPath workingDirectory;
 
     /**
      * Sets the image creation time.
@@ -199,6 +200,17 @@ public class ContainerConfiguration {
     }
 
     /**
+     * Sets the working directory in the container.
+     *
+     * @param workingDirectory the working directory
+     * @return this
+     */
+    public Builder setWorkingDirectory(@Nullable AbsoluteUnixPath workingDirectory) {
+      this.workingDirectory = workingDirectory;
+      return this;
+    }
+
+    /**
      * Builds the {@link ContainerConfiguration}.
      *
      * @return the corresponding {@link ContainerConfiguration}
@@ -212,7 +224,8 @@ public class ContainerConfiguration {
           exposedPorts == null ? null : ImmutableList.copyOf(exposedPorts),
           volumes == null ? null : ImmutableList.copyOf(volumes),
           labels == null ? null : ImmutableMap.copyOf(labels),
-          user);
+          user,
+          workingDirectory);
     }
 
     private Builder() {}
@@ -235,6 +248,7 @@ public class ContainerConfiguration {
   @Nullable private final ImmutableList<AbsoluteUnixPath> volumes;
   @Nullable private final ImmutableMap<String, String> labels;
   @Nullable private final String user;
+  @Nullable private final AbsoluteUnixPath workingDirectory;
 
   private ContainerConfiguration(
       Instant creationTime,
@@ -244,7 +258,8 @@ public class ContainerConfiguration {
       @Nullable ImmutableList<Port> exposedPorts,
       @Nullable ImmutableList<AbsoluteUnixPath> volumes,
       @Nullable ImmutableMap<String, String> labels,
-      @Nullable String user) {
+      @Nullable String user,
+      @Nullable AbsoluteUnixPath workingDirectory) {
     this.creationTime = creationTime;
     this.entrypoint = entrypoint;
     this.programArguments = programArguments;
@@ -253,6 +268,7 @@ public class ContainerConfiguration {
     this.volumes = volumes;
     this.labels = labels;
     this.user = user;
+    this.workingDirectory = workingDirectory;
   }
 
   public Instant getCreationTime() {
@@ -294,6 +310,11 @@ public class ContainerConfiguration {
     return labels;
   }
 
+  @Nullable
+  public AbsoluteUnixPath getWorkingDirectory() {
+    return workingDirectory;
+  }
+
   @Override
   @VisibleForTesting
   public boolean equals(Object other) {
@@ -310,7 +331,8 @@ public class ContainerConfiguration {
         && Objects.equals(environmentMap, otherContainerConfiguration.environmentMap)
         && Objects.equals(exposedPorts, otherContainerConfiguration.exposedPorts)
         && Objects.equals(labels, otherContainerConfiguration.labels)
-        && Objects.equals(user, otherContainerConfiguration.user);
+        && Objects.equals(user, otherContainerConfiguration.user)
+        && Objects.equals(workingDirectory, otherContainerConfiguration.workingDirectory);
   }
 
   @Override

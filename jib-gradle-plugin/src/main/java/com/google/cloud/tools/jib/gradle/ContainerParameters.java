@@ -44,6 +44,7 @@ public class ContainerParameters {
   private Map<String, String> labels = Collections.emptyMap();
   private String appRoot = "";
   @Nullable private String user;
+  @Nullable private String workingDirectory;
 
   @Input
   @Optional
@@ -196,5 +197,19 @@ public class ContainerParameters {
 
   public void setUser(String user) {
     this.user = user;
+  }
+
+  @Input
+  @Nullable
+  @Optional
+  public String getWorkingDirectory() {
+    if (System.getProperty(PropertyNames.CONTAINER_USER) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_USER);
+    }
+    return workingDirectory;
+  }
+
+  public void setWorkingDirectory(String workingDirectory) {
+    this.workingDirectory = workingDirectory;
   }
 }

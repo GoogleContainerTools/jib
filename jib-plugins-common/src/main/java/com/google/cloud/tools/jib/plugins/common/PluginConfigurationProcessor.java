@@ -243,6 +243,11 @@ public class PluginConfigurationProcessor {
             .setExposedPorts(ExposedPortsParser.parse(rawConfiguration.getPorts()))
             .setLabels(rawConfiguration.getLabels())
             .setUser(rawConfiguration.getUser().orElse(null));
+    rawConfiguration
+        .getWorkingDirectory()
+        .ifPresent(
+            workingDirectory ->
+                jibContainerBuilder.setWorkingDirectory(AbsoluteUnixPath.get(workingDirectory)));
     if (rawConfiguration.getUseCurrentTimestamp()) {
       eventDispatcher.dispatch(
           LogEvent.warn(
