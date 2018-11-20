@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.time.Duration;
 import java.util.Arrays;
@@ -116,6 +117,7 @@ public class DockerHealthCheck {
    * @return the new {@link DockerHealthCheck.Builder}
    */
   public static Builder builderWithExecCommand(List<String> command) {
+    Preconditions.checkArgument(command.size() > 0, "command must not be empty");
     return new Builder(ImmutableList.<String>builder().add("CMD").addAll(command).build());
   }
 
@@ -127,6 +129,7 @@ public class DockerHealthCheck {
    * @return the new {@link DockerHealthCheck.Builder}
    */
   public static Builder builderWithExecCommand(String... command) {
+    Preconditions.checkArgument(command.length > 0, "command must not be empty");
     return new Builder(
         ImmutableList.<String>builder().add("CMD").addAll(Arrays.asList(command)).build());
   }
@@ -140,6 +143,7 @@ public class DockerHealthCheck {
    * @return the new {@link DockerHealthCheck.Builder}
    */
   public static Builder builderWithShellCommand(String command) {
+    Preconditions.checkArgument(command.length() > 0, "command must not be empty");
     return new Builder(ImmutableList.of("CMD-SHELL", command));
   }
 
