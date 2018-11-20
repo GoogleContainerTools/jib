@@ -52,9 +52,6 @@ public class MavenRawConfigurationTest {
     AuthConfiguration auth = Mockito.mock(AuthConfiguration.class);
     Mockito.when(auth.getUsername()).thenReturn("user");
     Mockito.when(auth.getPassword()).thenReturn("password");
-    Mockito.when(auth.getPropertyDescriptor()).thenReturn("auth source");
-    Mockito.when(auth.getUsernamePropertyDescriptor()).thenReturn("from.auth.username");
-    Mockito.when(auth.getPasswordPropertyDescriptor()).thenReturn("<to><auth><password>");
 
     Mockito.when(jibPluginConfiguration.getSession()).thenReturn(mavenSession);
     Mockito.when(jibPluginConfiguration.getBaseImageAuth()).thenReturn(auth);
@@ -84,16 +81,15 @@ public class MavenRawConfigurationTest {
     AuthProperty fromAuth = rawConfiguration.getFromAuth();
     Assert.assertEquals("user", fromAuth.getUsername());
     Assert.assertEquals("password", fromAuth.getPassword());
-    Assert.assertEquals("auth source", fromAuth.getPropertyDescriptor());
-    Assert.assertEquals("from.auth.username", fromAuth.getUsernamePropertyDescriptor());
-    Assert.assertEquals("<to><auth><password>", fromAuth.getPasswordPropertyDescriptor());
+    Assert.assertEquals("<test><auth>", rawConfiguration.getAuthDescriptor("test"));
+    Assert.assertEquals(
+        "<test><auth><username>", rawConfiguration.getUsernameAuthDescriptor("test"));
+    Assert.assertEquals(
+        "<test><auth><password>", rawConfiguration.getPasswordAuthDescriptor("test"));
 
     AuthProperty mavenSettingsAuth = rawConfiguration.getInferredAuth("base registry").get();
     Assert.assertEquals("maven settings user", mavenSettingsAuth.getUsername());
     Assert.assertEquals("maven settings password", mavenSettingsAuth.getPassword());
-    Assert.assertEquals("Maven settings", mavenSettingsAuth.getPropertyDescriptor());
-    Assert.assertEquals("Maven settings", mavenSettingsAuth.getUsernamePropertyDescriptor());
-    Assert.assertEquals("Maven settings", mavenSettingsAuth.getPasswordPropertyDescriptor());
 
     Assert.assertFalse(rawConfiguration.getInferredAuth("unknown registry").isPresent());
 

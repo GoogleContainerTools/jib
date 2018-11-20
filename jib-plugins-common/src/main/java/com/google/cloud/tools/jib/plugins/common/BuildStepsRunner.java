@@ -160,6 +160,7 @@ public class BuildStepsRunner {
   private final String startupMessage;
   private final String successMessage;
   @Nullable private Path imageDigestOutputPath;
+  @Nullable private Path imageIdOutputPath;
 
   @VisibleForTesting
   BuildStepsRunner(String startupMessage, String successMessage) {
@@ -213,10 +214,14 @@ public class BuildStepsRunner {
       eventDispatcher.dispatch(LogEvent.lifecycle(""));
       eventDispatcher.dispatch(LogEvent.lifecycle(successMessage));
 
-      // when an image is built, write out the digest
+      // when an image is built, write out the digest and id
       if (imageDigestOutputPath != null) {
         String imageDigest = jibContainer.getDigest().toString();
         Files.write(imageDigestOutputPath, imageDigest.getBytes(StandardCharsets.UTF_8));
+      }
+      if (imageIdOutputPath != null) {
+        String imageId = jibContainer.getImageId().toString();
+        Files.write(imageIdOutputPath, imageId.getBytes(StandardCharsets.UTF_8));
       }
 
       return jibContainer;
@@ -286,6 +291,17 @@ public class BuildStepsRunner {
    */
   public BuildStepsRunner writeImageDigest(@Nullable Path imageDigestOutputPath) {
     this.imageDigestOutputPath = imageDigestOutputPath;
+    return this;
+  }
+
+  /**
+   * Set the location where the image id will be saved. If {@code null} then digest is not saved.
+   *
+   * @param imageIdOutputPath the location to write the image id or {@code null} to skip
+   * @return this
+   */
+  public BuildStepsRunner writeImageId(@Nullable Path imageIdOutputPath) {
+    this.imageIdOutputPath = imageIdOutputPath;
     return this;
   }
 }

@@ -95,6 +95,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
       BuildStepsRunner.forBuildTar(tarOutputPath)
           .writeImageDigest(buildOutput.resolve("jib-image.digest"))
+          .writeImageId(buildOutput.resolve("jib-image.id"))
           .build(
               pluginConfigurationProcessor.getJibContainerBuilder(),
               pluginConfigurationProcessor.getContainerizer(),

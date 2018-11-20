@@ -116,6 +116,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
       Path buildOutput = getProject().getBuildDir().toPath();
       BuildStepsRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
           .writeImageDigest(buildOutput.resolve("jib-image.digest"))
+          .writeImageId(buildOutput.resolve("jib-image.id"))
           .build(
               pluginConfigurationProcessor.getJibContainerBuilder(),
               pluginConfigurationProcessor.getContainerizer(),

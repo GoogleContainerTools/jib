@@ -17,11 +17,8 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
-import com.google.common.base.Preconditions;
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
 
 /**
@@ -32,35 +29,6 @@ public class AuthParameters implements AuthProperty {
 
   @Nullable private String username;
   @Nullable private String password;
-  private String descriptor;
-
-  /**
-   * Constructs a new {@link AuthParameters}.
-   *
-   * @param descriptor the name of the auth configuration property
-   */
-  @Inject
-  public AuthParameters(String descriptor) {
-    this.descriptor = descriptor;
-  }
-
-  @Internal
-  @Override
-  public String getPropertyDescriptor() {
-    return Preconditions.checkNotNull(descriptor);
-  }
-
-  @Internal
-  @Override
-  public String getUsernamePropertyDescriptor() {
-    return Preconditions.checkNotNull(descriptor) + ".username";
-  }
-
-  @Internal
-  @Override
-  public String getPasswordPropertyDescriptor() {
-    return Preconditions.checkNotNull(descriptor) + ".password";
-  }
 
   @Input
   @Optional

@@ -73,6 +73,21 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public String getAuthDescriptor(String source) {
+    return "<" + source + "><auth>";
+  }
+
+  @Override
+  public String getUsernameAuthDescriptor(String source) {
+    return getAuthDescriptor(source) + "<username>";
+  }
+
+  @Override
+  public String getPasswordAuthDescriptor(String source) {
+    return getAuthDescriptor(source) + "<password>";
+  }
+
+  @Override
   public Optional<String> getToCredHelper() {
     return Optional.ofNullable(jibPluginConfiguration.getTargetImageCredentialHelperName());
   }
@@ -146,6 +161,11 @@ class MavenRawConfiguration implements RawConfiguration {
   public Optional<AuthProperty> getInferredAuth(String authTarget)
       throws InferredAuthRetrievalException {
     return mavenSettingsServerCredentials.retrieve(authTarget);
+  }
+
+  @Override
+  public String getInferredAuthDescriptor() {
+    return MavenSettingsServerCredentials.CREDENTIAL_SOURCE;
   }
 
   @Override

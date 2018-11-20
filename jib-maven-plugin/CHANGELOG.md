@@ -5,9 +5,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Image ID is now written to `target/jib-image.id` ([#1204](https://github.com/GoogleContainerTools/jib/issues/1204))
+
 ### Changed
 
 ### Fixed
+
+- NullPointerException thrown with incomplete `auth` configuration ([#1177](https://github.com/GoogleContainerTools/jib/issues/1177))
 
 ## 0.10.0
 

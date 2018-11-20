@@ -48,6 +48,8 @@ public class ConfigurationPropertyValidator {
    * @param usernameProperty the name of the username system property
    * @param passwordProperty the name of the password system property
    * @param auth the configured credentials
+   * @param authUsernameDescriptor the name of the auth username parameter
+   * @param authPasswordDescriptor the name of the auth password parameter
    * @return a new {@link Authorization} from the system properties or build configuration, or
    *     {@link Optional#empty} if neither is configured.
    */
@@ -55,7 +57,9 @@ public class ConfigurationPropertyValidator {
       EventDispatcher eventDispatcher,
       String usernameProperty,
       String passwordProperty,
-      AuthProperty auth) {
+      AuthProperty auth,
+      String authUsernameDescriptor,
+      String authPasswordDescriptor) {
     // System property takes priority over build configuration
     String commandlineUsername = System.getProperty(usernameProperty);
     String commandlinePassword = System.getProperty(passwordProperty);
@@ -89,14 +93,14 @@ public class ConfigurationPropertyValidator {
     if (Strings.isNullOrEmpty(auth.getUsername())) {
       eventDispatcher.dispatch(
           LogEvent.warn(
-              auth.getUsernamePropertyDescriptor()
+              authUsernameDescriptor
                   + " is missing from build configuration; ignoring auth section."));
       return Optional.empty();
     }
     if (Strings.isNullOrEmpty(auth.getPassword())) {
       eventDispatcher.dispatch(
           LogEvent.warn(
-              auth.getPasswordPropertyDescriptor()
+              authPasswordDescriptor
                   + " is missing from build configuration; ignoring auth section."));
       return Optional.empty();
     }

@@ -70,19 +70,7 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testAuthDefaults() {
-    Assert.assertEquals(
-        "<from><auth><username>",
-        testPluginConfiguration.getBaseImageAuth().getUsernamePropertyDescriptor());
-    Assert.assertEquals(
-        "<from><auth><password>",
-        testPluginConfiguration.getBaseImageAuth().getPasswordPropertyDescriptor());
-    Assert.assertEquals(
-        "<to><auth><username>",
-        testPluginConfiguration.getTargetImageAuth().getUsernamePropertyDescriptor());
-    Assert.assertEquals(
-        "<to><auth><password>",
-        testPluginConfiguration.getTargetImageAuth().getPasswordPropertyDescriptor());
+  public void testDefaults() {
     Assert.assertEquals("", testPluginConfiguration.getAppRoot());
   }
 

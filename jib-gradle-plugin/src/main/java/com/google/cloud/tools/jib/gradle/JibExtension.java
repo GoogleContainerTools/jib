@@ -78,8 +78,8 @@ public class JibExtension {
   public JibExtension(Project project) {
     ObjectFactory objectFactory = project.getObjects();
 
-    from = objectFactory.newInstance(BaseImageParameters.class, "jib.from");
-    to = objectFactory.newInstance(TargetImageParameters.class, "jib.to");
+    from = objectFactory.newInstance(BaseImageParameters.class);
+    to = objectFactory.newInstance(TargetImageParameters.class);
     container = objectFactory.newInstance(ContainerParameters.class);
     extraDirectory =
         objectFactory.newInstance(ExtraDirectoryParameters.class, project.getProjectDir().toPath());

@@ -35,6 +35,12 @@ public interface RawConfiguration {
 
   AuthProperty getToAuth();
 
+  String getAuthDescriptor(String source);
+
+  String getUsernameAuthDescriptor(String source);
+
+  String getPasswordAuthDescriptor(String source);
+
   Optional<String> getFromCredHelper();
 
   Optional<String> getToCredHelper();
@@ -69,6 +75,8 @@ public interface RawConfiguration {
   // from settings.xml is not necessary raw configuration values. Consider removing it.
   // https://github.com/GoogleContainerTools/jib/pull/1163#discussion_r228389684
   Optional<AuthProperty> getInferredAuth(String authTarget) throws InferredAuthRetrievalException;
+
+  String getInferredAuthDescriptor();
 
   ImageFormat getImageFormat();
 }

@@ -156,6 +156,7 @@
               <systemPropertyVariables>
                 <_JIB_DISABLE_USER_AGENT>true</_JIB_DISABLE_USER_AGENT>
               </systemPropertyVariables>
+              <trimStackTrace>false</trimStackTrace>
             </configuration>
             <executions>
               <execution>
@@ -363,6 +364,7 @@
           <excludes>
             <exclude>**/*IntegrationTest.java</exclude>
           </excludes>
+          <trimStackTrace>false</trimStackTrace>
         </configuration>
       </plugin>
 
