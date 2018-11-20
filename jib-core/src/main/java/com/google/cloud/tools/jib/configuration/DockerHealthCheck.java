@@ -217,11 +217,10 @@ public class DockerHealthCheck {
   }
 
   /**
-   * Returns {@code true} if the entire health check is inherited from the base image, {@code false}
-   * if not.
+   * Returns {@code true} if the health check command is set (i.e. intended to be inherited), {@code
+   * false} if not.
    *
-   * @return {@code true} if the entire health check is inherited from the base image, {@code false}
-   *     if not
+   * @return {@code true} if the health check command is set, {@code false} if not
    */
   public boolean hasCommand() {
     return command != null && !command.isEmpty();
