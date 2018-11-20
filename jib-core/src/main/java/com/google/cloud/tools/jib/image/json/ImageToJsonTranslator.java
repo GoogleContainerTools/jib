@@ -170,17 +170,19 @@ public class ImageToJsonTranslator {
     template.setContainerUser(image.getUser());
 
     // Healthcheck is not supported by OCI
-    if (image.getImageFormat() != OCIManifestTemplate.class) {
+    if (image.getImageFormat() == V22ManifestTemplate.class
+        && !image.getHealthCheck().isInherited()) {
       DockerHealthCheck healthCheck = image.getHealthCheck();
       template.setContainerHealthTest(healthCheck.getCommand().orElse(ImmutableList.of()));
-      template.setContainerHealthInterval(
-          healthCheck.getInterval().isPresent() ? healthCheck.getInterval().get().toNanos() : null);
-      template.setContainerHealthTimeout(
-          healthCheck.getTimeout().isPresent() ? healthCheck.getTimeout().get().toNanos() : null);
-      template.setContainerHealthStartPeriod(
-          healthCheck.getStartPeriod().isPresent()
-              ? healthCheck.getStartPeriod().get().toNanos()
-              : null);
+      healthCheck
+          .getInterval()
+          .ifPresent(interval -> template.setContainerHealthInterval(interval.toNanos()));
+      healthCheck
+          .getTimeout()
+          .ifPresent(timeout -> template.setContainerHealthTimeout(timeout.toNanos()));
+      healthCheck
+          .getStartPeriod()
+          .ifPresent(startPeriod -> template.setContainerHealthStartPeriod(startPeriod.toNanos()));
       template.setContainerHealthRetries(healthCheck.getRetries().orElse(null));
     }
 
