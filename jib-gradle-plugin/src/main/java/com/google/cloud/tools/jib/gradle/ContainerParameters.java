@@ -203,8 +203,8 @@ public class ContainerParameters {
   @Nullable
   @Optional
   public String getWorkingDirectory() {
-    if (System.getProperty(PropertyNames.CONTAINER_USER) != null) {
-      return System.getProperty(PropertyNames.CONTAINER_USER);
+    if (System.getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY);
     }
     return workingDirectory;
   }
