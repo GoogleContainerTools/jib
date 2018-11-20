@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Removed `jib:exportDockerContext` goal ([#1219](https://github.com/GoogleContainerTools/jib/issues/1219))
+
 ### Fixed
 
 - NullPointerException thrown with incomplete `auth` configuration ([#1177](https://github.com/GoogleContainerTools/jib/issues/1177))

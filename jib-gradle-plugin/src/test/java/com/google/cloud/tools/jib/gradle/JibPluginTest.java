@@ -46,7 +46,6 @@ public class JibPluginTest {
       ImmutableList.of(
           JibPlugin.BUILD_IMAGE_TASK_NAME,
           JibPlugin.BUILD_DOCKER_TASK_NAME,
-          JibPlugin.DOCKER_CONTEXT_TASK_NAME,
           JibPlugin.BUILD_TAR_TASK_NAME);
 
   @Rule public final TemporaryFolder testProjectRoot = new TemporaryFolder();
@@ -140,18 +139,17 @@ public class JibPluginTest {
     ((ProjectInternal) rootProject).evaluate();
 
     KNOWN_JIB_TASKS.forEach(
-        taskName -> {
-          Assert.assertEquals(
-              ImmutableSet.of(":sub:assemble", ":classes", ":myCustomTask"),
-              rootProject
-                  .getTasks()
-                  .getByPath(taskName)
-                  .getDependsOn()
-                  .stream()
-                  .map(Task.class::cast)
-                  .map(Task::getPath)
-                  .collect(Collectors.toSet()));
-        });
+        taskName ->
+            Assert.assertEquals(
+                ImmutableSet.of(":sub:assemble", ":classes", ":myCustomTask"),
+                rootProject
+                    .getTasks()
+                    .getByPath(taskName)
+                    .getDependsOn()
+                    .stream()
+                    .map(Task.class::cast)
+                    .map(Task::getPath)
+                    .collect(Collectors.toSet())));
   }
 
   @Test
@@ -190,14 +188,6 @@ public class JibPluginTest {
         rootProject
             .getTasks()
             .getByPath(JibPlugin.BUILD_TAR_TASK_NAME)
-            .getDependsOn()
-            .iterator()
-            .next());
-    Assert.assertEquals(
-        explodedWarTask,
-        rootProject
-            .getTasks()
-            .getByPath(JibPlugin.DOCKER_CONTEXT_TASK_NAME)
             .getDependsOn()
             .iterator()
             .next());
