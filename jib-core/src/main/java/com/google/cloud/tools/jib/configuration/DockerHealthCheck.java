@@ -219,11 +219,7 @@ public class DockerHealthCheck {
    * @return {@code true} if the entire health check is inherited from the base image, {@code false}
    *     if not
    */
-  public boolean isInherited() {
-    return (command == null || command.isEmpty())
-        && interval == null
-        && timeout == null
-        && startPeriod == null
-        && retries == null;
+  public boolean hasCommand() {
+    return command != null && !command.isEmpty();
   }
 }
