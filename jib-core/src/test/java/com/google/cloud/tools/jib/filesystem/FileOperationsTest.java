@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -44,9 +45,10 @@ public class FileOperationsTest {
     OutputStream fileOutputStream = FileOperations.newLockingOutputStream(file);
 
     // Checks that the file was locked.
-    try {
-      FileChannel.open(file, StandardOpenOption.READ).tryLock(0, Long.MAX_VALUE, true);
-      Assert.fail("Lock attempt should have failed");
+    try (FileChannel channel = FileChannel.open(file, StandardOpenOption.READ)) {
+      // locking should either fail and return null or throw an OverlappingFileLockException
+      FileLock lock = channel.tryLock(0, Long.MAX_VALUE, true);
+      Assert.assertNull("Lock attempt should have failed", lock);
 
     } catch (OverlappingFileLockException ex) {
       // pass
