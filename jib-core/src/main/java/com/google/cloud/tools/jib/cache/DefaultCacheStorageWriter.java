@@ -74,9 +74,11 @@ class DefaultCacheStorageWriter {
     try {
       Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE);
 
-    } catch (FileAlreadyExistsException ignored) {
+    } catch (FileAlreadyExistsException | DirectoryNotEmptyException ignored) {
       // If the file already exists, we skip renaming and use the existing file. This happens if a
-      // new layer happens to have the same content as a previously-cached layer.
+      // new layer happens to have the same content as a previously-cached layer. Depending on the
+      // implementation, either FileAlreadyExistsException or DirectoryNotEmptyException will be
+      // thrown if it already exists.
       //
       // Do not attempt to remove the try-catch block with the idea of checking file existence
       // before moving; there can be concurrent file moves.
