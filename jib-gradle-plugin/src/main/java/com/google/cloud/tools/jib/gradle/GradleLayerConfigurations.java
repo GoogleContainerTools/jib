@@ -106,7 +106,7 @@ class GradleLayerConfigurations {
     FileCollection dependencyFiles =
         allFiles
             .minus(classesOutputDirectories)
-            .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
+            .filter(file -> !file.toPath().equals(resourcesOutputDirectory) && file.exists());
 
     // Adds class files.
     logger.info("Adding corresponding output directories of source sets to image");

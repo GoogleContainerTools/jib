@@ -132,6 +132,8 @@ public class GradleLayerConfigurationsTest {
         Paths.get(
             Resources.getResource("application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
                 .toURI()));
+    // A file added to SourceSet.allFiles that does not actually exist.
+    allFiles.add(Paths.get("/dev/null/cannot/exist/on/any/os"));
     FileCollection runtimeFileCollection = new TestFileCollection(allFiles);
 
     Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
