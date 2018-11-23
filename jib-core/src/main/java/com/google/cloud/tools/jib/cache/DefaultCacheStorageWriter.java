@@ -29,13 +29,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -67,6 +64,8 @@ class DefaultCacheStorageWriter {
    * @throws IOException if an I/O exception occurs
    */
   private static void moveIfDoesNotExist(Path source, Path destination) throws IOException {
+    // If the file already exists, we skip renaming and use the existing file. This happens if a
+    // new layer happens to have the same content as a previously-cached layer.
     if (Files.exists(destination)) {
       return;
     }
@@ -74,28 +73,9 @@ class DefaultCacheStorageWriter {
     try {
       Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE);
 
-    } catch (FileAlreadyExistsException ignored) {
-      // If the file already exists, we skip renaming and use the existing file. This happens if a
-      // new layer happens to have the same content as a previously-cached layer.
-      //
-      // Do not attempt to remove the try-catch block with the idea of checking file existence
-      // before moving; there can be concurrent file moves.
-
-    } catch (AtomicMoveNotSupportedException ignored) {
-      try {
-        Files.move(source, destination);
-
-      } catch (FileAlreadyExistsException alsoIgnored) {
-        // Same reasoning
-
-      } catch (DirectoryNotEmptyException ex) {
-        // The file system cannot rename directories, so we must resort to copying the directory.
-        Files.createDirectory(destination);
-        try (Stream<Path> sourceFiles = Files.list(source)) {
-          for (Path sourceFile : sourceFiles.collect(Collectors.toList())) {
-            Files.copy(sourceFile, destination.resolve(sourceFile.getFileName()));
-          }
-        }
+    } catch (FileSystemException ex) {
+      if (!Files.exists(destination)) {
+        throw ex;
       }
     }
   }
