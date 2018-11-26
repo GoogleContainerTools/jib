@@ -395,6 +395,37 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testGetWorkingDirectoryChecked() throws WorkingDirectoryInvalidException {
+    Mockito.when(rawConfiguration.getWorkingDirectory()).thenReturn(Optional.of("/valid/path"));
+
+    Optional<AbsoluteUnixPath> checkedPath =
+        PluginConfigurationProcessor.getWorkingDirectoryChecked(rawConfiguration);
+    Assert.assertTrue(checkedPath.isPresent());
+    Assert.assertEquals(AbsoluteUnixPath.get("/valid/path"), checkedPath.get());
+  }
+
+  @Test
+  public void testGetWorkingDirectoryChecked_undefined() throws WorkingDirectoryInvalidException {
+    Mockito.when(rawConfiguration.getWorkingDirectory()).thenReturn(Optional.empty());
+    Assert.assertEquals(
+        Optional.empty(),
+        PluginConfigurationProcessor.getWorkingDirectoryChecked(rawConfiguration));
+  }
+
+  @Test
+  public void testGetWorkingDirectoryChecked_notAbsolute() {
+    Mockito.when(rawConfiguration.getWorkingDirectory()).thenReturn(Optional.of("relative/path"));
+
+    try {
+      PluginConfigurationProcessor.getWorkingDirectoryChecked(rawConfiguration);
+      Assert.fail();
+    } catch (WorkingDirectoryInvalidException ex) {
+      Assert.assertEquals("relative/path", ex.getMessage());
+      Assert.assertEquals("relative/path", ex.getInvalidPathValue());
+    }
+  }
+
+  @Test
   public void testGetBaseImage_defaultNonWarPackaging() {
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
