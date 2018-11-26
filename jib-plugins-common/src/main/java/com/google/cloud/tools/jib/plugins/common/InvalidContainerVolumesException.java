@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-/** Thrown when list of volume's directories is invalid. */
+/** Thrown when list of volume's directories contains invalid paths */
 public class InvalidContainerVolumesException extends Exception {
 
   InvalidContainerVolumesException(String message) {
