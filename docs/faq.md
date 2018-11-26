@@ -284,7 +284,7 @@ COPY libs /
 COPY snapshot-libs /
 COPY resources /
 COPY classes /
-COPY root /
+COPY extra-dir /
 
 EXPOSE 1000
 EXPOSE 2000-2003/udp
@@ -298,7 +298,11 @@ ENTRYPOINT ["java", "-Xms512m", "-Xdebug", "-cp", "/app/resources:/app/classes:/
 CMD ["some", "args"]
 ```
 
-To achieve similar results with jib, you could use the following configuration in your `build.gradle`:
+To achieve similar results with jib, you could use the following configuration in your build configuration.
+
+<details>
+<summary>Gradle Example</summary>
+<p>
 
 ```groovy
 jib {
@@ -313,8 +317,51 @@ jib {
     environment = [var1:'value1', var2:'value2']
     user = 'myuser:mygroup'
   }
+  extraDirectory = file('extra-dir')
 }
 ```
+
+</p>
+</details>
+
+<details>
+<summary>Maven Example</summary>
+<p>
+
+```xml
+<configuration>
+  <from><image>baseImage</image></from>
+  <to><image>targetImage</image></to>
+  <container>
+    <jvmFlags>
+      <jvmFlag>-Xms512m</jvmFlag>
+      <jvmFlag>-Xdebug</jvmFlag>
+    </jvmFlags>
+    <mainClass>SomeMainClass</mainClass>
+    <args>
+      <arg>some</arg>
+      <arg>args</arg>
+    </args>
+    <ports>
+      <port>1000</port>
+      <port>2000-2003/udp</port>
+    </ports>
+    <labels>
+      <key1>value1</key1>
+      <key2>value2</key2>
+    </labels>
+    <environment>
+      <var1>value1</var1>
+      <var2>value2</var2>
+    </environment>
+    <user>myuser:mygroup</user>
+  </container>
+  <extraDirectory>${project.basedir}/extra-dir</extraDirectory>
+</configuration>
+```
+
+</p>
+</details>
 
 Some plugins, such as the [Docker Prepare Gradle Plugin](https://github.com/gclayburg/dockerPreparePlugin), will even automatically generate a Docker context for your project, including a Dockerfile.
 
