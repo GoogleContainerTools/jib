@@ -278,27 +278,22 @@ There are several ways of doing this:
 A Dockerfile that performs a Jib-like build is shown below:
 
 ```Dockerfile
-FROM baseImage
+# Jib uses distroless java as the default base image
+FROM gcr.io/distroless/java:latest
 
-COPY libs /
-COPY snapshot-libs /
-COPY resources /
-COPY classes /
-COPY extra-dir /
+# Multiple copy statements are used to break the app into layers, allowing for faster rebuilds after 
+# small changes
+COPY build/libs /app/libs
+COPY build/resources /app/resources
+COPY build/classes /app/classes
+COPY src/main/extra-dir /
 
-EXPOSE 1000
-EXPOSE 2000-2003/udp
-LABEL key1="value1" \
-      key2="value2"
-ENV var1="value1" \
-    var2="value2"
-USER myuser:mygroup
-
+# Sets the app as the container entrypoint, with 2 JVM flags and 2 main arguments
 ENTRYPOINT ["java", "-Xms512m", "-Xdebug", "-cp", "/app/resources:/app/classes:/app/libs/*", "SomeMainClass"]
 CMD ["some", "args"]
 ```
 
-To achieve similar results with jib, you could use the following configuration in your build configuration.
+To achieve similar results with jib, you could use the following configuration in your build configuration. Note that the `container.mainClass` configuration is not actually necessary, since Jib can automatically infer the main class while constructing the container entrypoint.
 
 <details>
 <summary>Gradle Example</summary>
@@ -306,18 +301,13 @@ To achieve similar results with jib, you could use the following configuration i
 
 ```groovy
 jib {
-  from.image = baseImage
   to.image = targetImage
   container {
     jvmFlags = ['-Xms512m', '-Xdebug']
     mainClass = 'SomeMainClass'
     args = ['some', 'args']
-    ports = ['1000', '2000-2003/udp']
-    labels = [key1:'value1', key2:'value2']
-    environment = [var1:'value1', var2:'value2']
-    user = 'myuser:mygroup'
   }
-  extraDirectory = file('extra-dir')
+  extraDirectory = file('src/main/extra-dir')
 }
 ```
 
@@ -330,7 +320,6 @@ jib {
 
 ```xml
 <configuration>
-  <from><image>baseImage</image></from>
   <to><image>targetImage</image></to>
   <container>
     <jvmFlags>
@@ -342,21 +331,8 @@ jib {
       <arg>some</arg>
       <arg>args</arg>
     </args>
-    <ports>
-      <port>1000</port>
-      <port>2000-2003/udp</port>
-    </ports>
-    <labels>
-      <key1>value1</key1>
-      <key2>value2</key2>
-    </labels>
-    <environment>
-      <var1>value1</var1>
-      <var2>value2</var2>
-    </environment>
-    <user>myuser:mygroup</user>
   </container>
-  <extraDirectory>${project.basedir}/extra-dir</extraDirectory>
+  <extraDirectory>${project.basedir}/src/main/extra-dir</extraDirectory>
 </configuration>
 ```
 
