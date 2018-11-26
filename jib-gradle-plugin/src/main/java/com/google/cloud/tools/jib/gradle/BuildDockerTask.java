@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
+import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumesException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
@@ -87,7 +88,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   public void buildDocker()
       throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
           CacheDirectoryCreationException, MainClassInferenceException,
-          InferredAuthRetrievalException {
+          InferredAuthRetrievalException, InvalidContainerVolumesException {
     Path dockerExecutable = dockerClientParameters.getExecutable();
     boolean isDockerInstalled =
         dockerExecutable == null

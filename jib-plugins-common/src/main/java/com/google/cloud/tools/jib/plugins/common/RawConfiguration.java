@@ -61,6 +61,8 @@ public interface RawConfiguration {
 
   Map<String, String> getLabels();
 
+  List<String> getVolumes();
+
   List<String> getPorts();
 
   Optional<String> getUser();

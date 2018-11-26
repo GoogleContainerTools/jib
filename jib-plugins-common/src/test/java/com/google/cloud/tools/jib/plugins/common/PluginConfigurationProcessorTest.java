@@ -91,7 +91,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testPluginConfigurationProcessor_defaults()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException,
+          InvalidContainerVolumesException {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties, containerizer, targetImageReference, false);
@@ -109,7 +110,7 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testPluginConfigurationProcessor_warProjectBaseImage()
       throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException {
+          InferredAuthRetrievalException, IOException, InvalidContainerVolumesException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     PluginConfigurationProcessor processor =
@@ -125,7 +126,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException,
+          InvalidContainerVolumesException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
 
@@ -165,7 +167,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_defaultWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException,
+          InvalidContainerVolumesException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
@@ -184,7 +187,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_defaulNonWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException,
+          InvalidContainerVolumesException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
@@ -205,7 +209,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testUser()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException,
+          InvalidContainerVolumesException {
     Mockito.when(rawConfiguration.getUser()).thenReturn(Optional.of("customUser"));
 
     PluginConfigurationProcessor processor =
@@ -221,7 +226,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testUser_null()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException,
+          InvalidContainerVolumesException {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties, containerizer, targetImageReference, false);
@@ -235,7 +241,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_warningOnJvmFlags()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException,
+          InvalidContainerVolumesException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getJvmFlags()).thenReturn(Collections.singletonList("jvmFlag"));
@@ -257,7 +264,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_warningOnMainclass()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException,
+          InvalidContainerVolumesException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
@@ -279,7 +287,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypointClasspath_nonDefaultAppRoot()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException,
+          InvalidContainerVolumesException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/my/app");
 
     PluginConfigurationProcessor processor =
@@ -302,7 +311,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testWebAppEntrypoint_inheritedFromBaseImage()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException,
+          InvalidContainerVolumesException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     PluginConfigurationProcessor processor =

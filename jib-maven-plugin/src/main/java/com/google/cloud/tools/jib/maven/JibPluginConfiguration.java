@@ -146,6 +146,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<String> ports = Collections.emptyList();
 
+    @Parameter private List<String> volumes = Collections.emptyList();
+
     @Parameter private Map<String, String> labels = Collections.emptyMap();
 
     @Parameter private String appRoot = "";
@@ -400,6 +402,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
           System.getProperty(PropertyNames.CONTAINER_PORTS));
     }
     return container.ports;
+  }
+
+  /**
+   * Gets the configured volumes.
+   *
+   * @return the configured volumes
+   */
+  List<String> getVolumes() {
+    if (System.getProperty(PropertyNames.CONTAINER_VOLUMES) != null) {
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.CONTAINER_VOLUMES));
+    }
+    return container.volumes;
   }
 
   /**

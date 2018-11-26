@@ -41,6 +41,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -131,7 +132,7 @@ public class PluginConfigurationProcessor {
       @Nullable Map<String, String> dockerEnvironment,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException {
+          InferredAuthRetrievalException, IOException, InvalidContainerVolumesException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -153,7 +154,7 @@ public class PluginConfigurationProcessor {
       Path tarImagePath,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException {
+          InferredAuthRetrievalException, IOException, InvalidContainerVolumesException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
@@ -166,7 +167,8 @@ public class PluginConfigurationProcessor {
   public static PluginConfigurationProcessor processCommonConfigurationForRegistryImage(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InferredAuthRetrievalException, InvalidImageReferenceException,
-          MainClassInferenceException, AppRootInvalidException, IOException {
+          MainClassInferenceException, AppRootInvalidException, IOException,
+          InvalidContainerVolumesException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -208,7 +210,7 @@ public class PluginConfigurationProcessor {
       ImageReference targetImageReference,
       boolean isTargetImageCredentialPresent)
       throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException {
+          InferredAuthRetrievalException, IOException, InvalidContainerVolumesException {
     JibSystemProperties.checkHttpTimeoutProperty();
 
     ImageReference baseImageReference =
@@ -246,6 +248,7 @@ public class PluginConfigurationProcessor {
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(rawConfiguration.getPorts()))
+            .setVolumes(getVolumesList(rawConfiguration))
             .setLabels(rawConfiguration.getLabels())
             .setUser(rawConfiguration.getUser().orElse(null));
     if (rawConfiguration.getUseCurrentTimestamp()) {
@@ -265,6 +268,29 @@ public class PluginConfigurationProcessor {
         targetImageReference,
         isBaseImageCredentialPresent,
         isTargetImageCredentialPresent);
+  }
+
+  /**
+   * Parses the list of raw volumes directories to a list of {@link AbsoluteUnixPath}
+   *
+   * @param rawConfiguration raw configuration data
+   * @return the list of parsed volumes.
+   * @throws InvalidContainerVolumesException if {@code volumes} are not valid absolute Unix paths
+   */
+  @VisibleForTesting
+  static List<AbsoluteUnixPath> getVolumesList(RawConfiguration rawConfiguration)
+      throws InvalidContainerVolumesException {
+    List<AbsoluteUnixPath> volumes = new ArrayList<>();
+    for (String directory : rawConfiguration.getVolumes()) {
+      try {
+        AbsoluteUnixPath absoluteUnixPath = AbsoluteUnixPath.get(directory);
+        volumes.add(absoluteUnixPath);
+      } catch (IllegalArgumentException exception) {
+        throw new InvalidContainerVolumesException("Invalid volume path: " + directory);
+      }
+    }
+
+    return volumes;
   }
 
   /**

@@ -52,6 +52,9 @@
               <key1>value1</key1>
               <key2>value2</key2>
             </labels>
+            <volumes>
+              <volume>/var/log</volume>
+            </volumes>
           </container>
           <extraDirectory>${project.basedir}/src/main/jib-custom</extraDirectory>
           <!-- Does not have tests use user-level cache for base image layers. -->

@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
+import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumesException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
@@ -118,6 +119,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
         | IOException
         | CacheDirectoryCreationException
         | MainClassInferenceException
+        | InvalidContainerVolumesException
         | InferredAuthRetrievalException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
