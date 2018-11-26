@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Image ID is now written to `build/jib-image.id` ([#1204](https://github.com/GoogleContainerTools/jib/issues/1204))
+- `jib.container.entrypoint = 'INHERIT'` allows inheriting `ENTRYPOINT` and `CMD` from the base image. While inheriting `ENTRYPOINT`, you can also override `CMD` using `jib.container.args`.
 
 ### Changed
 

@@ -62,6 +62,7 @@ public class PluginConfigurationProcessor {
    * Compute the container entrypoint, in this order:
    *
    * <ol>
+   *   <li>null (inheriting from the base image), if the user specified value is {@code INHERIT}
    *   <li>the user specified one, if set
    *   <li>for a WAR project, null (it must be inherited from base image)
    *   <li>for a non-WAR project, by resolving the main class
@@ -84,6 +85,10 @@ public class PluginConfigurationProcessor {
         new DefaultEventDispatcher(projectProperties.getEventHandlers())
             .dispatch(
                 LogEvent.warn("mainClass and jvmFlags are ignored when entrypoint is specified"));
+      }
+
+      if (rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))) {
+        return null;
       }
       return rawEntrypoint.get();
     }

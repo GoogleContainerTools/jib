@@ -73,6 +73,10 @@ public class ContainerParameters {
     this.entrypoint = entrypoint;
   }
 
+  public void setEntrypoint(String entrypoint) {
+    this.entrypoint = Collections.singletonList(entrypoint);
+  }
+
   @Input
   @Optional
   public List<String> getJvmFlags() {

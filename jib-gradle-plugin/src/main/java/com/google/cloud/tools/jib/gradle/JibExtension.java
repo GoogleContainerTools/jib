@@ -34,20 +34,20 @@ import org.gradle.api.tasks.Optional;
  * <pre>{@code
  * jib {
  *   from {
- *     image = ‘gcr.io/my-gcp-project/my-base-image’
- *     credHelper = ‘gcr’
+ *     image = 'gcr.io/my-gcp-project/my-base-image'
+ *     credHelper = 'gcr'
  *   }
  *   to {
- *     image = ‘gcr.io/gcp-project/my-app:built-with-jib’
- *     credHelper = ‘ecr-login’
+ *     image = 'gcr.io/gcp-project/my-app:built-with-jib'
+ *     credHelper = 'ecr-login'
  *   }
  *   container {
- *     jvmFlags = [‘-Xms512m’, ‘-Xdebug’]
- *     mainClass = ‘com.mycompany.myproject.Main’
+ *     jvmFlags = ['-Xms512m', '-Xdebug']
+ *     mainClass = 'com.mycompany.myproject.Main'
  *     args = ['arg1', 'arg2']
  *     exposedPorts = ['1000', '2000-2010', '3000']
  *     format = OCI
- *     appRoot = "/app";
+ *     appRoot = '/app'
  *   }
  *   extraDirectory {
  *     path = file('path/to/extra/dir')
