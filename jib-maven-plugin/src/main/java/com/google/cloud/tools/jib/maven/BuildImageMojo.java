@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
+import com.google.cloud.tools.jib.plugins.common.WorkingDirectoryInvalidException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -128,7 +129,11 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     } catch (AppRootInvalidException ex) {
       throw new MojoExecutionException(
-          "<container><appRoot> is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
+          "<container><appRoot> is not an absolute Unix-style path: " + ex.getInvalidPathValue());
+    } catch (WorkingDirectoryInvalidException ex) {
+      throw new MojoExecutionException(
+          "<container><workingDirectory> is not an absolute Unix-style path: "
+              + ex.getInvalidPathValue());
 
     } catch (InvalidImageReferenceException
         | IOException

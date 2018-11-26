@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
+import com.google.cloud.tools.jib.plugins.common.WorkingDirectoryInvalidException;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -146,7 +147,11 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     } catch (AppRootInvalidException ex) {
       throw new GradleException(
-          "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
+          "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidPathValue());
+    } catch (WorkingDirectoryInvalidException ex) {
+      throw new GradleException(
+          "container.workingDirectory is not an absolute Unix-style path: "
+              + ex.getInvalidPathValue());
     }
   }
 

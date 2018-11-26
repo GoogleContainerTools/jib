@@ -126,7 +126,7 @@ public class PluginConfigurationProcessor {
       @Nullable Map<String, String> dockerEnvironment,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException {
+          InferredAuthRetrievalException, IOException, WorkingDirectoryInvalidException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -148,7 +148,7 @@ public class PluginConfigurationProcessor {
       Path tarImagePath,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException {
+          InferredAuthRetrievalException, IOException, WorkingDirectoryInvalidException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
@@ -161,7 +161,8 @@ public class PluginConfigurationProcessor {
   public static PluginConfigurationProcessor processCommonConfigurationForRegistryImage(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InferredAuthRetrievalException, InvalidImageReferenceException,
-          MainClassInferenceException, AppRootInvalidException, IOException {
+          MainClassInferenceException, AppRootInvalidException, IOException,
+          WorkingDirectoryInvalidException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -203,7 +204,7 @@ public class PluginConfigurationProcessor {
       ImageReference targetImageReference,
       boolean isTargetImageCredentialPresent)
       throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException {
+          InferredAuthRetrievalException, IOException, WorkingDirectoryInvalidException {
     JibSystemProperties.checkHttpTimeoutProperty();
 
     ImageReference baseImageReference =
@@ -243,11 +244,8 @@ public class PluginConfigurationProcessor {
             .setExposedPorts(ExposedPortsParser.parse(rawConfiguration.getPorts()))
             .setLabels(rawConfiguration.getLabels())
             .setUser(rawConfiguration.getUser().orElse(null));
-    rawConfiguration
-        .getWorkingDirectory()
-        .ifPresent(
-            workingDirectory ->
-                jibContainerBuilder.setWorkingDirectory(AbsoluteUnixPath.get(workingDirectory)));
+    getWorkingDirectoryChecked(rawConfiguration)
+        .ifPresent(workingDirectory -> jibContainerBuilder.setWorkingDirectory(workingDirectory));
     if (rawConfiguration.getUseCurrentTimestamp()) {
       eventDispatcher.dispatch(
           LogEvent.warn(
@@ -292,6 +290,21 @@ public class PluginConfigurationProcessor {
       return AbsoluteUnixPath.get(appRoot);
     } catch (IllegalArgumentException ex) {
       throw new AppRootInvalidException(appRoot, appRoot, ex);
+    }
+  }
+
+  @VisibleForTesting
+  static Optional<AbsoluteUnixPath> getWorkingDirectoryChecked(RawConfiguration rawConfiguration)
+      throws WorkingDirectoryInvalidException {
+    if (!rawConfiguration.getWorkingDirectory().isPresent()) {
+      return Optional.empty();
+    }
+
+    String path = rawConfiguration.getWorkingDirectory().get();
+    try {
+      return Optional.of(AbsoluteUnixPath.get(path));
+    } catch (IllegalArgumentException ex) {
+      throw new WorkingDirectoryInvalidException(path, path, ex);
     }
   }
 

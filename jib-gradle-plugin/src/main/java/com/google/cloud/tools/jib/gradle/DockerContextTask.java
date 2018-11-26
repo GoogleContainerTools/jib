@@ -168,7 +168,7 @@ public class DockerContextTask extends DefaultTask implements JibTask {
 
     } catch (AppRootInvalidException ex) {
       throw new GradleException(
-          "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
+          "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidPathValue());
     }
   }
 
