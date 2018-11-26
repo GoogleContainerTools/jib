@@ -39,7 +39,6 @@ class TestProject extends TemporaryFolder implements Closeable {
       throws IOException, URISyntaxException {
     Path projectPathInResources =
         Paths.get(Resources.getResource(PROJECTS_PATH_IN_RESOURCES + projectName).toURI());
-    // TODO: Consolidate with DockerContextMojo#copyFiles.
     new DirectoryWalker(projectPathInResources)
         .filterRoot()
         .walk(
