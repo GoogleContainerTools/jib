@@ -391,7 +391,7 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Sets the working directory in the container as.
+   * Sets the working directory in the container.
    *
    * @param workingDirectory the working directory
    * @return this
