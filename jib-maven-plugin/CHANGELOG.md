@@ -6,9 +6,12 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Image ID is now written to `target/jib-image.id` ([#1204](https://github.com/GoogleContainerTools/jib/issues/1204))
+- `<container><entrypoint>INHERIT</entrypoint></container>` allows inheriting `ENTRYPOINT` and `CMD` from the base image. While inheriting `ENTRYPOINT`, you can also override `CMD` using `<container><args>`.
 - `<container><workingDirectory>` configuration parameter to set the working directory ([#1225](https://github.com/GoogleContainerTools/jib/issues/1225))
 
 ### Changed
+
+- Removed `jib:exportDockerContext` goal ([#1219](https://github.com/GoogleContainerTools/jib/issues/1219))
 
 ### Fixed
 

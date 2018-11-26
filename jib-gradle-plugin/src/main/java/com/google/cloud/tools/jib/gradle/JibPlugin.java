@@ -39,7 +39,6 @@ public class JibPlugin implements Plugin<Project> {
   @VisibleForTesting static final String BUILD_IMAGE_TASK_NAME = "jib";
   @VisibleForTesting static final String BUILD_TAR_TASK_NAME = "jibBuildTar";
   @VisibleForTesting static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
-  @VisibleForTesting static final String DOCKER_CONTEXT_TASK_NAME = "jibExportDockerContext";
   @VisibleForTesting static final String FILES_TASK_NAME = "_jibSkaffoldFiles";
   @VisibleForTesting static final String EXPLODED_WAR_TASK_NAME = "jibExplodedWar";
 
@@ -90,11 +89,6 @@ public class JibPlugin implements Plugin<Project> {
             .getTasks()
             .create(BUILD_IMAGE_TASK_NAME, BuildImageTask.class)
             .setJibExtension(jibExtension);
-    Task dockerContextTask =
-        project
-            .getTasks()
-            .create(DOCKER_CONTEXT_TASK_NAME, DockerContextTask.class)
-            .setJibExtension(jibExtension);
     Task buildDockerTask =
         project
             .getTasks()
@@ -130,7 +124,6 @@ public class JibPlugin implements Plugin<Project> {
               dependsOnTask = projectAfterEvaluation.getTasks().getByPath("classes");
             }
             buildImageTask.dependsOn(dependsOnTask);
-            dockerContextTask.dependsOn(dependsOnTask);
             buildDockerTask.dependsOn(dependsOnTask);
             buildTarTask.dependsOn(dependsOnTask);
 
@@ -147,7 +140,6 @@ public class JibPlugin implements Plugin<Project> {
                         Task assembleTask =
                             dependencyProject.getTasks().getByPath(BasePlugin.ASSEMBLE_TASK_NAME);
                         buildImageTask.dependsOn(assembleTask);
-                        dockerContextTask.dependsOn(assembleTask);
                         buildDockerTask.dependsOn(assembleTask);
                         buildTarTask.dependsOn(assembleTask);
                       });
