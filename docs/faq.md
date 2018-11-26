@@ -362,7 +362,7 @@ jib {
 
 </p>
 </details>
-
+<br>
 Some plugins, such as the [Docker Prepare Gradle Plugin](https://github.com/gclayburg/dockerPreparePlugin), will even automatically generate a Docker context for your project, including a Dockerfile.
 
 ### How can I inspect the image Jib built?
