@@ -100,13 +100,13 @@ public class DockerHealthCheck {
   }
 
   /**
-   * Creates a new {@link DockerHealthCheck.Builder} with the command set to be inherited from the
-   * base image (corresponds to empty list in container config).
+   * Creates a new {@link DockerHealthCheck} with the command set to be inherited from the base
+   * image.
    *
-   * @return the new {@link DockerHealthCheck.Builder}
+   * @return the new {@link DockerHealthCheck}
    */
-  public static Builder builderWithInheritedCommand() {
-    return new Builder(null);
+  public static DockerHealthCheck inherited() {
+    return new DockerHealthCheck(null, null, null, null, null);
   }
 
   /**
@@ -217,12 +217,11 @@ public class DockerHealthCheck {
   }
 
   /**
-   * Returns {@code true} if the health check command is set (i.e. intended to be inherited), {@code
-   * false} if not.
+   * Returns {@code true} if the health check should be inherited from the base image.
    *
-   * @return {@code true} if the health check command is set, {@code false} if not
+   * @return {@code true} if the health check should be inherited, {@code false} if not
    */
-  public boolean hasCommand() {
-    return command != null && !command.isEmpty();
+  public boolean isInherited() {
+    return command == null || command.isEmpty();
   }
 }

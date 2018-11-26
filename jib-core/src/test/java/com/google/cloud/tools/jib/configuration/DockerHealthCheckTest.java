@@ -27,7 +27,7 @@ public class DockerHealthCheckTest {
   @Test
   public void testBuild_parameters() {
     DockerHealthCheck healthCheck =
-        DockerHealthCheck.builderWithInheritedCommand()
+        DockerHealthCheck.builderWithShellCommand("echo hi")
             .setInterval(Duration.ofNanos(123))
             .setTimeout(Duration.ofNanos(456))
             .setStartPeriod(Duration.ofNanos(789))
@@ -46,8 +46,9 @@ public class DockerHealthCheckTest {
 
   @Test
   public void testBuild_propagated() {
-    DockerHealthCheck healthCheck = DockerHealthCheck.builderWithInheritedCommand().build();
+    DockerHealthCheck healthCheck = DockerHealthCheck.inherited();
     Assert.assertFalse(healthCheck.getCommand().isPresent());
+    Assert.assertTrue(healthCheck.isInherited());
   }
 
   @Test
