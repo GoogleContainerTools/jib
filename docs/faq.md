@@ -288,7 +288,7 @@ COPY resources /app/resources
 COPY classFiles /app/classes
 COPY src/main/extra-dir /
 
-# Sets the app as the container entrypoint with 2 JVM flags and 2 main arguments. Also adds the 
+# Sets the app as the container entrypoint with 2 JVM flags and 2 main arguments. Also adds the
 # appropriate files to the classpath.
 ENTRYPOINT ["java", "-Xms512m", "-Xdebug", "-cp", "/app/resources:/app/classes:/app/libs/*", "SomeMainClass"]
 CMD ["some", "args"]
