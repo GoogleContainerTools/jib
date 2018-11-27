@@ -168,7 +168,7 @@ public class PluginConfigurationProcessor {
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InferredAuthRetrievalException, InvalidImageReferenceException,
           MainClassInferenceException, AppRootInvalidException, IOException,
-      InvalidContainerVolumeException {
+          InvalidContainerVolumeException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -286,7 +286,11 @@ public class PluginConfigurationProcessor {
         AbsoluteUnixPath absoluteUnixPath = AbsoluteUnixPath.get(directory);
         volumes.add(absoluteUnixPath);
       } catch (IllegalArgumentException exception) {
-        throw new InvalidContainerVolumeException("Volume \"" + directory + "\" is an invalid path, volumes must be an absolute Unix-style path.", exception);
+        throw new InvalidContainerVolumeException(
+            "Volume \""
+                + directory
+                + "\" is an invalid path, volumes must be an absolute Unix-style path.",
+            exception);
       }
     }
 
