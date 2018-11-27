@@ -47,7 +47,7 @@ public class Image<T extends Layer> {
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
-    private DockerHealthCheck healthCheck = DockerHealthCheck.disabled();
+    private DockerHealthCheck healthCheck = DockerHealthCheck.inherited();
     @Nullable private ImmutableList<Port> exposedPorts;
     @Nullable private ImmutableList<AbsoluteUnixPath> volumes;
     @Nullable private String workingDirectory;

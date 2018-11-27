@@ -30,13 +30,13 @@ public class DockerHealthCheck {
   /** Builds the immutable {@link DockerHealthCheck}. */
   public static class Builder {
 
-    @Nullable private final ImmutableList<String> command;
+    private final ImmutableList<String> command;
     @Nullable private Duration interval;
     @Nullable private Duration timeout;
     @Nullable private Duration startPeriod;
     @Nullable private Integer retries;
 
-    private Builder(@Nullable ImmutableList<String> command) {
+    private Builder(ImmutableList<String> command) {
       this.command = command;
     }
 
@@ -106,7 +106,7 @@ public class DockerHealthCheck {
    * @return the new {@link DockerHealthCheck}
    */
   public static DockerHealthCheck inherited() {
-    return new DockerHealthCheck(null, null, null, null, null);
+    return new DockerHealthCheck(ImmutableList.of(), null, null, null, null);
   }
 
   /**
@@ -147,14 +147,14 @@ public class DockerHealthCheck {
     return new Builder(ImmutableList.of("CMD-SHELL", command));
   }
 
-  @Nullable private final ImmutableList<String> command;
+  private final ImmutableList<String> command;
   @Nullable private final Duration interval;
   @Nullable private final Duration timeout;
   @Nullable private final Duration startPeriod;
   @Nullable private final Integer retries;
 
   private DockerHealthCheck(
-      @Nullable ImmutableList<String> command,
+      ImmutableList<String> command,
       @Nullable Duration interval,
       @Nullable Duration timeout,
       @Nullable Duration startPeriod,
@@ -172,8 +172,8 @@ public class DockerHealthCheck {
    *
    * @return the healthcheck command
    */
-  public Optional<List<String>> getCommand() {
-    return Optional.ofNullable(command);
+  public List<String> getCommand() {
+    return command;
   }
 
   /**
@@ -222,6 +222,6 @@ public class DockerHealthCheck {
    * @return {@code true} if the health check should be inherited, {@code false} if not
    */
   public boolean isInherited() {
-    return command == null || command.isEmpty();
+    return command.isEmpty();
   }
 }

@@ -172,7 +172,7 @@ public class ImageToJsonTranslator {
     // Healthcheck is not supported by OCI
     DockerHealthCheck healthCheck = image.getHealthCheck();
     if (image.getImageFormat() == V22ManifestTemplate.class) {
-      template.setContainerHealthTest(healthCheck.getCommand().orElse(ImmutableList.of()));
+      template.setContainerHealthTest(healthCheck.getCommand());
       healthCheck
           .getInterval()
           .ifPresent(interval -> template.setContainerHealthInterval(interval.toNanos()));
