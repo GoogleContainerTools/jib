@@ -286,7 +286,7 @@ public class PluginConfigurationProcessor {
         AbsoluteUnixPath absoluteUnixPath = AbsoluteUnixPath.get(directory);
         volumes.add(absoluteUnixPath);
       } catch (IllegalArgumentException exception) {
-        throw new InvalidContainerVolumeException("Invalid volume path: " + directory, exception);
+        throw new InvalidContainerVolumeException("Volume \"" + directory + "\" is an invalid path, volumes must be an absolute Unix-style path.", exception);
       }
     }
 
