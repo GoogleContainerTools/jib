@@ -433,9 +433,8 @@ public class PluginConfigurationProcessorTest {
       PluginConfigurationProcessor.getVolumesList(rawConfiguration);
       Assert.fail();
     } catch (InvalidContainerVolumeException e) {
-      Assert.assertEquals(
-          "Volume \"`some/root\" is an invalid path, volumes must be an absolute Unix-style path.",
-          e.getMessage());
+      Assert.assertEquals("`some/root", e.getMessage());
+      Assert.assertEquals("`some/root", e.getInvalidVolume());
     }
   }
 }

@@ -16,14 +16,20 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-/** Thrown when list of volume's directories contains invalid paths */
+/**
+ * Indicates that the {@code container.volumes} config value has at least one invalid path. (The
+ * path is not in the absolute unix-path style).
+ */
 public class InvalidContainerVolumeException extends Exception {
 
-  InvalidContainerVolumeException(String message) {
-    super(message);
+  private String invalidVolume;
+
+  InvalidContainerVolumeException(String message, String invalidVolume, Throwable cause) {
+    super(message, cause);
+    this.invalidVolume = invalidVolume;
   }
 
-  InvalidContainerVolumeException(String message, Throwable cause) {
-    super(message, cause);
+  public String getInvalidVolume() {
+    return invalidVolume;
   }
 }

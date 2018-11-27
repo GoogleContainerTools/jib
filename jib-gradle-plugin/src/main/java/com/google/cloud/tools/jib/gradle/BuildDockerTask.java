@@ -88,7 +88,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   public void buildDocker()
       throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
           CacheDirectoryCreationException, MainClassInferenceException,
-          InferredAuthRetrievalException, InvalidContainerVolumeException {
+          InferredAuthRetrievalException {
     Path dockerExecutable = dockerClientParameters.getExecutable();
     boolean isDockerInstalled =
         dockerExecutable == null
@@ -148,6 +148,9 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     } catch (AppRootInvalidException ex) {
       throw new GradleException(
           "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
+    } catch (InvalidContainerVolumeException ex) {
+      throw new GradleException(
+          "container.volumes is not an absolute Unix-style path: " + ex.getInvalidVolume());
     }
   }
 

@@ -74,7 +74,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
   public void buildImage()
       throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
           CacheDirectoryCreationException, MainClassInferenceException,
-          InferredAuthRetrievalException, InvalidContainerVolumeException {
+          InferredAuthRetrievalException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     TaskCommon.disableHttpLogging();
@@ -128,6 +128,9 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     } catch (AppRootInvalidException ex) {
       throw new GradleException(
           "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
+    } catch (InvalidContainerVolumeException ex) {
+      throw new GradleException(
+          "container.volumes is not an absolute Unix-style path: " + ex.getInvalidVolume());
     }
   }
 

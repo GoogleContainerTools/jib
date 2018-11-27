@@ -281,16 +281,12 @@ public class PluginConfigurationProcessor {
   static List<AbsoluteUnixPath> getVolumesList(RawConfiguration rawConfiguration)
       throws InvalidContainerVolumeException {
     List<AbsoluteUnixPath> volumes = new ArrayList<>();
-    for (String directory : rawConfiguration.getVolumes()) {
+    for (String path : rawConfiguration.getVolumes()) {
       try {
-        AbsoluteUnixPath absoluteUnixPath = AbsoluteUnixPath.get(directory);
+        AbsoluteUnixPath absoluteUnixPath = AbsoluteUnixPath.get(path);
         volumes.add(absoluteUnixPath);
       } catch (IllegalArgumentException exception) {
-        throw new InvalidContainerVolumeException(
-            "Volume \""
-                + directory
-                + "\" is an invalid path, volumes must be an absolute Unix-style path.",
-            exception);
+        throw new InvalidContainerVolumeException(path, path, exception);
       }
     }
 

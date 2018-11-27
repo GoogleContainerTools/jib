@@ -109,11 +109,14 @@ public class BuildTarMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(
           "<container><appRoot> is not an absolute Unix-style path: " + ex.getInvalidAppRoot());
 
+    } catch (InvalidContainerVolumeException ex) {
+      throw new MojoExecutionException(
+          "<container><volumes> is not an absolute Unix-style path: " + ex.getInvalidVolume());
+
     } catch (InvalidImageReferenceException
         | IOException
         | CacheDirectoryCreationException
         | MainClassInferenceException
-        | InvalidContainerVolumeException
         | InferredAuthRetrievalException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
