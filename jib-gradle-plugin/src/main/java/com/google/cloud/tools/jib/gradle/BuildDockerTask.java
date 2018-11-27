@@ -22,15 +22,15 @@ import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.plugins.common.AppRootInvalidException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
+import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
+import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
-import com.google.cloud.tools.jib.plugins.common.WorkingDirectoryInvalidException;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -145,13 +145,14 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
               helpfulSuggestions);
 
-    } catch (AppRootInvalidException ex) {
+    } catch (InvalidAppRootException ex) {
       throw new GradleException(
-          "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidPathValue());
-    } catch (WorkingDirectoryInvalidException ex) {
+          "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidPathValue(), ex);
+    } catch (InvalidWorkingDirectoryException ex) {
       throw new GradleException(
           "container.workingDirectory is not an absolute Unix-style path: "
-              + ex.getInvalidPathValue());
+              + ex.getInvalidPathValue(),
+          ex);
     }
   }
 

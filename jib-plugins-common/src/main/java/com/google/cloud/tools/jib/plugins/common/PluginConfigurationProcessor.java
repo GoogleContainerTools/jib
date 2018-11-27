@@ -72,12 +72,12 @@ public class PluginConfigurationProcessor {
    * @param projectProperties used for providing additional information
    * @return the entrypoint
    * @throws MainClassInferenceException if no valid main class is configured or discovered
-   * @throws AppRootInvalidException if {@code appRoot} value is not an absolute Unix path
+   * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
    */
   @Nullable
   public static List<String> computeEntrypoint(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
-      throws MainClassInferenceException, AppRootInvalidException {
+      throws MainClassInferenceException, InvalidAppRootException {
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
     if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
       if (rawConfiguration.getMainClass().isPresent()
@@ -130,8 +130,8 @@ public class PluginConfigurationProcessor {
       @Nullable Path dockerExecutable,
       @Nullable Map<String, String> dockerEnvironment,
       HelpfulSuggestions helpfulSuggestions)
-      throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException, WorkingDirectoryInvalidException {
+      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
+          InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -152,8 +152,8 @@ public class PluginConfigurationProcessor {
       ProjectProperties projectProperties,
       Path tarImagePath,
       HelpfulSuggestions helpfulSuggestions)
-      throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException, WorkingDirectoryInvalidException {
+      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
+          InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
@@ -166,8 +166,8 @@ public class PluginConfigurationProcessor {
   public static PluginConfigurationProcessor processCommonConfigurationForRegistryImage(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InferredAuthRetrievalException, InvalidImageReferenceException,
-          MainClassInferenceException, AppRootInvalidException, IOException,
-          WorkingDirectoryInvalidException {
+          MainClassInferenceException, InvalidAppRootException, IOException,
+          InvalidWorkingDirectoryException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -208,8 +208,8 @@ public class PluginConfigurationProcessor {
       Containerizer containerizer,
       ImageReference targetImageReference,
       boolean isTargetImageCredentialPresent)
-      throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException, WorkingDirectoryInvalidException {
+      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
+          InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException {
     JibSystemProperties.checkHttpTimeoutProperty();
 
     ImageReference baseImageReference =
@@ -278,12 +278,12 @@ public class PluginConfigurationProcessor {
    * @param rawConfiguration raw configuration data
    * @param projectProperties used for providing additional information
    * @return the app root value
-   * @throws AppRootInvalidException if {@code appRoot} value is not an absolute Unix path
+   * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
    */
   @VisibleForTesting
   static AbsoluteUnixPath getAppRootChecked(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
-      throws AppRootInvalidException {
+      throws InvalidAppRootException {
     String appRoot = rawConfiguration.getAppRoot();
     if (appRoot.isEmpty()) {
       appRoot =
@@ -294,13 +294,13 @@ public class PluginConfigurationProcessor {
     try {
       return AbsoluteUnixPath.get(appRoot);
     } catch (IllegalArgumentException ex) {
-      throw new AppRootInvalidException(appRoot, appRoot, ex);
+      throw new InvalidAppRootException(appRoot, appRoot, ex);
     }
   }
 
   @VisibleForTesting
   static Optional<AbsoluteUnixPath> getWorkingDirectoryChecked(RawConfiguration rawConfiguration)
-      throws WorkingDirectoryInvalidException {
+      throws InvalidWorkingDirectoryException {
     if (!rawConfiguration.getWorkingDirectory().isPresent()) {
       return Optional.empty();
     }
@@ -309,7 +309,7 @@ public class PluginConfigurationProcessor {
     try {
       return Optional.of(AbsoluteUnixPath.get(path));
     } catch (IllegalArgumentException ex) {
-      throw new WorkingDirectoryInvalidException(path, path, ex);
+      throw new InvalidWorkingDirectoryException(path, path, ex);
     }
   }
 
