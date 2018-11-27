@@ -44,12 +44,6 @@ public class DefaultTargetProjectIntegrationTest {
     Assert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
-            "            \"Volumes\": {\n"
-                + "                \"/var/log\": {}\n"
-                + "            },"));
-    Assert.assertThat(
-        dockerInspect,
-        CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
                 + "                \"1000/tcp\": {},\n"
                 + "                \"2000/udp\": {},\n"

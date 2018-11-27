@@ -75,7 +75,8 @@ public class SingleProjectIntegrationTest {
         dockerInspect,
         CoreMatchers.containsString(
             "            \"Volumes\": {\n"
-                + "                \"/var/log\": {}\n"
+                + "                \"/var/log\": {},\n"
+                + "                \"/var/log2\": {}\n"
                 + "            },"));
     Assert.assertThat(
         dockerInspect,

@@ -132,7 +132,7 @@ public class PluginConfigurationProcessor {
       @Nullable Map<String, String> dockerEnvironment,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException, InvalidContainerVolumesException {
+          InferredAuthRetrievalException, IOException, InvalidContainerVolumeException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -154,7 +154,7 @@ public class PluginConfigurationProcessor {
       Path tarImagePath,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException, InvalidContainerVolumesException {
+          InferredAuthRetrievalException, IOException, InvalidContainerVolumeException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
@@ -168,7 +168,7 @@ public class PluginConfigurationProcessor {
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InferredAuthRetrievalException, InvalidImageReferenceException,
           MainClassInferenceException, AppRootInvalidException, IOException,
-          InvalidContainerVolumesException {
+      InvalidContainerVolumeException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -210,7 +210,7 @@ public class PluginConfigurationProcessor {
       ImageReference targetImageReference,
       boolean isTargetImageCredentialPresent)
       throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException, InvalidContainerVolumesException {
+          InferredAuthRetrievalException, IOException, InvalidContainerVolumeException {
     JibSystemProperties.checkHttpTimeoutProperty();
 
     ImageReference baseImageReference =
@@ -275,18 +275,18 @@ public class PluginConfigurationProcessor {
    *
    * @param rawConfiguration raw configuration data
    * @return the list of parsed volumes.
-   * @throws InvalidContainerVolumesException if {@code volumes} are not valid absolute Unix paths
+   * @throws InvalidContainerVolumeException if {@code volumes} are not valid absolute Unix paths
    */
   @VisibleForTesting
   static List<AbsoluteUnixPath> getVolumesList(RawConfiguration rawConfiguration)
-      throws InvalidContainerVolumesException {
+      throws InvalidContainerVolumeException {
     List<AbsoluteUnixPath> volumes = new ArrayList<>();
     for (String directory : rawConfiguration.getVolumes()) {
       try {
         AbsoluteUnixPath absoluteUnixPath = AbsoluteUnixPath.get(directory);
         volumes.add(absoluteUnixPath);
       } catch (IllegalArgumentException exception) {
-        throw new InvalidContainerVolumesException("Invalid volume path: " + directory);
+        throw new InvalidContainerVolumeException("Invalid volume path: " + directory, exception);
       }
     }
 

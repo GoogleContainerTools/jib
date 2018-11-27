@@ -54,6 +54,7 @@
             </labels>
             <volumes>
               <volume>/var/log</volume>
+              <volume>/var/log2</volume>
             </volumes>
           </container>
           <extraDirectory>${project.basedir}/src/main/jib-custom</extraDirectory>
