@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -103,5 +104,12 @@ public class ContainerConfigurationTest {
   public void testBuilder_user() {
     ContainerConfiguration configuration = ContainerConfiguration.builder().setUser("john").build();
     Assert.assertEquals("john", configuration.getUser());
+  }
+
+  @Test
+  public void testBuilder_workingDirectory() {
+    ContainerConfiguration configuration =
+        ContainerConfiguration.builder().setWorkingDirectory(AbsoluteUnixPath.get("/path")).build();
+    Assert.assertEquals(AbsoluteUnixPath.get("/path"), configuration.getWorkingDirectory());
   }
 }

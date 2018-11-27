@@ -159,6 +159,9 @@ class BuildImageStep
             .setExposedPorts(containerConfiguration.getExposedPorts())
             .setVolumes(containerConfiguration.getVolumes())
             .addLabels(containerConfiguration.getLabels());
+        if (containerConfiguration.getWorkingDirectory() != null) {
+          imageBuilder.setWorkingDirectory(containerConfiguration.getWorkingDirectory().toString());
+        }
       }
 
       // Gets the container configuration content descriptor.

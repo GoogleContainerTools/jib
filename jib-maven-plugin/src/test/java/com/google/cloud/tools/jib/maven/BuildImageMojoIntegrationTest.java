@@ -258,6 +258,15 @@ public class BuildImageMojoIntegrationTest {
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
   }
 
+  private static void assertWorkingDirectory(String expected, String imageReference)
+      throws IOException, InterruptedException {
+    Assert.assertEquals(
+        expected,
+        new Command("docker", "inspect", "-f", "{{.Config.WorkingDir}}", imageReference)
+            .run()
+            .trim());
+  }
+
   @Nullable private String detachedContainerName;
 
   @Before
@@ -318,6 +327,7 @@ public class BuildImageMojoIntegrationTest {
         Instant.parse(
             new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
     Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
+    assertWorkingDirectory("/home", targetImage);
   }
 
   @Test
@@ -326,6 +336,7 @@ public class BuildImageMojoIntegrationTest {
     String targetImage = getGcrImageReference("emptyimage:maven");
     Assert.assertEquals("", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, false));
     assertCreationTimeEpoch(targetImage);
+    assertWorkingDirectory("", targetImage);
   }
 
   @Test
@@ -365,6 +376,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
+    assertWorkingDirectory("", targetImage);
   }
 
   @Test
@@ -374,6 +386,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
+    assertWorkingDirectory("", targetImage);
   }
 
   @Test

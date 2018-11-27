@@ -143,6 +143,11 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public Optional<String> getWorkingDirectory() {
+    return Optional.ofNullable(jibPluginConfiguration.getWorkingDirectory());
+  }
+
+  @Override
   public boolean getUseCurrentTimestamp() {
     return jibPluginConfiguration.getUseCurrentTimestamp();
   }

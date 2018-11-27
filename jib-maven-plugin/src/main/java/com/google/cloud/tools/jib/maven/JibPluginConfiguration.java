@@ -151,6 +151,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private String appRoot = "";
 
     @Nullable @Parameter private String user;
+
+    @Nullable @Parameter private String workingDirectory;
   }
 
   /** Configuration for the {@code extraDirectory} parameter. */
@@ -373,6 +375,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return System.getProperty(PropertyNames.CONTAINER_USER);
     }
     return container.user;
+  }
+
+  /**
+   * Gets the working directory in the container.
+   *
+   * @return the working directory
+   */
+  @Nullable
+  String getWorkingDirectory() {
+    if (System.getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY);
+    }
+    return container.workingDirectory;
   }
 
   /**
