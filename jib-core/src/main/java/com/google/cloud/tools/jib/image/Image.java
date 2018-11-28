@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,12 +43,12 @@ public class Image<T extends Layer> {
     // values.
     private final Map<String, String> environmentBuilder = new HashMap<>();
     private final Map<String, String> labelsBuilder = new HashMap<>();
+    private final Set<Port> exposedPortsBuilder = new HashSet<>();
+    private final Set<AbsoluteUnixPath> volumesBuilder = new HashSet<>();
 
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
-    @Nullable private ImmutableSet<Port> exposedPorts;
-    @Nullable private ImmutableSet<AbsoluteUnixPath> volumes;
     @Nullable private String workingDirectory;
     @Nullable private String user;
 
@@ -127,8 +128,10 @@ public class Image<T extends Layer> {
      * @param exposedPorts the list of exposed ports to add
      * @return this
      */
-    public Builder<T> setExposedPorts(@Nullable Set<Port> exposedPorts) {
-      this.exposedPorts = (exposedPorts == null) ? null : ImmutableSet.copyOf(exposedPorts);
+    public Builder<T> addExposedPorts(@Nullable Set<Port> exposedPorts) {
+      if (exposedPorts != null) {
+        exposedPortsBuilder.addAll(exposedPorts);
+      }
       return this;
     }
 
@@ -138,8 +141,10 @@ public class Image<T extends Layer> {
      * @param volumes the list of directories to create a volume.
      * @return this
      */
-    public Builder<T> setVolumes(@Nullable Set<AbsoluteUnixPath> volumes) {
-      this.volumes = (volumes == null) ? null : ImmutableSet.copyOf(volumes);
+    public Builder<T> addVolumes(@Nullable Set<AbsoluteUnixPath> volumes) {
+      if (volumes != null) {
+        volumesBuilder.addAll(ImmutableSet.copyOf(volumes));
+      }
       return this;
     }
 
@@ -210,8 +215,8 @@ public class Image<T extends Layer> {
           ImmutableMap.copyOf(environmentBuilder),
           entrypoint,
           programArguments,
-          exposedPorts,
-          volumes,
+          ImmutableSet.copyOf(exposedPortsBuilder),
+          ImmutableSet.copyOf(volumesBuilder),
           ImmutableMap.copyOf(labelsBuilder),
           workingDirectory,
           user);

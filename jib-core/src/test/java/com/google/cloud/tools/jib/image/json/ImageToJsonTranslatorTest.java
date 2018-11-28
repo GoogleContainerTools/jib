@@ -61,9 +61,9 @@ public class ImageToJsonTranslatorTest {
     testImageBuilder.addEnvironmentVariable("VAR2", "VAL2");
     testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
     testImageBuilder.setProgramArguments(Arrays.asList("arg1", "arg2"));
-    testImageBuilder.setExposedPorts(
+    testImageBuilder.addExposedPorts(
         ImmutableSet.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)));
-    testImageBuilder.setVolumes(
+    testImageBuilder.addVolumes(
         ImmutableSet.of(
             AbsoluteUnixPath.get("/var/job-result-data"),
             AbsoluteUnixPath.get("/var/log/my-app-logs")));
