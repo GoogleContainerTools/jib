@@ -32,10 +32,10 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
@@ -247,31 +247,31 @@ public class JibContainerBuilder {
    * <p>This is similar to <a href="https://docs.docker.com/engine/reference/builder/#volume">{@code
    * VOLUME} in Dockerfiles</a>.
    *
-   * @param volumes the set of directory paths on the container filesystem to set as volumes
+   * @param volumes the directory paths on the container filesystem to set as volumes
    * @return this
    */
-  public JibContainerBuilder setVolumes(Set<AbsoluteUnixPath> volumes) {
-    containerConfigurationBuilder.setVolumes(volumes);
+  public JibContainerBuilder setVolumes(Collection<AbsoluteUnixPath> volumes) {
+    containerConfigurationBuilder.setVolumes(new HashSet<>(volumes));
     return this;
   }
 
   /**
    * Sets the directories that may hold externally mounted volumes.
    *
-   * @param volumes the list of directory paths on the container filesystem to set as volumes
+   * @param volumes the directory paths on the container filesystem to set as volumes
    * @return this
-   * @see #setVolumes(Set) for more details
+   * @see #setVolumes(Collection) for more details
    */
   public JibContainerBuilder setVolumes(AbsoluteUnixPath... volumes) {
-    return setVolumes(new HashSet<>(Arrays.asList(volumes)));
+    return setVolumes(Arrays.asList(volumes));
   }
 
   /**
    * Adds a directory that may hold an externally mounted volume.
    *
-   * @param volume a directory path on the container filesystem to represent a volume.
+   * @param volume a directory path on the container filesystem to represent a volume
    * @return this
-   * @see #setVolumes(Set) for more details
+   * @see #setVolumes(Collection) for more details
    */
   public JibContainerBuilder addVolume(AbsoluteUnixPath volume) {
     containerConfigurationBuilder.addVolume(volume);
@@ -289,11 +289,11 @@ public class JibContainerBuilder {
    * href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.11/#container-v1-core">Kubernetes
    * Container spec</a>.
    *
-   * @param ports the set of ports to expose
+   * @param ports the ports to expose
    * @return this
    */
-  public JibContainerBuilder setExposedPorts(Set<Port> ports) {
-    containerConfigurationBuilder.setExposedPorts(ports);
+  public JibContainerBuilder setExposedPorts(Collection<Port> ports) {
+    containerConfigurationBuilder.setExposedPorts(new HashSet<>(ports));
     return this;
   }
 
@@ -302,10 +302,10 @@ public class JibContainerBuilder {
    *
    * @param ports the ports to expose
    * @return this
-   * @see #setExposedPorts(Set) for more details
+   * @see #setExposedPorts(Collection) for more details
    */
   public JibContainerBuilder setExposedPorts(Port... ports) {
-    return setExposedPorts(new HashSet<>(Arrays.asList(ports)));
+    return setExposedPorts(Arrays.asList(ports));
   }
 
   /**
@@ -313,7 +313,7 @@ public class JibContainerBuilder {
    *
    * @param port the port to expose
    * @return this
-   * @see #setExposedPorts(Set) for more details
+   * @see #setExposedPorts(Collection) for more details
    */
   public JibContainerBuilder addExposedPort(Port port) {
     containerConfigurationBuilder.addExposedPort(port);
