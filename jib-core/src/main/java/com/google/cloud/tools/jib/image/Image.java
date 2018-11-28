@@ -21,10 +21,12 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Represents an image. */
@@ -44,8 +46,8 @@ public class Image<T extends Layer> {
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
-    @Nullable private ImmutableList<Port> exposedPorts;
-    @Nullable private ImmutableList<AbsoluteUnixPath> volumes;
+    @Nullable private ImmutableSet<Port> exposedPorts;
+    @Nullable private ImmutableSet<AbsoluteUnixPath> volumes;
     @Nullable private String workingDirectory;
     @Nullable private String user;
 
@@ -125,8 +127,8 @@ public class Image<T extends Layer> {
      * @param exposedPorts the list of exposed ports to add
      * @return this
      */
-    public Builder<T> setExposedPorts(@Nullable List<Port> exposedPorts) {
-      this.exposedPorts = (exposedPorts == null) ? null : ImmutableList.copyOf(exposedPorts);
+    public Builder<T> setExposedPorts(@Nullable Set<Port> exposedPorts) {
+      this.exposedPorts = (exposedPorts == null) ? null : ImmutableSet.copyOf(exposedPorts);
       return this;
     }
 
@@ -136,8 +138,8 @@ public class Image<T extends Layer> {
      * @param volumes the list of directories to create a volume.
      * @return this
      */
-    public Builder<T> setVolumes(@Nullable List<AbsoluteUnixPath> volumes) {
-      this.volumes = (volumes == null) ? null : ImmutableList.copyOf(volumes);
+    public Builder<T> setVolumes(@Nullable Set<AbsoluteUnixPath> volumes) {
+      this.volumes = (volumes == null) ? null : ImmutableSet.copyOf(volumes);
       return this;
     }
 
@@ -239,10 +241,10 @@ public class Image<T extends Layer> {
   @Nullable private final ImmutableList<String> programArguments;
 
   /** Ports that the container listens on. */
-  @Nullable private final ImmutableList<Port> exposedPorts;
+  @Nullable private final ImmutableSet<Port> exposedPorts;
 
-  /** List of directories to mount as volumes. */
-  @Nullable private final ImmutableList<AbsoluteUnixPath> volumes;
+  /** Directories to mount as volumes. */
+  @Nullable private final ImmutableSet<AbsoluteUnixPath> volumes;
 
   /** Labels on the container configuration */
   @Nullable private final ImmutableMap<String, String> labels;
@@ -260,8 +262,8 @@ public class Image<T extends Layer> {
       @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> programArguments,
-      @Nullable ImmutableList<Port> exposedPorts,
-      @Nullable ImmutableList<AbsoluteUnixPath> volumes,
+      @Nullable ImmutableSet<Port> exposedPorts,
+      @Nullable ImmutableSet<AbsoluteUnixPath> volumes,
       @Nullable ImmutableMap<String, String> labels,
       @Nullable String workingDirectory,
       @Nullable String user) {
@@ -299,12 +301,12 @@ public class Image<T extends Layer> {
   }
 
   @Nullable
-  public ImmutableList<Port> getExposedPorts() {
+  public ImmutableSet<Port> getExposedPorts() {
     return exposedPorts;
   }
 
   @Nullable
-  public ImmutableList<AbsoluteUnixPath> getVolumes() {
+  public ImmutableSet<AbsoluteUnixPath> getVolumes() {
     return volumes;
   }
 

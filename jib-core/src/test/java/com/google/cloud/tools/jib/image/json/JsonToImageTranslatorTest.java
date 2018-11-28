@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedMap;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -89,8 +90,8 @@ public class JsonToImageTranslatorTest {
             ImmutableMap.of(),
             "3000/udp",
             ImmutableMap.of());
-    ImmutableList<Port> expected = ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000));
-    Assert.assertEquals(expected, JsonToImageTranslator.portMapToList(input));
+    ImmutableSet<Port> expected = ImmutableSet.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000));
+    Assert.assertEquals(expected, JsonToImageTranslator.portMapToSet(input));
 
     ImmutableList<Map<String, Map<?, ?>>> badInputs =
         ImmutableList.of(
@@ -100,7 +101,7 @@ public class JsonToImageTranslatorTest {
             ImmutableMap.of("123/xxx", ImmutableMap.of()));
     for (Map<String, Map<?, ?>> badInput : badInputs) {
       try {
-        JsonToImageTranslator.portMapToList(badInput);
+        JsonToImageTranslator.portMapToSet(badInput);
         Assert.fail();
       } catch (BadContainerConfigurationFormatException ignored) {
       }
@@ -112,11 +113,11 @@ public class JsonToImageTranslatorTest {
     ImmutableSortedMap<String, Map<?, ?>> input =
         ImmutableSortedMap.of(
             "/var/job-result-data", ImmutableMap.of(), "/var/log/my-app-logs", ImmutableMap.of());
-    ImmutableList<AbsoluteUnixPath> expected =
-        ImmutableList.of(
+    ImmutableSet<AbsoluteUnixPath> expected =
+        ImmutableSet.of(
             AbsoluteUnixPath.get("/var/job-result-data"),
             AbsoluteUnixPath.get("/var/log/my-app-logs"));
-    Assert.assertEquals(expected, JsonToImageTranslator.volumeMapToList(input));
+    Assert.assertEquals(expected, JsonToImageTranslator.volumeMapToSet(input));
 
     ImmutableList<Map<String, Map<?, ?>>> badInputs =
         ImmutableList.of(
@@ -125,7 +126,7 @@ public class JsonToImageTranslatorTest {
             ImmutableMap.of("C:/udp", ImmutableMap.of()));
     for (Map<String, Map<?, ?>> badInput : badInputs) {
       try {
-        JsonToImageTranslator.volumeMapToList(badInput);
+        JsonToImageTranslator.volumeMapToSet(badInput);
         Assert.fail();
       } catch (BadContainerConfigurationFormatException ignored) {
       }
@@ -208,9 +209,9 @@ public class JsonToImageTranslatorTest {
     Assert.assertEquals(ImmutableMap.of("VAR1", "VAL1", "VAR2", "VAL2"), image.getEnvironment());
     Assert.assertEquals("/some/workspace", image.getWorkingDirectory());
     Assert.assertEquals(
-        ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)), image.getExposedPorts());
+        ImmutableSet.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)), image.getExposedPorts());
     Assert.assertEquals(
-        ImmutableList.of(
+        ImmutableSet.of(
             AbsoluteUnixPath.get("/var/job-result-data"),
             AbsoluteUnixPath.get("/var/log/my-app-logs")),
         image.getVolumes());

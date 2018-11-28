@@ -66,7 +66,7 @@ public class JibContainerBuilderTest {
         new JibContainerBuilder(baseImage, spyBuildConfigurationBuilder)
             .setEntrypoint(Arrays.asList("entry", "point"))
             .setEnvironment(ImmutableMap.of("name", "value"))
-            .setExposedPorts(Arrays.asList(Port.tcp(1234), Port.udp(5678)))
+            .setExposedPorts(ImmutableSet.of(Port.tcp(1234), Port.udp(5678)))
             .setLabels(ImmutableMap.of("key", "value"))
             .setProgramArguments(Arrays.asList("program", "arguments"))
             .setCreationTime(Instant.ofEpochMilli(1000))
@@ -80,7 +80,7 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(
         ImmutableMap.of("name", "value"), containerConfiguration.getEnvironmentMap());
     Assert.assertEquals(
-        Arrays.asList(Port.tcp(1234), Port.udp(5678)), containerConfiguration.getExposedPorts());
+        ImmutableSet.of(Port.tcp(1234), Port.udp(5678)), containerConfiguration.getExposedPorts());
     Assert.assertEquals(ImmutableMap.of("key", "value"), containerConfiguration.getLabels());
     Assert.assertEquals(
         Arrays.asList("program", "arguments"), containerConfiguration.getProgramArguments());
@@ -113,7 +113,7 @@ public class JibContainerBuilderTest {
         ImmutableMap.of("name", "value", "environment", "variable"),
         containerConfiguration.getEnvironmentMap());
     Assert.assertEquals(
-        Arrays.asList(Port.tcp(1234), Port.udp(5678), Port.tcp(1337)),
+        ImmutableSet.of(Port.tcp(1234), Port.udp(5678), Port.tcp(1337)),
         containerConfiguration.getExposedPorts());
     Assert.assertEquals(
         ImmutableMap.of("key", "value", "added", "label"), containerConfiguration.getLabels());

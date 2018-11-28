@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -251,11 +252,11 @@ public class PluginConfigurationProcessor {
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(rawConfiguration.getPorts()))
-            .setVolumes(getVolumesList(rawConfiguration))
+            .setVolumes(new HashSet<>(getVolumesList(rawConfiguration)))
             .setLabels(rawConfiguration.getLabels())
             .setUser(rawConfiguration.getUser().orElse(null));
     getWorkingDirectoryChecked(rawConfiguration)
-        .ifPresent(workingDirectory -> jibContainerBuilder.setWorkingDirectory(workingDirectory));
+        .ifPresent(jibContainerBuilder::setWorkingDirectory);
     if (rawConfiguration.getUseCurrentTimestamp()) {
       eventDispatcher.dispatch(
           LogEvent.warn(

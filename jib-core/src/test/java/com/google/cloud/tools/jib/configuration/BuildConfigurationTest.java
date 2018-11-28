@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
@@ -59,7 +58,7 @@ public class BuildConfigurationTest {
     List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
     List<String> expectedProgramArguments = Arrays.asList("arg1", "arg2");
     Map<String, String> expectedEnvironment = ImmutableMap.of("key", "value");
-    ImmutableList<Port> expectedExposedPorts = ImmutableList.of(Port.tcp(1000), Port.tcp(2000));
+    ImmutableSet<Port> expectedExposedPorts = ImmutableSet.of(Port.tcp(1000), Port.tcp(2000));
     Map<String, String> expectedLabels = ImmutableMap.of("key1", "value1", "key2", "value2");
     Class<? extends BuildableManifestTemplate> expectedTargetFormat = OCIManifestTemplate.class;
     Path expectedApplicationLayersCacheDirectory = Paths.get("application/layers");
