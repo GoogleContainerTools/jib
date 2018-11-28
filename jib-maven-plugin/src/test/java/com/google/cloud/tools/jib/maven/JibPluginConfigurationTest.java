@@ -50,6 +50,7 @@ public class JibPluginConfigurationTest {
     System.clearProperty("jib.container.ports");
     System.clearProperty("jib.container.useCurrentTimestamp");
     System.clearProperty("jib.container.user");
+    System.clearProperty("jib.container.workingDirectory");
     System.clearProperty("jib.extraDirectory.path");
     System.clearProperty("jib.extraDirectory.permissions");
   }
@@ -72,6 +73,7 @@ public class JibPluginConfigurationTest {
   @Test
   public void testDefaults() {
     Assert.assertEquals("", testPluginConfiguration.getAppRoot());
+    Assert.assertNull(testPluginConfiguration.getWorkingDirectory());
   }
 
   @Test
@@ -121,6 +123,8 @@ public class JibPluginConfigurationTest {
     Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
     System.setProperty("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
+    System.setProperty("jib.container.workingDirectory", "working directory");
+    Assert.assertEquals("working directory", testPluginConfiguration.getWorkingDirectory());
 
     System.setProperty("jib.extraDirectory.path", "custom-jib");
     Assert.assertEquals(

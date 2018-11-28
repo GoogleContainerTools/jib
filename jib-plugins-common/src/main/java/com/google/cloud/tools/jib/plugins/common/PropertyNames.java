@@ -37,6 +37,8 @@ public class PropertyNames {
   public static final String CONTAINER_LABELS = "jib.container.labels";
   public static final String CONTAINER_MAIN_CLASS = "jib.container.mainClass";
   public static final String CONTAINER_USER = "jib.container.user";
+  public static final String CONTAINER_WORKING_DIRECTORY = "jib.container.workingDirectory";
+  public static final String CONTAINER_VOLUMES = "jib.container.volumes";
   public static final String CONTAINER_PORTS = "jib.container.ports";
   public static final String CONTAINER_USE_CURRENT_TIMESTAMP = "jib.container.useCurrentTimestamp";
   public static final String USE_ONLY_PROJECT_CACHE = "jib.useOnlyProjectCache";

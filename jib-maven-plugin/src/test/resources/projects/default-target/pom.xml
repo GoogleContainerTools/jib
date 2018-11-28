@@ -48,6 +48,10 @@
               <key1>value1</key1>
               <key2>value2</key2>
             </labels>
+            <volumes>
+              <volume>/var/log</volume>
+              <volume>/var/log2</volume>
+            </volumes>
           </container>
           <!-- Does not have tests use user-level cache for base image layers. -->
           <useOnlyProjectCache>true</useOnlyProjectCache>

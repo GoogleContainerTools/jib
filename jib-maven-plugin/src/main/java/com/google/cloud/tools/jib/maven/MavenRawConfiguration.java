@@ -133,6 +133,11 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public List<String> getVolumes() {
+    return jibPluginConfiguration.getVolumes();
+  }
+
+  @Override
   public List<String> getPorts() {
     return jibPluginConfiguration.getExposedPorts();
   }
@@ -140,6 +145,11 @@ class MavenRawConfiguration implements RawConfiguration {
   @Override
   public Optional<String> getUser() {
     return Optional.ofNullable(jibPluginConfiguration.getUser());
+  }
+
+  @Override
+  public Optional<String> getWorkingDirectory() {
+    return Optional.ofNullable(jibPluginConfiguration.getWorkingDirectory());
   }
 
   @Override

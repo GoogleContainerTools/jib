@@ -146,11 +146,15 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<String> ports = Collections.emptyList();
 
+    @Parameter private List<String> volumes = Collections.emptyList();
+
     @Parameter private Map<String, String> labels = Collections.emptyMap();
 
     @Parameter private String appRoot = "";
 
     @Nullable @Parameter private String user;
+
+    @Nullable @Parameter private String workingDirectory;
   }
 
   /** Configuration for the {@code extraDirectory} parameter. */
@@ -376,6 +380,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /**
+   * Gets the working directory in the container.
+   *
+   * @return the working directory
+   */
+  @Nullable
+  String getWorkingDirectory() {
+    if (System.getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY);
+    }
+    return container.workingDirectory;
+  }
+
+  /**
    * Gets the configured main arguments.
    *
    * @return the configured main arguments
@@ -400,6 +417,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
           System.getProperty(PropertyNames.CONTAINER_PORTS));
     }
     return container.ports;
+  }
+
+  /**
+   * Gets the configured volumes.
+   *
+   * @return the configured volumes
+   */
+  List<String> getVolumes() {
+    if (System.getProperty(PropertyNames.CONTAINER_VOLUMES) != null) {
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.CONTAINER_VOLUMES));
+    }
+    return container.volumes;
   }
 
   /**

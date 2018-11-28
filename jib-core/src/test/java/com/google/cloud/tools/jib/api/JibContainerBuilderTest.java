@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEvent;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -69,7 +70,8 @@ public class JibContainerBuilderTest {
             .setLabels(ImmutableMap.of("key", "value"))
             .setProgramArguments(Arrays.asList("program", "arguments"))
             .setCreationTime(Instant.ofEpochMilli(1000))
-            .setUser("user");
+            .setUser("user")
+            .setWorkingDirectory(AbsoluteUnixPath.get("/working/directory"));
 
     BuildConfiguration buildConfiguration =
         jibContainerBuilder.toBuildConfiguration(Containerizer.to(baseImage));
@@ -84,6 +86,8 @@ public class JibContainerBuilderTest {
         Arrays.asList("program", "arguments"), containerConfiguration.getProgramArguments());
     Assert.assertEquals(Instant.ofEpochMilli(1000), containerConfiguration.getCreationTime());
     Assert.assertEquals("user", containerConfiguration.getUser());
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/working/directory"), containerConfiguration.getWorkingDirectory());
   }
 
   @Test
