@@ -69,6 +69,13 @@ public class BuildDockerMojoIntegrationTest {
     Assert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
+            "            \"Volumes\": {\n"
+                + "                \"/var/log\": {},\n"
+                + "                \"/var/log2\": {}\n"
+                + "            },"));
+    Assert.assertThat(
+        dockerInspect,
+        CoreMatchers.containsString(
             "            \"ExposedPorts\": {\n"
                 + "                \"1000/tcp\": {},\n"
                 + "                \"2000/udp\": {},\n"

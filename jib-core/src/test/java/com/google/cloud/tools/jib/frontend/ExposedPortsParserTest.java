@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -31,8 +31,8 @@ public class ExposedPortsParserTest {
   public void testParse() {
     List<String> goodInputs =
         Arrays.asList("1000", "2000-2003", "3000-3000", "4000/tcp", "5000/udp", "6000-6002/udp");
-    ImmutableList<Port> expected =
-        new ImmutableList.Builder<Port>()
+    ImmutableSet<Port> expected =
+        new ImmutableSet.Builder<Port>()
             .add(
                 Port.tcp(1000),
                 Port.tcp(2000),
@@ -46,7 +46,7 @@ public class ExposedPortsParserTest {
                 Port.udp(6001),
                 Port.udp(6002))
             .build();
-    ImmutableList<Port> result = ExposedPortsParser.parse(goodInputs);
+    ImmutableSet<Port> result = ExposedPortsParser.parse(goodInputs);
     Assert.assertEquals(expected, result);
 
     List<String> badInputs = Arrays.asList("abc", "/udp", "1000/abc", "a100/tcp", "20/udpabc");

@@ -16,12 +16,14 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import org.junit.Assert;
 import org.junit.Test;
@@ -48,7 +50,7 @@ public class ContainerConfigurationTest {
     }
 
     // Exposed ports element should not be null.
-    List<Port> badPorts = Arrays.asList(Port.tcp(1000), null);
+    Set<Port> badPorts = new HashSet<>(Arrays.asList(Port.tcp(1000), null));
     try {
       ContainerConfiguration.builder().setExposedPorts(badPorts);
       Assert.fail("The IllegalArgumentException should be thrown.");
@@ -103,5 +105,12 @@ public class ContainerConfigurationTest {
   public void testBuilder_user() {
     ContainerConfiguration configuration = ContainerConfiguration.builder().setUser("john").build();
     Assert.assertEquals("john", configuration.getUser());
+  }
+
+  @Test
+  public void testBuilder_workingDirectory() {
+    ContainerConfiguration configuration =
+        ContainerConfiguration.builder().setWorkingDirectory(AbsoluteUnixPath.get("/path")).build();
+    Assert.assertEquals(AbsoluteUnixPath.get("/path"), configuration.getWorkingDirectory());
   }
 }

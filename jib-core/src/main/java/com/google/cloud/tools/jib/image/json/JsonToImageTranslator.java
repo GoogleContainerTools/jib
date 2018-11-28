@@ -28,7 +28,7 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.ReferenceLayer;
 import com.google.cloud.tools.jib.image.ReferenceNoDiffIdLayer;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -148,12 +148,11 @@ public class JsonToImageTranslator {
 
     if (containerConfigurationTemplate.getContainerExposedPorts() != null) {
       imageBuilder.setExposedPorts(
-          portMapToList(containerConfigurationTemplate.getContainerExposedPorts()));
+          portMapToSet(containerConfigurationTemplate.getContainerExposedPorts()));
     }
 
     if (containerConfigurationTemplate.getContainerVolumes() != null) {
-      imageBuilder.setVolumes(
-          volumeMapToList(containerConfigurationTemplate.getContainerVolumes()));
+      imageBuilder.setVolumes(volumeMapToSet(containerConfigurationTemplate.getContainerVolumes()));
     }
 
     if (containerConfigurationTemplate.getContainerEnvironment() != null) {
@@ -174,19 +173,19 @@ public class JsonToImageTranslator {
   }
 
   /**
-   * Converts a map of exposed ports as strings to a list of {@link Port}s (e.g. {@code
+   * Converts a map of exposed ports as strings to a set of {@link Port}s (e.g. {@code
    * {"1000/tcp":{}}} -> {@code Port(1000, Protocol.TCP)}).
    *
    * @param portMap the map to convert
-   * @return a list of {@link Port}s
+   * @return a set of {@link Port}s
    */
   @VisibleForTesting
-  static ImmutableList<Port> portMapToList(@Nullable Map<String, Map<?, ?>> portMap)
+  static ImmutableSet<Port> portMapToSet(@Nullable Map<String, Map<?, ?>> portMap)
       throws BadContainerConfigurationFormatException {
     if (portMap == null) {
-      return ImmutableList.of();
+      return ImmutableSet.of();
     }
-    ImmutableList.Builder<Port> ports = new ImmutableList.Builder<>();
+    ImmutableSet.Builder<Port> ports = new ImmutableSet.Builder<>();
     for (Map.Entry<String, Map<?, ?>> entry : portMap.entrySet()) {
       String port = entry.getKey();
       Matcher matcher = PORT_PATTERN.matcher(port);
@@ -203,20 +202,20 @@ public class JsonToImageTranslator {
   }
 
   /**
-   * Converts a map of volumes strings to a list of {@link AbsoluteUnixPath}s (e.g. {@code {@code
+   * Converts a map of volumes strings to a set of {@link AbsoluteUnixPath}s (e.g. {@code {@code
    * {"/var/log/my-app-logs":{}}} -> AbsoluteUnixPath().get("/var/log/my-app-logs")}).
    *
    * @param volumeMap the map to convert
-   * @return a list of {@link AbsoluteUnixPath}s
+   * @return a set of {@link AbsoluteUnixPath}s
    */
   @VisibleForTesting
-  static ImmutableList<AbsoluteUnixPath> volumeMapToList(@Nullable Map<String, Map<?, ?>> volumeMap)
+  static ImmutableSet<AbsoluteUnixPath> volumeMapToSet(@Nullable Map<String, Map<?, ?>> volumeMap)
       throws BadContainerConfigurationFormatException {
     if (volumeMap == null) {
-      return ImmutableList.of();
+      return ImmutableSet.of();
     }
 
-    ImmutableList.Builder<AbsoluteUnixPath> volumeList = ImmutableList.builder();
+    ImmutableSet.Builder<AbsoluteUnixPath> volumeList = ImmutableSet.builder();
     for (String volume : volumeMap.keySet()) {
       try {
         volumeList.add(AbsoluteUnixPath.get(volume));

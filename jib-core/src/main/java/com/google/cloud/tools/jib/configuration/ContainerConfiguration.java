@@ -21,13 +21,15 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Immutable configuration options for the container. */
@@ -43,10 +45,11 @@ public class ContainerConfiguration {
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private Map<String, String> environmentMap;
-    @Nullable private List<Port> exposedPorts;
-    @Nullable private List<AbsoluteUnixPath> volumes;
+    @Nullable private Set<Port> exposedPorts;
+    @Nullable private Set<AbsoluteUnixPath> volumes;
     @Nullable private Map<String, String> labels;
     @Nullable private String user;
+    @Nullable private AbsoluteUnixPath workingDirectory;
 
     /**
      * Sets the image creation time.
@@ -102,22 +105,22 @@ public class ContainerConfiguration {
     /**
      * Sets the container's exposed ports.
      *
-     * @param exposedPorts the list of ports
+     * @param exposedPorts the set of ports
      * @return this
      */
-    public Builder setExposedPorts(@Nullable List<Port> exposedPorts) {
+    public Builder setExposedPorts(@Nullable Set<Port> exposedPorts) {
       if (exposedPorts == null) {
         this.exposedPorts = null;
       } else {
         Preconditions.checkArgument(!exposedPorts.contains(null));
-        this.exposedPorts = new ArrayList<>(exposedPorts);
+        this.exposedPorts = new HashSet<>(exposedPorts);
       }
       return this;
     }
 
     public void addExposedPort(Port port) {
       if (exposedPorts == null) {
-        exposedPorts = new ArrayList<>();
+        exposedPorts = new HashSet<>();
       }
       exposedPorts.add(port);
     }
@@ -125,22 +128,22 @@ public class ContainerConfiguration {
     /**
      * Sets the container's volumes.
      *
-     * @param volumes the list of volumes
+     * @param volumes the set of volumes
      * @return this
      */
-    public Builder setVolumes(@Nullable List<AbsoluteUnixPath> volumes) {
+    public Builder setVolumes(@Nullable Set<AbsoluteUnixPath> volumes) {
       if (volumes == null) {
         this.volumes = null;
       } else {
         Preconditions.checkArgument(!volumes.contains(null));
-        this.volumes = new ArrayList<>(volumes);
+        this.volumes = new HashSet<>(volumes);
       }
       return this;
     }
 
     public void addVolume(AbsoluteUnixPath volume) {
       if (volumes == null) {
-        volumes = new ArrayList<>();
+        volumes = new HashSet<>();
       }
       volumes.add(volume);
     }
@@ -199,6 +202,17 @@ public class ContainerConfiguration {
     }
 
     /**
+     * Sets the working directory in the container.
+     *
+     * @param workingDirectory the working directory
+     * @return this
+     */
+    public Builder setWorkingDirectory(@Nullable AbsoluteUnixPath workingDirectory) {
+      this.workingDirectory = workingDirectory;
+      return this;
+    }
+
+    /**
      * Builds the {@link ContainerConfiguration}.
      *
      * @return the corresponding {@link ContainerConfiguration}
@@ -209,10 +223,11 @@ public class ContainerConfiguration {
           entrypoint,
           programArguments,
           environmentMap == null ? null : ImmutableMap.copyOf(environmentMap),
-          exposedPorts == null ? null : ImmutableList.copyOf(exposedPorts),
-          volumes == null ? null : ImmutableList.copyOf(volumes),
+          exposedPorts == null ? null : ImmutableSet.copyOf(exposedPorts),
+          volumes == null ? null : ImmutableSet.copyOf(volumes),
           labels == null ? null : ImmutableMap.copyOf(labels),
-          user);
+          user,
+          workingDirectory);
     }
 
     private Builder() {}
@@ -231,20 +246,22 @@ public class ContainerConfiguration {
   @Nullable private final ImmutableList<String> entrypoint;
   @Nullable private final ImmutableList<String> programArguments;
   @Nullable private final ImmutableMap<String, String> environmentMap;
-  @Nullable private final ImmutableList<Port> exposedPorts;
-  @Nullable private final ImmutableList<AbsoluteUnixPath> volumes;
+  @Nullable private final ImmutableSet<Port> exposedPorts;
+  @Nullable private final ImmutableSet<AbsoluteUnixPath> volumes;
   @Nullable private final ImmutableMap<String, String> labels;
   @Nullable private final String user;
+  @Nullable private final AbsoluteUnixPath workingDirectory;
 
   private ContainerConfiguration(
       Instant creationTime,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> programArguments,
       @Nullable ImmutableMap<String, String> environmentMap,
-      @Nullable ImmutableList<Port> exposedPorts,
-      @Nullable ImmutableList<AbsoluteUnixPath> volumes,
+      @Nullable ImmutableSet<Port> exposedPorts,
+      @Nullable ImmutableSet<AbsoluteUnixPath> volumes,
       @Nullable ImmutableMap<String, String> labels,
-      @Nullable String user) {
+      @Nullable String user,
+      @Nullable AbsoluteUnixPath workingDirectory) {
     this.creationTime = creationTime;
     this.entrypoint = entrypoint;
     this.programArguments = programArguments;
@@ -253,6 +270,7 @@ public class ContainerConfiguration {
     this.volumes = volumes;
     this.labels = labels;
     this.user = user;
+    this.workingDirectory = workingDirectory;
   }
 
   public Instant getCreationTime() {
@@ -275,12 +293,12 @@ public class ContainerConfiguration {
   }
 
   @Nullable
-  public ImmutableList<Port> getExposedPorts() {
+  public ImmutableSet<Port> getExposedPorts() {
     return exposedPorts;
   }
 
   @Nullable
-  public ImmutableList<AbsoluteUnixPath> getVolumes() {
+  public ImmutableSet<AbsoluteUnixPath> getVolumes() {
     return volumes;
   }
 
@@ -292,6 +310,11 @@ public class ContainerConfiguration {
   @Nullable
   public ImmutableMap<String, String> getLabels() {
     return labels;
+  }
+
+  @Nullable
+  public AbsoluteUnixPath getWorkingDirectory() {
+    return workingDirectory;
   }
 
   @Override
@@ -310,7 +333,8 @@ public class ContainerConfiguration {
         && Objects.equals(environmentMap, otherContainerConfiguration.environmentMap)
         && Objects.equals(exposedPorts, otherContainerConfiguration.exposedPorts)
         && Objects.equals(labels, otherContainerConfiguration.labels)
-        && Objects.equals(user, otherContainerConfiguration.user);
+        && Objects.equals(user, otherContainerConfiguration.user)
+        && Objects.equals(workingDirectory, otherContainerConfiguration.workingDirectory);
   }
 
   @Override

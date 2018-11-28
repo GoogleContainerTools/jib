@@ -41,9 +41,11 @@ public class ContainerParameters {
   @Nullable private List<String> args;
   private ImageFormat format = ImageFormat.Docker;
   private List<String> ports = Collections.emptyList();
+  private List<String> volumes = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();
   private String appRoot = "";
   @Nullable private String user;
+  @Nullable private String workingDirectory;
 
   @Input
   @Optional
@@ -71,6 +73,10 @@ public class ContainerParameters {
 
   public void setEntrypoint(List<String> entrypoint) {
     this.entrypoint = entrypoint;
+  }
+
+  public void setEntrypoint(String entrypoint) {
+    this.entrypoint = Collections.singletonList(entrypoint);
   }
 
   @Input
@@ -159,6 +165,20 @@ public class ContainerParameters {
 
   @Input
   @Optional
+  public List<String> getVolumes() {
+    if (System.getProperty(PropertyNames.CONTAINER_VOLUMES) != null) {
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.CONTAINER_VOLUMES));
+    }
+    return volumes;
+  }
+
+  public void setVolumes(List<String> volumes) {
+    this.volumes = volumes;
+  }
+
+  @Input
+  @Optional
   public Map<String, String> getLabels() {
     if (System.getProperty(PropertyNames.CONTAINER_LABELS) != null) {
       return ConfigurationPropertyValidator.parseMapProperty(
@@ -196,5 +216,19 @@ public class ContainerParameters {
 
   public void setUser(String user) {
     this.user = user;
+  }
+
+  @Input
+  @Nullable
+  @Optional
+  public String getWorkingDirectory() {
+    if (System.getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY);
+    }
+    return workingDirectory;
+  }
+
+  public void setWorkingDirectory(String workingDirectory) {
+    this.workingDirectory = workingDirectory;
   }
 }

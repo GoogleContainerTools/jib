@@ -118,6 +118,11 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public List<String> getVolumes() {
+    return jibExtension.getContainer().getVolumes();
+  }
+
+  @Override
   public List<String> getPorts() {
     return jibExtension.getContainer().getPorts();
   }
@@ -125,6 +130,11 @@ class GradleRawConfiguration implements RawConfiguration {
   @Override
   public Optional<String> getUser() {
     return Optional.ofNullable(jibExtension.getContainer().getUser());
+  }
+
+  @Override
+  public Optional<String> getWorkingDirectory() {
+    return Optional.ofNullable(jibExtension.getContainer().getWorkingDirectory());
   }
 
   @Override

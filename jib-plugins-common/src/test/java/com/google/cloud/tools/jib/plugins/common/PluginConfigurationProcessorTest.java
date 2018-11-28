@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -87,11 +88,11 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(containerizer);
   }
 
-  /** Test with our default mocks, which try to mimic the bare Gradle configuration. */
   @Test
   public void testPluginConfigurationProcessor_defaults()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
+          InvalidWorkingDirectoryException, InvalidContainerVolumeException {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties, containerizer, targetImageReference, false);
@@ -108,8 +109,9 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testPluginConfigurationProcessor_warProjectBaseImage()
-      throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException {
+      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
+          InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     PluginConfigurationProcessor processor =
@@ -125,7 +127,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
+          InvalidWorkingDirectoryException, InvalidContainerVolumeException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
 
@@ -143,9 +146,30 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testComputeEntrypoint_inheritKeyword()
+      throws MainClassInferenceException, InvalidAppRootException {
+    Mockito.when(rawConfiguration.getEntrypoint())
+        .thenReturn(Optional.of(Collections.singletonList("INHERIT")));
+
+    Assert.assertNull(
+        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testComputeEntrypoint_inheritKeywordInNonSingletonList()
+      throws MainClassInferenceException, InvalidAppRootException {
+    Mockito.when(rawConfiguration.getEntrypoint())
+        .thenReturn(Optional.of(Arrays.asList("INHERIT", "")));
+
+    Assert.assertNotNull(
+        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+  }
+
+  @Test
   public void testEntrypoint_defaultWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
+          InvalidWorkingDirectoryException, InvalidContainerVolumeException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
@@ -164,7 +188,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_defaulNonWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
+          InvalidWorkingDirectoryException, InvalidContainerVolumeException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
@@ -185,7 +210,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testUser()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
+          InvalidWorkingDirectoryException, InvalidContainerVolumeException {
     Mockito.when(rawConfiguration.getUser()).thenReturn(Optional.of("customUser"));
 
     PluginConfigurationProcessor processor =
@@ -201,7 +227,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testUser_null()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
+          InvalidWorkingDirectoryException, InvalidContainerVolumeException {
     PluginConfigurationProcessor processor =
         PluginConfigurationProcessor.processCommonConfiguration(
             rawConfiguration, projectProperties, containerizer, targetImageReference, false);
@@ -215,7 +242,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_warningOnJvmFlags()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
+          InvalidWorkingDirectoryException, InvalidContainerVolumeException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getJvmFlags()).thenReturn(Collections.singletonList("jvmFlag"));
@@ -237,7 +265,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_warningOnMainclass()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
+          InvalidWorkingDirectoryException, InvalidContainerVolumeException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
@@ -259,7 +288,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypointClasspath_nonDefaultAppRoot()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
+          InvalidWorkingDirectoryException, InvalidContainerVolumeException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/my/app");
 
     PluginConfigurationProcessor processor =
@@ -282,7 +312,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testWebAppEntrypoint_inheritedFromBaseImage()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, AppRootInvalidException, InferredAuthRetrievalException {
+          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
+          InvalidWorkingDirectoryException, InvalidContainerVolumeException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     PluginConfigurationProcessor processor =
@@ -296,7 +327,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetAppRootChecked() throws AppRootInvalidException {
+  public void testGetAppRootChecked() throws InvalidAppRootException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/some/root");
 
     Assert.assertEquals(
@@ -311,7 +342,7 @@ public class PluginConfigurationProcessorTest {
     try {
       PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
       Assert.fail();
-    } catch (AppRootInvalidException ex) {
+    } catch (InvalidAppRootException ex) {
       Assert.assertEquals("relative/path", ex.getMessage());
     }
   }
@@ -323,7 +354,7 @@ public class PluginConfigurationProcessorTest {
     try {
       PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
       Assert.fail();
-    } catch (AppRootInvalidException ex) {
+    } catch (InvalidAppRootException ex) {
       Assert.assertEquals("\\windows\\path", ex.getMessage());
     }
   }
@@ -335,13 +366,13 @@ public class PluginConfigurationProcessorTest {
     try {
       PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
       Assert.fail();
-    } catch (AppRootInvalidException ex) {
+    } catch (InvalidAppRootException ex) {
       Assert.assertEquals("C:\\windows\\path", ex.getMessage());
     }
   }
 
   @Test
-  public void testGetAppRootChecked_defaultNonWarProject() throws AppRootInvalidException {
+  public void testGetAppRootChecked_defaultNonWarProject() throws InvalidAppRootException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("");
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
@@ -351,13 +382,44 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetAppRootChecked_defaultWarProject() throws AppRootInvalidException {
+  public void testGetAppRootChecked_defaultWarProject() throws InvalidAppRootException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("");
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/jetty/webapps/ROOT"),
         PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testGetWorkingDirectoryChecked() throws InvalidWorkingDirectoryException {
+    Mockito.when(rawConfiguration.getWorkingDirectory()).thenReturn(Optional.of("/valid/path"));
+
+    Optional<AbsoluteUnixPath> checkedPath =
+        PluginConfigurationProcessor.getWorkingDirectoryChecked(rawConfiguration);
+    Assert.assertTrue(checkedPath.isPresent());
+    Assert.assertEquals(AbsoluteUnixPath.get("/valid/path"), checkedPath.get());
+  }
+
+  @Test
+  public void testGetWorkingDirectoryChecked_undefined() throws InvalidWorkingDirectoryException {
+    Mockito.when(rawConfiguration.getWorkingDirectory()).thenReturn(Optional.empty());
+    Assert.assertEquals(
+        Optional.empty(),
+        PluginConfigurationProcessor.getWorkingDirectoryChecked(rawConfiguration));
+  }
+
+  @Test
+  public void testGetWorkingDirectoryChecked_notAbsolute() {
+    Mockito.when(rawConfiguration.getWorkingDirectory()).thenReturn(Optional.of("relative/path"));
+
+    try {
+      PluginConfigurationProcessor.getWorkingDirectoryChecked(rawConfiguration);
+      Assert.fail();
+    } catch (InvalidWorkingDirectoryException ex) {
+      Assert.assertEquals("relative/path", ex.getMessage());
+      Assert.assertEquals("relative/path", ex.getInvalidPathValue());
+    }
   }
 
   @Test
@@ -384,5 +446,27 @@ public class PluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         "tomcat", PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testGetValidVolumesList() throws InvalidContainerVolumeException {
+    Mockito.when(rawConfiguration.getVolumes()).thenReturn(Collections.singletonList("/some/root"));
+
+    Assert.assertEquals(
+        ImmutableSet.of(AbsoluteUnixPath.get("/some/root")),
+        PluginConfigurationProcessor.getVolumesSet(rawConfiguration));
+  }
+
+  @Test
+  public void testGetInvalidVolumesList() {
+    Mockito.when(rawConfiguration.getVolumes()).thenReturn(Collections.singletonList("`some/root"));
+
+    try {
+      PluginConfigurationProcessor.getVolumesSet(rawConfiguration);
+      Assert.fail();
+    } catch (InvalidContainerVolumeException ex) {
+      Assert.assertEquals("`some/root", ex.getMessage());
+      Assert.assertEquals("`some/root", ex.getInvalidVolume());
+    }
   }
 }

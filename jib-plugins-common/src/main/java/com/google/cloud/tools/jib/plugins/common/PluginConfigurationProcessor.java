@@ -41,9 +41,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -62,6 +64,7 @@ public class PluginConfigurationProcessor {
    * Compute the container entrypoint, in this order:
    *
    * <ol>
+   *   <li>null (inheriting from the base image), if the user specified value is {@code INHERIT}
    *   <li>the user specified one, if set
    *   <li>for a WAR project, null (it must be inherited from base image)
    *   <li>for a non-WAR project, by resolving the main class
@@ -71,12 +74,12 @@ public class PluginConfigurationProcessor {
    * @param projectProperties used for providing additional information
    * @return the entrypoint
    * @throws MainClassInferenceException if no valid main class is configured or discovered
-   * @throws AppRootInvalidException if {@code appRoot} value is not an absolute Unix path
+   * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
    */
   @Nullable
   public static List<String> computeEntrypoint(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
-      throws MainClassInferenceException, AppRootInvalidException {
+      throws MainClassInferenceException, InvalidAppRootException {
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
     if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
       if (rawConfiguration.getMainClass().isPresent()
@@ -84,6 +87,10 @@ public class PluginConfigurationProcessor {
         new DefaultEventDispatcher(projectProperties.getEventHandlers())
             .dispatch(
                 LogEvent.warn("mainClass and jvmFlags are ignored when entrypoint is specified"));
+      }
+
+      if (rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))) {
+        return null;
       }
       return rawEntrypoint.get();
     }
@@ -125,8 +132,9 @@ public class PluginConfigurationProcessor {
       @Nullable Path dockerExecutable,
       @Nullable Map<String, String> dockerEnvironment,
       HelpfulSuggestions helpfulSuggestions)
-      throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException {
+      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
+          InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -147,8 +155,9 @@ public class PluginConfigurationProcessor {
       ProjectProperties projectProperties,
       Path tarImagePath,
       HelpfulSuggestions helpfulSuggestions)
-      throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException {
+      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
+          InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
@@ -161,7 +170,8 @@ public class PluginConfigurationProcessor {
   public static PluginConfigurationProcessor processCommonConfigurationForRegistryImage(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InferredAuthRetrievalException, InvalidImageReferenceException,
-          MainClassInferenceException, AppRootInvalidException, IOException {
+          MainClassInferenceException, InvalidAppRootException, IOException,
+          InvalidWorkingDirectoryException, InvalidContainerVolumeException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -202,8 +212,9 @@ public class PluginConfigurationProcessor {
       Containerizer containerizer,
       ImageReference targetImageReference,
       boolean isTargetImageCredentialPresent)
-      throws InvalidImageReferenceException, MainClassInferenceException, AppRootInvalidException,
-          InferredAuthRetrievalException, IOException {
+      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
+          InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException {
     JibSystemProperties.checkHttpTimeoutProperty();
 
     ImageReference baseImageReference =
@@ -241,8 +252,11 @@ public class PluginConfigurationProcessor {
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(rawConfiguration.getPorts()))
+            .setVolumes(getVolumesSet(rawConfiguration))
             .setLabels(rawConfiguration.getLabels())
             .setUser(rawConfiguration.getUser().orElse(null));
+    getWorkingDirectoryChecked(rawConfiguration)
+        .ifPresent(jibContainerBuilder::setWorkingDirectory);
     if (rawConfiguration.getUseCurrentTimestamp()) {
       eventDispatcher.dispatch(
           LogEvent.warn(
@@ -263,6 +277,29 @@ public class PluginConfigurationProcessor {
   }
 
   /**
+   * Parses the list of raw volumes directories to a set of {@link AbsoluteUnixPath}
+   *
+   * @param rawConfiguration raw configuration data
+   * @return the set of parsed volumes.
+   * @throws InvalidContainerVolumeException if {@code volumes} are not valid absolute Unix paths
+   */
+  @VisibleForTesting
+  static Set<AbsoluteUnixPath> getVolumesSet(RawConfiguration rawConfiguration)
+      throws InvalidContainerVolumeException {
+    Set<AbsoluteUnixPath> volumes = new HashSet<>();
+    for (String path : rawConfiguration.getVolumes()) {
+      try {
+        AbsoluteUnixPath absoluteUnixPath = AbsoluteUnixPath.get(path);
+        volumes.add(absoluteUnixPath);
+      } catch (IllegalArgumentException exception) {
+        throw new InvalidContainerVolumeException(path, path, exception);
+      }
+    }
+
+    return volumes;
+  }
+
+  /**
    * Gets the value of the {@code appRoot} parameter. If the parameter is empty, returns {@link
    * JavaLayerConfigurations#DEFAULT_WEB_APP_ROOT} for WAR projects or {@link
    * JavaLayerConfigurations#DEFAULT_APP_ROOT} for other projects.
@@ -270,12 +307,12 @@ public class PluginConfigurationProcessor {
    * @param rawConfiguration raw configuration data
    * @param projectProperties used for providing additional information
    * @return the app root value
-   * @throws AppRootInvalidException if {@code appRoot} value is not an absolute Unix path
+   * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
    */
   @VisibleForTesting
   static AbsoluteUnixPath getAppRootChecked(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
-      throws AppRootInvalidException {
+      throws InvalidAppRootException {
     String appRoot = rawConfiguration.getAppRoot();
     if (appRoot.isEmpty()) {
       appRoot =
@@ -286,7 +323,22 @@ public class PluginConfigurationProcessor {
     try {
       return AbsoluteUnixPath.get(appRoot);
     } catch (IllegalArgumentException ex) {
-      throw new AppRootInvalidException(appRoot, appRoot, ex);
+      throw new InvalidAppRootException(appRoot, appRoot, ex);
+    }
+  }
+
+  @VisibleForTesting
+  static Optional<AbsoluteUnixPath> getWorkingDirectoryChecked(RawConfiguration rawConfiguration)
+      throws InvalidWorkingDirectoryException {
+    if (!rawConfiguration.getWorkingDirectory().isPresent()) {
+      return Optional.empty();
+    }
+
+    String path = rawConfiguration.getWorkingDirectory().get();
+    try {
+      return Optional.of(AbsoluteUnixPath.get(path));
+    } catch (IllegalArgumentException ex) {
+      throw new InvalidWorkingDirectoryException(path, path, ex);
     }
   }
 

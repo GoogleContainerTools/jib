@@ -17,19 +17,19 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 /**
- * Indicates that the container.appRoot config value is invalid (i.e., the path is not in the
- * absolute unix-path style.
+ * Indicates that the {@code container.workingDirectory} config value is invalid. (The path is not
+ * in the absolute unix-path style).
  */
-public class AppRootInvalidException extends Exception {
+public class InvalidWorkingDirectoryException extends Exception {
 
-  private final String invalidAppRoot;
+  private final String invalidPath;
 
-  public AppRootInvalidException(String message, String invalidAppRoot, Throwable ex) {
+  public InvalidWorkingDirectoryException(String message, String invalidPath, Throwable ex) {
     super(message, ex);
-    this.invalidAppRoot = invalidAppRoot;
+    this.invalidPath = invalidPath;
   }
 
-  public String getInvalidAppRoot() {
-    return invalidAppRoot;
+  public String getInvalidPathValue() {
+    return invalidPath;
   }
 }

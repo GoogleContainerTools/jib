@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEvent;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -65,11 +66,12 @@ public class JibContainerBuilderTest {
         new JibContainerBuilder(baseImage, spyBuildConfigurationBuilder)
             .setEntrypoint(Arrays.asList("entry", "point"))
             .setEnvironment(ImmutableMap.of("name", "value"))
-            .setExposedPorts(Arrays.asList(Port.tcp(1234), Port.udp(5678)))
+            .setExposedPorts(ImmutableSet.of(Port.tcp(1234), Port.udp(5678)))
             .setLabels(ImmutableMap.of("key", "value"))
             .setProgramArguments(Arrays.asList("program", "arguments"))
             .setCreationTime(Instant.ofEpochMilli(1000))
-            .setUser("user");
+            .setUser("user")
+            .setWorkingDirectory(AbsoluteUnixPath.get("/working/directory"));
 
     BuildConfiguration buildConfiguration =
         jibContainerBuilder.toBuildConfiguration(Containerizer.to(baseImage));
@@ -78,12 +80,14 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(
         ImmutableMap.of("name", "value"), containerConfiguration.getEnvironmentMap());
     Assert.assertEquals(
-        Arrays.asList(Port.tcp(1234), Port.udp(5678)), containerConfiguration.getExposedPorts());
+        ImmutableSet.of(Port.tcp(1234), Port.udp(5678)), containerConfiguration.getExposedPorts());
     Assert.assertEquals(ImmutableMap.of("key", "value"), containerConfiguration.getLabels());
     Assert.assertEquals(
         Arrays.asList("program", "arguments"), containerConfiguration.getProgramArguments());
     Assert.assertEquals(Instant.ofEpochMilli(1000), containerConfiguration.getCreationTime());
     Assert.assertEquals("user", containerConfiguration.getUser());
+    Assert.assertEquals(
+        AbsoluteUnixPath.get("/working/directory"), containerConfiguration.getWorkingDirectory());
   }
 
   @Test
@@ -109,7 +113,7 @@ public class JibContainerBuilderTest {
         ImmutableMap.of("name", "value", "environment", "variable"),
         containerConfiguration.getEnvironmentMap());
     Assert.assertEquals(
-        Arrays.asList(Port.tcp(1234), Port.udp(5678), Port.tcp(1337)),
+        ImmutableSet.of(Port.tcp(1234), Port.udp(5678), Port.tcp(1337)),
         containerConfiguration.getExposedPorts());
     Assert.assertEquals(
         ImmutableMap.of("key", "value", "added", "label"), containerConfiguration.getLabels());

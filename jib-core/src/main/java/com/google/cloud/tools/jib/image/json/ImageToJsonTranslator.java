@@ -31,8 +31,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSortedMap;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 
@@ -51,36 +51,37 @@ import javax.annotation.Nullable;
 public class ImageToJsonTranslator {
 
   /**
-   * Converts a list of {@link Port}s to the corresponding container config format for exposed ports
+   * Converts a set of {@link Port}s to the corresponding container config format for exposed ports
    * (e.g. {@code Port(1000, Protocol.TCP)} -> {@code {"1000/tcp":{}}}).
    *
-   * @param exposedPorts the list of {@link Port}s to translate, or {@code null}
+   * @param exposedPorts the set of {@link Port}s to translate, or {@code null}
    * @return a sorted map with the string representation of the ports as keys and empty maps as
    *     values, or {@code null} if {@code exposedPorts} is {@code null}
    */
   @VisibleForTesting
   @Nullable
-  static Map<String, Map<?, ?>> portListToMap(@Nullable List<Port> exposedPorts) {
-    return listToMap(exposedPorts, port -> port.getPort() + "/" + port.getProtocol());
+  static Map<String, Map<?, ?>> portSetToMap(@Nullable Set<Port> exposedPorts) {
+    return setToMap(exposedPorts, port -> port.getPort() + "/" + port.getProtocol());
   }
 
   /**
-   * Converts a list of {@link AbsoluteUnixPath}s to the corresponding container config format for
+   * Converts a set of {@link AbsoluteUnixPath}s to the corresponding container config format for
    * volumes (e.g. {@code AbsoluteUnixPath().get("/var/log/my-app-logs")} -> {@code
    * {"/var/log/my-app-logs":{}}}).
    *
-   * @param volumes the list of {@link AbsoluteUnixPath}s to translate, or {@code null}
+   * @param volumes the set of {@link AbsoluteUnixPath}s to translate, or {@code null}
    * @return a sorted map with the string representation of the ports as keys and empty maps as
    *     values, or {@code null} if {@code exposedPorts} is {@code null}
    */
   @VisibleForTesting
   @Nullable
-  static Map<String, Map<?, ?>> volumesListToMap(@Nullable List<AbsoluteUnixPath> volumes) {
-    return listToMap(volumes, AbsoluteUnixPath::toString);
+  static Map<String, Map<?, ?>> volumesSetToMap(@Nullable Set<AbsoluteUnixPath> volumes) {
+    return setToMap(volumes, AbsoluteUnixPath::toString);
   }
 
   /**
-   * Converts the map of environment variables to a list with items in the format "NAME=VALUE".
+   * <<<<<<< HEAD Converts the map of environment variables to a list with items in the format
+   * "NAME=VALUE".
    *
    * @return the list
    */
@@ -102,7 +103,9 @@ public class ImageToJsonTranslator {
 
   /**
    * Turns a list into a sorted map where each element of the list is mapped to an entry composed by
-   * the key generated with {@code Function<E, String> elementMapper} and an empty map as value.
+   * ======= Turns a set into a sorted map where each element of the set is mapped to an entry
+   * composed by >>>>>>> 7df3f7ed1f132e8dcf32e1d8a4f4dcbca1213e23 the key generated with {@code
+   * Function<E, String> elementMapper} and an empty map as value.
    *
    * <p>This method is needed because the volume object is a direct JSON serialization of the Go
    * type map[string]struct{} and is represented in JSON as an object mapping its keys to an empty
@@ -111,19 +114,19 @@ public class ImageToJsonTranslator {
    * <p>Further read at the <a
    * href="https://github.com/opencontainers/image-spec/blob/master/config.md">image specs.</a>
    *
-   * @param list the list of elements to be transformed
+   * @param set the set of elements to be transformed
    * @param keyMapper the mapper function to generate keys to the map
-   * @param <E> the type of the elements from the list
+   * @param <E> the type of the elements from the set
    * @return an map
    */
   @Nullable
-  private static <E> Map<String, Map<?, ?>> listToMap(
-      @Nullable List<E> list, Function<E, String> keyMapper) {
-    if (list == null) {
+  private static <E> Map<String, Map<?, ?>> setToMap(
+      @Nullable Set<E> set, Function<E, String> keyMapper) {
+    if (set == null) {
       return null;
     }
 
-    return list.stream()
+    return set.stream()
         .collect(
             ImmutableSortedMap.toImmutableSortedMap(
                 String::compareTo, keyMapper, ignored -> Collections.emptyMap()));
@@ -163,8 +166,8 @@ public class ImageToJsonTranslator {
     template.setContainerEnvironment(environmentMapToList(image.getEnvironment()));
     template.setContainerEntrypoint(image.getEntrypoint());
     template.setContainerCmd(image.getProgramArguments());
-    template.setContainerExposedPorts(portListToMap(image.getExposedPorts()));
-    template.setContainerVolumes(volumesListToMap(image.getVolumes()));
+    template.setContainerExposedPorts(portSetToMap(image.getExposedPorts()));
+    template.setContainerVolumes(volumesSetToMap(image.getVolumes()));
     template.setContainerLabels(image.getLabels());
     template.setContainerWorkingDir(image.getWorkingDirectory());
     template.setContainerUser(image.getUser());

@@ -20,12 +20,9 @@ import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.security.DigestException;
 import java.time.Instant;
 import org.gradle.testkit.runner.BuildResult;
-import org.gradle.testkit.runner.BuildTask;
-import org.gradle.testkit.runner.TaskOutcome;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -64,8 +61,17 @@ public class SingleProjectIntegrationTest {
     Assert.assertTrue(parsed.isAfter(before) || parsed.equals(before));
   }
 
+  private static void assertWorkingDirectory(String expected, String imageReference)
+      throws IOException, InterruptedException {
+    Assert.assertEquals(
+        expected,
+        new Command("docker", "inspect", "-f", "{{.Config.WorkingDir}}", imageReference)
+            .run()
+            .trim());
+  }
+
   /**
-   * Asserts that the test project has the required exposed ports and labels.
+   * Asserts that the test project has the required exposed ports, labels and volumes.
    *
    * @param imageReference the image to test
    * @throws IOException if the {@code docker inspect} command fails to run
@@ -74,6 +80,13 @@ public class SingleProjectIntegrationTest {
   private static void assertDockerInspect(String imageReference)
       throws IOException, InterruptedException {
     String dockerInspect = new Command("docker", "inspect", imageReference).run();
+    Assert.assertThat(
+        dockerInspect,
+        CoreMatchers.containsString(
+            "            \"Volumes\": {\n"
+                + "                \"/var/log\": {},\n"
+                + "                \"/var/log2\": {}\n"
+                + "            },"));
     Assert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(
@@ -147,6 +160,7 @@ public class SingleProjectIntegrationTest {
         JibRunHelper.buildAndRun(simpleTestProject, targetImage));
     assertDockerInspect(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    assertWorkingDirectory("/home", targetImage);
   }
 
   @Test
@@ -157,6 +171,7 @@ public class SingleProjectIntegrationTest {
         "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    assertWorkingDirectory("", targetImage);
   }
 
   @Test
@@ -167,6 +182,7 @@ public class SingleProjectIntegrationTest {
         "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    assertWorkingDirectory("", targetImage);
   }
 
   @Test
@@ -178,61 +194,7 @@ public class SingleProjectIntegrationTest {
         JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     assertDockerInspect(targetImage);
-  }
-
-  @Test
-  public void testDockerContext() throws IOException, InterruptedException {
-    BuildResult buildResult = simpleTestProject.build("clean", "jibExportDockerContext", "--info");
-
-    JibRunHelper.assertBuildSuccess(
-        buildResult, "jibExportDockerContext", "Created Docker context at ");
-
-    String imageName = "jib-gradle-plugin/integration-test" + System.nanoTime();
-    new Command(
-            "docker",
-            "build",
-            "-t",
-            imageName,
-            simpleTestProject
-                .getProjectRoot()
-                .resolve("build")
-                .resolve("jib-docker-context")
-                .toString())
-        .run();
-
-    assertDockerInspect(imageName);
-    String output = new Command("docker", "run", "--rm", imageName).run();
-    Assert.assertThat(output, CoreMatchers.startsWith("Hello, world. An argument.\n"));
-    Assert.assertThat(output, CoreMatchers.endsWith("foo\ncat\n"));
-
-    // Checks that generating the Docker context again is skipped.
-    BuildTask upToDateJibDockerContextTask =
-        simpleTestProject.build("jibExportDockerContext").task(":jibExportDockerContext");
-    Assert.assertNotNull(upToDateJibDockerContextTask);
-    Assert.assertEquals(TaskOutcome.UP_TO_DATE, upToDateJibDockerContextTask.getOutcome());
-
-    // Checks that adding a new file generates the Docker context again.
-    Files.createFile(
-        simpleTestProject
-            .getProjectRoot()
-            .resolve("src")
-            .resolve("main")
-            .resolve("resources")
-            .resolve("newfile"));
-    try {
-      BuildTask reexecutedJibDockerContextTask =
-          simpleTestProject.build("jibExportDockerContext").task(":jibExportDockerContext");
-      Assert.assertNotNull(reexecutedJibDockerContextTask);
-      Assert.assertEquals(TaskOutcome.SUCCESS, reexecutedJibDockerContextTask.getOutcome());
-
-    } catch (UnexpectedBuildFailure ex) {
-      // This might happen on systems without SecureDirectoryStream, so we just ignore it.
-      // See com.google.common.io.MoreFiles#deleteDirectoryContents.
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
-              "Export Docker context failed because cannot clear directory"));
-    }
+    assertWorkingDirectory("/home", targetImage);
   }
 
   @Test
@@ -254,5 +216,6 @@ public class SingleProjectIntegrationTest {
         new Command("docker", "run", "--rm", targetImage).run());
     assertDockerInspect(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    assertWorkingDirectory("/home", targetImage);
   }
 }

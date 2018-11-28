@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -30,6 +31,7 @@ import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.security.DigestException;
@@ -104,7 +106,7 @@ public class BuildImageStepTest {
     Mockito.when(mockContainerConfiguration.getCreationTime()).thenReturn(Instant.EPOCH);
     Mockito.when(mockContainerConfiguration.getEnvironmentMap()).thenReturn(ImmutableMap.of());
     Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(ImmutableList.of());
-    Mockito.when(mockContainerConfiguration.getExposedPorts()).thenReturn(ImmutableList.of());
+    Mockito.when(mockContainerConfiguration.getExposedPorts()).thenReturn(ImmutableSet.of());
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
     Mockito.when(mockContainerConfiguration.getUser()).thenReturn("root");
 
@@ -223,6 +225,26 @@ public class BuildImageStepTest {
     Assert.assertEquals(image.getHistory().get(2), emptyLayerHistory);
     Assert.assertEquals(ImmutableList.of(), image.getEntrypoint());
     Assert.assertEquals(ImmutableList.of(), image.getProgramArguments());
+  }
+
+  @Test
+  public void testOverrideWorkingDirectory() throws InterruptedException, ExecutionException {
+    Mockito.when(mockContainerConfiguration.getWorkingDirectory())
+        .thenReturn(AbsoluteUnixPath.get("/my/directory"));
+
+    BuildImageStep buildImageStep =
+        new BuildImageStep(
+            MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
+            mockBuildConfiguration,
+            mockPullBaseImageStep,
+            mockPullAndCacheBaseImageLayersStep,
+            ImmutableList.of(
+                mockBuildAndCacheApplicationLayerStepDependencies,
+                mockBuildAndCacheApplicationLayerStepResources,
+                mockBuildAndCacheApplicationLayerStepClasses));
+    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+
+    Assert.assertEquals("/my/directory", image.getWorkingDirectory());
   }
 
   @Test

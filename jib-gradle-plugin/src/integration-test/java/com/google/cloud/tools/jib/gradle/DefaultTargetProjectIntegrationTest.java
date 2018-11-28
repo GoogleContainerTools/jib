@@ -32,7 +32,7 @@ public class DefaultTargetProjectIntegrationTest {
   public static final TestProject defaultTargetTestProject = new TestProject("default-target");
 
   /**
-   * Asserts that the test project has the required exposed ports and labels.
+   * Asserts that the test project has the required exposed ports, labels and volumes.
    *
    * @param imageReference the image to test
    * @throws IOException if the {@code docker inspect} command fails to run
