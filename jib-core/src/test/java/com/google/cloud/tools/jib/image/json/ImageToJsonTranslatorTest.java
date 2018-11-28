@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
@@ -61,9 +62,9 @@ public class ImageToJsonTranslatorTest {
     testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
     testImageBuilder.setProgramArguments(Arrays.asList("arg1", "arg2"));
     testImageBuilder.setExposedPorts(
-        ImmutableList.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)));
+        ImmutableSet.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)));
     testImageBuilder.setVolumes(
-        Arrays.asList(
+        ImmutableSet.of(
             AbsoluteUnixPath.get("/var/job-result-data"),
             AbsoluteUnixPath.get("/var/log/my-app-logs")));
     testImageBuilder.addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
@@ -135,22 +136,22 @@ public class ImageToJsonTranslatorTest {
 
   @Test
   public void testPortListToMap() {
-    ImmutableList<Port> input = ImmutableList.of(Port.tcp(1000), Port.udp(2000));
+    ImmutableSet<Port> input = ImmutableSet.of(Port.tcp(1000), Port.udp(2000));
     ImmutableSortedMap<String, Map<?, ?>> expected =
         ImmutableSortedMap.of("1000/tcp", ImmutableMap.of(), "2000/udp", ImmutableMap.of());
-    Assert.assertEquals(expected, ImageToJsonTranslator.portListToMap(input));
+    Assert.assertEquals(expected, ImageToJsonTranslator.portSetToMap(input));
   }
 
   @Test
   public void testVolumeListToMap() {
-    ImmutableList<AbsoluteUnixPath> input =
-        ImmutableList.of(
+    ImmutableSet<AbsoluteUnixPath> input =
+        ImmutableSet.of(
             AbsoluteUnixPath.get("/var/job-result-data"),
             AbsoluteUnixPath.get("/var/log/my-app-logs"));
     ImmutableSortedMap<String, Map<?, ?>> expected =
         ImmutableSortedMap.of(
             "/var/job-result-data", ImmutableMap.of(), "/var/log/my-app-logs", ImmutableMap.of());
-    Assert.assertEquals(expected, ImageToJsonTranslator.volumesListToMap(input));
+    Assert.assertEquals(expected, ImageToJsonTranslator.volumesSetToMap(input));
   }
 
   @Test

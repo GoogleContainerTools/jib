@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -87,11 +88,6 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(containerizer);
   }
 
-  /**
-   * Test with our default mocks, which try to mimic the bare Gradle configuration.
-   *
-   * @throws InvalidWorkingDirectoryException
-   */
   @Test
   public void testPluginConfigurationProcessor_defaults()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
@@ -457,8 +453,8 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getVolumes()).thenReturn(Collections.singletonList("/some/root"));
 
     Assert.assertEquals(
-        Collections.singletonList(AbsoluteUnixPath.get("/some/root")),
-        PluginConfigurationProcessor.getVolumesList(rawConfiguration));
+        ImmutableSet.of(AbsoluteUnixPath.get("/some/root")),
+        PluginConfigurationProcessor.getVolumesSet(rawConfiguration));
   }
 
   @Test
@@ -466,7 +462,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getVolumes()).thenReturn(Collections.singletonList("`some/root"));
 
     try {
-      PluginConfigurationProcessor.getVolumesList(rawConfiguration);
+      PluginConfigurationProcessor.getVolumesSet(rawConfiguration);
       Assert.fail();
     } catch (InvalidContainerVolumeException ex) {
       Assert.assertEquals("`some/root", ex.getMessage());

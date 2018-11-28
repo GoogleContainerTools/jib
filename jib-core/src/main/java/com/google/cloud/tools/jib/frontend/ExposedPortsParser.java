@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,8 +44,8 @@ public class ExposedPortsParser {
    * @return the ports as a list of {@link Port}
    * @throws NumberFormatException if any of the ports are in an invalid format or out of range
    */
-  public static ImmutableList<Port> parse(List<String> ports) throws NumberFormatException {
-    ImmutableList.Builder<Port> result = new ImmutableList.Builder<>();
+  public static ImmutableSet<Port> parse(List<String> ports) throws NumberFormatException {
+    ImmutableSet.Builder<Port> result = new ImmutableSet.Builder<>();
 
     for (String port : ports) {
       Matcher matcher = portPattern.matcher(port);

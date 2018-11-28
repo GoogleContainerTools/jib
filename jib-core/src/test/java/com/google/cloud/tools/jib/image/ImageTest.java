@@ -18,8 +18,8 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.Port;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.util.Arrays;
 import org.junit.Assert;
@@ -52,7 +52,7 @@ public class ImageTest {
             .addEnvironmentVariable("VARIABLE", "VALUE")
             .setEntrypoint(Arrays.asList("some", "command"))
             .setProgramArguments(Arrays.asList("arg1", "arg2"))
-            .setExposedPorts(ImmutableList.of(Port.tcp(1000), Port.tcp(2000)))
+            .setExposedPorts(ImmutableSet.of(Port.tcp(1000), Port.tcp(2000)))
             .setUser("john")
             .addLayer(mockLayer)
             .build();
@@ -64,7 +64,7 @@ public class ImageTest {
         ImmutableMap.of("crepecake", "is great", "VARIABLE", "VALUE"), image.getEnvironment());
     Assert.assertEquals(Arrays.asList("some", "command"), image.getEntrypoint());
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), image.getProgramArguments());
-    Assert.assertEquals(ImmutableList.of(Port.tcp(1000), Port.tcp(2000)), image.getExposedPorts());
+    Assert.assertEquals(ImmutableSet.of(Port.tcp(1000), Port.tcp(2000)), image.getExposedPorts());
     Assert.assertEquals("john", image.getUser());
   }
 }
