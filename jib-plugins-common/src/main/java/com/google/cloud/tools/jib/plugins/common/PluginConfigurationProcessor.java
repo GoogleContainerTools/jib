@@ -41,11 +41,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -252,7 +252,7 @@ public class PluginConfigurationProcessor {
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
             .setExposedPorts(ExposedPortsParser.parse(rawConfiguration.getPorts()))
-            .setVolumes(new HashSet<>(getVolumesList(rawConfiguration)))
+            .setVolumes(getVolumesSet(rawConfiguration))
             .setLabels(rawConfiguration.getLabels())
             .setUser(rawConfiguration.getUser().orElse(null));
     getWorkingDirectoryChecked(rawConfiguration)
@@ -277,16 +277,16 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Parses the list of raw volumes directories to a list of {@link AbsoluteUnixPath}
+   * Parses the list of raw volumes directories to a set of {@link AbsoluteUnixPath}
    *
    * @param rawConfiguration raw configuration data
-   * @return the list of parsed volumes.
+   * @return the set of parsed volumes.
    * @throws InvalidContainerVolumeException if {@code volumes} are not valid absolute Unix paths
    */
   @VisibleForTesting
-  static List<AbsoluteUnixPath> getVolumesList(RawConfiguration rawConfiguration)
+  static Set<AbsoluteUnixPath> getVolumesSet(RawConfiguration rawConfiguration)
       throws InvalidContainerVolumeException {
-    List<AbsoluteUnixPath> volumes = new ArrayList<>();
+    Set<AbsoluteUnixPath> volumes = new HashSet<>();
     for (String path : rawConfiguration.getVolumes()) {
       try {
         AbsoluteUnixPath absoluteUnixPath = AbsoluteUnixPath.get(path);
