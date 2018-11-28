@@ -468,9 +468,9 @@ public class PluginConfigurationProcessorTest {
     try {
       PluginConfigurationProcessor.getVolumesList(rawConfiguration);
       Assert.fail();
-    } catch (InvalidContainerVolumeException e) {
-      Assert.assertEquals("`some/root", e.getMessage());
-      Assert.assertEquals("`some/root", e.getInvalidVolume());
+    } catch (InvalidContainerVolumeException ex) {
+      Assert.assertEquals("`some/root", ex.getMessage());
+      Assert.assertEquals("`some/root", ex.getInvalidVolume());
     }
   }
 }
