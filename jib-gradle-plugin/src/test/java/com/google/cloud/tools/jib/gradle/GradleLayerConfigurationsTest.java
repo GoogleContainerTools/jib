@@ -212,6 +212,22 @@ public class GradleLayerConfigurationsTest {
   }
 
   @Test
+  public void test_missingDependencyFiles() throws IOException {
+    Path nonexistentFile = Paths.get("/nonexistent/dependency");
+    FileCollection runtimeFileCollection =
+        new TestFileCollection(Collections.singleton(nonexistentFile));
+    Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
+
+    AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
+    GradleLayerConfigurations.getForProject(
+        mockProject, mockLogger, extraFilesDirectory, Collections.emptyMap(), appRoot);
+
+    Mockito.verify(mockLogger)
+        .info("Adding corresponding output directories of source sets to image");
+    Mockito.verify(mockLogger).info("\t'" + nonexistentFile + "' (not found, skipped)");
+  }
+
+  @Test
   public void test_extraFiles() throws IOException {
     JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
