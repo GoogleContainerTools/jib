@@ -71,7 +71,7 @@ public class SingleProjectIntegrationTest {
   }
 
   /**
-   * Asserts that the test project has the required exposed ports and labels.
+   * Asserts that the test project has the required exposed ports, labels and volumes.
    *
    * @param imageReference the image to test
    * @throws IOException if the {@code docker inspect} command fails to run
@@ -80,6 +80,13 @@ public class SingleProjectIntegrationTest {
   private static void assertDockerInspect(String imageReference)
       throws IOException, InterruptedException {
     String dockerInspect = new Command("docker", "inspect", imageReference).run();
+    Assert.assertThat(
+        dockerInspect,
+        CoreMatchers.containsString(
+            "            \"Volumes\": {\n"
+                + "                \"/var/log\": {},\n"
+                + "                \"/var/log2\": {}\n"
+                + "            },"));
     Assert.assertThat(
         dockerInspect,
         CoreMatchers.containsString(

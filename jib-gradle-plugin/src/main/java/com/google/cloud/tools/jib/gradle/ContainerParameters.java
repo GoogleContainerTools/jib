@@ -41,6 +41,7 @@ public class ContainerParameters {
   @Nullable private List<String> args;
   private ImageFormat format = ImageFormat.Docker;
   private List<String> ports = Collections.emptyList();
+  private List<String> volumes = Collections.emptyList();
   private Map<String, String> labels = Collections.emptyMap();
   private String appRoot = "";
   @Nullable private String user;
@@ -160,6 +161,20 @@ public class ContainerParameters {
 
   public void setPorts(List<String> ports) {
     this.ports = ports;
+  }
+
+  @Input
+  @Optional
+  public List<String> getVolumes() {
+    if (System.getProperty(PropertyNames.CONTAINER_VOLUMES) != null) {
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.CONTAINER_VOLUMES));
+    }
+    return volumes;
+  }
+
+  public void setVolumes(List<String> volumes) {
+    this.volumes = volumes;
   }
 
   @Input

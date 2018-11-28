@@ -133,6 +133,11 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public List<String> getVolumes() {
+    return jibPluginConfiguration.getVolumes();
+  }
+
+  @Override
   public List<String> getPorts() {
     return jibPluginConfiguration.getExposedPorts();
   }
