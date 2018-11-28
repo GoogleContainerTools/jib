@@ -124,8 +124,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     } catch (InvalidContainerVolumeException ex) {
       throw new MojoExecutionException(
-          "<container><volumes> is not an absolute Unix-style path: " + ex.getInvalidVolume());
-
+          "<container><volumes> is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
     } catch (InvalidImageReferenceException
         | IOException
         | CacheDirectoryCreationException

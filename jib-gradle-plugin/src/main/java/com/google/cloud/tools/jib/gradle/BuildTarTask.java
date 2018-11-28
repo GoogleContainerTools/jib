@@ -153,7 +153,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
           ex);
     } catch (InvalidContainerVolumeException ex) {
       throw new GradleException(
-          "container.volumes is not an absolute Unix-style path: " + ex.getInvalidVolume());
+          "container.volumes is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
     }
   }
 
