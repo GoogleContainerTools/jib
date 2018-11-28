@@ -51,11 +51,11 @@ public class ContainerConfigurationTemplateTest {
     containerConfigJson.setContainerEnvironment(Arrays.asList("VAR1=VAL1", "VAR2=VAL2"));
     containerConfigJson.setContainerEntrypoint(Arrays.asList("some", "entrypoint", "command"));
     containerConfigJson.setContainerCmd(Arrays.asList("arg1", "arg2"));
-    containerConfigJson.setContainerHealthTest(Arrays.asList("CMD-SHELL", "/checkhealth"));
-    containerConfigJson.setContainerHealthInterval(3000000000L);
-    containerConfigJson.setContainerHealthTimeout(1000000000L);
-    containerConfigJson.setContainerHealthStartPeriod(2000000000L);
-    containerConfigJson.setContainerHealthRetries(3);
+    containerConfigJson.setContainerHealthCheckTest(Arrays.asList("CMD-SHELL", "/checkhealth"));
+    containerConfigJson.setContainerHealthCheckInterval(3000000000L);
+    containerConfigJson.setContainerHealthCheckTimeout(1000000000L);
+    containerConfigJson.setContainerHealthCheckStartPeriod(2000000000L);
+    containerConfigJson.setContainerHealthCheckRetries(3);
     containerConfigJson.setContainerExposedPorts(
         ImmutableSortedMap.of(
             "1000/tcp",

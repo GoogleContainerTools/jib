@@ -37,6 +37,9 @@ public class DockerHealthCheck {
     @Nullable private Integer retries;
 
     private Builder(ImmutableList<String> command) {
+      Preconditions.checkArgument(
+          command.size() > 1 && !command.contains(""),
+          "command must not be empty and must not contain empty tokens");
       this.command = command;
     }
 
@@ -117,7 +120,6 @@ public class DockerHealthCheck {
    * @return the new {@link DockerHealthCheck.Builder}
    */
   public static Builder builderWithExecCommand(List<String> command) {
-    Preconditions.checkArgument(command.size() > 0, "command must not be empty");
     return new Builder(ImmutableList.<String>builder().add("CMD").addAll(command).build());
   }
 
@@ -129,7 +131,6 @@ public class DockerHealthCheck {
    * @return the new {@link DockerHealthCheck.Builder}
    */
   public static Builder builderWithExecCommand(String... command) {
-    Preconditions.checkArgument(command.length > 0, "command must not be empty");
     return new Builder(
         ImmutableList.<String>builder().add("CMD").addAll(Arrays.asList(command)).build());
   }
@@ -143,7 +144,6 @@ public class DockerHealthCheck {
    * @return the new {@link DockerHealthCheck.Builder}
    */
   public static Builder builderWithShellCommand(String command) {
-    Preconditions.checkArgument(command.length() > 0, "command must not be empty");
     return new Builder(ImmutableList.of("CMD-SHELL", command));
   }
 
@@ -214,14 +214,5 @@ public class DockerHealthCheck {
    */
   public Optional<Integer> getRetries() {
     return Optional.ofNullable(retries);
-  }
-
-  /**
-   * Returns {@code true} if the health check should be inherited from the base image.
-   *
-   * @return {@code true} if the health check should be inherited, {@code false} if not
-   */
-  public boolean isInherited() {
-    return command.isEmpty();
   }
 }

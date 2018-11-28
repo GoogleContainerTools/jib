@@ -169,20 +169,22 @@ public class ImageToJsonTranslator {
     template.setContainerWorkingDir(image.getWorkingDirectory());
     template.setContainerUser(image.getUser());
 
-    // Healthcheck is not supported by OCI
+    // Ignore healthcheck if not Docker/command is empty
     DockerHealthCheck healthCheck = image.getHealthCheck();
-    if (image.getImageFormat() == V22ManifestTemplate.class) {
-      template.setContainerHealthTest(healthCheck.getCommand());
+    if (image.getImageFormat() == V22ManifestTemplate.class
+        && !healthCheck.getCommand().isEmpty()) {
+      template.setContainerHealthCheckTest(healthCheck.getCommand());
       healthCheck
           .getInterval()
-          .ifPresent(interval -> template.setContainerHealthInterval(interval.toNanos()));
+          .ifPresent(interval -> template.setContainerHealthCheckInterval(interval.toNanos()));
       healthCheck
           .getTimeout()
-          .ifPresent(timeout -> template.setContainerHealthTimeout(timeout.toNanos()));
+          .ifPresent(timeout -> template.setContainerHealthCheckTimeout(timeout.toNanos()));
       healthCheck
           .getStartPeriod()
-          .ifPresent(startPeriod -> template.setContainerHealthStartPeriod(startPeriod.toNanos()));
-      template.setContainerHealthRetries(healthCheck.getRetries().orElse(null));
+          .ifPresent(
+              startPeriod -> template.setContainerHealthCheckStartPeriod(startPeriod.toNanos()));
+      template.setContainerHealthCheckRetries(healthCheck.getRetries().orElse(null));
     }
 
     // Serializes into JSON.

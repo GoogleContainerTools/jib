@@ -184,35 +184,35 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Cmd = cmd;
   }
 
-  public void setContainerHealthTest(@Nullable List<String> test) {
+  public void setContainerHealthCheckTest(@Nullable List<String> test) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
     }
     Preconditions.checkNotNull(config.Healthcheck).Test = test;
   }
 
-  public void setContainerHealthInterval(@Nullable Long interval) {
+  public void setContainerHealthCheckInterval(@Nullable Long interval) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
     }
     Preconditions.checkNotNull(config.Healthcheck).Interval = interval;
   }
 
-  public void setContainerHealthTimeout(@Nullable Long timeout) {
+  public void setContainerHealthCheckTimeout(@Nullable Long timeout) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
     }
     Preconditions.checkNotNull(config.Healthcheck).Timeout = timeout;
   }
 
-  public void setContainerHealthStartPeriod(@Nullable Long startPeriod) {
+  public void setContainerHealthCheckStartPeriod(@Nullable Long startPeriod) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
     }
     Preconditions.checkNotNull(config.Healthcheck).StartPeriod = startPeriod;
   }
 
-  public void setContainerHealthRetries(@Nullable Integer retries) {
+  public void setContainerHealthCheckRetries(@Nullable Integer retries) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
     }

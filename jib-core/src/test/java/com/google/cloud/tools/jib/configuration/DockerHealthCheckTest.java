@@ -47,7 +47,7 @@ public class DockerHealthCheckTest {
   @Test
   public void testBuild_propagated() {
     DockerHealthCheck healthCheck = DockerHealthCheck.inherited();
-    Assert.assertTrue(healthCheck.isInherited());
+    Assert.assertTrue(healthCheck.getCommand().isEmpty());
   }
 
   @Test
