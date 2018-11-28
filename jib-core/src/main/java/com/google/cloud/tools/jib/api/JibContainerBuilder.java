@@ -251,7 +251,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setVolumes(Set<AbsoluteUnixPath> volumes) {
-    containerConfigurationBuilder.setVolumes(new HashSet<>(volumes));
+    containerConfigurationBuilder.setVolumes(volumes);
     return this;
   }
 
@@ -293,7 +293,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setExposedPorts(Set<Port> ports) {
-    containerConfigurationBuilder.setExposedPorts(new HashSet<>(ports));
+    containerConfigurationBuilder.setExposedPorts(ports);
     return this;
   }
 
