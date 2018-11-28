@@ -133,6 +133,11 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public Optional<String> getWorkingDirectory() {
+    return Optional.ofNullable(jibExtension.getContainer().getWorkingDirectory());
+  }
+
+  @Override
   public boolean getUseCurrentTimestamp() {
     return jibExtension.getContainer().getUseCurrentTimestamp();
   }

@@ -67,6 +67,8 @@ public interface RawConfiguration {
 
   Optional<String> getUser();
 
+  Optional<String> getWorkingDirectory();
+
   boolean getUseCurrentTimestamp();
 
   boolean getAllowInsecureRegistries();

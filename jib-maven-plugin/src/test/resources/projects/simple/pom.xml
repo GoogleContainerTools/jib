@@ -56,6 +56,7 @@
               <volume>/var/log</volume>
               <volume>/var/log2</volume>
             </volumes>
+            <workingDirectory>/home</workingDirectory>
           </container>
           <extraDirectory>${project.basedir}/src/main/jib-custom</extraDirectory>
           <!-- Does not have tests use user-level cache for base image layers. -->

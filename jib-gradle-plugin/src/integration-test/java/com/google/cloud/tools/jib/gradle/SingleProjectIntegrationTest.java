@@ -61,6 +61,15 @@ public class SingleProjectIntegrationTest {
     Assert.assertTrue(parsed.isAfter(before) || parsed.equals(before));
   }
 
+  private static void assertWorkingDirectory(String expected, String imageReference)
+      throws IOException, InterruptedException {
+    Assert.assertEquals(
+        expected,
+        new Command("docker", "inspect", "-f", "{{.Config.WorkingDir}}", imageReference)
+            .run()
+            .trim());
+  }
+
   /**
    * Asserts that the test project has the required exposed ports, labels and volumes.
    *
@@ -151,6 +160,7 @@ public class SingleProjectIntegrationTest {
         JibRunHelper.buildAndRun(simpleTestProject, targetImage));
     assertDockerInspect(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    assertWorkingDirectory("/home", targetImage);
   }
 
   @Test
@@ -161,6 +171,7 @@ public class SingleProjectIntegrationTest {
         "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    assertWorkingDirectory("", targetImage);
   }
 
   @Test
@@ -171,6 +182,7 @@ public class SingleProjectIntegrationTest {
         "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    assertWorkingDirectory("", targetImage);
   }
 
   @Test
@@ -182,6 +194,7 @@ public class SingleProjectIntegrationTest {
         JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     assertDockerInspect(targetImage);
+    assertWorkingDirectory("/home", targetImage);
   }
 
   @Test
@@ -203,5 +216,6 @@ public class SingleProjectIntegrationTest {
         new Command("docker", "run", "--rm", targetImage).run());
     assertDockerInspect(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    assertWorkingDirectory("/home", targetImage);
   }
 }
