@@ -231,7 +231,8 @@ Property | Type | Default | Description
 `ports` | list | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
 `useCurrentTimestamp` | boolean | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
 `user` | string | *None* | The user and group to run the container as. The value can be a username or UID along with an optional groupname or GID. The following are all valid: `user`, `uid`, `user:group`, `uid:gid`, `uid:group`, `user:gid`.
-`volumes` | list | *None* | Specifies a list of mount points on the container
+`volumes` | list | *None* | Specifies a list of mount points on the container.
+`workingDirectory` | string | *None* | The working directory in the container.
 
 <a name="extradirectory-object"></a>`extraDirectory` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
 
