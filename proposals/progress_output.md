@@ -39,9 +39,7 @@ To display fine-grained progress feedback during the build, but not clutter the 
 
 ## Design considerations
 
-Since Jib builds/pulls and pushes each layer independently, we should not provide synchronized progress feedback (completion over all layers) as that would limit the concurrency of the build process.
-
-All progress feedback should be local to each layer.
+Since Jib builds/pulls and pushes each layer independently, synchronized progress feedback (completion over all layers, such as a progress bar) could potentially limit the concurrency of the build process - but this might be negligible.
 
 The available information for each layer include:
 
@@ -60,10 +58,81 @@ Therefore, the actions we can perform for progress feedback include:
 
 And the actions we cannot perform include:
 
-- synchronize progress between layers
-- output line replacement (ie. update a progress bar in the same output line) - Maven/Gradle output limited to a single-line logging interface
+- know ahead of time how many layers will be pulled/pushed
 
 ## Proposal
+
+Display an overall progress bar along with the tasks currently being executed.
+
+### Example
+
+```
+Executing tasks: Pushing classes layer, pulling base image layer 50501d3b88f7, pushing dependencies layer, pushing base image layer 8b106a18283f
+[========================         ] 80% complete
+```
+
+### Summary
+
+The implementation consists of two parts:
+
+1. Emit progress events from the builder steps.
+1. Monitor progress events and display to console.
+
+### Emit progress events
+
+There are a few issues to address for the progress event design:
+
+- the total amount of work is not known beforehand, so there is no static max progress known at any time
+- the builder steps are asynchronous and therefore progress events should not share a single progress state
+- rather, the progress event receiver should be the only potentially stateful entity
+
+These issues can be resolved with a *decentralized allocation tree*.
+
+#### Decentralized allocation tree (DAT)
+
+Each node in the DAT is immutable and initialized with a count of allocation units. These allocation units are to be claimed by progress made on that node or child nodes. Each child node claims 1 allocation unit of the parent node, meaning that completion of all allocation units on that child node means completion of 1 allocation unit on the parent node.
+
+##### Example
+
+Consider a root node (`Node A`) with 10 allocation units. A child node (`Node B`) is added with 3 allocation units. Each of these allocation units represents `10% x 30% = 3%` of the entire DAT progress. Completion of all the 3 child node allocation units means that the root node completed 1 allocation unit, or `10%`.
+
+New allocations can be added on-the-fly in a decentralized manner. Let's say a new download started for `123000` bytes and that download should be represented by one of the allocation units of `Node B`. We would create a new node (`Node C`) with `123000` allocation units and have its parent be `Node B`. This establishes the `123000` bytes that would represent `3%` of the overall progress without needing to modify other nodes or synchronize with other tasks that may add their own sub-allocations. This also limits the creation of suballocations to only children tasks of the task that created that allocation, making it fully-compatible with a DAG task pipeline.
+
+#### Benefits of DAT approach
+
+The DAT approach solves all of the issues present:
+
+- The progress % would never decrease even in an unknown total work scenario
+- The dynamic suballocation supports the asynchronous builder steps
+- The allocations are immutable, and state (total progress amount) can be kept at the receiver (DAT reader) side
+
+The downside is that the overall progress is not linear in scale among the work of each allocation. For example, an allocation representing a download may have each byte represent `1%` of the total progress while another may have each byte represent `2%`.
+
+### Monitor progress events
+
+Progress events will be emitted with
+1. an allocation node, and
+1. a number of progress units completed on that allocation node
+
+Therefore, the progress monitor receiving the progress events will only need to keep a single total progress amount as its state. Upon receiving a progress event, the progress monitor updates its total progress amount by:
+
+```
+totalProgressAmount += progressUnits / progressTotal * allocationFraction;
+```
+
+`progressUnits` - the progress units from the progress event \
+`progressTotal` - the number of allocation units for the allocation node associated with the progress event \
+`allocationFraction` - the fraction of the total progress represented by the allocation node, calculated as the *inverted product of all the parent allocation units*
+
+### Display to console
+
+The progress monitor can display a progress bar to the console based on the `totalProgressAmount` upon each update. Using `\r` could work, but results in the console cursor overlapping with the progress bar line. The proposal is to, for each update, move the cursor up a line (`\033[1A`) and print the progress bar line with a newline at the end.
+
+The progress monitor can also keep track of which allocation nodes have completed to display the currently executing tasks.
+
+## Alternative rejected proposal
+
+*This alternative proposal was rejected because it cluttered the log messages too much.*
 
 Display percentage completion of layer pushes at 10s intervals with a 20s cliff.
 
