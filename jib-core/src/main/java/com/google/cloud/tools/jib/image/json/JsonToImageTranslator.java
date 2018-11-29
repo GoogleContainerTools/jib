@@ -147,12 +147,12 @@ public class JsonToImageTranslator {
     }
 
     if (containerConfigurationTemplate.getContainerExposedPorts() != null) {
-      imageBuilder.setExposedPorts(
+      imageBuilder.addExposedPorts(
           portMapToSet(containerConfigurationTemplate.getContainerExposedPorts()));
     }
 
     if (containerConfigurationTemplate.getContainerVolumes() != null) {
-      imageBuilder.setVolumes(volumeMapToSet(containerConfigurationTemplate.getContainerVolumes()));
+      imageBuilder.addVolumes(volumeMapToSet(containerConfigurationTemplate.getContainerVolumes()));
     }
 
     if (containerConfigurationTemplate.getContainerEnvironment() != null) {
