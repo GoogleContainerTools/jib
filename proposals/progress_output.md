@@ -71,6 +71,8 @@ Executing tasks: Pushing classes layer, pulling base image layer 50501d3b88f7, p
 [========================         ] 80% complete
 ```
 
+*Note that this would replace the logs messages that are currently outputted as those may corrupt the progress bar display.*
+
 ### Summary
 
 The implementation consists of two parts:
