@@ -131,12 +131,16 @@ class GradleLayerConfigurations {
 
     // Adds dependency files.
     for (File dependencyFile : dependencyFiles) {
-      boolean isSnapshot = dependencyFile.getName().contains("SNAPSHOT");
-      LayerType layerType = isSnapshot ? LayerType.SNAPSHOT_DEPENDENCIES : LayerType.DEPENDENCIES;
-      layerBuilder.addFile(
-          layerType,
-          dependencyFile.toPath(),
-          dependenciesExtractionPath.resolve(dependencyFile.getName()));
+      if (dependencyFile.exists()) {
+        boolean isSnapshot = dependencyFile.getName().contains("SNAPSHOT");
+        LayerType layerType = isSnapshot ? LayerType.SNAPSHOT_DEPENDENCIES : LayerType.DEPENDENCIES;
+        layerBuilder.addFile(
+            layerType,
+            dependencyFile.toPath(),
+            dependenciesExtractionPath.resolve(dependencyFile.getName()));
+      } else {
+        logger.info("\t'" + dependencyFile + "' (not found, skipped)");
+      }
     }
 
     // Adds all the extra files.
