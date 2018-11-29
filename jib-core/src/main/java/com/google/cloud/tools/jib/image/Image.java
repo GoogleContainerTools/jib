@@ -123,9 +123,9 @@ public class Image<T extends Layer> {
     }
 
     /**
-     * Sets the items in the "ExposedPorts" field in the container configuration.
+     * Adds items to the "ExposedPorts" field in the container configuration.
      *
-     * @param exposedPorts the list of exposed ports to add
+     * @param exposedPorts the exposed ports to add
      * @return this
      */
     public Builder<T> addExposedPorts(@Nullable Set<Port> exposedPorts) {
@@ -136,9 +136,9 @@ public class Image<T extends Layer> {
     }
 
     /**
-     * Sets the items in the "Volumes" field in the container configuration.
+     * Adds items to the "Volumes" field in the container configuration.
      *
-     * @param volumes the list of directories to create a volume.
+     * @param volumes the directories to create volumes
      * @return this
      */
     public Builder<T> addVolumes(@Nullable Set<AbsoluteUnixPath> volumes) {
