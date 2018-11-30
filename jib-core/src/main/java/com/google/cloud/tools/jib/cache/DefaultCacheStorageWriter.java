@@ -71,7 +71,7 @@ class DefaultCacheStorageWriter {
     }
 
     try {
-      Files.move(source, destination, StandardCopyOption.ATOMIC_MOVE);
+      Files.move(source, destination);
 
     } catch (FileSystemException ex) {
       if (!Files.exists(destination)) {
