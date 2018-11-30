@@ -10,7 +10,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How do I set parameters for my image at runtime?](#how-do-i-set-parameters-for-my-image-at-runtime)\
 [What image format does Jib use?](#what-image-format-does-jib-use)\
 [Can I define a custom entrypoint?](#can-i-define-a-custom-entrypoint)\
-[I want to containerize an executable JAR/WAR.](#i-want-to-containerize-an-executable-jar-war)\
+[I want to containerize an executable JAR.](#i-want-to-containerize-an-executable-jar)\
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
 [I need to RUN commands like `apt-get`.](#i-need-to-run-commands-like-apt-get)\
 [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)\
