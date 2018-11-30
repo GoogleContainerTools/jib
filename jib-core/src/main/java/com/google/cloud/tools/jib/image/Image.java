@@ -16,9 +16,11 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -36,6 +38,7 @@ public class Image<T extends Layer> {
   /** Builds the immutable {@link Image}. */
   public static class Builder<T extends Layer> {
 
+    private final Class<? extends ManifestTemplate> imageFormat;
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
     private final ImmutableList.Builder<HistoryEntry> historyBuilder = ImmutableList.builder();
 
@@ -49,8 +52,13 @@ public class Image<T extends Layer> {
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
+    private DockerHealthCheck healthCheck = DockerHealthCheck.inherited();
     @Nullable private String workingDirectory;
     @Nullable private String user;
+
+    private Builder(Class<? extends ManifestTemplate> imageFormat) {
+      this.imageFormat = imageFormat;
+    }
 
     /**
      * Sets the image creation time.
@@ -119,6 +127,17 @@ public class Image<T extends Layer> {
     public Builder<T> setProgramArguments(@Nullable List<String> programArguments) {
       this.programArguments =
           (programArguments == null) ? null : ImmutableList.copyOf(programArguments);
+      return this;
+    }
+
+    /**
+     * Sets the container's healthcheck configuration.
+     *
+     * @param healthCheck the healthcheck configuration
+     * @return this
+     */
+    public Builder<T> setHealthCheck(DockerHealthCheck healthCheck) {
+      this.healthCheck = healthCheck;
       return this;
     }
 
@@ -209,12 +228,14 @@ public class Image<T extends Layer> {
 
     public Image<T> build() {
       return new Image<>(
+          imageFormat,
           created,
           imageLayersBuilder.build(),
           historyBuilder.build(),
           ImmutableMap.copyOf(environmentBuilder),
           entrypoint,
           programArguments,
+          healthCheck,
           ImmutableSet.copyOf(exposedPortsBuilder),
           ImmutableSet.copyOf(volumesBuilder),
           ImmutableMap.copyOf(labelsBuilder),
@@ -223,9 +244,13 @@ public class Image<T extends Layer> {
     }
   }
 
-  public static <T extends Layer> Builder<T> builder() {
-    return new Builder<>();
+  public static <T extends Layer> Builder<T> builder(
+      Class<? extends ManifestTemplate> imageFormat) {
+    return new Builder<>(imageFormat);
   }
+
+  /** The image format. */
+  private final Class<? extends ManifestTemplate> imageFormat;
 
   /** The image creation time. */
   @Nullable private final Instant created;
@@ -245,6 +270,9 @@ public class Image<T extends Layer> {
   /** Arguments to append to the image entrypoint when running the image. */
   @Nullable private final ImmutableList<String> programArguments;
 
+  /** Healthcheck configuration. */
+  private final DockerHealthCheck healthCheck;
+
   /** Ports that the container listens on. */
   @Nullable private final ImmutableSet<Port> exposedPorts;
 
@@ -261,28 +289,36 @@ public class Image<T extends Layer> {
   @Nullable private final String user;
 
   private Image(
+      Class<? extends ManifestTemplate> imageFormat,
       @Nullable Instant created,
       ImageLayers<T> layers,
       ImmutableList<HistoryEntry> history,
       @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> programArguments,
+      DockerHealthCheck healthCheck,
       @Nullable ImmutableSet<Port> exposedPorts,
       @Nullable ImmutableSet<AbsoluteUnixPath> volumes,
       @Nullable ImmutableMap<String, String> labels,
       @Nullable String workingDirectory,
       @Nullable String user) {
+    this.imageFormat = imageFormat;
     this.created = created;
     this.layers = layers;
     this.history = history;
     this.environment = environment;
     this.entrypoint = entrypoint;
     this.programArguments = programArguments;
+    this.healthCheck = healthCheck;
     this.exposedPorts = exposedPorts;
     this.volumes = volumes;
     this.labels = labels;
     this.workingDirectory = workingDirectory;
     this.user = user;
+  }
+
+  public Class<? extends ManifestTemplate> getImageFormat() {
+    return this.imageFormat;
   }
 
   @Nullable
@@ -303,6 +339,10 @@ public class Image<T extends Layer> {
   @Nullable
   public ImmutableList<String> getProgramArguments() {
     return programArguments;
+  }
+
+  public DockerHealthCheck getHealthCheck() {
+    return healthCheck;
   }
 
   @Nullable

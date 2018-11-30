@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.image;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
@@ -47,7 +48,7 @@ public class ImageTest {
   @Test
   public void test_smokeTest() throws LayerPropertyNotFoundException {
     Image<Layer> image =
-        Image.builder()
+        Image.builder(V22ManifestTemplate.class)
             .setCreated(Instant.ofEpochSecond(10000))
             .addEnvironmentVariable("crepecake", "is great")
             .addEnvironmentVariable("VARIABLE", "VALUE")
@@ -61,6 +62,7 @@ public class ImageTest {
             .addLayer(mockLayer)
             .build();
 
+    Assert.assertEquals(V22ManifestTemplate.class, image.getImageFormat());
     Assert.assertEquals(
         mockDescriptorDigest, image.getLayers().get(0).getBlobDescriptor().getDigest());
     Assert.assertEquals(Instant.ofEpochSecond(10000), image.getCreated());

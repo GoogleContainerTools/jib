@@ -45,7 +45,7 @@ public class ImageToTarballTranslator {
   /**
    * Instantiate with an {@link Image}.
    *
-   * @param image the image to convert into a tarball.
+   * @param image the image to convert into a tarball
    */
   public ImageToTarballTranslator(Image<Layer> image) {
     this.image = image;

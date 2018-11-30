@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,13 @@ import javax.annotation.Nullable;
  *     "Env": ["/usr/bin/java"],
  *     "Entrypoint": ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"],
  *     "Cmd": ["arg1", "arg2"],
+ *     "Healthcheck": {
+ *       "Test": ["CMD-SHELL", "/usr/bin/check-health localhost"],
+ *       "Interval": 30000000000,
+ *       "Timeout": 10000000000,
+ *       "StartPeriod": 0,
+ *       "Retries": 3
+ *     }
  *     "ExposedPorts": { "6000/tcp":{}, "8000/tcp":{}, "9000/tcp":{} },
  *     "Volumes":{"/var/job-result-data":{},"/var/log/my-app-logs":{}}},
  *     "Labels": { "com.example.label": "value" },
@@ -104,6 +112,9 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     /** Arguments to pass into main. */
     @Nullable private List<String> Cmd;
 
+    /** Healthcheck. */
+    @Nullable private HealthCheckObjectTemplate Healthcheck;
+
     /** Network ports the container exposes. */
     @Nullable private Map<String, Map<?, ?>> ExposedPorts;
 
@@ -118,6 +129,27 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
     /** Volumes */
     @Nullable private Map<String, Map<?, ?>> Volumes;
+  }
+
+  /** Template for inner JSON object representing the healthcheck configuration. */
+  private static class HealthCheckObjectTemplate implements JsonTemplate {
+
+    /** The test to perform to check that the container is healthy. */
+    @Nullable private List<String> Test;
+
+    /** Number of nanoseconds to wait between probe attempts. */
+    @Nullable private Long Interval;
+
+    /** Number of nanoseconds to wait before considering the check to have hung. */
+    @Nullable private Long Timeout;
+
+    /**
+     * Number of nanoseconds to wait for the container to initialize before starting health-retries.
+     */
+    @Nullable private Long StartPeriod;
+
+    /** The number of consecutive failures needed to consider the container as unhealthy. */
+    @Nullable private Integer Retries;
   }
 
   /**
@@ -150,6 +182,41 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
 
   public void setContainerCmd(@Nullable List<String> cmd) {
     config.Cmd = cmd;
+  }
+
+  public void setContainerHealthCheckTest(List<String> test) {
+    if (config.Healthcheck == null) {
+      config.Healthcheck = new HealthCheckObjectTemplate();
+    }
+    Preconditions.checkNotNull(config.Healthcheck).Test = test;
+  }
+
+  public void setContainerHealthCheckInterval(@Nullable Long interval) {
+    if (config.Healthcheck == null) {
+      config.Healthcheck = new HealthCheckObjectTemplate();
+    }
+    Preconditions.checkNotNull(config.Healthcheck).Interval = interval;
+  }
+
+  public void setContainerHealthCheckTimeout(@Nullable Long timeout) {
+    if (config.Healthcheck == null) {
+      config.Healthcheck = new HealthCheckObjectTemplate();
+    }
+    Preconditions.checkNotNull(config.Healthcheck).Timeout = timeout;
+  }
+
+  public void setContainerHealthCheckStartPeriod(@Nullable Long startPeriod) {
+    if (config.Healthcheck == null) {
+      config.Healthcheck = new HealthCheckObjectTemplate();
+    }
+    Preconditions.checkNotNull(config.Healthcheck).StartPeriod = startPeriod;
+  }
+
+  public void setContainerHealthCheckRetries(@Nullable Integer retries) {
+    if (config.Healthcheck == null) {
+      config.Healthcheck = new HealthCheckObjectTemplate();
+    }
+    Preconditions.checkNotNull(config.Healthcheck).Retries = retries;
   }
 
   public void setContainerExposedPorts(@Nullable Map<String, Map<?, ?>> exposedPorts) {
@@ -206,6 +273,31 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   @Nullable
   List<String> getContainerCmd() {
     return config.Cmd;
+  }
+
+  @Nullable
+  List<String> getContainerHealthTest() {
+    return config.Healthcheck == null ? null : config.Healthcheck.Test;
+  }
+
+  @Nullable
+  Long getContainerHealthInterval() {
+    return config.Healthcheck == null ? null : config.Healthcheck.Interval;
+  }
+
+  @Nullable
+  Long getContainerHealthTimeout() {
+    return config.Healthcheck == null ? null : config.Healthcheck.Timeout;
+  }
+
+  @Nullable
+  Long getContainerHealthStartPeriod() {
+    return config.Healthcheck == null ? null : config.Healthcheck.StartPeriod;
+  }
+
+  @Nullable
+  Integer getContainerHealthRetries() {
+    return config.Healthcheck == null ? null : config.Healthcheck.Retries;
   }
 
   @Nullable

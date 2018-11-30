@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -125,7 +126,7 @@ public class BuildImageStepTest {
             .build();
 
     Image<Layer> baseImage =
-        Image.builder()
+        Image.builder(V22ManifestTemplate.class)
             .addEnvironment(ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE", "BASE_ENV_2", "DEFAULT"))
             .addLabel("base.label", "base.label.value")
             .addLabel("base.label.2", "default")

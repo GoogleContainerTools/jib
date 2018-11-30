@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -79,6 +80,27 @@ public class ImageToJsonTranslator {
   }
 
   /**
+   * Converts the map of environment variables to a list with items in the format "NAME=VALUE".
+   *
+   * @return the list
+   */
+  @VisibleForTesting
+  @Nullable
+  static ImmutableList<String> environmentMapToList(@Nullable Map<String, String> environment) {
+    if (environment == null) {
+      return null;
+    }
+    Preconditions.checkArgument(
+        environment.keySet().stream().noneMatch(key -> key.contains("=")),
+        "Illegal environment variable: name cannot contain '='");
+    return environment
+        .entrySet()
+        .stream()
+        .map(entry -> entry.getKey() + "=" + entry.getValue())
+        .collect(ImmutableList.toImmutableList());
+  }
+
+  /**
    * Turns a set into a sorted map where each element of the set is mapped to an entry composed by
    * the key generated with {@code Function<E, String> elementMapper} and an empty map as value.
    *
@@ -107,33 +129,12 @@ public class ImageToJsonTranslator {
                 String::compareTo, keyMapper, ignored -> Collections.emptyMap()));
   }
 
-  /**
-   * Converts the map of environment variables to a list with items in the format "NAME=VALUE".
-   *
-   * @return the list
-   */
-  @VisibleForTesting
-  @Nullable
-  static ImmutableList<String> environmentMapToList(@Nullable Map<String, String> environment) {
-    if (environment == null) {
-      return null;
-    }
-    Preconditions.checkArgument(
-        environment.keySet().stream().noneMatch(key -> key.contains("=")),
-        "Illegal environment variable: name cannot contain '='");
-    return environment
-        .entrySet()
-        .stream()
-        .map(entry -> entry.getKey() + "=" + entry.getValue())
-        .collect(ImmutableList.toImmutableList());
-  }
-
   private final Image<Layer> image;
 
   /**
    * Instantiate with an {@link Image}.
    *
-   * @param image the image to translate.
+   * @param image the image to translate
    */
   public ImageToJsonTranslator(Image<Layer> image) {
     this.image = image;
@@ -142,7 +143,7 @@ public class ImageToJsonTranslator {
   /**
    * Gets the container configuration as a {@link Blob}.
    *
-   * @return the container configuration {@link Blob}.
+   * @return the container configuration {@link Blob}
    */
   public Blob getContainerConfigurationBlob() {
     // Set up the JSON template.
@@ -158,32 +159,33 @@ public class ImageToJsonTranslator {
       template.addHistoryEntry(historyObject);
     }
 
-    // Sets the creation time. Instant#toString() returns an ISO-8601 formatted string.
     template.setCreated(image.getCreated() == null ? null : image.getCreated().toString());
-
-    // Adds the environment variables.
     template.setContainerEnvironment(environmentMapToList(image.getEnvironment()));
-
-    // Sets the entrypoint.
     template.setContainerEntrypoint(image.getEntrypoint());
-
-    // Sets the main method arguments.
     template.setContainerCmd(image.getProgramArguments());
-
-    // Sets the exposed ports.
     template.setContainerExposedPorts(portSetToMap(image.getExposedPorts()));
-
-    // Sets the volumes.
     template.setContainerVolumes(volumesSetToMap(image.getVolumes()));
-
-    // Sets the labels.
     template.setContainerLabels(image.getLabels());
-
-    // Sets the working directory.
     template.setContainerWorkingDir(image.getWorkingDirectory());
-
-    // Sets the user.
     template.setContainerUser(image.getUser());
+
+    // Ignore healthcheck if not Docker/command is empty
+    DockerHealthCheck healthCheck = image.getHealthCheck();
+    if (image.getImageFormat() == V22ManifestTemplate.class
+        && !healthCheck.getCommand().isEmpty()) {
+      template.setContainerHealthCheckTest(healthCheck.getCommand());
+      healthCheck
+          .getInterval()
+          .ifPresent(interval -> template.setContainerHealthCheckInterval(interval.toNanos()));
+      healthCheck
+          .getTimeout()
+          .ifPresent(timeout -> template.setContainerHealthCheckTimeout(timeout.toNanos()));
+      healthCheck
+          .getStartPeriod()
+          .ifPresent(
+              startPeriod -> template.setContainerHealthCheckStartPeriod(startPeriod.toNanos()));
+      template.setContainerHealthCheckRetries(healthCheck.getRetries().orElse(null));
+    }
 
     // Serializes into JSON.
     return JsonTemplateMapper.toBlob(template);

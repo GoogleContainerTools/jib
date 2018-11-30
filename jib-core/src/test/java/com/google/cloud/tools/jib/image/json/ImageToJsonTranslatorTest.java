@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.image.json;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -40,11 +41,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Map;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Tests for {@link ImageToJsonTranslator}. */
@@ -52,24 +53,30 @@ public class ImageToJsonTranslatorTest {
 
   private ImageToJsonTranslator imageToJsonTranslator;
 
-  @Before
-  public void setUp() throws DigestException, LayerPropertyNotFoundException {
-    Image.Builder<Layer> testImageBuilder = Image.builder();
-
-    testImageBuilder.setCreated(Instant.ofEpochSecond(20));
-    testImageBuilder.addEnvironmentVariable("VAR1", "VAL1");
-    testImageBuilder.addEnvironmentVariable("VAR2", "VAL2");
-    testImageBuilder.setEntrypoint(Arrays.asList("some", "entrypoint", "command"));
-    testImageBuilder.setProgramArguments(Arrays.asList("arg1", "arg2"));
-    testImageBuilder.addExposedPorts(
-        ImmutableSet.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)));
-    testImageBuilder.addVolumes(
-        ImmutableSet.of(
-            AbsoluteUnixPath.get("/var/job-result-data"),
-            AbsoluteUnixPath.get("/var/log/my-app-logs")));
-    testImageBuilder.addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"));
-    testImageBuilder.setWorkingDirectory("/some/workspace");
-    testImageBuilder.setUser("tomcat");
+  private void setUp(Class<? extends BuildableManifestTemplate> imageFormat)
+      throws DigestException, LayerPropertyNotFoundException {
+    Image.Builder<Layer> testImageBuilder =
+        Image.builder(imageFormat)
+            .setCreated(Instant.ofEpochSecond(20))
+            .addEnvironmentVariable("VAR1", "VAL1")
+            .addEnvironmentVariable("VAR2", "VAL2")
+            .setEntrypoint(Arrays.asList("some", "entrypoint", "command"))
+            .setProgramArguments(Arrays.asList("arg1", "arg2"))
+            .setHealthCheck(
+                DockerHealthCheck.builderWithShellCommand("/checkhealth")
+                    .setInterval(Duration.ofSeconds(3))
+                    .setTimeout(Duration.ofSeconds(1))
+                    .setStartPeriod(Duration.ofSeconds(2))
+                    .setRetries(3)
+                    .build())
+            .addExposedPorts(ImmutableSet.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)))
+            .addVolumes(
+                ImmutableSet.of(
+                    AbsoluteUnixPath.get("/var/job-result-data"),
+                    AbsoluteUnixPath.get("/var/log/my-app-logs")))
+            .addLabels(ImmutableMap.of("key1", "value1", "key2", "value2"))
+            .setWorkingDirectory("/some/workspace")
+            .setUser("tomcat");
 
     DescriptorDigest fakeDigest =
         DescriptorDigest.fromDigest(
@@ -109,7 +116,10 @@ public class ImageToJsonTranslatorTest {
   }
 
   @Test
-  public void testGetContainerConfiguration() throws IOException, URISyntaxException {
+  public void testGetContainerConfiguration()
+      throws IOException, URISyntaxException, DigestException {
+    setUp(V22ManifestTemplate.class);
+
     // Loads the expected JSON string.
     Path jsonFile = Paths.get(Resources.getResource("json/containerconfig.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
@@ -125,12 +135,14 @@ public class ImageToJsonTranslatorTest {
   }
 
   @Test
-  public void testGetManifest_v22() throws URISyntaxException, IOException {
+  public void testGetManifest_v22() throws URISyntaxException, IOException, DigestException {
+    setUp(V22ManifestTemplate.class);
     testGetManifest(V22ManifestTemplate.class, "json/translated_v22manifest.json");
   }
 
   @Test
-  public void testGetManifest_oci() throws URISyntaxException, IOException {
+  public void testGetManifest_oci() throws URISyntaxException, IOException, DigestException {
+    setUp(OCIManifestTemplate.class);
     testGetManifest(OCIManifestTemplate.class, "json/translated_ocimanifest.json");
   }
 

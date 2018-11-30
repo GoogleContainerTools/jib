@@ -68,7 +68,7 @@ public class JsonToImageTranslator {
    */
   public static Image<Layer> toImage(V21ManifestTemplate manifestTemplate)
       throws LayerPropertyNotFoundException {
-    Image.Builder<Layer> imageBuilder = Image.builder();
+    Image.Builder<Layer> imageBuilder = Image.builder(V21ManifestTemplate.class);
 
     for (DescriptorDigest digest : manifestTemplate.getLayerDigests()) {
       imageBuilder.addLayer(new DigestOnlyLayer(digest));
@@ -117,7 +117,7 @@ public class JsonToImageTranslator {
           "Mismatch between image manifest and container configuration");
     }
 
-    Image.Builder<Layer> imageBuilder = Image.builder();
+    Image.Builder<Layer> imageBuilder = Image.builder(manifestTemplate.getClass());
 
     for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
       ReferenceNoDiffIdLayer noDiffIdLayer = layers.get(layerIndex);
