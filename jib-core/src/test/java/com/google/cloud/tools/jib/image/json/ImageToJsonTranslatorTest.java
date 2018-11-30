@@ -69,8 +69,8 @@ public class ImageToJsonTranslatorTest {
                     .setStartPeriod(Duration.ofSeconds(2))
                     .setRetries(3)
                     .build())
-            .setExposedPorts(ImmutableSet.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)))
-            .setVolumes(
+            .addExposedPorts(ImmutableSet.of(Port.tcp(1000), Port.tcp(2000), Port.udp(3000)))
+            .addVolumes(
                 ImmutableSet.of(
                     AbsoluteUnixPath.get("/var/job-result-data"),
                     AbsoluteUnixPath.get("/var/log/my-app-logs")))

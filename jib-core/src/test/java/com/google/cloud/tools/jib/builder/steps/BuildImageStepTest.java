@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -132,6 +133,10 @@ public class BuildImageStepTest {
             .setWorkingDirectory("/base/working/directory")
             .setEntrypoint(ImmutableList.of("baseImageEntrypoint"))
             .setProgramArguments(ImmutableList.of("catalina.sh", "run"))
+            .addExposedPorts(ImmutableSet.of(Port.tcp(1000), Port.udp(2000)))
+            .addVolumes(
+                ImmutableSet.of(
+                    AbsoluteUnixPath.get("/base/path1"), AbsoluteUnixPath.get("/base/path2")))
             .addHistory(nonEmptyLayerHistory)
             .addHistory(emptyLayerHistory)
             .addHistory(emptyLayerHistory)
@@ -193,6 +198,12 @@ public class BuildImageStepTest {
         .thenReturn(ImmutableMap.of("MY_ENV", "MY_ENV_VALUE", "BASE_ENV_2", "NEW_VALUE"));
     Mockito.when(mockContainerConfiguration.getLabels())
         .thenReturn(ImmutableMap.of("my.label", "my.label.value", "base.label.2", "new.value"));
+    Mockito.when(mockContainerConfiguration.getExposedPorts())
+        .thenReturn(ImmutableSet.of(Port.tcp(3000), Port.udp(4000)));
+    Mockito.when(mockContainerConfiguration.getVolumes())
+        .thenReturn(
+            ImmutableSet.of(
+                AbsoluteUnixPath.get("/new/path1"), AbsoluteUnixPath.get("/new/path2")));
     BuildImageStep buildImageStep =
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
@@ -217,6 +228,16 @@ public class BuildImageStepTest {
             "base.label.2",
             "new.value"),
         image.getLabels());
+    Assert.assertEquals(
+        ImmutableSet.of(Port.tcp(1000), Port.udp(2000), Port.tcp(3000), Port.udp(4000)),
+        image.getExposedPorts());
+    Assert.assertEquals(
+        ImmutableSet.of(
+            AbsoluteUnixPath.get("/base/path1"),
+            AbsoluteUnixPath.get("/base/path2"),
+            AbsoluteUnixPath.get("/new/path1"),
+            AbsoluteUnixPath.get("/new/path2")),
+        image.getVolumes());
     Assert.assertEquals("/base/working/directory", image.getWorkingDirectory());
     Assert.assertEquals("root", image.getUser());
 

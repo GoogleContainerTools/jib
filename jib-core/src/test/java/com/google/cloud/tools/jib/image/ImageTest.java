@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.Port;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -53,7 +54,10 @@ public class ImageTest {
             .addEnvironmentVariable("VARIABLE", "VALUE")
             .setEntrypoint(Arrays.asList("some", "command"))
             .setProgramArguments(Arrays.asList("arg1", "arg2"))
-            .setExposedPorts(ImmutableSet.of(Port.tcp(1000), Port.tcp(2000)))
+            .addExposedPorts(ImmutableSet.of(Port.tcp(1000), Port.tcp(2000)))
+            .addVolumes(
+                ImmutableSet.of(
+                    AbsoluteUnixPath.get("/a/path"), AbsoluteUnixPath.get("/another/path")))
             .setUser("john")
             .addLayer(mockLayer)
             .build();
@@ -67,6 +71,9 @@ public class ImageTest {
     Assert.assertEquals(Arrays.asList("some", "command"), image.getEntrypoint());
     Assert.assertEquals(Arrays.asList("arg1", "arg2"), image.getProgramArguments());
     Assert.assertEquals(ImmutableSet.of(Port.tcp(1000), Port.tcp(2000)), image.getExposedPorts());
+    Assert.assertEquals(
+        ImmutableSet.of(AbsoluteUnixPath.get("/a/path"), AbsoluteUnixPath.get("/another/path")),
+        image.getVolumes());
     Assert.assertEquals("john", image.getUser());
   }
 }

@@ -121,6 +121,8 @@ class BuildImageStep
       imageBuilder
           .addEnvironment(baseImage.getEnvironment())
           .addLabels(baseImage.getLabels())
+          .addExposedPorts(baseImage.getExposedPorts())
+          .addVolumes(baseImage.getVolumes())
           .setWorkingDirectory(baseImage.getWorkingDirectory());
 
       // Add history elements for non-empty layers that don't have one yet
@@ -156,8 +158,8 @@ class BuildImageStep
             .setUser(containerConfiguration.getUser())
             .setEntrypoint(computeEntrypoint(baseImage, containerConfiguration))
             .setProgramArguments(computeProgramArguments(baseImage, containerConfiguration))
-            .setExposedPorts(containerConfiguration.getExposedPorts())
-            .setVolumes(containerConfiguration.getVolumes())
+            .addExposedPorts(containerConfiguration.getExposedPorts())
+            .addVolumes(containerConfiguration.getVolumes())
             .addLabels(containerConfiguration.getLabels());
         if (containerConfiguration.getWorkingDirectory() != null) {
           imageBuilder.setWorkingDirectory(containerConfiguration.getWorkingDirectory().toString());
