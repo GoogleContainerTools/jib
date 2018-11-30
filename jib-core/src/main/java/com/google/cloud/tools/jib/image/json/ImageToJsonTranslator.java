@@ -80,8 +80,7 @@ public class ImageToJsonTranslator {
   }
 
   /**
-   * <<<<<<< HEAD Converts the map of environment variables to a list with items in the format
-   * "NAME=VALUE".
+   * Converts the map of environment variables to a list with items in the format "NAME=VALUE".
    *
    * @return the list
    */
@@ -102,10 +101,8 @@ public class ImageToJsonTranslator {
   }
 
   /**
-   * Turns a list into a sorted map where each element of the list is mapped to an entry composed by
-   * ======= Turns a set into a sorted map where each element of the set is mapped to an entry
-   * composed by >>>>>>> 7df3f7ed1f132e8dcf32e1d8a4f4dcbca1213e23 the key generated with {@code
-   * Function<E, String> elementMapper} and an empty map as value.
+   * Turns a set into a sorted map where each element of the set is mapped to an entry composed by
+   * the key generated with {@code Function<E, String> elementMapper} and an empty map as value.
    *
    * <p>This method is needed because the volume object is a direct JSON serialization of the Go
    * type map[string]struct{} and is represented in JSON as an object mapping its keys to an empty
