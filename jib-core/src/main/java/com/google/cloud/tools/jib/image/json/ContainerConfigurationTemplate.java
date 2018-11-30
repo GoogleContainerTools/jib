@@ -184,7 +184,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     config.Cmd = cmd;
   }
 
-  public void setContainerHealthCheckTest(@Nullable List<String> test) {
+  public void setContainerHealthCheckTest(List<String> test) {
     if (config.Healthcheck == null) {
       config.Healthcheck = new HealthCheckObjectTemplate();
     }

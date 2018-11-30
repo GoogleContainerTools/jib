@@ -19,8 +19,8 @@ package com.google.cloud.tools.jib.image;
 import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -38,7 +38,7 @@ public class Image<T extends Layer> {
   /** Builds the immutable {@link Image}. */
   public static class Builder<T extends Layer> {
 
-    private final Class<? extends BuildableManifestTemplate> imageFormat;
+    private final Class<? extends ManifestTemplate> imageFormat;
     private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
     private final ImmutableList.Builder<HistoryEntry> historyBuilder = ImmutableList.builder();
 
@@ -56,7 +56,7 @@ public class Image<T extends Layer> {
     @Nullable private String workingDirectory;
     @Nullable private String user;
 
-    private Builder(Class<? extends BuildableManifestTemplate> imageFormat) {
+    private Builder(Class<? extends ManifestTemplate> imageFormat) {
       this.imageFormat = imageFormat;
     }
 
@@ -245,12 +245,12 @@ public class Image<T extends Layer> {
   }
 
   public static <T extends Layer> Builder<T> builder(
-      Class<? extends BuildableManifestTemplate> imageFormat) {
+      Class<? extends ManifestTemplate> imageFormat) {
     return new Builder<>(imageFormat);
   }
 
   /** The image format. */
-  private final Class<? extends BuildableManifestTemplate> imageFormat;
+  private final Class<? extends ManifestTemplate> imageFormat;
 
   /** The image creation time. */
   @Nullable private final Instant created;
@@ -289,7 +289,7 @@ public class Image<T extends Layer> {
   @Nullable private final String user;
 
   private Image(
-      Class<? extends BuildableManifestTemplate> imageFormat,
+      Class<? extends ManifestTemplate> imageFormat,
       @Nullable Instant created,
       ImageLayers<T> layers,
       ImmutableList<HistoryEntry> history,
@@ -317,7 +317,7 @@ public class Image<T extends Layer> {
     this.user = user;
   }
 
-  public Class<? extends BuildableManifestTemplate> getImageFormat() {
+  public Class<? extends ManifestTemplate> getImageFormat() {
     return this.imageFormat;
   }
 

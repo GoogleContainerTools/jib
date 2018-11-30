@@ -37,9 +37,8 @@ public class DockerHealthCheck {
     @Nullable private Integer retries;
 
     private Builder(ImmutableList<String> command) {
-      Preconditions.checkArgument(
-          command.size() > 1 && !command.contains(""),
-          "command must not be empty and must not contain empty tokens");
+      Preconditions.checkArgument(command.size() > 1, "command must not be empty");
+      Preconditions.checkArgument(!command.contains(""), "command must not contain empty tokens");
       this.command = command;
     }
 

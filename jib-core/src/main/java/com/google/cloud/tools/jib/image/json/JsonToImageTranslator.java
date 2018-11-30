@@ -68,7 +68,7 @@ public class JsonToImageTranslator {
    */
   public static Image<Layer> toImage(V21ManifestTemplate manifestTemplate)
       throws LayerPropertyNotFoundException {
-    Image.Builder<Layer> imageBuilder = Image.builder(V22ManifestTemplate.class);
+    Image.Builder<Layer> imageBuilder = Image.builder(V21ManifestTemplate.class);
 
     for (DescriptorDigest digest : manifestTemplate.getLayerDigests()) {
       imageBuilder.addLayer(new DigestOnlyLayer(digest));
