@@ -156,7 +156,7 @@ Normally, the plugin sets a default entrypoint for java applications, or lets yo
 
 ### I want to containerize an executable JAR.
 
-Although Jib supports the ability to add an executable JAR to the container and run it using a custom `java -jar` entrypoint command, the intention of Jib is to add individual class files and dependency JARs into the container instead of putting a runnable JAR into the container. This lets Jib choose an opinionated, optimal layout for the application on the container image, which also allows it to skip the extra JAR-packaging step.
+Although it is possible to configure Jib to add a JAR to the container and run it using a custom `java -jar ...` or `java -cp ...` entrypoint command, the intention of Jib is to add individual class files and dependency JARs into the container instead of putting a runnable JAR into the container. This lets Jib choose an opinionated, optimal layout for the application on the container image, which also allows it to skip the extra JAR-packaging step.
 
 ### Where is the application in the container filesystem?
 
