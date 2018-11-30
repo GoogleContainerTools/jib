@@ -38,7 +38,6 @@ public class DockerHealthCheck {
 
     private Builder(ImmutableList<String> command) {
       Preconditions.checkArgument(command.size() > 1, "command must not be empty");
-      Preconditions.checkArgument(!command.contains(""), "command must not contain empty tokens");
       this.command = command;
     }
 
@@ -143,6 +142,7 @@ public class DockerHealthCheck {
    * @return the new {@link DockerHealthCheck.Builder}
    */
   public static Builder builderWithShellCommand(String command) {
+    Preconditions.checkArgument(!command.trim().isEmpty(), "command must not be empty/whitespace");
     return new Builder(ImmutableList.of("CMD-SHELL", command));
   }
 
