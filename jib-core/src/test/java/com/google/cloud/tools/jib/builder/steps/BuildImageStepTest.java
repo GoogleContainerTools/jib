@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
@@ -36,6 +37,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.security.DigestException;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -133,6 +135,13 @@ public class BuildImageStepTest {
             .setWorkingDirectory("/base/working/directory")
             .setEntrypoint(ImmutableList.of("baseImageEntrypoint"))
             .setProgramArguments(ImmutableList.of("catalina.sh", "run"))
+            .setHealthCheck(
+                DockerHealthCheck.fromCommand(ImmutableList.of("CMD-SHELL", "echo hi"))
+                    .setInterval(Duration.ofSeconds(3))
+                    .setTimeout(Duration.ofSeconds(2))
+                    .setStartPeriod(Duration.ofSeconds(1))
+                    .setRetries(20)
+                    .build())
             .addExposedPorts(ImmutableSet.of(Port.tcp(1000), Port.udp(2000)))
             .addVolumes(
                 ImmutableSet.of(
@@ -228,6 +237,17 @@ public class BuildImageStepTest {
             "base.label.2",
             "new.value"),
         image.getLabels());
+    Assert.assertNotNull(image.getHealthCheck());
+    Assert.assertEquals(
+        ImmutableList.of("CMD-SHELL", "echo hi"), image.getHealthCheck().getCommand());
+    Assert.assertTrue(image.getHealthCheck().getInterval().isPresent());
+    Assert.assertEquals(Duration.ofSeconds(3), image.getHealthCheck().getInterval().get());
+    Assert.assertTrue(image.getHealthCheck().getTimeout().isPresent());
+    Assert.assertEquals(Duration.ofSeconds(2), image.getHealthCheck().getTimeout().get());
+    Assert.assertTrue(image.getHealthCheck().getStartPeriod().isPresent());
+    Assert.assertEquals(Duration.ofSeconds(1), image.getHealthCheck().getStartPeriod().get());
+    Assert.assertTrue(image.getHealthCheck().getRetries().isPresent());
+    Assert.assertEquals(20, (int) image.getHealthCheck().getRetries().get());
     Assert.assertEquals(
         ImmutableSet.of(Port.tcp(1000), Port.udp(2000), Port.tcp(3000), Port.udp(4000)),
         image.getExposedPorts());

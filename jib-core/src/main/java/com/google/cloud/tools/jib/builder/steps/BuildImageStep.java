@@ -121,6 +121,7 @@ class BuildImageStep
       imageBuilder
           .addEnvironment(baseImage.getEnvironment())
           .addLabels(baseImage.getLabels())
+          .setHealthCheck(baseImage.getHealthCheck())
           .addExposedPorts(baseImage.getExposedPorts())
           .addVolumes(baseImage.getVolumes())
           .setWorkingDirectory(baseImage.getWorkingDirectory());

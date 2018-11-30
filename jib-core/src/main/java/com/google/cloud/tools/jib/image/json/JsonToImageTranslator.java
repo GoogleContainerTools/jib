@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -29,6 +30,7 @@ import com.google.cloud.tools.jib.image.ReferenceLayer;
 import com.google.cloud.tools.jib.image.ReferenceNoDiffIdLayer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -144,6 +146,27 @@ public class JsonToImageTranslator {
 
     if (containerConfigurationTemplate.getContainerCmd() != null) {
       imageBuilder.setProgramArguments(containerConfigurationTemplate.getContainerCmd());
+    }
+
+    List<String> baseHealthCheckCommand = containerConfigurationTemplate.getContainerHealthTest();
+    if (baseHealthCheckCommand != null) {
+      DockerHealthCheck.Builder builder = DockerHealthCheck.fromCommand(baseHealthCheckCommand);
+      if (containerConfigurationTemplate.getContainerHealthInterval() != null) {
+        builder.setInterval(
+            Duration.ofNanos(containerConfigurationTemplate.getContainerHealthInterval()));
+      }
+      if (containerConfigurationTemplate.getContainerHealthTimeout() != null) {
+        builder.setTimeout(
+            Duration.ofNanos(containerConfigurationTemplate.getContainerHealthTimeout()));
+      }
+      if (containerConfigurationTemplate.getContainerHealthStartPeriod() != null) {
+        builder.setStartPeriod(
+            Duration.ofNanos(containerConfigurationTemplate.getContainerHealthStartPeriod()));
+      }
+      if (containerConfigurationTemplate.getContainerHealthRetries() != null) {
+        builder.setRetries(containerConfigurationTemplate.getContainerHealthRetries());
+      }
+      imageBuilder.setHealthCheck(builder.build());
     }
 
     if (containerConfigurationTemplate.getContainerExposedPorts() != null) {

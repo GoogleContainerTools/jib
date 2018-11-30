@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.configuration;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -37,7 +36,6 @@ public class DockerHealthCheck {
     @Nullable private Integer retries;
 
     private Builder(ImmutableList<String> command) {
-      Preconditions.checkArgument(command.size() > 1, "command must not be empty");
       this.command = command;
     }
 
@@ -92,58 +90,15 @@ public class DockerHealthCheck {
   }
 
   /**
-   * Creates a disabled {@link DockerHealthCheck} (corresponds to "NONE" in container config).
+   * Creates a new {@link DockerHealthCheck.Builder} with the specified command.
    *
-   * @return the new {@link DockerHealthCheck}
+   * @param command the command
+   * @return a new {@link DockerHealthCheck.Builder}
    */
-  public static DockerHealthCheck disabled() {
-    return new DockerHealthCheck(ImmutableList.of("NONE"), null, null, null, null);
-  }
-
-  /**
-   * Creates a new {@link DockerHealthCheck} with the command set to be inherited from the base
-   * image.
-   *
-   * @return the new {@link DockerHealthCheck}
-   */
-  public static DockerHealthCheck inherited() {
-    return new DockerHealthCheck(ImmutableList.of(), null, null, null, null);
-  }
-
-  /**
-   * Creates a new {@link DockerHealthCheck.Builder} with the specified healthcheck command to be
-   * directly executed (corresponds to "CMD" in container config).
-   *
-   * @param command the healthcheck command to execute
-   * @return the new {@link DockerHealthCheck.Builder}
-   */
-  public static Builder builderWithExecCommand(List<String> command) {
-    return new Builder(ImmutableList.<String>builder().add("CMD").addAll(command).build());
-  }
-
-  /**
-   * Creates a new {@link DockerHealthCheck.Builder} with the specified healthcheck command to be
-   * directly executed (corresponds to "CMD" in container config).
-   *
-   * @param command the healthcheck command to execute
-   * @return the new {@link DockerHealthCheck.Builder}
-   */
-  public static Builder builderWithExecCommand(String... command) {
-    return new Builder(
-        ImmutableList.<String>builder().add("CMD").addAll(Arrays.asList(command)).build());
-  }
-
-  /**
-   * Creates a new {@link DockerHealthCheck.Builder} with the specified healthcheck command to be
-   * run by the container's default shell (corresponds to "CMD-SHELL" in container config). This
-   * command cannot be run on containers with no default shell.
-   *
-   * @param command the shell command to run
-   * @return the new {@link DockerHealthCheck.Builder}
-   */
-  public static Builder builderWithShellCommand(String command) {
-    Preconditions.checkArgument(!command.trim().isEmpty(), "command must not be empty/whitespace");
-    return new Builder(ImmutableList.of("CMD-SHELL", command));
+  public static DockerHealthCheck.Builder fromCommand(List<String> command) {
+    Preconditions.checkArgument(command.size() > 0, "command must not be empty");
+    Preconditions.checkArgument(!command.contains(null), "command must not contain null elements");
+    return new Builder(ImmutableList.copyOf(command));
   }
 
   private final ImmutableList<String> command;
