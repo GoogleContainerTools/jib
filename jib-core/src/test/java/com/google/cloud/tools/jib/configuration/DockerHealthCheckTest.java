@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.configuration;
 
 import com.google.common.collect.ImmutableList;
 import java.time.Duration;
+import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -25,9 +26,9 @@ import org.junit.Test;
 public class DockerHealthCheckTest {
 
   @Test
-  public void testBuild_parameters() {
+  public void testBuild() {
     DockerHealthCheck healthCheck =
-        DockerHealthCheck.builderWithShellCommand("echo hi")
+        DockerHealthCheck.fromCommand(ImmutableList.of("echo", "hi"))
             .setInterval(Duration.ofNanos(123))
             .setTimeout(Duration.ofNanos(456))
             .setStartPeriod(Duration.ofNanos(789))
@@ -45,35 +46,19 @@ public class DockerHealthCheckTest {
   }
 
   @Test
-  public void testBuild_propagated() {
-    DockerHealthCheck healthCheck = DockerHealthCheck.inherited();
-    Assert.assertTrue(healthCheck.getCommand().isEmpty());
-  }
+  public void testBuild_invalidCommand() {
+    try {
+      DockerHealthCheck.fromCommand(ImmutableList.of());
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("command must not be empty", ex.getMessage());
+    }
 
-  @Test
-  public void testBuild_execArray() {
-    DockerHealthCheck healthCheck =
-        DockerHealthCheck.builderWithExecCommand("test", "command").build();
-    Assert.assertEquals(ImmutableList.of("CMD", "test", "command"), healthCheck.getCommand());
-  }
-
-  @Test
-  public void testBuild_execList() {
-    DockerHealthCheck healthCheck =
-        DockerHealthCheck.builderWithExecCommand(ImmutableList.of("test", "command")).build();
-    Assert.assertEquals(ImmutableList.of("CMD", "test", "command"), healthCheck.getCommand());
-  }
-
-  @Test
-  public void testBuild_shell() {
-    DockerHealthCheck healthCheck =
-        DockerHealthCheck.builderWithShellCommand("shell command").build();
-    Assert.assertEquals(ImmutableList.of("CMD-SHELL", "shell command"), healthCheck.getCommand());
-  }
-
-  @Test
-  public void testDisabled() {
-    DockerHealthCheck healthCheck = DockerHealthCheck.disabled();
-    Assert.assertEquals(ImmutableList.of("NONE"), healthCheck.getCommand());
+    try {
+      DockerHealthCheck.fromCommand(Arrays.asList("CMD", null));
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("command must not contain null elements", ex.getMessage());
+    }
   }
 }

@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - `container.workingDirectory` configuration parameter to set the working directory ([#1225](https://github.com/GoogleContainerTools/jib/issues/1225))
 - Adds support for configuring volumes ([#1121](https://github.com/GoogleContainerTools/jib/issues/1121))
 - Exposed ports are now propagated from the base image ([#595](https://github.com/GoogleContainerTools/jib/issues/595))
+- Docker health check is now propagated from the base image ([#595](https://github.com/GoogleContainerTools/jib/issues/595))
 
 ### Changed
 

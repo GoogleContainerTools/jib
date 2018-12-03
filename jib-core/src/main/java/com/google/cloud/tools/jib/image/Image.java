@@ -52,7 +52,7 @@ public class Image<T extends Layer> {
     @Nullable private Instant created;
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
-    private DockerHealthCheck healthCheck = DockerHealthCheck.inherited();
+    @Nullable private DockerHealthCheck healthCheck;
     @Nullable private String workingDirectory;
     @Nullable private String user;
 
@@ -136,7 +136,7 @@ public class Image<T extends Layer> {
      * @param healthCheck the healthcheck configuration
      * @return this
      */
-    public Builder<T> setHealthCheck(DockerHealthCheck healthCheck) {
+    public Builder<T> setHealthCheck(@Nullable DockerHealthCheck healthCheck) {
       this.healthCheck = healthCheck;
       return this;
     }
@@ -271,7 +271,7 @@ public class Image<T extends Layer> {
   @Nullable private final ImmutableList<String> programArguments;
 
   /** Healthcheck configuration. */
-  private final DockerHealthCheck healthCheck;
+  @Nullable private final DockerHealthCheck healthCheck;
 
   /** Ports that the container listens on. */
   @Nullable private final ImmutableSet<Port> exposedPorts;
@@ -296,7 +296,7 @@ public class Image<T extends Layer> {
       @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
       @Nullable ImmutableList<String> programArguments,
-      DockerHealthCheck healthCheck,
+      @Nullable DockerHealthCheck healthCheck,
       @Nullable ImmutableSet<Port> exposedPorts,
       @Nullable ImmutableSet<AbsoluteUnixPath> volumes,
       @Nullable ImmutableMap<String, String> labels,
@@ -341,6 +341,7 @@ public class Image<T extends Layer> {
     return programArguments;
   }
 
+  @Nullable
   public DockerHealthCheck getHealthCheck() {
     return healthCheck;
   }

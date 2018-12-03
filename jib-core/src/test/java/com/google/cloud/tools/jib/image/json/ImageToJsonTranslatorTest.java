@@ -63,7 +63,7 @@ public class ImageToJsonTranslatorTest {
             .setEntrypoint(Arrays.asList("some", "entrypoint", "command"))
             .setProgramArguments(Arrays.asList("arg1", "arg2"))
             .setHealthCheck(
-                DockerHealthCheck.builderWithShellCommand("/checkhealth")
+                DockerHealthCheck.fromCommand(ImmutableList.of("CMD-SHELL", "/checkhealth"))
                     .setInterval(Duration.ofSeconds(3))
                     .setTimeout(Duration.ofSeconds(1))
                     .setStartPeriod(Duration.ofSeconds(2))

@@ -171,8 +171,7 @@ public class ImageToJsonTranslator {
 
     // Ignore healthcheck if not Docker/command is empty
     DockerHealthCheck healthCheck = image.getHealthCheck();
-    if (image.getImageFormat() == V22ManifestTemplate.class
-        && !healthCheck.getCommand().isEmpty()) {
+    if (image.getImageFormat() == V22ManifestTemplate.class && healthCheck != null) {
       template.setContainerHealthCheckTest(healthCheck.getCommand());
       healthCheck
           .getInterval()
