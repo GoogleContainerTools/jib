@@ -18,7 +18,7 @@ For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).
   * [Build your image](#build-your-image)
     * [Build to Docker Daemon](#build-to-docker-daemon)
     * [Build an image tarball](#build-an-image-tarball)
-  * [Bind to a lifecycle](#bind-to-a-lifecycle)
+  * [Run `jib` with each build](#run-jib-with-each-build)
   * [Additional Build Artifacts](#additional-build-artifacts)
 * [Extended Usage](#extended-usage)
   * [System Properties](#system-properties)
