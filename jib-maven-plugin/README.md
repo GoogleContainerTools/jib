@@ -199,7 +199,7 @@ mvn package
 ### Additional Build Artifacts
 
 As part of an image build, Jib also writes out the _image digest_ to
-`target/jib-image.digest`.
+`target/jib-image.digest`, as well as the _image ID_ to `target/jib-image.id`.
 
 ## Extended Usage
 
