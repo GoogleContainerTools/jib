@@ -9,6 +9,32 @@ Jib is a [Gradle](https://gradle.org/) plugin for building Docker and [OCI](http
 For information about the project, see the [Jib project README](../README.md).
 For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).
 
+## Table of Contents
+
+* [Upcoming Features](#upcoming-features)
+* [Quickstart](#quickstart)
+  * [Setup](#setup)
+  * [Configuration](#configuration)
+    * [Using Google Container Registry (GCR)](#using-google-container-registry-gcr-https-cloud-google-com-container-registry)
+    * [Using Amazong Elastic Container Registry (ECR)](#using-amazon-elastic-container-registry-ecr-https-aws-amazon-com-ecr)
+    * [Using Docker Hub Registry](#using-docker-hub-registry-https-hub-docker-com)
+  * [Build your image](#build-your-image)
+    * [Build to Docker Daemon](#build-to-docker-daemon)
+    * [Build an image tarball](#build-an-image-tarball)
+  * [Bind to a lifecycle](#bind-to-a-lifecycle)
+  * [Additional Build Artifacts](#additional-build-artifacts)
+* [Extended Usage](#extended-usage)
+  * [System Properties](#system-properties)
+  * [Example](#example)
+  * [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)
+  * [Authentication Methods](#authentication-methods)
+    * [Using Docker Credential Helpers](#using-docker-credential-helpers)
+    * [Using Specific Credentials](#using-specific-credentials)
+  * [WAR Projects](#war-projects)
+* [How Jib Works](#how-jib-works)
+* [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
+* [Community](#community)
+
 ## Upcoming Features
 
 See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
