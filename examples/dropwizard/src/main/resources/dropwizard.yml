@@ -1,0 +1,18 @@
+<#-- FreeMarker Enabled - https://github.com/tkrille/dropwizard-template-config -->
+hello:
+  template: ${DW_TEMPLATE!'Hello, %s!'}
+  defaultName: ${DW_DEFAULT_NAME!'Stranger'}
+
+server:
+  type: simple
+  applicationContextPath: /
+  adminContextPath: /admin
+  connector:
+    type: http
+    port: 8080
+
+logging:
+  level: ${LOG_LEVEL!'INFO'}
+  loggers:
+    <#-- Log level for a specific package -->
+    example: DEBUG
