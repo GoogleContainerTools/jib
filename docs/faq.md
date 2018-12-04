@@ -281,71 +281,27 @@ A Dockerfile that performs a Jib-like build is shown below:
 # Jib uses distroless java as the default base image
 FROM gcr.io/distroless/java:latest
 
-# Multiple copy statements are used to break the app into layers, allowing for faster rebuilds after 
-# small changes
+# Multiple copy statements are used to break the app into layers, allowing for faster rebuilds after small changes
 COPY dependencyJars /app/libs
+COPY snapshotDependencyJars /app/libs
 COPY resources /app/resources
 COPY classFiles /app/classes
-COPY src/main/extra-dir /
 
-# Sets the app as the container entrypoint with 2 JVM flags and 2 main arguments. Also adds the
-# appropriate files to the classpath.
-ENTRYPOINT ["java", "-Xms512m", "-Xdebug", "-cp", "/app/resources:/app/classes:/app/libs/*", "SomeMainClass"]
-CMD ["some", "args"]
+# Jib's extra directory ("src/main/jib" by default) is used to add extra, non-classpath files
+COPY src/main/jib /
+
+# Jib's default entrypoint when container.entrypoint is not set
+ENTRYPOINT ["java", jib.container.jvmFlags, "-cp", "/app/resources:/app/classes:/app/libs/*", jib.container.mainClass]
+CMD [jib.container.args]
 ```
 
-To achieve similar results with jib, you could use the following configuration in your build configuration. Note that the `container.mainClass` configuration is not actually necessary, since Jib can automatically infer the main class while constructing the container entrypoint.
-
-<details>
-<summary>Gradle Example</summary>
-<p>
-
-```groovy
-jib {
-  to.image = targetImage
-  container {
-    jvmFlags = ['-Xms512m', '-Xdebug']
-    mainClass = 'SomeMainClass'
-    args = ['some', 'args']
-  }
-  extraDirectory = file('src/main/extra-dir')
-}
-```
-
-</p>
-</details>
-
-<details>
-<summary>Maven Example</summary>
-<p>
-
-```xml
-<configuration>
-  <to><image>targetImage</image></to>
-  <container>
-    <jvmFlags>
-      <jvmFlag>-Xms512m</jvmFlag>
-      <jvmFlag>-Xdebug</jvmFlag>
-    </jvmFlags>
-    <mainClass>SomeMainClass</mainClass>
-    <args>
-      <arg>some</arg>
-      <arg>args</arg>
-    </args>
-  </container>
-  <extraDirectory>${project.basedir}/src/main/extra-dir</extraDirectory>
-</configuration>
-```
-
-</p>
-</details>
-<br>
+When unset, Jib will infer the value for `jib.container.mainClass`.
 
 Some plugins, such as the [Docker Prepare Gradle Plugin](https://github.com/gclayburg/dockerPreparePlugin), will even automatically generate a Docker context for your project, including a Dockerfile.
 
 ### How can I inspect the image Jib built?
 
-To inspect the image that is produced from the build using Docker, you can use commands such as `docker inspect your/image:tag` to view the image configuration, or you can also download the image using `docker save` to manually inspect the container image. You can also use tools such as [dive](https://github.com/wagoodman/dive) to analyze the efficiency of your container images.
+To inspect the image that is produced from the build using Docker, you can use commands such as `docker inspect your/image:tag` to view the image configuration, or you can also download the image using `docker save` to manually inspect the container image. Other tools, such as [dive](https://github.com/wagoodman/dive), provide nicer UI to inspect the image.
 
 ### I am seeing `ImagePullBackoff` on my pods (in [minikube](https://github.com/kubernetes/minikube)).
 
