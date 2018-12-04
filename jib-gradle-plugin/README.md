@@ -9,6 +9,29 @@ Jib is a [Gradle](https://gradle.org/) plugin for building Docker and [OCI](http
 For information about the project, see the [Jib project README](../README.md).
 For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).
 
+## Table of Contents
+
+* [Upcoming Features](#upcoming-features)
+* [Quickstart](#quickstart)
+  * [Setup](#setup)
+  * [Configuration](#configuration)
+  * [Build your image](#build-your-image)
+    * [Build to Docker Daemon](#build-to-docker-daemon)
+    * [Build an image tarball](#build-an-image-tarball)
+  * [Run `jib` with each build](#run-jib-with-each-build)
+  * [Additional Build Artifacts](#additional-build-artifacts)
+* [Extended Usage](#extended-usage)
+  * [System Properties](#system-properties)
+  * [Example](#example)
+  * [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)
+  * [Authentication Methods](#authentication-methods)
+    * [Using Docker Credential Helpers](#using-docker-credential-helpers)
+    * [Using Specific Credentials](#using-specific-credentials)
+  * [WAR Projects](#war-projects)
+* [How Jib Works](#how-jib-works)
+* [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
+* [Community](#community)
+
 ## Upcoming Features
 
 See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
@@ -132,30 +155,10 @@ tasks.build.dependsOn tasks.jib
 
 Then, ```gradle build``` will build and containerize your application.
 
-### Export to a Docker context
-
-Jib can also export a Docker context so that you can build with Docker, if needed:
-
-```shell
-gradle jibExportDockerContext
-```
-
-The Docker context will be created at `build/jib-docker-context` by default. You can change this directory with the `targetDir` configuration option or the `--jibTargetDir` parameter:
-
-```shell
-gradle jibExportDockerContext --jibTargetDir=my/docker/context/
-```
-
-You can then build your image with Docker:
-
-```shell
-docker build -t myimage my/docker/context/
-```
-
 ### Additional Build Artifacts
 
 As part of an image build, Jib also writes out the _image digest_ to
-`build/jib-image.digest`.
+`build/jib-image.digest`, as well as the _image ID_ to `build/jib-image.id`
 
 ## Extended Usage
 
@@ -200,15 +203,17 @@ Property | Type | Default | Description
 --- | --- | --- | ---
 `appRoot` | `String` | `/app` | The root directory on the container where the app's contents are placed. Particularly useful for WAR-packaging projects to work with different Servlet engine base images by designating where to put exploded WAR contents; see [WAR usage](#war-projects) as an example.
 `args` | `List<String>` | *None* | Additional program arguments appended to the command to start the container (similar to Docker's [CMD](https://docs.docker.com/engine/reference/builder/#cmd) instruction in relation with [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint)). In the default case where you do not set a custom `entrypoint`, this parameter is effectively the arguments to the main method of your Java application.
-`entrypoint` | `List<String>` | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored.
+`entrypoint` | `List<String>` | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored. You may also set `jib.container.entrypoint = 'INHERIT'` to indicate that the `entrypoint` and `args` should be inherited from the base image.\*
 `environment` | `Map<String, String>` | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application.
 `labels` | `Map<String, String>` | *None* | Key-value pairs for applying image metadata (similar to Docker's [LABEL](https://docs.docker.com/engine/reference/builder/#label) instruction).
-`mainClass` | `String` | *Inferred\** | The main class to launch your application from.
+`mainClass` | `String` | *Inferred*\*\* | The main class to launch your application from.
 `ports` | `List<String>` | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
 `useCurrentTimestamp` | `boolean` | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
 `user` | `String` | *None* | The user and group to run the container as. The value can be a username or UID along with an optional groupname or GID. The following are all valid: `user`, `uid`, `user:group`, `uid:gid`, `uid:group`, `user:gid`.
+`volumes` | `List<String>` | *None* | Specifies a list of mount points on the container.
+`workingDirectory` | `String` | *None* | The working directory in the container.
 
 <a name="extradirectory-closure"></a>`extraDirectory` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
 
@@ -239,7 +244,9 @@ You can also configure HTTP connection/read timeouts for registry interactions u
 gradle jib -Djib.httpTimeout=3000
 ```
 
-*\* Uses the main class defined in the `jar` task or tries to find a valid main class.*
+*\* If you configure `args` while `entrypoint` is set to `'INHERIT'`, the configured `args` value will take precedence over the CMD propagated from the base image.*
+
+*\*\* Uses the main class defined in the `jar` task or tries to find a valid main class.*
 
 ### Example
 

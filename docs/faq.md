@@ -16,6 +16,8 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)\
 [I need to add files generated during the build process to a custom directory on the image.](#i-need-to-add-files-generated-during-the-build-process-to-a-custom-directory-on-the-image)\
 [Can I build to a local Docker daemon?](#can-i-build-to-a-local-docker-daemon)\
+[What would a Dockerfile for a Jib-built image look like?](#what-would-a-dockerfile-for-a-jib-built-image-look-like)\
+[How can I inspect the image Jib built?](#how-can-i-inspect-the-image-jib-built)\
 [I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
 [How do I configure a proxy?](#how-do-i-configure-a-proxy)\
 [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries)\
@@ -275,6 +277,36 @@ There are several ways of doing this:
 - Use [`jib:buildTar` for Maven](../jib-maven-plugin#build-an-image-tarball) or [`jibBuildTar` for Gradle](../jib-gradle-plugin#build-an-image-tarball) to build the image to a tarball, then use `docker load --input` to load the image into Docker (the tarball built with these commands will be located in `target/jib-image.tar` for Maven and `build/jib-image.tar` for Gradle by default).
 - [`docker pull`](https://docs.docker.com/engine/reference/commandline/pull/) the image built with Jib to have it available in your local Docker daemon.
 - Alternatively, instead of using a Docker daemon, you can run a local container registry, such as [Docker registry](https://docs.docker.com/registry/deploying/) or other repository managers, and point Jib to push to the local registry.
+
+### What would a Dockerfile for a Jib-built image look like?
+
+A Dockerfile that performs a Jib-like build is shown below:
+
+```Dockerfile
+# Jib uses distroless java as the default base image
+FROM gcr.io/distroless/java:latest
+
+# Multiple copy statements are used to break the app into layers, allowing for faster rebuilds after small changes
+COPY dependencyJars /app/libs
+COPY snapshotDependencyJars /app/libs
+COPY resources /app/resources
+COPY classFiles /app/classes
+
+# Jib's extra directory ("src/main/jib" by default) is used to add extra, non-classpath files
+COPY src/main/jib /
+
+# Jib's default entrypoint when container.entrypoint is not set
+ENTRYPOINT ["java", jib.container.jvmFlags, "-cp", "/app/resources:/app/classes:/app/libs/*", jib.container.mainClass]
+CMD [jib.container.args]
+```
+
+When unset, Jib will infer the value for `jib.container.mainClass`.
+
+Some plugins, such as the [Docker Prepare Gradle Plugin](https://github.com/gclayburg/dockerPreparePlugin), will even automatically generate a Docker context for your project, including a Dockerfile.
+
+### How can I inspect the image Jib built?
+
+To inspect the image that is produced from the build using Docker, you can use commands such as `docker inspect your/image:tag` to view the image configuration, or you can also download the image using `docker save` to manually inspect the container image. Other tools, such as [dive](https://github.com/wagoodman/dive), provide nicer UI to inspect the image.
 
 ### I am seeing `ImagePullBackoff` on my pods (in [minikube](https://github.com/kubernetes/minikube)).
 
