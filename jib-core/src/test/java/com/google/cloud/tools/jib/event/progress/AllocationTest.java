@@ -25,19 +25,6 @@ public class AllocationTest {
   /** Error margin for checking equality of two doubles. */
   private static final double DOUBLE_ERROR_MARGIN = 1e-10;
 
-  /**
-   * Checks that the {@code allocations} add up to a full {@code 1.0}.
-   *
-   * @param allocations the leaf allocations
-   */
-  private static void checkAllocationComplete(Allocation... allocations) {
-    double total = 0.0;
-    for (Allocation allocation : allocations) {
-      total += allocation.getFractionOfRoot();
-    }
-    Assert.assertEquals(1.0, total, DOUBLE_ERROR_MARGIN);
-  }
-
   @Test
   public void testSmoke_linear() {
     Allocation root = Allocation.newRoot("root").allocate(1);
@@ -95,6 +82,12 @@ public class AllocationTest {
     Allocation right = root.newChild("ignored").allocate(1);
     Allocation rightDown = right.newChild("ignored").allocate(100);
 
-    checkAllocationComplete(leftLeftDown, leftMiddle, leftRight, rightDown);
+    // Checks that the leaf allocations add up to a full 1.0.
+    double total =
+        leftLeftDown.getFractionOfRoot()
+            + leftMiddle.getFractionOfRoot()
+            + leftRight.getFractionOfRoot()
+            + rightDown.getFractionOfRoot();
+    Assert.assertEquals(1.0, total, DOUBLE_ERROR_MARGIN);
   }
 }
