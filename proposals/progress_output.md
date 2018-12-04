@@ -14,7 +14,7 @@ This is especially prevalent for first-time users whose first builds would need 
 
 ## Current output
 
-An example of the current output (as of versoin `0.10.0`) looks like:
+An example of the current output (as of version `0.10.0`) looks like:
 
 ```
 Containerizing application to <image>...
@@ -67,9 +67,14 @@ Display an overall progress bar along with the tasks currently being executed.
 ### Example
 
 ```
-Executing tasks: Pushing classes layer, pulling base image layer 50501d3b88f7, pushing dependencies layer, pushing base image layer 8b106a18283f
-[========================         ] 80% complete
+[=====================            ] 60% complete
+> Pushing classes layer
+> Pulling base image layer 50501d3b88f7
+> Pushing dependencies layer
+> Pushing base image layer 8b106a18283f
 ```
+
+The currently executing tasks are displayed below the overall progress bar.
 
 *Note that this would replace the logs messages that are currently outputted as those may corrupt the progress bar display.*
 
@@ -131,6 +136,8 @@ totalProgressAmount += progressUnits / progressTotal * allocationFraction;
 The progress monitor can display a progress bar to the console based on the `totalProgressAmount` upon each update. Using `\r` could work, but results in the console cursor overlapping with the progress bar line. The proposal is to, for each update, move the cursor up a line (`\033[1A`) and print the progress bar line with a newline at the end.
 
 The progress monitor can also keep track of which allocation nodes have completed to display the currently executing tasks.
+
+For Gradle, in order to keep the log messages in sync with Gradle's own log messages (such as the Gradle progress bar), the progress bar display should effectively become a "footer" to the normal log messages Jib outputs and be displayed via the same Gradle Logger interface as the rest of the log messages.
 
 ## Alternative rejected proposal
 
