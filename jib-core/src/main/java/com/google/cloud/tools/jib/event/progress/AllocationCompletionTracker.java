@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.event.progress;
 
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -104,10 +103,6 @@ class AllocationCompletionTracker {
           return insertionOrderUnits;
         });
     return true;
-  }
-
-  List<Allocation> getKeys() {
-    return Collections.list(completionMap.keys());
   }
 
   /**
