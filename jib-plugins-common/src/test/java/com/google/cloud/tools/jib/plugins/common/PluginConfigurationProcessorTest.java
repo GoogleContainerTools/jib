@@ -116,8 +116,8 @@ public class PluginConfigurationProcessorTest {
       throws InferredAuthRetrievalException, InvalidContainerVolumeException,
           MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidWorkingDirectoryException, InvalidImageReferenceException {
-    System.setProperty(PropertyNames.BASE_IMAGE_LAYERS_CACHE, "new/base/cache");
-    System.setProperty(PropertyNames.APPLICATION_IMAGE_LAYERS_CACHE, "/new/application/cache");
+    System.setProperty(PropertyNames.BASE_IMAGE_CACHE, "new/base/cache");
+    System.setProperty(PropertyNames.APPLICATION_CACHE, "/new/application/cache");
 
     PluginConfigurationProcessor.processCommonConfiguration(
         rawConfiguration, projectProperties, containerizer, targetImageReference, false);
@@ -125,8 +125,8 @@ public class PluginConfigurationProcessorTest {
     Mockito.verify(containerizer).setBaseImageLayersCache(Paths.get("new/base/cache"));
     Mockito.verify(containerizer).setApplicationLayersCache(Paths.get("/new/application/cache"));
 
-    System.clearProperty(PropertyNames.BASE_IMAGE_LAYERS_CACHE);
-    System.clearProperty(PropertyNames.APPLICATION_IMAGE_LAYERS_CACHE);
+    System.clearProperty(PropertyNames.BASE_IMAGE_CACHE);
+    System.clearProperty(PropertyNames.APPLICATION_CACHE);
   }
 
   @Test

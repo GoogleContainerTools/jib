@@ -424,18 +424,17 @@ public class PluginConfigurationProcessor {
         .setAllowInsecureRegistries(rawConfiguration.getAllowInsecureRegistries())
         .setBaseImageLayersCache(
             getCheckedCacheDirectory(
-                PropertyNames.BASE_IMAGE_LAYERS_CACHE, Containerizer.DEFAULT_BASE_CACHE_DIRECTORY))
+                PropertyNames.BASE_IMAGE_CACHE, Containerizer.DEFAULT_BASE_CACHE_DIRECTORY))
         .setApplicationLayersCache(
             getCheckedCacheDirectory(
-                PropertyNames.APPLICATION_IMAGE_LAYERS_CACHE,
-                projectProperties.getDefaultCacheDirectory()));
+                PropertyNames.APPLICATION_CACHE, projectProperties.getDefaultCacheDirectory()));
 
     rawConfiguration.getToTags().forEach(containerizer::withAdditionalTag);
 
     if (rawConfiguration.getUseOnlyProjectCache()) {
       containerizer.setBaseImageLayersCache(
           getCheckedCacheDirectory(
-              PropertyNames.BASE_IMAGE_LAYERS_CACHE, projectProperties.getDefaultCacheDirectory()));
+              PropertyNames.BASE_IMAGE_CACHE, projectProperties.getDefaultCacheDirectory()));
     }
   }
 
