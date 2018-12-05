@@ -144,7 +144,7 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public Path getCacheDirectory() {
+  public Path getDefaultCacheDirectory() {
     return project.getBuildDir().toPath().resolve(CACHE_DIRECTORY_NAME);
   }
 

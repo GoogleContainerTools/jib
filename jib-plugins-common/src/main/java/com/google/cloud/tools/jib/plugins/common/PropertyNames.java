@@ -42,6 +42,8 @@ public class PropertyNames {
   public static final String CONTAINER_PORTS = "jib.container.ports";
   public static final String CONTAINER_USE_CURRENT_TIMESTAMP = "jib.container.useCurrentTimestamp";
   public static final String USE_ONLY_PROJECT_CACHE = "jib.useOnlyProjectCache";
+  public static final String BASE_IMAGE_LAYERS_CACHE = "jib.baseImageLayersCache";
+  public static final String APPLICATION_IMAGE_LAYERS_CACHE = "jib.applicationImageLayersCache";
   public static final String ALLOW_INSECURE_REGISTRIES = "jib.allowInsecureRegistries";
   public static final String EXTRA_DIRECTORY_PATH = "jib.extraDirectory.path";
   public static final String EXTRA_DIRECTORY_PERMISSIONS = "jib.extraDirectory.permissions";
