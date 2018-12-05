@@ -41,10 +41,21 @@ public class ProgressEvent implements JibEvent {
     this.progressUnits = progressUnits;
   }
 
+  /**
+   * Gets the {@link Allocation} this progress event accounts for.
+   *
+   * @return the {@link Allocation}
+   */
   Allocation getAllocation() {
     return allocation;
   }
 
+  /**
+   * Gets the units of progress this progress event accounts for in the associated {@link
+   * Allocation}.
+   *
+   * @return units of allocation
+   */
   long getUnits() {
     return progressUnits;
   }

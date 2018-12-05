@@ -82,19 +82,43 @@ public class Allocation {
     return new Allocation(description, allocationUnits, this);
   }
 
+  /**
+   * Gets the parent allocation, or {@link Optional#empty} if this is a root allocation. This
+   * allocation represents 1 allocation unit of the parent allocation.
+   *
+   * @return the parent {@link Allocation}
+   */
   public Optional<Allocation> getParent() {
     return Optional.ofNullable(parent);
   }
 
-  String getDescription() {
+  /**
+   * Gets a user-facing description of what this allocation represents. For example, this can a
+   * description of the task this allocation represents.
+   *
+   * @return the description
+   */
+  public String getDescription() {
     return description;
   }
 
+  /**
+   * Gets the allocation units this allocation holds. If this allocation is not the root, the full
+   * number of units represents 1 allocation unit of the parent.
+   *
+   * @return the allocation units
+   */
   public long getAllocationUnits() {
     return allocationUnits;
   }
 
-  double getFractionOfRoot() {
+  /**
+   * Gets how much of the root allocation this allocation accounts for. The entire root allocation
+   * is {@code 1.0}.
+   *
+   * @return the fraction of the root allocation this allocation accounts for
+   */
+  public double getFractionOfRoot() {
     return fractionOfRoot;
   }
 }
