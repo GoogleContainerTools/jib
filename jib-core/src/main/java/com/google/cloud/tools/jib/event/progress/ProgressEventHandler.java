@@ -37,7 +37,8 @@ class ProgressEventHandler implements Consumer<ProgressEvent> {
 
   /**
    * A callback to notify that {@link #progress} or {@link #completionTracker} could have changed.
-   * Note that every change will be reported, but there could be false positives.
+   * Note that every change will be reported (though multiple could be reported together), and there
+   * could be false positives.
    */
   private final Runnable updateNotifier;
 
@@ -52,16 +53,14 @@ class ProgressEventHandler implements Consumer<ProgressEvent> {
     double allocationFraction = allocation.getFractionOfRoot();
     long allocationUnits = allocation.getAllocationUnits();
 
-    if (progressUnits == 0) {
-      completionTracker.putIfAbsent(allocation);
-      return;
+    if (progressUnits != 0) {
+      progress.add(progressUnits * allocationFraction / allocationUnits);
     }
 
-    progress.add(progressUnits * allocationFraction / allocationUnits);
-
-    completionTracker.updateProgress(allocation, progressUnits);
-
-    updateNotifier.run();
+    if (completionTracker.updateProgress(allocation, progressUnits)) {
+      // Note: Could produce false positives.
+      updateNotifier.run();
+    }
   }
 
   /**

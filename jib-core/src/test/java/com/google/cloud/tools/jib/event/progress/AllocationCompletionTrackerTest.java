@@ -16,5 +16,174 @@
 
 package com.google.cloud.tools.jib.event.progress;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import org.junit.Assert;
+import org.junit.Test;
+
 /** Tests for {@link AllocationCompletionTracker}. */
-public class AllocationCompletionTrackerTest {}
+public class AllocationCompletionTrackerTest {
+
+  /** {@link Allocation} tree for testing. */
+  private static class AllocationTree {
+
+    /** The root node. */
+    private static final Allocation root = Allocation.newRoot("root", 2);
+
+    /** First child of the root node. */
+    private static final Allocation child1 = root.newChild("child1", 1);
+    /** Child of the first child of the root node. */
+    private static final Allocation child1Child = child1.newChild("child1Child", 100);
+
+    /** Second child of the root node. */
+    private static final Allocation child2 = root.newChild("child2", 200);
+
+    private AllocationTree() {}
+  }
+
+  /** Testing infrastructure for running code across multiple threads. */
+  private static class MultithreadedExecutor {
+
+    private static final Duration MULTITHREADED_TEST_TIMEOUT = Duration.ofSeconds(1);
+
+    private final ExecutorService executorService = Executors.newFixedThreadPool(20);
+
+    private <E> List<E> invokeAll(List<Callable<E>> callables)
+        throws InterruptedException, ExecutionException {
+      List<Future<E>> futures =
+          executorService.invokeAll(
+              callables, MULTITHREADED_TEST_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
+
+      List<E> returnValues = new ArrayList<>();
+      for (Future<E> future : futures) {
+        returnValues.add(future.get());
+      }
+
+      return returnValues;
+    }
+  }
+
+  @Test
+  public void testGetUnfinishedAllocations_singleThread() {
+    AllocationCompletionTracker allocationCompletionTracker = new AllocationCompletionTracker();
+
+    Assert.assertTrue(allocationCompletionTracker.updateProgress(AllocationTree.root, 0L));
+    Assert.assertEquals(
+        Collections.singletonList(AllocationTree.root),
+        allocationCompletionTracker.getUnfinishedAllocations());
+
+    Assert.assertTrue(allocationCompletionTracker.updateProgress(AllocationTree.child1, 0L));
+    Assert.assertEquals(
+        Arrays.asList(AllocationTree.root, AllocationTree.child1),
+        allocationCompletionTracker.getUnfinishedAllocations());
+
+    Assert.assertTrue(allocationCompletionTracker.updateProgress(AllocationTree.child1Child, 0L));
+    Assert.assertEquals(
+        Arrays.asList(AllocationTree.root, AllocationTree.child1, AllocationTree.child1Child),
+        allocationCompletionTracker.getUnfinishedAllocations());
+
+    Assert.assertTrue(allocationCompletionTracker.updateProgress(AllocationTree.child1Child, 50L));
+    Assert.assertEquals(
+        Arrays.asList(AllocationTree.root, AllocationTree.child1, AllocationTree.child1Child),
+        allocationCompletionTracker.getUnfinishedAllocations());
+
+    Assert.assertTrue(allocationCompletionTracker.updateProgress(AllocationTree.child1Child, 50L));
+    Assert.assertEquals(
+        Collections.singletonList(AllocationTree.root),
+        allocationCompletionTracker.getUnfinishedAllocations());
+
+    Assert.assertTrue(allocationCompletionTracker.updateProgress(AllocationTree.child2, 100L));
+    Assert.assertEquals(
+        Arrays.asList(AllocationTree.root, AllocationTree.child2),
+        allocationCompletionTracker.getUnfinishedAllocations());
+
+    Assert.assertTrue(allocationCompletionTracker.updateProgress(AllocationTree.child2, 100L));
+    Assert.assertEquals(
+        Collections.emptyList(), allocationCompletionTracker.getUnfinishedAllocations());
+
+    Assert.assertFalse(allocationCompletionTracker.updateProgress(AllocationTree.child2, 0L));
+    Assert.assertEquals(
+        Collections.emptyList(), allocationCompletionTracker.getUnfinishedAllocations());
+
+    try {
+      allocationCompletionTracker.updateProgress(AllocationTree.child1, 1L);
+      Assert.fail();
+
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals("Progress exceeds max for 'child1': 2 > 1", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetUnfinishedAllocations_multipleThreads()
+      throws InterruptedException, ExecutionException {
+    MultithreadedExecutor multithreadedExecutor = new MultithreadedExecutor();
+
+    AllocationCompletionTracker allocationCompletionTracker = new AllocationCompletionTracker();
+
+    // Adds root, child1, and child1Child.
+    Assert.assertEquals(
+        Collections.singletonList(true),
+        multithreadedExecutor.invokeAll(
+            Collections.singletonList(
+                () -> {
+                  boolean updated =
+                      allocationCompletionTracker.updateProgress(AllocationTree.root, 0L);
+                  Assert.assertEquals(
+                      Collections.singletonList(true),
+                      multithreadedExecutor.invokeAll(
+                          Collections.singletonList(
+                              () -> {
+                                boolean updated2 =
+                                    allocationCompletionTracker.updateProgress(
+                                        AllocationTree.child1, 0L);
+
+                                Assert.assertEquals(
+                                    Collections.singletonList(true),
+                                    multithreadedExecutor.invokeAll(
+                                        Collections.singletonList(
+                                            () ->
+                                                allocationCompletionTracker.updateProgress(
+                                                    AllocationTree.child1Child, 0L))));
+
+                                return updated2;
+                              })));
+                  return updated;
+                })));
+    Assert.assertEquals(
+        Arrays.asList(AllocationTree.root, AllocationTree.child1, AllocationTree.child1Child),
+        allocationCompletionTracker.getUnfinishedAllocations());
+
+    // Adds 50 to child1Child and 100 to child2.
+    List<Callable<Boolean>> callables = new ArrayList<>(150);
+    callables.addAll(
+        Collections.nCopies(
+            50, () -> allocationCompletionTracker.updateProgress(AllocationTree.child1Child, 1L)));
+    callables.addAll(
+        Collections.nCopies(
+            100, () -> allocationCompletionTracker.updateProgress(AllocationTree.child2, 1L)));
+
+    Assert.assertEquals(Collections.nCopies(150, true), multithreadedExecutor.invokeAll(callables));
+    Assert.assertEquals(
+        Arrays.asList(
+            AllocationTree.root,
+            AllocationTree.child1,
+            AllocationTree.child1Child,
+            AllocationTree.child2),
+        allocationCompletionTracker.getUnfinishedAllocations());
+
+    // Adds 50 to child1Child and 100 to child2 to finish it up.
+    Assert.assertEquals(Collections.nCopies(150, true), multithreadedExecutor.invokeAll(callables));
+    Assert.assertEquals(
+        Collections.emptyList(), allocationCompletionTracker.getUnfinishedAllocations());
+  }
+}

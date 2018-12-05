@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.event.progress;
 
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Queue;
@@ -72,27 +73,25 @@ class AllocationCompletionTracker {
       new ConcurrentHashMap<>();
 
   /**
-   * Puts an entry for {@code allocation} in the map if not present, with progress initialized to
-   * {@code 0}.
-   *
-   * @param allocation the {@link Allocation}
-   * @return {@code true} if the map was updated; {@code false} if {@code allocation} was already
-   *     present
-   */
-  boolean putIfAbsent(Allocation allocation) {
-    // Note: Could have false positives.
-    boolean alreadyPresent = completionMap.containsKey(allocation);
-    completionMap.computeIfAbsent(allocation, InsertionOrderUnits::new);
-    return alreadyPresent;
-  }
-
-  /**
    * Updates the progress for {@link Allocation} atomically relative to the {@code allocation}.
+   *
+   * <p>For any {@link Allocation}, this method <em>must</em> have been called on all of its parents
+   * beforehand.
    *
    * @param allocation the {@link Allocation} to update progress for
    * @param units the units of progress
+   * @return {@code true} if the map was updated; {@code false} if {@code allocation} was already
+   *     present. Note that there could be false positives if called concurrently, but never false
+   *     negatives.
    */
-  void updateProgress(Allocation allocation, long units) {
+  boolean updateProgress(Allocation allocation, long units) {
+    if (units == 0L) {
+      // Puts the allocation in the map if not present, with progress initialized to 0.
+      boolean alreadyPresent = completionMap.containsKey(allocation);
+      completionMap.computeIfAbsent(allocation, InsertionOrderUnits::new);
+      return !alreadyPresent;
+    }
+
     completionMap.compute(
         allocation,
         (ignored, insertionOrderUnits) -> {
@@ -104,6 +103,11 @@ class AllocationCompletionTracker {
 
           return insertionOrderUnits;
         });
+    return true;
+  }
+
+  List<Allocation> getKeys() {
+    return Collections.list(completionMap.keys());
   }
 
   /**
@@ -116,14 +120,14 @@ class AllocationCompletionTracker {
     Queue<InsertionOrderUnits> unfinishedInsertionOrderUnits = new PriorityQueue<>();
 
     for (InsertionOrderUnits insertionOrderUnits : completionMap.values()) {
-      if (insertionOrderUnits.units.get() == insertionOrderUnits.allocation.getAllocationUnits()) {
+      if (insertionOrderUnits.units.get() < insertionOrderUnits.allocation.getAllocationUnits()) {
         unfinishedInsertionOrderUnits.add(insertionOrderUnits);
       }
     }
 
     List<Allocation> unfinishedAllocations = new ArrayList<>();
-    for (InsertionOrderUnits insertionOrderUnits : unfinishedInsertionOrderUnits) {
-      unfinishedAllocations.add(insertionOrderUnits.allocation);
+    while (!unfinishedInsertionOrderUnits.isEmpty()) {
+      unfinishedAllocations.add(unfinishedInsertionOrderUnits.remove().allocation);
     }
     return unfinishedAllocations;
   }
