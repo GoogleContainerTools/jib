@@ -46,7 +46,7 @@ public class ProgressEvent implements JibEvent {
    *
    * @return the {@link Allocation}
    */
-  Allocation getAllocation() {
+  public Allocation getAllocation() {
     return allocation;
   }
 
@@ -56,7 +56,7 @@ public class ProgressEvent implements JibEvent {
    *
    * @return units of allocation
    */
-  long getUnits() {
+  public long getUnits() {
     return progressUnits;
   }
 }
