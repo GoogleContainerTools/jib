@@ -38,7 +38,6 @@ public class ZipUtil {
    * @throws IOException when I/O error occurs
    */
   public static void unzip(Path archive, Path destination) throws IOException {
-    String canonicalDestination = destination.toFile().getCanonicalPath();
 
     try (InputStream fileIn = Files.newInputStream(archive);
         ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(fileIn))) {
@@ -46,8 +45,7 @@ public class ZipUtil {
       for (ZipEntry entry = zipIn.getNextEntry(); entry != null; entry = zipIn.getNextEntry()) {
         Path entryPath = destination.resolve(entry.getName());
 
-        String canonicalTarget = entryPath.toFile().getCanonicalPath();
-        if (!canonicalTarget.startsWith(canonicalDestination + File.separator)) {
+        if (!entryPath.toRealPath().startsWith(destination.toRealPath())) {
           String offender = entry.getName() + " from " + archive;
           throw new IOException("Blocked unzipping files outside destination: " + offender);
         }
