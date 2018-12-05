@@ -159,7 +159,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @Override
   public boolean isWarProject() {
-    return "war".equals(project.getPackaging());
+    return MojoCommon.isWarProject(project);
   }
 
   @Override
