@@ -18,20 +18,14 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.Layer;
-import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -114,22 +108,6 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
       dockerClient.tag(targetImageReference, targetImageReference.withTag(tag));
     }
 
-    // TODO: Consolide image digest generation with PushImageStep and WriteTarFileStep.
-    // Gets the image manifest to generate the image digest.
-    ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
-    BlobDescriptor containerConfigurationBlobDescriptor =
-        imageToJsonTranslator
-            .getContainerConfigurationBlob()
-            .writeTo(ByteStreams.nullOutputStream());
-    BuildableManifestTemplate manifestTemplate =
-        imageToJsonTranslator.getManifestTemplate(
-            buildConfiguration.getTargetFormat(), containerConfigurationBlobDescriptor);
-    DescriptorDigest imageDigest =
-        JsonTemplateMapper.toBlob(manifestTemplate)
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest();
-    DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
-
-    return new BuildResult(imageDigest, imageId);
+    return BuildResult.fromImage(image, buildConfiguration.getTargetFormat());
   }
 }
