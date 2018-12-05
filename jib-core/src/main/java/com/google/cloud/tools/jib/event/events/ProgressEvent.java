@@ -36,7 +36,7 @@ public class ProgressEvent implements JibEvent {
   /** Units of progress. */
   private final long progressUnits;
 
-  ProgressEvent(Allocation allocation, long progressUnits) {
+  public ProgressEvent(Allocation allocation, long progressUnits) {
     this.allocation = allocation;
     this.progressUnits = progressUnits;
   }

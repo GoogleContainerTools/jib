@@ -16,17 +16,12 @@
 
 package com.google.cloud.tools.jib.event.progress;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,28 +43,6 @@ public class AllocationCompletionTrackerTest {
     private static final Allocation child2 = root.newChild("child2", 200);
 
     private AllocationTree() {}
-  }
-
-  /** Testing infrastructure for running code across multiple threads. */
-  private static class MultithreadedExecutor {
-
-    private static final Duration MULTITHREADED_TEST_TIMEOUT = Duration.ofSeconds(1);
-
-    private final ExecutorService executorService = Executors.newFixedThreadPool(20);
-
-    private <E> List<E> invokeAll(List<Callable<E>> callables)
-        throws InterruptedException, ExecutionException {
-      List<Future<E>> futures =
-          executorService.invokeAll(
-              callables, MULTITHREADED_TEST_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
-
-      List<E> returnValues = new ArrayList<>();
-      for (Future<E> future : futures) {
-        returnValues.add(future.get());
-      }
-
-      return returnValues;
-    }
   }
 
   @Test
@@ -173,6 +146,20 @@ public class AllocationCompletionTrackerTest {
             100, () -> allocationCompletionTracker.updateProgress(AllocationTree.child2, 1L)));
 
     Assert.assertEquals(Collections.nCopies(150, true), multithreadedExecutor.invokeAll(callables));
+    Assert.assertEquals(
+        Arrays.asList(
+            AllocationTree.root,
+            AllocationTree.child1,
+            AllocationTree.child1Child,
+            AllocationTree.child2),
+        allocationCompletionTracker.getUnfinishedAllocations());
+
+    // 0 progress doesn't do anything.
+    Assert.assertEquals(
+        Collections.nCopies(100, false),
+        multithreadedExecutor.invokeAll(
+            Collections.nCopies(
+                100, () -> allocationCompletionTracker.updateProgress(AllocationTree.child1, 0L))));
     Assert.assertEquals(
         Arrays.asList(
             AllocationTree.root,
