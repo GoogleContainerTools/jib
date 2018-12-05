@@ -122,9 +122,7 @@ public class PluginConfigurationProcessorTest {
     PluginConfigurationProcessor.processCommonConfiguration(
         rawConfiguration, projectProperties, containerizer, targetImageReference, false);
 
-    Mockito.verify(containerizer)
-        .setBaseImageLayersCache(
-            Paths.get(System.getProperty("user.dir")).resolve("new/base/cache"));
+    Mockito.verify(containerizer).setBaseImageLayersCache(Paths.get("new/base/cache"));
     Mockito.verify(containerizer).setApplicationLayersCache(Paths.get("/new/application/cache"));
 
     System.clearProperty(PropertyNames.BASE_IMAGE_LAYERS_CACHE);

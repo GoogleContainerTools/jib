@@ -450,11 +450,9 @@ public class PluginConfigurationProcessor {
    */
   private static Path getCheckedCacheDirectory(String property, Path defaultPath) {
     if (System.getProperty(property) != null) {
-      Path path = Paths.get(System.getProperty(property));
-      return path.isAbsolute() ? path : Paths.get(System.getProperty("user.dir")).resolve(path);
-    } else {
-      return defaultPath;
+      return Paths.get(System.getProperty(property));
     }
+    return defaultPath;
   }
 
   private final JibContainerBuilder jibContainerBuilder;
