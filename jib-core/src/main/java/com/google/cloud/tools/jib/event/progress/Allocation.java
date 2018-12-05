@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
  * <p>Note that it is up to the user of the class to ensure that the number of sub-allocations does
  * not exceed the number of allocation units.
  */
-class Allocation {
+public class Allocation {
 
   /**
    * Creates a new root {@link Allocation}.
@@ -47,7 +47,7 @@ class Allocation {
    * @param allocationUnits number of allocation units
    * @return a new {@link Allocation}
    */
-  static Allocation newRoot(String description, long allocationUnits) {
+  public static Allocation newRoot(String description, long allocationUnits) {
     return new Allocation(description, allocationUnits, null);
   }
 
@@ -78,23 +78,47 @@ class Allocation {
    * @param allocationUnits number of allocation units the child holds
    * @return a new {@link Allocation}
    */
-  Allocation newChild(String description, long allocationUnits) {
+  public Allocation newChild(String description, long allocationUnits) {
     return new Allocation(description, allocationUnits, this);
   }
 
-  Optional<Allocation> getParent() {
+  /**
+   * Gets the parent allocation, or {@link Optional#empty} if this is a root allocation. This
+   * allocation represents 1 allocation unit of the parent allocation.
+   *
+   * @return the parent {@link Allocation}
+   */
+  public Optional<Allocation> getParent() {
     return Optional.ofNullable(parent);
   }
 
-  String getDescription() {
+  /**
+   * Gets a user-facing description of what this allocation represents. For example, this can a
+   * description of the task this allocation represents.
+   *
+   * @return the description
+   */
+  public String getDescription() {
     return description;
   }
 
-  long getAllocationUnits() {
+  /**
+   * Gets the allocation units this allocation holds. If this allocation is not the root, the full
+   * number of units represents 1 allocation unit of the parent.
+   *
+   * @return the allocation units
+   */
+  public long getAllocationUnits() {
     return allocationUnits;
   }
 
-  double getFractionOfRoot() {
+  /**
+   * Gets how much of the root allocation this allocation accounts for. The entire root allocation
+   * is {@code 1.0}.
+   *
+   * @return the fraction of the root allocation this allocation accounts for
+   */
+  public double getFractionOfRoot() {
     return fractionOfRoot;
   }
 }
