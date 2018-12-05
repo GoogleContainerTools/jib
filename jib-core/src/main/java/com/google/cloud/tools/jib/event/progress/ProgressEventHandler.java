@@ -42,9 +42,7 @@ class ProgressEventHandler implements Consumer<ProgressEvent> {
    */
   private static class AllocationCompletionMap {
 
-    /**
-     * Holds the progress units completed along with a creation order.
-     */
+    /** Holds the progress units completed along with a creation order. */
     private static class InsertionOrderUnits implements Comparable<InsertionOrderUnits> {
 
       /** Monotonically-increasing source for {@link #index}. */
@@ -80,9 +78,14 @@ class ProgressEventHandler implements Consumer<ProgressEvent> {
      * {@code 0}.
      *
      * @param allocation the {@link Allocation}
+     * @return {@code true} if the map was updated; {@code false} if {@code allocation} was already
+     *     present
      */
-    private void putIfAbsent(Allocation allocation) {
+    private boolean putIfAbsent(Allocation allocation) {
+      // Note: Could have false positives.
+      boolean alreadyPresent = completionMap.containsKey(allocation);
       completionMap.computeIfAbsent(allocation, InsertionOrderUnits::new);
+      return alreadyPresent;
     }
 
     /**
@@ -145,7 +148,10 @@ class ProgressEventHandler implements Consumer<ProgressEvent> {
   /** Accumulates an overall progress, with {@code 1.0} indicating full completion. */
   private final DoubleAdder progress = new DoubleAdder();
 
-  /** A callback to notify that {@link #progress} or {@link #completionMap} has changed. */
+  /**
+   * A callback to notify that {@link #progress} or {@link #completionMap} could have changed. Note
+   * that every change will be reported, but there could be false positives.
+   */
   private final Runnable updateNotifier;
 
   ProgressEventHandler(Runnable updateNotifier) {
@@ -161,13 +167,14 @@ class ProgressEventHandler implements Consumer<ProgressEvent> {
 
     if (progressUnits == 0) {
       completionMap.putIfAbsent(allocation);
-      updateNotifier.run();
       return;
     }
 
     progress.add(progressUnits * allocationFraction / allocationUnits);
 
     completionMap.updateProgress(allocation, progressUnits);
+
+    updateNotifier.run();
   }
 
   /**
@@ -185,6 +192,8 @@ class ProgressEventHandler implements Consumer<ProgressEvent> {
    *
    * @return a list of unfinished {@link Allocation}s
    */
+  // TODO: Change this to do every time update notifier is called, so this is not called many times
+  // per update.
   List<Allocation> getUnfinishedAllocations() {
     Queue<AllocationCompletionMap.InsertionOrderUnits> unfinishedInsertionOrderUnits =
         new PriorityQueue<>();
