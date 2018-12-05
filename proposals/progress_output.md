@@ -101,9 +101,9 @@ Each node in the DAT is immutable and initialized with a count of allocation uni
 
 ##### Example
 
-Consider a root node (`Node A`) with 10 allocation units. A child node (`Node B`) is added with 3 allocation units. Each of these allocation units represents `10% x 30% = 3%` of the entire DAT progress. Completion of all the 3 child node allocation units means that the root node completed 1 allocation unit, or `10%`.
+Consider a root node (`Node A`) with 10 allocation units. A child node (`Node B`) is added with 4 allocation units. Each of these allocation units represents `10% x 25% = 2.5%` of the entire DAT progress. Completion of all the 4 child node allocation units means that the root node completed 1 allocation unit, or `10%`.
 
-New allocations can be added on-the-fly in a decentralized manner. Let's say a new download started for `123000` bytes and that download should be represented by one of the allocation units of `Node B`. We would create a new node (`Node C`) with `123000` allocation units and have its parent be `Node B`. This establishes the `123000` bytes that would represent `3%` of the overall progress without needing to modify other nodes or synchronize with other tasks that may add their own sub-allocations. This also limits the creation of suballocations to only children tasks of the task that created that allocation, making it fully-compatible with a DAG task pipeline.
+New allocations can be added on-the-fly in a decentralized manner. Let's say a new download started for `123000` bytes and that download should be represented by one of the allocation units of `Node B`. We would create a new node (`Node C`) with `123000` allocation units and have its parent be `Node B`. This establishes the `123000` bytes that would represent `2.5%` of the overall progress without needing to modify other nodes or synchronize with other tasks that may add their own sub-allocations. This also limits the creation of suballocations to only children tasks of the task that created that allocation, making it fully-compatible with a DAG task pipeline.
 
 #### Benefits of DAT approach
 
