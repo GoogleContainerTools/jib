@@ -40,36 +40,15 @@ import javax.annotation.Nullable;
  */
 class Allocation {
 
-  /** Builds a new {@link Allocation}. */
-  static class Builder {
-
-    @Nullable private final Allocation parent;
-    private final String description;
-
-    /**
-     * Creates the {@link Allocation} with a set number of allocation units.
-     *
-     * @param allocationUnits the number of allocation units
-     * @return a new {@link Allocation}
-     */
-    Allocation allocate(long allocationUnits) {
-      return new Allocation(description, allocationUnits, parent);
-    }
-
-    private Builder(String description, @Nullable Allocation parent) {
-      this.description = description;
-      this.parent = parent;
-    }
-  }
-
   /**
-   * Creates a {@link Builder} for a new root {@link Allocation}.
+   * Creates a new root {@link Allocation}.
    *
-   * @param description user-facing description of what the allocation represents
-   * @return a new {@link Builder}
+   * @param description thuser-facing description of what the allocation represents
+   * @param allocationUnits number of allocation units
+   * @return a new {@link Allocation}
    */
-  static Builder newRoot(String description) {
-    return new Builder(description, null);
+  static Allocation newRoot(String description, long allocationUnits) {
+    return new Allocation(description, allocationUnits, null);
   }
 
   /** The parent {@link Allocation}, or {@code null} to indicate a root node. */
@@ -93,13 +72,14 @@ class Allocation {
   }
 
   /**
-   * Creates a {@link Builder} for a new child {@link Allocation} (sub-allocation).
+   * Creates a new child {@link Allocation} (sub-allocation).
    *
    * @param description user-facing description of what the sub-allocation represents
-   * @return a new {@link Builder}
+   * @param allocationUnits number of allocation units the child holds
+   * @return a new {@link Allocation}
    */
-  Builder newChild(String description) {
-    return new Builder(description, this);
+  Allocation newChild(String description, long allocationUnits) {
+    return new Allocation(description, allocationUnits, this);
   }
 
   Optional<Allocation> getParent() {

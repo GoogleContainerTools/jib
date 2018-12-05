@@ -27,9 +27,9 @@ public class AllocationTest {
 
   @Test
   public void testSmoke_linear() {
-    Allocation root = Allocation.newRoot("root").allocate(1);
-    Allocation node1 = root.newChild("node1").allocate(2);
-    Allocation node2 = node1.newChild("node2").allocate(3);
+    Allocation root = Allocation.newRoot("root", 1);
+    Allocation node1 = root.newChild("node1", 2);
+    Allocation node2 = node1.newChild("node2", 3);
 
     Assert.assertEquals("node2", node2.getDescription());
     Assert.assertEquals(3, node2.getAllocationUnits());
@@ -51,13 +51,13 @@ public class AllocationTest {
 
   @Test
   public void testFractionOfRoot_tree_partial() {
-    Allocation root = Allocation.newRoot("ignored").allocate(10);
-    Allocation left = root.newChild("ignored").allocate(2);
-    Allocation right = root.newChild("ignored").allocate(4);
-    Allocation leftDown = left.newChild("ignored").allocate(20);
-    Allocation rightLeft = right.newChild("ignored").allocate(20);
-    Allocation rightRight = right.newChild("ignored").allocate(100);
-    Allocation rightRightDown = rightRight.newChild("ignored").allocate(200);
+    Allocation root = Allocation.newRoot("ignored", 10);
+    Allocation left = root.newChild("ignored", 2);
+    Allocation right = root.newChild("ignored", 4);
+    Allocation leftDown = left.newChild("ignored", 20);
+    Allocation rightLeft = right.newChild("ignored", 20);
+    Allocation rightRight = right.newChild("ignored", 100);
+    Allocation rightRightDown = rightRight.newChild("ignored", 200);
 
     Assert.assertEquals(1.0, root.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
     Assert.assertEquals(1.0 / 10, left.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
@@ -71,16 +71,16 @@ public class AllocationTest {
 
   @Test
   public void testFractionOfRoot_tree_complete() {
-    Allocation root = Allocation.newRoot("ignored").allocate(2);
+    Allocation root = Allocation.newRoot("ignored", 2);
 
-    Allocation left = root.newChild("ignored").allocate(3);
-    Allocation leftLeft = left.newChild("ignored").allocate(1);
-    Allocation leftLeftDown = leftLeft.newChild("ignored").allocate(100);
-    Allocation leftMiddle = left.newChild("ignored").allocate(100);
-    Allocation leftRight = left.newChild("ignored").allocate(100);
+    Allocation left = root.newChild("ignored", 3);
+    Allocation leftLeft = left.newChild("ignored", 1);
+    Allocation leftLeftDown = leftLeft.newChild("ignored", 100);
+    Allocation leftMiddle = left.newChild("ignored", 100);
+    Allocation leftRight = left.newChild("ignored", 100);
 
-    Allocation right = root.newChild("ignored").allocate(1);
-    Allocation rightDown = right.newChild("ignored").allocate(100);
+    Allocation right = root.newChild("ignored", 1);
+    Allocation rightDown = right.newChild("ignored", 100);
 
     // Checks that the leaf allocations add up to a full 1.0.
     double total =
