@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
  * <p>Note that it is up to the user of the class to ensure that the number of sub-allocations does
  * not exceed the number of allocation units.
  */
-class Allocation {
+public class Allocation {
 
   /**
    * Creates a new root {@link Allocation}.
@@ -47,7 +47,7 @@ class Allocation {
    * @param allocationUnits number of allocation units
    * @return a new {@link Allocation}
    */
-  static Allocation newRoot(String description, long allocationUnits) {
+  public static Allocation newRoot(String description, long allocationUnits) {
     return new Allocation(description, allocationUnits, null);
   }
 
@@ -78,11 +78,11 @@ class Allocation {
    * @param allocationUnits number of allocation units the child holds
    * @return a new {@link Allocation}
    */
-  Allocation newChild(String description, long allocationUnits) {
+  public Allocation newChild(String description, long allocationUnits) {
     return new Allocation(description, allocationUnits, this);
   }
 
-  Optional<Allocation> getParent() {
+  public Optional<Allocation> getParent() {
     return Optional.ofNullable(parent);
   }
 
@@ -90,7 +90,7 @@ class Allocation {
     return description;
   }
 
-  long getAllocationUnits() {
+  public long getAllocationUnits() {
     return allocationUnits;
   }
 
