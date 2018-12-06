@@ -80,8 +80,8 @@ class AllocationCompletionTracker {
    * @param allocation the {@link Allocation} to update progress for
    * @param units the units of progress
    * @return {@code true} if the map was updated; {@code false} if {@code allocation} was already
-   *     present. Note that there could be false positives if called concurrently, but never false
-   *     negatives.
+   *     present. Note that this may return {@code true} even if the map was not updated if called
+   *     concurrently, but never {@code false} if the map was updated.
    */
   boolean updateProgress(Allocation allocation, long units) {
     if (units == 0L) {
@@ -107,7 +107,9 @@ class AllocationCompletionTracker {
 
   /**
    * Gets a list of the unfinished {@link Allocation}s in the order in which those {@link
-   * Allocation}s were encountered.
+   * Allocation}s were encountered. This can be used to display, for example, currently executing
+   * tasks. The order helps to keep the displayed tasks in a deterministic order (new subtasks
+   * appear below older ones) and not jumbled together in some random order.
    *
    * @return a list of unfinished {@link Allocation}s
    */

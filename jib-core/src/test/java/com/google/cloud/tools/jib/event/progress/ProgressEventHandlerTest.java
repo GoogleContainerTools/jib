@@ -61,23 +61,21 @@ public class ProgressEventHandlerTest {
               new EventHandlers().add(JibEventType.PROGRESS, progressEventHandler));
 
       // Adds root, child1, and child1Child.
-      multithreadedExecutor.invokeAll(
-          Collections.singletonList(
-              () -> {
-                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.root, 0L));
-
-                multithreadedExecutor.invokeAll(
-                    Collections.singletonList(
-                        () -> {
-                          eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 0L));
-
-                          multithreadedExecutor.invokeAll(
-                              Collections.singletonList(
-                                  () -> new ProgressEvent(AllocationTree.child1Child, 0L)));
-                          return null;
-                        }));
-                return null;
-              }));
+      multithreadedExecutor.invoke(
+          () -> {
+            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.root, 0L));
+            return null;
+          });
+      multithreadedExecutor.invoke(
+          () -> {
+            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 0L));
+            return null;
+          });
+      multithreadedExecutor.invoke(
+          () -> {
+            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 0L));
+            return null;
+          });
       Assert.assertEquals(0.0, progressEventHandler.getProgress(), DOUBLE_ERROR_MARGIN);
 
       // Adds 50 to child1Child and 100 to child2.

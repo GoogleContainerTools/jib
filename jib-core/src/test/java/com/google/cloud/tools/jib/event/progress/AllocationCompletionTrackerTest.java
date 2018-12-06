@@ -105,33 +105,17 @@ public class AllocationCompletionTrackerTest {
 
       // Adds root, child1, and child1Child.
       Assert.assertEquals(
-          Collections.singletonList(true),
-          multithreadedExecutor.invokeAll(
-              Collections.singletonList(
-                  () -> {
-                    boolean updated =
-                        allocationCompletionTracker.updateProgress(AllocationTree.root, 0L);
-                    Assert.assertEquals(
-                        Collections.singletonList(true),
-                        multithreadedExecutor.invokeAll(
-                            Collections.singletonList(
-                                () -> {
-                                  boolean updated2 =
-                                      allocationCompletionTracker.updateProgress(
-                                          AllocationTree.child1, 0L);
-
-                                  Assert.assertEquals(
-                                      Collections.singletonList(true),
-                                      multithreadedExecutor.invokeAll(
-                                          Collections.singletonList(
-                                              () ->
-                                                  allocationCompletionTracker.updateProgress(
-                                                      AllocationTree.child1Child, 0L))));
-
-                                  return updated2;
-                                })));
-                    return updated;
-                  })));
+          true,
+          multithreadedExecutor.invoke(
+              () -> allocationCompletionTracker.updateProgress(AllocationTree.root, 0L)));
+      Assert.assertEquals(
+          true,
+          multithreadedExecutor.invoke(
+              () -> allocationCompletionTracker.updateProgress(AllocationTree.child1, 0L)));
+      Assert.assertEquals(
+          true,
+          multithreadedExecutor.invoke(
+              () -> allocationCompletionTracker.updateProgress(AllocationTree.child1Child, 0L)));
       Assert.assertEquals(
           Arrays.asList(AllocationTree.root, AllocationTree.child1, AllocationTree.child1Child),
           allocationCompletionTracker.getUnfinishedAllocations());

@@ -20,6 +20,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -35,6 +36,11 @@ class MultithreadedExecutor implements Closeable {
   private static final int THREAD_COUNT = 20;
 
   private final ExecutorService executorService = Executors.newFixedThreadPool(THREAD_COUNT);
+
+  <E> E invoke(Callable<E> callable) throws ExecutionException, InterruptedException {
+    List<E> returnValue = invokeAll(Collections.singletonList(callable));
+    return returnValue.get(0);
+  }
 
   <E> List<E> invokeAll(List<Callable<E>> callables)
       throws InterruptedException, ExecutionException {
