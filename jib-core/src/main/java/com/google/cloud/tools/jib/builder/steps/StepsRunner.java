@@ -25,10 +25,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import javax.annotation.Nullable;
@@ -82,8 +80,11 @@ public class StepsRunner {
   private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
 
-  /** Collects the functions to start running the steps. */
-  private final List<Runnable> stepsRunnables = new ArrayList<>();
+  /** Runnable to run all the steps. */
+  private Runnable stepsRunnable = () -> {};
+
+  /** The total number of steps added. */
+  private int stepsCount = 0;
 
   private StepsRunner(
       ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
@@ -92,46 +93,42 @@ public class StepsRunner {
   }
 
   public StepsRunner retrieveTargetRegistryCredentials() {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             steps.retrieveTargetRegistryCredentialsStep =
                 RetrieveRegistryCredentialsStep.forTargetImage(
                     listeningExecutorService, buildConfiguration));
-    return this;
   }
 
   public StepsRunner authenticatePush() {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             steps.authenticatePushStep =
                 new AuthenticatePushStep(
                     listeningExecutorService,
                     buildConfiguration,
                     Preconditions.checkNotNull(steps.retrieveTargetRegistryCredentialsStep)));
-    return this;
   }
 
   public StepsRunner pullBaseImage() {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             steps.pullBaseImageStep =
                 new PullBaseImageStep(listeningExecutorService, buildConfiguration));
-    return this;
   }
 
   public StepsRunner pullAndCacheBaseImageLayers() {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             steps.pullAndCacheBaseImageLayersStep =
                 new PullAndCacheBaseImageLayersStep(
                     listeningExecutorService,
                     buildConfiguration,
                     Preconditions.checkNotNull(steps.pullBaseImageStep)));
-    return this;
   }
 
   public StepsRunner pushBaseImageLayers() {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             steps.pushBaseImageLayersStep =
                 new PushLayersStep(
@@ -139,20 +136,18 @@ public class StepsRunner {
                     buildConfiguration,
                     Preconditions.checkNotNull(steps.authenticatePushStep),
                     Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep)));
-    return this;
   }
 
   public StepsRunner buildAndCacheApplicationLayers() {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             steps.buildAndCacheApplicationLayerSteps =
                 BuildAndCacheApplicationLayerStep.makeList(
                     listeningExecutorService, buildConfiguration));
-    return this;
   }
 
   public StepsRunner buildImage() {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             steps.buildImageStep =
                 new BuildImageStep(
@@ -161,11 +156,10 @@ public class StepsRunner {
                     Preconditions.checkNotNull(steps.pullBaseImageStep),
                     Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep),
                     Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps)));
-    return this;
   }
 
   public StepsRunner pushContainerConfiguration() {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             steps.pushContainerConfigurationStep =
                 new PushContainerConfigurationStep(
@@ -173,11 +167,10 @@ public class StepsRunner {
                     buildConfiguration,
                     Preconditions.checkNotNull(steps.authenticatePushStep),
                     Preconditions.checkNotNull(steps.buildImageStep)));
-    return this;
   }
 
   public StepsRunner pushApplicationLayers() {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             steps.pushApplicationLayersStep =
                 new PushLayersStep(
@@ -186,11 +179,10 @@ public class StepsRunner {
                     Preconditions.checkNotNull(steps.authenticatePushStep),
                     AsyncSteps.immediate(
                         Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps))));
-    return this;
   }
 
   public StepsRunner finalizingPush() {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             new FinalizingStep(
                 listeningExecutorService,
@@ -199,11 +191,10 @@ public class StepsRunner {
                     Preconditions.checkNotNull(steps.pushBaseImageLayersStep),
                     Preconditions.checkNotNull(steps.pushApplicationLayersStep)),
                 Collections.emptyList()));
-    return this;
   }
 
   public StepsRunner finalizingBuild() {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             new FinalizingStep(
                 listeningExecutorService,
@@ -211,11 +202,10 @@ public class StepsRunner {
                 Collections.singletonList(
                     Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep)),
                 Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps)));
-    return this;
   }
 
   public StepsRunner pushImage() {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             steps.pushImageStep =
                 new PushImageStep(
@@ -226,11 +216,10 @@ public class StepsRunner {
                     Preconditions.checkNotNull(steps.pushApplicationLayersStep),
                     Preconditions.checkNotNull(steps.pushContainerConfigurationStep),
                     Preconditions.checkNotNull(steps.buildImageStep)));
-    return this;
   }
 
   public StepsRunner loadDocker(DockerClient dockerClient) {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             steps.loadDockerStep =
                 new LoadDockerStep(
@@ -240,11 +229,10 @@ public class StepsRunner {
                     Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep),
                     Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps),
                     Preconditions.checkNotNull(steps.buildImageStep)));
-    return this;
   }
 
   public StepsRunner writeTarFile(Path outputPath) {
-    stepsRunnables.add(
+    return enqueueStep(
         () ->
             steps.writeTarFileStep =
                 new WriteTarFileStep(
@@ -254,27 +242,30 @@ public class StepsRunner {
                     Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep),
                     Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps),
                     Preconditions.checkNotNull(steps.buildImageStep)));
-    return this;
   }
 
   public BuildResult waitOnPushImage() throws ExecutionException, InterruptedException {
-    runStepsRunners();
+    stepsRunnable.run();
     return Preconditions.checkNotNull(steps.pushImageStep).getFuture().get();
   }
 
   public BuildResult waitOnLoadDocker() throws ExecutionException, InterruptedException {
-    runStepsRunners();
+    stepsRunnable.run();
     return Preconditions.checkNotNull(steps.loadDockerStep).getFuture().get();
   }
 
   public BuildResult waitOnWriteTarFile() throws ExecutionException, InterruptedException {
-    runStepsRunners();
+    stepsRunnable.run();
     return Preconditions.checkNotNull(steps.writeTarFileStep).getFuture().get();
   }
 
-  private void runStepsRunners() {
-    for (Runnable stepsRunner : stepsRunnables) {
-      stepsRunner.run();
-    }
+  private StepsRunner enqueueStep(Runnable stepRunnable) {
+    stepsRunnable =
+        () -> {
+          stepsRunnable.run();
+          stepRunnable.run();
+        };
+    stepsCount++;
+    return this;
   }
 }

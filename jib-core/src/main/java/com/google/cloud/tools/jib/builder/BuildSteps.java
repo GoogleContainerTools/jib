@@ -54,8 +54,7 @@ public class BuildSteps {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_REGISTRY,
         buildConfiguration,
-        () ->
-            StepsRunner.begin(buildConfiguration)
+        StepsRunner.begin(buildConfiguration)
                 .retrieveTargetRegistryCredentials()
                 .authenticatePush()
                 .pullBaseImage()
@@ -67,7 +66,7 @@ public class BuildSteps {
                 .pushApplicationLayers()
                 .finalizingPush()
                 .pushImage()
-                .waitOnPushImage());
+            ::waitOnPushImage);
   }
 
   /**
@@ -82,15 +81,14 @@ public class BuildSteps {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_DAEMON,
         buildConfiguration,
-        () ->
-            StepsRunner.begin(buildConfiguration)
+        StepsRunner.begin(buildConfiguration)
                 .pullBaseImage()
                 .pullAndCacheBaseImageLayers()
                 .buildAndCacheApplicationLayers()
                 .buildImage()
                 .finalizingBuild()
                 .loadDocker(dockerClient)
-                .waitOnLoadDocker());
+            ::waitOnLoadDocker);
   }
 
   /**
@@ -104,15 +102,14 @@ public class BuildSteps {
     return new BuildSteps(
         DESCRIPTION_FOR_TARBALL,
         buildConfiguration,
-        () ->
-            StepsRunner.begin(buildConfiguration)
+        StepsRunner.begin(buildConfiguration)
                 .pullBaseImage()
                 .pullAndCacheBaseImageLayers()
                 .buildAndCacheApplicationLayers()
                 .buildImage()
                 .finalizingBuild()
                 .writeTarFile(outputPath)
-                .waitOnWriteTarFile());
+            ::waitOnWriteTarFile);
   }
 
   private final String description;
