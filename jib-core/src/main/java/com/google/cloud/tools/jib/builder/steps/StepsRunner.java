@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.AsyncSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
@@ -55,9 +56,8 @@ public class StepsRunner {
     @Nullable private PushLayersStep pushApplicationLayersStep;
     @Nullable private BuildImageStep buildImageStep;
     @Nullable private PushContainerConfigurationStep pushContainerConfigurationStep;
-    @Nullable private PushImageStep pushImageStep;
-    @Nullable private LoadDockerStep loadDockerStep;
-    @Nullable private WriteTarFileStep writeTarFileStep;
+
+    @Nullable private AsyncStep<BuildResult> finalStep;
   }
 
   /**
@@ -207,7 +207,7 @@ public class StepsRunner {
   public StepsRunner pushImage() {
     return enqueueStep(
         () ->
-            steps.pushImageStep =
+            steps.finalStep =
                 new PushImageStep(
                     listeningExecutorService,
                     buildConfiguration,
@@ -221,7 +221,7 @@ public class StepsRunner {
   public StepsRunner loadDocker(DockerClient dockerClient) {
     return enqueueStep(
         () ->
-            steps.loadDockerStep =
+            steps.finalStep =
                 new LoadDockerStep(
                     listeningExecutorService,
                     dockerClient,
@@ -234,7 +234,7 @@ public class StepsRunner {
   public StepsRunner writeTarFile(Path outputPath) {
     return enqueueStep(
         () ->
-            steps.writeTarFileStep =
+            steps.finalStep =
                 new WriteTarFileStep(
                     listeningExecutorService,
                     outputPath,
@@ -244,25 +244,16 @@ public class StepsRunner {
                     Preconditions.checkNotNull(steps.buildImageStep)));
   }
 
-  public BuildResult waitOnPushImage() throws ExecutionException, InterruptedException {
+  public BuildResult run() throws ExecutionException, InterruptedException {
     stepsRunnable.run();
-    return Preconditions.checkNotNull(steps.pushImageStep).getFuture().get();
-  }
-
-  public BuildResult waitOnLoadDocker() throws ExecutionException, InterruptedException {
-    stepsRunnable.run();
-    return Preconditions.checkNotNull(steps.loadDockerStep).getFuture().get();
-  }
-
-  public BuildResult waitOnWriteTarFile() throws ExecutionException, InterruptedException {
-    stepsRunnable.run();
-    return Preconditions.checkNotNull(steps.writeTarFileStep).getFuture().get();
+    return Preconditions.checkNotNull(steps.finalStep).getFuture().get();
   }
 
   private StepsRunner enqueueStep(Runnable stepRunnable) {
+    Runnable previousStepsRunnable = stepsRunnable;
     stepsRunnable =
         () -> {
-          stepsRunnable.run();
+          previousStepsRunnable.run();
           stepRunnable.run();
         };
     stepsCount++;
