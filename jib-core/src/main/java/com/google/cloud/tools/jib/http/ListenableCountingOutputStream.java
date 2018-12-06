@@ -17,85 +17,18 @@
 package com.google.cloud.tools.jib.http;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import javax.annotation.Nullable;
 
 /**
  * Counts the number of bytes written and reports the count to a callback. The count is reported
  * with certain time delays to avoid calling the callback too often.
  */
 class ListenableCountingOutputStream extends OutputStream {
-
-  /** Partial {@link Builder} interface for setting the {@link #delayBetweenCallbacks}. */
-  interface DelayBuilder {
-
-    /**
-     * Sets the delay between each call to {@link #byteCountConsumer}.
-     *
-     * @param delayBetweenCallbacks the delay between calls
-     * @return a {@link CallbackBuilder}
-     */
-    CallbackBuilder every(Duration delayBetweenCallbacks);
-  }
-
-  /** Partial {@link Builder} interface for setting the {@link #byteCountConsumer}. */
-  interface CallbackBuilder {
-
-    /**
-     * Sets the {@link #byteCountConsumer} that is with a count of bytes written.
-     *
-     * @param byteCountConsumer the byte count {@link Consumer}
-     * @return a {@link ListenableCountingOutputStream}
-     */
-    ListenableCountingOutputStream forEachByteCount(Consumer<Long> byteCountConsumer);
-  }
-
-  /** Builds a {@link ListenableCountingOutputStream}. */
-  static class Builder implements DelayBuilder, CallbackBuilder {
-
-    private final OutputStream underlyingOutputStream;
-    @Nullable private Duration delayBetweenCallbacks;
-
-    /**
-     * Instantiate with {@link #wrap}.
-     *
-     * @param underlyingOutputStream the underlying {@link OutputStream}
-     */
-    private Builder(OutputStream underlyingOutputStream) {
-      this.underlyingOutputStream = underlyingOutputStream;
-    }
-
-    @Override
-    public CallbackBuilder every(Duration delayBetweenCallbacks) {
-      this.delayBetweenCallbacks = delayBetweenCallbacks;
-      return this;
-    }
-
-    @Override
-    public ListenableCountingOutputStream forEachByteCount(Consumer<Long> byteCountConsumer) {
-      return new ListenableCountingOutputStream(
-          underlyingOutputStream,
-          byteCountConsumer,
-          Preconditions.checkNotNull(delayBetweenCallbacks),
-          Instant::now);
-    }
-  }
-
-  /**
-   * Wraps an {@link OutputStream} to count the bytes written.
-   *
-   * @param underlyingOutputStream the wrapped {@link OutputStream}
-   * @return a {@link DelayBuilder} to set the delay between byte count reports
-   */
-  static DelayBuilder wrap(OutputStream underlyingOutputStream) {
-    return new Builder(underlyingOutputStream);
-  }
 
   /** The underlying {@link OutputStream} to wrap and forward bytes to. */
   private final OutputStream underlyingOutputStream;
@@ -114,6 +47,20 @@ class ListenableCountingOutputStream extends OutputStream {
 
   /** Last time {@link #byteCountConsumer} was called. */
   private Instant previousCallback;
+
+  /**
+   * Wraps the {@code underlyingOutputStream} to count the bytes written.
+   *
+   * @param underlyingOutputStream the wrapped {@link OutputStream}
+   * @param byteCountConsumer the byte count {@link Consumer}
+   * @param delayBetweenCallbacks the minimum delay between each call to {@link #byteCountConsumer}
+   */
+  ListenableCountingOutputStream(
+      OutputStream underlyingOutputStream,
+      Consumer<Long> byteCountConsumer,
+      Duration delayBetweenCallbacks) {
+    this(underlyingOutputStream, byteCountConsumer, delayBetweenCallbacks, Instant::now);
+  }
 
   @VisibleForTesting
   ListenableCountingOutputStream(

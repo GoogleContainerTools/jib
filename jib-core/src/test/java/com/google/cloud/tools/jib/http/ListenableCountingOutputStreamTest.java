@@ -38,9 +38,8 @@ public class ListenableCountingOutputStreamTest {
     List<Long> byteCounts = new ArrayList<>();
 
     try (ListenableCountingOutputStream listenableCountingOutputStream =
-        ListenableCountingOutputStream.wrap(byteArrayOutputStream)
-            .every(Duration.ofSeconds(-1))
-            .forEachByteCount(byteCounts::add)) {
+        new ListenableCountingOutputStream(
+            byteArrayOutputStream, byteCounts::add, Duration.ofSeconds(-1))) {
       listenableCountingOutputStream.write(0);
       listenableCountingOutputStream.write(new byte[] {1, 2, 3});
       listenableCountingOutputStream.write(new byte[] {1, 2, 3, 4, 5}, 3, 2);
