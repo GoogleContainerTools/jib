@@ -83,7 +83,7 @@ public class StepsRunner {
   private final BuildConfiguration buildConfiguration;
 
   /** Collects the functions to start running the steps. */
-  private final List<Runnable> stepsRunners = new ArrayList<>();
+  private final List<Runnable> stepsRunnables = new ArrayList<>();
 
   private StepsRunner(
       ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
@@ -92,7 +92,7 @@ public class StepsRunner {
   }
 
   public StepsRunner retrieveTargetRegistryCredentials() {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             steps.retrieveTargetRegistryCredentialsStep =
                 RetrieveRegistryCredentialsStep.forTargetImage(
@@ -101,7 +101,7 @@ public class StepsRunner {
   }
 
   public StepsRunner authenticatePush() {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             steps.authenticatePushStep =
                 new AuthenticatePushStep(
@@ -112,7 +112,7 @@ public class StepsRunner {
   }
 
   public StepsRunner pullBaseImage() {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             steps.pullBaseImageStep =
                 new PullBaseImageStep(listeningExecutorService, buildConfiguration));
@@ -120,7 +120,7 @@ public class StepsRunner {
   }
 
   public StepsRunner pullAndCacheBaseImageLayers() {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             steps.pullAndCacheBaseImageLayersStep =
                 new PullAndCacheBaseImageLayersStep(
@@ -131,7 +131,7 @@ public class StepsRunner {
   }
 
   public StepsRunner pushBaseImageLayers() {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             steps.pushBaseImageLayersStep =
                 new PushLayersStep(
@@ -143,7 +143,7 @@ public class StepsRunner {
   }
 
   public StepsRunner buildAndCacheApplicationLayers() {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             steps.buildAndCacheApplicationLayerSteps =
                 BuildAndCacheApplicationLayerStep.makeList(
@@ -152,7 +152,7 @@ public class StepsRunner {
   }
 
   public StepsRunner buildImage() {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             steps.buildImageStep =
                 new BuildImageStep(
@@ -165,7 +165,7 @@ public class StepsRunner {
   }
 
   public StepsRunner pushContainerConfiguration() {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             steps.pushContainerConfigurationStep =
                 new PushContainerConfigurationStep(
@@ -177,7 +177,7 @@ public class StepsRunner {
   }
 
   public StepsRunner pushApplicationLayers() {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             steps.pushApplicationLayersStep =
                 new PushLayersStep(
@@ -190,7 +190,7 @@ public class StepsRunner {
   }
 
   public StepsRunner finalizingPush() {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             new FinalizingStep(
                 listeningExecutorService,
@@ -203,7 +203,7 @@ public class StepsRunner {
   }
 
   public StepsRunner finalizingBuild() {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             new FinalizingStep(
                 listeningExecutorService,
@@ -215,7 +215,7 @@ public class StepsRunner {
   }
 
   public StepsRunner pushImage() {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             steps.pushImageStep =
                 new PushImageStep(
@@ -230,7 +230,7 @@ public class StepsRunner {
   }
 
   public StepsRunner loadDocker(DockerClient dockerClient) {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             steps.loadDockerStep =
                 new LoadDockerStep(
@@ -244,7 +244,7 @@ public class StepsRunner {
   }
 
   public StepsRunner writeTarFile(Path outputPath) {
-    stepsRunners.add(
+    stepsRunnables.add(
         () ->
             steps.writeTarFileStep =
                 new WriteTarFileStep(
@@ -273,7 +273,7 @@ public class StepsRunner {
   }
 
   private void runStepsRunners() {
-    for (Runnable stepsRunner : stepsRunners) {
+    for (Runnable stepsRunner : stepsRunnables) {
       stepsRunner.run();
     }
   }
