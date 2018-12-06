@@ -37,6 +37,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
@@ -57,6 +60,9 @@ import javax.annotation.Nullable;
  */
 // TODO: Add tests once containerize() is added.
 public class JibContainerBuilder {
+
+  @VisibleForTesting
+  static Supplier<ExecutorService> executorServiceFactory = Executors::newCachedThreadPool;
 
   private final ContainerConfiguration.Builder containerConfigurationBuilder =
       ContainerConfiguration.builder();
@@ -417,9 +423,21 @@ public class JibContainerBuilder {
   public JibContainer containerize(Containerizer containerizer)
       throws InterruptedException, ExecutionException, IOException,
           CacheDirectoryCreationException {
-    BuildConfiguration buildConfiguration = toBuildConfiguration(containerizer);
-    BuildResult result = containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();
-    return new JibContainer(result.getImageDigest(), result.getImageId());
+
+    boolean shutdownExecutorService = !containerizer.getExecutorService().isPresent();
+    ExecutorService executorService =
+        containerizer.getExecutorService().orElseGet(executorServiceFactory);
+
+    BuildConfiguration buildConfiguration = toBuildConfiguration(containerizer, executorService);
+
+    try {
+      BuildResult result = containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();
+      return new JibContainer(result.getImageDigest(), result.getImageId());
+    } finally {
+      if (shutdownExecutorService) {
+        executorService.shutdown();
+      }
+    }
   }
 
   /**
@@ -431,7 +449,8 @@ public class JibContainerBuilder {
    * @throws IOException if an I/O exception occurs
    */
   @VisibleForTesting
-  BuildConfiguration toBuildConfiguration(Containerizer containerizer)
+  BuildConfiguration toBuildConfiguration(
+      Containerizer containerizer, ExecutorService executorService)
       throws CacheDirectoryCreationException, IOException {
     buildConfigurationBuilder
         .setTargetImageConfiguration(containerizer.getTargetImage().toImageConfiguration())
@@ -441,9 +460,8 @@ public class JibContainerBuilder {
         .setContainerConfiguration(containerConfigurationBuilder.build())
         .setLayerConfigurations(layerConfigurations)
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
-        .setToolName(containerizer.getToolName());
-
-    containerizer.getExecutorService().ifPresent(buildConfigurationBuilder::setExecutorService);
+        .setToolName(containerizer.getToolName())
+        .setExecutorService(executorService);
 
     containerizer
         .getEventHandlers()
