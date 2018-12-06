@@ -79,19 +79,19 @@ class ListenableCountingOutputStream extends OutputStream {
   @Override
   public void write(int singleByte) throws IOException {
     underlyingOutputStream.write(singleByte);
-    wroteBytes(1);
+    countBytesWritten(1);
   }
 
   @Override
   public void write(byte[] byteArray) throws IOException {
     underlyingOutputStream.write(byteArray);
-    wroteBytes(byteArray.length);
+    countBytesWritten(byteArray.length);
   }
 
   @Override
   public void write(byte byteArray[], int offset, int length) throws IOException {
     underlyingOutputStream.write(byteArray, offset, length);
-    wroteBytes(length);
+    countBytesWritten(length);
   }
 
   @Override
@@ -106,7 +106,7 @@ class ListenableCountingOutputStream extends OutputStream {
     callByteCountConsumer(instantSupplier.get());
   }
 
-  private void wroteBytes(int byteCount) {
+  private void countBytesWritten(int byteCount) {
     this.byteCount += byteCount;
 
     Instant now = instantSupplier.get();
