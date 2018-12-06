@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -99,7 +100,7 @@ public class AllocationCompletionTrackerTest {
 
   @Test
   public void testGetUnfinishedAllocations_multipleThreads()
-      throws InterruptedException, ExecutionException, IOException {
+      throws InterruptedException, ExecutionException, IOException, TimeoutException {
     try (MultithreadedExecutor multithreadedExecutor = new MultithreadedExecutor()) {
       AllocationCompletionTracker allocationCompletionTracker = new AllocationCompletionTracker();
 

@@ -28,6 +28,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /** Testing infrastructure for running code across multiple threads. */
 class MultithreadedExecutor implements Closeable {
@@ -37,20 +38,21 @@ class MultithreadedExecutor implements Closeable {
 
   private final ExecutorService executorService = Executors.newFixedThreadPool(THREAD_COUNT);
 
-  <E> E invoke(Callable<E> callable) throws ExecutionException, InterruptedException {
+  <E> E invoke(Callable<E> callable)
+      throws ExecutionException, InterruptedException, TimeoutException {
     List<E> returnValue = invokeAll(Collections.singletonList(callable));
     return returnValue.get(0);
   }
 
   <E> List<E> invokeAll(List<Callable<E>> callables)
-      throws InterruptedException, ExecutionException {
+      throws InterruptedException, ExecutionException, TimeoutException {
     List<Future<E>> futures =
         executorService.invokeAll(
             callables, MULTITHREADED_TEST_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
     List<E> returnValues = new ArrayList<>();
     for (Future<E> future : futures) {
-      returnValues.add(future.get());
+      returnValues.add(future.get(MULTITHREADED_TEST_TIMEOUT.getSeconds(), TimeUnit.SECONDS));
     }
 
     return returnValues;
