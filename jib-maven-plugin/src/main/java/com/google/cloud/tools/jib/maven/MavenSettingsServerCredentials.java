@@ -142,12 +142,12 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
 
           @Override
           public String getUsernameDescriptor() {
-            return getAuthDescriptor();
+            return CREDENTIAL_SOURCE;
           }
 
           @Override
           public String getPasswordDescriptor() {
-            return getAuthDescriptor();
+            return CREDENTIAL_SOURCE;
           }
         });
   }
