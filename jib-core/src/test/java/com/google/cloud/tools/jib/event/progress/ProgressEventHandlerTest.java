@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -52,72 +53,72 @@ public class ProgressEventHandlerTest {
   private static final double DOUBLE_ERROR_MARGIN = 1e-10;
 
   @Test
-  public void testAccept() throws ExecutionException, InterruptedException {
-    MultithreadedExecutor multithreadedExecutor = new MultithreadedExecutor();
+  public void testAccept() throws ExecutionException, InterruptedException, IOException {
+    try (MultithreadedExecutor multithreadedExecutor = new MultithreadedExecutor()) {
+      ProgressEventHandler progressEventHandler = new ProgressEventHandler(() -> {});
+      EventDispatcher eventDispatcher =
+          new DefaultEventDispatcher(
+              new EventHandlers().add(JibEventType.PROGRESS, progressEventHandler));
 
-    ProgressEventHandler progressEventHandler = new ProgressEventHandler(() -> {});
-    EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(
-            new EventHandlers().add(JibEventType.PROGRESS, progressEventHandler));
+      // Adds root, child1, and child1Child.
+      multithreadedExecutor.invokeAll(
+          Collections.singletonList(
+              () -> {
+                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.root, 0L));
 
-    // Adds root, child1, and child1Child.
-    multithreadedExecutor.invokeAll(
-        Collections.singletonList(
-            () -> {
-              eventDispatcher.dispatch(new ProgressEvent(AllocationTree.root, 0L));
+                multithreadedExecutor.invokeAll(
+                    Collections.singletonList(
+                        () -> {
+                          eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 0L));
 
-              multithreadedExecutor.invokeAll(
-                  Collections.singletonList(
-                      () -> {
-                        eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 0L));
+                          multithreadedExecutor.invokeAll(
+                              Collections.singletonList(
+                                  () -> new ProgressEvent(AllocationTree.child1Child, 0L)));
+                          return null;
+                        }));
+                return null;
+              }));
+      Assert.assertEquals(0.0, progressEventHandler.getProgress(), DOUBLE_ERROR_MARGIN);
 
-                        multithreadedExecutor.invokeAll(
-                            Collections.singletonList(
-                                () -> new ProgressEvent(AllocationTree.child1Child, 0L)));
-                        return null;
-                      }));
-              return null;
-            }));
-    Assert.assertEquals(0.0, progressEventHandler.getProgress(), DOUBLE_ERROR_MARGIN);
+      // Adds 50 to child1Child and 100 to child2.
+      List<Callable<Void>> callables = new ArrayList<>(150);
+      callables.addAll(
+          Collections.nCopies(
+              50,
+              () -> {
+                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 1L));
+                return null;
+              }));
+      callables.addAll(
+          Collections.nCopies(
+              100,
+              () -> {
+                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 1L));
+                return null;
+              }));
 
-    // Adds 50 to child1Child and 100 to child2.
-    List<Callable<Void>> callables = new ArrayList<>(150);
-    callables.addAll(
-        Collections.nCopies(
-            50,
-            () -> {
-              eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 1L));
-              return null;
-            }));
-    callables.addAll(
-        Collections.nCopies(
-            100,
-            () -> {
-              eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 1L));
-              return null;
-            }));
+      multithreadedExecutor.invokeAll(callables);
+      Assert.assertEquals(
+          1.0 / 2 / 100 * 50 + 1.0 / 2 / 200 * 100,
+          progressEventHandler.getProgress(),
+          DOUBLE_ERROR_MARGIN);
 
-    multithreadedExecutor.invokeAll(callables);
-    Assert.assertEquals(
-        1.0 / 2 / 100 * 50 + 1.0 / 2 / 200 * 100,
-        progressEventHandler.getProgress(),
-        DOUBLE_ERROR_MARGIN);
+      // 0 progress doesn't do anything.
+      multithreadedExecutor.invokeAll(
+          Collections.nCopies(
+              100,
+              () -> {
+                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 0L));
+                return null;
+              }));
+      Assert.assertEquals(
+          1.0 / 2 / 100 * 50 + 1.0 / 2 / 200 * 100,
+          progressEventHandler.getProgress(),
+          DOUBLE_ERROR_MARGIN);
 
-    // 0 progress doesn't do anything.
-    multithreadedExecutor.invokeAll(
-        Collections.nCopies(
-            100,
-            () -> {
-              eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 0L));
-              return null;
-            }));
-    Assert.assertEquals(
-        1.0 / 2 / 100 * 50 + 1.0 / 2 / 200 * 100,
-        progressEventHandler.getProgress(),
-        DOUBLE_ERROR_MARGIN);
-
-    // Adds 50 to child1Child and 100 to child2 to finish it up.
-    multithreadedExecutor.invokeAll(callables);
-    Assert.assertEquals(1.0, progressEventHandler.getProgress(), DOUBLE_ERROR_MARGIN);
+      // Adds 50 to child1Child and 100 to child2 to finish it up.
+      multithreadedExecutor.invokeAll(callables);
+      Assert.assertEquals(1.0, progressEventHandler.getProgress(), DOUBLE_ERROR_MARGIN);
+    }
   }
 }

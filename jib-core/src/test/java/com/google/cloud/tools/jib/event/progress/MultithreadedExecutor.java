@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.event.progress;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,11 +29,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /** Testing infrastructure for running code across multiple threads. */
-class MultithreadedExecutor {
+class MultithreadedExecutor implements Closeable {
 
   private static final Duration MULTITHREADED_TEST_TIMEOUT = Duration.ofSeconds(1);
+  private static final int THREAD_COUNT = 20;
 
-  private final ExecutorService executorService = Executors.newFixedThreadPool(20);
+  private final ExecutorService executorService = Executors.newFixedThreadPool(THREAD_COUNT);
 
   <E> List<E> invokeAll(List<Callable<E>> callables)
       throws InterruptedException, ExecutionException {
@@ -45,5 +48,16 @@ class MultithreadedExecutor {
     }
 
     return returnValues;
+  }
+
+  @Override
+  public void close() throws IOException {
+    executorService.shutdown();
+    try {
+      executorService.awaitTermination(MULTITHREADED_TEST_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
+
+    } catch (InterruptedException ex) {
+      throw new IOException(ex);
+    }
   }
 }
