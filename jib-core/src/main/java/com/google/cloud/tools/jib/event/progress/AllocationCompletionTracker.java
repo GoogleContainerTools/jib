@@ -98,7 +98,7 @@ class AllocationCompletionTracker {
             insertionOrderUnits = new InsertionOrderUnits(allocation);
           }
 
-          updateProgress(insertionOrderUnits, units);
+          updateInsertionOrderUnits(insertionOrderUnits, units);
 
           return insertionOrderUnits;
         });
@@ -130,14 +130,17 @@ class AllocationCompletionTracker {
   }
 
   /**
-   * Helper method for {@link #updateProgress(Allocation, long)}. This method is <em>not</em>
-   * thread-safe for the {@code insertionOrderUnits} and should be called atomically relative to the
-   * {@code insertionOrderUnits}.
+   * Helper method for {@link #updateProgress(Allocation, long)}. Adds units to {@code
+   * insertionOrderUnits}. Updates {@link InsertionOrderUnits} for parent {@link Allocation}s if
+   * {@code insertionOrderUnits.units} reached completion (equals {@code
+   * allocation.getAllocationUnits()}. This method is <em>not</em> thread-safe for the {@code
+   * insertionOrderUnits} and should be called atomically relative to the {@code
+   * insertionOrderUnits}.
    *
    * @param insertionOrderUnits the {@link InsertionOrderUnits} to update progress for
    * @param units the units of progress
    */
-  private void updateProgress(InsertionOrderUnits insertionOrderUnits, long units) {
+  private void updateInsertionOrderUnits(InsertionOrderUnits insertionOrderUnits, long units) {
     Allocation allocation = insertionOrderUnits.allocation;
 
     long newUnits = insertionOrderUnits.units.addAndGet(units);
@@ -157,7 +160,7 @@ class AllocationCompletionTracker {
           .getParent()
           .ifPresent(
               parentAllocation ->
-                  updateProgress(
+                  updateInsertionOrderUnits(
                       Preconditions.checkNotNull(completionMap.get(parentAllocation)), 1L));
     }
   }
