@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
+import com.google.cloud.tools.jib.plugins.common.InferredAuthProvider;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
@@ -37,7 +38,7 @@ import org.apache.maven.settings.crypto.SettingsDecryptionResult;
  * Retrieves credentials for servers defined in <a
  * href="https://maven.apache.org/settings.html">Maven settings</a>.
  */
-class MavenSettingsServerCredentials {
+class MavenSettingsServerCredentials implements InferredAuthProvider {
 
   static final String CREDENTIAL_SOURCE = "Maven settings";
 
@@ -84,11 +85,8 @@ class MavenSettingsServerCredentials {
    * @return the auth info for the registry, or {@link Optional#empty} if none could be retrieved
    * @throws InferredAuthRetrievalException if the credentials could not be retrieved
    */
-  Optional<AuthProperty> retrieve(@Nullable String registry) throws InferredAuthRetrievalException {
-    if (registry == null) {
-      return Optional.empty();
-    }
-
+  @Override
+  public Optional<AuthProperty> getAuth(String registry) throws InferredAuthRetrievalException {
     Server registryServer = settings.getServer(registry);
     if (registryServer == null) {
       return Optional.empty();
@@ -135,6 +133,21 @@ class MavenSettingsServerCredentials {
           @Override
           public String getPassword() {
             return password;
+          }
+
+          @Override
+          public String getAuthDescriptor() {
+            return CREDENTIAL_SOURCE;
+          }
+
+          @Override
+          public String getUsernameDescriptor() {
+            return getAuthDescriptor();
+          }
+
+          @Override
+          public String getPasswordDescriptor() {
+            return getAuthDescriptor();
           }
         });
   }

@@ -39,6 +39,9 @@ public class GradleRawConfigurationTest {
 
     Mockito.when(authParameters.getUsername()).thenReturn("user");
     Mockito.when(authParameters.getPassword()).thenReturn("password");
+    Mockito.when(authParameters.getAuthDescriptor()).thenReturn("from.auth");
+    Mockito.when(authParameters.getUsernameDescriptor()).thenReturn("from.auth.username");
+    Mockito.when(authParameters.getPasswordDescriptor()).thenReturn("from.auth.password");
 
     Mockito.when(jibExtension.getFrom()).thenReturn(baseImageParameters);
     Mockito.when(jibExtension.getTo()).thenReturn(targetImageParameters);
@@ -71,9 +74,9 @@ public class GradleRawConfigurationTest {
     AuthProperty fromAuth = rawConfiguration.getFromAuth();
     Assert.assertEquals("user", fromAuth.getUsername());
     Assert.assertEquals("password", fromAuth.getPassword());
-    Assert.assertEquals("test.auth", rawConfiguration.getAuthDescriptor("test"));
-    Assert.assertEquals("test2.auth.username", rawConfiguration.getUsernameAuthDescriptor("test2"));
-    Assert.assertEquals("test3.auth.password", rawConfiguration.getPasswordAuthDescriptor("test3"));
+    Assert.assertEquals("from.auth", fromAuth.getAuthDescriptor());
+    Assert.assertEquals("from.auth.username", fromAuth.getUsernameDescriptor());
+    Assert.assertEquals("from.auth.password", fromAuth.getPasswordDescriptor());
 
     Assert.assertTrue(rawConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals("/app/root", rawConfiguration.getAppRoot());

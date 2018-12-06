@@ -1,3 +1,5 @@
+package com.google.cloud.tools.jib.plugins.common;
+
 /*
  * Copyright 2018 Google LLC.
  *
@@ -14,18 +16,8 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.plugins.common;
-
-import javax.annotation.Nullable;
-
-/** Holds a username and password property. */
-public interface AuthProperty {
-
-  @Nullable
-  String getUsername();
-
-  @Nullable
-  String getPassword();
+/** Returns human-readable sources of auth info. For example, {@code <from>><auth><username>}. */
+public interface AuthDescriptor {
 
   String getAuthDescriptor();
 

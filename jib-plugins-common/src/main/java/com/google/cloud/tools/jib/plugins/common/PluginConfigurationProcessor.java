@@ -54,12 +54,6 @@ import javax.annotation.Nullable;
  */
 public class PluginConfigurationProcessor {
 
-  @FunctionalInterface
-  private interface InferredAuthProvider {
-
-    Optional<AuthProperty> getInferredAuth(String registry) throws InferredAuthRetrievalException;
-  }
-
   /**
    * Compute the container entrypoint, in this order:
    *
@@ -128,6 +122,7 @@ public class PluginConfigurationProcessor {
 
   public static PluginConfigurationProcessor processCommonConfigurationForDockerDaemonImage(
       RawConfiguration rawConfiguration,
+      InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
       @Nullable Path dockerExecutable,
       @Nullable Map<String, String> dockerEnvironment,
@@ -147,11 +142,17 @@ public class PluginConfigurationProcessor {
     Containerizer containerizer = Containerizer.to(targetImage);
 
     return processCommonConfiguration(
-        rawConfiguration, projectProperties, containerizer, targetImageReference, false);
+        rawConfiguration,
+        inferredAuthProvider,
+        projectProperties,
+        containerizer,
+        targetImageReference,
+        false);
   }
 
   public static PluginConfigurationProcessor processCommonConfigurationForTarImage(
       RawConfiguration rawConfiguration,
+      InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
       Path tarImagePath,
       HelpfulSuggestions helpfulSuggestions)
@@ -164,11 +165,18 @@ public class PluginConfigurationProcessor {
     Containerizer containerizer = Containerizer.to(targetImage);
 
     return processCommonConfiguration(
-        rawConfiguration, projectProperties, containerizer, targetImageReference, false);
+        rawConfiguration,
+        inferredAuthProvider,
+        projectProperties,
+        containerizer,
+        targetImageReference,
+        false);
   }
 
   public static PluginConfigurationProcessor processCommonConfigurationForRegistryImage(
-      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+      RawConfiguration rawConfiguration,
+      InferredAuthProvider inferredAuthProvider,
+      ProjectProperties projectProperties)
       throws InferredAuthRetrievalException, InvalidImageReferenceException,
           MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidWorkingDirectoryException, InvalidContainerVolumeException {
@@ -187,16 +195,13 @@ public class PluginConfigurationProcessor {
             PropertyNames.TO_AUTH_USERNAME,
             PropertyNames.TO_AUTH_PASSWORD,
             rawConfiguration.getToAuth(),
-            rawConfiguration.getAuthDescriptor("to"),
-            rawConfiguration.getUsernameAuthDescriptor("to"),
-            rawConfiguration.getPasswordAuthDescriptor("to"),
-            rawConfiguration::getInferredAuth,
-            rawConfiguration.getInferredAuthDescriptor(),
+            inferredAuthProvider,
             rawConfiguration.getToCredHelper().orElse(null));
 
     PluginConfigurationProcessor processor =
         processCommonConfiguration(
             rawConfiguration,
+            inferredAuthProvider,
             projectProperties,
             Containerizer.to(targetImage),
             targetImageReference,
@@ -208,6 +213,7 @@ public class PluginConfigurationProcessor {
   @VisibleForTesting
   static PluginConfigurationProcessor processCommonConfiguration(
       RawConfiguration rawConfiguration,
+      InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
       Containerizer containerizer,
       ImageReference targetImageReference,
@@ -238,11 +244,7 @@ public class PluginConfigurationProcessor {
             PropertyNames.FROM_AUTH_USERNAME,
             PropertyNames.FROM_AUTH_PASSWORD,
             rawConfiguration.getFromAuth(),
-            rawConfiguration.getAuthDescriptor("from"),
-            rawConfiguration.getUsernameAuthDescriptor("from"),
-            rawConfiguration.getPasswordAuthDescriptor("from"),
-            rawConfiguration::getInferredAuth,
-            rawConfiguration.getInferredAuthDescriptor(),
+            inferredAuthProvider,
             rawConfiguration.getFromCredHelper().orElse(null));
 
     JibContainerBuilder jibContainerBuilder =
@@ -350,38 +352,34 @@ public class PluginConfigurationProcessor {
       String usernamePropertyName,
       String passwordPropertyName,
       AuthProperty knownAuth,
-      String knownAuthDescriptor,
-      String knownAuthUsernameDescriptor,
-      String knownAuthPasswordDescriptor,
       InferredAuthProvider inferredAuthProvider,
-      String inferredAuthDescriptor,
       @Nullable String credHelper)
       throws FileNotFoundException, InferredAuthRetrievalException {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
             CredentialRetrieverFactory.forImage(imageReference, eventDispatcher));
-    Optional<Credential> optionalToCredential =
+    Optional<Credential> optionalCredential =
         ConfigurationPropertyValidator.getImageCredential(
             eventDispatcher,
             usernamePropertyName,
             passwordPropertyName,
             knownAuth,
-            knownAuthUsernameDescriptor,
-            knownAuthPasswordDescriptor);
-    boolean credentialPresent = optionalToCredential.isPresent();
-    if (optionalToCredential.isPresent()) {
+            knownAuth.getUsernameDescriptor(),
+            knownAuth.getPasswordDescriptor());
+    boolean credentialPresent = optionalCredential.isPresent();
+    if (optionalCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(
-          optionalToCredential.get(), knownAuthDescriptor);
+          optionalCredential.get(), knownAuth.getAuthDescriptor());
     } else {
       Optional<AuthProperty> optionalInferredAuth =
-          inferredAuthProvider.getInferredAuth(imageReference.getRegistry());
+          inferredAuthProvider.getAuth(imageReference.getRegistry());
       credentialPresent = optionalInferredAuth.isPresent();
       if (optionalInferredAuth.isPresent()) {
         AuthProperty auth = optionalInferredAuth.get();
         String username = Verify.verifyNotNull(auth.getUsername());
         String password = Verify.verifyNotNull(auth.getPassword());
         Credential credential = Credential.basic(username, password);
-        defaultCredentialRetrievers.setInferredCredential(credential, inferredAuthDescriptor);
+        defaultCredentialRetrievers.setInferredCredential(credential, auth.getAuthDescriptor());
       }
     }
     defaultCredentialRetrievers.setCredentialHelper(credHelper);

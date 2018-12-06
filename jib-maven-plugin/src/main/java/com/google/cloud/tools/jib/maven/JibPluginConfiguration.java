@@ -44,11 +44,16 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 /** Defines the configuration parameters for Jib. Jib {@link Mojo}s should extend this class. */
 public abstract class JibPluginConfiguration extends AbstractMojo {
 
-  /** Used to configure {@code from.auth} and {@code to.auth} parameters. */
-  public static class AuthConfiguration implements AuthProperty {
+  /** Base for {@link FromAuthConfiguration} and {@link ToAuthConfiguration}. */
+  private static class AuthConfiguration implements AuthProperty {
 
     @Nullable @Parameter private String username;
     @Nullable @Parameter private String password;
+    private final String source;
+
+    private AuthConfiguration(String source) {
+      this.source = source;
+    }
 
     @Override
     @Nullable
@@ -62,14 +67,35 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return password;
     }
 
-    @VisibleForTesting
-    void setUsername(String username) {
-      this.username = username;
+    @Override
+    public String getAuthDescriptor() {
+      return "<" + source + "><auth>";
     }
 
-    @VisibleForTesting
-    void setPassword(String password) {
-      this.password = password;
+    @Override
+    public String getUsernameDescriptor() {
+      return getAuthDescriptor() + "<username>";
+    }
+
+    @Override
+    public String getPasswordDescriptor() {
+      return getAuthDescriptor() + "<password>";
+    }
+  }
+
+  /** Used to configure {@code from.auth} parameters. */
+  public static class FromAuthConfiguration extends AuthConfiguration {
+
+    public FromAuthConfiguration() {
+      super("from");
+    }
+  }
+
+  /** Used to configure {@code to.auth} parameters. */
+  public static class ToAuthConfiguration extends AuthConfiguration {
+
+    public ToAuthConfiguration() {
+      super("to");
     }
   }
 
@@ -106,7 +132,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private String credHelper;
 
-    @Parameter private AuthConfiguration auth = new AuthConfiguration();
+    @Parameter private FromAuthConfiguration auth = new FromAuthConfiguration();
   }
 
   /** Configuration for {@code to} parameter, where image is required. */
@@ -118,7 +144,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private String credHelper;
 
-    @Parameter private AuthConfiguration auth = new AuthConfiguration();
+    @Parameter private ToAuthConfiguration auth = new ToAuthConfiguration();
 
     public void set(String image) {
       this.image = image;
