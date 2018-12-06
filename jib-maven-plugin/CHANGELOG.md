@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+- `gwt-app` packaging type now builds a WAR container.
 
 ### Fixed
 
