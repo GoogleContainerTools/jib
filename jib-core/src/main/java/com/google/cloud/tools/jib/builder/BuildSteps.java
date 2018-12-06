@@ -55,19 +55,19 @@ public class BuildSteps {
         DESCRIPTION_FOR_DOCKER_REGISTRY,
         buildConfiguration,
         () ->
-            new StepsRunner(buildConfiguration)
-                .runRetrieveTargetRegistryCredentialsStep()
-                .runAuthenticatePushStep()
-                .runPullBaseImageStep()
-                .runPullAndCacheBaseImageLayersStep()
-                .runPushBaseImageLayersStep()
-                .runBuildAndCacheApplicationLayerSteps()
-                .runBuildImageStep()
-                .runPushContainerConfigurationStep()
-                .runPushApplicationLayersStep()
-                .runFinalizingPushStep()
-                .runPushImageStep()
-                .waitOnPushImageStep());
+            StepsRunner.begin(buildConfiguration)
+                .retrieveTargetRegistryCredentials()
+                .authenticatePush()
+                .pullBaseImage()
+                .pullAndCacheBaseImageLayers()
+                .pushBaseImageLayers()
+                .buildAndCacheApplicationLayers()
+                .buildImage()
+                .pushContainerConfiguration()
+                .pushApplicationLayers()
+                .finalizingPush()
+                .pushImage()
+                .waitOnPushImage());
   }
 
   /**
@@ -83,14 +83,14 @@ public class BuildSteps {
         DESCRIPTION_FOR_DOCKER_DAEMON,
         buildConfiguration,
         () ->
-            new StepsRunner(buildConfiguration)
-                .runPullBaseImageStep()
-                .runPullAndCacheBaseImageLayersStep()
-                .runBuildAndCacheApplicationLayerSteps()
-                .runBuildImageStep()
-                .runFinalizingBuildStep()
-                .runLoadDockerStep(dockerClient)
-                .waitOnLoadDockerStep());
+            StepsRunner.begin(buildConfiguration)
+                .pullBaseImage()
+                .pullAndCacheBaseImageLayers()
+                .buildAndCacheApplicationLayers()
+                .buildImage()
+                .finalizingBuild()
+                .loadDocker(dockerClient)
+                .waitOnLoadDocker());
   }
 
   /**
@@ -105,14 +105,14 @@ public class BuildSteps {
         DESCRIPTION_FOR_TARBALL,
         buildConfiguration,
         () ->
-            new StepsRunner(buildConfiguration)
-                .runPullBaseImageStep()
-                .runPullAndCacheBaseImageLayersStep()
-                .runBuildAndCacheApplicationLayerSteps()
-                .runBuildImageStep()
-                .runFinalizingBuildStep()
-                .runWriteTarFileStep(outputPath)
-                .waitOnWriteTarFileStep());
+            StepsRunner.begin(buildConfiguration)
+                .pullBaseImage()
+                .pullAndCacheBaseImageLayers()
+                .buildAndCacheApplicationLayers()
+                .buildImage()
+                .finalizingBuild()
+                .writeTarFile(outputPath)
+                .waitOnWriteTarFile());
   }
 
   private final String description;
