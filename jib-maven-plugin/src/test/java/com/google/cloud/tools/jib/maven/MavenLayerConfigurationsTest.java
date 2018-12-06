@@ -347,4 +347,32 @@ public class MavenLayerConfigurationsTest {
     MavenLayerConfigurations.getForProject(
         mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot); // should pass
   }
+
+  @Test
+  public void testIsWarProject_WarPackagingIsWar() throws IOException {
+    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
+
+    Assert.assertTrue(MojoCommon.isWarProject(mockMavenProject));
+  }
+
+  @Test
+  public void testIsWarProject_GwtAppPackagingIsWar() throws IOException {
+    Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-app");
+
+    Assert.assertTrue(MojoCommon.isWarProject(mockMavenProject));
+  }
+
+  @Test
+  public void testIsWarProject_JarPackagingIsNotWar() throws IOException {
+    Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
+
+    Assert.assertFalse(MojoCommon.isWarProject(mockMavenProject));
+  }
+
+  @Test
+  public void testIsWarProject_GwtLibPackagingIsNotWar() throws IOException {
+    Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-lib");
+
+    Assert.assertFalse(MojoCommon.isWarProject(mockMavenProject));
+  }
 }
