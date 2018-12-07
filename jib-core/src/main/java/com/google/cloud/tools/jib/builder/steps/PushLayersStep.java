@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
@@ -55,7 +56,9 @@ class PushLayersStep
     this.cachedLayerStep = cachedLayerStep;
 
     listenableFuture =
-        Futures.whenAllSucceed(cachedLayerStep.getFuture()).call(this, listeningExecutorService);
+        AsyncDependencies.using(listeningExecutorService)
+            .addStep(cachedLayerStep)
+            .whenAllSucceed(this);
   }
 
   @Override
