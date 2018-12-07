@@ -2,7 +2,7 @@
 
 ## How to start the Dropwizard application
 
-1. Run `./mvnw clean package -Djib.to.image=dropwizard-jib-example` to build your container
+1. Run `./mvnw clean package` to build your container
 1. Start the application
     - **With Docker**: `docker run --rm -p 8080:8080 dropwizard-jib-example:1`
     - **Without Docker**: `./mvnw exec:java`

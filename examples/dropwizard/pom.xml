@@ -7,11 +7,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>example</groupId>
-    <artifactId>dropwizard</artifactId>
+    <artifactId>dropwizard-jib-example</artifactId>
     <version>1</version>
     <packaging>jar</packaging>
-
-    <name>Dropwizard Jib Example</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -20,13 +18,13 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
 
+        <!-- for exec-maven-plugin -->
         <mainClass>example.JibExampleApplication</mainClass>
 
         <dropwizard.version>1.3.7</dropwizard.version>
         <dropwizard.server.config>dropwizard.yml</dropwizard.server.config>
         <dropwizard-template-config.version>1.5.0</dropwizard-template-config.version>
 
-        <jib.to.image>gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib</jib.to.image>
         <jib.container.appRoot>/app</jib.container.appRoot>
         <jib-maven-plugin.version>0.10.1</jib-maven-plugin.version>
     </properties>
@@ -63,14 +61,7 @@
                 <artifactId>jib-maven-plugin</artifactId>
                 <version>${jib-maven-plugin.version}</version>
                 <configuration>
-                    <to>
-                        <image>${jib.to.image}</image>
-                        <tags>
-                            <tag>${project.version}</tag>
-                        </tags>
-                    </to>
                     <container>
-                        <mainClass>${mainClass}</mainClass>
                         <args>
                             <arg>server</arg>
                             <arg>${jib.container.appRoot}/resources/${dropwizard.server.config}</arg>
@@ -109,16 +100,7 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
-                <executions>
-                    <execution>
-                        <id>java</id>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                    </execution>
-                </executions>
                 <configuration>
-                    <executable>java</executable>
                     <mainClass>${mainClass}</mainClass>
                     <arguments>
                         <argument>server</argument>
