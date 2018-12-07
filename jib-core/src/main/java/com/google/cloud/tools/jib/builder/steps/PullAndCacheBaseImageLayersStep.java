@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
@@ -25,6 +24,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.concurrent.Callable;
@@ -52,9 +52,7 @@ class PullAndCacheBaseImageLayersStep
     this.pullBaseImageStep = pullBaseImageStep;
 
     listenableFuture =
-        AsyncDependencies.using(listeningExecutorService)
-            .addStep(pullBaseImageStep)
-            .whenAllSucceed(this);
+        Futures.whenAllSucceed(pullBaseImageStep.getFuture()).call(this, listeningExecutorService);
   }
 
   @Override
