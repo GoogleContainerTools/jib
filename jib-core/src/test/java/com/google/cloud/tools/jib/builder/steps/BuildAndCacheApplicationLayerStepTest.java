@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.Layer;
@@ -129,7 +130,9 @@ public class BuildAndCacheApplicationLayerStepTest {
 
     ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
         BuildAndCacheApplicationLayerStep.makeList(
-            MoreExecutors.newDirectExecutorService(), mockBuildConfiguration);
+            MoreExecutors.newDirectExecutorService(),
+            mockBuildConfiguration,
+            Allocation.newRoot("ignored", 1));
 
     for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
         buildAndCacheApplicationLayerSteps) {

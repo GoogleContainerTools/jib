@@ -21,8 +21,9 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
-import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -41,25 +42,33 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
 
   /** Retrieves credentials for the base image. */
   static RetrieveRegistryCredentialsStep forBaseImage(
-      ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
+      ListeningExecutorService listeningExecutorService,
+      BuildConfiguration buildConfiguration,
+      Allocation parentProgressAllocation) {
     return new RetrieveRegistryCredentialsStep(
         listeningExecutorService,
-        buildConfiguration.getEventDispatcher(),
+        buildConfiguration,
+        parentProgressAllocation,
         buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
         buildConfiguration.getBaseImageConfiguration().getCredentialRetrievers());
   }
 
   /** Retrieves credentials for the target image. */
   static RetrieveRegistryCredentialsStep forTargetImage(
-      ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
+      ListeningExecutorService listeningExecutorService,
+      BuildConfiguration buildConfiguration,
+      Allocation parentProgressAllocation) {
     return new RetrieveRegistryCredentialsStep(
         listeningExecutorService,
-        buildConfiguration.getEventDispatcher(),
+        buildConfiguration,
+        parentProgressAllocation,
         buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
         buildConfiguration.getTargetImageConfiguration().getCredentialRetrievers());
   }
 
-  private final EventDispatcher eventDispatcher;
+  private final BuildConfiguration buildConfiguration;
+  private final Allocation parentProgressAllocation;
+
   private final String registry;
   private final ImmutableList<CredentialRetriever> credentialRetrievers;
 
@@ -68,10 +77,12 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
   @VisibleForTesting
   RetrieveRegistryCredentialsStep(
       ListeningExecutorService listeningExecutorService,
-      EventDispatcher eventDispatcher,
+      BuildConfiguration buildConfiguration,
+      Allocation parentProgressAllocation,
       String registry,
       ImmutableList<CredentialRetriever> credentialRetrievers) {
-    this.eventDispatcher = eventDispatcher;
+    this.buildConfiguration = buildConfiguration;
+    this.parentProgressAllocation = parentProgressAllocation;
     this.registry = registry;
     this.credentialRetrievers = credentialRetrievers;
 
@@ -87,20 +98,30 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
   @Nullable
   public Credential call() throws CredentialRetrievalException {
     String description = makeDescription(registry);
-    eventDispatcher.dispatch(LogEvent.lifecycle(description + "..."));
 
-    try (TimerEventDispatcher ignored = new TimerEventDispatcher(eventDispatcher, description)) {
+    buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(description + "..."));
+    Allocation progressAllocation =
+        parentProgressAllocation.newChild("Retrieve registry credentials for " + registry, 1);
+    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
+
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
       for (CredentialRetriever credentialRetriever : credentialRetrievers) {
         Optional<Credential> optionalCredential = credentialRetriever.retrieve();
         if (optionalCredential.isPresent()) {
+          buildConfiguration
+              .getEventDispatcher()
+              .dispatch(new ProgressEvent(progressAllocation, 1));
           return optionalCredential.get();
         }
       }
 
       // If no credentials found, give an info (not warning because in most cases, the base image is
       // public and does not need extra credentials) and return null.
-      eventDispatcher.dispatch(
-          LogEvent.info("No credentials could be retrieved for registry " + registry));
+      buildConfiguration
+          .getEventDispatcher()
+          .dispatch(LogEvent.info("No credentials could be retrieved for registry " + registry));
+      buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 1));
       return null;
     }
   }

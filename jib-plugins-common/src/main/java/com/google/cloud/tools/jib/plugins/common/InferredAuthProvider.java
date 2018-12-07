@@ -16,20 +16,10 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import javax.annotation.Nullable;
+import java.util.Optional;
 
-/** Holds a username and password property. */
-public interface AuthProperty {
+/** Provides inferred auth information. */
+public interface InferredAuthProvider {
 
-  @Nullable
-  String getUsername();
-
-  @Nullable
-  String getPassword();
-
-  String getAuthDescriptor();
-
-  String getUsernameDescriptor();
-
-  String getPasswordDescriptor();
+  Optional<AuthProperty> getAuth(String registry) throws InferredAuthRetrievalException;
 }

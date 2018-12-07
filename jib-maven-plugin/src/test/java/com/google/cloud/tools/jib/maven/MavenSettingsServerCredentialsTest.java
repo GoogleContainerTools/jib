@@ -58,7 +58,7 @@ public class MavenSettingsServerCredentialsTest {
     Mockito.when(mockServer1.getUsername()).thenReturn("server1 username");
     Mockito.when(mockServer1.getPassword()).thenReturn("server1 password");
 
-    Optional<AuthProperty> auth = testMavenSettingsServerCredentials.retrieve("server1");
+    Optional<AuthProperty> auth = testMavenSettingsServerCredentials.getAuth("server1");
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("server1 username", auth.get().getUsername());
     Assert.assertEquals("server1 password", auth.get().getPassword());
@@ -68,12 +68,12 @@ public class MavenSettingsServerCredentialsTest {
 
   @Test
   public void testRetrieve_notFound() throws InferredAuthRetrievalException {
-    Assert.assertFalse(testMavenSettingsServerCredentials.retrieve("serverUnknown").isPresent());
+    Assert.assertFalse(testMavenSettingsServerCredentials.getAuth("serverUnknown").isPresent());
   }
 
   @Test
   public void testRetrieve_withNullServer() throws InferredAuthRetrievalException {
-    Assert.assertFalse(testMavenSettingsServerCredentials.retrieve(null).isPresent());
+    Assert.assertFalse(testMavenSettingsServerCredentials.getAuth(null).isPresent());
   }
 
   @Test
@@ -82,7 +82,7 @@ public class MavenSettingsServerCredentialsTest {
     Mockito.when(mockServer1.getUsername()).thenReturn("server1 username");
     Mockito.when(mockServer1.getPassword()).thenReturn("{COQLCE6DU6GtcS5P=}");
 
-    Optional<AuthProperty> auth = testMavenSettingsServerCredentials.retrieve("server1");
+    Optional<AuthProperty> auth = testMavenSettingsServerCredentials.getAuth("server1");
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("server1 username", auth.get().getUsername());
     Assert.assertEquals("{COQLCE6DU6GtcS5P=}", auth.get().getPassword());
@@ -109,7 +109,7 @@ public class MavenSettingsServerCredentialsTest {
     Mockito.when(mockServer1.getUsername()).thenReturn("server1 username");
     Mockito.when(mockServer1.getPassword()).thenReturn("server1 password");
 
-    Optional<AuthProperty> auth = testMavenSettingsServerCredentials.retrieve("server1");
+    Optional<AuthProperty> auth = testMavenSettingsServerCredentials.getAuth("server1");
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("server1 username", auth.get().getUsername());
     Assert.assertEquals("server1 password", auth.get().getPassword());
@@ -140,7 +140,7 @@ public class MavenSettingsServerCredentialsTest {
     Mockito.when(mockSettings.getServer("server1")).thenReturn(mockServer1);
 
     try {
-      testMavenSettingsServerCredentials.retrieve("server1");
+      testMavenSettingsServerCredentials.getAuth("server1");
       Assert.fail("decryption should have failed");
     } catch (InferredAuthRetrievalException ex) {
       Assert.assertEquals(

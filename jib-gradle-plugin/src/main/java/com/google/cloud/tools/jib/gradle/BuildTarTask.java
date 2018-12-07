@@ -29,10 +29,10 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
-import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Optional;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -111,7 +111,6 @@ public class BuildTarTask extends DefaultTask implements JibTask {
               jibExtension.getExtraDirectory().getPath(),
               jibExtension.getExtraDirectory().getPermissions(),
               appRoot);
-      RawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
 
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
@@ -119,7 +118,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
       Path tarOutputPath = getTargetPath();
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForTarImage(
-              rawConfiguration,
+              new GradleRawConfiguration(jibExtension),
+              ignored -> Optional.empty(),
               projectProperties,
               tarOutputPath,
               gradleHelpfulSuggestionsBuilder.build());

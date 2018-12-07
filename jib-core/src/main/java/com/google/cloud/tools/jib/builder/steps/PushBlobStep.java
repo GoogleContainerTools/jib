@@ -23,6 +23,8 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.util.concurrent.Futures;
@@ -38,6 +40,8 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   private static final String DESCRIPTION = "Pushing BLOB ";
 
   private final BuildConfiguration buildConfiguration;
+  private final Allocation parentProgressAllocation;
+
   private final AuthenticatePushStep authenticatePushStep;
   private final BlobDescriptor blobDescriptor;
   private final Blob blob;
@@ -47,10 +51,12 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   PushBlobStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
+      Allocation parentProgressAllocation,
       AuthenticatePushStep authenticatePushStep,
       BlobDescriptor blobDescriptor,
       Blob blob) {
     this.buildConfiguration = buildConfiguration;
+    this.parentProgressAllocation = parentProgressAllocation;
     this.authenticatePushStep = authenticatePushStep;
     this.blobDescriptor = blobDescriptor;
     this.blob = blob;
@@ -67,6 +73,10 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
 
   @Override
   public BlobDescriptor call() throws IOException, RegistryException, ExecutionException {
+    Allocation progressAllocation =
+        parentProgressAllocation.newChild("push blob " + blobDescriptor.getDigest(), 1);
+    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
+
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(
             buildConfiguration.getEventDispatcher(), DESCRIPTION + blobDescriptor)) {
@@ -81,6 +91,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
         buildConfiguration
             .getEventDispatcher()
             .dispatch(LogEvent.info("BLOB : " + blobDescriptor + " already exists on registry"));
+        buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 1));
         return blobDescriptor;
       }
 
@@ -92,6 +103,8 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
           alsoIgnored -> {
             // TODO: Replace with progress-reporting.
           });
+
+      buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 1));
 
       return blobDescriptor;
     }

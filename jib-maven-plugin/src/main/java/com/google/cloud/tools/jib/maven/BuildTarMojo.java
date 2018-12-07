@@ -30,7 +30,6 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
-import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -73,7 +72,6 @@ public class BuildTarMojo extends JibPluginConfiguration {
               appRoot);
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
-      RawConfiguration rawConfiguration = new MavenRawConfiguration(this, eventDispatcher);
 
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
@@ -82,7 +80,9 @@ public class BuildTarMojo extends JibPluginConfiguration {
       Path tarOutputPath = buildOutput.resolve("jib-image.tar");
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForTarImage(
-              rawConfiguration,
+              new MavenRawConfiguration(this),
+              new MavenSettingsServerCredentials(
+                  getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
               projectProperties,
               tarOutputPath,
               mavenHelpfulSuggestionsBuilder.build());
