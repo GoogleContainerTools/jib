@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - `gwt-app` packaging type now builds a WAR container.
+- When building to Docker and no `<to><image>` is defined, artifact ID is used as an image reference instead of project name.
 
 ### Fixed
 

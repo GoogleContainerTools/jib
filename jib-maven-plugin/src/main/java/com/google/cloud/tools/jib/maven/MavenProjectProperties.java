@@ -164,7 +164,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @Override
   public String getName() {
-    return project.getName();
+    return project.getArtifactId();
   }
 
   @Override
