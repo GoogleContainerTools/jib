@@ -148,7 +148,7 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public Path getCacheDirectory() {
+  public Path getDefaultCacheDirectory() {
     return Paths.get(project.getBuild().getDirectory(), CACHE_DIRECTORY_NAME);
   }
 

@@ -40,6 +40,7 @@ import com.google.common.base.Verify;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
@@ -421,14 +422,36 @@ public class PluginConfigurationProcessor {
         .setToolName(projectProperties.getToolName())
         .setEventHandlers(projectProperties.getEventHandlers())
         .setAllowInsecureRegistries(rawConfiguration.getAllowInsecureRegistries())
-        .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
-        .setApplicationLayersCache(projectProperties.getCacheDirectory());
+        .setBaseImageLayersCache(
+            getCheckedCacheDirectory(
+                PropertyNames.BASE_IMAGE_CACHE, Containerizer.DEFAULT_BASE_CACHE_DIRECTORY))
+        .setApplicationLayersCache(
+            getCheckedCacheDirectory(
+                PropertyNames.APPLICATION_CACHE, projectProperties.getDefaultCacheDirectory()));
 
     rawConfiguration.getToTags().forEach(containerizer::withAdditionalTag);
 
     if (rawConfiguration.getUseOnlyProjectCache()) {
-      containerizer.setBaseImageLayersCache(projectProperties.getCacheDirectory());
+      containerizer.setBaseImageLayersCache(
+          getCheckedCacheDirectory(
+              PropertyNames.BASE_IMAGE_CACHE, projectProperties.getDefaultCacheDirectory()));
     }
+  }
+
+  /**
+   * Returns the value of a cache directory system property if it is set, otherwise returns {@code
+   * defaultPath}.
+   *
+   * @param property the name of the system property to check
+   * @param defaultPath the path to return if the system property isn't set
+   * @return the value of a cache directory system property if it is set, otherwise returns {@code
+   *     defaultPath}
+   */
+  private static Path getCheckedCacheDirectory(String property, Path defaultPath) {
+    if (System.getProperty(property) != null) {
+      return Paths.get(System.getProperty(property));
+    }
+    return defaultPath;
   }
 
   private final JibContainerBuilder jibContainerBuilder;

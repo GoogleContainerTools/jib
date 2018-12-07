@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `jib.baseImageCache` and `jib.applicationCache` system properties for setting cache directories ([#1238](https://github.com/GoogleContainerTools/jib/issues/1238))
+
 ### Changed
 - `gwt-app` packaging type now builds a WAR container.
 

@@ -75,7 +75,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");
     Mockito.when(projectProperties.getEventHandlers())
         .thenReturn(new EventHandlers().add(JibEventType.LOGGING, logger));
-    Mockito.when(projectProperties.getCacheDirectory()).thenReturn(Paths.get("cache"));
+    Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
 
     Mockito.when(containerizer.setToolName(Mockito.anyString())).thenReturn(containerizer);
     Mockito.when(containerizer.setEventHandlers(Mockito.any(EventHandlers.class)))
@@ -103,8 +103,30 @@ public class PluginConfigurationProcessorTest {
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
 
+    Mockito.verify(containerizer)
+        .setBaseImageLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY);
+    Mockito.verify(containerizer).setApplicationLayersCache(Paths.get("cache"));
+
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
     Mockito.verify(logger, Mockito.never()).accept(Mockito.argThat(isLogWarn));
+  }
+
+  @Test
+  public void testPluginConfigurationProcessor_cacheDirectorySystemProperties()
+      throws InferredAuthRetrievalException, InvalidContainerVolumeException,
+          MainClassInferenceException, InvalidAppRootException, IOException,
+          InvalidWorkingDirectoryException, InvalidImageReferenceException {
+    System.setProperty(PropertyNames.BASE_IMAGE_CACHE, "new/base/cache");
+    System.setProperty(PropertyNames.APPLICATION_CACHE, "/new/application/cache");
+
+    PluginConfigurationProcessor.processCommonConfiguration(
+        rawConfiguration, projectProperties, containerizer, targetImageReference, false);
+
+    Mockito.verify(containerizer).setBaseImageLayersCache(Paths.get("new/base/cache"));
+    Mockito.verify(containerizer).setApplicationLayersCache(Paths.get("/new/application/cache"));
+
+    System.clearProperty(PropertyNames.BASE_IMAGE_CACHE);
+    System.clearProperty(PropertyNames.APPLICATION_CACHE);
   }
 
   @Test
@@ -179,7 +201,6 @@ public class PluginConfigurationProcessorTest {
 
     JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
     BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
-    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verifyZeroInteractions(logger);
