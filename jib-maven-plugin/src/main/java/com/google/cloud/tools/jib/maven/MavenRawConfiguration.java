@@ -16,10 +16,8 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import java.util.List;
 import java.util.Map;
@@ -29,22 +27,14 @@ import java.util.Optional;
 class MavenRawConfiguration implements RawConfiguration {
 
   private final JibPluginConfiguration jibPluginConfiguration;
-  private final MavenSettingsServerCredentials mavenSettingsServerCredentials;
 
   /**
    * Creates a raw configuration instances.
    *
    * @param jibPluginConfiguration the Jib plugin configuration
-   * @param eventDispatcher Jib event dispatcher
    */
-  MavenRawConfiguration(
-      JibPluginConfiguration jibPluginConfiguration, EventDispatcher eventDispatcher) {
+  MavenRawConfiguration(JibPluginConfiguration jibPluginConfiguration) {
     this.jibPluginConfiguration = jibPluginConfiguration;
-    mavenSettingsServerCredentials =
-        new MavenSettingsServerCredentials(
-            jibPluginConfiguration.getSession().getSettings(),
-            jibPluginConfiguration.getSettingsDecrypter(),
-            eventDispatcher);
   }
 
   @Override
@@ -70,21 +60,6 @@ class MavenRawConfiguration implements RawConfiguration {
   @Override
   public AuthProperty getToAuth() {
     return jibPluginConfiguration.getTargetImageAuth();
-  }
-
-  @Override
-  public String getAuthDescriptor(String source) {
-    return "<" + source + "><auth>";
-  }
-
-  @Override
-  public String getUsernameAuthDescriptor(String source) {
-    return getAuthDescriptor(source) + "<username>";
-  }
-
-  @Override
-  public String getPasswordAuthDescriptor(String source) {
-    return getAuthDescriptor(source) + "<password>";
   }
 
   @Override
@@ -165,17 +140,6 @@ class MavenRawConfiguration implements RawConfiguration {
   @Override
   public boolean getUseOnlyProjectCache() {
     return jibPluginConfiguration.getUseOnlyProjectCache();
-  }
-
-  @Override
-  public Optional<AuthProperty> getInferredAuth(String authTarget)
-      throws InferredAuthRetrievalException {
-    return mavenSettingsServerCredentials.retrieve(authTarget);
-  }
-
-  @Override
-  public String getInferredAuthDescriptor() {
-    return MavenSettingsServerCredentials.CREDENTIAL_SOURCE;
   }
 
   @Override

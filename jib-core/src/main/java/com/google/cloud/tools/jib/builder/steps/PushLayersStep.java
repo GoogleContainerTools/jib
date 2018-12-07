@@ -22,6 +22,8 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -36,21 +38,25 @@ class PushLayersStep
   private static final String DESCRIPTION = "Setting up to push layers";
 
   private final BuildConfiguration buildConfiguration;
+  private final ListeningExecutorService listeningExecutorService;
+  private final Allocation parentProgressAllocation;
+
   private final AuthenticatePushStep authenticatePushStep;
   private final AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CachedLayer>>>
       cachedLayerStep;
 
-  private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<ImmutableList<AsyncStep<PushBlobStep>>> listenableFuture;
 
   PushLayersStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
+      Allocation parentProgressAllocation,
       AuthenticatePushStep authenticatePushStep,
       AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CachedLayer>>>
           cachedLayerStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
+    this.parentProgressAllocation = parentProgressAllocation;
     this.authenticatePushStep = authenticatePushStep;
     this.cachedLayerStep = cachedLayerStep;
 
@@ -86,9 +92,15 @@ class PushLayersStep
   private PushBlobStep makePushBlobStep(AsyncStep<? extends CachedLayer> cachedLayerStep)
       throws ExecutionException {
     CachedLayer cachedLayer = NonBlockingSteps.get(cachedLayerStep);
+
+    Allocation progressAllocation =
+        parentProgressAllocation.newChild("push layer " + cachedLayer.getDigest(), 1);
+    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
+
     return new PushBlobStep(
         listeningExecutorService,
         buildConfiguration,
+        progressAllocation,
         authenticatePushStep,
         new BlobDescriptor(cachedLayer.getSize(), cachedLayer.getDigest()),
         cachedLayer.getBlob());

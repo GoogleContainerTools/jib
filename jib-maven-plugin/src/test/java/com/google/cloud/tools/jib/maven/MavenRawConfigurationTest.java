@@ -17,9 +17,8 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.maven.JibPluginConfiguration.AuthConfiguration;
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration.FromAuthConfiguration;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,7 +34,7 @@ import org.mockito.Mockito;
 public class MavenRawConfigurationTest {
 
   @Test
-  public void testGetters() throws InferredAuthRetrievalException {
+  public void testGetters() {
     JibPluginConfiguration jibPluginConfiguration = Mockito.mock(JibPluginConfiguration.class);
     EventDispatcher eventDispatcher = Mockito.mock(EventDispatcher.class);
 
@@ -49,9 +48,12 @@ public class MavenRawConfigurationTest {
     MavenSession mavenSession = Mockito.mock(MavenSession.class);
     Mockito.when(mavenSession.getSettings()).thenReturn(mavenSettings);
 
-    AuthConfiguration auth = Mockito.mock(AuthConfiguration.class);
+    FromAuthConfiguration auth = Mockito.mock(FromAuthConfiguration.class);
     Mockito.when(auth.getUsername()).thenReturn("user");
     Mockito.when(auth.getPassword()).thenReturn("password");
+    Mockito.when(auth.getAuthDescriptor()).thenReturn("<from><auth>");
+    Mockito.when(auth.getUsernameDescriptor()).thenReturn("<from><auth><username>");
+    Mockito.when(auth.getPasswordDescriptor()).thenReturn("<from><auth><password>");
 
     Mockito.when(jibPluginConfiguration.getSession()).thenReturn(mavenSession);
     Mockito.when(jibPluginConfiguration.getBaseImageAuth()).thenReturn(auth);
@@ -75,23 +77,14 @@ public class MavenRawConfigurationTest {
     Mockito.when(jibPluginConfiguration.getUseOnlyProjectCache()).thenReturn(true);
     Mockito.when(jibPluginConfiguration.getUser()).thenReturn("admin:wheel");
 
-    MavenRawConfiguration rawConfiguration =
-        new MavenRawConfiguration(jibPluginConfiguration, eventDispatcher);
+    MavenRawConfiguration rawConfiguration = new MavenRawConfiguration(jibPluginConfiguration);
 
     AuthProperty fromAuth = rawConfiguration.getFromAuth();
     Assert.assertEquals("user", fromAuth.getUsername());
     Assert.assertEquals("password", fromAuth.getPassword());
-    Assert.assertEquals("<test><auth>", rawConfiguration.getAuthDescriptor("test"));
-    Assert.assertEquals(
-        "<test><auth><username>", rawConfiguration.getUsernameAuthDescriptor("test"));
-    Assert.assertEquals(
-        "<test><auth><password>", rawConfiguration.getPasswordAuthDescriptor("test"));
-
-    AuthProperty mavenSettingsAuth = rawConfiguration.getInferredAuth("base registry").get();
-    Assert.assertEquals("maven settings user", mavenSettingsAuth.getUsername());
-    Assert.assertEquals("maven settings password", mavenSettingsAuth.getPassword());
-
-    Assert.assertFalse(rawConfiguration.getInferredAuth("unknown registry").isPresent());
+    Assert.assertEquals("<from><auth>", fromAuth.getAuthDescriptor());
+    Assert.assertEquals("<from><auth><username>", fromAuth.getUsernameDescriptor());
+    Assert.assertEquals("<from><auth><password>", fromAuth.getPasswordDescriptor());
 
     Assert.assertTrue(rawConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Arrays.asList("java", "Main"), rawConfiguration.getEntrypoint().get());

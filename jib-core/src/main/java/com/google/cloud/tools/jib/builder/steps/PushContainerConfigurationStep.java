@@ -22,6 +22,8 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
@@ -40,19 +42,23 @@ class PushContainerConfigurationStep
   private static final String DESCRIPTION = "Pushing container configuration";
 
   private final BuildConfiguration buildConfiguration;
+  private final ListeningExecutorService listeningExecutorService;
+  private final Allocation parentProgressAllocation;
+
   private final AuthenticatePushStep authenticatePushStep;
   private final BuildImageStep buildImageStep;
 
-  private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<AsyncStep<PushBlobStep>> listenableFuture;
 
   PushContainerConfigurationStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
+      Allocation parentProgressAllocation,
       AuthenticatePushStep authenticatePushStep,
       BuildImageStep buildImageStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
+    this.parentProgressAllocation = parentProgressAllocation;
     this.authenticatePushStep = authenticatePushStep;
     this.buildImageStep = buildImageStep;
 
@@ -76,6 +82,10 @@ class PushContainerConfigurationStep
 
   private PushBlobStep afterBuildConfigurationFutureFuture()
       throws ExecutionException, IOException {
+    Allocation progressAllocation =
+        parentProgressAllocation.newChild("push container configuration", 1);
+    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
+
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
@@ -87,6 +97,7 @@ class PushContainerConfigurationStep
       return new PushBlobStep(
           listeningExecutorService,
           buildConfiguration,
+          progressAllocation,
           authenticatePushStep,
           blobDescriptor,
           containerConfigurationBlob);

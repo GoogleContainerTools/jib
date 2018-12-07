@@ -22,6 +22,8 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -38,6 +40,8 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
   private static final String DESCRIPTION = "Pulling base image layer %s";
 
   private final BuildConfiguration buildConfiguration;
+  private final Allocation parentProgressAllocation;
+
   private final DescriptorDigest layerDigest;
   private final @Nullable Authorization pullAuthorization;
 
@@ -46,9 +50,11 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
   PullAndCacheBaseImageLayerStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
+      Allocation parentProgressAllocation,
       DescriptorDigest layerDigest,
       @Nullable Authorization pullAuthorization) {
     this.buildConfiguration = buildConfiguration;
+    this.parentProgressAllocation = parentProgressAllocation;
     this.layerDigest = layerDigest;
     this.pullAuthorization = pullAuthorization;
 
@@ -62,6 +68,10 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
 
   @Override
   public CachedLayer call() throws IOException, CacheCorruptedException {
+    Allocation progressAllocation =
+        parentProgressAllocation.newChild("pull base image layer " + layerDigest, 1);
+    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
+
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(
             buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, layerDigest))) {
@@ -70,6 +80,7 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
       // Checks if the layer already exists in the cache.
       Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerDigest);
       if (optionalCachedLayer.isPresent()) {
+        buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 1));
         return optionalCachedLayer.get();
       }
 
@@ -78,7 +89,11 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
               .newBaseImageRegistryClientFactory()
               .setAuthorization(pullAuthorization)
               .newRegistryClient();
-      return cache.writeCompressedLayer(registryClient.pullBlob(layerDigest));
+      CachedLayer cachedLayer = cache.writeCompressedLayer(registryClient.pullBlob(layerDigest));
+
+      buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 1));
+
+      return cachedLayer;
     }
   }
 }

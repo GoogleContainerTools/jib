@@ -24,6 +24,8 @@ import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithA
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.Image;
@@ -82,12 +84,16 @@ class PullBaseImageStep
   }
 
   private final BuildConfiguration buildConfiguration;
+  private final Allocation parentProgressAllocation;
 
   private final ListenableFuture<BaseImageWithAuthorization> listenableFuture;
 
   PullBaseImageStep(
-      ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
+      ListeningExecutorService listeningExecutorService,
+      BuildConfiguration buildConfiguration,
+      Allocation parentProgressAllocation) {
     this.buildConfiguration = buildConfiguration;
+    this.parentProgressAllocation = parentProgressAllocation;
 
     listenableFuture = listeningExecutorService.submit(this);
   }
@@ -109,12 +115,19 @@ class PullBaseImageStep
                 "Getting base image "
                     + buildConfiguration.getBaseImageConfiguration().getImage()
                     + "..."));
+    Allocation progressAllocation = parentProgressAllocation.newChild("pull base image", 2);
+    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
 
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // First, try with no credentials.
       try {
-        return new BaseImageWithAuthorization(pullBaseImage(null), null);
+        BaseImageWithAuthorization baseImageWithAuthorization =
+            new BaseImageWithAuthorization(pullBaseImage(null), null);
+
+        buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 2));
+
+        return baseImageWithAuthorization;
 
       } catch (RegistryUnauthorizedException ex) {
         buildConfiguration
@@ -130,7 +143,8 @@ class PullBaseImageStep
         // registry.credentials.RegistryCredentialsRetriever to avoid this direct executor hack.
         ListeningExecutorService directExecutorService = MoreExecutors.newDirectExecutorService();
         RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep =
-            RetrieveRegistryCredentialsStep.forBaseImage(directExecutorService, buildConfiguration);
+            RetrieveRegistryCredentialsStep.forBaseImage(
+                directExecutorService, buildConfiguration, progressAllocation);
 
         Credential registryCredential = NonBlockingSteps.get(retrieveBaseRegistryCredentialsStep);
         Authorization registryAuthorization =
@@ -140,8 +154,15 @@ class PullBaseImageStep
                     registryCredential.getUsername(), registryCredential.getPassword());
 
         try {
-          return new BaseImageWithAuthorization(
-              pullBaseImage(registryAuthorization), registryAuthorization);
+          BaseImageWithAuthorization baseImageWithAuthorization =
+              new BaseImageWithAuthorization(
+                  pullBaseImage(registryAuthorization), registryAuthorization);
+
+          buildConfiguration
+              .getEventDispatcher()
+              .dispatch(new ProgressEvent(progressAllocation, 1));
+
+          return baseImageWithAuthorization;
 
         } catch (RegistryUnauthorizedException registryUnauthorizedException) {
           // The registry requires us to authenticate using the Docker Token Authentication.
@@ -164,8 +185,15 @@ class PullBaseImageStep
           registryAuthorization =
               registryAuthenticator.setAuthorization(registryAuthorization).authenticatePull();
 
-          return new BaseImageWithAuthorization(
-              pullBaseImage(registryAuthorization), registryAuthorization);
+          BaseImageWithAuthorization baseImageWithAuthorization =
+              new BaseImageWithAuthorization(
+                  pullBaseImage(registryAuthorization), registryAuthorization);
+
+          buildConfiguration
+              .getEventDispatcher()
+              .dispatch(new ProgressEvent(progressAllocation, 1));
+
+          return baseImageWithAuthorization;
         }
       }
     }

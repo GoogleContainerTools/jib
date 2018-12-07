@@ -35,7 +35,7 @@ public class BaseImageParameters {
 
   @Inject
   public BaseImageParameters(ObjectFactory objectFactory) {
-    auth = objectFactory.newInstance(AuthParameters.class);
+    auth = objectFactory.newInstance(AuthParameters.class, "from.auth");
   }
 
   @Input

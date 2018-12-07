@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
@@ -189,6 +190,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
+            Allocation.newRoot("ignored", 1),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
@@ -217,6 +219,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
+            Allocation.newRoot("ignored", 1),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
@@ -277,6 +280,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
+            Allocation.newRoot("ignored", 1),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
@@ -298,6 +302,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
+            Allocation.newRoot("ignored", 1),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
@@ -320,6 +325,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
+            Allocation.newRoot("ignored", 1),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
@@ -342,6 +348,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
+            Allocation.newRoot("ignored", 1),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
@@ -360,6 +367,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
+            Allocation.newRoot("ignored", 1),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(

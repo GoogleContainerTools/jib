@@ -21,6 +21,8 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithAuthorization;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
@@ -38,17 +40,21 @@ class PullAndCacheBaseImageLayersStep
   private static final String DESCRIPTION = "Setting up base image caching";
 
   private final BuildConfiguration buildConfiguration;
+  private final ListeningExecutorService listeningExecutorService;
+  private final Allocation parentProgressAllocation;
+
   private final PullBaseImageStep pullBaseImageStep;
 
-  private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<ImmutableList<PullAndCacheBaseImageLayerStep>> listenableFuture;
 
   PullAndCacheBaseImageLayersStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
+      Allocation parentProgressAllocation,
       PullBaseImageStep pullBaseImageStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
+    this.parentProgressAllocation = parentProgressAllocation;
     this.pullBaseImageStep = pullBaseImageStep;
 
     listenableFuture =
@@ -63,11 +69,15 @@ class PullAndCacheBaseImageLayersStep
   @Override
   public ImmutableList<PullAndCacheBaseImageLayerStep> call()
       throws ExecutionException, LayerPropertyNotFoundException {
+    BaseImageWithAuthorization pullBaseImageStepResult = NonBlockingSteps.get(pullBaseImageStep);
+    ImmutableList<Layer> baseImageLayers = pullBaseImageStepResult.getBaseImage().getLayers();
+
+    Allocation progressAllocation =
+        parentProgressAllocation.newChild("pull base imgae layers", baseImageLayers.size());
+    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
+
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
-      BaseImageWithAuthorization pullBaseImageStepResult = NonBlockingSteps.get(pullBaseImageStep);
-      ImmutableList<Layer> baseImageLayers = pullBaseImageStepResult.getBaseImage().getLayers();
-
       ImmutableList.Builder<PullAndCacheBaseImageLayerStep> pullAndCacheBaseImageLayerStepsBuilder =
           ImmutableList.builderWithExpectedSize(baseImageLayers.size());
       for (Layer layer : baseImageLayers) {
@@ -75,6 +85,7 @@ class PullAndCacheBaseImageLayersStep
             new PullAndCacheBaseImageLayerStep(
                 listeningExecutorService,
                 buildConfiguration,
+                progressAllocation,
                 layer.getBlobDescriptor().getDigest(),
                 pullBaseImageStepResult.getBaseImageAuthorization()));
       }

@@ -40,7 +40,7 @@ public class TargetImageParameters {
 
   @Inject
   public TargetImageParameters(ObjectFactory objectFactory) {
-    auth = objectFactory.newInstance(AuthParameters.class);
+    auth = objectFactory.newInstance(AuthParameters.class, "to.auth");
   }
 
   @Input
