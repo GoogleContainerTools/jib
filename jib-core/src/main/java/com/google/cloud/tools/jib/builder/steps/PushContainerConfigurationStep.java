@@ -72,7 +72,7 @@ class PushContainerConfigurationStep
     ListenableFuture<PushBlobStep> pushBlobStepFuture =
         AsyncDependencies.using(listeningExecutorService)
             .addStep(authenticatePushStep)
-            .addStepOfStep(buildImageStep)
+            .addStep(NonBlockingSteps.get(buildImageStep))
             .whenAllSucceed(this::afterBuildConfigurationFutureFuture);
     return () -> pushBlobStepFuture;
   }

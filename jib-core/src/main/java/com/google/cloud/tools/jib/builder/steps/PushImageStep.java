@@ -88,10 +88,10 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
   public BuildResult call() throws ExecutionException, InterruptedException {
     return AsyncDependencies.using(listeningExecutorService)
         .addStep(authenticatePushStep)
-        .addListOfSteps(pushBaseImageLayersStep)
-        .addListOfSteps(pushApplicationLayersStep)
-        .addStepOfStep(pushContainerConfigurationStep)
-        .addStepOfStep(buildImageStep)
+        .addSteps(NonBlockingSteps.get(pushBaseImageLayersStep))
+        .addSteps(NonBlockingSteps.get(pushApplicationLayersStep))
+        .addStep(NonBlockingSteps.get(pushContainerConfigurationStep))
+        .addStep(NonBlockingSteps.get(buildImageStep))
         .whenAllSucceed(this::afterPushSteps)
         .get()
         .get()
@@ -100,10 +100,17 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
   private ListenableFuture<ListenableFuture<BuildResult>> afterPushSteps()
       throws ExecutionException {
-    return AsyncDependencies.using(listeningExecutorService)
-        .addListOfStepOfSteps(pushBaseImageLayersStep)
-        .addListOfStepOfSteps(pushApplicationLayersStep)
-        .addStepOfStepOfStep(pushContainerConfigurationStep)
+    AsyncDependencies dependencies = AsyncDependencies.using(listeningExecutorService);
+    for (AsyncStep<PushBlobStep> pushBaseImageLayerStep :
+        NonBlockingSteps.get(pushBaseImageLayersStep)) {
+      dependencies.addStep(NonBlockingSteps.get(pushBaseImageLayerStep));
+    }
+    for (AsyncStep<PushBlobStep> pushApplicationLayerStep :
+        NonBlockingSteps.get(pushApplicationLayersStep)) {
+      dependencies.addStep(NonBlockingSteps.get(pushApplicationLayerStep));
+    }
+    return dependencies
+        .addStep(NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep)))
         .whenAllSucceed(this::afterAllPushed);
   }
 

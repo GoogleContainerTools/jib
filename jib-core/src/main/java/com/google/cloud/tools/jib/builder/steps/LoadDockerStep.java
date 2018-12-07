@@ -75,10 +75,10 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
   public BuildResult call() throws ExecutionException, InterruptedException {
     AsyncDependencies dependencies =
         AsyncDependencies.using(listeningExecutorService)
-            .addListOfSteps(pullAndCacheBaseImageLayersStep);
+            .addSteps(NonBlockingSteps.get(pullAndCacheBaseImageLayersStep));
     buildAndCacheApplicationLayerSteps.forEach(dependencies::addStep);
     return dependencies
-        .addStepOfStep(buildImageStep)
+        .addStep(NonBlockingSteps.get(buildImageStep))
         .whenAllSucceed(this::afterPushBaseImageLayerFuturesFuture)
         .get();
   }

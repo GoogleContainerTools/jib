@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
+import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.common.collect.ImmutableList;
@@ -69,7 +70,7 @@ class FinalizingStep implements AsyncStep<Void>, Callable<Void> {
     // Unwrap the wrapped dependencies.
     for (AsyncStep<? extends ImmutableList<? extends AsyncStep<?>>> wrappedDependency :
         futureDependencyLists) {
-      asyncDependencies.addListOfSteps(wrappedDependency);
+      asyncDependencies.addSteps(NonBlockingSteps.get(wrappedDependency));
     }
 
     // TODO: Don't let future error be suppressed

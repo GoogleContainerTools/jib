@@ -77,9 +77,12 @@ public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildR
   public BuildResult call() throws ExecutionException, InterruptedException {
     AsyncDependencies dependencies =
         AsyncDependencies.using(listeningExecutorService)
-            .addListOfSteps(pullAndCacheBaseImageLayersStep);
+            .addSteps(NonBlockingSteps.get(pullAndCacheBaseImageLayersStep));
     buildAndCacheApplicationLayerSteps.forEach(dependencies::addStep);
-    return dependencies.addStepOfStep(buildImageStep).whenAllSucceed(this::writeTarFile).get();
+    return dependencies
+        .addStep(NonBlockingSteps.get(buildImageStep))
+        .whenAllSucceed(this::writeTarFile)
+        .get();
   }
 
   private BuildResult writeTarFile() throws ExecutionException, IOException {

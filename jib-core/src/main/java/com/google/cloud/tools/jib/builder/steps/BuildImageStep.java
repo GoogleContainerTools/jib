@@ -79,7 +79,7 @@ class BuildImageStep
   public AsyncStep<Image<Layer>> call() throws ExecutionException {
     AsyncDependencies dependencies =
         AsyncDependencies.using(listeningExecutorService)
-            .addListOfSteps(pullAndCacheBaseImageLayersStep);
+            .addSteps(NonBlockingSteps.get(pullAndCacheBaseImageLayersStep));
     buildAndCacheApplicationLayerSteps.forEach(dependencies::addStep);
     ListenableFuture<Image<Layer>> future =
         dependencies.whenAllSucceed(this::afterCachedLayerSteps);

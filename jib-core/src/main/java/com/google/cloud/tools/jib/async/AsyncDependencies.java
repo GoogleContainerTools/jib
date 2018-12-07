@@ -16,14 +16,12 @@
 
 package com.google.cloud.tools.jib.async;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Builds a list of dependency {@link ListenableFuture}s to wait on before calling a {@link
@@ -62,65 +60,13 @@ public class AsyncDependencies {
   }
 
   /**
-   * Adds the future of an {@link AsyncStep} wrapped in an outer {@link AsyncStep}.
+   * Adds the futures of a list of {@link AsyncStep}s.
    *
-   * @param asyncStepOfAsyncStep the outer {@link AsyncStep}
+   * @param asyncSteps the {@link AsyncStep}s
    * @return this
-   * @throws ExecutionException if an exception occurs during execution of {@code
-   *     asyncStepOfAsyncStep}
    */
-  public AsyncDependencies addStepOfStep(AsyncStep<? extends AsyncStep<?>> asyncStepOfAsyncStep)
-      throws ExecutionException {
-    return addStep(NonBlockingSteps.get(asyncStepOfAsyncStep));
-  }
-
-  /**
-   * Adds the future of an {@link AsyncStep} wrapped two levels down an outer {@link AsyncStep}.
-   *
-   * @param asyncStepOfAsyncStepOfAsyncStep the outer {@link AsyncStep}
-   * @return this
-   * @throws ExecutionException if an exception occurs during execution of {@code
-   *     asyncStepOfAsyncStepOfAsyncStep}
-   */
-  public AsyncDependencies addStepOfStepOfStep(
-      AsyncStep<? extends AsyncStep<? extends AsyncStep<?>>> asyncStepOfAsyncStepOfAsyncStep)
-      throws ExecutionException {
-    return addStepOfStep(NonBlockingSteps.get(asyncStepOfAsyncStepOfAsyncStep));
-  }
-
-  /**
-   * Adds all the futures of {@link AsyncStep}s wrapped in an outer {@link AsyncStep}.
-   *
-   * @param asyncStepOfAsyncSteps the outer {@link AsyncStep}
-   * @return this
-   * @throws ExecutionException if an exception occurs during execution of {@code
-   *     asyncStepOfAsyncSteps}
-   */
-  public AsyncDependencies addListOfSteps(
-      AsyncStep<? extends List<? extends AsyncStep<?>>> asyncStepOfAsyncSteps)
-      throws ExecutionException {
-    for (AsyncStep<?> asyncStep : NonBlockingSteps.get(asyncStepOfAsyncSteps)) {
-      addStep(asyncStep);
-    }
-    return this;
-  }
-
-  /**
-   * Adds all the futures of inner {@link AsyncStep}s wrapped in an outer {@link AsyncStep}.
-   *
-   * @param asyncStepOfAsyncStepsOfAsyncStep the outer {@link AsyncStep}
-   * @return this
-   * @throws ExecutionException if an exception occurs during execution of {@code
-   *     asyncStepOfAsyncStepsOfAsyncStep}
-   */
-  public AsyncDependencies addListOfStepOfSteps(
-      AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends AsyncStep<?>>>>
-          asyncStepOfAsyncStepsOfAsyncStep)
-      throws ExecutionException {
-    for (AsyncStep<? extends AsyncStep<?>> asyncStepOfAsyncStep :
-        NonBlockingSteps.get(asyncStepOfAsyncStepsOfAsyncStep)) {
-      addStepOfStep(asyncStepOfAsyncStep);
-    }
+  public AsyncDependencies addSteps(List<? extends AsyncStep<?>> asyncSteps) {
+    asyncSteps.forEach(this::addStep);
     return this;
   }
 
