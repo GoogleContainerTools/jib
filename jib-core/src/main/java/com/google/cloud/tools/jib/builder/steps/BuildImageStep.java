@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.ProjectInfo;
+import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
@@ -28,11 +29,9 @@ import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -65,9 +64,10 @@ class BuildImageStep
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
 
     listenableFuture =
-        Futures.whenAllSucceed(
-                pullBaseImageStep.getFuture(), pullAndCacheBaseImageLayersStep.getFuture())
-            .call(this, listeningExecutorService);
+        AsyncDependencies.using(listeningExecutorService)
+            .addStep(pullBaseImageStep)
+            .addStep(pullAndCacheBaseImageLayersStep)
+            .whenAllSucceed(this);
   }
 
   @Override
@@ -77,19 +77,12 @@ class BuildImageStep
 
   @Override
   public AsyncStep<Image<Layer>> call() throws ExecutionException {
-    List<ListenableFuture<?>> dependencies = new ArrayList<>();
-
-    for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
-        NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
-      dependencies.add(pullAndCacheBaseImageLayerStep.getFuture());
-    }
-    for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
-        buildAndCacheApplicationLayerSteps) {
-      dependencies.add(buildAndCacheApplicationLayerStep.getFuture());
-    }
+    AsyncDependencies dependencies =
+        AsyncDependencies.using(listeningExecutorService)
+            .addListOfSteps(pullAndCacheBaseImageLayersStep);
+    buildAndCacheApplicationLayerSteps.forEach(dependencies::addStep);
     ListenableFuture<Image<Layer>> future =
-        Futures.whenAllSucceed(dependencies)
-            .call(this::afterCachedLayerSteps, listeningExecutorService);
+        dependencies.whenAllSucceed(this::afterCachedLayerSteps);
     return () -> future;
   }
 

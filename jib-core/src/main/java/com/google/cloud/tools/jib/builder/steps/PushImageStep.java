@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
@@ -27,7 +28,6 @@ import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -72,11 +72,11 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
     this.buildImageStep = buildImageStep;
 
     listenableFuture =
-        Futures.whenAllSucceed(
-                pushBaseImageLayersStep.getFuture(),
-                pushApplicationLayersStep.getFuture(),
-                pushContainerConfigurationStep.getFuture())
-            .call(this, listeningExecutorService);
+        AsyncDependencies.using(listeningExecutorService)
+            .addStep(pushBaseImageLayersStep)
+            .addStep(pushApplicationLayersStep)
+            .addStep(pushContainerConfigurationStep)
+            .whenAllSucceed(this);
   }
 
   @Override
@@ -86,19 +86,13 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
   @Override
   public BuildResult call() throws ExecutionException, InterruptedException {
-    ImmutableList.Builder<ListenableFuture<?>> dependenciesBuilder = ImmutableList.builder();
-    dependenciesBuilder.add(authenticatePushStep.getFuture());
-    for (AsyncStep<PushBlobStep> pushBlobStepStep : NonBlockingSteps.get(pushBaseImageLayersStep)) {
-      dependenciesBuilder.add(pushBlobStepStep.getFuture());
-    }
-    for (AsyncStep<PushBlobStep> pushBlobStepStep :
-        NonBlockingSteps.get(pushApplicationLayersStep)) {
-      dependenciesBuilder.add(pushBlobStepStep.getFuture());
-    }
-    dependenciesBuilder.add(NonBlockingSteps.get(pushContainerConfigurationStep).getFuture());
-    dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep).getFuture());
-    return Futures.whenAllSucceed(dependenciesBuilder.build())
-        .call(this::afterPushSteps, listeningExecutorService)
+    return AsyncDependencies.using(listeningExecutorService)
+        .addStep(authenticatePushStep)
+        .addListOfSteps(pushBaseImageLayersStep)
+        .addListOfSteps(pushApplicationLayersStep)
+        .addStepOfStep(pushContainerConfigurationStep)
+        .addStepOfStep(buildImageStep)
+        .whenAllSucceed(this::afterPushSteps)
         .get()
         .get()
         .get();
@@ -106,18 +100,11 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
   private ListenableFuture<ListenableFuture<BuildResult>> afterPushSteps()
       throws ExecutionException {
-    List<ListenableFuture<?>> dependencies = new ArrayList<>();
-    for (AsyncStep<PushBlobStep> pushBlobStepStep : NonBlockingSteps.get(pushBaseImageLayersStep)) {
-      dependencies.add(NonBlockingSteps.get(pushBlobStepStep).getFuture());
-    }
-    for (AsyncStep<PushBlobStep> pushBlobStepStep :
-        NonBlockingSteps.get(pushApplicationLayersStep)) {
-      dependencies.add(NonBlockingSteps.get(pushBlobStepStep).getFuture());
-    }
-    dependencies.add(
-        NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep)).getFuture());
-    return Futures.whenAllSucceed(dependencies)
-        .call(this::afterAllPushed, listeningExecutorService);
+    return AsyncDependencies.using(listeningExecutorService)
+        .addListOfStepOfSteps(pushBaseImageLayersStep)
+        .addListOfStepOfSteps(pushApplicationLayersStep)
+        .addStepOfStepOfStep(pushContainerConfigurationStep)
+        .whenAllSucceed(this::afterAllPushed);
   }
 
   private ListenableFuture<BuildResult> afterAllPushed() throws ExecutionException, IOException {

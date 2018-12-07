@@ -16,15 +16,13 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -53,16 +51,10 @@ class FinalizingStep implements AsyncStep<Void>, Callable<Void> {
     this.buildConfiguration = buildConfiguration;
     this.futureDependencyLists = wrappedDependencyLists;
 
-    List<ListenableFuture<?>> dependenciesFutures =
-        new ArrayList<>(wrappedDependencyLists.size() + dependencyList.size());
-    for (AsyncStep<?> dependency : wrappedDependencyLists) {
-      dependenciesFutures.add(dependency.getFuture());
-    }
-    for (AsyncStep<?> dependency : dependencyList) {
-      dependenciesFutures.add(dependency.getFuture());
-    }
-    listenableFuture =
-        Futures.whenAllSucceed(dependenciesFutures).call(this, listeningExecutorService);
+    AsyncDependencies dependencies = AsyncDependencies.using(listeningExecutorService);
+    wrappedDependencyLists.forEach(dependencies::addStep);
+    dependencyList.forEach(dependencies::addStep);
+    listenableFuture = dependencies.whenAllSucceed(this);
   }
 
   @Override
@@ -72,22 +64,20 @@ class FinalizingStep implements AsyncStep<Void>, Callable<Void> {
 
   @Override
   public Void call() throws ExecutionException {
+    AsyncDependencies asyncDependencies = AsyncDependencies.using(listeningExecutorService);
+
     // Unwrap the wrapped dependencies.
-    List<ListenableFuture<?>> unwrappedDependencies = new ArrayList<>();
     for (AsyncStep<? extends ImmutableList<? extends AsyncStep<?>>> wrappedDependency :
         futureDependencyLists) {
-      for (AsyncStep<?> unwrappedDependency : NonBlockingSteps.get(wrappedDependency)) {
-        unwrappedDependencies.add(unwrappedDependency.getFuture());
-      }
+      asyncDependencies.addListOfSteps(wrappedDependency);
     }
 
-    Futures.whenAllSucceed(unwrappedDependencies)
-        .call(
-            () -> {
-              buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle("Finalizing..."));
-              return null;
-            },
-            listeningExecutorService);
+    // TODO: Don't let future error be suppressed
+    asyncDependencies.whenAllSucceed(
+        () -> {
+          buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle("Finalizing..."));
+          return null;
+        });
 
     return null;
   }
