@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project
+        xmlns="http://maven.apache.org/POM/4.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>example</groupId>
+    <artifactId>dropwizard</artifactId>
+    <version>1</version>
+    <packaging>jar</packaging>
+
+    <name>Dropwizard Jib Example</name>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <mainClass>example.JibExampleApplication</mainClass>
+
+        <dropwizard.version>1.3.7</dropwizard.version>
+        <dropwizard.server.config>dropwizard.yml</dropwizard.server.config>
+        <dropwizard-template-config.version>1.5.0</dropwizard-template-config.version>
+
+        <jib.to.image>gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib</jib.to.image>
+        <jib.container.appRoot>/app</jib.container.appRoot>
+        <jib-maven-plugin.version>0.10.1</jib-maven-plugin.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.dropwizard</groupId>
+                <artifactId>dropwizard-bom</artifactId>
+                <version>${dropwizard.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>de.thomaskrille</groupId>
+            <artifactId>dropwizard-template-config</artifactId>
+            <version>${dropwizard-template-config.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>${jib-maven-plugin.version}</version>
+                <configuration>
+                    <to>
+                        <image>${jib.to.image}</image>
+                        <tags>
+                            <tag>${project.version}</tag>
+                        </tags>
+                    </to>
+                    <container>
+                        <mainClass>${mainClass}</mainClass>
+                        <args>
+                            <arg>server</arg>
+                            <arg>${jib.container.appRoot}/resources/${dropwizard.server.config}</arg>
+                        </args>
+                        <ports>
+                            <port>8080</port>
+                        </ports>
+
+                        <!-- good defaults intended for containers -->
+                        <jvmFlags>
+                            <jmxFlag>-server</jmxFlag>
+                            <jmxFlag>-Djava.awt.headless=true</jmxFlag>
+                            <jmxFlag>-XX:+UnlockExperimentalVMOptions</jmxFlag>
+                            <jmxFlag>-XX:+UseCGroupMemoryLimitForHeap</jmxFlag>
+                            <jmxFlag>-XX:InitialRAMFraction=2</jmxFlag>
+                            <jmxFlag>-XX:MinRAMFraction=2</jmxFlag>
+                            <jmxFlag>-XX:MaxRAMFraction=2</jmxFlag>
+                            <jmxFlag>-XX:+UseG1GC</jmxFlag>
+                            <jmxFlag>-XX:MaxGCPauseMillis=100</jmxFlag>
+                            <jmxFlag>-XX:+UseStringDeduplication</jmxFlag>
+                        </jvmFlags>
+                    </container>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>dockerBuild</id>
+                        <goals>
+                            <goal>dockerBuild</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <executions>
+                    <execution>
+                        <id>java</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <executable>java</executable>
+                    <mainClass>${mainClass}</mainClass>
+                    <arguments>
+                        <argument>server</argument>
+                        <argument>${project.build.sourceDirectory}/../resources/${dropwizard.server.config}</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
