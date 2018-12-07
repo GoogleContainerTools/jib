@@ -19,14 +19,17 @@ package com.google.cloud.tools.jib.registry;
 import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
+import com.google.cloud.tools.jib.http.ListenableCountingOutputStream;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /** Pulls an image's BLOB (layer or container configuration). */
@@ -42,18 +45,31 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
    */
   private final OutputStream destinationOutputStream;
 
+  // TODO: Refactor into BlobPullMonitor.
+  private final Consumer<Long> sizeConsumer;
+  private final Consumer<Long> receivedByteCountConsumer;
+  private final Duration delayBetweenCallbacks = Duration.ofMillis(100);
+
   BlobPuller(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       DescriptorDigest blobDigest,
-      OutputStream destinationOutputStream) {
+      OutputStream destinationOutputStream,
+      Consumer<Long> sizeConsumer,
+      Consumer<Long> receivedByteCountConsumer) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.blobDigest = blobDigest;
     this.destinationOutputStream = destinationOutputStream;
+    this.sizeConsumer = sizeConsumer;
+    this.receivedByteCountConsumer = receivedByteCountConsumer;
   }
 
   @Override
   public Void handleResponse(Response response) throws IOException, UnexpectedBlobDigestException {
-    try (OutputStream outputStream = destinationOutputStream) {
+    sizeConsumer.accept(response.getContentLength());
+
+    try (OutputStream outputStream =
+        new ListenableCountingOutputStream(
+            destinationOutputStream, receivedByteCountConsumer, delayBetweenCallbacks)) {
       BlobDescriptor receivedBlobDescriptor = response.getBody().writeTo(outputStream);
 
       if (!blobDigest.equals(receivedBlobDescriptor.getDigest())) {

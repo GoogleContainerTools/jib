@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.security.DigestException;
+import java.util.concurrent.atomic.LongAdder;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -54,7 +55,19 @@ public class BlobPullerIntegrationTest {
     // Pulls a layer BLOB of the busybox image.
     CountingDigestOutputStream layerOutputStream =
         new CountingDigestOutputStream(ByteStreams.nullOutputStream());
-    registryClient.pullBlob(realDigest).writeTo(layerOutputStream);
+    LongAdder byteCount = new LongAdder();
+    LongAdder expectedSize = new LongAdder();
+    registryClient
+        .pullBlob(
+            realDigest,
+            size -> {
+              Assert.assertEquals(0, expectedSize.sum());
+              expectedSize.add(size);
+            },
+            byteCount::add)
+        .writeTo(layerOutputStream);
+    Assert.assertTrue(expectedSize.sum() > 0);
+    Assert.assertEquals(expectedSize.sum(), byteCount.sum());
 
     Assert.assertEquals(realDigest, layerOutputStream.toBlobDescriptor().getDigest());
   }
@@ -72,7 +85,9 @@ public class BlobPullerIntegrationTest {
             .newRegistryClient();
 
     try {
-      registryClient.pullBlob(nonexistentDigest).writeTo(ByteStreams.nullOutputStream());
+      registryClient
+          .pullBlob(nonexistentDigest, ignored -> {}, ignored -> {})
+          .writeTo(ByteStreams.nullOutputStream());
       Assert.fail("Trying to pull nonexistent blob should have errored");
 
     } catch (IOException ex) {

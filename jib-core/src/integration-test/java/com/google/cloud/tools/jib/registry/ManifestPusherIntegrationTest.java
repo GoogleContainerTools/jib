@@ -86,10 +86,14 @@ public class ManifestPusherIntegrationTest {
         RegistryClient.factory(EVENT_DISPATCHER, "localhost:5000", "testimage")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
-    Assert.assertFalse(registryClient.pushBlob(testLayerBlobDigest, testLayerBlob, null));
+    Assert.assertFalse(
+        registryClient.pushBlob(testLayerBlobDigest, testLayerBlob, null, ignored -> {}));
     Assert.assertFalse(
         registryClient.pushBlob(
-            testContainerConfigurationBlobDigest, testContainerConfigurationBlob, null));
+            testContainerConfigurationBlobDigest,
+            testContainerConfigurationBlob,
+            null,
+            ignored -> {}));
 
     // Pushes the manifest.
     DescriptorDigest imageDigest = registryClient.pushManifest(expectedManifestTemplate, "latest");
@@ -99,6 +103,7 @@ public class ManifestPusherIntegrationTest {
         registryClient.pullManifest("latest", V22ManifestTemplate.class);
     Assert.assertEquals(1, manifestTemplate.getLayers().size());
     Assert.assertEquals(testLayerBlobDigest, manifestTemplate.getLayers().get(0).getDigest());
+    Assert.assertNotNull(manifestTemplate.getContainerConfiguration());
     Assert.assertEquals(
         testContainerConfigurationBlobDigest,
         manifestTemplate.getContainerConfiguration().getDigest());

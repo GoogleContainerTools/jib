@@ -78,7 +78,13 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
               .newBaseImageRegistryClientFactory()
               .setAuthorization(pullAuthorization)
               .newRegistryClient();
-      return cache.writeCompressedLayer(registryClient.pullBlob(layerDigest));
+      return cache.writeCompressedLayer(
+          registryClient.pullBlob(
+              layerDigest,
+              alsoIgnored -> {
+                // TODO: Replace with progress-reporting.
+              },
+              alsoIgnored -> {}));
     }
   }
 }
