@@ -39,11 +39,6 @@
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
-        <configuration>
-          <!-- testing the case <to><image> is not defined -->
-          <!-- Does not have tests use user-level cache for base image layers. -->
-          <useOnlyProjectCache>true</useOnlyProjectCache>
-        </configuration>
       </plugin>
     </plugins>
   </build>

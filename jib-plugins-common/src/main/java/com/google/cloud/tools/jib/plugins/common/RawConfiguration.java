@@ -67,7 +67,5 @@ public interface RawConfiguration {
 
   boolean getAllowInsecureRegistries();
 
-  boolean getUseOnlyProjectCache();
-
   ImageFormat getImageFormat();
 }

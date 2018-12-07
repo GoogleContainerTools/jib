@@ -429,7 +429,7 @@ public class PluginConfigurationProcessor {
 
     rawConfiguration.getToTags().forEach(containerizer::withAdditionalTag);
 
-    if (rawConfiguration.getUseOnlyProjectCache()) {
+    if (Boolean.getBoolean(PropertyNames.USE_ONLY_PROJECT_CACHE)) {
       containerizer.setBaseImageLayersCache(
           getCheckedCacheDirectory(
               PropertyNames.BASE_IMAGE_CACHE, projectProperties.getDefaultCacheDirectory()));

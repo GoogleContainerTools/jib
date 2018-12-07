@@ -212,12 +212,4 @@ public class JibExtensionTest {
     System.setProperty("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testJibExtension.getContainer().getUser());
   }
-
-  @Test
-  public void testUseOnlyProjectCache() {
-    Assert.assertFalse(testJibExtension.getUseOnlyProjectCache());
-
-    testJibExtension.setUseOnlyProjectCache(true);
-    Assert.assertTrue(testJibExtension.getUseOnlyProjectCache());
-  }
 }

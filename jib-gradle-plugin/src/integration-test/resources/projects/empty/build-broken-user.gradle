@@ -20,6 +20,4 @@ jib {
   container {
     user = 'myuser:mygroup'
   }
-  // Does not have tests use user-level cache for base image layers.
-  useOnlyProjectCache = true
 }

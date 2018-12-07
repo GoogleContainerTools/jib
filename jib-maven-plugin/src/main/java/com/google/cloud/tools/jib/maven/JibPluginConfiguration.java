@@ -226,12 +226,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(
       defaultValue = "false",
       required = true,
-      property = PropertyNames.USE_ONLY_PROJECT_CACHE)
-  private boolean useOnlyProjectCache;
-
-  @Parameter(
-      defaultValue = "false",
-      required = true,
       property = PropertyNames.ALLOW_INSECURE_REGISTRIES)
   private boolean allowInsecureRegistries;
 
@@ -525,10 +519,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
           .collect(Collectors.toList());
     }
     return extraDirectory.permissions;
-  }
-
-  boolean getUseOnlyProjectCache() {
-    return useOnlyProjectCache;
   }
 
   boolean getAllowInsecureRegistries() {
