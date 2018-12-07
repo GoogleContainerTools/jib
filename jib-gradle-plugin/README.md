@@ -235,7 +235,7 @@ gradle jibDockerBuild \
     -Djib.container.environment=key1="value1",key2="value2" \
     -Djib.container.args=arg1,arg2,arg3
 
-gradle jibBuildTar -Djib.useProjectOnlyCache=true
+gradle jibBuildTar -Djib.useOnlyProjectCache=true
 ```
 
 You can also configure HTTP connection/read timeouts for registry interactions using the `jib.httpTimeout` system property, configured in milliseconds via commandline (the default is `20000`; you can also set it to `0` for infinite timeout):

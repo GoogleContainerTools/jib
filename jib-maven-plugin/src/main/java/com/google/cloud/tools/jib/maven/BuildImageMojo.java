@@ -68,9 +68,9 @@ public class BuildImageMojo extends JibPluginConfiguration {
     if (getUseOnlyProjectCache()) {
       getLog()
           .warn(
-              "<useOnlyProjectCache> is deprecated; consider using the 'jib.useOnlyProjectCache' "
-                  + "system property instead, or set the cache directories using the "
-                  + "'jib.baseImageCache' and 'jib.applicationCache' system properties.");
+              "<useOnlyProjectCache> is deprecated; use the 'jib.useOnlyProjectCache'  system "
+                  + "property instead, or set the cache directories using the 'jib.baseImageCache' "
+                  + "and 'jib.applicationCache' system properties.");
     }
 
     // Validates 'format'.

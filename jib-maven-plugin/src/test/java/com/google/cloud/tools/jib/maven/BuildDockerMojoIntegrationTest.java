@@ -46,7 +46,7 @@ public class BuildDockerMojoIntegrationTest {
   private static void buildToDockerDaemon(Path projectRoot, String imageReference, String pomXml)
       throws VerificationException, DigestException, IOException {
     Verifier verifier = new Verifier(projectRoot.toString());
-    verifier.setSystemProperty("jib.useProjectOnlyCache", "true");
+    verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setAutoclean(false);
     verifier.addCliOption("--file=" + pomXml);

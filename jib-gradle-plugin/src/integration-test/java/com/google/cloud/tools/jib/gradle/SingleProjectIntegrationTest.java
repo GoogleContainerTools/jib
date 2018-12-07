@@ -112,7 +112,7 @@ public class SingleProjectIntegrationTest {
         simpleTestProject.build(
             "clean",
             "jib",
-            "-Djib.useProjectOnlyCache=true",
+            "-Djib.useOnlyProjectCache=true",
             "-D_TARGET_IMAGE=" + imageReference,
             "-D_TARGET_USERNAME=" + username,
             "-D_TARGET_PASSWORD=" + password,
@@ -148,7 +148,7 @@ public class SingleProjectIntegrationTest {
       simpleTestProject.build(
           "clean",
           "jib",
-          "-Djib.useProjectOnlyCache=true",
+          "-Djib.useOnlyProjectCache=true",
           "-x=classes",
           "-D_TARGET_IMAGE=" + targetImage);
       Assert.fail();
@@ -214,7 +214,7 @@ public class SingleProjectIntegrationTest {
         simpleTestProject.build(
             "clean",
             "jibBuildTar",
-            "-Djib.useProjectOnlyCache=true",
+            "-Djib.useOnlyProjectCache=true",
             "-D_TARGET_IMAGE=" + targetImage);
 
     JibRunHelper.assertBuildSuccess(buildResult, "jibBuildTar", "Built image tarball at ");

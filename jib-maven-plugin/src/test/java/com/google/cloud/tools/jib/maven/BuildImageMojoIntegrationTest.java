@@ -98,7 +98,7 @@ public class BuildImageMojoIntegrationTest {
   private static String buildAndRun(Path projectRoot, String imageReference, boolean runTwice)
       throws VerificationException, IOException, InterruptedException, DigestException {
     Verifier verifier = new Verifier(projectRoot.toString());
-    verifier.setSystemProperty("jib.useProjectOnlyCache", "true");
+    verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
@@ -145,7 +145,7 @@ public class BuildImageMojoIntegrationTest {
       throws VerificationException, InvalidImageReferenceException, IOException,
           InterruptedException, DigestException {
     Verifier verifier = new Verifier(projectRoot.toString());
-    verifier.setSystemProperty("jib.useProjectOnlyCache", "true");
+    verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setSystemProperty("_ADDITIONAL_TAG", additionalTag);
     verifier.setAutoclean(false);
@@ -176,7 +176,7 @@ public class BuildImageMojoIntegrationTest {
       throws VerificationException, IOException, InterruptedException, DigestException {
     Instant before = Instant.now();
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
-    verifier.setSystemProperty("jib.useProjectOnlyCache", "true");
+    verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setSystemProperty("_TARGET_USERNAME", username);
     verifier.setSystemProperty("_TARGET_PASSWORD", password);
@@ -416,7 +416,7 @@ public class BuildImageMojoIntegrationTest {
     String targetImage = getGcrImageReference(label);
 
     Verifier verifier = new Verifier(servlet25Project.getProjectRoot().toString());
-    verifier.setSystemProperty("jib.useProjectOnlyCache", "true");
+    verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");

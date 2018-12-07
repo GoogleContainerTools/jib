@@ -52,7 +52,7 @@ public class JibRunHelper {
         testProject.build(
             "clean",
             "jib",
-            "-Djib.useProjectOnlyCache=true",
+            "-Djib.useOnlyProjectCache=true",
             "-D_TARGET_IMAGE=" + imageReference,
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
@@ -69,7 +69,7 @@ public class JibRunHelper {
         testProject.build(
             "clean",
             "jib",
-            "-Djib.useProjectOnlyCache=true",
+            "-Djib.useOnlyProjectCache=true",
             "-D_TARGET_IMAGE=" + imageReference,
             "-D_ADDITIONAL_TAG=" + additionalTag);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
@@ -94,7 +94,7 @@ public class JibRunHelper {
         testProject.build(
             "clean",
             "jibDockerBuild",
-            "-Djib.useProjectOnlyCache=true",
+            "-Djib.useOnlyProjectCache=true",
             "-D_TARGET_IMAGE=" + imageReference,
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");

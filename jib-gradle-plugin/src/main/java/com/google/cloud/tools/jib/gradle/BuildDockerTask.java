@@ -107,9 +107,9 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     if (jibExtension.getUseOnlyProjectCache()) {
       getLogger()
           .warn(
-              "jib.useOnlyProjectCache is deprecated; consider using the 'jib.useOnlyProjectCache' "
-                  + "system property instead, or set the cache directories using the "
-                  + "'jib.baseImageCache' and 'jib.applicationCache' system properties.");
+              "jib.useOnlyProjectCache is deprecated; use the 'jib.useOnlyProjectCache' system "
+                  + "property instead, or set the cache directories using the 'jib.baseImageCache' "
+                  + "and 'jib.applicationCache' system properties.");
     }
 
     try {

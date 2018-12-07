@@ -64,7 +64,7 @@ public class DefaultTargetProjectIntegrationTest {
     // Test error when 'to' is missing
     try {
       defaultTargetTestProject.build(
-          "clean", "jib", "-Djib.useProjectOnlyCache=true", "-x=classes");
+          "clean", "jib", "-Djib.useOnlyProjectCache=true", "-x=classes");
       Assert.fail();
     } catch (UnexpectedBuildFailure ex) {
       Assert.assertThat(
