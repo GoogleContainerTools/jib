@@ -33,7 +33,7 @@ public class AllocationTest {
 
     Assert.assertEquals("node2", node2.getDescription());
     Assert.assertEquals(3, node2.getAllocationUnits());
-    Assert.assertEquals(1.0 / 2, node2.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
+    Assert.assertEquals(1.0 / 2 / 3, node2.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
     Assert.assertTrue(node2.getParent().isPresent());
     Assert.assertEquals(node1, node2.getParent().get());
 
@@ -41,7 +41,7 @@ public class AllocationTest {
     Assert.assertEquals(2, node1.getAllocationUnits());
     Assert.assertTrue(node1.getParent().isPresent());
     Assert.assertEquals(root, node1.getParent().get());
-    Assert.assertEquals(1.0, node1.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
+    Assert.assertEquals(1.0 / 2, node1.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
 
     Assert.assertEquals("root", root.getDescription());
     Assert.assertEquals(1, root.getAllocationUnits());
@@ -59,14 +59,14 @@ public class AllocationTest {
     Allocation rightRight = right.newChild("ignored", 100);
     Allocation rightRightDown = rightRight.newChild("ignored", 200);
 
-    Assert.assertEquals(1.0, root.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
-    Assert.assertEquals(1.0 / 10, left.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
-    Assert.assertEquals(1.0 / 10, right.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
-    Assert.assertEquals(1.0 / 10 / 2, leftDown.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
-    Assert.assertEquals(1.0 / 10 / 4, rightLeft.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
-    Assert.assertEquals(1.0 / 10 / 4, rightRight.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
+    Assert.assertEquals(1.0 / 10, root.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
+    Assert.assertEquals(1.0 / 10 / 2, left.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
+    Assert.assertEquals(1.0 / 10 / 4, right.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
+    Assert.assertEquals(1.0 / 10 / 2 / 20, leftDown.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
+    Assert.assertEquals(1.0 / 10 / 4 / 20, rightLeft.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
+    Assert.assertEquals(1.0 / 10 / 4 / 100, rightRight.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
     Assert.assertEquals(
-        1.0 / 10 / 4 / 100, rightRightDown.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
+        1.0 / 10 / 4 / 100 / 200, rightRightDown.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
   }
 
   @Test
@@ -84,10 +84,10 @@ public class AllocationTest {
 
     // Checks that the leaf allocations add up to a full 1.0.
     double total =
-        leftLeftDown.getFractionOfRoot()
-            + leftMiddle.getFractionOfRoot()
-            + leftRight.getFractionOfRoot()
-            + rightDown.getFractionOfRoot();
+        leftLeftDown.getFractionOfRoot() * leftLeftDown.getAllocationUnits()
+            + leftMiddle.getFractionOfRoot() * leftMiddle.getAllocationUnits()
+            + leftRight.getFractionOfRoot() * leftRight.getAllocationUnits()
+            + rightDown.getFractionOfRoot() * rightDown.getAllocationUnits();
     Assert.assertEquals(1.0, total, DOUBLE_ERROR_MARGIN);
   }
 }
