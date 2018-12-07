@@ -104,6 +104,14 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     Preconditions.checkNotNull(jibExtension);
     TaskCommon.disableHttpLogging();
 
+    if (jibExtension.getUseOnlyProjectCache()) {
+      getLogger()
+          .warn(
+              "jib.useOnlyProjectCache is deprecated; consider using the 'jib.useOnlyProjectCache' "
+                  + "system property instead, or set the cache directories using the "
+                  + "'jib.baseImageCache' and 'jib.applicationCache' system properties.");
+    }
+
     try {
       AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
       GradleProjectProperties projectProperties =

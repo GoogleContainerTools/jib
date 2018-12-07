@@ -52,8 +52,6 @@
           <container>
             <appRoot>/usr/local/tomcat/webapps/ROOT</appRoot>
           </container>
-          <!-- Does not have tests use user-level cache for base image layers. -->
-          <useOnlyProjectCache>true</useOnlyProjectCache>
         </configuration>
       </plugin>
     </plugins>

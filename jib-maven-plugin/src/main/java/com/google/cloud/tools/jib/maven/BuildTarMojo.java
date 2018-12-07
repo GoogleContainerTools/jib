@@ -62,6 +62,14 @@ public class BuildTarMojo extends JibPluginConfiguration {
       return;
     }
 
+    if (getUseOnlyProjectCache()) {
+      getLog()
+          .warn(
+              "<useOnlyProjectCache> is deprecated; consider using the 'jib.useOnlyProjectCache' "
+                  + "system property instead, or set the cache directories using the "
+                  + "'jib.baseImageCache' and 'jib.applicationCache' system properties.");
+    }
+
     try {
       AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
       MavenProjectProperties projectProperties =

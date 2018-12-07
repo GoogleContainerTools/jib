@@ -112,6 +112,7 @@ public class SingleProjectIntegrationTest {
         simpleTestProject.build(
             "clean",
             "jib",
+            "-Djib.useProjectOnlyCache=true",
             "-D_TARGET_IMAGE=" + imageReference,
             "-D_TARGET_USERNAME=" + username,
             "-D_TARGET_PASSWORD=" + password,
@@ -144,7 +145,12 @@ public class SingleProjectIntegrationTest {
 
     // Test empty output error
     try {
-      simpleTestProject.build("clean", "jib", "-x=classes", "-D_TARGET_IMAGE=" + targetImage);
+      simpleTestProject.build(
+          "clean",
+          "jib",
+          "-Djib.useProjectOnlyCache=true",
+          "-x=classes",
+          "-D_TARGET_IMAGE=" + targetImage);
       Assert.fail();
 
     } catch (UnexpectedBuildFailure ex) {
@@ -205,7 +211,11 @@ public class SingleProjectIntegrationTest {
         simpleTestProject.getProjectRoot().resolve("build").resolve("jib-image.tar").toString();
     Instant beforeBuild = Instant.now();
     BuildResult buildResult =
-        simpleTestProject.build("clean", "jibBuildTar", "-D_TARGET_IMAGE=" + targetImage);
+        simpleTestProject.build(
+            "clean",
+            "jibBuildTar",
+            "-Djib.useProjectOnlyCache=true",
+            "-D_TARGET_IMAGE=" + targetImage);
 
     JibRunHelper.assertBuildSuccess(buildResult, "jibBuildTar", "Built image tarball at ");
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(outputPath));

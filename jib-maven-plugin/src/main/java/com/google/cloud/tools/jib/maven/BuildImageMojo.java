@@ -65,6 +65,14 @@ public class BuildImageMojo extends JibPluginConfiguration {
       return;
     }
 
+    if (getUseOnlyProjectCache()) {
+      getLog()
+          .warn(
+              "<useOnlyProjectCache> is deprecated; consider using the 'jib.useOnlyProjectCache' "
+                  + "system property instead, or set the cache directories using the "
+                  + "'jib.baseImageCache' and 'jib.applicationCache' system properties.");
+    }
+
     // Validates 'format'.
     if (Arrays.stream(ImageFormat.values()).noneMatch(value -> value.name().equals(getFormat()))) {
       throw new MojoFailureException(

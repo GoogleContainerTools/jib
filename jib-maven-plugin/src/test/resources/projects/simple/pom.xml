@@ -59,8 +59,6 @@
             <workingDirectory>/home</workingDirectory>
           </container>
           <extraDirectory>${project.basedir}/src/main/jib-custom</extraDirectory>
-          <!-- Does not have tests use user-level cache for base image layers. -->
-          <useOnlyProjectCache>true</useOnlyProjectCache>
         </configuration>
       </plugin>
     </plugins>

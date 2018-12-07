@@ -28,7 +28,4 @@ jib {
     workingDirectory = '/home'
   }
   extraDirectory = file('src/main/custom-extra-dir')
-
-  // Does not have tests use user-level cache for base image layers.
-  useOnlyProjectCache = true
 }

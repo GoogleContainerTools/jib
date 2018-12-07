@@ -50,7 +50,11 @@ public class JibRunHelper {
       throws IOException, InterruptedException, DigestException {
     BuildResult buildResult =
         testProject.build(
-            "clean", "jib", "-D_TARGET_IMAGE=" + imageReference, "-b=" + gradleBuildFile);
+            "clean",
+            "jib",
+            "-Djib.useProjectOnlyCache=true",
+            "-D_TARGET_IMAGE=" + imageReference,
+            "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
     assertImageDigestAndId(testProject.getProjectRoot());
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(imageReference));
@@ -65,6 +69,7 @@ public class JibRunHelper {
         testProject.build(
             "clean",
             "jib",
+            "-Djib.useProjectOnlyCache=true",
             "-D_TARGET_IMAGE=" + imageReference,
             "-D_ADDITIONAL_TAG=" + additionalTag);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
@@ -89,6 +94,7 @@ public class JibRunHelper {
         testProject.build(
             "clean",
             "jibDockerBuild",
+            "-Djib.useProjectOnlyCache=true",
             "-D_TARGET_IMAGE=" + imageReference,
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");

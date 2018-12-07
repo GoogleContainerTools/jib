@@ -94,7 +94,6 @@
             </permissions>
           </extraDirectory>
           <allowInsecureRegistries>true</allowInsecureRegistries>
-          <useOnlyProjectCache>true</useOnlyProjectCache>
         </configuration>
       </plugin>
     </plugins>

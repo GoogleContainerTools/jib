@@ -62,6 +62,14 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       return;
     }
 
+    if (getUseOnlyProjectCache()) {
+      getLog()
+          .warn(
+              "<useOnlyProjectCache> is deprecated; consider using the 'jib.useOnlyProjectCache' "
+                  + "system property instead, or set the cache directories using the "
+                  + "'jib.baseImageCache' and 'jib.applicationCache' system properties.");
+    }
+
     if (!DockerClient.isDefaultDockerInstalled()) {
       throw new MojoExecutionException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));

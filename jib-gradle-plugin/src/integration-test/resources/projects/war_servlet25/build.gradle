@@ -31,7 +31,4 @@ jib {
     image = System.getProperty("_TARGET_IMAGE")
     credHelper = 'gcr'
   }
-
-  // Does not have tests use user-level cache for base image layers.
-  useOnlyProjectCache = true
 }
