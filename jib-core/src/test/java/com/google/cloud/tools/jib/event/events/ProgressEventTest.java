@@ -63,10 +63,10 @@ public class ProgressEventTest {
   public void testAccumulateProgress() {
     Consumer<ProgressEvent> progressEventConsumer =
         progressEvent -> {
-          Allocation allocation = progressEvent.getAllocation();
+          double fractionOfRoot = progressEvent.getAllocation().getFractionOfRoot();
           long units = progressEvent.getUnits();
 
-          progress += units * allocation.getFractionOfRoot() / allocation.getAllocationUnits();
+          progress += units * fractionOfRoot;
         };
 
     EventDispatcher eventDispatcher = makeEventDispatcher(progressEventConsumer);

@@ -29,6 +29,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import org.junit.Assert;
 
 /** Testing infrastructure for running code across multiple threads. */
 class MultithreadedExecutor implements Closeable {
@@ -52,7 +53,8 @@ class MultithreadedExecutor implements Closeable {
 
     List<E> returnValues = new ArrayList<>();
     for (Future<E> future : futures) {
-      returnValues.add(future.get(MULTITHREADED_TEST_TIMEOUT.getSeconds(), TimeUnit.SECONDS));
+      Assert.assertTrue(future.isDone());
+      returnValues.add(future.get());
     }
 
     return returnValues;

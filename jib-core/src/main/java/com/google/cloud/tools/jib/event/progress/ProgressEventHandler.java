@@ -51,10 +51,9 @@ class ProgressEventHandler implements Consumer<ProgressEvent> {
     Allocation allocation = progressEvent.getAllocation();
     long progressUnits = progressEvent.getUnits();
     double allocationFraction = allocation.getFractionOfRoot();
-    long allocationUnits = allocation.getAllocationUnits();
 
     if (progressUnits != 0) {
-      progress.add(progressUnits * allocationFraction / allocationUnits);
+      progress.add(progressUnits * allocationFraction);
     }
 
     if (completionTracker.updateProgress(allocation, progressUnits)) {
