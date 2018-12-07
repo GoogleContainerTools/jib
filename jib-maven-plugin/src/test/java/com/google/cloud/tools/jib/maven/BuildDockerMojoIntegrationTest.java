@@ -154,4 +154,13 @@ public class BuildDockerMojoIntegrationTest {
         "myuser:mygroup",
         new Command("docker", "inspect", "-f", "{{.Config.User}}", targetImage).run().trim());
   }
+
+  @Test
+  public void testExecute_noToImageAndInvalidProjectName()
+      throws DigestException, VerificationException, IOException, InterruptedException {
+    buildToDockerDaemon(
+        simpleTestProject.getProjectRoot(), "image reference ignored", "pom-no-to-image.xml");
+    Assert.assertEquals(
+        "Hello, world. \n", new Command("docker", "run", "--rm", "my-artifact-id:1").run());
+  }
 }
