@@ -27,9 +27,22 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.maven.project.MavenProject;
 
-/** Collection of common methods to share between Gradle tasks. */
+/** Collection of common methods to share between Maven goals. */
 class MojoCommon {
+
+  /**
+   * Gets whether or not the given project is a war project. This is the case for projects with
+   * packaging {@code war} and {@code gwt-app}.
+   *
+   * @param project the Maven project
+   * @return {@code true} if the project is a war project, {@code false} if not
+   */
+  static boolean isWarProject(MavenProject project) {
+    String packaging = project.getPackaging();
+    return "war".equals(packaging) || "gwt-app".equals(packaging);
+  }
 
   /**
    * Gets the value of the {@code <container><appRoot>} parameter. If the parameter is empty,
@@ -45,7 +58,7 @@ class MojoCommon {
       throws InvalidAppRootException {
     String appRoot = jibPluginConfiguration.getAppRoot();
     if (appRoot.isEmpty()) {
-      boolean isWarProject = "war".equals(jibPluginConfiguration.getProject().getPackaging());
+      boolean isWarProject = isWarProject(jibPluginConfiguration.getProject());
       appRoot =
           isWarProject
               ? JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT

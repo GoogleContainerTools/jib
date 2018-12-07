@@ -30,20 +30,6 @@ public class BuildSteps {
   private static final String DESCRIPTION_FOR_DOCKER_DAEMON = "Building image to Docker daemon";
   private static final String DESCRIPTION_FOR_TARBALL = "Building image tarball";
 
-  /** Runs appropriate steps to build an image. */
-  @FunctionalInterface
-  private interface ImageBuildRunnable {
-
-    /**
-     * Builds an image.
-     *
-     * @return the built image
-     * @throws ExecutionException if an exception occurs during execution
-     * @throws InterruptedException if the execution is interrupted
-     */
-    BuildResult build() throws ExecutionException, InterruptedException;
-  }
-
   /**
    * All the steps to build an image to a Docker registry.
    *
@@ -54,20 +40,18 @@ public class BuildSteps {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_REGISTRY,
         buildConfiguration,
-        () ->
-            new StepsRunner(buildConfiguration)
-                .runRetrieveTargetRegistryCredentialsStep()
-                .runAuthenticatePushStep()
-                .runPullBaseImageStep()
-                .runPullAndCacheBaseImageLayersStep()
-                .runPushBaseImageLayersStep()
-                .runBuildAndCacheApplicationLayerSteps()
-                .runBuildImageStep()
-                .runPushContainerConfigurationStep()
-                .runPushApplicationLayersStep()
-                .runFinalizingPushStep()
-                .runPushImageStep()
-                .waitOnPushImageStep());
+        StepsRunner.begin(buildConfiguration)
+            .retrieveTargetRegistryCredentials()
+            .authenticatePush()
+            .pullBaseImage()
+            .pullAndCacheBaseImageLayers()
+            .pushBaseImageLayers()
+            .buildAndCacheApplicationLayers()
+            .buildImage()
+            .pushContainerConfiguration()
+            .pushApplicationLayers()
+            .finalizingPush()
+            .pushImage());
   }
 
   /**
@@ -82,15 +66,13 @@ public class BuildSteps {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_DAEMON,
         buildConfiguration,
-        () ->
-            new StepsRunner(buildConfiguration)
-                .runPullBaseImageStep()
-                .runPullAndCacheBaseImageLayersStep()
-                .runBuildAndCacheApplicationLayerSteps()
-                .runBuildImageStep()
-                .runFinalizingBuildStep()
-                .runLoadDockerStep(dockerClient)
-                .waitOnLoadDockerStep());
+        StepsRunner.begin(buildConfiguration)
+            .pullBaseImage()
+            .pullAndCacheBaseImageLayers()
+            .buildAndCacheApplicationLayers()
+            .buildImage()
+            .finalizingBuild()
+            .loadDocker(dockerClient));
   }
 
   /**
@@ -104,33 +86,29 @@ public class BuildSteps {
     return new BuildSteps(
         DESCRIPTION_FOR_TARBALL,
         buildConfiguration,
-        () ->
-            new StepsRunner(buildConfiguration)
-                .runPullBaseImageStep()
-                .runPullAndCacheBaseImageLayersStep()
-                .runBuildAndCacheApplicationLayerSteps()
-                .runBuildImageStep()
-                .runFinalizingBuildStep()
-                .runWriteTarFileStep(outputPath)
-                .waitOnWriteTarFileStep());
+        StepsRunner.begin(buildConfiguration)
+            .pullBaseImage()
+            .pullAndCacheBaseImageLayers()
+            .buildAndCacheApplicationLayers()
+            .buildImage()
+            .finalizingBuild()
+            .writeTarFile(outputPath));
   }
 
   private final String description;
   private final BuildConfiguration buildConfiguration;
-  private final ImageBuildRunnable imageBuildRunnable;
+  private final StepsRunner stepsRunner;
 
   /**
    * @param description a description of what the steps do
    * @param buildConfiguration the configuration parameters for the build
-   * @param imageBuildRunnable runs the necessary steps to build an image
+   * @param stepsRunner runs the necessary steps to build an image
    */
   private BuildSteps(
-      String description,
-      BuildConfiguration buildConfiguration,
-      ImageBuildRunnable imageBuildRunnable) {
+      String description, BuildConfiguration buildConfiguration, StepsRunner stepsRunner) {
     this.description = description;
     this.buildConfiguration = buildConfiguration;
-    this.imageBuildRunnable = imageBuildRunnable;
+    this.stepsRunner = stepsRunner;
   }
 
   public BuildConfiguration getBuildConfiguration() {
@@ -147,7 +125,7 @@ public class BuildSteps {
   public BuildResult run() throws InterruptedException, ExecutionException {
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
-      return imageBuildRunnable.build();
+      return stepsRunner.run();
     }
   }
 }

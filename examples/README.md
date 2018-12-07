@@ -28,6 +28,10 @@ See [spring-boot-kubernetes](spring-boot-kubernetes) for containerizing a [Sprin
 
 See [ktor](ktor) for containerizing a [Ktor](https://ktor.io) Kotlin Application using the Kotlin Gradle DSL.
 
+### Dropwizard example
+
+See [dropwizard](dropwizard) for containerizing [Dropwizard](https://dropwizard.io) applications.
+
 ### Micronaut example
 
 See [micronaut](micronaut) for containerizing a [Micronaut framework](https://micronaut.io/) Groovy/Java application.

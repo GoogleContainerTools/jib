@@ -52,7 +52,7 @@ class MavenLayerConfigurations {
       Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
       AbsoluteUnixPath appRoot)
       throws IOException {
-    if ("war".equals(project.getPackaging())) {
+    if (MojoCommon.isWarProject(project)) {
       return getForWarProject(project, extraDirectory, extraDirectoryPermissions, appRoot);
     } else {
       return getForNonWarProject(project, extraDirectory, extraDirectoryPermissions, appRoot);
