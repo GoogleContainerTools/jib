@@ -60,7 +60,7 @@ public class Allocation {
   /** The number of allocation units this node holds. */
   private final long allocationUnits;
 
-  /** How much of the root allocation (1.0) this allocation accounts for. */
+  /** How much of the root allocation (1.0) each allocation unit accounts for. */
   private final double fractionOfRoot;
 
   private Allocation(String description, long allocationUnits, @Nullable Allocation parent) {
@@ -68,7 +68,7 @@ public class Allocation {
     this.allocationUnits = allocationUnits;
     this.parent = parent;
 
-    this.fractionOfRoot = parent == null ? 1.0 : parent.fractionOfRoot / parent.allocationUnits;
+    this.fractionOfRoot = (parent == null ? 1.0 : parent.fractionOfRoot) / allocationUnits;
   }
 
   /**
@@ -113,10 +113,10 @@ public class Allocation {
   }
 
   /**
-   * Gets how much of the root allocation this allocation accounts for. The entire root allocation
-   * is {@code 1.0}.
+   * Gets how much of the root allocation each of the allocation units of this allocation accounts
+   * for. The entire root allocation is {@code 1.0}.
    *
-   * @return the fraction of the root allocation this allocation accounts for
+   * @return the fraction of the root allocation this allocation's allocation units accounts for
    */
   public double getFractionOfRoot() {
     return fractionOfRoot;

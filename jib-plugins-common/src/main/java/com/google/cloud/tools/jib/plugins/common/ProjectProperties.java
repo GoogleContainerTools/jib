@@ -41,7 +41,7 @@ public interface ProjectProperties {
 
   JavaLayerConfigurations getJavaLayerConfigurations();
 
-  Path getCacheDirectory();
+  Path getDefaultCacheDirectory();
 
   String getJarPluginName();
 
