@@ -22,6 +22,8 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.Layer;
@@ -36,25 +38,30 @@ import java.util.concurrent.ExecutionException;
 /** Adds image layers to a tarball and loads into Docker daemon. */
 class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
-  private final DockerClient dockerClient;
+  private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
+  private final Allocation parentProgressAllocation;
+
+  private final DockerClient dockerClient;
+
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
   private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
   private final BuildImageStep buildImageStep;
 
-  private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<BuildResult> listenableFuture;
 
   LoadDockerStep(
       ListeningExecutorService listeningExecutorService,
-      DockerClient dockerClient,
       BuildConfiguration buildConfiguration,
+      Allocation parentProgressAllocation,
+      DockerClient dockerClient,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
       ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps,
       BuildImageStep buildImageStep) {
     this.listeningExecutorService = listeningExecutorService;
-    this.dockerClient = dockerClient;
     this.buildConfiguration = buildConfiguration;
+    this.parentProgressAllocation = parentProgressAllocation;
+    this.dockerClient = dockerClient;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
     this.buildImageStep = buildImageStep;
@@ -89,14 +96,17 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
   private BuildResult afterPushBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, IOException {
+    buildConfiguration
+        .getEventDispatcher()
+        .dispatch(LogEvent.lifecycle("Loading to Docker daemon..."));
+    Allocation progressAllocation = parentProgressAllocation.newChild("Load to Docker daemon", 1);
+    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
+
     Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
     ImageReference targetImageReference =
         buildConfiguration.getTargetImageConfiguration().getImage();
 
     // Load the image to docker daemon.
-    buildConfiguration
-        .getEventDispatcher()
-        .dispatch(LogEvent.lifecycle("Loading to Docker daemon..."));
     dockerClient.load(new ImageToTarballTranslator(image).toTarballBlob(targetImageReference));
 
     // Tags the image with all the additional tags, skipping the one 'docker load' already loaded.
@@ -107,6 +117,8 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
       dockerClient.tag(targetImageReference, targetImageReference.withTag(tag));
     }
+
+    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 1));
 
     return BuildResult.fromImage(image, buildConfiguration.getTargetFormat());
   }

@@ -20,6 +20,8 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.AsyncSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -86,6 +88,8 @@ public class StepsRunner {
   /** The total number of steps added. */
   private int stepsCount = 0;
 
+  @Nullable private Allocation rootProgressAllocation;
+
   private StepsRunner(
       ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
     this.listeningExecutorService = listeningExecutorService;
@@ -97,7 +101,9 @@ public class StepsRunner {
         () ->
             steps.retrieveTargetRegistryCredentialsStep =
                 RetrieveRegistryCredentialsStep.forTargetImage(
-                    listeningExecutorService, buildConfiguration));
+                    listeningExecutorService,
+                    buildConfiguration,
+                    Preconditions.checkNotNull(rootProgressAllocation)));
   }
 
   public StepsRunner authenticatePush() {
@@ -107,6 +113,7 @@ public class StepsRunner {
                 new AuthenticatePushStep(
                     listeningExecutorService,
                     buildConfiguration,
+                    Preconditions.checkNotNull(rootProgressAllocation),
                     Preconditions.checkNotNull(steps.retrieveTargetRegistryCredentialsStep)));
   }
 
@@ -114,7 +121,10 @@ public class StepsRunner {
     return enqueueStep(
         () ->
             steps.pullBaseImageStep =
-                new PullBaseImageStep(listeningExecutorService, buildConfiguration));
+                new PullBaseImageStep(
+                    listeningExecutorService,
+                    buildConfiguration,
+                    Preconditions.checkNotNull(rootProgressAllocation)));
   }
 
   public StepsRunner pullAndCacheBaseImageLayers() {
@@ -124,6 +134,7 @@ public class StepsRunner {
                 new PullAndCacheBaseImageLayersStep(
                     listeningExecutorService,
                     buildConfiguration,
+                    Preconditions.checkNotNull(rootProgressAllocation),
                     Preconditions.checkNotNull(steps.pullBaseImageStep)));
   }
 
@@ -134,6 +145,7 @@ public class StepsRunner {
                 new PushLayersStep(
                     listeningExecutorService,
                     buildConfiguration,
+                    Preconditions.checkNotNull(rootProgressAllocation),
                     Preconditions.checkNotNull(steps.authenticatePushStep),
                     Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep)));
   }
@@ -143,7 +155,9 @@ public class StepsRunner {
         () ->
             steps.buildAndCacheApplicationLayerSteps =
                 BuildAndCacheApplicationLayerStep.makeList(
-                    listeningExecutorService, buildConfiguration));
+                    listeningExecutorService,
+                    buildConfiguration,
+                    Preconditions.checkNotNull(rootProgressAllocation)));
   }
 
   public StepsRunner buildImage() {
@@ -153,6 +167,7 @@ public class StepsRunner {
                 new BuildImageStep(
                     listeningExecutorService,
                     buildConfiguration,
+                    Preconditions.checkNotNull(rootProgressAllocation),
                     Preconditions.checkNotNull(steps.pullBaseImageStep),
                     Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep),
                     Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps)));
@@ -165,6 +180,7 @@ public class StepsRunner {
                 new PushContainerConfigurationStep(
                     listeningExecutorService,
                     buildConfiguration,
+                    Preconditions.checkNotNull(rootProgressAllocation),
                     Preconditions.checkNotNull(steps.authenticatePushStep),
                     Preconditions.checkNotNull(steps.buildImageStep)));
   }
@@ -176,6 +192,7 @@ public class StepsRunner {
                 new PushLayersStep(
                     listeningExecutorService,
                     buildConfiguration,
+                    Preconditions.checkNotNull(rootProgressAllocation),
                     Preconditions.checkNotNull(steps.authenticatePushStep),
                     AsyncSteps.immediate(
                         Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps))));
@@ -205,12 +222,15 @@ public class StepsRunner {
   }
 
   public StepsRunner pushImage() {
+    createRootProgressAllocation("Build to registry");
+
     return enqueueStep(
         () ->
             steps.finalStep =
                 new PushImageStep(
                     listeningExecutorService,
                     buildConfiguration,
+                    Preconditions.checkNotNull(rootProgressAllocation),
                     Preconditions.checkNotNull(steps.authenticatePushStep),
                     Preconditions.checkNotNull(steps.pushBaseImageLayersStep),
                     Preconditions.checkNotNull(steps.pushApplicationLayersStep),
@@ -219,32 +239,39 @@ public class StepsRunner {
   }
 
   public StepsRunner loadDocker(DockerClient dockerClient) {
+    createRootProgressAllocation("Build to Docker daemon");
+
     return enqueueStep(
         () ->
             steps.finalStep =
                 new LoadDockerStep(
                     listeningExecutorService,
-                    dockerClient,
                     buildConfiguration,
+                    Preconditions.checkNotNull(rootProgressAllocation),
+                    dockerClient,
                     Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep),
                     Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps),
                     Preconditions.checkNotNull(steps.buildImageStep)));
   }
 
   public StepsRunner writeTarFile(Path outputPath) {
+    createRootProgressAllocation("Build to tar file");
+
     return enqueueStep(
         () ->
             steps.finalStep =
                 new WriteTarFileStep(
                     listeningExecutorService,
-                    outputPath,
                     buildConfiguration,
+                    Preconditions.checkNotNull(rootProgressAllocation),
+                    outputPath,
                     Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep),
                     Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps),
                     Preconditions.checkNotNull(steps.buildImageStep)));
   }
 
   public BuildResult run() throws ExecutionException, InterruptedException {
+    Preconditions.checkNotNull(rootProgressAllocation);
     stepsRunnable.run();
     return Preconditions.checkNotNull(steps.finalStep).getFuture().get();
   }
@@ -258,5 +285,10 @@ public class StepsRunner {
         };
     stepsCount++;
     return this;
+  }
+
+  private void createRootProgressAllocation(String description) {
+    rootProgressAllocation = Allocation.newRoot(description, stepsCount);
+    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(rootProgressAllocation, 0L));
   }
 }

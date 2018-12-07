@@ -23,6 +23,8 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -44,22 +46,25 @@ class BuildImageStep
 
   private static final String DESCRIPTION = "Building container configuration";
 
+  private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
+  private final Allocation parentProgressAllocation;
   private final PullBaseImageStep pullBaseImageStep;
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
   private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
 
-  private final ListeningExecutorService listeningExecutorService;
   private final ListenableFuture<AsyncStep<Image<Layer>>> listenableFuture;
 
   BuildImageStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
+      Allocation parentProgressAllocation,
       PullBaseImageStep pullBaseImageStep,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
       ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
+    this.parentProgressAllocation = parentProgressAllocation;
     this.pullBaseImageStep = pullBaseImageStep;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
@@ -95,6 +100,9 @@ class BuildImageStep
 
   private Image<Layer> afterCachedLayerSteps()
       throws ExecutionException, LayerPropertyNotFoundException {
+    Allocation progressAllocation = parentProgressAllocation.newChild("build image format", 1);
+    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
+
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // Constructs the image.
@@ -168,7 +176,11 @@ class BuildImageStep
       }
 
       // Gets the container configuration content descriptor.
-      return imageBuilder.build();
+      Image<Layer> image = imageBuilder.build();
+
+      buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 1));
+
+      return image;
     }
   }
 
