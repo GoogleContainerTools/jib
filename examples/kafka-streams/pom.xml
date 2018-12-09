@@ -1,0 +1,84 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>example</groupId>
+    <artifactId>kafka-streams-jib-example</artifactId>
+    <version>1</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <mainClass>example.kafkastreams.ToUpperCaseProcessor</mainClass>
+
+        <logback.version>1.2.3</logback.version>
+        <kafka.version>2.1.0</kafka.version>
+
+        <jib-maven-plugin.version>0.10.1</jib-maven-plugin.version>
+    </properties>
+
+    <dependencies>
+        <!-- Logback for slf4j -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+
+        <!-- Apache Kafka dependencies -->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-streams</artifactId>
+            <version>${kafka.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>${jib-maven-plugin.version}</version>
+                <configuration>
+                    <container>
+                        <!-- good defaults intended for containers -->
+                        <jvmFlags>
+                            <jmxFlag>-Djava.awt.headless=true</jmxFlag>
+                            <jmxFlag>-XX:+UnlockExperimentalVMOptions</jmxFlag>
+                            <jmxFlag>-XX:+UseCGroupMemoryLimitForHeap</jmxFlag>
+                            <jmxFlag>-XX:InitialRAMFraction=2</jmxFlag>
+                            <jmxFlag>-XX:MinRAMFraction=2</jmxFlag>
+                            <jmxFlag>-XX:MaxRAMFraction=2</jmxFlag>
+                            <jmxFlag>-XX:+UseG1GC</jmxFlag>
+                            <jmxFlag>-XX:MaxGCPauseMillis=100</jmxFlag>
+                            <jmxFlag>-XX:+UseStringDeduplication</jmxFlag>
+                        </jvmFlags>
+                    </container>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>dockerBuild</id>
+                        <goals>
+                            <goal>dockerBuild</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <configuration>
+                    <mainClass>${mainClass}</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

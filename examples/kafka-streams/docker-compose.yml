@@ -1,0 +1,54 @@
+# Originated from https://github.com/bitnami/bitnami-docker-kafka/blob/0b1b18843b8a5c754a4c6e52a49ac5cf992fa5ed/docker-compose.yml
+version: '3'
+
+services:
+  zookeeper:
+    image: bitnami/zookeeper:3.4.12
+    ports:
+      - '2181:2181'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    volumes:
+      - 'zookeeper_data:/bitnami/zookeeper'
+  kafka:
+    image: bitnami/kafka:2.1.0
+    depends_on:
+      - zookeeper
+    restart: unless-stopped
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    ports:
+      - '9092:9092'
+      - '29092:29092'
+    volumes:
+      - 'kafka_data:/bitnami/kafka'
+      - $PWD/lipsum.txt:/data/lipsum.txt:ro  # Some data to produce
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_DELETE_TOPIC_ENABLE=true
+      - KAFKA_LOG_RETENTION_HOURS=48  # 2 days of retention for demo purposes
+      # https://rmoff.net/2018/08/02/kafka-listeners-explained/
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_LISTENERS=PLAINTEXT://:9092,PLAINTEXT_HOST://:29092
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+
+  # Jib app
+  kafka-streams:
+    image: kafka-streams-jib-example:1
+    depends_on:
+      - kafka
+    environment:
+      - BOOTSTRAP_SERVERS=kafka:9092
+      - STREAMS_INPUT=streams-plaintext-input
+      - STREAMS_OUTPUT=streams-plaintext-output
+      - AUTO_OFFSET_RESET=earliest
+volumes:
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local
