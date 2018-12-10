@@ -38,7 +38,7 @@ public class SingleThreadedLoggerTest {
         .log(() -> logBuilder.append("message\n"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
-    Assert.assertEquals("message\n", logBuilder.toString());
+    Assert.assertEquals("\033[0Jmessage\n", logBuilder.toString());
   }
 
   @Test
@@ -55,7 +55,7 @@ public class SingleThreadedLoggerTest {
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
     Assert.assertEquals(
-        "footer\033[1A      \033[1Amessage\nfooter\033[1A      \033[1Aanother message\nfooter",
+        "\033[0Jfooter\033[1A\033[0Jmessage\nfooter\033[1A\033[0Janother message\nfooter",
         logBuilder.toString());
   }
 
@@ -76,8 +76,8 @@ public class SingleThreadedLoggerTest {
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
     Assert.assertEquals(
-        "footer\033[1A      \033[1Amessage\nfooter\033[1A      \033[1Atwo line\nfooter"
-            + "\033[1A\033[1A        \n      \033[1A\033[1Aanother message\ntwo line\nfooter",
+        "\033[0Jfooter\033[1A\033[0Jmessage\nfooter\033[1A\033[0Jtwo line\nfooter"
+            + "\033[1A\033[1A\033[0Janother message\ntwo line\nfooter",
         logBuilder.toString());
   }
 }

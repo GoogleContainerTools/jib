@@ -31,6 +31,9 @@ class SingleThreadedLogger {
   /** ANSI escape sequence for moving the cursor up one line. */
   private static final String CURSOR_UP_SEQUENCE = "\033[1A";
 
+  /** ANSI escape sequence for erasing to end of display. */
+  private static final String ERASE_DISPLAY_BELOW = "\033[0J";
+
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   private final Consumer<String> plainLogger;
@@ -50,7 +53,7 @@ class SingleThreadedLogger {
    * @return a {@link Future} to track completion
    */
   public Future<Void> log(Runnable messageLogger) {
-    return log(messageLogger, footer, footerLineCount);
+    return log(messageLogger, footerLineCount);
   }
 
   /**
@@ -66,7 +69,7 @@ class SingleThreadedLogger {
       return Futures.immediateFuture(null);
     }
 
-    Future<Void> future = log(() -> {}, this.footer, this.footerLineCount);
+    Future<Void> future = log(() -> {}, this.footerLineCount);
 
     this.footer = footer;
     this.footerLineCount = lineCount;
@@ -74,7 +77,7 @@ class SingleThreadedLogger {
     return future;
   }
 
-  private Future<Void> log(Runnable messageLogger, String previousFooter, int previousLineCount) {
+  private Future<Void> log(Runnable messageLogger, int previousLineCount) {
     return executorService.submit(
         () -> {
           StringBuilder plainLogBuilder = new StringBuilder();
@@ -86,18 +89,8 @@ class SingleThreadedLogger {
             plainLogBuilder.append(CURSOR_UP_SEQUENCE);
           }
 
-          // Overwrites the footer with whitespace.
-          // TODO: Optimize to single init.
-          for (int i = 0; i < previousFooter.length(); i++) {
-            plainLogBuilder.append(previousFooter.charAt(i) == '\n' ? '\n' : ' ');
-          }
-
-          // Moves the cursor up again.
-          // TODO: Optimize to single init.
-          for (int i = 0; i < previousLineCount; i++) {
-            // Moves cursor up.
-            plainLogBuilder.append(CURSOR_UP_SEQUENCE);
-          }
+          // Erases everything below cursor.
+          plainLogBuilder.append(ERASE_DISPLAY_BELOW);
 
           // Writes out logMessage and footer.
           plainLogger.accept(plainLogBuilder.toString());
