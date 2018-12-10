@@ -213,7 +213,6 @@ Field | Type | Default | Description
 `extraDirectory` | [`extraDirectory`](#extradirectory-object) / string | `(project-dir)/src/main/jib` | Configures the directory used to add arbitrary files to the image.
 `allowInsecureRegistries` | boolean | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 `skip` | boolean | `false` | If set to true, Jib execution is skipped (useful for multi-module projects). This can also be specified via the `-Djib.skip` command line option.
-`useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Maven projects.
 
 <a name="from-object"></a>`from` is an object with the following properties:
 
@@ -276,15 +275,14 @@ mvn compile jib:build \
 mvn compile jib:dockerBuild \
     -Djib.container.environment=key1="value1",key2="value2" \
     -Djib.container.args=arg1,arg2,arg3
-
-mvn jib:buildTar -Djib.useProjectOnlyCache=true
 ```
 
-You can also configure HTTP connection/read timeouts for registry interactions using the `jib.httpTimeout` system property, configured in milliseconds via commandline (the default is `20000`; you can also set it to `0` for infinite timeout):
+The following table contains additional system properties that are not available as build configuration parameters:
 
-```shell
-mvn compile jib:build -Djib.httpTimeout=3000
-```
+Property | Type | Default | Description
+--- | --- | --- | ---
+`jib.httpTimeout` | int | `20000` | HTTP connection/read timeout for registry interactions, in milliseconds. Use a value of `0` for an infinite timeout.
+`jib.useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Maven projects.
 
 *\* If you configure `args` while `entrypoint` is set to `'INHERIT'`, the configured `args` value will take precedence over the CMD propagated from the base image.*
 
