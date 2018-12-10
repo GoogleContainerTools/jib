@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.common.util.concurrent.Futures;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -38,8 +40,7 @@ class SingleThreadedLogger {
 
   private final Consumer<String> plainLogger;
 
-  private String footer = "";
-  private int footerLineCount = 0;
+  private List<String> footerLines = Collections.emptyList();
 
   SingleThreadedLogger(Consumer<String> plainLogger) {
     this.plainLogger = plainLogger;
@@ -53,28 +54,25 @@ class SingleThreadedLogger {
    * @return a {@link Future} to track completion
    */
   public Future<Void> log(Runnable messageLogger) {
-    return log(messageLogger, footerLineCount);
+    return log(messageLogger, footerLines.size());
   }
 
   /**
    * Sets the footer asynchronously. This will replace the previously-printed footer with the new
-   * {@code footer}.
+   * {@code footerLines}.
    *
-   * @param footer the footer
-   * @param lineCount the number of lines in the footer
+   * @param footerLines the footer, with each line as an element (no newline at end)
    * @return a {@link Future} to track completion
    */
-  public Future<Void> setFooter(String footer, int lineCount) {
-    if (footer.equals(this.footer)) {
+  public Future<Void> setFooter(List<String> footerLines) {
+    if (footerLines.equals(this.footerLines)) {
       return Futures.immediateFuture(null);
     }
 
-    Future<Void> future = log(() -> {}, this.footerLineCount);
+    int previousLineCount = this.footerLines.size();
+    this.footerLines = footerLines;
 
-    this.footer = footer;
-    this.footerLineCount = lineCount;
-
-    return future;
+    return log(() -> {}, previousLineCount);
   }
 
   private Future<Void> log(Runnable messageLogger, int previousLineCount) {
@@ -95,7 +93,7 @@ class SingleThreadedLogger {
           // Writes out logMessage and footer.
           plainLogger.accept(plainLogBuilder.toString());
           messageLogger.run();
-          plainLogger.accept(footer);
+          plainLogger.accept(String.join("\n", footerLines));
 
           return null;
         });

@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -45,7 +47,7 @@ public class SingleThreadedLoggerTest {
   public void testLog_sameFooter()
       throws InterruptedException, ExecutionException, TimeoutException {
     testSingleThreadedLogger
-        .setFooter("footer", 1)
+        .setFooter(Collections.singletonList("footer"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
     testSingleThreadedLogger
         .log(() -> logBuilder.append("message\n"))
@@ -63,13 +65,13 @@ public class SingleThreadedLoggerTest {
   public void testLog_changingFooter()
       throws InterruptedException, ExecutionException, TimeoutException {
     testSingleThreadedLogger
-        .setFooter("footer", 1)
+        .setFooter(Collections.singletonList("footer"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
     testSingleThreadedLogger
         .log(() -> logBuilder.append("message\n"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
     testSingleThreadedLogger
-        .setFooter("two line\nfooter", 2)
+        .setFooter(Arrays.asList("two line", "footer"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
     testSingleThreadedLogger
         .log(() -> logBuilder.append("another message\n"))
