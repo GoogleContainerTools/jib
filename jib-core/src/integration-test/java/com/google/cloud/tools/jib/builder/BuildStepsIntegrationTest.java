@@ -45,6 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 import org.hamcrest.CoreMatchers;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -58,7 +59,12 @@ import org.slf4j.LoggerFactory;
 public class BuildStepsIntegrationTest {
 
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
-  @ClassRule public static final ExecutorService executorService = Executors.newCachedThreadPool();
+  private static final ExecutorService executorService = Executors.newCachedThreadPool();
+
+  @AfterClass
+  public static void cleanUp() {
+    executorService.shutdown();
+  }
 
   /**
    * Lists the files in the {@code resourcePath} resources directory and builds a {@link
