@@ -26,10 +26,8 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -37,41 +35,6 @@ import javax.annotation.Nullable;
 
 /** Pulls and caches a single base image layer. */
 class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable<CachedLayer> {
-
-  /**
-   * Contains a {@link ProgressEventDispatcher}. This class is mutable and should only be used
-   * within a local context.
-   *
-   * <p>This class is necessary because the total BLOb size (allocation units) is not known until
-   * the response headers are received, only after which can the {@link ProgressEventDispatcher} be
-   * created.
-   */
-  private static class ProgressEventDispatcherContainer implements Closeable {
-
-    private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-    @Nullable private ProgressEventDispatcher progressEventDispatcher;
-
-    private ProgressEventDispatcherContainer(
-        ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
-      this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    }
-
-    private void initializeWithAllocationUnits(String description, long allocationUnits) {
-      Preconditions.checkState(progressEventDispatcher == null);
-      progressEventDispatcher = progressEventDispatcherFactory.create(description, allocationUnits);
-    }
-
-    private void dispatchProgress(long progressUnits) {
-      Preconditions.checkNotNull(progressEventDispatcher);
-      progressEventDispatcher.dispatchProgress(progressUnits);
-    }
-
-    @Override
-    public void close() {
-      Preconditions.checkNotNull(progressEventDispatcher);
-      progressEventDispatcher.close();
-    }
-  }
 
   private static final String DESCRIPTION = "Pulling base image layer %s";
 
@@ -124,14 +87,14 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
               .newRegistryClient();
 
       try (ProgressEventDispatcherContainer progressEventDispatcherContainer =
-          new ProgressEventDispatcherContainer(progressEventDispatcher.newChildProducer())) {
+          new ProgressEventDispatcherContainer(
+              progressEventDispatcher.newChildProducer(),
+              "pull base image layer blob " + layerDigest)) {
         return cache.writeCompressedLayer(
             registryClient.pullBlob(
                 layerDigest,
-                blobSize ->
-                    progressEventDispatcherContainer.initializeWithAllocationUnits(
-                        "pull base image layer blob " + layerDigest, blobSize),
-                progressEventDispatcherContainer::dispatchProgress));
+                progressEventDispatcherContainer::initializeWithBlobSize,
+                progressEventDispatcherContainer));
       }
     }
   }

@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
@@ -58,7 +59,7 @@ public class ConnectionTest {
   private Request fakeRequest;
   private HttpResponse mockHttpResponse;
 
-  private long byteCount = 0;
+  private long totalByteCount = 0;
 
   @InjectMocks
   private final Connection testConnection =
@@ -113,7 +114,17 @@ public class ConnectionTest {
                 new BlobHttpContent(
                     Blobs.from("crepecake"),
                     "fake.content.type",
-                    sentByteCount -> byteCount += sentByteCount))
+                    new BlobProgressListener() {
+                      @Override
+                      public void handleByteCount(long byteCount) {
+                        totalByteCount += byteCount;
+                      }
+
+                      @Override
+                      public Duration getDelayBetweenCallbacks() {
+                        return Duration.ofSeconds(-1);
+                      }
+                    }))
             .setAuthorization(Authorizations.withBasicCredentials("fake-username", "fake-secret"))
             .setHttpTimeout(httpTimeout)
             .build();
@@ -159,6 +170,6 @@ public class ConnectionTest {
 
     Assert.assertEquals(
         "crepecake", new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
-    Assert.assertEquals("crepecake".length(), byteCount);
+    Assert.assertEquals("crepecake".length(), totalByteCount);
   }
 }

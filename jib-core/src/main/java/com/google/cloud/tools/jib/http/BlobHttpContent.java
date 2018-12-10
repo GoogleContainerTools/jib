@@ -20,22 +20,20 @@ import com.google.api.client.http.HttpContent;
 import com.google.cloud.tools.jib.blob.Blob;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.time.Duration;
-import java.util.function.Consumer;
+import javax.annotation.Nullable;
 
 /** {@link Blob}-backed {@link HttpContent}. */
 public class BlobHttpContent implements HttpContent {
 
   private final Blob blob;
   private final String contentType;
-  // TODO: Refactor into BlobPushMonitor or something.
-  private final Consumer<Long> sentByteCountConsumer;
-  private final Duration delayBetweenCallbacks = Duration.ofMillis(100);
+  @Nullable private final BlobProgressListener blobProgressListener;
 
-  public BlobHttpContent(Blob blob, String contentType, Consumer<Long> sentByteCountConsumer) {
+  public BlobHttpContent(
+      Blob blob, String contentType, @Nullable BlobProgressListener blobProgressListener) {
     this.blob = blob;
     this.contentType = contentType;
-    this.sentByteCountConsumer = sentByteCountConsumer;
+    this.blobProgressListener = blobProgressListener;
   }
 
   @Override
@@ -56,10 +54,14 @@ public class BlobHttpContent implements HttpContent {
 
   @Override
   public void writeTo(OutputStream outputStream) throws IOException {
-    ListenableCountingOutputStream listenableCountingOutputStream =
-        new ListenableCountingOutputStream(
-            outputStream, sentByteCountConsumer, delayBetweenCallbacks);
-    blob.writeTo(listenableCountingOutputStream);
-    listenableCountingOutputStream.flush();
+    outputStream =
+        blobProgressListener == null
+            ? outputStream
+            : new ListenableCountingOutputStream(
+                outputStream,
+                blobProgressListener::handleByteCount,
+                blobProgressListener.getDelayBetweenCallbacks());
+    blob.writeTo(outputStream);
+    outputStream.flush();
   }
 }

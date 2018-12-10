@@ -20,6 +20,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
+import com.google.cloud.tools.jib.http.BlobProgressListener;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.net.MediaType;
@@ -28,7 +29,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /**
@@ -112,12 +112,12 @@ class BlobPusher {
   private class Writer implements RegistryEndpointProvider<URL> {
 
     private final URL location;
-    private final Consumer<Long> sentByteCountConsumer;
+    private final BlobProgressListener blobProgressListener;
 
     @Nullable
     @Override
     public BlobHttpContent getContent() {
-      return new BlobHttpContent(blob, MediaType.OCTET_STREAM.toString(), sentByteCountConsumer);
+      return new BlobHttpContent(blob, MediaType.OCTET_STREAM.toString(), blobProgressListener);
     }
 
     @Override
@@ -147,9 +147,9 @@ class BlobPusher {
       return BlobPusher.this.getActionDescription();
     }
 
-    private Writer(URL location, Consumer<Long> sentByteCountConsumer) {
+    private Writer(URL location, BlobProgressListener blobProgressListener) {
       this.location = location;
-      this.sentByteCountConsumer = sentByteCountConsumer;
+      this.blobProgressListener = blobProgressListener;
     }
   }
 
@@ -216,11 +216,11 @@ class BlobPusher {
 
   /**
    * @param location the upload URL
-   * @param sentByteCountConsumer callback to receive counts of bytes sent
+   * @param blobProgressListener the listener for {@link Blob} push progress
    * @return a {@link RegistryEndpointProvider} for writing the BLOB to an upload location
    */
-  RegistryEndpointProvider<URL> writer(URL location, Consumer<Long> sentByteCountConsumer) {
-    return new Writer(location, sentByteCountConsumer);
+  RegistryEndpointProvider<URL> writer(URL location, BlobProgressListener blobProgressListener) {
+    return new Writer(location, blobProgressListener);
   }
 
   /**
