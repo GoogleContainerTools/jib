@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
@@ -28,7 +29,6 @@ import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
@@ -67,9 +67,10 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
     this.buildImageStep = buildImageStep;
 
     listenableFuture =
-        Futures.whenAllSucceed(
-                pullAndCacheBaseImageLayersStep.getFuture(), buildImageStep.getFuture())
-            .call(this, listeningExecutorService);
+        AsyncDependencies.using(listeningExecutorService)
+            .addStep(pullAndCacheBaseImageLayersStep)
+            .addStep(buildImageStep)
+            .whenAllSucceed(this);
   }
 
   @Override
@@ -79,18 +80,11 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
   @Override
   public BuildResult call() throws ExecutionException, InterruptedException {
-    ImmutableList.Builder<ListenableFuture<?>> dependenciesBuilder = ImmutableList.builder();
-    for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep :
-        NonBlockingSteps.get(pullAndCacheBaseImageLayersStep)) {
-      dependenciesBuilder.add(pullAndCacheBaseImageLayerStep.getFuture());
-    }
-    for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
-        buildAndCacheApplicationLayerSteps) {
-      dependenciesBuilder.add(buildAndCacheApplicationLayerStep.getFuture());
-    }
-    dependenciesBuilder.add(NonBlockingSteps.get(buildImageStep).getFuture());
-    return Futures.whenAllSucceed(dependenciesBuilder.build())
-        .call(this::afterPushBaseImageLayerFuturesFuture, listeningExecutorService)
+    return AsyncDependencies.using(listeningExecutorService)
+        .addSteps(NonBlockingSteps.get(pullAndCacheBaseImageLayersStep))
+        .addSteps(buildAndCacheApplicationLayerSteps)
+        .addStep(NonBlockingSteps.get(buildImageStep))
+        .whenAllSucceed(this::afterPushBaseImageLayerFuturesFuture)
         .get();
   }
 
