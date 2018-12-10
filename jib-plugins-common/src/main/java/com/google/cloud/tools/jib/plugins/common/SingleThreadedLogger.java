@@ -54,7 +54,8 @@ class SingleThreadedLogger {
   }
 
   /**
-   * Sets the footer asynchronously. This will replace the previously-printed footer with the new {@code footer}.
+   * Sets the footer asynchronously. This will replace the previously-printed footer with the new
+   * {@code footer}.
    *
    * @param footer the footer
    * @param lineCount the number of lines in the footer
