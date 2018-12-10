@@ -426,13 +426,13 @@ public class JibContainerBuilder {
 
   @VisibleForTesting
   JibContainer containerize(
-      Containerizer containerizer, Supplier<ExecutorService> executorServiceFactory)
+      Containerizer containerizer, Supplier<ExecutorService> defaultExecutorServiceFactory)
       throws InterruptedException, ExecutionException, IOException,
           CacheDirectoryCreationException {
 
     boolean shutdownExecutorService = !containerizer.getExecutorService().isPresent();
     ExecutorService executorService =
-        containerizer.getExecutorService().orElseGet(executorServiceFactory);
+        containerizer.getExecutorService().orElseGet(defaultExecutorServiceFactory);
 
     BuildConfiguration buildConfiguration = toBuildConfiguration(containerizer, executorService);
 
