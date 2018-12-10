@@ -138,11 +138,6 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public boolean getUseOnlyProjectCache() {
-    return jibPluginConfiguration.getUseOnlyProjectCache();
-  }
-
-  @Override
   public ImageFormat getImageFormat() {
     return ImageFormat.valueOf(jibPluginConfiguration.getFormat());
   }

@@ -57,14 +57,12 @@ import org.gradle.api.tasks.Optional;
  *     ]
  *   }
  *   allowInsecureRegistries = false
- *   useOnlyProjectCache = false
  * }
  * }</pre>
  */
 public class JibExtension {
 
   // Defines default configuration values.
-  private static final boolean DEFAULT_USE_ONLY_PROJECT_CACHE = false;
   private static final boolean DEFAULT_ALLOW_INSECURE_REGISTIRIES = false;
 
   private final BaseImageParameters from;
@@ -72,7 +70,6 @@ public class JibExtension {
   private final ContainerParameters container;
   private final ExtraDirectoryParameters extraDirectory;
 
-  private final Property<Boolean> useOnlyProjectCache;
   private final Property<Boolean> allowInsecureRegistries;
 
   public JibExtension(Project project) {
@@ -84,11 +81,9 @@ public class JibExtension {
     extraDirectory =
         objectFactory.newInstance(ExtraDirectoryParameters.class, project.getProjectDir().toPath());
 
-    useOnlyProjectCache = objectFactory.property(Boolean.class);
     allowInsecureRegistries = objectFactory.property(Boolean.class);
 
     // Sets defaults.
-    useOnlyProjectCache.set(DEFAULT_USE_ONLY_PROJECT_CACHE);
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
   }
 
@@ -116,10 +111,6 @@ public class JibExtension {
     this.allowInsecureRegistries.set(allowInsecureRegistries);
   }
 
-  void setUseOnlyProjectCache(boolean useOnlyProjectCache) {
-    this.useOnlyProjectCache.set(useOnlyProjectCache);
-  }
-
   @Nested
   @Optional
   public BaseImageParameters getFrom() {
@@ -142,15 +133,6 @@ public class JibExtension {
   @Optional
   public ExtraDirectoryParameters getExtraDirectory() {
     return extraDirectory;
-  }
-
-  @Input
-  @Optional
-  boolean getUseOnlyProjectCache() {
-    if (System.getProperty(PropertyNames.USE_ONLY_PROJECT_CACHE) != null) {
-      return Boolean.getBoolean(PropertyNames.USE_ONLY_PROJECT_CACHE);
-    }
-    return useOnlyProjectCache.get();
   }
 
   @Input

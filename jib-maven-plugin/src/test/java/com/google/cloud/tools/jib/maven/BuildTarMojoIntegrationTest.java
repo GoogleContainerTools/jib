@@ -49,6 +49,7 @@ public class BuildTarMojoIntegrationTest {
 
     Instant before = Instant.now();
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
     verifier.setAutoclean(false);
     verifier.executeGoal("package");

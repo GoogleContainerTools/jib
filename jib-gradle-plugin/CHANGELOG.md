@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Removed `jib.useOnlyProjectCache` parameter in favor of the `jib.useOnlyProjectCache` system property ([#1308](https://github.com/GoogleContainerTools/jib/issues/1308))
+
 ### Fixed
 
 ## 0.10.1

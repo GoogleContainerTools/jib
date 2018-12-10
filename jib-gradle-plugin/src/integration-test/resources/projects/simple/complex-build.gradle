@@ -44,7 +44,4 @@ jib {
     permissions = ['/foo':'755', '/bar/cat':'777']
   }
   allowInsecureRegistries = true
-
-  // Does not have tests use user-level cache for base image layers.
-  useOnlyProjectCache = true
 }

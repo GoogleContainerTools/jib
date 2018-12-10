@@ -133,11 +133,6 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public boolean getUseOnlyProjectCache() {
-    return jibExtension.getUseOnlyProjectCache();
-  }
-
-  @Override
   public ImageFormat getImageFormat() {
     return jibExtension.getContainer().getFormat();
   }

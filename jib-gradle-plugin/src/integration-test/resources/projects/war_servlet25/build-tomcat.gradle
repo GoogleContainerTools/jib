@@ -33,7 +33,4 @@ jib {
     credHelper = 'gcr'
   }
   container.appRoot = '/usr/local/tomcat/webapps/ROOT'
-
-  // Does not have tests use user-level cache for base image layers.
-  useOnlyProjectCache = true
 }

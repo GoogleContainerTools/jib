@@ -52,7 +52,7 @@ public class HelpfulSuggestionsTest {
         "messagePrefix, perhaps you should run 'clearCacheCommand' to clear your build cache",
         TEST_HELPFUL_SUGGESTIONS.forCacheNeedsClean());
     Assert.assertEquals(
-        "messagePrefix, perhaps you should check that 'cacheDirectory' is not used by another application or set the `useOnlyProjectCache` configuration",
+        "messagePrefix, perhaps you should check that 'cacheDirectory' is not used by another application or set the `jib.useOnlyProjectCache` system property",
         TEST_HELPFUL_SUGGESTIONS.forCacheDirectoryNotOwned(Paths.get("cacheDirectory")));
     Assert.assertEquals(
         "messagePrefix, perhaps you should make sure you have permissions for imageReference",

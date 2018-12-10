@@ -34,8 +34,6 @@
           <container>
             <user>myuser:mygroup</user>
           </container>
-          <!-- Does not have tests use user-level cache for base image layers. -->
-          <useOnlyProjectCache>true</useOnlyProjectCache>
         </configuration>
       </plugin>
     </plugins>

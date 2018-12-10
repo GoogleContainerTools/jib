@@ -53,8 +53,6 @@
               <volume>/var/log2</volume>
             </volumes>
           </container>
-          <!-- Does not have tests use user-level cache for base image layers. -->
-          <useOnlyProjectCache>true</useOnlyProjectCache>
         </configuration>
       </plugin>
     </plugins>

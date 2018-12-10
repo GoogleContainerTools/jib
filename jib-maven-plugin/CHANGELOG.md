@@ -8,8 +8,10 @@ All notable changes to this project will be documented in this file.
 - `jib.baseImageCache` and `jib.applicationCache` system properties for setting cache directories ([#1238](https://github.com/GoogleContainerTools/jib/issues/1238))
 
 ### Changed
+
 - `gwt-app` packaging type now builds a WAR container.
 - When building to Docker and no `<to><image>` is defined, artifact ID is used as an image reference instead of project name.
+- Removed `<useOnlyProjectCache>` parameter in favor of the `jib.useOnlyProjectCache` system property ([#1308](https://github.com/GoogleContainerTools/jib/issues/1308))
 
 ### Fixed
 

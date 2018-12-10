@@ -151,8 +151,8 @@ public class HelpfulSuggestions {
     return suggest(
         "check that '"
             + cacheDirectory
-            + "' is not used by another application or set the `useOnlyProjectCache` "
-            + "configuration");
+            + "' is not used by another application or set the `jib.useOnlyProjectCache` system "
+            + "property");
   }
 
   public String forHttpStatusCodeForbidden(String imageReference) {
