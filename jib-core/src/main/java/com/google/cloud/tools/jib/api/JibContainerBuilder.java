@@ -444,6 +444,8 @@ public class JibContainerBuilder {
    * Builds a {@link BuildConfiguration} using this and a {@link Containerizer}.
    *
    * @param containerizer the {@link Containerizer}
+   * @param executorService the {@link ExecutorService} to use, overriding the executor in the
+   *     {@link Containerizer}
    * @return the {@link BuildConfiguration}
    * @throws CacheDirectoryCreationException if a cache directory could not be created
    * @throws IOException if an I/O exception occurs
