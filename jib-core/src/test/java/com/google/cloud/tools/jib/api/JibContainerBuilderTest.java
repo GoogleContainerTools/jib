@@ -48,7 +48,6 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,8 +67,6 @@ public class JibContainerBuilderTest {
   @Mock private ExecutorService mockExecutorService;
   @Mock private Consumer<JibEvent> mockJibEventConsumer;
   @Mock private JibEvent mockJibEvent;
-
-  private Supplier<ExecutorService> oldExecutorServiceFactory;
 
   @Test
   public void testToBuildConfiguration_containerConfigurationSet()
