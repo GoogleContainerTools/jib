@@ -44,8 +44,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BlobPusherTest {
 
-  private static final String testBlobContent = "some BLOB content";
-  private static final Blob testBlob = Blobs.from(testBlobContent);
+  private static final String TEST_BLOB_CONTENT = "some BLOB content";
+  private static final Blob TEST_BLOB = Blobs.from(TEST_BLOB_CONTENT);
 
   @Mock private URL mockURL;
   @Mock private Response mockResponse;
@@ -62,7 +62,7 @@ public class BlobPusherTest {
         new BlobPusher(
             new RegistryEndpointRequestProperties("someServerUrl", "someImageName"),
             fakeDescriptorDigest,
-            testBlob,
+            TEST_BLOB,
             null);
   }
 
@@ -137,7 +137,7 @@ public class BlobPusherTest {
         new BlobPusher(
             new RegistryEndpointRequestProperties("someServerUrl", "someImageName"),
             fakeDescriptorDigest,
-            testBlob,
+            TEST_BLOB,
             "sourceImageName");
 
     Assert.assertEquals(
@@ -172,8 +172,8 @@ public class BlobPusherTest {
     body.writeTo(byteArrayOutputStream);
 
     Assert.assertEquals(
-        testBlobContent, new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
-    Assert.assertEquals(testBlobContent.length(), byteCount.sum());
+        TEST_BLOB_CONTENT, new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
+    Assert.assertEquals(TEST_BLOB_CONTENT.length(), byteCount.sum());
   }
 
   @Test

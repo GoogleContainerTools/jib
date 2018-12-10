@@ -47,7 +47,6 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
 
   // TODO: Refactor into BlobPullMonitor.
   private final Consumer<Long> sizeConsumer;
-  private final Consumer<Long> receivedByteCountConsumer;
   private final Duration delayBetweenCallbacks = Duration.ofMillis(100);
 
   BlobPuller(
@@ -58,18 +57,17 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
       Consumer<Long> receivedByteCountConsumer) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.blobDigest = blobDigest;
-    this.destinationOutputStream = destinationOutputStream;
+    this.destinationOutputStream =
+        new ListenableCountingOutputStream(
+            destinationOutputStream, receivedByteCountConsumer, delayBetweenCallbacks);
     this.sizeConsumer = sizeConsumer;
-    this.receivedByteCountConsumer = receivedByteCountConsumer;
   }
 
   @Override
   public Void handleResponse(Response response) throws IOException, UnexpectedBlobDigestException {
     sizeConsumer.accept(response.getContentLength());
 
-    try (OutputStream outputStream =
-        new ListenableCountingOutputStream(
-            destinationOutputStream, receivedByteCountConsumer, delayBetweenCallbacks)) {
+    try (OutputStream outputStream = destinationOutputStream) {
       BlobDescriptor receivedBlobDescriptor = response.getBody().writeTo(outputStream);
 
       if (!blobDigest.equals(receivedBlobDescriptor.getDigest())) {

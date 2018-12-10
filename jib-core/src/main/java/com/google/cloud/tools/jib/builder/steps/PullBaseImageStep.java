@@ -243,6 +243,7 @@ class PullBaseImageStep
             Blobs.writeToString(
                 registryClient.pullBlob(
                     v22ManifestTemplate.getContainerConfiguration().getDigest(),
+                    // TODO: Replace with progress updates.
                     ignored -> {},
                     ignored -> {}));
 
