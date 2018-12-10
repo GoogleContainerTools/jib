@@ -54,7 +54,7 @@ class SingleThreadedLogger {
   }
 
   /**
-   * Sets the footer asynchronously.
+   * Sets the footer asynchronously. This will replace the previously-printed footer with the new {@code footer}.
    *
    * @param footer the footer
    * @param lineCount the number of lines in the footer
@@ -90,7 +90,6 @@ class SingleThreadedLogger {
           for (int i = 0; i < previousFooter.length(); i++) {
             plainLogBuilder.append(previousFooter.charAt(i) == '\n' ? '\n' : ' ');
           }
-          // plainLogBuilder.append('\n');
 
           // Moves the cursor up again.
           // TODO: Optimize to single init.
