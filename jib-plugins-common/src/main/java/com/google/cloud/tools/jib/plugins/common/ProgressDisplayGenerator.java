@@ -28,7 +28,10 @@ import java.util.Set;
  *
  * <p>Example:
  *
- * <p>Executing tasks... [================= ] 72.5% complete > task 1 running > task 3 running
+ * <p>Executing tasks...<br>
+ * [================= ] 72.5% complete<br>
+ * > task 1 running<br>
+ * > task 3 running
  */
 class ProgressDisplayGenerator {
 
@@ -99,6 +102,8 @@ class ProgressDisplayGenerator {
    * @param unfinishedAllocations the list of unfinished {@link Allocation}s
    * @return the list of unfinished {@link Allocation}s
    */
+  // TODO: Optimization: Change AllocationCompletionTracker#getUnfinishedAllocations to only return
+  // leaf Allocations so that this computation is unnecessary.
   private static List<Allocation> getLeafAllocations(List<Allocation> unfinishedAllocations) {
     // Prunes the set of all unfinished Allocations to leave just the leaves.
     Set<Allocation> leafAllocationSet = new HashSet<>(unfinishedAllocations);
