@@ -49,9 +49,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -72,16 +70,6 @@ public class JibContainerBuilderTest {
   @Mock private JibEvent mockJibEvent;
 
   private Supplier<ExecutorService> oldExecutorServiceFactory;
-
-  @Before
-  public void setUp() {
-    oldExecutorServiceFactory = JibContainerBuilder.executorServiceFactory;
-  }
-
-  @After
-  public void tearDown() {
-    JibContainerBuilder.executorServiceFactory = oldExecutorServiceFactory;
-  }
 
   @Test
   public void testToBuildConfiguration_containerConfigurationSet()
@@ -242,7 +230,6 @@ public class JibContainerBuilderTest {
   /** Verify that an internally-created ExecutorService is shutdown. */
   @Test
   public void testContainerize_executorCreated() throws Exception {
-    JibContainerBuilder.executorServiceFactory = Suppliers.ofInstance(mockExecutorService);
 
     RegistryImage baseImage = RegistryImage.named("test-image");
     JibContainerBuilder jibContainerBuilder =
@@ -258,7 +245,7 @@ public class JibContainerBuilderTest {
 
     Containerizer mockContainerizer = createMockContainerizer();
 
-    jibContainerBuilder.containerize(mockContainerizer);
+    jibContainerBuilder.containerize(mockContainerizer, Suppliers.ofInstance(mockExecutorService));
 
     Mockito.verify(mockExecutorService).shutdown();
   }
@@ -266,10 +253,6 @@ public class JibContainerBuilderTest {
   /** Verify that a provided ExecutorService is not shutdown. */
   @Test
   public void testContainerize_configuredExecutor() throws Exception {
-    JibContainerBuilder.executorServiceFactory =
-        () -> {
-          throw new AssertionError();
-        };
 
     RegistryImage baseImage = RegistryImage.named("test-image");
     JibContainerBuilder jibContainerBuilder =
@@ -286,7 +269,11 @@ public class JibContainerBuilderTest {
     Mockito.when(mockContainerizer.getExecutorService())
         .thenReturn(Optional.of(mockExecutorService));
 
-    jibContainerBuilder.containerize(mockContainerizer);
+    jibContainerBuilder.containerize(
+        mockContainerizer,
+        () -> {
+          throw new AssertionError();
+        });
 
     Mockito.verify(mockExecutorService, Mockito.never()).shutdown();
   }

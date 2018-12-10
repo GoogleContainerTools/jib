@@ -223,6 +223,9 @@ public class BuildConfiguration {
       if (applicationLayersCacheDirectory == null) {
         missingFields.add("application layers cache directory");
       }
+      if (executorService == null) {
+        missingFields.add("executor service");
+      }
 
       switch (missingFields.size()) {
         case 0: // No errors
@@ -232,10 +235,6 @@ public class BuildConfiguration {
                     "Base image '"
                         + baseImageConfiguration.getImage()
                         + "' does not use a specific image digest - build may not be reproducible"));
-          }
-
-          if (executorService == null) {
-            executorService = Executors.newCachedThreadPool();
           }
 
           return new BuildConfiguration(
@@ -250,7 +249,7 @@ public class BuildConfiguration {
               layerConfigurations,
               toolName,
               eventDispatcher,
-              executorService);
+              Preconditions.checkNotNull(executorService));
 
         case 1:
           throw new IllegalStateException(missingFields.get(0) + " is required but not set");

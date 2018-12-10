@@ -61,9 +61,6 @@ import javax.annotation.Nullable;
 // TODO: Add tests once containerize() is added.
 public class JibContainerBuilder {
 
-  @VisibleForTesting
-  static Supplier<ExecutorService> executorServiceFactory = Executors::newCachedThreadPool;
-
   private final ContainerConfiguration.Builder containerConfigurationBuilder =
       ContainerConfiguration.builder();
   private final BuildConfiguration.Builder buildConfigurationBuilder;
@@ -421,6 +418,15 @@ public class JibContainerBuilder {
    * @throws IOException if an I/O exception occurs
    */
   public JibContainer containerize(Containerizer containerizer)
+      throws InterruptedException, ExecutionException, IOException,
+          CacheDirectoryCreationException {
+
+    return containerize(containerizer, Executors::newCachedThreadPool);
+  }
+
+  @VisibleForTesting
+  JibContainer containerize(
+      Containerizer containerizer, Supplier<ExecutorService> executorServiceFactory)
       throws InterruptedException, ExecutionException, IOException,
           CacheDirectoryCreationException {
 
