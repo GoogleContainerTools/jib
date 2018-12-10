@@ -54,7 +54,7 @@ class SingleThreadedLogger {
    * @return a {@link Future} to track completion
    */
   public Future<Void> log(Runnable messageLogger) {
-    return log(messageLogger, footerLines.size());
+    return log(messageLogger, footerLines);
   }
 
   /**
@@ -69,20 +69,17 @@ class SingleThreadedLogger {
       return Futures.immediateFuture(null);
     }
 
-    int previousLineCount = this.footerLines.size();
-    this.footerLines = footerLines;
-
-    return log(() -> {}, previousLineCount);
+    return log(() -> {}, footerLines);
   }
 
-  private Future<Void> log(Runnable messageLogger, int previousLineCount) {
+  private Future<Void> log(Runnable messageLogger, List<String> newFooterLines) {
     return executorService.submit(
         () -> {
           StringBuilder plainLogBuilder = new StringBuilder();
 
           // Moves the cursor up to the start of the footer.
           // TODO: Optimize to single init.
-          for (int i = 0; i < previousLineCount; i++) {
+          for (int i = 0; i < this.footerLines.size(); i++) {
             // Moves cursor up.
             plainLogBuilder.append(CURSOR_UP_SEQUENCE);
           }
@@ -93,7 +90,9 @@ class SingleThreadedLogger {
           // Writes out logMessage and footer.
           plainLogger.accept(plainLogBuilder.toString());
           messageLogger.run();
-          plainLogger.accept(String.join("\n", footerLines));
+          plainLogger.accept(String.join("\n", newFooterLines));
+
+          this.footerLines = newFooterLines;
 
           return null;
         });
