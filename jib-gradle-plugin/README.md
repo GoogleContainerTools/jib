@@ -239,8 +239,10 @@ The following table contains additional system properties that are not available
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`jib.httpTimeout` | int | `20000` | HTTP connection/read timeout for registry interactions, in milliseconds. Use a value of `0` for an infinite timeout.
-`jib.useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Maven projects.
+`jib.httpTimeout` | `int` | `20000` | HTTP connection/read timeout for registry interactions, in milliseconds. Use a value of `0` for an infinite timeout.
+`jib.useOnlyProjectCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Maven projects.
+`jib.baseImageCache` | `File` | `[user cache home]/google-cloud-tools-java/jib` | Sets the directory to use for caching base image layers. This cache can (and should) be shared between multiple images.
+`jib.applicationCache` | `File` | `[project dir]/target/jib-cache` | Sets the directory to use for caching application layers. This cache can be shared between multiple images. If not set, a temporary directory will be used as the application layers cache.
 
 *\* If you configure `args` while `entrypoint` is set to `'INHERIT'`, the configured `args` value will take precedence over the CMD propagated from the base image.*
 
