@@ -28,7 +28,7 @@ import java.util.function.Supplier;
  * Counts the number of bytes written and reports the count to a callback. The count is reported
  * with certain time delays to avoid calling the callback too often.
  */
-class ListenableCountingOutputStream extends OutputStream {
+public class ListenableCountingOutputStream extends OutputStream {
 
   /** The underlying {@link OutputStream} to wrap and forward bytes to. */
   private final OutputStream underlyingOutputStream;
@@ -55,7 +55,7 @@ class ListenableCountingOutputStream extends OutputStream {
    * @param byteCountConsumer the byte count {@link Consumer}
    * @param delayBetweenCallbacks the minimum delay between each call to {@link #byteCountConsumer}
    */
-  ListenableCountingOutputStream(
+  public ListenableCountingOutputStream(
       OutputStream underlyingOutputStream,
       Consumer<Long> byteCountConsumer,
       Duration delayBetweenCallbacks) {

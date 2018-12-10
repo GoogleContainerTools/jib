@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
@@ -26,7 +27,6 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
@@ -61,8 +61,9 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
     this.blob = blob;
 
     listenableFuture =
-        Futures.whenAllSucceed(authenticatePushStep.getFuture())
-            .call(this, listeningExecutorService);
+        AsyncDependencies.using(listeningExecutorService)
+            .addStep(authenticatePushStep)
+            .whenAllSucceed(this);
   }
 
   @Override
@@ -92,7 +93,13 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
       }
 
       // todo: leverage cross-repository mounts
-      registryClient.pushBlob(blobDescriptor.getDigest(), blob, null);
+      registryClient.pushBlob(
+          blobDescriptor.getDigest(),
+          blob,
+          null,
+          alsoIgnored -> {
+            // TODO: Replace with progress-reporting.
+          });
 
       return blobDescriptor;
     }

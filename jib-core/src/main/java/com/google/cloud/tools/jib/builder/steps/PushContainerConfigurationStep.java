@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
@@ -27,7 +28,6 @@ import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.common.io.ByteStreams;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
@@ -62,7 +62,9 @@ class PushContainerConfigurationStep
     this.buildImageStep = buildImageStep;
 
     listenableFuture =
-        Futures.whenAllSucceed(buildImageStep.getFuture()).call(this, listeningExecutorService);
+        AsyncDependencies.using(listeningExecutorService)
+            .addStep(buildImageStep)
+            .whenAllSucceed(this);
   }
 
   @Override
@@ -73,9 +75,10 @@ class PushContainerConfigurationStep
   @Override
   public AsyncStep<PushBlobStep> call() throws ExecutionException {
     ListenableFuture<PushBlobStep> pushBlobStepFuture =
-        Futures.whenAllSucceed(
-                authenticatePushStep.getFuture(), NonBlockingSteps.get(buildImageStep).getFuture())
-            .call(this::afterBuildConfigurationFutureFuture, listeningExecutorService);
+        AsyncDependencies.using(listeningExecutorService)
+            .addStep(authenticatePushStep)
+            .addStep(NonBlockingSteps.get(buildImageStep))
+            .whenAllSucceed(this::afterBuildConfigurationFutureFuture);
     return () -> pushBlobStepFuture;
   }
 

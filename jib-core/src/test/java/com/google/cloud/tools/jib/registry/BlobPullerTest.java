@@ -28,6 +28,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.DigestException;
+import java.util.concurrent.atomic.LongAdder;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,7 +57,12 @@ public class BlobPullerTest {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
     testBlobPuller =
-        new BlobPuller(fakeRegistryEndpointRequestProperties, fakeDigest, layerOutputStream);
+        new BlobPuller(
+            fakeRegistryEndpointRequestProperties,
+            fakeDigest,
+            layerOutputStream,
+            ignored -> {},
+            ignored -> {});
   }
 
   @Test
@@ -65,15 +71,23 @@ public class BlobPullerTest {
     DescriptorDigest testBlobDigest = testBlob.writeTo(ByteStreams.nullOutputStream()).getDigest();
 
     Response mockResponse = Mockito.mock(Response.class);
+    Mockito.when(mockResponse.getContentLength()).thenReturn((long) "some BLOB content".length());
     Mockito.when(mockResponse.getBody()).thenReturn(testBlob);
 
+    LongAdder byteCount = new LongAdder();
     BlobPuller blobPuller =
-        new BlobPuller(fakeRegistryEndpointRequestProperties, testBlobDigest, layerOutputStream);
+        new BlobPuller(
+            fakeRegistryEndpointRequestProperties,
+            testBlobDigest,
+            layerOutputStream,
+            size -> Assert.assertEquals("some BLOB content".length(), size.longValue()),
+            byteCount::add);
     blobPuller.handleResponse(mockResponse);
     Assert.assertEquals(
         "some BLOB content",
         new String(layerContentOutputStream.toByteArray(), StandardCharsets.UTF_8));
     Assert.assertEquals(testBlobDigest, layerOutputStream.toBlobDescriptor().getDigest());
+    Assert.assertEquals("some BLOB content".length(), byteCount.sum());
   }
 
   @Test

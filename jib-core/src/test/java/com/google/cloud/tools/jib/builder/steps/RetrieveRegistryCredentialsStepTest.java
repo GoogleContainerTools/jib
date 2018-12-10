@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
@@ -23,7 +24,6 @@ import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
-import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -61,12 +61,18 @@ public class RetrieveRegistryCredentialsStepTest {
     Assert.assertEquals(
         Credential.basic("baseusername", "basepassword"),
         RetrieveRegistryCredentialsStep.forBaseImage(
-                mockListeningExecutorService, buildConfiguration, Allocation.newRoot("ignored", 1))
+                mockListeningExecutorService,
+                buildConfiguration,
+                ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1)
+                    .newChildProducer())
             .call());
     Assert.assertEquals(
         Credential.basic("targetusername", "targetpassword"),
         RetrieveRegistryCredentialsStep.forTargetImage(
-                mockListeningExecutorService, buildConfiguration, Allocation.newRoot("ignored", 1))
+                mockListeningExecutorService,
+                buildConfiguration,
+                ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1)
+                    .newChildProducer())
             .call());
   }
 
@@ -77,7 +83,10 @@ public class RetrieveRegistryCredentialsStepTest {
             Arrays.asList(Optional::empty, Optional::empty), Collections.emptyList());
     Assert.assertNull(
         RetrieveRegistryCredentialsStep.forBaseImage(
-                mockListeningExecutorService, buildConfiguration, Allocation.newRoot("ignored", 1))
+                mockListeningExecutorService,
+                buildConfiguration,
+                ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1)
+                    .newChildProducer())
             .call());
 
     Mockito.verify(mockEventDispatcher, Mockito.atLeastOnce())
@@ -87,7 +96,10 @@ public class RetrieveRegistryCredentialsStepTest {
 
     Assert.assertNull(
         RetrieveRegistryCredentialsStep.forTargetImage(
-                mockListeningExecutorService, buildConfiguration, Allocation.newRoot("ignored", 1))
+                mockListeningExecutorService,
+                buildConfiguration,
+                ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1)
+                    .newChildProducer())
             .call());
 
     Mockito.verify(mockEventDispatcher)
@@ -107,7 +119,9 @@ public class RetrieveRegistryCredentialsStepTest {
             Collections.emptyList());
     try {
       RetrieveRegistryCredentialsStep.forBaseImage(
-              mockListeningExecutorService, buildConfiguration, Allocation.newRoot("ignored", 1))
+              mockListeningExecutorService,
+              buildConfiguration,
+              ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer())
           .call();
       Assert.fail("Should have thrown exception");
 

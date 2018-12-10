@@ -24,24 +24,41 @@ import com.google.common.base.Verify;
 import java.io.Closeable;
 
 /**
- * Emits the remaining progress units upon {@link #close}.
+ * Dispatches {@link ProgressEvent}s associated with a managed {@link Allocation}. Keeps track of
+ * the allocation units that are remaining so that it can emits the remaining progress units upon
+ * {@link #close}.
  *
  * <p>This class is <em>not</em> thread-safe. Only use a single instance per thread and create child
  * instances with {@link #newChildProducer}.
  */
 public class ProgressEventDispatcher implements Closeable {
 
+  /**
+   * Creates a new {@link ProgressEventDispatcher} based off an existing {@link
+   * ProgressEventDispatcher}.
+   *
+   * <p>Implementations should be thread-safe.
+   */
   @FunctionalInterface
   public interface Factory {
 
+    /**
+     * Creates the {@link ProgressEventDispatcher} with an associated {@link Allocation}.
+     *
+     * @param description user-facing description of what the allocation represents
+     * @param allocationUnits number of allocation units
+     * @return the new {@link ProgressEventDispatcher}
+     */
     ProgressEventDispatcher create(String description, long allocationUnits);
   }
 
   /**
-   * @param eventDispatcher
-   * @param description
-   * @param allocationUnits
-   * @return
+   * Creates a new {@link ProgressEventDispatcher} with a root {@link Allocation}.
+   *
+   * @param eventDispatcher the {@link EventDispatcher}
+   * @param description user-facing description of what the allocation represents
+   * @param allocationUnits number of allocation units
+   * @return a new {@link ProgressEventDispatcher}
    */
   public static ProgressEventDispatcher newRoot(
       EventDispatcher eventDispatcher, String description, long allocationUnits) {
@@ -53,9 +70,9 @@ public class ProgressEventDispatcher implements Closeable {
    * Creates a new {@link ProgressEventDispatcher} and dispatches a new {@link ProgressEvent} with
    * progress 0 for {@code allocation}.
    *
-   * @param eventDispatcher
-   * @param allocation
-   * @return
+   * @param eventDispatcher the {@link EventDispatcher}
+   * @param allocation the {@link Allocation} to manage
+   * @return a new {@link ProgressEventDispatcher}
    */
   private static ProgressEventDispatcher newProgressEventDispatcher(
       EventDispatcher eventDispatcher, Allocation allocation) {
@@ -75,30 +92,43 @@ public class ProgressEventDispatcher implements Closeable {
     remainingAllocationUnits = allocation.getAllocationUnits();
   }
 
+  /**
+   * Creates a new {@link Factory} for a {@link ProgressEventDispatcher} that manages a child {@link
+   * Allocation}. Since each child {@link Allocation} accounts for 1 allocation unit of its parent,
+   * this method decrements the {@link #remainingAllocationUnits} by {@code 1}.
+   *
+   * @return a new {@link Factory}
+   */
   public Factory newChildProducer() {
-    remainingAllocationUnits--;
+    decrementRemainingAllocationUnits(1);
     return (description, allocationUnits) ->
         newProgressEventDispatcher(
             eventDispatcher, allocation.newChild(description, allocationUnits));
   }
 
-  public ProgressEventDispatcher dispatchProgress(long progressUnits) {
-    eventDispatcher.dispatch(new ProgressEvent(allocation, progressUnits));
-    remainingAllocationUnits -= progressUnits;
-    Verify.verify(
-        remainingAllocationUnits > 0,
-        "Remaining allocation units less than 0 for '%s': %s",
-        allocation.getDescription(),
-        remainingAllocationUnits);
-    return this;
-  }
-
+  /** Emits the remaining allocation units as progress units in a {@link ProgressEvent}. */
   @Override
   public void close() {
-    Preconditions.checkState(!closed);
-    closed = true;
     if (remainingAllocationUnits > 0) {
       dispatchProgress(remainingAllocationUnits);
     }
+    closed = true;
+  }
+
+  private ProgressEventDispatcher dispatchProgress(long progressUnits) {
+    decrementRemainingAllocationUnits(progressUnits);
+    eventDispatcher.dispatch(new ProgressEvent(allocation, progressUnits));
+    return this;
+  }
+
+  private void decrementRemainingAllocationUnits(long units) {
+    Preconditions.checkState(!closed);
+
+    remainingAllocationUnits -= units;
+    Verify.verify(
+        remainingAllocationUnits >= 0,
+        "Remaining allocation units less than 0 for '%s': %s",
+        allocation.getDescription(),
+        remainingAllocationUnits);
   }
 }
