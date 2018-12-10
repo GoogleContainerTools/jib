@@ -18,16 +18,19 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.common.io.ByteStreams;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.DigestException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.concurrent.atomic.LongAdder;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,7 +44,9 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BlobPusherTest {
 
-  @Mock private Blob mockBlob;
+  private static final String TEST_BLOB_CONTENT = "some BLOB content";
+  private static final Blob TEST_BLOB = Blobs.from(TEST_BLOB_CONTENT);
+
   @Mock private URL mockURL;
   @Mock private Response mockResponse;
 
@@ -57,7 +62,7 @@ public class BlobPusherTest {
         new BlobPusher(
             new RegistryEndpointRequestProperties("someServerUrl", "someImageName"),
             fakeDescriptorDigest,
-            mockBlob,
+            TEST_BLOB,
             null);
   }
 
@@ -132,7 +137,7 @@ public class BlobPusherTest {
         new BlobPusher(
             new RegistryEndpointRequestProperties("someServerUrl", "someImageName"),
             fakeDescriptorDigest,
-            mockBlob,
+            TEST_BLOB,
             "sourceImageName");
 
     Assert.assertEquals(
@@ -157,18 +162,23 @@ public class BlobPusherTest {
 
   @Test
   public void testWriter_getContent() throws IOException {
-    BlobHttpContent body = testBlobPusher.writer(mockURL).getContent();
+    LongAdder byteCount = new LongAdder();
+    BlobHttpContent body = testBlobPusher.writer(mockURL, byteCount::add).getContent();
 
     Assert.assertNotNull(body);
     Assert.assertEquals("application/octet-stream", body.getType());
 
-    body.writeTo(ByteStreams.nullOutputStream());
-    Mockito.verify(mockBlob).writeTo(ByteStreams.nullOutputStream());
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    body.writeTo(byteArrayOutputStream);
+
+    Assert.assertEquals(
+        TEST_BLOB_CONTENT, new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
+    Assert.assertEquals(TEST_BLOB_CONTENT.length(), byteCount.sum());
   }
 
   @Test
   public void testWriter_GetAccept() {
-    Assert.assertEquals(0, testBlobPusher.writer(mockURL).getAccept().size());
+    Assert.assertEquals(0, testBlobPusher.writer(mockURL, ignored -> {}).getAccept().size());
   }
 
   @Test
@@ -179,25 +189,25 @@ public class BlobPusherTest {
     Mockito.when(mockResponse.getRequestUrl()).thenReturn(requestUrl);
     Assert.assertEquals(
         new URL("https://somenewurl/location"),
-        testBlobPusher.writer(mockURL).handleResponse(mockResponse));
+        testBlobPusher.writer(mockURL, ignored -> {}).handleResponse(mockResponse));
   }
 
   @Test
   public void testWriter_getApiRoute() throws MalformedURLException {
     URL fakeUrl = new URL("http://someurl");
-    Assert.assertEquals(fakeUrl, testBlobPusher.writer(fakeUrl).getApiRoute(""));
+    Assert.assertEquals(fakeUrl, testBlobPusher.writer(fakeUrl, ignored -> {}).getApiRoute(""));
   }
 
   @Test
   public void testWriter_getHttpMethod() {
-    Assert.assertEquals("PATCH", testBlobPusher.writer(mockURL).getHttpMethod());
+    Assert.assertEquals("PATCH", testBlobPusher.writer(mockURL, ignored -> {}).getHttpMethod());
   }
 
   @Test
   public void testWriter_getActionDescription() {
     Assert.assertEquals(
         "push BLOB for someServerUrl/someImageName with digest " + fakeDescriptorDigest,
-        testBlobPusher.writer(mockURL).getActionDescription());
+        testBlobPusher.writer(mockURL, ignored -> {}).getActionDescription());
   }
 
   @Test

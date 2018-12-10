@@ -242,7 +242,10 @@ class PullBaseImageStep
         String containerConfigurationString =
             Blobs.writeToString(
                 registryClient.pullBlob(
-                    v22ManifestTemplate.getContainerConfiguration().getDigest()));
+                    v22ManifestTemplate.getContainerConfiguration().getDigest(),
+                    // TODO: Replace with progress updates.
+                    ignored -> {},
+                    ignored -> {}));
 
         ContainerConfigurationTemplate containerConfigurationTemplate =
             JsonTemplateMapper.readJson(

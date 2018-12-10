@@ -34,6 +34,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 import java.io.IOException;
 import java.net.URL;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /** Interfaces with a registry. */
@@ -244,15 +245,25 @@ public class RegistryClient {
    * written out.
    *
    * @param blobDigest the digest of the BLOB to download
-   * @return a {@link Blob} backed by the file at {@code destPath}. The file at {@code destPath}
-   *     must exist for {@link Blob} to be valid.
+   * @param blobSizeConsumer callback to receive the total size of the BLOB to pull
+   * @param receivedByteCountConsumer callback to receive counts of bytes received
+   * @return a {@link Blob}
    */
-  public Blob pullBlob(DescriptorDigest blobDigest) {
+  // TODO: Refactor callbacks into BlobPullMonitor.
+  public Blob pullBlob(
+      DescriptorDigest blobDigest,
+      Consumer<Long> blobSizeConsumer,
+      Consumer<Long> receivedByteCountConsumer) {
     return Blobs.from(
         outputStream -> {
           try {
             callRegistryEndpoint(
-                new BlobPuller(registryEndpointRequestProperties, blobDigest, outputStream));
+                new BlobPuller(
+                    registryEndpointRequestProperties,
+                    blobDigest,
+                    outputStream,
+                    blobSizeConsumer,
+                    receivedByteCountConsumer));
 
           } catch (RegistryException ex) {
             throw new IOException(ex);
@@ -268,12 +279,18 @@ public class RegistryClient {
    * @param blob the BLOB to push
    * @param sourceRepository if pushing to the same registry then the source image, or {@code null}
    *     otherwise; used to optimize the BLOB push
+   * @param sentByteCountConsumer callback to receive counts of bytes sent
    * @return {@code true} if the BLOB already exists on the registry and pushing was skipped; false
    *     if the BLOB was pushed
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  public boolean pushBlob(DescriptorDigest blobDigest, Blob blob, @Nullable String sourceRepository)
+  // TODO: Refactor callbacks into BlobPushMonitor.
+  public boolean pushBlob(
+      DescriptorDigest blobDigest,
+      Blob blob,
+      @Nullable String sourceRepository,
+      Consumer<Long> sentByteCountConsumer)
       throws IOException, RegistryException {
     BlobPusher blobPusher =
         new BlobPusher(registryEndpointRequestProperties, blobDigest, blob, sourceRepository);
@@ -294,7 +311,8 @@ public class RegistryClient {
         timerEventDispatcher2.lap("pushBlob PATCH " + blobDigest);
 
         // PATCH <Location> with BLOB
-        URL putLocation = callRegistryEndpoint(blobPusher.writer(patchLocation));
+        URL putLocation =
+            callRegistryEndpoint(blobPusher.writer(patchLocation, sentByteCountConsumer));
         Preconditions.checkNotNull(putLocation);
 
         timerEventDispatcher2.lap("pushBlob PUT " + blobDigest);

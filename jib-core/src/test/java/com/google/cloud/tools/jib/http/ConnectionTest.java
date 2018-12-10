@@ -41,7 +41,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ConnectionTest {
 
   @FunctionalInterface
-  private static interface SendFunction {
+  private interface SendFunction {
 
     Response send(Connection connection, Request request) throws IOException;
   }
@@ -57,6 +57,8 @@ public class ConnectionTest {
   private final GenericUrl fakeUrl = new GenericUrl("http://crepecake/fake/url");
   private Request fakeRequest;
   private HttpResponse mockHttpResponse;
+
+  private long byteCount = 0;
 
   @InjectMocks
   private final Connection testConnection =
@@ -107,7 +109,11 @@ public class ConnectionTest {
         Request.builder()
             .setAccept(Arrays.asList("fake.accept", "another.fake.accept"))
             .setUserAgent("fake user agent")
-            .setBody(new BlobHttpContent(Blobs.from("crepecake"), "fake.content.type"))
+            .setBody(
+                new BlobHttpContent(
+                    Blobs.from("crepecake"),
+                    "fake.content.type",
+                    sentByteCount -> byteCount += sentByteCount))
             .setAuthorization(Authorizations.withBasicCredentials("fake-username", "fake-secret"))
             .setHttpTimeout(httpTimeout)
             .build();
@@ -153,5 +159,6 @@ public class ConnectionTest {
 
     Assert.assertEquals(
         "crepecake", new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
+    Assert.assertEquals("crepecake".length(), byteCount);
   }
 }
