@@ -76,7 +76,10 @@ public class ProgressEventDispatcher implements Closeable {
    */
   private static ProgressEventDispatcher newProgressEventDispatcher(
       EventDispatcher eventDispatcher, Allocation allocation) {
-    return new ProgressEventDispatcher(eventDispatcher, allocation).dispatchProgress(0);
+    ProgressEventDispatcher progressEventDispatcher =
+        new ProgressEventDispatcher(eventDispatcher, allocation);
+    progressEventDispatcher.dispatchProgress(0);
+    return progressEventDispatcher;
   }
 
   private final EventDispatcher eventDispatcher;
@@ -115,10 +118,15 @@ public class ProgressEventDispatcher implements Closeable {
     closed = true;
   }
 
-  private ProgressEventDispatcher dispatchProgress(long progressUnits) {
+  /**
+   * Dispatches a {@link ProgressEvent} representing {@code progressUnits} of progress on the
+   * managed {@link #allocation}.
+   *
+   * @param progressUnits units of progress
+   */
+  public void dispatchProgress(long progressUnits) {
     decrementRemainingAllocationUnits(progressUnits);
     eventDispatcher.dispatch(new ProgressEvent(allocation, progressUnits));
-    return this;
   }
 
   private void decrementRemainingAllocationUnits(long units) {

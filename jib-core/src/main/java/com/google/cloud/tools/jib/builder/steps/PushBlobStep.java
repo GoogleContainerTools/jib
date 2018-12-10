@@ -73,9 +73,10 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
 
   @Override
   public BlobDescriptor call() throws IOException, RegistryException, ExecutionException {
-    try (ProgressEventDispatcher ignored =
-            progressEventDipatcherFactory.create("push blob " + blobDescriptor.getDigest(), 1);
-        TimerEventDispatcher ignored2 =
+    try (ProgressEventDispatcher progressEventDispatcher =
+            progressEventDipatcherFactory.create(
+                "push blob " + blobDescriptor.getDigest(), blobDescriptor.getSize());
+        TimerEventDispatcher ignored =
             new TimerEventDispatcher(
                 buildConfiguration.getEventDispatcher(), DESCRIPTION + blobDescriptor)) {
       RegistryClient registryClient =
@@ -94,12 +95,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
 
       // todo: leverage cross-repository mounts
       registryClient.pushBlob(
-          blobDescriptor.getDigest(),
-          blob,
-          null,
-          alsoIgnored -> {
-            // TODO: Replace with progress-reporting.
-          });
+          blobDescriptor.getDigest(), blob, null, progressEventDispatcher::dispatchProgress);
 
       return blobDescriptor;
     }
