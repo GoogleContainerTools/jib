@@ -52,10 +52,11 @@ class FinalizingStep implements AsyncStep<Void>, Callable<Void> {
     this.buildConfiguration = buildConfiguration;
     this.futureDependencyLists = wrappedDependencyLists;
 
-    AsyncDependencies dependencies = AsyncDependencies.using(listeningExecutorService);
-    wrappedDependencyLists.forEach(dependencies::addStep);
-    dependencyList.forEach(dependencies::addStep);
-    listenableFuture = dependencies.whenAllSucceed(this);
+    listenableFuture =
+        AsyncDependencies.using(listeningExecutorService)
+            .addSteps(wrappedDependencyLists)
+            .addSteps(dependencyList)
+            .whenAllSucceed(this);
   }
 
   @Override

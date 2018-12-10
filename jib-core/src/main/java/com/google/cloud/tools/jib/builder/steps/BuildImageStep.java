@@ -77,12 +77,11 @@ class BuildImageStep
 
   @Override
   public AsyncStep<Image<Layer>> call() throws ExecutionException {
-    AsyncDependencies dependencies =
-        AsyncDependencies.using(listeningExecutorService)
-            .addSteps(NonBlockingSteps.get(pullAndCacheBaseImageLayersStep));
-    buildAndCacheApplicationLayerSteps.forEach(dependencies::addStep);
     ListenableFuture<Image<Layer>> future =
-        dependencies.whenAllSucceed(this::afterCachedLayerSteps);
+        AsyncDependencies.using(listeningExecutorService)
+            .addSteps(NonBlockingSteps.get(pullAndCacheBaseImageLayersStep))
+            .addSteps(buildAndCacheApplicationLayerSteps)
+            .whenAllSucceed(this::afterCachedLayerSteps);
     return () -> future;
   }
 
