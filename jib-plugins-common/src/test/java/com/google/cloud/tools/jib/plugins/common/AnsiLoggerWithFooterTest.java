@@ -25,18 +25,18 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link SingleThreadedLogger}. */
-public class SingleThreadedLoggerTest {
+/** Tests for {@link AnsiLoggerWithFooter}. */
+public class AnsiLoggerWithFooterTest {
 
   private static final Duration FUTURE_TIMEOUT = Duration.ofSeconds(1);
 
   private final StringBuilder logBuilder = new StringBuilder();
-  private final SingleThreadedLogger testSingleThreadedLogger =
-      new SingleThreadedLogger(logBuilder::append);
+  private final AnsiLoggerWithFooter testAnsiLoggerWithFooter =
+      new AnsiLoggerWithFooter(logBuilder::append);
 
   @Test
   public void testLog_noFooter() throws InterruptedException, ExecutionException, TimeoutException {
-    testSingleThreadedLogger
+    testAnsiLoggerWithFooter
         .log(() -> logBuilder.append("message\n"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
@@ -46,13 +46,13 @@ public class SingleThreadedLoggerTest {
   @Test
   public void testLog_sameFooter()
       throws InterruptedException, ExecutionException, TimeoutException {
-    testSingleThreadedLogger
+    testAnsiLoggerWithFooter
         .setFooter(Collections.singletonList("footer"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
-    testSingleThreadedLogger
+    testAnsiLoggerWithFooter
         .log(() -> logBuilder.append("message\n"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
-    testSingleThreadedLogger
+    testAnsiLoggerWithFooter
         .log(() -> logBuilder.append("another message\n"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
@@ -64,16 +64,16 @@ public class SingleThreadedLoggerTest {
   @Test
   public void testLog_changingFooter()
       throws InterruptedException, ExecutionException, TimeoutException {
-    testSingleThreadedLogger
+    testAnsiLoggerWithFooter
         .setFooter(Collections.singletonList("footer"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
-    testSingleThreadedLogger
+    testAnsiLoggerWithFooter
         .log(() -> logBuilder.append("message\n"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
-    testSingleThreadedLogger
+    testAnsiLoggerWithFooter
         .setFooter(Arrays.asList("two line", "footer"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
-    testSingleThreadedLogger
+    testAnsiLoggerWithFooter
         .log(() -> logBuilder.append("another message\n"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
