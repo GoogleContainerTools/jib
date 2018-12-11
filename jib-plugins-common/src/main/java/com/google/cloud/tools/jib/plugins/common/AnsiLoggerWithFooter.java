@@ -41,6 +41,12 @@ class AnsiLoggerWithFooter {
   /** ANSI escape sequence for erasing to end of display. */
   private static final String ERASE_DISPLAY_BELOW = "\033[0J";
 
+  /** ANSI escape sequence for setting all further characters to bold. */
+  private static final String BOLD = "\033[1m";
+
+  /** ANSI escape sequence for setting all further characters to not bold. */
+  private static final String UNBOLD = "\033[0m";
+
   private static final Duration EXECUTOR_SHUTDOWN_WAIT = Duration.ofSeconds(1);
 
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -81,6 +87,8 @@ class AnsiLoggerWithFooter {
    * Sets the footer asynchronously. This will replace the previously-printed footer with the new
    * {@code footerLines}.
    *
+   * <p>The footer is printed in <strong>bold</strong>.
+   *
    * @param footerLines the footer, with each line as an element (no newline at end)
    * @return a {@link Future} to track completion
    */
@@ -110,7 +118,16 @@ class AnsiLoggerWithFooter {
           // Writes out logMessage and footer.
           plainLogger.accept(plainLogBuilder.toString());
           messageLogger.run();
-          plainLogger.accept(String.join("\n", newFooterLines));
+
+          if (newFooterLines.size() > 0) {
+            StringBuilder footerBuilder = new StringBuilder();
+            for (String newFooterLine : newFooterLines) {
+              footerBuilder.append(BOLD).append(newFooterLine).append(UNBOLD).append('\n');
+            }
+            // Removes last newline.
+            footerBuilder.setLength(footerBuilder.length() - 1);
+            plainLogger.accept(footerBuilder.toString());
+          }
 
           this.footerLines = newFooterLines;
 
