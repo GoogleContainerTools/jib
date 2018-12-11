@@ -26,7 +26,8 @@ import java.util.function.Consumer;
 
 /**
  * Keeps all log messages in a sequential, deterministic order along with an additional footer that
- * always appears below log messages. This is intended to log both the messages and the footer to the same console.
+ * always appears below log messages. This is intended to log both the messages and the footer to
+ * the same console.
  */
 class AnsiLoggerWithFooter {
 
