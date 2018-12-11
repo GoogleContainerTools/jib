@@ -101,24 +101,24 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
     buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(description + "..."));
 
     try (ProgressEventDispatcher ignored =
-        progressEventDispatcherFactory.create("Retrieve registry credentials for " + registry, 1)) {
-      try (TimerEventDispatcher ignored2 =
-          new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
-        for (CredentialRetriever credentialRetriever : credentialRetrievers) {
-          Optional<Credential> optionalCredential = credentialRetriever.retrieve();
-          if (optionalCredential.isPresent()) {
-            return optionalCredential.get();
-          }
+            progressEventDispatcherFactory.create(
+                "Retrieve registry credentials for " + registry, 1);
+        TimerEventDispatcher ignored2 =
+            new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
+      for (CredentialRetriever credentialRetriever : credentialRetrievers) {
+        Optional<Credential> optionalCredential = credentialRetriever.retrieve();
+        if (optionalCredential.isPresent()) {
+          return optionalCredential.get();
         }
-
-        // If no credentials found, give an info (not warning because in most cases, the base image
-        // is
-        // public and does not need extra credentials) and return null.
-        buildConfiguration
-            .getEventDispatcher()
-            .dispatch(LogEvent.info("No credentials could be retrieved for registry " + registry));
-        return null;
       }
+
+      // If no credentials found, give an info (not warning because in most cases, the base image
+      // is
+      // public and does not need extra credentials) and return null.
+      buildConfiguration
+          .getEventDispatcher()
+          .dispatch(LogEvent.info("No credentials could be retrieved for registry " + registry));
+      return null;
     }
   }
 }

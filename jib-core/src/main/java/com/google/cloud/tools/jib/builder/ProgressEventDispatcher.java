@@ -25,7 +25,7 @@ import java.io.Closeable;
 
 /**
  * Dispatches {@link ProgressEvent}s associated with a managed {@link Allocation}. Keeps track of
- * the allocation units that are remaining so that it can emits the remaining progress units upon
+ * the allocation units that are remaining so that it can emit the remaining progress units upon
  * {@link #close}.
  *
  * <p>This class is <em>not</em> thread-safe. Only use a single instance per thread and create child
@@ -35,9 +35,7 @@ public class ProgressEventDispatcher implements Closeable {
 
   /**
    * Creates a new {@link ProgressEventDispatcher} based off an existing {@link
-   * ProgressEventDispatcher}.
-   *
-   * <p>Implementations should be thread-safe.
+   * ProgressEventDispatcher}. {@link #create} should only be called once.
    */
   @FunctionalInterface
   public interface Factory {
@@ -104,9 +102,19 @@ public class ProgressEventDispatcher implements Closeable {
    */
   public Factory newChildProducer() {
     decrementRemainingAllocationUnits(1);
-    return (description, allocationUnits) ->
-        newProgressEventDispatcher(
+
+    return new Factory() {
+
+      private boolean used = false;
+
+      @Override
+      public ProgressEventDispatcher create(String description, long allocationUnits) {
+        Preconditions.checkState(!used);
+        used = true;
+        return newProgressEventDispatcher(
             eventDispatcher, allocation.newChild(description, allocationUnits));
+      }
+    };
   }
 
   /** Emits the remaining allocation units as progress units in a {@link ProgressEvent}. */

@@ -37,11 +37,10 @@ public class ProgressEventDispatcherTest {
   @Test
   public void testDispatch() {
     try (ProgressEventDispatcher progressEventDispatcher =
-        ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 10)) {
-      try (ProgressEventDispatcher ignored =
-          progressEventDispatcher.newChildProducer().create("ignored", 20)) {
-        // empty
-      }
+            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 10);
+        ProgressEventDispatcher ignored =
+            progressEventDispatcher.newChildProducer().create("ignored", 20)) {
+      // empty
     }
 
     ArgumentCaptor<ProgressEvent> progressEventArgumentCaptor =
@@ -78,18 +77,19 @@ public class ProgressEventDispatcherTest {
 
   @Test
   public void testDispatch_tooManyChildren() {
-    try {
-      try (ProgressEventDispatcher progressEventDispatcher =
-          ProgressEventDispatcher.newRoot(mockEventDispatcher, "allocation description", 1)) {
-        progressEventDispatcher.newChildProducer();
-        progressEventDispatcher.newChildProducer();
-      }
-      Assert.fail();
+    try (ProgressEventDispatcher progressEventDispatcher =
+        ProgressEventDispatcher.newRoot(mockEventDispatcher, "allocation description", 1)) {
+      progressEventDispatcher.newChildProducer();
 
-    } catch (VerifyException ex) {
-      Assert.assertEquals(
-          "Remaining allocation units less than 0 for 'allocation description': -1",
-          ex.getMessage());
+      try {
+        progressEventDispatcher.newChildProducer();
+        Assert.fail();
+
+      } catch (VerifyException ex) {
+        Assert.assertEquals(
+            "Remaining allocation units less than 0 for 'allocation description': -1",
+            ex.getMessage());
+      }
     }
   }
 }
