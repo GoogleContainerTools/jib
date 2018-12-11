@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -101,7 +102,8 @@ public class BuildConfigurationTest {
             .setTargetFormat(OCIManifestTemplate.class)
             .setAllowInsecureRegistries(true)
             .setLayerConfigurations(expectedLayerConfigurations)
-            .setToolName(expectedCreatedBy);
+            .setToolName(expectedCreatedBy)
+            .setExecutorService(MoreExecutors.newDirectExecutorService());
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
@@ -151,6 +153,7 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedEntrypoint, buildConfiguration.getContainerConfiguration().getEntrypoint());
     Assert.assertEquals(expectedCreatedBy, buildConfiguration.getToolName());
+    Assert.assertNotNull(buildConfiguration.getExecutorService());
   }
 
   @Test
@@ -178,7 +181,8 @@ public class BuildConfigurationTest {
             .setBaseImageConfiguration(baseImageConfiguration)
             .setTargetImageConfiguration(targetImageConfiguration)
             .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
-            .setApplicationLayersCacheDirectory(Paths.get("ignored"));
+            .setApplicationLayersCacheDirectory(Paths.get("ignored"))
+            .setExecutorService(MoreExecutors.newDirectExecutorService());
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertEquals(ImmutableSet.of("targettag"), buildConfiguration.getAllTargetImageTags());
@@ -204,6 +208,7 @@ public class BuildConfigurationTest {
               ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
           .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
           .setApplicationLayersCacheDirectory(Paths.get("ignored"))
+          .setExecutorService(MoreExecutors.newDirectExecutorService())
           .build();
       Assert.fail("Build configuration should not be built with missing values");
 
@@ -216,6 +221,7 @@ public class BuildConfigurationTest {
       BuildConfiguration.builder()
           .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
           .setApplicationLayersCacheDirectory(Paths.get("ignored"))
+          .setExecutorService(MoreExecutors.newDirectExecutorService())
           .build();
       Assert.fail("Build configuration should not be built with missing values");
 
@@ -233,7 +239,7 @@ public class BuildConfigurationTest {
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
           "base image configuration, target image configuration, base image layers cache directory, "
-              + "and application layers cache directory are required but not set",
+              + "application layers cache directory, and executor service are required but not set",
           ex.getMessage());
     }
   }
