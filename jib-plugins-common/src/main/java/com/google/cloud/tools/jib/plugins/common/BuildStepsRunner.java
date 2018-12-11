@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.events.SuccessEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
@@ -213,6 +214,7 @@ public class BuildStepsRunner {
 
       eventDispatcher.dispatch(LogEvent.lifecycle(""));
       eventDispatcher.dispatch(LogEvent.lifecycle(successMessage));
+      eventDispatcher.dispatch(new SuccessEvent());
 
       // when an image is built, write out the digest and id
       if (imageDigestOutputPath != null) {
