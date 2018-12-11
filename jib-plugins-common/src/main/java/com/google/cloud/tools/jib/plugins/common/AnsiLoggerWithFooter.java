@@ -31,7 +31,7 @@ import java.util.function.Consumer;
  * always appears below log messages. This is intended to log both the messages and the footer to
  * the same console.
  *
- * Make sure to call {@link #shutDown} when finished.
+ * <p>Make sure to call {@link #shutDown} when finished.
  */
 class AnsiLoggerWithFooter {
 
@@ -57,7 +57,8 @@ class AnsiLoggerWithFooter {
   public void shutDown() {
     executorService.shutdown();
     try {
-      if (!executorService.awaitTermination(EXECUTOR_SHUTDOWN_WAIT.getSeconds(), TimeUnit.SECONDS)) {
+      if (!executorService.awaitTermination(
+          EXECUTOR_SHUTDOWN_WAIT.getSeconds(), TimeUnit.SECONDS)) {
         executorService.shutdownNow();
       }
     } catch (InterruptedException ex) {
