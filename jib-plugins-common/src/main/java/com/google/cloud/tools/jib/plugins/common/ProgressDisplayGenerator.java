@@ -30,8 +30,8 @@ import java.util.Set;
  *
  * <p>Executing tasks...<br>
  * [================= ] 72.5% complete<br>
- * > task 1 running<br>
- * > task 3 running
+ * &gt; task 1 running<br>
+ * &gt; task 3 running
  */
 class ProgressDisplayGenerator {
 
