@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -148,6 +149,7 @@ public class RetrieveRegistryCredentialsStepTest {
                 .build())
         .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
         .setApplicationLayersCacheDirectory(Paths.get("ignored"))
+        .setExecutorService(MoreExecutors.newDirectExecutorService())
         .build();
   }
 }

@@ -25,6 +25,8 @@ import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -82,5 +84,27 @@ public class JibIntegrationTest {
         "Hello World\n",
         pullAndRunBuiltImage(
             targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+  }
+
+  /** Ensure that a provided executor is not disposed. */
+  @Test
+  public void testProvidedExecutorNotDisposed()
+      throws InvalidImageReferenceException, InterruptedException, ExecutionException,
+          CacheDirectoryCreationException, IOException {
+    ImageReference targetImageReference =
+        ImageReference.of("localhost:5000", "jib-core", "basic-helloworld");
+    Containerizer containerizer =
+        Containerizer.to(
+                RegistryImage.named(targetImageReference)
+                    .addCredentialRetriever(
+                        () -> Optional.of(Credential.basic("username", "password"))))
+            .setAllowInsecureRegistries(true);
+
+    ExecutorService executorService = Executors.newCachedThreadPool();
+    containerizer.setExecutorService(executorService);
+    Jib.from("busybox").setEntrypoint("echo", "Hello World").containerize(containerizer);
+    Assert.assertFalse(executorService.isShutdown());
+
+    executorService.shutdown();
   }
 }
