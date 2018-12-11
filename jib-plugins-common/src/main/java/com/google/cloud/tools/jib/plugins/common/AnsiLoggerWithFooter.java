@@ -17,17 +17,21 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.common.util.concurrent.Futures;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
  * Keeps all log messages in a sequential, deterministic order along with an additional footer that
  * always appears below log messages. This is intended to log both the messages and the footer to
  * the same console.
+ *
+ * Make sure to call {@link #shutDown} when finished.
  */
 class AnsiLoggerWithFooter {
 
@@ -37,6 +41,8 @@ class AnsiLoggerWithFooter {
   /** ANSI escape sequence for erasing to end of display. */
   private static final String ERASE_DISPLAY_BELOW = "\033[0J";
 
+  private static final Duration EXECUTOR_SHUTDOWN_WAIT = Duration.ofSeconds(1);
+
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   private final Consumer<String> plainLogger;
@@ -45,6 +51,18 @@ class AnsiLoggerWithFooter {
 
   AnsiLoggerWithFooter(Consumer<String> plainLogger) {
     this.plainLogger = plainLogger;
+  }
+
+  /** Shuts down the {@link #executorService}. */
+  public void shutDown() {
+    executorService.shutdown();
+    try {
+      if (!executorService.awaitTermination(EXECUTOR_SHUTDOWN_WAIT.getSeconds(), TimeUnit.SECONDS)) {
+        executorService.shutdownNow();
+      }
+    } catch (InterruptedException ex) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   /**
