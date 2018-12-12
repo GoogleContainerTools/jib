@@ -51,17 +51,23 @@ class AnsiLoggerWithFooter {
 
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-  private final Consumer<String> plainLogger;
+  private final Consumer<String> plainPrinter;
 
   private List<String> footerLines = Collections.emptyList();
 
-  AnsiLoggerWithFooter(Consumer<String> plainLogger) {
-    this.plainLogger = plainLogger;
+  /**
+   * Creates a new {@link AnsiLoggerWithFooter}
+   *
+   * @param plainPrinter the {@link Consumer} intended to synchronously print the footer and other plain console output. {@code plainPrinter} should print a new line at the end.
+   */
+  AnsiLoggerWithFooter(Consumer<String> plainPrinter) {
+    this.plainPrinter = plainPrinter;
   }
 
   /** Shuts down the {@link #executorService}. */
-  public void shutDown() {
+  public AnsiLoggerWithFooter shutDown() {
     executorService.shutdown();
+    return this;
   }
 
   /** Waits for the {@link #executorService} to terminate. */
@@ -79,12 +85,26 @@ class AnsiLoggerWithFooter {
   /**
    * Runs {@code messageLogger} asynchronously.
    *
-   * @param messageLogger the {@link Runnable} intended to synchronously log a message to the
-   *     console
+   * @param messageLogger the {@link Consumer} intended to synchronously log a message to the
+   *     console. {@code messageLogger} should print a new line at the end.
+   * @param message the message to log with {@code messageLogger}
    * @return a {@link Future} to track completion
    */
-  public Future<Void> log(Runnable messageLogger) {
-    return log(messageLogger, footerLines);
+  public Future<Void> log(Consumer<String> messageLogger, String message) {
+    return executorService.submit(
+        () -> {
+          boolean didErase = eraseFooter();
+
+          // If a previous footer was erased, the message needs to go up a line.
+          String messagePrefix = didErase ? CURSOR_UP_SEQUENCE : "";
+          messageLogger.accept(messagePrefix + message);
+
+          for (String footerLine : footerLines) {
+            plainPrinter.accept(BOLD + footerLine + UNBOLD);
+          }
+          
+          return null;
+        });
   }
 
   /**
@@ -93,49 +113,54 @@ class AnsiLoggerWithFooter {
    *
    * <p>The footer is printed in <strong>bold</strong>.
    *
-   * @param footerLines the footer, with each line as an element (no newline at end)
+   * @param newFooterLines the footer, with each line as an element (no newline at end)
    * @return a {@link Future} to track completion
    */
-  public Future<Void> setFooter(List<String> footerLines) {
-    if (footerLines.equals(this.footerLines)) {
+  public Future<Void> setFooter(List<String> newFooterLines) {
+    if (newFooterLines.equals(footerLines)) {
       return Futures.immediateFuture(null);
     }
 
-    return log(() -> {}, footerLines);
-  }
-
-  private Future<Void> log(Runnable messageLogger, List<String> newFooterLines) {
     return executorService.submit(
         () -> {
-          StringBuilder plainLogBuilder = new StringBuilder();
+          boolean didErase = eraseFooter();
 
-          // Moves the cursor up to the start of the footer.
-          // TODO: Optimize to single init.
-          for (int i = 0; i < this.footerLines.size(); i++) {
-            // Moves cursor up.
-            plainLogBuilder.append(CURSOR_UP_SEQUENCE);
+          // If a previous footer was erased, the first new footer line needs to go up a line.
+          String newFooterPrefix = didErase ? CURSOR_UP_SEQUENCE : "";
+
+          for (String newFooterLine : newFooterLines) {
+            plainPrinter.accept(newFooterPrefix+BOLD+newFooterLine+UNBOLD);
+            newFooterPrefix = "";
           }
 
-          // Erases everything below cursor.
-          plainLogBuilder.append(ERASE_DISPLAY_BELOW);
-
-          // Writes out logMessage and footer.
-          plainLogger.accept(plainLogBuilder.toString());
-          messageLogger.run();
-
-          if (newFooterLines.size() > 0) {
-            StringBuilder footerBuilder = new StringBuilder();
-            for (String newFooterLine : newFooterLines) {
-              footerBuilder.append(BOLD).append(newFooterLine).append(UNBOLD).append('\n');
-            }
-            // Removes last newline.
-            footerBuilder.setLength(footerBuilder.length() - 1);
-            plainLogger.accept(footerBuilder.toString());
-          }
-
-          this.footerLines = newFooterLines;
+          footerLines = newFooterLines;
 
           return null;
         });
+  }
+
+  /**
+   * Erases the footer. Do <em>not</em> call outside of a task submitted to {@link #executorService}.
+   *
+   * @return {@code true} if anything was erased; {@code false} otherwise
+   */
+  private boolean eraseFooter() {
+    if (footerLines.isEmpty()) {
+      return false;
+    }
+
+    StringBuilder footerEraserBuilder = new StringBuilder();
+
+    // Moves the cursor up to the start of the footer.
+    // TODO: Optimize to single init.
+    for (int i = 0; i < footerLines.size(); i++) {
+      // Moves cursor up.
+      footerEraserBuilder.append(CURSOR_UP_SEQUENCE);
+    }
+
+    // Erases everything below cursor.
+    footerEraserBuilder.append(ERASE_DISPLAY_BELOW);
+
+    plainPrinter.accept(footerEraserBuilder.toString());
   }
 }
