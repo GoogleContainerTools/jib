@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.event.progress;
 
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
-import java.util.List;
+import com.google.common.collect.ImmutableList;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.function.Consumer;
 
@@ -28,6 +28,37 @@ import java.util.function.Consumer;
  * <p>This implementation is thread-safe.
  */
 public class ProgressEventHandler implements Consumer<ProgressEvent> {
+
+  /** Contains the accumulated progress and which {@link Allocation}s are not yet complete. */
+  public static class Update {
+
+    private final double progress;
+    private final ImmutableList<Allocation> unfinishedAllocations;
+
+    private Update(double progress, ImmutableList<Allocation> unfinishedAllocations) {
+      this.progress = progress;
+      this.unfinishedAllocations = unfinishedAllocations;
+    }
+
+    /**
+     * Gets the overall progress, with {@code 1.0} meaning fully complete.
+     *
+     * @return the overall progress
+     */
+    public double getProgress() {
+      return progress;
+    }
+
+    /**
+     * Gets a list of the unfinished {@link Allocation}s in the order in which those {@link
+     * Allocation}s were encountered.
+     *
+     * @return a list of unfinished {@link Allocation}s
+     */
+    public ImmutableList<Allocation> getUnfinishedAllocations() {
+      return unfinishedAllocations;
+    }
+  }
 
   /** Keeps track of the progress for each {@link Allocation} encountered. */
   private final AllocationCompletionTracker completionTracker = new AllocationCompletionTracker();
@@ -40,9 +71,9 @@ public class ProgressEventHandler implements Consumer<ProgressEvent> {
    * Note that every change will be reported (though multiple could be reported together), and there
    * could be false positives.
    */
-  private final Runnable updateNotifier;
+  private final Consumer<Update> updateNotifier;
 
-  public ProgressEventHandler(Runnable updateNotifier) {
+  public ProgressEventHandler(Consumer<Update> updateNotifier) {
     this.updateNotifier = updateNotifier;
   }
 
@@ -58,28 +89,8 @@ public class ProgressEventHandler implements Consumer<ProgressEvent> {
 
     if (completionTracker.updateProgress(allocation, progressUnits)) {
       // Note: Could produce false positives.
-      updateNotifier.run();
+      updateNotifier.accept(
+          new Update(progress.sum(), completionTracker.getUnfinishedAllocations()));
     }
-  }
-
-  /**
-   * Gets the overall progress, with {@code 1.0} meaning fully complete.
-   *
-   * @return the overall progress
-   */
-  public double getProgress() {
-    return progress.sum();
-  }
-
-  /**
-   * Gets a list of the unfinished {@link Allocation}s in the order in which those {@link
-   * Allocation}s were encountered.
-   *
-   * @return a list of unfinished {@link Allocation}s
-   */
-  // TODO: Change this to do every time update notifier is called, so this is not called many times
-  // per update.
-  public List<Allocation> getUnfinishedAllocations() {
-    return completionTracker.getUnfinishedAllocations();
   }
 }
