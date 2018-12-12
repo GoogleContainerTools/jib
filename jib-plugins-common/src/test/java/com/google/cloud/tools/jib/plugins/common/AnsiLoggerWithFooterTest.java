@@ -32,15 +32,15 @@ public class AnsiLoggerWithFooterTest {
 
   private final StringBuilder logBuilder = new StringBuilder();
   private final AnsiLoggerWithFooter testAnsiLoggerWithFooter =
-      new AnsiLoggerWithFooter(logBuilder::append);
+      new AnsiLoggerWithFooter(this::logBuilderPrinter);
 
   @Test
   public void testLog_noFooter() throws InterruptedException, ExecutionException, TimeoutException {
     testAnsiLoggerWithFooter
-        .log(() -> logBuilder.append("message\n"))
+        .log(this::logBuilderPrinter, "message")
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
-    Assert.assertEquals("\033[0Jmessage\n", logBuilder.toString());
+    Assert.assertEquals("message\n", logBuilder.toString());
   }
 
   @Test
@@ -49,22 +49,32 @@ public class AnsiLoggerWithFooterTest {
     testAnsiLoggerWithFooter
         .setFooter(Collections.singletonList("footer"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
+
+    Assert.assertEquals("\033[1mfooter\033[0m\n", logBuilder.toString());
+
     testAnsiLoggerWithFooter
-        .log(() -> logBuilder.append("message\n"))
-        .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
-    testAnsiLoggerWithFooter
-        .log(() -> logBuilder.append("another message\n"))
+        .log(this::logBuilderPrinter, "message")
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
     Assert.assertEquals(
-        "\033[0J"
-            + "\033[1mfooter\033[0m"
-            + "\033[1A\033[0J"
-            + "message\n"
-            + "\033[1mfooter\033[0m"
-            + "\033[1A\033[0J"
-            + "another message\n"
-            + "\033[1mfooter\033[0m",
+        "\033[1mfooter\033[0m\n"
+            + "\033[1A\033[0J\n"
+            + "\033[1Amessage\n"
+            + "\033[1mfooter\033[0m\n",
+        logBuilder.toString());
+
+    testAnsiLoggerWithFooter
+        .log(this::logBuilderPrinter, "another message")
+        .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
+
+    Assert.assertEquals(
+        "\033[1mfooter\033[0m\n"
+            + "\033[1A\033[0J\n"
+            + "\033[1Amessage\n"
+            + "\033[1mfooter\033[0m\n"
+            + "\033[1A\033[0J\n"
+            + "\033[1Aanother message\n"
+            + "\033[1mfooter\033[0m\n",
         logBuilder.toString());
   }
 
@@ -75,28 +85,41 @@ public class AnsiLoggerWithFooterTest {
         .setFooter(Collections.singletonList("footer"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
     testAnsiLoggerWithFooter
-        .log(() -> logBuilder.append("message\n"))
+        .log(this::logBuilderPrinter, "message")
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
+
     testAnsiLoggerWithFooter
         .setFooter(Arrays.asList("two line", "footer"))
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
+
+    Assert.assertEquals(
+        "\033[1mfooter\033[0m\n"
+            + "\033[1A\033[0J\n"
+            + "\033[1Amessage\n"
+            + "\033[1mfooter\033[0m\n"
+            + "\033[1A\033[0J\n"
+            + "\033[1A\033[1mtwo line\033[0m\n\033[1mfooter\033[0m\n",
+        logBuilder.toString());
+
     testAnsiLoggerWithFooter
-        .log(() -> logBuilder.append("another message\n"))
+        .log(this::logBuilderPrinter, "another message")
         .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
 
     Assert.assertEquals(
-        "\033[0J"
-            + "\033[1mfooter\033[0m"
-            + "\033[1A\033[0J"
-            + "message\n"
-            + "\033[1mfooter\033[0m"
-            + "\033[1A\033[0J"
-            + "\033[1mtwo line\033[0m\n"
-            + "\033[1mfooter\033[0m"
-            + "\033[1A\033[1A\033[0J"
-            + "another message\n"
-            + "\033[1mtwo line\033[0m\n"
-            + "\033[1mfooter\033[0m",
+        "\033[1mfooter\033[0m\n"
+            + "\033[1A\033[0J\n"
+            + "\033[1Amessage\n"
+            + "\033[1mfooter\033[0m\n"
+            + "\033[1A\033[0J\n"
+            + "\033[1A\033[1mtwo line\033[0m\n\033[1mfooter\033[0m\n"
+            + "\033[1A\033[1A\033[0J\n"
+            + "\033[1Aanother message\n"
+            + "\033[1mtwo line\033[0m\n\033[1mfooter\033[0m\n",
         logBuilder.toString());
+  }
+
+  // This mimics a real log printer that always adds a new line at the end.
+  private void logBuilderPrinter(String message) {
+    logBuilder.append(message).append('\n');
   }
 }
