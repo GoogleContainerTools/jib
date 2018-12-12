@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.AnsiLoggerWithFooter;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
@@ -105,7 +106,11 @@ public class MavenProjectProperties implements ProjectProperties {
     this.project = project;
     this.javaLayerConfigurations = javaLayerConfigurations;
 
-    ansiLoggerWithFooter = new AnsiLoggerWithFooter(log::info);
+    // TODO: Make SHOW_PROGRESS be true by default.
+    boolean showProgressFooter =
+        Boolean.getBoolean(PropertyNames.SHOW_PROGRESS) && System.console() != null;
+
+    ansiLoggerWithFooter = new AnsiLoggerWithFooter(log::info, showProgressFooter);
     eventHandlers = makeEventHandlers(log, ansiLoggerWithFooter);
   }
 

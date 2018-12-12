@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.AnsiLoggerWithFooter;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
@@ -113,7 +114,11 @@ class GradleProjectProperties implements ProjectProperties {
     this.project = project;
     this.javaLayerConfigurations = javaLayerConfigurations;
 
-    ansiLoggerWithFooter = new AnsiLoggerWithFooter(logger::lifecycle);
+    // TODO: Make SHOW_PROGRESS be true by default.
+    boolean showProgressFooter =
+        Boolean.getBoolean(PropertyNames.SHOW_PROGRESS) && System.console() != null;
+
+    ansiLoggerWithFooter = new AnsiLoggerWithFooter(logger::lifecycle, showProgressFooter);
     eventHandlers = makeEventHandlers(logger, ansiLoggerWithFooter);
   }
 

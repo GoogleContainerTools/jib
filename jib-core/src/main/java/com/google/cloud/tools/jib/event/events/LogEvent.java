@@ -35,6 +35,9 @@ public class LogEvent implements JibEvent {
     /** Default. */
     LIFECYCLE,
 
+    /** Same as {@link #LIFECYCLE}, except represents progress updates. */
+    PROGRESS,
+
     /**
      * Details that can be ignored.
      *
@@ -52,6 +55,10 @@ public class LogEvent implements JibEvent {
 
   public static LogEvent lifecycle(String message) {
     return new LogEvent(Level.LIFECYCLE, message);
+  }
+
+  public static LogEvent progress(String message) {
+    return new LogEvent(Level.PROGRESS, message);
   }
 
   public static LogEvent warn(String message) {

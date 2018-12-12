@@ -50,6 +50,7 @@ public class AnsiLoggerWithFooter {
 
   private final ExecutorService executorService;
   private final Consumer<String> plainPrinter;
+  private final boolean isFooterEnabled;
 
   private List<String> footerLines = Collections.emptyList();
 
@@ -58,14 +59,18 @@ public class AnsiLoggerWithFooter {
    *
    * @param plainPrinter the {@link Consumer} intended to synchronously print the footer and other
    *     plain console output. {@code plainPrinter} should print a new line at the end.
+   * @param isFooterEnabled {@code true} to enable the footer; {@code false} to not include the
+   *     footer
    */
-  public AnsiLoggerWithFooter(Consumer<String> plainPrinter) {
-    this(plainPrinter, Executors.newSingleThreadExecutor());
+  public AnsiLoggerWithFooter(Consumer<String> plainPrinter, boolean isFooterEnabled) {
+    this(plainPrinter, isFooterEnabled, Executors.newSingleThreadExecutor());
   }
 
   @VisibleForTesting
-  AnsiLoggerWithFooter(Consumer<String> plainPrinter, ExecutorService executorService) {
+  AnsiLoggerWithFooter(
+      Consumer<String> plainPrinter, boolean isFooterEnabled, ExecutorService executorService) {
     this.plainPrinter = plainPrinter;
+    this.isFooterEnabled = isFooterEnabled;
     this.executorService = executorService;
   }
 
@@ -90,6 +95,15 @@ public class AnsiLoggerWithFooter {
   }
 
   /**
+   * Gets whether the footer is being printed.
+   *
+   * @return {@code true} if the footer is being printed; {@code false} if not
+   */
+  public boolean isPrintingFooter() {
+    return isFooterEnabled;
+  }
+
+  /**
    * Runs {@code messageLogger} asynchronously.
    *
    * @param messageLogger the {@link Consumer} intended to synchronously log a message to the
@@ -105,8 +119,10 @@ public class AnsiLoggerWithFooter {
           String messagePrefix = didErase ? CURSOR_UP_SEQUENCE : "";
           messageLogger.accept(messagePrefix + message);
 
-          for (String footerLine : footerLines) {
-            plainPrinter.accept(BOLD + footerLine + UNBOLD);
+          if (isFooterEnabled) {
+            for (String footerLine : footerLines) {
+              plainPrinter.accept(BOLD + footerLine + UNBOLD);
+            }
           }
         });
   }
@@ -131,12 +147,14 @@ public class AnsiLoggerWithFooter {
           // If a previous footer was erased, the first new footer line needs to go up a line.
           String newFooterPrefix = didErase ? CURSOR_UP_SEQUENCE : "";
 
-          for (String newFooterLine : newFooterLines) {
-            plainPrinter.accept(newFooterPrefix + BOLD + newFooterLine + UNBOLD);
-            newFooterPrefix = "";
-          }
+          if (isFooterEnabled) {
+            for (String newFooterLine : newFooterLines) {
+              plainPrinter.accept(newFooterPrefix + BOLD + newFooterLine + UNBOLD);
+              newFooterPrefix = "";
+            }
 
-          footerLines = newFooterLines;
+            footerLines = newFooterLines;
+          }
         });
   }
 
@@ -147,7 +165,7 @@ public class AnsiLoggerWithFooter {
    * @return {@code true} if anything was erased; {@code false} otherwise
    */
   private boolean eraseFooter() {
-    if (footerLines.isEmpty()) {
+    if (!isFooterEnabled || footerLines.isEmpty()) {
       return false;
     }
 

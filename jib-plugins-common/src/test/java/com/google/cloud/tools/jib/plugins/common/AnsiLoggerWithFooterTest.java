@@ -27,13 +27,28 @@ public class AnsiLoggerWithFooterTest {
 
   private final StringBuilder logBuilder = new StringBuilder();
   private final AnsiLoggerWithFooter testAnsiLoggerWithFooter =
-      new AnsiLoggerWithFooter(this::logBuilderPrinter, MoreExecutors.newDirectExecutorService());
+      new AnsiLoggerWithFooter(
+          this::logBuilderPrinter, true, MoreExecutors.newDirectExecutorService());
 
   @Test
   public void testLog_noFooter() {
     testAnsiLoggerWithFooter.log(this::logBuilderPrinter, "message");
 
     Assert.assertEquals("message\n", logBuilder.toString());
+  }
+
+  @Test
+  public void testLog_footerDisabled() {
+    AnsiLoggerWithFooter testAnsiLoggerWithFooter =
+        new AnsiLoggerWithFooter(
+            this::logBuilderPrinter, false, MoreExecutors.newDirectExecutorService());
+
+    testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
+    testAnsiLoggerWithFooter.log(this::logBuilderPrinter, "message");
+    testAnsiLoggerWithFooter.setFooter(Arrays.asList("two line", "footer"));
+    testAnsiLoggerWithFooter.log(this::logBuilderPrinter, "another message");
+
+    Assert.assertEquals("message\nanother message\n", logBuilder.toString());
   }
 
   @Test

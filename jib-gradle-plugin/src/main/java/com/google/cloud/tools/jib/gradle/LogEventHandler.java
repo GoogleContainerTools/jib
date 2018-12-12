@@ -41,6 +41,13 @@ class LogEventHandler implements Consumer<LogEvent> {
         }
         break;
 
+      case PROGRESS:
+        // Progress messages only print if not printing progress in the footer.
+        if (logger.isLifecycleEnabled() && !ansiLoggerWithFooter.isPrintingFooter()) {
+          ansiLoggerWithFooter.log(logger::lifecycle, logEvent.getMessage());
+        }
+        break;
+
       case DEBUG:
         if (logger.isDebugEnabled()) {
           ansiLoggerWithFooter.log(logger::debug, logEvent.getMessage());
