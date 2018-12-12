@@ -27,6 +27,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /** Logs the message before finalizing an image build. */
 class FinalizingStep implements AsyncStep<Void>, Callable<Void> {
@@ -74,12 +75,13 @@ class FinalizingStep implements AsyncStep<Void>, Callable<Void> {
       asyncDependencies.addSteps(NonBlockingSteps.get(wrappedDependency));
     }
 
-    // TODO: Don't let future error be suppressed
-    asyncDependencies.whenAllSucceed(
-        () -> {
-          buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle("Finalizing..."));
-          return null;
-        });
+    // This suppresses any exceptions of this future.
+    Future<Void> ignored =
+        asyncDependencies.whenAllSucceed(
+            () -> {
+              buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle("Finalizing..."));
+              return null;
+            });
 
     return null;
   }
