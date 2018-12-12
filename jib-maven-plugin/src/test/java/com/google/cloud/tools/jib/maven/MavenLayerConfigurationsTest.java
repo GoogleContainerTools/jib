@@ -75,7 +75,8 @@ public class MavenLayerConfigurationsTest {
             "/my/app/libs/dependency-1.0.0-200.jar",
             "/my/app/libs/dependency-1.0.0-480.jar",
             "/my/app/libs/libraryA-0.jar",
-            "/my/app/libs/libraryB-0.jar"),
+            "/my/app/libs/libraryB-0.jar",
+            "/my/app/libs/library.jarC-0.jar"),
         configuration.getDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT-770.jar"),
@@ -120,6 +121,7 @@ public class MavenLayerConfigurationsTest {
 
     Set<Artifact> artifacts =
         ImmutableSet.of(
+            makeArtifact(dependenciesPath.resolve("library.jarC.jar")),
             makeArtifact(dependenciesPath.resolve("libraryB.jar")),
             makeArtifact(dependenciesPath.resolve("libraryA.jar")),
             makeArtifact(dependenciesPath.resolve("more").resolve("dependency-1.0.0.jar")),
@@ -148,7 +150,8 @@ public class MavenLayerConfigurationsTest {
             dependenciesPath.resolve("more").resolve("dependency-1.0.0.jar"),
             dependenciesPath.resolve("another").resolve("one").resolve("dependency-1.0.0.jar"),
             dependenciesPath.resolve("libraryA.jar"),
-            dependenciesPath.resolve("libraryB.jar"));
+            dependenciesPath.resolve("libraryB.jar"),
+            dependenciesPath.resolve("library.jarC.jar"));
     ImmutableList<Path> expectedSnapshotDependenciesFiles =
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT"));

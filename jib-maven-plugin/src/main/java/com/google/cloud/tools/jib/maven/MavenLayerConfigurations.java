@@ -91,14 +91,15 @@ class MavenLayerConfigurations {
       Path artifactPath = artifact.getFile().toPath();
       LayerType layerType =
           artifact.isSnapshot() ? LayerType.SNAPSHOT_DEPENDENCIES : LayerType.DEPENDENCIES;
+      String filename = artifactPath.getFileName().toString();
       layerBuilder.addFile(
           layerType,
           artifactPath,
           dependenciesExtractionPath.resolve(
-              artifactPath
-                  .getFileName()
-                  .toString()
-                  .replace(".jar", "-" + Files.size(artifactPath) + ".jar")));
+              filename.substring(0, filename.length() - 4)
+                  + "-"
+                  + Files.size(artifactPath)
+                  + ".jar"));
     }
 
     Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());

@@ -124,6 +124,8 @@ public class GradleLayerConfigurationsTest {
 
     Set<Path> allFiles = new HashSet<>(classesFiles);
     allFiles.add(resourcesOutputDir);
+    allFiles.add(
+        Paths.get(Resources.getResource("application/dependencies/library.jarC.jar").toURI()));
     allFiles.add(Paths.get(Resources.getResource("application/dependencies/libraryB.jar").toURI()));
     allFiles.add(Paths.get(Resources.getResource("application/dependencies/libraryA.jar").toURI()));
     allFiles.add(
@@ -168,7 +170,8 @@ public class GradleLayerConfigurationsTest {
             applicationDirectory.resolve("dependencies/more/dependency-1.0.0.jar"),
             applicationDirectory.resolve("dependencies/another/one/dependency-1.0.0.jar"),
             applicationDirectory.resolve("dependencies/libraryA.jar"),
-            applicationDirectory.resolve("dependencies/libraryB.jar"));
+            applicationDirectory.resolve("dependencies/libraryB.jar"),
+            applicationDirectory.resolve("dependencies/library.jarC.jar"));
     ImmutableList<Path> expectedSnapshotDependenciesFiles =
         ImmutableList.of(
             applicationDirectory.resolve("dependencies/dependencyX-1.0.0-SNAPSHOT.jar"));
@@ -275,7 +278,8 @@ public class GradleLayerConfigurationsTest {
             "/my/app/libs/dependency-1.0.0-200.jar",
             "/my/app/libs/dependency-1.0.0-480.jar",
             "/my/app/libs/libraryA-0.jar",
-            "/my/app/libs/libraryB-0.jar"),
+            "/my/app/libs/libraryB-0.jar",
+            "/my/app/libs/library.jarC-0.jar"),
         configuration.getDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT-770.jar"),
@@ -310,7 +314,8 @@ public class GradleLayerConfigurationsTest {
             "/app/libs/dependency-1.0.0-200.jar",
             "/app/libs/dependency-1.0.0-480.jar",
             "/app/libs/libraryA-0.jar",
-            "/app/libs/libraryB-0.jar"),
+            "/app/libs/libraryB-0.jar",
+            "/app/libs/library.jarC-0.jar"),
         configuration.getDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/app/libs/dependencyX-1.0.0-SNAPSHOT-770.jar"),
