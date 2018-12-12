@@ -118,6 +118,9 @@ class GradleProjectProperties implements ProjectProperties {
     boolean showProgressFooter =
         Boolean.getBoolean(PropertyNames.SHOW_PROGRESS) && System.console() != null;
 
+    System.out.println("showProgress is: " + showProgressFooter);
+    System.out.println("console=" + project.getProperties().get("console"));
+
     ansiLoggerWithFooter = new AnsiLoggerWithFooter(logger::lifecycle, showProgressFooter);
     eventHandlers = makeEventHandlers(logger, ansiLoggerWithFooter);
   }
