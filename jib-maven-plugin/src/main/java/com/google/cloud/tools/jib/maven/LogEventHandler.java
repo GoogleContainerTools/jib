@@ -22,8 +22,6 @@ import java.util.function.Consumer;
 import org.apache.maven.plugin.logging.Log;
 
 /** Handles {@link LogEvent}s by passing to the Maven {@link Log}. */
-// We don't care about the return values of the logging futures.
-@SuppressWarnings("FutureReturnValueIgnored")
 class LogEventHandler implements Consumer<LogEvent> {
 
   private final Log log;

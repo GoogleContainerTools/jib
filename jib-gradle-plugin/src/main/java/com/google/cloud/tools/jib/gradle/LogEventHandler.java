@@ -22,8 +22,6 @@ import java.util.function.Consumer;
 import org.gradle.api.logging.Logger;
 
 /** Handles {@link LogEvent}s by passing to the Gradle {@link Logger}. */
-// We don't care about the return values of the logging futures.
-@SuppressWarnings("FutureReturnValueIgnored")
 class LogEventHandler implements Consumer<LogEvent> {
 
   private final Logger logger;
