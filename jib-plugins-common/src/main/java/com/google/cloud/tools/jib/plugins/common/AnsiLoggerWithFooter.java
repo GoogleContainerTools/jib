@@ -62,6 +62,10 @@ class AnsiLoggerWithFooter {
   /** Shuts down the {@link #executorService}. */
   public void shutDown() {
     executorService.shutdown();
+  }
+
+  /** Waits for the {@link #executorService} to terminate. */
+  public void awaitTermination() {
     try {
       if (!executorService.awaitTermination(
           EXECUTOR_SHUTDOWN_WAIT.getSeconds(), TimeUnit.SECONDS)) {
