@@ -31,6 +31,9 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.function.Function;
 import javax.annotation.Nullable;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 /**
  * Sends an HTTP {@link Request} and stores the {@link Response}. Clients should not send more than
@@ -62,6 +65,7 @@ public class Connection implements Closeable {
      *     href="https://github.com/google/google-http-java-client/issues/39">https://github.com/google/google-http-java-client/issues/39</a>
      */
     HttpTransport transport = new ApacheHttpTransport();
+    addProxyCredentials(transport);
     return url -> new Connection(url, transport);
   }
 
@@ -75,7 +79,34 @@ public class Connection implements Closeable {
       throws GeneralSecurityException {
     // Do not use {@link NetHttpTransport}. See {@link getConnectionFactory} for details.
     HttpTransport transport = new ApacheHttpTransport.Builder().doNotValidateCertificate().build();
+    addProxyCredentials(transport);
     return url -> new Connection(url, transport);
+  }
+
+  private static void addProxyCredentials(HttpTransport transport) {
+    DefaultHttpClient httpClient =
+        (DefaultHttpClient) ((ApacheHttpTransport) transport).getHttpClient();
+
+    if (System.getProperty("http.proxyUser") != null) {
+      httpClient
+          .getCredentialsProvider()
+          .setCredentials(
+              new AuthScope(
+                  System.getProperty("http.proxyHost"),
+                  Integer.parseInt(System.getProperty("http.proxyPort"))),
+              new UsernamePasswordCredentials(
+                  System.getProperty("http.proxyUser"), System.getProperty("http.proxyPassword")));
+    } else if (System.getProperty("https.proxyUser") != null) {
+      httpClient
+          .getCredentialsProvider()
+          .setCredentials(
+              new AuthScope(
+                  System.getProperty("https.proxyHost"),
+                  Integer.parseInt(System.getProperty("https.proxyPort"))),
+              new UsernamePasswordCredentials(
+                  System.getProperty("https.proxyUser"),
+                  System.getProperty("https.proxyPassword")));
+    }
   }
 
   private HttpRequestFactory requestFactory;
