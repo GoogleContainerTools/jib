@@ -33,7 +33,7 @@ import java.util.function.Consumer;
  *
  * <p>Make sure to call {@link #shutDown} when finished.
  */
-class AnsiLoggerWithFooter {
+public class AnsiLoggerWithFooter {
 
   /** ANSI escape sequence for moving the cursor up one line. */
   private static final String CURSOR_UP_SEQUENCE = "\033[1A";
@@ -61,11 +61,15 @@ class AnsiLoggerWithFooter {
    * @param plainPrinter the {@link Consumer} intended to synchronously print the footer and other
    *     plain console output. {@code plainPrinter} should print a new line at the end.
    */
-  AnsiLoggerWithFooter(Consumer<String> plainPrinter) {
+  public AnsiLoggerWithFooter(Consumer<String> plainPrinter) {
     this.plainPrinter = plainPrinter;
   }
 
-  /** Shuts down the {@link #executorService}. */
+  /**
+   * Shuts down the {@link #executorService}.
+   *
+   * @return this
+   */
   public AnsiLoggerWithFooter shutDown() {
     executorService.shutdown();
     return this;

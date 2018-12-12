@@ -112,6 +112,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               helpfulSuggestions);
       getLog().info("");
 
+      projectProperties.waitForLoggingThread();
+
     } catch (InvalidAppRootException ex) {
       throw new MojoExecutionException(
           "<container><appRoot> is not an absolute Unix-style path: " + ex.getInvalidPathValue(),

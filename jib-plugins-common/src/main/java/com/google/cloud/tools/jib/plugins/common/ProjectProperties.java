@@ -33,6 +33,8 @@ public interface ProjectProperties {
    */
   String EXPLODED_WAR_DIRECTORY_NAME = "jib-exploded-war";
 
+  void waitForLoggingThread();
+
   EventHandlers getEventHandlers();
 
   String getToolName();

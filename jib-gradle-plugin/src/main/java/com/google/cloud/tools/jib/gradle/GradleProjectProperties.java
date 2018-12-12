@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.plugins.common.AnsiLoggerWithFooter;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
@@ -67,7 +68,7 @@ class GradleProjectProperties implements ProjectProperties {
     try {
       return new GradleProjectProperties(
           project,
-          makeEventHandlers(logger),
+          logger,
           GradleLayerConfigurations.getForProject(
               project, logger, extraDirectory, convertPermissionsMap(permissions), appRoot));
 
@@ -76,13 +77,15 @@ class GradleProjectProperties implements ProjectProperties {
     }
   }
 
-  private static EventHandlers makeEventHandlers(Logger logger) {
-    LogEventHandler logEventHandler = new LogEventHandler(logger);
+  private static EventHandlers makeEventHandlers(
+      Logger logger, AnsiLoggerWithFooter ansiLoggerWithFooter) {
+    LogEventHandler logEventHandler = new LogEventHandler(logger, ansiLoggerWithFooter);
+    TimerEventHandler timerEventHandler =
+        new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message)));
+
     return new EventHandlers()
         .add(JibEventType.LOGGING, logEventHandler)
-        .add(
-            JibEventType.TIMING,
-            new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message))));
+        .add(JibEventType.TIMING, timerEventHandler);
   }
 
   @Nullable
@@ -100,22 +103,28 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   private final Project project;
+  private final AnsiLoggerWithFooter ansiLoggerWithFooter;
   private final EventHandlers eventHandlers;
   private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   GradleProjectProperties(
-      Project project,
-      EventHandlers eventHandlers,
-      JavaLayerConfigurations javaLayerConfigurations) {
+      Project project, Logger logger, JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
-    this.eventHandlers = eventHandlers;
     this.javaLayerConfigurations = javaLayerConfigurations;
+
+    ansiLoggerWithFooter = new AnsiLoggerWithFooter(logger::lifecycle);
+    eventHandlers = makeEventHandlers(logger, ansiLoggerWithFooter);
   }
 
   @Override
   public JavaLayerConfigurations getJavaLayerConfigurations() {
     return javaLayerConfigurations;
+  }
+
+  @Override
+  public void waitForLoggingThread() {
+    ansiLoggerWithFooter.shutDown().awaitTermination();
   }
 
   @Override

@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import org.apache.maven.model.Plugin;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
@@ -36,6 +36,7 @@ public class MavenProjectPropertiesTest {
   @Mock private MavenProject mockMavenProject;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
   @Mock private Plugin mockJarPlugin;
+  @Mock private Log mockLog;
 
   private Xpp3Dom jarPluginConfiguration;
   private Xpp3Dom archive;
@@ -47,8 +48,7 @@ public class MavenProjectPropertiesTest {
   @Before
   public void setup() {
     mavenProjectProperties =
-        new MavenProjectProperties(
-            mockMavenProject, new EventHandlers(), mockJavaLayerConfigurations);
+        new MavenProjectProperties(mockMavenProject, mockLog, mockJavaLayerConfigurations);
     jarPluginConfiguration = new Xpp3Dom("");
     archive = new Xpp3Dom("archive");
     manifest = new Xpp3Dom("manifest");

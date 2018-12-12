@@ -17,8 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import com.google.cloud.tools.jib.plugins.common.AnsiLoggerWithFooter;
 import java.util.function.Consumer;
 import org.gradle.api.logging.Logger;
 
@@ -27,36 +26,45 @@ import org.gradle.api.logging.Logger;
 @SuppressWarnings("FutureReturnValueIgnored")
 class LogEventHandler implements Consumer<LogEvent> {
 
-  /** This executor keeps all log messages in order. */
-  private static final ExecutorService executorService = Executors.newSingleThreadExecutor();
-
   private final Logger logger;
+  private final AnsiLoggerWithFooter ansiLoggerWithFooter;
 
-  LogEventHandler(Logger logger) {
+  LogEventHandler(Logger logger, AnsiLoggerWithFooter ansiLoggerWithFooter) {
     this.logger = logger;
+    this.ansiLoggerWithFooter = ansiLoggerWithFooter;
   }
 
   @Override
   public void accept(LogEvent logEvent) {
     switch (logEvent.getLevel()) {
       case LIFECYCLE:
-        executorService.submit(() -> logger.lifecycle(logEvent.getMessage()));
+        if (logger.isLifecycleEnabled()) {
+          ansiLoggerWithFooter.log(logger::lifecycle, logEvent.getMessage());
+        }
         break;
 
       case DEBUG:
-        executorService.submit(() -> logger.debug(logEvent.getMessage()));
+        if (logger.isDebugEnabled()) {
+          ansiLoggerWithFooter.log(logger::debug, logEvent.getMessage());
+        }
         break;
 
       case ERROR:
-        executorService.submit(() -> logger.error(logEvent.getMessage()));
+        if (logger.isErrorEnabled()) {
+          ansiLoggerWithFooter.log(logger::error, logEvent.getMessage());
+        }
         break;
 
       case INFO:
-        executorService.submit(() -> logger.info(logEvent.getMessage()));
+        if (logger.isInfoEnabled()) {
+          ansiLoggerWithFooter.log(logger::info, logEvent.getMessage());
+        }
         break;
 
       case WARN:
-        executorService.submit(() -> logger.warn("warning: " + logEvent.getMessage()));
+        if (logger.isWarnEnabled()) {
+          ansiLoggerWithFooter.log(logger::warn, "warning: " + logEvent.getMessage());
+        }
         break;
 
       default:
