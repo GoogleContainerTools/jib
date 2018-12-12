@@ -60,18 +60,18 @@ public class ProgressEventDispatcherTest {
 
   @Test
   public void testDispatch_tooMuchProgress() {
-    try {
-      try (ProgressEventDispatcher progressEventDispatcher =
-          ProgressEventDispatcher.newRoot(mockEventDispatcher, "allocation description", 10)) {
+    try (ProgressEventDispatcher progressEventDispatcher =
+        ProgressEventDispatcher.newRoot(mockEventDispatcher, "allocation description", 10)) {
+      progressEventDispatcher.dispatchProgress(10);
+      try {
         progressEventDispatcher.dispatchProgress(10);
-        progressEventDispatcher.dispatchProgress(10);
-      }
-      Assert.fail();
+        Assert.fail();
 
-    } catch (VerifyException ex) {
-      Assert.assertEquals(
-          "Remaining allocation units less than 0 for 'allocation description': -10",
-          ex.getMessage());
+      } catch (VerifyException ex) {
+        Assert.assertEquals(
+            "Remaining allocation units less than 0 for 'allocation description': -10",
+            ex.getMessage());
+      }
     }
   }
 
