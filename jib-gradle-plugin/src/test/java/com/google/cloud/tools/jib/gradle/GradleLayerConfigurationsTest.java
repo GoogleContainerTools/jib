@@ -130,6 +130,13 @@ public class GradleLayerConfigurationsTest {
         Paths.get(Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI()));
     allFiles.add(
         Paths.get(
+            Resources.getResource("application/dependencies/more/dependency-1.0.0.jar").toURI()));
+    allFiles.add(
+        Paths.get(
+            Resources.getResource("application/dependencies/another/one/dependency-1.0.0.jar")
+                .toURI()));
+    allFiles.add(
+        Paths.get(
             Resources.getResource("application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
                 .toURI()));
     FileCollection runtimeFileCollection = new TestFileCollection(allFiles);
@@ -158,6 +165,8 @@ public class GradleLayerConfigurationsTest {
     ImmutableList<Path> expectedDependenciesFiles =
         ImmutableList.of(
             applicationDirectory.resolve("dependencies/dependency-1.0.0.jar"),
+            applicationDirectory.resolve("dependencies/more/dependency-1.0.0.jar"),
+            applicationDirectory.resolve("dependencies/another/one/dependency-1.0.0.jar"),
             applicationDirectory.resolve("dependencies/libraryA.jar"),
             applicationDirectory.resolve("dependencies/libraryB.jar"));
     ImmutableList<Path> expectedSnapshotDependenciesFiles =
@@ -262,12 +271,14 @@ public class GradleLayerConfigurationsTest {
 
     assertExtractionPathsUnordered(
         Arrays.asList(
-            "/my/app/libs/dependency-1.0.0.jar",
-            "/my/app/libs/libraryA.jar",
-            "/my/app/libs/libraryB.jar"),
+            "/my/app/libs/dependency-1.0.0-770.jar",
+            "/my/app/libs/dependency-1.0.0-200.jar",
+            "/my/app/libs/dependency-1.0.0-480.jar",
+            "/my/app/libs/libraryA-0.jar",
+            "/my/app/libs/libraryB-0.jar"),
         configuration.getDependencyLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
+        Collections.singletonList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT-770.jar"),
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -295,10 +306,14 @@ public class GradleLayerConfigurationsTest {
 
     assertExtractionPathsUnordered(
         Arrays.asList(
-            "/app/libs/dependency-1.0.0.jar", "/app/libs/libraryA.jar", "/app/libs/libraryB.jar"),
+            "/app/libs/dependency-1.0.0-770.jar",
+            "/app/libs/dependency-1.0.0-200.jar",
+            "/app/libs/dependency-1.0.0-480.jar",
+            "/app/libs/libraryA-0.jar",
+            "/app/libs/libraryB-0.jar"),
         configuration.getDependencyLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
+        Collections.singletonList("/app/libs/dependencyX-1.0.0-SNAPSHOT-770.jar"),
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -366,10 +381,10 @@ public class GradleLayerConfigurationsTest {
     assertSourcePathsUnordered(expectedExtraFiles, configuration.getExtraFilesLayerEntries());
 
     assertExtractionPathsUnordered(
-        Arrays.asList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
+        Collections.singletonList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
         configuration.getDependencyLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
+        Collections.singletonList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -409,10 +424,10 @@ public class GradleLayerConfigurationsTest {
             AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT));
 
     assertExtractionPathsUnordered(
-        Arrays.asList("/jetty/webapps/ROOT/WEB-INF/lib/dependency-1.0.0.jar"),
+        Collections.singletonList("/jetty/webapps/ROOT/WEB-INF/lib/dependency-1.0.0.jar"),
         configuration.getDependencyLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/jetty/webapps/ROOT/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
+        Collections.singletonList("/jetty/webapps/ROOT/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(

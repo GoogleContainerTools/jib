@@ -137,7 +137,10 @@ class GradleLayerConfigurations {
         layerBuilder.addFile(
             layerType,
             dependencyFile.toPath(),
-            dependenciesExtractionPath.resolve(dependencyFile.getName()));
+            dependenciesExtractionPath.resolve(
+                dependencyFile
+                    .getName()
+                    .replace(".jar", "-" + Files.size(dependencyFile.toPath()) + ".jar")));
       } else {
         logger.info("\t'" + dependencyFile + "' (not found, skipped)");
       }
