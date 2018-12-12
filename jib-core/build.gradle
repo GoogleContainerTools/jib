@@ -23,11 +23,7 @@ repositories {
 
 sourceSets {
   integrationTest {
-    java {
-      compileClasspath += main.output + test.output
-      runtimeClasspath += main.output + test.output
-      srcDir file('src/integration-test/java')
-    }
+    java.srcDir file('src/integration-test/java')
     resources.srcDir file('src/integration-test/resources')
   }
 }
@@ -52,6 +48,13 @@ dependencies {
   // NullAway errorprone plugin
   apt 'com.uber.nullaway:nullaway:0.4.2'
   errorprone 'com.google.errorprone:error_prone_core:2.2.0'
+
+  integrationTestCompile sourceSets.main.output
+  integrationTestCompile sourceSets.test.output
+  integrationTestCompile configurations.compile
+  integrationTestCompile configurations.testCompile
+  integrationTestCompile configurations.runtime
+  integrationTestCompile configurations.testRuntime
 }
 
 jar {
