@@ -62,6 +62,9 @@ import org.slf4j.LoggerFactory;
 /** Integration tests for {@link BuildSteps}. */
 public class BuildStepsIntegrationTest {
 
+  /**
+   * Helper class to hold a {@link ProgressEventHandler} and verify that it handles a full progress.
+   */
   private static class ProgressChecker {
 
     private final ProgressEventHandler progressEventHandler =
