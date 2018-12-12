@@ -43,6 +43,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.api.plugins.WarPluginConvention;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.jvm.tasks.Jar;
@@ -116,10 +117,8 @@ class GradleProjectProperties implements ProjectProperties {
 
     // TODO: Make SHOW_PROGRESS be true by default.
     boolean showProgressFooter =
-        Boolean.getBoolean(PropertyNames.SHOW_PROGRESS) && System.console() != null;
-
-    System.out.println("showProgress is: " + showProgressFooter);
-    System.out.println("console=" + project.getProperties().get("console"));
+        Boolean.getBoolean(PropertyNames.SHOW_PROGRESS)
+            && ConsoleOutput.Plain != project.getGradle().getStartParameter().getConsoleOutput();
 
     ansiLoggerWithFooter = new AnsiLoggerWithFooter(logger::lifecycle, showProgressFooter);
     eventHandlers = makeEventHandlers(logger, ansiLoggerWithFooter);
