@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
+import com.google.cloud.tools.jib.http.TestBlobProgressListener;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.io.ByteStreams;
@@ -55,7 +56,7 @@ public class BlobPullerIntegrationTest {
     // Pulls a layer BLOB of the busybox image.
     CountingDigestOutputStream layerOutputStream =
         new CountingDigestOutputStream(ByteStreams.nullOutputStream());
-    LongAdder byteCount = new LongAdder();
+    LongAdder totalByteCount = new LongAdder();
     LongAdder expectedSize = new LongAdder();
     registryClient
         .pullBlob(
@@ -64,10 +65,10 @@ public class BlobPullerIntegrationTest {
               Assert.assertEquals(0, expectedSize.sum());
               expectedSize.add(size);
             },
-            byteCount::add)
+            new TestBlobProgressListener(totalByteCount::add))
         .writeTo(layerOutputStream);
     Assert.assertTrue(expectedSize.sum() > 0);
-    Assert.assertEquals(expectedSize.sum(), byteCount.sum());
+    Assert.assertEquals(expectedSize.sum(), totalByteCount.sum());
 
     Assert.assertEquals(realDigest, layerOutputStream.toBlobDescriptor().getDigest());
   }
@@ -86,7 +87,7 @@ public class BlobPullerIntegrationTest {
 
     try {
       registryClient
-          .pullBlob(nonexistentDigest, ignored -> {}, ignored -> {})
+          .pullBlob(nonexistentDigest, ignored -> {}, new TestBlobProgressListener(ignored -> {}))
           .writeTo(ByteStreams.nullOutputStream());
       Assert.fail("Trying to pull nonexistent blob should have errored");
 

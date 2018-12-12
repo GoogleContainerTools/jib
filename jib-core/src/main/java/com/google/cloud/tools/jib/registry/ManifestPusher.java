@@ -84,9 +84,8 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
     return new BlobHttpContent(
         JsonTemplateMapper.toBlob(manifestTemplate),
         manifestTemplate.getManifestMediaType(),
-        ignored -> {
-          // TODO: Consider giving progress on manifest push as well?
-        });
+        // TODO: Consider giving progress on manifest push as well?
+        null);
   }
 
   @Override
