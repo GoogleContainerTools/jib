@@ -58,7 +58,8 @@ class AnsiLoggerWithFooter {
   /**
    * Creates a new {@link AnsiLoggerWithFooter}
    *
-   * @param plainPrinter the {@link Consumer} intended to synchronously print the footer and other plain console output. {@code plainPrinter} should print a new line at the end.
+   * @param plainPrinter the {@link Consumer} intended to synchronously print the footer and other
+   *     plain console output. {@code plainPrinter} should print a new line at the end.
    */
   AnsiLoggerWithFooter(Consumer<String> plainPrinter) {
     this.plainPrinter = plainPrinter;
@@ -102,7 +103,7 @@ class AnsiLoggerWithFooter {
           for (String footerLine : footerLines) {
             plainPrinter.accept(BOLD + footerLine + UNBOLD);
           }
-          
+
           return null;
         });
   }
@@ -129,7 +130,7 @@ class AnsiLoggerWithFooter {
           String newFooterPrefix = didErase ? CURSOR_UP_SEQUENCE : "";
 
           for (String newFooterLine : newFooterLines) {
-            plainPrinter.accept(newFooterPrefix+BOLD+newFooterLine+UNBOLD);
+            plainPrinter.accept(newFooterPrefix + BOLD + newFooterLine + UNBOLD);
             newFooterPrefix = "";
           }
 
@@ -140,7 +141,8 @@ class AnsiLoggerWithFooter {
   }
 
   /**
-   * Erases the footer. Do <em>not</em> call outside of a task submitted to {@link #executorService}.
+   * Erases the footer. Do <em>not</em> call outside of a task submitted to {@link
+   * #executorService}.
    *
    * @return {@code true} if anything was erased; {@code false} otherwise
    */
@@ -162,5 +164,7 @@ class AnsiLoggerWithFooter {
     footerEraserBuilder.append(ERASE_DISPLAY_BELOW);
 
     plainPrinter.accept(footerEraserBuilder.toString());
+
+    return true;
   }
 }
