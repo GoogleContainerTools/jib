@@ -126,9 +126,9 @@ public class BuildImageMojo extends JibPluginConfiguration {
               eventDispatcher,
               projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
               helpfulSuggestions);
-      getLog().info("");
 
       projectProperties.waitForLoggingThread();
+      getLog().info("");
 
     } catch (InvalidAppRootException ex) {
       throw new MojoExecutionException(

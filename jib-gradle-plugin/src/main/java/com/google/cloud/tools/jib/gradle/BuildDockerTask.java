@@ -146,6 +146,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
               helpfulSuggestions);
 
+      projectProperties.waitForLoggingThread();
+
     } catch (InvalidAppRootException ex) {
       throw new GradleException(
           "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidPathValue(), ex);
