@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.DoubleAccumulator;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -57,7 +58,10 @@ public class ProgressEventHandlerTest {
   public void testAccept()
       throws ExecutionException, InterruptedException, IOException, TimeoutException {
     try (MultithreadedExecutor multithreadedExecutor = new MultithreadedExecutor()) {
-      ProgressEventHandler progressEventHandler = new ProgressEventHandler(() -> {});
+      DoubleAccumulator maxProgress = new DoubleAccumulator(Double::max, 0);
+
+      ProgressEventHandler progressEventHandler =
+          new ProgressEventHandler(update -> maxProgress.accumulate(update.getProgress()));
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(
               new EventHandlers().add(JibEventType.PROGRESS, progressEventHandler));
@@ -78,7 +82,7 @@ public class ProgressEventHandlerTest {
             eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 0L));
             return null;
           });
-      Assert.assertEquals(0.0, progressEventHandler.getProgress(), DOUBLE_ERROR_MARGIN);
+      Assert.assertEquals(0.0, maxProgress.get(), DOUBLE_ERROR_MARGIN);
 
       // Adds 50 to child1Child and 100 to child2.
       List<Callable<Void>> callables = new ArrayList<>(150);
@@ -99,9 +103,7 @@ public class ProgressEventHandlerTest {
 
       multithreadedExecutor.invokeAll(callables);
       Assert.assertEquals(
-          1.0 / 2 / 100 * 50 + 1.0 / 2 / 200 * 100,
-          progressEventHandler.getProgress(),
-          DOUBLE_ERROR_MARGIN);
+          1.0 / 2 / 100 * 50 + 1.0 / 2 / 200 * 100, maxProgress.get(), DOUBLE_ERROR_MARGIN);
 
       // 0 progress doesn't do anything.
       multithreadedExecutor.invokeAll(
@@ -112,13 +114,11 @@ public class ProgressEventHandlerTest {
                 return null;
               }));
       Assert.assertEquals(
-          1.0 / 2 / 100 * 50 + 1.0 / 2 / 200 * 100,
-          progressEventHandler.getProgress(),
-          DOUBLE_ERROR_MARGIN);
+          1.0 / 2 / 100 * 50 + 1.0 / 2 / 200 * 100, maxProgress.get(), DOUBLE_ERROR_MARGIN);
 
       // Adds 50 to child1Child and 100 to child2 to finish it up.
       multithreadedExecutor.invokeAll(callables);
-      Assert.assertEquals(1.0, progressEventHandler.getProgress(), DOUBLE_ERROR_MARGIN);
+      Assert.assertEquals(1.0, maxProgress.get(), DOUBLE_ERROR_MARGIN);
     }
   }
 }

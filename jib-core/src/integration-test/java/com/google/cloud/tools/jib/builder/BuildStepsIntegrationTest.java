@@ -62,6 +62,27 @@ import org.slf4j.LoggerFactory;
 /** Integration tests for {@link BuildSteps}. */
 public class BuildStepsIntegrationTest {
 
+  /**
+   * Helper class to hold a {@link ProgressEventHandler} and verify that it handles a full progress.
+   */
+  private static class ProgressChecker {
+
+    private final ProgressEventHandler progressEventHandler =
+        new ProgressEventHandler(
+            update -> {
+              lastProgress = update.getProgress();
+              areTasksFinished = update.getUnfinishedAllocations().isEmpty();
+            });
+
+    private volatile double lastProgress = 0.0;
+    private volatile boolean areTasksFinished = false;
+
+    private void checkCompletion() {
+      Assert.assertEquals(1.0, lastProgress, DOUBLE_ERROR_MARGIN);
+      Assert.assertTrue(areTasksFinished);
+    }
+  }
+
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
   private static final ExecutorService executorService = Executors.newCachedThreadPool();
   private static final Logger logger = LoggerFactory.getLogger(BuildStepsIntegrationTest.class);
@@ -136,7 +157,7 @@ public class BuildStepsIntegrationTest {
   @Test
   public void testSteps_forBuildToDockerRegistry()
       throws IOException, InterruptedException, ExecutionException {
-    ProgressEventHandler progressEventHandler = new ProgressEventHandler(() -> {});
+    ProgressChecker progressChecker = new ProgressChecker();
 
     long lastTime = System.nanoTime();
     BuildResult image1 =
@@ -146,11 +167,11 @@ public class BuildStepsIntegrationTest {
                         ImageReference.of("localhost:5000", "testimage", "testtag"))
                     .setEventDispatcher(
                         new DefaultEventDispatcher(
-                            new EventHandlers().add(JibEventType.PROGRESS, progressEventHandler)))
+                            new EventHandlers()
+                                .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)))
                     .build())
             .run();
-    Assert.assertEquals(1.0, progressEventHandler.getProgress(), DOUBLE_ERROR_MARGIN);
-    Assert.assertTrue(progressEventHandler.getUnfinishedAllocations().isEmpty());
+    progressChecker.checkCompletion();
 
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
@@ -238,7 +259,7 @@ public class BuildStepsIntegrationTest {
   @Test
   public void testSteps_forBuildToDockerDaemon()
       throws IOException, InterruptedException, ExecutionException {
-    ProgressEventHandler progressEventHandler = new ProgressEventHandler(() -> {});
+    ProgressChecker progressChecker = new ProgressChecker();
 
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
@@ -246,12 +267,12 @@ public class BuildStepsIntegrationTest {
                 ImageReference.of(null, "testdocker", null))
             .setEventDispatcher(
                 new DefaultEventDispatcher(
-                    new EventHandlers().add(JibEventType.PROGRESS, progressEventHandler)))
+                    new EventHandlers()
+                        .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)))
             .build();
     BuildSteps.forBuildToDockerDaemon(DockerClient.newDefaultClient(), buildConfiguration).run();
 
-    Assert.assertEquals(1.0, progressEventHandler.getProgress(), DOUBLE_ERROR_MARGIN);
-    Assert.assertTrue(progressEventHandler.getUnfinishedAllocations().isEmpty());
+    progressChecker.checkCompletion();
 
     assertDockerInspect("testdocker");
     Assert.assertEquals(
@@ -286,7 +307,7 @@ public class BuildStepsIntegrationTest {
   @Test
   public void testSteps_forBuildToTarball()
       throws IOException, InterruptedException, ExecutionException {
-    ProgressEventHandler progressEventHandler = new ProgressEventHandler(() -> {});
+    ProgressChecker progressChecker = new ProgressChecker();
 
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
@@ -294,13 +315,13 @@ public class BuildStepsIntegrationTest {
                 ImageReference.of(null, "testtar", null))
             .setEventDispatcher(
                 new DefaultEventDispatcher(
-                    new EventHandlers().add(JibEventType.PROGRESS, progressEventHandler)))
+                    new EventHandlers()
+                        .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)))
             .build();
     Path outputPath = temporaryFolder.newFolder().toPath().resolve("test.tar");
     BuildSteps.forBuildToTar(outputPath, buildConfiguration).run();
 
-    Assert.assertEquals(1.0, progressEventHandler.getProgress(), DOUBLE_ERROR_MARGIN);
-    Assert.assertTrue(progressEventHandler.getUnfinishedAllocations().isEmpty());
+    progressChecker.checkCompletion();
 
     new Command("docker", "load", "--input", outputPath.toString()).run();
     Assert.assertEquals(
