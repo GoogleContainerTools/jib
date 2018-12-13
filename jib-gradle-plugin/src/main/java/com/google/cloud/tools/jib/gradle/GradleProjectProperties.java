@@ -38,12 +38,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import javax.annotation.Nullable;
+import org.apache.tools.ant.taskdefs.condition.Os;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.api.plugins.WarPluginConvention;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.jvm.tasks.Jar;
@@ -79,17 +79,6 @@ class GradleProjectProperties implements ProjectProperties {
     }
   }
 
-  private static EventHandlers makeEventHandlers(
-      Logger logger, AnsiLoggerWithFooter ansiLoggerWithFooter) {
-    LogEventHandler logEventHandler = new LogEventHandler(logger, ansiLoggerWithFooter);
-    TimerEventHandler timerEventHandler =
-        new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message)));
-
-    return new EventHandlers()
-        .add(JibEventType.LOGGING, logEventHandler)
-        .add(JibEventType.TIMING, timerEventHandler);
-  }
-
   @Nullable
   static War getWarTask(Project project) {
     WarPluginConvention warPluginConvention =
@@ -104,6 +93,36 @@ class GradleProjectProperties implements ProjectProperties {
     return project.getBuildDir().toPath().resolve(ProjectProperties.EXPLODED_WAR_DIRECTORY_NAME);
   }
 
+  private static EventHandlers makeEventHandlers(
+      Logger logger, AnsiLoggerWithFooter ansiLoggerWithFooter) {
+    LogEventHandler logEventHandler = new LogEventHandler(logger, ansiLoggerWithFooter);
+    TimerEventHandler timerEventHandler =
+        new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message)));
+
+    return new EventHandlers()
+        .add(JibEventType.LOGGING, logEventHandler)
+        .add(JibEventType.TIMING, timerEventHandler);
+  }
+
+  private static boolean isProgressFooterEnabled(Project project) {
+    // TODO: Make SHOW_PROGRESS be true by default.
+    if (!Boolean.getBoolean(PropertyNames.SHOW_PROGRESS)) {
+      return false;
+    }
+
+    switch (project.getGradle().getStartParameter().getConsoleOutput()) {
+      case Plain:
+        return false;
+
+      case Auto:
+        // Enables progress footer when ANSI is supported (Windows or TERM not 'dumb').
+        return Os.isFamily(Os.FAMILY_WINDOWS) || !"dumb".equals(System.getenv("TERM"));
+
+      default:
+        return true;
+    }
+  }
+
   private final Project project;
   private final AnsiLoggerWithFooter ansiLoggerWithFooter;
   private final EventHandlers eventHandlers;
@@ -115,14 +134,8 @@ class GradleProjectProperties implements ProjectProperties {
     this.project = project;
     this.javaLayerConfigurations = javaLayerConfigurations;
 
-    // TODO: Make SHOW_PROGRESS be true by default.
-    boolean showProgressFooter =
-        Boolean.getBoolean(PropertyNames.SHOW_PROGRESS)
-            // TODO: When getConsoleOutput() is Auto, need to not show footer if console does not
-            // support ANSI
-            && ConsoleOutput.Plain != project.getGradle().getStartParameter().getConsoleOutput();
-
-    ansiLoggerWithFooter = new AnsiLoggerWithFooter(logger::lifecycle, showProgressFooter);
+    ansiLoggerWithFooter =
+        new AnsiLoggerWithFooter(logger::lifecycle, isProgressFooterEnabled(project));
     eventHandlers = makeEventHandlers(logger, ansiLoggerWithFooter);
   }
 

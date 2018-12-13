@@ -36,6 +36,7 @@ import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.utils.Os;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 /** Obtains information about a {@link MavenProject}. */
@@ -95,6 +96,20 @@ public class MavenProjectProperties implements ProjectProperties {
         .add(JibEventType.TIMING, timerEventHandler);
   }
 
+  private static boolean isProgressFooterEnabled() {
+    // TODO: Make SHOW_PROGRESS be true by default.
+    if (!Boolean.getBoolean(PropertyNames.SHOW_PROGRESS)) {
+      return false;
+    }
+
+    // Enables progress footer when ANSI is supported (Windows or System.console() not null and TERM
+    // not 'dumb').
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+      return true;
+    }
+    return System.console() != null && !"dumb".equals(System.getenv("TERM"));
+  }
+
   private final MavenProject project;
   private final AnsiLoggerWithFooter ansiLoggerWithFooter;
   private final EventHandlers eventHandlers;
@@ -106,11 +121,7 @@ public class MavenProjectProperties implements ProjectProperties {
     this.project = project;
     this.javaLayerConfigurations = javaLayerConfigurations;
 
-    // TODO: Make SHOW_PROGRESS be true by default.
-    boolean showProgressFooter =
-        Boolean.getBoolean(PropertyNames.SHOW_PROGRESS) && System.console() != null;
-
-    ansiLoggerWithFooter = new AnsiLoggerWithFooter(log::info, showProgressFooter);
+    ansiLoggerWithFooter = new AnsiLoggerWithFooter(log::info, isProgressFooterEnabled());
     eventHandlers = makeEventHandlers(log, ansiLoggerWithFooter);
   }
 
