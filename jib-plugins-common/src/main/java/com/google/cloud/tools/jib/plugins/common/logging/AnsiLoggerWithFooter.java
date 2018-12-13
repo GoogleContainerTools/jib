@@ -1,0 +1,145 @@
+/*
+ * Copyright 2018 Google LLC.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package com.google.cloud.tools.jib.plugins.common.logging;
+
+import com.google.cloud.tools.jib.event.events.LogEvent.Level;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
+
+/**
+ * Logs to a console supporting ANSI escape sequences and keeps an additional footer that always
+ * appears below log messages.
+ */
+class AnsiLoggerWithFooter implements ConsoleLogger {
+
+  /** ANSI escape sequence for moving the cursor up one line. */
+  private static final String CURSOR_UP_SEQUENCE = "\033[1A";
+
+  /** ANSI escape sequence for erasing to end of display. */
+  private static final String ERASE_DISPLAY_BELOW = "\033[0J";
+
+  /** ANSI escape sequence for setting all further characters to bold. */
+  private static final String BOLD = "\033[1m";
+
+  /** ANSI escape sequence for setting all further characters to not bold. */
+  private static final String UNBOLD = "\033[0m";
+
+  private final ImmutableMap<Level, Consumer<String>> messageConsumers;
+  private final SingleThreadedExecutor singleThreadedExecutor;
+
+  private List<String> footerLines = Collections.emptyList();
+
+  /**
+   * Creates a new {@link AnsiLoggerWithFooter}.
+   *
+   * @param messageConsumers map from each {@link Level} to a log message {@link Consumer<String>
+   * @param singleThreadedExecutor a {@link SingleThreadedExecutor} to ensure that all messages are logged in a sequential, deterministic order
+   */
+  AnsiLoggerWithFooter(
+      ImmutableMap<Level, Consumer<String>> messageConsumers,
+      SingleThreadedExecutor singleThreadedExecutor) {
+    this.messageConsumers = messageConsumers;
+    this.singleThreadedExecutor = singleThreadedExecutor;
+  }
+
+  @Override
+  public void log(Level logLevel, String message) {
+    singleThreadedExecutor.execute(
+        () -> {
+          boolean didErase = eraseFooter();
+
+          // If a previous footer was erased, the message needs to go up a line.
+          String messagePrefix = didErase ? CURSOR_UP_SEQUENCE : "";
+          consumeMessage(logLevel, messagePrefix + message);
+
+          for (String footerLine : footerLines) {
+            consumeMessage(Level.LIFECYCLE, BOLD + footerLine + UNBOLD);
+          }
+        });
+  }
+
+  /**
+   * Sets the footer asynchronously. This will replace the previously-printed footer with the new
+   * {@code footerLines}.
+   *
+   * <p>The footer is printed in <strong>bold</strong>.
+   *
+   * @param newFooterLines the footer, with each line as an element (no newline at end)
+   */
+  void setFooter(List<String> newFooterLines) {
+    if (newFooterLines.equals(footerLines)) {
+      return;
+    }
+
+    singleThreadedExecutor.execute(
+        () -> {
+          boolean didErase = eraseFooter();
+
+          // If a previous footer was erased, the first new footer line needs to go up a line.
+          String newFooterPrefix = didErase ? CURSOR_UP_SEQUENCE : "";
+
+          for (String newFooterLine : newFooterLines) {
+            consumeMessage(Level.LIFECYCLE, newFooterPrefix + BOLD + newFooterLine + UNBOLD);
+            newFooterPrefix = "";
+          }
+
+          footerLines = newFooterLines;
+        });
+  }
+
+  /**
+   * Erases the footer. Do <em>not</em> call outside of a task submitted to {@link
+   * #singleThreadedExecutor}.
+   *
+   * @return {@code true} if anything was erased; {@code false} otherwise
+   */
+  private boolean eraseFooter() {
+    if (footerLines.isEmpty()) {
+      return false;
+    }
+
+    StringBuilder footerEraserBuilder = new StringBuilder();
+
+    // Moves the cursor up to the start of the footer.
+    // TODO: Optimize to single init.
+    for (int i = 0; i < footerLines.size(); i++) {
+      // Moves cursor up.
+      footerEraserBuilder.append(CURSOR_UP_SEQUENCE);
+    }
+
+    // Erases everything below cursor.
+    footerEraserBuilder.append(ERASE_DISPLAY_BELOW);
+
+    consumeMessage(Level.LIFECYCLE, footerEraserBuilder.toString());
+
+    return true;
+  }
+
+  /**
+   * Logs a message with the corresponding {@link Consumer}in {@link #messageConsumers}. Do
+   * <em>not</em> call outside of a task submitted to {@link #singleThreadedExecutor}.
+   *
+   * @param logLevel the {@link Level} of the message
+   * @param message the message
+   */
+  private void consumeMessage(Level logLevel, String message) {
+    Preconditions.checkNotNull(messageConsumers.get(logLevel)).accept(message);
+  }
+}

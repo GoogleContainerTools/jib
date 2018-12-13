@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event.progress;
 
+import com.google.cloud.tools.jib.MultithreadedExecutor;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;

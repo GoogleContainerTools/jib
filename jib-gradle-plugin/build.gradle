@@ -1,7 +1,7 @@
 plugins {
   id 'java-gradle-plugin'
   id 'checkstyle'
-  id 'com.github.sherter.google-java-format' version '0.7.1'
+  id 'com.github.sherter.google-java-format' version '0.8'
 
   // For local install
   id 'maven'
@@ -118,7 +118,7 @@ check.dependsOn verifyGoogleJavaFormat
 
 /* CHECKSTYLE */
 checkstyle {
-  toolVersion = "7.6.1"
+  toolVersion = '8.15'
 
   // get the google_checks.xml file from the checkstyle jar and take out the java checks
   def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()

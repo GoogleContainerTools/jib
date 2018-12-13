@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.plugins.common;
+package com.google.cloud.tools.jib.plugins.common.logging;
 
 import com.google.cloud.tools.jib.event.progress.Allocation;
 import java.util.Arrays;
@@ -22,7 +22,7 @@ import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link ProgressDisplayGenerator}. */
+/** Tests for {@link com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator}. */
 public class ProgressDisplayGeneratorTest {
 
   @Test
