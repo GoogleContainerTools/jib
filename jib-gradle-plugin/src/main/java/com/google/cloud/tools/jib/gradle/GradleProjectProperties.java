@@ -118,6 +118,8 @@ class GradleProjectProperties implements ProjectProperties {
     // TODO: Make SHOW_PROGRESS be true by default.
     boolean showProgressFooter =
         Boolean.getBoolean(PropertyNames.SHOW_PROGRESS)
+            // TODO: When getConsoleOutput() is Auto, need to not show footer if console does not
+            // support ANSI
             && ConsoleOutput.Plain != project.getGradle().getStartParameter().getConsoleOutput();
 
     ansiLoggerWithFooter = new AnsiLoggerWithFooter(logger::lifecycle, showProgressFooter);
