@@ -104,6 +104,9 @@ public class BuildTarMojo extends JibPluginConfiguration {
               eventDispatcher,
               projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
               helpfulSuggestions);
+
+      // TODO: This should not be called on projectProperties.
+      projectProperties.waitForLoggingThread();
       getLog().info("");
 
     } catch (InvalidAppRootException ex) {

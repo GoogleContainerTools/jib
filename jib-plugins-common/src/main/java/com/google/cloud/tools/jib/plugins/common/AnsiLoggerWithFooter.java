@@ -16,13 +16,12 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.common.util.concurrent.Futures;
+import com.google.common.annotations.VisibleForTesting;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -31,9 +30,9 @@ import java.util.function.Consumer;
  * always appears below log messages. This is intended to log both the messages and the footer to
  * the same console.
  *
- * <p>Make sure to call {@link #shutDown} when finished.
+ * <p>Make sure to call {@link #shutDownAndAwaitTermination} when finished.
  */
-class AnsiLoggerWithFooter {
+public class AnsiLoggerWithFooter {
 
   /** ANSI escape sequence for moving the cursor up one line. */
   private static final String CURSOR_UP_SEQUENCE = "\033[1A";
@@ -49,8 +48,7 @@ class AnsiLoggerWithFooter {
 
   private static final Duration EXECUTOR_SHUTDOWN_WAIT = Duration.ofSeconds(1);
 
-  private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-
+  private final ExecutorService executorService;
   private final Consumer<String> plainPrinter;
 
   private List<String> footerLines = Collections.emptyList();
@@ -61,24 +59,32 @@ class AnsiLoggerWithFooter {
    * @param plainPrinter the {@link Consumer} intended to synchronously print the footer and other
    *     plain console output. {@code plainPrinter} should print a new line at the end.
    */
-  AnsiLoggerWithFooter(Consumer<String> plainPrinter) {
+  public AnsiLoggerWithFooter(Consumer<String> plainPrinter) {
+    this(plainPrinter, Executors.newSingleThreadExecutor());
+  }
+
+  @VisibleForTesting
+  AnsiLoggerWithFooter(Consumer<String> plainPrinter, ExecutorService executorService) {
     this.plainPrinter = plainPrinter;
+    this.executorService = executorService;
   }
 
-  /** Shuts down the {@link #executorService}. */
-  public AnsiLoggerWithFooter shutDown() {
+  /** Shuts down the {@link #executorService} and waits for it to terminate. */
+  public void shutDownAndAwaitTermination() {
     executorService.shutdown();
-    return this;
-  }
 
-  /** Waits for the {@link #executorService} to terminate. */
-  public void awaitTermination() {
     try {
       if (!executorService.awaitTermination(
           EXECUTOR_SHUTDOWN_WAIT.getSeconds(), TimeUnit.SECONDS)) {
         executorService.shutdownNow();
+        if (!executorService.awaitTermination(
+            EXECUTOR_SHUTDOWN_WAIT.getSeconds(), TimeUnit.SECONDS)) {
+          throw new RuntimeException("Could not shut down AnsiLoggerWithFooter executor");
+        }
       }
+
     } catch (InterruptedException ex) {
+      executorService.shutdownNow();
       Thread.currentThread().interrupt();
     }
   }
@@ -89,10 +95,9 @@ class AnsiLoggerWithFooter {
    * @param messageLogger the {@link Consumer} intended to synchronously log a message to the
    *     console. {@code messageLogger} should print a new line at the end.
    * @param message the message to log with {@code messageLogger}
-   * @return a {@link Future} to track completion
    */
-  public Future<Void> log(Consumer<String> messageLogger, String message) {
-    return executorService.submit(
+  public void log(Consumer<String> messageLogger, String message) {
+    executorService.execute(
         () -> {
           boolean didErase = eraseFooter();
 
@@ -103,8 +108,6 @@ class AnsiLoggerWithFooter {
           for (String footerLine : footerLines) {
             plainPrinter.accept(BOLD + footerLine + UNBOLD);
           }
-
-          return null;
         });
   }
 
@@ -115,14 +118,13 @@ class AnsiLoggerWithFooter {
    * <p>The footer is printed in <strong>bold</strong>.
    *
    * @param newFooterLines the footer, with each line as an element (no newline at end)
-   * @return a {@link Future} to track completion
    */
-  public Future<Void> setFooter(List<String> newFooterLines) {
+  public void setFooter(List<String> newFooterLines) {
     if (newFooterLines.equals(footerLines)) {
-      return Futures.immediateFuture(null);
+      return;
     }
 
-    return executorService.submit(
+    executorService.execute(
         () -> {
           boolean didErase = eraseFooter();
 
@@ -135,8 +137,6 @@ class AnsiLoggerWithFooter {
           }
 
           footerLines = newFooterLines;
-
-          return null;
         });
   }
 

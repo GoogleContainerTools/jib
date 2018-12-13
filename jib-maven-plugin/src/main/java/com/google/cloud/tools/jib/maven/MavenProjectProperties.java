@@ -19,8 +19,10 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.plugins.common.AnsiLoggerWithFooter;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
 import com.google.common.annotations.VisibleForTesting;
@@ -69,7 +71,7 @@ public class MavenProjectProperties implements ProjectProperties {
     try {
       return new MavenProjectProperties(
           project,
-          makeEventHandlers(log),
+          log,
           MavenLayerConfigurations.getForProject(project, extraDirectory, permissions, appRoot));
 
     } catch (IOException ex) {
@@ -81,29 +83,40 @@ public class MavenProjectProperties implements ProjectProperties {
     }
   }
 
-  private static EventHandlers makeEventHandlers(Log log) {
+  private static EventHandlers makeEventHandlers(
+      Log log, AnsiLoggerWithFooter ansiLoggerWithFooter) {
+    LogEventHandler logEventHandler = new LogEventHandler(log, ansiLoggerWithFooter);
+    TimerEventHandler timerEventHandler =
+        new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message)));
+
     return new EventHandlers()
-        .add(JibEventType.LOGGING, new LogEventHandler(log))
-        .add(JibEventType.TIMING, new TimerEventHandler(log::debug));
+        .add(JibEventType.LOGGING, logEventHandler)
+        .add(JibEventType.TIMING, timerEventHandler);
   }
 
   private final MavenProject project;
+  private final AnsiLoggerWithFooter ansiLoggerWithFooter;
   private final EventHandlers eventHandlers;
   private final JavaLayerConfigurations javaLayerConfigurations;
 
   @VisibleForTesting
   MavenProjectProperties(
-      MavenProject project,
-      EventHandlers eventHandlers,
-      JavaLayerConfigurations javaLayerConfigurations) {
+      MavenProject project, Log log, JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
-    this.eventHandlers = eventHandlers;
     this.javaLayerConfigurations = javaLayerConfigurations;
+
+    ansiLoggerWithFooter = new AnsiLoggerWithFooter(log::info);
+    eventHandlers = makeEventHandlers(log, ansiLoggerWithFooter);
   }
 
   @Override
   public JavaLayerConfigurations getJavaLayerConfigurations() {
     return javaLayerConfigurations;
+  }
+
+  @Override
+  public void waitForLoggingThread() {
+    ansiLoggerWithFooter.shutDownAndAwaitTermination();
   }
 
   @Override

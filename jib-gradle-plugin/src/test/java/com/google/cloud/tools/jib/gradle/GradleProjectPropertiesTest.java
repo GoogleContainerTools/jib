@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.configuration.FilePermissions;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.common.collect.ImmutableMap;
@@ -27,6 +26,7 @@ import org.gradle.api.Project;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.java.archives.internal.DefaultManifest;
+import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.WarPluginConvention;
 import org.gradle.api.tasks.TaskContainer;
@@ -52,6 +52,7 @@ public class GradleProjectPropertiesTest {
   @Mock private WarPluginConvention mockWarPluginConvection;
   @Mock private TaskContainer mockTaskContainer;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
+  @Mock private Logger mockLogger;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -68,7 +69,7 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockJar.getManifest()).thenReturn(manifest);
 
     gradleProjectProperties =
-        new GradleProjectProperties(mockProject, new EventHandlers(), mockJavaLayerConfigurations);
+        new GradleProjectProperties(mockProject, mockLogger, mockJavaLayerConfigurations);
   }
 
   @Test

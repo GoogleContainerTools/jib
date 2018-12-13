@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.plugins.common.AnsiLoggerWithFooter;
 import java.util.function.Consumer;
 import org.apache.maven.plugin.logging.Log;
 
@@ -24,33 +25,45 @@ import org.apache.maven.plugin.logging.Log;
 class LogEventHandler implements Consumer<LogEvent> {
 
   private final Log log;
+  private final AnsiLoggerWithFooter ansiLoggerWithFooter;
 
-  LogEventHandler(Log log) {
+  LogEventHandler(Log log, AnsiLoggerWithFooter ansiLoggerWithFooter) {
     this.log = log;
+    this.ansiLoggerWithFooter = ansiLoggerWithFooter;
   }
 
   @Override
   public void accept(LogEvent logEvent) {
     switch (logEvent.getLevel()) {
       case LIFECYCLE:
-        log.info(logEvent.getMessage());
+        if (log.isInfoEnabled()) {
+          ansiLoggerWithFooter.log(log::info, logEvent.getMessage());
+        }
         break;
 
       case DEBUG:
-        log.debug(logEvent.getMessage());
+        if (log.isDebugEnabled()) {
+          ansiLoggerWithFooter.log(log::debug, logEvent.getMessage());
+        }
         break;
 
       case ERROR:
-        log.error(logEvent.getMessage());
+        if (log.isErrorEnabled()) {
+          ansiLoggerWithFooter.log(log::error, logEvent.getMessage());
+        }
         break;
 
       case INFO:
         // Use lifecycle for progress-indicating messages.
-        log.debug(logEvent.getMessage());
+        if (log.isDebugEnabled()) {
+          ansiLoggerWithFooter.log(log::debug, logEvent.getMessage());
+        }
         break;
 
       case WARN:
-        log.warn(logEvent.getMessage());
+        if (log.isWarnEnabled()) {
+          ansiLoggerWithFooter.log(log::warn, logEvent.getMessage());
+        }
         break;
 
       default:

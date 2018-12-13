@@ -16,45 +16,33 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import java.time.Duration;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.junit.Assert;
 import org.junit.Test;
 
 /** Tests for {@link AnsiLoggerWithFooter}. */
 public class AnsiLoggerWithFooterTest {
 
-  private static final Duration FUTURE_TIMEOUT = Duration.ofSeconds(1);
-
   private final StringBuilder logBuilder = new StringBuilder();
   private final AnsiLoggerWithFooter testAnsiLoggerWithFooter =
-      new AnsiLoggerWithFooter(this::logBuilderPrinter);
+      new AnsiLoggerWithFooter(this::logBuilderPrinter, MoreExecutors.newDirectExecutorService());
 
   @Test
-  public void testLog_noFooter() throws InterruptedException, ExecutionException, TimeoutException {
-    testAnsiLoggerWithFooter
-        .log(this::logBuilderPrinter, "message")
-        .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
+  public void testLog_noFooter() {
+    testAnsiLoggerWithFooter.log(this::logBuilderPrinter, "message");
 
     Assert.assertEquals("message\n", logBuilder.toString());
   }
 
   @Test
-  public void testLog_sameFooter()
-      throws InterruptedException, ExecutionException, TimeoutException {
-    testAnsiLoggerWithFooter
-        .setFooter(Collections.singletonList("footer"))
-        .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
+  public void testLog_sameFooter() {
+    testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
 
     Assert.assertEquals("\033[1mfooter\033[0m\n", logBuilder.toString());
 
-    testAnsiLoggerWithFooter
-        .log(this::logBuilderPrinter, "message")
-        .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
+    testAnsiLoggerWithFooter.log(this::logBuilderPrinter, "message");
 
     Assert.assertEquals(
         "\033[1mfooter\033[0m\n"
@@ -63,9 +51,7 @@ public class AnsiLoggerWithFooterTest {
             + "\033[1mfooter\033[0m\n",
         logBuilder.toString());
 
-    testAnsiLoggerWithFooter
-        .log(this::logBuilderPrinter, "another message")
-        .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
+    testAnsiLoggerWithFooter.log(this::logBuilderPrinter, "another message");
 
     Assert.assertEquals(
         "\033[1mfooter\033[0m\n"
@@ -79,18 +65,11 @@ public class AnsiLoggerWithFooterTest {
   }
 
   @Test
-  public void testLog_changingFooter()
-      throws InterruptedException, ExecutionException, TimeoutException {
-    testAnsiLoggerWithFooter
-        .setFooter(Collections.singletonList("footer"))
-        .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
-    testAnsiLoggerWithFooter
-        .log(this::logBuilderPrinter, "message")
-        .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
+  public void testLog_changingFooter() {
+    testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
+    testAnsiLoggerWithFooter.log(this::logBuilderPrinter, "message");
 
-    testAnsiLoggerWithFooter
-        .setFooter(Arrays.asList("two line", "footer"))
-        .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
+    testAnsiLoggerWithFooter.setFooter(Arrays.asList("two line", "footer"));
 
     Assert.assertEquals(
         "\033[1mfooter\033[0m\n"
@@ -101,9 +80,7 @@ public class AnsiLoggerWithFooterTest {
             + "\033[1A\033[1mtwo line\033[0m\n\033[1mfooter\033[0m\n",
         logBuilder.toString());
 
-    testAnsiLoggerWithFooter
-        .log(this::logBuilderPrinter, "another message")
-        .get(FUTURE_TIMEOUT.getSeconds(), TimeUnit.SECONDS);
+    testAnsiLoggerWithFooter.log(this::logBuilderPrinter, "another message");
 
     Assert.assertEquals(
         "\033[1mfooter\033[0m\n"
