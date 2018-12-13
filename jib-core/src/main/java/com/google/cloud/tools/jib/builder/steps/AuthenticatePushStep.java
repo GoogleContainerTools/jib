@@ -19,11 +19,10 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
+import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.event.events.ProgressEvent;
-import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
@@ -47,7 +46,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
   private static final String DESCRIPTION = "Authenticating with push to %s";
 
   private final BuildConfiguration buildConfiguration;
-  private final Allocation parentProgressAllocation;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep;
 
@@ -56,10 +55,10 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
   AuthenticatePushStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      Allocation parentProgressAllocation,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep) {
     this.buildConfiguration = buildConfiguration;
-    this.parentProgressAllocation = parentProgressAllocation;
+    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.retrieveTargetRegistryCredentialsStep = retrieveTargetRegistryCredentialsStep;
 
     listenableFuture =
@@ -80,13 +79,11 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
           RegistryException {
     String registry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
 
-    Allocation progressAllocation =
-        parentProgressAllocation.newChild("authenticate push to " + registry, 1);
-    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
-
-    try (TimerEventDispatcher ignored =
-        new TimerEventDispatcher(
-            buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, registry))) {
+    try (ProgressEventDispatcher ignored =
+            progressEventDispatcherFactory.create("authenticate push to " + registry, 1);
+        TimerEventDispatcher ignored2 =
+            new TimerEventDispatcher(
+                buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, registry))) {
       Credential registryCredential = NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
       Authorization registryAuthorization =
           registryCredential == null
@@ -102,16 +99,9 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .initialize();
       if (registryAuthenticator == null) {
-        buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 1));
-
         return registryAuthorization;
       }
-      Authorization authorization =
-          registryAuthenticator.setAuthorization(registryAuthorization).authenticatePush();
-
-      buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 1));
-
-      return authorization;
+      return registryAuthenticator.setAuthorization(registryAuthorization).authenticatePush();
     }
   }
 }

@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.TestBlobProgressListener;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayOutputStream;
@@ -62,7 +63,7 @@ public class BlobPullerTest {
             fakeDigest,
             layerOutputStream,
             ignored -> {},
-            ignored -> {});
+            new TestBlobProgressListener(ignored -> {}));
   }
 
   @Test
@@ -81,7 +82,7 @@ public class BlobPullerTest {
             testBlobDigest,
             layerOutputStream,
             size -> Assert.assertEquals("some BLOB content".length(), size.longValue()),
-            byteCount::add);
+            new TestBlobProgressListener(byteCount::add));
     blobPuller.handleResponse(mockResponse);
     Assert.assertEquals(
         "some BLOB content",

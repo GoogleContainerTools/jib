@@ -23,6 +23,10 @@ import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.event.JibEventType;
+import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
@@ -60,6 +64,9 @@ public class BuildStepsIntegrationTest {
 
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
   private static final ExecutorService executorService = Executors.newCachedThreadPool();
+  private static final Logger logger = LoggerFactory.getLogger(BuildStepsIntegrationTest.class);
+
+  private static final double DOUBLE_ERROR_MARGIN = 1e-10;
 
   @AfterClass
   public static void cleanUp() {
@@ -112,8 +119,6 @@ public class BuildStepsIntegrationTest {
     Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
   }
 
-  private static final Logger logger = LoggerFactory.getLogger(BuildStepsIntegrationTest.class);
-
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private ImmutableList<LayerConfiguration> fakeLayerConfigurations;
@@ -131,18 +136,32 @@ public class BuildStepsIntegrationTest {
   @Test
   public void testSteps_forBuildToDockerRegistry()
       throws IOException, InterruptedException, ExecutionException {
-    BuildSteps buildImageSteps =
-        BuildSteps.forBuildToDockerRegistry(
-            getBuildConfigurationBuilder(
-                    ImageReference.of("gcr.io", "distroless/java", "latest"),
-                    ImageReference.of("localhost:5000", "testimage", "testtag"))
-                .build());
+    ProgressEventHandler progressEventHandler = new ProgressEventHandler(() -> {});
 
     long lastTime = System.nanoTime();
-    BuildResult image1 = buildImageSteps.run();
+    BuildResult image1 =
+        BuildSteps.forBuildToDockerRegistry(
+                getBuildConfigurationBuilder(
+                        ImageReference.of("gcr.io", "distroless/java", "latest"),
+                        ImageReference.of("localhost:5000", "testimage", "testtag"))
+                    .setEventDispatcher(
+                        new DefaultEventDispatcher(
+                            new EventHandlers().add(JibEventType.PROGRESS, progressEventHandler)))
+                    .build())
+            .run();
+    Assert.assertEquals(1.0, progressEventHandler.getProgress(), DOUBLE_ERROR_MARGIN);
+    Assert.assertTrue(progressEventHandler.getUnfinishedAllocations().isEmpty());
+
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+
     lastTime = System.nanoTime();
-    BuildResult image2 = buildImageSteps.run();
+    BuildResult image2 =
+        BuildSteps.forBuildToDockerRegistry(
+                getBuildConfigurationBuilder(
+                        ImageReference.of("gcr.io", "distroless/java", "latest"),
+                        ImageReference.of("localhost:5000", "testimage", "testtag"))
+                    .build())
+            .run();
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     Assert.assertEquals(image1, image2);
@@ -219,17 +238,24 @@ public class BuildStepsIntegrationTest {
   @Test
   public void testSteps_forBuildToDockerDaemon()
       throws IOException, InterruptedException, ExecutionException {
-    String imageReference = "testdocker";
+    ProgressEventHandler progressEventHandler = new ProgressEventHandler(() -> {});
+
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
                 ImageReference.of("gcr.io", "distroless/java", "latest"),
-                ImageReference.of(null, imageReference, null))
+                ImageReference.of(null, "testdocker", null))
+            .setEventDispatcher(
+                new DefaultEventDispatcher(
+                    new EventHandlers().add(JibEventType.PROGRESS, progressEventHandler)))
             .build();
     BuildSteps.forBuildToDockerDaemon(DockerClient.newDefaultClient(), buildConfiguration).run();
 
-    assertDockerInspect(imageReference);
+    Assert.assertEquals(1.0, progressEventHandler.getProgress(), DOUBLE_ERROR_MARGIN);
+    Assert.assertTrue(progressEventHandler.getUnfinishedAllocations().isEmpty());
+
+    assertDockerInspect("testdocker");
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
+        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", "testdocker").run());
   }
 
   @Test
@@ -260,13 +286,21 @@ public class BuildStepsIntegrationTest {
   @Test
   public void testSteps_forBuildToTarball()
       throws IOException, InterruptedException, ExecutionException {
+    ProgressEventHandler progressEventHandler = new ProgressEventHandler(() -> {});
+
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
                 ImageReference.of("gcr.io", "distroless/java", "latest"),
                 ImageReference.of(null, "testtar", null))
+            .setEventDispatcher(
+                new DefaultEventDispatcher(
+                    new EventHandlers().add(JibEventType.PROGRESS, progressEventHandler)))
             .build();
     Path outputPath = temporaryFolder.newFolder().toPath().resolve("test.tar");
     BuildSteps.forBuildToTar(outputPath, buildConfiguration).run();
+
+    Assert.assertEquals(1.0, progressEventHandler.getProgress(), DOUBLE_ERROR_MARGIN);
+    Assert.assertTrue(progressEventHandler.getUnfinishedAllocations().isEmpty());
 
     new Command("docker", "load", "--input", outputPath.toString()).run();
     Assert.assertEquals(

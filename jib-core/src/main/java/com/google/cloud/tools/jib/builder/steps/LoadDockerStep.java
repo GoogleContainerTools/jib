@@ -19,12 +19,11 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
+import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.event.events.ProgressEvent;
-import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.Layer;
@@ -40,7 +39,7 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
   private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
-  private final Allocation parentProgressAllocation;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final DockerClient dockerClient;
 
@@ -53,14 +52,14 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
   LoadDockerStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      Allocation parentProgressAllocation,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       DockerClient dockerClient,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
       ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps,
       BuildImageStep buildImageStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
-    this.parentProgressAllocation = parentProgressAllocation;
+    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.dockerClient = dockerClient;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
@@ -93,27 +92,26 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
     buildConfiguration
         .getEventDispatcher()
         .dispatch(LogEvent.lifecycle("Loading to Docker daemon..."));
-    Allocation progressAllocation = parentProgressAllocation.newChild("Load to Docker daemon", 1);
-    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
 
-    Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
-    ImageReference targetImageReference =
-        buildConfiguration.getTargetImageConfiguration().getImage();
+    try (ProgressEventDispatcher ignored =
+        progressEventDispatcherFactory.create("Load to Docker daemon", 1)) {
+      Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
+      ImageReference targetImageReference =
+          buildConfiguration.getTargetImageConfiguration().getImage();
 
-    // Load the image to docker daemon.
-    dockerClient.load(new ImageToTarballTranslator(image).toTarballBlob(targetImageReference));
+      // Load the image to docker daemon.
+      dockerClient.load(new ImageToTarballTranslator(image).toTarballBlob(targetImageReference));
 
-    // Tags the image with all the additional tags, skipping the one 'docker load' already loaded.
-    for (String tag : buildConfiguration.getAllTargetImageTags()) {
-      if (tag.equals(targetImageReference.getTag())) {
-        continue;
+      // Tags the image with all the additional tags, skipping the one 'docker load' already loaded.
+      for (String tag : buildConfiguration.getAllTargetImageTags()) {
+        if (tag.equals(targetImageReference.getTag())) {
+          continue;
+        }
+
+        dockerClient.tag(targetImageReference, targetImageReference.withTag(tag));
       }
 
-      dockerClient.tag(targetImageReference, targetImageReference.withTag(tag));
+      return BuildResult.fromImage(image, buildConfiguration.getTargetFormat());
     }
-
-    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 1));
-
-    return BuildResult.fromImage(image, buildConfiguration.getTargetFormat());
   }
 }

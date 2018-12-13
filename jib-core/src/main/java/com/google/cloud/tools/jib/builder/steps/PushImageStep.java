@@ -20,11 +20,10 @@ import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.event.events.ProgressEvent;
-import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
@@ -47,7 +46,7 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
   private final BuildConfiguration buildConfiguration;
   private final ListeningExecutorService listeningExecutorService;
-  private final Allocation parentProgressAllocation;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final AuthenticatePushStep authenticatePushStep;
 
@@ -61,7 +60,7 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
   PushImageStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      Allocation parentProgressAllocation,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       AuthenticatePushStep authenticatePushStep,
       PushLayersStep pushBaseImageLayersStep,
       PushLayersStep pushApplicationLayersStep,
@@ -69,7 +68,7 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
       BuildImageStep buildImageStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
-    this.parentProgressAllocation = parentProgressAllocation;
+    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.authenticatePushStep = authenticatePushStep;
     this.pushBaseImageLayersStep = pushBaseImageLayersStep;
     this.pushApplicationLayersStep = pushApplicationLayersStep;
@@ -120,8 +119,8 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
   }
 
   private ListenableFuture<BuildResult> afterAllPushed() throws ExecutionException, IOException {
-    Allocation progressAllocation = parentProgressAllocation.newChild("Push to registry", 1);
-    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
+    ProgressEventDispatcher progressEventDispatcher =
+        progressEventDispatcherFactory.create("Push to registry", 1);
 
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
@@ -167,10 +166,7 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
       return Futures.whenAllSucceed(pushAllTagsFutures)
           .call(
               () -> {
-                buildConfiguration
-                    .getEventDispatcher()
-                    .dispatch(new ProgressEvent(progressAllocation, 1));
-
+                progressEventDispatcher.close();
                 return result;
               },
               listeningExecutorService);

@@ -19,13 +19,13 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
@@ -190,7 +190,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            Allocation.newRoot("ignored", 1),
+            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
@@ -219,7 +219,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            Allocation.newRoot("ignored", 1),
+            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
@@ -280,7 +280,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            Allocation.newRoot("ignored", 1),
+            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
@@ -302,7 +302,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            Allocation.newRoot("ignored", 1),
+            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
@@ -325,7 +325,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            Allocation.newRoot("ignored", 1),
+            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
@@ -348,7 +348,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            Allocation.newRoot("ignored", 1),
+            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
@@ -367,7 +367,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            Allocation.newRoot("ignored", 1),
+            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(

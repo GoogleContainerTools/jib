@@ -19,11 +19,10 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
+import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.event.events.ProgressEvent;
-import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -42,7 +41,7 @@ public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildR
 
   private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
-  private final Allocation parentProgressAllocation;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final Path outputPath;
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
@@ -54,14 +53,14 @@ public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildR
   WriteTarFileStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      Allocation parentProgressAllocation,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Path outputPath,
       PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
       ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps,
       BuildImageStep buildImageStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
-    this.parentProgressAllocation = parentProgressAllocation;
+    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.outputPath = outputPath;
     this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
     this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
@@ -93,22 +92,21 @@ public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildR
     buildConfiguration
         .getEventDispatcher()
         .dispatch(LogEvent.lifecycle("Building image to tar file..."));
-    Allocation progressAllocation = parentProgressAllocation.newChild("Write to tar file", 1);
-    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
 
-    Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
+    try (ProgressEventDispatcher ignored =
+        progressEventDispatcherFactory.create("Write to tar file", 1)) {
+      Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
 
-    // Builds the image to a tarball.
-    Files.createDirectories(outputPath.getParent());
-    try (OutputStream outputStream =
-        new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
-      new ImageToTarballTranslator(image)
-          .toTarballBlob(buildConfiguration.getTargetImageConfiguration().getImage())
-          .writeTo(outputStream);
+      // Builds the image to a tarball.
+      Files.createDirectories(outputPath.getParent());
+      try (OutputStream outputStream =
+          new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
+        new ImageToTarballTranslator(image)
+            .toTarballBlob(buildConfiguration.getTargetImageConfiguration().getImage())
+            .writeTo(outputStream);
+      }
+
+      return BuildResult.fromImage(image, buildConfiguration.getTargetFormat());
     }
-
-    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 1));
-
-    return BuildResult.fromImage(image, buildConfiguration.getTargetFormat());
   }
 }

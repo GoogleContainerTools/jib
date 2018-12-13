@@ -43,7 +43,7 @@ public class Allocation {
   /**
    * Creates a new root {@link Allocation}.
    *
-   * @param description thuser-facing description of what the allocation represents
+   * @param description user-facing description of what the allocation represents
    * @param allocationUnits number of allocation units
    * @return a new {@link Allocation}
    */

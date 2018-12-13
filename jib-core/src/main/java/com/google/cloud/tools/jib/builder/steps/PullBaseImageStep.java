@@ -19,15 +19,16 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithAuthorization;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
-import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
@@ -84,16 +85,16 @@ class PullBaseImageStep
   }
 
   private final BuildConfiguration buildConfiguration;
-  private final Allocation parentProgressAllocation;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final ListenableFuture<BaseImageWithAuthorization> listenableFuture;
 
   PullBaseImageStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
-      Allocation parentProgressAllocation) {
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
     this.buildConfiguration = buildConfiguration;
-    this.parentProgressAllocation = parentProgressAllocation;
+    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
 
     listenableFuture = listeningExecutorService.submit(this);
   }
@@ -115,19 +116,14 @@ class PullBaseImageStep
                 "Getting base image "
                     + buildConfiguration.getBaseImageConfiguration().getImage()
                     + "..."));
-    Allocation progressAllocation = parentProgressAllocation.newChild("pull base image", 2);
-    buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 0));
 
-    try (TimerEventDispatcher ignored =
-        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+    try (ProgressEventDispatcher progressEventDispatcher =
+            progressEventDispatcherFactory.create("pull base image", 2);
+        TimerEventDispatcher ignored =
+            new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // First, try with no credentials.
       try {
-        BaseImageWithAuthorization baseImageWithAuthorization =
-            new BaseImageWithAuthorization(pullBaseImage(null), null);
-
-        buildConfiguration.getEventDispatcher().dispatch(new ProgressEvent(progressAllocation, 2));
-
-        return baseImageWithAuthorization;
+        return new BaseImageWithAuthorization(pullBaseImage(null, progressEventDispatcher), null);
 
       } catch (RegistryUnauthorizedException ex) {
         buildConfiguration
@@ -144,7 +140,9 @@ class PullBaseImageStep
         ListeningExecutorService directExecutorService = MoreExecutors.newDirectExecutorService();
         RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep =
             RetrieveRegistryCredentialsStep.forBaseImage(
-                directExecutorService, buildConfiguration, progressAllocation);
+                directExecutorService,
+                buildConfiguration,
+                progressEventDispatcher.newChildProducer());
 
         Credential registryCredential = NonBlockingSteps.get(retrieveBaseRegistryCredentialsStep);
         Authorization registryAuthorization =
@@ -154,15 +152,8 @@ class PullBaseImageStep
                     registryCredential.getUsername(), registryCredential.getPassword());
 
         try {
-          BaseImageWithAuthorization baseImageWithAuthorization =
-              new BaseImageWithAuthorization(
-                  pullBaseImage(registryAuthorization), registryAuthorization);
-
-          buildConfiguration
-              .getEventDispatcher()
-              .dispatch(new ProgressEvent(progressAllocation, 1));
-
-          return baseImageWithAuthorization;
+          return new BaseImageWithAuthorization(
+              pullBaseImage(registryAuthorization, progressEventDispatcher), registryAuthorization);
 
         } catch (RegistryUnauthorizedException registryUnauthorizedException) {
           // The registry requires us to authenticate using the Docker Token Authentication.
@@ -185,15 +176,8 @@ class PullBaseImageStep
           registryAuthorization =
               registryAuthenticator.setAuthorization(registryAuthorization).authenticatePull();
 
-          BaseImageWithAuthorization baseImageWithAuthorization =
-              new BaseImageWithAuthorization(
-                  pullBaseImage(registryAuthorization), registryAuthorization);
-
-          buildConfiguration
-              .getEventDispatcher()
-              .dispatch(new ProgressEvent(progressAllocation, 1));
-
-          return baseImageWithAuthorization;
+          return new BaseImageWithAuthorization(
+              pullBaseImage(registryAuthorization, progressEventDispatcher), registryAuthorization);
         }
       }
     }
@@ -203,6 +187,8 @@ class PullBaseImageStep
    * Pulls the base image.
    *
    * @param registryAuthorization authentication credentials to possibly use
+   * @param progressEventDispatcher the {@link ProgressEventDispatcher} for emitting {@link
+   *     ProgressEvent}s
    * @return the pulled image
    * @throws IOException when an I/O exception occurs during the pulling
    * @throws RegistryException if communicating with the registry caused a known error
@@ -212,7 +198,9 @@ class PullBaseImageStep
    * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
    *     format
    */
-  private Image<Layer> pullBaseImage(@Nullable Authorization registryAuthorization)
+  private Image<Layer> pullBaseImage(
+      @Nullable Authorization registryAuthorization,
+      ProgressEventDispatcher progressEventDispatcher)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
     RegistryClient registryClient =
@@ -239,18 +227,25 @@ class PullBaseImageStep
                   + Blobs.writeToString(JsonTemplateMapper.toBlob(v22ManifestTemplate)));
         }
 
-        String containerConfigurationString =
-            Blobs.writeToString(
-                registryClient.pullBlob(
-                    v22ManifestTemplate.getContainerConfiguration().getDigest(),
-                    // TODO: Replace with progress updates.
-                    ignored -> {},
-                    ignored -> {}));
+        DescriptorDigest containerConfigurationDigest =
+            v22ManifestTemplate.getContainerConfiguration().getDigest();
 
-        ContainerConfigurationTemplate containerConfigurationTemplate =
-            JsonTemplateMapper.readJson(
-                containerConfigurationString, ContainerConfigurationTemplate.class);
-        return JsonToImageTranslator.toImage(v22ManifestTemplate, containerConfigurationTemplate);
+        try (ProgressEventDispatcherContainer progressEventDispatcherContainer =
+            new ProgressEventDispatcherContainer(
+                progressEventDispatcher.newChildProducer(),
+                "pull container configuration " + containerConfigurationDigest)) {
+          String containerConfigurationString =
+              Blobs.writeToString(
+                  registryClient.pullBlob(
+                      containerConfigurationDigest,
+                      progressEventDispatcherContainer::initializeWithBlobSize,
+                      progressEventDispatcherContainer));
+
+          ContainerConfigurationTemplate containerConfigurationTemplate =
+              JsonTemplateMapper.readJson(
+                  containerConfigurationString, ContainerConfigurationTemplate.class);
+          return JsonToImageTranslator.toImage(v22ManifestTemplate, containerConfigurationTemplate);
+        }
     }
 
     throw new IllegalStateException("Unknown manifest schema version");

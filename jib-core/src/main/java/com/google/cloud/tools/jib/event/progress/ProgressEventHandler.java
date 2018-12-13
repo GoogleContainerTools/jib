@@ -27,7 +27,7 @@ import java.util.function.Consumer;
  *
  * <p>This implementation is thread-safe.
  */
-class ProgressEventHandler implements Consumer<ProgressEvent> {
+public class ProgressEventHandler implements Consumer<ProgressEvent> {
 
   /** Keeps track of the progress for each {@link Allocation} encountered. */
   private final AllocationCompletionTracker completionTracker = new AllocationCompletionTracker();
@@ -42,7 +42,7 @@ class ProgressEventHandler implements Consumer<ProgressEvent> {
    */
   private final Runnable updateNotifier;
 
-  ProgressEventHandler(Runnable updateNotifier) {
+  public ProgressEventHandler(Runnable updateNotifier) {
     this.updateNotifier = updateNotifier;
   }
 
@@ -67,7 +67,7 @@ class ProgressEventHandler implements Consumer<ProgressEvent> {
    *
    * @return the overall progress
    */
-  double getProgress() {
+  public double getProgress() {
     return progress.sum();
   }
 
@@ -79,7 +79,7 @@ class ProgressEventHandler implements Consumer<ProgressEvent> {
    */
   // TODO: Change this to do every time update notifier is called, so this is not called many times
   // per update.
-  List<Allocation> getUnfinishedAllocations() {
+  public List<Allocation> getUnfinishedAllocations() {
     return completionTracker.getUnfinishedAllocations();
   }
 }
