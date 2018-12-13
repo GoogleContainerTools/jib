@@ -74,12 +74,12 @@ public class MavenLayerConfigurationsTest {
             "/my/app/libs/dependency-1.0.0-770.jar",
             "/my/app/libs/dependency-1.0.0-200.jar",
             "/my/app/libs/dependency-1.0.0-480.jar",
-            "/my/app/libs/libraryA-0.jar",
-            "/my/app/libs/libraryB-0.jar",
-            "/my/app/libs/library.jarC-0.jar"),
+            "/my/app/libs/libraryA.jar",
+            "/my/app/libs/libraryB.jar",
+            "/my/app/libs/library.jarC.jar"),
         configuration.getDependencyLayerEntries());
     assertExtractionPathsUnordered(
-        Collections.singletonList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT-770.jar"),
+        Collections.singletonList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
