@@ -144,6 +144,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
               projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
               helpfulSuggestions);
 
+      // TODO: This should not be called on projectProperties.
       projectProperties.waitForLoggingThread();
 
     } catch (InvalidAppRootException ex) {

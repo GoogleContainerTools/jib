@@ -33,8 +33,10 @@ public interface ProjectProperties {
    */
   String EXPLODED_WAR_DIRECTORY_NAME = "jib-exploded-war";
 
+  // TODO: Move out of ProjectProperties.
   void waitForLoggingThread();
 
+  // TODO: Move out of ProjectProperties.
   EventHandlers getEventHandlers();
 
   String getToolName();
