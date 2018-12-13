@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.maven.settings.Proxy;
@@ -25,64 +24,53 @@ import org.apache.maven.settings.Settings;
 /** Initializes and retrieves proxy settings from either Maven settings or system properties * */
 public class ProxyProvider {
 
-  static Settings mavenSettings = new Settings();
-
   /**
    * Initializes proxy settings based on Maven settings and system properties.
    *
    * @param settings - Maven settings from mojo
    */
   public static void init(Settings settings) {
-    mavenSettings = settings;
-    for (Proxy proxy : mavenSettings.getProxies()) {
-      // Poor way to push proxy settings onto Connection instances
-      if (proxy != null && proxy.getProtocol().equalsIgnoreCase("http")) {
-        System.setProperty("http.proxyHost", proxy.getHost());
-        System.setProperty("http.proxyPort", String.valueOf(proxy.getPort()));
-        System.setProperty("http.nonProxyHosts", proxy.getNonProxyHosts());
-        System.setProperty("http.proxyUser", String.valueOf(proxy.getUsername()));
-        System.setProperty("http.proxyPassword", proxy.getPassword());
-      } else if (proxy != null && proxy.getProtocol().equalsIgnoreCase("https")) {
-        System.setProperty("https.proxyHost", proxy.getHost());
-        System.setProperty("https.proxyPort", String.valueOf(proxy.getPort()));
-        System.setProperty("http.nonProxyHosts", proxy.getNonProxyHosts());
-        System.setProperty("https.proxyUser", String.valueOf(proxy.getUsername()));
-        System.setProperty("https.proxyPassword", proxy.getPassword());
-      }
+    List<Proxy> activeProxies =
+        settings
+            .getProxies()
+            .stream()
+            .filter(proxy -> proxy.isActive())
+            .collect(Collectors.toList());
+    for (Proxy proxy : activeProxies) {
+      propagateProxyProperties(proxy);
     }
   }
 
   /**
-   * Attempts to retrieve proxy from either Maven settings or system properties.
+   * Propagate Maven proxy properties into system properties to be picked up by Connections.
    *
-   * @return the active proxies
+   * @param proxy Maven proxy
    */
-  public List<Proxy> getProxies() {
-    List<Proxy> proxies = new ArrayList<Proxy>();
-    if (mavenSettings != null) {
-      proxies.addAll(mavenSettings.getProxies());
-    } else {
-      if (System.getProperty("http.proxyHost") != null) {
-        Proxy proxy = new Proxy();
-        proxy.setHost(System.getProperty("http.proxyHost"));
-        proxy.setPort(Integer.parseInt(System.getProperty("http.proxyPort")));
-        proxy.setActive(true);
-        proxy.setUsername(System.getProperty("http.proxyUser"));
-        proxy.setPassword(System.getProperty("http.proxyPassword"));
-        proxy.setNonProxyHosts(System.getProperty("http.nonProxyHosts"));
-        proxies.add(proxy);
-      }
-      if (System.getProperty("https.proxyHost") != null) {
-        Proxy proxy = new Proxy();
-        proxy.setHost(System.getProperty("https.proxyHost"));
-        proxy.setPort(Integer.parseInt(System.getProperty("https.proxyPort")));
-        proxy.setActive(true);
-        proxy.setUsername(System.getProperty("https.proxyUser"));
-        proxy.setPassword(System.getProperty("https.proxyPassword"));
-        proxy.setNonProxyHosts(System.getProperty("http.nonProxyHosts"));
-        proxies.add(proxy);
-      }
+  private static void propagateProxyProperties(Proxy proxy) {
+    if (proxy.getProtocol().equalsIgnoreCase("http")) {
+      propagateProxyProperty("http.proxyHost", proxy.getHost());
+      propagateProxyProperty("http.proxyPort", String.valueOf(proxy.getPort()));
+      propagateProxyProperty("http.proxyUser", proxy.getUsername());
+      propagateProxyProperty("http.proxyPassword", proxy.getPassword());
+    } else if (proxy.getProtocol().equalsIgnoreCase("https")) {
+      propagateProxyProperty("https.proxyHost", proxy.getHost());
+      propagateProxyProperty("https.proxyPort", String.valueOf(proxy.getPort()));
+      propagateProxyProperty("https.proxyUser", proxy.getUsername());
+      propagateProxyProperty("https.proxyPassword", proxy.getPassword());
     }
-    return proxies.stream().filter(proxy -> proxy.isActive()).collect(Collectors.toList());
+    propagateProxyProperty("http.nonProxyHosts", proxy.getNonProxyHosts());
+  }
+
+  /**
+   * Propagate Maven proxy property into system property to be picked up by Connections. Only set
+   * the system property if not already set.
+   *
+   * @param name proxy system property name
+   * @param value proxy system property value
+   */
+  private static void propagateProxyProperty(String name, String value) {
+    if (value != null && System.getProperty(name) == null) {
+      System.setProperty(name, value);
+    }
   }
 }

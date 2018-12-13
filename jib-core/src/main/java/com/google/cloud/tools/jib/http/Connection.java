@@ -87,7 +87,11 @@ public class Connection implements Closeable {
     DefaultHttpClient httpClient =
         (DefaultHttpClient) ((ApacheHttpTransport) transport).getHttpClient();
 
-    if (System.getProperty("http.proxyUser") != null) {
+    boolean httpProxy = System.getProperty("http.proxyHost") != null;
+    boolean httpCreds = System.getProperty("http.proxyUser") != null;
+    boolean httpsProxy = System.getProperty("https.proxyHost") != null;
+    boolean httpsCreds = System.getProperty("https.proxyUser") != null;
+    if (httpProxy && httpCreds) {
       httpClient
           .getCredentialsProvider()
           .setCredentials(
@@ -96,7 +100,8 @@ public class Connection implements Closeable {
                   Integer.parseInt(System.getProperty("http.proxyPort"))),
               new UsernamePasswordCredentials(
                   System.getProperty("http.proxyUser"), System.getProperty("http.proxyPassword")));
-    } else if (System.getProperty("https.proxyUser") != null) {
+    }
+    if (httpsProxy && (httpsCreds || httpCreds)) {
       httpClient
           .getCredentialsProvider()
           .setCredentials(
@@ -104,8 +109,12 @@ public class Connection implements Closeable {
                   System.getProperty("https.proxyHost"),
                   Integer.parseInt(System.getProperty("https.proxyPort"))),
               new UsernamePasswordCredentials(
-                  System.getProperty("https.proxyUser"),
-                  System.getProperty("https.proxyPassword")));
+                  httpsCreds
+                      ? System.getProperty("https.proxyUser")
+                      : System.getProperty("http.proxyUser"),
+                  httpsCreds
+                      ? System.getProperty("https.proxyPassword")
+                      : System.getProperty("http.proxyPassword")));
     }
   }
 
