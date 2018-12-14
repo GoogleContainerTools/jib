@@ -89,20 +89,24 @@ public class MavenProjectProperties implements ProjectProperties {
 
   private static EventHandlers makeEventHandlers(
       Log log, SingleThreadedExecutor singleThreadedExecutor) {
-    Consumer<String> noOp = ignored -> {};
-
-    Consumer<LogEvent> logEventHandler =
+    LogEventHandlerBuilder logEventHandlerBuilder =
         (isProgressFooterEnabled()
-                ? LogEventHandlerBuilder.rich(singleThreadedExecutor).progress(noOp)
-                : LogEventHandlerBuilder.plain(singleThreadedExecutor)
-                    .progress(log.isInfoEnabled() ? log::info : noOp))
-            .lifecycle(log.isInfoEnabled() ? log::info : noOp)
-            .debug(log.isDebugEnabled() ? log::debug : noOp)
-            // INFO messages also go to Log#debug.
-            .info(log.isDebugEnabled() ? log::debug : noOp)
-            .warn(log.isWarnEnabled() ? log::warn : noOp)
-            .error(log.isErrorEnabled() ? log::error : noOp)
-            .build();
+                ? LogEventHandlerBuilder.rich(singleThreadedExecutor)
+                : LogEventHandlerBuilder.plain(singleThreadedExecutor).progress(log::info))
+            .lifecycle(log::info);
+    if (log.isDebugEnabled()) {
+      logEventHandlerBuilder
+          .debug(log::debug)
+          // INFO messages also go to Log#debug.
+          .info(log::info);
+    }
+    if (log.isWarnEnabled()) {
+      logEventHandlerBuilder.warn(log::warn);
+    }
+    if (log.isErrorEnabled()) {
+      logEventHandlerBuilder.error(log::error);
+    }
+    Consumer<LogEvent> logEventHandler = logEventHandlerBuilder.build();
 
     TimerEventHandler timerEventHandler =
         new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message)));

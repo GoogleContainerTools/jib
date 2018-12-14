@@ -97,18 +97,24 @@ class GradleProjectProperties implements ProjectProperties {
 
   private static EventHandlers makeEventHandlers(
       Project project, Logger logger, SingleThreadedExecutor singleThreadedExecutor) {
-    Consumer<String> noOp = ignored -> {};
-
-    Consumer<LogEvent> logEventHandler =
+    LogEventHandlerBuilder logEventHandlerBuilder =
         (isProgressFooterEnabled(project)
-                ? LogEventHandlerBuilder.rich(singleThreadedExecutor).progress(noOp)
+                ? LogEventHandlerBuilder.rich(singleThreadedExecutor)
                 : LogEventHandlerBuilder.plain(singleThreadedExecutor).progress(logger::lifecycle))
-            .lifecycle(logger.isLifecycleEnabled() ? logger::lifecycle : noOp)
-            .debug(logger.isDebugEnabled() ? logger::debug : noOp)
-            .info(logger.isInfoEnabled() ? logger::info : noOp)
-            .warn(logger.isWarnEnabled() ? logger::warn : noOp)
-            .error(logger.isErrorEnabled() ? logger::error : noOp)
-            .build();
+            .lifecycle(logger::lifecycle);
+    if (logger.isDebugEnabled()) {
+      logEventHandlerBuilder.debug(logger::debug);
+    }
+    if (logger.isInfoEnabled()) {
+      logEventHandlerBuilder.debug(logger::info);
+    }
+    if (logger.isWarnEnabled()) {
+      logEventHandlerBuilder.warn(logger::warn);
+    }
+    if (logger.isErrorEnabled()) {
+      logEventHandlerBuilder.error(logger::error);
+    }
+    Consumer<LogEvent> logEventHandler = logEventHandlerBuilder.build();
 
     TimerEventHandler timerEventHandler =
         new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message)));
