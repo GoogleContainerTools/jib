@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -32,49 +31,53 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 
+/** Tests for {@link JavaContainerBuilder}. */
 public class JavaContainerBuilderTest {
 
-  private static List<Path> getFromResources(String directory) throws URISyntaxException {
+  /** Gets a resource file in a singleton list. */
+  private static List<Path> getResourceAsList(String directory) throws URISyntaxException {
     return Collections.singletonList(Paths.get(Resources.getResource(directory).toURI()));
   }
 
+  /** Gets a resource file as a {@link Path}. */
+  private static Path getResourceAsPath(String directory) throws URISyntaxException {
+    return Paths.get(Resources.getResource(directory).toURI());
+  }
+
+  /** Gets the extraction paths in the specified layer of a give {@link BuildConfiguration}. */
   private static List<AbsoluteUnixPath> getExtractionPaths(
       BuildConfiguration buildConfiguration, String layerName) {
-    Optional<LayerConfiguration> layerConfiguration =
-        buildConfiguration
-            .getLayerConfigurations()
-            .stream()
-            .filter(layerConfiguration1 -> layerConfiguration1.getName().equals(layerName))
-            .findFirst();
-    if (layerConfiguration.isPresent()) {
-      return layerConfiguration
-          .get()
-          .getLayerEntries()
-          .stream()
-          .map(LayerEntry::getExtractionPath)
-          .collect(Collectors.toList());
-
-    } else {
-      return ImmutableList.of();
-    }
+    return buildConfiguration
+        .getLayerConfigurations()
+        .stream()
+        .filter(layerConfiguration -> layerConfiguration.getName().equals(layerName))
+        .findFirst()
+        .map(
+            layerConfiguration ->
+                layerConfiguration
+                    .getLayerEntries()
+                    .stream()
+                    .map(LayerEntry::getExtractionPath)
+                    .collect(Collectors.toList()))
+        .orElse(ImmutableList.of());
   }
 
   @Test
-  public void testToJibContainerBuilder_layers()
+  public void testToJibContainerBuilder_all()
       throws InvalidImageReferenceException, URISyntaxException, IOException,
           CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         JavaContainerBuilder.fromDistroless()
-            .addClasses(getFromResources("application/classes").get(0))
-            .addResources(getFromResources("application/resources").get(0))
-            .addDependencies(getFromResources("application/dependencies"))
-            .addDependencies(getFromResources("application/snapshot-dependencies"))
-            .addToClasspath(getFromResources("fileA"))
+            .addClasses(getResourceAsPath("application/classes"))
+            .addResources(getResourceAsPath("application/resources"))
+            .addDependencies(getResourceAsList("application/dependencies"))
+            .addDependencies(getResourceAsList("application/snapshot-dependencies"))
+            .addToClasspath(getResourceAsList("fileA"))
+            .addToClasspath(getResourceAsPath("fileB"))
             .setJvmFlags("-xflag1", "-xflag2")
             .setMainClass("HelloWorld")
             .toContainerBuilder()
@@ -82,6 +85,7 @@ public class JavaContainerBuilderTest {
                 Containerizer.to(RegistryImage.named("hello")),
                 MoreExecutors.newDirectExecutorService());
 
+    // Check entrypoint
     ContainerConfiguration containerConfiguration = buildConfiguration.getContainerConfiguration();
     Assert.assertNotNull(containerConfiguration);
     Assert.assertEquals(
@@ -94,6 +98,7 @@ public class JavaContainerBuilderTest {
             "HelloWorld"),
         containerConfiguration.getEntrypoint());
 
+    // Check dependencies
     List<AbsoluteUnixPath> expectedDependencies =
         ImmutableList.of(
             AbsoluteUnixPath.get("/app/libs/dependency-1.0.0.jar"),
@@ -102,12 +107,14 @@ public class JavaContainerBuilderTest {
     Assert.assertEquals(
         expectedDependencies, getExtractionPaths(buildConfiguration, "dependencies"));
 
+    // Check snapshots
     List<AbsoluteUnixPath> expectedSnapshotDependencies =
         ImmutableList.of(AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-SNAPSHOT.jar"));
     Assert.assertEquals(
         expectedSnapshotDependencies,
         getExtractionPaths(buildConfiguration, "snapshot dependencies"));
 
+    // Check resources
     List<AbsoluteUnixPath> expectedResources =
         ImmutableList.of(
             AbsoluteUnixPath.get("/app/resources/resourceA"),
@@ -115,14 +122,17 @@ public class JavaContainerBuilderTest {
             AbsoluteUnixPath.get("/app/resources/world"));
     Assert.assertEquals(expectedResources, getExtractionPaths(buildConfiguration, "resources"));
 
+    // Check classes
     List<AbsoluteUnixPath> expectedClasses =
         ImmutableList.of(
             AbsoluteUnixPath.get("/app/classes/HelloWorld.class"),
             AbsoluteUnixPath.get("/app/classes/some.class"));
     Assert.assertEquals(expectedClasses, getExtractionPaths(buildConfiguration, "classes"));
 
+    // Check additional classpath files
     List<AbsoluteUnixPath> expectedOthers =
-        ImmutableList.of(AbsoluteUnixPath.get("/app/other/fileA"));
+        ImmutableList.of(
+            AbsoluteUnixPath.get("/app/other/fileA"), AbsoluteUnixPath.get("/app/other/fileB"));
     Assert.assertEquals(expectedOthers, getExtractionPaths(buildConfiguration, "extra files"));
   }
 
@@ -132,23 +142,28 @@ public class JavaContainerBuilderTest {
           CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         JavaContainerBuilder.fromDistroless()
-            .addClasses(getFromResources("application/classes/").get(0))
-            .addDependencies(getFromResources("application/dependencies/libraryA.jar"))
-            .addDependencies(getFromResources("application/dependencies/libraryB.jar"))
+            .addClasses(getResourceAsPath("application/classes/"))
+            .addClasses(getResourceAsPath("class-finder-tests/extension"))
             .addDependencies(
-                getFromResources("application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
+                getResourceAsPath("application/dependencies/libraryA.jar"),
+                getResourceAsPath("application/dependencies/libraryB.jar"))
+            .addDependencies(
+                getResourceAsList(
+                    "application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
             .setMainClass("HelloWorld")
             .toContainerBuilder()
             .toBuildConfiguration(
                 Containerizer.to(RegistryImage.named("hello")),
                 MoreExecutors.newDirectExecutorService());
 
+    // Check entrypoint
     ContainerConfiguration containerConfiguration = buildConfiguration.getContainerConfiguration();
     Assert.assertNotNull(containerConfiguration);
     Assert.assertEquals(
         ImmutableList.of("java", "-cp", "/app/classes:/app/libs/*", "HelloWorld"),
         containerConfiguration.getEntrypoint());
 
+    // Check dependencies
     List<AbsoluteUnixPath> expectedDependencies =
         ImmutableList.of(
             AbsoluteUnixPath.get("/app/libs/libraryA.jar"),
@@ -156,18 +171,26 @@ public class JavaContainerBuilderTest {
     Assert.assertEquals(
         expectedDependencies, getExtractionPaths(buildConfiguration, "dependencies"));
 
+    // Check snapshots
     List<AbsoluteUnixPath> expectedSnapshotDependencies =
         ImmutableList.of(AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-SNAPSHOT.jar"));
     Assert.assertEquals(
         expectedSnapshotDependencies,
         getExtractionPaths(buildConfiguration, "snapshot dependencies"));
 
+    // Check classes
     List<AbsoluteUnixPath> expectedClasses =
         ImmutableList.of(
             AbsoluteUnixPath.get("/app/classes/HelloWorld.class"),
-            AbsoluteUnixPath.get("/app/classes/some.class"));
-
+            AbsoluteUnixPath.get("/app/classes/some.class"),
+            AbsoluteUnixPath.get("/app/classes/main/"),
+            AbsoluteUnixPath.get("/app/classes/main/MainClass.class"),
+            AbsoluteUnixPath.get("/app/classes/pack/"),
+            AbsoluteUnixPath.get("/app/classes/pack/Apple.class"),
+            AbsoluteUnixPath.get("/app/classes/pack/Orange.class"));
     Assert.assertEquals(expectedClasses, getExtractionPaths(buildConfiguration, "classes"));
+
+    // Check empty layers
     Assert.assertEquals(ImmutableList.of(), getExtractionPaths(buildConfiguration, "resources"));
     Assert.assertEquals(ImmutableList.of(), getExtractionPaths(buildConfiguration, "extra files"));
   }

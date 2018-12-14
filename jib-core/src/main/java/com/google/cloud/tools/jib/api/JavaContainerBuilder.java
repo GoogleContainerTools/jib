@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -145,6 +146,17 @@ public class JavaContainerBuilder {
   }
 
   /**
+   * Adds dependencies to /app/libs on the image.
+   *
+   * @param dependencyFiles the list of dependencies to add to the image
+   * @return this
+   * @throws IOException if adding the layer fails
+   */
+  public JavaContainerBuilder addDependencies(Path... dependencyFiles) throws IOException {
+    return addDependencies(Arrays.asList(dependencyFiles));
+  }
+
+  /**
    * Adds resources to /app/resources on the image.
    *
    * @param resourceFilesDirectory the directory containing the project's resources
@@ -208,6 +220,17 @@ public class JavaContainerBuilder {
       classpath.add(OTHERS_PATH.toString());
     }
     return this;
+  }
+
+  /**
+   * Adds additional files to the image's classpath.
+   *
+   * @param otherFiles the list of files to add. Files are added to /app/other on the container
+   * @return this
+   * @throws IOException if adding the layer fails
+   */
+  public JavaContainerBuilder addToClasspath(Path... otherFiles) throws IOException {
+    return addToClasspath(Arrays.asList(otherFiles));
   }
 
   /**
