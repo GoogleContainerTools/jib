@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Builds failing due to dependency JARs with the same name ([#810](https://github.com/GoogleContainerTools/jib/issues/810))
+
 ## 0.10.1
 
 ### Added
