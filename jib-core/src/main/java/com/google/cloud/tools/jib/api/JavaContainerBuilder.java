@@ -28,37 +28,67 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
+/** Creates a {@link JavaContainerBuilder} for containerizing Java applications. */
 public class JavaContainerBuilder {
 
+  /** Absolute path of dependencies on container. */
   private static final AbsoluteUnixPath DEPENDENCIES_PATH =
-      AbsoluteUnixPath
-          .get("/app")
+      AbsoluteUnixPath.get("/app")
           .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
-  private static final AbsoluteUnixPath CLASSES_PATH =
-      AbsoluteUnixPath
-          .get("/app")
-          .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
-  private static final AbsoluteUnixPath RESOURCES_PATH =
-      AbsoluteUnixPath
-          .get("/app")
-          .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
-  private static final AbsoluteUnixPath OTHERS_PATH =
-      AbsoluteUnixPath.get("/app").resolve("/other");
 
+  /** Absolute path of classes on container. */
+  private static final AbsoluteUnixPath CLASSES_PATH =
+      AbsoluteUnixPath.get("/app")
+          .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
+
+  /** Absolute path of resources on container. */
+  private static final AbsoluteUnixPath RESOURCES_PATH =
+      AbsoluteUnixPath.get("/app")
+          .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
+
+  /** Absolute path of additional classpath files on container. */
+  private static final AbsoluteUnixPath OTHERS_PATH = AbsoluteUnixPath.get("/app/other");
+
+  /**
+   * Creates a new {@link JavaContainerBuilder} that uses distroless java as the base image.
+   *
+   * @return a new {@link JavaContainerBuilder} that uses distroless java as the base image
+   * @throws InvalidImageReferenceException if creating the base image reference fails
+   */
   public static JavaContainerBuilder fromDistroless() throws InvalidImageReferenceException {
-    return from(RegistryImage.named("https://gcr.io/distroless/java"));
+    return from(RegistryImage.named("gcr.io/distroless/java"));
   }
 
+  /**
+   * Creates a new {@link JavaContainerBuilder} with the specified base image reference.
+   *
+   * @param baseImageReference the base image reference
+   * @return a new {@link JavaContainerBuilder} with the specified base image reference
+   * @throws InvalidImageReferenceException if {@code baseImageReference} is invalid
+   */
   public static JavaContainerBuilder from(String baseImageReference)
       throws InvalidImageReferenceException {
     return from(RegistryImage.named(baseImageReference));
   }
 
+  /**
+   * Creates a new {@link JavaContainerBuilder} with the specified base image reference.
+   *
+   * @param baseImageReference the base image reference
+   * @return a new {@link JavaContainerBuilder} with the specified base image reference
+   */
   public static JavaContainerBuilder from(ImageReference baseImageReference) {
     return from(RegistryImage.named(baseImageReference));
   }
 
+  /**
+   * Creates a new {@link JavaContainerBuilder} with the specified base image reference.
+   *
+   * @param baseImageReference the base image reference
+   * @return a new {@link JavaContainerBuilder} with the specified base image reference
+   */
   public static JavaContainerBuilder from(RegistryImage baseImageReference) {
     return new JavaContainerBuilder(Jib.from(baseImageReference));
   }
@@ -67,7 +97,7 @@ public class JavaContainerBuilder {
   private JavaLayerConfigurations.Builder layerConfigurationsBuilder;
   private List<String> classpath;
   private List<String> jvmFlags;
-  private String mainClass;
+  @Nullable private String mainClass;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
     this.jibContainerBuilder = jibContainerBuilder;
@@ -76,73 +106,147 @@ public class JavaContainerBuilder {
     jvmFlags = new ArrayList<>();
   }
 
-  public JavaContainerBuilder addDependencies(List<Path> dependencyFiles) {
-    for (Path dependencyFile : dependencyFiles) {
-      if (Files.exists(dependencyFile)) {
-        boolean isSnapshot = dependencyFile.getFileName().toString().contains("SNAPSHOT");
-        LayerType layerType = isSnapshot ? LayerType.SNAPSHOT_DEPENDENCIES : LayerType.DEPENDENCIES;
-        layerConfigurationsBuilder.addFile(layerType, dependencyFile, DEPENDENCIES_PATH);
-      }
-    }
+  /**
+   * Adds dependencies to the image.
+   *
+   * @param dependencyFiles the list of dependency jars to add to the image
+   * @return this
+   * @throws IOException if adding the layer fails
+   */
+  public JavaContainerBuilder addDependencies(List<Path> dependencyFiles) throws IOException {
+    addFiles(LayerType.DEPENDENCIES, dependencyFiles, DEPENDENCIES_PATH);
     if (!classpath.contains(DEPENDENCIES_PATH.resolve("*").toString())) {
       classpath.add(DEPENDENCIES_PATH.resolve("*").toString());
     }
     return this;
   }
 
-  public JavaContainerBuilder addResources(Path resourceFilesDirectory) throws IOException {
-    if (Files.exists(resourceFilesDirectory)) {
-      layerConfigurationsBuilder.addDirectoryContents(
-          LayerType.RESOURCES, resourceFilesDirectory, path -> true, RESOURCES_PATH);
+  /**
+   * Adds snapshot dependencies to the image.
+   *
+   * @param snapshotDependencyFiles the list of snapshot dependency jars to add to the image
+   * @return this
+   * @throws IOException if adding the layer fails
+   */
+  public JavaContainerBuilder addSnapshotDependencies(List<Path> snapshotDependencyFiles)
+      throws IOException {
+    addFiles(LayerType.SNAPSHOT_DEPENDENCIES, snapshotDependencyFiles, DEPENDENCIES_PATH);
+    if (!classpath.contains(DEPENDENCIES_PATH.resolve("*").toString())) {
+      classpath.add(DEPENDENCIES_PATH.resolve("*").toString());
     }
+    return this;
+  }
+
+  /**
+   * Adds resources to the image.
+   *
+   * @param resourceFilesDirectory the directory containing the project's resources
+   * @return this
+   * @throws IOException if adding the layer fails
+   */
+  public JavaContainerBuilder addResources(List<Path> resourceFilesDirectory) throws IOException {
+    addFiles(LayerType.RESOURCES, resourceFilesDirectory, RESOURCES_PATH);
     if (!classpath.contains(RESOURCES_PATH.toString())) {
       classpath.add(RESOURCES_PATH.toString());
     }
     return this;
   }
 
-  public JavaContainerBuilder addClasses(Path classFilesDirectory) throws IOException {
-    if (Files.exists(classFilesDirectory)) {
-      layerConfigurationsBuilder.addDirectoryContents(
-          LayerType.CLASSES, classFilesDirectory, path -> true, CLASSES_PATH);
-    }
+  /**
+   * Adds classes to the image.
+   *
+   * @param classFilesDirectory the directory containing the class files
+   * @return this
+   * @throws IOException if adding the layer fails
+   */
+  public JavaContainerBuilder addClasses(List<Path> classFilesDirectory) throws IOException {
+    addFiles(LayerType.CLASSES, classFilesDirectory, CLASSES_PATH);
     if (!classpath.contains(CLASSES_PATH.toString())) {
       classpath.add(CLASSES_PATH.toString());
     }
     return this;
   }
 
-  public JavaContainerBuilder addToClasspath(List<Path> otherFiles) {
-    for (Path otherFile : otherFiles) {
-      if (Files.exists(otherFile)) {
-        layerConfigurationsBuilder.addFile(LayerType.EXTRA_FILES, otherFile, OTHERS_PATH);
-      }
-    }
+  /**
+   * Adds additional files to the image's classpath.
+   *
+   * @param otherFiles the list of files to add
+   * @return this
+   * @throws IOException if adding the layer fails
+   */
+  public JavaContainerBuilder addToClasspath(List<Path> otherFiles) throws IOException {
+    addFiles(LayerType.EXTRA_FILES, otherFiles, OTHERS_PATH);
     if (!classpath.contains(OTHERS_PATH.toString())) {
       classpath.add(OTHERS_PATH.toString());
     }
     return this;
   }
 
+  /**
+   * Sets the JVM flags to use when starting the application.
+   *
+   * @param jvmFlags the list of JVM flags
+   * @return this
+   */
   public JavaContainerBuilder setJvmFlags(List<String> jvmFlags) {
     this.jvmFlags = ImmutableList.copyOf(jvmFlags);
     return this;
   }
 
+  /**
+   * Sets the JVM flags to use when starting the application.
+   *
+   * @param jvmFlags the list of JVM flags
+   * @return this
+   */
   public JavaContainerBuilder setJvmFlags(String... jvmFlags) {
     this.jvmFlags = ImmutableList.copyOf(jvmFlags);
     return this;
   }
 
+  /**
+   * Sets the main class used to start the application on the image.
+   *
+   * @param mainClass the main class used to start the application
+   * @return this
+   */
   public JavaContainerBuilder setMainClass(String mainClass) {
     this.mainClass = mainClass;
     return this;
   }
 
+  /**
+   * Returns a new {@link JibContainerBuilder} using the parameters specified on the {@link
+   * JavaContainerBuilder}.
+   *
+   * @return a new {@link JibContainerBuilder} using the parameters specified on the {@link
+   *     JavaContainerBuilder}
+   */
   public JibContainerBuilder toContainerBuilder() {
+    if (mainClass == null) {
+      throw new IllegalArgumentException(
+          "mainClass is null on JavaContainerBuilder; specify the "
+              + "main class using JavaContainerBuilder#setMainClass(String), or consider using a "
+              + "jib.frontend.MainClassFinder to infer the main class");
+    }
     jibContainerBuilder.setEntrypoint(
         JavaEntrypointConstructor.makeEntrypoint(classpath, jvmFlags, mainClass));
     jibContainerBuilder.setLayers(layerConfigurationsBuilder.build().getLayerConfigurations());
     return jibContainerBuilder;
+  }
+
+  private void addFiles(LayerType layerType, List<Path> sourceFiles, AbsoluteUnixPath destination)
+      throws IOException {
+    for (Path file : sourceFiles) {
+      if (!Files.exists(file)) {
+        continue;
+      }
+      if (Files.isDirectory(file)) {
+        layerConfigurationsBuilder.addDirectoryContents(layerType, file, path -> true, destination);
+      } else {
+        layerConfigurationsBuilder.addFile(
+            layerType, file, destination.resolve(file.getFileName()));
+      }
+    }
   }
 }
