@@ -29,7 +29,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Assert;
@@ -38,13 +37,8 @@ import org.junit.Test;
 /** Tests for {@link JavaContainerBuilder}. */
 public class JavaContainerBuilderTest {
 
-  /** Gets a resource file in a singleton list. */
-  private static List<Path> getResourceAsList(String directory) throws URISyntaxException {
-    return Collections.singletonList(Paths.get(Resources.getResource(directory).toURI()));
-  }
-
   /** Gets a resource file as a {@link Path}. */
-  private static Path getResourceAsPath(String directory) throws URISyntaxException {
+  private static Path getResource(String directory) throws URISyntaxException {
     return Paths.get(Resources.getResource(directory).toURI());
   }
 
@@ -72,15 +66,14 @@ public class JavaContainerBuilderTest {
           CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         JavaContainerBuilder.fromDistroless()
-            .addResources(getResourceAsPath("application/resources"))
-            .addClasses(getResourceAsPath("application/classes"))
+            .addResources(getResource("application/resources"))
+            .addClasses(getResource("application/classes"))
             .addDependencies(
-                getResourceAsPath("application/dependencies/dependency-1.0.0.jar"),
-                getResourceAsPath("application/dependencies/libraryA.jar"),
-                getResourceAsPath("application/dependencies/libraryB.jar"),
-                getResourceAsPath(
-                    "application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
-            .addToClasspath(getResourceAsPath("fileA"), getResourceAsPath("fileB"))
+                getResource("application/dependencies/dependency-1.0.0.jar"),
+                getResource("application/dependencies/libraryA.jar"),
+                getResource("application/dependencies/libraryB.jar"),
+                getResource("application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
+            .addToClasspath(getResource("fileA"), getResource("fileB"))
             .addJvmFlags("-xflag1", "-xflag2")
             .setMainClass("HelloWorld")
             .toContainerBuilder()
@@ -145,13 +138,12 @@ public class JavaContainerBuilderTest {
           CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         JavaContainerBuilder.fromDistroless()
-            .addDependencies(getResourceAsPath("application/dependencies/libraryA.jar"))
-            .addDependencies(getResourceAsPath("application/dependencies/libraryB.jar"))
+            .addDependencies(getResource("application/dependencies/libraryA.jar"))
+            .addDependencies(getResource("application/dependencies/libraryB.jar"))
             .addDependencies(
-                getResourceAsPath(
-                    "application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
-            .addClasses(getResourceAsPath("application/classes/"))
-            .addClasses(getResourceAsPath("class-finder-tests/extension"))
+                getResource("application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
+            .addClasses(getResource("application/classes/"))
+            .addClasses(getResource("class-finder-tests/extension"))
             .setMainClass("HelloWorld")
             .toContainerBuilder()
             .toBuildConfiguration(
