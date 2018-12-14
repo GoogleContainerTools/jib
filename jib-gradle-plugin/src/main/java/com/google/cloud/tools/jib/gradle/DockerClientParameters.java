@@ -21,6 +21,7 @@ import java.nio.file.Paths;
 import java.util.Map;
 import javax.annotation.Nullable;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
 
 /**
@@ -35,7 +36,13 @@ public class DockerClientParameters {
   @Input
   @Nullable
   @Optional
-  public Path getExecutable() {
+  public String getExecutable() {
+    return executable == null ? null : executable.toString();
+  }
+
+  @Internal
+  @Nullable
+  Path getExecutablePath() {
     return executable;
   }
 
