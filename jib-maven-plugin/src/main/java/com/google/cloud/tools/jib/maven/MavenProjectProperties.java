@@ -94,7 +94,8 @@ public class MavenProjectProperties implements ProjectProperties {
     Consumer<LogEvent> logEventHandler =
         (isProgressFooterEnabled()
                 ? LogEventHandlerBuilder.rich(singleThreadedExecutor).progress(noOp)
-                : LogEventHandlerBuilder.plain(singleThreadedExecutor).progress(log.isInfoEnabled() ? log::info : noOp))
+                : LogEventHandlerBuilder.plain(singleThreadedExecutor)
+                    .progress(log.isInfoEnabled() ? log::info : noOp))
             .lifecycle(log.isInfoEnabled() ? log::info : noOp)
             .debug(log.isDebugEnabled() ? log::debug : noOp)
             // INFO messages also go to Log#debug.
