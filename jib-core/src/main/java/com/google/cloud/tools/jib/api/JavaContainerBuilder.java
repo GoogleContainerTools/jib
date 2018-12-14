@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/** Creates a {@link JavaContainerBuilder} for containerizing Java applications. */
+/** Creates a {@link JibContainerBuilder} for containerizing Java applications. */
 public class JavaContainerBuilder {
 
   private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
@@ -52,10 +52,13 @@ public class JavaContainerBuilder {
   private static final AbsoluteUnixPath OTHERS_PATH = APP_ROOT.resolve("other");
 
   /**
-   * Creates a new {@link JavaContainerBuilder} that uses distroless java as the base image.
+   * Creates a new {@link JavaContainerBuilder} that uses distroless java as the base image. For
+   * more information on {@code gcr.io/distroless/java}, see <a
+   * href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
    *
-   * @return a new {@link JavaContainerBuilder} that uses distroless java as the base image
+   * @return a new {@link JavaContainerBuilder}
    * @throws InvalidImageReferenceException if creating the base image reference fails
+   * @see <a href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
    */
   public static JavaContainerBuilder fromDistroless() throws InvalidImageReferenceException {
     return from(RegistryImage.named("gcr.io/distroless/java"));
@@ -65,7 +68,7 @@ public class JavaContainerBuilder {
    * Creates a new {@link JavaContainerBuilder} with the specified base image reference.
    *
    * @param baseImageReference the base image reference
-   * @return a new {@link JavaContainerBuilder} with the specified base image reference
+   * @return a new {@link JavaContainerBuilder}
    * @throws InvalidImageReferenceException if {@code baseImageReference} is invalid
    */
   public static JavaContainerBuilder from(String baseImageReference)
@@ -77,7 +80,7 @@ public class JavaContainerBuilder {
    * Creates a new {@link JavaContainerBuilder} with the specified base image reference.
    *
    * @param baseImageReference the base image reference
-   * @return a new {@link JavaContainerBuilder} with the specified base image reference
+   * @return a new {@link JavaContainerBuilder}
    */
   public static JavaContainerBuilder from(ImageReference baseImageReference) {
     return from(RegistryImage.named(baseImageReference));
@@ -86,28 +89,30 @@ public class JavaContainerBuilder {
   /**
    * Creates a new {@link JavaContainerBuilder} with the specified base image reference.
    *
-   * @param baseImageReference the base image reference
-   * @return a new {@link JavaContainerBuilder} with the specified base image reference
+   * @param registryImage the {@link RegistryImage} that defines base container registry and
+   *     credentials
+   * @return a new {@link JavaContainerBuilder}
    */
-  public static JavaContainerBuilder from(RegistryImage baseImageReference) {
-    return new JavaContainerBuilder(Jib.from(baseImageReference));
+  public static JavaContainerBuilder from(RegistryImage registryImage) {
+    return new JavaContainerBuilder(Jib.from(registryImage));
   }
 
-  private JibContainerBuilder jibContainerBuilder;
-  private JavaLayerConfigurations.Builder layerConfigurationsBuilder;
+  private final JibContainerBuilder jibContainerBuilder;
+  private final JavaLayerConfigurations.Builder layerConfigurationsBuilder =
+      JavaLayerConfigurations.builder();
+
   private List<String> classpath;
   private List<String> jvmFlags;
   @Nullable private String mainClass;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
     this.jibContainerBuilder = jibContainerBuilder;
-    layerConfigurationsBuilder = JavaLayerConfigurations.builder();
     classpath = new ArrayList<>();
     jvmFlags = new ArrayList<>();
   }
 
   /**
-   * Adds dependencies to /app/libs on the image.
+   * Adds dependency JARs to {@code /app/libs} on the image.
    *
    * @param dependencyFiles the list of dependencies to add to the image
    * @return this
@@ -145,7 +150,7 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds dependencies to /app/libs on the image.
+   * Adds dependencies to {@code /app/libs} on the image.
    *
    * @param dependencyFiles the list of dependencies to add to the image
    * @return this
@@ -156,7 +161,7 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds resources to /app/resources on the image.
+   * Adds the contents of a resource directory to {@code /app/resources} on the image.
    *
    * @param resourceFilesDirectory the directory containing the project's resources
    * @return this
@@ -176,7 +181,7 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds classes to /app/classes on the image.
+   * Adds the contents of a classes directory to {@code /app/classes} on the image.
    *
    * @param classFilesDirectory the directory containing the class files
    * @return this
@@ -196,9 +201,10 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds additional files to the image's classpath.
+   * Adds additional files to the classpath.
    *
-   * @param otherFiles the list of files to add. Files are added to /app/other on the container
+   * @param otherFiles the list of files to add. Files are added to {@code /app/other} on the
+   *     container file system
    * @return this
    * @throws IOException if adding the layer fails
    */
@@ -255,10 +261,12 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Sets the main class used to start the application on the image.
+   * Sets the main class used to start the application on the image. To automatically infer the main
+   * class, use {@link com.google.cloud.tools.jib.frontend.MainClassFinder}.
    *
    * @param mainClass the main class used to start the application
    * @return this
+   * @see com.google.cloud.tools.jib.frontend.MainClassFinder
    */
   public JavaContainerBuilder setMainClass(String mainClass) {
     this.mainClass = mainClass;
