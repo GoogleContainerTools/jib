@@ -28,7 +28,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.junit.Assert;
 
 /** Testing infrastructure for running code across multiple threads. */
@@ -39,8 +38,7 @@ public class MultithreadedExecutor implements Closeable {
 
   private final ExecutorService executorService = Executors.newFixedThreadPool(THREAD_COUNT);
 
-  public <E> E invoke(Callable<E> callable)
-      throws ExecutionException, InterruptedException {
+  public <E> E invoke(Callable<E> callable) throws ExecutionException, InterruptedException {
     List<E> returnValue = invokeAll(Collections.singletonList(callable));
     return returnValue.get(0);
   }

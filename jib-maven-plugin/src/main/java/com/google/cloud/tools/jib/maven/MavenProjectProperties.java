@@ -97,8 +97,8 @@ public class MavenProjectProperties implements ProjectProperties {
     if (log.isDebugEnabled()) {
       logEventHandlerBuilder
           .debug(log::debug)
-          // INFO messages also go to Log#debug.
-          .info(log::info);
+          // INFO messages also go to Log#debug since Log#info is used for LIFECYCLE.
+          .info(log::debug);
     }
     if (log.isWarnEnabled()) {
       logEventHandlerBuilder.warn(log::warn);

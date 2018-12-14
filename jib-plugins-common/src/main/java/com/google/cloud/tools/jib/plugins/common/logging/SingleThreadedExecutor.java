@@ -43,7 +43,7 @@ public class SingleThreadedExecutor {
         executorService.shutdownNow();
         if (!executorService.awaitTermination(
             EXECUTOR_SHUTDOWN_WAIT.getSeconds(), TimeUnit.SECONDS)) {
-          throw new RuntimeException("Could not shut down AnsiLoggerWithFooter executor");
+          System.err.println("Could not shut down SingleThreadedExecutor");
         }
       }
 
