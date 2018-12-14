@@ -34,23 +34,22 @@ import javax.annotation.Nullable;
 /** Creates a {@link JavaContainerBuilder} for containerizing Java applications. */
 public class JavaContainerBuilder {
 
+  private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
+
   /** Absolute path of dependencies on container. */
   private static final AbsoluteUnixPath DEPENDENCIES_PATH =
-      AbsoluteUnixPath.get("/app")
-          .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
+      APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
 
   /** Absolute path of classes on container. */
   private static final AbsoluteUnixPath CLASSES_PATH =
-      AbsoluteUnixPath.get("/app")
-          .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
+      APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
 
   /** Absolute path of resources on container. */
   private static final AbsoluteUnixPath RESOURCES_PATH =
-      AbsoluteUnixPath.get("/app")
-          .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
+      APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
 
   /** Absolute path of additional classpath files on container. */
-  private static final AbsoluteUnixPath OTHERS_PATH = AbsoluteUnixPath.get("/app/other");
+  private static final AbsoluteUnixPath OTHERS_PATH = APP_ROOT.resolve("other");
 
   /**
    * Creates a new {@link JavaContainerBuilder} that uses distroless java as the base image.
