@@ -40,7 +40,6 @@ public class LogEventHandlerBuilderTest {
   @Mock private Consumer<String> mockDebugConsumer;
   @Mock private Consumer<String> mockWarnConsumer;
   @Mock private Consumer<String> mockErrorConsumer;
-  @Mock private ConsoleLoggerFactory mockConsoleLoggerFactory;
 
   @Test
   public void testBuild() {
@@ -89,18 +88,5 @@ public class LogEventHandlerBuilderTest {
         levels);
     Assert.assertEquals(
         Arrays.asList("lifecycle", "progress", "info", "debug", "warn", "error"), messages);
-  }
-
-  @Test
-  public void testBuild_incomplete() {
-    try {
-      new LogEventHandlerBuilder(mockConsoleLoggerFactory).lifecycle(mockLifecycleConsumer).build();
-      Assert.fail();
-
-    } catch (IllegalStateException ex) {
-      Assert.assertEquals(
-          "LogEventHandlerBuilder did not set handler for log level: " + Level.values()[0],
-          ex.getMessage());
-    }
   }
 }

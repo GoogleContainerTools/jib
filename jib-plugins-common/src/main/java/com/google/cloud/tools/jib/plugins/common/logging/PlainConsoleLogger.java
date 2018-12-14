@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.plugins.common.logging;
 
 import com.google.cloud.tools.jib.event.events.LogEvent.Level;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import java.util.function.Consumer;
 
@@ -43,7 +42,11 @@ class PlainConsoleLogger implements ConsoleLogger {
 
   @Override
   public void log(Level logLevel, String message) {
-    singleThreadedExecutor.execute(
-        () -> Preconditions.checkNotNull(messageConsumers.get(logLevel)).accept(message));
+    if (!messageConsumers.containsKey(logLevel)) {
+      return;
+    }
+    Consumer<String> messageConsumer = messageConsumers.get(logLevel);
+
+    singleThreadedExecutor.execute(() -> messageConsumer.accept(message));
   }
 }

@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -57,9 +56,9 @@ public class JavaLayerConfigurationsHelper {
     Predicate<Path> isClassFile =
         path -> path.startsWith(webInfClasses) && path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResource =
-        (isSnapshotDependency.or(isNonSnapshotDependency).or(isClassFile)).negate();
+        isSnapshotDependency.or(isNonSnapshotDependency).or(isClassFile).negate();
 
-    Builder layerBuilder = JavaLayerConfigurations.builder();
+    JavaLayerConfigurations.Builder layerBuilder = JavaLayerConfigurations.builder();
 
     // Gets all the dependencies.
     if (Files.exists(webInfLib)) {

@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,9 +31,16 @@ import org.junit.Test;
 /** Tests for {@link com.google.cloud.tools.jib.plugins.common.logging.AnsiLoggerWithFooter}. */
 public class AnsiLoggerWithFooterTest {
 
+  private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
+
   private final List<String> messages = new ArrayList<>();
   private final List<Level> levels = new ArrayList<>();
-  private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
+  private final Function<Level, Consumer<String>> messageConsumerFactory =
+      level ->
+          message -> {
+            levels.add(level);
+            messages.add(message);
+          };
 
   private AnsiLoggerWithFooter testAnsiLoggerWithFooter;
 
@@ -40,16 +48,23 @@ public class AnsiLoggerWithFooterTest {
   public void setUp() {
     ImmutableMap.Builder<Level, Consumer<String>> messageConsumers = ImmutableMap.builder();
     for (Level level : Level.values()) {
-      messageConsumers.put(
-          level,
-          message -> {
-            levels.add(level);
-            messages.add(message);
-          });
+      messageConsumers.put(level, messageConsumerFactory.apply(level));
     }
 
     testAnsiLoggerWithFooter =
         new AnsiLoggerWithFooter(messageConsumers.build(), singleThreadedExecutor);
+  }
+
+  @Test
+  public void testNoLifecycle() {
+    try {
+      new AnsiLoggerWithFooter(ImmutableMap.of(), singleThreadedExecutor);
+      Assert.fail();
+
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "Cannot construct AnsiLoggerFooter without LIFECYCLE message consumer", ex.getMessage());
+    }
   }
 
   @Test
@@ -69,6 +84,26 @@ public class AnsiLoggerWithFooterTest {
         Arrays.asList(
             Level.LIFECYCLE, Level.PROGRESS, Level.INFO, Level.DEBUG, Level.WARN, Level.ERROR),
         levels);
+  }
+
+  @Test
+  public void testLog_ignoreIfNoMessageConsumer() {
+    AnsiLoggerWithFooter testAnsiLoggerWithFooter =
+        new AnsiLoggerWithFooter(
+            ImmutableMap.of(Level.LIFECYCLE, messageConsumerFactory.apply(Level.LIFECYCLE)),
+            singleThreadedExecutor);
+
+    testAnsiLoggerWithFooter.log(Level.LIFECYCLE, "lifecycle");
+    testAnsiLoggerWithFooter.log(Level.PROGRESS, "progress");
+    testAnsiLoggerWithFooter.log(Level.INFO, "info");
+    testAnsiLoggerWithFooter.log(Level.DEBUG, "debug");
+    testAnsiLoggerWithFooter.log(Level.WARN, "warn");
+    testAnsiLoggerWithFooter.log(Level.ERROR, "error");
+
+    singleThreadedExecutor.shutDownAndAwaitTermination();
+
+    Assert.assertEquals(Collections.singletonList("lifecycle"), messages);
+    Assert.assertEquals(Collections.singletonList(Level.LIFECYCLE), levels);
   }
 
   @Test

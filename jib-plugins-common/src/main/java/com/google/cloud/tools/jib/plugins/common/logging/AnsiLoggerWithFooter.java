@@ -42,6 +42,7 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
   private static final String UNBOLD = "\033[0m";
 
   private final ImmutableMap<Level, Consumer<String>> messageConsumers;
+  private final Consumer<String> lifecycleConsumer;
   private final SingleThreadedExecutor singleThreadedExecutor;
 
   private List<String> footerLines = Collections.emptyList();
@@ -55,22 +56,31 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
   AnsiLoggerWithFooter(
       ImmutableMap<Level, Consumer<String>> messageConsumers,
       SingleThreadedExecutor singleThreadedExecutor) {
+    Preconditions.checkArgument(
+        messageConsumers.containsKey(Level.LIFECYCLE),
+        "Cannot construct AnsiLoggerFooter without LIFECYCLE message consumer");
     this.messageConsumers = messageConsumers;
+    this.lifecycleConsumer = Preconditions.checkNotNull(messageConsumers.get(Level.LIFECYCLE));
     this.singleThreadedExecutor = singleThreadedExecutor;
   }
 
   @Override
   public void log(Level logLevel, String message) {
+    if (!messageConsumers.containsKey(logLevel)) {
+      return;
+    }
+    Consumer<String> messageConsumer = messageConsumers.get(logLevel);
+
     singleThreadedExecutor.execute(
         () -> {
           boolean didErase = eraseFooter();
 
           // If a previous footer was erased, the message needs to go up a line.
           String messagePrefix = didErase ? CURSOR_UP_SEQUENCE : "";
-          consumeMessage(logLevel, messagePrefix + message);
+          messageConsumer.accept(messagePrefix + message);
 
           for (String footerLine : footerLines) {
-            consumeMessage(Level.LIFECYCLE, BOLD + footerLine + UNBOLD);
+            lifecycleConsumer.accept(BOLD + footerLine + UNBOLD);
           }
         });
   }
@@ -96,7 +106,7 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
           String newFooterPrefix = didErase ? CURSOR_UP_SEQUENCE : "";
 
           for (String newFooterLine : newFooterLines) {
-            consumeMessage(Level.LIFECYCLE, newFooterPrefix + BOLD + newFooterLine + UNBOLD);
+            lifecycleConsumer.accept(newFooterPrefix + BOLD + newFooterLine + UNBOLD);
             newFooterPrefix = "";
           }
 
@@ -127,19 +137,8 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
     // Erases everything below cursor.
     footerEraserBuilder.append(ERASE_DISPLAY_BELOW);
 
-    consumeMessage(Level.LIFECYCLE, footerEraserBuilder.toString());
+    lifecycleConsumer.accept(footerEraserBuilder.toString());
 
     return true;
-  }
-
-  /**
-   * Logs a message with the corresponding {@link Consumer}in {@link #messageConsumers}. Do
-   * <em>not</em> call outside of a task submitted to {@link #singleThreadedExecutor}.
-   *
-   * @param logLevel the {@link Level} of the message
-   * @param message the message
-   */
-  private void consumeMessage(Level logLevel, String message) {
-    Preconditions.checkNotNull(messageConsumers.get(logLevel)).accept(message);
   }
 }

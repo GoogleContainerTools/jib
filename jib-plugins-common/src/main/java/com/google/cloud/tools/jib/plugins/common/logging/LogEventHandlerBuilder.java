@@ -60,7 +60,7 @@ public class LogEventHandlerBuilder {
   }
 
   private final ImmutableMap.Builder<Level, Consumer<String>> messageConsumers =
-      ImmutableMap.builderWithExpectedSize(6);
+      ImmutableMap.builder();
   private final ConsoleLoggerFactory consoleLoggerFactory;
 
   @VisibleForTesting
@@ -140,15 +140,7 @@ public class LogEventHandlerBuilder {
    * @return the {@link Consumer}
    */
   public Consumer<LogEvent> build() {
-    ImmutableMap<Level, Consumer<String>> messageConsumersMap = messageConsumers.build();
-    for (Level level : Level.values()) {
-      if (!messageConsumersMap.containsKey(level)) {
-        throw new IllegalStateException(
-            "LogEventHandlerBuilder did not set handler for log level: " + level);
-      }
-    }
-
-    ConsoleLogger consoleLogger = consoleLoggerFactory.apply(messageConsumersMap);
+    ConsoleLogger consoleLogger = consoleLoggerFactory.apply(messageConsumers.build());
     return logEvent -> consoleLogger.log(logEvent.getLevel(), logEvent.getMessage());
   }
 }

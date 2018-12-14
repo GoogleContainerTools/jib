@@ -95,7 +95,7 @@ public class DockerDaemonImage implements TargetImage {
 
   @Override
   public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
-    Builder dockerClientBuilder = DockerClient.builder();
+    DockerClient.Builder dockerClientBuilder = DockerClient.builder();
     if (dockerExecutable != null) {
       dockerClientBuilder.setDockerExecutable(dockerExecutable);
     }
