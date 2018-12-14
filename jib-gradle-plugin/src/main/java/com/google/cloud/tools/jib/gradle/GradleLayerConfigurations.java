@@ -27,7 +27,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
@@ -130,6 +133,17 @@ class GradleLayerConfigurations {
     }
 
     // Adds dependency files.
+    List<String> duplicates =
+        dependencyFiles
+            .getFiles()
+            .stream()
+            .map(File::getName)
+            .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
+            .entrySet()
+            .stream()
+            .filter(entry -> entry.getValue() > 1)
+            .map(Entry::getKey)
+            .collect(Collectors.toList());
     for (File dependencyFile : dependencyFiles) {
       if (dependencyFile.exists()) {
         boolean isSnapshot = dependencyFile.getName().contains("SNAPSHOT");
@@ -137,7 +151,13 @@ class GradleLayerConfigurations {
         layerBuilder.addFile(
             layerType,
             dependencyFile.toPath(),
-            dependenciesExtractionPath.resolve(dependencyFile.getName()));
+            dependenciesExtractionPath.resolve(
+                duplicates.contains(dependencyFile.getName())
+                    ? dependencyFile
+                            .getName()
+                            .replaceFirst("\\.jar$", "-" + Files.size(dependencyFile.toPath()))
+                        + ".jar"
+                    : dependencyFile.getName()));
       } else {
         logger.info("\t'" + dependencyFile + "' (not found, skipped)");
       }

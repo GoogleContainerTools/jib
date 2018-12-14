@@ -23,12 +23,16 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import com.google.cloud.tools.jib.plugins.common.JavaLayerConfigurationsHelper;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.project.MavenProject;
 
@@ -87,12 +91,30 @@ class MavenLayerConfigurations {
     Builder layerBuilder = JavaLayerConfigurations.builder();
 
     // Gets all the dependencies.
+    List<String> duplicates =
+        project
+            .getArtifacts()
+            .stream()
+            .map(Artifact::getFile)
+            .map(File::getName)
+            .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
+            .entrySet()
+            .stream()
+            .filter(entry -> entry.getValue() > 1)
+            .map(Entry::getKey)
+            .collect(Collectors.toList());
     for (Artifact artifact : project.getArtifacts()) {
       Path artifactPath = artifact.getFile().toPath();
       LayerType layerType =
           artifact.isSnapshot() ? LayerType.SNAPSHOT_DEPENDENCIES : LayerType.DEPENDENCIES;
+      String filename = artifactPath.getFileName().toString();
       layerBuilder.addFile(
-          layerType, artifactPath, dependenciesExtractionPath.resolve(artifactPath.getFileName()));
+          layerType,
+          artifactPath,
+          dependenciesExtractionPath.resolve(
+              duplicates.contains(filename)
+                  ? filename.replaceFirst("\\.jar$", "-" + Files.size(artifactPath)) + ".jar"
+                  : filename));
     }
 
     Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());

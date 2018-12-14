@@ -71,12 +71,15 @@ public class MavenLayerConfigurationsTest {
   private static void assertNonDefaultAppRoot(JavaLayerConfigurations configuration) {
     assertExtractionPathsUnordered(
         Arrays.asList(
-            "/my/app/libs/dependency-1.0.0.jar",
+            "/my/app/libs/dependency-1.0.0-770.jar",
+            "/my/app/libs/dependency-1.0.0-200.jar",
+            "/my/app/libs/dependency-1.0.0-480.jar",
             "/my/app/libs/libraryA.jar",
-            "/my/app/libs/libraryB.jar"),
+            "/my/app/libs/libraryB.jar",
+            "/my/app/libs/library.jarC.jar"),
         configuration.getDependencyLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
+        Collections.singletonList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -111,14 +114,19 @@ public class MavenLayerConfigurationsTest {
   @Before
   public void setUp() throws URISyntaxException, IOException {
     Path outputPath = Paths.get(Resources.getResource("application/output").toURI());
+    Path dependenciesPath = Paths.get(Resources.getResource("application/dependencies").toURI());
 
     Mockito.when(mockMavenProject.getBuild()).thenReturn(mockBuild);
     Mockito.when(mockBuild.getOutputDirectory()).thenReturn(outputPath.toString());
 
     Set<Artifact> artifacts =
         ImmutableSet.of(
-            makeArtifact(Paths.get("application", "dependencies", "libraryB.jar")),
-            makeArtifact(Paths.get("application", "dependencies", "libraryA.jar")),
+            makeArtifact(dependenciesPath.resolve("library.jarC.jar")),
+            makeArtifact(dependenciesPath.resolve("libraryB.jar")),
+            makeArtifact(dependenciesPath.resolve("libraryA.jar")),
+            makeArtifact(dependenciesPath.resolve("more").resolve("dependency-1.0.0.jar")),
+            makeArtifact(
+                dependenciesPath.resolve("another").resolve("one").resolve("dependency-1.0.0.jar")),
             // Maven reads and populates "Artifacts" with its own processing, so read some from a
             // repository
             testRepository.findArtifact("com.test", "dependency", "1.0.0"),
@@ -135,11 +143,15 @@ public class MavenLayerConfigurationsTest {
 
   @Test
   public void test_correctFiles() throws URISyntaxException, IOException {
+    Path dependenciesPath = Paths.get(Resources.getResource("application/dependencies").toURI());
     ImmutableList<Path> expectedDependenciesFiles =
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
-            Paths.get("application", "dependencies", "libraryA.jar"),
-            Paths.get("application", "dependencies", "libraryB.jar"));
+            dependenciesPath.resolve("more").resolve("dependency-1.0.0.jar"),
+            dependenciesPath.resolve("another").resolve("one").resolve("dependency-1.0.0.jar"),
+            dependenciesPath.resolve("libraryA.jar"),
+            dependenciesPath.resolve("libraryB.jar"),
+            dependenciesPath.resolve("library.jarC.jar"));
     ImmutableList<Path> expectedSnapshotDependenciesFiles =
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
@@ -266,10 +278,10 @@ public class MavenLayerConfigurationsTest {
     assertSourcePathsUnordered(expectedExtraFiles, configuration.getExtraFilesLayerEntries());
 
     assertExtractionPathsUnordered(
-        Arrays.asList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
+        Collections.singletonList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
         configuration.getDependencyLayerEntries());
     assertExtractionPathsUnordered(
-        Arrays.asList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
+        Collections.singletonList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
         configuration.getSnapshotDependencyLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -349,28 +361,28 @@ public class MavenLayerConfigurationsTest {
   }
 
   @Test
-  public void testIsWarProject_WarPackagingIsWar() throws IOException {
+  public void testIsWarProject_WarPackagingIsWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
 
     Assert.assertTrue(MojoCommon.isWarProject(mockMavenProject));
   }
 
   @Test
-  public void testIsWarProject_GwtAppPackagingIsWar() throws IOException {
+  public void testIsWarProject_GwtAppPackagingIsWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-app");
 
     Assert.assertTrue(MojoCommon.isWarProject(mockMavenProject));
   }
 
   @Test
-  public void testIsWarProject_JarPackagingIsNotWar() throws IOException {
+  public void testIsWarProject_JarPackagingIsNotWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
 
     Assert.assertFalse(MojoCommon.isWarProject(mockMavenProject));
   }
 
   @Test
-  public void testIsWarProject_GwtLibPackagingIsNotWar() throws IOException {
+  public void testIsWarProject_GwtLibPackagingIsNotWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-lib");
 
     Assert.assertFalse(MojoCommon.isWarProject(mockMavenProject));
