@@ -111,34 +111,22 @@ public class JavaContainerBuilder {
   /**
    * Adds dependency JARs to {@code /app/libs} on the image.
    *
-   * @param dependencyFiles the list of dependencies to add to the image
+   * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
    * @throws IOException if adding the layer fails
    */
   public JavaContainerBuilder addDependencies(List<Path> dependencyFiles) throws IOException {
     for (Path file : dependencyFiles) {
       if (!Files.exists(file)) {
-        continue;
+        throw new IOException("File '" + file + "' does not exist.");
       }
-      if (Files.isDirectory(file)) {
-        layerConfigurationsBuilder.addDirectoryContents(
-            LayerType.DEPENDENCIES,
-            file,
-            path -> !path.getFileName().toString().contains("SNAPSHOT"),
-            DEPENDENCIES_PATH);
-        layerConfigurationsBuilder.addDirectoryContents(
-            LayerType.SNAPSHOT_DEPENDENCIES,
-            file,
-            path -> path.getFileName().toString().contains("SNAPSHOT"),
-            DEPENDENCIES_PATH);
-      } else {
-        layerConfigurationsBuilder.addFile(
-            file.getFileName().toString().contains("SNAPSHOT")
-                ? LayerType.SNAPSHOT_DEPENDENCIES
-                : LayerType.DEPENDENCIES,
-            file,
-            DEPENDENCIES_PATH.resolve(file.getFileName()));
-      }
+
+      layerConfigurationsBuilder.addFile(
+          file.getFileName().toString().contains("SNAPSHOT")
+              ? LayerType.SNAPSHOT_DEPENDENCIES
+              : LayerType.DEPENDENCIES,
+          file,
+          DEPENDENCIES_PATH.resolve(file.getFileName()));
     }
     if (!classpath.contains(DEPENDENCIES_PATH.resolve("*").toString())) {
       classpath.add(DEPENDENCIES_PATH.resolve("*").toString());
@@ -147,9 +135,9 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds dependencies to {@code /app/libs} on the image.
+   * Adds dependency JARs to {@code /app/libs} on the image.
    *
-   * @param dependencyFiles the list of dependencies to add to the image
+   * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
    * @throws IOException if adding the layer fails
    */
@@ -165,7 +153,10 @@ public class JavaContainerBuilder {
    * @throws IOException if adding the layer fails
    */
   public JavaContainerBuilder addResources(Path resourceFilesDirectory) throws IOException {
-    if (!Files.exists(resourceFilesDirectory) || !Files.isDirectory(resourceFilesDirectory)) {
+    if (!Files.exists(resourceFilesDirectory)) {
+      throw new IOException("Directory '" + resourceFilesDirectory + "' does not exist.");
+    }
+    if (!Files.isDirectory(resourceFilesDirectory)) {
       throw new IOException(
           "Adding resources failed: '" + resourceFilesDirectory + "' is not a directory");
     }
@@ -185,7 +176,10 @@ public class JavaContainerBuilder {
    * @throws IOException if adding the layer fails
    */
   public JavaContainerBuilder addClasses(Path classFilesDirectory) throws IOException {
-    if (!Files.exists(classFilesDirectory) || !Files.isDirectory(classFilesDirectory)) {
+    if (!Files.exists(classFilesDirectory)) {
+      throw new IOException("Directory '" + classFilesDirectory + "' does not exist.");
+    }
+    if (!Files.isDirectory(classFilesDirectory)) {
       throw new IOException(
           "Adding classes failed: '" + classFilesDirectory + "' is not a directory");
     }
@@ -208,7 +202,7 @@ public class JavaContainerBuilder {
   public JavaContainerBuilder addToClasspath(List<Path> otherFiles) throws IOException {
     for (Path file : otherFiles) {
       if (!Files.exists(file)) {
-        continue;
+        throw new IOException("File '" + file + "' does not exist.");
       }
       if (Files.isDirectory(file)) {
         layerConfigurationsBuilder.addDirectoryContents(

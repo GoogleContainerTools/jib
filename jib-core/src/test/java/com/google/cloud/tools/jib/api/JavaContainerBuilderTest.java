@@ -74,10 +74,13 @@ public class JavaContainerBuilderTest {
         JavaContainerBuilder.fromDistroless()
             .addClasses(getResourceAsPath("application/classes"))
             .addResources(getResourceAsPath("application/resources"))
-            .addDependencies(getResourceAsList("application/dependencies"))
-            .addDependencies(getResourceAsList("application/snapshot-dependencies"))
-            .addToClasspath(getResourceAsList("fileA"))
-            .addToClasspath(getResourceAsPath("fileB"))
+            .addDependencies(
+                getResourceAsPath("application/dependencies/dependency-1.0.0.jar"),
+                getResourceAsPath("application/dependencies/libraryA.jar"),
+                getResourceAsPath("application/dependencies/libraryB.jar"),
+                getResourceAsPath(
+                    "application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
+            .addToClasspath(getResourceAsPath("fileA"), getResourceAsPath("fileB"))
             .addJvmFlags("-xflag1", "-xflag2")
             .setMainClass("HelloWorld")
             .toContainerBuilder()
@@ -109,9 +112,7 @@ public class JavaContainerBuilderTest {
 
     // Check snapshots
     List<AbsoluteUnixPath> expectedSnapshotDependencies =
-        ImmutableList.of(
-            AbsoluteUnixPath.get("/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-            AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-SNAPSHOT.jar"));
+        ImmutableList.of(AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-SNAPSHOT.jar"));
     Assert.assertEquals(
         expectedSnapshotDependencies,
         getExtractionPaths(buildConfiguration, "snapshot dependencies"));
@@ -146,11 +147,10 @@ public class JavaContainerBuilderTest {
         JavaContainerBuilder.fromDistroless()
             .addClasses(getResourceAsPath("application/classes/"))
             .addClasses(getResourceAsPath("class-finder-tests/extension"))
+            .addDependencies(getResourceAsPath("application/dependencies/libraryA.jar"))
+            .addDependencies(getResourceAsPath("application/dependencies/libraryB.jar"))
             .addDependencies(
-                getResourceAsPath("application/dependencies/libraryA.jar"),
-                getResourceAsPath("application/dependencies/libraryB.jar"))
-            .addDependencies(
-                getResourceAsList(
+                getResourceAsPath(
                     "application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
             .setMainClass("HelloWorld")
             .toContainerBuilder()
