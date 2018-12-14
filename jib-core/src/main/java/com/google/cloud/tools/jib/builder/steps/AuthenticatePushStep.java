@@ -80,7 +80,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
     String registry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
 
     try (ProgressEventDispatcher ignored =
-            progressEventDispatcherFactory.create("authenticate push to " + registry, 1);
+            progressEventDispatcherFactory.create("authenticating push to " + registry, 1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(
                 buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, registry))) {

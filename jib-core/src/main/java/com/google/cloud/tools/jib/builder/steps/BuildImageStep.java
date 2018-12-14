@@ -92,7 +92,7 @@ class BuildImageStep
   private Image<Layer> afterCachedLayerSteps()
       throws ExecutionException, LayerPropertyNotFoundException {
     try (ProgressEventDispatcher ignored =
-            progressEventDispatcherFactory.create("build image format", 1);
+            progressEventDispatcherFactory.create("building image format", 1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // Constructs the image.
