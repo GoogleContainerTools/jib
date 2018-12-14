@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.event.progress;
+package com.google.cloud.tools.jib;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -28,25 +28,23 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.junit.Assert;
 
 /** Testing infrastructure for running code across multiple threads. */
-class MultithreadedExecutor implements Closeable {
+public class MultithreadedExecutor implements Closeable {
 
   private static final Duration MULTITHREADED_TEST_TIMEOUT = Duration.ofSeconds(1);
   private static final int THREAD_COUNT = 20;
 
   private final ExecutorService executorService = Executors.newFixedThreadPool(THREAD_COUNT);
 
-  <E> E invoke(Callable<E> callable)
-      throws ExecutionException, InterruptedException, TimeoutException {
+  public <E> E invoke(Callable<E> callable) throws ExecutionException, InterruptedException {
     List<E> returnValue = invokeAll(Collections.singletonList(callable));
     return returnValue.get(0);
   }
 
-  <E> List<E> invokeAll(List<Callable<E>> callables)
-      throws InterruptedException, ExecutionException, TimeoutException {
+  public <E> List<E> invokeAll(List<Callable<E>> callables)
+      throws InterruptedException, ExecutionException {
     List<Future<E>> futures =
         executorService.invokeAll(
             callables, MULTITHREADED_TEST_TIMEOUT.getSeconds(), TimeUnit.SECONDS);

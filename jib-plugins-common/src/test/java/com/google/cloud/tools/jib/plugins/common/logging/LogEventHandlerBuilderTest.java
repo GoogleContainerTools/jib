@@ -1,0 +1,92 @@
+/*
+ * Copyright 2018 Google LLC.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package com.google.cloud.tools.jib.plugins.common.logging;
+
+import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.events.LogEvent.Level;
+import com.google.cloud.tools.jib.plugins.common.logging.LogEventHandlerBuilder.ConsoleLoggerFactory;
+import com.google.common.collect.ImmutableMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Consumer;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+/** Tests for {@link LogEventHandlerBuilder}. */
+@RunWith(MockitoJUnitRunner.class)
+public class LogEventHandlerBuilderTest {
+
+  @Mock private Consumer<String> mockLifecycleConsumer;
+  @Mock private Consumer<String> mockProgressConsumer;
+  @Mock private Consumer<String> mockInfoConsumer;
+  @Mock private Consumer<String> mockDebugConsumer;
+  @Mock private Consumer<String> mockWarnConsumer;
+  @Mock private Consumer<String> mockErrorConsumer;
+
+  @Test
+  public void testBuild() {
+    List<String> messages = new ArrayList<>();
+    List<Level> levels = new ArrayList<>();
+
+    ConsoleLoggerFactory consoleLoggerFactory =
+        messageConsumers -> {
+          Assert.assertEquals(
+              ImmutableMap.builder()
+                  .put(Level.LIFECYCLE, mockLifecycleConsumer)
+                  .put(Level.PROGRESS, mockProgressConsumer)
+                  .put(Level.INFO, mockInfoConsumer)
+                  .put(Level.DEBUG, mockDebugConsumer)
+                  .put(Level.WARN, mockWarnConsumer)
+                  .put(Level.ERROR, mockErrorConsumer)
+                  .build(),
+              messageConsumers);
+          return (ConsoleLogger)
+              (logLevel, message) -> {
+                messages.add(message);
+                levels.add(logLevel);
+              };
+        };
+
+    Consumer<LogEvent> logEventHandler =
+        new LogEventHandlerBuilder(consoleLoggerFactory)
+            .lifecycle(mockLifecycleConsumer)
+            .progress(mockProgressConsumer)
+            .info(mockInfoConsumer)
+            .debug(mockDebugConsumer)
+            .warn(mockWarnConsumer)
+            .error(mockErrorConsumer)
+            .build();
+
+    logEventHandler.accept(LogEvent.lifecycle("lifecycle"));
+    logEventHandler.accept(LogEvent.progress("progress"));
+    logEventHandler.accept(LogEvent.info("info"));
+    logEventHandler.accept(LogEvent.debug("debug"));
+    logEventHandler.accept(LogEvent.warn("warn"));
+    logEventHandler.accept(LogEvent.error("error"));
+
+    Assert.assertEquals(
+        Arrays.asList(
+            Level.LIFECYCLE, Level.PROGRESS, Level.INFO, Level.DEBUG, Level.WARN, Level.ERROR),
+        levels);
+    Assert.assertEquals(
+        Arrays.asList("lifecycle", "progress", "info", "debug", "warn", "error"), messages);
+  }
+}

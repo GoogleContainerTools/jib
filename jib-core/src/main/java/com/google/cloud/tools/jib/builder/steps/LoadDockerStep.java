@@ -91,7 +91,7 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
       throws ExecutionException, InterruptedException, IOException {
     buildConfiguration
         .getEventDispatcher()
-        .dispatch(LogEvent.lifecycle("Loading to Docker daemon..."));
+        .dispatch(LogEvent.progress("Loading to Docker daemon..."));
 
     try (ProgressEventDispatcher ignored =
         progressEventDispatcherFactory.create("Load to Docker daemon", 1)) {

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.plugins.common;
+package com.google.cloud.tools.jib.plugins.common.logging;
 
 import com.google.cloud.tools.jib.event.progress.Allocation;
 import java.util.ArrayList;

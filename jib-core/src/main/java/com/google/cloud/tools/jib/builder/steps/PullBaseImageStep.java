@@ -112,7 +112,7 @@ class PullBaseImageStep
     buildConfiguration
         .getEventDispatcher()
         .dispatch(
-            LogEvent.lifecycle(
+            LogEvent.progress(
                 "Getting base image "
                     + buildConfiguration.getBaseImageConfiguration().getImage()
                     + "..."));

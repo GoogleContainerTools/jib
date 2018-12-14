@@ -378,7 +378,7 @@
       <plugin>
         <groupId>com.coveo</groupId>
         <artifactId>fmt-maven-plugin</artifactId>
-        <version>2.5.0</version>
+        <version>2.6.0</version>
         <dependencies>
           <dependency>
             <groupId>com.google.googlejavaformat</groupId>
@@ -399,19 +399,21 @@
       <!-- Checkstyle -->
       <plugin>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>2.17</version>
+        <version>3.0.0</version>
         <dependencies>
           <dependency>
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
-            <version>8.7</version>
+            <version>8.15</version>
           </dependency>
         </dependencies>
         <configuration>
           <logViolationsToConsole>true</logViolationsToConsole>
           <failOnViolation>true</failOnViolation>
           <violationSeverity>warning</violationSeverity>
-          <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+          <sourceDirectories>
+            <sourceDirectory>{project.build.sourceDirectory}</sourceDirectory>
+          </sourceDirectories>
         </configuration>
         <executions>
           <execution>

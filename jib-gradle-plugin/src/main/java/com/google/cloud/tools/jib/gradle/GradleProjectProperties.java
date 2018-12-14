@@ -22,9 +22,11 @@ import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.AnsiLoggerWithFooter;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
+import com.google.cloud.tools.jib.plugins.common.logging.LogEventHandlerBuilder;
+import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +38,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
+import org.apache.tools.ant.taskdefs.condition.Os;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -77,17 +81,6 @@ class GradleProjectProperties implements ProjectProperties {
     }
   }
 
-  private static EventHandlers makeEventHandlers(
-      Logger logger, AnsiLoggerWithFooter ansiLoggerWithFooter) {
-    LogEventHandler logEventHandler = new LogEventHandler(logger, ansiLoggerWithFooter);
-    TimerEventHandler timerEventHandler =
-        new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message)));
-
-    return new EventHandlers()
-        .add(JibEventType.LOGGING, logEventHandler)
-        .add(JibEventType.TIMING, timerEventHandler);
-  }
-
   @Nullable
   static War getWarTask(Project project) {
     WarPluginConvention warPluginConvention =
@@ -102,8 +95,56 @@ class GradleProjectProperties implements ProjectProperties {
     return project.getBuildDir().toPath().resolve(ProjectProperties.EXPLODED_WAR_DIRECTORY_NAME);
   }
 
+  private static EventHandlers makeEventHandlers(
+      Project project, Logger logger, SingleThreadedExecutor singleThreadedExecutor) {
+    LogEventHandlerBuilder logEventHandlerBuilder =
+        (isProgressFooterEnabled(project)
+                ? LogEventHandlerBuilder.rich(singleThreadedExecutor)
+                : LogEventHandlerBuilder.plain(singleThreadedExecutor).progress(logger::lifecycle))
+            .lifecycle(logger::lifecycle);
+    if (logger.isDebugEnabled()) {
+      logEventHandlerBuilder.debug(logger::debug);
+    }
+    if (logger.isInfoEnabled()) {
+      logEventHandlerBuilder.info(logger::info);
+    }
+    if (logger.isWarnEnabled()) {
+      logEventHandlerBuilder.warn(logger::warn);
+    }
+    if (logger.isErrorEnabled()) {
+      logEventHandlerBuilder.error(logger::error);
+    }
+    Consumer<LogEvent> logEventHandler = logEventHandlerBuilder.build();
+
+    TimerEventHandler timerEventHandler =
+        new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message)));
+
+    return new EventHandlers()
+        .add(JibEventType.LOGGING, logEventHandler)
+        .add(JibEventType.TIMING, timerEventHandler);
+  }
+
+  private static boolean isProgressFooterEnabled(Project project) {
+    // TODO: Make SHOW_PROGRESS be true by default.
+    if (!Boolean.getBoolean(PropertyNames.SHOW_PROGRESS)) {
+      return false;
+    }
+
+    switch (project.getGradle().getStartParameter().getConsoleOutput()) {
+      case Plain:
+        return false;
+
+      case Auto:
+        // Enables progress footer when ANSI is supported (Windows or TERM not 'dumb').
+        return Os.isFamily(Os.FAMILY_WINDOWS) || !"dumb".equals(System.getenv("TERM"));
+
+      default:
+        return true;
+    }
+  }
+
   private final Project project;
-  private final AnsiLoggerWithFooter ansiLoggerWithFooter;
+  private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final EventHandlers eventHandlers;
   private final JavaLayerConfigurations javaLayerConfigurations;
 
@@ -113,8 +154,7 @@ class GradleProjectProperties implements ProjectProperties {
     this.project = project;
     this.javaLayerConfigurations = javaLayerConfigurations;
 
-    ansiLoggerWithFooter = new AnsiLoggerWithFooter(logger::lifecycle);
-    eventHandlers = makeEventHandlers(logger, ansiLoggerWithFooter);
+    eventHandlers = makeEventHandlers(project, logger, singleThreadedExecutor);
   }
 
   @Override
@@ -124,7 +164,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public void waitForLoggingThread() {
-    ansiLoggerWithFooter.shutDownAndAwaitTermination();
+    singleThreadedExecutor.shutDownAndAwaitTermination();
   }
 
   @Override

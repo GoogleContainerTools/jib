@@ -1,7 +1,7 @@
 plugins {
   id 'java'
   id 'checkstyle'
-  id 'com.github.sherter.google-java-format' version '0.7.1'
+  id 'com.github.sherter.google-java-format' version '0.8'
   id 'net.ltgt.apt' version '0.13'
   id 'net.ltgt.errorprone' version '0.0.13'
 }
@@ -77,7 +77,7 @@ check.dependsOn verifyGoogleJavaFormat
 
 /* CHECKSTYLE */
 checkstyle {
-  toolVersion = "7.6.1"
+  toolVersion = '8.15'
 
   // get the google_checks.xml file from the checkstyle jar and take out the java checks
   def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()

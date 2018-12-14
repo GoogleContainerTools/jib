@@ -41,12 +41,14 @@ public class LogEventTest {
   public void testFactories() {
     eventDispatcher.dispatch(LogEvent.error("error"));
     eventDispatcher.dispatch(LogEvent.lifecycle("lifecycle"));
+    eventDispatcher.dispatch(LogEvent.progress("progress"));
     eventDispatcher.dispatch(LogEvent.warn("warn"));
     eventDispatcher.dispatch(LogEvent.info("info"));
     eventDispatcher.dispatch(LogEvent.debug("debug"));
 
     verifyNextLogEvent(Level.ERROR, "error");
     verifyNextLogEvent(Level.LIFECYCLE, "lifecycle");
+    verifyNextLogEvent(Level.PROGRESS, "progress");
     verifyNextLogEvent(Level.WARN, "warn");
     verifyNextLogEvent(Level.INFO, "info");
     verifyNextLogEvent(Level.DEBUG, "debug");

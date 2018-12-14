@@ -73,7 +73,7 @@ public class FilePermissions {
       Set<PosixFilePermission> posixFilePermissions) {
     int permissionBits = 0;
     for (PosixFilePermission permission : posixFilePermissions) {
-      permissionBits |= PERMISSION_MAP.get(permission);
+      permissionBits |= Preconditions.checkNotNull(PERMISSION_MAP.get(permission));
     }
     return new FilePermissions(permissionBits);
   }

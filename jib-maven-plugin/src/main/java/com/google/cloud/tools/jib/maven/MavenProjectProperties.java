@@ -22,19 +22,23 @@ import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.AnsiLoggerWithFooter;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
+import com.google.cloud.tools.jib.plugins.common.logging.LogEventHandlerBuilder;
+import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.utils.Os;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 
 /** Obtains information about a {@link MavenProject}. */
@@ -84,8 +88,26 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   private static EventHandlers makeEventHandlers(
-      Log log, AnsiLoggerWithFooter ansiLoggerWithFooter) {
-    LogEventHandler logEventHandler = new LogEventHandler(log, ansiLoggerWithFooter);
+      Log log, SingleThreadedExecutor singleThreadedExecutor) {
+    LogEventHandlerBuilder logEventHandlerBuilder =
+        (isProgressFooterEnabled()
+                ? LogEventHandlerBuilder.rich(singleThreadedExecutor)
+                : LogEventHandlerBuilder.plain(singleThreadedExecutor).progress(log::info))
+            .lifecycle(log::info);
+    if (log.isDebugEnabled()) {
+      logEventHandlerBuilder
+          .debug(log::debug)
+          // INFO messages also go to Log#debug since Log#info is used for LIFECYCLE.
+          .info(log::debug);
+    }
+    if (log.isWarnEnabled()) {
+      logEventHandlerBuilder.warn(log::warn);
+    }
+    if (log.isErrorEnabled()) {
+      logEventHandlerBuilder.error(log::error);
+    }
+    Consumer<LogEvent> logEventHandler = logEventHandlerBuilder.build();
+
     TimerEventHandler timerEventHandler =
         new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message)));
 
@@ -94,8 +116,22 @@ public class MavenProjectProperties implements ProjectProperties {
         .add(JibEventType.TIMING, timerEventHandler);
   }
 
+  private static boolean isProgressFooterEnabled() {
+    // TODO: Make SHOW_PROGRESS be true by default.
+    if (!Boolean.getBoolean(PropertyNames.SHOW_PROGRESS)) {
+      return false;
+    }
+
+    // Enables progress footer when ANSI is supported (Windows or System.console() not null and TERM
+    // not 'dumb').
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+      return true;
+    }
+    return System.console() != null && !"dumb".equals(System.getenv("TERM"));
+  }
+
   private final MavenProject project;
-  private final AnsiLoggerWithFooter ansiLoggerWithFooter;
+  private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final EventHandlers eventHandlers;
   private final JavaLayerConfigurations javaLayerConfigurations;
 
@@ -105,8 +141,7 @@ public class MavenProjectProperties implements ProjectProperties {
     this.project = project;
     this.javaLayerConfigurations = javaLayerConfigurations;
 
-    ansiLoggerWithFooter = new AnsiLoggerWithFooter(log::info);
-    eventHandlers = makeEventHandlers(log, ansiLoggerWithFooter);
+    eventHandlers = makeEventHandlers(log, singleThreadedExecutor);
   }
 
   @Override
@@ -116,7 +151,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @Override
   public void waitForLoggingThread() {
-    ansiLoggerWithFooter.shutDownAndAwaitTermination();
+    singleThreadedExecutor.shutDownAndAwaitTermination();
   }
 
   @Override
