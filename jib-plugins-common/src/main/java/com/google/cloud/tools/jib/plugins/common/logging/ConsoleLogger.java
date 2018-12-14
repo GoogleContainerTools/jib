@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.plugins.common.logging;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent.Level;
 
-/** Logs messages to the console. */
+/** Logs messages to the console. Implementations must be thread-safe. */
 interface ConsoleLogger {
 
   /**
