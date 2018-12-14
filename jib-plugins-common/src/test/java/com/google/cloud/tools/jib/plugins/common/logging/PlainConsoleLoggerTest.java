@@ -1,0 +1,92 @@
+/*
+ * Copyright 2018 Google LLC.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+package com.google.cloud.tools.jib.plugins.common.logging;
+
+import com.google.cloud.tools.jib.event.events.LogEvent.Level;
+import com.google.common.collect.ImmutableMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import org.junit.Assert;
+import org.junit.Test;
+
+/** Tests for {@link PlainConsoleLogger}. */
+public class PlainConsoleLoggerTest {
+
+  private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
+
+  private final List<Level> levels = new ArrayList<>();
+  private final List<String> messages = new ArrayList<>();
+  private final Function<Level, Consumer<String>> messageConsumerFactory =
+      level ->
+          message -> {
+            levels.add(level);
+            messages.add(message);
+          };
+
+  private PlainConsoleLogger testPlainConsoleLogger;
+
+  @Test
+  public void testLog() {
+    ImmutableMap.Builder<Level, Consumer<String>> messageConsumers = ImmutableMap.builder();
+    for (Level level : Level.values()) {
+      messageConsumers.put(level, messageConsumerFactory.apply(level));
+    }
+
+    testPlainConsoleLogger =
+        new PlainConsoleLogger(messageConsumers.build(), singleThreadedExecutor);
+
+    testPlainConsoleLogger.log(Level.LIFECYCLE, "lifecycle");
+    testPlainConsoleLogger.log(Level.PROGRESS, "progress");
+    testPlainConsoleLogger.log(Level.INFO, "info");
+    testPlainConsoleLogger.log(Level.DEBUG, "debug");
+    testPlainConsoleLogger.log(Level.WARN, "warn");
+    testPlainConsoleLogger.log(Level.ERROR, "error");
+
+    singleThreadedExecutor.shutDownAndAwaitTermination();
+
+    Assert.assertEquals(
+        Arrays.asList(
+            Level.LIFECYCLE, Level.PROGRESS, Level.INFO, Level.DEBUG, Level.WARN, Level.ERROR),
+        levels);
+    Assert.assertEquals(
+        Arrays.asList("lifecycle", "progress", "info", "debug", "warn", "error"), messages);
+  }
+
+  @Test
+  public void testLog_ignoreIfNoMessageConsumer() {
+    testPlainConsoleLogger =
+        new PlainConsoleLogger(
+            ImmutableMap.of(Level.WARN, messageConsumerFactory.apply(Level.WARN)),
+            singleThreadedExecutor);
+
+    testPlainConsoleLogger.log(Level.LIFECYCLE, "lifecycle");
+    testPlainConsoleLogger.log(Level.PROGRESS, "progress");
+    testPlainConsoleLogger.log(Level.INFO, "info");
+    testPlainConsoleLogger.log(Level.DEBUG, "debug");
+    testPlainConsoleLogger.log(Level.WARN, "warn");
+    testPlainConsoleLogger.log(Level.ERROR, "error");
+
+    singleThreadedExecutor.shutDownAndAwaitTermination();
+
+    Assert.assertEquals(Collections.singletonList(Level.WARN), levels);
+    Assert.assertEquals(Collections.singletonList("warn"), messages);
+  }
+}

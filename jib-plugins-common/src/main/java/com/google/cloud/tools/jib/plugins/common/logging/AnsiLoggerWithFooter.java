@@ -14,25 +14,20 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.plugins.common;
+package com.google.cloud.tools.jib.plugins.common.logging;
 
-import com.google.common.annotations.VisibleForTesting;
-import java.time.Duration;
+import com.google.cloud.tools.jib.event.events.LogEvent.Level;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
- * Keeps all log messages in a sequential, deterministic order along with an additional footer that
- * always appears below log messages. This is intended to log both the messages and the footer to
- * the same console.
- *
- * <p>Make sure to call {@link #shutDownAndAwaitTermination} when finished.
+ * Logs to a console supporting ANSI escape sequences and keeps an additional footer that always
+ * appears below log messages.
  */
-public class AnsiLoggerWithFooter {
+class AnsiLoggerWithFooter implements ConsoleLogger {
 
   /** ANSI escape sequence for moving the cursor up one line. */
   private static final String CURSOR_UP_SEQUENCE = "\033[1A";
@@ -46,67 +41,46 @@ public class AnsiLoggerWithFooter {
   /** ANSI escape sequence for setting all further characters to not bold. */
   private static final String UNBOLD = "\033[0m";
 
-  private static final Duration EXECUTOR_SHUTDOWN_WAIT = Duration.ofSeconds(1);
-
-  private final ExecutorService executorService;
-  private final Consumer<String> plainPrinter;
+  private final ImmutableMap<Level, Consumer<String>> messageConsumers;
+  private final Consumer<String> lifecycleConsumer;
+  private final SingleThreadedExecutor singleThreadedExecutor;
 
   private List<String> footerLines = Collections.emptyList();
 
   /**
-   * Creates a new {@link AnsiLoggerWithFooter}
+   * Creates a new {@link AnsiLoggerWithFooter}.
    *
-   * @param plainPrinter the {@link Consumer} intended to synchronously print the footer and other
-   *     plain console output. {@code plainPrinter} should print a new line at the end.
+   * @param messageConsumers map from each {@link Level} to a log message {@link Consumer<String>
+   * @param singleThreadedExecutor a {@link SingleThreadedExecutor} to ensure that all messages are logged in a sequential, deterministic order
    */
-  public AnsiLoggerWithFooter(Consumer<String> plainPrinter) {
-    this(plainPrinter, Executors.newSingleThreadExecutor());
+  AnsiLoggerWithFooter(
+      ImmutableMap<Level, Consumer<String>> messageConsumers,
+      SingleThreadedExecutor singleThreadedExecutor) {
+    Preconditions.checkArgument(
+        messageConsumers.containsKey(Level.LIFECYCLE),
+        "Cannot construct AnsiLoggerFooter without LIFECYCLE message consumer");
+    this.messageConsumers = messageConsumers;
+    this.lifecycleConsumer = Preconditions.checkNotNull(messageConsumers.get(Level.LIFECYCLE));
+    this.singleThreadedExecutor = singleThreadedExecutor;
   }
 
-  @VisibleForTesting
-  AnsiLoggerWithFooter(Consumer<String> plainPrinter, ExecutorService executorService) {
-    this.plainPrinter = plainPrinter;
-    this.executorService = executorService;
-  }
-
-  /** Shuts down the {@link #executorService} and waits for it to terminate. */
-  public void shutDownAndAwaitTermination() {
-    executorService.shutdown();
-
-    try {
-      if (!executorService.awaitTermination(
-          EXECUTOR_SHUTDOWN_WAIT.getSeconds(), TimeUnit.SECONDS)) {
-        executorService.shutdownNow();
-        if (!executorService.awaitTermination(
-            EXECUTOR_SHUTDOWN_WAIT.getSeconds(), TimeUnit.SECONDS)) {
-          throw new RuntimeException("Could not shut down AnsiLoggerWithFooter executor");
-        }
-      }
-
-    } catch (InterruptedException ex) {
-      executorService.shutdownNow();
-      Thread.currentThread().interrupt();
+  @Override
+  public void log(Level logLevel, String message) {
+    if (!messageConsumers.containsKey(logLevel)) {
+      return;
     }
-  }
+    Consumer<String> messageConsumer = messageConsumers.get(logLevel);
 
-  /**
-   * Runs {@code messageLogger} asynchronously.
-   *
-   * @param messageLogger the {@link Consumer} intended to synchronously log a message to the
-   *     console. {@code messageLogger} should print a new line at the end.
-   * @param message the message to log with {@code messageLogger}
-   */
-  public void log(Consumer<String> messageLogger, String message) {
-    executorService.execute(
+    singleThreadedExecutor.execute(
         () -> {
           boolean didErase = eraseFooter();
 
           // If a previous footer was erased, the message needs to go up a line.
           String messagePrefix = didErase ? CURSOR_UP_SEQUENCE : "";
-          messageLogger.accept(messagePrefix + message);
+          messageConsumer.accept(messagePrefix + message);
 
           for (String footerLine : footerLines) {
-            plainPrinter.accept(BOLD + footerLine + UNBOLD);
+            lifecycleConsumer.accept(BOLD + footerLine + UNBOLD);
           }
         });
   }
@@ -119,12 +93,12 @@ public class AnsiLoggerWithFooter {
    *
    * @param newFooterLines the footer, with each line as an element (no newline at end)
    */
-  public void setFooter(List<String> newFooterLines) {
+  void setFooter(List<String> newFooterLines) {
     if (newFooterLines.equals(footerLines)) {
       return;
     }
 
-    executorService.execute(
+    singleThreadedExecutor.execute(
         () -> {
           boolean didErase = eraseFooter();
 
@@ -132,7 +106,7 @@ public class AnsiLoggerWithFooter {
           String newFooterPrefix = didErase ? CURSOR_UP_SEQUENCE : "";
 
           for (String newFooterLine : newFooterLines) {
-            plainPrinter.accept(newFooterPrefix + BOLD + newFooterLine + UNBOLD);
+            lifecycleConsumer.accept(newFooterPrefix + BOLD + newFooterLine + UNBOLD);
             newFooterPrefix = "";
           }
 
@@ -142,7 +116,7 @@ public class AnsiLoggerWithFooter {
 
   /**
    * Erases the footer. Do <em>not</em> call outside of a task submitted to {@link
-   * #executorService}.
+   * #singleThreadedExecutor}.
    *
    * @return {@code true} if anything was erased; {@code false} otherwise
    */
@@ -163,7 +137,7 @@ public class AnsiLoggerWithFooter {
     // Erases everything below cursor.
     footerEraserBuilder.append(ERASE_DISPLAY_BELOW);
 
-    plainPrinter.accept(footerEraserBuilder.toString());
+    lifecycleConsumer.accept(footerEraserBuilder.toString());
 
     return true;
   }

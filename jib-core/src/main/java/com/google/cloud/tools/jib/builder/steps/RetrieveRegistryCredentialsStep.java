@@ -98,7 +98,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
   public Credential call() throws CredentialRetrievalException {
     String description = makeDescription(registry);
 
-    buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(description + "..."));
+    buildConfiguration.getEventDispatcher().dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create(

@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.plugins.common;
 
 /** Names of system properties used to set configuration via commandline. */
 public class PropertyNames {
+
   public static final String FROM_IMAGE = "jib.from.image";
   public static final String FROM_CRED_HELPER = "jib.from.credHelper";
   public static final String FROM_AUTH_USERNAME = "jib.from.auth.username";
@@ -48,4 +49,7 @@ public class PropertyNames {
   public static final String EXTRA_DIRECTORY_PATH = "jib.extraDirectory.path";
   public static final String EXTRA_DIRECTORY_PERMISSIONS = "jib.extraDirectory.permissions";
   public static final String SKIP = "jib.skip";
+  public static final String SHOW_PROGRESS = "jib.showProgress";
+
+  private PropertyNames() {}
 }
