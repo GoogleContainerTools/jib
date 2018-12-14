@@ -106,7 +106,7 @@ class GradleProjectProperties implements ProjectProperties {
       logEventHandlerBuilder.debug(logger::debug);
     }
     if (logger.isInfoEnabled()) {
-      logEventHandlerBuilder.debug(logger::info);
+      logEventHandlerBuilder.info(logger::info);
     }
     if (logger.isWarnEnabled()) {
       logEventHandlerBuilder.warn(logger::warn);
