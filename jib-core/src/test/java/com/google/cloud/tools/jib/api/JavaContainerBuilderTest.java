@@ -72,8 +72,8 @@ public class JavaContainerBuilderTest {
           CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         JavaContainerBuilder.fromDistroless()
-            .addClasses(getResourceAsPath("application/classes"))
             .addResources(getResourceAsPath("application/resources"))
+            .addClasses(getResourceAsPath("application/classes"))
             .addDependencies(
                 getResourceAsPath("application/dependencies/dependency-1.0.0.jar"),
                 getResourceAsPath("application/dependencies/libraryA.jar"),
@@ -97,7 +97,7 @@ public class JavaContainerBuilderTest {
             "-xflag1",
             "-xflag2",
             "-cp",
-            "/app/classes:/app/resources:/app/libs/*:/app/other",
+            "/app/resources:/app/classes:/app/libs/*:/app/other",
             "HelloWorld"),
         containerConfiguration.getEntrypoint());
 
@@ -145,13 +145,13 @@ public class JavaContainerBuilderTest {
           CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         JavaContainerBuilder.fromDistroless()
-            .addClasses(getResourceAsPath("application/classes/"))
-            .addClasses(getResourceAsPath("class-finder-tests/extension"))
             .addDependencies(getResourceAsPath("application/dependencies/libraryA.jar"))
             .addDependencies(getResourceAsPath("application/dependencies/libraryB.jar"))
             .addDependencies(
                 getResourceAsPath(
                     "application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
+            .addClasses(getResourceAsPath("application/classes/"))
+            .addClasses(getResourceAsPath("class-finder-tests/extension"))
             .setMainClass("HelloWorld")
             .toContainerBuilder()
             .toBuildConfiguration(
@@ -162,7 +162,7 @@ public class JavaContainerBuilderTest {
     ContainerConfiguration containerConfiguration = buildConfiguration.getContainerConfiguration();
     Assert.assertNotNull(containerConfiguration);
     Assert.assertEquals(
-        ImmutableList.of("java", "-cp", "/app/classes:/app/libs/*", "HelloWorld"),
+        ImmutableList.of("java", "-cp", "/app/libs/*:/app/classes", "HelloWorld"),
         containerConfiguration.getEntrypoint());
 
     // Check dependencies

@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -35,17 +36,17 @@ public class JavaContainerBuilder {
 
   private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
 
-  /** Absolute path of dependencies on container. */
-  private static final AbsoluteUnixPath DEPENDENCIES_PATH =
-      APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
+  /** Absolute path of resources on container. */
+  private static final AbsoluteUnixPath RESOURCES_PATH =
+      APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
 
   /** Absolute path of classes on container. */
   private static final AbsoluteUnixPath CLASSES_PATH =
       APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
 
-  /** Absolute path of resources on container. */
-  private static final AbsoluteUnixPath RESOURCES_PATH =
-      APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
+  /** Absolute path of dependencies on container. */
+  private static final AbsoluteUnixPath DEPENDENCIES_PATH =
+      APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
 
   /** Absolute path of additional classpath files on container. */
   private static final AbsoluteUnixPath OTHERS_PATH = APP_ROOT.resolve("other");
@@ -100,7 +101,7 @@ public class JavaContainerBuilder {
   private final JavaLayerConfigurations.Builder layerConfigurationsBuilder =
       JavaLayerConfigurations.builder();
   private final List<String> jvmFlags = new ArrayList<>();
-  private final List<String> classpath = new ArrayList<>();
+  private final LinkedHashSet<String> classpath = new LinkedHashSet<>(4);
 
   @Nullable private String mainClass;
 
@@ -128,9 +129,7 @@ public class JavaContainerBuilder {
           file,
           DEPENDENCIES_PATH.resolve(file.getFileName()));
     }
-    if (!classpath.contains(DEPENDENCIES_PATH.resolve("*").toString())) {
-      classpath.add(DEPENDENCIES_PATH.resolve("*").toString());
-    }
+    classpath.add(DEPENDENCIES_PATH.resolve("*").toString());
     return this;
   }
 
@@ -162,9 +161,7 @@ public class JavaContainerBuilder {
     }
     layerConfigurationsBuilder.addDirectoryContents(
         LayerType.RESOURCES, resourceFilesDirectory, path -> true, RESOURCES_PATH);
-    if (!classpath.contains(RESOURCES_PATH.toString())) {
-      classpath.add(RESOURCES_PATH.toString());
-    }
+    classpath.add(RESOURCES_PATH.toString());
     return this;
   }
 
@@ -185,9 +182,7 @@ public class JavaContainerBuilder {
     }
     layerConfigurationsBuilder.addDirectoryContents(
         LayerType.CLASSES, classFilesDirectory, path -> true, CLASSES_PATH);
-    if (!classpath.contains(CLASSES_PATH.toString())) {
-      classpath.add(CLASSES_PATH.toString());
-    }
+    classpath.add(CLASSES_PATH.toString());
     return this;
   }
 
@@ -212,9 +207,7 @@ public class JavaContainerBuilder {
             LayerType.EXTRA_FILES, file, OTHERS_PATH.resolve(file.getFileName()));
       }
     }
-    if (!classpath.contains(OTHERS_PATH.toString())) {
-      classpath.add(OTHERS_PATH.toString());
-    }
+    classpath.add(OTHERS_PATH.toString());
     return this;
   }
 
@@ -282,8 +275,9 @@ public class JavaContainerBuilder {
       throw new IllegalArgumentException(
           "Failed to construct entrypoint because no files were added to the JavaContainerBuilder");
     }
+
     jibContainerBuilder.setEntrypoint(
-        JavaEntrypointConstructor.makeEntrypoint(classpath, jvmFlags, mainClass));
+        JavaEntrypointConstructor.makeEntrypoint(new ArrayList<>(classpath), jvmFlags, mainClass));
     jibContainerBuilder.setLayers(layerConfigurationsBuilder.build().getLayerConfigurations());
     return jibContainerBuilder;
   }
