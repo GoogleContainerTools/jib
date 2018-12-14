@@ -20,19 +20,21 @@ import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
-import com.google.cloud.tools.jib.plugins.common.logging.LogEventHandlerBuilder;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
+import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -51,7 +53,7 @@ public class MavenProjectProperties implements ProjectProperties {
   public static final String PLUGIN_KEY = "com.google.cloud.tools:" + PLUGIN_NAME;
 
   /** Used to generate the User-Agent header and history metadata. */
-  static final String TOOL_NAME = "jib-maven-plugin";
+  private static final String TOOL_NAME = "jib-maven-plugin";
 
   /** Used for logging during main class inference. */
   private static final String JAR_PLUGIN_NAME = "'maven-jar-plugin'";
@@ -89,10 +91,10 @@ public class MavenProjectProperties implements ProjectProperties {
 
   private static EventHandlers makeEventHandlers(
       Log log, SingleThreadedExecutor singleThreadedExecutor) {
-    LogEventHandlerBuilder logEventHandlerBuilder =
+    ConsoleLoggerBuilder logEventHandlerBuilder =
         (isProgressFooterEnabled()
-                ? LogEventHandlerBuilder.rich(singleThreadedExecutor)
-                : LogEventHandlerBuilder.plain(singleThreadedExecutor).progress(log::info))
+                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
+                : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(log::info))
             .lifecycle(log::info);
     if (log.isDebugEnabled()) {
       logEventHandlerBuilder
@@ -106,14 +108,22 @@ public class MavenProjectProperties implements ProjectProperties {
     if (log.isErrorEnabled()) {
       logEventHandlerBuilder.error(log::error);
     }
-    Consumer<LogEvent> logEventHandler = logEventHandlerBuilder.build();
-
-    TimerEventHandler timerEventHandler =
-        new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message)));
+    ConsoleLogger consoleLogger = logEventHandlerBuilder.build();
 
     return new EventHandlers()
-        .add(JibEventType.LOGGING, logEventHandler)
-        .add(JibEventType.TIMING, timerEventHandler);
+        .add(
+            JibEventType.LOGGING,
+            logEvent -> consoleLogger.log(logEvent.getLevel(), logEvent.getMessage()))
+        .add(
+            JibEventType.TIMING,
+            new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
+        .add(
+            JibEventType.PROGRESS,
+            new ProgressEventHandler(
+                update ->
+                    consoleLogger.setFooter(
+                        ProgressDisplayGenerator.generateProgressDisplay(
+                            update.getProgress(), update.getUnfinishedAllocations()))));
   }
 
   private static boolean isProgressFooterEnabled() {

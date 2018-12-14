@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.plugins.common.logging;
 
 import com.google.cloud.tools.jib.event.events.LogEvent.Level;
 import com.google.common.collect.ImmutableMap;
+import java.util.List;
 import java.util.function.Consumer;
 
 /** Logs messages plainly. */
@@ -48,5 +49,10 @@ class PlainConsoleLogger implements ConsoleLogger {
     Consumer<String> messageConsumer = messageConsumers.get(logLevel);
 
     singleThreadedExecutor.execute(() -> messageConsumer.accept(message));
+  }
+
+  @Override
+  public void setFooter(List<String> footerLines) {
+    // No op.
   }
 }

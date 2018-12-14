@@ -16,15 +16,14 @@
 
 package com.google.cloud.tools.jib.plugins.common.logging;
 
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent.Level;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/** Builds a handler for {@link LogEvent}. */
-public class LogEventHandlerBuilder {
+/** Builds a handler for {@link ConsoleLogger}. */
+public class ConsoleLoggerBuilder {
 
   /**
    * Alias for function that takes a map from {@link Level} to a log message {@link Consumer} and
@@ -36,26 +35,26 @@ public class LogEventHandlerBuilder {
       extends Function<ImmutableMap<Level, Consumer<String>>, ConsoleLogger> {}
 
   /**
-   * Starts a {@link LogEventHandlerBuilder} for rich logging (ANSI support with footer).
+   * Starts a {@link ConsoleLoggerBuilder} for rich logging (ANSI support with footer).
    *
    * @param singleThreadedExecutor a {@link SingleThreadedExecutor} to ensure that all messages are
    *     logged in a sequential, deterministic order
-   * @return a new {@link LogEventHandlerBuilder}
+   * @return a new {@link ConsoleLoggerBuilder}
    */
-  public static LogEventHandlerBuilder rich(SingleThreadedExecutor singleThreadedExecutor) {
-    return new LogEventHandlerBuilder(
+  public static ConsoleLoggerBuilder rich(SingleThreadedExecutor singleThreadedExecutor) {
+    return new ConsoleLoggerBuilder(
         messageConsumers -> new AnsiLoggerWithFooter(messageConsumers, singleThreadedExecutor));
   }
 
   /**
-   * Starts a {@link LogEventHandlerBuilder} for plain-text logging (no ANSI support).
+   * Starts a {@link ConsoleLoggerBuilder} for plain-text logging (no ANSI support).
    *
    * @param singleThreadedExecutor a {@link SingleThreadedExecutor} to ensure that all messages are
    *     logged in a sequential, deterministic order
-   * @return a new {@link LogEventHandlerBuilder}
+   * @return a new {@link ConsoleLoggerBuilder}
    */
-  public static LogEventHandlerBuilder plain(SingleThreadedExecutor singleThreadedExecutor) {
-    return new LogEventHandlerBuilder(
+  public static ConsoleLoggerBuilder plain(SingleThreadedExecutor singleThreadedExecutor) {
+    return new ConsoleLoggerBuilder(
         messageConsumers -> new PlainConsoleLogger(messageConsumers, singleThreadedExecutor));
   }
 
@@ -64,7 +63,7 @@ public class LogEventHandlerBuilder {
   private final ConsoleLoggerFactory consoleLoggerFactory;
 
   @VisibleForTesting
-  LogEventHandlerBuilder(ConsoleLoggerFactory consoleLoggerFactory) {
+  ConsoleLoggerBuilder(ConsoleLoggerFactory consoleLoggerFactory) {
     this.consoleLoggerFactory = consoleLoggerFactory;
   }
 
@@ -74,7 +73,7 @@ public class LogEventHandlerBuilder {
    * @param messageConsumer the message {@link Consumer}
    * @return this
    */
-  public LogEventHandlerBuilder lifecycle(Consumer<String> messageConsumer) {
+  public ConsoleLoggerBuilder lifecycle(Consumer<String> messageConsumer) {
     messageConsumers.put(Level.LIFECYCLE, messageConsumer);
     return this;
   }
@@ -85,7 +84,7 @@ public class LogEventHandlerBuilder {
    * @param messageConsumer the message {@link Consumer}
    * @return this
    */
-  public LogEventHandlerBuilder progress(Consumer<String> messageConsumer) {
+  public ConsoleLoggerBuilder progress(Consumer<String> messageConsumer) {
     messageConsumers.put(Level.PROGRESS, messageConsumer);
     return this;
   }
@@ -96,7 +95,7 @@ public class LogEventHandlerBuilder {
    * @param messageConsumer the message {@link Consumer}
    * @return this
    */
-  public LogEventHandlerBuilder debug(Consumer<String> messageConsumer) {
+  public ConsoleLoggerBuilder debug(Consumer<String> messageConsumer) {
     messageConsumers.put(Level.DEBUG, messageConsumer);
     return this;
   }
@@ -107,7 +106,7 @@ public class LogEventHandlerBuilder {
    * @param messageConsumer the message {@link Consumer}
    * @return this
    */
-  public LogEventHandlerBuilder error(Consumer<String> messageConsumer) {
+  public ConsoleLoggerBuilder error(Consumer<String> messageConsumer) {
     messageConsumers.put(Level.ERROR, messageConsumer);
     return this;
   }
@@ -118,7 +117,7 @@ public class LogEventHandlerBuilder {
    * @param messageConsumer the message {@link Consumer}
    * @return this
    */
-  public LogEventHandlerBuilder info(Consumer<String> messageConsumer) {
+  public ConsoleLoggerBuilder info(Consumer<String> messageConsumer) {
     messageConsumers.put(Level.INFO, messageConsumer);
     return this;
   }
@@ -129,18 +128,17 @@ public class LogEventHandlerBuilder {
    * @param messageConsumer the message {@link Consumer}
    * @return this
    */
-  public LogEventHandlerBuilder warn(Consumer<String> messageConsumer) {
+  public ConsoleLoggerBuilder warn(Consumer<String> messageConsumer) {
     messageConsumers.put(Level.WARN, messageConsumer);
     return this;
   }
 
   /**
-   * Builds the {@link LogEvent} handler.
+   * Builds the {@link ConsoleLogger}.
    *
-   * @return the {@link Consumer}
+   * @return the {@link ConsoleLogger}
    */
-  public Consumer<LogEvent> build() {
-    ConsoleLogger consoleLogger = consoleLoggerFactory.apply(messageConsumers.build());
-    return logEvent -> consoleLogger.log(logEvent.getLevel(), logEvent.getMessage());
+  public ConsoleLogger build() {
+    return consoleLoggerFactory.apply(messageConsumers.build());
   }
 }
