@@ -78,7 +78,7 @@ public class JavaContainerBuilderTest {
             .addDependencies(getResourceAsList("application/snapshot-dependencies"))
             .addToClasspath(getResourceAsList("fileA"))
             .addToClasspath(getResourceAsPath("fileB"))
-            .setJvmFlags("-xflag1", "-xflag2")
+            .addJvmFlags("-xflag1", "-xflag2")
             .setMainClass("HelloWorld")
             .toContainerBuilder()
             .toBuildConfiguration(

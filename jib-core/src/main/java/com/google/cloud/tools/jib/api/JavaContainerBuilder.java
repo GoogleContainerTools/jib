@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -100,15 +99,13 @@ public class JavaContainerBuilder {
   private final JibContainerBuilder jibContainerBuilder;
   private final JavaLayerConfigurations.Builder layerConfigurationsBuilder =
       JavaLayerConfigurations.builder();
+  private final List<String> jvmFlags = new ArrayList<>();
+  private final List<String> classpath = new ArrayList<>();
 
-  private List<String> classpath;
-  private List<String> jvmFlags;
   @Nullable private String mainClass;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
     this.jibContainerBuilder = jibContainerBuilder;
-    classpath = new ArrayList<>();
-    jvmFlags = new ArrayList<>();
   }
 
   /**
@@ -239,24 +236,24 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Sets the JVM flags to use when starting the application.
+   * Adds JVM flags to use when starting the application.
    *
-   * @param jvmFlags the list of JVM flags
+   * @param jvmFlags the list of JVM flags to add
    * @return this
    */
-  public JavaContainerBuilder setJvmFlags(List<String> jvmFlags) {
-    this.jvmFlags = ImmutableList.copyOf(jvmFlags);
+  public JavaContainerBuilder addJvmFlags(List<String> jvmFlags) {
+    this.jvmFlags.addAll(jvmFlags);
     return this;
   }
 
   /**
-   * Sets the JVM flags to use when starting the application.
+   * Adds JVM flags to use when starting the application.
    *
-   * @param jvmFlags the list of JVM flags
+   * @param jvmFlags the list of JVM flags to add
    * @return this
    */
-  public JavaContainerBuilder setJvmFlags(String... jvmFlags) {
-    this.jvmFlags = ImmutableList.copyOf(jvmFlags);
+  public JavaContainerBuilder addJvmFlags(String... jvmFlags) {
+    this.jvmFlags.addAll(Arrays.asList(jvmFlags));
     return this;
   }
 
