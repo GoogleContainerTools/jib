@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -31,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,28 +45,35 @@ public class JavaContainerBuilderTest {
 
   private static List<AbsoluteUnixPath> getExtractionPaths(
       BuildConfiguration buildConfiguration, String layerName) {
-    return buildConfiguration
-        .getLayerConfigurations()
-        .stream()
-        .filter(layerConfiguration -> layerConfiguration.getName().equals(layerName))
-        .findFirst()
-        .get()
-        .getLayerEntries()
-        .stream()
-        .map(LayerEntry::getExtractionPath)
-        .collect(Collectors.toList());
+    Optional<LayerConfiguration> layerConfiguration =
+        buildConfiguration
+            .getLayerConfigurations()
+            .stream()
+            .filter(layerConfiguration1 -> layerConfiguration1.getName().equals(layerName))
+            .findFirst();
+    if (layerConfiguration.isPresent()) {
+      return layerConfiguration
+          .get()
+          .getLayerEntries()
+          .stream()
+          .map(LayerEntry::getExtractionPath)
+          .collect(Collectors.toList());
+
+    } else {
+      return ImmutableList.of();
+    }
   }
 
   @Test
-  public void testToJibContainerBuilder()
+  public void testToJibContainerBuilder_layers()
       throws InvalidImageReferenceException, URISyntaxException, IOException,
           CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         JavaContainerBuilder.fromDistroless()
-            .addClasses(getFromResources("application/classes"))
-            .addResources(getFromResources("application/resources"))
+            .addClasses(getFromResources("application/classes").get(0))
+            .addResources(getFromResources("application/resources").get(0))
             .addDependencies(getFromResources("application/dependencies"))
-            .addSnapshotDependencies(getFromResources("application/snapshot-dependencies"))
+            .addDependencies(getFromResources("application/snapshot-dependencies"))
             .addToClasspath(getFromResources("fileA"))
             .setJvmFlags("-xflag1", "-xflag2")
             .setMainClass("HelloWorld")
@@ -90,34 +99,104 @@ public class JavaContainerBuilderTest {
             AbsoluteUnixPath.get("/app/libs/dependency-1.0.0.jar"),
             AbsoluteUnixPath.get("/app/libs/libraryA.jar"),
             AbsoluteUnixPath.get("/app/libs/libraryB.jar"));
-    List<AbsoluteUnixPath> actualDependencies =
-        getExtractionPaths(buildConfiguration, "dependencies");
-    Assert.assertEquals(expectedDependencies, actualDependencies);
+    Assert.assertEquals(
+        expectedDependencies, getExtractionPaths(buildConfiguration, "dependencies"));
 
     List<AbsoluteUnixPath> expectedSnapshotDependencies =
         ImmutableList.of(AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-SNAPSHOT.jar"));
-    List<AbsoluteUnixPath> actualSnapshotDependencies =
-        getExtractionPaths(buildConfiguration, "snapshot dependencies");
-    Assert.assertEquals(expectedSnapshotDependencies, actualSnapshotDependencies);
+    Assert.assertEquals(
+        expectedSnapshotDependencies,
+        getExtractionPaths(buildConfiguration, "snapshot dependencies"));
 
     List<AbsoluteUnixPath> expectedResources =
         ImmutableList.of(
             AbsoluteUnixPath.get("/app/resources/resourceA"),
             AbsoluteUnixPath.get("/app/resources/resourceB"),
             AbsoluteUnixPath.get("/app/resources/world"));
-    List<AbsoluteUnixPath> actualResources = getExtractionPaths(buildConfiguration, "resources");
-    Assert.assertEquals(expectedResources, actualResources);
+    Assert.assertEquals(expectedResources, getExtractionPaths(buildConfiguration, "resources"));
 
     List<AbsoluteUnixPath> expectedClasses =
         ImmutableList.of(
             AbsoluteUnixPath.get("/app/classes/HelloWorld.class"),
             AbsoluteUnixPath.get("/app/classes/some.class"));
-    List<AbsoluteUnixPath> actualClasses = getExtractionPaths(buildConfiguration, "classes");
-    Assert.assertEquals(expectedClasses, actualClasses);
+    Assert.assertEquals(expectedClasses, getExtractionPaths(buildConfiguration, "classes"));
 
     List<AbsoluteUnixPath> expectedOthers =
         ImmutableList.of(AbsoluteUnixPath.get("/app/other/fileA"));
-    List<AbsoluteUnixPath> actualOthers = getExtractionPaths(buildConfiguration, "extra files");
-    Assert.assertEquals(expectedOthers, actualOthers);
+    Assert.assertEquals(expectedOthers, getExtractionPaths(buildConfiguration, "extra files"));
+  }
+
+  @Test
+  public void testToJibContainerBuilder_missingAndMultipleAdds()
+      throws InvalidImageReferenceException, URISyntaxException, IOException,
+          CacheDirectoryCreationException {
+    BuildConfiguration buildConfiguration =
+        JavaContainerBuilder.fromDistroless()
+            .addClasses(getFromResources("application/classes/").get(0))
+            .addDependencies(getFromResources("application/dependencies/libraryA.jar"))
+            .addDependencies(getFromResources("application/dependencies/libraryB.jar"))
+            .addDependencies(
+                getFromResources("application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
+            .setMainClass("HelloWorld")
+            .toContainerBuilder()
+            .toBuildConfiguration(
+                Containerizer.to(RegistryImage.named("hello")),
+                MoreExecutors.newDirectExecutorService());
+
+    ContainerConfiguration containerConfiguration = buildConfiguration.getContainerConfiguration();
+    Assert.assertNotNull(containerConfiguration);
+    Assert.assertEquals(
+        ImmutableList.of("java", "-cp", "/app/classes:/app/libs/*", "HelloWorld"),
+        containerConfiguration.getEntrypoint());
+
+    List<AbsoluteUnixPath> expectedDependencies =
+        ImmutableList.of(
+            AbsoluteUnixPath.get("/app/libs/libraryA.jar"),
+            AbsoluteUnixPath.get("/app/libs/libraryB.jar"));
+    Assert.assertEquals(
+        expectedDependencies, getExtractionPaths(buildConfiguration, "dependencies"));
+
+    List<AbsoluteUnixPath> expectedSnapshotDependencies =
+        ImmutableList.of(AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-SNAPSHOT.jar"));
+    Assert.assertEquals(
+        expectedSnapshotDependencies,
+        getExtractionPaths(buildConfiguration, "snapshot dependencies"));
+
+    List<AbsoluteUnixPath> expectedClasses =
+        ImmutableList.of(
+            AbsoluteUnixPath.get("/app/classes/HelloWorld.class"),
+            AbsoluteUnixPath.get("/app/classes/some.class"));
+
+    Assert.assertEquals(expectedClasses, getExtractionPaths(buildConfiguration, "classes"));
+    Assert.assertEquals(ImmutableList.of(), getExtractionPaths(buildConfiguration, "resources"));
+    Assert.assertEquals(ImmutableList.of(), getExtractionPaths(buildConfiguration, "extra files"));
+  }
+
+  @Test
+  public void testToJibContainerBuilder_mainClassNull() throws InvalidImageReferenceException {
+    try {
+      JavaContainerBuilder.fromDistroless().toContainerBuilder();
+      Assert.fail();
+
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "mainClass is null on JavaContainerBuilder; specify the main class using "
+              + "JavaContainerBuilder#setMainClass(String), or consider using a "
+              + "jib.frontend.MainClassFinder to infer the main class",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testToJibContainerBuilder_classpathEmpty() throws InvalidImageReferenceException {
+    try {
+      JavaContainerBuilder.fromDistroless().setMainClass("Hello").toContainerBuilder();
+      Assert.fail();
+
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "Failed to construct entrypoint because no files were added to the JavaContainerBuilder",
+          ex.getMessage());
+    }
   }
 }
