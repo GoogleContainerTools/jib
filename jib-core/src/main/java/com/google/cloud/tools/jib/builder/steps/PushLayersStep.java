@@ -79,7 +79,7 @@ class PushLayersStep
           NonBlockingSteps.get(cachedLayerStep);
 
       try (ProgressEventDispatcher progressEventDispatcher =
-          progressEventDispatcherFactory.create("push layers", cachedLayers.size())) {
+          progressEventDispatcherFactory.create("setting up to push layers", cachedLayers.size())) {
         // Constructs a PushBlobStep for each layer.
         ImmutableList.Builder<AsyncStep<PushBlobStep>> pushBlobStepsBuilder =
             ImmutableList.builder();

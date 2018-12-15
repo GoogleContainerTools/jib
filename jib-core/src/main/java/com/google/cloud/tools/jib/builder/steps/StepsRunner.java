@@ -222,7 +222,7 @@ public class StepsRunner {
   }
 
   public StepsRunner pushImage() {
-    rootProgressAllocationDescription = "Build to registry";
+    rootProgressAllocationDescription = "building image to registry";
 
     return enqueueStep(
         () ->
@@ -239,7 +239,7 @@ public class StepsRunner {
   }
 
   public StepsRunner loadDocker(DockerClient dockerClient) {
-    rootProgressAllocationDescription = "Build to Docker daemon";
+    rootProgressAllocationDescription = "building image to Docker daemon";
 
     return enqueueStep(
         () ->
@@ -255,7 +255,7 @@ public class StepsRunner {
   }
 
   public StepsRunner writeTarFile(Path outputPath) {
-    rootProgressAllocationDescription = "Build to tar file";
+    rootProgressAllocationDescription = "building image to tar file";
 
     return enqueueStep(
         () ->

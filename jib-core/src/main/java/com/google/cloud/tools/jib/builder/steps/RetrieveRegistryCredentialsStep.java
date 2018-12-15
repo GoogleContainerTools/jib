@@ -101,8 +101,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
     buildConfiguration.getEventDispatcher().dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =
-            progressEventDispatcherFactory.create(
-                "Retrieve registry credentials for " + registry, 1);
+            progressEventDispatcherFactory.create("retrieving credentials for " + registry, 1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
       for (CredentialRetriever credentialRetriever : credentialRetrievers) {
