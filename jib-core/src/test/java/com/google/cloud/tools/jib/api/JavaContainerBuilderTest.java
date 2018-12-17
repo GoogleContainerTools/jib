@@ -90,7 +90,7 @@ public class JavaContainerBuilderTest {
             "-xflag1",
             "-xflag2",
             "-cp",
-            "/app/resources:/app/classes:/app/libs/*:/app/other",
+            "/app/resources:/app/classes:/app/libs/*:/app/classpath",
             "HelloWorld"),
         containerConfiguration.getEntrypoint());
 
@@ -128,7 +128,8 @@ public class JavaContainerBuilderTest {
     // Check additional classpath files
     List<AbsoluteUnixPath> expectedOthers =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/app/other/fileA"), AbsoluteUnixPath.get("/app/other/fileB"));
+            AbsoluteUnixPath.get("/app/classpath/fileA"),
+            AbsoluteUnixPath.get("/app/classpath/fileB"));
     Assert.assertEquals(expectedOthers, getExtractionPaths(buildConfiguration, "extra files"));
   }
 

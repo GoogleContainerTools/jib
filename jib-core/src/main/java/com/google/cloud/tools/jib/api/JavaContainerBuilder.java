@@ -22,8 +22,10 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,9 +36,10 @@ import javax.annotation.Nullable;
 /** Creates a {@link JibContainerBuilder} for containerizing Java applications. */
 public class JavaContainerBuilder {
 
+  /** The default root directory of the application on the container. */
   private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
 
-  /** Absolute path of resources on container. */
+  /** Absolute path of directory containing application resources on container. */
   private static final AbsoluteUnixPath RESOURCES_PATH =
       APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
 
@@ -48,8 +51,14 @@ public class JavaContainerBuilder {
   private static final AbsoluteUnixPath DEPENDENCIES_PATH =
       APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
 
+  /** The classpath element corresponding to dependencies in the entrypoint. */
+  private static final AbsoluteUnixPath DEPENDENCIES_CLASSPATH =
+      APP_ROOT
+          .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE)
+          .resolve("*");
+
   /** Absolute path of additional classpath files on container. */
-  private static final AbsoluteUnixPath OTHERS_PATH = APP_ROOT.resolve("other");
+  private static final AbsoluteUnixPath OTHERS_PATH = APP_ROOT.resolve("classpath");
 
   /**
    * Creates a new {@link JavaContainerBuilder} that uses distroless java as the base image. For
@@ -87,7 +96,7 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Creates a new {@link JavaContainerBuilder} with the specified base image reference.
+   * Creates a new {@link JavaContainerBuilder} with the specified base image.
    *
    * @param registryImage the {@link RegistryImage} that defines base container registry and
    *     credentials
@@ -110,18 +119,22 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds dependency JARs to {@code /app/libs} on the image.
+   * Adds dependency JARs to the image.
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
-   * @throws IOException if adding the layer fails
+   * @throws FileNotFoundException if adding the layer fails
    */
-  public JavaContainerBuilder addDependencies(List<Path> dependencyFiles) throws IOException {
+  public JavaContainerBuilder addDependencies(List<Path> dependencyFiles)
+      throws FileNotFoundException {
+    // Make sure all files exist before adding any
     for (Path file : dependencyFiles) {
       if (!Files.exists(file)) {
-        throw new IOException("File '" + file + "' does not exist.");
+        throw new FileNotFoundException("File '" + file + "' does not exist.");
       }
+    }
 
+    for (Path file : dependencyFiles) {
       layerConfigurationsBuilder.addFile(
           file.getFileName().toString().contains("SNAPSHOT")
               ? LayerType.SNAPSHOT_DEPENDENCIES
@@ -129,23 +142,24 @@ public class JavaContainerBuilder {
           file,
           DEPENDENCIES_PATH.resolve(file.getFileName()));
     }
-    classpath.add(DEPENDENCIES_PATH.resolve("*").toString());
+    classpath.add(DEPENDENCIES_CLASSPATH.toString());
     return this;
   }
 
   /**
-   * Adds dependency JARs to {@code /app/libs} on the image.
+   * Adds dependency JARs to the image.
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
-   * @throws IOException if adding the layer fails
+   * @throws FileNotFoundException if adding the layer fails
    */
-  public JavaContainerBuilder addDependencies(Path... dependencyFiles) throws IOException {
+  public JavaContainerBuilder addDependencies(Path... dependencyFiles)
+      throws FileNotFoundException {
     return addDependencies(Arrays.asList(dependencyFiles));
   }
 
   /**
-   * Adds the contents of a resources directory to {@code /app/resources} on the image.
+   * Adds the contents of a resources directory to the image.
    *
    * @param resourceFilesDirectory the directory containing the project's resources
    * @return this
@@ -153,10 +167,10 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addResources(Path resourceFilesDirectory) throws IOException {
     if (!Files.exists(resourceFilesDirectory)) {
-      throw new IOException("Directory '" + resourceFilesDirectory + "' does not exist.");
+      throw new FileNotFoundException("Directory '" + resourceFilesDirectory + "' does not exist.");
     }
     if (!Files.isDirectory(resourceFilesDirectory)) {
-      throw new IOException(
+      throw new NotDirectoryException(
           "Adding resources failed: '" + resourceFilesDirectory + "' is not a directory");
     }
     layerConfigurationsBuilder.addDirectoryContents(
@@ -166,7 +180,7 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds the contents of a classes directory to {@code /app/classes} on the image.
+   * Adds the contents of a classes directory to the image.
    *
    * @param classFilesDirectory the directory containing the class files
    * @return this
@@ -174,10 +188,10 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addClasses(Path classFilesDirectory) throws IOException {
     if (!Files.exists(classFilesDirectory)) {
-      throw new IOException("Directory '" + classFilesDirectory + "' does not exist.");
+      throw new FileNotFoundException("Directory '" + classFilesDirectory + "' does not exist.");
     }
     if (!Files.isDirectory(classFilesDirectory)) {
-      throw new IOException(
+      throw new NotDirectoryException(
           "Adding classes failed: '" + classFilesDirectory + "' is not a directory");
     }
     layerConfigurationsBuilder.addDirectoryContents(
@@ -189,17 +203,20 @@ public class JavaContainerBuilder {
   /**
    * Adds additional files to the classpath.
    *
-   * @param otherFiles the list of files to add. Files are added to {@code /app/other} on the
-   *     container file system. If {@code otherFiles} contains a directory, files within are added
-   *     recursively.
+   * @param otherFiles the list of files to add. If {@code otherFiles} contains a directory, files
+   *     within are added recursively.
    * @return this
    * @throws IOException if adding the layer fails
    */
   public JavaContainerBuilder addToClasspath(List<Path> otherFiles) throws IOException {
+    // Make sure all files exist before adding any
     for (Path file : otherFiles) {
       if (!Files.exists(file)) {
-        throw new IOException("File '" + file + "' does not exist.");
+        throw new FileNotFoundException("File '" + file + "' does not exist.");
       }
+    }
+
+    for (Path file : otherFiles) {
       if (Files.isDirectory(file)) {
         layerConfigurationsBuilder.addDirectoryContents(
             LayerType.EXTRA_FILES, file, path -> true, OTHERS_PATH);
@@ -215,13 +232,24 @@ public class JavaContainerBuilder {
   /**
    * Adds additional files to the classpath.
    *
-   * @param otherFiles the list of files to add. Files are added to /app/other on the container file
-   *     system. If {@code otherFiles} contains a directory, files within are added recursively.
+   * @param otherFiles the list of files to add. If {@code otherFiles} contains a directory, files
+   *     within are added recursively.
    * @return this
    * @throws IOException if adding the layer fails
    */
   public JavaContainerBuilder addToClasspath(Path... otherFiles) throws IOException {
     return addToClasspath(Arrays.asList(otherFiles));
+  }
+
+  /**
+   * Adds a JVM flag to use when starting the application.
+   *
+   * @param jvmFlag the JVM flag to add
+   * @return this
+   */
+  public JavaContainerBuilder addJvmFlag(String jvmFlag) {
+    jvmFlags.add(jvmFlag);
+    return this;
   }
 
   /**
@@ -247,8 +275,8 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Sets the main class used to start the application on the image. To automatically infer the main
-   * class, use {@link com.google.cloud.tools.jib.frontend.MainClassFinder}.
+   * Sets the main class used to start the application on the image. To find the main class from
+   * {@code .class} files, use {@link com.google.cloud.tools.jib.frontend.MainClassFinder}.
    *
    * @param mainClass the main class used to start the application
    * @return this
