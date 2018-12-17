@@ -49,7 +49,7 @@ public class PropertyNames {
   public static final String EXTRA_DIRECTORY_PATH = "jib.extraDirectory.path";
   public static final String EXTRA_DIRECTORY_PERMISSIONS = "jib.extraDirectory.permissions";
   public static final String SKIP = "jib.skip";
-  public static final String SHOW_PROGRESS = "jib.showProgress";
+  public static final String CONSOLE = "jib.console";
 
   private PropertyNames() {}
 }
