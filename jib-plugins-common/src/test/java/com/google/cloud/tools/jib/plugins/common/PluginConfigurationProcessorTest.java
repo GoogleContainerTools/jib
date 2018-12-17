@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Consumer;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,8 +64,12 @@ public class PluginConfigurationProcessorTest {
   @Mock private AuthProperty authProperty;
   @Mock private Consumer<LogEvent> logger;
 
+  private String originalJavaVersion;
+
   @Before
   public void setUp() {
+    originalJavaVersion = System.getProperty("java.version");
+
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
@@ -86,6 +91,11 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(containerizer);
     Mockito.when(containerizer.setApplicationLayersCache(Mockito.any(Path.class)))
         .thenReturn(containerizer);
+  }
+
+  @After
+  public void cleanup() {
+    System.setProperty("java.version", originalJavaVersion);
   }
 
   @Test
@@ -467,6 +477,46 @@ public class PluginConfigurationProcessorTest {
     } catch (InvalidContainerVolumeException ex) {
       Assert.assertEquals("`some/root", ex.getMessage());
       Assert.assertEquals("`some/root", ex.getInvalidVolume());
+    }
+  }
+
+  @Test
+  public void testCheckJavaVersion() throws InvalidImageReferenceException {
+    System.setProperty("java.version", "1.8.0_161");
+    PluginConfigurationProcessor.checkJavaVersion(null, "parameter name");
+
+    System.setProperty("java.version", "1.8.0_161");
+    PluginConfigurationProcessor.checkJavaVersion("gcr.io/distroless/java", "parameter name");
+
+    System.setProperty("java.version", "1.9.0_161");
+    try {
+      PluginConfigurationProcessor.checkJavaVersion(null, "parameter name");
+      Assert.fail("Exception should have been thrown");
+    } catch (InvalidImageReferenceException ex) {
+      Assert.assertEquals(
+          "Invalid image reference: Java 8 base image detected, but project is using Java version 9; perhaps you should configure a Java 9-compatible base image using the 'parameter name' parameter",
+          ex.getMessage());
+    }
+
+    System.setProperty("java.version", "10.0.1");
+    try {
+      PluginConfigurationProcessor.checkJavaVersion("gcr.io/distroless/java", "parameter name");
+      Assert.fail("Exception should have been thrown");
+    } catch (InvalidImageReferenceException ex) {
+      Assert.assertEquals(
+          "Invalid image reference: Java 8 base image detected, but project is using Java version 10; perhaps you should configure a Java 10-compatible base image using the 'parameter name' parameter",
+          ex.getMessage());
+    }
+
+    System.setProperty("java.version", "11.0.1");
+    try {
+      PluginConfigurationProcessor.checkJavaVersion(
+          "gcr.io/distroless/java/jetty", "parameter name");
+      Assert.fail("Exception should have been thrown");
+    } catch (InvalidImageReferenceException ex) {
+      Assert.assertEquals(
+          "Invalid image reference: Java 8 base image detected, but project is using Java version 11; perhaps you should configure a Java 11-compatible base image using the 'parameter name' parameter",
+          ex.getMessage());
     }
   }
 

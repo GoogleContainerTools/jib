@@ -64,6 +64,12 @@ public class BuildImageMojo extends JibPluginConfiguration {
       return;
     }
 
+    try {
+      PluginConfigurationProcessor.checkJavaVersion(getBaseImage(), "<from><image>");
+    } catch (InvalidImageReferenceException ex) {
+      throw new MojoFailureException(ex.getMessage());
+    }
+
     // Validates 'format'.
     if (Arrays.stream(ImageFormat.values()).noneMatch(value -> value.name().equals(getFormat()))) {
       throw new MojoFailureException(

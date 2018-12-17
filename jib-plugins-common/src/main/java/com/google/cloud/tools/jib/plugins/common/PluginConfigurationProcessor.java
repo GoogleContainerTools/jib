@@ -55,6 +55,9 @@ import javax.annotation.Nullable;
  */
 public class PluginConfigurationProcessor {
 
+  private static final String DEFAULT_BASE_IMAGE = "gcr.io/distroless/java";
+  private static final String DEFAULT_BASE_IMAGE_WAR = "gcr.io/distroless/java/jetty";
+
   /**
    * Compute the container entrypoint, in this order:
    *
@@ -103,6 +106,38 @@ public class PluginConfigurationProcessor {
   }
 
   /**
+   * Checks whether or not current Java version is compatible with the base image.
+   *
+   * @param baseImageConfiguration the configured base image
+   * @param fromImageParameterName the name of the base image configuration parameter
+   * @throws InvalidImageReferenceException if the project is incompatible with the base image
+   */
+  public static void checkJavaVersion(
+      @Nullable String baseImageConfiguration, String fromImageParameterName)
+      throws InvalidImageReferenceException {
+    // TODO: check for other Java 8 base images?
+    if (baseImageConfiguration == null
+        || baseImageConfiguration.equals(DEFAULT_BASE_IMAGE)
+        || baseImageConfiguration.equals(DEFAULT_BASE_IMAGE_WAR)) {
+      String version = System.getProperty("java.version");
+      int majorVersion =
+          version.startsWith("1.")
+              ? version.charAt(2) - '0'
+              : Integer.parseInt(version.substring(0, version.indexOf(".")));
+      if (majorVersion > 8) {
+        throw new InvalidImageReferenceException(
+            "Java 8 base image detected, but project is using Java version "
+                + majorVersion
+                + "; perhaps you should configure a Java "
+                + majorVersion
+                + "-compatible base image using the '"
+                + fromImageParameterName
+                + "' parameter");
+      }
+    }
+  }
+
+  /**
    * Gets the suitable value for the base image. If the raw base image parameter is null, returns
    * {@code "gcr.io/distroless/java/jetty"} for WAR projects or {@code "gcr.io/distroless/java"} for
    * non-WAR.
@@ -115,10 +150,7 @@ public class PluginConfigurationProcessor {
       RawConfiguration rawConfiguration, ProjectProperties projectProperties) {
     return rawConfiguration
         .getFromImage()
-        .orElse(
-            projectProperties.isWarProject()
-                ? "gcr.io/distroless/java/jetty"
-                : "gcr.io/distroless/java");
+        .orElse(projectProperties.isWarProject() ? DEFAULT_BASE_IMAGE_WAR : DEFAULT_BASE_IMAGE);
   }
 
   public static PluginConfigurationProcessor processCommonConfigurationForDockerDaemonImage(

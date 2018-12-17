@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
@@ -51,7 +52,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Building image tarball failed";
 
   @Override
-  public void execute() throws MojoExecutionException {
+  public void execute() throws MojoExecutionException, MojoFailureException {
     if (isSkipped()) {
       getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
       return;
@@ -59,6 +60,12 @@ public class BuildTarMojo extends JibPluginConfiguration {
     if ("pom".equals(getProject().getPackaging())) {
       getLog().info("Skipping containerization because packaging is 'pom'...");
       return;
+    }
+
+    try {
+      PluginConfigurationProcessor.checkJavaVersion(getBaseImage(), "<from><image>");
+    } catch (InvalidImageReferenceException ex) {
+      throw new MojoFailureException(ex.getMessage());
     }
 
     try {

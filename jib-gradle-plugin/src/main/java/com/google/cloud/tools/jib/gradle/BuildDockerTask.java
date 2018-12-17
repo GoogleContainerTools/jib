@@ -101,6 +101,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
+    PluginConfigurationProcessor.checkJavaVersion(
+        jibExtension.getFrom().getImage(), "jib.to.image");
     TaskCommon.disableHttpLogging();
 
     try {
