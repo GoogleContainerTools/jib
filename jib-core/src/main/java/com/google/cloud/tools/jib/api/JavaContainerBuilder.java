@@ -54,7 +54,7 @@ public class JavaContainerBuilder {
   /**
    * Creates a new {@link JavaContainerBuilder} that uses distroless java as the base image. For
    * more information on {@code gcr.io/distroless/java}, see <a
-   * href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
+   * href="https://github.com/GoogleContainerTools/distroless">the distroless repository</a>.
    *
    * @return a new {@link JavaContainerBuilder}
    * @throws InvalidImageReferenceException if creating the base image reference fails
@@ -145,7 +145,7 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds the contents of a resource directory to {@code /app/resources} on the image.
+   * Adds the contents of a resources directory to {@code /app/resources} on the image.
    *
    * @param resourceFilesDirectory the directory containing the project's resources
    * @return this
@@ -190,7 +190,8 @@ public class JavaContainerBuilder {
    * Adds additional files to the classpath.
    *
    * @param otherFiles the list of files to add. Files are added to {@code /app/other} on the
-   *     container file system
+   *     container file system. If {@code otherFiles} contains a directory, files within are added
+   *     recursively.
    * @return this
    * @throws IOException if adding the layer fails
    */
@@ -212,9 +213,10 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds additional files to the image's classpath.
+   * Adds additional files to the classpath.
    *
-   * @param otherFiles the list of files to add. Files are added to /app/other on the container
+   * @param otherFiles the list of files to add. Files are added to /app/other on the container file
+   *     system. If {@code otherFiles} contains a directory, files within are added recursively.
    * @return this
    * @throws IOException if adding the layer fails
    */
@@ -267,8 +269,8 @@ public class JavaContainerBuilder {
   public JibContainerBuilder toContainerBuilder() {
     if (mainClass == null) {
       throw new IllegalArgumentException(
-          "mainClass is null on JavaContainerBuilder; specify the "
-              + "main class using JavaContainerBuilder#setMainClass(String), or consider using a "
+          "mainClass is null on JavaContainerBuilder; specify the main class using "
+              + "JavaContainerBuilder#setMainClass(String), or consider using a "
               + "jib.frontend.MainClassFinder to infer the main class");
     }
     if (classpath.isEmpty()) {
