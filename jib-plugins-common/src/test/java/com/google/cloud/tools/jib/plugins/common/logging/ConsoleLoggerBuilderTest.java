@@ -16,9 +16,8 @@
 
 package com.google.cloud.tools.jib.plugins.common.logging;
 
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent.Level;
-import com.google.cloud.tools.jib.plugins.common.logging.LogEventHandlerBuilder.ConsoleLoggerFactory;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder.ConsoleLoggerFactory;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,9 +29,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link LogEventHandlerBuilder}. */
+/** Tests for {@link ConsoleLoggerBuilder}. */
 @RunWith(MockitoJUnitRunner.class)
-public class LogEventHandlerBuilderTest {
+public class ConsoleLoggerBuilderTest {
 
   @Mock private Consumer<String> mockLifecycleConsumer;
   @Mock private Consumer<String> mockProgressConsumer;
@@ -58,15 +57,24 @@ public class LogEventHandlerBuilderTest {
                   .put(Level.ERROR, mockErrorConsumer)
                   .build(),
               messageConsumers);
-          return (ConsoleLogger)
-              (logLevel, message) -> {
-                messages.add(message);
-                levels.add(logLevel);
-              };
+
+          return new ConsoleLogger() {
+
+            @Override
+            public void log(Level logLevel, String message) {
+              messages.add(message);
+              levels.add(logLevel);
+            }
+
+            @Override
+            public void setFooter(List<String> footerLines) {
+              // No op.
+            }
+          };
         };
 
-    Consumer<LogEvent> logEventHandler =
-        new LogEventHandlerBuilder(consoleLoggerFactory)
+    ConsoleLogger consoleLogger =
+        new ConsoleLoggerBuilder(consoleLoggerFactory)
             .lifecycle(mockLifecycleConsumer)
             .progress(mockProgressConsumer)
             .info(mockInfoConsumer)
@@ -75,12 +83,12 @@ public class LogEventHandlerBuilderTest {
             .error(mockErrorConsumer)
             .build();
 
-    logEventHandler.accept(LogEvent.lifecycle("lifecycle"));
-    logEventHandler.accept(LogEvent.progress("progress"));
-    logEventHandler.accept(LogEvent.info("info"));
-    logEventHandler.accept(LogEvent.debug("debug"));
-    logEventHandler.accept(LogEvent.warn("warn"));
-    logEventHandler.accept(LogEvent.error("error"));
+    consoleLogger.log(Level.LIFECYCLE, "lifecycle");
+    consoleLogger.log(Level.PROGRESS, "progress");
+    consoleLogger.log(Level.INFO, "info");
+    consoleLogger.log(Level.DEBUG, "debug");
+    consoleLogger.log(Level.WARN, "warn");
+    consoleLogger.log(Level.ERROR, "error");
 
     Assert.assertEquals(
         Arrays.asList(

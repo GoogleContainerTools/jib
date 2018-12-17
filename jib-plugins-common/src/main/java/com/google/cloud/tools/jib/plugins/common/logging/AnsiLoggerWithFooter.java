@@ -93,7 +93,8 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
    *
    * @param newFooterLines the footer, with each line as an element (no newline at end)
    */
-  void setFooter(List<String> newFooterLines) {
+  @Override
+  public void setFooter(List<String> newFooterLines) {
     if (newFooterLines.equals(footerLines)) {
       return;
     }
