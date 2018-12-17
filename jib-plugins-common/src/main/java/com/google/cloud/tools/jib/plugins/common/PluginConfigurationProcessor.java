@@ -106,39 +106,17 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Checks whether or not current Java version is compatible with the base image.
+   * Checks whether or not the default distroless base image is being used.
    *
    * @param baseImageConfiguration the configured base image
-   * @param fromImageParameterName the name of the base image configuration parameter
-   * @throws InvalidJavaVersionException if the project is incompatible with the base image
+   * @return {@code true} if the base image is null or equal to one of the distroless java images,
+   *     else {@code false}
    */
-  public static void checkJavaVersion(
-      @Nullable String baseImageConfiguration, String fromImageParameterName)
-      throws InvalidJavaVersionException {
+  public static boolean usingDefaultBaseImage(@Nullable String baseImageConfiguration) {
     // TODO: check for other Java 8 base images?
-    if (baseImageConfiguration != null
-        && !baseImageConfiguration.equals(DEFAULT_BASE_IMAGE)
-        && !baseImageConfiguration.equals(DEFAULT_BASE_IMAGE_WAR)) {
-      return;
-    }
-    String version = System.getProperty("java.version");
-    if (version == null) {
-      return;
-    }
-    int majorVersion =
-        version.startsWith("1.")
-            ? version.charAt(2) - '0'
-            : Integer.parseInt(version.substring(0, version.indexOf(".")));
-    if (majorVersion > 8) {
-      throw new InvalidJavaVersionException(
-          "Java 8 base image detected, but project is using Java version "
-              + majorVersion
-              + "; perhaps you should configure a Java "
-              + majorVersion
-              + "-compatible base image using the '"
-              + fromImageParameterName
-              + "' parameter");
-    }
+    return baseImageConfiguration == null
+        || baseImageConfiguration.equals(DEFAULT_BASE_IMAGE)
+        || baseImageConfiguration.equals(DEFAULT_BASE_IMAGE_WAR);
   }
 
   /**
@@ -379,6 +357,12 @@ public class PluginConfigurationProcessor {
     } catch (IllegalArgumentException ex) {
       throw new InvalidWorkingDirectoryException(path, path, ex);
     }
+  }
+
+  public static int getVersionFromString(String versionString) {
+    return versionString.startsWith("1.")
+        ? versionString.charAt(2) - '0'
+        : Integer.parseInt(versionString.substring(0, versionString.indexOf(".")));
   }
 
   // TODO: find a way to reduce the number of arguments.

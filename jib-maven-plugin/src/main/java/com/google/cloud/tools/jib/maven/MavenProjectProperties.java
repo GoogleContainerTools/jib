@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
@@ -36,6 +37,7 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.utils.Os;
@@ -218,5 +220,66 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public String getVersion() {
     return project.getVersion();
+  }
+
+  void validateBaseImageVersion(@Nullable String baseImage) throws MojoFailureException {
+    if (!PluginConfigurationProcessor.usingDefaultBaseImage(baseImage)) {
+      return;
+    }
+
+    // Determine project version
+    Plugin mavenCompilerPlugin =
+        project.getPlugin("org.apache.maven.plugins:maven-compiler-plugin");
+    if (mavenCompilerPlugin == null) {
+      return;
+    }
+    Xpp3Dom pluginConfiguration = (Xpp3Dom) mavenCompilerPlugin.getConfiguration();
+    if (pluginConfiguration == null) {
+      return;
+    }
+
+    // Check highest version specified by maven compiler plugin
+    int version = -1;
+    Xpp3Dom target = pluginConfiguration.getChild("target");
+    if (target != null) {
+      version = PluginConfigurationProcessor.getVersionFromString(target.getValue());
+    }
+    Xpp3Dom release = pluginConfiguration.getChild("release");
+    if (release != null) {
+      version =
+          Math.max(version, PluginConfigurationProcessor.getVersionFromString(release.getValue()));
+    }
+    Xpp3Dom compilerVersion = pluginConfiguration.getChild("compilerVersion");
+    if (compilerVersion != null) {
+      version =
+          Math.max(
+              version,
+              PluginConfigurationProcessor.getVersionFromString(compilerVersion.getValue()));
+    }
+
+    // Check system properties for version
+    if (System.getProperty("maven.compiler.release") != null) {
+      version =
+          Math.max(
+              version,
+              PluginConfigurationProcessor.getVersionFromString(
+                  System.getProperty("maven.compiler.release")));
+    }
+    if (System.getProperty("maven.compiler.target") != null) {
+      version =
+          Math.max(
+              version,
+              PluginConfigurationProcessor.getVersionFromString(
+                  System.getProperty("maven.compiler.target")));
+    }
+
+    if (version > 8) {
+      throw new MojoFailureException(
+          "Java 8 base image detected, but project is using Java "
+              + version
+              + "; perhaps you should configure a Java "
+              + version
+              + "-compatible base image using the '<from><image>' parameter");
+    }
   }
 }

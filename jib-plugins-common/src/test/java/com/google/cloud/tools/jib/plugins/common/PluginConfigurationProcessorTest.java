@@ -480,46 +480,6 @@ public class PluginConfigurationProcessorTest {
     }
   }
 
-  @Test
-  public void testCheckJavaVersion() throws InvalidJavaVersionException {
-    System.setProperty("java.version", "1.8.0_161");
-    PluginConfigurationProcessor.checkJavaVersion(null, "parameter name");
-
-    System.setProperty("java.version", "1.8.0_161");
-    PluginConfigurationProcessor.checkJavaVersion("gcr.io/distroless/java", "parameter name");
-
-    System.setProperty("java.version", "1.9.0_161");
-    try {
-      PluginConfigurationProcessor.checkJavaVersion(null, "parameter name");
-      Assert.fail("Exception should have been thrown");
-    } catch (InvalidJavaVersionException ex) {
-      Assert.assertEquals(
-          "Java 8 base image detected, but project is using Java version 9; perhaps you should configure a Java 9-compatible base image using the 'parameter name' parameter",
-          ex.getMessage());
-    }
-
-    System.setProperty("java.version", "10.0.1");
-    try {
-      PluginConfigurationProcessor.checkJavaVersion("gcr.io/distroless/java", "parameter name");
-      Assert.fail("Exception should have been thrown");
-    } catch (InvalidJavaVersionException ex) {
-      Assert.assertEquals(
-          "Java 8 base image detected, but project is using Java version 10; perhaps you should configure a Java 10-compatible base image using the 'parameter name' parameter",
-          ex.getMessage());
-    }
-
-    System.setProperty("java.version", "11.0.1");
-    try {
-      PluginConfigurationProcessor.checkJavaVersion(
-          "gcr.io/distroless/java/jetty", "parameter name");
-      Assert.fail("Exception should have been thrown");
-    } catch (InvalidJavaVersionException ex) {
-      Assert.assertEquals(
-          "Java 8 base image detected, but project is using Java version 11; perhaps you should configure a Java 11-compatible base image using the 'parameter name' parameter",
-          ex.getMessage());
-    }
-  }
-
   private PluginConfigurationProcessor createPluginConfigurationProcessor()
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,

@@ -29,7 +29,6 @@ import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
-import com.google.cloud.tools.jib.plugins.common.InvalidJavaVersionException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
@@ -65,12 +64,6 @@ public class BuildImageMojo extends JibPluginConfiguration {
       return;
     }
 
-    try {
-      PluginConfigurationProcessor.checkJavaVersion(getBaseImage(), "<from><image>");
-    } catch (InvalidJavaVersionException ex) {
-      throw new MojoFailureException(ex.getMessage(), ex);
-    }
-
     // Validates 'format'.
     if (Arrays.stream(ImageFormat.values()).noneMatch(value -> value.name().equals(getFormat()))) {
       throw new MojoFailureException(
@@ -102,6 +95,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
               MojoCommon.getExtraDirectoryPath(this),
               MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
               appRoot);
+      projectProperties.validateBaseImageVersion(getBaseImage());
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
 

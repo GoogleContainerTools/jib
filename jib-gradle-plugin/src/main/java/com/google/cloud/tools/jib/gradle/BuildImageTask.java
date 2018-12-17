@@ -79,8 +79,6 @@ public class BuildImageTask extends DefaultTask implements JibTask {
           InferredAuthRetrievalException, InvalidJavaVersionException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    PluginConfigurationProcessor.checkJavaVersion(
-        jibExtension.getFrom().getImage(), "jib.from.image");
     TaskCommon.disableHttpLogging();
 
     try {
@@ -92,6 +90,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               jibExtension.getExtraDirectory().getPath(),
               jibExtension.getExtraDirectory().getPermissions(),
               appRoot);
+      projectProperties.validateBaseImageVersion(jibExtension.getFrom().getImage());
 
       if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
         throw new GradleException(

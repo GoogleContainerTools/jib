@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
@@ -48,6 +49,7 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.WarPluginConvention;
 import org.gradle.api.tasks.bundling.War;
+import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
@@ -239,6 +241,27 @@ class GradleProjectProperties implements ProjectProperties {
   @Override
   public String getVersion() {
     return project.getVersion().toString();
+  }
+
+  void validateBaseImageVersion(@Nullable String baseImage) {
+    if (!PluginConfigurationProcessor.usingDefaultBaseImage(baseImage)) {
+      return;
+    }
+    JavaCompile javaCompile = project.getExtensions().getByType(JavaCompile.class);
+    String sourceCompatibility = javaCompile.getSourceCompatibility();
+    String targetCompatibility = javaCompile.getTargetCompatibility();
+    int version =
+        Math.max(
+            PluginConfigurationProcessor.getVersionFromString(sourceCompatibility),
+            PluginConfigurationProcessor.getVersionFromString(targetCompatibility));
+    if (version > 8) {
+      throw new GradleException(
+          "Java 8 base image detected, but project is using Java "
+              + version
+              + "; perhaps you should configure a Java "
+              + version
+              + "-compatible base image using the 'jib.from.image' parameter");
+    }
   }
 
   /**
