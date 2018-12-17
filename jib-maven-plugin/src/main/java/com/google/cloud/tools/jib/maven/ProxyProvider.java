@@ -16,61 +16,69 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.maven.settings.Proxy;
 import org.apache.maven.settings.Settings;
 
-/** Initializes and retrieves proxy settings from either Maven settings or system properties * */
+/** Propagates proxy configuration from Maven settings to system properties * */
 public class ProxyProvider {
 
+  private static final List<String> PROXY_PROPERTIES =
+      Arrays.asList("proxyHost,proxyPort,proxyUser,proxyPassword".split(","));
+
   /**
-   * Initializes proxy settings based on Maven settings and system properties.
+   * Initializes proxy settings based on Maven settings.
    *
    * @param settings - Maven settings from mojo
    */
   public static void init(Settings settings) {
-    List<Proxy> activeProxies =
-        settings
-            .getProxies()
-            .stream()
-            .filter(proxy -> proxy.isActive())
-            .collect(Collectors.toList());
-    for (Proxy proxy : activeProxies) {
-      propagateProxyProperties(proxy);
-    }
+    settings
+        .getProxies()
+        .stream()
+        .filter(proxy -> proxy.isActive())
+        .collect(Collectors.toList())
+        .forEach(proxy -> setProxyProperties(proxy));
   }
 
   /**
-   * Propagate Maven proxy properties into system properties to be picked up by Connections.
+   * Set proxy system properties based on Maven proxy configuration. These system properties will be
+   * picked up by {@link java.net.ProxySelector} used in {@link
+   * com.google.cloud.tools.jib.http.Connection}, while connecting to container image registries.
    *
    * @param proxy Maven proxy
    */
-  private static void propagateProxyProperties(Proxy proxy) {
-    if (proxy.getProtocol().equalsIgnoreCase("http")) {
-      propagateProxyProperty("http.proxyHost", proxy.getHost());
-      propagateProxyProperty("http.proxyPort", String.valueOf(proxy.getPort()));
-      propagateProxyProperty("http.proxyUser", proxy.getUsername());
-      propagateProxyProperty("http.proxyPassword", proxy.getPassword());
-    } else if (proxy.getProtocol().equalsIgnoreCase("https")) {
-      propagateProxyProperty("https.proxyHost", proxy.getHost());
-      propagateProxyProperty("https.proxyPort", String.valueOf(proxy.getPort()));
-      propagateProxyProperty("https.proxyUser", proxy.getUsername());
-      propagateProxyProperty("https.proxyPassword", proxy.getPassword());
+  private static void setProxyProperties(Proxy proxy) {
+    String protocol = proxy.getProtocol();
+    if (protocol != null && !proxyPropertiesSet(protocol)) {
+      setProxyProperty(protocol + ".proxyHost", proxy.getHost());
+      setProxyProperty(protocol + ".proxyPort", String.valueOf(proxy.getPort()));
+      setProxyProperty(protocol + ".proxyUser", proxy.getUsername());
+      setProxyProperty(protocol + ".proxyPassword", proxy.getPassword());
+      setProxyProperty("http.nonProxyHosts", proxy.getNonProxyHosts());
     }
-    propagateProxyProperty("http.nonProxyHosts", proxy.getNonProxyHosts());
   }
 
   /**
-   * Propagate Maven proxy property into system property to be picked up by Connections. Only set
-   * the system property if not already set.
+   * Set proxy system property if it has a proper value
    *
-   * @param name proxy system property name
-   * @param value proxy system property value
+   * @param property property name
+   * @param value property value
    */
-  private static void propagateProxyProperty(String name, String value) {
-    if (value != null && System.getProperty(name) == null) {
-      System.setProperty(name, value);
-    }
+  private static void setProxyProperty(String property, String value) {
+      if (property != null && value != null) {
+          System.setProperty(property, value);
+      }
+  }
+
+  /**
+   * Check if any proxy system properties are already set for a given protocol. Note, <code>
+   * nonProxyHosts</code> is excluded as it can only be set with <code>http</code>.
+   *
+   * @param protocol protocol
+   */
+  private static boolean proxyPropertiesSet(String protocol) {
+    return PROXY_PROPERTIES.stream().anyMatch(p -> System.getProperty(protocol + "." + p) != null);
   }
 }
