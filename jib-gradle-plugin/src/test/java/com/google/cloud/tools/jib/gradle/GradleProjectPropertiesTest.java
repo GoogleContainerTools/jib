@@ -22,11 +22,14 @@ import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
+import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.gradle.api.internal.file.FileResolver;
+import org.gradle.api.invocation.Gradle;
 import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.java.archives.internal.DefaultManifest;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.WarPluginConvention;
 import org.gradle.api.tasks.TaskContainer;
@@ -53,6 +56,8 @@ public class GradleProjectPropertiesTest {
   @Mock private TaskContainer mockTaskContainer;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
   @Mock private Logger mockLogger;
+  @Mock private Gradle mockGradle;
+  @Mock private StartParameter mockStartParameter;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -67,6 +72,10 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockProject.getTasks()).thenReturn(mockTaskContainer);
     Mockito.when(mockTaskContainer.findByName("war")).thenReturn(Mockito.mock(War.class));
     Mockito.when(mockJar.getManifest()).thenReturn(manifest);
+
+    Mockito.when(mockProject.getGradle()).thenReturn(mockGradle);
+    Mockito.when(mockGradle.getStartParameter()).thenReturn(mockStartParameter);
+    Mockito.when(mockStartParameter.getConsoleOutput()).thenReturn(ConsoleOutput.Auto);
 
     gradleProjectProperties =
         new GradleProjectProperties(mockProject, mockLogger, mockJavaLayerConfigurations);

@@ -138,8 +138,8 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   private static boolean isProgressFooterEnabled(Project project) {
-    // TODO: Make SHOW_PROGRESS be true by default.
-    if (!Boolean.getBoolean(PropertyNames.SHOW_PROGRESS)) {
+    // TODO: Consolidate with MavenProjectProperties?
+    if ("plain".equals(System.getProperty(PropertyNames.CONSOLE))) {
       return false;
     }
 

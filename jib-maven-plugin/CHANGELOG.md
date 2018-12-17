@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `jib.baseImageCache` and `jib.applicationCache` system properties for setting cache directories ([#1238](https://github.com/GoogleContainerTools/jib/issues/1238))
+- Build progress shown via a progress bar - set `-Djib.console=plain` to show progress as log messages ([#1297](https://github.com/GoogleContainerTools/jib/issues/1297))
 
 ### Changed
 
