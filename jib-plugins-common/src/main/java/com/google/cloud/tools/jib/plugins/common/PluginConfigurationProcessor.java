@@ -110,30 +110,34 @@ public class PluginConfigurationProcessor {
    *
    * @param baseImageConfiguration the configured base image
    * @param fromImageParameterName the name of the base image configuration parameter
-   * @throws InvalidImageReferenceException if the project is incompatible with the base image
+   * @throws InvalidJavaVersionException if the project is incompatible with the base image
    */
   public static void checkJavaVersion(
       @Nullable String baseImageConfiguration, String fromImageParameterName)
-      throws InvalidImageReferenceException {
+      throws InvalidJavaVersionException {
     // TODO: check for other Java 8 base images?
-    if (baseImageConfiguration == null
-        || baseImageConfiguration.equals(DEFAULT_BASE_IMAGE)
-        || baseImageConfiguration.equals(DEFAULT_BASE_IMAGE_WAR)) {
-      String version = System.getProperty("java.version");
-      int majorVersion =
-          version.startsWith("1.")
-              ? version.charAt(2) - '0'
-              : Integer.parseInt(version.substring(0, version.indexOf(".")));
-      if (majorVersion > 8) {
-        throw new InvalidImageReferenceException(
-            "Java 8 base image detected, but project is using Java version "
-                + majorVersion
-                + "; perhaps you should configure a Java "
-                + majorVersion
-                + "-compatible base image using the '"
-                + fromImageParameterName
-                + "' parameter");
-      }
+    if (baseImageConfiguration != null
+        && !baseImageConfiguration.equals(DEFAULT_BASE_IMAGE)
+        && !baseImageConfiguration.equals(DEFAULT_BASE_IMAGE_WAR)) {
+      return;
+    }
+    String version = System.getProperty("java.version");
+    if (version == null) {
+      return;
+    }
+    int majorVersion =
+        version.startsWith("1.")
+            ? version.charAt(2) - '0'
+            : Integer.parseInt(version.substring(0, version.indexOf(".")));
+    if (majorVersion > 8) {
+      throw new InvalidJavaVersionException(
+          "Java 8 base image detected, but project is using Java version "
+              + majorVersion
+              + "; perhaps you should configure a Java "
+              + majorVersion
+              + "-compatible base image using the '"
+              + fromImageParameterName
+              + "' parameter");
     }
   }
 

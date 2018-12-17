@@ -481,7 +481,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testCheckJavaVersion() throws InvalidImageReferenceException {
+  public void testCheckJavaVersion() throws InvalidJavaVersionException {
     System.setProperty("java.version", "1.8.0_161");
     PluginConfigurationProcessor.checkJavaVersion(null, "parameter name");
 
@@ -492,9 +492,9 @@ public class PluginConfigurationProcessorTest {
     try {
       PluginConfigurationProcessor.checkJavaVersion(null, "parameter name");
       Assert.fail("Exception should have been thrown");
-    } catch (InvalidImageReferenceException ex) {
+    } catch (InvalidJavaVersionException ex) {
       Assert.assertEquals(
-          "Invalid image reference: Java 8 base image detected, but project is using Java version 9; perhaps you should configure a Java 9-compatible base image using the 'parameter name' parameter",
+          "Java 8 base image detected, but project is using Java version 9; perhaps you should configure a Java 9-compatible base image using the 'parameter name' parameter",
           ex.getMessage());
     }
 
@@ -502,9 +502,9 @@ public class PluginConfigurationProcessorTest {
     try {
       PluginConfigurationProcessor.checkJavaVersion("gcr.io/distroless/java", "parameter name");
       Assert.fail("Exception should have been thrown");
-    } catch (InvalidImageReferenceException ex) {
+    } catch (InvalidJavaVersionException ex) {
       Assert.assertEquals(
-          "Invalid image reference: Java 8 base image detected, but project is using Java version 10; perhaps you should configure a Java 10-compatible base image using the 'parameter name' parameter",
+          "Java 8 base image detected, but project is using Java version 10; perhaps you should configure a Java 10-compatible base image using the 'parameter name' parameter",
           ex.getMessage());
     }
 
@@ -513,9 +513,9 @@ public class PluginConfigurationProcessorTest {
       PluginConfigurationProcessor.checkJavaVersion(
           "gcr.io/distroless/java/jetty", "parameter name");
       Assert.fail("Exception should have been thrown");
-    } catch (InvalidImageReferenceException ex) {
+    } catch (InvalidJavaVersionException ex) {
       Assert.assertEquals(
-          "Invalid image reference: Java 8 base image detected, but project is using Java version 11; perhaps you should configure a Java 11-compatible base image using the 'parameter name' parameter",
+          "Java 8 base image detected, but project is using Java version 11; perhaps you should configure a Java 11-compatible base image using the 'parameter name' parameter",
           ex.getMessage());
     }
   }

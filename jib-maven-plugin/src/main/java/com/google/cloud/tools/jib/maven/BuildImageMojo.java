@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidJavaVersionException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
@@ -66,8 +67,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     try {
       PluginConfigurationProcessor.checkJavaVersion(getBaseImage(), "<from><image>");
-    } catch (InvalidImageReferenceException ex) {
-      throw new MojoFailureException(ex.getMessage());
+    } catch (InvalidJavaVersionException ex) {
+      throw new MojoFailureException(ex.getMessage(), ex);
     }
 
     // Validates 'format'.
