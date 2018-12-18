@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.common.collect.ImmutableList;
+import javax.annotation.Nullable;
 import org.apache.maven.settings.Proxy;
 import org.apache.maven.settings.Settings;
 
@@ -64,7 +65,7 @@ public class ProxyProvider {
     setPropertySafe("http.nonProxyHosts", proxy.getNonProxyHosts());
   }
 
-  private static void setPropertySafe(String property, String value) {
+  private static void setPropertySafe(String property, @Nullable String value) {
     if (value != null) {
       System.setProperty(property, value);
     }
