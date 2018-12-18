@@ -84,8 +84,8 @@ public class Connection implements Closeable {
   }
 
   /**
-   * Registers proxy credentials onto transport client, in order to deal with proxies
-   * that require basic authentication.
+   * Registers proxy credentials onto transport client, in order to deal with proxies that require
+   * basic authentication.
    *
    * @param transport
    */
@@ -94,26 +94,33 @@ public class Connection implements Closeable {
         (DefaultHttpClient) ((ApacheHttpTransport) transport).getHttpClient();
 
     boolean httpProxy = System.getProperty("http.proxyHost") != null;
-    boolean httpCreds = System.getProperty("http.proxyUser") != null && System.getProperty("http.proxyPassword") != null;
+    boolean httpCreds =
+        System.getProperty("http.proxyUser") != null
+            && System.getProperty("http.proxyPassword") != null;
     if (httpProxy && httpCreds) {
       httpClient
           .getCredentialsProvider()
           .setCredentials(
               new AuthScope(
-                  System.getProperty("http.proxyHost"), Integer.parseInt(System.getProperty("http.proxyPort", "8080"))),
+                  System.getProperty("http.proxyHost"),
+                  Integer.parseInt(System.getProperty("http.proxyPort", "8080"))),
               new UsernamePasswordCredentials(
                   System.getProperty("http.proxyUser"), System.getProperty("http.proxyPassword")));
     }
     boolean httpsProxy = System.getProperty("https.proxyHost") != null;
-    boolean httpsCreds = System.getProperty("https.proxyUser") != null && System.getProperty("https.proxyPassword") != null;
+    boolean httpsCreds =
+        System.getProperty("https.proxyUser") != null
+            && System.getProperty("https.proxyPassword") != null;
     if (httpsProxy && httpsCreds) {
       httpClient
           .getCredentialsProvider()
           .setCredentials(
               new AuthScope(
-                  System.getProperty("https.proxyHost"), Integer.parseInt(System.getProperty("https.proxyPort", "443"))),
+                  System.getProperty("https.proxyHost"),
+                  Integer.parseInt(System.getProperty("https.proxyPort", "443"))),
               new UsernamePasswordCredentials(
-                  System.getProperty("https.proxyUser"), System.getProperty("https.proxyPassword")));
+                  System.getProperty("https.proxyUser"),
+                  System.getProperty("https.proxyPassword")));
     }
   }
 
