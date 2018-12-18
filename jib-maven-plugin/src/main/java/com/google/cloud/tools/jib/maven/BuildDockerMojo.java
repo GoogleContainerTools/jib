@@ -75,6 +75,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               MojoCommon.getExtraDirectoryPath(this),
               MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
               appRoot);
+
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
 
@@ -90,6 +91,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               null,
               null,
               mavenHelpfulSuggestionsBuilder.build());
+      ProxyProvider.init(getSession().getSettings());
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =

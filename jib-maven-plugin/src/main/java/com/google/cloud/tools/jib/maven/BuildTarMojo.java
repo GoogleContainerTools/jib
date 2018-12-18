@@ -86,6 +86,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
               projectProperties,
               tarOutputPath,
               mavenHelpfulSuggestionsBuilder.build());
+      ProxyProvider.init(getSession().getSettings());
 
       HelpfulSuggestions helpfulSuggestions =
           mavenHelpfulSuggestionsBuilder

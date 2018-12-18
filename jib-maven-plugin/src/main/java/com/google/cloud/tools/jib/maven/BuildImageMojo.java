@@ -104,6 +104,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
               projectProperties);
+      ProxyProvider.init(getSession().getSettings());
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =
