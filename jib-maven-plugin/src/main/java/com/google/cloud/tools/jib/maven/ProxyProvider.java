@@ -32,8 +32,8 @@ public class ProxyProvider {
    * @param settings Maven settings from mojo
    */
   public static void init(Settings settings) {
-    configureProxy(settings, "http");
     configureProxy(settings, "https");
+    configureProxy(settings, "http");
   }
 
   private static void configureProxy(Settings settings, String protocol) {

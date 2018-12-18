@@ -91,8 +91,8 @@ public class Connection implements Closeable {
    * @param transport Apache HTTP transport
    */
   private static void addProxyCredentials(ApacheHttpTransport transport) {
-    addProxyCredentials(transport, "http");
     addProxyCredentials(transport, "https");
+    addProxyCredentials(transport, "http");
   }
 
   private static void addProxyCredentials(ApacheHttpTransport transport, String protocol) {
