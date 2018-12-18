@@ -157,11 +157,13 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     } catch (InvalidAppRootException ex) {
       throw new GradleException(
           "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidPathValue(), ex);
+
     } catch (InvalidWorkingDirectoryException ex) {
       throw new GradleException(
           "container.workingDirectory is not an absolute Unix-style path: "
               + ex.getInvalidPathValue(),
           ex);
+
     } catch (InvalidContainerVolumeException ex) {
       throw new GradleException(
           "container.volumes is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
