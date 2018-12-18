@@ -21,8 +21,8 @@ import javax.annotation.Nullable;
 import org.apache.maven.settings.Proxy;
 import org.apache.maven.settings.Settings;
 
-/** Propagates proxy configuration from Maven settings to system properties * */
-public class ProxyProvider {
+/** Propagates proxy configuration from Maven settings to system properties. */
+class ProxyProvider {
 
   private static final ImmutableList<String> PROXY_PROPERTIES =
       ImmutableList.of("proxyHost", "proxyPort", "proxyUser", "proxyPassword");
@@ -30,9 +30,9 @@ public class ProxyProvider {
   /**
    * Initializes proxy settings based on Maven settings.
    *
-   * @param settings Maven settings from mojo
+   * @param settings Maven settings
    */
-  public static void init(Settings settings) {
+  static void init(Settings settings) {
     configureProxy(settings, "https");
     configureProxy(settings, "http");
   }
@@ -50,7 +50,7 @@ public class ProxyProvider {
   /**
    * Set proxy system properties based on Maven proxy configuration.
    *
-   * @param proxy Maven proxy
+   * @param proxy Maven proxy settings
    */
   private static void setProxyProperties(Proxy proxy) {
     String protocol = proxy.getProtocol();
