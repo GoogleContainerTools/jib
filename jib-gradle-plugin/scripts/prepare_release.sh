@@ -30,7 +30,7 @@ EchoGreen '===== RELEASE SETUP SCRIPT ====='
 
 VERSION=$1
 CheckVersion ${VERSION}
-if [ $2 ]; then
+if [ -n "$2" ]; then
   POST_RELEASE_VERSION=$2
   CheckVersion ${POST_RELEASE_VERSION}
 fi
