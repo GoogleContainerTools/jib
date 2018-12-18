@@ -98,25 +98,22 @@ public class Connection implements Closeable {
   private static void addProxyCredentials(ApacheHttpTransport transport, String protocol) {
     Preconditions.checkArgument(protocol.equals("http") || protocol.equals("https"));
 
-    boolean addCredentials =
-        System.getProperty(protocol + ".proxyHost") != null
-            && System.getProperty(protocol + ".proxyUser") != null
-            && System.getProperty(protocol + ".proxyPassword") != null;
-
-    if (addCredentials) {
-      String defaultProxyPort = protocol.equals("http") ? "80" : "443";
-
-      DefaultHttpClient httpClient = (DefaultHttpClient) transport.getHttpClient();
-      httpClient
-          .getCredentialsProvider()
-          .setCredentials(
-              new AuthScope(
-                  System.getProperty(protocol + ".proxyHost"),
-                  Integer.parseInt(System.getProperty(protocol + ".proxyPort", defaultProxyPort))),
-              new UsernamePasswordCredentials(
-                  System.getProperty(protocol + ".proxyUser"),
-                  System.getProperty(protocol + ".proxyPassword")));
+    String proxyHost = System.getProperty(protocol + ".proxyHost");
+    String proxyUser = System.getProperty(protocol + ".proxyUser");
+    String proxyPassword = System.getProperty(protocol + ".proxyPassword");
+    if (proxyHost == null || proxyUser == null || proxyPassword == null) {
+      return;
     }
+
+    String defaultProxyPort = protocol.equals("http") ? "80" : "443";
+    int proxyPort = Integer.parseInt(System.getProperty(protocol + ".proxyPort", defaultProxyPort));
+
+    DefaultHttpClient httpClient = (DefaultHttpClient) transport.getHttpClient();
+    httpClient
+        .getCredentialsProvider()
+        .setCredentials(
+            new AuthScope(proxyHost, proxyPort),
+            new UsernamePasswordCredentials(proxyUser, proxyPassword));
   }
 
   private HttpRequestFactory requestFactory;

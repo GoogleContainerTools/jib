@@ -53,12 +53,20 @@ public class ProxyProvider {
    */
   private static void setProxyProperties(Proxy proxy) {
     String protocol = proxy.getProtocol();
-    if (!proxyPropertiesSet(protocol)) {
-      System.setProperty(protocol + ".proxyHost", proxy.getHost());
-      System.setProperty(protocol + ".proxyPort", String.valueOf(proxy.getPort()));
-      System.setProperty(protocol + ".proxyUser", proxy.getUsername());
-      System.setProperty(protocol + ".proxyPassword", proxy.getPassword());
-      System.setProperty("http.nonProxyHosts", proxy.getNonProxyHosts());
+    if (areProxyPropertiesSet(protocol)) {
+      return;
+    }
+
+    setPropertySafe(protocol + ".proxyHost", proxy.getHost());
+    setPropertySafe(protocol + ".proxyPort", String.valueOf(proxy.getPort()));
+    setPropertySafe(protocol + ".proxyUser", proxy.getUsername());
+    setPropertySafe(protocol + ".proxyPassword", proxy.getPassword());
+    setPropertySafe("http.nonProxyHosts", proxy.getNonProxyHosts());
+  }
+
+  private static void setPropertySafe(String property, String value) {
+    if (value != null) {
+      System.setProperty(property, value);
     }
   }
 
@@ -68,7 +76,7 @@ public class ProxyProvider {
    *
    * @param protocol protocol
    */
-  private static boolean proxyPropertiesSet(String protocol) {
+  private static boolean areProxyPropertiesSet(String protocol) {
     return PROXY_PROPERTIES
         .stream()
         .anyMatch(property -> System.getProperty(protocol + "." + property) != null);
