@@ -75,6 +75,7 @@ class DefaultCacheStorageWriter {
 
     } catch (FileSystemException ex) {
       if (!Files.exists(destination)) {
+        // TODO to log that the destination exists
         throw ex;
       }
     }
