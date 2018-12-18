@@ -67,9 +67,9 @@ public class ProxyProvider {
    * @param value property value
    */
   private static void setProxyProperty(String property, String value) {
-      if (property != null && value != null) {
-          System.setProperty(property, value);
-      }
+    if (property != null && value != null) {
+      System.setProperty(property, value);
+    }
   }
 
   /**
