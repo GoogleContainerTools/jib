@@ -37,7 +37,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Consumer;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,12 +63,8 @@ public class PluginConfigurationProcessorTest {
   @Mock private AuthProperty authProperty;
   @Mock private Consumer<LogEvent> logger;
 
-  private String originalJavaVersion;
-
   @Before
   public void setUp() {
-    originalJavaVersion = System.getProperty("java.version");
-
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
@@ -91,11 +86,6 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(containerizer);
     Mockito.when(containerizer.setApplicationLayersCache(Mockito.any(Path.class)))
         .thenReturn(containerizer);
-  }
-
-  @After
-  public void cleanup() {
-    System.setProperty("java.version", originalJavaVersion);
   }
 
   @Test

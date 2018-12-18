@@ -49,7 +49,6 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.WarPluginConvention;
 import org.gradle.api.tasks.bundling.War;
-import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
@@ -247,9 +246,9 @@ class GradleProjectProperties implements ProjectProperties {
     if (!PluginConfigurationProcessor.usingDefaultBaseImage(baseImage)) {
       return;
     }
-    JavaCompile javaCompile = project.getExtensions().getByType(JavaCompile.class);
-    String sourceCompatibility = javaCompile.getSourceCompatibility();
-    String targetCompatibility = javaCompile.getTargetCompatibility();
+    Map<String, ?> javaCompile = project.getProperties();
+    String sourceCompatibility = String.valueOf(javaCompile.get("sourceCompatibility"));
+    String targetCompatibility = String.valueOf(javaCompile.get("targetCompatibility"));
     int version =
         Math.max(
             PluginConfigurationProcessor.getVersionFromString(sourceCompatibility),

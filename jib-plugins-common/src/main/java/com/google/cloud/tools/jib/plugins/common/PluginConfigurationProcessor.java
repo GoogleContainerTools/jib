@@ -120,6 +120,18 @@ public class PluginConfigurationProcessor {
   }
 
   /**
+   * Gets the Java version number from a version string. Examples: {@code "11" -> 11, "1.8" -> 8}.
+   *
+   * @param versionString the string to convert
+   * @return the major version number from {@code versionString}
+   */
+  public static int getVersionFromString(String versionString) {
+    return versionString.startsWith("1.")
+        ? versionString.charAt(2) - '0'
+        : Integer.parseInt(versionString.substring(0, versionString.indexOf(".")));
+  }
+
+  /**
    * Gets the suitable value for the base image. If the raw base image parameter is null, returns
    * {@code "gcr.io/distroless/java/jetty"} for WAR projects or {@code "gcr.io/distroless/java"} for
    * non-WAR.
@@ -357,12 +369,6 @@ public class PluginConfigurationProcessor {
     } catch (IllegalArgumentException ex) {
       throw new InvalidWorkingDirectoryException(path, path, ex);
     }
-  }
-
-  public static int getVersionFromString(String versionString) {
-    return versionString.startsWith("1.")
-        ? versionString.charAt(2) - '0'
-        : Integer.parseInt(versionString.substring(0, versionString.indexOf(".")));
   }
 
   // TODO: find a way to reduce the number of arguments.
