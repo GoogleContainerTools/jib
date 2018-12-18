@@ -134,18 +134,22 @@ public class BuildTarTask extends DefaultTask implements JibTask {
               .build();
 
       Path buildOutput = getProject().getBuildDir().toPath();
-      BuildStepsRunner.forBuildTar(tarOutputPath)
-          .writeImageDigest(buildOutput.resolve("jib-image.digest"))
-          .writeImageId(buildOutput.resolve("jib-image.id"))
-          .build(
-              pluginConfigurationProcessor.getJibContainerBuilder(),
-              pluginConfigurationProcessor.getContainerizer(),
-              new DefaultEventDispatcher(projectProperties.getEventHandlers()),
-              projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
-              helpfulSuggestions);
 
-      // TODO: This should not be called on projectProperties.
-      projectProperties.waitForLoggingThread();
+      try {
+        BuildStepsRunner.forBuildTar(tarOutputPath)
+            .writeImageDigest(buildOutput.resolve("jib-image.digest"))
+            .writeImageId(buildOutput.resolve("jib-image.id"))
+            .build(
+                pluginConfigurationProcessor.getJibContainerBuilder(),
+                pluginConfigurationProcessor.getContainerizer(),
+                new DefaultEventDispatcher(projectProperties.getEventHandlers()),
+                projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+                helpfulSuggestions);
+
+      } finally {
+        // TODO: This should not be called on projectProperties.
+        projectProperties.waitForLoggingThread();
+      }
 
     } catch (InvalidAppRootException ex) {
       throw new GradleException(
