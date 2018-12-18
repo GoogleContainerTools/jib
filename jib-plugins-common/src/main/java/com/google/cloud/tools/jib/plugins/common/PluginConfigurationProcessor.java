@@ -120,15 +120,23 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Gets the Java version number from a version string. Examples: {@code "11" -> 11, "1.8" -> 8}.
+   * Gets the Java version number from a version string. Retrieves the number after the decimal
+   * place if the string starts with "1.", otherwise gets the number before the decimal point.
+   * Examples: {@code "11" -> 11, "10.0.1" -> 10, "1.8" -> 8}.
    *
    * @param versionString the string to convert
    * @return the major version number from {@code versionString}
    */
   public static int getVersionFromString(String versionString) {
-    return versionString.startsWith("1.")
-        ? versionString.charAt(2) - '0'
-        : Integer.parseInt(versionString.substring(0, versionString.indexOf(".")));
+    System.out.println(versionString);
+    if (versionString.startsWith("1.")) {
+      return versionString.charAt(2) - '0';
+    }
+    int dotIndex = versionString.indexOf(".");
+    if (dotIndex == -1) {
+      return Integer.parseInt(versionString);
+    }
+    return Integer.parseInt(versionString.substring(0, versionString.indexOf(".")));
   }
 
   /**
