@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.global;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.collect.Range;
 
 /** Names of system properties defined/used by Jib. */
 public class JibSystemProperties {
@@ -83,18 +84,38 @@ public class JibSystemProperties {
    * @throws NumberFormatException if invalid values
    */
   public static void checkHttpTimeoutProperty() throws NumberFormatException {
-    String value = System.getProperty(HTTP_TIMEOUT);
+    checkNumericSystemProperty(HTTP_TIMEOUT, Range.atLeast(0));
+  }
+
+  /**
+   * Checks if {@code http.proxyPort} and {@code https.proxyPort} system properties are in the
+   * [0..65535] range when set.
+   *
+   * @throws NumberFormatException if invalid values
+   */
+  public static void checkProxyPortProperty() throws NumberFormatException {
+    checkNumericSystemProperty("http.proxyPort", Range.closed(0, 65535));
+    checkNumericSystemProperty("https.proxyPort", Range.closed(0, 65535));
+  }
+
+  private static void checkNumericSystemProperty(String property, Range<Integer> validRange) {
+    String value = System.getProperty(property);
     if (value == null) {
       return;
     }
+
     int parsed;
     try {
       parsed = Integer.parseInt(value);
     } catch (NumberFormatException ex) {
-      throw new NumberFormatException(HTTP_TIMEOUT + " must be an integer: " + value);
+      throw new NumberFormatException(property + " must be an integer: " + value);
     }
-    if (parsed < 0) {
-      throw new NumberFormatException(HTTP_TIMEOUT + " cannot be negative: " + value);
+    if (validRange.hasLowerBound() && validRange.lowerEndpoint() > parsed) {
+      throw new NumberFormatException(
+          property + " cannot be less than " + validRange.lowerEndpoint() + ": " + value);
+    } else if (validRange.hasUpperBound() && validRange.upperEndpoint() < parsed) {
+      throw new NumberFormatException(
+          property + " cannot be greater than " + validRange.upperEndpoint() + ": " + value);
     }
   }
 
