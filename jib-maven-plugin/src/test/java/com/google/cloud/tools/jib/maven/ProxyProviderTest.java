@@ -44,7 +44,6 @@ public class ProxyProviderTest {
           "https.proxyPassword",
           "http.nonProxyHosts");
 
-  // private static Proxy createProxy(@Nullable protocol, @Nullable )
   // HashMap to allow saving null values.
   private HashMap<String, String> savedProperties = new HashMap<>();
 
