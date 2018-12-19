@@ -223,6 +223,7 @@ public class PluginConfigurationProcessor {
           InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,
           InvalidContainerVolumeException {
     JibSystemProperties.checkHttpTimeoutProperty();
+    JibSystemProperties.checkProxyPortProperty();
 
     ImageReference baseImageReference =
         ImageReference.parse(getBaseImage(rawConfiguration, projectProperties));
