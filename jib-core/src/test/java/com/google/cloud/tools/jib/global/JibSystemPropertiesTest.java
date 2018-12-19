@@ -56,7 +56,7 @@ public class JibSystemPropertiesTest {
     System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "random string");
     try {
       JibSystemProperties.checkHttpTimeoutProperty();
-      Assert.fail("Should error with a non-integer timeout");
+      Assert.fail();
     } catch (NumberFormatException ex) {
       Assert.assertEquals("jib.httpTimeout must be an integer: random string", ex.getMessage());
     }
@@ -94,7 +94,7 @@ public class JibSystemPropertiesTest {
     System.clearProperty("https.proxyPort");
     try {
       JibSystemProperties.checkProxyPortProperty();
-      Assert.fail("Should error with a negative timeout");
+      Assert.fail();
     } catch (NumberFormatException ex) {
       Assert.assertEquals("http.proxyPort cannot be less than 0: -1", ex.getMessage());
     }
@@ -103,9 +103,30 @@ public class JibSystemPropertiesTest {
     System.setProperty("https.proxyPort", "-1");
     try {
       JibSystemProperties.checkProxyPortProperty();
-      Assert.fail("Should error with a negative timeout");
+      Assert.fail();
     } catch (NumberFormatException ex) {
       Assert.assertEquals("https.proxyPort cannot be less than 0: -1", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testCheckHttpProxyPortProperty_over65535() {
+    System.setProperty("http.proxyPort", "65536");
+    System.clearProperty("https.proxyPort");
+    try {
+      JibSystemProperties.checkProxyPortProperty();
+      Assert.fail();
+    } catch (NumberFormatException ex) {
+      Assert.assertEquals("http.proxyPort cannot be greater than 65535: 65536", ex.getMessage());
+    }
+
+    System.clearProperty("http.proxyPort");
+    System.setProperty("https.proxyPort", "65536");
+    try {
+      JibSystemProperties.checkProxyPortProperty();
+      Assert.fail();
+    } catch (NumberFormatException ex) {
+      Assert.assertEquals("https.proxyPort cannot be greater than 65535: 65536", ex.getMessage());
     }
   }
 
@@ -115,7 +136,7 @@ public class JibSystemPropertiesTest {
     System.clearProperty("https.proxyPort");
     try {
       JibSystemProperties.checkProxyPortProperty();
-      Assert.fail("Should error with a negative timeout");
+      Assert.fail();
     } catch (NumberFormatException ex) {
       Assert.assertEquals("http.proxyPort must be an integer: some string", ex.getMessage());
     }
@@ -124,7 +145,7 @@ public class JibSystemPropertiesTest {
     System.setProperty("https.proxyPort", "some string");
     try {
       JibSystemProperties.checkProxyPortProperty();
-      Assert.fail("Should error with a negative timeout");
+      Assert.fail();
     } catch (NumberFormatException ex) {
       Assert.assertEquals("https.proxyPort must be an integer: some string", ex.getMessage());
     }
