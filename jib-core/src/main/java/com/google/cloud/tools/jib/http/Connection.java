@@ -90,7 +90,8 @@ public class Connection implements Closeable {
    *
    * @param transport Apache HTTP transport
    */
-  private static void addProxyCredentials(ApacheHttpTransport transport) {
+  @VisibleForTesting
+  static void addProxyCredentials(ApacheHttpTransport transport) {
     addProxyCredentials(transport, "https");
     addProxyCredentials(transport, "http");
   }

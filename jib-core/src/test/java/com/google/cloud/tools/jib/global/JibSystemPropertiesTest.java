@@ -37,6 +37,8 @@ public class JibSystemPropertiesTest {
   @After
   public void tearDown() {
     System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
+    System.clearProperty("http.proxyPort");
+    System.clearProperty("https.proxyPort");
     if (httpProxyPortSaved != null) {
       System.setProperty("http.proxyPort", httpProxyPortSaved);
     }
