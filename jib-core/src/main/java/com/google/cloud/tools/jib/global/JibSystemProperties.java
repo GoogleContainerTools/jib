@@ -89,7 +89,7 @@ public class JibSystemProperties {
 
   /**
    * Checks if {@code http.proxyPort} and {@code https.proxyPort} system properties are in the
-   * [0..65535] range.
+   * [0..65535] range when set.
    *
    * @throws NumberFormatException if invalid values
    */
