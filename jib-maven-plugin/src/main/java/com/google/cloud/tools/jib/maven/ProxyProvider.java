@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import javax.annotation.Nullable;
 import org.apache.maven.settings.Proxy;
@@ -52,7 +53,8 @@ class ProxyProvider {
    *
    * @param proxy Maven proxy settings
    */
-  private static void setProxyProperties(Proxy proxy) {
+  @VisibleForTesting
+  static void setProxyProperties(Proxy proxy) {
     String protocol = proxy.getProtocol();
     if (areProxyPropertiesSet(protocol)) {
       return;
@@ -77,7 +79,8 @@ class ProxyProvider {
    *
    * @param protocol protocol
    */
-  private static boolean areProxyPropertiesSet(String protocol) {
+  @VisibleForTesting
+  static boolean areProxyPropertiesSet(String protocol) {
     return PROXY_PROPERTIES
         .stream()
         .anyMatch(property -> System.getProperty(protocol + "." + property) != null);
