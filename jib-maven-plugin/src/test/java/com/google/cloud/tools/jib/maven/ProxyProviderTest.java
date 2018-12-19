@@ -45,7 +45,7 @@ public class ProxyProviderTest {
           "http.nonProxyHosts");
 
   // HashMap to allow saving null values.
-  private HashMap<String, String> savedProperties = new HashMap<>();
+  private final HashMap<String, String> savedProperties = new HashMap<>();
 
   @Before
   public void setUp() {

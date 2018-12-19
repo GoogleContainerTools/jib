@@ -43,10 +43,10 @@ public class ConnectionWithProxyCredentialsTest {
           "https.proxyUser",
           "https.proxyPassword");
 
-  private final ApacheHttpTransport transport = new ApacheHttpTransport();
-
   // HashMap to allow saving null values.
-  private HashMap<String, String> savedProperties = new HashMap<>();
+  private final HashMap<String, String> savedProperties = new HashMap<>();
+
+  private final ApacheHttpTransport transport = new ApacheHttpTransport();
 
   @Before
   public void setUp() {
