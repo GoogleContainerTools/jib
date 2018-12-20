@@ -50,9 +50,9 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.WarPluginConvention;
 import org.gradle.api.tasks.bundling.War;
-import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
@@ -262,13 +262,10 @@ class GradleProjectProperties implements ProjectProperties {
       return;
     }
     JavaVersion version = JavaVersion.current();
-    JavaCompile javaCompile = project.getConvention().findPlugin(JavaCompile.class);
-    if (javaCompile != null) {
-      if (javaCompile.getTargetCompatibility() != null) {
-        version = JavaVersion.toVersion(javaCompile.getTargetCompatibility());
-      } else if (javaCompile.getSourceCompatibility() != null) {
-        version = JavaVersion.toVersion(javaCompile.getTargetCompatibility());
-      }
+    JavaPluginConvention javaPluginConvention =
+        project.getConvention().findPlugin(JavaPluginConvention.class);
+    if (javaPluginConvention != null) {
+      version = JavaVersion.toVersion(javaPluginConvention.getTargetCompatibility());
     }
     if (version.isJava9Compatible()) {
       throw new GradleException(
@@ -276,7 +273,7 @@ class GradleProjectProperties implements ProjectProperties {
               + version.getMajorVersion()
               + "; perhaps you should configure a Java "
               + version.getMajorVersion()
-              + "-compatible base image using the 'jib.from.image' parameter");
+              + "-compatible base image using the 'jib.from.image' parameter, or set targetCompatibility = 1.8 in your build configuration");
     }
   }
 
