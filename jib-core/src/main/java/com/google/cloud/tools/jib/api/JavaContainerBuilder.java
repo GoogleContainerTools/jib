@@ -20,11 +20,12 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
+import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -43,21 +44,18 @@ public class JavaContainerBuilder {
   private static final AbsoluteUnixPath RESOURCES_PATH =
       APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
 
-  /** Absolute path of classes on container. */
+  /** Absolute path of directory containing classes on container. */
   private static final AbsoluteUnixPath CLASSES_PATH =
       APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
 
-  /** Absolute path of dependencies on container. */
+  /** Absolute path of directory containing dependencies on container. */
   private static final AbsoluteUnixPath DEPENDENCIES_PATH =
       APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
 
-  /** The classpath element corresponding to dependencies in the entrypoint. */
-  private static final AbsoluteUnixPath DEPENDENCIES_CLASSPATH =
-      APP_ROOT
-          .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE)
-          .resolve("*");
+  /** The entrypoint classpath element corresponding to dependencies. */
+  private static final AbsoluteUnixPath DEPENDENCIES_CLASSPATH = DEPENDENCIES_PATH.resolve("*");
 
-  /** Absolute path of additional classpath files on container. */
+  /** Absolute path of directory containing additional classpath files on container. */
   private static final AbsoluteUnixPath OTHERS_PATH = APP_ROOT.resolve("classpath");
 
   /**
@@ -123,14 +121,14 @@ public class JavaContainerBuilder {
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
-   * @throws FileNotFoundException if adding the layer fails
+   * @throws NoSuchFileException if adding the layer fails
    */
   public JavaContainerBuilder addDependencies(List<Path> dependencyFiles)
-      throws FileNotFoundException {
+      throws NoSuchFileException {
     // Make sure all files exist before adding any
     for (Path file : dependencyFiles) {
       if (!Files.exists(file)) {
-        throw new FileNotFoundException("File '" + file + "' does not exist.");
+        throw new NoSuchFileException(file.toString());
       }
     }
 
@@ -151,10 +149,9 @@ public class JavaContainerBuilder {
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
-   * @throws FileNotFoundException if adding the layer fails
+   * @throws NoSuchFileException if adding the layer fails
    */
-  public JavaContainerBuilder addDependencies(Path... dependencyFiles)
-      throws FileNotFoundException {
+  public JavaContainerBuilder addDependencies(Path... dependencyFiles) throws NoSuchFileException {
     return addDependencies(Arrays.asList(dependencyFiles));
   }
 
@@ -166,17 +163,7 @@ public class JavaContainerBuilder {
    * @throws IOException if adding the layer fails
    */
   public JavaContainerBuilder addResources(Path resourceFilesDirectory) throws IOException {
-    if (!Files.exists(resourceFilesDirectory)) {
-      throw new FileNotFoundException("Directory '" + resourceFilesDirectory + "' does not exist.");
-    }
-    if (!Files.isDirectory(resourceFilesDirectory)) {
-      throw new NotDirectoryException(
-          "Adding resources failed: '" + resourceFilesDirectory + "' is not a directory");
-    }
-    layerConfigurationsBuilder.addDirectoryContents(
-        LayerType.RESOURCES, resourceFilesDirectory, path -> true, RESOURCES_PATH);
-    classpath.add(RESOURCES_PATH.toString());
-    return this;
+    return addDirectory(resourceFilesDirectory, RESOURCES_PATH, LayerType.RESOURCES);
   }
 
   /**
@@ -187,17 +174,7 @@ public class JavaContainerBuilder {
    * @throws IOException if adding the layer fails
    */
   public JavaContainerBuilder addClasses(Path classFilesDirectory) throws IOException {
-    if (!Files.exists(classFilesDirectory)) {
-      throw new FileNotFoundException("Directory '" + classFilesDirectory + "' does not exist.");
-    }
-    if (!Files.isDirectory(classFilesDirectory)) {
-      throw new NotDirectoryException(
-          "Adding classes failed: '" + classFilesDirectory + "' is not a directory");
-    }
-    layerConfigurationsBuilder.addDirectoryContents(
-        LayerType.CLASSES, classFilesDirectory, path -> true, CLASSES_PATH);
-    classpath.add(CLASSES_PATH.toString());
-    return this;
+    return addDirectory(classFilesDirectory, CLASSES_PATH, LayerType.CLASSES);
   }
 
   /**
@@ -212,7 +189,7 @@ public class JavaContainerBuilder {
     // Make sure all files exist before adding any
     for (Path file : otherFiles) {
       if (!Files.exists(file)) {
-        throw new FileNotFoundException("File '" + file + "' does not exist.");
+        throw new NoSuchFileException(file.toString());
       }
     }
 
@@ -276,11 +253,11 @@ public class JavaContainerBuilder {
 
   /**
    * Sets the main class used to start the application on the image. To find the main class from
-   * {@code .class} files, use {@link com.google.cloud.tools.jib.frontend.MainClassFinder}.
+   * {@code .class} files, use {@link MainClassFinder}.
    *
    * @param mainClass the main class used to start the application
    * @return this
-   * @see com.google.cloud.tools.jib.frontend.MainClassFinder
+   * @see MainClassFinder
    */
   public JavaContainerBuilder setMainClass(String mainClass) {
     this.mainClass = mainClass;
@@ -296,13 +273,13 @@ public class JavaContainerBuilder {
    */
   public JibContainerBuilder toContainerBuilder() {
     if (mainClass == null) {
-      throw new IllegalArgumentException(
+      throw new IllegalStateException(
           "mainClass is null on JavaContainerBuilder; specify the main class using "
               + "JavaContainerBuilder#setMainClass(String), or consider using a "
               + "jib.frontend.MainClassFinder to infer the main class");
     }
     if (classpath.isEmpty()) {
-      throw new IllegalArgumentException(
+      throw new IllegalStateException(
           "Failed to construct entrypoint because no files were added to the JavaContainerBuilder");
     }
 
@@ -310,5 +287,19 @@ public class JavaContainerBuilder {
         JavaEntrypointConstructor.makeEntrypoint(new ArrayList<>(classpath), jvmFlags, mainClass));
     jibContainerBuilder.setLayers(layerConfigurationsBuilder.build().getLayerConfigurations());
     return jibContainerBuilder;
+  }
+
+  private JavaContainerBuilder addDirectory(
+      Path directory, AbsoluteUnixPath destination, LayerType layerType) throws IOException {
+    if (!Files.exists(directory)) {
+      throw new NoSuchFileException(directory.toString());
+    }
+    if (!Files.isDirectory(directory)) {
+      throw new NotDirectoryException(directory.toString());
+    }
+    layerConfigurationsBuilder.addDirectoryContents(
+        layerType, directory, path -> true, destination);
+    classpath.add(destination.toString());
+    return this;
   }
 }

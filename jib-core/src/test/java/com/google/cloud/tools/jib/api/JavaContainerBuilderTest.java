@@ -196,7 +196,7 @@ public class JavaContainerBuilderTest {
       JavaContainerBuilder.fromDistroless().toContainerBuilder();
       Assert.fail();
 
-    } catch (IllegalArgumentException ex) {
+    } catch (IllegalStateException ex) {
       Assert.assertEquals(
           "mainClass is null on JavaContainerBuilder; specify the main class using "
               + "JavaContainerBuilder#setMainClass(String), or consider using a "
@@ -211,7 +211,7 @@ public class JavaContainerBuilderTest {
       JavaContainerBuilder.fromDistroless().setMainClass("Hello").toContainerBuilder();
       Assert.fail();
 
-    } catch (IllegalArgumentException ex) {
+    } catch (IllegalStateException ex) {
       Assert.assertEquals(
           "Failed to construct entrypoint because no files were added to the JavaContainerBuilder",
           ex.getMessage());
