@@ -128,7 +128,6 @@ public class PluginConfigurationProcessor {
    * @return the major version number from {@code versionString}
    */
   public static int getVersionFromString(String versionString) {
-    System.out.println(versionString);
     if (versionString.startsWith("1.")) {
       return versionString.charAt(2) - '0';
     }
