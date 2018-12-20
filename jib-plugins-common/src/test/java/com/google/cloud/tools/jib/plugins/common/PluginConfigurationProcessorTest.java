@@ -220,14 +220,6 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetVersionFromString() {
-    Assert.assertEquals(8, PluginConfigurationProcessor.getVersionFromString("1.8"));
-    Assert.assertEquals(9, PluginConfigurationProcessor.getVersionFromString("9"));
-    Assert.assertEquals(10, PluginConfigurationProcessor.getVersionFromString("10.0.1"));
-    Assert.assertEquals(11, PluginConfigurationProcessor.getVersionFromString("11"));
-  }
-
-  @Test
   public void testUser()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,

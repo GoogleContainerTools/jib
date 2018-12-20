@@ -45,12 +45,14 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.tools.ant.taskdefs.condition.Os;
 import org.gradle.api.GradleException;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.WarPluginConvention;
 import org.gradle.api.tasks.bundling.War;
+import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
@@ -259,19 +261,21 @@ class GradleProjectProperties implements ProjectProperties {
     if (!PluginConfigurationProcessor.usingDefaultBaseImage(baseImage)) {
       return;
     }
-    Map<String, ?> javaCompile = project.getProperties();
-    String sourceCompatibility = String.valueOf(javaCompile.get("sourceCompatibility"));
-    String targetCompatibility = String.valueOf(javaCompile.get("targetCompatibility"));
-    int version =
-        Math.max(
-            PluginConfigurationProcessor.getVersionFromString(sourceCompatibility),
-            PluginConfigurationProcessor.getVersionFromString(targetCompatibility));
-    if (version > 8) {
+    JavaVersion version = JavaVersion.current();
+    JavaCompile javaCompile = project.getConvention().findPlugin(JavaCompile.class);
+    if (javaCompile != null) {
+      if (javaCompile.getTargetCompatibility() != null) {
+        version = JavaVersion.toVersion(javaCompile.getTargetCompatibility());
+      } else if (javaCompile.getSourceCompatibility() != null) {
+        version = JavaVersion.toVersion(javaCompile.getTargetCompatibility());
+      }
+    }
+    if (version.isJava9Compatible()) {
       throw new GradleException(
           "Java 8 base image detected, but project is using Java "
-              + version
+              + version.getMajorVersion()
               + "; perhaps you should configure a Java "
-              + version
+              + version.getMajorVersion()
               + "-compatible base image using the 'jib.from.image' parameter");
     }
   }

@@ -142,6 +142,17 @@ public class MavenProjectProperties implements ProjectProperties {
     return System.console() != null && !"dumb".equals(System.getenv("TERM"));
   }
 
+  private static int getVersionFromString(String versionString) {
+    if (versionString.startsWith("1.")) {
+      return versionString.charAt(2) - '0';
+    }
+    int dotIndex = versionString.indexOf(".");
+    if (dotIndex == -1) {
+      return Integer.parseInt(versionString);
+    }
+    return Integer.parseInt(versionString.substring(0, versionString.indexOf(".")));
+  }
+
   private final MavenProject project;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final EventHandlers eventHandlers;
@@ -237,50 +248,32 @@ public class MavenProjectProperties implements ProjectProperties {
       return;
     }
 
-    // Determine project version
-    Plugin mavenCompilerPlugin =
-        project.getPlugin("org.apache.maven.plugins:maven-compiler-plugin");
-    if (mavenCompilerPlugin == null) {
-      return;
-    }
-    Xpp3Dom pluginConfiguration = (Xpp3Dom) mavenCompilerPlugin.getConfiguration();
-    if (pluginConfiguration == null) {
-      return;
-    }
+    // maven-compiler-plugin default is 1.5
+    int version = 5;
 
-    // Check highest version specified by maven compiler plugin
-    int version = -1;
-    Xpp3Dom target = pluginConfiguration.getChild("target");
-    if (target != null) {
-      version = PluginConfigurationProcessor.getVersionFromString(target.getValue());
-    }
-    Xpp3Dom release = pluginConfiguration.getChild("release");
-    if (release != null) {
-      version =
-          Math.max(version, PluginConfigurationProcessor.getVersionFromString(release.getValue()));
-    }
-    Xpp3Dom compilerVersion = pluginConfiguration.getChild("compilerVersion");
-    if (compilerVersion != null) {
-      version =
-          Math.max(
-              version,
-              PluginConfigurationProcessor.getVersionFromString(compilerVersion.getValue()));
-    }
-
-    // Check system properties for version
-    if (System.getProperty("maven.compiler.release") != null) {
-      version =
-          Math.max(
-              version,
-              PluginConfigurationProcessor.getVersionFromString(
-                  System.getProperty("maven.compiler.release")));
-    }
-    if (System.getProperty("maven.compiler.target") != null) {
-      version =
-          Math.max(
-              version,
-              PluginConfigurationProcessor.getVersionFromString(
-                  System.getProperty("maven.compiler.target")));
+    // Check properties for version
+    if (project.getProperties().getProperty("maven.compiler.target") != null) {
+      version = getVersionFromString(project.getProperties().getProperty("maven.compiler.target"));
+    } else if (project.getProperties().getProperty("maven.compiler.release") != null) {
+      version = getVersionFromString(project.getProperties().getProperty("maven.compiler.release"));
+    } else {
+      // Check maven-compiler-plugin for version
+      Plugin mavenCompilerPlugin =
+          project.getPlugin("org.apache.maven.plugins:maven-compiler-plugin");
+      if (mavenCompilerPlugin != null) {
+        Xpp3Dom pluginConfiguration = (Xpp3Dom) mavenCompilerPlugin.getConfiguration();
+        if (pluginConfiguration != null) {
+          Xpp3Dom target = pluginConfiguration.getChild("target");
+          if (target != null) {
+            version = getVersionFromString(target.getValue());
+          } else {
+            Xpp3Dom release = pluginConfiguration.getChild("release");
+            if (release != null) {
+              version = getVersionFromString(release.getValue());
+            }
+          }
+        }
+      }
     }
 
     if (version > 8) {
