@@ -20,13 +20,16 @@ import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
-import com.google.cloud.tools.jib.plugins.common.logging.LogEventHandlerBuilder;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
+import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
+import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
@@ -39,7 +42,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.apache.tools.ant.taskdefs.condition.Os;
 import org.gradle.api.GradleException;
@@ -55,7 +57,7 @@ import org.gradle.jvm.tasks.Jar;
 class GradleProjectProperties implements ProjectProperties {
 
   /** Used to generate the User-Agent header and history metadata. */
-  static final String TOOL_NAME = "jib-gradle-plugin";
+  private static final String TOOL_NAME = "jib-gradle-plugin";
 
   /** Used for logging during main class inference. */
   private static final String PLUGIN_NAME = "jib";
@@ -98,36 +100,47 @@ class GradleProjectProperties implements ProjectProperties {
 
   private static EventHandlers makeEventHandlers(
       Project project, Logger logger, SingleThreadedExecutor singleThreadedExecutor) {
-    LogEventHandlerBuilder logEventHandlerBuilder =
+    ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(project)
-                ? LogEventHandlerBuilder.rich(singleThreadedExecutor)
-                : LogEventHandlerBuilder.plain(singleThreadedExecutor).progress(logger::lifecycle))
+                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
+                : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(logger::lifecycle))
             .lifecycle(logger::lifecycle);
     if (logger.isDebugEnabled()) {
-      logEventHandlerBuilder.debug(logger::debug);
+      consoleLoggerBuilder.debug(logger::debug);
     }
     if (logger.isInfoEnabled()) {
-      logEventHandlerBuilder.info(logger::info);
+      consoleLoggerBuilder.info(logger::info);
     }
     if (logger.isWarnEnabled()) {
-      logEventHandlerBuilder.warn(logger::warn);
+      consoleLoggerBuilder.warn(logger::warn);
     }
     if (logger.isErrorEnabled()) {
-      logEventHandlerBuilder.error(logger::error);
+      consoleLoggerBuilder.error(logger::error);
     }
-    Consumer<LogEvent> logEventHandler = logEventHandlerBuilder.build();
-
-    TimerEventHandler timerEventHandler =
-        new TimerEventHandler(message -> logEventHandler.accept(LogEvent.debug(message)));
+    ConsoleLogger consoleLogger = consoleLoggerBuilder.build();
 
     return new EventHandlers()
-        .add(JibEventType.LOGGING, logEventHandler)
-        .add(JibEventType.TIMING, timerEventHandler);
+        .add(
+            JibEventType.LOGGING,
+            logEvent -> consoleLogger.log(logEvent.getLevel(), logEvent.getMessage()))
+        .add(
+            JibEventType.TIMING,
+            new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
+        .add(
+            JibEventType.PROGRESS,
+            new ProgressEventHandler(
+                update -> {
+                  List<String> footer =
+                      ProgressDisplayGenerator.generateProgressDisplay(
+                          update.getProgress(), update.getUnfinishedAllocations());
+                  footer.add("");
+                  consoleLogger.setFooter(footer);
+                }));
   }
 
   private static boolean isProgressFooterEnabled(Project project) {
-    // TODO: Make SHOW_PROGRESS be true by default.
-    if (!Boolean.getBoolean(PropertyNames.SHOW_PROGRESS)) {
+    // TODO: Consolidate with MavenProjectProperties?
+    if ("plain".equals(System.getProperty(PropertyNames.CONSOLE))) {
       return false;
     }
 

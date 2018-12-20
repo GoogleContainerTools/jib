@@ -85,7 +85,7 @@ class PushContainerConfigurationStep
   private PushBlobStep afterBuildConfigurationFutureFuture()
       throws ExecutionException, IOException {
     try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("push container configuration", 1);
+            progressEventDispatcherFactory.create("pushing container configuration", 1);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));

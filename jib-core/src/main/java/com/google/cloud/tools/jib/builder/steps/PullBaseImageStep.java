@@ -118,7 +118,7 @@ class PullBaseImageStep
                     + "..."));
 
     try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("pull base image", 2);
+            progressEventDispatcherFactory.create("pulling base image manifest", 2);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // First, try with no credentials.

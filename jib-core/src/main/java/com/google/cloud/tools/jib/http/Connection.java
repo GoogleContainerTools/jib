@@ -31,6 +31,9 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.function.Function;
 import javax.annotation.Nullable;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 /**
  * Sends an HTTP {@link Request} and stores the {@link Response}. Clients should not send more than
@@ -61,7 +64,8 @@ public class Connection implements Closeable {
      * @see <a
      *     href="https://github.com/google/google-http-java-client/issues/39">https://github.com/google/google-http-java-client/issues/39</a>
      */
-    HttpTransport transport = new ApacheHttpTransport();
+    ApacheHttpTransport transport = new ApacheHttpTransport();
+    addProxyCredentials(transport);
     return url -> new Connection(url, transport);
   }
 
@@ -74,8 +78,43 @@ public class Connection implements Closeable {
   public static Function<URL, Connection> getInsecureConnectionFactory()
       throws GeneralSecurityException {
     // Do not use {@link NetHttpTransport}. See {@link getConnectionFactory} for details.
-    HttpTransport transport = new ApacheHttpTransport.Builder().doNotValidateCertificate().build();
+    ApacheHttpTransport transport =
+        new ApacheHttpTransport.Builder().doNotValidateCertificate().build();
+    addProxyCredentials(transport);
     return url -> new Connection(url, transport);
+  }
+
+  /**
+   * Registers proxy credentials onto transport client, in order to deal with proxies that require
+   * basic authentication.
+   *
+   * @param transport Apache HTTP transport
+   */
+  @VisibleForTesting
+  static void addProxyCredentials(ApacheHttpTransport transport) {
+    addProxyCredentials(transport, "https");
+    addProxyCredentials(transport, "http");
+  }
+
+  private static void addProxyCredentials(ApacheHttpTransport transport, String protocol) {
+    Preconditions.checkArgument(protocol.equals("http") || protocol.equals("https"));
+
+    String proxyHost = System.getProperty(protocol + ".proxyHost");
+    String proxyUser = System.getProperty(protocol + ".proxyUser");
+    String proxyPassword = System.getProperty(protocol + ".proxyPassword");
+    if (proxyHost == null || proxyUser == null || proxyPassword == null) {
+      return;
+    }
+
+    String defaultProxyPort = protocol.equals("http") ? "80" : "443";
+    int proxyPort = Integer.parseInt(System.getProperty(protocol + ".proxyPort", defaultProxyPort));
+
+    DefaultHttpClient httpClient = (DefaultHttpClient) transport.getHttpClient();
+    httpClient
+        .getCredentialsProvider()
+        .setCredentials(
+            new AuthScope(proxyHost, proxyPort),
+            new UsernamePasswordCredentials(proxyUser, proxyPassword));
   }
 
   private HttpRequestFactory requestFactory;

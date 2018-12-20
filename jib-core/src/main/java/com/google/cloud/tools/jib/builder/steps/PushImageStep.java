@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -119,8 +120,9 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
   }
 
   private ListenableFuture<BuildResult> afterAllPushed() throws ExecutionException, IOException {
+    ImmutableSet<String> targetImageTags = buildConfiguration.getAllTargetImageTags();
     ProgressEventDispatcher progressEventDispatcher =
-        progressEventDispatcherFactory.create("Push to registry", 1);
+        progressEventDispatcherFactory.create("pushing image manifest", targetImageTags.size());
 
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
@@ -144,14 +146,19 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
       // Pushes to all target image tags.
       List<ListenableFuture<Void>> pushAllTagsFutures = new ArrayList<>();
-      for (String tag : buildConfiguration.getAllTargetImageTags()) {
+      for (String tag : targetImageTags) {
+        ProgressEventDispatcher.Factory progressEventDispatcherFactory =
+            progressEventDispatcher.newChildProducer();
         pushAllTagsFutures.add(
             listeningExecutorService.submit(
                 () -> {
-                  buildConfiguration
-                      .getEventDispatcher()
-                      .dispatch(LogEvent.info("Tagging with " + tag + "..."));
-                  registryClient.pushManifest(manifestTemplate, tag);
+                  try (ProgressEventDispatcher ignored2 =
+                      progressEventDispatcherFactory.create("tagging with " + tag, 1)) {
+                    buildConfiguration
+                        .getEventDispatcher()
+                        .dispatch(LogEvent.info("Tagging with " + tag + "..."));
+                    registryClient.pushManifest(manifestTemplate, tag);
+                  }
                   return null;
                 }));
       }

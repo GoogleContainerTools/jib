@@ -75,7 +75,7 @@ class PullAndCacheBaseImageLayersStep
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                "pull base image layers", baseImageLayers.size());
+                "checking base image layers", baseImageLayers.size());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       ImmutableList.Builder<PullAndCacheBaseImageLayerStep> pullAndCacheBaseImageLayerStepsBuilder =

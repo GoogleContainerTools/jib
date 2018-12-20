@@ -94,7 +94,7 @@ public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildR
         .dispatch(LogEvent.progress("Building image to tar file..."));
 
     try (ProgressEventDispatcher ignored =
-        progressEventDispatcherFactory.create("Write to tar file", 1)) {
+        progressEventDispatcherFactory.create("writing to tar file", 1)) {
       Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
 
       // Builds the image to a tarball.

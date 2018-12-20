@@ -1,5 +1,5 @@
 #!/bin/bash -
-# Usage: ./scripts/prepare_release.sh <release version>
+# Usage: ./scripts/prepare_release.sh <release version> [<post-release-version>]
 
 set -e
 
@@ -39,8 +39,13 @@ EchoGreen '===== RELEASE SETUP SCRIPT ====='
 VERSION=$1
 CheckVersion ${VERSION}
 
-NEXT_VERSION=$(IncrementVersion $VERSION)
-CheckVersion ${NEXT_VERSION}
+if [ -n "$2" ]; then
+  NEXT_VERSION=$2
+  CheckVersion ${NEXT_VERSION}
+else
+  NEXT_VERSION=$(IncrementVersion $VERSION)
+  CheckVersion ${NEXT_VERSION}
+fi
 
 if [[ $(git status -uno --porcelain) ]]; then
   Die 'There are uncommitted changes.'
@@ -63,7 +68,10 @@ git tag ${TAG}
 
 # Updates the pom.xml with the next snapshot version.
 # For example, when releasing 1.5.7, the next snapshot version would be 1.5.8-SNAPSHOT.
-NEXT_SNAPSHOT=${NEXT_VERSION}-SNAPSHOT
+NEXT_SNAPSHOT=${NEXT_VERSION}
+if [[ "${NEXT_SNAPSHOT}" != *-SNAPSHOT ]]; then
+  NEXT_SNAPSHOT=${NEXT_SNAPSHOT}-SNAPSHOT
+fi
 mvn versions:set versions:commit -DnewVersion=${NEXT_SNAPSHOT}
 
 # Commits this next snapshot version.

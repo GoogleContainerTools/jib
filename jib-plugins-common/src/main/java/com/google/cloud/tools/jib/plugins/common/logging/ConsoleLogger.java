@@ -18,9 +18,10 @@ package com.google.cloud.tools.jib.plugins.common.logging;
 
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent.Level;
+import java.util.List;
 
 /** Logs messages to the console. Implementations must be thread-safe. */
-interface ConsoleLogger {
+public interface ConsoleLogger {
 
   /**
    * Logs {@code message} to the console at {@link Level#LIFECYCLE}.
@@ -29,4 +30,11 @@ interface ConsoleLogger {
    * @param message the message
    */
   void log(LogEvent.Level logLevel, String message);
+
+  /**
+   * Sets the footer.
+   *
+   * @param footerLines the footer, with each line as an element (no newline at end)
+   */
+  void setFooter(List<String> footerLines);
 }
