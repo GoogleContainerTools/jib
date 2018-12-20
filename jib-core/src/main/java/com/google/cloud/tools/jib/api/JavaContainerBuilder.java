@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Creates a {@link JibContainerBuilder} for containerizing Java applications. */
@@ -121,24 +123,37 @@ public class JavaContainerBuilder {
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
-   * @throws NoSuchFileException if adding the layer fails
+   * @throws IOException if adding the layer fails
    */
-  public JavaContainerBuilder addDependencies(List<Path> dependencyFiles)
-      throws NoSuchFileException {
+  public JavaContainerBuilder addDependencies(List<Path> dependencyFiles) throws IOException {
     // Make sure all files exist before adding any
     for (Path file : dependencyFiles) {
       if (!Files.exists(file)) {
         throw new NoSuchFileException(file.toString());
       }
     }
-
+    List<String> duplicates =
+        dependencyFiles
+            .stream()
+            .map(Path::getFileName)
+            .map(Path::toString)
+            .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
+            .entrySet()
+            .stream()
+            .filter(entry -> entry.getValue() > 1)
+            .map(Entry::getKey)
+            .collect(Collectors.toList());
     for (Path file : dependencyFiles) {
       layerConfigurationsBuilder.addFile(
           file.getFileName().toString().contains("SNAPSHOT")
               ? LayerType.SNAPSHOT_DEPENDENCIES
               : LayerType.DEPENDENCIES,
           file,
-          DEPENDENCIES_PATH.resolve(file.getFileName()));
+          DEPENDENCIES_PATH.resolve(
+              duplicates.contains(file.getFileName().toString())
+                  ? file.getFileName().toString().replaceFirst("\\.jar$", "-" + Files.size(file))
+                      + ".jar"
+                  : file.getFileName().toString()));
     }
     classpath.add(DEPENDENCIES_CLASSPATH.toString());
     return this;
@@ -149,9 +164,9 @@ public class JavaContainerBuilder {
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
-   * @throws NoSuchFileException if adding the layer fails
+   * @throws IOException if adding the layer fails
    */
-  public JavaContainerBuilder addDependencies(Path... dependencyFiles) throws NoSuchFileException {
+  public JavaContainerBuilder addDependencies(Path... dependencyFiles) throws IOException {
     return addDependencies(Arrays.asList(dependencyFiles));
   }
 

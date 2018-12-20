@@ -70,6 +70,7 @@ public class JavaContainerBuilderTest {
             .addClasses(getResource("application/classes"))
             .addDependencies(
                 getResource("application/dependencies/dependency-1.0.0.jar"),
+                getResource("application/dependencies/more/dependency-1.0.0.jar"),
                 getResource("application/dependencies/libraryA.jar"),
                 getResource("application/dependencies/libraryB.jar"),
                 getResource("application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
@@ -97,7 +98,8 @@ public class JavaContainerBuilderTest {
     // Check dependencies
     List<AbsoluteUnixPath> expectedDependencies =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/app/libs/dependency-1.0.0.jar"),
+            AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-770.jar"),
+            AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-200.jar"),
             AbsoluteUnixPath.get("/app/libs/libraryA.jar"),
             AbsoluteUnixPath.get("/app/libs/libraryB.jar"));
     Assert.assertEquals(
