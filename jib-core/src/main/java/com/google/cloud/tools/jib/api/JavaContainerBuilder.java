@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -180,7 +181,20 @@ public class JavaContainerBuilder {
    * @throws IOException if adding the layer fails
    */
   public JavaContainerBuilder addResources(Path resourceFilesDirectory) throws IOException {
-    return addDirectory(resourceFilesDirectory, RESOURCES_PATH, LayerType.RESOURCES);
+    return addResources(resourceFilesDirectory, path -> true);
+  }
+
+  /**
+   * Adds the contents of a resources directory to the image.
+   *
+   * @param resourceFilesDirectory the directory containing the project's resources
+   * @param pathFilter filter that determines which files (not directories) should be added
+   * @return this
+   * @throws IOException if adding the layer fails
+   */
+  public JavaContainerBuilder addResources(Path resourceFilesDirectory, Predicate<Path> pathFilter)
+      throws IOException {
+    return addDirectory(resourceFilesDirectory, RESOURCES_PATH, LayerType.RESOURCES, pathFilter);
   }
 
   /**
@@ -191,7 +205,20 @@ public class JavaContainerBuilder {
    * @throws IOException if adding the layer fails
    */
   public JavaContainerBuilder addClasses(Path classFilesDirectory) throws IOException {
-    return addDirectory(classFilesDirectory, CLASSES_PATH, LayerType.CLASSES);
+    return addClasses(classFilesDirectory, path -> true);
+  }
+
+  /**
+   * Adds the contents of a classes directory to the image.
+   *
+   * @param classFilesDirectory the directory containing the class files
+   * @param pathFilter filter that determines which files (not directories) should be added
+   * @return this
+   * @throws IOException if adding the layer fails
+   */
+  public JavaContainerBuilder addClasses(Path classFilesDirectory, Predicate<Path> pathFilter)
+      throws IOException {
+    return addDirectory(classFilesDirectory, CLASSES_PATH, LayerType.CLASSES, pathFilter);
   }
 
   /**
@@ -313,15 +340,15 @@ public class JavaContainerBuilder {
   }
 
   private JavaContainerBuilder addDirectory(
-      Path directory, AbsoluteUnixPath destination, LayerType layerType) throws IOException {
+      Path directory, AbsoluteUnixPath destination, LayerType layerType, Predicate<Path> pathFilter)
+      throws IOException {
     if (!Files.exists(directory)) {
       throw new NoSuchFileException(directory.toString());
     }
     if (!Files.isDirectory(directory)) {
       throw new NotDirectoryException(directory.toString());
     }
-    layerConfigurationsBuilder.addDirectoryContents(
-        layerType, directory, path -> true, destination);
+    layerConfigurationsBuilder.addDirectoryContents(layerType, directory, pathFilter, destination);
     classpath.add(destination.toString());
     return this;
   }
