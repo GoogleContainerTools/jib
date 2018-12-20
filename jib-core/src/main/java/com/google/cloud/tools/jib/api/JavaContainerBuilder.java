@@ -132,6 +132,8 @@ public class JavaContainerBuilder {
         throw new NoSuchFileException(file.toString());
       }
     }
+
+    // Detect duplicate filenames and rename with filesize to avoid collisions
     List<String> duplicates =
         dependencyFiles
             .stream()
