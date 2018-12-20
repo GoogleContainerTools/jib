@@ -120,7 +120,8 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds dependency JARs to the image.
+   * Adds dependency JARs to the image. Duplicate JAR filenames are renamed with the filesize in
+   * order to avoid collisions.
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
@@ -163,7 +164,8 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds dependency JARs to the image.
+   * Adds dependency JARs to the image. Duplicate JAR filenames are renamed with the filesize in
+   * order to avoid collisions.
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
