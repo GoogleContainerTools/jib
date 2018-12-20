@@ -178,10 +178,13 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds additional files to the classpath.
+   * Adds additional files to the classpath. If {@code otherFiles} contains a directory, the files
+   * within are added recursively, maintaining the directory structure. For files in {@code
+   * otherFiles}, files with duplicate filenames will be overwritten (e.g. if {@code otherFiles}
+   * contains '/loser/messages.txt' and '/winner/messages.txt', only the second 'messages.txt' is
+   * added.
    *
-   * @param otherFiles the list of files to add. If {@code otherFiles} contains a directory, files
-   *     within are added recursively.
+   * @param otherFiles the list of files to add
    * @return this
    * @throws IOException if adding the layer fails
    */
@@ -207,10 +210,13 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds additional files to the classpath.
+   * Adds additional files to the classpath. If {@code otherFiles} contains a directory, the files
+   * within are added recursively, maintaining the directory structure. For files in {@code
+   * otherFiles}, files with duplicate filenames will be overwritten (e.g. if {@code otherFiles}
+   * contains '/loser/messages.txt' and '/winner/messages.txt', only the second 'messages.txt' is
+   * added.
    *
-   * @param otherFiles the list of files to add. If {@code otherFiles} contains a directory, files
-   *     within are added recursively.
+   * @param otherFiles the list of files to add
    * @return this
    * @throws IOException if adding the layer fails
    */
