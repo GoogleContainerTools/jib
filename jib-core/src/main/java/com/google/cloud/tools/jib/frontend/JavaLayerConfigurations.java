@@ -160,7 +160,6 @@ public class JavaLayerConfigurations {
      * @throws IOException error while listing directories
      * @throws NotDirectoryException if {@code sourceRoot} is not a directory
      */
-    // TODO: Use in plugins
     public Builder addDirectoryContents(
         LayerType layerType,
         Path sourceRoot,
