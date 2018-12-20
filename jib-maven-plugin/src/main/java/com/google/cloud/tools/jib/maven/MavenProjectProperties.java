@@ -248,8 +248,8 @@ public class MavenProjectProperties implements ProjectProperties {
       return;
     }
 
-    // maven-compiler-plugin default is 1.5
-    int version = 5;
+    // maven-compiler-plugin default is 1.6
+    int version = 6;
 
     // Check properties for version
     if (project.getProperties().getProperty("maven.compiler.target") != null) {
