@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Setting proxy credentials (via system properties `http(s).proxyUser` and `http(s).proxyPassword`) is now supported.
+- `jib.DECIDE_THE_NAME={java|war}` configuration parameter to enforce WAR or non-WAR containerization.
 
 ### Changed
 

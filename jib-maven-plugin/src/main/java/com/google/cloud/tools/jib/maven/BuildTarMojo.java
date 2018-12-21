@@ -62,14 +62,20 @@ public class BuildTarMojo extends JibPluginConfiguration {
     }
 
     try {
-      AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
+      MavenRawConfiguration rawConfiguration = new MavenRawConfiguration(this);
+      boolean containerizeWar = MojoCommon.isWarContainerization(getProject(), rawConfiguration);
+      AbsoluteUnixPath appRoot =
+          PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, containerizeWar);
+
       MavenProjectProperties projectProperties =
           MavenProjectProperties.getForProject(
               getProject(),
+              containerizeWar,
               getLog(),
               MojoCommon.getExtraDirectoryPath(this),
               MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
               appRoot);
+
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
 
@@ -80,7 +86,8 @@ public class BuildTarMojo extends JibPluginConfiguration {
       Path tarOutputPath = buildOutput.resolve("jib-image.tar");
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForTarImage(
-              new MavenRawConfiguration(this),
+              rawConfiguration,
+              containerizeWar,
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
               projectProperties,

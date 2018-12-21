@@ -68,4 +68,6 @@ public interface RawConfiguration {
   boolean getAllowInsecureRegistries();
 
   ImageFormat getImageFormat();
+
+  Optional<String> getPackagingOverride();
 }

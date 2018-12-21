@@ -17,11 +17,8 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import java.util.logging.Level;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.internal.logging.events.LogEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
@@ -30,31 +27,6 @@ import org.slf4j.LoggerFactory;
 
 /** Collection of common methods to share between Gradle tasks. */
 class TaskCommon {
-
-  /**
-   * Gets the value of the {@code container.appRoot} parameter. Throws {@link GradleException} if it
-   * is not an absolute path in Unix-style.
-   *
-   * @param jibExtension the {@link JibExtension} providing the configuration data
-   * @return the app root value
-   * @throws InvalidAppRootException if the app root is not an absolute path in Unix-style
-   */
-  // TODO: find a way to use PluginConfigurationProcessor.getAppRootChecked() instead
-  static AbsoluteUnixPath getAppRootChecked(JibExtension jibExtension, Project project)
-      throws InvalidAppRootException {
-    String appRoot = jibExtension.getContainer().getAppRoot();
-    if (appRoot.isEmpty()) {
-      appRoot =
-          GradleProjectProperties.getWarTask(project) != null
-              ? JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT
-              : JavaLayerConfigurations.DEFAULT_APP_ROOT;
-    }
-    try {
-      return AbsoluteUnixPath.get(appRoot);
-    } catch (IllegalArgumentException ex) {
-      throw new InvalidAppRootException(appRoot, appRoot, ex);
-    }
-  }
 
   /** Disables annoying Apache HTTP client logging. */
   static void disableHttpLogging() {
@@ -72,6 +44,13 @@ class TaskCommon {
 
     // Disables Google HTTP client logging.
     java.util.logging.Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
+  }
+
+  static boolean isWarContainerization(Project project, RawConfiguration rawConfiguration) {
+    if (!rawConfiguration.getPackagingOverride().isPresent()) {
+      return GradleProjectProperties.getWarTask(project) != null;
+    }
+    return "war".equals(rawConfiguration.getPackagingOverride().get());
   }
 
   private TaskCommon() {}

@@ -72,6 +72,15 @@ public class WarProjectIntegrationTest {
     verifyBuildAndRun(servlet25Project, "war_tomcat_servlet25:gradle", "build-tomcat.gradle");
   }
 
+  @Test
+  public void testBuild_javaForced() throws IOException, InterruptedException, DigestException {
+    String nameBase = "gcr.io/" + IntegrationTestingConfiguration.getGCPProject() + '/';
+    String targetImage = nameBase + "java_forced_on_war:gradle" + System.nanoTime();
+    Assert.assertEquals(
+        "Hello from main()\n",
+        JibRunHelper.buildAndRun(servlet25Project, targetImage, "build-java-forced.gradle"));
+  }
+
   private void verifyBuildAndRun(TestProject project, String label, String gradleBuildFile)
       throws IOException, InterruptedException, DigestException {
     String nameBase = "gcr.io/" + IntegrationTestingConfiguration.getGCPProject() + '/';

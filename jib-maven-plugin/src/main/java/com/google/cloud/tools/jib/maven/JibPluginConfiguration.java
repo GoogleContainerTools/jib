@@ -234,6 +234,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Nullable @Component protected SettingsDecrypter settingsDecrypter;
 
+  @Nullable
+  @Parameter(property = PropertyNames.PACKAGING_OVERRIDE)
+  private String packagingOverride;
+
   MavenSession getSession() {
     return Preconditions.checkNotNull(session);
   }
@@ -527,6 +531,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   boolean isSkipped() {
     return skip;
+  }
+
+  @Nullable
+  String getPackagingOverride() {
+    return packagingOverride;
   }
 
   SettingsDecrypter getSettingsDecrypter() {

@@ -104,11 +104,15 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     TaskCommon.disableHttpLogging();
 
     try {
-      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
+      GradleRawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
+      boolean containerizeWar = TaskCommon.isWarContainerization(getProject(), rawConfiguration);
+      AbsoluteUnixPath appRoot =
+          PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, containerizeWar);
 
       GradleProjectProperties projectProperties =
           GradleProjectProperties.getForProject(
               getProject(),
+              containerizeWar,
               getLogger(),
               jibExtension.getExtraDirectory().getPath(),
               jibExtension.getExtraDirectory().getPermissions(),
@@ -119,7 +123,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
-              new GradleRawConfiguration(jibExtension),
+              rawConfiguration,
+              containerizeWar,
               ignored -> java.util.Optional.empty(),
               projectProperties,
               dockerClientParameters.getExecutablePath(),

@@ -95,13 +95,15 @@ public class BuildImageMojoIntegrationTest {
    * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
    */
-  private static String buildAndRun(Path projectRoot, String imageReference, boolean runTwice)
+  private static String buildAndRun(
+      Path projectRoot, String imageReference, boolean runTwice, String pomXml)
       throws VerificationException, IOException, InterruptedException, DigestException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
+    verifier.addCliOption("--file=" + pomXml);
     verifier.executeGoals(Arrays.asList("clean", "compile"));
 
     // Builds twice, and checks if the second build took less time.
@@ -211,7 +213,6 @@ public class BuildImageMojoIntegrationTest {
   private static String pullAndRunBuiltImage(String imageReference)
       throws IOException, InterruptedException {
     new Command("docker", "pull", imageReference).run();
-    assertDockerInspectParameters(imageReference);
     return new Command("docker", "run", "--rm", imageReference).run();
   }
 
@@ -324,8 +325,9 @@ public class BuildImageMojoIntegrationTest {
 
     Assert.assertEquals(
         "Hello, " + before + ". An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
-        buildAndRun(simpleTestProject.getProjectRoot(), targetImage, true));
+        buildAndRun(simpleTestProject.getProjectRoot(), targetImage, true, "pom.xml"));
 
+    assertDockerInspectParameters(targetImage);
     Instant buildTime =
         Instant.parse(
             new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
@@ -337,7 +339,9 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_empty()
       throws InterruptedException, IOException, VerificationException, DigestException {
     String targetImage = getGcrImageReference("emptyimage:maven");
-    Assert.assertEquals("", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, false));
+    Assert.assertEquals(
+        "", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, false, "pom.xml"));
+    assertDockerInspectParameters(targetImage);
     assertCreationTimeEpoch(targetImage);
     assertWorkingDirectory("", targetImage);
   }
@@ -409,6 +413,15 @@ public class BuildImageMojoIntegrationTest {
       throws VerificationException, IOException, InterruptedException {
     buildAndRunWar("tomcat-servlet25:maven", "pom-tomcat.xml");
     HttpGetVerifier.verifyBody("Hello world", new URL("http://localhost:8080/hello"));
+  }
+
+  @Test
+  public void testExecute_javaForced()
+      throws VerificationException, IOException, InterruptedException, DigestException {
+    String targetImage = getGcrImageReference("java-forced-on-war:maven");
+    Assert.assertEquals(
+        "Hello from main()\n",
+        buildAndRun(servlet25Project.getProjectRoot(), targetImage, false, "pom-java-forced.xml"));
   }
 
   private void buildAndRunWar(String label, String pomXml)

@@ -110,9 +110,4 @@ public class MavenProjectPropertiesTest {
   public void testGetMainClassFromJar_missingPlugin() {
     Assert.assertNull(mavenProjectProperties.getMainClassFromJar());
   }
-
-  @Test
-  public void testIsWarProject() {
-    Assert.assertFalse(mavenProjectProperties.isWarProject());
-  }
 }

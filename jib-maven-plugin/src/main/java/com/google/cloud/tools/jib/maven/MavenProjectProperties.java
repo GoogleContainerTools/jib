@@ -60,6 +60,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
   /**
    * @param project the {@link MavenProject} for the plugin.
+   * @param containerizeWar whether to do WAR containerization
    * @param log the Maven {@link Log} to log messages during Jib execution
    * @param extraDirectory path to the directory for the extra files layer
    * @param permissions map from path on container to file permissions for extra-layer files
@@ -69,6 +70,7 @@ public class MavenProjectProperties implements ProjectProperties {
    */
   static MavenProjectProperties getForProject(
       MavenProject project,
+      boolean containerizeWar,
       Log log,
       Path extraDirectory,
       Map<AbsoluteUnixPath, FilePermissions> permissions,
@@ -78,7 +80,8 @@ public class MavenProjectProperties implements ProjectProperties {
       return new MavenProjectProperties(
           project,
           log,
-          MavenLayerConfigurations.getForProject(project, extraDirectory, permissions, appRoot));
+          MavenLayerConfigurations.getForProject(
+              project, containerizeWar, extraDirectory, permissions, appRoot));
 
     } catch (IOException ex) {
       throw new MojoExecutionException(
@@ -213,11 +216,6 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public String getJarPluginName() {
     return JAR_PLUGIN_NAME;
-  }
-
-  @Override
-  public boolean isWarProject() {
-    return MojoCommon.isWarProject(project);
   }
 
   @Override

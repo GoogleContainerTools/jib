@@ -67,6 +67,7 @@ class GradleProjectProperties implements ProjectProperties {
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(
       Project project,
+      boolean containerizeWar,
       Logger logger,
       Path extraDirectory,
       Map<String, String> permissions,
@@ -76,7 +77,12 @@ class GradleProjectProperties implements ProjectProperties {
           project,
           logger,
           GradleLayerConfigurations.getForProject(
-              project, logger, extraDirectory, convertPermissionsMap(permissions), appRoot));
+              project,
+              containerizeWar,
+              logger,
+              extraDirectory,
+              convertPermissionsMap(permissions),
+              appRoot));
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
@@ -213,11 +219,6 @@ class GradleProjectProperties implements ProjectProperties {
   @Override
   public String getJarPluginName() {
     return JAR_PLUGIN_NAME;
-  }
-
-  @Override
-  public boolean isWarProject() {
-    return getWarTask(project) != null;
   }
 
   /**

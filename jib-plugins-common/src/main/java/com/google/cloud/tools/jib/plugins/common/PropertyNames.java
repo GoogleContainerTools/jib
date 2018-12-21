@@ -50,6 +50,7 @@ public class PropertyNames {
   public static final String EXTRA_DIRECTORY_PERMISSIONS = "jib.extraDirectory.permissions";
   public static final String SKIP = "jib.skip";
   public static final String CONSOLE = "jib.console";
+  public static final String PACKAGING_OVERRIDE = "jib.packagingOverride";
 
   private PropertyNames() {}
 }

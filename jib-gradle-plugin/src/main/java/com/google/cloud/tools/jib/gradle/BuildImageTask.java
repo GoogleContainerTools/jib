@@ -81,10 +81,15 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     TaskCommon.disableHttpLogging();
 
     try {
-      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
+      GradleRawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
+      boolean containerizeWar = TaskCommon.isWarContainerization(getProject(), rawConfiguration);
+      AbsoluteUnixPath appRoot =
+          PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, containerizeWar);
+
       GradleProjectProperties projectProperties =
           GradleProjectProperties.getForProject(
               getProject(),
+              containerizeWar,
               getLogger(),
               jibExtension.getExtraDirectory().getPath(),
               jibExtension.getExtraDirectory().getPermissions(),
@@ -101,9 +106,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
-              new GradleRawConfiguration(jibExtension),
-              ignored -> Optional.empty(),
-              projectProperties);
+              rawConfiguration, containerizeWar, ignored -> Optional.empty(), projectProperties);
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =

@@ -103,11 +103,15 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     TaskCommon.disableHttpLogging();
 
     try {
-      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
+      GradleRawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
+      boolean containerizeWar = TaskCommon.isWarContainerization(getProject(), rawConfiguration);
+      AbsoluteUnixPath appRoot =
+          PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, containerizeWar);
 
       GradleProjectProperties projectProperties =
           GradleProjectProperties.getForProject(
               getProject(),
+              containerizeWar,
               getLogger(),
               jibExtension.getExtraDirectory().getPath(),
               jibExtension.getExtraDirectory().getPermissions(),
@@ -119,7 +123,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
       Path tarOutputPath = getTargetPath();
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForTarImage(
-              new GradleRawConfiguration(jibExtension),
+              rawConfiguration,
+              containerizeWar,
               ignored -> Optional.empty(),
               projectProperties,
               tarOutputPath,

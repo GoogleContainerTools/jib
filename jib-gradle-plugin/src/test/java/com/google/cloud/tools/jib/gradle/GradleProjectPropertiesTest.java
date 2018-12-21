@@ -103,11 +103,6 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testIsWarProject() {
-    Assert.assertTrue(gradleProjectProperties.isWarProject());
-  }
-
-  @Test
   public void testGetWar_warProject() {
     Assert.assertNotNull(GradleProjectProperties.getWarTask(mockProject));
   }

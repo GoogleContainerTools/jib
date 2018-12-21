@@ -87,10 +87,15 @@ public class BuildImageMojo extends JibPluginConfiguration {
     }
 
     try {
-      AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
+      MavenRawConfiguration rawConfiguration = new MavenRawConfiguration(this);
+      boolean containerizeWar = MojoCommon.isWarContainerization(getProject(), rawConfiguration);
+      AbsoluteUnixPath appRoot =
+          PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, containerizeWar);
+
       MavenProjectProperties projectProperties =
           MavenProjectProperties.getForProject(
               getProject(),
+              containerizeWar,
               getLog(),
               MojoCommon.getExtraDirectoryPath(this),
               MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
@@ -100,7 +105,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
-              new MavenRawConfiguration(this),
+              rawConfiguration,
+              containerizeWar,
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
               projectProperties);

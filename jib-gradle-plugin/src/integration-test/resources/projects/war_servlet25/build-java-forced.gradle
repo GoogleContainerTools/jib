@@ -1,0 +1,24 @@
+plugins {
+  id 'java'
+  id 'war'
+  id 'com.google.cloud.tools.jib'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  providedCompile 'javax.servlet:servlet-api:2.5'
+}
+
+jib {
+  to {
+    image = System.getProperty("_TARGET_IMAGE")
+    credHelper = 'gcr'
+  }
+  packagingOverride = 'java'
+}

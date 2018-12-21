@@ -53,8 +53,6 @@ public interface ProjectProperties {
   @Nullable
   String getMainClassFromJar();
 
-  boolean isWarProject();
-
   String getName();
 
   String getVersion();

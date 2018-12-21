@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 
 - Setting proxy credentials (via system properties `http(s).proxyUser` and `http(s).proxyPassword`) is now supported.
 - Maven proxy settings are now supported.
+- `<DECIDE_THE_NAME>(java|war)` configuration parameter to enforce WAR or non-WAR containerization.
 
 ### Changed
 

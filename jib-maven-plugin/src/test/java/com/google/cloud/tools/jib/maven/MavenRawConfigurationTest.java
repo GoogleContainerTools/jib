@@ -75,6 +75,7 @@ public class MavenRawConfigurationTest {
         .thenReturn(new HashSet<>(Arrays.asList("additional", "tags")));
     Mockito.when(jibPluginConfiguration.getUseCurrentTimestamp()).thenReturn(true);
     Mockito.when(jibPluginConfiguration.getUser()).thenReturn("admin:wheel");
+    Mockito.when(jibPluginConfiguration.getPackagingOverride()).thenReturn("do this way");
 
     MavenRawConfiguration rawConfiguration = new MavenRawConfiguration(jibPluginConfiguration);
 
@@ -102,6 +103,7 @@ public class MavenRawConfigurationTest {
         new HashSet<>(Arrays.asList("additional", "tags")), rawConfiguration.getToTags());
     Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
+    Assert.assertEquals("do this way", rawConfiguration.getPackagingOverride().get());
 
     Mockito.verifyNoMoreInteractions(eventDispatcher);
   }

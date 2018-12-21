@@ -43,6 +43,7 @@ class MavenLayerConfigurations {
    * Resolves the {@link JavaLayerConfigurations} for a {@link MavenProject}.
    *
    * @param project the {@link MavenProject}
+   * @param containerizeWar whether to do WAR containerization
    * @param extraDirectory path to the directory for the extra files layer
    * @param extraDirectoryPermissions map from path on container to file permissions for extra-layer
    *     files
@@ -52,11 +53,12 @@ class MavenLayerConfigurations {
    */
   static JavaLayerConfigurations getForProject(
       MavenProject project,
+      boolean containerizeWar,
       Path extraDirectory,
       Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
       AbsoluteUnixPath appRoot)
       throws IOException {
-    if (MojoCommon.isWarProject(project)) {
+    if (containerizeWar) {
       return getForWarProject(project, extraDirectory, extraDirectoryPermissions, appRoot);
     } else {
       return getForNonWarProject(project, extraDirectory, extraDirectoryPermissions, appRoot);

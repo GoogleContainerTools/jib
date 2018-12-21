@@ -190,6 +190,7 @@ public class GradleLayerConfigurationsTest {
     JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
             mockProject,
+            false,
             mockLogger,
             Paths.get("nonexistent/path"),
             Collections.emptyMap(),
@@ -215,7 +216,12 @@ public class GradleLayerConfigurationsTest {
 
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
     GradleLayerConfigurations.getForProject(
-        mockProject, mockLogger, Paths.get("nonexistent/path"), Collections.emptyMap(), appRoot);
+        mockProject,
+        false,
+        mockLogger,
+        Paths.get("nonexistent/path"),
+        Collections.emptyMap(),
+        appRoot);
 
     Mockito.verify(mockLogger)
         .info("Adding corresponding output directories of source sets to image");
@@ -232,7 +238,7 @@ public class GradleLayerConfigurationsTest {
 
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
     GradleLayerConfigurations.getForProject(
-        mockProject, mockLogger, extraFilesDirectory, Collections.emptyMap(), appRoot);
+        mockProject, false, mockLogger, extraFilesDirectory, Collections.emptyMap(), appRoot);
 
     Mockito.verify(mockLogger)
         .info("Adding corresponding output directories of source sets to image");
@@ -244,6 +250,7 @@ public class GradleLayerConfigurationsTest {
     JavaLayerConfigurations javaLayerConfigurations =
         GradleLayerConfigurations.getForProject(
             mockProject,
+            false,
             mockLogger,
             extraFilesDirectory,
             Collections.emptyMap(),
@@ -267,6 +274,7 @@ public class GradleLayerConfigurationsTest {
     JavaLayerConfigurations configuration =
         GradleLayerConfigurations.getForProject(
             mockProject,
+            false,
             mockLogger,
             extraFilesDirectory,
             Collections.emptyMap(),
@@ -303,6 +311,7 @@ public class GradleLayerConfigurationsTest {
     JavaLayerConfigurations configuration =
         GradleLayerConfigurations.getForProject(
             mockProject,
+            false,
             mockLogger,
             extraFilesDirectory,
             Collections.emptyMap(),
@@ -340,6 +349,7 @@ public class GradleLayerConfigurationsTest {
     JavaLayerConfigurations configuration =
         GradleLayerConfigurations.getForProject(
             mockWebAppProject,
+            true,
             mockLogger,
             extraFilesDirectory,
             Collections.emptyMap(),
@@ -423,6 +433,7 @@ public class GradleLayerConfigurationsTest {
     JavaLayerConfigurations configuration =
         GradleLayerConfigurations.getForProject(
             mockWebAppProject,
+            true,
             mockLogger,
             extraFilesDirectory,
             Collections.emptyMap(),
@@ -466,6 +477,7 @@ public class GradleLayerConfigurationsTest {
 
     GradleLayerConfigurations.getForProject(
         mockWebAppProject,
+        true,
         mockLogger,
         extraFilesDirectory,
         Collections.emptyMap(),
@@ -479,6 +491,7 @@ public class GradleLayerConfigurationsTest {
 
     GradleLayerConfigurations.getForProject(
         mockWebAppProject,
+        true,
         mockLogger,
         extraFilesDirectory,
         Collections.emptyMap(),
@@ -492,6 +505,7 @@ public class GradleLayerConfigurationsTest {
 
     GradleLayerConfigurations.getForProject(
         mockWebAppProject,
+        true,
         mockLogger,
         extraFilesDirectory,
         Collections.emptyMap(),
@@ -500,11 +514,5 @@ public class GradleLayerConfigurationsTest {
 
   private void setUpWarProject(Path webAppDirectory) {
     Mockito.when(mockWebAppProject.getBuildDir()).thenReturn(webAppDirectory.toFile());
-    Mockito.when(mockWebAppProject.getConvention()).thenReturn(mockConvention);
-    Mockito.when(mockConvention.findPlugin(WarPluginConvention.class))
-        .thenReturn(mockWarPluginConvention);
-    Mockito.when(mockWarPluginConvention.getProject()).thenReturn(mockWebAppProject);
-    Mockito.when(mockWebAppProject.getTasks()).thenReturn(taskContainer);
-    Mockito.when(taskContainer.findByName("war")).thenReturn(war);
   }
 }

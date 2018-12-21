@@ -47,6 +47,7 @@ class GradleLayerConfigurations {
    * Resolves the {@link JavaLayerConfigurations} for a Gradle {@link Project}.
    *
    * @param project the Gradle {@link Project}
+   * @param containerizeWar whether to do WAR containerization
    * @param logger the logger for providing feedback about the resolution
    * @param extraDirectory path to the source directory for the extra files layer
    * @param extraDirectoryPermissions map from path on container to file permissions for extra-layer
@@ -57,12 +58,13 @@ class GradleLayerConfigurations {
    */
   static JavaLayerConfigurations getForProject(
       Project project,
+      boolean containerizeWar,
       Logger logger,
       Path extraDirectory,
       Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
       AbsoluteUnixPath appRoot)
       throws IOException {
-    if (GradleProjectProperties.getWarTask(project) != null) {
+    if (containerizeWar) {
       logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
       return getForWarProject(project, extraDirectory, extraDirectoryPermissions, appRoot);
     } else {

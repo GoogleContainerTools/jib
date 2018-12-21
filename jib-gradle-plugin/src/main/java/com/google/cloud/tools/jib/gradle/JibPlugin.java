@@ -99,15 +99,16 @@ public class JibPlugin implements Plugin<Project> {
             .getTasks()
             .create(BUILD_TAR_TASK_NAME, BuildTarTask.class)
             .setJibExtension(jibExtension);
-    Task filesTask =
-        project.getTasks().create(FILES_TASK_NAME, FilesTask.class).setJibExtension(jibExtension);
+    project.getTasks().create(FILES_TASK_NAME, FilesTask.class).setJibExtension(jibExtension);
 
     project.afterEvaluate(
         projectAfterEvaluation -> {
           try {
             War warTask = GradleProjectProperties.getWarTask(project);
             Task dependsOnTask;
-            if (warTask != null) {
+            if (warTask != null
+                && (jibExtension.getPackagingOverride() == null
+                    || "war".equals(jibExtension.getPackagingOverride()))) {
               ExplodedWarTask explodedWarTask =
                   (ExplodedWarTask)
                       project

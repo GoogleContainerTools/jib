@@ -18,9 +18,8 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
-import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.nio.file.Path;
@@ -33,42 +32,20 @@ import org.apache.maven.project.MavenProject;
 class MojoCommon {
 
   /**
-   * Gets whether or not the given project is a war project. This is the case for projects with
-   * packaging {@code war} and {@code gwt-app}.
+   * Computes whether or not it should containerize WAR. This is the case for projects with
+   * packaging {@code war} and {@code gwt-app}, unless non-WAR containierzation is indicated in
+   * {@code rawConfiguration}.
    *
    * @param project the Maven project
-   * @return {@code true} if the project is a war project, {@code false} if not
+   * @param rawConfiguration raw configuration data
+   * @return whether
    */
-  static boolean isWarProject(MavenProject project) {
-    String packaging = project.getPackaging();
-    return "war".equals(packaging) || "gwt-app".equals(packaging);
-  }
-
-  /**
-   * Gets the value of the {@code <container><appRoot>} parameter. If the parameter is empty,
-   * returns {@link JavaLayerConfigurations#DEFAULT_WEB_APP_ROOT} for project with WAR packaging or
-   * {@link JavaLayerConfigurations#DEFAULT_APP_ROOT} for other packaging.
-   *
-   * @param jibPluginConfiguration the Jib plugin configuration
-   * @return the app root value
-   * @throws InvalidAppRootException if the app root is not an absolute path in Unix-style
-   */
-  // TODO: find a way to use PluginConfigurationProcessor.getAppRootChecked() instead
-  static AbsoluteUnixPath getAppRootChecked(JibPluginConfiguration jibPluginConfiguration)
-      throws InvalidAppRootException {
-    String appRoot = jibPluginConfiguration.getAppRoot();
-    if (appRoot.isEmpty()) {
-      boolean isWarProject = isWarProject(jibPluginConfiguration.getProject());
-      appRoot =
-          isWarProject
-              ? JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT
-              : JavaLayerConfigurations.DEFAULT_APP_ROOT;
+  static boolean isWarContainerization(MavenProject project, RawConfiguration rawConfiguration) {
+    if (!rawConfiguration.getPackagingOverride().isPresent()) {
+      String packaging = project.getPackaging();
+      return "war".equals(packaging) || "gwt-app".equals(packaging);
     }
-    try {
-      return AbsoluteUnixPath.get(appRoot);
-    } catch (IllegalArgumentException ex) {
-      throw new InvalidAppRootException(appRoot, appRoot, ex);
-    }
+    return "war".equals(rawConfiguration.getPackagingOverride().get());
   }
 
   /**

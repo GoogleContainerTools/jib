@@ -47,6 +47,7 @@ public class GradleRawConfigurationTest {
     Mockito.when(jibExtension.getTo()).thenReturn(targetImageParameters);
     Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
     Mockito.when(jibExtension.getAllowInsecureRegistries()).thenReturn(true);
+    Mockito.when(jibExtension.getPackagingOverride()).thenReturn("do this way");
 
     Mockito.when(baseImageParameters.getCredHelper()).thenReturn("gcr");
     Mockito.when(baseImageParameters.getImage()).thenReturn("openjdk:15");
@@ -94,5 +95,6 @@ public class GradleRawConfigurationTest {
         new HashSet<>(Arrays.asList("additional", "tags")), rawConfiguration.getToTags());
     Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
+    Assert.assertEquals("do this way", rawConfiguration.getPackagingOverride().get());
   }
 }

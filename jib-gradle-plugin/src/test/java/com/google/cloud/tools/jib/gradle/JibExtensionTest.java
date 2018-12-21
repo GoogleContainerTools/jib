@@ -55,6 +55,7 @@ public class JibExtensionTest {
     System.clearProperty("jib.container.user");
     System.clearProperty("jib.extraDirectory.path");
     System.clearProperty("jib.extraDirectory.permissions");
+    System.clearProperty("jib.packagingOverride");
   }
 
   @Before
@@ -166,6 +167,12 @@ public class JibExtensionTest {
   }
 
   @Test
+  public void testPackagingOverride() {
+    testJibExtension.setPackagingOverride("do this way");
+    Assert.assertEquals("do this way", testJibExtension.getPackagingOverride());
+  }
+
+  @Test
   public void testProperties() {
     System.setProperty("jib.from.image", "fromImage");
     Assert.assertEquals("fromImage", testJibExtension.getFrom().getImage());
@@ -211,5 +218,7 @@ public class JibExtensionTest {
     Assert.assertTrue(testJibExtension.getContainer().getUseCurrentTimestamp());
     System.setProperty("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testJibExtension.getContainer().getUser());
+    System.setProperty("jib.packagingOverride", "do this way");
+    Assert.assertEquals("do this way", testJibExtension.getPackagingOverride());
   }
 }

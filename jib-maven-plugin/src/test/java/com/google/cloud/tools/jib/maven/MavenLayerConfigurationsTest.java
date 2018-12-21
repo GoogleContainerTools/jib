@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
@@ -30,6 +31,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -107,6 +109,7 @@ public class MavenLayerConfigurationsTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private MavenProject mockMavenProject;
+  @Mock private RawConfiguration rawConfiguration;
   @Mock private Build mockBuild;
 
   private Path extraFilesDirectory;
@@ -175,6 +178,7 @@ public class MavenLayerConfigurationsTest {
     JavaLayerConfigurations javaLayerConfigurations =
         MavenLayerConfigurations.getForProject(
             mockMavenProject,
+            false,
             Paths.get("nonexistent/path"),
             Collections.emptyMap(),
             AbsoluteUnixPath.get("/app"));
@@ -194,7 +198,7 @@ public class MavenLayerConfigurationsTest {
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
     JavaLayerConfigurations javaLayerConfigurations =
         MavenLayerConfigurations.getForProject(
-            mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot);
+            mockMavenProject, false, extraFilesDirectory, Collections.emptyMap(), appRoot);
 
     ImmutableList<Path> expectedExtraFiles =
         ImmutableList.of(
@@ -214,7 +218,7 @@ public class MavenLayerConfigurationsTest {
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
     JavaLayerConfigurations configuration =
         MavenLayerConfigurations.getForProject(
-            mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot);
+            mockMavenProject, false, extraFilesDirectory, Collections.emptyMap(), appRoot);
 
     assertNonDefaultAppRoot(configuration);
   }
@@ -228,14 +232,13 @@ public class MavenLayerConfigurationsTest {
   @Test
   public void testGetForWarProject_nonDefaultAppRoot() throws URISyntaxException, IOException {
     Path outputPath = Paths.get(Resources.getResource("webapp").toURI());
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
     Mockito.when(mockBuild.getDirectory()).thenReturn(outputPath.toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
     JavaLayerConfigurations configuration =
         MavenLayerConfigurations.getForProject(
-            mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot);
+            mockMavenProject, true, extraFilesDirectory, Collections.emptyMap(), appRoot);
 
     ImmutableList<Path> expectedDependenciesFiles =
         ImmutableList.of(outputPath.resolve("final-name/WEB-INF/lib/dependency-1.0.0.jar"));
@@ -310,13 +313,10 @@ public class MavenLayerConfigurationsTest {
 
   @Test
   public void testGetForJarProject_nonDefaultAppRoot() throws IOException {
-    // Test when the default packaging is set
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
-
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
     JavaLayerConfigurations configuration =
         MavenLayerConfigurations.getForProject(
-            mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot);
+            mockMavenProject, false, extraFilesDirectory, Collections.emptyMap(), appRoot);
 
     assertNonDefaultAppRoot(configuration);
   }
@@ -324,67 +324,87 @@ public class MavenLayerConfigurationsTest {
   @Test
   public void testGetForWarProject_noErrorIfWebInfDoesNotExist() throws IOException {
     temporaryFolder.newFolder("final-name");
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
     Mockito.when(mockBuild.getDirectory())
         .thenReturn(temporaryFolder.getRoot().toPath().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
 
+    // should pass
     MavenLayerConfigurations.getForProject(
-        mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot); // should pass
+        mockMavenProject, true, extraFilesDirectory, Collections.emptyMap(), appRoot);
   }
 
   @Test
   public void testGetForWarProject_noErrorIfWebInfLibDoesNotExist() throws IOException {
     temporaryFolder.newFolder("final-name", "WEB-INF", "classes");
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
     Mockito.when(mockBuild.getDirectory())
         .thenReturn(temporaryFolder.getRoot().toPath().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
 
+    // should pass
     MavenLayerConfigurations.getForProject(
-        mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot); // should pass
+        mockMavenProject, true, extraFilesDirectory, Collections.emptyMap(), appRoot);
   }
 
   @Test
   public void testGetForWarProject_noErrorIfWebInfClassesDoesNotExist() throws IOException {
     temporaryFolder.newFolder("final-name", "WEB-INF", "lib");
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
     Mockito.when(mockBuild.getDirectory())
         .thenReturn(temporaryFolder.getRoot().toPath().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
     AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/my/app");
 
+    // should pass
     MavenLayerConfigurations.getForProject(
-        mockMavenProject, extraFilesDirectory, Collections.emptyMap(), appRoot); // should pass
+        mockMavenProject, true, extraFilesDirectory, Collections.emptyMap(), appRoot);
   }
 
   @Test
-  public void testIsWarProject_WarPackagingIsWar() {
+  public void testIsWarProject_warPackagingAndNoOverride() {
+    Mockito.when(rawConfiguration.getPackagingOverride()).thenReturn(Optional.empty());
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
 
-    Assert.assertTrue(MojoCommon.isWarProject(mockMavenProject));
+    Assert.assertTrue(MojoCommon.isWarContainerization(mockMavenProject, rawConfiguration));
   }
 
   @Test
-  public void testIsWarProject_GwtAppPackagingIsWar() {
+  public void testIsWarProject_gwtAppPackagingAndNoOverride() {
+    Mockito.when(rawConfiguration.getPackagingOverride()).thenReturn(Optional.empty());
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-app");
 
-    Assert.assertTrue(MojoCommon.isWarProject(mockMavenProject));
+    Assert.assertTrue(MojoCommon.isWarContainerization(mockMavenProject, rawConfiguration));
   }
 
   @Test
-  public void testIsWarProject_JarPackagingIsNotWar() {
+  public void testIsWarProject_jarPackagingAndNoOverride() {
+    Mockito.when(rawConfiguration.getPackagingOverride()).thenReturn(Optional.empty());
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
 
-    Assert.assertFalse(MojoCommon.isWarProject(mockMavenProject));
+    Assert.assertFalse(MojoCommon.isWarContainerization(mockMavenProject, rawConfiguration));
   }
 
   @Test
-  public void testIsWarProject_GwtLibPackagingIsNotWar() {
+  public void testIsWarProject_gwtLibPackagingAndNoOverride() {
+    Mockito.when(rawConfiguration.getPackagingOverride()).thenReturn(Optional.empty());
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-lib");
 
-    Assert.assertFalse(MojoCommon.isWarProject(mockMavenProject));
+    Assert.assertFalse(MojoCommon.isWarContainerization(mockMavenProject, rawConfiguration));
+  }
+
+  @Test
+  public void testIsWarProject_warOverride() {
+    Mockito.when(rawConfiguration.getPackagingOverride()).thenReturn(Optional.of("war"));
+    Mockito.lenient().when(mockMavenProject.getPackaging()).thenReturn("jar");
+
+    Assert.assertTrue(MojoCommon.isWarContainerization(mockMavenProject, rawConfiguration));
+  }
+
+  @Test
+  public void testIsWarProject_javaOverride() {
+    Mockito.when(rawConfiguration.getPackagingOverride()).thenReturn(Optional.of("java"));
+    Mockito.lenient().when(mockMavenProject.getPackaging()).thenReturn("war");
+
+    Assert.assertFalse(MojoCommon.isWarContainerization(mockMavenProject, rawConfiguration));
   }
 }
