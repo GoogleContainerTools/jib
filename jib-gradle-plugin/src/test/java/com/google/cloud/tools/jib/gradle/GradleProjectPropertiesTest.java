@@ -151,12 +151,9 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testValidateBaseImageVersion_nonDefaultBaseImage() {
+  public void testValidateBaseImageVersion() {
     gradleProjectProperties.validateBaseImageVersion("nonDefault");
-  }
 
-  @Test
-  public void testValidateBaseImageVersion_targetCompatibility() {
     Mockito.when(mockConvention.findPlugin(JavaPluginConvention.class))
         .thenReturn(mockJavaPluginConvention);
     Mockito.when(mockJavaPluginConvention.getTargetCompatibility())
