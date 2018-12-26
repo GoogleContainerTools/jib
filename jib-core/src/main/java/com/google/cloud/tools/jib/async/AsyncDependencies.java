@@ -77,7 +77,7 @@ public class AsyncDependencies {
    *
    * @param combiner the {@link Callable}
    * @param <C> the return type of {@code combiner}
-   * @return a {@link ListenableFuture} to handle completion of the call to {@code combiner}
+   * @return the result returned from calling {@code combiner}
    */
   public <C> ListenableFuture<C> whenAllSucceed(Callable<C> combiner) {
     return Futures.whenAllSucceed(futures).call(combiner, listeningExecutorService);
