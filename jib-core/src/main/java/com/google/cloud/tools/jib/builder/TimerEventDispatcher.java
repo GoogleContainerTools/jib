@@ -74,7 +74,7 @@ public class TimerEventDispatcher implements Closeable {
    * Captures the time since last lap or creation and dispatches an {@link State#LAP} {@link
    * TimerEvent}.
    *
-   * @see #lap(String) for using a different description
+   * @see #lap(String)
    */
   public void lap() {
     dispatchTimerEvent(State.LAP, timer.lap(), description);
