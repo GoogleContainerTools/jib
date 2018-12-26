@@ -28,6 +28,7 @@ import org.junit.Test;
 /** Tests for {@link SingleThreadedExecutor}. */
 public class SingleThreadedExecutorTest {
 
+  @SuppressWarnings("ThreadPriorityCheck") // use of Thread.yield()
   @Test
   public void testExecute_mutualExclusion()
       throws IOException, ExecutionException, InterruptedException {
