@@ -35,6 +35,7 @@ import org.gradle.testfixtures.ProjectBuilder;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -48,6 +49,10 @@ public class JibPluginTest {
           JibPlugin.BUILD_DOCKER_TASK_NAME,
           JibPlugin.BUILD_TAR_TASK_NAME);
 
+  public static boolean isJava8Runtime() {
+    return System.getProperty("java.version").startsWith("1.8.");
+  }
+
   @Rule public final TemporaryFolder testProjectRoot = new TemporaryFolder();
 
   @Test
@@ -55,13 +60,14 @@ public class JibPluginTest {
     GradleRunner.create()
         .withProjectDir(testProjectRoot.getRoot())
         .withPluginClasspath()
-        .withGradleVersion(JibPlugin.GRADLE_MIN_VERSION.getVersion())
+        .withGradleVersion("5.0")
         .build();
     // pass
   }
 
   @Test
   public void testCheckGradleVersion_fail() throws IOException {
+    Assume.assumeTrue(isJava8Runtime());
     // Copy build file to temp dir
     Path buildFile = testProjectRoot.getRoot().toPath().resolve("build.gradle");
     InputStream buildFileContent =
