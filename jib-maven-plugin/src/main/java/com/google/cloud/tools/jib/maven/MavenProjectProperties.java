@@ -142,6 +142,14 @@ public class MavenProjectProperties implements ProjectProperties {
     return System.console() != null && !"dumb".equals(System.getenv("TERM"));
   }
 
+  /**
+   * Gets the major version number from a Java version string.
+   *
+   * <p>Examples: {@code "1.7" -> 7, "1.8.0_161" -> 8, "10" -> 10, "11.0.1" -> 11}
+   *
+   * @param versionString the string to convert
+   * @return the major version number as an integer
+   */
   private static int getVersionFromString(String versionString) {
     if (versionString.startsWith("1.")) {
       return versionString.charAt(2) - '0';
