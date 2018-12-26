@@ -269,7 +269,7 @@ class GradleProjectProperties implements ProjectProperties {
     }
     if (version.isJava9Compatible()) {
       throw new GradleException(
-          "Java 8 base image detected, but project is using Java "
+          "Jib's default base image uses Java 8, but project is using Java "
               + version.getMajorVersion()
               + "; perhaps you should configure a Java "
               + version.getMajorVersion()

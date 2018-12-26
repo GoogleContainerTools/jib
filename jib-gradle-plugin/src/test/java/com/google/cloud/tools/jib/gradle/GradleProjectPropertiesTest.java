@@ -167,7 +167,7 @@ public class GradleProjectPropertiesTest {
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(
-          "Java 8 base image detected, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the 'jib.from.image' parameter, or set targetCompatibility = 1.8 in your build configuration",
+          "Jib's default base image uses Java 8, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the 'jib.from.image' parameter, or set targetCompatibility = 1.8 in your build configuration",
           ex.getMessage());
     }
   }

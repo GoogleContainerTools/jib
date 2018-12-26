@@ -147,7 +147,7 @@ public class MavenProjectPropertiesTest {
       Assert.fail();
     } catch (MojoFailureException ex) {
       Assert.assertEquals(
-          "Java 8 base image detected, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the '<from><image>' parameter",
+          "Jib's default base image uses Java 8, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's target or release version to 1.8 in your build configuration",
           ex.getMessage());
     }
   }
@@ -163,7 +163,7 @@ public class MavenProjectPropertiesTest {
       Assert.fail();
     } catch (MojoFailureException ex) {
       Assert.assertEquals(
-          "Java 8 base image detected, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the '<from><image>' parameter",
+          "Jib's default base image uses Java 8, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's target or release version to 1.8 in your build configuration",
           ex.getMessage());
     }
   }
@@ -183,7 +183,7 @@ public class MavenProjectPropertiesTest {
       Assert.fail();
     } catch (MojoFailureException ex) {
       Assert.assertEquals(
-          "Java 8 base image detected, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the '<from><image>' parameter",
+          "Jib's default base image uses Java 8, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's target or release version to 1.8 in your build configuration",
           ex.getMessage());
     }
   }
@@ -203,7 +203,7 @@ public class MavenProjectPropertiesTest {
       Assert.fail();
     } catch (MojoFailureException ex) {
       Assert.assertEquals(
-          "Java 8 base image detected, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the '<from><image>' parameter",
+          "Jib's default base image uses Java 8, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's target or release version to 1.8 in your build configuration",
           ex.getMessage());
     }
   }

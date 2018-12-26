@@ -286,11 +286,11 @@ public class MavenProjectProperties implements ProjectProperties {
 
     if (version > 8) {
       throw new MojoFailureException(
-          "Java 8 base image detected, but project is using Java "
+          "Jib's default base image uses Java 8, but project is using Java "
               + version
               + "; perhaps you should configure a Java "
               + version
-              + "-compatible base image using the '<from><image>' parameter");
+              + "-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's target or release version to 1.8 in your build configuration");
     }
   }
 }
