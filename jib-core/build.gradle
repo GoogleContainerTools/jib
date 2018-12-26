@@ -95,7 +95,6 @@ tasks.withType(JavaCompile) {
       check('NullAway', CheckSeverity.ERROR)
       option('NullAway:AnnotatedPackages', 'com.google.cloud.tools')
     }
-    //options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools"]
   }
 }
 
