@@ -97,14 +97,10 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
         .addSteps(NonBlockingSteps.get(pushApplicationLayersStep))
         .addStep(NonBlockingSteps.get(pushContainerConfigurationStep))
         .addStep(NonBlockingSteps.get(buildImageStep))
-        .whenAllSucceed(this::afterPushSteps)
-        .get()
-        .get()
-        .get();
+        .whenAllSucceedBlocking(this::afterPushSteps);
   }
 
-  private ListenableFuture<ListenableFuture<BuildResult>> afterPushSteps()
-      throws ExecutionException {
+  private BuildResult afterPushSteps() throws ExecutionException, InterruptedException {
     AsyncDependencies dependencies = AsyncDependencies.using(listeningExecutorService);
     for (AsyncStep<PushBlobStep> pushBaseImageLayerStep :
         NonBlockingSteps.get(pushBaseImageLayersStep)) {
@@ -116,10 +112,11 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
     }
     return dependencies
         .addStep(NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep)))
-        .whenAllSucceed(this::afterAllPushed);
+        .whenAllSucceedBlocking(this::afterAllPushed);
   }
 
-  private ListenableFuture<BuildResult> afterAllPushed() throws ExecutionException, IOException {
+  private BuildResult afterAllPushed()
+      throws ExecutionException, IOException, InterruptedException {
     ImmutableSet<String> targetImageTags = buildConfiguration.getAllTargetImageTags();
     ProgressEventDispatcher progressEventDispatcher =
         progressEventDispatcherFactory.create("pushing image manifest", targetImageTags.size());
@@ -176,7 +173,8 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
                 progressEventDispatcher.close();
                 return result;
               },
-              listeningExecutorService);
+              listeningExecutorService)
+          .get();
     }
   }
 }

@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Builds a list of dependency {@link ListenableFuture}s to wait on before calling a {@link
@@ -71,7 +72,8 @@ public class AsyncDependencies {
   }
 
   /**
-   * Calls {@code combiner} when all the added futures succeed.
+   * Creates the {@link ListenableFuture} which will return the result of calling {@code combiner}
+   * when all the added futures succeed.
    *
    * @param combiner the {@link Callable}
    * @param <C> the return type of {@code combiner}
@@ -79,5 +81,20 @@ public class AsyncDependencies {
    */
   public <C> ListenableFuture<C> whenAllSucceed(Callable<C> combiner) {
     return Futures.whenAllSucceed(futures).call(combiner, listeningExecutorService);
+  }
+
+  /**
+   * Calls {@code combiner} when all the added futures succeed.
+   *
+   * @param combiner the {@link Callable}
+   * @param <C> the return type of {@code combiner}
+   * @return a {@link ListenableFuture} to handle completion of the call to {@code combiner}
+   * @throws ExecutionException if {@code combiner} threw an exception
+   * @throws InterruptedException if the current thread was interrupted while waiting for {@code
+   *     combiner}
+   */
+  public <C> C whenAllSucceedBlocking(Callable<C> combiner)
+      throws InterruptedException, ExecutionException {
+    return Futures.whenAllSucceed(futures).call(combiner, listeningExecutorService).get();
   }
 }
