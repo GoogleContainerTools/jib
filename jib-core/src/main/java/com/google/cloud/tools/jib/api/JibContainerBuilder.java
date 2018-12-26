@@ -128,7 +128,8 @@ public class JibContainerBuilder {
    *     sourceFile}
    * @return this
    * @throws IOException if an exception occurred when recursively listing any directories
-   * @see #addLayer(List, AbsoluteUnixPath) for more details
+   * @throws IllegalArgumentException if {@code pathInContainer} is not an absolute Unix-style path
+   * @see #addLayer(List, AbsoluteUnixPath)
    */
   public JibContainerBuilder addLayer(List<Path> files, String pathInContainer) throws IOException {
     return addLayer(files, AbsoluteUnixPath.get(pathInContainer));
