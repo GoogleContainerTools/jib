@@ -120,6 +120,33 @@ public class JibContainerBuilder {
   }
 
   /**
+   * Adds a new layer to the container with {@code files} as the source files and {@code
+   * pathInContainer} as the path to copy the source files to in the container file system.
+   *
+   * @param files the source files to copy to a new layer in the container
+   * @param pathInContainer the path in the container file system corresponding to the {@code
+   *     sourceFile}
+   * @return this
+   * @throws IOException if an exception occurred when recursively listing any directories
+   * @throws IllegalArgumentException if {@code pathInContainer} is not an absolute Unix-style path
+   * @see #addLayer(List, AbsoluteUnixPath)
+   */
+  public JibContainerBuilder addLayer(List<Path> files, String pathInContainer) throws IOException {
+    return addLayer(files, AbsoluteUnixPath.get(pathInContainer));
+  }
+
+  /**
+   * Adds a layer (defined by a {@link LayerConfiguration}).
+   *
+   * @param layerConfiguration the {@link LayerConfiguration}
+   * @return this
+   */
+  public JibContainerBuilder addLayer(LayerConfiguration layerConfiguration) {
+    layerConfigurations.add(layerConfiguration);
+    return this;
+  }
+
+  /**
    * Sets the layers (defined by a list of {@link LayerConfiguration}s). This replaces any
    * previously-added layers.
    *
@@ -139,17 +166,6 @@ public class JibContainerBuilder {
    */
   public JibContainerBuilder setLayers(LayerConfiguration... layerConfigurations) {
     return setLayers(Arrays.asList(layerConfigurations));
-  }
-
-  /**
-   * Adds a layer (defined by a {@link LayerConfiguration}).
-   *
-   * @param layerConfiguration the {@link LayerConfiguration}
-   * @return this
-   */
-  public JibContainerBuilder addLayer(LayerConfiguration layerConfiguration) {
-    layerConfigurations.add(layerConfiguration);
-    return this;
   }
 
   /**
