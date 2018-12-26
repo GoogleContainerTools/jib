@@ -148,17 +148,28 @@ public class MavenProjectProperties implements ProjectProperties {
    * <p>Examples: {@code "1.7" -> 7, "1.8.0_161" -> 8, "10" -> 10, "11.0.1" -> 11}
    *
    * @param versionString the string to convert
-   * @return the major version number as an integer
+   * @return the major version number as an integer, or 0 if the string is invalid
    */
-  private static int getVersionFromString(String versionString) {
+  @VisibleForTesting
+  static int getVersionFromString(String versionString) {
+    // Parse version starting with "1."
     if (versionString.startsWith("1.")) {
-      return versionString.charAt(2) - '0';
+      if (versionString.length() >= 3 && Character.isDigit(versionString.charAt(2))) {
+        return versionString.charAt(2) - '0';
+      }
+      return 0;
     }
+
+    // Parse string starting with major version number
     int dotIndex = versionString.indexOf(".");
-    if (dotIndex == -1) {
-      return Integer.parseInt(versionString);
+    try {
+      if (dotIndex == -1) {
+        return Integer.parseInt(versionString);
+      }
+      return Integer.parseInt(versionString.substring(0, versionString.indexOf(".")));
+    } catch (NumberFormatException ex) {
+      return 0;
     }
-    return Integer.parseInt(versionString.substring(0, versionString.indexOf(".")));
   }
 
   private final MavenProject project;

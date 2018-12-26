@@ -127,6 +127,19 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
+  public void testGetVersionFromString() {
+    Assert.assertEquals(8, MavenProjectProperties.getVersionFromString("1.8"));
+    Assert.assertEquals(8, MavenProjectProperties.getVersionFromString("1.8.0_123"));
+    Assert.assertEquals(11, MavenProjectProperties.getVersionFromString("11"));
+    Assert.assertEquals(11, MavenProjectProperties.getVersionFromString("11.0.1"));
+
+    Assert.assertEquals(0, MavenProjectProperties.getVersionFromString("asdfasdf"));
+    Assert.assertEquals(0, MavenProjectProperties.getVersionFromString(""));
+    Assert.assertEquals(0, MavenProjectProperties.getVersionFromString("11abc"));
+    Assert.assertEquals(0, MavenProjectProperties.getVersionFromString("1.abc"));
+  }
+
+  @Test
   public void testValidateBaseImageVersion_nonDefaultBaseImage() throws MojoFailureException {
     mavenProjectProperties.validateBaseImageVersion("non-default");
   }
