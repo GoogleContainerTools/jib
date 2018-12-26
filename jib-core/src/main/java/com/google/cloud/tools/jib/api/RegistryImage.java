@@ -89,7 +89,8 @@ public class RegistryImage implements SourceImage, TargetImage {
   /**
    * Adds {@link CredentialRetriever} to fetch push/pull credentials for the image. Credential
    * retrievers are attempted in the order in which they are specified until credentials are
-   * successfully retrieved.
+   * successfully retrieved. See {@link CredentialRetrieverFactory} for useful pre-defined
+   * CredentialRetrievers.
    *
    * <p>Example usage:
    *
