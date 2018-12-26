@@ -14,13 +14,6 @@ For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin)
 
 For information about the Jib project, see the [Jib project README](../README.md).
 
-## Upcoming features
-
-- Extensions to make building Java and other language-specific containers easier
-- Structured events to react to parts of Jib Core's execution
-
-See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
-
 ## Adding Jib Core to your build
 
 Add Jib Core as a dependency using Maven:
@@ -105,13 +98,16 @@ Some other parts of Jib Core internals include:
 - an eventing system to react to events from Jib Core during its execution (add handlers with [`Containerizer.setEventHandlers`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.0/com/google/cloud/tools/jib/api/Containerizer.html#setEventHandlers-com.google.cloud.tools.jib.event.EventHandlers-))
 - support for fully-concurrent multi-threaded executions
 
-## How Jib Works
-
-See the [Jib project README](/../../#how-jib-works).
-
 ## Frequently Asked Questions (FAQ)
 
 See the [Jib project FAQ](../docs/faq.md).
+
+## Upcoming features
+
+- Extensions to make building Java and other language-specific containers easier
+- Structured events to react to parts of Jib Core's execution
+
+See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
 
 ## Community
 
