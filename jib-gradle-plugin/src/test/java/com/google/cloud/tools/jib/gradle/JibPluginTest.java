@@ -49,7 +49,7 @@ public class JibPluginTest {
           JibPlugin.BUILD_DOCKER_TASK_NAME,
           JibPlugin.BUILD_TAR_TASK_NAME);
 
-  public static boolean isJava8Runtime() {
+  private static boolean isJava8Runtime() {
     return System.getProperty("java.version").startsWith("1.8.");
   }
 
