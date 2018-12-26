@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.Builder;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import com.google.cloud.tools.jib.plugins.common.JavaLayerConfigurationsHelper;
 import java.io.File;
@@ -97,7 +96,7 @@ class GradleLayerConfigurations {
     AbsoluteUnixPath classesExtractionPath =
         appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
 
-    Builder layerBuilder = JavaLayerConfigurations.builder();
+    JavaLayerConfigurations.Builder layerBuilder = JavaLayerConfigurations.builder();
 
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);

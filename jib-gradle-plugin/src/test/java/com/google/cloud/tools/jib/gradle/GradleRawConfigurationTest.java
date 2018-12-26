@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import org.gradle.internal.impldep.com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -91,7 +92,8 @@ public class GradleRawConfigurationTest {
     Assert.assertEquals(
         Arrays.asList("--log", "info"), rawConfiguration.getProgramArguments().get());
     Assert.assertEquals(
-        new HashSet<>(Arrays.asList("additional", "tags")), rawConfiguration.getToTags());
+        new HashSet<>(Arrays.asList("additional", "tags")),
+        Sets.newHashSet(rawConfiguration.getToTags()));
     Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
   }

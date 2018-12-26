@@ -7,8 +7,8 @@ plugins {
   id 'maven'
 
   // Error-prone checker
-  id 'net.ltgt.apt' version '0.13'
-  id 'net.ltgt.errorprone' version '0.0.13'
+  id 'net.ltgt.apt' version '0.19'
+  id 'net.ltgt.errorprone' version '0.6'
 
   // Prepare release
   id 'net.researchgate.release' version '2.6.0'
@@ -18,8 +18,8 @@ plugins {
 
 group 'com.google.cloud.tools'
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 compileJava.options.encoding = 'UTF-8'
 
 repositories {
@@ -65,7 +65,7 @@ dependencies {
   compile 'org.apache.commons:commons-compress:1.18'
   compile 'com.google.guava:guava:23.5-jre'
   compile 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
-  compile 'org.javassist:javassist:3.22.0-GA'
+  compile 'org.javassist:javassist:3.24.1-GA'
 
   testCompile 'junit:junit:4.12'
   testCompile 'org.mockito:mockito-core:2.23.4'
@@ -74,8 +74,8 @@ dependencies {
   compile gradleApi()
 
   // NullAway errorprone plugin
-  apt 'com.uber.nullaway:nullaway:0.4.2'
-  errorprone 'com.google.errorprone:error_prone_core:2.2.0'
+  apt 'com.uber.nullaway:nullaway:0.6.4'
+  errorprone 'com.google.errorprone:error_prone_core:2.3.2'
 }
 
 // Integration tests must be run explicitly
@@ -93,10 +93,15 @@ test {
   }
 }
 
+import net.ltgt.gradle.errorprone.CheckSeverity
+
 // Adds NullAway errorprone checks.
 tasks.withType(JavaCompile) {
   if (!name.toLowerCase().contains("test")) {
-    options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools"]
+    options.errorprone {
+      check('NullAway', CheckSeverity.ERROR)
+      option('NullAway:AnnotatedPackages', 'com.google.cloud.tools')
+    }
   }
 }
 
