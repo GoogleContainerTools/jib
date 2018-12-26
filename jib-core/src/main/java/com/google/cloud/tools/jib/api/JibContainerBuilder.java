@@ -175,7 +175,7 @@ public class JibContainerBuilder {
    *
    * @param entrypoint the entrypoint command
    * @return this
-   * @see #setEntrypoint(List) for more details
+   * @see #setEntrypoint(List)
    */
   public JibContainerBuilder setEntrypoint(String... entrypoint) {
     return setEntrypoint(Arrays.asList(entrypoint));
@@ -207,7 +207,7 @@ public class JibContainerBuilder {
    *
    * @param programArguments program arguments tokens
    * @return this
-   * @see #setProgramArguments(List) for more details
+   * @see #setProgramArguments(List)
    */
   public JibContainerBuilder setProgramArguments(String... programArguments) {
     return setProgramArguments(Arrays.asList(programArguments));
@@ -237,7 +237,7 @@ public class JibContainerBuilder {
    * @param name the environment variable name
    * @param value the environment variable value
    * @return this
-   * @see #setEnvironment for more details
+   * @see #setEnvironment
    */
   public JibContainerBuilder addEnvironmentVariable(String name, String value) {
     containerConfigurationBuilder.addEnvironment(name, value);
@@ -263,7 +263,7 @@ public class JibContainerBuilder {
    *
    * @param volumes the directory paths on the container filesystem to set as volumes
    * @return this
-   * @see #setVolumes(Set) for more details
+   * @see #setVolumes(Set)
    */
   public JibContainerBuilder setVolumes(AbsoluteUnixPath... volumes) {
     return setVolumes(new HashSet<>(Arrays.asList(volumes)));
@@ -274,7 +274,7 @@ public class JibContainerBuilder {
    *
    * @param volume a directory path on the container filesystem to represent a volume
    * @return this
-   * @see #setVolumes(Set) for more details
+   * @see #setVolumes(Set)
    */
   public JibContainerBuilder addVolume(AbsoluteUnixPath volume) {
     containerConfigurationBuilder.addVolume(volume);
@@ -305,7 +305,7 @@ public class JibContainerBuilder {
    *
    * @param ports the ports to expose
    * @return this
-   * @see #setExposedPorts(Set) for more details
+   * @see #setExposedPorts(Set)
    */
   public JibContainerBuilder setExposedPorts(Port... ports) {
     return setExposedPorts(new HashSet<>(Arrays.asList(ports)));
@@ -316,7 +316,7 @@ public class JibContainerBuilder {
    *
    * @param port the port to expose
    * @return this
-   * @see #setExposedPorts(Set) for more details
+   * @see #setExposedPorts(Set)
    */
   public JibContainerBuilder addExposedPort(Port port) {
     containerConfigurationBuilder.addExposedPort(port);

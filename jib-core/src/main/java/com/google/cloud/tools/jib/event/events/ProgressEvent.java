@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.event.progress.Allocation;
  * Event representing progress. The progress accounts for allocation units in an {@link Allocation},
  * which makes up a Decentralized Allocation Tree.
  *
- * @see Allocation for more details
+ * @see Allocation
  */
 public class ProgressEvent implements JibEvent {
 

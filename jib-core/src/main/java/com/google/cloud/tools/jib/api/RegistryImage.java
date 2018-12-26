@@ -110,7 +110,7 @@ public class RegistryImage implements SourceImage, TargetImage {
    *
    * @param credentialRetriever the {@link CredentialRetriever} to add
    * @return this
-   * @see CredentialRetrieverFactory for useful pre-defined {@link CredentialRetriever}s
+   * @see CredentialRetrieverFactory
    */
   public RegistryImage addCredentialRetriever(CredentialRetriever credentialRetriever) {
     credentialRetrievers.add(credentialRetriever);
