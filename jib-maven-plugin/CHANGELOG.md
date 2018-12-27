@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 
 - Setting proxy credentials (via system properties `http(s).proxyUser` and `http(s).proxyPassword`) is now supported.
 - Maven proxy settings are now supported.
+- Aliases for configuring nested parameters (for example, target image can be configured with a single `<to.image>` parameter instead of using a `<to>` block containing the `<image>` parameter) ([#382](https://github.com/GoogleContainerTools/jib/issues/382))
 
 ### Changed
 
