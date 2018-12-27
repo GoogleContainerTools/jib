@@ -25,8 +25,8 @@ import javax.annotation.Nullable;
 /**
  * Parent class for image manifest JSON templates that can be built.
  *
- * @see V22ManifestTemplate for Docker V2.2 format
- * @see OCIManifestTemplate for OCI format
+ * @see V22ManifestTemplate Docker V2.2 format
+ * @see OCIManifestTemplate OCI format
  */
 public interface BuildableManifestTemplate extends ManifestTemplate {
 
