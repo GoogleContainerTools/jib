@@ -152,18 +152,18 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testValidateBaseImageVersion() {
-    gradleProjectProperties.validateBaseImageVersion("nonDefault");
+    gradleProjectProperties.validateAgainstDefaultBaseImageVersion("nonDefault");
 
     Mockito.when(mockConvention.findPlugin(JavaPluginConvention.class))
         .thenReturn(mockJavaPluginConvention);
     Mockito.when(mockJavaPluginConvention.getTargetCompatibility())
         .thenReturn(JavaVersion.VERSION_1_8);
-    gradleProjectProperties.validateBaseImageVersion(null);
+    gradleProjectProperties.validateAgainstDefaultBaseImageVersion(null);
 
     Mockito.when(mockJavaPluginConvention.getTargetCompatibility())
         .thenReturn(JavaVersion.VERSION_11);
     try {
-      gradleProjectProperties.validateBaseImageVersion(null);
+      gradleProjectProperties.validateAgainstDefaultBaseImageVersion(null);
       Assert.fail();
     } catch (GradleException ex) {
       Assert.assertEquals(

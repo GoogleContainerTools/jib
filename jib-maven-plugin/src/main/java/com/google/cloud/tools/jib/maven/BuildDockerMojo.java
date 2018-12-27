@@ -76,7 +76,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               MojoCommon.getExtraDirectoryPath(this),
               MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
               appRoot);
-      projectProperties.validateBaseImageVersion(getBaseImage());
+      projectProperties.validateAgainstDefaultBaseImageVersion(getBaseImage());
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
 

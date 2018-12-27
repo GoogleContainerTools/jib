@@ -262,7 +262,8 @@ public class MavenProjectProperties implements ProjectProperties {
     return project.getVersion();
   }
 
-  void validateBaseImageVersion(@Nullable String baseImage) throws MojoFailureException {
+  void validateAgainstDefaultBaseImageVersion(@Nullable String baseImage)
+      throws MojoFailureException {
     if (!PluginConfigurationProcessor.usingDefaultBaseImage(baseImage)) {
       return;
     }

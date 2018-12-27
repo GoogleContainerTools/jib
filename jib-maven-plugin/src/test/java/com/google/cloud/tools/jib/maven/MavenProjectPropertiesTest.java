@@ -141,22 +141,22 @@ public class MavenProjectPropertiesTest {
 
   @Test
   public void testValidateBaseImageVersion_nonDefaultBaseImage() throws MojoFailureException {
-    mavenProjectProperties.validateBaseImageVersion("non-default");
+    mavenProjectProperties.validateAgainstDefaultBaseImageVersion("non-default");
   }
 
   @Test
   public void testValidateBaseImageVersion_allNull() throws MojoFailureException {
-    mavenProjectProperties.validateBaseImageVersion(null);
+    mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
   }
 
   @Test
   public void testValidateBaseImageVersion_targetProperty() throws MojoFailureException {
     Mockito.when(mockMavenProperties.getProperty("maven.compiler.target")).thenReturn("1.8");
-    mavenProjectProperties.validateBaseImageVersion(null);
+    mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
 
     Mockito.when(mockMavenProperties.getProperty("maven.compiler.target")).thenReturn("11");
     try {
-      mavenProjectProperties.validateBaseImageVersion(null);
+      mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
       Assert.fail();
     } catch (MojoFailureException ex) {
       Assert.assertEquals(
@@ -168,11 +168,11 @@ public class MavenProjectPropertiesTest {
   @Test
   public void testValidateBaseImageVersion_releaseProperty() throws MojoFailureException {
     Mockito.when(mockMavenProperties.getProperty("maven.compiler.release")).thenReturn("8");
-    mavenProjectProperties.validateBaseImageVersion(null);
+    mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
 
     Mockito.when(mockMavenProperties.getProperty("maven.compiler.release")).thenReturn("11.0");
     try {
-      mavenProjectProperties.validateBaseImageVersion(null);
+      mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
       Assert.fail();
     } catch (MojoFailureException ex) {
       Assert.assertEquals(
@@ -188,11 +188,11 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockCompilerPlugin.getConfiguration()).thenReturn(compilerPluginConfiguration);
     Mockito.when(compilerPluginConfiguration.getChild("target")).thenReturn(compilerTarget);
     Mockito.when(compilerTarget.getValue()).thenReturn("1.8");
-    mavenProjectProperties.validateBaseImageVersion(null);
+    mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
 
     Mockito.when(compilerTarget.getValue()).thenReturn("11");
     try {
-      mavenProjectProperties.validateBaseImageVersion(null);
+      mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
       Assert.fail();
     } catch (MojoFailureException ex) {
       Assert.assertEquals(
@@ -208,11 +208,11 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockCompilerPlugin.getConfiguration()).thenReturn(compilerPluginConfiguration);
     Mockito.when(compilerPluginConfiguration.getChild("release")).thenReturn(compilerRelease);
     Mockito.when(compilerRelease.getValue()).thenReturn("1.8");
-    mavenProjectProperties.validateBaseImageVersion(null);
+    mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
 
     Mockito.when(compilerRelease.getValue()).thenReturn("11");
     try {
-      mavenProjectProperties.validateBaseImageVersion(null);
+      mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
       Assert.fail();
     } catch (MojoFailureException ex) {
       Assert.assertEquals(
