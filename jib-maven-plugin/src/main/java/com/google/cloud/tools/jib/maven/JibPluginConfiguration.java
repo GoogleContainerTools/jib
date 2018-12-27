@@ -55,6 +55,12 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       this.source = source;
     }
 
+    private AuthConfiguration(String source, @Nullable String username, @Nullable String password) {
+      this.username = username;
+      this.password = password;
+      this.source = source;
+    }
+
     @Override
     @Nullable
     public String getUsername() {
@@ -234,6 +240,102 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Nullable @Component protected SettingsDecrypter settingsDecrypter;
 
+  // Aliases
+  @Nullable
+  @Parameter(alias = "from.image")
+  private String fromImageAlias;
+
+  @Nullable
+  @Parameter(alias = "from.auth.username")
+  private String fromAuthUsernameAlias;
+
+  @Nullable
+  @Parameter(alias = "from.auth.password")
+  private String fromAuthPasswordAlias;
+
+  @Nullable
+  @Parameter(alias = "from.credHelper")
+  private String fromCredHelperAlias;
+
+  @Nullable
+  @Parameter(alias = "to.image")
+  private String toImageAlias;
+
+  @Nullable
+  @Parameter(alias = "to.tags")
+  private List<String> toTagsAlias;
+
+  @Nullable
+  @Parameter(alias = "to.auth.username")
+  private String toAuthUsernameAlias;
+
+  @Nullable
+  @Parameter(alias = "to.auth.password")
+  private String toAuthPasswordAlias;
+
+  @Nullable
+  @Parameter(alias = "to.credHelper")
+  private String toCredHelperAlias;
+
+  @Nullable
+  @Parameter(alias = "container.appRoot")
+  private String containerAppRootAlias;
+
+  @Nullable
+  @Parameter(alias = "container.args")
+  private List<String> containerArgsAlias;
+
+  @Nullable
+  @Parameter(alias = "container.entrypoint")
+  private List<String> containerEntrypointAlias;
+
+  @Nullable
+  @Parameter(alias = "container.environment")
+  private Map<String, String> containerEnvironmentAlias;
+
+  @Nullable
+  @Parameter(alias = "container.format")
+  private String containerFormatAlias;
+
+  @Nullable
+  @Parameter(alias = "container.jvmFlags")
+  private List<String> containerJvmFlagsAlias;
+
+  @Nullable
+  @Parameter(alias = "container.labels")
+  private Map<String, String> containerLabelsAlias;
+
+  @Nullable
+  @Parameter(alias = "container.mainClass")
+  private String containerMainClassAlias;
+
+  @Nullable
+  @Parameter(alias = "container.ports")
+  private List<String> containerPortsAlias;
+
+  @Parameter(alias = "container.useCurrentTimestamp")
+  private boolean containerUseCurrentTimestampAlias;
+
+  @Nullable
+  @Parameter(alias = "container.user")
+  private String containerUserAlias;
+
+  @Nullable
+  @Parameter(alias = "container.volumes")
+  private List<String> containerVolumesAlias;
+
+  @Nullable
+  @Parameter(alias = "container.workingDirectory")
+  private String containerWorkingDirectoryAlias;
+
+  @Nullable
+  @Parameter(alias = "extraDirectory.path")
+  private File extraDirectoryPathAlias;
+
+  @Nullable
+  @Parameter(alias = "extraDirectory.permissions")
+  private List<PermissionConfiguration> extraDirectoryPermissionsAlias;
+
   MavenSession getSession() {
     return Preconditions.checkNotNull(session);
   }
@@ -252,6 +354,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (System.getProperty(PropertyNames.FROM_IMAGE) != null) {
       return System.getProperty(PropertyNames.FROM_IMAGE);
     }
+    if (fromImageAlias != null) {
+      return fromImageAlias;
+    }
     return Preconditions.checkNotNull(from).image;
   }
 
@@ -265,11 +370,17 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (System.getProperty(PropertyNames.FROM_CRED_HELPER) != null) {
       return System.getProperty(PropertyNames.FROM_CRED_HELPER);
     }
+    if (fromCredHelperAlias != null) {
+      return fromCredHelperAlias;
+    }
     return Preconditions.checkNotNull(from).credHelper;
   }
 
   AuthConfiguration getBaseImageAuth() {
     // System properties are handled in ConfigurationPropertyValidator
+    if (fromAuthUsernameAlias != null && fromAuthPasswordAlias != null) {
+      return new AuthConfiguration("from", fromAuthUsernameAlias, fromAuthPasswordAlias);
+    }
     return from.auth;
   }
 
@@ -286,6 +397,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (System.getProperty(PropertyNames.TO_IMAGE) != null) {
       return System.getProperty(PropertyNames.TO_IMAGE);
     }
+    if (toImageAlias != null) {
+      return toImageAlias;
+    }
     return to.image;
   }
 
@@ -300,6 +414,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
           ConfigurationPropertyValidator.parseListProperty(
               System.getProperty(PropertyNames.TO_TAGS)));
     }
+    if (toTagsAlias != null && !toTagsAlias.isEmpty()) {
+      return new HashSet<>(toTagsAlias);
+    }
     return new HashSet<>(to.tags);
   }
 
@@ -313,11 +430,17 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (System.getProperty(PropertyNames.TO_CRED_HELPER) != null) {
       return System.getProperty(PropertyNames.TO_CRED_HELPER);
     }
+    if (toCredHelperAlias != null) {
+      return toCredHelperAlias;
+    }
     return Preconditions.checkNotNull(to).credHelper;
   }
 
   AuthConfiguration getTargetImageAuth() {
     // System properties are handled in ConfigurationPropertyValidator
+    if (toAuthUsernameAlias != null && toAuthPasswordAlias != null) {
+      return new AuthConfiguration("to", toAuthUsernameAlias, toAuthPasswordAlias);
+    }
     return to.auth;
   }
 
@@ -330,7 +453,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (System.getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP) != null) {
       return Boolean.getBoolean(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
     }
-    return container.useCurrentTimestamp;
+    return containerUseCurrentTimestampAlias || container.useCurrentTimestamp;
   }
 
   /**
@@ -343,6 +466,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT) != null) {
       return ConfigurationPropertyValidator.parseListProperty(
           System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT));
+    }
+    if (containerEntrypointAlias != null && !containerEntrypointAlias.isEmpty()) {
+      return containerEntrypointAlias;
     }
     return container.entrypoint;
   }
@@ -357,6 +483,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return ConfigurationPropertyValidator.parseListProperty(
           System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS));
     }
+    if (containerJvmFlagsAlias != null && !containerJvmFlagsAlias.isEmpty()) {
+      return containerJvmFlagsAlias;
+    }
     return container.jvmFlags;
   }
 
@@ -369,6 +498,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT) != null) {
       return ConfigurationPropertyValidator.parseMapProperty(
           System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT));
+    }
+    if (containerEnvironmentAlias != null && !containerEnvironmentAlias.isEmpty()) {
+      return containerEnvironmentAlias;
     }
     return container.environment;
   }
@@ -383,6 +515,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS) != null) {
       return System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS);
     }
+    if (containerMainClassAlias != null) {
+      return containerMainClassAlias;
+    }
     return container.mainClass;
   }
 
@@ -396,6 +531,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (System.getProperty(PropertyNames.CONTAINER_USER) != null) {
       return System.getProperty(PropertyNames.CONTAINER_USER);
     }
+    if (containerUserAlias != null) {
+      return containerUserAlias;
+    }
     return container.user;
   }
 
@@ -408,6 +546,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   String getWorkingDirectory() {
     if (System.getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY) != null) {
       return System.getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY);
+    }
+    if (containerWorkingDirectoryAlias != null) {
+      return containerWorkingDirectoryAlias;
     }
     return container.workingDirectory;
   }
@@ -423,6 +564,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return ConfigurationPropertyValidator.parseListProperty(
           System.getProperty(PropertyNames.CONTAINER_ARGS));
     }
+    if (containerArgsAlias != null && !containerArgsAlias.isEmpty()) {
+      return containerArgsAlias;
+    }
     return container.args;
   }
 
@@ -435,6 +579,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (System.getProperty(PropertyNames.CONTAINER_PORTS) != null) {
       return ConfigurationPropertyValidator.parseListProperty(
           System.getProperty(PropertyNames.CONTAINER_PORTS));
+    }
+    if (containerPortsAlias != null && !containerPortsAlias.isEmpty()) {
+      return containerPortsAlias;
     }
     return container.ports;
   }
@@ -449,6 +596,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return ConfigurationPropertyValidator.parseListProperty(
           System.getProperty(PropertyNames.CONTAINER_VOLUMES));
     }
+    if (containerVolumesAlias != null && !containerVolumesAlias.isEmpty()) {
+      return containerVolumesAlias;
+    }
     return container.volumes;
   }
 
@@ -462,6 +612,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return ConfigurationPropertyValidator.parseMapProperty(
           System.getProperty(PropertyNames.CONTAINER_LABELS));
     }
+    if (containerLabelsAlias != null && !containerLabelsAlias.isEmpty()) {
+      return containerLabelsAlias;
+    }
     return container.labels;
   }
 
@@ -473,6 +626,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   String getAppRoot() {
     if (System.getProperty(PropertyNames.CONTAINER_APP_ROOT) != null) {
       return System.getProperty(PropertyNames.CONTAINER_APP_ROOT);
+    }
+    if (containerAppRootAlias != null) {
+      return containerAppRootAlias;
     }
     return container.appRoot;
   }
@@ -486,6 +642,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (System.getProperty(PropertyNames.CONTAINER_FORMAT) != null) {
       return System.getProperty(PropertyNames.CONTAINER_FORMAT);
     }
+    if (containerFormatAlias != null) {
+      return containerFormatAlias;
+    }
     return Preconditions.checkNotNull(container.format);
   }
 
@@ -498,6 +657,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH) != null) {
       return Optional.of(Paths.get(System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH)));
+    }
+    if (extraDirectoryPathAlias != null) {
+      return Optional.of(extraDirectoryPathAlias.toPath());
     }
     return extraDirectory.path == null
         ? Optional.empty()
@@ -517,6 +679,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
           .stream()
           .map(entry -> new PermissionConfiguration(entry.getKey(), entry.getValue()))
           .collect(Collectors.toList());
+    }
+    if (extraDirectoryPermissionsAlias != null && !extraDirectoryPermissionsAlias.isEmpty()) {
+      return extraDirectoryPermissionsAlias;
     }
     return extraDirectory.permissions;
   }
