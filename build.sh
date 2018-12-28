@@ -90,7 +90,7 @@ for target in "$@"; do
 
     it)
       doBuild jib-core ./gradlew $gradleOptions integrationTest
-      doBuild jib-maven-plugin ./mvnw $mavenOptions -Pintegration-tests verify -U
+      doBuild jib-maven-plugin ./mvnw $mavenOptions -PintegrationTest verify -U
       doBuild jib-gradle-plugin ./gradlew $gradleOptions integrationTest
       ;;
 
