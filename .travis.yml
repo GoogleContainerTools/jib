@@ -2,8 +2,13 @@ sudo: false
 git:
   depth: 3
 language: java
-# using `openjdk8` leads to javadoc errors
-jdk: openjdk11
+matrix:
+  include:
+    - name: Oracle JDK 8
+      # using `openjdk8` leads to javadoc errors
+      jdk: oraclejdk8
+    - name: OpenJDK 11
+      jdk: openjdk11
 env:
   global:
   - TERM=dumb         # for gradle
