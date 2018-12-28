@@ -18,10 +18,10 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import org.gradle.internal.impldep.com.google.common.collect.Sets;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
