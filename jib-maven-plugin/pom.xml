@@ -141,7 +141,7 @@
   <profiles>
     <!-- Profile for running integration tests. -->
     <profile>
-      <id>integration-tests</id>
+      <id>integrationTest</id>
       <build>
         <plugins>
           <plugin>
@@ -160,7 +160,7 @@
             </configuration>
             <executions>
               <execution>
-                <id>integration-tests</id>
+                <id>integration-test</id>
                 <goals>
                   <goal>integration-test</goal>
                   <goal>verify</goal>

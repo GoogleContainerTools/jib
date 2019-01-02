@@ -117,6 +117,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               jibExtension.getExtraDirectory().getPath(),
               jibExtension.getExtraDirectory().getPermissions(),
               appRoot);
+      projectProperties.validateAgainstDefaultBaseImageVersion(jibExtension.getFrom().getImage());
 
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);

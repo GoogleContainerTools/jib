@@ -55,6 +55,23 @@ import javax.annotation.Nullable;
  */
 public class PluginConfigurationProcessor {
 
+  private static final String DEFAULT_BASE_IMAGE = "gcr.io/distroless/java";
+  private static final String DEFAULT_BASE_IMAGE_WAR = "gcr.io/distroless/java/jetty";
+
+  /**
+   * Checks whether or not the default distroless base image is being used.
+   *
+   * @param baseImageConfiguration the configured base image
+   * @return {@code true} if the base image is null or equal to one of the distroless java images,
+   *     else {@code false}
+   */
+  public static boolean usingDefaultBaseImage(@Nullable String baseImageConfiguration) {
+    // TODO: check for other Java 8 base images?
+    return baseImageConfiguration == null
+        || baseImageConfiguration.equals(DEFAULT_BASE_IMAGE)
+        || baseImageConfiguration.equals(DEFAULT_BASE_IMAGE_WAR);
+  }
+
   /**
    * Gets the value of the {@code appRoot} parameter. If the parameter is empty, returns {@link
    * JavaLayerConfigurations#DEFAULT_WEB_APP_ROOT} for WAR projects or {@link
