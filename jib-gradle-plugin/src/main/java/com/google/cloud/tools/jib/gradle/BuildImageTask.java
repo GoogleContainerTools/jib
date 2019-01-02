@@ -89,6 +89,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               jibExtension.getExtraDirectory().getPath(),
               jibExtension.getExtraDirectory().getPermissions(),
               appRoot);
+      projectProperties.validateAgainstDefaultBaseImageVersion(jibExtension.getFrom().getImage());
 
       if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
         throw new GradleException(
