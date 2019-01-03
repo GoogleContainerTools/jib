@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Properties;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,18 +39,14 @@ public class JibPluginConfigurationTest {
 
   private static final MavenProject project = new MavenProject();
   @Mock private MavenSession session;
-  private Properties sessionProperties = new Properties();
+  private Properties sessionProperties;
   private JibPluginConfiguration testPluginConfiguration;
-
-  private void clearProperties() {
-    sessionProperties.clear();
-    project.getProperties().clear();
-  }
 
   @Before
   public void setup() {
+    project.getProperties().clear();
+    sessionProperties = new Properties();
     Mockito.when(session.getSystemProperties()).thenReturn(sessionProperties);
-    clearProperties();
     testPluginConfiguration =
         new JibPluginConfiguration() {
           @Override
@@ -59,11 +54,6 @@ public class JibPluginConfigurationTest {
         };
     testPluginConfiguration.setProject(project);
     testPluginConfiguration.session = session;
-  }
-
-  @After
-  public void teardown() {
-    clearProperties();
   }
 
   @Test
