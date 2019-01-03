@@ -172,7 +172,11 @@ public class BuildImageMojoIntegrationTest {
   }
 
   private static String buildAndRunComplex(
-      String imageReference, String username, String password, LocalRegistry targetRegistry)
+      String imageReference,
+      String username,
+      String password,
+      LocalRegistry targetRegistry,
+      String pomFile)
       throws VerificationException, IOException, InterruptedException, DigestException {
     Instant before = Instant.now();
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
@@ -183,7 +187,7 @@ public class BuildImageMojoIntegrationTest {
     verifier.setSystemProperty("sendCredentialsOverHttp", "true");
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
-    verifier.addCliOption("--file=pom-complex.xml");
+    verifier.addCliOption("--file=" + pomFile);
     verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
     verifier.verifyErrorFreeLog();
 
@@ -378,7 +382,8 @@ public class BuildImageMojoIntegrationTest {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
+        buildAndRunComplex(
+            targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml"));
     assertWorkingDirectory("", targetImage);
   }
 
@@ -388,7 +393,23 @@ public class BuildImageMojoIntegrationTest {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
+        buildAndRunComplex(
+            targetImage, "testuser", "testpassword", localRegistry1, "pom-complex.xml"));
+    assertWorkingDirectory("", targetImage);
+  }
+
+  @Test
+  public void testExecute_complexProperties()
+      throws InterruptedException, DigestException, VerificationException, IOException {
+    String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
+        buildAndRunComplex(
+            targetImage,
+            "testuser2",
+            "testpassword2",
+            localRegistry2,
+            "pom-complex-properties.xml"));
     assertWorkingDirectory("", targetImage);
   }
 
