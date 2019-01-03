@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -249,10 +248,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   String getBaseImage() {
-    if (System.getProperty(PropertyNames.FROM_IMAGE) != null) {
-      return System.getProperty(PropertyNames.FROM_IMAGE);
-    }
-    return Preconditions.checkNotNull(from).image;
+    String property = getProperty(PropertyNames.FROM_IMAGE);
+    return property == null ? Preconditions.checkNotNull(from).image : property;
   }
 
   /**
@@ -262,14 +259,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   String getBaseImageCredentialHelperName() {
-    if (System.getProperty(PropertyNames.FROM_CRED_HELPER) != null) {
-      return System.getProperty(PropertyNames.FROM_CRED_HELPER);
-    }
-    return Preconditions.checkNotNull(from).credHelper;
+    String property = getProperty(PropertyNames.FROM_CRED_HELPER);
+    return property == null ? Preconditions.checkNotNull(from).credHelper : property;
   }
 
   AuthConfiguration getBaseImageAuth() {
     // System properties are handled in ConfigurationPropertyValidator
+    // TODO: handle properties here, not in ConfigurationPropertyValidator
     return from.auth;
   }
 
@@ -280,13 +276,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   String getTargetImage() {
-    if (System.getProperty(PropertyNames.TO_IMAGE_ALTERNATE) != null) {
-      return System.getProperty(PropertyNames.TO_IMAGE_ALTERNATE);
-    }
-    if (System.getProperty(PropertyNames.TO_IMAGE) != null) {
-      return System.getProperty(PropertyNames.TO_IMAGE);
-    }
-    return to.image;
+    String property = getProperty(PropertyNames.TO_IMAGE);
+    String propertyAlternate = getProperty(PropertyNames.TO_IMAGE_ALTERNATE);
+    return propertyAlternate == null ? (property == null ? to.image : property) : propertyAlternate;
   }
 
   /**
@@ -295,12 +287,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured extra tags.
    */
   Set<String> getTargetImageAdditionalTags() {
-    if (System.getProperty(PropertyNames.TO_TAGS) != null) {
-      return ImmutableSet.copyOf(
-          ConfigurationPropertyValidator.parseListProperty(
-              System.getProperty(PropertyNames.TO_TAGS)));
-    }
-    return new HashSet<>(to.tags);
+    String property = getProperty(PropertyNames.TO_TAGS);
+    return new HashSet<>(
+        property == null ? to.tags : ConfigurationPropertyValidator.parseListProperty(property));
   }
 
   /**
@@ -310,14 +299,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   String getTargetImageCredentialHelperName() {
-    if (System.getProperty(PropertyNames.TO_CRED_HELPER) != null) {
-      return System.getProperty(PropertyNames.TO_CRED_HELPER);
-    }
-    return Preconditions.checkNotNull(to).credHelper;
+    String property = getProperty(PropertyNames.TO_CRED_HELPER);
+    return property == null ? Preconditions.checkNotNull(to).credHelper : property;
   }
 
   AuthConfiguration getTargetImageAuth() {
     // System properties are handled in ConfigurationPropertyValidator
+    // TODO: handle properties here, not in ConfigurationPropertyValidator
     return to.auth;
   }
 
@@ -327,10 +315,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return {@code true} if the build should use the current timestamp, {@code false} if not
    */
   boolean getUseCurrentTimestamp() {
-    if (System.getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP) != null) {
-      return Boolean.getBoolean(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
-    }
-    return container.useCurrentTimestamp;
+    String property = getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
+    return property == null ? container.useCurrentTimestamp : Boolean.parseBoolean(property);
   }
 
   /**
@@ -340,11 +326,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   List<String> getEntrypoint() {
-    if (System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT) != null) {
-      return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.CONTAINER_ENTRYPOINT));
-    }
-    return container.entrypoint;
+    String property = getProperty(PropertyNames.CONTAINER_ENTRYPOINT);
+    return property == null
+        ? container.entrypoint
+        : ConfigurationPropertyValidator.parseListProperty(property);
   }
 
   /**
@@ -353,11 +338,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured jvm flags
    */
   List<String> getJvmFlags() {
-    if (System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS) != null) {
-      return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.CONTAINER_JVM_FLAGS));
-    }
-    return container.jvmFlags;
+    String property = getProperty(PropertyNames.CONTAINER_JVM_FLAGS);
+    return property == null
+        ? container.jvmFlags
+        : ConfigurationPropertyValidator.parseListProperty(property);
   }
 
   /**
@@ -366,11 +350,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured environment variables
    */
   Map<String, String> getEnvironment() {
-    if (System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT) != null) {
-      return ConfigurationPropertyValidator.parseMapProperty(
-          System.getProperty(PropertyNames.CONTAINER_ENVIRONMENT));
-    }
-    return container.environment;
+    String property = getProperty(PropertyNames.CONTAINER_ENVIRONMENT);
+    return property == null
+        ? container.environment
+        : ConfigurationPropertyValidator.parseMapProperty(property);
   }
 
   /**
@@ -380,10 +363,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   String getMainClass() {
-    if (System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS) != null) {
-      return System.getProperty(PropertyNames.CONTAINER_MAIN_CLASS);
-    }
-    return container.mainClass;
+    String property = getProperty(PropertyNames.CONTAINER_MAIN_CLASS);
+    return property == null ? container.mainClass : property;
   }
 
   /**
@@ -393,10 +374,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   String getUser() {
-    if (System.getProperty(PropertyNames.CONTAINER_USER) != null) {
-      return System.getProperty(PropertyNames.CONTAINER_USER);
-    }
-    return container.user;
+    String property = getProperty(PropertyNames.CONTAINER_USER);
+    return property == null ? container.user : property;
   }
 
   /**
@@ -406,10 +385,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   String getWorkingDirectory() {
-    if (System.getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY) != null) {
-      return System.getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY);
-    }
-    return container.workingDirectory;
+    String property = getProperty(PropertyNames.CONTAINER_WORKING_DIRECTORY);
+    return property == null ? container.workingDirectory : property;
   }
 
   /**
@@ -419,11 +396,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   @Nullable
   List<String> getArgs() {
-    if (System.getProperty(PropertyNames.CONTAINER_ARGS) != null) {
-      return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.CONTAINER_ARGS));
-    }
-    return container.args;
+    String property = getProperty(PropertyNames.CONTAINER_ARGS);
+    return property == null
+        ? container.args
+        : ConfigurationPropertyValidator.parseListProperty(property);
   }
 
   /**
@@ -432,11 +408,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured exposed ports
    */
   List<String> getExposedPorts() {
-    if (System.getProperty(PropertyNames.CONTAINER_PORTS) != null) {
-      return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.CONTAINER_PORTS));
-    }
-    return container.ports;
+    String property = getProperty(PropertyNames.CONTAINER_PORTS);
+    return property == null
+        ? container.ports
+        : ConfigurationPropertyValidator.parseListProperty(property);
   }
 
   /**
@@ -445,11 +420,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured volumes
    */
   List<String> getVolumes() {
-    if (System.getProperty(PropertyNames.CONTAINER_VOLUMES) != null) {
-      return ConfigurationPropertyValidator.parseListProperty(
-          System.getProperty(PropertyNames.CONTAINER_VOLUMES));
-    }
-    return container.volumes;
+    String property = getProperty(PropertyNames.CONTAINER_VOLUMES);
+    return property == null
+        ? container.volumes
+        : ConfigurationPropertyValidator.parseListProperty(property);
   }
 
   /**
@@ -458,11 +432,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured labels
    */
   Map<String, String> getLabels() {
-    if (System.getProperty(PropertyNames.CONTAINER_LABELS) != null) {
-      return ConfigurationPropertyValidator.parseMapProperty(
-          System.getProperty(PropertyNames.CONTAINER_LABELS));
-    }
-    return container.labels;
+    String property = getProperty(PropertyNames.CONTAINER_LABELS);
+    return property == null
+        ? container.labels
+        : ConfigurationPropertyValidator.parseMapProperty(property);
   }
 
   /**
@@ -471,10 +444,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured app root directory
    */
   String getAppRoot() {
-    if (System.getProperty(PropertyNames.CONTAINER_APP_ROOT) != null) {
-      return System.getProperty(PropertyNames.CONTAINER_APP_ROOT);
-    }
-    return container.appRoot;
+    String property = getProperty(PropertyNames.CONTAINER_APP_ROOT);
+    return property == null ? container.appRoot : property;
   }
 
   /**
@@ -483,10 +454,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured container image format
    */
   String getFormat() {
-    if (System.getProperty(PropertyNames.CONTAINER_FORMAT) != null) {
-      return System.getProperty(PropertyNames.CONTAINER_FORMAT);
-    }
-    return Preconditions.checkNotNull(container.format);
+    String property = getProperty(PropertyNames.CONTAINER_FORMAT);
+    return property == null ? Preconditions.checkNotNull(container.format) : property;
   }
 
   /**
@@ -496,12 +465,12 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   Optional<Path> getExtraDirectoryPath() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
-    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH) != null) {
-      return Optional.of(Paths.get(System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH)));
-    }
-    return extraDirectory.path == null
-        ? Optional.empty()
-        : Optional.of(extraDirectory.path.toPath());
+    String property = getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
+    return property == null
+        ? (extraDirectory.path == null
+            ? Optional.empty()
+            : Optional.of(extraDirectory.path.toPath()))
+        : Optional.of(Paths.get(property));
   }
 
   /**
@@ -510,15 +479,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured extra layer file permissions
    */
   List<PermissionConfiguration> getExtraDirectoryPermissions() {
-    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS) != null) {
-      return ConfigurationPropertyValidator.parseMapProperty(
-              System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS))
-          .entrySet()
-          .stream()
-          .map(entry -> new PermissionConfiguration(entry.getKey(), entry.getValue()))
-          .collect(Collectors.toList());
-    }
-    return extraDirectory.permissions;
+    String permissionsProperty = getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS);
+    return permissionsProperty == null
+        ? extraDirectory.permissions
+        : ConfigurationPropertyValidator.parseMapProperty(permissionsProperty)
+            .entrySet()
+            .stream()
+            .map(entry -> new PermissionConfiguration(entry.getKey(), entry.getValue()))
+            .collect(Collectors.toList());
   }
 
   boolean getAllowInsecureRegistries() {
@@ -536,5 +504,23 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @VisibleForTesting
   void setProject(MavenProject project) {
     this.project = project;
+  }
+
+  /**
+   * Gets a system property with the given name. First checks for a -D commandline argument, then
+   * checks for a property defined in the POM, then returns null if neither are defined.
+   *
+   * @param propertyName the name of the system property
+   * @return the value of the system property, or null if not defined
+   */
+  @Nullable
+  private String getProperty(String propertyName) {
+    if (session != null && session.getSystemProperties().containsKey(propertyName)) {
+      return session.getSystemProperties().getProperty(propertyName);
+    }
+    if (project != null && project.getProperties().containsKey(propertyName)) {
+      return project.getProperties().getProperty(propertyName);
+    }
+    return null;
   }
 }
