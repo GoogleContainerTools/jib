@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
@@ -51,7 +52,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
   @Override
-  public void execute() throws MojoExecutionException {
+  public void execute() throws MojoExecutionException, MojoFailureException {
     if (isSkipped()) {
       getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
       return;
@@ -75,7 +76,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               MojoCommon.getExtraDirectoryPath(this),
               MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
               appRoot);
-
+      projectProperties.validateAgainstDefaultBaseImageVersion(getBaseImage());
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
 

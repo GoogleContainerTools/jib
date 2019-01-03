@@ -23,6 +23,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
 import org.gradle.StartParameter;
+import org.gradle.api.GradleException;
+import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.invocation.Gradle;
@@ -31,6 +33,7 @@ import org.gradle.api.java.archives.internal.DefaultManifest;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.api.plugins.Convention;
+import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.WarPluginConvention;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.bundling.War;
@@ -58,6 +61,7 @@ public class GradleProjectPropertiesTest {
   @Mock private Logger mockLogger;
   @Mock private Gradle mockGradle;
   @Mock private StartParameter mockStartParameter;
+  @Mock private JavaPluginConvention mockJavaPluginConvention;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -143,6 +147,28 @@ public class GradleProjectPropertiesTest {
       Assert.fail();
     } catch (IllegalArgumentException ignored) {
       // pass
+    }
+  }
+
+  @Test
+  public void testValidateBaseImageVersion() {
+    gradleProjectProperties.validateAgainstDefaultBaseImageVersion("nonDefault");
+
+    Mockito.when(mockConvention.findPlugin(JavaPluginConvention.class))
+        .thenReturn(mockJavaPluginConvention);
+    Mockito.when(mockJavaPluginConvention.getTargetCompatibility())
+        .thenReturn(JavaVersion.VERSION_1_8);
+    gradleProjectProperties.validateAgainstDefaultBaseImageVersion(null);
+
+    Mockito.when(mockJavaPluginConvention.getTargetCompatibility())
+        .thenReturn(JavaVersion.VERSION_11);
+    try {
+      gradleProjectProperties.validateAgainstDefaultBaseImageVersion(null);
+      Assert.fail();
+    } catch (GradleException ex) {
+      Assert.assertEquals(
+          "Jib's default base image uses Java 8, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the 'jib.from.image' parameter, or set targetCompatibility = 1.8 in your build configuration",
+          ex.getMessage());
     }
   }
 }

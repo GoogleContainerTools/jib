@@ -41,7 +41,7 @@ To build, use the provided `build.sh` which builds and tests each of the compone
    * In `jib-core`, run `./gradlew clean goJF build integrationTest`
    * In `jib-gradle-plugin`, run `./gradlew clean goJF build integrationTest`
    * In `jib-plugins-common`, run `./gradlew clean goJF build`
-   * In `jib-maven-plugin`, run `./mvnw clean fmt:format verify -Pintegration-tests`
+   * In `jib-maven-plugin`, run `./mvnw clean fmt:format verify -PintegrationTest`
 5. Associate the change with an existing issue or file a [new issue](../../issues).
 6. Create a pull request!
 
