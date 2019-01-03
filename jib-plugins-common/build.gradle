@@ -42,6 +42,11 @@ dependencies {
   // NullAway errorprone plugin
   annotationProcessor 'com.uber.nullaway:nullaway:0.6.4'
   errorprone 'com.google.errorprone:error_prone_core:2.3.2'
+  // Using github.com/google/error-prone-javac is required when running on
+  // JDK 8. Remove when migrating to JDK 11.
+  if (System.getProperty("java.version").startsWith("1.8.")) {
+    errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
+  }
 }
 
 test {

@@ -317,7 +317,6 @@
               <goal>compile</goal>
             </goals>
             <configuration>
-              <forceJavacCompilerUse>true</forceJavacCompilerUse>
               <release>${maven.compiler.release}</release>
               <showDeprecation>true</showDeprecation>
               <showWarnings>true</showWarnings>

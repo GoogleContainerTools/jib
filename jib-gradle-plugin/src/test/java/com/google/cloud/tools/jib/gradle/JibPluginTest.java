@@ -56,11 +56,19 @@ public class JibPluginTest {
   @Rule public final TemporaryFolder testProjectRoot = new TemporaryFolder();
 
   @Test
-  public void testCheckGradleVersion_pass() {
+  public void testCheckGradleVersion_pass() throws IOException {
+    Assume.assumeTrue(isJava8Runtime());
+
+    // Copy build file to temp dir
+    Path buildFile = testProjectRoot.getRoot().toPath().resolve("build.gradle");
+    InputStream buildFileContent =
+        getClass().getClassLoader().getResourceAsStream("plugin-test/build.gradle");
+    Files.copy(buildFileContent, buildFile);
+
     GradleRunner.create()
         .withProjectDir(testProjectRoot.getRoot())
         .withPluginClasspath()
-        .withGradleVersion("5.0")
+        .withGradleVersion(JibPlugin.GRADLE_MIN_VERSION.getVersion())
         .build();
     // pass
   }
@@ -68,6 +76,7 @@ public class JibPluginTest {
   @Test
   public void testCheckGradleVersion_fail() throws IOException {
     Assume.assumeTrue(isJava8Runtime());
+
     // Copy build file to temp dir
     Path buildFile = testProjectRoot.getRoot().toPath().resolve("build.gradle");
     InputStream buildFileContent =
