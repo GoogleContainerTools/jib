@@ -37,15 +37,13 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class JibPluginConfigurationTest {
 
-  private static final MavenProject project = new MavenProject();
+  private final MavenProject project = new MavenProject();
+  private final Properties sessionProperties = new Properties();
   @Mock private MavenSession session;
-  private Properties sessionProperties;
   private JibPluginConfiguration testPluginConfiguration;
 
   @Before
   public void setup() {
-    project.getProperties().clear();
-    sessionProperties = new Properties();
     Mockito.when(session.getSystemProperties()).thenReturn(sessionProperties);
     testPluginConfiguration =
         new JibPluginConfiguration() {
