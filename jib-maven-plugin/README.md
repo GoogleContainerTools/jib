@@ -6,8 +6,9 @@
 
 Jib is a [Maven](https://maven.apache.org/) plugin for building Docker and [OCI](https://github.com/opencontainers/image-spec) images for your Java applications.
 
-For information about the project, see the [Jib project README](../README.md).
 For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin).
+
+For information about the project, see the [Jib project README](../README.md).
 
 ## Table of Contents
 
@@ -31,10 +32,6 @@ For the Gradle plugin, see the [jib-gradle-plugin project](../jib-gradle-plugin)
 * [How Jib Works](#how-jib-works)
 * [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
 * [Community](#community)
-
-## Upcoming Features
-
-See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
 
 ## Quickstart
 
@@ -484,7 +481,7 @@ To use a different Servlet engine base image, you can customize `<container><app
     <image>tomcat:8.5-jre8-alpine</image>
   </from>
   <container>
-    <!-
+    <!--
       For demonstration only: this directory in the base image contains a Tomcat default
       app (welcome page), so you may first want to delete this directory in the base image.
     -->
@@ -493,13 +490,13 @@ To use a different Servlet engine base image, you can customize `<container><app
 </configuration>
 ```
 
-## How Jib Works
-
-See the [Jib project README](/../../#how-jib-works).
-
 ## Frequently Asked Questions (FAQ)
 
 See the [Jib project FAQ](../docs/faq.md).
+
+## Upcoming Features
+
+See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
 
 ## Community
 

@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
@@ -38,6 +39,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.utils.Os;
@@ -140,6 +142,36 @@ public class MavenProjectProperties implements ProjectProperties {
     return System.console() != null && !"dumb".equals(System.getenv("TERM"));
   }
 
+  /**
+   * Gets the major version number from a Java version string.
+   *
+   * <p>Examples: {@code "1.7" -> 7, "1.8.0_161" -> 8, "10" -> 10, "11.0.1" -> 11}
+   *
+   * @param versionString the string to convert
+   * @return the major version number as an integer, or 0 if the string is invalid
+   */
+  @VisibleForTesting
+  static int getVersionFromString(String versionString) {
+    // Parse version starting with "1."
+    if (versionString.startsWith("1.")) {
+      if (versionString.length() >= 3 && Character.isDigit(versionString.charAt(2))) {
+        return versionString.charAt(2) - '0';
+      }
+      return 0;
+    }
+
+    // Parse string starting with major version number
+    int dotIndex = versionString.indexOf(".");
+    try {
+      if (dotIndex == -1) {
+        return Integer.parseInt(versionString);
+      }
+      return Integer.parseInt(versionString.substring(0, versionString.indexOf(".")));
+    } catch (NumberFormatException ex) {
+      return 0;
+    }
+  }
+
   private final MavenProject project;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final EventHandlers eventHandlers;
@@ -228,5 +260,49 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public String getVersion() {
     return project.getVersion();
+  }
+
+  void validateAgainstDefaultBaseImageVersion(@Nullable String baseImage)
+      throws MojoFailureException {
+    if (!PluginConfigurationProcessor.usingDefaultBaseImage(baseImage)) {
+      return;
+    }
+
+    // maven-compiler-plugin default is 1.6
+    int version = 6;
+
+    // Check properties for version
+    if (project.getProperties().getProperty("maven.compiler.target") != null) {
+      version = getVersionFromString(project.getProperties().getProperty("maven.compiler.target"));
+    } else if (project.getProperties().getProperty("maven.compiler.release") != null) {
+      version = getVersionFromString(project.getProperties().getProperty("maven.compiler.release"));
+    } else {
+      // Check maven-compiler-plugin for version
+      Plugin mavenCompilerPlugin =
+          project.getPlugin("org.apache.maven.plugins:maven-compiler-plugin");
+      if (mavenCompilerPlugin != null) {
+        Xpp3Dom pluginConfiguration = (Xpp3Dom) mavenCompilerPlugin.getConfiguration();
+        if (pluginConfiguration != null) {
+          Xpp3Dom target = pluginConfiguration.getChild("target");
+          if (target != null) {
+            version = getVersionFromString(target.getValue());
+          } else {
+            Xpp3Dom release = pluginConfiguration.getChild("release");
+            if (release != null) {
+              version = getVersionFromString(release.getValue());
+            }
+          }
+        }
+      }
+    }
+
+    if (version > 8) {
+      throw new MojoFailureException(
+          "Jib's default base image uses Java 8, but project is using Java "
+              + version
+              + "; perhaps you should configure a Java "
+              + version
+              + "-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's target or release version to 1.8 in your build configuration");
+    }
   }
 }
