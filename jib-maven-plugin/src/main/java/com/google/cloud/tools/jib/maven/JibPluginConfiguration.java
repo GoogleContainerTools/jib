@@ -270,7 +270,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   AuthConfiguration getBaseImageAuth() {
-    // TODO: handle properties here instead of in ConfigurationPropertyValidator
+    // System/pom properties for auth are handled in ConfigurationPropertyValidator
     return from.auth;
   }
 
@@ -320,7 +320,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   AuthConfiguration getTargetImageAuth() {
-    // TODO: handle properties here instead of in ConfigurationPropertyValidator
+    // System/pom properties for auth are handled in ConfigurationPropertyValidator
     return to.auth;
   }
 
