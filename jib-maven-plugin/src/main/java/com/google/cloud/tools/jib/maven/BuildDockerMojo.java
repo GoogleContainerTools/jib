@@ -33,6 +33,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryExceptio
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.common.annotations.VisibleForTesting;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -54,14 +55,14 @@ public class BuildDockerMojo extends JibPluginConfiguration {
    * Object that configures the Docker executable and the additional environment variables to use
    * when executing the executable.
    */
-  private static class DockerClientConfiguration {
+  public static class DockerClientConfiguration {
 
-    @Nullable @Parameter private String executable;
+    @Nullable @Parameter private File executable;
     @Nullable @Parameter private Map<String, String> environment;
 
     @Nullable
     private Path getExecutable() {
-      return executable == null ? null : Paths.get(executable);
+      return executable == null ? null : executable.toPath();
     }
 
     @Nullable
@@ -73,7 +74,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
   @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
 
-  private final DockerClientConfiguration dockerClientConfiguration = new DockerClientConfiguration();
+  @Parameter private DockerClientConfiguration dockerClient = new DockerClientConfiguration();
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
@@ -86,7 +87,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       return;
     }
 
-    Path dockerExecutable = dockerClientConfiguration.getExecutable();
+    Path dockerExecutable = dockerClient.getExecutable();
     boolean isDockerInstalled =
         dockerExecutable == null
             ? DockerClient.isDefaultDockerInstalled()
@@ -119,7 +120,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
                   getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
               projectProperties,
               dockerExecutable,
-              dockerClientConfiguration.getEnvironment(),
+              dockerClient.getEnvironment(),
               mavenHelpfulSuggestionsBuilder.build());
       ProxyProvider.init(getSession().getSettings());
 

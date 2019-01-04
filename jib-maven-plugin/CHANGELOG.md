@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Setting proxy credentials (via system properties `http(s).proxyUser` and `http(s).proxyPassword`) is now supported.
 - Maven proxy settings are now supported.
 - Now checks for system properties in pom as well as commandline. ([#1201](https://github.com/GoogleContainerTools/jib/issues/1201))
+- `<dockerClient><executable>` and `<dockerClient><environment>` to set Docker client binary path (defaulting to `docker`) and additional environment variables to apply when running the binary ([#468](https://github.com/GoogleContainerTools/jib/issues/468))
 
 ### Changed
 
