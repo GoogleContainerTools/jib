@@ -36,9 +36,12 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
+import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Builds a container image and exports to the default Docker daemon. */
@@ -47,9 +50,30 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
     requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class BuildDockerMojo extends JibPluginConfiguration {
 
-  @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
+  /**
+   * Object that configures the Docker executable and the additional environment variables to use
+   * when executing the executable.
+   */
+  private static class DockerClientConfiguration {
 
+    @Nullable @Parameter private String executable;
+    @Nullable @Parameter private Map<String, String> environment;
+
+    @Nullable
+    private Path getExecutable() {
+      return executable == null ? null : Paths.get(executable);
+    }
+
+    @Nullable
+    private Map<String, String> getEnvironment() {
+      return environment;
+    }
+  }
+
+  @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
+
+  private final DockerClientConfiguration dockerClientConfiguration = new DockerClientConfiguration();
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
@@ -62,7 +86,12 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       return;
     }
 
-    if (!DockerClient.isDefaultDockerInstalled()) {
+    Path dockerExecutable = dockerClientConfiguration.getExecutable();
+    boolean isDockerInstalled =
+        dockerExecutable == null
+            ? DockerClient.isDefaultDockerInstalled()
+            : DockerClient.isDockerInstalled(dockerExecutable);
+    if (!isDockerInstalled) {
       throw new MojoExecutionException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
@@ -89,8 +118,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
               projectProperties,
-              null,
-              null,
+              dockerExecutable,
+              dockerClientConfiguration.getEnvironment(),
               mavenHelpfulSuggestionsBuilder.build());
       ProxyProvider.init(getSession().getSettings());
 
