@@ -12,7 +12,11 @@
     <jib-maven-plugin.version>@@PluginVersion@@</jib-maven-plugin.version>
 
     <jib.from.image>localhost:5000/distroless/java</jib.from.image>
+    <jib.from.auth.username>testuser</jib.from.auth.username>
+    <jib.from.auth.password>testpassword</jib.from.auth.password>
     <jib.to.image>${_TARGET_IMAGE}</jib.to.image>
+    <jib.to.auth.username>${_TARGET_USERNAME}</jib.to.auth.username>
+    <jib.to.auth.password>${_TARGET_PASSWORD}</jib.to.auth.password>
     <jib.container.useCurrentTimestamp>true</jib.container.useCurrentTimestamp>
     <jib.container.args>An argument.</jib.container.args>
     <jib.container.mainClass>com.test.HelloWorld</jib.container.mainClass>
@@ -52,20 +56,6 @@
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
-        <configuration>
-          <from>
-            <auth>
-              <username>testuser</username>
-              <password>testpassword</password>
-            </auth>
-          </from>
-          <to>
-            <auth>
-              <username>${_TARGET_USERNAME}</username>
-              <password>${_TARGET_PASSWORD}</password>
-            </auth>
-          </to>
-        </configuration>
       </plugin>
     </plugins>
   </build>

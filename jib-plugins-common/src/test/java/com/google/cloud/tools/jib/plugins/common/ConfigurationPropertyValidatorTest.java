@@ -38,15 +38,20 @@ public class ConfigurationPropertyValidatorTest {
   @Mock private EventDispatcher mockEventDispatcher;
   @Mock private AuthProperty mockAuth;
   @Mock private ImageReference mockImageReference;
+  @Mock private RawConfiguration mockConfiguration;
 
   @Test
   public void testGetImageAuth() {
+    Mockito.when(mockAuth.getUsernameDescriptor()).thenReturn("user");
+    Mockito.when(mockAuth.getPasswordDescriptor()).thenReturn("pass");
     Mockito.when(mockAuth.getUsername()).thenReturn("vwxyz");
     Mockito.when(mockAuth.getPassword()).thenReturn("98765");
 
     // System properties set
-    System.setProperty("jib.test.auth.user", "abcde");
-    System.setProperty("jib.test.auth.pass", "12345");
+    Mockito.when(mockConfiguration.getProperty("jib.test.auth.user"))
+        .thenReturn(Optional.of("abcde"));
+    Mockito.when(mockConfiguration.getProperty("jib.test.auth.pass"))
+        .thenReturn(Optional.of("12345"));
     Credential expected = Credential.basic("abcde", "12345");
     Optional<Credential> actual =
         ConfigurationPropertyValidator.getImageCredential(
@@ -54,14 +59,13 @@ public class ConfigurationPropertyValidatorTest {
             "jib.test.auth.user",
             "jib.test.auth.pass",
             mockAuth,
-            "user",
-            "pass");
+            mockConfiguration);
     Assert.assertTrue(actual.isPresent());
     Assert.assertEquals(expected.toString(), actual.get().toString());
 
     // Auth set in configuration
-    System.clearProperty("jib.test.auth.user");
-    System.clearProperty("jib.test.auth.pass");
+    Mockito.when(mockConfiguration.getProperty("jib.test.auth.user")).thenReturn(Optional.empty());
+    Mockito.when(mockConfiguration.getProperty("jib.test.auth.pass")).thenReturn(Optional.empty());
     expected = Credential.basic("vwxyz", "98765");
     actual =
         ConfigurationPropertyValidator.getImageCredential(
@@ -69,8 +73,7 @@ public class ConfigurationPropertyValidatorTest {
             "jib.test.auth.user",
             "jib.test.auth.pass",
             mockAuth,
-            "user",
-            "pass");
+            mockConfiguration);
     Assert.assertTrue(actual.isPresent());
     Assert.assertEquals(expected.toString(), actual.get().toString());
     Mockito.verify(mockEventDispatcher, Mockito.never()).dispatch(LogEvent.warn(Mockito.any()));
@@ -84,8 +87,7 @@ public class ConfigurationPropertyValidatorTest {
             "jib.test.auth.user",
             "jib.test.auth.pass",
             mockAuth,
-            "user",
-            "pass");
+            mockConfiguration);
     Assert.assertFalse(actual.isPresent());
 
     // Password missing
@@ -97,8 +99,7 @@ public class ConfigurationPropertyValidatorTest {
             "jib.test.auth.user",
             "jib.test.auth.pass",
             mockAuth,
-            "user",
-            "pass");
+            mockConfiguration);
     Assert.assertFalse(actual.isPresent());
     Mockito.verify(mockEventDispatcher)
         .dispatch(
@@ -113,8 +114,7 @@ public class ConfigurationPropertyValidatorTest {
             "jib.test.auth.user",
             "jib.test.auth.pass",
             mockAuth,
-            "user",
-            "pass");
+            mockConfiguration);
     Assert.assertFalse(actual.isPresent());
     Mockito.verify(mockEventDispatcher)
         .dispatch(

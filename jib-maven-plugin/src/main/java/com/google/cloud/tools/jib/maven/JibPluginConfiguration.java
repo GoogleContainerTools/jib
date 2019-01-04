@@ -556,7 +556,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the value of the system property, or null if not defined
    */
   @Nullable
-  private String getProperty(String propertyName) {
+  public String getProperty(String propertyName) {
     if (session != null && session.getSystemProperties().containsKey(propertyName)) {
       return session.getSystemProperties().getProperty(propertyName);
     }

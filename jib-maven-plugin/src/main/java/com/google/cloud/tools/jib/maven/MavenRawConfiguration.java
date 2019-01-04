@@ -141,4 +141,9 @@ class MavenRawConfiguration implements RawConfiguration {
   public ImageFormat getImageFormat() {
     return ImageFormat.valueOf(jibPluginConfiguration.getFormat());
   }
+
+  @Override
+  public Optional<String> getProperty(String propertyName) {
+    return Optional.ofNullable(jibPluginConfiguration.getProperty(propertyName));
+  }
 }
