@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file.
 - Setting proxy credentials (via system properties `http(s).proxyUser` and `http(s).proxyPassword`) is now supported.
 - Maven proxy settings are now supported.
 - Now checks for system properties in pom as well as commandline. ([#1201](https://github.com/GoogleContainerTools/jib/issues/1201))
-- `<DECIDE_THE_NAME>(java|war)` configuration parameter to enforce WAR or non-WAR containerization.
+- `<packagingOverride>{standard|web-app}` configuration parameter to enforce WAR or non-WAR containerization.
 
 ### Changed
 

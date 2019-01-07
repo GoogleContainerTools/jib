@@ -50,7 +50,7 @@ class TaskCommon {
     if (!rawConfiguration.getPackagingOverride().isPresent()) {
       return GradleProjectProperties.getWarTask(project) != null;
     }
-    return "war".equals(rawConfiguration.getPackagingOverride().get());
+    return "web-app".equals(rawConfiguration.getPackagingOverride().get());
   }
 
   private TaskCommon() {}

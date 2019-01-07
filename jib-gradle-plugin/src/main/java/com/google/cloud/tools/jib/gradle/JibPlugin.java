@@ -108,7 +108,7 @@ public class JibPlugin implements Plugin<Project> {
             Task dependsOnTask;
             if (warTask != null
                 && (jibExtension.getPackagingOverride() == null
-                    || "war".equals(jibExtension.getPackagingOverride()))) {
+                    || "web-app".equals(jibExtension.getPackagingOverride()))) {
               ExplodedWarTask explodedWarTask =
                   (ExplodedWarTask)
                       project

@@ -45,7 +45,7 @@ class MojoCommon {
       String packaging = project.getPackaging();
       return "war".equals(packaging) || "gwt-app".equals(packaging);
     }
-    return "war".equals(rawConfiguration.getPackagingOverride().get());
+    return "web-app".equals(rawConfiguration.getPackagingOverride().get());
   }
 
   /**

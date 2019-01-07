@@ -66,15 +66,15 @@ public class TaskCommonTest {
   }
 
   @Test
-  public void testIsWarPackaging_warOverride() {
-    Mockito.when(rawConfiguration.getPackagingOverride()).thenReturn(Optional.of("war"));
+  public void testIsWarPackaging_webAppOverride() {
+    Mockito.when(rawConfiguration.getPackagingOverride()).thenReturn(Optional.of("web-app"));
 
     Assert.assertTrue(TaskCommon.isWarContainerization(project, rawConfiguration));
   }
 
   @Test
-  public void testIsWarPackaging_javaOverride() {
-    Mockito.when(rawConfiguration.getPackagingOverride()).thenReturn(Optional.of("java"));
+  public void testIsWarPackaging_standardOverride() {
+    Mockito.when(rawConfiguration.getPackagingOverride()).thenReturn(Optional.of("standard"));
     applyGradleWarPlugin();
 
     Assert.assertFalse(TaskCommon.isWarContainerization(project, rawConfiguration));

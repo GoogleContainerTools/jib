@@ -41,7 +41,7 @@
           <to>
             <image>${_TARGET_IMAGE}</image>
           </to>
-          <packagingOverride>java</packagingOverride>
+          <packagingOverride>standard</packagingOverride>
         </configuration>
       </plugin>
     </plugins>

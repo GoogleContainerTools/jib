@@ -20,5 +20,5 @@ jib {
     image = System.getProperty("_TARGET_IMAGE")
     credHelper = 'gcr'
   }
-  packagingOverride = 'java'
+  packagingOverride = 'standard'
 }
