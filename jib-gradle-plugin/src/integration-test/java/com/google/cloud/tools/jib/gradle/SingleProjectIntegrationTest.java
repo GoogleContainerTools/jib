@@ -25,10 +25,7 @@ import java.time.Instant;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
+import org.junit.*;
 
 /** Integration tests for building single project images. */
 public class SingleProjectIntegrationTest {
@@ -201,6 +198,30 @@ public class SingleProjectIntegrationTest {
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     assertDockerInspect(targetImage);
     assertWorkingDirectory("/home", targetImage);
+  }
+
+  @Test
+  public void testExecute_dockerClient() throws IOException, InterruptedException, DigestException {
+    Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
+    new Command(
+            "chmod", "+x", simpleTestProject.getProjectRoot().resolve("mock-docker.sh").toString())
+        .run();
+
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
+
+    BuildResult buildResult =
+        simpleTestProject.build(
+            "clean",
+            "jibDockerBuild",
+            "-Djib.useOnlyProjectCache=true",
+            "-D_TARGET_IMAGE=" + targetImage,
+            "-b=build-dockerclient.gradle",
+            "--debug");
+    JibRunHelper.assertBuildSuccess(
+        buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
+    JibRunHelper.assertImageDigestAndId(simpleTestProject.getProjectRoot());
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(targetImage));
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString("Docker load called."));
   }
 
   @Test
