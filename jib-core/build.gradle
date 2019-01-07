@@ -2,8 +2,8 @@ plugins {
   id 'java-library'
   id 'checkstyle'
   id 'com.github.sherter.google-java-format' version '0.8'
-  id 'net.ltgt.apt' version '0.13'
-  id 'net.ltgt.errorprone' version '0.0.13'
+  id 'net.ltgt.apt' version '0.19'
+  id 'net.ltgt.errorprone' version '0.6'
   id 'biz.aQute.bnd.builder' version '4.0.0'
 
   // For release.
@@ -38,16 +38,21 @@ dependencies {
   implementation 'com.google.http-client:google-http-client:1.23.0'
   implementation 'org.apache.commons:commons-compress:1.18'
   implementation 'com.google.guava:guava:23.5-jre'
-  implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
-  implementation 'org.javassist:javassist:3.22.0-GA'
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+  implementation 'org.javassist:javassist:3.24.1-GA'
 
   testImplementation 'junit:junit:4.12'
   testImplementation 'org.mockito:mockito-core:2.23.4'
   testImplementation 'org.slf4j:slf4j-api:1.7.25'
 
   // NullAway errorprone plugin
-  apt 'com.uber.nullaway:nullaway:0.4.2'
-  errorprone 'com.google.errorprone:error_prone_core:2.2.0'
+  annotationProcessor 'com.uber.nullaway:nullaway:0.6.4'
+  errorprone 'com.google.errorprone:error_prone_core:2.3.2'
+  // Using github.com/google/error-prone-javac is required when running on
+  // JDK 8. Remove when migrating to JDK 11.
+  if (System.getProperty("java.version").startsWith("1.8.")) {
+    errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
+  }
 
   integrationTestCompile sourceSets.main.output
   integrationTestCompile sourceSets.test.output
@@ -87,10 +92,15 @@ test {
   }
 }
 
+import net.ltgt.gradle.errorprone.CheckSeverity
+
 // Adds NullAway errorprone checks.
 tasks.withType(JavaCompile) {
   if (!name.toLowerCase().contains("test")) {
-    options.compilerArgs += ["-Xep:NullAway:ERROR", "-XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools"]
+    options.errorprone {
+      check('NullAway', CheckSeverity.ERROR)
+      option('NullAway:AnnotatedPackages', 'com.google.cloud.tools')
+    }
   }
 }
 

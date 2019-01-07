@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.AbstractFileCollection;
 import org.gradle.api.logging.Logger;
@@ -46,6 +47,7 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.TaskDependency;
 import org.gradle.api.tasks.bundling.War;
 import org.junit.Assert;
 import org.junit.Before;
@@ -78,6 +80,17 @@ public class GradleLayerConfigurationsTest {
     @Override
     public Set<File> getFiles() {
       return files;
+    }
+
+    @Override
+    public TaskDependency getBuildDependencies() {
+      return new TaskDependency() {
+
+        @Override
+        public Set<? extends Task> getDependencies(Task task) {
+          return Collections.emptySet();
+        }
+      };
     }
   }
 
