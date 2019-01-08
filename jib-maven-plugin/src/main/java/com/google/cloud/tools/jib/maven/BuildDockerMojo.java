@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
@@ -32,6 +33,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
@@ -59,16 +61,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     @Nullable @Parameter private File executable;
     @Nullable @Parameter private Map<String, String> environment;
-
-    @Nullable
-    private Path getExecutable() {
-      return executable == null ? null : executable.toPath();
-    }
-
-    @Nullable
-    private Map<String, String> getEnvironment() {
-      return environment;
-    }
   }
 
   @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
@@ -87,7 +79,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       return;
     }
 
-    Path dockerExecutable = dockerClient.getExecutable();
+    Path dockerExecutable = getDockerClientExecutable();
     boolean isDockerInstalled =
         dockerExecutable == null
             ? DockerClient.isDefaultDockerInstalled()
@@ -120,7 +112,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
                   getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
               projectProperties,
               dockerExecutable,
-              dockerClient.getEnvironment(),
+              getDockerClientEnvironment(),
               mavenHelpfulSuggestionsBuilder.build());
       ProxyProvider.init(getSession().getSettings());
 
@@ -178,5 +170,23 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     } catch (BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
+  }
+
+  @Nullable
+  private Path getDockerClientExecutable() {
+    String property = getProperty(PropertyNames.DOCKER_CLIENT_EXECUTABLE);
+    if (property != null) {
+      return Paths.get(property);
+    }
+    return dockerClient.executable == null ? null : dockerClient.executable.toPath();
+  }
+
+  @Nullable
+  private Map<String, String> getDockerClientEnvironment() {
+    String property = getProperty(PropertyNames.DOCKER_CLIENT_ENVIRONMENT);
+    if (property != null) {
+      return ConfigurationPropertyValidator.parseMapProperty(property);
+    }
+    return dockerClient.environment;
   }
 }
