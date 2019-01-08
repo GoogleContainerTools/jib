@@ -3,4 +3,4 @@
 # Read stdin to avoid broken pipe
 cat > /dev/null
 
-echo "Docker load called."
+echo "Docker load called. $envvar1 $envvar2"

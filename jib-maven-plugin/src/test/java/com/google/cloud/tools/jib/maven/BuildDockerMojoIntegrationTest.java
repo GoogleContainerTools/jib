@@ -128,7 +128,7 @@ public class BuildDockerMojoIntegrationTest {
     verifier.executeGoal("package");
 
     verifier.executeGoal("jib:dockerBuild");
-    verifier.verifyTextInLog("Docker load called.");
+    verifier.verifyTextInLog("Docker load called. value1 value2");
     verifier.verifyErrorFreeLog();
   }
 
