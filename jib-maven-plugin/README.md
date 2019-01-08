@@ -153,6 +153,8 @@ eval $(minikube docker-env)
 mvn compile jib:dockerBuild
 ```
 
+See [`dockerClient`](#dockerclient-object) for more configuration options.
+
 #### Build an image tarball
 
 You can build and save your image to disk as a tarball with:
@@ -259,6 +261,13 @@ Property | Type
 --- | ---
 `path` | string
 `permissions` | list
+
+<a name="dockerclient-object"></a>**(`jib:dockerBuild` only)** `dockerClient` is an object with the following properties:
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`executable` | string | `docker` | Sets the path to the Docker executable that is called to load the image into the Docker daemon.
+`environment` | map | *None* | Sets environment variables used by the Docker executable.
 
 #### System Properties
 

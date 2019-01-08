@@ -128,6 +128,8 @@ eval $(minikube docker-env)
 gradle jibDockerBuild
 ```
 
+See [`dockerClient`](#dockerclient-closure) for more configuration options.
+
 #### Build an image tarball
 
 You can build and save your image to disk as a tarball with:
@@ -217,6 +219,13 @@ Property | Type
 --- | ---
 `path` | `File`
 `permissions` | `Map<String, String>`
+
+<a name="dockerclient-closure"></a>**(`jibDockerBuild` only)** `dockerClient` is an object that can be configured directly on the `jibDockerBuild` task, and has the following properties:
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`executable` | `File` | `docker` | Sets the path to the Docker executable that is called to load the image into the Docker daemon.
+`environment` | `Map<String, String>` | *None* | Sets environment variables used by the Docker executable.
 
 #### System Properties
 
