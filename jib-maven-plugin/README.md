@@ -153,7 +153,7 @@ eval $(minikube docker-env)
 mvn compile jib:dockerBuild
 ```
 
-See [`dockerClient`](#dockerclient-object) for more configuration options.
+Alternatively, you can set environment variables in the Jib configuration. See [`dockerClient`](#dockerclient-object) for more configuration options.
 
 #### Build an image tarball
 

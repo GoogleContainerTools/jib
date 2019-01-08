@@ -128,7 +128,7 @@ eval $(minikube docker-env)
 gradle jibDockerBuild
 ```
 
-See [`dockerClient`](#dockerclient-closure) for more configuration options.
+Alternatively, you can set environment variables in the Jib configuration. See [`dockerClient`](#dockerclient-closure) for more configuration options.
 
 #### Build an image tarball
 
