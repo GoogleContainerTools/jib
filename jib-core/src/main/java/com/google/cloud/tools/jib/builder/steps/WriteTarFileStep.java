@@ -84,7 +84,8 @@ public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildR
         .addSteps(NonBlockingSteps.get(pullAndCacheBaseImageLayersStep))
         .addSteps(buildAndCacheApplicationLayerSteps)
         .addStep(NonBlockingSteps.get(buildImageStep))
-        .whenAllSucceedBlocking(this::writeTarFile);
+        .whenAllSucceed(this::writeTarFile)
+        .get();
   }
 
   private BuildResult writeTarFile() throws ExecutionException, IOException {

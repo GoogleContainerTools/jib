@@ -83,7 +83,8 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
         .addSteps(NonBlockingSteps.get(pullAndCacheBaseImageLayersStep))
         .addSteps(buildAndCacheApplicationLayerSteps)
         .addStep(NonBlockingSteps.get(buildImageStep))
-        .whenAllSucceedBlocking(this::afterPushBaseImageLayerFuturesFuture);
+        .whenAllSucceed(this::afterPushBaseImageLayerFuturesFuture)
+        .get();
   }
 
   private BuildResult afterPushBaseImageLayerFuturesFuture()

@@ -97,7 +97,8 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
         .addSteps(NonBlockingSteps.get(pushApplicationLayersStep))
         .addStep(NonBlockingSteps.get(pushContainerConfigurationStep))
         .addStep(NonBlockingSteps.get(buildImageStep))
-        .whenAllSucceedBlocking(this::afterPushSteps);
+        .whenAllSucceed(this::afterPushSteps)
+        .get();
   }
 
   private BuildResult afterPushSteps() throws ExecutionException, InterruptedException {
@@ -112,7 +113,8 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
     }
     return dependencies
         .addStep(NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep)))
-        .whenAllSucceedBlocking(this::afterAllPushed);
+        .whenAllSucceed(this::afterAllPushed)
+        .get();
   }
 
   private BuildResult afterAllPushed()
