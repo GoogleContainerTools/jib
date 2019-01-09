@@ -21,17 +21,17 @@ repositories {
   mavenCentral()
 }
 
-sourceSets {
-  integrationTest {
-    java.srcDir file('src/integration-test/java')
-    resources.srcDir file('src/integration-test/resources')
-  }
-}
+//sourceSets {
+//  integrationTest {
+//    java.srcDir file('src/integration-test/java')
+//    resources.srcDir file('src/integration-test/resources')
+//  }
+//}
 
-configurations {
-  integrationTestImplementation.extendsFrom testImplementation
-  integrationTestRuntime.extendsFrom testRuntime
-}
+//configurations {
+//  integrationTestImplementation.extendsFrom testImplementation
+//  integrationTestRuntime.extendsFrom testRuntime
+//}
 
 dependencies {
   // Make sure these are consistent with jib-maven-plugin.
@@ -54,18 +54,119 @@ dependencies {
     errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
   }
 
-  integrationTestCompile sourceSets.main.output
-  integrationTestCompile sourceSets.test.output
-  integrationTestCompile configurations.compile
-  integrationTestCompile configurations.testCompile
-  integrationTestCompile configurations.runtime
-  integrationTestCompile configurations.testRuntime
+//  integrationTestCompile sourceSets.main.output
+//  integrationTestCompile sourceSets.test.output
+//  integrationTestCompile configurations.compile
+//  integrationTestCompile configurations.testCompile
+//  integrationTestCompile configurations.runtime
+//  integrationTestCompile configurations.testRuntime
 }
+
+ext.moduleName = 'com.google.cloud.tools.jib'
+
+compileJava {
+  doFirst {
+    options.compilerArgs = ['--module-path', classpath.asPath]
+    classpath = files()
+  }
+}
+
+javadoc {
+  doFirst {
+    options.addStringOption('-module-path', classpath.asPath)
+    classpath = files()
+  }
+}
+
+        compileTestJava {
+            inputs.property("moduleName", moduleName)
+            doFirst {
+                options.compilerArgs = [
+                    '--module-path', classpath.asPath,
+                    '--add-modules', 'junit',
+                    '--patch-module', "$moduleName=" + files(sourceSets.test.java.srcDirs).asPath,
+                ]
+                classpath = files()
+            }
+        }
+
+        test {
+            inputs.property("moduleName", moduleName)
+            doFirst {
+                jvmArgs = [
+                    '--module-path', classpath.asPath,
+                    '--add-modules', 'ALL-MODULE-PATH',
+
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.api=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.frontend=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.blob=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.filesystem=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.configuration=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.configuration.credentials=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.http=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.hash=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.cache=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.image=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.image.json=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.tar=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.docker=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.docker.json=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.registry=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.registry.credentials=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.global=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.json=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.builder=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.builder.steps=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.event=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.event.events=junit,org.mockito',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.event.progress=junit,org.mockito',
+
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.api=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.frontend=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.blob=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.configuration=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.configuration.credentials=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.http=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.hash=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.cache=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.image=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.image.json=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.tar=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.docker=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.docker.json=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.registry=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.registry.credentials=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.global=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.json=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.builder=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.builder.steps=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.event=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.event.events=junit,org.mockito',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.event.progress=junit,org.mockito',
+
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.registry.json=com.fasterxml.jackson.databind',
+                    '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.registry.credentials.json=com.fasterxml.jackson.databind',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.cache=com.fasterxml.jackson.databind',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.docker.json=com.fasterxml.jackson.databind',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.registry.json=com.fasterxml.jackson.databind',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.registry.credentials.json=com.fasterxml.jackson.databind',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.image.json=com.fasterxml.jackson.databind',
+                    '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.json=com.fasterxml.jackson.databind',
+
+                    '--add-reads', "$moduleName=junit",
+                    '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath
+                    ,
+                ]
+                classpath = files(sourceSets.test.output.resourcesDir)
+            }
+        }
 
 jar {
   manifest {
     attributes 'Implementation-Version': version
-    attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib'
+    //attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib'
 
     // OSGi metadata
     attributes 'Bundle-SymbolicName': 'com.google.cloud.tools.jib'
@@ -78,12 +179,12 @@ jar {
 }
 
 // Integration tests must be run explicitly
-task integrationTest(type: Test) {
-  testClassesDirs = sourceSets.integrationTest.output.classesDirs
-  classpath = sourceSets.integrationTest.runtimeClasspath
-  systemProperty '_JIB_DISABLE_USER_AGENT', true
-}
-integrationTest.dependsOn test
+//task integrationTest(type: Test) {
+//  testClassesDirs = sourceSets.integrationTest.output.classesDirs
+//  classpath = sourceSets.integrationTest.runtimeClasspath
+//  systemProperty '_JIB_DISABLE_USER_AGENT', true
+//}
+//integrationTest.dependsOn test
 
 test {
   testLogging {
