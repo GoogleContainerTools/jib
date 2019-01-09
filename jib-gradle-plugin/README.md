@@ -237,7 +237,7 @@ gradle jib \
     -Djib.to.auth.password=$PASSWORD
 
 gradle jibDockerBuild \
-    -Djib.dockerClient.executable=/path/to/docker/ \
+    -Djib.dockerClient.executable=/path/to/docker \
     -Djib.container.environment=key1="value1",key2="value2" \
     -Djib.container.args=arg1,arg2,arg3
 ```
