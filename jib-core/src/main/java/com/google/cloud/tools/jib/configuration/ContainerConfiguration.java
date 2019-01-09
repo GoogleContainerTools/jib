@@ -72,7 +72,8 @@ public class ContainerConfiguration {
       if (programArguments == null) {
         this.programArguments = null;
       } else {
-        Preconditions.checkArgument(!programArguments.contains(null));
+        Preconditions.checkArgument(
+            !programArguments.contains(null), "args list contains null elements");
         this.programArguments = ImmutableList.copyOf(programArguments);
       }
       return this;
@@ -88,8 +89,12 @@ public class ContainerConfiguration {
       if (environmentMap == null) {
         this.environmentMap = null;
       } else {
-        Preconditions.checkArgument(!Iterables.any(environmentMap.keySet(), Objects::isNull));
-        Preconditions.checkArgument(!Iterables.any(environmentMap.values(), Objects::isNull));
+        Preconditions.checkArgument(
+            !Iterables.any(environmentMap.keySet(), Objects::isNull),
+            "environment map contains null keys");
+        Preconditions.checkArgument(
+            !Iterables.any(environmentMap.values(), Objects::isNull),
+            "environment map contains null values");
         this.environmentMap = new HashMap<>(environmentMap);
       }
       return this;
@@ -112,7 +117,8 @@ public class ContainerConfiguration {
       if (exposedPorts == null) {
         this.exposedPorts = null;
       } else {
-        Preconditions.checkArgument(!exposedPorts.contains(null));
+        Preconditions.checkArgument(
+            !exposedPorts.contains(null), "ports list contains null elements");
         this.exposedPorts = new HashSet<>(exposedPorts);
       }
       return this;
@@ -135,7 +141,7 @@ public class ContainerConfiguration {
       if (volumes == null) {
         this.volumes = null;
       } else {
-        Preconditions.checkArgument(!volumes.contains(null));
+        Preconditions.checkArgument(!volumes.contains(null), "volumes list contains null elements");
         this.volumes = new HashSet<>(volumes);
       }
       return this;
@@ -158,8 +164,10 @@ public class ContainerConfiguration {
       if (labels == null) {
         this.labels = null;
       } else {
-        Preconditions.checkArgument(!Iterables.any(labels.keySet(), Objects::isNull));
-        Preconditions.checkArgument(!Iterables.any(labels.values(), Objects::isNull));
+        Preconditions.checkArgument(
+            !Iterables.any(labels.keySet(), Objects::isNull), "labels map contains null keys");
+        Preconditions.checkArgument(
+            !Iterables.any(labels.values(), Objects::isNull), "labels map contains null values");
         this.labels = new HashMap<>(labels);
       }
       return this;
@@ -182,7 +190,8 @@ public class ContainerConfiguration {
       if (entrypoint == null) {
         this.entrypoint = null;
       } else {
-        Preconditions.checkArgument(!entrypoint.contains(null));
+        Preconditions.checkArgument(
+            !entrypoint.contains(null), "entrypoint contains null elements");
         this.entrypoint = ImmutableList.copyOf(entrypoint);
       }
       return this;

@@ -38,7 +38,7 @@ public class ContainerConfigurationTest {
       ContainerConfiguration.builder().setProgramArguments(Arrays.asList("first", null));
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
-      Assert.assertNull(ex.getMessage());
+      Assert.assertEquals("args list contains null elements", ex.getMessage());
     }
 
     // Entrypoint element should not be null.
@@ -46,7 +46,7 @@ public class ContainerConfigurationTest {
       ContainerConfiguration.builder().setEntrypoint(Arrays.asList("first", null));
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
-      Assert.assertNull(ex.getMessage());
+      Assert.assertEquals("entrypoint contains null elements", ex.getMessage());
     }
 
     // Exposed ports element should not be null.
@@ -55,38 +55,54 @@ public class ContainerConfigurationTest {
       ContainerConfiguration.builder().setExposedPorts(badPorts);
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
-      Assert.assertNull(ex.getMessage());
+      Assert.assertEquals("ports list contains null elements", ex.getMessage());
     }
 
-    // Labels element should not be null.
-    Map<String, String> badLabels = new HashMap<>();
-    badLabels.put("label-key", null);
+    // Volume element should not be null.
+    Set<AbsoluteUnixPath> badVolumes =
+        new HashSet<>(Arrays.asList(AbsoluteUnixPath.get("/"), null));
     try {
-      ContainerConfiguration.builder().setLabels(badLabels);
+      ContainerConfiguration.builder().setVolumes(badVolumes);
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
-      Assert.assertNull(ex.getMessage());
+      Assert.assertEquals("volumes list contains null elements", ex.getMessage());
     }
 
-    // Environment keys element should not be null.
     Map<String, String> nullKeyMap = new HashMap<>();
     nullKeyMap.put(null, "value");
+    Map<String, String> nullValueMap = new HashMap<>();
+    nullValueMap.put("key", null);
 
+    // Label keys should not be null.
+    try {
+      ContainerConfiguration.builder().setLabels(nullKeyMap);
+      Assert.fail("The IllegalArgumentException should be thrown.");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("labels map contains null keys", ex.getMessage());
+    }
+
+    // Labels values should not be null.
+    try {
+      ContainerConfiguration.builder().setLabels(nullValueMap);
+      Assert.fail("The IllegalArgumentException should be thrown.");
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("labels map contains null values", ex.getMessage());
+    }
+
+    // Environment keys should not be null.
     try {
       ContainerConfiguration.builder().setEnvironment(nullKeyMap);
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
-      Assert.assertNull(ex.getMessage());
+      Assert.assertEquals("environment map contains null keys", ex.getMessage());
     }
 
-    // Environment values element should not be null.
-    Map<String, String> nullValueMap = new HashMap<>();
-    nullValueMap.put("key", null);
+    // Environment values should not be null.
     try {
       ContainerConfiguration.builder().setEnvironment(nullValueMap);
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
-      Assert.assertNull(ex.getMessage());
+      Assert.assertEquals("environment map contains null values", ex.getMessage());
     }
   }
 
