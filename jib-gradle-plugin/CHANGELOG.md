@@ -5,13 +5,19 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.0.0-rc2
+
+### Added
+
 - Setting proxy credentials (via system properties `http(s).proxyUser` and `http(s).proxyPassword`) is now supported.
 
 ### Changed
 
 - Java 9+ projects using the default distroless Java 8 base image will now fail to build. ([#1143](https://github.com/GoogleContainerTools/jib/issues/1143))
-
-### Fixed
 
 ## 1.0.0-rc1
 
