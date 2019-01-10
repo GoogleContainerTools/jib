@@ -153,6 +153,8 @@ eval $(minikube docker-env)
 mvn compile jib:dockerBuild
 ```
 
+Alternatively, you can set environment variables in the Jib configuration. See [`dockerClient`](#dockerclient-object) for more configuration options.
+
 #### Build an image tarball
 
 You can build and save your image to disk as a tarball with:
@@ -260,6 +262,13 @@ Property | Type
 `path` | string
 `permissions` | list
 
+<a name="dockerclient-object"></a>**(`jib:dockerBuild` only)** `dockerClient` is an object with the following properties:
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`executable` | string | `docker` | Sets the path to the Docker executable that is called to load the image into the Docker daemon.
+`environment` | map | *None* | Sets environment variables used by the Docker executable.
+
 #### System Properties
 
 Each of these parameters is configurable via commandline using system properties. Jib's system properties follow the same naming convention as the configuration parameters, with each level separated by dots (i.e. `-Djib.parameterName[.nestedParameter.[...]]=value`). Some examples are below:
@@ -270,6 +279,7 @@ mvn compile jib:build \
     -Djib.to.auth.password=$PASSWORD
 
 mvn compile jib:dockerBuild \
+    -Djib.dockerClient.executable=/path/to/docker \
     -Djib.container.environment=key1="value1",key2="value2" \
     -Djib.container.args=arg1,arg2,arg3
 ```
