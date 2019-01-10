@@ -39,7 +39,8 @@ public class ImageConfiguration {
      * @return this
      */
     public Builder setCredentialRetrievers(List<CredentialRetriever> credentialRetrievers) {
-      Preconditions.checkArgument(!credentialRetrievers.contains(null));
+      Preconditions.checkArgument(
+          !credentialRetrievers.contains(null), "credential retriever list contains null elements");
       this.credentialRetrievers = ImmutableList.copyOf(credentialRetrievers);
       return this;
     }
