@@ -73,7 +73,7 @@ public class ContainerConfiguration {
         this.programArguments = null;
       } else {
         Preconditions.checkArgument(
-            !programArguments.contains(null), "args list contains null elements");
+            !programArguments.contains(null), "program arguments list contains null elements");
         this.programArguments = ImmutableList.copyOf(programArguments);
       }
       return this;

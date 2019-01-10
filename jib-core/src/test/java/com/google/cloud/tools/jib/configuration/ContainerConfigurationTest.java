@@ -38,7 +38,7 @@ public class ContainerConfigurationTest {
       ContainerConfiguration.builder().setProgramArguments(Arrays.asList("first", null));
       Assert.fail("The IllegalArgumentException should be thrown.");
     } catch (IllegalArgumentException ex) {
-      Assert.assertEquals("args list contains null elements", ex.getMessage());
+      Assert.assertEquals("program arguments list contains null elements", ex.getMessage());
     }
 
     // Entrypoint element should not be null.
