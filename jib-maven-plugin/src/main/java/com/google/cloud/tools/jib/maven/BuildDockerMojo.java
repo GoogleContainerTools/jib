@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
@@ -32,13 +33,18 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
+import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /** Builds a container image and exports to the default Docker daemon. */
@@ -47,9 +53,20 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
     requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
 public class BuildDockerMojo extends JibPluginConfiguration {
 
-  @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
+  /**
+   * Object that configures the Docker executable and the additional environment variables to use
+   * when executing the executable.
+   */
+  public static class DockerClientConfiguration {
 
+    @Nullable @Parameter private File executable;
+    @Nullable @Parameter private Map<String, String> environment;
+  }
+
+  @VisibleForTesting static final String GOAL_NAME = "dockerBuild";
   private static final String HELPFUL_SUGGESTIONS_PREFIX = "Build to Docker daemon failed";
+
+  @Parameter private DockerClientConfiguration dockerClient = new DockerClientConfiguration();
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
@@ -62,7 +79,12 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       return;
     }
 
-    if (!DockerClient.isDefaultDockerInstalled()) {
+    Path dockerExecutable = getDockerClientExecutable();
+    boolean isDockerInstalled =
+        dockerExecutable == null
+            ? DockerClient.isDefaultDockerInstalled()
+            : DockerClient.isDockerInstalled(dockerExecutable);
+    if (!isDockerInstalled) {
       throw new MojoExecutionException(
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
@@ -89,8 +111,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
               projectProperties,
-              null,
-              null,
+              dockerExecutable,
+              getDockerClientEnvironment(),
               mavenHelpfulSuggestionsBuilder.build());
       ProxyProvider.init(getSession().getSettings());
 
@@ -148,5 +170,23 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     } catch (BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
     }
+  }
+
+  @Nullable
+  private Path getDockerClientExecutable() {
+    String property = getProperty(PropertyNames.DOCKER_CLIENT_EXECUTABLE);
+    if (property != null) {
+      return Paths.get(property);
+    }
+    return dockerClient.executable == null ? null : dockerClient.executable.toPath();
+  }
+
+  @Nullable
+  private Map<String, String> getDockerClientEnvironment() {
+    String property = getProperty(PropertyNames.DOCKER_CLIENT_ENVIRONMENT);
+    if (property != null) {
+      return ConfigurationPropertyValidator.parseMapProperty(property);
+    }
+    return dockerClient.environment;
   }
 }

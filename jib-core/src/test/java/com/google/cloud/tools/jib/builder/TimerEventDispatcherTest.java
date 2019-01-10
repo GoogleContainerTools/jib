@@ -27,7 +27,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -90,47 +89,6 @@ public class TimerEventDispatcherTest {
     verifyDescription(timerEvent, "description");
 
     Assert.assertTrue(timerEventQueue.isEmpty());
-  }
-
-  /**
-   * Verifies the next {@link TimerEvent} on the {@link #timerEventQueue}.
-   *
-   * @param expectedParentTimer the expected parent {@link TimerEvent.Timer}, or {@code null} if
-   *     none expected
-   * @param expectedState the expected {@link TimerEvent.State}
-   * @param expectedDescription the expected description
-   * @param hasLapped {@code true} if the timer has already lapped; {@code false} if it has not
-   * @return the verified {@link TimerEvent}
-   */
-  private TimerEvent.Timer verifyNextTimerEvent(
-      @Nullable TimerEvent.Timer expectedParentTimer,
-      State expectedState,
-      String expectedDescription,
-      boolean hasLapped) {
-    TimerEvent timerEvent = timerEventQueue.poll();
-    Assert.assertNotNull(timerEvent);
-
-    if (expectedParentTimer == null) {
-      Assert.assertFalse(timerEvent.getTimer().getParent().isPresent());
-    } else {
-      Assert.assertTrue(timerEvent.getTimer().getParent().isPresent());
-      Assert.assertSame(expectedParentTimer, timerEvent.getTimer().getParent().get());
-    }
-    Assert.assertEquals(expectedState, timerEvent.getState());
-    if (expectedState == State.START) {
-      Assert.assertEquals(Duration.ZERO, timerEvent.getDuration());
-      Assert.assertEquals(Duration.ZERO, timerEvent.getElapsed());
-    } else {
-      Assert.assertTrue(timerEvent.getDuration().compareTo(Duration.ZERO) > 0);
-      if (hasLapped) {
-        Assert.assertTrue(timerEvent.getElapsed().compareTo(timerEvent.getDuration()) > 0);
-      } else {
-        Assert.assertEquals(0, timerEvent.getElapsed().compareTo(timerEvent.getDuration()));
-      }
-    }
-    Assert.assertEquals(expectedDescription, timerEvent.getDescription());
-
-    return timerEvent.getTimer();
   }
 
   /**

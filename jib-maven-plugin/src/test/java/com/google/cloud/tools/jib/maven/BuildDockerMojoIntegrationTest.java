@@ -25,6 +25,7 @@ import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -107,6 +108,28 @@ public class BuildDockerMojoIntegrationTest {
         Instant.parse(
             new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
     Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
+  }
+
+  @Test
+  public void testExecute_dockerClient()
+      throws VerificationException, IOException, InterruptedException {
+    Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
+    new Command(
+            "chmod", "+x", simpleTestProject.getProjectRoot().resolve("mock-docker.sh").toString())
+        .run();
+
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    verifier.setAutoclean(false);
+    verifier.addCliOption("--file=pom-dockerclient.xml");
+    verifier.addCliOption("--debug");
+    verifier.executeGoal("package");
+
+    verifier.executeGoal("jib:dockerBuild");
+    verifier.verifyTextInLog("Docker load called. value1 value2");
+    verifier.verifyErrorFreeLog();
   }
 
   @Test

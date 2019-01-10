@@ -71,7 +71,8 @@ public class AsyncDependencies {
   }
 
   /**
-   * Calls {@code combiner} when all the added futures succeed.
+   * Creates the {@link ListenableFuture} which will return the result of calling {@code combiner}
+   * when all the added futures succeed.
    *
    * @param combiner the {@link Callable}
    * @param <C> the return type of {@code combiner}

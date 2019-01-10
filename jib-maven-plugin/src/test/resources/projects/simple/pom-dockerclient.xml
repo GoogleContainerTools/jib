@@ -1,27 +1,34 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.test</groupId>
-  <artifactId>empty</artifactId>
+  <artifactId>hello-world</artifactId>
   <version>1</version>
 
   <properties>
-    <java.target.version>1.8</java.target.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <jib-maven-plugin.version>@@PluginVersion@@</jib-maven-plugin.version>
   </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.test</groupId>
+      <artifactId>dependency</artifactId>
+      <version>1.0.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/libs/dependency-1.0.0.jar</systemPath>
+    </dependency>
+  </dependencies>
 
   <build>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+        <configuration>	
+          <source>1.8</source>	
+          <target>1.8</target>	
         </configuration>
       </plugin>
 
@@ -33,9 +40,13 @@
           <to>
             <image>${_TARGET_IMAGE}</image>
           </to>
-          <container>
-            <user>myuser:mygroup</user>
-          </container>
+          <dockerClient>
+            <executable>${project.basedir}/mock-docker.sh</executable>
+            <environment>
+              <envvar1>value1</envvar1>
+              <envvar2>value2</envvar2>
+            </environment>
+          </dockerClient>
         </configuration>
       </plugin>
     </plugins>
