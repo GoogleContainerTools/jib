@@ -43,7 +43,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '0.10.1'
+  id 'com.google.cloud.tools.jib' version '1.0.0-rc2'
 }
 ```
 
@@ -127,6 +127,8 @@ If you are using [`minikube`](https://github.com/kubernetes/minikube)'s remote D
 eval $(minikube docker-env)
 gradle jibDockerBuild
 ```
+
+Alternatively, you can set environment variables in the Jib configuration. See [`dockerClient`](#dockerclient-closure) for more configuration options.
 
 #### Build an image tarball
 
@@ -218,6 +220,13 @@ Property | Type
 `path` | `File`
 `permissions` | `Map<String, String>`
 
+<a name="dockerclient-closure"></a>**(`jibDockerBuild` only)** `dockerClient` is an object that can be configured directly on the `jibDockerBuild` task, and has the following properties:
+
+Property | Type | Default | Description
+--- | --- | --- | ---
+`executable` | `File` | `docker` | Sets the path to the Docker executable that is called to load the image into the Docker daemon.
+`environment` | `Map<String, String>` | *None* | Sets environment variables used by the Docker executable.
+
 #### System Properties
 
 Each of these parameters is configurable via commandline using system properties. Jib's system properties follow the same naming convention as the configuration parameters, with each level separated by dots (i.e. `-Djib.parameterName[.nestedParameter.[...]]=value`). Some examples are below:
@@ -228,6 +237,7 @@ gradle jib \
     -Djib.to.auth.password=$PASSWORD
 
 gradle jibDockerBuild \
+    -Djib.dockerClient.executable=/path/to/docker \
     -Djib.container.environment=key1="value1",key2="value2" \
     -Djib.container.args=arg1,arg2,arg3
 ```
