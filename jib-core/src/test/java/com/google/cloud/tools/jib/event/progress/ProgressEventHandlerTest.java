@@ -28,7 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.DoubleAccumulator;
 import org.junit.Assert;
 import org.junit.Test;
@@ -56,8 +55,7 @@ public class ProgressEventHandlerTest {
   private static final double DOUBLE_ERROR_MARGIN = 1e-10;
 
   @Test
-  public void testAccept()
-      throws ExecutionException, InterruptedException, IOException, TimeoutException {
+  public void testAccept() throws ExecutionException, InterruptedException, IOException {
     try (MultithreadedExecutor multithreadedExecutor = new MultithreadedExecutor()) {
       DoubleAccumulator maxProgress = new DoubleAccumulator(Double::max, 0);
 

@@ -136,4 +136,9 @@ class GradleRawConfiguration implements RawConfiguration {
   public ImageFormat getImageFormat() {
     return jibExtension.getContainer().getFormat();
   }
+
+  @Override
+  public Optional<String> getProperty(String propertyName) {
+    return Optional.ofNullable(System.getProperty(propertyName));
+  }
 }
