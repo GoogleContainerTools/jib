@@ -109,7 +109,7 @@ public class MainClassFinder {
   /** {@link ClassVisitor} that keeps track of whether or not it has visited a main class. */
   private static class MainClassVisitor extends ClassVisitor {
 
-    private boolean visitedMain;
+    private boolean visitedMainClass;
 
     private MainClassVisitor() {
       super(Opcodes.ASM6);
@@ -122,13 +122,9 @@ public class MainClassFinder {
       if (access == Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC
           && name.equals("main")
           && desc.equals("([Ljava/lang/String;)V")) {
-        visitedMain = true;
+        visitedMainClass = true;
       }
       return null;
-    }
-
-    private boolean visitedMainClass() {
-      return visitedMain;
     }
   }
 
@@ -187,7 +183,7 @@ public class MainClassFinder {
     try (InputStream classFileInputStream = Files.newInputStream(file)) {
       ClassReader reader = new ClassReader(classFileInputStream);
       reader.accept(mainClassVisitor, 0);
-      if (mainClassVisitor.visitedMainClass()) {
+      if (mainClassVisitor.visitedMainClass) {
         return Optional.of(reader.getClassName().replace("/", "."));
       }
 
