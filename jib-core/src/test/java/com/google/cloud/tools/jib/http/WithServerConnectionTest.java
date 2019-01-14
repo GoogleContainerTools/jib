@@ -22,8 +22,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import javax.net.ssl.SSLHandshakeException;
-import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -71,7 +70,7 @@ public class WithServerConnectionTest {
       try {
         connection.send("GET", new Request.Builder().build());
         Assert.fail("Should fail if cannot verify peer");
-      } catch (SSLPeerUnverifiedException | SSLHandshakeException ex) {
+      } catch (SSLException ex) {
         Assert.assertNotNull(ex.getMessage());
       }
     }
