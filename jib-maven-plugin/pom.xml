@@ -77,7 +77,7 @@
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm</artifactId>
-      <version>6.2.1</version>
+      <version>7.0</version>
       <scope>compile</scope>
     </dependency>
     <!-- End dependencies from jib-core -->
