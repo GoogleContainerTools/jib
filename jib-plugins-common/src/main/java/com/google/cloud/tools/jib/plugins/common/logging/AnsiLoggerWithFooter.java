@@ -49,6 +49,14 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
   /** ANSI escape sequence for setting all further characters to not bold. */
   private static final String UNBOLD = "\033[0m";
 
+  /**
+   * Makes sure each line of text in {@code lines} is at most {@link #MAX_FOOTER_WIDTH} characters
+   * long. If a line of text exceeds {@link #MAX_FOOTER_WIDTH} characters, the line is truncated to
+   * {@link #MAX_FOOTER_WIDTH} characters with the last 3 characters as {@code ...}.
+   *
+   * @param lines the lines of text
+   * @return the truncated lines of text
+   */
   @VisibleForTesting
   static List<String> truncateToMaxWidth(List<String> lines) {
     List<String> truncatedLines = new ArrayList<>();
