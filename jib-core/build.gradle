@@ -43,6 +43,9 @@ dependencies {
 
   testImplementation 'junit:junit:4.12'
   testImplementation 'org.mockito:mockito-core:2.23.4'
+  //testImplementation 'org.mockito:mockito-inline:2.23.4'
+  //testImplementation 'net.bytebuddy:byte-buddy:1.9.7'
+  //testImplementation 'net.bytebuddy:byte-buddy-agent:1.9.7'
   testImplementation 'org.slf4j:slf4j-api:1.7.25'
 
   // NullAway errorprone plugin
@@ -94,6 +97,7 @@ test {
   inputs.property("moduleName", moduleName)
   doFirst {
     jvmArgs = [
+        '-Dnet.bytebuddy.experimental=true',
         '--module-path', classpath.asPath,
         '--add-modules', 'ALL-MODULE-PATH',
         '--add-reads', "$moduleName=junit",
