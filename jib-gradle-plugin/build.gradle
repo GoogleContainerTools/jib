@@ -61,7 +61,7 @@ configurations {
 
 dependencies {
   // These are copied over from jib-core and are necessary for the jib-core sourcesets.
-  compile 'com.google.http-client:google-http-client:1.23.0'
+  compile 'com.google.http-client:google-http-client:1.27.0'
   compile 'org.apache.commons:commons-compress:1.18'
   compile 'com.google.guava:guava:23.5-jre'
   compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
