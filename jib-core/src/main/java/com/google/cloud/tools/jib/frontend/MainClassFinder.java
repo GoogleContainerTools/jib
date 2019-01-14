@@ -33,6 +33,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 /**
  * Finds main classes in a list of class files. Main classes are classes that define the {@code
@@ -112,16 +113,17 @@ public class MainClassFinder {
     private boolean visitedMainClass;
 
     private MainClassVisitor() {
-      super(Opcodes.ASM6);
+      super(Opcodes.ASM7);
     }
 
     @Override
     @Nullable
     public MethodVisitor visitMethod(
-        int access, String name, String desc, String signature, String[] exceptions) {
-      if (access == Opcodes.ACC_PUBLIC + Opcodes.ACC_STATIC
+        int access, String name, String descriptor, String signature, String[] exceptions) {
+      if (access == (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
           && name.equals("main")
-          && desc.equals("([Ljava/lang/String;)V")) {
+          && descriptor.equals(
+              Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String[].class)))) {
         visitedMainClass = true;
       }
       return null;
