@@ -198,29 +198,6 @@ public class StepsRunner {
                         Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps))));
   }
 
-  public StepsRunner finalizingPush() {
-    return enqueueStep(
-        () ->
-            new FinalizingStep(
-                listeningExecutorService,
-                buildConfiguration,
-                Arrays.asList(
-                    Preconditions.checkNotNull(steps.pushBaseImageLayersStep),
-                    Preconditions.checkNotNull(steps.pushApplicationLayersStep)),
-                Collections.emptyList()));
-  }
-
-  public StepsRunner finalizingBuild() {
-    return enqueueStep(
-        () ->
-            new FinalizingStep(
-                listeningExecutorService,
-                buildConfiguration,
-                Collections.singletonList(
-                    Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep)),
-                Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps)));
-  }
-
   public StepsRunner pushImage() {
     rootProgressAllocationDescription = "building image to registry";
 
