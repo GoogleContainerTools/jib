@@ -31,7 +31,7 @@ dependencies {
     compileOnly 'io.micronaut:micronaut-inject-java'
     runtime 'ch.qos.logback:logback-classic:1.2.3'
     testCompile 'io.micronaut:micronaut-inject-groovy'
-    testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
+    testCompile('org.spockframework:spock-core:1.2-groovy-2.5') {
         exclude group: 'org.codehaus.groovy', module: 'groovy-all'
     }
     testCompile 'io.micronaut:micronaut-inject-java'
