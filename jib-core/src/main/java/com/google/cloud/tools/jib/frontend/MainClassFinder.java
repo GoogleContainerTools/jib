@@ -110,8 +110,11 @@ public class MainClassFinder {
   /** {@link ClassVisitor} that keeps track of whether or not it has visited a main class. */
   private static class MainClassVisitor extends ClassVisitor {
 
+    /** The return/argument types for main. */
     private static final String MAIN_DESCRIPTOR =
         Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String[].class));
+
+    /** Accessors that main may or may not have. */
     private static final int OPTIONAL_ACCESS = Opcodes.ACC_FINAL | Opcodes.ACC_DEPRECATED;
 
     private boolean visitedMainClass;
