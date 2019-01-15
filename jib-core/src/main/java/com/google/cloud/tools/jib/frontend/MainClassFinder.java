@@ -190,7 +190,7 @@ public class MainClassFinder {
       }
 
     } catch (ArrayIndexOutOfBoundsException ignored) {
-      // Not a valid class file
+      // Not a valid class file (thrown by ClassReader if it reads an invalid format)
       eventDispatcher.dispatch(LogEvent.warn("Invalid class file found: " + file));
 
     } catch (IOException ignored) {
