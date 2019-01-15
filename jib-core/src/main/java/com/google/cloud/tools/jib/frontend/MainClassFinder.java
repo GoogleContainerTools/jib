@@ -112,6 +112,7 @@ public class MainClassFinder {
 
     private static final String MAIN_DESCRIPTOR =
         Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String[].class));
+    private static final int OPTIONAL_ACCESS = Opcodes.ACC_FINAL | Opcodes.ACC_DEPRECATED;
 
     private boolean visitedMainClass;
 
@@ -123,8 +124,7 @@ public class MainClassFinder {
     @Nullable
     public MethodVisitor visitMethod(
         int access, String name, String descriptor, String signature, String[] exceptions) {
-      int optionalAccess = Opcodes.ACC_FINAL | Opcodes.ACC_DEPRECATED;
-      if ((access & ~optionalAccess) == (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
+      if ((access & ~OPTIONAL_ACCESS) == (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
           && name.equals("main")
           && descriptor.equals(MAIN_DESCRIPTOR)) {
         visitedMainClass = true;
