@@ -191,7 +191,7 @@ public class MainClassFinder {
 
     } catch (ArrayIndexOutOfBoundsException ignored) {
       // Not a valid class file
-      eventDispatcher.dispatch(LogEvent.debug("Invalid class file found: " + file));
+      eventDispatcher.dispatch(LogEvent.warn("Invalid class file found: " + file));
 
     } catch (IOException ignored) {
       // Could not read class file.
