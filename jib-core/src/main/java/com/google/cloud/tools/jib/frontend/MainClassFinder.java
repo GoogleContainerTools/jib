@@ -110,6 +110,9 @@ public class MainClassFinder {
   /** {@link ClassVisitor} that keeps track of whether or not it has visited a main class. */
   private static class MainClassVisitor extends ClassVisitor {
 
+    private static final String MAIN_DESCRIPTOR =
+        Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String[].class));
+
     private boolean visitedMainClass;
 
     private MainClassVisitor() {
@@ -120,10 +123,10 @@ public class MainClassFinder {
     @Nullable
     public MethodVisitor visitMethod(
         int access, String name, String descriptor, String signature, String[] exceptions) {
-      if (access == (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
+      int optionalAccess = Opcodes.ACC_FINAL | Opcodes.ACC_DEPRECATED;
+      if ((access & ~optionalAccess) == (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
           && name.equals("main")
-          && descriptor.equals(
-              Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String[].class)))) {
+          && descriptor.equals(MAIN_DESCRIPTOR)) {
         visitedMainClass = true;
       }
       return null;
