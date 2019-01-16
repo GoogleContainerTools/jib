@@ -62,7 +62,7 @@ public class JibPluginTest {
     // Copy build file to temp dir
     Path buildFile = testProjectRoot.getRoot().toPath().resolve("build.gradle");
     InputStream buildFileContent =
-        getClass().getClassLoader().getResourceAsStream("plugin-test/build.gradle");
+        getClass().getClassLoader().getResourceAsStream("gradle/plugin-test/build.gradle");
     Files.copy(buildFileContent, buildFile);
 
     GradleRunner.create()
@@ -80,7 +80,7 @@ public class JibPluginTest {
     // Copy build file to temp dir
     Path buildFile = testProjectRoot.getRoot().toPath().resolve("build.gradle");
     InputStream buildFileContent =
-        getClass().getClassLoader().getResourceAsStream("plugin-test/build.gradle");
+        getClass().getClassLoader().getResourceAsStream("gradle/plugin-test/build.gradle");
     Files.copy(buildFileContent, buildFile);
 
     GradleRunner gradleRunner =
