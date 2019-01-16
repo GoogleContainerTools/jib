@@ -46,7 +46,7 @@ public class BlobTest {
 
   @Test
   public void testFromFile() throws IOException, URISyntaxException {
-    Path fileA = Paths.get(Resources.getResource("fileA").toURI());
+    Path fileA = Paths.get(Resources.getResource("core/fileA").toURI());
     String expected = new String(Files.readAllBytes(fileA), StandardCharsets.UTF_8);
     verifyBlobWriteTo(expected, Blobs.from(fileA));
   }

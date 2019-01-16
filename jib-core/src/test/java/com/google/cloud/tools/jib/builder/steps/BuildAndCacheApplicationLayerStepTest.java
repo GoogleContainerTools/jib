@@ -101,22 +101,22 @@ public class BuildAndCacheApplicationLayerStepTest {
   public void setUp() throws IOException, URISyntaxException {
     fakeDependenciesLayerConfiguration =
         makeLayerConfiguration(
-            "application-core/dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
+            "core/application/dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
     fakeSnapshotDependenciesLayerConfiguration =
         makeLayerConfiguration(
-            "application-core/snapshot-dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
+            "core/application/snapshot-dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
     fakeResourcesLayerConfiguration =
         makeLayerConfiguration(
-            "application-core/resources", EXTRACTION_PATH_ROOT.resolve("resources"));
+            "core/application/resources", EXTRACTION_PATH_ROOT.resolve("resources"));
     fakeClassesLayerConfiguration =
-        makeLayerConfiguration("application-core/classes", EXTRACTION_PATH_ROOT.resolve("classes"));
+        makeLayerConfiguration("core/application/classes", EXTRACTION_PATH_ROOT.resolve("classes"));
     fakeExtraFilesLayerConfiguration =
         LayerConfiguration.builder()
             .addEntry(
-                Paths.get(Resources.getResource("fileA").toURI()),
+                Paths.get(Resources.getResource("core/fileA").toURI()),
                 EXTRA_FILES_LAYER_EXTRACTION_PATH.resolve("fileA"))
             .addEntry(
-                Paths.get(Resources.getResource("fileB").toURI()),
+                Paths.get(Resources.getResource("core/fileB").toURI()),
                 EXTRA_FILES_LAYER_EXTRACTION_PATH.resolve("fileB"))
             .build();
     emptyLayerConfiguration = LayerConfiguration.builder().build();

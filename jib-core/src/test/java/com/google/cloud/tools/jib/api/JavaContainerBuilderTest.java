@@ -66,15 +66,15 @@ public class JavaContainerBuilderTest {
           CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         JavaContainerBuilder.fromDistroless()
-            .addResources(getResource("application-core/resources"))
-            .addClasses(getResource("application-core/classes"))
+            .addResources(getResource("core/application/resources"))
+            .addClasses(getResource("core/application/classes"))
             .addDependencies(
-                getResource("application-core/dependencies/dependency-1.0.0.jar"),
-                getResource("application-core/dependencies/more/dependency-1.0.0.jar"),
-                getResource("application-core/dependencies/libraryA.jar"),
-                getResource("application-core/dependencies/libraryB.jar"),
-                getResource("application-core/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
-            .addToClasspath(getResource("fileA"), getResource("fileB"))
+                getResource("core/application/dependencies/dependency-1.0.0.jar"),
+                getResource("core/application/dependencies/more/dependency-1.0.0.jar"),
+                getResource("core/application/dependencies/libraryA.jar"),
+                getResource("core/application/dependencies/libraryB.jar"),
+                getResource("core/application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
+            .addToClasspath(getResource("core/fileA"), getResource("core/fileB"))
             .addJvmFlags("-xflag1", "-xflag2")
             .setMainClass("HelloWorld")
             .toContainerBuilder()
@@ -141,12 +141,12 @@ public class JavaContainerBuilderTest {
           CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         JavaContainerBuilder.fromDistroless()
-            .addDependencies(getResource("application-core/dependencies/libraryA.jar"))
-            .addDependencies(getResource("application-core/dependencies/libraryB.jar"))
+            .addDependencies(getResource("core/application/dependencies/libraryA.jar"))
+            .addDependencies(getResource("core/application/dependencies/libraryB.jar"))
             .addDependencies(
-                getResource("application-core/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
-            .addClasses(getResource("application-core/classes/"))
-            .addClasses(getResource("class-finder-tests/extension"))
+                getResource("core/application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
+            .addClasses(getResource("core/application/classes/"))
+            .addClasses(getResource("core/class-finder-tests/extension"))
             .setMainClass("HelloWorld")
             .toContainerBuilder()
             .toBuildConfiguration(

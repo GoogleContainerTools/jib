@@ -38,7 +38,7 @@ public class DirectoryWalkerTest {
 
   @Before
   public void setUp() throws URISyntaxException {
-    testDir = Paths.get(Resources.getResource("layer").toURI());
+    testDir = Paths.get(Resources.getResource("core/layer").toURI());
   }
 
   @Test

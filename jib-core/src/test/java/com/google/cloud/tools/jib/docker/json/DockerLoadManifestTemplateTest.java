@@ -37,7 +37,7 @@ public class DockerLoadManifestTemplateTest {
   @Test
   public void testToJson() throws URISyntaxException, IOException {
     // Loads the expected JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/loadmanifest.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/loadmanifest.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     DockerLoadManifestEntryTemplate template = new DockerLoadManifestEntryTemplate();

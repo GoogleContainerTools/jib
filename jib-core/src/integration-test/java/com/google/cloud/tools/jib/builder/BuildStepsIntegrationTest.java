@@ -149,11 +149,11 @@ public class BuildStepsIntegrationTest {
     fakeLayerConfigurations =
         ImmutableList.of(
             makeLayerConfiguration(
-                "application-core/dependencies", AbsoluteUnixPath.get("/app/libs/")),
+                "core/application/dependencies", AbsoluteUnixPath.get("/app/libs/")),
             makeLayerConfiguration(
-                "application-core/resources", AbsoluteUnixPath.get("/app/resources/")),
+                "core/application/resources", AbsoluteUnixPath.get("/app/resources/")),
             makeLayerConfiguration(
-                "application-core/classes", AbsoluteUnixPath.get("/app/classes/")));
+                "core/application/classes", AbsoluteUnixPath.get("/app/classes/")));
   }
 
   @Test

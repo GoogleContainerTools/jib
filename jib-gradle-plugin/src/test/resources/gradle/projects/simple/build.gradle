@@ -1,3 +1,5 @@
+package gradle.projects.simple
+
 plugins {
   id 'java'
   id 'com.google.cloud.tools.jib'
