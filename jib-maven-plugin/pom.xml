@@ -53,7 +53,13 @@
     <dependency>
       <groupId>com.google.http-client</groupId>
       <artifactId>google-http-client</artifactId>
-      <version>1.27.0</version>
+      <version>1.28.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client-apache</artifactId>
+      <version>2.0.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
@@ -65,7 +71,7 @@
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>23.5-jre</version>
+      <version>26.0-jre</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
