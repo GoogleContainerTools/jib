@@ -148,10 +148,12 @@ public class BuildStepsIntegrationTest {
   public void setUp() throws IOException, URISyntaxException {
     fakeLayerConfigurations =
         ImmutableList.of(
-            makeLayerConfiguration("application/dependencies", AbsoluteUnixPath.get("/app/libs/")),
             makeLayerConfiguration(
-                "application/resources", AbsoluteUnixPath.get("/app/resources/")),
-            makeLayerConfiguration("application/classes", AbsoluteUnixPath.get("/app/classes/")));
+                "application-core/dependencies", AbsoluteUnixPath.get("/app/libs/")),
+            makeLayerConfiguration(
+                "application-core/resources", AbsoluteUnixPath.get("/app/resources/")),
+            makeLayerConfiguration(
+                "application-core/classes", AbsoluteUnixPath.get("/app/classes/")));
   }
 
   @Test

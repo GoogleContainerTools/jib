@@ -72,9 +72,9 @@ public class FileOperationsTest {
   public void testCopy() throws IOException, URISyntaxException {
     Path destDir = temporaryFolder.newFolder().toPath();
     Path libraryA =
-        Paths.get(Resources.getResource("application/dependencies/libraryA.jar").toURI());
+        Paths.get(Resources.getResource("application-core/dependencies/libraryA.jar").toURI());
     Path libraryB =
-        Paths.get(Resources.getResource("application/dependencies/libraryB.jar").toURI());
+        Paths.get(Resources.getResource("application-core/dependencies/libraryB.jar").toURI());
     Path dirLayer = Paths.get(Resources.getResource("layer").toURI());
 
     FileOperations.copy(ImmutableList.of(libraryA, libraryB, dirLayer), destDir);

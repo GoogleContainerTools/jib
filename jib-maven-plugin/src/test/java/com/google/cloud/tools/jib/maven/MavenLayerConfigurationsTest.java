@@ -113,8 +113,9 @@ public class MavenLayerConfigurationsTest {
 
   @Before
   public void setUp() throws URISyntaxException, IOException {
-    Path outputPath = Paths.get(Resources.getResource("application/output").toURI());
-    Path dependenciesPath = Paths.get(Resources.getResource("application/dependencies").toURI());
+    Path outputPath = Paths.get(Resources.getResource("application-maven/output").toURI());
+    Path dependenciesPath =
+        Paths.get(Resources.getResource("application-maven/dependencies").toURI());
 
     Mockito.when(mockMavenProject.getBuild()).thenReturn(mockBuild);
     Mockito.when(mockBuild.getOutputDirectory()).thenReturn(outputPath.toString());
@@ -143,7 +144,8 @@ public class MavenLayerConfigurationsTest {
 
   @Test
   public void test_correctFiles() throws URISyntaxException, IOException {
-    Path dependenciesPath = Paths.get(Resources.getResource("application/dependencies").toURI());
+    Path dependenciesPath =
+        Paths.get(Resources.getResource("application-maven/dependencies").toURI());
     ImmutableList<Path> expectedDependenciesFiles =
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
@@ -155,7 +157,7 @@ public class MavenLayerConfigurationsTest {
     ImmutableList<Path> expectedSnapshotDependenciesFiles =
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
-    Path applicationDirectory = Paths.get(Resources.getResource("application").toURI());
+    Path applicationDirectory = Paths.get(Resources.getResource("application-maven").toURI());
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
             applicationDirectory.resolve("output/directory"),

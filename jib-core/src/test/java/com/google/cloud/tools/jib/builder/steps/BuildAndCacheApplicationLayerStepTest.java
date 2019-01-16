@@ -100,14 +100,16 @@ public class BuildAndCacheApplicationLayerStepTest {
   @Before
   public void setUp() throws IOException, URISyntaxException {
     fakeDependenciesLayerConfiguration =
-        makeLayerConfiguration("application/dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
+        makeLayerConfiguration(
+            "application-core/dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
     fakeSnapshotDependenciesLayerConfiguration =
         makeLayerConfiguration(
-            "application/snapshot-dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
+            "application-core/snapshot-dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
     fakeResourcesLayerConfiguration =
-        makeLayerConfiguration("application/resources", EXTRACTION_PATH_ROOT.resolve("resources"));
+        makeLayerConfiguration(
+            "application-core/resources", EXTRACTION_PATH_ROOT.resolve("resources"));
     fakeClassesLayerConfiguration =
-        makeLayerConfiguration("application/classes", EXTRACTION_PATH_ROOT.resolve("classes"));
+        makeLayerConfiguration("application-core/classes", EXTRACTION_PATH_ROOT.resolve("classes"));
     fakeExtraFilesLayerConfiguration =
         LayerConfiguration.builder()
             .addEntry(

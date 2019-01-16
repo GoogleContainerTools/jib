@@ -131,28 +131,35 @@ public class GradleLayerConfigurationsTest {
   @Before
   public void setUp() throws URISyntaxException, IOException {
     Set<Path> classesFiles =
-        ImmutableSet.of(Paths.get(Resources.getResource("application/classes").toURI()));
+        ImmutableSet.of(Paths.get(Resources.getResource("application-gradle/classes").toURI()));
     FileCollection classesFileCollection = new TestFileCollection(classesFiles);
-    Path resourcesOutputDir = Paths.get(Resources.getResource("application/resources").toURI());
+    Path resourcesOutputDir =
+        Paths.get(Resources.getResource("application-gradle/resources").toURI());
 
     Set<Path> allFiles = new HashSet<>(classesFiles);
     allFiles.add(resourcesOutputDir);
     allFiles.add(
-        Paths.get(Resources.getResource("application/dependencies/library.jarC.jar").toURI()));
-    allFiles.add(Paths.get(Resources.getResource("application/dependencies/libraryB.jar").toURI()));
-    allFiles.add(Paths.get(Resources.getResource("application/dependencies/libraryA.jar").toURI()));
+        Paths.get(
+            Resources.getResource("application-gradle/dependencies/library.jarC.jar").toURI()));
     allFiles.add(
-        Paths.get(Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI()));
+        Paths.get(Resources.getResource("application-gradle/dependencies/libraryB.jar").toURI()));
+    allFiles.add(
+        Paths.get(Resources.getResource("application-gradle/dependencies/libraryA.jar").toURI()));
     allFiles.add(
         Paths.get(
-            Resources.getResource("application/dependencies/more/dependency-1.0.0.jar").toURI()));
+            Resources.getResource("application-gradle/dependencies/dependency-1.0.0.jar").toURI()));
     allFiles.add(
         Paths.get(
-            Resources.getResource("application/dependencies/another/one/dependency-1.0.0.jar")
+            Resources.getResource("application-gradle/dependencies/more/dependency-1.0.0.jar")
                 .toURI()));
     allFiles.add(
         Paths.get(
-            Resources.getResource("application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
+            Resources.getResource(
+                    "application-gradle/dependencies/another/one/dependency-1.0.0.jar")
+                .toURI()));
+    allFiles.add(
+        Paths.get(
+            Resources.getResource("application-gradle/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
                 .toURI()));
     FileCollection runtimeFileCollection = new TestFileCollection(allFiles);
 
@@ -176,7 +183,7 @@ public class GradleLayerConfigurationsTest {
 
   @Test
   public void test_correctFiles() throws URISyntaxException, IOException {
-    Path applicationDirectory = Paths.get(Resources.getResource("application").toURI());
+    Path applicationDirectory = Paths.get(Resources.getResource("application-gradle").toURI());
     ImmutableList<Path> expectedDependenciesFiles =
         ImmutableList.of(
             applicationDirectory.resolve("dependencies/dependency-1.0.0.jar"),
