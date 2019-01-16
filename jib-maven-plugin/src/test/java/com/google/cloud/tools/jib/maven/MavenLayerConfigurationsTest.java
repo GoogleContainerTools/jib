@@ -113,9 +113,9 @@ public class MavenLayerConfigurationsTest {
 
   @Before
   public void setUp() throws URISyntaxException, IOException {
-    Path outputPath = Paths.get(Resources.getResource("application-maven/output").toURI());
+    Path outputPath = Paths.get(Resources.getResource("maven/application/output").toURI());
     Path dependenciesPath =
-        Paths.get(Resources.getResource("application-maven/dependencies").toURI());
+        Paths.get(Resources.getResource("maven/application/dependencies").toURI());
 
     Mockito.when(mockMavenProject.getBuild()).thenReturn(mockBuild);
     Mockito.when(mockBuild.getOutputDirectory()).thenReturn(outputPath.toString());
@@ -135,17 +135,17 @@ public class MavenLayerConfigurationsTest {
     Mockito.when(mockMavenProject.getArtifacts()).thenReturn(artifacts);
 
     Path emptyDirectory =
-        Paths.get(Resources.getResource("webapp").toURI())
+        Paths.get(Resources.getResource("maven/webapp").toURI())
             .resolve("final-name/WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
 
-    extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
+    extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
   }
 
   @Test
   public void test_correctFiles() throws URISyntaxException, IOException {
     Path dependenciesPath =
-        Paths.get(Resources.getResource("application-maven/dependencies").toURI());
+        Paths.get(Resources.getResource("maven/application/dependencies").toURI());
     ImmutableList<Path> expectedDependenciesFiles =
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
@@ -157,7 +157,7 @@ public class MavenLayerConfigurationsTest {
     ImmutableList<Path> expectedSnapshotDependenciesFiles =
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT"));
-    Path applicationDirectory = Paths.get(Resources.getResource("application-maven").toURI());
+    Path applicationDirectory = Paths.get(Resources.getResource("maven/application").toURI());
     ImmutableList<Path> expectedResourcesFiles =
         ImmutableList.of(
             applicationDirectory.resolve("output/directory"),
@@ -229,7 +229,7 @@ public class MavenLayerConfigurationsTest {
 
   @Test
   public void testGetForWarProject_nonDefaultAppRoot() throws URISyntaxException, IOException {
-    Path outputPath = Paths.get(Resources.getResource("webapp").toURI());
+    Path outputPath = Paths.get(Resources.getResource("maven/webapp").toURI());
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
     Mockito.when(mockBuild.getDirectory()).thenReturn(outputPath.toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
