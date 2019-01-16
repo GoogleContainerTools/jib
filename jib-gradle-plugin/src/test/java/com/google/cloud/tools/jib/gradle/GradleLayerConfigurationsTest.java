@@ -131,28 +131,35 @@ public class GradleLayerConfigurationsTest {
   @Before
   public void setUp() throws URISyntaxException, IOException {
     Set<Path> classesFiles =
-        ImmutableSet.of(Paths.get(Resources.getResource("application/classes").toURI()));
+        ImmutableSet.of(Paths.get(Resources.getResource("gradle/application/classes").toURI()));
     FileCollection classesFileCollection = new TestFileCollection(classesFiles);
-    Path resourcesOutputDir = Paths.get(Resources.getResource("application/resources").toURI());
+    Path resourcesOutputDir =
+        Paths.get(Resources.getResource("gradle/application/resources").toURI());
 
     Set<Path> allFiles = new HashSet<>(classesFiles);
     allFiles.add(resourcesOutputDir);
     allFiles.add(
-        Paths.get(Resources.getResource("application/dependencies/library.jarC.jar").toURI()));
-    allFiles.add(Paths.get(Resources.getResource("application/dependencies/libraryB.jar").toURI()));
-    allFiles.add(Paths.get(Resources.getResource("application/dependencies/libraryA.jar").toURI()));
+        Paths.get(
+            Resources.getResource("gradle/application/dependencies/library.jarC.jar").toURI()));
     allFiles.add(
-        Paths.get(Resources.getResource("application/dependencies/dependency-1.0.0.jar").toURI()));
+        Paths.get(Resources.getResource("gradle/application/dependencies/libraryB.jar").toURI()));
+    allFiles.add(
+        Paths.get(Resources.getResource("gradle/application/dependencies/libraryA.jar").toURI()));
     allFiles.add(
         Paths.get(
-            Resources.getResource("application/dependencies/more/dependency-1.0.0.jar").toURI()));
+            Resources.getResource("gradle/application/dependencies/dependency-1.0.0.jar").toURI()));
     allFiles.add(
         Paths.get(
-            Resources.getResource("application/dependencies/another/one/dependency-1.0.0.jar")
+            Resources.getResource("gradle/application/dependencies/more/dependency-1.0.0.jar")
                 .toURI()));
     allFiles.add(
         Paths.get(
-            Resources.getResource("application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
+            Resources.getResource(
+                    "gradle/application/dependencies/another/one/dependency-1.0.0.jar")
+                .toURI()));
+    allFiles.add(
+        Paths.get(
+            Resources.getResource("gradle/application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
                 .toURI()));
     FileCollection runtimeFileCollection = new TestFileCollection(allFiles);
 
@@ -167,16 +174,16 @@ public class GradleLayerConfigurationsTest {
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
     // We can't commit an empty directory in Git, so create (if not exist).
     Path emptyDirectory =
-        Paths.get(Resources.getResource("webapp").toURI())
+        Paths.get(Resources.getResource("gradle/webapp").toURI())
             .resolve("jib-exploded-war/WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
 
-    extraFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
+    extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
   }
 
   @Test
   public void test_correctFiles() throws URISyntaxException, IOException {
-    Path applicationDirectory = Paths.get(Resources.getResource("application").toURI());
+    Path applicationDirectory = Paths.get(Resources.getResource("gradle/application").toURI());
     ImmutableList<Path> expectedDependenciesFiles =
         ImmutableList.of(
             applicationDirectory.resolve("dependencies/dependency-1.0.0.jar"),
@@ -347,7 +354,7 @@ public class GradleLayerConfigurationsTest {
 
   @Test
   public void testWebApp() throws URISyntaxException, IOException {
-    Path webAppDirectory = Paths.get(Resources.getResource("webapp").toURI());
+    Path webAppDirectory = Paths.get(Resources.getResource("gradle/webapp").toURI());
     setUpWarProject(webAppDirectory);
 
     JavaLayerConfigurations configuration =
@@ -431,7 +438,7 @@ public class GradleLayerConfigurationsTest {
 
   @Test
   public void testWebApp_defaultWebAppRoot() throws URISyntaxException, IOException {
-    setUpWarProject(Paths.get(Resources.getResource("webapp").toURI()));
+    setUpWarProject(Paths.get(Resources.getResource("gradle/webapp").toURI()));
 
     JavaLayerConfigurations configuration =
         GradleLayerConfigurations.getForProject(

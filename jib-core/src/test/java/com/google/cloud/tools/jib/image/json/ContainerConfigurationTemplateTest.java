@@ -41,7 +41,7 @@ public class ContainerConfigurationTemplateTest {
   @Test
   public void testToJson() throws IOException, URISyntaxException, DigestException {
     // Loads the expected JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/containerconfig.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/containerconfig.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Creates the JSON object to serialize.
@@ -98,7 +98,7 @@ public class ContainerConfigurationTemplateTest {
   @Test
   public void testFromJson() throws IOException, URISyntaxException, DigestException {
     // Loads the JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/containerconfig.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/containerconfig.json").toURI());
 
     // Deserializes into a manifest JSON object.
     ContainerConfigurationTemplate containerConfigJson =

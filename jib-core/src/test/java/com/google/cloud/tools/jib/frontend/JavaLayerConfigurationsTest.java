@@ -113,7 +113,7 @@ public class JavaLayerConfigurationsTest {
 
   @Test
   public void testAddFile_directories() throws URISyntaxException {
-    Path sourceDirectory = Paths.get(Resources.getResource("random-contents").toURI());
+    Path sourceDirectory = Paths.get(Resources.getResource("core/random-contents").toURI());
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()
@@ -152,7 +152,7 @@ public class JavaLayerConfigurationsTest {
   @Test
   public void testAddFile_regularFiles() throws URISyntaxException {
     Path sourceFile =
-        Paths.get(Resources.getResource("random-contents/sub-directory/leaf/file6").toURI());
+        Paths.get(Resources.getResource("core/random-contents/sub-directory/leaf/file6").toURI());
 
     JavaLayerConfigurations configurations =
         JavaLayerConfigurations.builder()

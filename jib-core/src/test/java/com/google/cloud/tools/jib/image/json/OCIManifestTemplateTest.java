@@ -36,7 +36,7 @@ public class OCIManifestTemplateTest {
   @Test
   public void testToJson() throws DigestException, IOException, URISyntaxException {
     // Loads the expected JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/ocimanifest.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/ocimanifest.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Creates the JSON object to serialize.
@@ -62,7 +62,7 @@ public class OCIManifestTemplateTest {
   @Test
   public void testFromJson() throws IOException, URISyntaxException, DigestException {
     // Loads the JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/ocimanifest.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/ocimanifest.json").toURI());
 
     // Deserializes into a manifest JSON object.
     OCIManifestTemplate manifestJson =

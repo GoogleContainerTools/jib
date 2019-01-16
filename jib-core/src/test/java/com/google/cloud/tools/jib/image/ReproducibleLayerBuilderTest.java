@@ -95,8 +95,8 @@ public class ReproducibleLayerBuilderTest {
 
   @Test
   public void testBuild() throws URISyntaxException, IOException {
-    Path layerDirectory = Paths.get(Resources.getResource("layer").toURI());
-    Path blobA = Paths.get(Resources.getResource("blobA").toURI());
+    Path layerDirectory = Paths.get(Resources.getResource("core/layer").toURI());
+    Path blobA = Paths.get(Resources.getResource("core/blobA").toURI());
 
     ReproducibleLayerBuilder layerBuilder =
         new ReproducibleLayerBuilder(
@@ -129,16 +129,16 @@ public class ReproducibleLayerBuilderTest {
       verifyNextTarArchiveEntry(
           tarArchiveInputStream,
           "extract/here/apple/layer/a/b/bar",
-          Paths.get(Resources.getResource("layer/a/b/bar").toURI()));
+          Paths.get(Resources.getResource("core/layer/a/b/bar").toURI()));
       verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/apple/layer/c/");
       verifyNextTarArchiveEntry(
           tarArchiveInputStream,
           "extract/here/apple/layer/c/cat",
-          Paths.get(Resources.getResource("layer/c/cat").toURI()));
+          Paths.get(Resources.getResource("core/layer/c/cat").toURI()));
       verifyNextTarArchiveEntry(
           tarArchiveInputStream,
           "extract/here/apple/layer/foo",
-          Paths.get(Resources.getResource("layer/foo").toURI()));
+          Paths.get(Resources.getResource("core/layer/foo").toURI()));
       verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/banana/");
       verifyNextTarArchiveEntry(tarArchiveInputStream, "extract/here/banana/blobA", blobA);
     }

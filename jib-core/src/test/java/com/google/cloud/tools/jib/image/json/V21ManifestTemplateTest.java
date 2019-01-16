@@ -33,7 +33,7 @@ public class V21ManifestTemplateTest {
   @Test
   public void testFromJson() throws URISyntaxException, IOException, DigestException {
     // Loads the JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/v21manifest.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/v21manifest.json").toURI());
 
     // Deserializes into a manifest JSON object.
     V21ManifestTemplate manifestJson =

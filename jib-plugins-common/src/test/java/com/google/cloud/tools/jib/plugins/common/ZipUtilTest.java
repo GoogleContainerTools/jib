@@ -51,7 +51,8 @@ public class ZipUtilTest {
   public void testZipSlipVulnerability_windows() throws URISyntaxException {
     Assume.assumeTrue(System.getProperty("os.name").startsWith("Windows"));
 
-    Path archive = Paths.get(Resources.getResource("test-archives/zip-slip-win.zip").toURI());
+    Path archive =
+        Paths.get(Resources.getResource("plugins-common/test-archives/zip-slip-win.zip").toURI());
     verifyZipSlipSafe(archive);
   }
 
@@ -59,12 +60,14 @@ public class ZipUtilTest {
   public void testZipSlipVulnerability_unix() throws URISyntaxException {
     Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
 
-    Path archive = Paths.get(Resources.getResource("test-archives/zip-slip.zip").toURI());
+    Path archive =
+        Paths.get(Resources.getResource("plugins-common/test-archives/zip-slip.zip").toURI());
     verifyZipSlipSafe(archive);
   }
 
   private void verifyUnzip(Path destination) throws URISyntaxException, IOException {
-    Path archive = Paths.get(Resources.getResource("test-archives/test.zip").toURI());
+    Path archive =
+        Paths.get(Resources.getResource("plugins-common/test-archives/test.zip").toURI());
 
     ZipUtil.unzip(archive, destination);
 

@@ -29,7 +29,7 @@ import org.junit.rules.TemporaryFolder;
 /** Works with the test Maven projects in the {@code resources/projects} directory. */
 public class TestProject extends TemporaryFolder implements Closeable {
 
-  private static final String PROJECTS_PATH_IN_RESOURCES = "/projects/";
+  private static final String PROJECTS_PATH_IN_RESOURCES = "/maven/projects/";
 
   private static boolean isPomXml(Path path) {
     String filename = path.getFileName().toString();
