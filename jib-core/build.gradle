@@ -39,7 +39,7 @@ dependencies {
   implementation 'org.apache.commons:commons-compress:1.18'
   implementation 'com.google.guava:guava:23.5-jre'
   implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
-  implementation 'org.javassist:javassist:3.24.1-GA'
+  implementation 'org.ow2.asm:asm:7.0'
 
   testImplementation 'junit:junit:4.12'
   testImplementation 'org.mockito:mockito-core:2.23.4'
