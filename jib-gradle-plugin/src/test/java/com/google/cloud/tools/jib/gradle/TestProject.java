@@ -32,7 +32,7 @@ import org.junit.rules.TemporaryFolder;
 /** Works with the test Gradle projects in the {@code resources/projects} directory. */
 class TestProject extends TemporaryFolder implements Closeable {
 
-  private static final String PROJECTS_PATH_IN_RESOURCES = "/gradle/projects/";
+  private static final String PROJECTS_PATH_IN_RESOURCES = "gradle/projects/";
 
   /** Copies test project {@code projectName} to {@code destination} folder. */
   private static void copyProject(String projectName, Path destination)
