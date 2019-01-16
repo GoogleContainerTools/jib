@@ -71,7 +71,7 @@ public class WithServerConnectionTest {
       try {
         connection.send("GET", new Request.Builder().build());
         Assert.fail("Should fail if cannot verify peer");
-      } catch (SSLPeerUnverifiedException | SSLHandshakeException ex) {
+      } catch (SSLException ex) {
         Assert.assertNotNull(ex.getMessage());
       }
     }
