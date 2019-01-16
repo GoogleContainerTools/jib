@@ -17,8 +17,10 @@
 package com.google.cloud.tools.jib.plugins.common.logging;
 
 import com.google.cloud.tools.jib.event.events.LogEvent.Level;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
@@ -28,6 +30,12 @@ import java.util.function.Consumer;
  * appears below log messages.
  */
 class AnsiLoggerWithFooter implements ConsoleLogger {
+
+  /**
+   * Maximum width of a footer line. Having width too large can mess up the display when the console
+   * width is too small.
+   */
+  private static final int MAX_FOOTER_WIDTH = 50;
 
   /** ANSI escape sequence for moving the cursor up one line. */
   private static final String CURSOR_UP_SEQUENCE = "\033[1A";
@@ -40,6 +48,27 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
 
   /** ANSI escape sequence for setting all further characters to not bold. */
   private static final String UNBOLD = "\033[0m";
+
+  /**
+   * Makes sure each line of text in {@code lines} is at most {@link #MAX_FOOTER_WIDTH} characters
+   * long. If a line of text exceeds {@link #MAX_FOOTER_WIDTH} characters, the line is truncated to
+   * {@link #MAX_FOOTER_WIDTH} characters with the last 3 characters as {@code ...}.
+   *
+   * @param lines the lines of text
+   * @return the truncated lines of text
+   */
+  @VisibleForTesting
+  static List<String> truncateToMaxWidth(List<String> lines) {
+    List<String> truncatedLines = new ArrayList<>();
+    for (String line : lines) {
+      if (line.length() > MAX_FOOTER_WIDTH) {
+        truncatedLines.add(line.substring(0, MAX_FOOTER_WIDTH - 3) + "...");
+      } else {
+        truncatedLines.add(line);
+      }
+    }
+    return truncatedLines;
+  }
 
   private final ImmutableMap<Level, Consumer<String>> messageConsumers;
   private final Consumer<String> lifecycleConsumer;
@@ -95,7 +124,9 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
    */
   @Override
   public void setFooter(List<String> newFooterLines) {
-    if (newFooterLines.equals(footerLines)) {
+    List<String> truncatedNewFooterLines = truncateToMaxWidth(newFooterLines);
+
+    if (truncatedNewFooterLines.equals(footerLines)) {
       return;
     }
 
@@ -106,12 +137,12 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
           // If a previous footer was erased, the first new footer line needs to go up a line.
           String newFooterPrefix = didErase ? CURSOR_UP_SEQUENCE : "";
 
-          for (String newFooterLine : newFooterLines) {
+          for (String newFooterLine : truncatedNewFooterLines) {
             lifecycleConsumer.accept(newFooterPrefix + BOLD + newFooterLine + UNBOLD);
             newFooterPrefix = "";
           }
 
-          footerLines = newFooterLines;
+          footerLines = truncatedNewFooterLines;
         });
   }
 

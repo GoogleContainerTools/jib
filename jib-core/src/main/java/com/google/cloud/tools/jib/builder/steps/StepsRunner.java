@@ -27,8 +27,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import javax.annotation.Nullable;
@@ -196,29 +194,6 @@ public class StepsRunner {
                     Preconditions.checkNotNull(steps.authenticatePushStep),
                     AsyncSteps.immediate(
                         Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps))));
-  }
-
-  public StepsRunner finalizingPush() {
-    return enqueueStep(
-        () ->
-            new FinalizingStep(
-                listeningExecutorService,
-                buildConfiguration,
-                Arrays.asList(
-                    Preconditions.checkNotNull(steps.pushBaseImageLayersStep),
-                    Preconditions.checkNotNull(steps.pushApplicationLayersStep)),
-                Collections.emptyList()));
-  }
-
-  public StepsRunner finalizingBuild() {
-    return enqueueStep(
-        () ->
-            new FinalizingStep(
-                listeningExecutorService,
-                buildConfiguration,
-                Collections.singletonList(
-                    Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep)),
-                Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps)));
   }
 
   public StepsRunner pushImage() {

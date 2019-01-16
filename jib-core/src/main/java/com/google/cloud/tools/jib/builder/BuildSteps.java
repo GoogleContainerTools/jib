@@ -50,7 +50,6 @@ public class BuildSteps {
             .buildImage()
             .pushContainerConfiguration()
             .pushApplicationLayers()
-            .finalizingPush()
             .pushImage());
   }
 
@@ -71,7 +70,6 @@ public class BuildSteps {
             .pullAndCacheBaseImageLayers()
             .buildAndCacheApplicationLayers()
             .buildImage()
-            .finalizingBuild()
             .loadDocker(dockerClient));
   }
 
@@ -91,7 +89,6 @@ public class BuildSteps {
             .pullAndCacheBaseImageLayers()
             .buildAndCacheApplicationLayers()
             .buildImage()
-            .finalizingBuild()
             .writeTarFile(outputPath));
   }
 

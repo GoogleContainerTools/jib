@@ -22,17 +22,18 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Modifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtMethod;
-import javassist.NotFoundException;
+import javax.annotation.Nullable;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 /**
  * Finds main classes in a list of class files. Main classes are classes that define the {@code
@@ -106,6 +107,35 @@ public class MainClassFinder {
     }
   }
 
+  /** {@link ClassVisitor} that keeps track of whether or not it has visited a main class. */
+  private static class MainClassVisitor extends ClassVisitor {
+
+    /** The return/argument types for main. */
+    private static final String MAIN_DESCRIPTOR =
+        Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String[].class));
+
+    /** Accessors that main may or may not have. */
+    private static final int OPTIONAL_ACCESS = Opcodes.ACC_FINAL | Opcodes.ACC_DEPRECATED;
+
+    private boolean visitedMainClass;
+
+    private MainClassVisitor() {
+      super(Opcodes.ASM7);
+    }
+
+    @Override
+    @Nullable
+    public MethodVisitor visitMethod(
+        int access, String name, String descriptor, String signature, String[] exceptions) {
+      if ((access & ~OPTIONAL_ACCESS) == (Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC)
+          && name.equals("main")
+          && descriptor.equals(MAIN_DESCRIPTOR)) {
+        visitedMainClass = true;
+      }
+      return null;
+    }
+  }
+
   private final ImmutableList<Path> files;
   private final EventDispatcher eventDispatcher;
 
@@ -157,35 +187,21 @@ public class MainClassFinder {
       return Optional.empty();
     }
 
-    ClassPool classPool = new ClassPool();
-    classPool.appendSystemPath();
-
-    try {
-      CtClass[] mainMethodParams = new CtClass[] {classPool.get("java.lang.String[]")};
-
-      try (InputStream classFileInputStream = Files.newInputStream(file)) {
-        CtClass fileClass = classPool.makeClass(classFileInputStream);
-
-        // Check if class contains 'psvm' (see class javadoc).
-        CtMethod mainMethod = fileClass.getDeclaredMethod("main", mainMethodParams);
-
-        if (CtClass.voidType.equals(mainMethod.getReturnType())
-            && Modifier.isStatic(mainMethod.getModifiers())
-            && Modifier.isPublic(mainMethod.getModifiers())) {
-          return Optional.of(fileClass.getName());
-        }
-
-      } catch (NotFoundException ex) {
-        // Ignores main method not found.
-
-      } catch (IOException ex) {
-        // Could not read class file.
-        eventDispatcher.dispatch(LogEvent.warn("Could not read file: " + file));
+    MainClassVisitor mainClassVisitor = new MainClassVisitor();
+    try (InputStream classFileInputStream = Files.newInputStream(file)) {
+      ClassReader reader = new ClassReader(classFileInputStream);
+      reader.accept(mainClassVisitor, 0);
+      if (mainClassVisitor.visitedMainClass) {
+        return Optional.of(reader.getClassName().replace('/', '.'));
       }
 
-    } catch (NotFoundException ex) {
-      // Thrown if 'java.lang.String' is not found in classPool.
-      throw new RuntimeException(ex);
+    } catch (ArrayIndexOutOfBoundsException ignored) {
+      // Not a valid class file (thrown by ClassReader if it reads an invalid format)
+      eventDispatcher.dispatch(LogEvent.warn("Invalid class file found: " + file));
+
+    } catch (IOException ignored) {
+      // Could not read class file.
+      eventDispatcher.dispatch(LogEvent.warn("Could not read file: " + file));
     }
 
     return Optional.empty();
