@@ -121,7 +121,7 @@ public class ImageToJsonTranslatorTest {
     setUp(V22ManifestTemplate.class);
 
     // Loads the expected JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/containerconfig.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/containerconfig.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Translates the image to the container configuration and writes the JSON string.
@@ -137,13 +137,13 @@ public class ImageToJsonTranslatorTest {
   @Test
   public void testGetManifest_v22() throws URISyntaxException, IOException, DigestException {
     setUp(V22ManifestTemplate.class);
-    testGetManifest(V22ManifestTemplate.class, "json/translated_v22manifest.json");
+    testGetManifest(V22ManifestTemplate.class, "core/json/translated_v22manifest.json");
   }
 
   @Test
   public void testGetManifest_oci() throws URISyntaxException, IOException, DigestException {
     setUp(OCIManifestTemplate.class);
-    testGetManifest(OCIManifestTemplate.class, "json/translated_ocimanifest.json");
+    testGetManifest(OCIManifestTemplate.class, "core/json/translated_ocimanifest.json");
   }
 
   @Test

@@ -46,7 +46,7 @@ public class DockerConfigCredentialRetrieverTest {
   public void setUp()
       throws URISyntaxException, CredentialHelperUnhandledServerUrlException,
           CredentialHelperNotFoundException, IOException {
-    dockerConfigFile = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
+    dockerConfigFile = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
     Mockito.when(mockDockerCredentialHelper.retrieve()).thenReturn(FAKE_CREDENTIAL);
   }
 
@@ -136,7 +136,7 @@ public class DockerConfigCredentialRetrieverTest {
   @Test
   public void testRetrieve_suffixMatching() throws IOException, URISyntaxException {
     Path dockerConfigFile =
-        Paths.get(Resources.getResource("json/dockerconfig_index_docker_io_v1.json").toURI());
+        Paths.get(Resources.getResource("core/json/dockerconfig_index_docker_io_v1.json").toURI());
 
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("index.docker.io", dockerConfigFile);
@@ -150,7 +150,7 @@ public class DockerConfigCredentialRetrieverTest {
   @Test
   public void testRetrieve_suffixMatchingFromAlias() throws IOException, URISyntaxException {
     Path dockerConfigFile =
-        Paths.get(Resources.getResource("json/dockerconfig_index_docker_io_v1.json").toURI());
+        Paths.get(Resources.getResource("core/json/dockerconfig_index_docker_io_v1.json").toURI());
 
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("registry.hub.docker.com", dockerConfigFile);

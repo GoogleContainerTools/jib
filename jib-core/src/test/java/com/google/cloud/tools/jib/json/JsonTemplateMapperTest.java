@@ -54,7 +54,7 @@ public class JsonTemplateMapperTest {
 
   @Test
   public void testWriteJson() throws DigestException, IOException, URISyntaxException {
-    Path jsonFile = Paths.get(Resources.getResource("json/basic.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/basic.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     TestJson testJson = new TestJson();
@@ -93,7 +93,7 @@ public class JsonTemplateMapperTest {
 
   @Test
   public void testReadJsonWithLock() throws IOException, URISyntaxException, DigestException {
-    Path jsonFile = Paths.get(Resources.getResource("json/basic.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/basic.json").toURI());
 
     // Deserializes into a metadata JSON object.
     TestJson testJson = JsonTemplateMapper.readJsonFromFileWithLock(jsonFile, TestJson.class);
@@ -122,7 +122,7 @@ public class JsonTemplateMapperTest {
 
   @Test
   public void testReadListOfJson() throws IOException, URISyntaxException, DigestException {
-    Path jsonFile = Paths.get(Resources.getResource("json/basic_list.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/basic_list.json").toURI());
 
     String jsonString = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
     List<TestJson> listofJsons = JsonTemplateMapper.readListOfJson(jsonString, TestJson.class);
@@ -150,7 +150,7 @@ public class JsonTemplateMapperTest {
 
   @Test
   public void testToBlob_listOfJson() throws IOException, URISyntaxException {
-    Path jsonFile = Paths.get(Resources.getResource("json/basic_list.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/basic_list.json").toURI());
 
     String jsonString = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
     List<TestJson> listOfJson = JsonTemplateMapper.readListOfJson(jsonString, TestJson.class);

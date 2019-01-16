@@ -68,7 +68,7 @@ class TestWebServer implements Closeable {
     if (https) {
       KeyStore keyStore = KeyStore.getInstance("JKS");
       // generated with: keytool -genkey -keyalg RSA -keystore ./TestWebServer-keystore
-      Path keyStoreFile = Paths.get(Resources.getResource("TestWebServer-keystore").toURI());
+      Path keyStoreFile = Paths.get(Resources.getResource("core/TestWebServer-keystore").toURI());
       try (InputStream in = Files.newInputStream(keyStoreFile)) {
         keyStore.load(in, "password".toCharArray());
       }
