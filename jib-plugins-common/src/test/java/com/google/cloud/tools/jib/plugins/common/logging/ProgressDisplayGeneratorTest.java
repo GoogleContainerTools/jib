@@ -28,27 +28,21 @@ public class ProgressDisplayGeneratorTest {
   @Test
   public void testGenerateProgressDisplay_progressBar_0() {
     Assert.assertEquals(
-        Arrays.asList(
-            "Executing tasks:",
-            "[                                                  ] 0.0% complete"),
+        Arrays.asList("Executing tasks:", "[                              ] 0.0% complete"),
         ProgressDisplayGenerator.generateProgressDisplay(0, Collections.emptyList()));
   }
 
   @Test
   public void testGenerateProgressDisplay_progressBar_50() {
     Assert.assertEquals(
-        Arrays.asList(
-            "Executing tasks:",
-            "[=========================                         ] 50.0% complete"),
+        Arrays.asList("Executing tasks:", "[===============               ] 50.0% complete"),
         ProgressDisplayGenerator.generateProgressDisplay(0.5, Collections.emptyList()));
   }
 
   @Test
   public void testGenerateProgressDisplay_progressBar_100() {
     Assert.assertEquals(
-        Arrays.asList(
-            "Executing tasks:",
-            "[==================================================] 100.0% complete"),
+        Arrays.asList("Executing tasks:", "[==============================] 100.0% complete"),
         ProgressDisplayGenerator.generateProgressDisplay(1, Collections.emptyList()));
   }
 
@@ -62,7 +56,7 @@ public class ProgressDisplayGeneratorTest {
     Assert.assertEquals(
         Arrays.asList(
             "Executing tasks:",
-            "[=========================                         ] 50.0% complete",
+            "[===============               ] 50.0% complete",
             "> childLeftDown",
             "> childRight"),
         ProgressDisplayGenerator.generateProgressDisplay(

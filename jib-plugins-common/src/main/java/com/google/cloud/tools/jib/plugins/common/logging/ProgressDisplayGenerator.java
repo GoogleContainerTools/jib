@@ -39,7 +39,7 @@ public class ProgressDisplayGenerator {
   private static final String HEADER = "Executing tasks:";
 
   /** Maximum number of bars in the progress display. */
-  private static final int PROGRESS_BAR_COUNT = 50;
+  private static final int PROGRESS_BAR_COUNT = 30;
 
   /**
    * Generates a progress display.

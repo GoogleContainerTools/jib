@@ -51,7 +51,7 @@
     <dependency>
       <groupId>com.google.http-client</groupId>
       <artifactId>google-http-client</artifactId>
-      <version>1.23.0</version>
+      <version>1.27.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
