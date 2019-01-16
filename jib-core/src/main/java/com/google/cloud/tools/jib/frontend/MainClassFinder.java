@@ -192,7 +192,7 @@ public class MainClassFinder {
       ClassReader reader = new ClassReader(classFileInputStream);
       reader.accept(mainClassVisitor, 0);
       if (mainClassVisitor.visitedMainClass) {
-        return Optional.of(reader.getClassName().replace("/", "."));
+        return Optional.of(reader.getClassName().replace('/', '.'));
       }
 
     } catch (ArrayIndexOutOfBoundsException ignored) {
