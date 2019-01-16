@@ -56,14 +56,10 @@ public class Connection implements Closeable {
    * @return {@link Connection} factory, a function that generates a {@link Connection} to a URL
    */
   public static Function<URL, Connection> getConnectionFactory() {
-    /*
-     * Do not use {@link NetHttpTransport}. It does not process response errors properly. A new
-     * {@link ApacheHttpTransport} needs to be created for each connection because otherwise HTTP
-     * connection persistence causes the connection to throw {@link NoHttpResponseException}.
-     *
-     * @see <a
-     *     href="https://github.com/google/google-http-java-client/issues/39">https://github.com/google/google-http-java-client/issues/39</a>
-     */
+    // Do not use {@link NetHttpTransport}. It does not process response errors properly. A new
+    // {@link ApacheHttpTransport} needs to be created for each connection because otherwise HTTP
+    // connection persistence causes the connection to throw {@link NoHttpResponseException}. See
+    // https://github.com/google/google-http-java-client/issues/39
     ApacheHttpTransport transport = new ApacheHttpTransport();
     addProxyCredentials(transport);
     return url -> new Connection(url, transport);
