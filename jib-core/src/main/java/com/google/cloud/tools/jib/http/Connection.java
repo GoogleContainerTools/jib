@@ -32,12 +32,8 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 
 /**
@@ -61,8 +57,7 @@ public class Connection implements Closeable {
    * @return {@link Connection} factory, a function that generates a {@link Connection} to a URL
    */
   public static Function<URL, Connection> getConnectionFactory() {
-    HttpClient httpClient = initializeHttpClientBuilder().build();
-    return url -> new Connection(url, new ApacheHttpTransport(httpClient));
+    return url -> new Connection(url, new ApacheHttpTransport());
   }
 
   /**
@@ -73,8 +68,10 @@ public class Connection implements Closeable {
    */
   public static Function<URL, Connection> getInsecureConnectionFactory()
       throws GeneralSecurityException {
+    // TODO: need to configure more stuff to match the default HttpClient.
     HttpClient httpClient =
-        initializeHttpClientBuilder()
+        HttpClientBuilder.create()
+            .useSystemProperties()
             .setSSLContext(SslUtils.trustAllSSLContext())
             .setSSLHostnameVerifier(new NoopHostnameVerifier())
             .build();
@@ -84,43 +81,6 @@ public class Connection implements Closeable {
     // connection persistence causes the connection to throw {@link NoHttpResponseException}. See
     // https://github.com/google/google-http-java-client/issues/39
     return url -> new Connection(url, new ApacheHttpTransport(httpClient));
-  }
-
-  private static HttpClientBuilder initializeHttpClientBuilder() {
-    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-    addProxyCredentials(credentialsProvider);
-    return HttpClientBuilder.create().setDefaultCredentialsProvider(credentialsProvider);
-  }
-
-  /**
-   * Registers proxy credentials onto transport client, in order to deal with proxies that require
-   * basic authentication.
-   *
-   * @param transport Apache HTTP transport
-   */
-  @VisibleForTesting
-  static void addProxyCredentials(CredentialsProvider credentialsProvider) {
-    addProxyCredentials(credentialsProvider, "https");
-    addProxyCredentials(credentialsProvider, "http");
-  }
-
-  private static void addProxyCredentials(
-      CredentialsProvider credentialsProvider, String protocol) {
-    Preconditions.checkArgument(protocol.equals("http") || protocol.equals("https"));
-
-    String proxyHost = System.getProperty(protocol + ".proxyHost");
-    String proxyUser = System.getProperty(protocol + ".proxyUser");
-    String proxyPassword = System.getProperty(protocol + ".proxyPassword");
-    if (proxyHost == null || proxyUser == null || proxyPassword == null) {
-      return;
-    }
-
-    String defaultProxyPort = protocol.equals("http") ? "80" : "443";
-    int proxyPort = Integer.parseInt(System.getProperty(protocol + ".proxyPort", defaultProxyPort));
-
-    credentialsProvider.setCredentials(
-        new AuthScope(proxyHost, proxyPort),
-        new UsernamePasswordCredentials(proxyUser, proxyPassword));
   }
 
   private HttpRequestFactory requestFactory;
