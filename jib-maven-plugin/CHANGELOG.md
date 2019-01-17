@@ -7,9 +7,13 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Shortened progress bar display - make sure console window is at least 50 characters wide or progress bar display can be messy ([#1361](https://github.com/GoogleContainerTools/jib/issues/1361))
-
 ### Fixed
+
+## 1.0.0
+
+### Changed
+
+- Shortened progress bar display - make sure console window is at least 50 characters wide or progress bar display can be messy ([#1361](https://github.com/GoogleContainerTools/jib/issues/1361))
 
 ## 1.0.0-rc2
 
