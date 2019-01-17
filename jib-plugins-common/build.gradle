@@ -33,7 +33,7 @@ dependencies {
   compile 'org.apache.commons:commons-compress:1.18'
   compile 'com.google.guava:guava:23.5-jre'
   compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
-  compile 'org.javassist:javassist:3.24.1-GA'
+  compile 'org.ow2.asm:asm:7.0'
 
   testCompile 'junit:junit:4.12'
   testCompile 'org.mockito:mockito-core:2.23.4'

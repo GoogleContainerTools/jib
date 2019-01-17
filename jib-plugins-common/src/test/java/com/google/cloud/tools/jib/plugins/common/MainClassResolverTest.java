@@ -88,7 +88,7 @@ public class MainClassResolverTest {
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
         .thenReturn(
             new DirectoryWalker(
-                    Paths.get(Resources.getResource("class-finder-tests/multiple").toURI()))
+                    Paths.get(Resources.getResource("core/class-finder-tests/multiple").toURI()))
                 .walk()
                 .stream()
                 .map(path -> new LayerEntry(path, AbsoluteUnixPath.get("/ignored"), null))
@@ -106,7 +106,7 @@ public class MainClassResolverTest {
     Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
         .thenReturn(
             new DirectoryWalker(
-                    Paths.get(Resources.getResource("class-finder-tests/multiple").toURI()))
+                    Paths.get(Resources.getResource("core/class-finder-tests/multiple").toURI()))
                 .walk()
                 .stream()
                 .map(path -> new LayerEntry(path, AbsoluteUnixPath.get("/ignored"), null))

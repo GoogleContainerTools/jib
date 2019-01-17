@@ -51,9 +51,9 @@ public class TarStreamBuilderTest {
   @Before
   public void setup() throws URISyntaxException, IOException {
     // Gets the test resource files.
-    fileA = Paths.get(Resources.getResource("fileA").toURI());
-    fileB = Paths.get(Resources.getResource("fileB").toURI());
-    directoryA = Paths.get(Resources.getResource("directoryA").toURI());
+    fileA = Paths.get(Resources.getResource("core/fileA").toURI());
+    fileB = Paths.get(Resources.getResource("core/fileB").toURI());
+    directoryA = Paths.get(Resources.getResource("core/directoryA").toURI());
 
     fileAContents = Files.readAllBytes(fileA);
     fileBContents = Files.readAllBytes(fileB);

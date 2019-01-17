@@ -60,8 +60,8 @@ public class ImageToTarballTranslatorTest {
   public void testToTarballBlob()
       throws InvalidImageReferenceException, IOException, URISyntaxException,
           LayerPropertyNotFoundException, DigestException {
-    Path fileA = Paths.get(Resources.getResource("fileA").toURI());
-    Path fileB = Paths.get(Resources.getResource("fileB").toURI());
+    Path fileA = Paths.get(Resources.getResource("core/fileA").toURI());
+    Path fileB = Paths.get(Resources.getResource("core/fileB").toURI());
     long fileASize = Files.size(fileA);
     long fileBSize = Files.size(fileB);
 
