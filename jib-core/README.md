@@ -63,8 +63,6 @@ Jib.from("busybox")
 
 [`JibContainerBuilder`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/api/JibContainerBuilder.html) - configures the container to build
 
-[`JavaContainerBuilder`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/api/JavaContainerBuilder.html) - configures a `JibContainerBuilder` for Java-specific applications
-
 [`Containerizer`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/api/Containerizer.html) - configures how and where to containerize to
 
 [`JibContainer`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/api/JibContainer.html) - information about the built container
@@ -75,12 +73,14 @@ Three `TargetImage` types define the 3 different targets Jib can build to:
 - [`TarImage`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/api/TarImage.html) - saves as a tarball archive
 
 Other useful classes:
-
 - [`ImageReference`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/image/ImageReference.html) - represents an image reference and has useful methods for parsing and manipulating image references
 - [`LayerConfiguration`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/configuration/LayerConfiguration.html) - configures a container layer to build
 - [`CredentialRetriever`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/configuration/credentials/CredentialRetriever.html) - implement with custom credential retrieval methods for authenticating against a container registry
 - [`CredentialRetrieverFactory`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/frontend/CredentialRetrieverFactory.html) - provides useful `CredentialRetriever`s to retrieve credentials from Docker config and credential helpers
 - [`EventHandlers`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/event/EventHandlers.html) - attach event handlers to handle events dispatched during the container build execution
+
+Java-specific API:
+- [`JavaContainerBuilder`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/api/JavaContainerBuilder.html) - configures a `JibContainerBuilder` for Java-specific applications
 - [`MainClassFinder`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/frontend/MainClassFinder.html) - find the main Java class in a given list of class files
 
 ## API reference
