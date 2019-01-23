@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.plugins.common.logging;
 import com.google.cloud.tools.jib.event.progress.Allocation;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Locale;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,32 +29,21 @@ public class ProgressDisplayGeneratorTest {
   public void testGenerateProgressDisplay_progressBar_0() {
     Assert.assertEquals(
         Arrays.asList("Executing tasks:", "[                              ] 0.0% complete"),
-        ProgressDisplayGenerator.generateProgressDisplay(
-            0, Collections.emptyList(), Locale.ENGLISH));
+        ProgressDisplayGenerator.generateProgressDisplay(0, Collections.emptyList()));
   }
 
   @Test
   public void testGenerateProgressDisplay_progressBar_50() {
     Assert.assertEquals(
         Arrays.asList("Executing tasks:", "[===============               ] 50.0% complete"),
-        ProgressDisplayGenerator.generateProgressDisplay(
-            0.5, Collections.emptyList(), Locale.ENGLISH));
+        ProgressDisplayGenerator.generateProgressDisplay(0.5, Collections.emptyList()));
   }
 
   @Test
   public void testGenerateProgressDisplay_progressBar_100() {
     Assert.assertEquals(
         Arrays.asList("Executing tasks:", "[==============================] 100.0% complete"),
-        ProgressDisplayGenerator.generateProgressDisplay(
-            1, Collections.emptyList(), Locale.ENGLISH));
-  }
-
-  @Test
-  public void testGenerateProgressDisplay_progressBarFrench() {
-    Assert.assertEquals(
-        Arrays.asList("Executing tasks:", "[                              ] 0,0% complete"),
-        ProgressDisplayGenerator.generateProgressDisplay(
-            0, Collections.emptyList(), Locale.FRENCH));
+        ProgressDisplayGenerator.generateProgressDisplay(1, Collections.emptyList()));
   }
 
   @Test
@@ -72,6 +60,6 @@ public class ProgressDisplayGeneratorTest {
             "> childLeftDown",
             "> childRight"),
         ProgressDisplayGenerator.generateProgressDisplay(
-            0.5, Arrays.asList(root, childLeft, childLeftDown, childRight), Locale.ENGLISH));
+            0.5, Arrays.asList(root, childLeft, childLeftDown, childRight)));
   }
 }

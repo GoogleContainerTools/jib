@@ -17,11 +17,9 @@
 package com.google.cloud.tools.jib.plugins.common.logging;
 
 import com.google.cloud.tools.jib.event.progress.Allocation;
-import com.google.common.annotations.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
@@ -52,16 +50,10 @@ public class ProgressDisplayGenerator {
    */
   public static List<String> generateProgressDisplay(
       double progress, List<Allocation> unfinishedAllocations) {
-    return generateProgressDisplay(progress, unfinishedAllocations, Locale.getDefault());
-  }
-
-  @VisibleForTesting
-  static List<String> generateProgressDisplay(
-      double progress, List<Allocation> unfinishedAllocations, Locale locale) {
     List<String> lines = new ArrayList<>();
 
     lines.add(HEADER);
-    lines.add(generateProgressBar(progress, locale));
+    lines.add(generateProgressBar(progress));
     lines.addAll(generateUnfinishedTasks(unfinishedAllocations));
 
     return lines;
@@ -73,7 +65,7 @@ public class ProgressDisplayGenerator {
    * @param progress the overall progress, with {@code 1.0} meaning fully complete
    * @return the progress bar line
    */
-  private static String generateProgressBar(double progress, Locale locale) {
+  private static String generateProgressBar(double progress) {
     StringBuilder progressBar = new StringBuilder();
     progressBar.append('[');
 
@@ -84,7 +76,7 @@ public class ProgressDisplayGenerator {
 
     return progressBar
         .append(']')
-        .append(String.format(locale, " %.1f", progress * 100))
+        .append(String.format(" %.1f", progress * 100))
         .append("% complete")
         .toString();
   }
