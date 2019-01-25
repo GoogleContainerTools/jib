@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.Cache;
@@ -51,7 +52,9 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                "setting up to build application layers", layerCount);
+                BuildStepType.BuildAndCacheApplicationLayer,
+                "setting up to build application layers",
+                layerCount);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
@@ -108,7 +111,10 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
     buildConfiguration.getEventDispatcher().dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =
-            progressEventDispatcherFactory.create("building " + layerType + " layer", 1);
+            progressEventDispatcherFactory.create(
+                BuildStepType.BuildAndCacheApplicationLayer,
+                "building " + layerType + " layer",
+                1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
       Cache cache = buildConfiguration.getApplicationLayersCache();

@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
+import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
@@ -92,7 +93,8 @@ class BuildImageStep
   private Image<Layer> afterCachedLayerSteps()
       throws ExecutionException, LayerPropertyNotFoundException {
     try (ProgressEventDispatcher ignored =
-            progressEventDispatcherFactory.create("building image format", 1);
+            progressEventDispatcherFactory.create(
+                BuildStepType.BuildImage, "building image format", 1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // Constructs the image.

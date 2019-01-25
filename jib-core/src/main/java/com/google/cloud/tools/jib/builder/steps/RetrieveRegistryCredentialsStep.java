@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
+import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
@@ -101,7 +102,10 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
     buildConfiguration.getEventDispatcher().dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =
-            progressEventDispatcherFactory.create("retrieving credentials for " + registry, 1);
+            progressEventDispatcherFactory.create(
+                BuildStepType.RetrieveRegistryCredentials,
+                "retrieving credentials for " + registry,
+                1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
       for (CredentialRetriever credentialRetriever : credentialRetrievers) {

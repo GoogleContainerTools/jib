@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
@@ -96,7 +97,9 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   public BlobDescriptor call() throws IOException, RegistryException, ExecutionException {
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDipatcherFactory.create(
-                "pushing blob " + blobDescriptor.getDigest(), blobDescriptor.getSize());
+                BuildStepType.PushBlob,
+                "pushing blob " + blobDescriptor.getDigest(),
+                blobDescriptor.getSize());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
                 buildConfiguration.getEventDispatcher(), DESCRIPTION + blobDescriptor)) {

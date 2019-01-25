@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
+import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.Cache;
@@ -68,7 +69,10 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
   @Override
   public CachedLayer call() throws IOException, CacheCorruptedException {
     try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("checking base image layer " + layerDigest, 1);
+            progressEventDispatcherFactory.create(
+                BuildStepType.PullAndCacheBaseImageLayer,
+                "checking base image layer " + layerDigest,
+                1);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
                 buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, layerDigest))) {
@@ -89,7 +93,8 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
       try (ProgressEventDispatcherContainer progressEventDispatcherContainer =
           new ProgressEventDispatcherContainer(
               progressEventDispatcher.newChildProducer(),
-              "pulling base image layer " + layerDigest)) {
+              "pulling base image layer " + layerDigest,
+              BuildStepType.PullAndCacheBaseImageLayer)) {
         return cache.writeCompressedLayer(
             registryClient.pullBlob(
                 layerDigest,

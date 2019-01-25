@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.CachedLayer;
@@ -79,7 +80,8 @@ class PushLayersStep
           NonBlockingSteps.get(cachedLayerStep);
 
       try (ProgressEventDispatcher progressEventDispatcher =
-          progressEventDispatcherFactory.create("setting up to push layers", cachedLayers.size())) {
+          progressEventDispatcherFactory.create(
+              BuildStepType.PushLayers, "setting up to push layers", cachedLayers.size())) {
         // Constructs a PushBlobStep for each layer.
         ImmutableList.Builder<AsyncStep<PushBlobStep>> pushBlobStepsBuilder =
             ImmutableList.builder();

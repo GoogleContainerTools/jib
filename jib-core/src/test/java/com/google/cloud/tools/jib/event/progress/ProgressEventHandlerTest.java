@@ -68,17 +68,17 @@ public class ProgressEventHandlerTest {
       // Adds root, child1, and child1Child.
       multithreadedExecutor.invoke(
           () -> {
-            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.root, 0L));
+            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.root, 0L, null));
             return null;
           });
       multithreadedExecutor.invoke(
           () -> {
-            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 0L));
+            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 0L, null));
             return null;
           });
       multithreadedExecutor.invoke(
           () -> {
-            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 0L));
+            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 0L, null));
             return null;
           });
       Assert.assertEquals(0.0, maxProgress.get(), DOUBLE_ERROR_MARGIN);
@@ -89,14 +89,14 @@ public class ProgressEventHandlerTest {
           Collections.nCopies(
               50,
               () -> {
-                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 1L));
+                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 1L, null));
                 return null;
               }));
       callables.addAll(
           Collections.nCopies(
               100,
               () -> {
-                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 1L));
+                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 1L, null));
                 return null;
               }));
 
@@ -109,7 +109,7 @@ public class ProgressEventHandlerTest {
           Collections.nCopies(
               100,
               () -> {
-                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 0L));
+                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 0L, null));
                 return null;
               }));
       Assert.assertEquals(

@@ -71,16 +71,16 @@ public class ProgressEventTest {
 
     EventDispatcher eventDispatcher = makeEventDispatcher(progressEventConsumer);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, null));
     Assert.assertEquals(1.0 / 2 / 100 * 50, progress, DOUBLE_ERROR_MARGIN);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, null));
     Assert.assertEquals(1.0 / 2, progress, DOUBLE_ERROR_MARGIN);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 10));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 10, null));
     Assert.assertEquals(1.0 / 2 + 1.0 / 2 / 200 * 10, progress, DOUBLE_ERROR_MARGIN);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 190));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 190, null));
     Assert.assertEquals(1.0, progress, DOUBLE_ERROR_MARGIN);
   }
 
@@ -96,19 +96,19 @@ public class ProgressEventTest {
 
     EventDispatcher eventDispatcher = makeEventDispatcher(progressEventConsumer);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, null));
 
     Assert.assertEquals(1, allocationCompletionMap.size());
     Assert.assertEquals(50, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, null));
 
     Assert.assertEquals(3, allocationCompletionMap.size());
     Assert.assertEquals(100, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
     Assert.assertEquals(1, allocationCompletionMap.get(AllocationTree.child1).longValue());
     Assert.assertEquals(1, allocationCompletionMap.get(AllocationTree.root).longValue());
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 200));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 200, null));
 
     Assert.assertEquals(4, allocationCompletionMap.size());
     Assert.assertEquals(100, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
