@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 import java.io.Closeable;
-import javax.annotation.Nullable;
 
 /**
  * Dispatches {@link ProgressEvent}s associated with a managed {@link Allocation}. Keeps track of
@@ -64,7 +63,7 @@ public class ProgressEventDispatcher implements Closeable {
   public static ProgressEventDispatcher newRoot(
       EventDispatcher eventDispatcher, String description, long allocationUnits) {
     return newProgressEventDispatcher(
-        eventDispatcher, Allocation.newRoot(description, allocationUnits), null);
+        eventDispatcher, Allocation.newRoot(description, allocationUnits), BuildStepType.ALL);
   }
 
   /**
@@ -76,9 +75,7 @@ public class ProgressEventDispatcher implements Closeable {
    * @return a new {@link ProgressEventDispatcher}
    */
   private static ProgressEventDispatcher newProgressEventDispatcher(
-      EventDispatcher eventDispatcher,
-      Allocation allocation,
-      @Nullable BuildStepType buildStepType) {
+      EventDispatcher eventDispatcher, Allocation allocation, BuildStepType buildStepType) {
     ProgressEventDispatcher progressEventDispatcher =
         new ProgressEventDispatcher(eventDispatcher, allocation, buildStepType);
     progressEventDispatcher.dispatchProgress(0);
@@ -87,15 +84,13 @@ public class ProgressEventDispatcher implements Closeable {
 
   private final EventDispatcher eventDispatcher;
   private final Allocation allocation;
+  private final BuildStepType buildStepType;
 
   private long remainingAllocationUnits;
   private boolean closed = false;
-  @Nullable private BuildStepType buildStepType;
 
   private ProgressEventDispatcher(
-      EventDispatcher eventDispatcher,
-      Allocation allocation,
-      @Nullable BuildStepType buildStepType) {
+      EventDispatcher eventDispatcher, Allocation allocation, BuildStepType buildStepType) {
     this.eventDispatcher = eventDispatcher;
     this.allocation = allocation;
     this.buildStepType = buildStepType;

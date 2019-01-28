@@ -18,16 +18,43 @@ package com.google.cloud.tools.jib.builder;
 
 /** Types corresponding to steps in the containerization process. */
 public enum BuildStepType {
+
+  /** Root type that corresponds to build startup. */
+  ALL,
+
+  /** Authentication step for pushing to target registry. */
   AUTHENTICATE_PUSH,
+
+  /** Step for building/caching an application layer. */
   BUILD_AND_CACHE_APPLICATION_LAYER,
+
+  /** Step for building image layers/configuration. */
   BUILD_IMAGE,
+
+  /** Step for loading the image into the Docker daemon. */
   LOAD_DOCKER,
+
+  /** Step for pulling/caching a base image layer. */
   PULL_AND_CACHE_BASE_IMAGE_LAYER,
+
+  /** Step for pulling the base image manifest. */
   PULL_BASE_IMAGE,
-  PUSH_BLOB,
+
+  /** Step for pushing the container configuration to the target registry. */
   PUSH_CONTAINER_CONFIGURATION,
+
+  /** Step for pushing the image manifest to the target registry. */
   PUSH_IMAGE,
+
+  /** Step for pushing the image layers to the target registry. */
   PUSH_LAYERS,
-  RETRIEVE_REGISTRY_CREDENTIALS,
+
+  /** Step for retrieving credentials for the base image registry. */
+  RETRIEVE_REGISTRY_CREDENTIALS_BASE,
+
+  /** Step for retrieving credentials for the target image registry. */
+  RETRIEVE_REGISTRY_CREDENTIALS_TARGET,
+
+  /** Step for writing the image tarball to disk. */
   WRITE_TAR_FILE
 }

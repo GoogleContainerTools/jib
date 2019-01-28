@@ -72,16 +72,16 @@ public class ProgressEventTest {
 
     EventDispatcher eventDispatcher = makeEventDispatcher(progressEventConsumer);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, null));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
     Assert.assertEquals(1.0 / 2 / 100 * 50, progress, DOUBLE_ERROR_MARGIN);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, null));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
     Assert.assertEquals(1.0 / 2, progress, DOUBLE_ERROR_MARGIN);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 10, null));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 10, BuildStepType.ALL));
     Assert.assertEquals(1.0 / 2 + 1.0 / 2 / 200 * 10, progress, DOUBLE_ERROR_MARGIN);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 190, null));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 190, BuildStepType.ALL));
     Assert.assertEquals(1.0, progress, DOUBLE_ERROR_MARGIN);
   }
 
@@ -97,19 +97,19 @@ public class ProgressEventTest {
 
     EventDispatcher eventDispatcher = makeEventDispatcher(progressEventConsumer);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, null));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
 
     Assert.assertEquals(1, allocationCompletionMap.size());
     Assert.assertEquals(50, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, null));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
 
     Assert.assertEquals(3, allocationCompletionMap.size());
     Assert.assertEquals(100, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
     Assert.assertEquals(1, allocationCompletionMap.get(AllocationTree.child1).longValue());
     Assert.assertEquals(1, allocationCompletionMap.get(AllocationTree.root).longValue());
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 200, null));
+    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 200, BuildStepType.ALL));
 
     Assert.assertEquals(4, allocationCompletionMap.size());
     Assert.assertEquals(100, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
@@ -120,18 +120,18 @@ public class ProgressEventTest {
 
   @Test
   public void testType() {
+    // Used to test whether or not progress event was consumed
+    boolean[] called = new boolean[] {false};
     Consumer<ProgressEvent> buildImageConsumer =
-        progressEvent ->
-            Assert.assertEquals(
-                BuildStepType.BUILD_IMAGE, progressEvent.getBuildStepType().orElse(null));
+        progressEvent -> {
+          Assert.assertEquals(BuildStepType.BUILD_IMAGE, progressEvent.getBuildStepType());
+          called[0] = true;
+        };
+
     EventDispatcher buildImageDispatcher = makeEventDispatcher(buildImageConsumer);
     buildImageDispatcher.dispatch(
         new ProgressEvent(AllocationTree.child1, 50, BuildStepType.BUILD_IMAGE));
-
-    Consumer<ProgressEvent> nullConsumer =
-        progressEvent -> Assert.assertNull(progressEvent.getBuildStepType().orElse(null));
-    EventDispatcher nullDispatcher = makeEventDispatcher(nullConsumer);
-    nullDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 50, null));
+    Assert.assertTrue(called[0]);
   }
 
   /**

@@ -19,8 +19,6 @@ package com.google.cloud.tools.jib.event.events;
 import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.event.JibEvent;
 import com.google.cloud.tools.jib.event.progress.Allocation;
-import java.util.Optional;
-import javax.annotation.Nullable;
 
 /**
  * Event representing progress. The progress accounts for allocation units in an {@link Allocation},
@@ -40,10 +38,9 @@ public class ProgressEvent implements JibEvent {
   private final long progressUnits;
 
   /** The step in the build process that the progress event corresponds to. */
-  @Nullable private final BuildStepType buildStepType;
+  private final BuildStepType buildStepType;
 
-  public ProgressEvent(
-      Allocation allocation, long progressUnits, @Nullable BuildStepType buildStepType) {
+  public ProgressEvent(Allocation allocation, long progressUnits, BuildStepType buildStepType) {
     this.allocation = allocation;
     this.progressUnits = progressUnits;
     this.buildStepType = buildStepType;
@@ -73,7 +70,7 @@ public class ProgressEvent implements JibEvent {
    *
    * @return the build step
    */
-  public Optional<BuildStepType> getBuildStepType() {
-    return Optional.ofNullable(buildStepType);
+  public BuildStepType getBuildStepType() {
+    return buildStepType;
   }
 }

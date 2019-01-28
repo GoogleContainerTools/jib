@@ -113,6 +113,7 @@ class PushLayersStep
         progressEventDispatcherFactory,
         authenticatePushStep,
         new BlobDescriptor(cachedLayer.getSize(), cachedLayer.getDigest()),
-        cachedLayer.getBlob());
+        cachedLayer.getBlob(),
+        BuildStepType.PUSH_LAYERS);
   }
 }

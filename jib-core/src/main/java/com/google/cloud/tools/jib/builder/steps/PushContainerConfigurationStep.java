@@ -102,7 +102,8 @@ class PushContainerConfigurationStep
           progressEventDispatcher.newChildProducer(),
           authenticatePushStep,
           blobDescriptor,
-          containerConfigurationBlob);
+          containerConfigurationBlob,
+          BuildStepType.PUSH_CONTAINER_CONFIGURATION);
     }
   }
 }

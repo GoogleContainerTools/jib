@@ -50,7 +50,8 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
         buildConfiguration,
         progressEventDispatcherFactory,
         buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
-        buildConfiguration.getBaseImageConfiguration().getCredentialRetrievers());
+        buildConfiguration.getBaseImageConfiguration().getCredentialRetrievers(),
+        BuildStepType.RETRIEVE_REGISTRY_CREDENTIALS_BASE);
   }
 
   /** Retrieves credentials for the target image. */
@@ -63,7 +64,8 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
         buildConfiguration,
         progressEventDispatcherFactory,
         buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
-        buildConfiguration.getTargetImageConfiguration().getCredentialRetrievers());
+        buildConfiguration.getTargetImageConfiguration().getCredentialRetrievers(),
+        BuildStepType.RETRIEVE_REGISTRY_CREDENTIALS_TARGET);
   }
 
   private final BuildConfiguration buildConfiguration;
@@ -71,6 +73,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
 
   private final String registry;
   private final ImmutableList<CredentialRetriever> credentialRetrievers;
+  private final BuildStepType buildStepType;
 
   private final ListenableFuture<Credential> listenableFuture;
 
@@ -80,11 +83,13 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       String registry,
-      ImmutableList<CredentialRetriever> credentialRetrievers) {
+      ImmutableList<CredentialRetriever> credentialRetrievers,
+      BuildStepType buildStepType) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.registry = registry;
     this.credentialRetrievers = credentialRetrievers;
+    this.buildStepType = buildStepType;
 
     listenableFuture = listeningExecutorService.submit(this);
   }
@@ -103,9 +108,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
 
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create(
-                BuildStepType.RETRIEVE_REGISTRY_CREDENTIALS,
-                "retrieving credentials for " + registry,
-                1);
+                buildStepType, "retrieving credentials for " + registry, 1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
       for (CredentialRetriever credentialRetriever : credentialRetrievers) {
@@ -115,8 +118,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
         }
       }
 
-      // If no credentials found, give an info (not warning because in most cases, the base image
-      // is
+      // If no credentials found, give an info (not warning because in most cases, the base image is
       // public and does not need extra credentials) and return null.
       buildConfiguration
           .getEventDispatcher()

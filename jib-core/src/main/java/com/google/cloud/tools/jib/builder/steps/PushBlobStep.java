@@ -66,6 +66,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   private final AuthenticatePushStep authenticatePushStep;
   private final BlobDescriptor blobDescriptor;
   private final Blob blob;
+  private final BuildStepType buildStepType;
 
   private final ListenableFuture<BlobDescriptor> listenableFuture;
 
@@ -75,12 +76,14 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
       ProgressEventDispatcher.Factory progressEventDipatcherFactory,
       AuthenticatePushStep authenticatePushStep,
       BlobDescriptor blobDescriptor,
-      Blob blob) {
+      Blob blob,
+      BuildStepType buildStepType) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDipatcherFactory = progressEventDipatcherFactory;
     this.authenticatePushStep = authenticatePushStep;
     this.blobDescriptor = blobDescriptor;
     this.blob = blob;
+    this.buildStepType = buildStepType;
 
     listenableFuture =
         AsyncDependencies.using(listeningExecutorService)
@@ -97,7 +100,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   public BlobDescriptor call() throws IOException, RegistryException, ExecutionException {
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDipatcherFactory.create(
-                BuildStepType.PUSH_BLOB,
+                buildStepType,
                 "pushing blob " + blobDescriptor.getDigest(),
                 blobDescriptor.getSize());
         TimerEventDispatcher ignored =
