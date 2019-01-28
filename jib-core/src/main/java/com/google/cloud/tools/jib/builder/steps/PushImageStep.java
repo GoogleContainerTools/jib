@@ -123,7 +123,7 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
     ImmutableSet<String> targetImageTags = buildConfiguration.getAllTargetImageTags();
     ProgressEventDispatcher progressEventDispatcher =
         progressEventDispatcherFactory.create(
-            BuildStepType.PushImage, "pushing image manifest", targetImageTags.size());
+            BuildStepType.PUSH_IMAGE, "pushing image manifest", targetImageTags.size());
 
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
@@ -155,7 +155,7 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
                 () -> {
                   try (ProgressEventDispatcher ignored2 =
                       progressEventDispatcherFactory.create(
-                          BuildStepType.PushImage, "tagging with " + tag, 1)) {
+                          BuildStepType.PUSH_IMAGE, "tagging with " + tag, 1)) {
                     buildConfiguration
                         .getEventDispatcher()
                         .dispatch(LogEvent.info("Tagging with " + tag + "..."));

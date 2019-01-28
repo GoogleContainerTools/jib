@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event.events;
 
+import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
@@ -115,6 +116,22 @@ public class ProgressEventTest {
     Assert.assertEquals(1, allocationCompletionMap.get(AllocationTree.child1).longValue());
     Assert.assertEquals(200, allocationCompletionMap.get(AllocationTree.child2).longValue());
     Assert.assertEquals(2, allocationCompletionMap.get(AllocationTree.root).longValue());
+  }
+
+  @Test
+  public void testType() {
+    Consumer<ProgressEvent> buildImageConsumer =
+        progressEvent ->
+            Assert.assertEquals(
+                BuildStepType.BUILD_IMAGE, progressEvent.getBuildStepType().orElse(null));
+    EventDispatcher buildImageDispatcher = makeEventDispatcher(buildImageConsumer);
+    buildImageDispatcher.dispatch(
+        new ProgressEvent(AllocationTree.child1, 50, BuildStepType.BUILD_IMAGE));
+
+    Consumer<ProgressEvent> nullConsumer =
+        progressEvent -> Assert.assertNull(progressEvent.getBuildStepType().orElse(null));
+    EventDispatcher nullDispatcher = makeEventDispatcher(nullConsumer);
+    nullDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 50, null));
   }
 
   /**

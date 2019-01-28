@@ -120,7 +120,7 @@ class PullBaseImageStep
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                BuildStepType.PullBaseImage, "pulling base image manifest", 2);
+                BuildStepType.PULL_BASE_IMAGE, "pulling base image manifest", 2);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       // First, try with no credentials.
@@ -236,7 +236,7 @@ class PullBaseImageStep
             new ProgressEventDispatcherContainer(
                 progressEventDispatcher.newChildProducer(),
                 "pull container configuration " + containerConfigurationDigest,
-                BuildStepType.PullBaseImage)) {
+                BuildStepType.PULL_BASE_IMAGE)) {
           String containerConfigurationString =
               Blobs.writeToString(
                   registryClient.pullBlob(

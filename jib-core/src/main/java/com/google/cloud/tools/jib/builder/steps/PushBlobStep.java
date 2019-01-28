@@ -97,7 +97,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
   public BlobDescriptor call() throws IOException, RegistryException, ExecutionException {
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDipatcherFactory.create(
-                BuildStepType.PushBlob,
+                BuildStepType.PUSH_BLOB,
                 "pushing blob " + blobDescriptor.getDigest(),
                 blobDescriptor.getSize());
         TimerEventDispatcher ignored =

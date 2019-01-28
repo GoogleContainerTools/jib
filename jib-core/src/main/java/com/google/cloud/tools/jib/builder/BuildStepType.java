@@ -18,16 +18,16 @@ package com.google.cloud.tools.jib.builder;
 
 /** Types corresponding to steps in the containerization process. */
 public enum BuildStepType {
-  AuthenticatePush,
-  BuildAndCacheApplicationLayer,
-  BuildImage,
-  LoadDocker,
-  PullAndCacheBaseImageLayer,
-  PullBaseImage,
-  PushBlob,
-  PushContainerConfiguration,
-  PushImage,
-  PushLayers,
-  RetrieveRegistryCredentials,
-  WriteTarFile
+  AUTHENTICATE_PUSH,
+  BUILD_AND_CACHE_APPLICATION_LAYER,
+  BUILD_IMAGE,
+  LOAD_DOCKER,
+  PULL_AND_CACHE_BASE_IMAGE_LAYER,
+  PULL_BASE_IMAGE,
+  PUSH_BLOB,
+  PUSH_CONTAINER_CONFIGURATION,
+  PUSH_IMAGE,
+  PUSH_LAYERS,
+  RETRIEVE_REGISTRY_CREDENTIALS,
+  WRITE_TAR_FILE
 }

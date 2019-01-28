@@ -96,7 +96,7 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
     try (ProgressEventDispatcher ignored =
         progressEventDispatcherFactory.create(
-            BuildStepType.LoadDocker, "loading to Docker daemon", 1)) {
+            BuildStepType.LOAD_DOCKER, "loading to Docker daemon", 1)) {
       Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
       ImageReference targetImageReference =
           buildConfiguration.getTargetImageConfiguration().getImage();

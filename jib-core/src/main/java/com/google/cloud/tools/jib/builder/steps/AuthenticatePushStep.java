@@ -82,7 +82,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
 
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create(
-                BuildStepType.AuthenticatePush, "authenticating push to " + registry, 1);
+                BuildStepType.AUTHENTICATE_PUSH, "authenticating push to " + registry, 1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(
                 buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, registry))) {

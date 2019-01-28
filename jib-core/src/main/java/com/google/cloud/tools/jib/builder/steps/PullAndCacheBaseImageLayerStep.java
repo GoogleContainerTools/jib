@@ -70,7 +70,7 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
   public CachedLayer call() throws IOException, CacheCorruptedException {
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                BuildStepType.PullAndCacheBaseImageLayer,
+                BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER,
                 "checking base image layer " + layerDigest,
                 1);
         TimerEventDispatcher ignored =
@@ -94,7 +94,7 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
           new ProgressEventDispatcherContainer(
               progressEventDispatcher.newChildProducer(),
               "pulling base image layer " + layerDigest,
-              BuildStepType.PullAndCacheBaseImageLayer)) {
+              BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER)) {
         return cache.writeCompressedLayer(
             registryClient.pullBlob(
                 layerDigest,

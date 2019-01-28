@@ -103,7 +103,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
 
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create(
-                BuildStepType.RetrieveRegistryCredentials,
+                BuildStepType.RETRIEVE_REGISTRY_CREDENTIALS,
                 "retrieving credentials for " + registry,
                 1);
         TimerEventDispatcher ignored2 =

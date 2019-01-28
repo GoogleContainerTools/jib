@@ -87,7 +87,7 @@ class PushContainerConfigurationStep
       throws ExecutionException, IOException {
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                BuildStepType.PushContainerConfiguration, "pushing container configuration", 1);
+                BuildStepType.PUSH_CONTAINER_CONFIGURATION, "pushing container configuration", 1);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
       Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));

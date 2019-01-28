@@ -52,7 +52,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                BuildStepType.BuildAndCacheApplicationLayer,
+                BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
                 "setting up to build application layers",
                 layerCount);
         TimerEventDispatcher ignored =
@@ -112,7 +112,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
 
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create(
-                BuildStepType.BuildAndCacheApplicationLayer,
+                BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
                 "building " + layerType + " layer",
                 1);
         TimerEventDispatcher ignored2 =
