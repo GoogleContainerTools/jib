@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.event.progress;
 
 import com.google.cloud.tools.jib.MultithreadedExecutor;
-import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
@@ -59,19 +58,9 @@ public class ProgressEventHandlerTest {
   public void testAccept() throws ExecutionException, InterruptedException, IOException {
     try (MultithreadedExecutor multithreadedExecutor = new MultithreadedExecutor()) {
       DoubleAccumulator maxProgress = new DoubleAccumulator(Double::max, 0);
-      DoubleAccumulator buildImageProgress = new DoubleAccumulator(Double::max, 0);
-      DoubleAccumulator pushBlobProgress = new DoubleAccumulator(Double::max, 0);
 
       ProgressEventHandler progressEventHandler =
-          new ProgressEventHandler(
-              update -> {
-                maxProgress.accumulate(update.getProgress());
-                if (update.getBuildStepType().orElse(null) == BuildStepType.BUILD_IMAGE) {
-                  buildImageProgress.accumulate(update.getProgress());
-                } else if (update.getBuildStepType().orElse(null) == BuildStepType.PUSH_BLOB) {
-                  pushBlobProgress.accumulate(update.getProgress());
-                }
-              });
+          new ProgressEventHandler(update -> maxProgress.accumulate(update.getProgress()));
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(
               new EventHandlers().add(JibEventType.PROGRESS, progressEventHandler));
@@ -84,19 +73,15 @@ public class ProgressEventHandlerTest {
           });
       multithreadedExecutor.invoke(
           () -> {
-            eventDispatcher.dispatch(
-                new ProgressEvent(AllocationTree.child1, 0L, BuildStepType.BUILD_IMAGE));
+            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 0L, null));
             return null;
           });
       multithreadedExecutor.invoke(
           () -> {
-            eventDispatcher.dispatch(
-                new ProgressEvent(AllocationTree.child1Child, 0L, BuildStepType.BUILD_IMAGE));
+            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 0L, null));
             return null;
           });
       Assert.assertEquals(0.0, maxProgress.get(), DOUBLE_ERROR_MARGIN);
-      Assert.assertEquals(0.0, buildImageProgress.get(), DOUBLE_ERROR_MARGIN);
-      Assert.assertEquals(0.0, pushBlobProgress.get(), DOUBLE_ERROR_MARGIN);
 
       // Adds 50 to child1Child and 100 to child2.
       List<Callable<Void>> callables = new ArrayList<>(150);
@@ -104,24 +89,21 @@ public class ProgressEventHandlerTest {
           Collections.nCopies(
               50,
               () -> {
-                eventDispatcher.dispatch(
-                    new ProgressEvent(AllocationTree.child1Child, 1L, BuildStepType.BUILD_IMAGE));
+                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 1L, null));
                 return null;
               }));
       callables.addAll(
           Collections.nCopies(
               100,
               () -> {
-                eventDispatcher.dispatch(
-                    new ProgressEvent(AllocationTree.child2, 1L, BuildStepType.PUSH_BLOB));
+                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 1L, null));
                 return null;
               }));
 
       multithreadedExecutor.invokeAll(callables);
+
       Assert.assertEquals(
           1.0 / 2 / 100 * 50 + 1.0 / 2 / 200 * 100, maxProgress.get(), DOUBLE_ERROR_MARGIN);
-      Assert.assertEquals(1.0 / 2 / 100 * 50, buildImageProgress.get(), DOUBLE_ERROR_MARGIN);
-      Assert.assertEquals(1.0 / 2 / 200 * 100, pushBlobProgress.get(), DOUBLE_ERROR_MARGIN);
 
       // 0 progress doesn't do anything.
       multithreadedExecutor.invokeAll(
@@ -133,14 +115,10 @@ public class ProgressEventHandlerTest {
               }));
       Assert.assertEquals(
           1.0 / 2 / 100 * 50 + 1.0 / 2 / 200 * 100, maxProgress.get(), DOUBLE_ERROR_MARGIN);
-      Assert.assertEquals(1.0 / 2 / 100 * 50, buildImageProgress.get(), DOUBLE_ERROR_MARGIN);
-      Assert.assertEquals(1.0 / 2 / 200 * 100, pushBlobProgress.get(), DOUBLE_ERROR_MARGIN);
 
       // Adds 50 to child1Child and 100 to child2 to finish it up.
       multithreadedExecutor.invokeAll(callables);
       Assert.assertEquals(1.0, maxProgress.get(), DOUBLE_ERROR_MARGIN);
-      Assert.assertEquals(0.5, buildImageProgress.get(), DOUBLE_ERROR_MARGIN);
-      Assert.assertEquals(0.5, pushBlobProgress.get(), DOUBLE_ERROR_MARGIN);
     }
   }
 }

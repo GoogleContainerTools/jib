@@ -16,13 +16,10 @@
 
 package com.google.cloud.tools.jib.event.progress;
 
-import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.common.collect.ImmutableList;
-import java.util.Optional;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.function.Consumer;
-import javax.annotation.Nullable;
 
 /**
  * Handles {@link ProgressEvent}s by accumulating an overall progress and keeping track of which
@@ -35,15 +32,10 @@ public class ProgressEventHandler implements Consumer<ProgressEvent> {
   /** Contains the accumulated progress and which {@link Allocation}s are not yet complete. */
   public static class Update {
 
-    @Nullable private final BuildStepType buildStepType;
     private final double progress;
     private final ImmutableList<Allocation> unfinishedAllocations;
 
-    private Update(
-        @Nullable BuildStepType buildStepType,
-        double progress,
-        ImmutableList<Allocation> unfinishedAllocations) {
-      this.buildStepType = buildStepType;
+    private Update(double progress, ImmutableList<Allocation> unfinishedAllocations) {
       this.progress = progress;
       this.unfinishedAllocations = unfinishedAllocations;
     }
@@ -65,15 +57,6 @@ public class ProgressEventHandler implements Consumer<ProgressEvent> {
      */
     public ImmutableList<Allocation> getUnfinishedAllocations() {
       return unfinishedAllocations;
-    }
-
-    /**
-     * Gets the build step that the progress update corresponds to.
-     *
-     * @return the build step
-     */
-    public Optional<BuildStepType> getBuildStepType() {
-      return Optional.ofNullable(buildStepType);
     }
   }
 
@@ -107,10 +90,7 @@ public class ProgressEventHandler implements Consumer<ProgressEvent> {
     if (completionTracker.updateProgress(allocation, progressUnits)) {
       // Note: Could produce false positives.
       updateNotifier.accept(
-          new Update(
-              progressEvent.getBuildStepType().orElse(null),
-              progress.sum(),
-              completionTracker.getUnfinishedAllocations()));
+          new Update(progress.sum(), completionTracker.getUnfinishedAllocations()));
     }
   }
 }
