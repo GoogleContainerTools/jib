@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.http.BlobProgressListener;
 import com.google.common.base.Preconditions;
@@ -35,12 +36,16 @@ class ProgressEventDispatcherContainer implements BlobProgressListener, Closeabl
 
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   private final String description;
+  private final BuildStepType type;
   @Nullable private ProgressEventDispatcher progressEventDispatcher;
 
   ProgressEventDispatcherContainer(
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory, String description) {
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      String description,
+      BuildStepType type) {
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.description = description;
+    this.type = type;
   }
 
   @Override
@@ -62,6 +67,6 @@ class ProgressEventDispatcherContainer implements BlobProgressListener, Closeabl
 
   void initializeWithBlobSize(long blobSize) {
     Preconditions.checkState(progressEventDispatcher == null);
-    progressEventDispatcher = progressEventDispatcherFactory.create(description, blobSize);
+    progressEventDispatcher = progressEventDispatcherFactory.create(type, description, blobSize);
   }
 }

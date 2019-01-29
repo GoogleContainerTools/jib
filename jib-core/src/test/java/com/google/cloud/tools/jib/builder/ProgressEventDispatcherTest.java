@@ -39,7 +39,7 @@ public class ProgressEventDispatcherTest {
     try (ProgressEventDispatcher progressEventDispatcher =
             ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 10);
         ProgressEventDispatcher ignored =
-            progressEventDispatcher.newChildProducer().create("ignored", 20)) {
+            progressEventDispatcher.newChildProducer().create(BuildStepType.ALL, "ignored", 20)) {
       // empty
     }
 
