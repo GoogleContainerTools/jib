@@ -126,4 +126,15 @@ public class MainClassFinderTest {
         mainClassFinderResult.getFoundMainClass(),
         CoreMatchers.containsString("HelloWorld$InnerClass"));
   }
+
+  @Test
+  public void testMainClass_varargs() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("core/class-finder-tests/varargs").toURI());
+    MainClassFinder.Result mainClassFinderResult =
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
+    Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
+    Assert.assertThat(
+        mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("HelloWorld"));
+  }
 }
