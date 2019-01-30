@@ -115,7 +115,8 @@ public class MainClassFinder {
         Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(String[].class));
 
     /** Accessors that main may or may not have. */
-    private static final int OPTIONAL_ACCESS = Opcodes.ACC_FINAL | Opcodes.ACC_DEPRECATED;
+    private static final int OPTIONAL_ACCESS =
+        Opcodes.ACC_FINAL | Opcodes.ACC_DEPRECATED | Opcodes.ACC_VARARGS;
 
     private boolean visitedMainClass;
 
