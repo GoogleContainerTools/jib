@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `ProgressEvent#getBuildStepType` method to get which step in the build process a progress event corresponds to ([#1449](https://github.com/GoogleContainerTools/jib/pull/1449))
+
 ### Changed
 
 ### Fixed
