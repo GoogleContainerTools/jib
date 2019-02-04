@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
+import com.google.cloud.tools.jib.event.events.LayerCountEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
@@ -44,9 +45,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
@@ -144,6 +148,17 @@ public class BuildStepsIntegrationTest {
 
   private ImmutableList<LayerConfiguration> fakeLayerConfigurations;
 
+  private Map<BuildStepType, Integer> layerCounts = new HashMap<>();
+  private final Consumer<LayerCountEvent> layerCountConsumer =
+      layerCountEvent -> {
+        BuildStepType stepType = layerCountEvent.getBuildStepType();
+        if (layerCounts.containsKey(stepType)) {
+          layerCounts.put(stepType, layerCounts.get(stepType) + layerCountEvent.getCount());
+        } else {
+          layerCounts.put(stepType, layerCountEvent.getCount());
+        }
+      };
+
   @Before
   public void setUp() throws IOException, URISyntaxException {
     fakeLayerConfigurations =
@@ -170,10 +185,24 @@ public class BuildStepsIntegrationTest {
                     .setEventDispatcher(
                         new DefaultEventDispatcher(
                             new EventHandlers()
-                                .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)))
+                                .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
+                                .add(JibEventType.LAYER_COUNT, layerCountConsumer)))
                     .build())
             .run();
     progressChecker.checkCompletion();
+    // TODO: Layer count event test depends on the number of layers in distroless; use a specific
+    // TODO: digest instead of "latest"?
+    Assert.assertEquals(
+        layerCounts,
+        ImmutableMap.of(
+            BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER,
+            4,
+            BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
+            3,
+            BuildStepType.PUSH_BASE_LAYERS,
+            4,
+            BuildStepType.PUSH_APPLICATION_LAYERS,
+            3));
 
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
@@ -270,11 +299,19 @@ public class BuildStepsIntegrationTest {
             .setEventDispatcher(
                 new DefaultEventDispatcher(
                     new EventHandlers()
-                        .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)))
+                        .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
+                        .add(JibEventType.LAYER_COUNT, layerCountConsumer)))
             .build();
     BuildSteps.forBuildToDockerDaemon(DockerClient.newDefaultClient(), buildConfiguration).run();
 
     progressChecker.checkCompletion();
+    Assert.assertEquals(
+        layerCounts,
+        ImmutableMap.of(
+            BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER,
+            4,
+            BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
+            3));
 
     assertDockerInspect("testdocker");
     Assert.assertEquals(
@@ -318,12 +355,20 @@ public class BuildStepsIntegrationTest {
             .setEventDispatcher(
                 new DefaultEventDispatcher(
                     new EventHandlers()
-                        .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)))
+                        .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
+                        .add(JibEventType.LAYER_COUNT, layerCountConsumer)))
             .build();
     Path outputPath = temporaryFolder.newFolder().toPath().resolve("test.tar");
     BuildSteps.forBuildToTar(outputPath, buildConfiguration).run();
 
     progressChecker.checkCompletion();
+    Assert.assertEquals(
+        layerCounts,
+        ImmutableMap.of(
+            BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER,
+            4,
+            BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
+            3));
 
     new Command("docker", "load", "--input", outputPath.toString()).run();
     Assert.assertEquals(

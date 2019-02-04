@@ -46,8 +46,11 @@ public enum BuildStepType {
   /** Step for pushing the image manifest to the target registry. */
   PUSH_IMAGE,
 
-  /** Step for pushing the image layers to the target registry. */
-  PUSH_LAYERS,
+  /** Step for pushing the application image layers to the target registry. */
+  PUSH_APPLICATION_LAYERS,
+
+  /** Step for pushing the base image layers to the target registry. */
+  PUSH_BASE_LAYERS,
 
   /** Step for retrieving credentials for the base image registry. */
   RETRIEVE_REGISTRY_CREDENTIALS_BASE,

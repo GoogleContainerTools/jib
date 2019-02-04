@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event;
 
+import com.google.cloud.tools.jib.event.events.LayerCountEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
@@ -39,6 +40,10 @@ public class JibEventType<E extends JibEvent> {
   /** Event indicating progress for tasks in Jib's execution. */
   public static final JibEventType<ProgressEvent> PROGRESS =
       new JibEventType<>(ProgressEvent.class);
+
+  /** Event used for counting layers processed during a build step. */
+  public static final JibEventType<LayerCountEvent> LAYER_COUNT =
+      new JibEventType<>(LayerCountEvent.class);
 
   // TODO: Add entries for all JibEvent types.
 
