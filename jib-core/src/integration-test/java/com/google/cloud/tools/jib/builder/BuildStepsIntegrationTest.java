@@ -150,14 +150,16 @@ public class BuildStepsIntegrationTest {
 
   private ImmutableList<LayerConfiguration> fakeLayerConfigurations;
 
-  private Map<BuildStepType, Integer> layerCounts = new HashMap<>();
+  private final Map<BuildStepType, Integer> layerCounts = new HashMap<>();
   private final Consumer<LayerCountEvent> layerCountConsumer =
       layerCountEvent -> {
-        BuildStepType stepType = layerCountEvent.getBuildStepType();
-        if (layerCounts.containsKey(stepType)) {
-          layerCounts.put(stepType, layerCounts.get(stepType) + layerCountEvent.getCount());
-        } else {
-          layerCounts.put(stepType, layerCountEvent.getCount());
+        synchronized (layerCounts) {
+          BuildStepType stepType = layerCountEvent.getBuildStepType();
+          if (layerCounts.containsKey(stepType)) {
+            layerCounts.put(stepType, layerCounts.get(stepType) + layerCountEvent.getCount());
+          } else {
+            layerCounts.put(stepType, layerCountEvent.getCount());
+          }
         }
       };
 
