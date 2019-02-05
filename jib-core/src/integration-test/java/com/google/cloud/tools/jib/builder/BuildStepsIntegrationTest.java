@@ -45,8 +45,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -150,17 +150,12 @@ public class BuildStepsIntegrationTest {
 
   private ImmutableList<LayerConfiguration> fakeLayerConfigurations;
 
-  private final Map<BuildStepType, Integer> layerCounts = new HashMap<>();
+  private final Map<BuildStepType, Integer> layerCounts = new ConcurrentHashMap<>();
   private final Consumer<LayerCountEvent> layerCountConsumer =
       layerCountEvent -> {
-        synchronized (layerCounts) {
-          BuildStepType stepType = layerCountEvent.getBuildStepType();
-          if (layerCounts.containsKey(stepType)) {
-            layerCounts.put(stepType, layerCounts.get(stepType) + layerCountEvent.getCount());
-          } else {
-            layerCounts.put(stepType, layerCountEvent.getCount());
-          }
-        }
+        BuildStepType stepType = layerCountEvent.getBuildStepType();
+        layerCounts.merge(
+            stepType, layerCountEvent.getCount(), (oldValue, count) -> oldValue + count);
       };
 
   @Before
