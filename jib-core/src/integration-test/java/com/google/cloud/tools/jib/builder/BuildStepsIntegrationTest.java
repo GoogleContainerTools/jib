@@ -90,6 +90,8 @@ public class BuildStepsIntegrationTest {
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
   private static final ExecutorService executorService = Executors.newCachedThreadPool();
   private static final Logger logger = LoggerFactory.getLogger(BuildStepsIntegrationTest.class);
+  private static final String DISTROLESS_DIGEST =
+      "sha256:f488c213f278bc5f9ffe3ddf30c5dbb2303a15a74146b738d12453088e662880";
 
   private static final double DOUBLE_ERROR_MARGIN = 1e-10;
 
@@ -180,7 +182,7 @@ public class BuildStepsIntegrationTest {
     BuildResult image1 =
         BuildSteps.forBuildToDockerRegistry(
                 getBuildConfigurationBuilder(
-                        ImageReference.of("gcr.io", "distroless/java", "latest"),
+                        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
                         ImageReference.of("localhost:5000", "testimage", "testtag"))
                     .setEventDispatcher(
                         new DefaultEventDispatcher(
@@ -190,8 +192,6 @@ public class BuildStepsIntegrationTest {
                     .build())
             .run();
     progressChecker.checkCompletion();
-    // TODO: Layer count event test depends on the number of layers in distroless; use a specific
-    // TODO: digest instead of "latest"?
     Assert.assertEquals(
         layerCounts,
         ImmutableMap.of(
@@ -210,7 +210,7 @@ public class BuildStepsIntegrationTest {
     BuildResult image2 =
         BuildSteps.forBuildToDockerRegistry(
                 getBuildConfigurationBuilder(
-                        ImageReference.of("gcr.io", "distroless/java", "latest"),
+                        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
                         ImageReference.of("localhost:5000", "testimage", "testtag"))
                     .build())
             .run();
@@ -238,7 +238,7 @@ public class BuildStepsIntegrationTest {
     BuildSteps buildImageSteps =
         BuildSteps.forBuildToDockerRegistry(
             getBuildConfigurationBuilder(
-                    ImageReference.of("gcr.io", "distroless/java", "latest"),
+                    ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
                     ImageReference.of("localhost:5000", "testimage", "testtag"))
                 .setAdditionalTargetImageTags(ImmutableSet.of("testtag2", "testtag3"))
                 .build());
@@ -294,7 +294,7 @@ public class BuildStepsIntegrationTest {
 
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
-                ImageReference.of("gcr.io", "distroless/java", "latest"),
+                ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
                 ImageReference.of(null, "testdocker", null))
             .setEventDispatcher(
                 new DefaultEventDispatcher(
@@ -324,7 +324,7 @@ public class BuildStepsIntegrationTest {
     String imageReference = "testdocker";
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
-                ImageReference.of("gcr.io", "distroless/java", "latest"),
+                ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
                 ImageReference.of(null, imageReference, null))
             .setAdditionalTargetImageTags(ImmutableSet.of("testtag2", "testtag3"))
             .build();
@@ -350,7 +350,7 @@ public class BuildStepsIntegrationTest {
 
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
-                ImageReference.of("gcr.io", "distroless/java", "latest"),
+                ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
                 ImageReference.of(null, "testtar", null))
             .setEventDispatcher(
                 new DefaultEventDispatcher(
