@@ -2,7 +2,7 @@
 
 Please [file an issue](/../../issues/new) if you find any problems with the examples or would like to request other examples.
 
-For examples on using Jib plugins, see [examples](/../../examples).
+For examples on using Jib plugins, see [examples](../examples).
 
 ### Using Jib Core in Gradle builds
 

@@ -4,7 +4,7 @@
 
 Please [file an issue](/../../issues/new) if you find any problems with the examples or would like to request other examples.
 
-For examples on using Jib Core, see [jib-core/examples](/../../jib-core/examples).
+For examples on using Jib Core, see [jib-core/examples](../jib-core/examples).
 
 ### Simple example
 
