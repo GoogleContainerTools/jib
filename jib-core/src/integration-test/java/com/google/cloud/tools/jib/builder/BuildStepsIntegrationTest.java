@@ -152,11 +152,11 @@ public class BuildStepsIntegrationTest {
 
   private final Map<BuildStepType, Integer> layerCounts = new ConcurrentHashMap<>();
   private final Consumer<LayerCountEvent> layerCountConsumer =
-      layerCountEvent -> {
-        BuildStepType stepType = layerCountEvent.getBuildStepType();
-        layerCounts.merge(
-            stepType, layerCountEvent.getCount(), (oldValue, count) -> oldValue + count);
-      };
+      layerCountEvent ->
+          layerCounts.merge(
+              layerCountEvent.getBuildStepType(),
+              layerCountEvent.getCount(),
+              (oldValue, count) -> oldValue + count);
 
   @Before
   public void setUp() throws IOException, URISyntaxException {
