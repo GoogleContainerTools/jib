@@ -98,8 +98,34 @@ The Jib Core system consists 3 main parts:
 Some other parts of Jib Core internals include:
 
 - a caching mechanism to speed up builds (configurable with [`Containerizer.setApplicationLayersCache`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/api/Containerizer.html#setApplicationLayersCache-java.nio.file.Path-) and [`Containerizer.setBaseImageLayersCache`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/api/Containerizer.html#setBaseImageLayersCache-java.nio.file.Path-))
-- an eventing system to react to events from Jib Core during its execution (add handlers with [`Containerizer.setEventHandlers`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/api/Containerizer.html#setEventHandlers-com.google.cloud.tools.jib.event.EventHandlers-))
+- an [eventing system](#events) to react to events from Jib Core during its execution (add handlers with [`Containerizer.setEventHandlers`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/api/Containerizer.html#setEventHandlers-com.google.cloud.tools.jib.event.EventHandlers-))
 - support for fully-concurrent multi-threaded executions
+
+## Events
+
+Throughout the build process, Jib Core dispatches events that provide useful information. These events implement the type [`JibEvent`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/event/JibEvent.html), and can be handled by registering event handlers with the event dispatcher that is passed to Jib.
+
+```java
+// Setup event handlers
+EventHandlers eventHandlers = new EventHandlers()
+    .add(JibEventType.LOGGING, logEvent -> System.out.println(logEvent.getLevel() + ": " + logEvent.getMessage()))
+    .add(JibEventType.TIMING, timeEvent -> ...);
+
+// Register with Jib
+Jib.from(...)
+    ...
+    .containerize(
+        Containerizer.to(...)
+            ...
+            .setEventHandlers(eventHandlers));
+```
+
+When Jib dispatches events, the event handlers you defined for that event type will be called. The following are the types of events you can listen for in Jib core (see [API reference](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/api/package-summary.html) for more information):
+
+- [`LogEvent`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/event/events/LogEvent.html) - Log message events. The message and verbosity can be retrieved using `getMessage()` and `getLevel()`, respectively.
+- [`TimerEvent`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/event/events/TimerEvent.html) - Events used for measuring how long different build steps take. You can retrieve the duration since the timer's creation and the duration since the same timer's previous event using `getElapsed()` and `getDuration()`, respectively.
+- [`ProgressEvent`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/event/events/ProgressEvent.html) - Indicates the amount of progress build steps have made. Since Jib consists of a hierarchy of build steps, each progress event consists of an allocation (containing a fraction representing how much of the root allocation this allocation accounts for) and a number of progress units that indicates the amount of work completed since the previous progress event. In other words, the amount of work a single progress event has completed (out of 1.0) can be calculated using `getAllocation().getFractionOfRoot() * getUnits()`. Progress events also carries the type of its corresponding build step, which can be retrieved using `getBuildStepType()`.
+- [`LayerCountEvent`](http://static.javadoc.io/com.google.cloud.tools/jib-core/0.1.1/com/google/cloud/tools/jib/event/events/LayerCountEvent.html) - Indicates the number of layers in pull/build/push steps in the build process. Use `getBuildStepType()` to retrieve the step that the event is part of, and use `getCount()` to get the number of layers being processed.
 
 ## Frequently Asked Questions (FAQ)
 
