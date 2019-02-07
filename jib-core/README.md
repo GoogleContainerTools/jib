@@ -134,7 +134,6 @@ See the [Jib project FAQ](../docs/faq.md).
 ## Upcoming features
 
 - Extensions to make building Java and other language-specific containers easier
-- Structured events to react to parts of Jib Core's execution
 
 See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for planned features. [Get involved with the community](https://github.com/GoogleContainerTools/jib/tree/master#get-involved-with-the-community) for the latest updates.
 
