@@ -40,7 +40,6 @@ public class Containerizer {
    * The default directory for caching the base image layers, in {@code [user cache
    * home]/google-cloud-tools-java/jib}.
    */
-  // TODO: Reduce scope once plugins are migrated to use the new Jib Core API.
   public static final Path DEFAULT_BASE_CACHE_DIRECTORY =
       UserCacheHome.getCacheHome().resolve("google-cloud-tools-java").resolve("jib");
 
