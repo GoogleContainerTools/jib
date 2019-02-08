@@ -1,0 +1,25 @@
+plugins {
+  id 'java'
+  id 'application'
+}
+
+group 'demo.autojib'
+version '0.1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenLocal()
+  mavenCentral()
+}
+
+dependencies {
+  implementation 'com.google.cloud.tools.examples.autojib:autojib:0.1.0-SNAPSHOT'
+}
+
+mainClassName = 'com.google.cloud.tools.examples.autojib.Main'
+run {
+  args = ['arg1', 'arg2']
+  systemProperty 'autojibImage', System.properties.autojibImage
+}

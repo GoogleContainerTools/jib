@@ -1,0 +1,82 @@
+plugins {
+  id 'java-library'
+  id 'maven'
+  id 'checkstyle'
+  id 'com.github.sherter.google-java-format' version '0.8'
+  id 'net.ltgt.apt' version '0.19'
+  id 'net.ltgt.errorprone' version '0.6.1'
+}
+
+group 'com.google.cloud.tools.examples.autojib'
+version '0.1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+}
+
+wrapper {
+  gradleVersion = '4.10.3'
+}
+
+dependencies {
+  implementation 'com.google.cloud.tools:jib-core:0.1.1'
+
+  testImplementation group: 'junit', name: 'junit', version: '4.12'
+
+  // NullAway errorprone plugin
+  annotationProcessor 'com.uber.nullaway:nullaway:0.6.4'
+  errorprone 'com.google.errorprone:error_prone_core:2.3.2'
+  // Using github.com/google/error-prone-javac is required when running on
+  // JDK 8. Remove when migrating to JDK 11.
+  if (System.getProperty('java.version').startsWith('1.8.')) {
+    errorproneJavac('com.google.errorprone:javac:9+181-r4173-1')
+  }
+}
+
+
+// Adds NullAway errorprone checks.
+import net.ltgt.gradle.errorprone.CheckSeverity
+tasks.withType(JavaCompile) {
+  if (!name.toLowerCase().contains('test')) {
+    options.errorprone {
+      check('NullAway', CheckSeverity.ERROR)
+      option('NullAway:AnnotatedPackages', 'com.google.cloud.tools')
+    }
+  }
+}
+
+// Fail build on javadoc warnings
+tasks.withType(Javadoc) {
+  options.addBooleanOption('Xwerror', true)
+  // TODO: Remove when there is a public class added
+  enabled = false
+}
+assemble.dependsOn javadoc
+
+/* GOOGLE JAVA FORMAT */
+googleJavaFormat {
+  toolVersion = '1.6'
+}
+check.dependsOn verifyGoogleJavaFormat
+/* GOOGLE JAVA FORMAT */
+
+/* CHECKSTYLE */
+checkstyle {
+  toolVersion = '8.15'
+
+  // get the google_checks.xml file from the checkstyle jar and take out the java checks
+  def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()
+  def fileExtensionsBefore = '<property name="fileExtensions" value="java, properties, xml"/>'
+  def fileExtensionsAfter = '<property name="fileExtensions" value="properties, xml"/>'
+  def googleChecksNoJava = googleChecks.replace(fileExtensionsBefore, fileExtensionsAfter)
+  assert !googleChecks.equals(googleChecksNoJava)
+
+  config = resources.text.fromString(googleChecksNoJava)
+
+  maxErrors = 0
+  maxWarnings = 0
+}
+/* CHECKSTYLE */

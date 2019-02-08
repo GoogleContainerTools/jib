@@ -7,3 +7,7 @@ For examples on using Jib plugins, see [examples](../../examples).
 ### Using Jib Core in Gradle builds
 
 See [build.gradle](build.gradle) for examples using Jib Core to build and manipulate container images within a `build.gradle` script.
+
+### AutoJib - make your application self-containerize
+
+See [autojib](autojib) for an example of a library that, when added as a dependency to a Java application, can make the application containerize itself.
