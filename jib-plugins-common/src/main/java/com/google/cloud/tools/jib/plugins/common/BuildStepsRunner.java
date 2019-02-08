@@ -242,7 +242,11 @@ public class BuildStepsRunner {
             new RegistryUnauthorizedException(
                 ex.getServerUrl(), ex.getImageName(), (HttpResponseException) ex.getCause()),
             helpfulSuggestions);
+      } else {
+        // Unknown cause
+        throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
       }
+
     } catch (UnknownHostException ex) {
       throw new BuildStepsExecutionException(helpfulSuggestions.forUnknownHost(), ex);
 
