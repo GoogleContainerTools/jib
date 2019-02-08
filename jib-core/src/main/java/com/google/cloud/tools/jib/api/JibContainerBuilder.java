@@ -26,8 +26,13 @@ import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageFormat;
+import com.google.cloud.tools.jib.registry.InsecureRegistryException;
+import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
+import com.google.cloud.tools.jib.registry.RegistryException;
+import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -41,6 +46,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import org.apache.http.conn.HttpHostConnectException;
 
 /**
  * Builds a container with Jib.
@@ -427,24 +433,31 @@ public class JibContainerBuilder {
    *
    * @param containerizer the {@link Containerizer} that configures how to containerize
    * @return the built container
+   * @throws IOException if an I/O exception occurs
    * @throws CacheDirectoryCreationException if a directory to be used for the cache could not be
    *     created
-   * @throws ExecutionException if an exception occurred during execution
+   * @throws HttpHostConnectException if jib failed to connect to a registry
+   * @throws RegistryUnauthorizedException if a registry request is unauthorized and needs
+   *     authentication
+   * @throws RegistryAuthenticationFailedException if registry authentication failed
+   * @throws UnknownHostException if the registry does not exist
+   * @throws InsecureRegistryException if a server could not be verified due to an insecure
+   *     connection
+   * @throws RegistryException if some other error occurred while interacting with a registry
+   * @throws ExecutionException if some other exception occurred during execution
    * @throws InterruptedException if the execution was interrupted
-   * @throws IOException if an I/O exception occurs
    */
   public JibContainer containerize(Containerizer containerizer)
-      throws InterruptedException, ExecutionException, IOException,
-          CacheDirectoryCreationException {
-
+      throws InterruptedException, RegistryException, IOException, CacheDirectoryCreationException,
+          ExecutionException {
     return containerize(containerizer, Executors::newCachedThreadPool);
   }
 
   @VisibleForTesting
   JibContainer containerize(
       Containerizer containerizer, Supplier<ExecutorService> defaultExecutorServiceFactory)
-      throws InterruptedException, ExecutionException, IOException,
-          CacheDirectoryCreationException {
+      throws IOException, CacheDirectoryCreationException, InterruptedException, RegistryException,
+          ExecutionException {
 
     boolean shutdownExecutorService = !containerizer.getExecutorService().isPresent();
     ExecutorService executorService =
@@ -455,6 +468,14 @@ public class JibContainerBuilder {
     try {
       BuildResult result = containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();
       return new JibContainer(result.getImageDigest(), result.getImageId());
+
+    } catch (ExecutionException ex) {
+      // If an ExecutionException occurs, re-throw the cause to be more easily handled by the user
+      if (ex.getCause() instanceof RegistryException) {
+        throw (RegistryException) ex.getCause();
+      }
+      throw ex;
+
     } finally {
       if (shutdownExecutorService) {
         executorService.shutdown();

@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import java.text.MessageFormat;
 
 /** Thrown because registry authentication failed. */
-public class RegistryAuthenticationFailedException extends Exception {
+public class RegistryAuthenticationFailedException extends RegistryException {
 
   private static final String REASON = "Failed to authenticate with registry {0}/{1} because: {2}";
   private final String serverUrl;
