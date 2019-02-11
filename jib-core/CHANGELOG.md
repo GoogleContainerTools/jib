@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.1.2
+
+### Added
+
 - `ProgressEvent#getBuildStepType` method to get which step in the build process a progress event corresponds to ([#1449](https://github.com/GoogleContainerTools/jib/pull/1449))
 - `LayerCountEvent` that is dispatched at the beginning of certain pull/build/push build steps to indicate the number of layers being processed ([#1461](https://github.com/GoogleContainerTools/jib/pull/1461))
 
