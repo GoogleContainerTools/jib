@@ -4,9 +4,9 @@ Please [file an issue](/../../issues/new) if you find any problems with the exam
 
 For examples on using Jib plugins, see [examples](../../examples).
 
-### [sbt](https://www.scala-sbt.org/) plugin
+### [sbt](https://index.scala-lang.org/schmitch/sbt-jib) plugin
 
-Jib Core is used in a third-party project, [sbt-jib](https://index.scala-lang.org/schmitch/sbt-jib), that brings the benefits of Jib to [sbt](https://www.scala-sbt.org/) users.
+Jib Core is used in a third-party project, [sbt-jib](https://github.com/schmitch/sbt-jib), that brings the benefits of Jib to [sbt](https://www.scala-sbt.org/) users.
 
 ### Using Jib Core in Gradle builds
 
