@@ -6,8 +6,12 @@ For examples on using Jib plugins, see [examples](../../examples).
 
 ### [sbt](https://www.scala-sbt.org/) plugin
 
-Jib Core is used in a third-party project that brings the benefits of Jib to [sbt](https://www.scala-sbt.org/) users: [sbt-jib](https://index.scala-lang.org/schmitch/sbt-jib).
+Jib Core is used in a third-party project, [sbt-jib](https://index.scala-lang.org/schmitch/sbt-jib), that brings the benefits of Jib to [sbt](https://www.scala-sbt.org/) users.
 
 ### Using Jib Core in Gradle builds
 
 See [build.gradle](build.gradle) for examples using Jib Core to build and manipulate container images within a `build.gradle` script.
+
+### AutoJib - make your application self-containerize
+
+See [AutoJib](https://github.com/coollog/autojib) for an example of a library that, when added as a dependency to a Java application, can make your application containerize itself.
