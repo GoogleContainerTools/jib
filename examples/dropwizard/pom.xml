@@ -70,7 +70,7 @@
                             <port>8080</port>
                         </ports>
 
-                        <!-- good defaults intended for containers -->
+                        <!-- good defaults intended for Java 8 containers -->
                         <jvmFlags>
                             <jmxFlag>-server</jmxFlag>
                             <jmxFlag>-Djava.awt.headless=true</jmxFlag>

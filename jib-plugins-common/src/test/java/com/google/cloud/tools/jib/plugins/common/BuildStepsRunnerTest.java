@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
+import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -69,7 +70,6 @@ public class BuildStepsRunnerTest {
   @Mock private RegistryUnauthorizedException mockRegistryUnauthorizedException;
   @Mock private RegistryCredentialsNotSentException mockRegistryCredentialsNotSentException;
   @Mock private HttpResponseException mockHttpResponseException;
-  @Mock private ExecutionException mockExecutionException;
 
   private BuildStepsRunner testBuildImageStepsRunner;
 
@@ -90,13 +90,12 @@ public class BuildStepsRunnerTest {
   }
 
   @Test
-  public void testBuildImage_executionException_httpHostConnectException()
-      throws InterruptedException, ExecutionException, IOException,
-          CacheDirectoryCreationException {
+  public void testBuildImage_httpHostConnectException()
+      throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
+          ExecutionException {
     HttpHostConnectException mockHttpHostConnectException =
         Mockito.mock(HttpHostConnectException.class);
-    Mockito.when(mockExecutionException.getCause()).thenReturn(mockHttpHostConnectException);
-    Mockito.doThrow(mockExecutionException)
+    Mockito.doThrow(mockHttpHostConnectException)
         .when(mockJibContainerBuilder)
         .containerize(mockContainerizer);
 
@@ -111,17 +110,15 @@ public class BuildStepsRunnerTest {
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forHttpHostConnect(), ex.getMessage());
-      Assert.assertEquals(mockHttpHostConnectException, ex.getCause());
     }
   }
 
   @Test
-  public void testBuildImage_executionException_unknownHostException()
-      throws InterruptedException, ExecutionException, IOException,
-          CacheDirectoryCreationException {
+  public void testBuildImage_unknownHostException()
+      throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
+          ExecutionException {
     UnknownHostException mockUnknownHostException = Mockito.mock(UnknownHostException.class);
-    Mockito.when(mockExecutionException.getCause()).thenReturn(mockUnknownHostException);
-    Mockito.doThrow(mockExecutionException)
+    Mockito.doThrow(mockUnknownHostException)
         .when(mockJibContainerBuilder)
         .containerize(mockContainerizer);
 
@@ -136,18 +133,16 @@ public class BuildStepsRunnerTest {
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forUnknownHost(), ex.getMessage());
-      Assert.assertEquals(mockUnknownHostException, ex.getCause());
     }
   }
 
   @Test
-  public void testBuildImage_executionException_insecureRegistryException()
-      throws InterruptedException, ExecutionException, IOException,
-          CacheDirectoryCreationException {
+  public void testBuildImage_insecureRegistryException()
+      throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
+          ExecutionException {
     InsecureRegistryException mockInsecureRegistryException =
         Mockito.mock(InsecureRegistryException.class);
-    Mockito.when(mockExecutionException.getCause()).thenReturn(mockInsecureRegistryException);
-    Mockito.doThrow(mockExecutionException)
+    Mockito.doThrow(mockInsecureRegistryException)
         .when(mockJibContainerBuilder)
         .containerize(mockContainerizer);
 
@@ -162,14 +157,13 @@ public class BuildStepsRunnerTest {
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forInsecureRegistry(), ex.getMessage());
-      Assert.assertEquals(mockInsecureRegistryException, ex.getCause());
     }
   }
 
   @Test
-  public void testBuildImage_executionException_registryUnauthorizedException_statusCodeForbidden()
-      throws InterruptedException, ExecutionException, IOException,
-          CacheDirectoryCreationException {
+  public void testBuildImage_registryUnauthorizedException_statusCodeForbidden()
+      throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
+          ExecutionException {
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
     Mockito.when(mockRegistryUnauthorizedException.getImageReference())
@@ -177,8 +171,7 @@ public class BuildStepsRunnerTest {
     Mockito.when(mockHttpResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_FORBIDDEN);
 
-    Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
-    Mockito.doThrow(mockExecutionException)
+    Mockito.doThrow(mockRegistryUnauthorizedException)
         .when(mockJibContainerBuilder)
         .containerize(mockContainerizer);
 
@@ -195,22 +188,20 @@ public class BuildStepsRunnerTest {
       Assert.assertEquals(
           TEST_HELPFUL_SUGGESTIONS.forHttpStatusCodeForbidden("someregistry/somerepository"),
           ex.getMessage());
-      Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
   }
 
   @Test
-  public void testBuildImage_executionException_registryUnauthorizedException_noCredentials()
-      throws InterruptedException, ExecutionException, IOException,
-          CacheDirectoryCreationException {
+  public void testBuildImage_registryUnauthorizedException_noCredentials()
+      throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
+          ExecutionException {
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
     Mockito.when(mockRegistryUnauthorizedException.getRegistry()).thenReturn("someregistry");
     Mockito.when(mockRegistryUnauthorizedException.getRepository()).thenReturn("somerepository");
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
 
-    Mockito.when(mockExecutionException.getCause()).thenReturn(mockRegistryUnauthorizedException);
-    Mockito.doThrow(mockExecutionException)
+    Mockito.doThrow(mockRegistryUnauthorizedException)
         .when(mockJibContainerBuilder)
         .containerize(mockContainerizer);
 
@@ -227,17 +218,14 @@ public class BuildStepsRunnerTest {
       Assert.assertEquals(
           TEST_HELPFUL_SUGGESTIONS.forNoCredentialsDefined("someregistry", "somerepository"),
           ex.getMessage());
-      Assert.assertEquals(mockRegistryUnauthorizedException, ex.getCause());
     }
   }
 
   @Test
-  public void testBuildImage_executionException_registryCredentialsNotSentException()
-      throws InterruptedException, ExecutionException, IOException,
-          CacheDirectoryCreationException {
-    Mockito.when(mockExecutionException.getCause())
-        .thenReturn(mockRegistryCredentialsNotSentException);
-    Mockito.doThrow(mockExecutionException)
+  public void testBuildImage_registryCredentialsNotSentException()
+      throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
+          ExecutionException {
+    Mockito.doThrow(mockRegistryCredentialsNotSentException)
         .when(mockJibContainerBuilder)
         .containerize(mockContainerizer);
 
@@ -252,17 +240,15 @@ public class BuildStepsRunnerTest {
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forCredentialsNotSent(), ex.getMessage());
-      Assert.assertEquals(mockRegistryCredentialsNotSentException, ex.getCause());
     }
   }
 
   @Test
-  public void testBuildImage_executionException_other()
-      throws InterruptedException, ExecutionException, IOException,
-          CacheDirectoryCreationException {
-    Throwable throwable = new Throwable();
-    Mockito.when(mockExecutionException.getCause()).thenReturn(throwable);
-    Mockito.doThrow(mockExecutionException)
+  public void testBuildImage_other()
+      throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
+          ExecutionException {
+    RegistryException registryException = new RegistryException("messagePrefix");
+    Mockito.doThrow(registryException)
         .when(mockJibContainerBuilder)
         .containerize(mockContainerizer);
 
@@ -277,7 +263,6 @@ public class BuildStepsRunnerTest {
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.none(), ex.getMessage());
-      Assert.assertEquals(throwable, ex.getCause());
     }
   }
 }

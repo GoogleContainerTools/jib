@@ -43,7 +43,7 @@ jib {
         ports = listOf("8080")
         mainClass = main_class
 
-        // good defauls intended for containers
+        // good defauls intended for Java 8 containers
         jvmFlags = listOf(
                 "-server",
                 "-Djava.awt.headless=true",

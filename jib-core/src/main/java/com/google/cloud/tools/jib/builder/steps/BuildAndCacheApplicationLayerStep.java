@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.event.events.LayerCountEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
@@ -73,7 +74,13 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
                 layerConfiguration.getName(),
                 layerConfiguration));
       }
-      return buildAndCacheApplicationLayerSteps.build();
+      ImmutableList<BuildAndCacheApplicationLayerStep> steps =
+          buildAndCacheApplicationLayerSteps.build();
+      buildConfiguration
+          .getEventDispatcher()
+          .dispatch(
+              new LayerCountEvent(BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER, steps.size()));
+      return steps;
     }
   }
 
