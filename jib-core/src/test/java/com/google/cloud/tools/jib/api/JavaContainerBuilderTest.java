@@ -194,13 +194,11 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_setAppRootLate()
-      throws URISyntaxException, InvalidImageReferenceException, IOException {
+  public void testToJibContainerBuilder_setAppRootLate() throws URISyntaxException, IOException {
+    JavaContainerBuilder javaContainerBuilder =
+        JavaContainerBuilder.fromDistroless().addClasses(getResource("core/application/classes"));
     try {
-      JavaContainerBuilder.fromDistroless()
-          .addClasses(getResource("core/application/classes"))
-          .setAppRoot("/oh no")
-          .toContainerBuilder();
+      javaContainerBuilder.setAppRoot("/oh no");
       Assert.fail();
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
@@ -209,7 +207,7 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_mainClassNull() throws InvalidImageReferenceException {
+  public void testToJibContainerBuilder_mainClassNull() {
     try {
       JavaContainerBuilder.fromDistroless().toContainerBuilder();
       Assert.fail();
@@ -224,7 +222,7 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_classpathEmpty() throws InvalidImageReferenceException {
+  public void testToJibContainerBuilder_classpathEmpty() {
     try {
       JavaContainerBuilder.fromDistroless().setMainClass("Hello").toContainerBuilder();
       Assert.fail();

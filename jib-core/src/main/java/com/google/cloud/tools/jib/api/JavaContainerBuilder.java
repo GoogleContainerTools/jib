@@ -46,11 +46,14 @@ public class JavaContainerBuilder {
    * href="https://github.com/GoogleContainerTools/distroless">the distroless repository</a>.
    *
    * @return a new {@link JavaContainerBuilder}
-   * @throws InvalidImageReferenceException if creating the base image reference fails
    * @see <a href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
    */
-  public static JavaContainerBuilder fromDistroless() throws InvalidImageReferenceException {
-    return from(RegistryImage.named("gcr.io/distroless/java"));
+  public static JavaContainerBuilder fromDistroless() {
+    try {
+      return from(RegistryImage.named("gcr.io/distroless/java"));
+    } catch (InvalidImageReferenceException ignored) {
+      throw new IllegalStateException("Unreachable");
+    }
   }
 
   /**
@@ -59,12 +62,15 @@ public class JavaContainerBuilder {
    * href="https://github.com/GoogleContainerTools/distroless">the distroless repository</a>.
    *
    * @return a new {@link JavaContainerBuilder}
-   * @throws InvalidImageReferenceException if creating the base image reference fails
    * @see <a href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
    */
-  public static JavaContainerBuilder fromDistrolessJetty() throws InvalidImageReferenceException {
-    return from(RegistryImage.named("gcr.io/distroless/java/jetty"))
-        .setAppRoot(AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT));
+  public static JavaContainerBuilder fromDistrolessJetty() {
+    try {
+      return from(RegistryImage.named("gcr.io/distroless/java/jetty"))
+          .setAppRoot(AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT));
+    } catch (InvalidImageReferenceException ignored) {
+      throw new IllegalStateException("Unreachable");
+    }
   }
 
   /**
