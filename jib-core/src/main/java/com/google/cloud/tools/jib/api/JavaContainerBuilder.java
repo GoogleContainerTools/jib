@@ -40,38 +40,37 @@ import javax.annotation.Nullable;
 /** Creates a {@link JibContainerBuilder} for containerizing Java applications. */
 public class JavaContainerBuilder {
 
-  /** The default root directory of the application on the container. */
-  private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
-
-  /** Absolute path of directory containing application resources on container. */
-  private static final AbsoluteUnixPath RESOURCES_PATH =
-      APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
-
-  /** Absolute path of directory containing classes on container. */
-  private static final AbsoluteUnixPath CLASSES_PATH =
-      APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
-
-  /** Absolute path of directory containing dependencies on container. */
-  private static final AbsoluteUnixPath DEPENDENCIES_PATH =
-      APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
-
-  /** The entrypoint classpath element corresponding to dependencies. */
-  private static final AbsoluteUnixPath DEPENDENCIES_CLASSPATH = DEPENDENCIES_PATH.resolve("*");
-
-  /** Absolute path of directory containing additional classpath files on container. */
-  private static final AbsoluteUnixPath OTHERS_PATH = APP_ROOT.resolve("classpath");
-
   /**
    * Creates a new {@link JavaContainerBuilder} that uses distroless java as the base image. For
    * more information on {@code gcr.io/distroless/java}, see <a
    * href="https://github.com/GoogleContainerTools/distroless">the distroless repository</a>.
    *
    * @return a new {@link JavaContainerBuilder}
-   * @throws InvalidImageReferenceException if creating the base image reference fails
    * @see <a href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
    */
-  public static JavaContainerBuilder fromDistroless() throws InvalidImageReferenceException {
-    return from(RegistryImage.named("gcr.io/distroless/java"));
+  public static JavaContainerBuilder fromDistroless() {
+    try {
+      return from(RegistryImage.named("gcr.io/distroless/java"));
+    } catch (InvalidImageReferenceException ignored) {
+      throw new IllegalStateException("Unreachable");
+    }
+  }
+
+  /**
+   * Creates a new {@link JavaContainerBuilder} that uses distroless jetty as the base image. For
+   * more information on {@code gcr.io/distroless/java}, see <a
+   * href="https://github.com/GoogleContainerTools/distroless">the distroless repository</a>.
+   *
+   * @return a new {@link JavaContainerBuilder}
+   * @see <a href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
+   */
+  public static JavaContainerBuilder fromDistrolessJetty() {
+    try {
+      return from(RegistryImage.named("gcr.io/distroless/java/jetty"))
+          .setAppRoot(AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT));
+    } catch (InvalidImageReferenceException ignored) {
+      throw new IllegalStateException("Unreachable");
+    }
   }
 
   /**
@@ -113,10 +112,63 @@ public class JavaContainerBuilder {
   private final List<String> jvmFlags = new ArrayList<>();
   private final LinkedHashSet<String> classpath = new LinkedHashSet<>(4);
 
+  /** Absolute path of directory containing application resources on container. */
+  private AbsoluteUnixPath resourcesPath;
+
+  /** Absolute path of directory containing classes on container. */
+  private AbsoluteUnixPath classesPath;
+
+  /** Absolute path of directory containing dependencies on container. */
+  private AbsoluteUnixPath dependenciesPath;
+
+  /** The entrypoint classpath element corresponding to dependencies. */
+  private AbsoluteUnixPath dependenciesClasspath;
+
+  /** Absolute path of directory containing additional classpath files on container. */
+  private AbsoluteUnixPath othersPath;
+
   @Nullable private String mainClass;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
     this.jibContainerBuilder = jibContainerBuilder;
+    AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
+    resourcesPath =
+        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
+    classesPath = appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
+    dependenciesPath =
+        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
+    dependenciesClasspath = dependenciesPath.resolve("*");
+    othersPath = appRoot.resolve("classpath");
+  }
+
+  /**
+   * Sets the app root of the container image (useful for building WAR containers).
+   *
+   * @param appRoot the absolute path of the app on the container ({@code /app} by default)
+   * @return this
+   */
+  public JavaContainerBuilder setAppRoot(String appRoot) {
+    return setAppRoot(AbsoluteUnixPath.get(appRoot));
+  }
+
+  /**
+   * Sets the app root of the container image (useful for building WAR containers).
+   *
+   * @param appRoot the absolute path of the app on the container ({@code /app} by default)
+   * @return this
+   */
+  public JavaContainerBuilder setAppRoot(AbsoluteUnixPath appRoot) {
+    if (!classpath.isEmpty()) {
+      throw new IllegalStateException("You cannot change the app root after files are added");
+    }
+    resourcesPath =
+        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
+    classesPath = appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
+    dependenciesPath =
+        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
+    dependenciesClasspath = dependenciesPath.resolve("*");
+    othersPath = appRoot.resolve("classpath");
+    return this;
   }
 
   /**
@@ -153,13 +205,13 @@ public class JavaContainerBuilder {
               ? LayerType.SNAPSHOT_DEPENDENCIES
               : LayerType.DEPENDENCIES,
           file,
-          DEPENDENCIES_PATH.resolve(
+          dependenciesPath.resolve(
               duplicates.contains(file.getFileName().toString())
                   ? file.getFileName().toString().replaceFirst("\\.jar$", "-" + Files.size(file))
                       + ".jar"
                   : file.getFileName().toString()));
     }
-    classpath.add(DEPENDENCIES_CLASSPATH.toString());
+    classpath.add(dependenciesClasspath.toString());
     return this;
   }
 
@@ -196,7 +248,7 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addResources(Path resourceFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
-    return addDirectory(resourceFilesDirectory, RESOURCES_PATH, LayerType.RESOURCES, pathFilter);
+    return addDirectory(resourceFilesDirectory, resourcesPath, LayerType.RESOURCES, pathFilter);
   }
 
   /**
@@ -220,7 +272,7 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addClasses(Path classFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
-    return addDirectory(classFilesDirectory, CLASSES_PATH, LayerType.CLASSES, pathFilter);
+    return addDirectory(classFilesDirectory, classesPath, LayerType.CLASSES, pathFilter);
   }
 
   /**
@@ -245,13 +297,13 @@ public class JavaContainerBuilder {
     for (Path file : otherFiles) {
       if (Files.isDirectory(file)) {
         layerConfigurationsBuilder.addDirectoryContents(
-            LayerType.EXTRA_FILES, file, path -> true, OTHERS_PATH);
+            LayerType.EXTRA_FILES, file, path -> true, othersPath);
       } else {
         layerConfigurationsBuilder.addFile(
-            LayerType.EXTRA_FILES, file, OTHERS_PATH.resolve(file.getFileName()));
+            LayerType.EXTRA_FILES, file, othersPath.resolve(file.getFileName()));
       }
     }
-    classpath.add(OTHERS_PATH.toString());
+    classpath.add(othersPath.toString());
     return this;
   }
 

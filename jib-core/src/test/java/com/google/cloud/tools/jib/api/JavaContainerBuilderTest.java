@@ -66,6 +66,7 @@ public class JavaContainerBuilderTest {
           CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         JavaContainerBuilder.fromDistroless()
+            .setAppRoot("/hello")
             .addResources(getResource("core/application/resources"))
             .addClasses(getResource("core/application/classes"))
             .addDependencies(
@@ -91,23 +92,23 @@ public class JavaContainerBuilderTest {
             "-xflag1",
             "-xflag2",
             "-cp",
-            "/app/resources:/app/classes:/app/libs/*:/app/classpath",
+            "/hello/resources:/hello/classes:/hello/libs/*:/hello/classpath",
             "HelloWorld"),
         containerConfiguration.getEntrypoint());
 
     // Check dependencies
     List<AbsoluteUnixPath> expectedDependencies =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-770.jar"),
-            AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-200.jar"),
-            AbsoluteUnixPath.get("/app/libs/libraryA.jar"),
-            AbsoluteUnixPath.get("/app/libs/libraryB.jar"));
+            AbsoluteUnixPath.get("/hello/libs/dependency-1.0.0-770.jar"),
+            AbsoluteUnixPath.get("/hello/libs/dependency-1.0.0-200.jar"),
+            AbsoluteUnixPath.get("/hello/libs/libraryA.jar"),
+            AbsoluteUnixPath.get("/hello/libs/libraryB.jar"));
     Assert.assertEquals(
         expectedDependencies, getExtractionPaths(buildConfiguration, "dependencies"));
 
     // Check snapshots
     List<AbsoluteUnixPath> expectedSnapshotDependencies =
-        ImmutableList.of(AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-SNAPSHOT.jar"));
+        ImmutableList.of(AbsoluteUnixPath.get("/hello/libs/dependency-1.0.0-SNAPSHOT.jar"));
     Assert.assertEquals(
         expectedSnapshotDependencies,
         getExtractionPaths(buildConfiguration, "snapshot dependencies"));
@@ -115,23 +116,23 @@ public class JavaContainerBuilderTest {
     // Check resources
     List<AbsoluteUnixPath> expectedResources =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/app/resources/resourceA"),
-            AbsoluteUnixPath.get("/app/resources/resourceB"),
-            AbsoluteUnixPath.get("/app/resources/world"));
+            AbsoluteUnixPath.get("/hello/resources/resourceA"),
+            AbsoluteUnixPath.get("/hello/resources/resourceB"),
+            AbsoluteUnixPath.get("/hello/resources/world"));
     Assert.assertEquals(expectedResources, getExtractionPaths(buildConfiguration, "resources"));
 
     // Check classes
     List<AbsoluteUnixPath> expectedClasses =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/app/classes/HelloWorld.class"),
-            AbsoluteUnixPath.get("/app/classes/some.class"));
+            AbsoluteUnixPath.get("/hello/classes/HelloWorld.class"),
+            AbsoluteUnixPath.get("/hello/classes/some.class"));
     Assert.assertEquals(expectedClasses, getExtractionPaths(buildConfiguration, "classes"));
 
     // Check additional classpath files
     List<AbsoluteUnixPath> expectedOthers =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/app/classpath/fileA"),
-            AbsoluteUnixPath.get("/app/classpath/fileB"));
+            AbsoluteUnixPath.get("/hello/classpath/fileA"),
+            AbsoluteUnixPath.get("/hello/classpath/fileB"));
     Assert.assertEquals(expectedOthers, getExtractionPaths(buildConfiguration, "extra files"));
   }
 
@@ -193,7 +194,19 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_mainClassNull() throws InvalidImageReferenceException {
+  public void testToJibContainerBuilder_setAppRootLate() throws URISyntaxException, IOException {
+    JavaContainerBuilder javaContainerBuilder =
+        JavaContainerBuilder.fromDistroless().addClasses(getResource("core/application/classes"));
+    try {
+      javaContainerBuilder.setAppRoot("/oh no");
+      Assert.fail();
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals("You cannot change the app root after files are added", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testToJibContainerBuilder_mainClassNull() {
     try {
       JavaContainerBuilder.fromDistroless().toContainerBuilder();
       Assert.fail();
@@ -208,7 +221,7 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_classpathEmpty() throws InvalidImageReferenceException {
+  public void testToJibContainerBuilder_classpathEmpty() {
     try {
       JavaContainerBuilder.fromDistroless().setMainClass("Hello").toContainerBuilder();
       Assert.fail();
