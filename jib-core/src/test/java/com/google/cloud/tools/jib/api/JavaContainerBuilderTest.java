@@ -66,6 +66,7 @@ public class JavaContainerBuilderTest {
           CacheDirectoryCreationException {
     BuildConfiguration buildConfiguration =
         JavaContainerBuilder.fromDistroless()
+            .setAppRoot("/hello")
             .addResources(getResource("core/application/resources"))
             .addClasses(getResource("core/application/classes"))
             .addDependencies(
@@ -91,23 +92,23 @@ public class JavaContainerBuilderTest {
             "-xflag1",
             "-xflag2",
             "-cp",
-            "/app/resources:/app/classes:/app/libs/*:/app/classpath",
+            "/hello/resources:/hello/classes:/hello/libs/*:/hello/classpath",
             "HelloWorld"),
         containerConfiguration.getEntrypoint());
 
     // Check dependencies
     List<AbsoluteUnixPath> expectedDependencies =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-770.jar"),
-            AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-200.jar"),
-            AbsoluteUnixPath.get("/app/libs/libraryA.jar"),
-            AbsoluteUnixPath.get("/app/libs/libraryB.jar"));
+            AbsoluteUnixPath.get("/hello/libs/dependency-1.0.0-770.jar"),
+            AbsoluteUnixPath.get("/hello/libs/dependency-1.0.0-200.jar"),
+            AbsoluteUnixPath.get("/hello/libs/libraryA.jar"),
+            AbsoluteUnixPath.get("/hello/libs/libraryB.jar"));
     Assert.assertEquals(
         expectedDependencies, getExtractionPaths(buildConfiguration, "dependencies"));
 
     // Check snapshots
     List<AbsoluteUnixPath> expectedSnapshotDependencies =
-        ImmutableList.of(AbsoluteUnixPath.get("/app/libs/dependency-1.0.0-SNAPSHOT.jar"));
+        ImmutableList.of(AbsoluteUnixPath.get("/hello/libs/dependency-1.0.0-SNAPSHOT.jar"));
     Assert.assertEquals(
         expectedSnapshotDependencies,
         getExtractionPaths(buildConfiguration, "snapshot dependencies"));
@@ -115,23 +116,23 @@ public class JavaContainerBuilderTest {
     // Check resources
     List<AbsoluteUnixPath> expectedResources =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/app/resources/resourceA"),
-            AbsoluteUnixPath.get("/app/resources/resourceB"),
-            AbsoluteUnixPath.get("/app/resources/world"));
+            AbsoluteUnixPath.get("/hello/resources/resourceA"),
+            AbsoluteUnixPath.get("/hello/resources/resourceB"),
+            AbsoluteUnixPath.get("/hello/resources/world"));
     Assert.assertEquals(expectedResources, getExtractionPaths(buildConfiguration, "resources"));
 
     // Check classes
     List<AbsoluteUnixPath> expectedClasses =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/app/classes/HelloWorld.class"),
-            AbsoluteUnixPath.get("/app/classes/some.class"));
+            AbsoluteUnixPath.get("/hello/classes/HelloWorld.class"),
+            AbsoluteUnixPath.get("/hello/classes/some.class"));
     Assert.assertEquals(expectedClasses, getExtractionPaths(buildConfiguration, "classes"));
 
     // Check additional classpath files
     List<AbsoluteUnixPath> expectedOthers =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/app/classpath/fileA"),
-            AbsoluteUnixPath.get("/app/classpath/fileB"));
+            AbsoluteUnixPath.get("/hello/classpath/fileA"),
+            AbsoluteUnixPath.get("/hello/classpath/fileB"));
     Assert.assertEquals(expectedOthers, getExtractionPaths(buildConfiguration, "extra files"));
   }
 
@@ -190,6 +191,21 @@ public class JavaContainerBuilderTest {
     // Check empty layers
     Assert.assertEquals(ImmutableList.of(), getExtractionPaths(buildConfiguration, "resources"));
     Assert.assertEquals(ImmutableList.of(), getExtractionPaths(buildConfiguration, "extra files"));
+  }
+
+  @Test
+  public void testToJibContainerBuilder_setAppRootLate()
+      throws URISyntaxException, InvalidImageReferenceException, IOException {
+    try {
+      JavaContainerBuilder.fromDistroless()
+          .addClasses(getResource("core/application/classes"))
+          .setAppRoot("/oh no")
+          .toContainerBuilder();
+      Assert.fail();
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals(
+          "App root must be set before adding files to the JavaContainerBuilder.", ex.getMessage());
+    }
   }
 
   @Test
