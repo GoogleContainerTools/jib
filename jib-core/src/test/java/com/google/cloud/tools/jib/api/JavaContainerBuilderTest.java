@@ -202,7 +202,8 @@ public class JavaContainerBuilderTest {
       Assert.fail();
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
-          "App root must be set before adding files to the JavaContainerBuilder.", ex.getMessage());
+          "You cannot set a new app root (or change the app root) after files are added",
+          ex.getMessage());
     }
   }
 
