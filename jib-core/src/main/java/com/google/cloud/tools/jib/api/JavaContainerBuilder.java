@@ -159,8 +159,7 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder setAppRoot(AbsoluteUnixPath appRoot) {
     if (!classpath.isEmpty()) {
-      throw new IllegalStateException(
-          "You cannot set a new app root (or change the app root) after files are added");
+      throw new IllegalStateException("You cannot change the app root after files are added");
     }
     resourcesPath =
         appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
