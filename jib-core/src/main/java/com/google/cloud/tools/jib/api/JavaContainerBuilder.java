@@ -63,7 +63,7 @@ public class JavaContainerBuilder {
    * @see <a href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
    */
   public static JavaContainerBuilder fromDistrolessJetty() throws InvalidImageReferenceException {
-    return from(RegistryImage.named("gcr.io/distroless/java"))
+    return from(RegistryImage.named("gcr.io/distroless/java/jetty"))
         .setAppRoot(AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT));
   }
 
