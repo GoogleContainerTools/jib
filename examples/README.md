@@ -41,3 +41,8 @@ See [micronaut](micronaut) for containerizing a [Micronaut framework](https://mi
 ### Java agents example
 
 See [java-agent](java-agent) for launching with the Stackdriver Debugger Java agent.
+
+### [Google Cloud Build](https://cloud.google.com/cloud-build) example
+
+See [google-cloud-build](google-cloud-build) for using Jib to build your Java container image via [Google Cloud Build](https://cloud.google.com/cloud-build).
+ 

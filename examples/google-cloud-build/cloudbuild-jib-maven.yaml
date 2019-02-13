@@ -1,0 +1,19 @@
+substitutions:
+  _IMAGE_NAME: my-image # Configure this
+
+steps:
+- # Uses the Cloud Builder Maven image.
+  name: gcr.io/cloud-builders/mvn
+  args:
+  # Compiles the application.
+  - compile
+
+  # Runs the Jib build by using the latest version of the plugin.
+  # To use a specific version, configure the plugin in the pom.xml.
+  - com.google.cloud.tools:jib-maven-plugin:build
+
+  # This is necessary for Jib to find the credentials to use to push to your GCR repository.
+  - -Duser.home=/builder/home
+
+  # Sets the target image reference to push to.
+  - -Dimage=gcr.io/${PROJECT_ID}/${_IMAGE_NAME}

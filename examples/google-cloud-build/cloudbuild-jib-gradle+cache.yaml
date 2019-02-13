@@ -1,0 +1,69 @@
+substitutions:
+  _GCS_CACHE_BUCKET: <your bucket>
+  _IMAGE_NAME: my-image
+
+steps:
+
+# First, loads the cached files from GCS if they exist.
+- waitFor:
+  - '-'
+  name: gcr.io/cloud-builders/gsutil
+  dir: /builder/home
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - |
+    mkdir /builder/home/.gradle &&
+    (
+      gsutil cp gs://${_GCS_CACHE_BUCKET}/gradle-cache.tar.gz /builder/home/gradle-cache.tar.gz &&
+      tar -xzf gradle-cache.tar.gz
+    ) || echo 'Cache not found'
+- waitFor:
+  - '-'
+  name: gcr.io/cloud-builders/gsutil
+  dir: /builder/home
+  entrypoint: /bin/bash
+  args:
+  - -c
+  - |
+    mkdir /builder/home/.cache &&
+    (
+      gsutil cp gs://${_GCS_CACHE_BUCKET}/jib-cache.tar.gz /builder/home/jib-cache.tar.gz &&
+      tar -xzf jib-cache.tar.gz
+    ) || echo 'Cache not found'
+
+# Runs the Jib build.
+- id: jib-build
+  name: gcr.io/cloud-builders/gradle
+  args:
+  - classes
+  - jib
+  # Uncomment for projects that do not include Jib as a plugin.
+  # - --init-script=auto-jib.gradle
+  - -Dgradle.user.home=/builder/home/.gradle
+  - -Duser.home=/builder/home
+  - --image=gcr.io/${PROJECT_ID}/${_IMAGE_NAME}
+
+# Saves the files to the GCS cache.
+- waitFor:
+  - jib-build
+  name: gcr.io/cloud-builders/gsutil
+  dir: /builder/home
+  entrypoint: /bin/bash
+  # Caches the Gradle cache.
+  args:
+  - -c
+  - |
+    tar -czf gradle-cache.tar.gz .gradle &&
+    gsutil cp gradle-cache.tar.gz gs://${_GCS_CACHE_BUCKET}/gradle-cache.tar.gz
+- waitFor:
+  - jib-build
+  name: gcr.io/cloud-builders/gsutil
+  dir: /builder/home
+  entrypoint: /bin/bash
+  # Caches the Jib cache.
+  args:
+  - -c
+  - |
+    tar -czf jib-cache.tar.gz .cache &&
+    gsutil cp jib-cache.tar.gz gs://${_GCS_CACHE_BUCKET}/jib-cache.tar.gz

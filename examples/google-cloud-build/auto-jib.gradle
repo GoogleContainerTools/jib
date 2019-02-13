@@ -1,0 +1,22 @@
+// Gradle init script that applies the Jib Gradle plugin.
+
+initscript {
+    repositories {
+        maven {
+            url 'https://plugins.gradle.org/m2'
+        }
+    }
+    dependencies {
+        classpath 'gradle.plugin.com.google.cloud.tools:jib-gradle-plugin:+'
+    }
+}
+
+// Only applies the Jib plugin if the project does not apply it already.
+rootProject {
+    afterEvaluate {
+        if (!project.plugins.hasPlugin('com.google.cloud.tools.jib')) {
+            project.apply plugin: com.google.cloud.tools.jib.gradle.JibPlugin
+            tasks.jib.dependsOn classes
+        }
+    }
+}
