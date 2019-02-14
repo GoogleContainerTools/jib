@@ -434,6 +434,97 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testGetBaseImage_chooseJava8Distroless()
+      throws IncompatibleBaseImageJavaVersionException {
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(6);
+    Assert.assertEquals(
+        "gcr.io/distroless/java:8",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(7);
+    Assert.assertEquals(
+        "gcr.io/distroless/java:8",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(8);
+    Assert.assertEquals(
+        "gcr.io/distroless/java:8",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testGetBaseImage_chooseJava11Distroless()
+      throws IncompatibleBaseImageJavaVersionException {
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(9);
+    Assert.assertEquals(
+        "gcr.io/distroless/java:11",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(10);
+    Assert.assertEquals(
+        "gcr.io/distroless/java:11",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(11);
+    Assert.assertEquals(
+        "gcr.io/distroless/java:11",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testGetBaseImage_projectHigherThanJava11() {
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(12);
+
+    try {
+      PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+      Assert.fail();
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      Assert.assertEquals(11, ex.getBaseImageMajorJavaVersion());
+      Assert.assertEquals(12, ex.getProjectMajorJavaVersion());
+    }
+  }
+
+  @Test
+  public void testGetBaseImage_incompatibleJava8BaseImage() {
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(11);
+
+    Mockito.when(rawConfiguration.getFromImage())
+        .thenReturn(Optional.of("gcr.io/distroless/java:8"));
+    try {
+      PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+      Assert.fail();
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      Assert.assertEquals(8, ex.getBaseImageMajorJavaVersion());
+      Assert.assertEquals(11, ex.getProjectMajorJavaVersion());
+    }
+
+    Mockito.when(rawConfiguration.getFromImage())
+        .thenReturn(Optional.of("gcr.io/distroless/java:latest"));
+    try {
+      PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+      Assert.fail();
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      Assert.assertEquals(8, ex.getBaseImageMajorJavaVersion());
+      Assert.assertEquals(11, ex.getProjectMajorJavaVersion());
+    }
+  }
+
+  @Test
+  public void testGetBaseImage_incompatibleJava11BaseImage() {
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(15);
+
+    Mockito.when(rawConfiguration.getFromImage())
+        .thenReturn(Optional.of("gcr.io/distroless/java:11"));
+    try {
+      PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+      Assert.fail();
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      Assert.assertEquals(11, ex.getBaseImageMajorJavaVersion());
+      Assert.assertEquals(15, ex.getProjectMajorJavaVersion());
+    }
+  }
+
+  @Test
   public void testGetBaseImage_defaultNonWarPackaging()
       throws IncompatibleBaseImageJavaVersionException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);

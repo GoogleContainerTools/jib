@@ -64,13 +64,15 @@ public class PluginConfigurationProcessor {
    * @return {@code true} if the base image is equal to one of the known Java 8 distroless images,
    *     else {@code false}
    */
-  public static boolean knownDistrolessJava8Image(String baseImageConfiguration) {
+  private static boolean knownDistrolessJava8Image(String baseImageConfiguration) {
     // TODO: drop "latest" and the likes once it no longer points to Java 8.
     return baseImageConfiguration.equals("gcr.io/distroless/java")
         || baseImageConfiguration.equals("gcr.io/distroless/java:latest")
         || baseImageConfiguration.equals("gcr.io/distroless/java:debug")
         || baseImageConfiguration.equals("gcr.io/distroless/java:8")
         || baseImageConfiguration.equals("gcr.io/distroless/java:8-debug")
+        || baseImageConfiguration.equals("gcr.io/distroless/java/jetty")
+        || baseImageConfiguration.equals("gcr.io/distroless/java/jetty:debug")
         || baseImageConfiguration.equals("gcr.io/distroless/java/jetty:java8")
         || baseImageConfiguration.equals("gcr.io/distroless/java/jetty:java8-debug");
   }
@@ -84,7 +86,7 @@ public class PluginConfigurationProcessor {
    * @return {@code true} if the base image is equal to one of the known Java 11 distroless images,
    *     else {@code false}
    */
-  public static boolean knownDistrolessJava11Image(String baseImageConfiguration) {
+  private static boolean knownDistrolessJava11Image(String baseImageConfiguration) {
     // TODO: add "latest" and the likes once it points to Java 11.
     return baseImageConfiguration.equals("gcr.io/distroless/java:11")
         || baseImageConfiguration.equals("gcr.io/distroless/java:11-debug")

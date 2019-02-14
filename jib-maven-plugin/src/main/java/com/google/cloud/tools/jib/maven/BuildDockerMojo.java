@@ -163,15 +163,15 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       throw new MojoExecutionException(
           "The base image uses Java "
-              + ex.getBaseImageJavaMajorVersion()
+              + ex.getBaseImageMajorJavaVersion()
               + ", but project is using Java "
-              + ex.getProjectJavaMajorVersion()
+              + ex.getProjectMajorJavaVersion()
               + "; perhaps you should configure a Java "
-              + ex.getProjectJavaMajorVersion()
+              + ex.getProjectMajorJavaVersion()
               + "-compatible base image using the "
               + "'<from><image>' parameter, or set maven-compiler-plugin's '<target>' or "
               + "'<release>' version to "
-              + ex.getBaseImageJavaMajorVersion()
+              + ex.getBaseImageMajorJavaVersion()
               + " or below in your build configuration");
 
     } catch (InvalidImageReferenceException

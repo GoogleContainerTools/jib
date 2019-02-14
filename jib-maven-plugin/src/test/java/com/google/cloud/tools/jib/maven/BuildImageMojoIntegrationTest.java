@@ -351,7 +351,7 @@ public class BuildImageMojoIntegrationTest {
 
     String targetImage = getGcrImageReference("simpleimage:maven");
     Assert.assertEquals(
-        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
+        "Hello, world. An argument.\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-java11.xml", false));
   }
 

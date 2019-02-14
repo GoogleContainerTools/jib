@@ -38,6 +38,22 @@
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
+        <configuration>
+          <to>
+            <image>${_TARGET_IMAGE}</image>
+          </to>
+          <container>
+            <args>An argument.</args>
+            <ports>
+              <port>1000/tcp</port>
+              <port>2000-2003/udp</port>
+            </ports>
+            <labels>
+              <key1>value1</key1>
+              <key2>value2</key2>
+            </labels>
+          </container>
+        </configuration>
       </plugin>
     </plugins>
   </build>
