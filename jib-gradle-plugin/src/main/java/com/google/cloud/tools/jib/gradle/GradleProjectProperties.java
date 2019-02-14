@@ -257,6 +257,11 @@ class GradleProjectProperties implements ProjectProperties {
     return project.getVersion().toString();
   }
 
+  @Override
+  public int getMajorJavaVersion() {
+    throw new RuntimeException("bug");
+  }
+
   void validateAgainstDefaultBaseImageVersion(@Nullable String baseImage) {
     if (!PluginConfigurationProcessor.usingDefaultBaseImage(baseImage)) {
       return;

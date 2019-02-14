@@ -262,20 +262,13 @@ public class MavenProjectProperties implements ProjectProperties {
     return project.getVersion();
   }
 
-  void validateAgainstDefaultBaseImageVersion(@Nullable String baseImage)
-      throws MojoFailureException {
-    if (!PluginConfigurationProcessor.usingDefaultBaseImage(baseImage)) {
-      return;
-    }
-
-    // maven-compiler-plugin default is 1.6
-    int version = 6;
-
+  @Override
+  public int getMajorJavaVersion() {
     // Check properties for version
     if (project.getProperties().getProperty("maven.compiler.target") != null) {
-      version = getVersionFromString(project.getProperties().getProperty("maven.compiler.target"));
+      return getVersionFromString(project.getProperties().getProperty("maven.compiler.target"));
     } else if (project.getProperties().getProperty("maven.compiler.release") != null) {
-      version = getVersionFromString(project.getProperties().getProperty("maven.compiler.release"));
+      return getVersionFromString(project.getProperties().getProperty("maven.compiler.release"));
     } else {
       // Check maven-compiler-plugin for version
       Plugin mavenCompilerPlugin =
@@ -285,24 +278,34 @@ public class MavenProjectProperties implements ProjectProperties {
         if (pluginConfiguration != null) {
           Xpp3Dom target = pluginConfiguration.getChild("target");
           if (target != null) {
-            version = getVersionFromString(target.getValue());
+            return getVersionFromString(target.getValue());
           } else {
             Xpp3Dom release = pluginConfiguration.getChild("release");
             if (release != null) {
-              version = getVersionFromString(release.getValue());
+              return getVersionFromString(release.getValue());
             }
           }
         }
       }
     }
+    return 6; // maven-compiler-plugin default is 1.6
+  }
 
-    if (version > 8) {
+  void validateAgainstDefaultBaseImageVersion(@Nullable String baseImage)
+      throws MojoFailureException {
+    if (!PluginConfigurationProcessor.usingDefaultBaseImage(baseImage)) {
+      return;
+    }
+
+    int version = getMajorJavaVersion();
+    if (version > 11) {
       throw new MojoFailureException(
-          "Jib's default base image uses Java 8, but project is using Java "
+          "Jib's default base image uses Java 8 or 11, but project is using Java "
               + version
               + "; perhaps you should configure a Java "
               + version
-              + "-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's target or release version to 1.8 in your build configuration");
+              + "-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's "
+              + "'<target>' or '<release>' version to 11 or below in your build configuration");
     }
   }
 }
