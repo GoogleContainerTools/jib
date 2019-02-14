@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.test</groupId>
-  <artifactId>empty</artifactId>
+  <artifactId>my-artifact-id</artifactId>
   <version>1</version>
 
   <properties>
@@ -13,14 +13,24 @@
     <jib-maven-plugin.version>@@PluginVersion@@</jib-maven-plugin.version>
   </properties>
 
+  <dependencies>
+    <dependency>
+      <groupId>com.test</groupId>
+      <artifactId>dependency</artifactId>
+      <version>1.0.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/libs/dependency-1.0.0.jar</systemPath>
+    </dependency>
+  </dependencies>
+
   <build>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>11</source>
+          <target>11</target>
         </configuration>
       </plugin>
 
@@ -28,14 +38,6 @@
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
-        <configuration>
-          <to>
-            <image>${_TARGET_IMAGE}</image>
-          </to>
-          <container>
-            <user>myuser:mygroup</user>
-          </container>
-        </configuration>
       </plugin>
     </plugins>
   </build>

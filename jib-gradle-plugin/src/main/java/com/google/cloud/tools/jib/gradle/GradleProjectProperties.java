@@ -267,19 +267,6 @@ class GradleProjectProperties implements ProjectProperties {
     return Integer.valueOf(version.getMajorVersion());
   }
 
-  void validateAgainstDefaultBaseImageVersion(@Nullable String baseImage) {
-    int version = getMajorJavaVersion();
-    if (version > 11) {
-      throw new GradleException(
-          "Jib's default base image uses Java 8 or 11, but project is using Java "
-              + version
-              + "; perhaps you should configure a Java "
-              + version
-              + "-compatible base image using the 'jib.from.image' parameter, or set "
-              + "targetCompatibility = 11 or below in your build configuration");
-    }
-  }
-
   /**
    * Validates and converts a {@code String->String} file-path-to-file-permissions map to an
    * equivalent {@code AbsoluteUnixPath->FilePermission} map.

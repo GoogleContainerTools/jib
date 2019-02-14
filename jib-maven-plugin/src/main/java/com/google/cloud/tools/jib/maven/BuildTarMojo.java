@@ -131,6 +131,18 @@ public class BuildTarMojo extends JibPluginConfiguration {
           "<container><volumes> is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
 
     } catch (IncompatibleBaseImageJavaVersionException ex) {
+      throw new MojoExecutionException(
+          "The base image uses Java "
+              + ex.getBaseImageJavaMajorVersion()
+              + ", but project is using Java "
+              + ex.getProjectJavaMajorVersion()
+              + "; perhaps you should configure a Java "
+              + ex.getProjectJavaMajorVersion()
+              + "-compatible base image using the "
+              + "'<from><image>' parameter, or set maven-compiler-plugin's '<target>' or "
+              + "'<release>' version to "
+              + ex.getBaseImageJavaMajorVersion()
+              + " or below in your build configuration");
 
     } catch (InvalidImageReferenceException
         | IOException

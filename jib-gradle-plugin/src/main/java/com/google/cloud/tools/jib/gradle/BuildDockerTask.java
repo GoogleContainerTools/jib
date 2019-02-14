@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
@@ -113,7 +114,6 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               jibExtension.getExtraDirectory().getPath(),
               jibExtension.getExtraDirectory().getPermissions(),
               appRoot);
-      projectProperties.validateAgainstDefaultBaseImageVersion(jibExtension.getFrom().getImage());
 
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
@@ -168,6 +168,19 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     } catch (InvalidContainerVolumeException ex) {
       throw new GradleException(
           "container.volumes is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
+
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      throw new GradleException(
+          "The base image uses Java "
+              + ex.getBaseImageJavaMajorVersion()
+              + ", but project is using Java "
+              + ex.getProjectJavaMajorVersion()
+              + "; perhaps you should configure a Java "
+              + ex.getProjectJavaMajorVersion()
+              + "-compatible base image using the 'jib.from.image' parameter, or set "
+              + "targetCompatibility = "
+              + ex.getBaseImageJavaMajorVersion()
+              + " or below in your build configuration");
     }
   }
 
