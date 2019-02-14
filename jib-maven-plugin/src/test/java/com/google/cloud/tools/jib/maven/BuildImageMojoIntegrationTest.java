@@ -356,6 +356,27 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
+  public void testExecute_simpleWithIncomptiableJava11()
+      throws DigestException, IOException, InterruptedException {
+    Assume.assumeTrue(isJava11RuntimeOrHigher());
+
+    String targetImage = getGcrImageReference("simpleimage:maven");
+    try {
+      buildAndRun(
+          simpleTestProject.getProjectRoot(), targetImage, "pom-java11-incompatible.xml", false);
+      Assert.fail();
+    } catch (VerificationException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "The base image uses Java 8, but project is using Java 11; perhaps you should "
+                  + "configure a Java 11-compatible base image using the '<from><image>' "
+                  + "parameter, or set maven-compiler-plugin's '<target>' or '<release>' version "
+                  + "to 8 or below in your build configuration"));
+    }
+  }
+
+  @Test
   public void testExecute_empty()
       throws InterruptedException, IOException, VerificationException, DigestException {
     String targetImage = getGcrImageReference("emptyimage:maven");
