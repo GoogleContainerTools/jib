@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
@@ -289,23 +288,5 @@ public class MavenProjectProperties implements ProjectProperties {
       }
     }
     return 6; // maven-compiler-plugin default is 1.6
-  }
-
-  void validateAgainstDefaultBaseImageVersion(@Nullable String baseImage)
-      throws MojoFailureException {
-    if (!PluginConfigurationProcessor.usingDefaultBaseImage(baseImage)) {
-      return;
-    }
-
-    int version = getMajorJavaVersion();
-    if (version > 11) {
-      throw new MojoFailureException(
-          "Jib's default base image uses Java 8 or 11, but project is using Java "
-              + version
-              + "; perhaps you should configure a Java "
-              + version
-              + "-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's "
-              + "'<target>' or '<release>' version to 11 or below in your build configuration");
-    }
   }
 }

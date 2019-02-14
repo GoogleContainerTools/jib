@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
@@ -95,7 +96,6 @@ public class BuildImageMojo extends JibPluginConfiguration {
               MojoCommon.getExtraDirectoryPath(this),
               MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
               appRoot);
-      projectProperties.validateAgainstDefaultBaseImageVersion(getBaseImage());
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
 
@@ -151,6 +151,20 @@ public class BuildImageMojo extends JibPluginConfiguration {
     } catch (InvalidContainerVolumeException ex) {
       throw new MojoExecutionException(
           "<container><volumes> is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
+
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      throw new MojoExecutionException(
+          "The base image uses Java "
+              + ex.getBaseImageJavaMajorVersion()
+              + ", but project is using Java "
+              + ex.getProjectJavaMajorVersion()
+              + "; perhaps you should configure a Java "
+              + ex.getProjectJavaMajorVersion()
+              + "-compatible base image using the "
+              + "'<from><image>' parameter, or set maven-compiler-plugin's '<target>' or "
+              + "'<release>' version to "
+              + ex.getBaseImageJavaMajorVersion()
+              + " or below in your build configuration");
 
     } catch (InvalidImageReferenceException
         | IOException

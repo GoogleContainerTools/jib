@@ -55,21 +55,41 @@ import javax.annotation.Nullable;
  */
 public class PluginConfigurationProcessor {
 
-  private static final String DEFAULT_BASE_IMAGE = "gcr.io/distroless/java";
-  private static final String DEFAULT_BASE_IMAGE_WAR = "gcr.io/distroless/java/jetty";
-
   /**
-   * Checks whether or not the default distroless base image is being used.
+   * Checks whether or not the known default Java 8 distroless base image is being used. Checking
+   * against only images known to Java 8, the method may to return {@code false} for Java 8
+   * distroless unknown to it.
    *
    * @param baseImageConfiguration the configured base image
-   * @return {@code true} if the base image is null or equal to one of the distroless java images,
+   * @return {@code true} if the base image is equal to one of the known Java 8 distroless images,
    *     else {@code false}
    */
-  public static boolean usingDefaultBaseImage(@Nullable String baseImageConfiguration) {
-    // TODO: check for other Java 8 base images?
-    return baseImageConfiguration == null
-        || baseImageConfiguration.equals(DEFAULT_BASE_IMAGE)
-        || baseImageConfiguration.equals(DEFAULT_BASE_IMAGE_WAR);
+  public static boolean knownDistrolessJava8Image(String baseImageConfiguration) {
+    // TODO: drop "latest" and the likes once it no longer points to Java 8.
+    return baseImageConfiguration.equals("gcr.io/distroless/java")
+        || baseImageConfiguration.equals("gcr.io/distroless/java:latest")
+        || baseImageConfiguration.equals("gcr.io/distroless/java:debug")
+        || baseImageConfiguration.equals("gcr.io/distroless/java:8")
+        || baseImageConfiguration.equals("gcr.io/distroless/java:8-debug")
+        || baseImageConfiguration.equals("gcr.io/distroless/java/jetty:java8")
+        || baseImageConfiguration.equals("gcr.io/distroless/java/jetty:java8-debug");
+  }
+
+  /**
+   * Checks whether or not the known default Java 11 distroless base image is being used. Checking
+   * against only images known to Java 11, the method may to return {@code false} for Java 11
+   * distroless unknown to it.
+   *
+   * @param baseImageConfiguration the configured base image
+   * @return {@code true} if the base image is equal to one of the known Java 11 distroless images,
+   *     else {@code false}
+   */
+  public static boolean knownDistrolessJava11Image(String baseImageConfiguration) {
+    // TODO: add "latest" and the likes once it points to Java 11.
+    return baseImageConfiguration.equals("gcr.io/distroless/java:11")
+        || baseImageConfiguration.equals("gcr.io/distroless/java:11-debug")
+        || baseImageConfiguration.equals("gcr.io/distroless/java/jetty:java11")
+        || baseImageConfiguration.equals("gcr.io/distroless/java/jetty:java11-debug");
   }
 
   public static PluginConfigurationProcessor processCommonConfigurationForDockerDaemonImage(
@@ -81,7 +101,7 @@ public class PluginConfigurationProcessor {
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException {
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -110,7 +130,7 @@ public class PluginConfigurationProcessor {
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException {
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
@@ -131,7 +151,8 @@ public class PluginConfigurationProcessor {
       ProjectProperties projectProperties)
       throws InferredAuthRetrievalException, InvalidImageReferenceException,
           MainClassInferenceException, InvalidAppRootException, IOException,
-          InvalidWorkingDirectoryException, InvalidContainerVolumeException {
+          InvalidWorkingDirectoryException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -173,7 +194,7 @@ public class PluginConfigurationProcessor {
       boolean isTargetImageCredentialPresent)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException {
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     JibSystemProperties.checkHttpTimeoutProperty();
     JibSystemProperties.checkProxyPortProperty();
 
@@ -289,16 +310,34 @@ public class PluginConfigurationProcessor {
    * @param rawConfiguration raw configuration data
    * @param projectProperties used for providing additional information
    * @return the base image
+   * @throws IncompatibleBaseImageJavaVersionException
    */
   @VisibleForTesting
-  static String getBaseImage(
-      RawConfiguration rawConfiguration, ProjectProperties projectProperties) {
-    return rawConfiguration
-        .getFromImage()
-        .orElse(
-            projectProperties.isWarProject()
-                ? "gcr.io/distroless/java/jetty"
-                : "gcr.io/distroless/java");
+  static String getBaseImage(RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+      throws IncompatibleBaseImageJavaVersionException {
+    int javaVersion = projectProperties.getMajorJavaVersion();
+
+    if (rawConfiguration.getFromImage().isPresent()) {
+      String baseImage = rawConfiguration.getFromImage().get();
+
+      if (knownDistrolessJava8Image(baseImage) && javaVersion > 8) {
+        throw new IncompatibleBaseImageJavaVersionException(8, javaVersion);
+      } else if (knownDistrolessJava11Image(baseImage) && javaVersion > 11) {
+        throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
+      }
+      return baseImage;
+    }
+
+    // Base image not configured; auto-pick Distroless.
+    if (projectProperties.isWarProject()) {
+      return "gcr.io/distroless/java/jetty";
+    } else if (javaVersion <= 8) {
+      return "gcr.io/distroless/java:8";
+    } else if (javaVersion <= 11) {
+      return "gcr.io/distroless/java:11";
+    } else {
+      throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
+    }
   }
 
   /**

@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
@@ -71,7 +72,6 @@ public class BuildTarMojo extends JibPluginConfiguration {
               MojoCommon.getExtraDirectoryPath(this),
               MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
               appRoot);
-      projectProperties.validateAgainstDefaultBaseImageVersion(getBaseImage());
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
 
@@ -129,6 +129,8 @@ public class BuildTarMojo extends JibPluginConfiguration {
     } catch (InvalidContainerVolumeException ex) {
       throw new MojoExecutionException(
           "<container><volumes> is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
+
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
 
     } catch (InvalidImageReferenceException
         | IOException

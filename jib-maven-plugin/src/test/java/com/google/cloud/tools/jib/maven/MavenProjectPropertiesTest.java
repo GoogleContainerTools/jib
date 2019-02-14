@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import java.util.Properties;
 import org.apache.maven.model.Plugin;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -140,84 +139,65 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testValidateBaseImageVersion_nonDefaultBaseImage() throws MojoFailureException {
-    mavenProjectProperties.validateAgainstDefaultBaseImageVersion("non-default");
+  public void testGetMajorJavaVersion_undefinedDefaultsTo6() {
+    Assert.assertEquals(6, mavenProjectProperties.getMajorJavaVersion());
   }
 
   @Test
-  public void testValidateBaseImageVersion_allNull() throws MojoFailureException {
-    mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
-  }
-
-  @Test
-  public void testValidateBaseImageVersion_targetProperty() throws MojoFailureException {
+  public void testGetMajorJavaVersion_targetProperty() {
     Mockito.when(mockMavenProperties.getProperty("maven.compiler.target")).thenReturn("1.8");
-    mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
+    Assert.assertEquals(8, mavenProjectProperties.getMajorJavaVersion());
+
+    Mockito.when(mockMavenProperties.getProperty("maven.compiler.target")).thenReturn("1.7");
+    Assert.assertEquals(7, mavenProjectProperties.getMajorJavaVersion());
 
     Mockito.when(mockMavenProperties.getProperty("maven.compiler.target")).thenReturn("11");
-    try {
-      mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
-      Assert.fail();
-    } catch (MojoFailureException ex) {
-      Assert.assertEquals(
-          "Jib's default base image uses Java 8, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's target or release version to 1.8 in your build configuration",
-          ex.getMessage());
-    }
+    Assert.assertEquals(11, mavenProjectProperties.getMajorJavaVersion());
   }
 
   @Test
-  public void testValidateBaseImageVersion_releaseProperty() throws MojoFailureException {
-    Mockito.when(mockMavenProperties.getProperty("maven.compiler.release")).thenReturn("8");
-    mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
+  public void testValidateBaseImageVersion_releaseProperty() {
+    Mockito.when(mockMavenProperties.getProperty("maven.compiler.release")).thenReturn("1.8");
+    Assert.assertEquals(8, mavenProjectProperties.getMajorJavaVersion());
 
-    Mockito.when(mockMavenProperties.getProperty("maven.compiler.release")).thenReturn("11.0");
-    try {
-      mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
-      Assert.fail();
-    } catch (MojoFailureException ex) {
-      Assert.assertEquals(
-          "Jib's default base image uses Java 8, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's target or release version to 1.8 in your build configuration",
-          ex.getMessage());
-    }
+    Mockito.when(mockMavenProperties.getProperty("maven.compiler.release")).thenReturn("1.7");
+    Assert.assertEquals(7, mavenProjectProperties.getMajorJavaVersion());
+
+    Mockito.when(mockMavenProperties.getProperty("maven.compiler.release")).thenReturn("9");
+    Assert.assertEquals(9, mavenProjectProperties.getMajorJavaVersion());
   }
 
   @Test
-  public void testValidateBaseImageVersion_compilerPluginTarget() throws MojoFailureException {
+  public void testValidateBaseImageVersion_compilerPluginTarget() {
     Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-compiler-plugin"))
         .thenReturn(mockCompilerPlugin);
     Mockito.when(mockCompilerPlugin.getConfiguration()).thenReturn(compilerPluginConfiguration);
     Mockito.when(compilerPluginConfiguration.getChild("target")).thenReturn(compilerTarget);
-    Mockito.when(compilerTarget.getValue()).thenReturn("1.8");
-    mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
 
-    Mockito.when(compilerTarget.getValue()).thenReturn("11");
-    try {
-      mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
-      Assert.fail();
-    } catch (MojoFailureException ex) {
-      Assert.assertEquals(
-          "Jib's default base image uses Java 8, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's target or release version to 1.8 in your build configuration",
-          ex.getMessage());
-    }
+    Mockito.when(compilerTarget.getValue()).thenReturn("1.8");
+    Assert.assertEquals(8, mavenProjectProperties.getMajorJavaVersion());
+
+    Mockito.when(compilerTarget.getValue()).thenReturn("1.6");
+    Assert.assertEquals(6, mavenProjectProperties.getMajorJavaVersion());
+
+    Mockito.when(compilerTarget.getValue()).thenReturn("13");
+    Assert.assertEquals(13, mavenProjectProperties.getMajorJavaVersion());
   }
 
   @Test
-  public void testValidateBaseImageVersion_compilerPluginRelease() throws MojoFailureException {
+  public void testValidateBaseImageVersion_compilerPluginRelease() {
     Mockito.when(mockMavenProject.getPlugin("org.apache.maven.plugins:maven-compiler-plugin"))
         .thenReturn(mockCompilerPlugin);
     Mockito.when(mockCompilerPlugin.getConfiguration()).thenReturn(compilerPluginConfiguration);
     Mockito.when(compilerPluginConfiguration.getChild("release")).thenReturn(compilerRelease);
-    Mockito.when(compilerRelease.getValue()).thenReturn("1.8");
-    mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
 
-    Mockito.when(compilerRelease.getValue()).thenReturn("11");
-    try {
-      mavenProjectProperties.validateAgainstDefaultBaseImageVersion(null);
-      Assert.fail();
-    } catch (MojoFailureException ex) {
-      Assert.assertEquals(
-          "Jib's default base image uses Java 8, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's target or release version to 1.8 in your build configuration",
-          ex.getMessage());
-    }
+    Mockito.when(compilerRelease.getValue()).thenReturn("1.8");
+    Assert.assertEquals(8, mavenProjectProperties.getMajorJavaVersion());
+
+    Mockito.when(compilerRelease.getValue()).thenReturn("10");
+    Assert.assertEquals(10, mavenProjectProperties.getMajorJavaVersion());
+
+    Mockito.when(compilerRelease.getValue()).thenReturn("13");
+    Assert.assertEquals(13, mavenProjectProperties.getMajorJavaVersion());
   }
 }
