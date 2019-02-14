@@ -64,7 +64,7 @@ gcloud builds submit --config cloudbuild-jib-gradle.yaml helloworld-sample
 
 ## Speeding up your build
 
-By default, Google Cloud Build does not cache anything across builds. However, you can [use Google Cloud Storage to cache files](https://cloud.google.com/cloud-build/docs/speeding-up-builds) across builds to speed up subsequent builds.
+By default, Google Cloud Build does not cache anything across builds. However, you can [use Google Cloud Storage to cache files](https://cloud.google.com/cloud-build/docs/speeding-up-builds) across builds to potentially speed up subsequent builds. Note that this may not necessarily speed up your build since it involves sending cache data to and from [Google Cloud Storage](https://cloud.google.com/storage).
 
 First, [create a Google Cloud Storage bucket](https://cloud.google.com/storage/docs/creating-buckets) to use for storing the cache files.
 
