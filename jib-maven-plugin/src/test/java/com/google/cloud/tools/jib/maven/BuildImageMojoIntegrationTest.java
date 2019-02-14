@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -93,7 +94,8 @@ public class BuildImageMojoIntegrationTest {
   }
 
   private static boolean isJava11RuntimeOrHigher() {
-    return Integer.valueOf(System.getProperty("java.version").split("\\.")[0]) >= 11;
+    Iterable<String> split = Splitter.on(".").split(System.getProperty("java.version"));
+    return Integer.valueOf(split.iterator().next()) >= 11;
   }
 
   /**
@@ -360,10 +362,9 @@ public class BuildImageMojoIntegrationTest {
       throws DigestException, IOException, InterruptedException {
     Assume.assumeTrue(isJava11RuntimeOrHigher());
 
-    String targetImage = getGcrImageReference("simpleimage:maven");
     try {
       buildAndRun(
-          simpleTestProject.getProjectRoot(), targetImage, "pom-java11-incompatible.xml", false);
+          simpleTestProject.getProjectRoot(), "willnotbuild", "pom-java11-incompatible.xml", false);
       Assert.fail();
     } catch (VerificationException ex) {
       Assert.assertThat(

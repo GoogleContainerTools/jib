@@ -82,7 +82,9 @@ public class DefaultTargetProjectIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\n",
         JibRunHelper.buildToDockerDaemonAndRun(
-            defaultTargetTestProject, "default-target-name:default-target-version"));
+            defaultTargetTestProject,
+            "default-target-name:default-target-version",
+            "build.gradle"));
     assertDockerInspect("default-target-name:default-target-version");
   }
 }
