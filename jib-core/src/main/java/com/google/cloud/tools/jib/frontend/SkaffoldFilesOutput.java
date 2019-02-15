@@ -17,19 +17,45 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Builds a JSON string containing files and directories for <a
- * href="https://github.com/GoogleContainerTools/skaffold">Skaffold</a> to watch.
+ * Builds a JSON string containing files and directories that <a
+ * href="https://github.com/GoogleContainerTools/skaffold">Skaffold</a> should watch for changes
+ * (and consequently trigger rebuilds).
+ *
+ * <p>{@code buildFiles} consist of build definitions. Changes in these files indicate that the
+ * project structure may have changed, so Skaffold will refresh the file watch list when this
+ * happens.
+ *
+ * <p>{@code inputs} consist of source/resource directories. Skaffold will trigger a rebuild when
+ * changes are detected in these files.
+ *
+ * <p>{@code ignore} consists of files that the Skaffold file watcher should not watch.
+ *
+ * <p>Example:
+ *
+ * <pre>{@code
+ * {
+ *   "buildFiles": [
+ *     "buildFile1",
+ *     "buildFile2"
+ *   ],
+ *   "inputs": [
+ *     "src/main/java/",
+ *     "src/main/resources/"
+ *   ],
+ *   "ignore": [
+ *     "pathToIgnore"
+ *   ]
+ * }
+ * }</pre>
  */
 public class SkaffoldFilesOutput {
 
@@ -79,10 +105,6 @@ public class SkaffoldFilesOutput {
    * @throws IOException if writing out the JSON fails
    */
   public String getJsonString() throws IOException {
-    Blob blob = JsonTemplateMapper.toBlob(skaffoldFilesTemplate);
-    try (OutputStream outputStream = new ByteArrayOutputStream()) {
-      blob.writeTo(outputStream);
-      return outputStream.toString();
-    }
+    return Blobs.writeToString(JsonTemplateMapper.toBlob(skaffoldFilesTemplate));
   }
 }
