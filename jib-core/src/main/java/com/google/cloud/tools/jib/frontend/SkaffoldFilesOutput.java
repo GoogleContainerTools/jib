@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.skaffold.json;
+package com.google.cloud.tools.jib.frontend;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.blob.Blob;
@@ -27,29 +27,34 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class SkaffoldFilesTemplate implements JsonTemplate {
+public class SkaffoldFilesOutput {
 
-  private final List<String> buildFiles = new ArrayList<>();
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private static class SkaffoldFilesTemplate implements JsonTemplate {
 
-  private final List<String> inputs = new ArrayList<>();
+    private final List<String> buildFiles = new ArrayList<>();
 
-  private final List<String> ignore = new ArrayList<>();
+    private final List<String> inputs = new ArrayList<>();
+
+    private final List<String> ignore = new ArrayList<>();
+  }
+
+  private final SkaffoldFilesTemplate skaffoldFilesTemplate = new SkaffoldFilesTemplate();
 
   public void addBuildFile(Path buildFile) {
-    buildFiles.add(buildFile.toString());
+    skaffoldFilesTemplate.buildFiles.add(buildFile.toString());
   }
 
   public void addInput(Path inputFile) {
-    inputs.add(inputFile.toString());
+    skaffoldFilesTemplate.inputs.add(inputFile.toString());
   }
 
   public void addIgnore(Path ignoreFile) {
-    ignore.add(ignoreFile.toString());
+    skaffoldFilesTemplate.ignore.add(ignoreFile.toString());
   }
 
   public String getJsonString() throws IOException {
-    Blob blob = JsonTemplateMapper.toBlob(this);
+    Blob blob = JsonTemplateMapper.toBlob(skaffoldFilesTemplate);
     try (OutputStream outputStream = new ByteArrayOutputStream()) {
       blob.writeTo(outputStream);
       return outputStream.toString();
