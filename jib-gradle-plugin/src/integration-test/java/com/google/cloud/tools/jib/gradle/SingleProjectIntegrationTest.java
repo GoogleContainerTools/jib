@@ -204,7 +204,7 @@ public class SingleProjectIntegrationTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "The base image uses Java 8, but project is using Java 11, perhaps you should "
+              "Your project is using Java 11 but the base image is for Java 8, perhaps you should "
                   + "configure a Java 11-compatible base image using the 'jib.from.image' "
                   + "parameter, or set targetCompatibility = 8 or below in your build "
                   + "configuration"));

@@ -87,10 +87,10 @@ public class HelpfulSuggestions {
   private static String forIncompatibleBaseImageJavaVesion(
       int baseImageMajorJavaVersion, int projectMajorJavaVersion, String parameterInstructions) {
     return suggest(
-        "The base image uses Java "
-            + baseImageMajorJavaVersion
-            + ", but project is using Java "
-            + projectMajorJavaVersion,
+        "Your project is using Java "
+            + projectMajorJavaVersion
+            + " but the base image is for Java "
+            + baseImageMajorJavaVersion,
         "configure a Java "
             + projectMajorJavaVersion
             + "-compatible base image "

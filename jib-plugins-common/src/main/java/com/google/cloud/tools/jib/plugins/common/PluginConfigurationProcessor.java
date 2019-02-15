@@ -477,42 +477,41 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Checks whether or not the known default Java 8 distroless base image is being used. Checking
-   * against only images known to Java 8, the method may to return {@code false} for Java 8
-   * distroless unknown to it.
+   * Checks if the given image is a known Java 8 distroless image. Checking against only images
+   * known to Java 8, the method may to return {@code false} for Java 8 distroless unknown to it.
    *
-   * @param baseImage the configured base image
-   * @return {@code true} if the base image is equal to one of the known Java 8 distroless images,
-   *     else {@code false}
+   * @param imageReference the image reference
+   * @return {@code true} if the image is equal to one of the known Java 8 distroless images, else
+   *     {@code false}
    */
-  private static boolean isKnownDistrolessJava8Image(String baseImage) {
-    // TODO: drop "latest" and the likes once it no longer points to Java 8.
-    return baseImage.equals("gcr.io/distroless/java")
-        || baseImage.equals("gcr.io/distroless/java:latest")
-        || baseImage.equals("gcr.io/distroless/java:debug")
-        || baseImage.equals("gcr.io/distroless/java:8")
-        || baseImage.equals("gcr.io/distroless/java:8-debug")
-        || baseImage.equals("gcr.io/distroless/java/jetty")
-        || baseImage.equals("gcr.io/distroless/java/jetty:debug")
-        || baseImage.equals("gcr.io/distroless/java/jetty:java8")
-        || baseImage.equals("gcr.io/distroless/java/jetty:java8-debug");
+  private static boolean isKnownDistrolessJava8Image(String imageReference) {
+    // TODO: drop "latest", "debug", and the like once they no longer point to Java 8.
+    return imageReference.equals("gcr.io/distroless/java")
+        || imageReference.equals("gcr.io/distroless/java:latest")
+        || imageReference.equals("gcr.io/distroless/java:debug")
+        || imageReference.equals("gcr.io/distroless/java:8")
+        || imageReference.equals("gcr.io/distroless/java:8-debug")
+        || imageReference.equals("gcr.io/distroless/java/jetty")
+        || imageReference.equals("gcr.io/distroless/java/jetty:latest")
+        || imageReference.equals("gcr.io/distroless/java/jetty:debug")
+        || imageReference.equals("gcr.io/distroless/java/jetty:java8")
+        || imageReference.equals("gcr.io/distroless/java/jetty:java8-debug");
   }
 
   /**
-   * Checks whether or not the known default Java 11 distroless base image is being used. Checking
-   * against only images known to Java 11, the method may to return {@code false} for Java 11
-   * distroless unknown to it.
+   * Checks if the given image is a known Java 11 distroless image. Checking against only images
+   * known to Java 11, the method may to return {@code false} for Java 11 distroless unknown to it.
    *
-   * @param baseImage the configured base image
-   * @return {@code true} if the base image is equal to one of the known Java 11 distroless images,
-   *     else {@code false}
+   * @param imageReference the image reference
+   * @return {@code true} if the image is equal to one of the known Java 11 distroless images, else
+   *     {@code false}
    */
-  private static boolean isKnownDistrolessJava11Image(String baseImage) {
-    // TODO: add "latest" and the likes once it points to Java 11.
-    return baseImage.equals("gcr.io/distroless/java:11")
-        || baseImage.equals("gcr.io/distroless/java:11-debug")
-        || baseImage.equals("gcr.io/distroless/java/jetty:java11")
-        || baseImage.equals("gcr.io/distroless/java/jetty:java11-debug");
+  private static boolean isKnownDistrolessJava11Image(String imageReference) {
+    // TODO: add "latest", "debug", and the like to this list once they point to Java 11.
+    return imageReference.equals("gcr.io/distroless/java:11")
+        || imageReference.equals("gcr.io/distroless/java:11-debug")
+        || imageReference.equals("gcr.io/distroless/java/jetty:java11")
+        || imageReference.equals("gcr.io/distroless/java/jetty:java11-debug");
   }
 
   private final JibContainerBuilder jibContainerBuilder;
