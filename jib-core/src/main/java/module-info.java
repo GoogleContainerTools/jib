@@ -6,5 +6,5 @@ module com.google.cloud.tools.jib {
   requires com.google.api.client;
   requires com.google.common;
   requires org.apache.commons.compress;
-  requires javassist;
+  requires org.objectweb.asm;
 }

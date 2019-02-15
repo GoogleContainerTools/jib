@@ -18,9 +18,6 @@ targetCompatibility = JavaVersion.VERSION_11
 compileJava.options.encoding = 'UTF-8'
 
 repositories {
-  flatDir {
-    dirs 'mockito-libs' // to load Mockito 2.23.17 built locally from source
-  }
   mavenCentral()
 }
 
@@ -45,16 +42,8 @@ dependencies {
   implementation 'org.ow2.asm:asm:7.0'
 
   testImplementation 'junit:junit:4.12'
+  testImplementation 'org.mockito:mockito-core:2.24.0'
   testImplementation 'org.slf4j:slf4j-api:1.7.25'
-
-  // 2.23.17 manually compiled from source. The JAR is at
-  // mockito-libs/mockito-core-2.23.17.jar.
-  testImplementation 'org.mockito:mockito-core:2.23.17'
-  // I had to add these three when using mockito as an unnamed module.
-  // https://github.com/mockito/mockito/issues/1483#issuecomment-454889589
-  testImplementation 'net.bytebuddy:byte-buddy:1.9.7'
-  testImplementation 'net.bytebuddy:byte-buddy-agent:1.9.7'
-  testImplementation 'org.objenesis:objenesis:3.0.1'
 
   // NullAway errorprone plugin
   annotationProcessor 'com.uber.nullaway:nullaway:0.6.4'
@@ -105,39 +94,36 @@ test {
   inputs.property("moduleName", moduleName)
   doFirst {
     jvmArgs = [
-        // For now, have Mockito as an unnamed module.
-        '--module-path', classpath.minus(files('mockito-libs/mockito-core-2.23.17.jar')).asPath,
+        '--module-path', classpath.asPath,
         '--add-modules', 'ALL-MODULE-PATH',
         '--add-reads', "$moduleName=junit",
         '--patch-module', "$moduleName=" + files(sourceSets.test.java.outputDir).asPath,
 
         // Try to open or export whenever running the test complains. Need to clean up or find a proper way.
-
-        // ALL-UNNAMED probabaly not needed when having Mockito as a module
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.api=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.frontend=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.blob=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.filesystem=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.configuration=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.configuration.credentials=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.http=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.hash=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.cache=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.image=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.image.json=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.tar=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.docker=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.docker.json=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.registry=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.registry.credentials=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.global=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.json=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.builder=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.builder.steps=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.event=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.event.events=junit,org.mockito,ALL-UNNAMED',
-        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.event.progress=junit,org.mockito,ALL-UNNAMED',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.api=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.frontend=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.blob=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.filesystem=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.configuration=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.configuration.credentials=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.http=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.hash=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.cache=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.image=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.image.json=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.tar=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.docker=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.docker.json=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.registry=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.registry.credentials=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.global=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.json=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.builder=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.builder.steps=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.event=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.event.events=junit,org.mockito',
+        '--add-opens', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.event.progress=junit,org.mockito',
 
         '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.api=junit,org.mockito',
         '--add-exports', 'com.google.cloud.tools.jib/com.google.cloud.tools.jib.frontend=junit,org.mockito',
@@ -181,8 +167,7 @@ test {
     // resource output directory as a simple workaround. (If we did not have "getResource()", we
     // would clear the classpath instead.) Should reconsider this when the Gradle test runner is
     // fully modularized or we find a better solution.
-    classpath = files(sourceSets.test.output.resourcesDir,
-        'mockito-libs/mockito-core-2.23.17.jar') // For now, have Mockito as an unnamed module.
+    classpath = files(sourceSets.test.output.resourcesDir)
   }
 }
 
