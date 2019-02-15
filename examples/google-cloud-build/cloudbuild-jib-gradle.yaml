@@ -2,18 +2,37 @@ substitutions:
   _IMAGE_NAME: my-image # Configure this
 
 steps:
+
+- # Uses the Cloud Builder Gradle image since it is cached.
+  name: gcr.io/cloud-builders/gradle
+  dir: /root
+  entrypoint: bash
+  args:
+  - -c
+  - # Links the Docker config to /root/.docker/config.json so Jib picks it up.
+    # Note that this is only a temporary workaround.
+    # See https://github.com/GoogleContainerTools/jib/pull/1479.
+    |
+    mkdir .docker &&
+    ln -s $$HOME/.docker/config.json .docker/config.json
+
+  volumes:
+  - name: user.home
+    path: /root
+
 - # Uses the Cloud Builders Gradle image.
   name: gcr.io/cloud-builders/gradle
   args:
   # Uncomment for projects that do not include Jib as a plugin.
-  # - --init-script=auto-jib.gradle
+#  - --init-script=auto-jib.gradle
 
   # Runs the Jib build.
   # For advanced customizations, configure the plugin in the build.gradle.
   - jib
 
-  # This is necessary for Jib to find the credentials to use to push to your GCR repository.
-  - -Duser.home=/builder/home
-
   # Sets the target image reference to push to.
   - --image=gcr.io/${PROJECT_ID}/${_IMAGE_NAME}
+
+  volumes:
+  - name: user.home
+    path: /root

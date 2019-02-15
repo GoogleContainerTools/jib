@@ -8,7 +8,7 @@ steps:
 - waitFor: ['-']
   name: gcr.io/cloud-builders/gsutil
   dir: /root
-  entrypoint: /bin/bash
+  entrypoint: bash
   args:
   - -c
   - |
@@ -17,12 +17,12 @@ steps:
       tar -xzf /tmp/m2-cache.tar.gz
     ) || echo 'Cache not found'
   volumes:
-  - name: maven-home
+  - name: user.home
     path: /root
 - waitFor: ['-']
   name: gcr.io/cloud-builders/gsutil
   dir: /root
-  entrypoint: /bin/bash
+  entrypoint: bash
   args:
   - -c
   - |
@@ -31,7 +31,7 @@ steps:
       tar -xzf /tmp/jib-cache.tar.gz
     ) || echo 'Cache not found'
   volumes:
-  - name: maven-home
+  - name: user.home
     path: /root
 
 - waitFor: ['-']
@@ -44,7 +44,7 @@ steps:
     mkdir .docker &&
     ln -s $$HOME/.docker/config.json .docker/config.json
   volumes:
-  - name: maven-home
+  - name: user.home
     path: /root
 
 # Runs the Jib build.
@@ -55,7 +55,7 @@ steps:
   - com.google.cloud.tools:jib-maven-plugin:build
   - -Dimage=gcr.io/${PROJECT_ID}/${_IMAGE_NAME}
   volumes:
-  - name: maven-home
+  - name: user.home
     path: /root
 
 # Saves the files to the GCS cache.
@@ -63,7 +63,7 @@ steps:
   - jib-build
   name: gcr.io/cloud-builders/gsutil
   dir: /root
-  entrypoint: /bin/bash
+  entrypoint: bash
   # Caches the local Maven repository.
   args:
   - -c
@@ -71,13 +71,13 @@ steps:
     tar -czf /tmp/m2-cache.tar.gz .m2 &&
     gsutil cp /tmp/m2-cache.tar.gz gs://${_GCS_CACHE_BUCKET}/m2-cache.tar.gz
   volumes:
-  - name: maven-home
+  - name: user.home
     path: /root
 - waitFor:
   - jib-build
   name: gcr.io/cloud-builders/gsutil
   dir: /root
-  entrypoint: /bin/bash
+  entrypoint: bash
   # Caches the Jib cache.
   args:
   - -c
@@ -85,5 +85,5 @@ steps:
     tar -czf /tmp/jib-cache.tar.gz .cache &&
     gsutil cp /tmp/jib-cache.tar.gz gs://${_GCS_CACHE_BUCKET}/jib-cache.tar.gz
   volumes:
-  - name: maven-home
+  - name: user.home
     path: /root
