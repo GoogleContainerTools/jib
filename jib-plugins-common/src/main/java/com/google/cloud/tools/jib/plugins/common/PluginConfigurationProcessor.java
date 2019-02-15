@@ -273,7 +273,8 @@ public class PluginConfigurationProcessor {
    * @param rawConfiguration raw configuration data
    * @param projectProperties used for providing additional information
    * @return the base image
-   * @throws IncompatibleBaseImageJavaVersionException
+   * @throws IncompatibleBaseImageJavaVersionException when the Java version in the base image is
+   *     incompatible with the Java version of the application to be containerized
    */
   @VisibleForTesting
   static String getBaseImage(RawConfiguration rawConfiguration, ProjectProperties projectProperties)
@@ -283,9 +284,10 @@ public class PluginConfigurationProcessor {
     if (rawConfiguration.getFromImage().isPresent()) {
       String baseImage = rawConfiguration.getFromImage().get();
 
-      if (knownDistrolessJava8Image(baseImage) && javaVersion > 8) {
+      if (isKnownDistrolessJava8Image(baseImage) && javaVersion > 8) {
         throw new IncompatibleBaseImageJavaVersionException(8, javaVersion);
-      } else if (knownDistrolessJava11Image(baseImage) && javaVersion > 11) {
+      }
+      if (isKnownDistrolessJava11Image(baseImage) && javaVersion > 11) {
         throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
       }
       return baseImage;
@@ -294,13 +296,14 @@ public class PluginConfigurationProcessor {
     // Base image not configured; auto-pick Distroless.
     if (projectProperties.isWarProject()) {
       return "gcr.io/distroless/java/jetty";
-    } else if (javaVersion <= 8) {
-      return "gcr.io/distroless/java:8";
-    } else if (javaVersion <= 11) {
-      return "gcr.io/distroless/java:11";
-    } else {
-      throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
     }
+    if (javaVersion <= 8) {
+      return "gcr.io/distroless/java:8";
+    }
+    if (javaVersion <= 11) {
+      return "gcr.io/distroless/java:11";
+    }
+    throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
   }
 
   /**
@@ -478,21 +481,21 @@ public class PluginConfigurationProcessor {
    * against only images known to Java 8, the method may to return {@code false} for Java 8
    * distroless unknown to it.
    *
-   * @param baseImageConfiguration the configured base image
+   * @param baseImage the configured base image
    * @return {@code true} if the base image is equal to one of the known Java 8 distroless images,
    *     else {@code false}
    */
-  private static boolean knownDistrolessJava8Image(String baseImageConfiguration) {
+  private static boolean isKnownDistrolessJava8Image(String baseImage) {
     // TODO: drop "latest" and the likes once it no longer points to Java 8.
-    return baseImageConfiguration.equals("gcr.io/distroless/java")
-        || baseImageConfiguration.equals("gcr.io/distroless/java:latest")
-        || baseImageConfiguration.equals("gcr.io/distroless/java:debug")
-        || baseImageConfiguration.equals("gcr.io/distroless/java:8")
-        || baseImageConfiguration.equals("gcr.io/distroless/java:8-debug")
-        || baseImageConfiguration.equals("gcr.io/distroless/java/jetty")
-        || baseImageConfiguration.equals("gcr.io/distroless/java/jetty:debug")
-        || baseImageConfiguration.equals("gcr.io/distroless/java/jetty:java8")
-        || baseImageConfiguration.equals("gcr.io/distroless/java/jetty:java8-debug");
+    return baseImage.equals("gcr.io/distroless/java")
+        || baseImage.equals("gcr.io/distroless/java:latest")
+        || baseImage.equals("gcr.io/distroless/java:debug")
+        || baseImage.equals("gcr.io/distroless/java:8")
+        || baseImage.equals("gcr.io/distroless/java:8-debug")
+        || baseImage.equals("gcr.io/distroless/java/jetty")
+        || baseImage.equals("gcr.io/distroless/java/jetty:debug")
+        || baseImage.equals("gcr.io/distroless/java/jetty:java8")
+        || baseImage.equals("gcr.io/distroless/java/jetty:java8-debug");
   }
 
   /**
@@ -500,16 +503,16 @@ public class PluginConfigurationProcessor {
    * against only images known to Java 11, the method may to return {@code false} for Java 11
    * distroless unknown to it.
    *
-   * @param baseImageConfiguration the configured base image
+   * @param baseImage the configured base image
    * @return {@code true} if the base image is equal to one of the known Java 11 distroless images,
    *     else {@code false}
    */
-  private static boolean knownDistrolessJava11Image(String baseImageConfiguration) {
+  private static boolean isKnownDistrolessJava11Image(String baseImage) {
     // TODO: add "latest" and the likes once it points to Java 11.
-    return baseImageConfiguration.equals("gcr.io/distroless/java:11")
-        || baseImageConfiguration.equals("gcr.io/distroless/java:11-debug")
-        || baseImageConfiguration.equals("gcr.io/distroless/java/jetty:java11")
-        || baseImageConfiguration.equals("gcr.io/distroless/java/jetty:java11-debug");
+    return baseImage.equals("gcr.io/distroless/java:11")
+        || baseImage.equals("gcr.io/distroless/java:11-debug")
+        || baseImage.equals("gcr.io/distroless/java/jetty:java11")
+        || baseImage.equals("gcr.io/distroless/java/jetty:java11-debug");
   }
 
   private final JibContainerBuilder jibContainerBuilder;

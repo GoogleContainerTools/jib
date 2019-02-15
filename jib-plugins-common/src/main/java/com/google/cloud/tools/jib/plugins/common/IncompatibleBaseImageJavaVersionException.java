@@ -16,6 +16,11 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+/**
+ * Exception when the Java version in the base image is incompatible with the Java version of the
+ * application to be containerized. For example, when the project is Java 11 but the base image is
+ * {@code gcr.io/distroless/java:8}.
+ */
 public class IncompatibleBaseImageJavaVersionException extends Exception {
 
   private final int baseImageMajorJavaVersion;
