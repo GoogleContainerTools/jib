@@ -21,6 +21,7 @@ import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
 
+/** Tests for {@link SkaffoldFilesOutput}. */
 public class SkaffoldFilesOutputTest {
 
   @Test

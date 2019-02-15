@@ -27,6 +27,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Builds a JSON string containing files and directories for <a
+ * href="https://github.com/GoogleContainerTools/skaffold">Skaffold</a> to watch.
+ */
 public class SkaffoldFilesOutput {
 
   @JsonIgnoreProperties(ignoreUnknown = true)
@@ -41,18 +45,39 @@ public class SkaffoldFilesOutput {
 
   private final SkaffoldFilesTemplate skaffoldFilesTemplate = new SkaffoldFilesTemplate();
 
+  /**
+   * Adds a build file.
+   *
+   * @param buildFile the path to the file
+   */
   public void addBuildFile(Path buildFile) {
     skaffoldFilesTemplate.buildFiles.add(buildFile.toString());
   }
 
+  /**
+   * Adds an input directory.
+   *
+   * @param inputFile the path to the directory
+   */
   public void addInput(Path inputFile) {
     skaffoldFilesTemplate.inputs.add(inputFile.toString());
   }
 
+  /**
+   * Adds an ignored file.
+   *
+   * @param ignoreFile the path to the file
+   */
   public void addIgnore(Path ignoreFile) {
     skaffoldFilesTemplate.ignore.add(ignoreFile.toString());
   }
 
+  /**
+   * Gets the added files in JSON format.
+   *
+   * @return the files in a JSON string
+   * @throws IOException if writing out the JSON fails
+   */
   public String getJsonString() throws IOException {
     Blob blob = JsonTemplateMapper.toBlob(skaffoldFilesTemplate);
     try (OutputStream outputStream = new ByteArrayOutputStream()) {
