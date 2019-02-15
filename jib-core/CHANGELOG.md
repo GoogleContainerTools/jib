@@ -5,9 +5,30 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Adds support for configuring volumes ([#1121](https://github.com/GoogleContainerTools/jib/issues/1121))
-- Adds `JavaContainerBuilder` for building opinionated containers for Java applications ([#1212](https://github.com/GoogleContainerTools/jib/issues/1212))
+- `JavaContainerBuilder#setAppRoot()` and `JavaContainerBuilder#fromDistrolessJetty()` for building WAR containers ([#1464](https://github.com/GoogleContainerTools/jib/issues/1464))
 
 ### Changed
 
 ### Fixed
+
+## 0.1.2
+
+### Added
+
+- `ProgressEvent#getBuildStepType` method to get which step in the build process a progress event corresponds to ([#1449](https://github.com/GoogleContainerTools/jib/pull/1449))
+- `LayerCountEvent` that is dispatched at the beginning of certain pull/build/push build steps to indicate the number of layers being processed ([#1461](https://github.com/GoogleContainerTools/jib/pull/1461))
+
+### Changed
+
+- `JibContainerBuilder#containerize()` throws multiple sub-types of `RegistryException` rather than wrapping them in an `ExecutionException` ([#1440](https://github.com/GoogleContainerTools/jib/issues/1440))
+
+### Fixed
+
+- `MainClassFinder` failure when main method is defined using varargs (i.e. `public static void main(String... args)`) ([#1456](https://github.com/GoogleContainerTools/jib/issues/1456))
+
+## 0.1.1
+
+### Added
+
+- Adds support for configuring volumes ([#1121](https://github.com/GoogleContainerTools/jib/issues/1121))
+- Adds `JavaContainerBuilder` for building opinionated containers for Java applications ([#1212](https://github.com/GoogleContainerTools/jib/issues/1212))

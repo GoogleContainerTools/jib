@@ -50,7 +50,7 @@ public class JsonToImageTranslatorTest {
       throws IOException, LayerPropertyNotFoundException, DigestException, URISyntaxException {
     // Loads the JSON string.
     Path jsonFile =
-        Paths.get(getClass().getClassLoader().getResource("json/v21manifest.json").toURI());
+        Paths.get(getClass().getClassLoader().getResource("core/json/v21manifest.json").toURI());
 
     // Deserializes into a manifest JSON object.
     V21ManifestTemplate manifestTemplate =
@@ -70,14 +70,14 @@ public class JsonToImageTranslatorTest {
   public void testToImage_v22()
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
           DigestException, URISyntaxException, BadContainerConfigurationFormatException {
-    testToImage_buildable("json/v22manifest.json", V22ManifestTemplate.class);
+    testToImage_buildable("core/json/v22manifest.json", V22ManifestTemplate.class);
   }
 
   @Test
   public void testToImage_oci()
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
           DigestException, URISyntaxException, BadContainerConfigurationFormatException {
-    testToImage_buildable("json/ocimanifest.json", OCIManifestTemplate.class);
+    testToImage_buildable("core/json/ocimanifest.json", OCIManifestTemplate.class);
   }
 
   @Test
@@ -164,7 +164,8 @@ public class JsonToImageTranslatorTest {
           DigestException, URISyntaxException, BadContainerConfigurationFormatException {
     // Loads the container configuration JSON.
     Path containerConfigurationJsonFile =
-        Paths.get(getClass().getClassLoader().getResource("json/containerconfig.json").toURI());
+        Paths.get(
+            getClass().getClassLoader().getResource("core/json/containerconfig.json").toURI());
     ContainerConfigurationTemplate containerConfigurationTemplate =
         JsonTemplateMapper.readJsonFromFile(
             containerConfigurationJsonFile, ContainerConfigurationTemplate.class);

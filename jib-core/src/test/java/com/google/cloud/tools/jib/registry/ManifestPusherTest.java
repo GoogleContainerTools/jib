@@ -61,7 +61,7 @@ public class ManifestPusherTest {
 
   @Before
   public void setUp() throws URISyntaxException, IOException {
-    v22manifestJsonFile = Paths.get(Resources.getResource("json/v22manifest.json").toURI());
+    v22manifestJsonFile = Paths.get(Resources.getResource("core/json/v22manifest.json").toURI());
     fakeManifestTemplate =
         JsonTemplateMapper.readJsonFromFile(v22manifestJsonFile, V22ManifestTemplate.class);
 

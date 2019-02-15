@@ -26,7 +26,7 @@
         <dropwizard-template-config.version>1.5.0</dropwizard-template-config.version>
 
         <jib.container.appRoot>/app</jib.container.appRoot>
-        <jib-maven-plugin.version>1.0.0-rc2</jib-maven-plugin.version>
+        <jib-maven-plugin.version>1.0.0</jib-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -70,7 +70,7 @@
                             <port>8080</port>
                         </ports>
 
-                        <!-- good defaults intended for containers -->
+                        <!-- good defaults intended for Java 8 containers -->
                         <jvmFlags>
                             <jmxFlag>-server</jmxFlag>
                             <jmxFlag>-Djava.awt.headless=true</jmxFlag>
