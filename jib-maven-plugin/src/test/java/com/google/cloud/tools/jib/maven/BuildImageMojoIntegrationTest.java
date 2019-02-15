@@ -370,7 +370,7 @@ public class BuildImageMojoIntegrationTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "The base image uses Java 8, but project is using Java 11; perhaps you should "
+              "The base image uses Java 8, but project is using Java 11, perhaps you should "
                   + "configure a Java 11-compatible base image using the '<from><image>' "
                   + "parameter, or set maven-compiler-plugin's '<target>' or '<release>' version "
                   + "to 8 or below in your build configuration"));

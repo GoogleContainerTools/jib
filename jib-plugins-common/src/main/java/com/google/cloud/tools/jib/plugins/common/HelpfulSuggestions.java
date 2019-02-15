@@ -54,10 +54,25 @@ public class HelpfulSuggestions {
     return suggest(messagePrefix, "add a `mainClass` configuration to " + pluginName);
   }
 
-  public static String forDockerContextInsecureRecursiveDelete(
-      String messagePrefix, String directory) {
-    return suggest(
-        messagePrefix, "clear " + directory + " manually before creating the Docker context");
+  public static String forIncompatibleBaseImageJavaVesionForGradle(
+      int baseImageMajorJavaVersion, int projectMajorJavaVersion) {
+    return forIncompatibleBaseImageJavaVesion(
+        baseImageMajorJavaVersion,
+        projectMajorJavaVersion,
+        "using the 'jib.from.image' parameter, or set targetCompatibility = "
+            + baseImageMajorJavaVersion
+            + " or below");
+  }
+
+  public static String forIncompatibleBaseImageJavaVesionForMaven(
+      int baseImageMajorJavaVersion, int projectMajorJavaVersion) {
+    return forIncompatibleBaseImageJavaVesion(
+        baseImageMajorJavaVersion,
+        projectMajorJavaVersion,
+        "using the '<from><image>' parameter, or set maven-compiler-plugin's '<target>' or "
+            + "'<release>' version to "
+            + baseImageMajorJavaVersion
+            + " or below");
   }
 
   /**
@@ -67,6 +82,20 @@ public class HelpfulSuggestions {
    */
   public static String suggest(String messagePrefix, String suggestion) {
     return messagePrefix + ", perhaps you should " + suggestion;
+  }
+
+  private static String forIncompatibleBaseImageJavaVesion(
+      int baseImageMajorJavaVersion, int projectMajorJavaVersion, String parameterInstructions) {
+    return suggest(
+        "The base image uses Java "
+            + baseImageMajorJavaVersion
+            + ", but project is using Java "
+            + projectMajorJavaVersion,
+        "configure a Java "
+            + projectMajorJavaVersion
+            + "-compatible base image "
+            + parameterInstructions
+            + " in your build configuration");
   }
 
   private final String messagePrefix;

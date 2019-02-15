@@ -19,10 +19,10 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.security.DigestException;
 import java.time.Instant;
-import org.gradle.internal.impldep.com.google.api.client.repackaged.com.google.common.base.Splitter;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
@@ -183,7 +183,7 @@ public class SingleProjectIntegrationTest {
       throws DigestException, IOException, InterruptedException {
     Assume.assumeTrue(isJava11RuntimeOrHigher());
 
-    String targetImage = "localhost:6000/compleximage:gradle" + System.nanoTime();
+    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n",
         JibRunHelper.buildToDockerDaemonAndRun(
@@ -204,7 +204,7 @@ public class SingleProjectIntegrationTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "The base image uses Java 8, but project is using Java 11; perhaps you should "
+              "The base image uses Java 8, but project is using Java 11, perhaps you should "
                   + "configure a Java 11-compatible base image using the 'jib.from.image' "
                   + "parameter, or set targetCompatibility = 8 or below in your build "
                   + "configuration"));

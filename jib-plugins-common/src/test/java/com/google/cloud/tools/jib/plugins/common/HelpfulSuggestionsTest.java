@@ -64,15 +64,24 @@ public class HelpfulSuggestionsTest {
         "messagePrefix, perhaps you should make sure your credentials for 'targetregistry' are set up correctly",
         TEST_HELPFUL_SUGGESTIONS.forNoCredentialsDefined("targetregistry", "targetrepository"));
     Assert.assertEquals(
-        "messagePrefix, perhaps you should clear directory manually before creating the Docker context",
-        HelpfulSuggestions.forDockerContextInsecureRecursiveDelete("messagePrefix", "directory"));
-    Assert.assertEquals(
         "messagePrefix, perhaps you should add a `mainClass` configuration to plugin",
         HelpfulSuggestions.forMainClassNotFound("messagePrefix", "plugin"));
     Assert.assertEquals(
         "messagePrefix, perhaps you should add a parameter configuration parameter to your buildFile or set the parameter via the commandline (e.g. 'command').",
         HelpfulSuggestions.forToNotConfigured(
             "messagePrefix", "parameter", "buildFile", "command"));
+    Assert.assertEquals(
+        "The base image uses Java 8, but project is using Java 11, perhaps you should "
+            + "configure a Java 11-compatible base image using the 'jib.from.image' "
+            + "parameter, or set targetCompatibility = 8 or below in your build "
+            + "configuration",
+        HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForGradle(8, 11));
+    Assert.assertEquals(
+        "The base image uses Java 8, but project is using Java 11, perhaps you should "
+            + "configure a Java 11-compatible base image using the '<from><image>' "
+            + "parameter, or set maven-compiler-plugin's '<target>' or '<release>' version "
+            + "to 8 or below in your build configuration",
+        HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForMaven(8, 11));
     Assert.assertEquals("messagePrefix", TEST_HELPFUL_SUGGESTIONS.none());
     Assert.assertEquals(
         "messagePrefix, perhaps you should use a registry that supports HTTPS so credentials can be sent safely, or set the 'sendCredentialsOverHttp' system property to true",

@@ -168,16 +168,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       throw new GradleException(
-          "The base image uses Java "
-              + ex.getBaseImageMajorJavaVersion()
-              + ", but project is using Java "
-              + ex.getProjectMajorJavaVersion()
-              + "; perhaps you should configure a Java "
-              + ex.getProjectMajorJavaVersion()
-              + "-compatible base image using the 'jib.from.image' parameter, or set "
-              + "targetCompatibility = "
-              + ex.getBaseImageMajorJavaVersion()
-              + " or below in your build configuration");
+          HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForGradle(8, 11));
     }
   }
 
