@@ -72,7 +72,7 @@ public class SkaffoldFilesOutput {
   private final SkaffoldFilesTemplate skaffoldFilesTemplate = new SkaffoldFilesTemplate();
 
   /**
-   * Adds a build file.
+   * Adds a build file/directory.
    *
    * @param buildFile the path to the file
    */
@@ -81,7 +81,7 @@ public class SkaffoldFilesOutput {
   }
 
   /**
-   * Adds an input directory.
+   * Adds an input file/directory.
    *
    * @param inputFile the path to the directory
    */
@@ -90,7 +90,7 @@ public class SkaffoldFilesOutput {
   }
 
   /**
-   * Adds an ignored file.
+   * Adds an ignored file/directory.
    *
    * @param ignoreFile the path to the file
    */
