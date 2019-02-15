@@ -32,8 +32,8 @@ public class LayerConfigurationTest {
 
   @Test
   public void testAddEntryRecursive() throws IOException, URISyntaxException {
-    Path testDirectory = Paths.get(Resources.getResource("layer").toURI()).toAbsolutePath();
-    Path testFile = Paths.get(Resources.getResource("fileA").toURI());
+    Path testDirectory = Paths.get(Resources.getResource("core/layer").toURI()).toAbsolutePath();
+    Path testFile = Paths.get(Resources.getResource("core/fileA").toURI());
 
     LayerConfiguration layerConfiguration =
         LayerConfiguration.builder()

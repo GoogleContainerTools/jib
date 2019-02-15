@@ -127,7 +127,6 @@ public class DockerClient {
    *
    * @param dockerExecutable path to {@code docker}
    * @param dockerEnvironment environment variables for {@code docker}
-   * @return a new {@link DockerClient}
    */
   private DockerClient(Path dockerExecutable, ImmutableMap<String, String> dockerEnvironment) {
     this(defaultProcessBuilderFactory(dockerExecutable.toString(), dockerEnvironment));

@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
@@ -37,6 +39,9 @@ public class DockerClientParameters {
   @Nullable
   @Optional
   public String getExecutable() {
+    if (System.getProperty(PropertyNames.DOCKER_CLIENT_EXECUTABLE) != null) {
+      return System.getProperty(PropertyNames.DOCKER_CLIENT_EXECUTABLE);
+    }
     return executable == null ? null : executable.toString();
   }
 
@@ -54,6 +59,10 @@ public class DockerClientParameters {
   @Nullable
   @Optional
   public Map<String, String> getEnvironment() {
+    if (System.getProperty(PropertyNames.DOCKER_CLIENT_ENVIRONMENT) != null) {
+      return ConfigurationPropertyValidator.parseMapProperty(
+          System.getProperty(PropertyNames.DOCKER_CLIENT_ENVIRONMENT));
+    }
     return environment;
   }
 

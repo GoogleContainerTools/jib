@@ -270,7 +270,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   AuthConfiguration getBaseImageAuth() {
-    // TODO: handle properties here instead of in ConfigurationPropertyValidator
+    // System/pom properties for auth are handled in ConfigurationPropertyValidator
     return from.auth;
   }
 
@@ -320,7 +320,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   AuthConfiguration getTargetImageAuth() {
-    // TODO: handle properties here instead of in ConfigurationPropertyValidator
+    // System/pom properties for auth are handled in ConfigurationPropertyValidator
     return to.auth;
   }
 
@@ -556,7 +556,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the value of the system property, or null if not defined
    */
   @Nullable
-  private String getProperty(String propertyName) {
+  public String getProperty(String propertyName) {
     if (session != null && session.getSystemProperties().containsKey(propertyName)) {
       return session.getSystemProperties().getProperty(propertyName);
     }

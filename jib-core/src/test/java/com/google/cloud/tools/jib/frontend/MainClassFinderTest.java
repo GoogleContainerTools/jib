@@ -39,7 +39,7 @@ public class MainClassFinderTest {
 
   @Test
   public void testFindMainClass_simple() throws URISyntaxException, IOException {
-    Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/simple").toURI());
+    Path rootDirectory = Paths.get(Resources.getResource("core/class-finder-tests/simple").toURI());
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
@@ -50,7 +50,7 @@ public class MainClassFinderTest {
   @Test
   public void testFindMainClass_subdirectories() throws URISyntaxException, IOException {
     Path rootDirectory =
-        Paths.get(Resources.getResource("class-finder-tests/subdirectories").toURI());
+        Paths.get(Resources.getResource("core/class-finder-tests/subdirectories").toURI());
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
@@ -61,7 +61,8 @@ public class MainClassFinderTest {
 
   @Test
   public void testFindMainClass_noClass() throws URISyntaxException, IOException {
-    Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/no-main").toURI());
+    Path rootDirectory =
+        Paths.get(Resources.getResource("core/class-finder-tests/no-main").toURI());
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertEquals(Type.MAIN_CLASS_NOT_FOUND, mainClassFinderResult.getType());
@@ -69,7 +70,8 @@ public class MainClassFinderTest {
 
   @Test
   public void testFindMainClass_multiple() throws URISyntaxException, IOException {
-    Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/multiple").toURI());
+    Path rootDirectory =
+        Paths.get(Resources.getResource("core/class-finder-tests/multiple").toURI());
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertEquals(
@@ -82,7 +84,8 @@ public class MainClassFinderTest {
 
   @Test
   public void testFindMainClass_extension() throws URISyntaxException, IOException {
-    Path rootDirectory = Paths.get(Resources.getResource("class-finder-tests/extension").toURI());
+    Path rootDirectory =
+        Paths.get(Resources.getResource("core/class-finder-tests/extension").toURI());
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
@@ -93,7 +96,7 @@ public class MainClassFinderTest {
   @Test
   public void testFindMainClass_importedMethods() throws URISyntaxException, IOException {
     Path rootDirectory =
-        Paths.get(Resources.getResource("class-finder-tests/imported-methods").toURI());
+        Paths.get(Resources.getResource("core/class-finder-tests/imported-methods").toURI());
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
@@ -104,7 +107,7 @@ public class MainClassFinderTest {
   @Test
   public void testFindMainClass_externalClasses() throws URISyntaxException, IOException {
     Path rootDirectory =
-        Paths.get(Resources.getResource("class-finder-tests/external-classes").toURI());
+        Paths.get(Resources.getResource("core/class-finder-tests/external-classes").toURI());
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
@@ -115,12 +118,23 @@ public class MainClassFinderTest {
   @Test
   public void testFindMainClass_innerClasses() throws URISyntaxException, IOException {
     Path rootDirectory =
-        Paths.get(Resources.getResource("class-finder-tests/inner-classes").toURI());
+        Paths.get(Resources.getResource("core/class-finder-tests/inner-classes").toURI());
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
     Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
     Assert.assertThat(
         mainClassFinderResult.getFoundMainClass(),
         CoreMatchers.containsString("HelloWorld$InnerClass"));
+  }
+
+  @Test
+  public void testMainClass_varargs() throws URISyntaxException, IOException {
+    Path rootDirectory =
+        Paths.get(Resources.getResource("core/class-finder-tests/varargs").toURI());
+    MainClassFinder.Result mainClassFinderResult =
+        new MainClassFinder(new DirectoryWalker(rootDirectory).walk(), mockEventDispatcher).find();
+    Assert.assertSame(Type.MAIN_CLASS_FOUND, mainClassFinderResult.getType());
+    Assert.assertThat(
+        mainClassFinderResult.getFoundMainClass(), CoreMatchers.containsString("HelloWorld"));
   }
 }

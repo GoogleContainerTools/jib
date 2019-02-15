@@ -36,7 +36,7 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLException;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.conn.HttpHostConnectException;
 
@@ -151,7 +151,7 @@ class RegistryEndpointCaller<T> {
     try {
       return call(url, connectionFactory);
 
-    } catch (SSLPeerUnverifiedException ex) {
+    } catch (SSLException ex) {
       return handleUnverifiableServerException(url);
 
     } catch (HttpHostConnectException ex) {
@@ -176,7 +176,7 @@ class RegistryEndpointCaller<T> {
               "Cannot verify server at " + url + ". Attempting again with no TLS verification."));
       return call(url, getInsecureConnectionFactory());
 
-    } catch (SSLPeerUnverifiedException ex) {
+    } catch (SSLException ex) {
       return fallBackToHttp(url);
     }
   }

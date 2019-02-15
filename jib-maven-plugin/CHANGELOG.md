@@ -5,15 +5,30 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+- Failure to infer main class when main method is defined using varargs (i.e. `public static void main(String... args)`) ([#1456](https://github.com/GoogleContainerTools/jib/issues/1456))
+
+## 1.0.0
+
+### Changed
+
+- Shortened progress bar display - make sure console window is at least 50 characters wide or progress bar display can be messy ([#1361](https://github.com/GoogleContainerTools/jib/issues/1361))
+
+## 1.0.0-rc2
+
+### Added
+
 - Setting proxy credentials (via system properties `http(s).proxyUser` and `http(s).proxyPassword`) is now supported.
 - Maven proxy settings are now supported.
 - Now checks for system properties in pom as well as commandline. ([#1201](https://github.com/GoogleContainerTools/jib/issues/1201))
+- `<dockerClient><executable>` and `<dockerClient><environment>` to set Docker client binary path (defaulting to `docker`) and additional environment variables to apply when running the binary ([#468](https://github.com/GoogleContainerTools/jib/issues/468))
 
 ### Changed
 
 - Java 9+ projects using the default distroless Java 8 base image will now fail to build. ([#1143](https://github.com/GoogleContainerTools/jib/issues/1143))
-
-### Fixed
 
 ## 1.0.0-rc1
 

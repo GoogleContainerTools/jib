@@ -55,7 +55,7 @@ public class ManifestPullerTest {
   @Test
   public void testHandleResponse_v21()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
-    Path v21ManifestFile = Paths.get(Resources.getResource("json/v21manifest.json").toURI());
+    Path v21ManifestFile = Paths.get(Resources.getResource("core/json/v21manifest.json").toURI());
 
     Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from(v21ManifestFile));
     ManifestTemplate manifestTemplate =
@@ -69,7 +69,7 @@ public class ManifestPullerTest {
   @Test
   public void testHandleResponse_v22()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
-    Path v22ManifestFile = Paths.get(Resources.getResource("json/v22manifest.json").toURI());
+    Path v22ManifestFile = Paths.get(Resources.getResource("core/json/v22manifest.json").toURI());
 
     Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from(v22ManifestFile));
     ManifestTemplate manifestTemplate =

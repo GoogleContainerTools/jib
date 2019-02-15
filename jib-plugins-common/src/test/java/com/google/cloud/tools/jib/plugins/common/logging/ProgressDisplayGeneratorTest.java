@@ -25,30 +25,28 @@ import org.junit.Test;
 /** Tests for {@link com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator}. */
 public class ProgressDisplayGeneratorTest {
 
+  private static String getBar(String bar, double value) {
+    return String.format("%s %.1f%% complete", bar, value);
+  }
+
   @Test
   public void testGenerateProgressDisplay_progressBar_0() {
     Assert.assertEquals(
-        Arrays.asList(
-            "Executing tasks:",
-            "[                                                  ] 0.0% complete"),
+        Arrays.asList("Executing tasks:", getBar("[                              ]", 0.0)),
         ProgressDisplayGenerator.generateProgressDisplay(0, Collections.emptyList()));
   }
 
   @Test
   public void testGenerateProgressDisplay_progressBar_50() {
     Assert.assertEquals(
-        Arrays.asList(
-            "Executing tasks:",
-            "[=========================                         ] 50.0% complete"),
+        Arrays.asList("Executing tasks:", getBar("[===============               ]", 50.0)),
         ProgressDisplayGenerator.generateProgressDisplay(0.5, Collections.emptyList()));
   }
 
   @Test
   public void testGenerateProgressDisplay_progressBar_100() {
     Assert.assertEquals(
-        Arrays.asList(
-            "Executing tasks:",
-            "[==================================================] 100.0% complete"),
+        Arrays.asList("Executing tasks:", getBar("[==============================]", 100.0)),
         ProgressDisplayGenerator.generateProgressDisplay(1, Collections.emptyList()));
   }
 
@@ -62,7 +60,7 @@ public class ProgressDisplayGeneratorTest {
     Assert.assertEquals(
         Arrays.asList(
             "Executing tasks:",
-            "[=========================                         ] 50.0% complete",
+            getBar("[===============               ]", 50.0),
             "> childLeftDown",
             "> childRight"),
         ProgressDisplayGenerator.generateProgressDisplay(

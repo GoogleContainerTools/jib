@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
@@ -98,13 +99,10 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
         .addStep(NonBlockingSteps.get(pushContainerConfigurationStep))
         .addStep(NonBlockingSteps.get(buildImageStep))
         .whenAllSucceed(this::afterPushSteps)
-        .get()
-        .get()
         .get();
   }
 
-  private ListenableFuture<ListenableFuture<BuildResult>> afterPushSteps()
-      throws ExecutionException {
+  private BuildResult afterPushSteps() throws ExecutionException, InterruptedException {
     AsyncDependencies dependencies = AsyncDependencies.using(listeningExecutorService);
     for (AsyncStep<PushBlobStep> pushBaseImageLayerStep :
         NonBlockingSteps.get(pushBaseImageLayersStep)) {
@@ -116,13 +114,16 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
     }
     return dependencies
         .addStep(NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep)))
-        .whenAllSucceed(this::afterAllPushed);
+        .whenAllSucceed(this::afterAllPushed)
+        .get();
   }
 
-  private ListenableFuture<BuildResult> afterAllPushed() throws ExecutionException, IOException {
+  private BuildResult afterAllPushed()
+      throws ExecutionException, IOException, InterruptedException {
     ImmutableSet<String> targetImageTags = buildConfiguration.getAllTargetImageTags();
     ProgressEventDispatcher progressEventDispatcher =
-        progressEventDispatcherFactory.create("pushing image manifest", targetImageTags.size());
+        progressEventDispatcherFactory.create(
+            BuildStepType.PUSH_IMAGE, "pushing image manifest", targetImageTags.size());
 
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
@@ -153,7 +154,8 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
             listeningExecutorService.submit(
                 () -> {
                   try (ProgressEventDispatcher ignored2 =
-                      progressEventDispatcherFactory.create("tagging with " + tag, 1)) {
+                      progressEventDispatcherFactory.create(
+                          BuildStepType.PUSH_IMAGE, "tagging with " + tag, 1)) {
                     buildConfiguration
                         .getEventDispatcher()
                         .dispatch(LogEvent.info("Tagging with " + tag + "..."));
@@ -176,7 +178,8 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
                 progressEventDispatcher.close();
                 return result;
               },
-              listeningExecutorService);
+              listeningExecutorService)
+          .get();
     }
   }
 }

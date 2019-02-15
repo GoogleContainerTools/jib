@@ -22,7 +22,7 @@ import org.junit.rules.ExternalResource;
 /** A test helper to resolve artifacts from a local repository in test/resources */
 public class TestRepository extends ExternalResource {
 
-  private static final String TEST_M2 = "testM2";
+  private static final String TEST_M2 = "maven/testM2";
 
   private MojoRule testHarness;
   private ArtifactRepositoryFactory artifactRepositoryFactory;

@@ -56,6 +56,19 @@ public class AnsiLoggerWithFooterTest {
   }
 
   @Test
+  public void testTruncateToMaxWidth() {
+    List<String> lines =
+        Arrays.asList(
+            "this line of text is way too long and will be truncated",
+            "this line will not be truncated");
+    Assert.assertEquals(
+        Arrays.asList(
+            "this line of text is way too long and will be t...",
+            "this line will not be truncated"),
+        AnsiLoggerWithFooter.truncateToMaxWidth(lines));
+  }
+
+  @Test
   public void testNoLifecycle() {
     try {
       new AnsiLoggerWithFooter(ImmutableMap.of(), singleThreadedExecutor);

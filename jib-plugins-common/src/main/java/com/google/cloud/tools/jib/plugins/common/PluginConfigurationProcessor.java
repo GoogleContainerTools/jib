@@ -141,6 +141,7 @@ public class PluginConfigurationProcessor {
         new DefaultEventDispatcher(projectProperties.getEventHandlers());
     boolean isTargetImageCredentialPresent =
         configureCredentialRetrievers(
+            rawConfiguration,
             eventDispatcher,
             targetImage,
             targetImageReference,
@@ -191,6 +192,7 @@ public class PluginConfigurationProcessor {
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     boolean isBaseImageCredentialPresent =
         configureCredentialRetrievers(
+            rawConfiguration,
             eventDispatcher,
             baseImage,
             baseImageReference,
@@ -367,6 +369,7 @@ public class PluginConfigurationProcessor {
 
   // TODO: find a way to reduce the number of arguments.
   private static boolean configureCredentialRetrievers(
+      RawConfiguration rawConfiguration,
       EventDispatcher eventDispatcher,
       RegistryImage registryImage,
       ImageReference imageReference,
@@ -385,8 +388,7 @@ public class PluginConfigurationProcessor {
             usernamePropertyName,
             passwordPropertyName,
             knownAuth,
-            knownAuth.getUsernameDescriptor(),
-            knownAuth.getPasswordDescriptor());
+            rawConfiguration);
     boolean credentialPresent = optionalCredential.isPresent();
     if (optionalCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(

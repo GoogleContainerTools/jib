@@ -1,7 +1,7 @@
 plugins {
     application
     kotlin("jvm") version "1.3.10"
-    id("com.google.cloud.tools.jib") version "0.10.1"
+    id("com.google.cloud.tools.jib") version "1.0.0"
 }
 
 group = "example"
@@ -43,7 +43,7 @@ jib {
         ports = listOf("8080")
         mainClass = main_class
 
-        // good defauls intended for containers
+        // good defauls intended for Java 8 containers
         jvmFlags = listOf(
                 "-server",
                 "-Djava.awt.headless=true",

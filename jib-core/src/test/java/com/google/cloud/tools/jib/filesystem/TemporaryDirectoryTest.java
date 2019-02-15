@@ -32,7 +32,7 @@ public class TemporaryDirectoryTest {
 
   private static void createFilesInDirectory(Path directory)
       throws IOException, URISyntaxException {
-    Path testFilesDirectory = Paths.get(Resources.getResource("layer").toURI());
+    Path testFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     new DirectoryWalker(testFilesDirectory)
         .filterRoot()
         .walk(path -> Files.copy(path, directory.resolve(testFilesDirectory.relativize(path))));
