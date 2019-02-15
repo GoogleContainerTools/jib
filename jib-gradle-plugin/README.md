@@ -1,4 +1,4 @@
-![beta](https://img.shields.io/badge/stability-beta-darkorange.svg)
+![stable](https://img.shields.io/badge/stability-stable-brightgreen.svg)
 [![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com/google/cloud/tools/jib/com.google.cloud.tools.jib.gradle.plugin/maven-metadata.xml.svg?colorB=007ec6&label=gradle)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
@@ -43,7 +43,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '1.0.0-rc2'
+  id 'com.google.cloud.tools.jib' version '1.0.0'
 }
 ```
 
@@ -249,7 +249,7 @@ Property | Type | Default | Description
 `jib.httpTimeout` | `int` | `20000` | HTTP connection/read timeout for registry interactions, in milliseconds. Use a value of `0` for an infinite timeout.
 `jib.useOnlyProjectCache` | `boolean` | `false` | If set to true, Jib does not share a cache between different Maven projects.
 `jib.baseImageCache` | `File` | `[user cache home]/google-cloud-tools-java/jib` | Sets the directory to use for caching base image layers. This cache can (and should) be shared between multiple images.
-`jib.applicationCache` | `File` | `[project dir]/target/jib-cache` | Sets the directory to use for caching application layers. This cache can be shared between multiple images. If not set, a temporary directory will be used as the application layers cache.
+`jib.applicationCache` | `File` | `[project dir]/target/jib-cache` | Sets the directory to use for caching application layers. This cache can be shared between multiple images.
 `jib.console` | `String` | *None* | If set to `plain`, Jib will print plaintext log messages rather than display a progress bar during the build.
 
 *\* If you configure `args` while `entrypoint` is set to `'INHERIT'`, the configured `args` value will take precedence over the CMD propagated from the base image.*
@@ -394,7 +394,7 @@ Note that Jib will work slightly differently for WAR projects from JAR projects:
    - `container.mainClass` and `container.jvmFlags` are ignored.
    - The WAR will be exploded into `/jetty/webapps/ROOT`, which is the expected WAR location for the distroless Jetty base image.
 
-To use a different Servlet engine base image, you can customize `container.appRoot`, `container.entrypoint`, and `container.args`. If you do not set `entrypoint` or `args`, Jib will inherit the `ENTRYPOINT` and `CMD` of the base image, so in many cases, you may need to configure them. However, you will most likely have to set `container.appRoot` to a proper location depending on the base image. Here is an example of using a Tomcat image:
+To use a different Servlet engine base image, you can customize `container.appRoot`, `container.entrypoint`, and `container.args`. If you do not set `entrypoint` or `args`, Jib will inherit the `ENTRYPOINT` and `CMD` of the base image, so in many cases, you may not need to configure them. However, you will most likely have to set `container.appRoot` to a proper location depending on the base image. Here is an example of using a Tomcat image:
 
 ```gradle
 jib {

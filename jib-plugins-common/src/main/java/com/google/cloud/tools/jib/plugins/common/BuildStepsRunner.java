@@ -31,7 +31,7 @@ import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
-import com.google.cloud.tools.jib.registry.RegistryErrorException;
+import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
@@ -226,53 +226,40 @@ public class BuildStepsRunner {
 
       return jibContainer;
 
-    } catch (ExecutionException executionException) {
-      Throwable exceptionDuringBuildSteps = executionException.getCause();
+    } catch (HttpHostConnectException ex) {
+      // Failed to connect to registry.
+      throw new BuildStepsExecutionException(helpfulSuggestions.forHttpHostConnect(), ex);
 
-      if (exceptionDuringBuildSteps instanceof HttpHostConnectException) {
-        // Failed to connect to registry.
-        throw new BuildStepsExecutionException(
-            helpfulSuggestions.forHttpHostConnect(), exceptionDuringBuildSteps);
+    } catch (RegistryUnauthorizedException ex) {
+      handleRegistryUnauthorizedException(ex, helpfulSuggestions);
 
-      } else if (exceptionDuringBuildSteps instanceof RegistryUnauthorizedException) {
-        handleRegistryUnauthorizedException(
-            (RegistryUnauthorizedException) exceptionDuringBuildSteps, helpfulSuggestions);
+    } catch (RegistryCredentialsNotSentException ex) {
+      throw new BuildStepsExecutionException(helpfulSuggestions.forCredentialsNotSent(), ex);
 
-      } else if (exceptionDuringBuildSteps instanceof RegistryCredentialsNotSentException) {
-        throw new BuildStepsExecutionException(
-            helpfulSuggestions.forCredentialsNotSent(), exceptionDuringBuildSteps);
-
-      } else if (exceptionDuringBuildSteps instanceof RegistryAuthenticationFailedException
-          && exceptionDuringBuildSteps.getCause() instanceof HttpResponseException) {
-        RegistryAuthenticationFailedException failureException =
-            (RegistryAuthenticationFailedException) exceptionDuringBuildSteps;
+    } catch (RegistryAuthenticationFailedException ex) {
+      if (ex.getCause() instanceof HttpResponseException) {
         handleRegistryUnauthorizedException(
             new RegistryUnauthorizedException(
-                failureException.getServerUrl(),
-                failureException.getImageName(),
-                (HttpResponseException) exceptionDuringBuildSteps.getCause()),
+                ex.getServerUrl(), ex.getImageName(), (HttpResponseException) ex.getCause()),
             helpfulSuggestions);
-
-      } else if (exceptionDuringBuildSteps instanceof UnknownHostException) {
-        throw new BuildStepsExecutionException(
-            helpfulSuggestions.forUnknownHost(), exceptionDuringBuildSteps);
-
-      } else if (exceptionDuringBuildSteps instanceof InsecureRegistryException) {
-        throw new BuildStepsExecutionException(
-            helpfulSuggestions.forInsecureRegistry(), exceptionDuringBuildSteps);
-
-      } else if (exceptionDuringBuildSteps instanceof RegistryErrorException) {
-        // RegistryErrorExceptions have good messages
-        RegistryErrorException registryErrorException =
-            (RegistryErrorException) exceptionDuringBuildSteps;
-        String message =
-            Verify.verifyNotNull(registryErrorException.getMessage()); // keep null-away happy
-        throw new BuildStepsExecutionException(message, exceptionDuringBuildSteps);
-
       } else {
-        throw new BuildStepsExecutionException(
-            helpfulSuggestions.none(), executionException.getCause());
+        // Unknown cause
+        throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
       }
+
+    } catch (UnknownHostException ex) {
+      throw new BuildStepsExecutionException(helpfulSuggestions.forUnknownHost(), ex);
+
+    } catch (InsecureRegistryException ex) {
+      throw new BuildStepsExecutionException(helpfulSuggestions.forInsecureRegistry(), ex);
+
+    } catch (RegistryException ex) {
+      String message = Verify.verifyNotNull(ex.getMessage()); // keep null-away happy
+      throw new BuildStepsExecutionException(message, ex);
+
+    } catch (ExecutionException ex) {
+      String message = Verify.verifyNotNull(ex.getCause().getMessage()); // keep null-away happy
+      throw new BuildStepsExecutionException(message, ex.getCause());
 
     } catch (InterruptedException ex) {
       // TODO: Add more suggestions for various build failures.

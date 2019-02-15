@@ -61,14 +61,14 @@ configurations {
 
 dependencies {
   // These are copied over from jib-core and are necessary for the jib-core sourcesets.
-  compile 'com.google.http-client:google-http-client:1.23.0'
+  compile 'com.google.http-client:google-http-client:1.27.0'
   compile 'org.apache.commons:commons-compress:1.18'
-  compile 'com.google.guava:guava:23.5-jre'
+  compile 'com.google.guava:guava:27.0.1-jre'
   compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
   compile 'org.ow2.asm:asm:7.0'
 
   testCompile 'junit:junit:4.12'
-  testCompile 'org.mockito:mockito-core:2.23.4'
+  testCompile 'org.mockito:mockito-core:2.24.0'
   testCompile 'org.slf4j:slf4j-api:1.7.25'
 
   compile gradleApi()
@@ -76,11 +76,6 @@ dependencies {
   // NullAway errorprone plugin
   annotationProcessor 'com.uber.nullaway:nullaway:0.6.4'
   errorprone 'com.google.errorprone:error_prone_core:2.3.2'
-  // Using github.com/google/error-prone-javac is required when running on
-  // JDK 8. Remove when migrating to JDK 11.
-  if (System.getProperty("java.version").startsWith("1.8.")) {
-    errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
-  }
 }
 
 // Integration tests must be run explicitly

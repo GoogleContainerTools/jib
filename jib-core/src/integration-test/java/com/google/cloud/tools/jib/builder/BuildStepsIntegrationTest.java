@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
+import com.google.cloud.tools.jib.event.events.LayerCountEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
@@ -44,9 +45,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
@@ -86,6 +90,8 @@ public class BuildStepsIntegrationTest {
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
   private static final ExecutorService executorService = Executors.newCachedThreadPool();
   private static final Logger logger = LoggerFactory.getLogger(BuildStepsIntegrationTest.class);
+  private static final String DISTROLESS_DIGEST =
+      "sha256:f488c213f278bc5f9ffe3ddf30c5dbb2303a15a74146b738d12453088e662880";
 
   private static final double DOUBLE_ERROR_MARGIN = 1e-10;
 
@@ -144,6 +150,14 @@ public class BuildStepsIntegrationTest {
 
   private ImmutableList<LayerConfiguration> fakeLayerConfigurations;
 
+  private final Map<BuildStepType, Integer> layerCounts = new ConcurrentHashMap<>();
+  private final Consumer<LayerCountEvent> layerCountConsumer =
+      layerCountEvent ->
+          layerCounts.merge(
+              layerCountEvent.getBuildStepType(),
+              layerCountEvent.getCount(),
+              (oldValue, count) -> oldValue + count);
+
   @Before
   public void setUp() throws IOException, URISyntaxException {
     fakeLayerConfigurations =
@@ -165,15 +179,27 @@ public class BuildStepsIntegrationTest {
     BuildResult image1 =
         BuildSteps.forBuildToDockerRegistry(
                 getBuildConfigurationBuilder(
-                        ImageReference.of("gcr.io", "distroless/java", "latest"),
+                        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
                         ImageReference.of("localhost:5000", "testimage", "testtag"))
                     .setEventDispatcher(
                         new DefaultEventDispatcher(
                             new EventHandlers()
-                                .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)))
+                                .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
+                                .add(JibEventType.LAYER_COUNT, layerCountConsumer)))
                     .build())
             .run();
     progressChecker.checkCompletion();
+    Assert.assertEquals(
+        layerCounts,
+        ImmutableMap.of(
+            BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER,
+            4,
+            BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
+            3,
+            BuildStepType.PUSH_BASE_LAYERS,
+            4,
+            BuildStepType.PUSH_APPLICATION_LAYERS,
+            3));
 
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
@@ -181,7 +207,7 @@ public class BuildStepsIntegrationTest {
     BuildResult image2 =
         BuildSteps.forBuildToDockerRegistry(
                 getBuildConfigurationBuilder(
-                        ImageReference.of("gcr.io", "distroless/java", "latest"),
+                        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
                         ImageReference.of("localhost:5000", "testimage", "testtag"))
                     .build())
             .run();
@@ -209,7 +235,7 @@ public class BuildStepsIntegrationTest {
     BuildSteps buildImageSteps =
         BuildSteps.forBuildToDockerRegistry(
             getBuildConfigurationBuilder(
-                    ImageReference.of("gcr.io", "distroless/java", "latest"),
+                    ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
                     ImageReference.of("localhost:5000", "testimage", "testtag"))
                 .setAdditionalTargetImageTags(ImmutableSet.of("testtag2", "testtag3"))
                 .build());
@@ -265,16 +291,24 @@ public class BuildStepsIntegrationTest {
 
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
-                ImageReference.of("gcr.io", "distroless/java", "latest"),
+                ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
                 ImageReference.of(null, "testdocker", null))
             .setEventDispatcher(
                 new DefaultEventDispatcher(
                     new EventHandlers()
-                        .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)))
+                        .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
+                        .add(JibEventType.LAYER_COUNT, layerCountConsumer)))
             .build();
     BuildSteps.forBuildToDockerDaemon(DockerClient.newDefaultClient(), buildConfiguration).run();
 
     progressChecker.checkCompletion();
+    Assert.assertEquals(
+        layerCounts,
+        ImmutableMap.of(
+            BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER,
+            4,
+            BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
+            3));
 
     assertDockerInspect("testdocker");
     Assert.assertEquals(
@@ -287,7 +321,7 @@ public class BuildStepsIntegrationTest {
     String imageReference = "testdocker";
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
-                ImageReference.of("gcr.io", "distroless/java", "latest"),
+                ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
                 ImageReference.of(null, imageReference, null))
             .setAdditionalTargetImageTags(ImmutableSet.of("testtag2", "testtag3"))
             .build();
@@ -313,17 +347,25 @@ public class BuildStepsIntegrationTest {
 
     BuildConfiguration buildConfiguration =
         getBuildConfigurationBuilder(
-                ImageReference.of("gcr.io", "distroless/java", "latest"),
+                ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
                 ImageReference.of(null, "testtar", null))
             .setEventDispatcher(
                 new DefaultEventDispatcher(
                     new EventHandlers()
-                        .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)))
+                        .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
+                        .add(JibEventType.LAYER_COUNT, layerCountConsumer)))
             .build();
     Path outputPath = temporaryFolder.newFolder().toPath().resolve("test.tar");
     BuildSteps.forBuildToTar(outputPath, buildConfiguration).run();
 
     progressChecker.checkCompletion();
+    Assert.assertEquals(
+        layerCounts,
+        ImmutableMap.of(
+            BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER,
+            4,
+            BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
+            3));
 
     new Command("docker", "load", "--input", outputPath.toString()).run();
     Assert.assertEquals(

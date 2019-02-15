@@ -10,7 +10,6 @@ import spock.lang.Specification
 
 class HelloControllerSpec extends Specification {
 
-
     @Shared
     @AutoCleanup // <1>
     EmbeddedServer embeddedServer = ApplicationContext.run(EmbeddedServer) // <2>

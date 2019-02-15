@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.cloud.tools.jib.registry.RegistryException;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -65,8 +66,8 @@ public class JibIntegrationTest {
 
   @Test
   public void testBasic_helloWorld()
-      throws InvalidImageReferenceException, InterruptedException, ExecutionException,
-          CacheDirectoryCreationException, IOException {
+      throws InvalidImageReferenceException, InterruptedException, CacheDirectoryCreationException,
+          IOException, RegistryException, ExecutionException {
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-helloworld");
     JibContainer jibContainer =
@@ -89,8 +90,8 @@ public class JibIntegrationTest {
   /** Ensure that a provided executor is not disposed. */
   @Test
   public void testProvidedExecutorNotDisposed()
-      throws InvalidImageReferenceException, InterruptedException, ExecutionException,
-          CacheDirectoryCreationException, IOException {
+      throws InvalidImageReferenceException, InterruptedException, CacheDirectoryCreationException,
+          IOException, RegistryException, ExecutionException {
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-helloworld");
     Containerizer containerizer =

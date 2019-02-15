@@ -1,4 +1,4 @@
-![beta](https://img.shields.io/badge/stability-beta-darkorange.svg)
+![stable](https://img.shields.io/badge/stability-stable-brightgreen.svg)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
@@ -38,7 +38,7 @@ For information about the project, see the [Jib project README](../README.md).
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:1.0.0-rc2:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:1.0.0:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -46,7 +46,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:1.0.0-rc2:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:1.0.0:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -64,7 +64,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>1.0.0-rc2</version>
+        <version>1.0.0</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -291,7 +291,7 @@ Property | Type | Default | Description
 `jib.httpTimeout` | int | `20000` | HTTP connection/read timeout for registry interactions, in milliseconds. Use a value of `0` for an infinite timeout.
 `jib.useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Maven projects (i.e. `jib.baseImageCache` defaults to `[project dir]/target/jib-cache` instead of `[user cache home]/google-cloud-tools-java/jib`).
 `jib.baseImageCache` | string | `[user cache home]/google-cloud-tools-java/jib` | Sets the directory to use for caching base image layers. This cache can (and should) be shared between multiple images.
-`jib.applicationCache` | string | `[project dir]/target/jib-cache` | Sets the directory to use for caching application layers. This cache can be shared between multiple images. If not set, a temporary directory will be used as the application layers cache.
+`jib.applicationCache` | string | `[project dir]/target/jib-cache` | Sets the directory to use for caching application layers. This cache can be shared between multiple images.
 `jib.console` | `String` | *None* | If set to `plain`, Jib will print plaintext log messages rather than display a progress bar during the build.
 
 *\* If you configure `args` while `entrypoint` is set to `'INHERIT'`, the configured `args` value will take precedence over the CMD propagated from the base image.*
@@ -483,7 +483,7 @@ Note that Jib will work slightly differently for WAR projects from JAR projects:
    - `<container><mainClass>` and `<container><jvmFlags>` are ignored.
    - The WAR will be exploded into `/jetty/webapps/ROOT`, which is the expected WAR location for the distroless Jetty base image.
 
-To use a different Servlet engine base image, you can customize `<container><appRoot>`, `<container><entrypoint>`, and `<container><args>`. If you do not set `entrypoint` or `args`, Jib will inherit the `ENTRYPOINT` and `CMD` of the base image, so in many cases, you may need to configure them. However, you will most likely have to set `<container><appRoot>` to a proper location depending on the base image. Here is an example of using a Tomcat image:
+To use a different Servlet engine base image, you can customize `<container><appRoot>`, `<container><entrypoint>`, and `<container><args>`. If you do not set `entrypoint` or `args`, Jib will inherit the `ENTRYPOINT` and `CMD` of the base image, so in many cases, you may not need to configure them. However, you will most likely have to set `<container><appRoot>` to a proper location depending on the base image. Here is an example of using a Tomcat image:
 
 ```xml
 <configuration>
