@@ -30,14 +30,14 @@ import java.util.List;
  * href="https://github.com/GoogleContainerTools/skaffold">Skaffold</a> should watch for changes
  * (and consequently trigger rebuilds).
  *
- * <p>{@code buildFiles} consist of build definitions. Changes in these files indicate that the
- * project structure may have changed, so Skaffold will refresh the file watch list when this
+ * <p>{@code build} consists of build definitions. Changes in these files/directories indicate that
+ * the project structure may have changed, so Skaffold will refresh the file watch list when this
  * happens.
  *
- * <p>{@code inputs} consist of source/resource directories. Skaffold will trigger a rebuild when
- * changes are detected in these files.
+ * <p>{@code inputs} consist of source/resource files/directories. Skaffold will trigger a rebuild
+ * when changes are detected in these files.
  *
- * <p>{@code ignore} consists of files that the Skaffold file watcher should not watch.
+ * <p>{@code ignore} consists of files/directories that the Skaffold file watcher should not watch.
  *
  * <p>Example:
  *
@@ -74,7 +74,7 @@ public class SkaffoldFilesOutput {
   /**
    * Adds a build file/directory.
    *
-   * @param build the path to the file
+   * @param build the path to the file/directory
    */
   public void addBuild(Path build) {
     skaffoldFilesTemplate.build.add(build.toString());
@@ -83,7 +83,7 @@ public class SkaffoldFilesOutput {
   /**
    * Adds an input file/directory.
    *
-   * @param inputFile the path to the directory
+   * @param inputFile the path to the file/directory
    */
   public void addInput(Path inputFile) {
     skaffoldFilesTemplate.inputs.add(inputFile.toString());
@@ -92,7 +92,7 @@ public class SkaffoldFilesOutput {
   /**
    * Adds an ignored file/directory.
    *
-   * @param ignoreFile the path to the file
+   * @param ignoreFile the path to the file/directory
    */
   public void addIgnore(Path ignoreFile) {
     skaffoldFilesTemplate.ignore.add(ignoreFile.toString());
