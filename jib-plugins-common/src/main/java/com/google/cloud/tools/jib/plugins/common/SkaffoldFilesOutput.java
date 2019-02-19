@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -61,7 +60,6 @@ import java.util.List;
 public class SkaffoldFilesOutput {
 
   @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-  @JsonIgnoreProperties(ignoreUnknown = true)
   private static class SkaffoldFilesTemplate {
 
     private final List<String> buildFiles = new ArrayList<>();
