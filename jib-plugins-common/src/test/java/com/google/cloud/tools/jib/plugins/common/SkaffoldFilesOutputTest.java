@@ -27,14 +27,21 @@ public class SkaffoldFilesOutputTest {
   @Test
   public void testGetJsonString() throws IOException {
     SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
-    skaffoldFilesOutput.addBuildFile(Paths.get("buildFile1"));
-    skaffoldFilesOutput.addBuildFile(Paths.get("buildFile2"));
+    skaffoldFilesOutput.addBuild(Paths.get("buildFile1"));
+    skaffoldFilesOutput.addBuild(Paths.get("buildFile2"));
     skaffoldFilesOutput.addInput(Paths.get("input1"));
     skaffoldFilesOutput.addInput(Paths.get("input2"));
     skaffoldFilesOutput.addIgnore(Paths.get("ignore1"));
     skaffoldFilesOutput.addIgnore(Paths.get("ignore2"));
     Assert.assertEquals(
-        "{\"buildFiles\":[\"buildFile1\",\"buildFile2\"],\"inputs\":[\"input1\",\"input2\"],\"ignore\":[\"ignore1\",\"ignore2\"]}",
+        "{\"build\":[\"buildFile1\",\"buildFile2\"],\"inputs\":[\"input1\",\"input2\"],\"ignore\":[\"ignore1\",\"ignore2\"]}",
         skaffoldFilesOutput.getJsonString());
+  }
+
+  @Test
+  public void testGetJsonString_empty() throws IOException {
+    SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
+    Assert.assertEquals(
+        "{\"build\":[],\"inputs\":[],\"ignore\":[]}", skaffoldFilesOutput.getJsonString());
   }
 }

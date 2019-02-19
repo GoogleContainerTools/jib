@@ -62,7 +62,7 @@ public class SkaffoldFilesOutput {
   @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
   private static class SkaffoldFilesTemplate {
 
-    private final List<String> buildFiles = new ArrayList<>();
+    private final List<String> build = new ArrayList<>();
 
     private final List<String> inputs = new ArrayList<>();
 
@@ -74,10 +74,10 @@ public class SkaffoldFilesOutput {
   /**
    * Adds a build file/directory.
    *
-   * @param buildFile the path to the file
+   * @param build the path to the file
    */
-  public void addBuildFile(Path buildFile) {
-    skaffoldFilesTemplate.buildFiles.add(buildFile.toString());
+  public void addBuild(Path build) {
+    skaffoldFilesTemplate.build.add(build.toString());
   }
 
   /**
