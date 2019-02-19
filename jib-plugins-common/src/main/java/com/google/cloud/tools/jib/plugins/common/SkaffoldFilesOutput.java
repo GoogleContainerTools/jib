@@ -14,13 +14,14 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.frontend;
+package com.google.cloud.tools.jib.plugins.common;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.json.JsonTemplate;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,8 +60,9 @@ import java.util.List;
  */
 public class SkaffoldFilesOutput {
 
+  @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
   @JsonIgnoreProperties(ignoreUnknown = true)
-  private static class SkaffoldFilesTemplate implements JsonTemplate {
+  private static class SkaffoldFilesTemplate {
 
     private final List<String> buildFiles = new ArrayList<>();
 
@@ -105,6 +107,9 @@ public class SkaffoldFilesOutput {
    * @throws IOException if writing out the JSON fails
    */
   public String getJsonString() throws IOException {
-    return Blobs.writeToString(JsonTemplateMapper.toBlob(skaffoldFilesTemplate));
+    try (OutputStream outputStream = new ByteArrayOutputStream()) {
+      new ObjectMapper().writeValue(outputStream, skaffoldFilesTemplate);
+      return outputStream.toString();
+    }
   }
 }
