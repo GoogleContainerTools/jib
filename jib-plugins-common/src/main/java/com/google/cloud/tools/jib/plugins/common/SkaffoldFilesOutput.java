@@ -43,7 +43,7 @@ import java.util.List;
  *
  * <pre>{@code
  * {
- *   "buildFiles": [
+ *   "build": [
  *     "buildFile1",
  *     "buildFile2"
  *   ],
