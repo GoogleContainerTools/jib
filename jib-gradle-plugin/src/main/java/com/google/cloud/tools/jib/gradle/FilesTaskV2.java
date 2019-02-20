@@ -39,7 +39,7 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
 
 /**
- * Print out changing source dependencies on a project.
+ * Prints out changing source dependencies on a project.
  *
  * <p>Expected use: {@code ./gradlew _jibSkaffoldFiles -q} or {@code ./gradlew
  * :<subproject>:_jibSkaffoldFiles -q}
@@ -106,17 +106,17 @@ public class FilesTaskV2 extends DefaultTask {
   }
 
   /**
-   * Prints the locations of a project's build.gradle, settings.gradle, and gradle.properties.
+   * Adds the locations of a project's build.gradle, settings.gradle, and gradle.properties.
    *
    * @param project the project
    */
   private void addGradleFiles(Project project) {
     Path projectPath = project.getProjectDir().toPath();
 
-    // Print build.gradle
+    // Add build.gradle
     skaffoldFilesOutput.addBuild(project.getBuildFile().toPath());
 
-    // Print settings.gradle
+    // Add settings.gradle
     if (project.getGradle().getStartParameter().getSettingsFile() != null) {
       skaffoldFilesOutput.addBuild(
           project.getGradle().getStartParameter().getSettingsFile().toPath());
@@ -124,7 +124,7 @@ public class FilesTaskV2 extends DefaultTask {
       skaffoldFilesOutput.addBuild(projectPath.resolve(Settings.DEFAULT_SETTINGS_FILE));
     }
 
-    // Print gradle.properties
+    // Add gradle.properties
     if (Files.exists(projectPath.resolve("gradle.properties"))) {
       skaffoldFilesOutput.addBuild(projectPath.resolve("gradle.properties"));
     }
