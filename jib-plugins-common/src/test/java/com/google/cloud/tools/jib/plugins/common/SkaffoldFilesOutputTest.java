@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Paths;
 import org.junit.Assert;
@@ -23,6 +24,9 @@ import org.junit.Test;
 
 /** Tests for {@link SkaffoldFilesOutput}. */
 public class SkaffoldFilesOutputTest {
+
+  private static final String TEST_JSON =
+      "{\"build\":[\"buildFile1\",\"buildFile2\"],\"inputs\":[\"input1\",\"input2\"],\"ignore\":[\"ignore1\",\"ignore2\"]}";
 
   @Test
   public void testGetJsonString() throws IOException {
@@ -33,9 +37,7 @@ public class SkaffoldFilesOutputTest {
     skaffoldFilesOutput.addInput(Paths.get("input2"));
     skaffoldFilesOutput.addIgnore(Paths.get("ignore1"));
     skaffoldFilesOutput.addIgnore(Paths.get("ignore2"));
-    Assert.assertEquals(
-        "{\"build\":[\"buildFile1\",\"buildFile2\"],\"inputs\":[\"input1\",\"input2\"],\"ignore\":[\"ignore1\",\"ignore2\"]}",
-        skaffoldFilesOutput.getJsonString());
+    Assert.assertEquals(TEST_JSON, skaffoldFilesOutput.getJsonString());
   }
 
   @Test
@@ -43,5 +45,14 @@ public class SkaffoldFilesOutputTest {
     SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
     Assert.assertEquals(
         "{\"build\":[],\"inputs\":[],\"ignore\":[]}", skaffoldFilesOutput.getJsonString());
+  }
+
+  @Test
+  public void testConstructor_json() throws IOException {
+    SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput(TEST_JSON);
+    Assert.assertEquals(
+        ImmutableList.of("buildFile1", "buildFile2"), skaffoldFilesOutput.getBuild());
+    Assert.assertEquals(ImmutableList.of("input1", "input2"), skaffoldFilesOutput.getInputs());
+    Assert.assertEquals(ImmutableList.of("ignore1", "ignore2"), skaffoldFilesOutput.getIgnore());
   }
 }

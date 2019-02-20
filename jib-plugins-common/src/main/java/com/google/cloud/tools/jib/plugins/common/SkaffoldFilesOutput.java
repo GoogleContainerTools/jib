@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -69,7 +70,23 @@ public class SkaffoldFilesOutput {
     private final List<String> ignore = new ArrayList<>();
   }
 
-  private final SkaffoldFilesTemplate skaffoldFilesTemplate = new SkaffoldFilesTemplate();
+  private final SkaffoldFilesTemplate skaffoldFilesTemplate;
+
+  /** Creates an empty {@link SkaffoldFilesOutput}. */
+  public SkaffoldFilesOutput() {
+    skaffoldFilesTemplate = new SkaffoldFilesTemplate();
+  }
+
+  /**
+   * Creates a {@link SkaffoldFilesOutput} from a JSON string.
+   *
+   * @param json the JSON string
+   * @throws IOException if reading the JSON string fails
+   */
+  @VisibleForTesting
+  public SkaffoldFilesOutput(String json) throws IOException {
+    this.skaffoldFilesTemplate = new ObjectMapper().readValue(json, SkaffoldFilesTemplate.class);
+  }
 
   /**
    * Adds a build file/directory.
@@ -96,6 +113,21 @@ public class SkaffoldFilesOutput {
    */
   public void addIgnore(Path ignoreFile) {
     skaffoldFilesTemplate.ignore.add(ignoreFile.toString());
+  }
+
+  @VisibleForTesting
+  public List<String> getBuild() {
+    return skaffoldFilesTemplate.build;
+  }
+
+  @VisibleForTesting
+  public List<String> getInputs() {
+    return skaffoldFilesTemplate.inputs;
+  }
+
+  @VisibleForTesting
+  public List<String> getIgnore() {
+    return skaffoldFilesTemplate.ignore;
   }
 
   /**
