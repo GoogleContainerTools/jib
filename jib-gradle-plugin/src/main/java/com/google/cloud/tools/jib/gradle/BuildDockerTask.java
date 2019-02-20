@@ -172,7 +172,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       throw new GradleException(
           HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForGradle(
-              ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()));
+              ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
+          ex);
     }
   }
 
