@@ -136,27 +136,25 @@ public class FilesTaskV2 extends DefaultTask {
    * @param project the project
    */
   private void addProjectFiles(Project project) {
+    // Add build config, settings, etc.
+    addGradleFiles(project);
+
+    // Add sources + resources
     JavaPluginConvention javaConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
     SourceSet mainSourceSet =
         javaConvention.getSourceSets().findByName(SourceSet.MAIN_SOURCE_SET_NAME);
-    if (mainSourceSet == null) {
-      return;
+    if (mainSourceSet != null) {
+      mainSourceSet
+          .getAllSource()
+          .getSourceDirectories()
+          .forEach(
+              sourceDirectory -> {
+                if (sourceDirectory.exists()) {
+                  skaffoldFilesOutput.addInput(sourceDirectory.toPath());
+                }
+              });
     }
-
-    // Print build config, settings, etc.
-    addGradleFiles(project);
-
-    // Print sources + resources
-    mainSourceSet
-        .getAllSource()
-        .getSourceDirectories()
-        .forEach(
-            sourceDirectory -> {
-              if (sourceDirectory.exists()) {
-                skaffoldFilesOutput.addInput(sourceDirectory.toPath());
-              }
-            });
   }
 
   /**
