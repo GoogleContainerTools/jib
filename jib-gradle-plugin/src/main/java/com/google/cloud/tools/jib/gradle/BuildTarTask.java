@@ -168,7 +168,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       throw new GradleException(
-          HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForGradle(8, 11));
+          HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForGradle(
+              ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()));
     }
   }
 

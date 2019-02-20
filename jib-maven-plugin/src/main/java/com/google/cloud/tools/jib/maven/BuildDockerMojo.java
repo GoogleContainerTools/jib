@@ -162,7 +162,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       throw new MojoExecutionException(
-          HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForMaven(8, 11));
+          HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForMaven(
+              ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()));
 
     } catch (InvalidImageReferenceException
         | IOException

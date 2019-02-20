@@ -265,24 +265,24 @@ public class MavenProjectProperties implements ProjectProperties {
     // Check properties for version
     if (project.getProperties().getProperty("maven.compiler.target") != null) {
       return getVersionFromString(project.getProperties().getProperty("maven.compiler.target"));
-    } else if (project.getProperties().getProperty("maven.compiler.release") != null) {
+    }
+    if (project.getProperties().getProperty("maven.compiler.release") != null) {
       return getVersionFromString(project.getProperties().getProperty("maven.compiler.release"));
-    } else {
-      // Check maven-compiler-plugin for version
-      Plugin mavenCompilerPlugin =
-          project.getPlugin("org.apache.maven.plugins:maven-compiler-plugin");
-      if (mavenCompilerPlugin != null) {
-        Xpp3Dom pluginConfiguration = (Xpp3Dom) mavenCompilerPlugin.getConfiguration();
-        if (pluginConfiguration != null) {
-          Xpp3Dom target = pluginConfiguration.getChild("target");
-          if (target != null) {
-            return getVersionFromString(target.getValue());
-          } else {
-            Xpp3Dom release = pluginConfiguration.getChild("release");
-            if (release != null) {
-              return getVersionFromString(release.getValue());
-            }
-          }
+    }
+
+    // Check maven-compiler-plugin for version
+    Plugin mavenCompilerPlugin =
+        project.getPlugin("org.apache.maven.plugins:maven-compiler-plugin");
+    if (mavenCompilerPlugin != null) {
+      Xpp3Dom pluginConfiguration = (Xpp3Dom) mavenCompilerPlugin.getConfiguration();
+      if (pluginConfiguration != null) {
+        Xpp3Dom target = pluginConfiguration.getChild("target");
+        if (target != null) {
+          return getVersionFromString(target.getValue());
+        }
+        Xpp3Dom release = pluginConfiguration.getChild("release");
+        if (release != null) {
+          return getVersionFromString(release.getValue());
         }
       }
     }
