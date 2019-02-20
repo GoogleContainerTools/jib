@@ -137,5 +137,6 @@ public class FilesTaskV2Test {
         result.getInputs().get(result.getInputs().size() - 1),
         CoreMatchers.endsWith("guava-HEAD-jre-SNAPSHOT.jar"));
     Assert.assertEquals(7, result.getInputs().size());
+    Assert.assertEquals(result.getIgnore().size(), 0);
   }
 }
