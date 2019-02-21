@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
@@ -93,7 +94,6 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               jibExtension.getExtraDirectory().getPath(),
               jibExtension.getExtraDirectory().getPermissions(),
               appRoot);
-      projectProperties.validateAgainstDefaultBaseImageVersion(jibExtension.getFrom().getImage());
 
       if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
         throw new GradleException(
@@ -150,6 +150,12 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     } catch (InvalidContainerVolumeException ex) {
       throw new GradleException(
           "container.volumes is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
+
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      throw new GradleException(
+          HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForGradle(
+              ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
+          ex);
     }
   }
 

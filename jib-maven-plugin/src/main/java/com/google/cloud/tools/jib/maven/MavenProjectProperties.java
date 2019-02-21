@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
@@ -39,7 +38,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.utils.Os;
@@ -261,47 +259,32 @@ public class MavenProjectProperties implements ProjectProperties {
     return project.getVersion();
   }
 
-  void validateAgainstDefaultBaseImageVersion(@Nullable String baseImage)
-      throws MojoFailureException {
-    if (!PluginConfigurationProcessor.usingDefaultBaseImage(baseImage)) {
-      return;
-    }
-
-    // maven-compiler-plugin default is 1.6
-    int version = 6;
-
+  @Override
+  public int getMajorJavaVersion() {
     // Check properties for version
     if (project.getProperties().getProperty("maven.compiler.target") != null) {
-      version = getVersionFromString(project.getProperties().getProperty("maven.compiler.target"));
-    } else if (project.getProperties().getProperty("maven.compiler.release") != null) {
-      version = getVersionFromString(project.getProperties().getProperty("maven.compiler.release"));
-    } else {
-      // Check maven-compiler-plugin for version
-      Plugin mavenCompilerPlugin =
-          project.getPlugin("org.apache.maven.plugins:maven-compiler-plugin");
-      if (mavenCompilerPlugin != null) {
-        Xpp3Dom pluginConfiguration = (Xpp3Dom) mavenCompilerPlugin.getConfiguration();
-        if (pluginConfiguration != null) {
-          Xpp3Dom target = pluginConfiguration.getChild("target");
-          if (target != null) {
-            version = getVersionFromString(target.getValue());
-          } else {
-            Xpp3Dom release = pluginConfiguration.getChild("release");
-            if (release != null) {
-              version = getVersionFromString(release.getValue());
-            }
-          }
+      return getVersionFromString(project.getProperties().getProperty("maven.compiler.target"));
+    }
+    if (project.getProperties().getProperty("maven.compiler.release") != null) {
+      return getVersionFromString(project.getProperties().getProperty("maven.compiler.release"));
+    }
+
+    // Check maven-compiler-plugin for version
+    Plugin mavenCompilerPlugin =
+        project.getPlugin("org.apache.maven.plugins:maven-compiler-plugin");
+    if (mavenCompilerPlugin != null) {
+      Xpp3Dom pluginConfiguration = (Xpp3Dom) mavenCompilerPlugin.getConfiguration();
+      if (pluginConfiguration != null) {
+        Xpp3Dom target = pluginConfiguration.getChild("target");
+        if (target != null) {
+          return getVersionFromString(target.getValue());
+        }
+        Xpp3Dom release = pluginConfiguration.getChild("release");
+        if (release != null) {
+          return getVersionFromString(release.getValue());
         }
       }
     }
-
-    if (version > 8) {
-      throw new MojoFailureException(
-          "Jib's default base image uses Java 8, but project is using Java "
-              + version
-              + "; perhaps you should configure a Java "
-              + version
-              + "-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's target or release version to 1.8 in your build configuration");
-    }
+    return 6; // maven-compiler-plugin default is 1.6
   }
 }

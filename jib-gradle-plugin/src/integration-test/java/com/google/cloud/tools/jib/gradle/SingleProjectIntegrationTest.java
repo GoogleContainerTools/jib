@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.security.DigestException;
 import java.time.Instant;
@@ -43,6 +44,11 @@ public class SingleProjectIntegrationTest {
       new LocalRegistry(6000, "testuser2", "testpassword2");
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+
+  private static boolean isJava11RuntimeOrHigher() {
+    Iterable<String> split = Splitter.on(".").split(System.getProperty("java.version"));
+    return Integer.valueOf(split.iterator().next()) >= 11;
+  }
 
   /**
    * Asserts that the creation time of the simple test project is set. If the time parsed from the
@@ -114,6 +120,7 @@ public class SingleProjectIntegrationTest {
             "clean",
             "jib",
             "-Djib.useOnlyProjectCache=true",
+            "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
             "-D_TARGET_USERNAME=" + username,
             "-D_TARGET_PASSWORD=" + password,
@@ -150,6 +157,7 @@ public class SingleProjectIntegrationTest {
           "clean",
           "jib",
           "-Djib.useOnlyProjectCache=true",
+          "-Djib.console=plain",
           "-x=classes",
           "-D_TARGET_IMAGE=" + targetImage);
       Assert.fail();
@@ -168,6 +176,39 @@ public class SingleProjectIntegrationTest {
     assertDockerInspect(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     assertWorkingDirectory("/home", targetImage);
+  }
+
+  @Test
+  public void testDockerDaemon_simpleOnJava11()
+      throws DigestException, IOException, InterruptedException {
+    Assume.assumeTrue(isJava11RuntimeOrHigher());
+
+    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. \n",
+        JibRunHelper.buildToDockerDaemonAndRun(
+            simpleTestProject, targetImage, "build-java11.gradle"));
+  }
+
+  @Test
+  public void testDockerDaemon_simpleWithIncompatibleJava11()
+      throws DigestException, IOException, InterruptedException {
+    Assume.assumeTrue(isJava11RuntimeOrHigher());
+
+    try {
+      JibRunHelper.buildToDockerDaemonAndRun(
+          simpleTestProject, "willnotbuild", "build-java11-incompatible.gradle");
+      Assert.fail();
+
+    } catch (UnexpectedBuildFailure ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Your project is using Java 11 but the base image is for Java 8, perhaps you should "
+                  + "configure a Java 11-compatible base image using the 'jib.from.image' "
+                  + "parameter, or set targetCompatibility = 8 or below in your build "
+                  + "configuration"));
+    }
   }
 
   @Test
@@ -198,7 +239,7 @@ public class SingleProjectIntegrationTest {
     Instant beforeBuild = Instant.now();
     Assert.assertEquals(
         "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
-        JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage));
+        JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage, "build.gradle"));
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     assertDockerInspect(targetImage);
     assertWorkingDirectory("/home", targetImage);
@@ -218,6 +259,7 @@ public class SingleProjectIntegrationTest {
             "clean",
             "jibDockerBuild",
             "-Djib.useOnlyProjectCache=true",
+            "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + targetImage,
             "-b=build-dockerclient.gradle",
             "--debug");
@@ -241,6 +283,7 @@ public class SingleProjectIntegrationTest {
             "clean",
             "jibBuildTar",
             "-Djib.useOnlyProjectCache=true",
+            "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + targetImage);
 
     JibRunHelper.assertBuildSuccess(buildResult, "jibBuildTar", "Built image tarball at ");

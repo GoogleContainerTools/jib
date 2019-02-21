@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
@@ -244,24 +243,15 @@ class GradleProjectProperties implements ProjectProperties {
     return project.getVersion().toString();
   }
 
-  void validateAgainstDefaultBaseImageVersion(@Nullable String baseImage) {
-    if (!PluginConfigurationProcessor.usingDefaultBaseImage(baseImage)) {
-      return;
-    }
+  @Override
+  public int getMajorJavaVersion() {
     JavaVersion version = JavaVersion.current();
     JavaPluginConvention javaPluginConvention =
         project.getConvention().findPlugin(JavaPluginConvention.class);
     if (javaPluginConvention != null) {
-      version = JavaVersion.toVersion(javaPluginConvention.getTargetCompatibility());
+      version = javaPluginConvention.getTargetCompatibility();
     }
-    if (version.isJava9Compatible()) {
-      throw new GradleException(
-          "Jib's default base image uses Java 8, but project is using Java "
-              + version.getMajorVersion()
-              + "; perhaps you should configure a Java "
-              + version.getMajorVersion()
-              + "-compatible base image using the 'jib.from.image' parameter, or set targetCompatibility = 1.8 in your build configuration");
-    }
+    return Integer.valueOf(version.getMajorVersion());
   }
 
   /**

@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.util.Collections;
 import org.gradle.StartParameter;
-import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.internal.file.FileResolver;
@@ -38,7 +37,9 @@ import org.gradle.api.plugins.WarPluginConvention;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.jvm.tasks.Jar;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -151,24 +152,34 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testValidateBaseImageVersion() {
-    gradleProjectProperties.validateAgainstDefaultBaseImageVersion("nonDefault");
-
+  public void testGetMajorJavaVersion() {
     Mockito.when(mockConvention.findPlugin(JavaPluginConvention.class))
         .thenReturn(mockJavaPluginConvention);
+
     Mockito.when(mockJavaPluginConvention.getTargetCompatibility())
-        .thenReturn(JavaVersion.VERSION_1_8);
-    gradleProjectProperties.validateAgainstDefaultBaseImageVersion(null);
+        .thenReturn(JavaVersion.VERSION_1_3);
+    Assert.assertEquals(3, gradleProjectProperties.getMajorJavaVersion());
 
     Mockito.when(mockJavaPluginConvention.getTargetCompatibility())
         .thenReturn(JavaVersion.VERSION_11);
-    try {
-      gradleProjectProperties.validateAgainstDefaultBaseImageVersion(null);
-      Assert.fail();
-    } catch (GradleException ex) {
-      Assert.assertEquals(
-          "Jib's default base image uses Java 8, but project is using Java 11; perhaps you should configure a Java 11-compatible base image using the 'jib.from.image' parameter, or set targetCompatibility = 1.8 in your build configuration",
-          ex.getMessage());
-    }
+    Assert.assertEquals(11, gradleProjectProperties.getMajorJavaVersion());
+
+    Mockito.when(mockJavaPluginConvention.getTargetCompatibility())
+        .thenReturn(JavaVersion.VERSION_1_9);
+    Assert.assertEquals(9, gradleProjectProperties.getMajorJavaVersion());
+  }
+
+  @Test
+  public void testGetMajorJavaVersion_jvm8() {
+    Assume.assumeThat(JavaVersion.current(), CoreMatchers.is(JavaVersion.VERSION_1_8));
+
+    Assert.assertEquals(8, gradleProjectProperties.getMajorJavaVersion());
+  }
+
+  @Test
+  public void testGetMajorJavaVersion_jvm11() {
+    Assume.assumeThat(JavaVersion.current(), CoreMatchers.is(JavaVersion.VERSION_11));
+
+    Assert.assertEquals(11, gradleProjectProperties.getMajorJavaVersion());
   }
 }

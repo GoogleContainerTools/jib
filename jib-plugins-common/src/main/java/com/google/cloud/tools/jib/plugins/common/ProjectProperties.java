@@ -58,4 +58,6 @@ public interface ProjectProperties {
   String getName();
 
   String getVersion();
+
+  int getMajorJavaVersion();
 }

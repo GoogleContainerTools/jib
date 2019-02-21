@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.common.base.Splitter;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -39,6 +40,7 @@ import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -91,17 +93,24 @@ public class BuildImageMojoIntegrationTest {
     return DescriptorDigest.fromDigest(id).toString();
   }
 
+  private static boolean isJava11RuntimeOrHigher() {
+    Iterable<String> split = Splitter.on(".").split(System.getProperty("java.version"));
+    return Integer.valueOf(split.iterator().next()) >= 11;
+  }
+
   /**
    * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
    * imageReference}.
    */
-  private static String buildAndRun(Path projectRoot, String imageReference, boolean runTwice)
+  private static String buildAndRun(
+      Path projectRoot, String imageReference, String pomXml, boolean runTwice)
       throws VerificationException, IOException, InterruptedException, DigestException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
+    verifier.addCliOption("--file=" + pomXml);
     verifier.executeGoals(Arrays.asList("clean", "compile"));
 
     // Builds twice, and checks if the second build took less time.
@@ -328,7 +337,7 @@ public class BuildImageMojoIntegrationTest {
 
     Assert.assertEquals(
         "Hello, " + before + ". An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
-        buildAndRun(simpleTestProject.getProjectRoot(), targetImage, true));
+        buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom.xml", true));
 
     Instant buildTime =
         Instant.parse(
@@ -338,10 +347,42 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
+  public void testExecute_simpleOnJava11()
+      throws DigestException, VerificationException, IOException, InterruptedException {
+    Assume.assumeTrue(isJava11RuntimeOrHigher());
+
+    String targetImage = getGcrImageReference("simpleimage:maven");
+    Assert.assertEquals(
+        "Hello, world. An argument.\n",
+        buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-java11.xml", false));
+  }
+
+  @Test
+  public void testExecute_simpleWithIncomptiableJava11()
+      throws DigestException, IOException, InterruptedException {
+    Assume.assumeTrue(isJava11RuntimeOrHigher());
+
+    try {
+      buildAndRun(
+          simpleTestProject.getProjectRoot(), "willnotbuild", "pom-java11-incompatible.xml", false);
+      Assert.fail();
+    } catch (VerificationException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Your project is using Java 11 but the base image is for Java 8, perhaps you should "
+                  + "configure a Java 11-compatible base image using the '<from><image>' "
+                  + "parameter, or set maven-compiler-plugin's '<target>' or '<release>' version "
+                  + "to 8 or below in your build configuration"));
+    }
+  }
+
+  @Test
   public void testExecute_empty()
       throws InterruptedException, IOException, VerificationException, DigestException {
     String targetImage = getGcrImageReference("emptyimage:maven");
-    Assert.assertEquals("", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, false));
+    Assert.assertEquals(
+        "", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, "pom.xml", false));
     assertCreationTimeEpoch(targetImage);
     assertWorkingDirectory("", targetImage);
   }

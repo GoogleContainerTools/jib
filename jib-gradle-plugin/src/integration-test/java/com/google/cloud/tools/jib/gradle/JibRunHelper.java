@@ -53,6 +53,7 @@ public class JibRunHelper {
             "clean",
             "jib",
             "-Djib.useOnlyProjectCache=true",
+            "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
@@ -70,6 +71,7 @@ public class JibRunHelper {
             "clean",
             "jib",
             "-Djib.useOnlyProjectCache=true",
+            "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
             "-D_ADDITIONAL_TAG=" + additionalTag);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
@@ -95,6 +97,7 @@ public class JibRunHelper {
             "clean",
             "jibDockerBuild",
             "-Djib.useOnlyProjectCache=true",
+            "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
@@ -105,9 +108,10 @@ public class JibRunHelper {
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
   }
 
-  static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
+  static String buildToDockerDaemonAndRun(
+      TestProject testProject, String imageReference, String gradleBuildFile)
       throws IOException, InterruptedException, DigestException {
-    buildToDockerDaemon(testProject, imageReference, "build.gradle");
+    buildToDockerDaemon(testProject, imageReference, gradleBuildFile);
     return new Command("docker", "run", "--rm", imageReference).run();
   }
 
