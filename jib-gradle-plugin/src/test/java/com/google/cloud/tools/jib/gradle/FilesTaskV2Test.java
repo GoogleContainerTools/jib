@@ -52,8 +52,12 @@ public class FilesTaskV2Test {
     BuildTask jibTask = buildResult.task(taskName);
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
+    String output = buildResult.getOutput().trim();
+    Assert.assertThat(output, CoreMatchers.startsWith("BEGIN JIB JSON"));
+    Assert.assertThat(output, CoreMatchers.endsWith("END JIB JSON"));
 
-    return buildResult.getOutput().trim();
+    // Return task output with header/footer removed
+    return output.replace("BEGIN JIB JSON", "").replace("END JIB JSON", "").trim();
   }
 
   /**
