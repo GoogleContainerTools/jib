@@ -85,7 +85,7 @@ public class SkaffoldFilesOutput {
    */
   @VisibleForTesting
   public SkaffoldFilesOutput(String json) throws IOException {
-    this.skaffoldFilesTemplate = new ObjectMapper().readValue(json, SkaffoldFilesTemplate.class);
+    skaffoldFilesTemplate = new ObjectMapper().readValue(json, SkaffoldFilesTemplate.class);
   }
 
   /**
