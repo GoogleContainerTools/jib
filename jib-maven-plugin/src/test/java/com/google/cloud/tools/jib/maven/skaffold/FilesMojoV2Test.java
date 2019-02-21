@@ -45,7 +45,7 @@ public class FilesMojoV2Test {
   public static final TestProject multiTestProject = new TestProject(testPlugin, "multi");
 
   private static void verifyFiles(
-      Path projectRoot, String module, List<Path> buildFiles, List<Path> inputFiles)
+      Path projectRoot, String module, List<String> buildFiles, List<String> inputFiles)
       throws VerificationException, IOException {
 
     Verifier verifier = new Verifier(projectRoot.toString());
@@ -66,29 +66,10 @@ public class FilesMojoV2Test {
     Assert.assertTrue(log.size() > begin + 2);
     Assert.assertEquals("END JIB JSON", log.get(begin + 2));
 
-    Assert.fail(log.get(begin + 1));
-
     SkaffoldFilesOutput output = new SkaffoldFilesOutput(log.get(begin + 1));
-    assertPathListsAreEqual(buildFiles, output.getBuild());
-    assertPathListsAreEqual(inputFiles, output.getInputs());
+    Assert.assertEquals(buildFiles, output.getBuild());
+    Assert.assertEquals(inputFiles, output.getInputs());
     Assert.assertEquals(0, output.getIgnore().size());
-  }
-
-  /**
-   * Asserts that two lists contain the same paths. Required to avoid Mac's /var/ vs. /private/var/
-   * symlink issue.
-   *
-   * @param expected the expected list of paths
-   * @param actual the actual list of paths
-   * @throws IOException if checking if two files are the same fails
-   */
-  private static void assertPathListsAreEqual(List<Path> expected, List<String> actual)
-      throws IOException {
-    Assert.assertEquals(expected.size(), actual.size());
-    for (int index = 0; index < expected.size(); index++) {
-      Assert.assertEquals(
-          expected.get(index).toRealPath(), Paths.get(actual.get(index)).toRealPath());
-    }
   }
 
   @Test
@@ -98,11 +79,11 @@ public class FilesMojoV2Test {
     verifyFiles(
         projectRoot,
         null,
-        ImmutableList.of(projectRoot.resolve("pom.xml")),
+        ImmutableList.of(projectRoot.resolve("pom.xml").toString()),
         ImmutableList.of(
-            projectRoot.resolve("src/main/java"),
-            projectRoot.resolve("src/main/resources"),
-            projectRoot.resolve("src/main/jib-custom")));
+            projectRoot.resolve("src/main/java").toString(),
+            projectRoot.resolve("src/main/resources").toString(),
+            projectRoot.resolve("src/main/jib-custom").toString()));
   }
 
   @Test
@@ -113,11 +94,13 @@ public class FilesMojoV2Test {
     verifyFiles(
         projectRoot,
         "simple-service",
-        ImmutableList.of(projectRoot.resolve("pom.xml"), simpleServiceRoot.resolve("pom.xml")),
         ImmutableList.of(
-            simpleServiceRoot.resolve("src/main/java"),
-            simpleServiceRoot.resolve("src/main/resources"),
-            simpleServiceRoot.resolve("src/main/jib")));
+            projectRoot.resolve("pom.xml").toString(),
+            simpleServiceRoot.resolve("pom.xml").toString()),
+        ImmutableList.of(
+            simpleServiceRoot.resolve("src/main/java").toString(),
+            simpleServiceRoot.resolve("src/main/resources").toString(),
+            simpleServiceRoot.resolve("src/main/jib").toString()));
   }
 
   @Test
@@ -130,19 +113,20 @@ public class FilesMojoV2Test {
         projectRoot,
         "complex-service",
         ImmutableList.of(
-            projectRoot.resolve("pom.xml"),
-            libRoot.resolve("pom.xml"),
-            complexServiceRoot.resolve("pom.xml")),
+            projectRoot.resolve("pom.xml").toString(),
+            libRoot.resolve("pom.xml").toString(),
+            complexServiceRoot.resolve("pom.xml").toString()),
         ImmutableList.of(
-            libRoot.resolve("src/main/java"),
-            libRoot.resolve("src/main/resources"),
-            complexServiceRoot.resolve("src/main/java"),
-            complexServiceRoot.resolve("src/main/resources1"),
-            complexServiceRoot.resolve("src/main/resources2"),
-            complexServiceRoot.resolve("src/main/other-jib"),
+            libRoot.resolve("src/main/java").toString(),
+            libRoot.resolve("src/main/resources").toString(),
+            complexServiceRoot.resolve("src/main/java").toString(),
+            complexServiceRoot.resolve("src/main/resources1").toString(),
+            complexServiceRoot.resolve("src/main/resources2").toString(),
+            complexServiceRoot.resolve("src/main/other-jib").toString(),
             // this test expects standard .m2 locations
             Paths.get(System.getProperty("user.home"))
                 .resolve(
-                    ".m2/repository/com/google/guava/guava/HEAD-jre-SNAPSHOT/guava-HEAD-jre-SNAPSHOT.jar")));
+                    ".m2/repository/com/google/guava/guava/HEAD-jre-SNAPSHOT/guava-HEAD-jre-SNAPSHOT.jar")
+                .toString()));
   }
 }

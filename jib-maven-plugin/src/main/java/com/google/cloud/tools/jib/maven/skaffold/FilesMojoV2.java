@@ -69,10 +69,6 @@ public class FilesMojoV2 extends AbstractMojo {
   private MavenSession session;
 
   @Nullable
-  @Parameter(defaultValue = "${project}", required = true, readonly = true)
-  private MavenProject project;
-
-  @Nullable
   @Parameter(defaultValue = "${reactorProjects}", required = true, readonly = true)
   private List<MavenProject> projects;
 
@@ -86,89 +82,93 @@ public class FilesMojoV2 extends AbstractMojo {
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-    Preconditions.checkNotNull(project);
     Preconditions.checkNotNull(projects);
     Preconditions.checkNotNull(session);
     Preconditions.checkNotNull(projectDependenciesResolver);
 
     // Add pom configuration files
-    skaffoldFilesOutput.addBuild(project.getFile().toPath());
-    project.getPlugin("com.google.cloud.tools:jib-maven-plugin").getKey()
-    if ("pom".equals(project.getPackaging())) {
-      // done if <packaging>pom</packaging>
-      return;
-    }
+    for (MavenProject project : projects) {
+      skaffoldFilesOutput.addBuild(project.getFile().toPath());
+      if ("pom".equals(project.getPackaging())) {
+        // done if <packaging>pom</packaging>
+        continue;
+      }
 
-    // Add sources directory (resolved by maven to be an absolute path)
-    skaffoldFilesOutput.addInput(Paths.get(project.getBuild().getSourceDirectory()));
+      // Add sources directory (resolved by maven to be an absolute path)
+      skaffoldFilesOutput.addInput(Paths.get(project.getBuild().getSourceDirectory()));
 
-    // Add resources directory (resolved by maven to be an absolute path)
-    ImmutableSet.copyOf(project.getBuild().getResources())
-        .stream()
-        .map(FileSet::getDirectory)
-        .map(Paths::get)
-        .forEach(skaffoldFilesOutput::addInput);
-
-    // This seems weird, but we will only print out the jib "extraFiles" directory on projects where
-    // the plugin is explicitly configured (even though _skaffold-files-v2 is a jib-maven-plugin
-    // goal and is expected to run on all projects irrespective of their configuring of the jib
-    // plugin).
-    if (project.getPlugin(MavenProjectProperties.PLUGIN_KEY) != null) {
-      // Add extra directory
-      skaffoldFilesOutput.addInput(resolveExtraDirectory());
-    }
-
-    // Grab non-project SNAPSHOT dependencies for this project
-    // TODO: this whole sections relies on internal maven API, it could break. We need to explore
-    // TODO: better ways to resolve dependencies using the public maven API.
-    Set<String> projectArtifacts =
-        projects
-            .stream()
-            .map(MavenProject::getArtifact)
-            .map(Artifact::toString)
-            .collect(Collectors.toSet());
-
-    DependencyFilter ignoreProjectDependenciesFilter =
-        (node, parents) -> {
-          if (node == null || node.getDependency() == null) {
-            // if nothing, then ignore
-            return false;
-          }
-          if (projectArtifacts.contains(node.getArtifact().toString())) {
-            // ignore project dependency artifacts
-            return false;
-          }
-          // we only want compile/runtime deps
-          return Artifact.SCOPE_COMPILE_PLUS_RUNTIME.contains(node.getDependency().getScope());
-        };
-
-    try {
-      DependencyResolutionResult resolutionResult =
-          projectDependenciesResolver.resolve(
-              new DefaultDependencyResolutionRequest(project, session.getRepositorySession())
-                  .setResolutionFilter(ignoreProjectDependenciesFilter));
-      resolutionResult
-          .getDependencies()
+      // Add resources directory (resolved by maven to be an absolute path)
+      ImmutableSet.copyOf(project.getBuild().getResources())
           .stream()
-          .map(org.eclipse.aether.graph.Dependency::getArtifact)
-          .filter(org.eclipse.aether.artifact.Artifact::isSnapshot)
-          .map(org.eclipse.aether.artifact.Artifact::getFile)
-          .map(File::toPath)
+          .map(FileSet::getDirectory)
+          .map(Paths::get)
           .forEach(skaffoldFilesOutput::addInput);
 
+      // This seems weird, but we will only print out the jib "extraFiles" directory on projects
+      // where the plugin is explicitly configured (even though _skaffold-files-v2 is a
+      // jib-maven-plugin goal and is expected to run on all projects irrespective of their
+      // configuring of the jib plugin).
+      if (project.getPlugin(MavenProjectProperties.PLUGIN_KEY) != null) {
+        // Add extra directory
+        skaffoldFilesOutput.addInput(resolveExtraDirectory(project));
+      }
+
+      // Grab non-project SNAPSHOT dependencies for this project
+      // TODO: this whole sections relies on internal maven API, it could break. We need to explore
+      // TODO: better ways to resolve dependencies using the public maven API.
+      Set<String> projectArtifacts =
+          projects
+              .stream()
+              .map(MavenProject::getArtifact)
+              .map(Artifact::toString)
+              .collect(Collectors.toSet());
+
+      DependencyFilter ignoreProjectDependenciesFilter =
+          (node, parents) -> {
+            if (node == null || node.getDependency() == null) {
+              // if nothing, then ignore
+              return false;
+            }
+            if (projectArtifacts.contains(node.getArtifact().toString())) {
+              // ignore project dependency artifacts
+              return false;
+            }
+            // we only want compile/runtime deps
+            return Artifact.SCOPE_COMPILE_PLUS_RUNTIME.contains(node.getDependency().getScope());
+          };
+
+      try {
+        DependencyResolutionResult resolutionResult =
+            projectDependenciesResolver.resolve(
+                new DefaultDependencyResolutionRequest(project, session.getRepositorySession())
+                    .setResolutionFilter(ignoreProjectDependenciesFilter));
+        resolutionResult
+            .getDependencies()
+            .stream()
+            .map(org.eclipse.aether.graph.Dependency::getArtifact)
+            .filter(org.eclipse.aether.artifact.Artifact::isSnapshot)
+            .map(org.eclipse.aether.artifact.Artifact::getFile)
+            .map(File::toPath)
+            .forEach(skaffoldFilesOutput::addInput);
+
+      } catch (DependencyResolutionException ex) {
+        throw new MojoExecutionException("Failed to resolve dependencies", ex);
+      }
+    }
+
+    try {
       // Print JSON files
       System.out.println("BEGIN JIB JSON");
       System.out.println(skaffoldFilesOutput.getJsonString());
       System.out.println("END JIB JSON");
-
-    } catch (DependencyResolutionException ex) {
-      throw new MojoExecutionException("Failed to resolve dependencies", ex);
     } catch (IOException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
     }
   }
 
-  private Path resolveExtraDirectory() {
+  private Path resolveExtraDirectory(MavenProject project) {
+    // TODO: Get extraDirectory from project??
+
     if (extraDirectory.getPath() == null) {
       return Preconditions.checkNotNull(project)
           .getBasedir()
