@@ -332,7 +332,7 @@ public class PluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/some/root"),
-        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, false));
   }
 
   @Test
@@ -340,7 +340,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("relative/path");
 
     try {
-      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, false);
       Assert.fail();
     } catch (InvalidAppRootException ex) {
       Assert.assertEquals("relative/path", ex.getMessage());
@@ -352,7 +352,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("\\windows\\path");
 
     try {
-      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, false);
       Assert.fail();
     } catch (InvalidAppRootException ex) {
       Assert.assertEquals("\\windows\\path", ex.getMessage());
@@ -364,7 +364,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("C:\\windows\\path");
 
     try {
-      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, false);
       Assert.fail();
     } catch (InvalidAppRootException ex) {
       Assert.assertEquals("C:\\windows\\path", ex.getMessage());
@@ -374,21 +374,19 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testGetAppRootChecked_defaultNonWarProject() throws InvalidAppRootException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("");
-    Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/app"),
-        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, false));
   }
 
   @Test
   public void testGetAppRootChecked_defaultWarProject() throws InvalidAppRootException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("");
-    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/jetty/webapps/ROOT"),
-        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, true));
   }
 
   @Test

@@ -106,7 +106,7 @@ public class JibPlugin implements Plugin<Project> {
     project.afterEvaluate(
         projectAfterEvaluation -> {
           try {
-            War warTask = GradleProjectProperties.getWarTask(project);
+            War warTask = TaskCommon.getWarTask(project);
             Task dependsOnTask;
             if (warTask != null) {
               ExplodedWarTask explodedWarTask =

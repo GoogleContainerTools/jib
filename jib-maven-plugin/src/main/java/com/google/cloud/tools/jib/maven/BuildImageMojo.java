@@ -32,6 +32,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -87,7 +88,10 @@ public class BuildImageMojo extends JibPluginConfiguration {
     }
 
     try {
-      AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
+      RawConfiguration mavenRawConfiguration = new MavenRawConfiguration(this);
+      AbsoluteUnixPath appRoot =
+          PluginConfigurationProcessor.getAppRootChecked(
+              mavenRawConfiguration, MojoCommon.isWarProject(getProject()));
       MavenProjectProperties projectProperties =
           MavenProjectProperties.getForProject(
               getProject(),
@@ -101,7 +105,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
-              new MavenRawConfiguration(this),
+              mavenRawConfiguration,
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
               projectProperties);

@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -81,7 +82,10 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     TaskCommon.disableHttpLogging();
 
     try {
-      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
+      RawConfiguration gradleRawConfiguration = new GradleRawConfiguration(jibExtension);
+      AbsoluteUnixPath appRoot =
+          PluginConfigurationProcessor.getAppRootChecked(
+              gradleRawConfiguration, TaskCommon.isWarProject(getProject()));
       GradleProjectProperties projectProperties =
           GradleProjectProperties.getForProject(
               getProject(),
@@ -102,9 +106,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
-              new GradleRawConfiguration(jibExtension),
-              ignored -> Optional.empty(),
-              projectProperties);
+              gradleRawConfiguration, ignored -> Optional.empty(), projectProperties);
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =

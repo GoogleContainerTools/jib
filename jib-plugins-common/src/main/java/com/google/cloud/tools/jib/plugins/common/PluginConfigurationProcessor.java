@@ -273,7 +273,8 @@ public class PluginConfigurationProcessor {
       return null;
     }
 
-    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
+    AbsoluteUnixPath appRoot =
+        getAppRootChecked(rawConfiguration, projectProperties.isWarProject());
     String mainClass =
         MainClassResolver.resolveMainClass(
             rawConfiguration.getMainClass().orElse(null), projectProperties);
@@ -330,18 +331,17 @@ public class PluginConfigurationProcessor {
    * JavaLayerConfigurations#DEFAULT_APP_ROOT} for other projects.
    *
    * @param rawConfiguration raw configuration data
-   * @param projectProperties used for providing additional information
+   * @param isWarProject whether or not the project is a WAR project
    * @return the app root value
    * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
    */
   @VisibleForTesting
-  static AbsoluteUnixPath getAppRootChecked(
-      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
-      throws InvalidAppRootException {
+  public static AbsoluteUnixPath getAppRootChecked(
+      RawConfiguration rawConfiguration, boolean isWarProject) throws InvalidAppRootException {
     String appRoot = rawConfiguration.getAppRoot();
     if (appRoot.isEmpty()) {
       appRoot =
-          projectProperties.isWarProject()
+          isWarProject
               ? JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT
               : JavaLayerConfigurations.DEFAULT_APP_ROOT;
     }

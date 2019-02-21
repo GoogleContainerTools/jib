@@ -61,7 +61,7 @@ class GradleLayerConfigurations {
       Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
       AbsoluteUnixPath appRoot)
       throws IOException {
-    if (GradleProjectProperties.getWarTask(project) != null) {
+    if (TaskCommon.getWarTask(project) != null) {
       logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
       return getForWarProject(project, extraDirectory, extraDirectoryPermissions, appRoot);
     } else {
