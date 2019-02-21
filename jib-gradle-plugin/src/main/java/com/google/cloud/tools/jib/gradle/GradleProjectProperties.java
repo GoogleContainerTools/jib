@@ -51,8 +51,6 @@ import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.plugins.WarPluginConvention;
-import org.gradle.api.tasks.bundling.War;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
@@ -84,16 +82,6 @@ class GradleProjectProperties implements ProjectProperties {
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
     }
-  }
-
-  @Nullable
-  static War getWarTask(Project project) {
-    WarPluginConvention warPluginConvention =
-        project.getConvention().findPlugin(WarPluginConvention.class);
-    if (warPluginConvention == null) {
-      return null;
-    }
-    return (War) warPluginConvention.getProject().getTasks().findByName("war");
   }
 
   static Path getExplodedWarDirectory(Project project) {
@@ -141,7 +129,6 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   private static boolean isProgressFooterEnabled(Project project) {
-    // TODO: Consolidate with MavenProjectProperties?
     if ("plain".equals(System.getProperty(PropertyNames.CONSOLE))) {
       return false;
     }
@@ -220,7 +207,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public boolean isWarProject() {
-    return getWarTask(project) != null;
+    return TaskCommon.isWarProject(project);
   }
 
   /**

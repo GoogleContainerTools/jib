@@ -34,6 +34,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryExceptio
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
@@ -90,7 +91,10 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     }
 
     try {
-      AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
+      RawConfiguration mavenRawConfiguration = new MavenRawConfiguration(this);
+      AbsoluteUnixPath appRoot =
+          PluginConfigurationProcessor.getAppRootChecked(
+              mavenRawConfiguration, MojoCommon.isWarProject(getProject()));
       MavenProjectProperties projectProperties =
           MavenProjectProperties.getForProject(
               getProject(),
@@ -107,7 +111,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
-              new MavenRawConfiguration(this),
+              mavenRawConfiguration,
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
               projectProperties,

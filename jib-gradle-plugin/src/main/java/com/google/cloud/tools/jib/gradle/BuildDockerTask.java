@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -104,8 +105,10 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     TaskCommon.disableHttpLogging();
 
     try {
-      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
-
+      RawConfiguration gradleRawConfiguration = new GradleRawConfiguration(jibExtension);
+      AbsoluteUnixPath appRoot =
+          PluginConfigurationProcessor.getAppRootChecked(
+              gradleRawConfiguration, TaskCommon.isWarProject(getProject()));
       GradleProjectProperties projectProperties =
           GradleProjectProperties.getForProject(
               getProject(),
@@ -120,7 +123,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
-              new GradleRawConfiguration(jibExtension),
+              gradleRawConfiguration,
               ignored -> java.util.Optional.empty(),
               projectProperties,
               dockerClientParameters.getExecutablePath(),

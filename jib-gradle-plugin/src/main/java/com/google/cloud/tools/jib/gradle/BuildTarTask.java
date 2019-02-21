@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -103,8 +104,10 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     TaskCommon.disableHttpLogging();
 
     try {
-      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
-
+      RawConfiguration gradleRawConfiguration = new GradleRawConfiguration(jibExtension);
+      AbsoluteUnixPath appRoot =
+          PluginConfigurationProcessor.getAppRootChecked(
+              gradleRawConfiguration, TaskCommon.isWarProject(getProject()));
       GradleProjectProperties projectProperties =
           GradleProjectProperties.getForProject(
               getProject(),
@@ -120,7 +123,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
       Path tarOutputPath = getTargetPath();
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForTarImage(
-              new GradleRawConfiguration(jibExtension),
+              gradleRawConfiguration,
               ignored -> Optional.empty(),
               projectProperties,
               tarOutputPath,

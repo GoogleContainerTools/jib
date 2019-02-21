@@ -17,12 +17,11 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import java.util.logging.Level;
-import org.gradle.api.GradleException;
+import javax.annotation.Nullable;
 import org.gradle.api.Project;
+import org.gradle.api.plugins.WarPluginConvention;
+import org.gradle.api.tasks.bundling.War;
 import org.gradle.internal.logging.events.LogEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
@@ -31,29 +30,18 @@ import org.slf4j.LoggerFactory;
 /** Collection of common methods to share between Gradle tasks. */
 class TaskCommon {
 
-  /**
-   * Gets the value of the {@code container.appRoot} parameter. Throws {@link GradleException} if it
-   * is not an absolute path in Unix-style.
-   *
-   * @param jibExtension the {@link JibExtension} providing the configuration data
-   * @return the app root value
-   * @throws InvalidAppRootException if the app root is not an absolute path in Unix-style
-   */
-  // TODO: find a way to use PluginConfigurationProcessor.getAppRootChecked() instead
-  static AbsoluteUnixPath getAppRootChecked(JibExtension jibExtension, Project project)
-      throws InvalidAppRootException {
-    String appRoot = jibExtension.getContainer().getAppRoot();
-    if (appRoot.isEmpty()) {
-      appRoot =
-          GradleProjectProperties.getWarTask(project) != null
-              ? JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT
-              : JavaLayerConfigurations.DEFAULT_APP_ROOT;
+  static boolean isWarProject(Project project) {
+    return getWarTask(project) != null;
+  }
+
+  @Nullable
+  static War getWarTask(Project project) {
+    WarPluginConvention warPluginConvention =
+        project.getConvention().findPlugin(WarPluginConvention.class);
+    if (warPluginConvention == null) {
+      return null;
     }
-    try {
-      return AbsoluteUnixPath.get(appRoot);
-    } catch (IllegalArgumentException ex) {
-      throw new InvalidAppRootException(appRoot, appRoot, ex);
-    }
+    return (War) warPluginConvention.getProject().getTasks().findByName("war");
   }
 
   /** Disables annoying Apache HTTP client logging. */

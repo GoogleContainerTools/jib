@@ -129,7 +129,6 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   private static boolean isProgressFooterEnabled() {
-    // TODO: Consolidate with GradleProjectProperties?
     if ("plain".equals(System.getProperty(PropertyNames.CONSOLE))) {
       return false;
     }
