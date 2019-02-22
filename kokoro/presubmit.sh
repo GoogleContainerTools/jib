@@ -10,6 +10,17 @@ export PATH=$PATH:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/b
 docker stop $(docker ps --all --quiet) || true
 docker kill $(docker ps --all --quiet) || true
 
+# Restarting Docker for Mac to get around the certificate expiration issue:
+# b/112707824
+# https://github.com/GoogleContainerTools/jib/issues/730#issuecomment-413603874
+# https://github.com/moby/moby/issues/11534
+# TODO: remove this temporary fix once b/112707824 is permanently fixed.
+if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
+  osascript -e 'quit app "Docker"'
+  open -a Docker
+  while ! docker info > /dev/null 2>&1; do sleep 1; done
+fi
+
 cd github/jib
 
 # Workaround for issue with calling 'docker login'. It defaults to using docker-credential-osxkeychain and errors with:
