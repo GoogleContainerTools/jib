@@ -158,7 +158,7 @@ public class FilesMojoV2 extends AbstractMojo {
 
     try {
       // Print JSON string
-      System.out.println("BEGIN JIB JSON");
+      System.out.println("\nBEGIN JIB JSON");
       System.out.println(skaffoldFilesOutput.getJsonString());
       System.out.println("END JIB JSON");
     } catch (IOException ex) {
@@ -168,13 +168,10 @@ public class FilesMojoV2 extends AbstractMojo {
 
   private Path resolveExtraDirectory(MavenProject project) {
     // Try getting extra directory from project/session properties
-    if (project.getProperties().containsKey(PropertyNames.EXTRA_DIRECTORY_PATH)) {
-      return Paths.get(project.getProperties().getProperty(PropertyNames.EXTRA_DIRECTORY_PATH));
-    }
-    if (session != null
-        && session.getSystemProperties().containsKey(PropertyNames.EXTRA_DIRECTORY_PATH)) {
-      return Paths.get(
-          session.getSystemProperties().getProperty(PropertyNames.EXTRA_DIRECTORY_PATH));
+    String extraDirectoryProperty =
+        MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH, project, session);
+    if (extraDirectoryProperty != null) {
+      return Paths.get(extraDirectoryProperty);
     }
 
     // Try getting extra directory from project pom

@@ -20,12 +20,13 @@ import com.google.cloud.tools.jib.maven.TestPlugin;
 import com.google.cloud.tools.jib.maven.TestProject;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldFilesOutput;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
@@ -63,7 +64,9 @@ public class FilesMojoV2Test {
     List<String> log = Files.readAllLines(logFile, StandardCharsets.UTF_8);
 
     int begin = log.indexOf("BEGIN JIB JSON");
-    Assert.assertTrue(log.size() > begin + 2);
+    Assert.assertTrue(begin > -1);
+    Assert.assertTrue(
+        "log.size() is " + log.size() + ", but begin + 2 is " + begin + 2, log.size() > begin + 2);
     Assert.assertEquals("END JIB JSON", log.get(begin + 2));
 
     SkaffoldFilesOutput output = new SkaffoldFilesOutput(log.get(begin + 1));
@@ -79,8 +82,8 @@ public class FilesMojoV2Test {
     verifyFiles(
         projectRoot,
         null,
-        ImmutableList.of(projectRoot.resolve("pom.xml").toString()),
-        ImmutableList.of(
+        Collections.singletonList(projectRoot.resolve("pom.xml").toString()),
+        Arrays.asList(
             projectRoot.resolve("src/main/java").toString(),
             projectRoot.resolve("src/main/resources").toString(),
             projectRoot.resolve("src/main/jib-custom").toString()));
@@ -94,10 +97,10 @@ public class FilesMojoV2Test {
     verifyFiles(
         projectRoot,
         "simple-service",
-        ImmutableList.of(
+        Arrays.asList(
             projectRoot.resolve("pom.xml").toString(),
             simpleServiceRoot.resolve("pom.xml").toString()),
-        ImmutableList.of(
+        Arrays.asList(
             simpleServiceRoot.resolve("src/main/java").toString(),
             simpleServiceRoot.resolve("src/main/resources").toString(),
             simpleServiceRoot.resolve("src/main/jib").toString()));
@@ -112,11 +115,11 @@ public class FilesMojoV2Test {
     verifyFiles(
         projectRoot,
         "complex-service",
-        ImmutableList.of(
+        Arrays.asList(
             projectRoot.resolve("pom.xml").toString(),
             libRoot.resolve("pom.xml").toString(),
             complexServiceRoot.resolve("pom.xml").toString()),
-        ImmutableList.of(
+        Arrays.asList(
             libRoot.resolve("src/main/java").toString(),
             libRoot.resolve("src/main/resources").toString(),
             complexServiceRoot.resolve("src/main/java").toString(),

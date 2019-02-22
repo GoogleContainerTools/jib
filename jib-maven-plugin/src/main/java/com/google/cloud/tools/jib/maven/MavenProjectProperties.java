@@ -37,6 +37,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import javax.annotation.Nullable;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -89,6 +90,25 @@ public class MavenProjectProperties implements ProjectProperties {
               + "jib:build\" instead of \"mvn clean compile jib:build\"?)",
           ex);
     }
+  }
+
+  /**
+   * Gets a system property with the given name. First checks for a -D commandline argument, then
+   * checks for a property defined in the POM, then returns null if neither are defined.
+   *
+   * @param propertyName the name of the system property
+   * @return the value of the system property, or null if not defined
+   */
+  @Nullable
+  public static String getProperty(
+      String propertyName, @Nullable MavenProject project, @Nullable MavenSession session) {
+    if (session != null && session.getSystemProperties().containsKey(propertyName)) {
+      return session.getSystemProperties().getProperty(propertyName);
+    }
+    if (project != null && project.getProperties().containsKey(propertyName)) {
+      return project.getProperties().getProperty(propertyName);
+    }
+    return null;
   }
 
   private static EventHandlers makeEventHandlers(

@@ -548,21 +548,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     this.project = project;
   }
 
-  /**
-   * Gets a system property with the given name. First checks for a -D commandline argument, then
-   * checks for a property defined in the POM, then returns null if neither are defined.
-   *
-   * @param propertyName the name of the system property
-   * @return the value of the system property, or null if not defined
-   */
   @Nullable
-  public String getProperty(String propertyName) {
-    if (session != null && session.getSystemProperties().containsKey(propertyName)) {
-      return session.getSystemProperties().getProperty(propertyName);
-    }
-    if (project != null && project.getProperties().containsKey(propertyName)) {
-      return project.getProperties().getProperty(propertyName);
-    }
-    return null;
+  String getProperty(String propertyName) {
+    return MavenProjectProperties.getProperty(propertyName, project, session);
   }
 }
