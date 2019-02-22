@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.maven.skaffold;
 
-import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryParameters;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldFilesOutput;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -33,6 +33,7 @@ import javax.annotation.Nullable;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
+import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -45,6 +46,7 @@ import org.apache.maven.project.DependencyResolutionException;
 import org.apache.maven.project.DependencyResolutionResult;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectDependenciesResolver;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.eclipse.aether.graph.DependencyFilter;
 
 /**
@@ -75,9 +77,6 @@ public class FilesMojoV2 extends AbstractMojo {
   // TODO: This is internal maven, we should find a better way to do this
   @Nullable @Component private ProjectDependenciesResolver projectDependenciesResolver;
 
-  // This parameter is cloned from JibPluginConfiguration
-  @Parameter private ExtraDirectoryParameters extraDirectory = new ExtraDirectoryParameters();
-
   private final SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
 
   @Override
@@ -86,8 +85,8 @@ public class FilesMojoV2 extends AbstractMojo {
     Preconditions.checkNotNull(session);
     Preconditions.checkNotNull(projectDependenciesResolver);
 
-    // Add pom configuration files
     for (MavenProject project : projects) {
+      // Add pom configuration files
       skaffoldFilesOutput.addBuild(project.getFile().toPath());
       if ("pom".equals(project.getPackaging())) {
         // done if <packaging>pom</packaging>
@@ -157,7 +156,7 @@ public class FilesMojoV2 extends AbstractMojo {
     }
 
     try {
-      // Print JSON files
+      // Print JSON string
       System.out.println("BEGIN JIB JSON");
       System.out.println(skaffoldFilesOutput.getJsonString());
       System.out.println("END JIB JSON");
@@ -167,17 +166,41 @@ public class FilesMojoV2 extends AbstractMojo {
   }
 
   private Path resolveExtraDirectory(MavenProject project) {
-    // TODO: Get extraDirectory from project??
-
-    if (extraDirectory.getPath() == null) {
-      return Preconditions.checkNotNull(project)
-          .getBasedir()
-          .getAbsoluteFile()
-          .toPath()
-          .resolve("src")
-          .resolve("main")
-          .resolve("jib");
+    // Try getting extra directory from project/session properties
+    if (project.getProperties().containsKey(PropertyNames.EXTRA_DIRECTORY_PATH)) {
+      return Paths.get(project.getProperties().getProperty(PropertyNames.EXTRA_DIRECTORY_PATH));
     }
-    return extraDirectory.getPath().getAbsoluteFile().toPath();
+    if (session != null
+        && session.getSystemProperties().containsKey(PropertyNames.EXTRA_DIRECTORY_PATH)) {
+      return Paths.get(
+          session.getSystemProperties().getProperty(PropertyNames.EXTRA_DIRECTORY_PATH));
+    }
+
+    // Try getting extra directory from project pom
+    Plugin jibMavenPlugin = project.getPlugin(MavenProjectProperties.PLUGIN_KEY);
+    if (jibMavenPlugin != null) {
+      Xpp3Dom pluginConfiguration = (Xpp3Dom) jibMavenPlugin.getConfiguration();
+      if (pluginConfiguration != null) {
+        Xpp3Dom extraDirectoryConfiguration = pluginConfiguration.getChild("extraDirectory");
+        if (extraDirectoryConfiguration != null) {
+          // May be configured via <extraDirectory> or <extraDirectory><path>
+          Xpp3Dom child = extraDirectoryConfiguration.getChild("path");
+          if (child != null) {
+            return Paths.get(child.getValue());
+          } else {
+            return Paths.get(extraDirectoryConfiguration.getValue());
+          }
+        }
+      }
+    }
+
+    // Return default if not found
+    return Preconditions.checkNotNull(project)
+        .getBasedir()
+        .getAbsoluteFile()
+        .toPath()
+        .resolve("src")
+        .resolve("main")
+        .resolve("jib");
   }
 }
