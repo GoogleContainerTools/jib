@@ -43,4 +43,6 @@ mainClassName = 'example.micronaut.Application'
 
 /** CHANGE THIS TO THE IMAGE YOU WANT TO PUSH TO */
 // jib.to.image = 'gcr.io/PROJECT_ID/micronaut-jib'
+
+// not needed once https://github.com/GoogleContainerTools/jib/issues/1501 is fixed
 jib.container.mainClass = mainClassName
