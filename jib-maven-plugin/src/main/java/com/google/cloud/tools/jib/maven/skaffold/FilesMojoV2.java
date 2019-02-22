@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldFilesOutput;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -97,7 +96,9 @@ public class FilesMojoV2 extends AbstractMojo {
       skaffoldFilesOutput.addInput(Paths.get(project.getBuild().getSourceDirectory()));
 
       // Add resources directory (resolved by maven to be an absolute path)
-      ImmutableSet.copyOf(project.getBuild().getResources())
+      project
+          .getBuild()
+          .getResources()
           .stream()
           .map(FileSet::getDirectory)
           .map(Paths::get)
@@ -183,13 +184,13 @@ public class FilesMojoV2 extends AbstractMojo {
       if (pluginConfiguration != null) {
         Xpp3Dom extraDirectoryConfiguration = pluginConfiguration.getChild("extraDirectory");
         if (extraDirectoryConfiguration != null) {
-          // May be configured via <extraDirectory> or <extraDirectory><path>
           Xpp3Dom child = extraDirectoryConfiguration.getChild("path");
           if (child != null) {
+            // <extraDirectory><path>...</path></extraDirectory>
             return Paths.get(child.getValue());
-          } else {
-            return Paths.get(extraDirectoryConfiguration.getValue());
           }
+          // <extraDirectory>...</extraDirectory>
+          return Paths.get(extraDirectoryConfiguration.getValue());
         }
       }
     }

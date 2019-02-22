@@ -43,7 +43,7 @@ public class FilesTaskV2Test {
    *
    * @param project the project to run the task on
    * @param moduleName the name of the sub-project, or {@code null} if no sub-project
-   * @return the list of paths printed by the task
+   * @return the JSON string printed by the task
    */
   private static String verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
     String taskName =
