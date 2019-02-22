@@ -5,9 +5,15 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Java 9+ projects are now supported and run on the distroless Java 11 image by default. Java 8 projects remain on the distroless Java 8 image. ([#1279](https://github.com/GoogleContainerTools/jib/issues/1279))
-
 ### Changed
+
+### Fixed
+
+## 1.0.1
+
+### Added
+
+- Java 9+ projects are now supported and run on the distroless Java 11 image by default. Java 8 projects remain on the distroless Java 8 image. ([#1279](https://github.com/GoogleContainerTools/jib/issues/1279))
 
 ### Fixed
 
