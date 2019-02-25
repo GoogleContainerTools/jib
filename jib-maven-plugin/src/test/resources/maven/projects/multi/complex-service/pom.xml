@@ -18,7 +18,7 @@
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
         <configuration>
-          <extraDirectory>src/main/other-jib</extraDirectory>
+          <extraDirectory>${project.basedir}/src/main/other-jib</extraDirectory>
         </configuration>
       </plugin>
     </plugins>

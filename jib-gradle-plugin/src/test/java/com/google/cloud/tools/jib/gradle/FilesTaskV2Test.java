@@ -43,7 +43,7 @@ public class FilesTaskV2Test {
    *
    * @param project the project to run the task on
    * @param moduleName the name of the sub-project, or {@code null} if no sub-project
-   * @return the list of paths printed by the task
+   * @return the JSON string printed by the task
    */
   private static String verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
     String taskName =
@@ -52,8 +52,12 @@ public class FilesTaskV2Test {
     BuildTask jibTask = buildResult.task(taskName);
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
+    String output = buildResult.getOutput().trim();
+    Assert.assertThat(output, CoreMatchers.startsWith("BEGIN JIB JSON"));
+    Assert.assertThat(output, CoreMatchers.endsWith("END JIB JSON"));
 
-    return buildResult.getOutput().trim();
+    // Return task output with header/footer removed
+    return output.replace("BEGIN JIB JSON", "").replace("END JIB JSON", "").trim();
   }
 
   /**

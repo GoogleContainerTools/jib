@@ -102,7 +102,9 @@ public class FilesTaskV2 extends DefaultTask {
     }
 
     // Print files
+    System.out.println("\nBEGIN JIB JSON");
     System.out.println(skaffoldFilesOutput.getJsonString());
+    System.out.println("END JIB JSON");
   }
 
   /**
