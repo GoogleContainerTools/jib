@@ -160,7 +160,6 @@ public class FilesMojoV2 extends AbstractMojo {
       // Print JSON string
       System.out.println("\nBEGIN JIB JSON");
       System.out.println(skaffoldFilesOutput.getJsonString());
-      System.out.println("END JIB JSON");
     } catch (IOException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
     }
