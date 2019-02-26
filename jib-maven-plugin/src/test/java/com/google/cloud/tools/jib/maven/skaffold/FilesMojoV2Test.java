@@ -65,10 +65,6 @@ public class FilesMojoV2Test {
 
     int begin = log.indexOf("BEGIN JIB JSON");
     Assert.assertTrue(begin > -1);
-    Assert.assertTrue(
-        "log.size() is " + log.size() + ", but begin + 2 is " + begin + 2, log.size() > begin + 2);
-    Assert.assertEquals("END JIB JSON", log.get(begin + 2));
-
     SkaffoldFilesOutput output = new SkaffoldFilesOutput(log.get(begin + 1));
     Assert.assertEquals(buildFiles, output.getBuild());
     Assert.assertEquals(inputFiles, output.getInputs());
