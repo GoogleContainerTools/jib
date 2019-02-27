@@ -269,7 +269,7 @@ public class RegistryAuthenticator {
   private Authorization authenticate(String scope) throws RegistryAuthenticationFailedException {
     try {
         AuthenticationResponseTemplate responseJson = credential != null && credential.isRefreshToken() ?
-            fetchTokenWithOAuth(credential, realm, service, scope): fetchTokenWithBasicAuth(credential, realm, service, scope);
+            fetchTokenWithOAuth(scope, credential.getPassword()) : fetchTokenWithBasicAuth(scope);
 
         if (responseJson.getToken() == null) {
           throw new RegistryAuthenticationFailedException(registryEndpointRequestProperties.getServerUrl(),
@@ -285,15 +285,14 @@ public class RegistryAuthenticator {
     }
   }
 
-  private AuthenticationResponseTemplate fetchTokenWithOAuth(Credential credential, String realm,
-			String service, String scope) throws IOException, RegistryAuthenticationFailedException {
+  private AuthenticationResponseTemplate fetchTokenWithOAuth(String scope, String token) throws IOException, RegistryAuthenticationFailedException {
 			URL authenticationUrl = new URL(realm);
 
 			try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
 				BlobHttpContent formBody = new BlobHttpContent(Blobs.from("grant_type=refresh_token"
 						+ "&service=" + service
 						+ "&scope=repository:" + registryEndpointRequestProperties.getImageName() + ":" + scope
-						+ "&refresh_token=" + credential.getPassword()
+						+ "&refresh_token=" + token
 						), MediaType.FORM_DATA.toString(), null); // FORM_DATA
 				Request.Builder requestBuilder = Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout())
 						.setBody(formBody);
@@ -306,8 +305,7 @@ public class RegistryAuthenticator {
 			}
   }
 
-	private AuthenticationResponseTemplate fetchTokenWithBasicAuth(Credential credential, String realm,
-			String service, String scope) throws IOException, RegistryAuthenticationFailedException {
+	private AuthenticationResponseTemplate fetchTokenWithBasicAuth(String scope) throws IOException, RegistryAuthenticationFailedException {
 			URL authenticationUrl = getAuthenticationUrl(scope);
 
 			try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
