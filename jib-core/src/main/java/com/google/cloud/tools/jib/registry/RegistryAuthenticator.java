@@ -305,7 +305,7 @@ public class RegistryAuthenticator {
     }
   }
 
-	private AuthenticationResponseTemplate fetchTokenWithBasicAuth(String scope) throws IOException, RegistryAuthenticationFailedException {
+  private AuthenticationResponseTemplate fetchTokenWithBasicAuth(String scope) throws IOException, RegistryAuthenticationFailedException {
     URL authenticationUrl = getAuthenticationUrl(scope);
 
     try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
@@ -319,5 +319,5 @@ public class RegistryAuthenticator {
       return JsonTemplateMapper.readJson(responseString,
               AuthenticationResponseTemplate.class);
     }
-	}
+  }
 }
