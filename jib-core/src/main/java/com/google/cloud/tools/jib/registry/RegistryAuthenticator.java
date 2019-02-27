@@ -37,6 +37,7 @@ import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 
 /**
  * Authenticates push/pull access with a registry service.
@@ -106,9 +107,9 @@ public class RegistryAuthenticator {
    * @param credential the credential
    * @return this
    */
-  public RegistryAuthenticator setCredential(Credential credential) {
+  public RegistryAuthenticator setCredential(@Nullable Credential credential) {
     this.credential = credential;
-	return this;
+    return this;
   }
 
   /**
@@ -215,8 +216,7 @@ public class RegistryAuthenticator {
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final String realm;
   private final String service;
-  private Credential credential;
-  
+  @Nullable private Credential credential;
 
   RegistryAuthenticator(
       String realm,
@@ -270,8 +270,13 @@ public class RegistryAuthenticator {
     try {
         AuthenticationResponseTemplate responseJson = credential != null && credential.isRefreshToken() ?
             fetchTokenWithOAuth(credential, realm, service, scope): fetchTokenWithBasicAuth(credential, realm, service, scope);
-        return Authorizations.withBearerToken(responseJson.getToken());
 
+        if (responseJson.getToken() == null) {
+          throw new RegistryAuthenticationFailedException(registryEndpointRequestProperties.getServerUrl(),
+              registryEndpointRequestProperties.getImageName(),
+              "Did not get token in authentication response from " + getAuthenticationUrl(scope));
+        }
+        return Authorizations.withBearerToken(responseJson.getToken());
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(
           registryEndpointRequestProperties.getServerUrl(),
@@ -296,16 +301,11 @@ public class RegistryAuthenticator {
 				Response response = connection.post(requestBuilder.build());
 				String responseString = Blobs.writeToString(response.getBody());
 
-				AuthenticationResponseTemplate responseJson = JsonTemplateMapper.readJson(responseString,
+				return JsonTemplateMapper.readJson(responseString,
 						AuthenticationResponseTemplate.class);
-				if (responseJson.getToken() == null) {
-					throw new RegistryAuthenticationFailedException(registryEndpointRequestProperties.getServerUrl(),
-							registryEndpointRequestProperties.getImageName(),
-							"Did not get token in authentication response from " + authenticationUrl);
-				}
-				return responseJson;
 			}
   }
+
 	private AuthenticationResponseTemplate fetchTokenWithBasicAuth(Credential credential, String realm,
 			String service, String scope) throws IOException, RegistryAuthenticationFailedException {
 			URL authenticationUrl = getAuthenticationUrl(scope);
@@ -318,14 +318,8 @@ public class RegistryAuthenticator {
 				Response response = connection.get(requestBuilder.build());
 				String responseString = Blobs.writeToString(response.getBody());
 
-				AuthenticationResponseTemplate responseJson = JsonTemplateMapper.readJson(responseString,
+				return JsonTemplateMapper.readJson(responseString,
 						AuthenticationResponseTemplate.class);
-				if (responseJson.getToken() == null) {
-					throw new RegistryAuthenticationFailedException(registryEndpointRequestProperties.getServerUrl(),
-							registryEndpointRequestProperties.getImageName(),
-							"Did not get token in authentication response from " + authenticationUrl);
-				}
-				return responseJson;
 			}
 	}
 }
