@@ -248,12 +248,14 @@ public class RegistryAuthenticator {
 
   @VisibleForTesting
   URL getAuthenticationUrl(String scope) throws MalformedURLException {
-    return new URL(realm
+    return new URL(
+        realm
             + "?service="
             + service
             + "&scope=repository:"
             + registryEndpointRequestProperties.getImageName()
-            + ":" + scope);
+            + ":"
+            + scope);
   }
 
   /**
@@ -267,11 +269,14 @@ public class RegistryAuthenticator {
    */
   private Authorization authenticate(String scope) throws RegistryAuthenticationFailedException {
     try {
-      AuthenticationResponseTemplate responseJson = credential != null && credential.isRefreshToken() ?
-          fetchTokenWithOAuth(scope, credential.getPassword()) : fetchTokenWithBasicAuth(scope);
+      AuthenticationResponseTemplate responseJson =
+          credential != null && credential.isRefreshToken()
+              ? fetchTokenWithOAuth(scope, credential.getPassword())
+              : fetchTokenWithBasicAuth(scope);
 
       if (responseJson.getToken() == null) {
-        throw new RegistryAuthenticationFailedException(registryEndpointRequestProperties.getServerUrl(),
+        throw new RegistryAuthenticationFailedException(
+            registryEndpointRequestProperties.getServerUrl(),
             registryEndpointRequestProperties.getImageName(),
             "Did not get token in authentication response from " + getAuthenticationUrl(scope));
       }
@@ -284,39 +289,51 @@ public class RegistryAuthenticator {
     }
   }
 
-  private AuthenticationResponseTemplate fetchTokenWithOAuth(String scope, String token) throws IOException, RegistryAuthenticationFailedException {
+  private AuthenticationResponseTemplate fetchTokenWithOAuth(String scope, String token)
+      throws IOException, RegistryAuthenticationFailedException {
     URL authenticationUrl = new URL(realm);
 
     try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
-      BlobHttpContent formBody = new BlobHttpContent(Blobs.from("grant_type=refresh_token"
-              + "&service=" + service
-              + "&scope=repository:" + registryEndpointRequestProperties.getImageName() + ":" + scope
-              + "&refresh_token=" + token
-              ), MediaType.FORM_DATA.toString(), null); // FORM_DATA
-      Request.Builder requestBuilder = Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout())
-              .setBody(formBody);
+      BlobHttpContent formBody =
+          new BlobHttpContent(
+              Blobs.from(
+                  "grant_type=refresh_token"
+                      + "&service="
+                      + service
+                      + "&scope=repository:"
+                      + registryEndpointRequestProperties.getImageName()
+                      + ":"
+                      + scope
+                      + "&refresh_token="
+                      + token),
+              MediaType.FORM_DATA.toString(),
+              null); // FORM_DATA
+      Request.Builder requestBuilder =
+          Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout()).setBody(formBody);
 
       Response response = connection.post(requestBuilder.build());
       String responseString = Blobs.writeToString(response.getBody());
 
-      return JsonTemplateMapper.readJson(responseString,
-              AuthenticationResponseTemplate.class);
+      return JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
     }
   }
 
-  private AuthenticationResponseTemplate fetchTokenWithBasicAuth(String scope) throws IOException, RegistryAuthenticationFailedException {
+  private AuthenticationResponseTemplate fetchTokenWithBasicAuth(String scope)
+      throws IOException, RegistryAuthenticationFailedException {
     URL authenticationUrl = getAuthenticationUrl(scope);
 
     try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
-      Request.Builder requestBuilder = Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout());
+      Request.Builder requestBuilder =
+          Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout());
       if (credential != null) {
-          requestBuilder.setAuthorization(Authorizations.withBasicCredentials(credential.getUsername(), credential.getPassword()));
+        requestBuilder.setAuthorization(
+            Authorizations.withBasicCredentials(
+                credential.getUsername(), credential.getPassword()));
       }
       Response response = connection.get(requestBuilder.build());
       String responseString = Blobs.writeToString(response.getBody());
 
-      return JsonTemplateMapper.readJson(responseString,
-              AuthenticationResponseTemplate.class);
+      return JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
     }
   }
 }

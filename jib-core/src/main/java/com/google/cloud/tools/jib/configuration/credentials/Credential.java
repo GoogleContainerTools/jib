@@ -66,7 +66,7 @@ public class Credential {
    * @return tur if this credential is a refresh token.
    */
   public boolean isRefreshToken() {
-	  return TOKEN_USER_NAME.equals(this.username);
+    return TOKEN_USER_NAME.equals(this.username);
   }
 
   @Override
