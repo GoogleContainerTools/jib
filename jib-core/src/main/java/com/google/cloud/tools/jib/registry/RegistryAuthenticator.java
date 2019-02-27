@@ -37,7 +37,6 @@ import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
-import javax.annotation.Nonnull;
 
 /**
  * Authenticates push/pull access with a registry service.
