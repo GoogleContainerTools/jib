@@ -21,6 +21,7 @@ import java.util.Objects;
 // TODO: Move to lower-level package - probably at same level as Authorization.
 /** Holds credentials (username and password). */
 public class Credential {
+  private static final String TOKEN_USER_NAME = "<token>";
 
   /**
    * Gets a {@link Credential} configured with a username and password.
@@ -57,6 +58,15 @@ public class Credential {
    */
   public String getPassword() {
     return password;
+  }
+
+  /**
+   * Check whether this credential is a refresh token.
+   *
+   * @return tur if this credential is a refresh token.
+   */
+  public boolean isRefreshToken() {
+	  return TOKEN_USER_NAME.equals(this.username);
   }
 
   @Override

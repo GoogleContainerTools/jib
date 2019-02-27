@@ -18,16 +18,19 @@ package com.google.cloud.tools.jib.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
+import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.net.MediaType;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -95,6 +98,17 @@ public class RegistryAuthenticator {
         return null;
       }
     }
+  }
+
+  /**
+   * Sets an {@code Credential} to help authentication.
+   *
+   * @param credential the credential
+   * @return this
+   */
+  public RegistryAuthenticator setCredential(Credential credential) {
+    this.credential = credential;
+	return this;
   }
 
   /**
@@ -198,33 +212,19 @@ public class RegistryAuthenticator {
     }
   }
 
-  private final String authenticationUrlBase;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  @Nullable private Authorization authorization;
+  private final String realm;
+  private final String service;
+  private Credential credential;
+  
 
   RegistryAuthenticator(
       String realm,
       String service,
       RegistryEndpointRequestProperties registryEndpointRequestProperties) {
-    authenticationUrlBase =
-        realm
-            + "?service="
-            + service
-            + "&scope=repository:"
-            + registryEndpointRequestProperties.getImageName()
-            + ":";
+    this.realm = realm;
+    this.service = service;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
-  }
-
-  /**
-   * Sets an {@code Authorization} header to authenticate with.
-   *
-   * @param authorization the authorization header
-   * @return this
-   */
-  public RegistryAuthenticator setAuthorization(@Nullable Authorization authorization) {
-    this.authorization = authorization;
-    return this;
   }
 
   /**
@@ -249,7 +249,12 @@ public class RegistryAuthenticator {
 
   @VisibleForTesting
   URL getAuthenticationUrl(String scope) throws MalformedURLException {
-    return new URL(authenticationUrlBase + scope);
+    return new URL(realm
+            + "?service="
+            + service
+            + "&scope=repository:"
+            + registryEndpointRequestProperties.getImageName()
+            + ":" + scope);
   }
 
   /**
@@ -263,27 +268,9 @@ public class RegistryAuthenticator {
    */
   private Authorization authenticate(String scope) throws RegistryAuthenticationFailedException {
     try {
-      URL authenticationUrl = getAuthenticationUrl(scope);
-
-      try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
-        Request.Builder requestBuilder =
-            Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout());
-        if (authorization != null) {
-          requestBuilder.setAuthorization(authorization);
-        }
-        Response response = connection.get(requestBuilder.build());
-        String responseString = Blobs.writeToString(response.getBody());
-
-        AuthenticationResponseTemplate responseJson =
-            JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
-        if (responseJson.getToken() == null) {
-          throw new RegistryAuthenticationFailedException(
-              registryEndpointRequestProperties.getServerUrl(),
-              registryEndpointRequestProperties.getImageName(),
-              "Did not get token in authentication response from " + authenticationUrl);
-        }
+        AuthenticationResponseTemplate responseJson = credential != null && credential.isRefreshToken() ?
+            fetchTokenWithOAuth(credential, realm, service, scope): fetchTokenWithBasicAuth(credential, realm, service, scope);
         return Authorizations.withBearerToken(responseJson.getToken());
-      }
 
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(
@@ -292,4 +279,53 @@ public class RegistryAuthenticator {
           ex);
     }
   }
+
+  private AuthenticationResponseTemplate fetchTokenWithOAuth(Credential credential, String realm,
+			String service, String scope) throws IOException, RegistryAuthenticationFailedException {
+			URL authenticationUrl = new URL(realm);
+
+			try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
+				BlobHttpContent formBody = new BlobHttpContent(Blobs.from("grant_type=refresh_token"
+						+ "&service=" + service
+						+ "&scope=repository:" + registryEndpointRequestProperties.getImageName() + ":" + scope
+						+ "&refresh_token=" + credential.getPassword()
+						), MediaType.FORM_DATA.toString(), null); // FORM_DATA
+				Request.Builder requestBuilder = Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout())
+						.setBody(formBody);
+
+				Response response = connection.post(requestBuilder.build());
+				String responseString = Blobs.writeToString(response.getBody());
+
+				AuthenticationResponseTemplate responseJson = JsonTemplateMapper.readJson(responseString,
+						AuthenticationResponseTemplate.class);
+				if (responseJson.getToken() == null) {
+					throw new RegistryAuthenticationFailedException(registryEndpointRequestProperties.getServerUrl(),
+							registryEndpointRequestProperties.getImageName(),
+							"Did not get token in authentication response from " + authenticationUrl);
+				}
+				return responseJson;
+			}
+  }
+	private AuthenticationResponseTemplate fetchTokenWithBasicAuth(Credential credential, String realm,
+			String service, String scope) throws IOException, RegistryAuthenticationFailedException {
+			URL authenticationUrl = getAuthenticationUrl(scope);
+
+			try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
+				Request.Builder requestBuilder = Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout());
+				if (credential != null) {
+					requestBuilder.setAuthorization(Authorizations.withBasicCredentials(credential.getUsername(), credential.getPassword()));
+				}
+				Response response = connection.get(requestBuilder.build());
+				String responseString = Blobs.writeToString(response.getBody());
+
+				AuthenticationResponseTemplate responseJson = JsonTemplateMapper.readJson(responseString,
+						AuthenticationResponseTemplate.class);
+				if (responseJson.getToken() == null) {
+					throw new RegistryAuthenticationFailedException(registryEndpointRequestProperties.getServerUrl(),
+							registryEndpointRequestProperties.getImageName(),
+							"Did not get token in authentication response from " + authenticationUrl);
+				}
+				return responseJson;
+			}
+	}
 }
