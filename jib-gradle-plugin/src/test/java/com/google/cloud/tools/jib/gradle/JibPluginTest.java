@@ -223,4 +223,18 @@ public class JibPluginTest {
       Assert.assertNotNull(ex.getMessage());
     }
   }
+
+  @Test
+  public void testJibTaskGroupIsSet() {
+    Project rootProject =
+        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
+    rootProject.getPluginManager().apply("java");
+    rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
+    ((ProjectInternal) rootProject).evaluate();
+    TaskContainer tasks = rootProject.getTasks();
+
+    KNOWN_JIB_TASKS.forEach(
+        taskName ->
+            Assert.assertEquals(taskName, "Jib Docker", tasks.getByPath(taskName).getGroup()));
+  }
 }
