@@ -136,7 +136,6 @@ public class RegistryEndpointCallerTest {
 
     try {
       secureEndpointCaller.call();
-
       Assert.fail("Secure caller should fail if cannot verify server");
     } catch (InsecureRegistryException ex) {
       Assert.assertEquals(
