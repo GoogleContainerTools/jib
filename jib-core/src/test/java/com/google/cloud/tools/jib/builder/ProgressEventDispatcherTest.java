@@ -101,7 +101,9 @@ public class ProgressEventDispatcherTest {
     Assert.assertEquals(5, progressEvents.get(1).getAllocation().getAllocationUnits());
     Assert.assertEquals(4, progressEvents.get(2).getAllocation().getAllocationUnits());
 
+    // child1 (of allocation 5) opening and closing
     Assert.assertSame(progressEvents.get(1).getAllocation(), progressEvents.get(4).getAllocation());
+    // child1 (of allocation 4) opening and closing
     Assert.assertSame(progressEvents.get(2).getAllocation(), progressEvents.get(3).getAllocation());
 
     Assert.assertEquals(0, progressEvents.get(0).getUnits()); // 0-progress sent when root creation
