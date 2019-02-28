@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -38,7 +39,6 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
 import org.apache.http.NoHttpResponseException;
-import org.apache.http.conn.HttpHostConnectException;
 
 /**
  * Makes requests to a registry endpoint.
@@ -154,7 +154,7 @@ class RegistryEndpointCaller<T> {
     } catch (SSLException ex) {
       return handleUnverifiableServerException(url);
 
-    } catch (HttpHostConnectException ex) {
+    } catch (ConnectException ex) {
       if (allowInsecureRegistries && isHttpsProtocol(url) && url.getPort() == -1) {
         // Fall back to HTTP only if "url" had no port specified (i.e., we tried the default HTTPS
         // port 443) and we could not connect to 443. It's worth trying port 80.

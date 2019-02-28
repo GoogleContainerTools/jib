@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.MockConnection;
 import com.google.cloud.tools.jib.http.Response;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -38,7 +39,6 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
-import org.apache.http.conn.HttpHostConnectException;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Assert;
@@ -206,7 +206,7 @@ public class RegistryEndpointCallerTest {
   public void testCall_insecureCallerOnHttpServerAndNoPortSpecified()
       throws IOException, RegistryException {
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(HttpHostConnectException.class)) // server is not listening on 443
+        .thenThrow(Mockito.mock(ConnectException.class)) // server is not listening on 443
         .thenReturn(mockResponse); // respond when connected through 80
 
     RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true, -1);
@@ -230,12 +230,12 @@ public class RegistryEndpointCallerTest {
   public void testCall_secureCallerOnNonListeningServerAndNoPortSpecified()
       throws IOException, RegistryException {
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(HttpHostConnectException.class)); // server is not listening on 443
+        .thenThrow(Mockito.mock(ConnectException.class)); // server is not listening on 443
 
     try {
       secureEndpointCaller.call();
       Assert.fail("Should not fall back to HTTP if not allowInsecureRegistries");
-    } catch (HttpHostConnectException ex) {
+    } catch (ConnectException ex) {
       Assert.assertNull(ex.getMessage());
     }
 
@@ -251,14 +251,14 @@ public class RegistryEndpointCallerTest {
   public void testCall_insecureCallerOnNonListeningServerAndPortSpecified()
       throws IOException, RegistryException {
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(HttpHostConnectException.class)); // server is not listening on 5000
+        .thenThrow(Mockito.mock(ConnectException.class)); // server is not listening on 5000
 
     RegistryEndpointCaller<String> insecureEndpointCaller =
         createRegistryEndpointCaller(true, 5000);
     try {
       insecureEndpointCaller.call();
       Assert.fail("Should not fall back to HTTP if port was explicitly given and cannot connect");
-    } catch (HttpHostConnectException ex) {
+    } catch (ConnectException ex) {
       Assert.assertNull(ex.getMessage());
     }
 
