@@ -88,7 +88,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
                 buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, registry))) {
       Credential registryCredential = NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
       Authorization registryAuthorization =
-          registryCredential == null || registryCredential.isRefreshToken()
+          registryCredential == null || registryCredential.isOAuth2RefreshToken()
               ? null
               : Authorizations.withBasicCredentials(
                   registryCredential.getUsername(), registryCredential.getPassword());

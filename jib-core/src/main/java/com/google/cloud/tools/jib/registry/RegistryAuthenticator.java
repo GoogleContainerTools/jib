@@ -101,9 +101,9 @@ public class RegistryAuthenticator {
   }
 
   /**
-   * Sets an {@code Credential} to help authentication.
+   * Sets a {@code Credential} to help the authentication.
    *
-   * @param credential the credential
+   * @param credential the credential used to authenticate.
    * @return this
    */
   public RegistryAuthenticator setCredential(@Nullable Credential credential) {
@@ -248,14 +248,24 @@ public class RegistryAuthenticator {
 
   @VisibleForTesting
   URL getAuthenticationUrl(String scope) throws MalformedURLException {
-    return new URL(
-        realm
-            + "?service="
-            + service
-            + "&scope=repository:"
-            + registryEndpointRequestProperties.getImageName()
-            + ":"
-            + scope);
+    return new URL(realm + "?" + getUrlEncodedServiceScope(scope));
+  }
+
+  @VisibleForTesting
+  String getAuthenticationFormUrlEncoded(String scope, String token) {
+    return "grant_type=refresh_token&"
+        + getUrlEncodedServiceScope(scope)
+        + "&refresh_token="
+        + token;
+  }
+
+  private String getUrlEncodedServiceScope(String scope) {
+    return "service="
+        + service
+        + "&scope=repository:"
+        + registryEndpointRequestProperties.getImageName()
+        + ":"
+        + scope;
   }
 
   /**
@@ -270,7 +280,7 @@ public class RegistryAuthenticator {
   private Authorization authenticate(String scope) throws RegistryAuthenticationFailedException {
     try {
       AuthenticationResponseTemplate responseJson =
-          credential != null && credential.isRefreshToken()
+          credential != null && credential.isOAuth2RefreshToken()
               ? fetchTokenWithOAuth(scope, credential.getPassword())
               : fetchTokenWithBasicAuth(scope);
 
@@ -290,22 +300,13 @@ public class RegistryAuthenticator {
   }
 
   private AuthenticationResponseTemplate fetchTokenWithOAuth(String scope, String token)
-      throws IOException, RegistryAuthenticationFailedException {
+      throws IOException {
     URL authenticationUrl = new URL(realm);
 
     try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
       BlobHttpContent formBody =
           new BlobHttpContent(
-              Blobs.from(
-                  "grant_type=refresh_token"
-                      + "&service="
-                      + service
-                      + "&scope=repository:"
-                      + registryEndpointRequestProperties.getImageName()
-                      + ":"
-                      + scope
-                      + "&refresh_token="
-                      + token),
+              Blobs.from(getAuthenticationFormUrlEncoded(scope, token)),
               MediaType.FORM_DATA.toString(),
               null); // FORM_DATA
       Request.Builder requestBuilder =
@@ -318,8 +319,7 @@ public class RegistryAuthenticator {
     }
   }
 
-  private AuthenticationResponseTemplate fetchTokenWithBasicAuth(String scope)
-      throws IOException, RegistryAuthenticationFailedException {
+  private AuthenticationResponseTemplate fetchTokenWithBasicAuth(String scope) throws IOException {
     URL authenticationUrl = getAuthenticationUrl(scope);
 
     try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
