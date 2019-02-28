@@ -88,17 +88,35 @@ public class JibPlugin implements Plugin<Project> {
     Task buildImageTask =
         project
             .getTasks()
-            .create(BUILD_IMAGE_TASK_NAME, BuildImageTask.class)
+            .create(
+                BUILD_IMAGE_TASK_NAME,
+                BuildImageTask.class,
+                task -> {
+                  task.setGroup("Jib");
+                  task.setDescription("Builds a container image to a registry.");
+                })
             .setJibExtension(jibExtension);
     Task buildDockerTask =
         project
             .getTasks()
-            .create(BUILD_DOCKER_TASK_NAME, BuildDockerTask.class)
+            .create(
+                BUILD_DOCKER_TASK_NAME,
+                BuildDockerTask.class,
+                task -> {
+                  task.setGroup("Jib");
+                  task.setDescription("Builds a container image to a Docker daemon.");
+                })
             .setJibExtension(jibExtension);
     Task buildTarTask =
         project
             .getTasks()
-            .create(BUILD_TAR_TASK_NAME, BuildTarTask.class)
+            .create(
+                BUILD_TAR_TASK_NAME,
+                BuildTarTask.class,
+                task -> {
+                  task.setGroup("Jib");
+                  task.setDescription("Builds a container image to a tarball.");
+                })
             .setJibExtension(jibExtension);
     project.getTasks().create(FILES_TASK_NAME, FilesTask.class).setJibExtension(jibExtension);
     project.getTasks().create(FILES_TASK_V2_NAME, FilesTaskV2.class).setJibExtension(jibExtension);
