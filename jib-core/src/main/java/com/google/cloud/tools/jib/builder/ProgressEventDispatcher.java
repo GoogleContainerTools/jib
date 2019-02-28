@@ -61,11 +61,8 @@ public class ProgressEventDispatcher implements Closeable {
    */
   public static ProgressEventDispatcher newRoot(
       EventDispatcher eventDispatcher, String description, long allocationUnits) {
-    long allocationUnitsChecked = allocationUnits < 0 ? 0 : allocationUnits;
     return newProgressEventDispatcher(
-        eventDispatcher,
-        Allocation.newRoot(description, allocationUnitsChecked),
-        BuildStepType.ALL);
+        eventDispatcher, Allocation.newRoot(description, allocationUnits), BuildStepType.ALL);
   }
 
   /**
@@ -119,11 +116,8 @@ public class ProgressEventDispatcher implements Closeable {
           BuildStepType buildStepType, String description, long allocationUnits) {
         Preconditions.checkState(!used);
         used = true;
-        long allocationUnitsChecked = allocationUnits < 0 ? 0 : allocationUnits;
         return newProgressEventDispatcher(
-            eventDispatcher,
-            allocation.newChild(description, allocationUnitsChecked),
-            buildStepType);
+            eventDispatcher, allocation.newChild(description, allocationUnits), buildStepType);
       }
     };
   }
@@ -148,6 +142,14 @@ public class ProgressEventDispatcher implements Closeable {
     eventDispatcher.dispatch(new ProgressEvent(allocation, unitsDecremented, buildStepType));
   }
 
+  /**
+   * Decrements remaining allocation units by {@code units} but no more than the remaining
+   * allocation units (which may be 0). Returns the actual units decremented, which never exceeds
+   * {@code units}.
+   *
+   * @param units units to decrement
+   * @return units actually decremented
+   */
   private long decrementRemainingAllocationUnits(long units) {
     Preconditions.checkState(!closed);
 

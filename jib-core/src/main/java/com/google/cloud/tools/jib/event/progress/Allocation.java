@@ -65,7 +65,7 @@ public class Allocation {
 
   private Allocation(String description, long allocationUnits, @Nullable Allocation parent) {
     this.description = description;
-    this.allocationUnits = allocationUnits;
+    this.allocationUnits = allocationUnits < 0 ? 0 : allocationUnits;
     this.parent = parent;
 
     this.fractionOfRoot = (parent == null ? 1.0 : parent.fractionOfRoot) / allocationUnits;
