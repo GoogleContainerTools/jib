@@ -139,7 +139,7 @@ public class PluginConfigurationProcessorTest {
     PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
 
     Assert.assertEquals(
-        ImageReference.parse("gcr.io/distroless/java/jetty").toString(),
+        ImageReference.parse("gcr.io/distroless/java/jetty:java8").toString(),
         processor.getBaseImageReference().toString());
     Mockito.verifyNoMoreInteractions(logger);
   }
@@ -470,6 +470,46 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testGetBaseImage_chooseJava8JettyDistroless()
+      throws IncompatibleBaseImageJavaVersionException {
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(6);
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
+    Assert.assertEquals(
+        "gcr.io/distroless/java/jetty:java8",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(7);
+    Assert.assertEquals(
+        "gcr.io/distroless/java/jetty:java8",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(8);
+    Assert.assertEquals(
+        "gcr.io/distroless/java/jetty:java8",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testGetBaseImage_chooseJava11JettyDistroless()
+      throws IncompatibleBaseImageJavaVersionException {
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(9);
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
+    Assert.assertEquals(
+        "gcr.io/distroless/java/jetty:java11",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(10);
+    Assert.assertEquals(
+        "gcr.io/distroless/java/jetty:java11",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(11);
+    Assert.assertEquals(
+        "gcr.io/distroless/java/jetty:java11",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+  }
+
+  @Test
   public void testGetBaseImage_projectHigherThanJava11() {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(12);
 
@@ -523,6 +563,36 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testGetBaseImage_incompatibleJava8JettyBaseImage() {
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(11);
+
+    Mockito.when(rawConfiguration.getFromImage())
+        .thenReturn(Optional.of("gcr.io/distroless/java/jetty:java8"));
+    try {
+      PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+      Assert.fail();
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      Assert.assertEquals(8, ex.getBaseImageMajorJavaVersion());
+      Assert.assertEquals(11, ex.getProjectMajorJavaVersion());
+    }
+  }
+
+  @Test
+  public void testGetBaseImage_incompatibleJava11JettyBaseImage() {
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(15);
+
+    Mockito.when(rawConfiguration.getFromImage())
+        .thenReturn(Optional.of("gcr.io/distroless/java/jetty:java11"));
+    try {
+      PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+      Assert.fail();
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      Assert.assertEquals(11, ex.getBaseImageMajorJavaVersion());
+      Assert.assertEquals(15, ex.getProjectMajorJavaVersion());
+    }
+  }
+
+  @Test
   public void testGetBaseImage_defaultNonWarPackaging()
       throws IncompatibleBaseImageJavaVersionException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
@@ -538,7 +608,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     Assert.assertEquals(
-        "gcr.io/distroless/java/jetty",
+        "gcr.io/distroless/java/jetty:java8",
         PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
   }
 

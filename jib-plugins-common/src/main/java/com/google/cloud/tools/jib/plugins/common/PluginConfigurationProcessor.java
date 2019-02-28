@@ -295,14 +295,15 @@ public class PluginConfigurationProcessor {
     }
 
     // Base image not configured; auto-pick Distroless.
-    if (projectProperties.isWarProject()) {
-      return "gcr.io/distroless/java/jetty";
-    }
     if (javaVersion <= 8) {
-      return "gcr.io/distroless/java:8";
+      return projectProperties.isWarProject()
+          ? "gcr.io/distroless/java/jetty:java8"
+          : "gcr.io/distroless/java:8";
     }
     if (javaVersion <= 11) {
-      return "gcr.io/distroless/java:11";
+      return projectProperties.isWarProject()
+          ? "gcr.io/distroless/java/jetty:java11"
+          : "gcr.io/distroless/java:11";
     }
     throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
   }
