@@ -11,6 +11,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed an issue where setting `<allowInsecureRegistries>` may fail to try HTTP.
+
 ## 1.0.1
 
 ### Added
