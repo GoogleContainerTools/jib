@@ -91,8 +91,8 @@ public class JibPlugin implements Plugin<Project> {
                 BUILD_IMAGE_TASK_NAME,
                 BuildImageTask.class,
                 task -> {
-                  task.setGroup("Jib Docker");
-                  task.setDescription("Builds a container image.");
+                  task.setGroup("Jib");
+                  task.setDescription("Builds a container image to a registry.");
                 })
             .setJibExtension(jibExtension);
     Task buildDockerTask =
@@ -102,9 +102,8 @@ public class JibPlugin implements Plugin<Project> {
                 BUILD_DOCKER_TASK_NAME,
                 BuildDockerTask.class,
                 task -> {
-                  task.setGroup("Jib Docker");
-                  task.setDescription(
-                      "Builds a container image and exports to the default Docker daemon.");
+                  task.setGroup("Jib");
+                  task.setDescription("Builds a container image to a Docker daemon.");
                 })
             .setJibExtension(jibExtension);
     Task buildTarTask =
@@ -114,7 +113,7 @@ public class JibPlugin implements Plugin<Project> {
                 BUILD_TAR_TASK_NAME,
                 BuildTarTask.class,
                 task -> {
-                  task.setGroup("Jib Docker");
+                  task.setGroup("Jib");
                   task.setDescription("Builds a container image to a tarball.");
                 })
             .setJibExtension(jibExtension);

@@ -234,7 +234,6 @@ public class JibPluginTest {
     TaskContainer tasks = rootProject.getTasks();
 
     KNOWN_JIB_TASKS.forEach(
-        taskName ->
-            Assert.assertEquals(taskName, "Jib Docker", tasks.getByPath(taskName).getGroup()));
+        taskName -> Assert.assertEquals(taskName, "Jib", tasks.getByPath(taskName).getGroup()));
   }
 }
