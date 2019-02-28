@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Verify;
 import java.io.Closeable;
 
 /**
@@ -62,8 +61,11 @@ public class ProgressEventDispatcher implements Closeable {
    */
   public static ProgressEventDispatcher newRoot(
       EventDispatcher eventDispatcher, String description, long allocationUnits) {
+    long allocationUnitsChecked = allocationUnits < 0 ? 0 : allocationUnits;
     return newProgressEventDispatcher(
-        eventDispatcher, Allocation.newRoot(description, allocationUnits), BuildStepType.ALL);
+        eventDispatcher,
+        Allocation.newRoot(description, allocationUnitsChecked),
+        BuildStepType.ALL);
   }
 
   /**
@@ -117,8 +119,11 @@ public class ProgressEventDispatcher implements Closeable {
           BuildStepType buildStepType, String description, long allocationUnits) {
         Preconditions.checkState(!used);
         used = true;
+        long allocationUnitsChecked = allocationUnits < 0 ? 0 : allocationUnits;
         return newProgressEventDispatcher(
-            eventDispatcher, allocation.newChild(description, allocationUnits), buildStepType);
+            eventDispatcher,
+            allocation.newChild(description, allocationUnitsChecked),
+            buildStepType);
       }
     };
   }
@@ -139,18 +144,20 @@ public class ProgressEventDispatcher implements Closeable {
    * @param progressUnits units of progress
    */
   public void dispatchProgress(long progressUnits) {
-    decrementRemainingAllocationUnits(progressUnits);
-    eventDispatcher.dispatch(new ProgressEvent(allocation, progressUnits, buildStepType));
+    long unitsDecremented = decrementRemainingAllocationUnits(progressUnits);
+    eventDispatcher.dispatch(new ProgressEvent(allocation, unitsDecremented, buildStepType));
   }
 
-  private void decrementRemainingAllocationUnits(long units) {
+  private long decrementRemainingAllocationUnits(long units) {
     Preconditions.checkState(!closed);
 
-    remainingAllocationUnits -= units;
-    Verify.verify(
-        remainingAllocationUnits >= 0,
-        "Remaining allocation units less than 0 for '%s': %s",
-        allocation.getDescription(),
-        remainingAllocationUnits);
+    if (remainingAllocationUnits > units) {
+      remainingAllocationUnits -= units;
+      return units;
+    }
+
+    long actualDecrement = remainingAllocationUnits;
+    remainingAllocationUnits = 0;
+    return actualDecrement;
   }
 }
