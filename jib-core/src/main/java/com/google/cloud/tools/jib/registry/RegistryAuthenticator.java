@@ -270,6 +270,7 @@ public class RegistryAuthenticator {
     return isOAuth2Auth()
         ? serviceScope
             + "&grant_type=refresh_token&refresh_token="
+            // If OAuth2, credential.getPassword() is a refresh token.
             + Verify.verifyNotNull(credential).getPassword()
         : serviceScope;
   }
