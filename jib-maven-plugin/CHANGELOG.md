@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 
 - Java 9+ WAR projects are now supported and run on the distroless Jetty Java 11 image (https://github.com/GoogleContainerTools/distroless) by default. Java 8 projects remain on the distroless Jetty Java 8 image. ([#1510](https://github.com/GoogleContainerTools/jib/issues/1510))
 - Now supports authentication against Azure Container Registry using `docker-credential-acr-*` credential helpers.
+- Batch mode now disables build progress bar.
 
 ### Changed
 

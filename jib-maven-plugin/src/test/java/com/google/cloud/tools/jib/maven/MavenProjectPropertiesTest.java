@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import java.util.Properties;
+import org.apache.maven.execution.MavenExecutionRequest;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
@@ -35,6 +37,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class MavenProjectPropertiesTest {
 
   @Mock private MavenProject mockMavenProject;
+  @Mock private MavenSession mockMavenSession;
+  @Mock private MavenExecutionRequest mockMavenRequest;
   @Mock private Properties mockMavenProperties;
   @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
   @Mock private Plugin mockJarPlugin;
@@ -54,8 +58,10 @@ public class MavenProjectPropertiesTest {
 
   @Before
   public void setup() {
+    Mockito.when(mockMavenSession.getRequest()).thenReturn(mockMavenRequest);
     mavenProjectProperties =
-        new MavenProjectProperties(mockMavenProject, mockLog, mockJavaLayerConfigurations);
+        new MavenProjectProperties(
+            mockMavenProject, mockMavenSession, mockLog, mockJavaLayerConfigurations);
     jarPluginConfiguration = new Xpp3Dom("");
     archive = new Xpp3Dom("archive");
     manifest = new Xpp3Dom("manifest");
@@ -199,5 +205,11 @@ public class MavenProjectPropertiesTest {
 
     Mockito.when(compilerRelease.getValue()).thenReturn("13");
     Assert.assertEquals(13, mavenProjectProperties.getMajorJavaVersion());
+  }
+
+  @Test
+  public void isProgressFooterEnabled() {
+    Mockito.when(mockMavenRequest.isInteractiveMode()).thenReturn(false);
+    Assert.assertFalse(MavenProjectProperties.isProgressFooterEnabled(mockMavenSession));
   }
 }
