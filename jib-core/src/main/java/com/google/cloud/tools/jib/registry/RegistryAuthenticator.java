@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import com.google.common.net.MediaType;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -267,7 +268,9 @@ public class RegistryAuthenticator {
   String getAuthRequestParameters(String scope) {
     String serviceScope = getServiceScopeRequestParameters(scope);
     return isOAuth2Auth()
-        ? serviceScope + "&grant_type=refresh_token&refresh_token=" + credential.getPassword()
+        ? serviceScope
+            + "&grant_type=refresh_token&refresh_token="
+            + Verify.verifyNotNull(credential).getPassword()
         : serviceScope;
   }
 

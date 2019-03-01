@@ -44,9 +44,7 @@ public class CredentialTest {
 
   @Test
   public void testCredentialsOAuth2RefreshToken() {
-
     Credential oauth2Credential = Credential.basic("<token>", "eyJhbGciOi...3gw");
-
     Assert.assertTrue(
         "Credential should be an auth2 token when username is <token>",
         oauth2Credential.isOAuth2RefreshToken());
