@@ -252,11 +252,13 @@ public class RegistryAuthenticator {
   }
 
   @VisibleForTesting
-  String getAuthenticationFormUrlEncoded(String scope, String token) {
-    return "grant_type=refresh_token&"
-        + getUrlEncodedServiceScope(scope)
-        + "&refresh_token="
-        + token;
+  BlobHttpContent getOAuth2AuthRequestBody(String scope, String oauth2RefreshToken) {
+    String formDataBody =
+        "grant_type=refresh_token&"
+            + getUrlEncodedServiceScope(scope)
+            + "&refresh_token="
+            + oauth2RefreshToken;
+    return new BlobHttpContent(Blobs.from(formDataBody), MediaType.FORM_DATA.toString(), null);
   }
 
   private String getUrlEncodedServiceScope(String scope) {
@@ -281,7 +283,8 @@ public class RegistryAuthenticator {
     try {
       AuthenticationResponseTemplate responseJson =
           credential != null && credential.isOAuth2RefreshToken()
-              ? fetchTokenWithOAuth(scope, credential.getPassword())
+              // in this case, credential.getPassword() is an OAuth2 refresh token.
+              ? fetchTokenWithOAuth2(scope, credential.getPassword())
               : fetchTokenWithBasicAuth(scope);
 
       if (responseJson.getToken() == null) {
@@ -299,18 +302,15 @@ public class RegistryAuthenticator {
     }
   }
 
-  private AuthenticationResponseTemplate fetchTokenWithOAuth(String scope, String token)
-      throws IOException {
+  private AuthenticationResponseTemplate fetchTokenWithOAuth2(
+      String scope, String oauth2RefreshToken) throws IOException {
     URL authenticationUrl = new URL(realm);
 
     try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
-      BlobHttpContent formBody =
-          new BlobHttpContent(
-              Blobs.from(getAuthenticationFormUrlEncoded(scope, token)),
-              MediaType.FORM_DATA.toString(),
-              null); // FORM_DATA
       Request.Builder requestBuilder =
-          Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout()).setBody(formBody);
+          Request.builder()
+              .setHttpTimeout(JibSystemProperties.getHttpTimeout())
+              .setBody(getOAuth2AuthRequestBody(scope, oauth2RefreshToken));
 
       Response response = connection.post(requestBuilder.build());
       String responseString = Blobs.writeToString(response.getBody());
