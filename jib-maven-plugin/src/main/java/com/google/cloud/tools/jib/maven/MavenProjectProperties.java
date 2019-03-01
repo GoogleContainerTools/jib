@@ -61,6 +61,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
   /**
    * @param project the {@link MavenProject} for the plugin.
+   * @param session the {@link MavenSession} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution
    * @param extraDirectory path to the directory for the extra files layer
    * @param permissions map from path on container to file permissions for extra-layer files
@@ -70,6 +71,7 @@ public class MavenProjectProperties implements ProjectProperties {
    */
   static MavenProjectProperties getForProject(
       MavenProject project,
+      MavenSession session,
       Log log,
       Path extraDirectory,
       Map<AbsoluteUnixPath, FilePermissions> permissions,
@@ -78,6 +80,7 @@ public class MavenProjectProperties implements ProjectProperties {
     try {
       return new MavenProjectProperties(
           project,
+          session,
           log,
           MavenLayerConfigurations.getForProject(project, extraDirectory, permissions, appRoot));
 
@@ -110,9 +113,9 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   private static EventHandlers makeEventHandlers(
-      Log log, SingleThreadedExecutor singleThreadedExecutor) {
+      MavenSession session, Log log, SingleThreadedExecutor singleThreadedExecutor) {
     ConsoleLoggerBuilder logEventHandlerBuilder =
-        (isProgressFooterEnabled()
+        (isProgressFooterEnabled(session)
                 ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
                 : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(log::info))
             .lifecycle(log::info);
@@ -146,7 +149,11 @@ public class MavenProjectProperties implements ProjectProperties {
                             update.getProgress(), update.getUnfinishedAllocations()))));
   }
 
-  private static boolean isProgressFooterEnabled() {
+  private static boolean isProgressFooterEnabled(MavenSession session) {
+    if (!session.getRequest().isInteractiveMode()) {
+      return false;
+    }
+
     if ("plain".equals(System.getProperty(PropertyNames.CONSOLE))) {
       return false;
     }
@@ -196,11 +203,14 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @VisibleForTesting
   MavenProjectProperties(
-      MavenProject project, Log log, JavaLayerConfigurations javaLayerConfigurations) {
+      MavenProject project,
+      MavenSession session,
+      Log log,
+      JavaLayerConfigurations javaLayerConfigurations) {
     this.project = project;
     this.javaLayerConfigurations = javaLayerConfigurations;
 
-    eventHandlers = makeEventHandlers(log, singleThreadedExecutor);
+    eventHandlers = makeEventHandlers(session, log, singleThreadedExecutor);
   }
 
   @Override
