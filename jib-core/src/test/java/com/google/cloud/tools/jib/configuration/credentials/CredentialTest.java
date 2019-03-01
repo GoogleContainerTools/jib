@@ -47,7 +47,12 @@ public class CredentialTest {
 
     Credential oauth2Credential = Credential.basic("<token>", "eyJhbGciOi...3gw");
 
-    Assert.assertTrue("Credential should be an auth2 token when username is <token>", oauth2Credential.isOAuth2RefreshToken());
-    Assert.assertEquals("OAuth2 token credential should take password as refresh token", "eyJhbGciOi...3gw", oauth2Credential.getPassword());
+    Assert.assertTrue(
+        "Credential should be an auth2 token when username is <token>",
+        oauth2Credential.isOAuth2RefreshToken());
+    Assert.assertEquals(
+        "OAuth2 token credential should take password as refresh token",
+        "eyJhbGciOi...3gw",
+        oauth2Credential.getPassword());
   }
 }
