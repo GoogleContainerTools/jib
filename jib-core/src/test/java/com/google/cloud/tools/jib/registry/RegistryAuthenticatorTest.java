@@ -16,18 +16,27 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.http.BlobHttpContent;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import java.net.MalformedURLException;
 import java.net.URL;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 /** Tests for {@link RegistryAuthenticator}. */
 public class RegistryAuthenticatorTest {
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties =
       new RegistryEndpointRequestProperties("someserver", "someimage");
+
+  private RegistryAuthenticator registryAuthenticator;
+
+  @Before
+  public void setUp() throws RegistryAuthenticationFailedException {
+    registryAuthenticator =
+        RegistryAuthenticator.fromAuthenticationMethod(
+            "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
+            registryEndpointRequestProperties);
+  }
 
   @Test
   public void testFromAuthenticationMethod_bearer()
@@ -50,23 +59,50 @@ public class RegistryAuthenticatorTest {
   }
 
   @Test
-  public void testFromAuthenticationMethod_oauth2()
-      throws RegistryAuthenticationFailedException, IOException {
-    RegistryAuthenticator registryAuthenticator =
-        RegistryAuthenticator.fromAuthenticationMethod(
-            "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
-            registryEndpointRequestProperties);
-    BlobHttpContent blobHttpContent =
-        registryAuthenticator.getOAuth2AuthRequestBody("scope", "sometoken");
-    // the content type should be "application/x-www-form-urlencoded"
-    Assert.assertEquals("application/x-www-form-urlencoded", blobHttpContent.getType());
-    try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-      blobHttpContent.writeTo(out);
-      Assert.assertEquals(
-          "grant_type=refresh_token&service=someservice&"
-              + "scope=repository:someimage:scope&refresh_token=sometoken",
-          out.toString());
-    }
+  public void testAuthRequestParameters_basicAuth() {
+    Assert.assertEquals(
+        "service=someservice&scope=repository:someimage:scope",
+        registryAuthenticator.getAuthRequestParameters("scope"));
+  }
+
+  @Test
+  public void testAuthRequestParameters_oauth2() {
+    registryAuthenticator.setCredential(Credential.basic("<token>", "oauth2_access_token"));
+    Assert.assertEquals(
+        "service=someservice&scope=repository:someimage:scope"
+            + "&grant_type=refresh_token&refresh_token=oauth2_access_token",
+        registryAuthenticator.getAuthRequestParameters("scope"));
+  }
+
+  @Test
+  public void isOAuth2Auth_nullCredential() {
+    Assert.assertFalse(registryAuthenticator.isOAuth2Auth());
+  }
+
+  @Test
+  public void isOAuth2Auth_basicAuth() {
+    registryAuthenticator.setCredential(Credential.basic("name", "password"));
+    Assert.assertFalse(registryAuthenticator.isOAuth2Auth());
+  }
+
+  @Test
+  public void isOAuth2Auth_oauth2() {
+    registryAuthenticator.setCredential(Credential.basic("<token>", "oauth2_token"));
+    Assert.assertTrue(registryAuthenticator.isOAuth2Auth());
+  }
+
+  @Test
+  public void getAuthenticationUrl_basicAuth() throws MalformedURLException {
+    Assert.assertEquals(
+        new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
+        registryAuthenticator.getAuthenticationUrl("scope"));
+  }
+
+  @Test
+  public void istAuthenticationUrl_oauth2() throws MalformedURLException {
+    registryAuthenticator.setCredential(Credential.basic("<token>", "oauth2_token"));
+    Assert.assertEquals(
+        new URL("https://somerealm"), registryAuthenticator.getAuthenticationUrl("scope"));
   }
 
   @Test
