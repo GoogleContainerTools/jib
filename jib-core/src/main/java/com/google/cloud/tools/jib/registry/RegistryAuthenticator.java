@@ -305,7 +305,8 @@ public class RegistryAuthenticator {
                 credential.getUsername(), credential.getPassword()));
       }
 
-      Response response = connection.post(requestBuilder.build());
+      Request request = requestBuilder.build();
+      Response response = isOAuth2Auth() ? connection.post(request) : connection.get(request);
       String responseString = Blobs.writeToString(response.getBody());
 
       AuthenticationResponseTemplate responseJson =
