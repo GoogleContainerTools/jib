@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.http.BlobHttpContent;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import org.junit.Assert;
@@ -44,6 +47,26 @@ public class RegistryAuthenticatorTest {
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
         registryAuthenticator.getAuthenticationUrl("scope"));
+  }
+
+  @Test
+  public void testFromAuthenticationMethod_oauth2()
+      throws RegistryAuthenticationFailedException, IOException {
+    RegistryAuthenticator registryAuthenticator =
+        RegistryAuthenticator.fromAuthenticationMethod(
+            "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
+            registryEndpointRequestProperties);
+    BlobHttpContent blobHttpContent =
+        registryAuthenticator.getOAuth2AuthRequestBody("scope", "sometoken");
+    // the content type should be "application/x-www-form-urlencoded"
+    Assert.assertEquals("application/x-www-form-urlencoded", blobHttpContent.getType());
+    try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+      blobHttpContent.writeTo(out);
+      Assert.assertEquals(
+          "grant_type=refresh_token&service=someservice&"
+              + "scope=repository:someimage:scope&refresh_token=sometoken",
+          out.toString());
+    }
   }
 
   @Test

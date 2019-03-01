@@ -148,7 +148,7 @@ class PullBaseImageStep
 
         Credential registryCredential = NonBlockingSteps.get(retrieveBaseRegistryCredentialsStep);
         Authorization registryAuthorization =
-            registryCredential == null
+            registryCredential == null || registryCredential.isOAuth2RefreshToken()
                 ? null
                 : Authorizations.withBasicCredentials(
                     registryCredential.getUsername(), registryCredential.getPassword());
@@ -176,7 +176,7 @@ class PullBaseImageStep
             throw registryUnauthorizedException;
           }
           registryAuthorization =
-              registryAuthenticator.setAuthorization(registryAuthorization).authenticatePull();
+              registryAuthenticator.setCredential(registryCredential).authenticatePull();
 
           return new BaseImageWithAuthorization(
               pullBaseImage(registryAuthorization, progressEventDispatcher), registryAuthorization);
