@@ -149,7 +149,8 @@ public class MavenProjectProperties implements ProjectProperties {
                             update.getProgress(), update.getUnfinishedAllocations()))));
   }
 
-  private static boolean isProgressFooterEnabled(MavenSession session) {
+  @VisibleForTesting
+  static boolean isProgressFooterEnabled(MavenSession session) {
     if (!session.getRequest().isInteractiveMode()) {
       return false;
     }
