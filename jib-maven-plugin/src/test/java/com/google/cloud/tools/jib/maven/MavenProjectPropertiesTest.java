@@ -206,4 +206,10 @@ public class MavenProjectPropertiesTest {
     Mockito.when(compilerRelease.getValue()).thenReturn("13");
     Assert.assertEquals(13, mavenProjectProperties.getMajorJavaVersion());
   }
+
+  @Test
+  public void isProgressFooterEnabled() {
+    Mockito.when(mockMavenRequest.isInteractiveMode()).thenReturn(false);
+    Assert.assertFalse(MavenProjectProperties.isProgressFooterEnabled(mockMavenSession));
+  }
 }
