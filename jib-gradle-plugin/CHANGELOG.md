@@ -11,7 +11,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fixed an issue where setting `allowInsecureRegistries` may fail to try HTTP.
+- Fixed an issue where setting `allowInsecureRegistries` may fail to try HTTP. ([#1517](https://github.com/GoogleContainerTools/jib/issues/1517))
+- Crash on talking to servers that do not set the `Content-Length` HTTP header or send an incorrect value. ([#1512](https://github.com/GoogleContainerTools/jib/issues/1512))
 
 ## 1.0.1
 
