@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import com.google.common.net.MediaType;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -247,27 +248,36 @@ public class RegistryAuthenticator {
   }
 
   @VisibleForTesting
-  URL getAuthenticationUrl(String scope) throws MalformedURLException {
-    return new URL(realm + "?" + getUrlEncodedServiceScope(scope));
-  }
-
-  @VisibleForTesting
-  BlobHttpContent getOAuth2AuthRequestBody(String scope, String oauth2RefreshToken) {
-    String formDataBody =
-        "grant_type=refresh_token&"
-            + getUrlEncodedServiceScope(scope)
-            + "&refresh_token="
-            + oauth2RefreshToken;
-    return new BlobHttpContent(Blobs.from(formDataBody), MediaType.FORM_DATA.toString(), null);
-  }
-
-  private String getUrlEncodedServiceScope(String scope) {
+  String getServiceScopeRequestParameters(String scope) {
     return "service="
         + service
         + "&scope=repository:"
         + registryEndpointRequestProperties.getImageName()
         + ":"
         + scope;
+  }
+
+  @VisibleForTesting
+  URL getAuthenticationUrl(String scope) throws MalformedURLException {
+    return isOAuth2Auth()
+        ? new URL(realm) // Required parameters will be sent via POST .
+        : new URL(realm + "?" + getServiceScopeRequestParameters(scope));
+  }
+
+  @VisibleForTesting
+  String getAuthRequestParameters(String scope) {
+    String serviceScope = getServiceScopeRequestParameters(scope);
+    return isOAuth2Auth()
+        ? serviceScope
+            + "&grant_type=refresh_token&refresh_token="
+            // If OAuth2, credential.getPassword() is a refresh token.
+            + Verify.verifyNotNull(credential).getPassword()
+        : serviceScope;
+  }
+
+  @VisibleForTesting
+  boolean isOAuth2Auth() {
+    return credential != null && credential.isOAuth2RefreshToken();
   }
 
   /**
@@ -280,60 +290,44 @@ public class RegistryAuthenticator {
    *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
    */
   private Authorization authenticate(String scope) throws RegistryAuthenticationFailedException {
-    try {
+    try (Connection connection =
+        Connection.getConnectionFactory().apply(getAuthenticationUrl(scope))) {
+      Request.Builder requestBuilder =
+          Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout());
+
+      if (isOAuth2Auth()) {
+        String parameters = getAuthRequestParameters(scope);
+        requestBuilder.setBody(
+            new BlobHttpContent(Blobs.from(parameters), MediaType.FORM_DATA.toString(), null));
+      } else if (credential != null) {
+        requestBuilder.setAuthorization(
+            Authorizations.withBasicCredentials(
+                credential.getUsername(), credential.getPassword()));
+      }
+
+      Request request = requestBuilder.build();
+      Response response = isOAuth2Auth() ? connection.post(request) : connection.get(request);
+      String responseString = Blobs.writeToString(response.getBody());
+
       AuthenticationResponseTemplate responseJson =
-          credential != null && credential.isOAuth2RefreshToken()
-              // in this case, credential.getPassword() is an OAuth2 refresh token.
-              ? fetchTokenWithOAuth2(scope, credential.getPassword())
-              : fetchTokenWithBasicAuth(scope);
+          JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
 
       if (responseJson.getToken() == null) {
         throw new RegistryAuthenticationFailedException(
             registryEndpointRequestProperties.getServerUrl(),
             registryEndpointRequestProperties.getImageName(),
-            "Did not get token in authentication response from " + getAuthenticationUrl(scope));
+            "Did not get token in authentication response from "
+                + getAuthenticationUrl(scope)
+                + "; parameters: "
+                + getAuthRequestParameters(scope));
       }
       return Authorizations.withBearerToken(responseJson.getToken());
+
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(
           registryEndpointRequestProperties.getServerUrl(),
           registryEndpointRequestProperties.getImageName(),
           ex);
-    }
-  }
-
-  private AuthenticationResponseTemplate fetchTokenWithOAuth2(
-      String scope, String oauth2RefreshToken) throws IOException {
-    URL authenticationUrl = new URL(realm);
-
-    try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
-      Request.Builder requestBuilder =
-          Request.builder()
-              .setHttpTimeout(JibSystemProperties.getHttpTimeout())
-              .setBody(getOAuth2AuthRequestBody(scope, oauth2RefreshToken));
-
-      Response response = connection.post(requestBuilder.build());
-      String responseString = Blobs.writeToString(response.getBody());
-
-      return JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
-    }
-  }
-
-  private AuthenticationResponseTemplate fetchTokenWithBasicAuth(String scope) throws IOException {
-    URL authenticationUrl = getAuthenticationUrl(scope);
-
-    try (Connection connection = Connection.getConnectionFactory().apply(authenticationUrl)) {
-      Request.Builder requestBuilder =
-          Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout());
-      if (credential != null) {
-        requestBuilder.setAuthorization(
-            Authorizations.withBasicCredentials(
-                credential.getUsername(), credential.getPassword()));
-      }
-      Response response = connection.get(requestBuilder.build());
-      String responseString = Blobs.writeToString(response.getBody());
-
-      return JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
     }
   }
 }

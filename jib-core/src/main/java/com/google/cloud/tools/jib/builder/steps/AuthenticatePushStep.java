@@ -87,11 +87,6 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
             new TimerEventDispatcher(
                 buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, registry))) {
       Credential registryCredential = NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
-      Authorization registryAuthorization =
-          registryCredential == null || registryCredential.isOAuth2RefreshToken()
-              ? null
-              : Authorizations.withBasicCredentials(
-                  registryCredential.getUsername(), registryCredential.getPassword());
 
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticator.initializer(
@@ -100,10 +95,14 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
                   buildConfiguration.getTargetImageConfiguration().getImageRepository())
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .initialize();
-      if (registryAuthenticator == null) {
-        return registryAuthorization;
+      if (registryAuthenticator != null) {
+        return registryAuthenticator.setCredential(registryCredential).authenticatePush();
       }
-      return registryAuthenticator.setCredential(registryCredential).authenticatePush();
+
+      return (registryCredential == null || registryCredential.isOAuth2RefreshToken())
+          ? null
+          : Authorizations.withBasicCredentials(
+              registryCredential.getUsername(), registryCredential.getPassword());
     }
   }
 }
