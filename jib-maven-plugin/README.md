@@ -124,6 +124,20 @@ For example, to build the image `my-docker-id/my-app`, the configuration would b
 </configuration>
 ```
 
+### Using [Azure Container Registry (ACR)](https://azure.microsoft.com/en-us/services/container-registry/)...
+
+* Make sure you have the [`ACR Docker Credential Helper`] installed and configured. For example, on Windows, you would have a `docker-credential-acr-windows` command line tool and log into ACR with `az acr login -n <registry name>`. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
+
+For example, to build the image `my_acr_name.azurecr.io/my-app`, the configuration would be:
+
+```xml
+<configuration>
+  <to>
+    <image>my_acr_name.azurecr.io/my-app</image>
+  </to>
+</configuration>
+```
+
 #### *TODO: Add more examples for common registries.*
 
 ### Build your image
