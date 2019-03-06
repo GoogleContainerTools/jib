@@ -29,7 +29,6 @@ For information about the project, see the [Jib project README](../README.md).
     * [Using Docker Credential Helpers](#using-docker-credential-helpers)
     * [Using Specific Credentials](#using-specific-credentials)
   * [WAR Projects](#war-projects)
-* [How Jib Works](#how-jib-works)
 * [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
 * [Community](#community)
 
@@ -97,6 +96,16 @@ For example, to build the image `my-docker-id/my-app`, the configuration would b
 
 ```groovy
 jib.to.image = 'my-docker-id/my-app'
+```
+
+### Using [Azure Container Registry (ACR)](https://azure.microsoft.com/en-us/services/container-registry/)...
+
+*Make sure you have a [`ACR Docker Credential Helper`](https://github.com/Azure/acr-docker-credential-helper) installed and set up. For example, on Windows, the credential helper would be `docker-credential-acr-windows`. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
+
+For example, to build the image `my_acr_name.azurecr.io/my-app`, the configuration would be:
+
+```groovy
+jib.to.image = 'my_acr_name.azurecr.io/my-app'
 ```
 
 #### *TODO: Add more examples for common registries.*
@@ -328,8 +337,7 @@ Some common credential helpers include:
 * Google Container Registry: [`docker-credential-gcr`](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper)
 * AWS Elastic Container Registry: [`docker-credential-ecr-login`](https://github.com/awslabs/amazon-ecr-credential-helper)
 * Docker Hub Registry: [`docker-credential-*`](https://github.com/docker/docker-credential-helpers)
-<!--* Azure Container Registry: [`docker-credential-acr-*`](https://github.com/Azure/acr-docker-credential-helper)
--->
+* Azure Container Registry: [`docker-credential-acr-*`](https://github.com/Azure/acr-docker-credential-helper)
 
 Configure credential helpers to use by specifying them as a `credHelper` for their respective image in the `jib` extension.
 
