@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
@@ -113,15 +114,16 @@ public class MavenRawConfigurationTest {
   @Test
   public void testNullTags() {
     JibPluginConfiguration jibPluginConfiguration = Mockito.mock(JibPluginConfiguration.class);
-    Mockito.when(jibPluginConfiguration.getTargetImageAdditionalTags())
-        .thenReturn(new HashSet<>(Arrays.asList(null)));
+    Set<String> setWithNull = new HashSet<>();
+    setWithNull.add(null);
+    Mockito.when(jibPluginConfiguration.getTargetImageAdditionalTags()).thenReturn(setWithNull);
 
     MavenRawConfiguration rawConfiguration = new MavenRawConfiguration(jibPluginConfiguration);
     try {
       rawConfiguration.getToTags();
       Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      // good job
+    } catch (NullPointerException ex) {
+      Assert.assertEquals("null or empty tag", ex.getMessage());
     }
   }
 }

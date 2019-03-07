@@ -19,9 +19,11 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
+import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /** Maven-specific adapter for providing raw configuration parameter values. */
 class MavenRawConfiguration implements RawConfiguration {
@@ -69,7 +71,9 @@ class MavenRawConfiguration implements RawConfiguration {
 
   @Override
   public Iterable<String> getToTags() {
-    return jibPluginConfiguration.getTargetImageAdditionalTags();
+    Set<String> tags = jibPluginConfiguration.getTargetImageAdditionalTags();
+    tags.forEach(tag -> Preconditions.checkNotNull(tag, "null or empty tag"));
+    return tags;
   }
 
   @Override
