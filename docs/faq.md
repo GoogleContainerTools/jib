@@ -415,7 +415,33 @@ jib.container.useCurrentTimestamp = true
 
 ### I would like to run my application with a javaagent.
 
-See [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image).
+See also [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image).
+
+You need to put your javaagent into your `src/main/jib` folder, so that this file will end in your containers file system.
+Assuming that you have `agent.jar` stored in `src/main/jib/myfolder`:
+
+#### Maven
+
+```xml
+<configuration>
+  <container>
+    <jvmFlags>
+      <jvmFlag>-javaagent:/myfolder/agent.jar</jvmFlag>
+    </jvmFlags>    
+  </container>
+</configuration>
+```
+
+#### Gradle
+
+```groovy
+jib {
+    container {
+        jvmFlags = ['-javaagent:/myfolder/agent.jar']
+    }
+}
+
+```
 
 *TODO: Provide more comprehensive solution.*
 
