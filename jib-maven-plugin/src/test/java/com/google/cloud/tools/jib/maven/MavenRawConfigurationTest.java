@@ -105,4 +105,23 @@ public class MavenRawConfigurationTest {
 
     Mockito.verifyNoMoreInteractions(eventDispatcher);
   }
+
+  /**
+   * Maven turns empty tags into null entries (<a
+   * href="https://github.com/GoogleContainerTools/jib/issues/1534">#1534</a>).
+   */
+  @Test
+  public void testNullTags() {
+    JibPluginConfiguration jibPluginConfiguration = Mockito.mock(JibPluginConfiguration.class);
+    Mockito.when(jibPluginConfiguration.getTargetImageAdditionalTags())
+        .thenReturn(new HashSet<>(Arrays.asList(null)));
+
+    MavenRawConfiguration rawConfiguration = new MavenRawConfiguration(jibPluginConfiguration);
+    try {
+      rawConfiguration.getToTags();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      // good job
+    }
+  }
 }

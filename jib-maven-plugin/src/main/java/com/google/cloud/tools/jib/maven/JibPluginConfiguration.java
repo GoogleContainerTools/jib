@@ -299,10 +299,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   Set<String> getTargetImageAdditionalTags() {
     String property = getProperty(PropertyNames.TO_TAGS);
-    if (property != null) {
-      return new HashSet<>(ConfigurationPropertyValidator.parseListProperty(property));
-    }
-    return new HashSet<>(to.tags);
+    List<String> tags =
+        property != null ? ConfigurationPropertyValidator.parseListProperty(property) : to.tags;
+    tags.forEach(tag -> Preconditions.checkNotNull(tag, "null or empty tag"));
+    return new HashSet<>(tags);
   }
 
   /**
