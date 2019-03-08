@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.filesystem.RelativeUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
@@ -39,6 +40,23 @@ import javax.annotation.Nullable;
 
 /** Creates a {@link JibContainerBuilder} for containerizing Java applications. */
 public class JavaContainerBuilder {
+
+  /** Holds a directory and a filter. */
+  private static class PathPredicatePair {
+
+    private final Path path;
+    private final Predicate<Path> predicate;
+
+    private PathPredicatePair(Path path, Predicate<Path> predicate) {
+      this.path = path;
+      this.predicate = predicate;
+    }
+  }
+
+  private static final RelativeUnixPath CLASSES_CLASSPATH = RelativeUnixPath.get("classes");
+  private static final RelativeUnixPath RESOURCES_CLASSPATH = RelativeUnixPath.get("resources");
+  private static final RelativeUnixPath DEPENDENCIES_CLASSPATH = RelativeUnixPath.get("libs/*");
+  private static final RelativeUnixPath OTHERS_CLASSPATH = RelativeUnixPath.get("classpath");
 
   /**
    * Creates a new {@link JavaContainerBuilder} that uses distroless java as the base image. For
@@ -107,38 +125,21 @@ public class JavaContainerBuilder {
   }
 
   private final JibContainerBuilder jibContainerBuilder;
-  private final JavaLayerConfigurations.Builder layerConfigurationsBuilder =
-      JavaLayerConfigurations.builder();
   private final List<String> jvmFlags = new ArrayList<>();
-  private final LinkedHashSet<String> classpath = new LinkedHashSet<>(4);
+  private final LinkedHashSet<RelativeUnixPath> relativeClasspaths = new LinkedHashSet<>(4);
 
-  /** Absolute path of directory containing application resources on container. */
-  private AbsoluteUnixPath resourcesPath;
+  // Keeps track of files to add to the image, by system path
+  private final List<PathPredicatePair> addedResources = new ArrayList<>();
+  private final List<PathPredicatePair> addedClasses = new ArrayList<>();
+  private final List<Path> addedDependencies = new ArrayList<>();
+  private final List<Path> addedOthers = new ArrayList<>();
 
-  /** Absolute path of directory containing classes on container. */
-  private AbsoluteUnixPath classesPath;
-
-  /** Absolute path of directory containing dependencies on container. */
-  private AbsoluteUnixPath dependenciesPath;
-
-  /** The entrypoint classpath element corresponding to dependencies. */
-  private AbsoluteUnixPath dependenciesClasspath;
-
-  /** Absolute path of directory containing additional classpath files on container. */
-  private AbsoluteUnixPath othersPath;
-
+  private AbsoluteUnixPath appRoot;
   @Nullable private String mainClass;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
     this.jibContainerBuilder = jibContainerBuilder;
-    AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
-    resourcesPath =
-        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
-    classesPath = appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
-    dependenciesPath =
-        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
-    dependenciesClasspath = dependenciesPath.resolve("*");
-    othersPath = appRoot.resolve("classpath");
+    this.appRoot = AbsoluteUnixPath.get("/app");
   }
 
   /**
@@ -158,16 +159,7 @@ public class JavaContainerBuilder {
    * @return this
    */
   public JavaContainerBuilder setAppRoot(AbsoluteUnixPath appRoot) {
-    if (!classpath.isEmpty()) {
-      throw new IllegalStateException("You cannot change the app root after files are added");
-    }
-    resourcesPath =
-        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
-    classesPath = appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
-    dependenciesPath =
-        appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
-    dependenciesClasspath = dependenciesPath.resolve("*");
-    othersPath = appRoot.resolve("classpath");
+    this.appRoot = appRoot;
     return this;
   }
 
@@ -186,32 +178,8 @@ public class JavaContainerBuilder {
         throw new NoSuchFileException(file.toString());
       }
     }
-
-    // Detect duplicate filenames and rename with filesize to avoid collisions
-    List<String> duplicates =
-        dependencyFiles
-            .stream()
-            .map(Path::getFileName)
-            .map(Path::toString)
-            .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
-            .entrySet()
-            .stream()
-            .filter(entry -> entry.getValue() > 1)
-            .map(Entry::getKey)
-            .collect(Collectors.toList());
-    for (Path file : dependencyFiles) {
-      layerConfigurationsBuilder.addFile(
-          file.getFileName().toString().contains("SNAPSHOT")
-              ? LayerType.SNAPSHOT_DEPENDENCIES
-              : LayerType.DEPENDENCIES,
-          file,
-          dependenciesPath.resolve(
-              duplicates.contains(file.getFileName().toString())
-                  ? file.getFileName().toString().replaceFirst("\\.jar$", "-" + Files.size(file))
-                      + ".jar"
-                  : file.getFileName().toString()));
-    }
-    classpath.add(dependenciesClasspath.toString());
+    addedDependencies.addAll(dependencyFiles);
+    relativeClasspaths.add(DEPENDENCIES_CLASSPATH);
     return this;
   }
 
@@ -248,7 +216,8 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addResources(Path resourceFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
-    return addDirectory(resourceFilesDirectory, resourcesPath, LayerType.RESOURCES, pathFilter);
+    relativeClasspaths.add(RESOURCES_CLASSPATH);
+    return addDirectory(addedResources, resourceFilesDirectory, pathFilter);
   }
 
   /**
@@ -272,7 +241,8 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addClasses(Path classFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
-    return addDirectory(classFilesDirectory, classesPath, LayerType.CLASSES, pathFilter);
+    relativeClasspaths.add(CLASSES_CLASSPATH);
+    return addDirectory(addedClasses, classFilesDirectory, pathFilter);
   }
 
   /**
@@ -293,17 +263,8 @@ public class JavaContainerBuilder {
         throw new NoSuchFileException(file.toString());
       }
     }
-
-    for (Path file : otherFiles) {
-      if (Files.isDirectory(file)) {
-        layerConfigurationsBuilder.addDirectoryContents(
-            LayerType.EXTRA_FILES, file, path -> true, othersPath);
-      } else {
-        layerConfigurationsBuilder.addFile(
-            LayerType.EXTRA_FILES, file, othersPath.resolve(file.getFileName()));
-      }
-    }
-    classpath.add(othersPath.toString());
+    relativeClasspaths.add(OTHERS_CLASSPATH);
+    addedOthers.addAll(otherFiles);
     return this;
   }
 
@@ -374,36 +335,104 @@ public class JavaContainerBuilder {
    *
    * @return a new {@link JibContainerBuilder} using the parameters specified on the {@link
    *     JavaContainerBuilder}
+   * @throws IOException if building the {@link JibContainerBuilder} fails.
    */
-  public JibContainerBuilder toContainerBuilder() {
+  public JibContainerBuilder toContainerBuilder() throws IOException {
     if (mainClass == null) {
       throw new IllegalStateException(
           "mainClass is null on JavaContainerBuilder; specify the main class using "
               + "JavaContainerBuilder#setMainClass(String), or consider using a "
               + "jib.frontend.MainClassFinder to infer the main class");
     }
-    if (classpath.isEmpty()) {
+    if (relativeClasspaths.isEmpty()) {
       throw new IllegalStateException(
           "Failed to construct entrypoint because no files were added to the JavaContainerBuilder");
     }
 
+    JavaLayerConfigurations.Builder layerConfigurationsBuilder = JavaLayerConfigurations.builder();
+
+    // Add classes to layer configuration
+    for (PathPredicatePair directory : addedClasses) {
+      layerConfigurationsBuilder.addDirectoryContents(
+          LayerType.CLASSES,
+          directory.path,
+          directory.predicate,
+          appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE));
+    }
+
+    // Add resources to layer configuration
+    for (PathPredicatePair directory : addedResources) {
+      layerConfigurationsBuilder.addDirectoryContents(
+          LayerType.RESOURCES,
+          directory.path,
+          directory.predicate,
+          appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE));
+    }
+
+    // Detect duplicate filenames and rename with filesize to avoid collisions
+    List<String> duplicates =
+        addedDependencies
+            .stream()
+            .map(Path::getFileName)
+            .map(Path::toString)
+            .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
+            .entrySet()
+            .stream()
+            .filter(entry -> entry.getValue() > 1)
+            .map(Entry::getKey)
+            .collect(Collectors.toList());
+    for (Path file : addedDependencies) {
+      // Add dependencies to layer configuration
+      layerConfigurationsBuilder.addFile(
+          file.getFileName().toString().contains("SNAPSHOT")
+              ? LayerType.SNAPSHOT_DEPENDENCIES
+              : LayerType.DEPENDENCIES,
+          file,
+          appRoot
+              .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE)
+              .resolve(
+                  duplicates.contains(file.getFileName().toString())
+                      ? file.getFileName()
+                              .toString()
+                              .replaceFirst("\\.jar$", "-" + Files.size(file))
+                          + ".jar"
+                      : file.getFileName().toString()));
+    }
+
+    // Add others to layer configuration
+    for (Path path : addedOthers) {
+      if (Files.isDirectory(path)) {
+        layerConfigurationsBuilder.addDirectoryContents(
+            LayerType.EXTRA_FILES, path, path1 -> true, appRoot.resolve(OTHERS_CLASSPATH));
+      } else {
+        layerConfigurationsBuilder.addFile(
+            LayerType.EXTRA_FILES,
+            path,
+            appRoot.resolve(OTHERS_CLASSPATH).resolve(path.getFileName()));
+      }
+    }
+
+    // Construct entrypoint
+    List<String> classpathElements = new ArrayList<>();
+    for (RelativeUnixPath path : relativeClasspaths) {
+      classpathElements.add(appRoot.resolve(path).toString());
+    }
     jibContainerBuilder.setEntrypoint(
-        JavaEntrypointConstructor.makeEntrypoint(new ArrayList<>(classpath), jvmFlags, mainClass));
+        JavaEntrypointConstructor.makeEntrypoint(classpathElements, jvmFlags, mainClass));
     jibContainerBuilder.setLayers(layerConfigurationsBuilder.build().getLayerConfigurations());
     return jibContainerBuilder;
   }
 
   private JavaContainerBuilder addDirectory(
-      Path directory, AbsoluteUnixPath destination, LayerType layerType, Predicate<Path> pathFilter)
-      throws IOException {
+      List<PathPredicatePair> addedPaths, Path directory, Predicate<Path> filter)
+      throws NoSuchFileException, NotDirectoryException {
     if (!Files.exists(directory)) {
       throw new NoSuchFileException(directory.toString());
     }
     if (!Files.isDirectory(directory)) {
       throw new NotDirectoryException(directory.toString());
     }
-    layerConfigurationsBuilder.addDirectoryContents(layerType, directory, pathFilter, destination);
-    classpath.add(destination.toString());
+    addedPaths.add(new PathPredicatePair(directory, filter));
     return this;
   }
 }
