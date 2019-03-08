@@ -126,7 +126,7 @@ public class JavaContainerBuilder {
 
   private final JibContainerBuilder jibContainerBuilder;
   private final List<String> jvmFlags = new ArrayList<>();
-  private final LinkedHashSet<RelativeUnixPath> classpath = new LinkedHashSet<>(4);
+  private final LinkedHashSet<RelativeUnixPath> relativeClasspaths = new LinkedHashSet<>(4);
 
   // Keeps track of files to add to the image, by system path
   private final List<PathPredicatePair> addedResources = new ArrayList<>();
@@ -179,7 +179,7 @@ public class JavaContainerBuilder {
       }
     }
     addedDependencies.addAll(dependencyFiles);
-    classpath.add(DEPENDENCIES_CLASSPATH);
+    relativeClasspaths.add(DEPENDENCIES_CLASSPATH);
     return this;
   }
 
@@ -216,7 +216,7 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addResources(Path resourceFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
-    classpath.add(RESOURCES_CLASSPATH);
+    relativeClasspaths.add(RESOURCES_CLASSPATH);
     return addDirectory(addedResources, resourceFilesDirectory, pathFilter);
   }
 
@@ -241,7 +241,7 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addClasses(Path classFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
-    classpath.add(CLASSES_CLASSPATH);
+    relativeClasspaths.add(CLASSES_CLASSPATH);
     return addDirectory(addedClasses, classFilesDirectory, pathFilter);
   }
 
@@ -263,7 +263,7 @@ public class JavaContainerBuilder {
         throw new NoSuchFileException(file.toString());
       }
     }
-    classpath.add(OTHERS_CLASSPATH);
+    relativeClasspaths.add(OTHERS_CLASSPATH);
     addedOthers.addAll(otherFiles);
     return this;
   }
@@ -344,7 +344,7 @@ public class JavaContainerBuilder {
               + "JavaContainerBuilder#setMainClass(String), or consider using a "
               + "jib.frontend.MainClassFinder to infer the main class");
     }
-    if (classpath.isEmpty()) {
+    if (relativeClasspaths.isEmpty()) {
       throw new IllegalStateException(
           "Failed to construct entrypoint because no files were added to the JavaContainerBuilder");
     }
@@ -352,20 +352,20 @@ public class JavaContainerBuilder {
     JavaLayerConfigurations.Builder layerConfigurationsBuilder = JavaLayerConfigurations.builder();
 
     // Add classes to layer configuration
-    for (PathPredicatePair file : addedClasses) {
+    for (PathPredicatePair directory : addedClasses) {
       layerConfigurationsBuilder.addDirectoryContents(
           LayerType.CLASSES,
-          file.path,
-          file.predicate,
+          directory.path,
+          directory.predicate,
           appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE));
     }
 
     // Add resources to layer configuration
-    for (PathPredicatePair file : addedResources) {
+    for (PathPredicatePair directory : addedResources) {
       layerConfigurationsBuilder.addDirectoryContents(
           LayerType.RESOURCES,
-          file.path,
-          file.predicate,
+          directory.path,
+          directory.predicate,
           appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE));
     }
 
@@ -400,21 +400,21 @@ public class JavaContainerBuilder {
     }
 
     // Add others to layer configuration
-    for (Path file : addedOthers) {
-      if (Files.isDirectory(file)) {
+    for (Path path : addedOthers) {
+      if (Files.isDirectory(path)) {
         layerConfigurationsBuilder.addDirectoryContents(
-            LayerType.EXTRA_FILES, file, path -> true, appRoot.resolve(OTHERS_CLASSPATH));
+            LayerType.EXTRA_FILES, path, path1 -> true, appRoot.resolve(OTHERS_CLASSPATH));
       } else {
         layerConfigurationsBuilder.addFile(
             LayerType.EXTRA_FILES,
-            file,
-            appRoot.resolve(OTHERS_CLASSPATH).resolve(file.getFileName()));
+            path,
+            appRoot.resolve(OTHERS_CLASSPATH).resolve(path.getFileName()));
       }
     }
 
     // Construct entrypoint
     List<String> classpathElements = new ArrayList<>();
-    for (RelativeUnixPath path : classpath) {
+    for (RelativeUnixPath path : relativeClasspaths) {
       classpathElements.add(appRoot.resolve(path).toString());
     }
     jibContainerBuilder.setEntrypoint(
@@ -424,7 +424,7 @@ public class JavaContainerBuilder {
   }
 
   private JavaContainerBuilder addDirectory(
-      List<PathPredicatePair> addedFiles, Path directory, Predicate<Path> filter)
+      List<PathPredicatePair> addedPaths, Path directory, Predicate<Path> filter)
       throws NoSuchFileException, NotDirectoryException {
     if (!Files.exists(directory)) {
       throw new NoSuchFileException(directory.toString());
@@ -432,7 +432,7 @@ public class JavaContainerBuilder {
     if (!Files.isDirectory(directory)) {
       throw new NotDirectoryException(directory.toString());
     }
-    addedFiles.add(new PathPredicatePair(directory, filter));
+    addedPaths.add(new PathPredicatePair(directory, filter));
     return this;
   }
 }
