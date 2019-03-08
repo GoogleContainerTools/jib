@@ -29,7 +29,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -128,6 +127,8 @@ public class JavaContainerBuilder {
   private final JibContainerBuilder jibContainerBuilder;
   private final List<String> jvmFlags = new ArrayList<>();
   private final LinkedHashSet<RelativeUnixPath> classpath = new LinkedHashSet<>(4);
+
+  // Keeps track of files to add to the image, by system path
   private final List<PathPredicatePair> addedResources = new ArrayList<>();
   private final List<PathPredicatePair> addedClasses = new ArrayList<>();
   private final List<Path> addedDependencies = new ArrayList<>();
@@ -177,27 +178,7 @@ public class JavaContainerBuilder {
         throw new NoSuchFileException(file.toString());
       }
     }
-
-    // Detect duplicate filenames and rename with filesize to avoid collisions
-    List<String> duplicates =
-        dependencyFiles
-            .stream()
-            .map(Path::getFileName)
-            .map(Path::toString)
-            .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
-            .entrySet()
-            .stream()
-            .filter(entry -> entry.getValue() > 1)
-            .map(Entry::getKey)
-            .collect(Collectors.toList());
-    for (Path file : dependencyFiles) {
-      addedDependencies.add(
-          Paths.get(
-              duplicates.contains(file.getFileName().toString())
-                  ? file.getFileName().toString().replaceFirst("\\.jar$", "-" + Files.size(file))
-                      + ".jar"
-                  : file.getFileName().toString()));
-    }
+    addedDependencies.addAll(dependencyFiles);
     classpath.add(DEPENDENCIES_CLASSPATH);
     return this;
   }
@@ -389,6 +370,18 @@ public class JavaContainerBuilder {
     }
 
     // Add dependencies to layer configuration
+    // Detect duplicate filenames and rename with filesize to avoid collisions
+    List<String> duplicates =
+        addedDependencies
+            .stream()
+            .map(Path::getFileName)
+            .map(Path::toString)
+            .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
+            .entrySet()
+            .stream()
+            .filter(entry -> entry.getValue() > 1)
+            .map(Entry::getKey)
+            .collect(Collectors.toList());
     for (Path file : addedDependencies) {
       layerConfigurationsBuilder.addFile(
           file.getFileName().toString().contains("SNAPSHOT")
@@ -397,7 +390,13 @@ public class JavaContainerBuilder {
           file,
           appRoot
               .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE)
-              .resolve(file.getFileName().toString()));
+              .resolve(
+                  duplicates.contains(file.getFileName().toString())
+                      ? file.getFileName()
+                              .toString()
+                              .replaceFirst("\\.jar$", "-" + Files.size(file))
+                          + ".jar"
+                      : file.getFileName().toString()));
     }
 
     // Add others to layer configuration
