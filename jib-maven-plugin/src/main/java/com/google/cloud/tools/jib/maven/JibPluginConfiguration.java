@@ -302,7 +302,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     String property = getProperty(PropertyNames.TO_TAGS);
     List<String> tags =
         property != null ? ConfigurationPropertyValidator.parseListProperty(property) : to.tags;
-    String source = property != null ? PropertyNames.TO_TAGS : "<jib><to><tags>";
+    String source = property != null ? PropertyNames.TO_TAGS : "<to><tags>";
     tags.forEach(
         tag ->
             Preconditions.checkArgument(!Strings.isNullOrEmpty(tag), "%s has empty tag", source));
