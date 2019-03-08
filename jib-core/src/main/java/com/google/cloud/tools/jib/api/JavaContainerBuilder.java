@@ -369,7 +369,6 @@ public class JavaContainerBuilder {
           appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE));
     }
 
-    // Add dependencies to layer configuration
     // Detect duplicate filenames and rename with filesize to avoid collisions
     List<String> duplicates =
         addedDependencies
@@ -383,6 +382,7 @@ public class JavaContainerBuilder {
             .map(Entry::getKey)
             .collect(Collectors.toList());
     for (Path file : addedDependencies) {
+      // Add dependencies to layer configuration
       layerConfigurationsBuilder.addFile(
           file.getFileName().toString().contains("SNAPSHOT")
               ? LayerType.SNAPSHOT_DEPENDENCIES
