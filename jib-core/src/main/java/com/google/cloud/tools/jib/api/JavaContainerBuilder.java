@@ -363,10 +363,7 @@ public class JavaContainerBuilder {
               + "JavaContainerBuilder#setMainClass(String), or consider using a "
               + "jib.frontend.MainClassFinder to infer the main class");
     }
-    if (addedClasses.isEmpty()
-        && addedResources.isEmpty()
-        && addedDependencies.isEmpty()
-        && addedOthers.isEmpty()) {
+    if (classpath.isEmpty()) {
       throw new IllegalStateException(
           "Failed to construct entrypoint because no files were added to the JavaContainerBuilder");
     }
