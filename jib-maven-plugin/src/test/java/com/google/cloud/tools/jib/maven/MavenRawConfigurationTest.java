@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableMap;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
@@ -105,25 +104,5 @@ public class MavenRawConfigurationTest {
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
 
     Mockito.verifyNoMoreInteractions(eventDispatcher);
-  }
-
-  /**
-   * Maven turns empty tags into null entries (<a
-   * href="https://github.com/GoogleContainerTools/jib/issues/1534">#1534</a>).
-   */
-  @Test
-  public void testNullTags() {
-    JibPluginConfiguration jibPluginConfiguration = Mockito.mock(JibPluginConfiguration.class);
-    Set<String> setWithNull = new HashSet<>();
-    setWithNull.add(null);
-    Mockito.when(jibPluginConfiguration.getTargetImageAdditionalTags()).thenReturn(setWithNull);
-
-    MavenRawConfiguration rawConfiguration = new MavenRawConfiguration(jibPluginConfiguration);
-    try {
-      rawConfiguration.getToTags();
-      Assert.fail();
-    } catch (NullPointerException ex) {
-      Assert.assertEquals("null or empty tag", ex.getMessage());
-    }
   }
 }

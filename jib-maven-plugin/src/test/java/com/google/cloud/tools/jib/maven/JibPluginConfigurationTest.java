@@ -185,4 +185,18 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("/another/file", permissions.get(1).getFile().get());
     Assert.assertEquals("456", permissions.get(1).getMode().get());
   }
+
+  @Test
+  public void testEmptyOrNullTags() {
+    // https://github.com/GoogleContainerTools/jib/issues/1534
+    // Maven turns empty tags into null entries, and its possible
+    // to have empty tags in jib.to.tags
+    sessionProperties.put("jib.to.tags", "a,,b");
+    try {
+      testPluginConfiguration.getTargetImageAdditionalTags();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("jib.to.tags has empty tag", ex.getMessage());
+    }
+  }
 }
