@@ -86,4 +86,19 @@ public class ContainerizerTest {
     Assert.assertTrue(containerizer.getAllowInsecureRegistries());
     Assert.assertEquals("tool", containerizer.getToolName());
   }
+
+  @Test
+  public void testWithAdditionalTag() {
+    DockerDaemonImage dockerDaemonImage =
+        DockerDaemonImage.named(ImageReference.of(null, "repository", null));
+    Containerizer containerizer = Containerizer.to(dockerDaemonImage);
+
+    containerizer.withAdditionalTag("tag");
+    try {
+      containerizer.withAdditionalTag("+invalid+");
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("invalid tag '+invalid+'", ex.getMessage());
+    }
+  }
 }

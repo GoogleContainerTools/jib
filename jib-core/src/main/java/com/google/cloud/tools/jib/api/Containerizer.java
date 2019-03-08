@@ -103,7 +103,7 @@ public class Containerizer {
    * @return this
    */
   public Containerizer withAdditionalTag(String tag) {
-    Preconditions.checkArgument(ImageReference.isValidTag(tag));
+    Preconditions.checkArgument(ImageReference.isValidTag(tag), "invalid tag '%s'", tag);
     additionalTags.add(tag);
     return this;
   }

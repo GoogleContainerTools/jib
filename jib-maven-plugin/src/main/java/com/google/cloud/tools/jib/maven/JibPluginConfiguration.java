@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -299,10 +300,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   Set<String> getTargetImageAdditionalTags() {
     String property = getProperty(PropertyNames.TO_TAGS);
-    if (property != null) {
-      return new HashSet<>(ConfigurationPropertyValidator.parseListProperty(property));
-    }
-    return new HashSet<>(to.tags);
+    List<String> tags =
+        property != null ? ConfigurationPropertyValidator.parseListProperty(property) : to.tags;
+    String source = property != null ? PropertyNames.TO_TAGS : "<to><tags>";
+    tags.forEach(
+        tag ->
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(tag), "%s has empty tag", source));
+    return new HashSet<>(tags);
   }
 
   /**
