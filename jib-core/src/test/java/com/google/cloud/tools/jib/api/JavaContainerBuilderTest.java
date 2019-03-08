@@ -194,19 +194,64 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_setAppRootLate() throws URISyntaxException, IOException {
-    JavaContainerBuilder javaContainerBuilder =
-        JavaContainerBuilder.fromDistroless().addClasses(getResource("core/application/classes"));
-    try {
-      javaContainerBuilder.setAppRoot("/oh no");
-      Assert.fail();
-    } catch (IllegalStateException ex) {
-      Assert.assertEquals("You cannot change the app root after files are added", ex.getMessage());
-    }
+  public void testToJibContainerBuilder_setAppRootLate()
+      throws URISyntaxException, IOException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
+    BuildConfiguration buildConfiguration =
+        JavaContainerBuilder.fromDistroless()
+            .addClasses(getResource("core/application/classes"))
+            .addResources(getResource("core/application/resources"))
+            .addDependencies(getResource("core/application/dependencies/libraryA.jar"))
+            .addToClasspath(getResource("core/fileA"))
+            .setAppRoot("/different")
+            .setMainClass("HelloWorld")
+            .toContainerBuilder()
+            .toBuildConfiguration(
+                Containerizer.to(RegistryImage.named("hello")),
+                MoreExecutors.newDirectExecutorService());
+
+    // Check entrypoint
+    ContainerConfiguration containerConfiguration = buildConfiguration.getContainerConfiguration();
+    Assert.assertNotNull(containerConfiguration);
+    Assert.assertEquals(
+        ImmutableList.of(
+            "java",
+            "-cp",
+            "/different/classes:/different/resources:/different/libs/*:/different/classpath",
+            "HelloWorld"),
+        containerConfiguration.getEntrypoint());
+
+    // Check classes
+    List<AbsoluteUnixPath> expectedClasses =
+        ImmutableList.of(
+            AbsoluteUnixPath.get("/different/classes/HelloWorld.class"),
+            AbsoluteUnixPath.get("/different/classes/some.class"));
+    Assert.assertEquals(expectedClasses, getExtractionPaths(buildConfiguration, "classes"));
+
+    // Check resources
+    List<AbsoluteUnixPath> expectedResources =
+        ImmutableList.of(
+            AbsoluteUnixPath.get("/different/resources/resourceA"),
+            AbsoluteUnixPath.get("/different/resources/resourceB"),
+            AbsoluteUnixPath.get("/different/resources/world"));
+    Assert.assertEquals(expectedResources, getExtractionPaths(buildConfiguration, "resources"));
+
+    // Check dependencies
+    List<AbsoluteUnixPath> expectedDependencies =
+        ImmutableList.of(AbsoluteUnixPath.get("/different/libs/libraryA.jar"));
+    Assert.assertEquals(
+        expectedDependencies, getExtractionPaths(buildConfiguration, "dependencies"));
+
+    Assert.assertEquals(expectedClasses, getExtractionPaths(buildConfiguration, "classes"));
+
+    // Check additional classpath files
+    List<AbsoluteUnixPath> expectedOthers =
+        ImmutableList.of(AbsoluteUnixPath.get("/different/classpath/fileA"));
+    Assert.assertEquals(expectedOthers, getExtractionPaths(buildConfiguration, "extra files"));
   }
 
   @Test
-  public void testToJibContainerBuilder_mainClassNull() {
+  public void testToJibContainerBuilder_mainClassNull() throws IOException {
     try {
       JavaContainerBuilder.fromDistroless().toContainerBuilder();
       Assert.fail();
@@ -221,7 +266,7 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_classpathEmpty() {
+  public void testToJibContainerBuilder_classpathEmpty() throws IOException {
     try {
       JavaContainerBuilder.fromDistroless().setMainClass("Hello").toContainerBuilder();
       Assert.fail();
