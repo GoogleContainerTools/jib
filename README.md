@@ -30,11 +30,11 @@ For more information, check out the [official blog post](https://cloudplatform.g
 
 ## Quickstart
 
-* **Maven** - See the jib-maven-plugin [quickstart](jib-maven-plugin#quickstart).
+* **Maven** - See the jib-maven-plugin [Quickstart](jib-maven-plugin#quickstart).
 
-* **Gradle** - See the jib-gradle-plugin [quickstart](jib-gradle-plugin#quickstart).
+* **Gradle** - See the jib-gradle-plugin [Quickstart](jib-gradle-plugin#quickstart).
 
-* **Jib Core** - See the Jib Core [quickstart](jib-core#adding-jib-core-to-your-build).
+* **Jib Core** - See the Jib Core [Quickstart](jib-core#adding-jib-core-to-your-build).
 
 ## Examples
 
