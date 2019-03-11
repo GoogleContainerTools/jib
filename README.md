@@ -42,6 +42,15 @@ See documentation for using [jib-gradle-plugin](jib-gradle-plugin#quickstart).
 
 See documentation for using [Jib Core](jib-core#adding-jib-core-to-your-build)
 
+## Examples
+
+The [examples](examples) directory includes the following examples (and more).
+   * [hellworld](examples/helloworld)
+   * [Spring Boot](examples/spring-boot-kubernetes)
+   * [Micronaut](examples/micronaut)
+   * [Multi-module project](examples/multi-module)
+   * [Spark using Java Agent](examples/java-agent)
+
 ## How Jib Works
 
 Whereas traditionally a Java application is built as a single image layer with the application JAR, Jib's build strategy separates the Java application into multiple layers for more granular incremental builds. When you change your code, only your changes are rebuilt, not your entire application. These layers, by default, are layered on top of a [distroless](https://github.com/GoogleCloudPlatform/distroless) base image. For more information, check out the [official blog post](https://cloudplatform.googleblog.com/2018/07/introducing-jib-build-java-docker-images-better.html) or watch [this talk](https://www.youtube.com/watch?v=H6gR_Cv4yWI) ([slides](https://speakerdeck.com/coollog/build-containers-faster-with-jib-a-google-image-build-tool-for-java-applications)).
