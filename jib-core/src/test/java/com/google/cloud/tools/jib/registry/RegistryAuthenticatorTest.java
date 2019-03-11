@@ -70,7 +70,7 @@ public class RegistryAuthenticatorTest {
     registryAuthenticator.setCredential(Credential.basic("<token>", "oauth2_access_token"));
     Assert.assertEquals(
         "service=someservice&scope=repository:someimage:scope"
-            + "&grant_type=refresh_token&refresh_token=oauth2_access_token",
+            + "&client_id=jib&grant_type=refresh_token&refresh_token=oauth2_access_token",
         registryAuthenticator.getAuthRequestParameters("scope"));
   }
 
