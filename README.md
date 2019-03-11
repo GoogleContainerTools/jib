@@ -39,11 +39,11 @@ For more information, check out the [official blog post](https://cloudplatform.g
 ## Examples
 
 The [examples](examples) directory includes the following examples (and more).
-   * [hellworld](examples/helloworld)
+   * [helloworld](examples/helloworld)
    * [Spring Boot](examples/spring-boot-kubernetes)
    * [Micronaut](examples/micronaut)
    * [Multi-module project](examples/multi-module)
-   * [Spark using Java Agent](examples/java-agent)
+   * [Spark Java using Java Agent](examples/java-agent)
 
 ## How Jib Works
 
