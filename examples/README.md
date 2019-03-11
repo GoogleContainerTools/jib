@@ -41,3 +41,7 @@ See [micronaut](micronaut) for containerizing a [Micronaut framework](https://mi
 ### Java agents example
 
 See [java-agent](java-agent) for launching with the Stackdriver Debugger Java agent.
+
+### Kafka Streams example
+
+See [cricket007/kafka-streams-jib-example](https://github.com/cricket007/kafka-streams-jib-example) for containerizing a [Kafka Streams](http://kafka.apache.org/documentation/streams) application.
