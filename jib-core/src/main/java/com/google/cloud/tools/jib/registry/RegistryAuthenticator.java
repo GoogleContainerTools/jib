@@ -269,7 +269,9 @@ public class RegistryAuthenticator {
     String serviceScope = getServiceScopeRequestParameters(scope);
     return isOAuth2Auth()
         ? serviceScope
-            + "&client_id=jib&grant_type=refresh_token&refresh_token="
+            // https://github.com/GoogleContainerTools/jib/pull/1545
+            + "&client_id=da031fe481a93ac107a95a96462358f9"
+            + "&grant_type=refresh_token&refresh_token="
             // If OAuth2, credential.getPassword() is a refresh token.
             + Verify.verifyNotNull(credential).getPassword()
         : serviceScope;
