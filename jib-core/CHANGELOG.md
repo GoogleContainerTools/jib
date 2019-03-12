@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `JavaContainerBuilder#setAppRoot()` and `JavaContainerBuilder#fromDistrolessJetty()` for building WAR containers ([#1464](https://github.com/GoogleContainerTools/jib/issues/1464))
+- `Jib#fromScratch()` to start building from an empty base image ([#1471](https://github.com/GoogleContainerTools/jib/issues/1471))
 
 ### Changed
 

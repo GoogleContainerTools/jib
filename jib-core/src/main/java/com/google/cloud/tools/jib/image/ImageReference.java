@@ -169,6 +169,17 @@ public class ImageReference {
   }
 
   /**
+   * Constructs an {@link ImageReference} with an empty registry and tag component, and repository
+   * set to "scratch".
+   *
+   * @return an {@link ImageReference} with an empty registry and tag component, and repository set
+   *     to "scratch"
+   */
+  public static ImageReference scratch() {
+    return new ImageReference("", "scratch", "");
+  }
+
+  /**
    * Returns {@code true} if {@code registry} is a valid registry string. For example, a valid
    * registry could be {@code gcr.io} or {@code localhost:5000}.
    *
@@ -269,6 +280,15 @@ public class ImageReference {
    */
   public boolean isTagDigest() {
     return tag.matches(DescriptorDigest.DIGEST_REGEX);
+  }
+
+  /**
+   * Returns {@code true} if the {@link ImageReference} is a scratch image; {@code false} if not.
+   *
+   * @return {@code true} if the {@link ImageReference} is a scratch image; {@code false} if not
+   */
+  public boolean isScratch() {
+    return "".equals(registry) && "scratch".equals(repository) && "".equals(tag);
   }
 
   /**

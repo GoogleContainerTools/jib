@@ -60,5 +60,14 @@ public class Jib {
     return new JibContainerBuilder(registryImage);
   }
 
+  /**
+   * Starts building the container from an empty base image.
+   *
+   * @return a new {@link JibContainerBuilder} to continue building the container
+   */
+  public static JibContainerBuilder fromScratch() {
+    return from(ImageReference.scratch());
+  }
+
   private Jib() {}
 }

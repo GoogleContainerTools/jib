@@ -87,6 +87,28 @@ public class JibIntegrationTest {
             targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
   }
 
+  @Test
+  public void testScratch()
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException {
+    ImageReference targetImageReference =
+        ImageReference.of("localhost:5000", "jib-core", "basic-scratch");
+    Jib.fromScratch()
+        .containerize(
+            Containerizer.to(
+                    RegistryImage.named(targetImageReference)
+                        .addCredentialRetriever(
+                            () -> Optional.of(Credential.basic("username", "password"))))
+                .setAllowInsecureRegistries(true));
+
+    // Check that resulting image has no layers
+    localRegistry.pull(targetImageReference.toString());
+    String inspectOutput = new Command("docker", "inspect", targetImageReference.toString()).run();
+    Assert.assertFalse(
+        "docker inspect output contained layers: " + inspectOutput,
+        inspectOutput.contains("\"Layers\": ["));
+  }
+
   /** Ensure that a provided executor is not disposed. */
   @Test
   public void testProvidedExecutorNotDisposed()

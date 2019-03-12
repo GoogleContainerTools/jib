@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithAuthorization;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
@@ -42,7 +43,6 @@ import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.RegistryException;
@@ -108,8 +108,18 @@ class PullBaseImageStep
   @Override
   public BaseImageWithAuthorization call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-          LayerCountMismatchException, ExecutionException, BadContainerConfigurationFormatException,
-          RegistryAuthenticationFailedException {
+          LayerCountMismatchException, ExecutionException,
+          BadContainerConfigurationFormatException {
+    // Skip this step if this is a scratch image
+    ImageConfiguration baseImageConfiguration = buildConfiguration.getBaseImageConfiguration();
+    if (baseImageConfiguration.getImage().isScratch()) {
+      buildConfiguration
+          .getEventDispatcher()
+          .dispatch(LogEvent.progress("Getting scratch base image..."));
+      return new BaseImageWithAuthorization(
+          Image.builder(buildConfiguration.getTargetFormat()).build(), null);
+    }
+
     buildConfiguration
         .getEventDispatcher()
         .dispatch(
