@@ -66,7 +66,7 @@ public class Jib {
    * @return a new {@link JibContainerBuilder} to continue building the container
    */
   public static JibContainerBuilder fromScratch() {
-    return from(ImageReference.ofScratch());
+    return from(ImageReference.scratch());
   }
 
   private Jib() {}

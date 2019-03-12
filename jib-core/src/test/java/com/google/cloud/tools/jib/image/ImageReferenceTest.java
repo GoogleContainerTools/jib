@@ -180,6 +180,13 @@ public class ImageReferenceTest {
             .isTagDigest());
   }
 
+  @Test
+  public void testIsScratch() {
+    Assert.assertTrue(ImageReference.scratch().isScratch());
+    Assert.assertFalse(ImageReference.of("", "scratch", "").isScratch());
+    Assert.assertFalse(ImageReference.of(null, "scratch", null).isScratch());
+  }
+
   private void verifyParse(String registry, String repository, String tagSeparator, String tag)
       throws InvalidImageReferenceException {
     // Gets the expected parsed components.

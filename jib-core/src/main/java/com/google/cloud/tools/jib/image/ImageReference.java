@@ -175,7 +175,7 @@ public class ImageReference {
    * @return an {@link ImageReference} with an empty registry and tag component, and repository set
    *     to "scratch"
    */
-  public static ImageReference ofScratch() {
+  public static ImageReference scratch() {
     return new ImageReference("", "scratch", "");
   }
 
