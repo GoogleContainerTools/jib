@@ -80,7 +80,7 @@ public class JavaContainerBuilderTest {
             .setClassesDestination(RelativeUnixPath.get("different-classes"))
             .setResourcesDestination(RelativeUnixPath.get("different-resources"))
             .setDependenciesDestination(RelativeUnixPath.get("different-libs"))
-            .setClasspathDestination(RelativeUnixPath.get("different-classpath"))
+            .setOthersDestination(RelativeUnixPath.get("different-classpath"))
             .addJvmFlags("-xflag1", "-xflag2")
             .setMainClass("HelloWorld")
             .toContainerBuilder()
