@@ -30,17 +30,20 @@ For more information, check out the [official blog post](https://cloudplatform.g
 
 ## Quickstart
 
-### Maven
+* **Maven** - See the jib-maven-plugin [Quickstart](jib-maven-plugin#quickstart).
 
-See documentation for using [jib-maven-plugin](jib-maven-plugin#quickstart).
+* **Gradle** - See the jib-gradle-plugin [Quickstart](jib-gradle-plugin#quickstart).
 
-### Gradle
+* **Jib Core** - See the Jib Core [Quickstart](jib-core#adding-jib-core-to-your-build).
 
-See documentation for using [jib-gradle-plugin](jib-gradle-plugin#quickstart).
+## Examples
 
-### Jib Core
-
-See documentation for using [Jib Core](jib-core#adding-jib-core-to-your-build)
+The [examples](examples) directory includes the following examples (and more).
+   * [helloworld](examples/helloworld)
+   * [Spring Boot](examples/spring-boot-kubernetes)
+   * [Micronaut](examples/micronaut)
+   * [Multi-module project](examples/multi-module)
+   * [Spark Java using Java Agent](examples/java-agent)
 
 ## How Jib Works
 
