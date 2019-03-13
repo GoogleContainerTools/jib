@@ -387,11 +387,12 @@ public class JavaContainerBuilder {
    * @throws IOException if building the {@link JibContainerBuilder} fails.
    */
   public JibContainerBuilder toContainerBuilder() throws IOException {
-    if (mainClass == null) {
+    if (mainClass == null && !jvmFlags.isEmpty()) {
       throw new IllegalStateException(
-          "mainClass is null on JavaContainerBuilder; specify the main class using "
+          "Failed to construct entrypoint on JavaContainerBuilder; "
+              + "jvmFlags were set, but mainClass is null. Specify the main class using "
               + "JavaContainerBuilder#setMainClass(String), or consider using a "
-              + "jib.frontend.MainClassFinder to infer the main class");
+              + "jib.frontend.MainClassFinder to infer the main class.");
     }
     if (classpathOrder.isEmpty()) {
       throw new IllegalStateException(
@@ -461,28 +462,32 @@ public class JavaContainerBuilder {
       }
     }
 
-    // Construct entrypoint. Ensure classpath elements are in the same order as the files were added
-    // to the JavaContainerBuilder.
-    List<String> classpathElements = new ArrayList<>();
-    for (LayerType path : classpathOrder) {
-      switch (path) {
-        case CLASSES:
-          classpathElements.add(appRoot.resolve(classesDestination).toString());
-          break;
-        case RESOURCES:
-          classpathElements.add(appRoot.resolve(resourcesDestination).toString());
-          break;
-        case DEPENDENCIES:
-          classpathElements.add(appRoot.resolve(dependenciesDestination).resolve("*").toString());
-          break;
-        default:
-          classpathElements.add(appRoot.resolve(classpathDestination).toString());
-          break;
-      }
-    }
-    jibContainerBuilder.setEntrypoint(
-        JavaEntrypointConstructor.makeEntrypoint(classpathElements, jvmFlags, mainClass));
     jibContainerBuilder.setLayers(layerConfigurationsBuilder.build().getLayerConfigurations());
+
+    if (mainClass != null) {
+      // Construct entrypoint. Ensure classpath elements are in the same order as the files were
+      // added to the JavaContainerBuilder.
+      List<String> classpathElements = new ArrayList<>();
+      for (LayerType path : classpathOrder) {
+        switch (path) {
+          case CLASSES:
+            classpathElements.add(appRoot.resolve(classesDestination).toString());
+            break;
+          case RESOURCES:
+            classpathElements.add(appRoot.resolve(resourcesDestination).toString());
+            break;
+          case DEPENDENCIES:
+            classpathElements.add(appRoot.resolve(dependenciesDestination).resolve("*").toString());
+            break;
+          default:
+            classpathElements.add(appRoot.resolve(classpathDestination).toString());
+            break;
+        }
+      }
+      jibContainerBuilder.setEntrypoint(
+          JavaEntrypointConstructor.makeEntrypoint(classpathElements, jvmFlags, mainClass));
+    }
+
     return jibContainerBuilder;
   }
 

@@ -257,16 +257,29 @@ public class JavaContainerBuilderTest {
   }
 
   @Test
-  public void testToJibContainerBuilder_mainClassNull() throws IOException {
+  public void testToJibContainerBuilder_mainClassNull()
+      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
+          URISyntaxException {
+    BuildConfiguration buildConfiguration =
+        JavaContainerBuilder.fromDistroless()
+            .addClasses(getResource("core/application/classes/"))
+            .toContainerBuilder()
+            .toBuildConfiguration(
+                Containerizer.to(RegistryImage.named("hello")),
+                MoreExecutors.newDirectExecutorService());
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
+
     try {
-      JavaContainerBuilder.fromDistroless().toContainerBuilder();
+      JavaContainerBuilder.fromDistroless().addJvmFlags("-flag1", "-flag2").toContainerBuilder();
       Assert.fail();
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
-          "mainClass is null on JavaContainerBuilder; specify the main class using "
+          "Failed to construct entrypoint on JavaContainerBuilder; jvmFlags were set, but "
+              + "mainClass is null. Specify the main class using "
               + "JavaContainerBuilder#setMainClass(String), or consider using a "
-              + "jib.frontend.MainClassFinder to infer the main class",
+              + "jib.frontend.MainClassFinder to infer the main class.",
           ex.getMessage());
     }
   }

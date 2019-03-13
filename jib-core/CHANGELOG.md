@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Methods in `JavaContainerBuilder` for setting the destination directories for classes, resources, directories, and additional classpath files
 
 ### Changed
+- Allow skipping `JavaContainerBuilder#setMainClass()` to skip setting the entrypoint
 
 ### Fixed
 
