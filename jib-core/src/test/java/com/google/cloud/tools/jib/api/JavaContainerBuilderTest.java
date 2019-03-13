@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.filesystem.RelativeUnixPath;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
@@ -76,6 +77,10 @@ public class JavaContainerBuilderTest {
                 getResource("core/application/dependencies/libraryB.jar"),
                 getResource("core/application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
             .addToClasspath(getResource("core/fileA"), getResource("core/fileB"))
+            .setClassesDestination(RelativeUnixPath.get("different-classes"))
+            .setResourcesDestination(RelativeUnixPath.get("different-resources"))
+            .setDependenciesDestination(RelativeUnixPath.get("different-libs"))
+            .setClasspathDestination(RelativeUnixPath.get("different-classpath"))
             .addJvmFlags("-xflag1", "-xflag2")
             .setMainClass("HelloWorld")
             .toContainerBuilder()
@@ -92,23 +97,24 @@ public class JavaContainerBuilderTest {
             "-xflag1",
             "-xflag2",
             "-cp",
-            "/hello/resources:/hello/classes:/hello/libs/*:/hello/classpath",
+            "/hello/different-resources:/hello/different-classes:/hello/different-libs/*:/hello/different-classpath",
             "HelloWorld"),
         containerConfiguration.getEntrypoint());
 
     // Check dependencies
     List<AbsoluteUnixPath> expectedDependencies =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/hello/libs/dependency-1.0.0-770.jar"),
-            AbsoluteUnixPath.get("/hello/libs/dependency-1.0.0-200.jar"),
-            AbsoluteUnixPath.get("/hello/libs/libraryA.jar"),
-            AbsoluteUnixPath.get("/hello/libs/libraryB.jar"));
+            AbsoluteUnixPath.get("/hello/different-libs/dependency-1.0.0-770.jar"),
+            AbsoluteUnixPath.get("/hello/different-libs/dependency-1.0.0-200.jar"),
+            AbsoluteUnixPath.get("/hello/different-libs/libraryA.jar"),
+            AbsoluteUnixPath.get("/hello/different-libs/libraryB.jar"));
     Assert.assertEquals(
         expectedDependencies, getExtractionPaths(buildConfiguration, "dependencies"));
 
     // Check snapshots
     List<AbsoluteUnixPath> expectedSnapshotDependencies =
-        ImmutableList.of(AbsoluteUnixPath.get("/hello/libs/dependency-1.0.0-SNAPSHOT.jar"));
+        ImmutableList.of(
+            AbsoluteUnixPath.get("/hello/different-libs/dependency-1.0.0-SNAPSHOT.jar"));
     Assert.assertEquals(
         expectedSnapshotDependencies,
         getExtractionPaths(buildConfiguration, "snapshot dependencies"));
@@ -116,23 +122,23 @@ public class JavaContainerBuilderTest {
     // Check resources
     List<AbsoluteUnixPath> expectedResources =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/hello/resources/resourceA"),
-            AbsoluteUnixPath.get("/hello/resources/resourceB"),
-            AbsoluteUnixPath.get("/hello/resources/world"));
+            AbsoluteUnixPath.get("/hello/different-resources/resourceA"),
+            AbsoluteUnixPath.get("/hello/different-resources/resourceB"),
+            AbsoluteUnixPath.get("/hello/different-resources/world"));
     Assert.assertEquals(expectedResources, getExtractionPaths(buildConfiguration, "resources"));
 
     // Check classes
     List<AbsoluteUnixPath> expectedClasses =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/hello/classes/HelloWorld.class"),
-            AbsoluteUnixPath.get("/hello/classes/some.class"));
+            AbsoluteUnixPath.get("/hello/different-classes/HelloWorld.class"),
+            AbsoluteUnixPath.get("/hello/different-classes/some.class"));
     Assert.assertEquals(expectedClasses, getExtractionPaths(buildConfiguration, "classes"));
 
     // Check additional classpath files
     List<AbsoluteUnixPath> expectedOthers =
         ImmutableList.of(
-            AbsoluteUnixPath.get("/hello/classpath/fileA"),
-            AbsoluteUnixPath.get("/hello/classpath/fileB"));
+            AbsoluteUnixPath.get("/hello/different-classpath/fileA"),
+            AbsoluteUnixPath.get("/hello/different-classpath/fileB"));
     Assert.assertEquals(expectedOthers, getExtractionPaths(buildConfiguration, "extra files"));
   }
 
