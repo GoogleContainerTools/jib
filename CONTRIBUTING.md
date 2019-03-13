@@ -49,6 +49,39 @@ To build, use the provided `build.sh` which builds and tests each of the compone
 
 # Development Tips
 
+## Configuring Eclipse
+
+Jib is a mix of Gradle and Maven projects, and the projects reference
+source from their dependencies directly using `sourceSets` and
+`build-helper-maven-plugin`.  When importing these projects into
+Eclipse, the Gradle and Maven tooling faithfully replicate the
+direct source referencs, but this has a side-effect that classes
+appear multiple times, in the originating project and in the
+subprojects.  These instructions first import the projects, and
+then replace the source-set-style references to use project references
+instead.
+
+  1. Ensure you have installed the Gradle tooling for Eclipse, called
+     _Buildship_ (available from [the Eclipse
+     Marketplace](https://marketplace.eclipse.org/content/buildship-gradle-integration)).
+  2. _File &rarr; Open Projects from File System..._ to use the Eclipe Smart Import feature
+     and specify the root of the Jib project.
+     Unfortunately Buildship does [not yet support the Eclipse Smart Import](https://github.com/eclipse/buildship/issues/356).
+     Import the `jib-maven-plugin`
+  3. _File &rarr; Import &rarr; Gradle &rarr; Existing Gradle Project_
+     and import `jib-core`, `jib-plugins-common`, and `jib-gradle-plugin`.
+  4. For each of the `jib-plugins-common`, `jib-*-plugin` projects:
+     - Right-click and select _Properties &rarr; Java Build Path_
+     - Open the _Source_ panel and _remove_ all _linked_ source folders:
+       these will appear like `jib-plugins-common/main-java - path/to/jib-core/src/main/java`.
+       Only folders within the project should remain when complete.
+         - you may wish to remove `jib-gradle-plugin`'s `src/test/resources` and
+           `src/integration-test/resources` too as these contain test projects
+     - Open the _Projects_ panel and click _Add_ to select the dependencies:
+         - `jib-plugins-common` depends on `jib-core`
+         - `jib-maven-plugin` depends on `jib-core` and `jib-plugins-common`
+         - `jib-gradle-plugin` depends on `jib-core` and `jib-plugins-common`
+
 ## Debugging the Jib Maven Plugin (`jib-maven-plugin`)
 
 ### Build and use a local snapshot 
