@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.regex.Matcher;
@@ -32,7 +33,7 @@ import javax.annotation.Nullable;
  */
 public class ImageReference {
 
-  private static final String DOCKER_HUB_REGISTRY = "registry.hub.docker.com";
+  private static final String DOCKER_HUB_REGISTRY = "registry-1.docker.io";
   private static final String DEFAULT_TAG = "latest";
   private static final String LIBRARY_REPOSITORY_PREFIX = "library/";
 
@@ -236,12 +237,12 @@ public class ImageReference {
   }
 
   /**
-   * Gets the registry portion of the {@link ImageReference}.
+   * Gets the registry host of the {@link ImageReference}.
    *
-   * @return the registry
+   * @return the registry host
    */
   public String getRegistry() {
-    return registry;
+    return RegistryAliasGroup.getHost(registry);
   }
 
   /**

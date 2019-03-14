@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -82,8 +83,17 @@ public class ImageConfiguration {
     return image;
   }
 
-  public String getImageRegistry() {
+  public String getImgRegistry() {
     return image.getRegistry();
+  }
+
+  /**
+   * Return the actual host for the registry.
+   *
+   * @return the registry host
+   */
+  public String getImageRegistryHost() {
+    return RegistryAliasGroup.getHost(image.getRegistry());
   }
 
   public String getImageRepository() {

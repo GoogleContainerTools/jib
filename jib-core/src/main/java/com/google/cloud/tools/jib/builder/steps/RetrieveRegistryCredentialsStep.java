@@ -33,11 +33,11 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
-/** Attempts to retrieve registry credentials. */
+/** Attempts to retrieve registryHost credentials. */
 class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable<Credential> {
 
   private static String makeDescription(String registry) {
-    return "Retrieving registry credentials for " + registry;
+    return "Retrieving registryHost credentials for " + registry;
   }
 
   /** Retrieves credentials for the base image. */
@@ -49,7 +49,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
         listeningExecutorService,
         buildConfiguration,
         progressEventDispatcherFactory,
-        buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
+        buildConfiguration.getBaseImageConfiguration().getImageRegistryHost(),
         buildConfiguration.getBaseImageConfiguration().getCredentialRetrievers(),
         BuildStepType.RETRIEVE_REGISTRY_CREDENTIALS_BASE);
   }
@@ -63,7 +63,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
         listeningExecutorService,
         buildConfiguration,
         progressEventDispatcherFactory,
-        buildConfiguration.getTargetImageConfiguration().getImageRegistry(),
+        buildConfiguration.getTargetImageConfiguration().getImageRegistryHost(),
         buildConfiguration.getTargetImageConfiguration().getCredentialRetrievers(),
         BuildStepType.RETRIEVE_REGISTRY_CREDENTIALS_TARGET);
   }
@@ -71,7 +71,7 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final String registry;
+  private final String registryHost;
   private final ImmutableList<CredentialRetriever> credentialRetrievers;
   private final BuildStepType buildStepType;
 
@@ -82,12 +82,12 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      String registry,
+      String registryHost,
       ImmutableList<CredentialRetriever> credentialRetrievers,
       BuildStepType buildStepType) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.registry = registry;
+    this.registryHost = registryHost;
     this.credentialRetrievers = credentialRetrievers;
     this.buildStepType = buildStepType;
 
@@ -102,13 +102,13 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
   @Override
   @Nullable
   public Credential call() throws CredentialRetrievalException {
-    String description = makeDescription(registry);
+    String description = makeDescription(registryHost);
 
     buildConfiguration.getEventDispatcher().dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create(
-                buildStepType, "retrieving credentials for " + registry, 1);
+                buildStepType, "retrieving credentials for " + registryHost, 1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
       for (CredentialRetriever credentialRetriever : credentialRetrievers) {
@@ -122,7 +122,8 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
       // public and does not need extra credentials) and return null.
       buildConfiguration
           .getEventDispatcher()
-          .dispatch(LogEvent.info("No credentials could be retrieved for registry " + registry));
+          .dispatch(
+              LogEvent.info("No credentials could be retrieved for registry-host " + registryHost));
       return null;
     }
   }

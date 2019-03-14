@@ -427,7 +427,7 @@ public class BuildConfiguration {
   private RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
     return RegistryClient.factory(
             getEventDispatcher(),
-            imageConfiguration.getImageRegistry(),
+            imageConfiguration.getImageRegistryHost(),
             imageConfiguration.getImageRepository())
         .setAllowInsecureRegistries(getAllowInsecureRegistries())
         .setUserAgentSuffix(getToolName());
