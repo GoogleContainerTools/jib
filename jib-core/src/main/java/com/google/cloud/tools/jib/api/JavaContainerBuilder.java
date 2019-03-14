@@ -136,7 +136,7 @@ public class JavaContainerBuilder {
       JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE;
   private RelativeUnixPath dependenciesDestination =
       JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE;
-  private RelativeUnixPath classpathDestination = RelativeUnixPath.get("classpath");
+  private RelativeUnixPath othersDestination = RelativeUnixPath.get("classpath");
   @Nullable private String mainClass;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
@@ -204,11 +204,11 @@ public class JavaContainerBuilder {
    * Sets the destination directory of additional classpath files added to the container (relative
    * to the app root).
    *
-   * @param classpathDestination the additional classpath directory, relative to the app root
+   * @param othersDestination the additional classpath directory, relative to the app root
    * @return this
    */
-  public JavaContainerBuilder setClasspathDestination(RelativeUnixPath classpathDestination) {
-    this.classpathDestination = classpathDestination;
+  public JavaContainerBuilder setOthersDestination(RelativeUnixPath othersDestination) {
+    this.othersDestination = othersDestination;
     return this;
   }
 
@@ -453,15 +453,14 @@ public class JavaContainerBuilder {
     for (Path path : addedOthers) {
       if (Files.isDirectory(path)) {
         layerConfigurationsBuilder.addDirectoryContents(
-            LayerType.EXTRA_FILES, path, path1 -> true, appRoot.resolve(classpathDestination));
+            LayerType.EXTRA_FILES, path, path1 -> true, appRoot.resolve(othersDestination));
       } else {
         layerConfigurationsBuilder.addFile(
             LayerType.EXTRA_FILES,
             path,
-            appRoot.resolve(classpathDestination).resolve(path.getFileName()));
+            appRoot.resolve(othersDestination).resolve(path.getFileName()));
       }
     }
-
     jibContainerBuilder.setLayers(layerConfigurationsBuilder.build().getLayerConfigurations());
 
     if (mainClass != null) {
@@ -480,7 +479,7 @@ public class JavaContainerBuilder {
             classpathElements.add(appRoot.resolve(dependenciesDestination).resolve("*").toString());
             break;
           default:
-            classpathElements.add(appRoot.resolve(classpathDestination).toString());
+            classpathElements.add(appRoot.resolve(othersDestination).toString());
             break;
         }
       }
