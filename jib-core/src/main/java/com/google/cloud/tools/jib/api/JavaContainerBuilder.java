@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.RelativeUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
@@ -366,8 +367,9 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Sets the main class used to start the application on the image. To find the main class from
-   * {@code .class} files, use {@link MainClassFinder}.
+   * Sets the container entrypoint with the specified main class. The entrypoint will be left
+   * unconfigured if this method is not called. To find the main class from {@code .class} files,
+   * use {@link MainClassFinder}.
    *
    * @param mainClass the main class used to start the application
    * @return this
@@ -478,9 +480,12 @@ public class JavaContainerBuilder {
           case DEPENDENCIES:
             classpathElements.add(appRoot.resolve(dependenciesDestination).resolve("*").toString());
             break;
-          default:
+          case EXTRA_FILES:
             classpathElements.add(appRoot.resolve(othersDestination).toString());
             break;
+          default:
+            throw new RuntimeException(
+                "Bug in jib-core; please report the bug at " + ProjectInfo.GITHUB_NEW_ISSUE_URL);
         }
       }
       jibContainerBuilder.setEntrypoint(
