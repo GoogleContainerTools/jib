@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.RelativeUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
@@ -52,11 +53,6 @@ public class JavaContainerBuilder {
       this.predicate = predicate;
     }
   }
-
-  private static final RelativeUnixPath CLASSES_CLASSPATH = RelativeUnixPath.get("classes");
-  private static final RelativeUnixPath RESOURCES_CLASSPATH = RelativeUnixPath.get("resources");
-  private static final RelativeUnixPath DEPENDENCIES_CLASSPATH = RelativeUnixPath.get("libs/*");
-  private static final RelativeUnixPath OTHERS_CLASSPATH = RelativeUnixPath.get("classpath");
 
   /**
    * Creates a new {@link JavaContainerBuilder} that uses distroless java as the base image. For
@@ -126,7 +122,7 @@ public class JavaContainerBuilder {
 
   private final JibContainerBuilder jibContainerBuilder;
   private final List<String> jvmFlags = new ArrayList<>();
-  private final LinkedHashSet<RelativeUnixPath> relativeClasspaths = new LinkedHashSet<>(4);
+  private final LinkedHashSet<LayerType> classpathOrder = new LinkedHashSet<>(4);
 
   // Keeps track of files to add to the image, by system path
   private final List<PathPredicatePair> addedResources = new ArrayList<>();
@@ -134,12 +130,18 @@ public class JavaContainerBuilder {
   private final List<Path> addedDependencies = new ArrayList<>();
   private final List<Path> addedOthers = new ArrayList<>();
 
-  private AbsoluteUnixPath appRoot;
+  private AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
+  private RelativeUnixPath classesDestination =
+      JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE;
+  private RelativeUnixPath resourcesDestination =
+      JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE;
+  private RelativeUnixPath dependenciesDestination =
+      JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE;
+  private RelativeUnixPath othersDestination = RelativeUnixPath.get("classpath");
   @Nullable private String mainClass;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
     this.jibContainerBuilder = jibContainerBuilder;
-    this.appRoot = AbsoluteUnixPath.get("/app");
   }
 
   /**
@@ -164,6 +166,54 @@ public class JavaContainerBuilder {
   }
 
   /**
+   * Sets the destination directory of the classes added to the container (relative to the app
+   * root).
+   *
+   * @param classesDestination the path to the classes directory, relative to the app root
+   * @return this
+   */
+  public JavaContainerBuilder setClassesDestination(RelativeUnixPath classesDestination) {
+    this.classesDestination = classesDestination;
+    return this;
+  }
+
+  /**
+   * Sets the destination directory of the resources added to the container (relative to the app
+   * root).
+   *
+   * @param resourcesDestination the path to the resources directory, relative to the app root
+   * @return this
+   */
+  public JavaContainerBuilder setResourcesDestination(RelativeUnixPath resourcesDestination) {
+    this.resourcesDestination = resourcesDestination;
+    return this;
+  }
+
+  /**
+   * Sets the destination directory of the dependencies added to the container (relative to the app
+   * root).
+   *
+   * @param dependenciesDestination the path to the dependencies directory, relative to the app root
+   * @return this
+   */
+  public JavaContainerBuilder setDependenciesDestination(RelativeUnixPath dependenciesDestination) {
+    this.dependenciesDestination = dependenciesDestination;
+    return this;
+  }
+
+  /**
+   * Sets the destination directory of additional classpath files added to the container (relative
+   * to the app root).
+   *
+   * @param othersDestination the additional classpath directory, relative to the app root
+   * @return this
+   */
+  public JavaContainerBuilder setOthersDestination(RelativeUnixPath othersDestination) {
+    this.othersDestination = othersDestination;
+    return this;
+  }
+
+  /**
    * Adds dependency JARs to the image. Duplicate JAR filenames are renamed with the filesize in
    * order to avoid collisions.
    *
@@ -179,7 +229,7 @@ public class JavaContainerBuilder {
       }
     }
     addedDependencies.addAll(dependencyFiles);
-    relativeClasspaths.add(DEPENDENCIES_CLASSPATH);
+    classpathOrder.add(LayerType.DEPENDENCIES);
     return this;
   }
 
@@ -216,7 +266,7 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addResources(Path resourceFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
-    relativeClasspaths.add(RESOURCES_CLASSPATH);
+    classpathOrder.add(LayerType.RESOURCES);
     return addDirectory(addedResources, resourceFilesDirectory, pathFilter);
   }
 
@@ -241,7 +291,7 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addClasses(Path classFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
-    relativeClasspaths.add(CLASSES_CLASSPATH);
+    classpathOrder.add(LayerType.CLASSES);
     return addDirectory(addedClasses, classFilesDirectory, pathFilter);
   }
 
@@ -263,7 +313,7 @@ public class JavaContainerBuilder {
         throw new NoSuchFileException(file.toString());
       }
     }
-    relativeClasspaths.add(OTHERS_CLASSPATH);
+    classpathOrder.add(LayerType.EXTRA_FILES);
     addedOthers.addAll(otherFiles);
     return this;
   }
@@ -344,7 +394,7 @@ public class JavaContainerBuilder {
               + "JavaContainerBuilder#setMainClass(String), or consider using a "
               + "jib.frontend.MainClassFinder to infer the main class");
     }
-    if (relativeClasspaths.isEmpty()) {
+    if (classpathOrder.isEmpty()) {
       throw new IllegalStateException(
           "Failed to construct entrypoint because no files were added to the JavaContainerBuilder");
     }
@@ -357,7 +407,7 @@ public class JavaContainerBuilder {
           LayerType.CLASSES,
           directory.path,
           directory.predicate,
-          appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE));
+          appRoot.resolve(classesDestination));
     }
 
     // Add resources to layer configuration
@@ -366,7 +416,7 @@ public class JavaContainerBuilder {
           LayerType.RESOURCES,
           directory.path,
           directory.predicate,
-          appRoot.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE));
+          appRoot.resolve(resourcesDestination));
     }
 
     // Detect duplicate filenames and rename with filesize to avoid collisions
@@ -389,7 +439,7 @@ public class JavaContainerBuilder {
               : LayerType.DEPENDENCIES,
           file,
           appRoot
-              .resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE)
+              .resolve(dependenciesDestination)
               .resolve(
                   duplicates.contains(file.getFileName().toString())
                       ? file.getFileName()
@@ -403,19 +453,36 @@ public class JavaContainerBuilder {
     for (Path path : addedOthers) {
       if (Files.isDirectory(path)) {
         layerConfigurationsBuilder.addDirectoryContents(
-            LayerType.EXTRA_FILES, path, path1 -> true, appRoot.resolve(OTHERS_CLASSPATH));
+            LayerType.EXTRA_FILES, path, path1 -> true, appRoot.resolve(othersDestination));
       } else {
         layerConfigurationsBuilder.addFile(
             LayerType.EXTRA_FILES,
             path,
-            appRoot.resolve(OTHERS_CLASSPATH).resolve(path.getFileName()));
+            appRoot.resolve(othersDestination).resolve(path.getFileName()));
       }
     }
 
-    // Construct entrypoint
+    // Construct entrypoint. Ensure classpath elements are in the same order as the files were added
+    // to the JavaContainerBuilder.
     List<String> classpathElements = new ArrayList<>();
-    for (RelativeUnixPath path : relativeClasspaths) {
-      classpathElements.add(appRoot.resolve(path).toString());
+    for (LayerType path : classpathOrder) {
+      switch (path) {
+        case CLASSES:
+          classpathElements.add(appRoot.resolve(classesDestination).toString());
+          break;
+        case RESOURCES:
+          classpathElements.add(appRoot.resolve(resourcesDestination).toString());
+          break;
+        case DEPENDENCIES:
+          classpathElements.add(appRoot.resolve(dependenciesDestination).resolve("*").toString());
+          break;
+        case EXTRA_FILES:
+          classpathElements.add(appRoot.resolve(othersDestination).toString());
+          break;
+        default:
+          throw new RuntimeException(
+              "Bug in jib-core; please report the bug at " + ProjectInfo.GITHUB_NEW_ISSUE_URL);
+      }
     }
     jibContainerBuilder.setEntrypoint(
         JavaEntrypointConstructor.makeEntrypoint(classpathElements, jvmFlags, mainClass));
