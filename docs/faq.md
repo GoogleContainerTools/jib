@@ -415,7 +415,7 @@ jib.container.useCurrentTimestamp = true
 
 ### I would like to run my application with a javaagent.
 
-You can run your container with a javaagent by placing it in the `src/main/jib` folder to add it to the container's filesystem, then pointing to it using Jib's `container.jvmFlags` configuration.
+You can run your container with a javaagent by placing it in under `src/main/jib` directory to add it to the container's filesystem, then pointing to it using Jib's `container.jvmFlags` configuration.
 
 #### Maven
 
