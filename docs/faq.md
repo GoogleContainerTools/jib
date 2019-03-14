@@ -415,9 +415,27 @@ jib.container.useCurrentTimestamp = true
 
 ### I would like to run my application with a javaagent.
 
-See [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image).
+You can run your container with a javaagent by placing it in under `src/main/jib` directory to add it to the container's filesystem, then pointing to it using Jib's `container.jvmFlags` configuration.
 
-*TODO: Provide more comprehensive solution.*
+#### Maven
+
+```xml
+<configuration>
+  <container>
+    <jvmFlags>
+      <jvmFlag>-javaagent:/myfolder/agent.jar</jvmFlag>
+    </jvmFlags>    
+  </container>
+</configuration>
+```
+
+#### Gradle
+
+```groovy
+jib.container.jvmFlags = ['-javaagent:/myfolder/agent.jar']
+```
+
+See also [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image).
 
 ### How can I tag my image with a timestamp?
 
