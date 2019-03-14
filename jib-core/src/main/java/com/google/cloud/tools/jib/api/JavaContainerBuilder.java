@@ -367,8 +367,9 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Sets the main class used to start the application on the image. To find the main class from
-   * {@code .class} files, use {@link MainClassFinder}.
+   * Sets the container entrypoint with the specified main class. The entrypoint will be left
+   * unconfigured if this method is not called. To find the main class from {@code .class} files,
+   * use {@link MainClassFinder}.
    *
    * @param mainClass the main class used to start the application
    * @return this
@@ -388,11 +389,12 @@ public class JavaContainerBuilder {
    * @throws IOException if building the {@link JibContainerBuilder} fails.
    */
   public JibContainerBuilder toContainerBuilder() throws IOException {
-    if (mainClass == null) {
+    if (mainClass == null && !jvmFlags.isEmpty()) {
       throw new IllegalStateException(
-          "mainClass is null on JavaContainerBuilder; specify the main class using "
+          "Failed to construct entrypoint on JavaContainerBuilder; "
+              + "jvmFlags were set, but mainClass is null. Specify the main class using "
               + "JavaContainerBuilder#setMainClass(String), or consider using a "
-              + "jib.frontend.MainClassFinder to infer the main class");
+              + "jib.frontend.MainClassFinder to infer the main class.");
     }
     if (classpathOrder.isEmpty()) {
       throw new IllegalStateException(
@@ -461,32 +463,35 @@ public class JavaContainerBuilder {
             appRoot.resolve(othersDestination).resolve(path.getFileName()));
       }
     }
-
-    // Construct entrypoint. Ensure classpath elements are in the same order as the files were added
-    // to the JavaContainerBuilder.
-    List<String> classpathElements = new ArrayList<>();
-    for (LayerType path : classpathOrder) {
-      switch (path) {
-        case CLASSES:
-          classpathElements.add(appRoot.resolve(classesDestination).toString());
-          break;
-        case RESOURCES:
-          classpathElements.add(appRoot.resolve(resourcesDestination).toString());
-          break;
-        case DEPENDENCIES:
-          classpathElements.add(appRoot.resolve(dependenciesDestination).resolve("*").toString());
-          break;
-        case EXTRA_FILES:
-          classpathElements.add(appRoot.resolve(othersDestination).toString());
-          break;
-        default:
-          throw new RuntimeException(
-              "Bug in jib-core; please report the bug at " + ProjectInfo.GITHUB_NEW_ISSUE_URL);
-      }
-    }
-    jibContainerBuilder.setEntrypoint(
-        JavaEntrypointConstructor.makeEntrypoint(classpathElements, jvmFlags, mainClass));
     jibContainerBuilder.setLayers(layerConfigurationsBuilder.build().getLayerConfigurations());
+
+    if (mainClass != null) {
+      // Construct entrypoint. Ensure classpath elements are in the same order as the files were
+      // added to the JavaContainerBuilder.
+      List<String> classpathElements = new ArrayList<>();
+      for (LayerType path : classpathOrder) {
+        switch (path) {
+          case CLASSES:
+            classpathElements.add(appRoot.resolve(classesDestination).toString());
+            break;
+          case RESOURCES:
+            classpathElements.add(appRoot.resolve(resourcesDestination).toString());
+            break;
+          case DEPENDENCIES:
+            classpathElements.add(appRoot.resolve(dependenciesDestination).resolve("*").toString());
+            break;
+          case EXTRA_FILES:
+            classpathElements.add(appRoot.resolve(othersDestination).toString());
+            break;
+          default:
+            throw new RuntimeException(
+                "Bug in jib-core; please report the bug at " + ProjectInfo.GITHUB_NEW_ISSUE_URL);
+        }
+      }
+      jibContainerBuilder.setEntrypoint(
+          JavaEntrypointConstructor.makeEntrypoint(classpathElements, jvmFlags, mainClass));
+    }
+
     return jibContainerBuilder;
   }
 
