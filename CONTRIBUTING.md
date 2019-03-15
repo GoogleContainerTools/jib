@@ -89,6 +89,9 @@ instead.
          - `jib-maven-plugin` depends on `jib-core` and `jib-plugins-common`
          - `jib-gradle-plugin` depends on `jib-core` and `jib-plugins-common`
 
+Note that you will likely need to re-apply these changes whenever
+you refresh or update these projects.
+
 ## Debugging the Jib Maven Plugin (`jib-maven-plugin`)
 
 ### Build and use a local snapshot 
