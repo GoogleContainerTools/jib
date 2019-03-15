@@ -21,7 +21,7 @@ import java.util.Objects;
 // TODO: Move to lower-level package - probably at same level as Authorization.
 /** Holds credentials (username and password). */
 public class Credential {
-  // if the username is set to <token> the secret would be an refresh token, see details at
+  // If the username is set to <token>, the secret would be a refresh token.
   // https://github.com/docker/cli/blob/master/docs/reference/commandline/login.md#credential-helper-protocol
   private static final String OAUTH2_TOKEN_USER_NAME = "<token>";
 
@@ -32,7 +32,7 @@ public class Credential {
    * @param password the password
    * @return a new {@link Credential}
    */
-  public static Credential basic(String username, String password) {
+  public static Credential from(String username, String password) {
     return new Credential(username, password);
   }
 

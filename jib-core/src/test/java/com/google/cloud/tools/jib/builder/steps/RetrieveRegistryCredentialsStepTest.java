@@ -54,13 +54,13 @@ public class RetrieveRegistryCredentialsStepTest {
         makeFakeBuildConfiguration(
             Arrays.asList(
                 Optional::empty,
-                () -> Optional.of(Credential.basic("baseusername", "basepassword"))),
+                () -> Optional.of(Credential.from("baseusername", "basepassword"))),
             Arrays.asList(
-                () -> Optional.of(Credential.basic("targetusername", "targetpassword")),
-                () -> Optional.of(Credential.basic("ignored", "ignored"))));
+                () -> Optional.of(Credential.from("targetusername", "targetpassword")),
+                () -> Optional.of(Credential.from("ignored", "ignored"))));
 
     Assert.assertEquals(
-        Credential.basic("baseusername", "basepassword"),
+        Credential.from("baseusername", "basepassword"),
         RetrieveRegistryCredentialsStep.forBaseImage(
                 mockListeningExecutorService,
                 buildConfiguration,
@@ -68,7 +68,7 @@ public class RetrieveRegistryCredentialsStepTest {
                     .newChildProducer())
             .call());
     Assert.assertEquals(
-        Credential.basic("targetusername", "targetpassword"),
+        Credential.from("targetusername", "targetpassword"),
         RetrieveRegistryCredentialsStep.forTargetImage(
                 mockListeningExecutorService,
                 buildConfiguration,

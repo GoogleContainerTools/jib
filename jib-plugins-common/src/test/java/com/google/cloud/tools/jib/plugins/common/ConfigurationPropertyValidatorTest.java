@@ -52,7 +52,7 @@ public class ConfigurationPropertyValidatorTest {
         .thenReturn(Optional.of("abcde"));
     Mockito.when(mockConfiguration.getProperty("jib.test.auth.pass"))
         .thenReturn(Optional.of("12345"));
-    Credential expected = Credential.basic("abcde", "12345");
+    Credential expected = Credential.from("abcde", "12345");
     Optional<Credential> actual =
         ConfigurationPropertyValidator.getImageCredential(
             mockEventDispatcher,
@@ -66,7 +66,7 @@ public class ConfigurationPropertyValidatorTest {
     // Auth set in configuration
     Mockito.when(mockConfiguration.getProperty("jib.test.auth.user")).thenReturn(Optional.empty());
     Mockito.when(mockConfiguration.getProperty("jib.test.auth.pass")).thenReturn(Optional.empty());
-    expected = Credential.basic("vwxyz", "98765");
+    expected = Credential.from("vwxyz", "98765");
     actual =
         ConfigurationPropertyValidator.getImageCredential(
             mockEventDispatcher,

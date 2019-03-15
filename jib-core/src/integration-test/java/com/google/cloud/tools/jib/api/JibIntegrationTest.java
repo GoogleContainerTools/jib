@@ -77,7 +77,7 @@ public class JibIntegrationTest {
                 Containerizer.to(
                         RegistryImage.named(targetImageReference)
                             .addCredentialRetriever(
-                                () -> Optional.of(Credential.basic("username", "password"))))
+                                () -> Optional.of(Credential.from("username", "password"))))
                     .setAllowInsecureRegistries(true));
 
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
@@ -98,7 +98,7 @@ public class JibIntegrationTest {
             Containerizer.to(
                     RegistryImage.named(targetImageReference)
                         .addCredentialRetriever(
-                            () -> Optional.of(Credential.basic("username", "password"))))
+                            () -> Optional.of(Credential.from("username", "password"))))
                 .setAllowInsecureRegistries(true));
 
     // Check that resulting image has no layers
@@ -120,7 +120,7 @@ public class JibIntegrationTest {
         Containerizer.to(
                 RegistryImage.named(targetImageReference)
                     .addCredentialRetriever(
-                        () -> Optional.of(Credential.basic("username", "password"))))
+                        () -> Optional.of(Credential.from("username", "password"))))
             .setAllowInsecureRegistries(true);
 
     ExecutorService executorService = Executors.newCachedThreadPool();
