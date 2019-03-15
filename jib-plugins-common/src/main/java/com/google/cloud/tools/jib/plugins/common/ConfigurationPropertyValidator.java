@@ -63,7 +63,7 @@ public class ConfigurationPropertyValidator {
     String commandlinePassword = rawConfiguration.getProperty(passwordProperty).orElse(null);
     if (!Strings.isNullOrEmpty(commandlineUsername)
         && !Strings.isNullOrEmpty(commandlinePassword)) {
-      return Optional.of(Credential.basic(commandlineUsername, commandlinePassword));
+      return Optional.of(Credential.from(commandlineUsername, commandlinePassword));
     }
 
     // Warn if a system property is missing
@@ -103,7 +103,7 @@ public class ConfigurationPropertyValidator {
       return Optional.empty();
     }
 
-    return Optional.of(Credential.basic(auth.getUsername(), auth.getPassword()));
+    return Optional.of(Credential.from(auth.getUsername(), auth.getPassword()));
   }
 
   /**

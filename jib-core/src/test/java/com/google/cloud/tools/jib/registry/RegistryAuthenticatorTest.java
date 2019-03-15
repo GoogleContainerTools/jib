@@ -67,7 +67,7 @@ public class RegistryAuthenticatorTest {
 
   @Test
   public void testAuthRequestParameters_oauth2() {
-    registryAuthenticator.setCredential(Credential.basic("<token>", "oauth2_access_token"));
+    registryAuthenticator.setCredential(Credential.from("<token>", "oauth2_access_token"));
     Assert.assertEquals(
         "service=someservice&scope=repository:someimage:scope"
             + "&client_id=jib.da031fe481a93ac107a95a96462358f9"
@@ -82,13 +82,13 @@ public class RegistryAuthenticatorTest {
 
   @Test
   public void isOAuth2Auth_basicAuth() {
-    registryAuthenticator.setCredential(Credential.basic("name", "password"));
+    registryAuthenticator.setCredential(Credential.from("name", "password"));
     Assert.assertFalse(registryAuthenticator.isOAuth2Auth());
   }
 
   @Test
   public void isOAuth2Auth_oauth2() {
-    registryAuthenticator.setCredential(Credential.basic("<token>", "oauth2_token"));
+    registryAuthenticator.setCredential(Credential.from("<token>", "oauth2_token"));
     Assert.assertTrue(registryAuthenticator.isOAuth2Auth());
   }
 
@@ -101,7 +101,7 @@ public class RegistryAuthenticatorTest {
 
   @Test
   public void istAuthenticationUrl_oauth2() throws MalformedURLException {
-    registryAuthenticator.setCredential(Credential.basic("<token>", "oauth2_token"));
+    registryAuthenticator.setCredential(Credential.from("<token>", "oauth2_token"));
     Assert.assertEquals(
         new URL("https://somerealm"), registryAuthenticator.getAuthenticationUrl("scope"));
   }

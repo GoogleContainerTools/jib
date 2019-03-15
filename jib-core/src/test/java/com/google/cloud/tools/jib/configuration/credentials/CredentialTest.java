@@ -27,10 +27,10 @@ public class CredentialTest {
 
   @Test
   public void testCredentialsHash() {
-    Credential credentialA1 = Credential.basic("username", "password");
-    Credential credentialA2 = Credential.basic("username", "password");
-    Credential credentialB1 = Credential.basic("", "");
-    Credential credentialB2 = Credential.basic("", "");
+    Credential credentialA1 = Credential.from("username", "password");
+    Credential credentialA2 = Credential.from("username", "password");
+    Credential credentialB1 = Credential.from("", "");
+    Credential credentialB2 = Credential.from("", "");
 
     Assert.assertEquals(credentialA1, credentialA2);
     Assert.assertEquals(credentialB1, credentialB2);
@@ -44,7 +44,7 @@ public class CredentialTest {
 
   @Test
   public void testCredentialsOAuth2RefreshToken() {
-    Credential oauth2Credential = Credential.basic("<token>", "eyJhbGciOi...3gw");
+    Credential oauth2Credential = Credential.from("<token>", "eyJhbGciOi...3gw");
     Assert.assertTrue(
         "Credential should be an auth2 token when username is <token>",
         oauth2Credential.isOAuth2RefreshToken());

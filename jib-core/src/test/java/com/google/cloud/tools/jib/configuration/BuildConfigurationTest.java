@@ -54,7 +54,7 @@ public class BuildConfigurationTest {
     Set<String> additionalTargetImageTags = ImmutableSet.of("tag1", "tag2", "tag3");
     Set<String> expectedTargetImageTags = ImmutableSet.of("targettag", "tag1", "tag2", "tag3");
     List<CredentialRetriever> credentialRetrievers =
-        Collections.singletonList(() -> Optional.of(Credential.basic("username", "password")));
+        Collections.singletonList(() -> Optional.of(Credential.from("username", "password")));
     Instant expectedCreationTime = Instant.ofEpochSecond(10000);
     List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
     List<String> expectedProgramArguments = Arrays.asList("arg1", "arg2");
@@ -126,7 +126,7 @@ public class BuildConfigurationTest {
         expectedTargetTag, buildConfiguration.getTargetImageConfiguration().getImageTag());
     Assert.assertEquals(expectedTargetImageTags, buildConfiguration.getAllTargetImageTags());
     Assert.assertEquals(
-        Credential.basic("username", "password"),
+        Credential.from("username", "password"),
         buildConfiguration
             .getTargetImageConfiguration()
             .getCredentialRetrievers()

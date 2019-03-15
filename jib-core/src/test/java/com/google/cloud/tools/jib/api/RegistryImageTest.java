@@ -49,7 +49,7 @@ public class RegistryImageTest {
     Assert.assertEquals(2, imageConfiguration.getCredentialRetrievers().size());
     Assert.assertSame(mockCredentialRetriever, imageConfiguration.getCredentialRetrievers().get(0));
     Assert.assertEquals(
-        Credential.basic("username", "password"),
+        Credential.from("username", "password"),
         imageConfiguration
             .getCredentialRetrievers()
             .get(1)

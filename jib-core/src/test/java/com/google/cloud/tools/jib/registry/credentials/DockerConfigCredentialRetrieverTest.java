@@ -35,7 +35,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class DockerConfigCredentialRetrieverTest {
 
-  private static final Credential FAKE_CREDENTIAL = Credential.basic("username", "password");
+  private static final Credential FAKE_CREDENTIAL = Credential.from("username", "password");
 
   @Mock private DockerCredentialHelper mockDockerCredentialHelper;
   @Mock private DockerConfig mockDockerConfig;

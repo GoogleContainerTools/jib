@@ -42,7 +42,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class CredentialRetrieverFactoryTest {
 
-  private static final Credential FAKE_CREDENTIALS = Credential.basic("username", "password");
+  private static final Credential FAKE_CREDENTIALS = Credential.from("username", "password");
 
   /**
    * Returns a {@link DockerCredentialHelperFactory} that checks given parameters upon creating a

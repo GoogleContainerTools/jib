@@ -407,7 +407,7 @@ public class PluginConfigurationProcessor {
         AuthProperty auth = optionalInferredAuth.get();
         String username = Verify.verifyNotNull(auth.getUsername());
         String password = Verify.verifyNotNull(auth.getPassword());
-        Credential credential = Credential.basic(username, password);
+        Credential credential = Credential.from(username, password);
         defaultCredentialRetrievers.setInferredCredential(credential, auth.getAuthDescriptor());
       }
     }

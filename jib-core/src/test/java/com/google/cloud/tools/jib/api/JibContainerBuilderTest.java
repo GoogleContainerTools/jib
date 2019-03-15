@@ -176,7 +176,7 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(
         1, buildConfiguration.getTargetImageConfiguration().getCredentialRetrievers().size());
     Assert.assertEquals(
-        Credential.basic("username", "password"),
+        Credential.from("username", "password"),
         buildConfiguration
             .getTargetImageConfiguration()
             .getCredentialRetrievers()

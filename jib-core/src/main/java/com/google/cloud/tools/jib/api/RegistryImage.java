@@ -82,7 +82,7 @@ public class RegistryImage implements SourceImage, TargetImage {
    * @return this
    */
   public RegistryImage addCredential(String username, String password) {
-    addCredentialRetriever(() -> Optional.of(Credential.basic(username, password)));
+    addCredentialRetriever(() -> Optional.of(Credential.from(username, password)));
     return this;
   }
 
