@@ -78,20 +78,20 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
   public Authorization call()
       throws ExecutionException, RegistryAuthenticationFailedException, IOException,
           RegistryException {
-    String host = buildConfiguration.getTargetImageConfiguration().getImageRegistryHost();
+    String registry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
 
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create(
-                BuildStepType.AUTHENTICATE_PUSH, "authenticating push to " + host, 1);
+                BuildStepType.AUTHENTICATE_PUSH, "authenticating push to " + registry, 1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(
-                buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, host))) {
+                buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, registry))) {
       Credential registryCredential = NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
 
       RegistryAuthenticator registryAuthenticator =
           RegistryAuthenticator.initializer(
                   buildConfiguration.getEventDispatcher(),
-                  host,
+                  registry,
                   buildConfiguration.getTargetImageConfiguration().getImageRepository())
               .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
               .initialize();

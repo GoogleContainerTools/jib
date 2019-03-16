@@ -111,14 +111,14 @@ public class BuildConfigurationTest {
         expectedCreationTime, buildConfiguration.getContainerConfiguration().getCreationTime());
     Assert.assertEquals(
         expectedBaseImageServerUrl,
-        buildConfiguration.getBaseImageConfiguration().getImageRegistryHost());
+        buildConfiguration.getBaseImageConfiguration().getImageRegistry());
     Assert.assertEquals(
         expectedBaseImageName, buildConfiguration.getBaseImageConfiguration().getImageRepository());
     Assert.assertEquals(
         expectedBaseImageTag, buildConfiguration.getBaseImageConfiguration().getImageTag());
     Assert.assertEquals(
         expectedTargetServerUrl,
-        buildConfiguration.getTargetImageConfiguration().getImageRegistryHost());
+        buildConfiguration.getTargetImageConfiguration().getImageRegistry());
     Assert.assertEquals(
         expectedTargetImageName,
         buildConfiguration.getTargetImageConfiguration().getImageRepository());

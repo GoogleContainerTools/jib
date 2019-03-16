@@ -83,16 +83,12 @@ public class ImageConfiguration {
     return image;
   }
 
-  public String getImgRegistry() {
-    return image.getRegistry();
-  }
-
   /**
    * Return the actual host for the registry.
    *
    * @return the registry host
    */
-  public String getImageRegistryHost() {
+  public String getImageRegistry() {
     return RegistryAliasGroup.getHost(image.getRegistry());
   }
 

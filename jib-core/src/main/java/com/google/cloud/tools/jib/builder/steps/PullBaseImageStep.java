@@ -173,7 +173,7 @@ class PullBaseImageStep
           RegistryAuthenticator registryAuthenticator =
               RegistryAuthenticator.initializer(
                       buildConfiguration.getEventDispatcher(),
-                      buildConfiguration.getBaseImageConfiguration().getImageRegistryHost(),
+                      buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
                       buildConfiguration.getBaseImageConfiguration().getImageRepository())
                   .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
                   .initialize();
