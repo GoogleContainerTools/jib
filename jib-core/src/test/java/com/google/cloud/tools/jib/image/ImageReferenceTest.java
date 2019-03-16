@@ -187,6 +187,20 @@ public class ImageReferenceTest {
     Assert.assertFalse(ImageReference.of(null, "scratch", null).isScratch());
   }
 
+  @Test
+  public void testGetRegistry() {
+    Assert.assertEquals(
+        "registry-1.docker.io", ImageReference.of(null, "someimage", null).getRegistry());
+    Assert.assertEquals(
+        "registry-1.docker.io", ImageReference.of("docker.io", "someimage", null).getRegistry());
+    Assert.assertEquals(
+        "index.docker.io", ImageReference.of("index.docker.io", "someimage", null).getRegistry());
+    Assert.assertEquals(
+        "registry.hub.docker.com",
+        ImageReference.of("registry.hub.docker.com", "someimage", null).getRegistry());
+    Assert.assertEquals("gcr.io", ImageReference.of("gcr.io", "someimage", null).getRegistry());
+  }
+
   private void verifyParse(String registry, String repository, String tagSeparator, String tag)
       throws InvalidImageReferenceException {
     // Gets the expected parsed components.
