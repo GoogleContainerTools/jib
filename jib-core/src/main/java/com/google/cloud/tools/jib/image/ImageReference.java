@@ -121,6 +121,7 @@ public class ImageReference {
       repository = registry + "/" + repository;
       registry = DOCKER_HUB_REGISTRY;
     }
+
     /*
      * For Docker Hub, if the repository is only one component, then it should be prefixed with
      * 'library/'.
@@ -231,18 +232,18 @@ public class ImageReference {
 
   /** Construct with {@link #parse}. */
   private ImageReference(String registry, String repository, String tag) {
-    this.registry = registry;
+    this.registry = RegistryAliasGroup.getHost(registry);
     this.repository = repository;
     this.tag = tag;
   }
 
   /**
-   * Gets the registry host of the {@link ImageReference}.
+   * Gets the registry portion of the {@link ImageReference}.
    *
    * @return the registry host
    */
   public String getRegistry() {
-    return RegistryAliasGroup.getHost(registry);
+    return registry;
   }
 
   /**
