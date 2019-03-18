@@ -172,6 +172,28 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     this.created = created;
   }
 
+  /**
+   * Set the architecture for which this container was built. See the <a
+   * href="https://github.com/opencontainers/image-spec/blob/master/config.md#properties">OCI Image
+   * Configuration specification</a> for acceptable values.
+   *
+   * @param architecture value for the {@code architecture} field
+   */
+  public void setArchitecture(String architecture) {
+    this.architecture = architecture;
+  }
+
+  /**
+   * Set the operating system for which this container was built. See the <a
+   * href="https://github.com/opencontainers/image-spec/blob/master/config.md#properties">OCI Image
+   * Configuration specification</a> for acceptable values.
+   *
+   * @param os value for the {@code os} field
+   */
+  public void setOs(String os) {
+    this.os = os;
+  }
+
   public void setContainerEnvironment(@Nullable List<String> environment) {
     config.Env = environment;
   }
@@ -258,6 +280,28 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   @Nullable
   String getCreated() {
     return created;
+  }
+
+  /**
+   * Return the architecture for which this container was built. See the <a
+   * href="https://github.com/opencontainers/image-spec/blob/master/config.md#properties">OCI Image
+   * Configuration specification</a> for acceptable values.
+   *
+   * @return the {@code architecture} field
+   */
+  public String getArchitecture() {
+    return architecture;
+  }
+
+  /**
+   * Return the operating system for which this container was built. See the <a
+   * href="https://github.com/opencontainers/image-spec/blob/master/config.md#properties">OCI Image
+   * Configuration specification</a> for acceptable values.
+   *
+   * @return the {@code os} field
+   */
+  public String getOs() {
+    return os;
   }
 
   @Nullable
