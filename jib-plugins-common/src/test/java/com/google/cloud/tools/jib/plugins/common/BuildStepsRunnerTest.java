@@ -29,7 +29,6 @@ import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.cloud.tools.jib.registry.RegistryUnauthorizedException;
 import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import org.apache.http.conn.HttpHostConnectException;
 import org.junit.Assert;
@@ -82,11 +81,7 @@ public class BuildStepsRunnerTest {
   public void testBuildImage_pass()
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
     testBuildImageStepsRunner.build(
-        mockJibContainerBuilder,
-        mockContainerizer,
-        mockEventDispatcher,
-        Collections.emptyList(),
-        TEST_HELPFUL_SUGGESTIONS);
+        mockJibContainerBuilder, mockContainerizer, mockEventDispatcher, TEST_HELPFUL_SUGGESTIONS);
   }
 
   @Test
@@ -104,7 +99,6 @@ public class BuildStepsRunnerTest {
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
-          Collections.emptyList(),
           TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
@@ -127,7 +121,6 @@ public class BuildStepsRunnerTest {
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
-          Collections.emptyList(),
           TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
@@ -151,7 +144,6 @@ public class BuildStepsRunnerTest {
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
-          Collections.emptyList(),
           TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
@@ -180,7 +172,6 @@ public class BuildStepsRunnerTest {
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
-          Collections.emptyList(),
           TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
@@ -210,7 +201,6 @@ public class BuildStepsRunnerTest {
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
-          Collections.emptyList(),
           TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
@@ -234,7 +224,6 @@ public class BuildStepsRunnerTest {
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
-          Collections.emptyList(),
           TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
@@ -257,7 +246,6 @@ public class BuildStepsRunnerTest {
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
-          Collections.emptyList(),
           TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
