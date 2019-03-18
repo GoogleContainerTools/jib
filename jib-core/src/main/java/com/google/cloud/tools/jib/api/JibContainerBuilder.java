@@ -24,8 +24,10 @@ import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageFormat;
+import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryException;
@@ -66,6 +68,13 @@ import org.apache.http.conn.HttpHostConnectException;
  */
 // TODO: Add tests once containerize() is added.
 public class JibContainerBuilder {
+
+  private static String capitalizeFirstLetter(String string) {
+    if (string.length() == 0) {
+      return string;
+    }
+    return Character.toUpperCase(string.charAt(0)) + string.substring(1);
+  }
 
   private final ContainerConfiguration.Builder containerConfigurationBuilder =
       ContainerConfiguration.builder();
@@ -464,6 +473,28 @@ public class JibContainerBuilder {
         containerizer.getExecutorService().orElseGet(defaultExecutorServiceFactory);
 
     BuildConfiguration buildConfiguration = toBuildConfiguration(containerizer, executorService);
+
+    // Logs the different source files used.
+    buildConfiguration
+        .getEventDispatcher()
+        .dispatch(LogEvent.info("Containerizing application with the following files:"));
+
+    for (LayerConfiguration layerConfiguration : layerConfigurations) {
+      if (layerConfiguration.getLayerEntries().isEmpty()) {
+        continue;
+      }
+
+      buildConfiguration
+          .getEventDispatcher()
+          .dispatch(
+              LogEvent.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":"));
+
+      for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
+        buildConfiguration
+            .getEventDispatcher()
+            .dispatch(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
+      }
+    }
 
     try {
       BuildResult result = containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();

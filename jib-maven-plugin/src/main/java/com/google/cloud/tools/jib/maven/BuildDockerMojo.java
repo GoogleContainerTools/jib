@@ -141,7 +141,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
                 eventDispatcher,
-                projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
                 helpfulSuggestions);
 
       } finally {

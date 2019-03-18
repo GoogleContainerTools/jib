@@ -23,11 +23,9 @@ import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
@@ -40,7 +38,6 @@ import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
@@ -150,13 +147,6 @@ public class BuildStepsRunner {
     }
   }
 
-  private static String capitalizeFirstLetter(String string) {
-    if (string.length() == 0) {
-      return string;
-    }
-    return Character.toUpperCase(string.charAt(0)) + string.substring(1);
-  }
-
   private final String startupMessage;
   private final String successMessage;
   @Nullable private Path imageDigestOutputPath;
@@ -174,7 +164,6 @@ public class BuildStepsRunner {
    * @param jibContainerBuilder the {@link JibContainerBuilder}
    * @param containerizer the {@link Containerizer}
    * @param eventDispatcher the {@link EventDispatcher}
-   * @param layerConfigurations the list of {@link LayerConfiguration}s
    * @param helpfulSuggestions suggestions to use in help messages for exceptions
    * @return the built {@link JibContainer}
    * @throws BuildStepsExecutionException if another exception is thrown during the build
@@ -185,29 +174,11 @@ public class BuildStepsRunner {
       JibContainerBuilder jibContainerBuilder,
       Containerizer containerizer,
       EventDispatcher eventDispatcher,
-      List<LayerConfiguration> layerConfigurations,
       HelpfulSuggestions helpfulSuggestions)
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
     try {
       eventDispatcher.dispatch(LogEvent.lifecycle(""));
       eventDispatcher.dispatch(LogEvent.lifecycle(startupMessage));
-
-      // Logs the different source files used.
-      eventDispatcher.dispatch(
-          LogEvent.info("Containerizing application with the following files:"));
-
-      for (LayerConfiguration layerConfiguration : layerConfigurations) {
-        if (layerConfiguration.getLayerEntries().isEmpty()) {
-          continue;
-        }
-
-        eventDispatcher.dispatch(
-            LogEvent.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":"));
-
-        for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
-          eventDispatcher.dispatch(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
-        }
-      }
 
       JibContainer jibContainer = jibContainerBuilder.containerize(containerizer);
 

@@ -147,7 +147,6 @@ public class BuildTarTask extends DefaultTask implements JibTask {
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
                 new DefaultEventDispatcher(projectProperties.getEventHandlers()),
-                projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
                 helpfulSuggestions);
 
       } finally {
