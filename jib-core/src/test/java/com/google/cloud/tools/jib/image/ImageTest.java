@@ -90,9 +90,9 @@ public class ImageTest {
   @Test
   public void testOsArch() {
     Image<Layer> image =
-        Image.builder(V22ManifestTemplate.class).setOs("windows").setArchitecture("arm").build();
-    Assert.assertEquals("arm", image.getArchitecture());
-    Assert.assertEquals("windows", image.getOs());
+        Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").setOs("js").build();
+    Assert.assertEquals("wasm", image.getArchitecture());
+    Assert.assertEquals("js", image.getOs());
     Assert.assertEquals(Collections.emptyList(), image.getLayers());
     Assert.assertEquals(Collections.emptyList(), image.getHistory());
   }

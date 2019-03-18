@@ -119,6 +119,8 @@ class BuildImageStep
         }
       }
       imageBuilder
+          .setArchitecture(baseImage.getArchitecture())
+          .setOs(baseImage.getOs())
           .addEnvironment(baseImage.getEnvironment())
           .addLabels(baseImage.getLabels())
           .setHealthCheck(baseImage.getHealthCheck())

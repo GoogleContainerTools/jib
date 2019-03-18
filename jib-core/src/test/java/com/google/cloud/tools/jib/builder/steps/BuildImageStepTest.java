@@ -130,6 +130,8 @@ public class BuildImageStepTest {
 
     Image<Layer> baseImage =
         Image.builder(V22ManifestTemplate.class)
+            .setArchitecture("wasm")
+            .setOs("js")
             .addEnvironment(ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE", "BASE_ENV_2", "DEFAULT"))
             .addLabel("base.label", "base.label.value")
             .addLabel("base.label.2", "default")
@@ -227,6 +229,8 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses));
     Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Assert.assertEquals("wasm", image.getArchitecture());
+    Assert.assertEquals("js", image.getOs());
     Assert.assertEquals(
         ImmutableMap.of(
             "BASE_ENV", "BASE_ENV_VALUE", "MY_ENV", "MY_ENV_VALUE", "BASE_ENV_2", "NEW_VALUE"),
