@@ -16,13 +16,17 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.api.JavaContainerBuilder;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.plugins.common.JavaLayerConfigurationsHelper;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
@@ -31,6 +35,7 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -41,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.tools.ant.taskdefs.condition.Os;
 import org.gradle.api.GradleException;
@@ -50,6 +56,7 @@ import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.tasks.SourceSet;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
@@ -64,6 +71,9 @@ class GradleProjectProperties implements ProjectProperties {
   /** Used for logging during main class inference. */
   private static final String JAR_PLUGIN_NAME = "'jar' task";
 
+  /** Name of the `main` {@link SourceSet} to use as source files. */
+  private static final String MAIN_SOURCE_SET_NAME = "main";
+
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(
       Project project,
@@ -71,16 +81,8 @@ class GradleProjectProperties implements ProjectProperties {
       Path extraDirectory,
       Map<String, String> permissions,
       AbsoluteUnixPath appRoot) {
-    try {
-      return new GradleProjectProperties(
-          project,
-          logger,
-          GradleLayerConfigurations.getForProject(
-              project, logger, extraDirectory, convertPermissionsMap(permissions), appRoot));
-
-    } catch (IOException ex) {
-      throw new GradleException("Obtaining project build output files failed", ex);
-    }
+    return new GradleProjectProperties(
+        project, logger, extraDirectory, convertPermissionsMap(permissions), appRoot);
   }
 
   static Path getExplodedWarDirectory(Project project) {
@@ -148,20 +150,103 @@ class GradleProjectProperties implements ProjectProperties {
   private final Project project;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final EventHandlers eventHandlers;
-  private final JavaLayerConfigurations javaLayerConfigurations;
+  private final Logger logger;
+  private final Path extraDirectory;
+  private final Map<AbsoluteUnixPath, FilePermissions> permissions;
+  private final AbsoluteUnixPath appRoot;
 
   @VisibleForTesting
   GradleProjectProperties(
-      Project project, Logger logger, JavaLayerConfigurations javaLayerConfigurations) {
+      Project project,
+      Logger logger,
+      Path extraDirectory,
+      Map<AbsoluteUnixPath, FilePermissions> permissions,
+      AbsoluteUnixPath appRoot) {
     this.project = project;
-    this.javaLayerConfigurations = javaLayerConfigurations;
+    this.logger = logger;
+    this.extraDirectory = extraDirectory;
+    this.permissions = permissions;
+    this.appRoot = appRoot;
 
     eventHandlers = makeEventHandlers(project, logger, singleThreadedExecutor);
   }
 
   @Override
-  public JavaLayerConfigurations getJavaLayerConfigurations() {
-    return javaLayerConfigurations;
+  public JibContainerBuilder getContainerBuilderWithLayers(RegistryImage baseImage) {
+    try {
+      if (TaskCommon.getWarTask(project) != null) {
+        logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
+        Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
+        return JavaLayerConfigurationsHelper.fromExplodedWar(
+            baseImage, explodedWarPath, appRoot, extraDirectory, permissions);
+      }
+
+      JavaPluginConvention javaPluginConvention =
+          project.getConvention().getPlugin(JavaPluginConvention.class);
+      SourceSet mainSourceSet =
+          javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
+
+      FileCollection classesOutputDirectories =
+          mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
+      Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
+      FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
+      FileCollection dependencyFiles =
+          allFiles
+              .minus(classesOutputDirectories)
+              .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
+
+      JavaContainerBuilder javaContainerBuilder =
+          JavaContainerBuilder.from(baseImage).setAppRoot(appRoot);
+
+      // Adds resource files
+      if (Files.exists(resourcesOutputDirectory)) {
+        javaContainerBuilder.addResources(resourcesOutputDirectory);
+      }
+
+      // Adds class files
+      for (File classesOutputDirectory : classesOutputDirectories) {
+        javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
+      }
+      if (classesOutputDirectories.filter(File::exists).isEmpty()) {
+        logger.warn("No classes files were found - did you compile your project?");
+      }
+
+      // Adds dependency files
+      javaContainerBuilder.addDependencies(
+          dependencyFiles
+              .getFiles()
+              .stream()
+              .filter(File::exists)
+              .map(File::toPath)
+              .collect(Collectors.toList()));
+
+      JibContainerBuilder jibContainerBuilder = javaContainerBuilder.toContainerBuilder();
+
+      // Adds all the extra files.
+      if (Files.exists(extraDirectory)) {
+        jibContainerBuilder.addLayer(
+            JavaLayerConfigurationsHelper.extraDirectoryLayerConfiguration(
+                extraDirectory, permissions));
+      }
+      return jibContainerBuilder;
+
+    } catch (IOException ex) {
+      throw new GradleException("Obtaining project build output files failed", ex);
+    }
+  }
+
+  @Override
+  public ImmutableList<Path> getClassFiles() throws IOException {
+    // TODO: Consolidate with getContainerBuilderWithLayers
+    JavaPluginConvention javaPluginConvention =
+        project.getConvention().getPlugin(JavaPluginConvention.class);
+    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
+    FileCollection classesOutputDirectories = mainSourceSet.getOutput().getClassesDirs();
+    ImmutableList.Builder<Path> classFiles = ImmutableList.builder();
+    for (File classesOutputDirectory : classesOutputDirectories) {
+      classFiles.addAll(new DirectoryWalker(classesOutputDirectory.toPath()).walk().asList());
+    }
+    return classFiles.build();
   }
 
   @Override

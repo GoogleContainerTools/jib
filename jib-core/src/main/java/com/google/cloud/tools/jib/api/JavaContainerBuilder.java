@@ -127,7 +127,7 @@ public class JavaContainerBuilder {
   // Keeps track of files to add to the image, by system path
   private final List<PathPredicatePair> addedResources = new ArrayList<>();
   private final List<PathPredicatePair> addedClasses = new ArrayList<>();
-  private final List<Path> addedDependencies = new ArrayList<>();
+  private final List<PathPredicatePair> addedDependencies = new ArrayList<>();
   private final List<Path> addedOthers = new ArrayList<>();
 
   private AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
@@ -227,8 +227,8 @@ public class JavaContainerBuilder {
       if (!Files.exists(file)) {
         throw new NoSuchFileException(file.toString());
       }
+      addedDependencies.add(new PathPredicatePair(file, path -> true));
     }
-    addedDependencies.addAll(dependencyFiles);
     classpathOrder.add(LayerType.DEPENDENCIES);
     return this;
   }
@@ -243,6 +243,21 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addDependencies(Path... dependencyFiles) throws IOException {
     return addDependencies(Arrays.asList(dependencyFiles));
+  }
+
+  /**
+   * Adds dependency JARs to the image. Duplicate JAR filenames are renamed with the filesize in
+   * order to avoid collisions.
+   *
+   * @param dependenciesDirectory the directory containing dependency JARs to add to the image
+   * @param pathFilter filter that determines which files (not directories) should be added
+   * @return this
+   * @throws IOException if adding the layer fails
+   */
+  public JavaContainerBuilder addDependencies(
+      Path dependenciesDirectory, Predicate<Path> pathFilter) throws IOException {
+    classpathOrder.add(LayerType.DEPENDENCIES);
+    return addDirectory(addedDependencies, dependenciesDirectory, pathFilter);
   }
 
   /**
@@ -425,6 +440,7 @@ public class JavaContainerBuilder {
     List<String> duplicates =
         addedDependencies
             .stream()
+            .map(entry -> entry.path)
             .map(Path::getFileName)
             .map(Path::toString)
             .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
@@ -433,22 +449,24 @@ public class JavaContainerBuilder {
             .filter(entry -> entry.getValue() > 1)
             .map(Entry::getKey)
             .collect(Collectors.toList());
-    for (Path file : addedDependencies) {
+    for (PathPredicatePair pathPredicatePair : addedDependencies) {
       // Add dependencies to layer configuration
       layerConfigurationsBuilder.addFile(
-          file.getFileName().toString().contains("SNAPSHOT")
+          pathPredicatePair.path.getFileName().toString().contains("SNAPSHOT")
               ? LayerType.SNAPSHOT_DEPENDENCIES
               : LayerType.DEPENDENCIES,
-          file,
+          pathPredicatePair.path,
           appRoot
               .resolve(dependenciesDestination)
               .resolve(
-                  duplicates.contains(file.getFileName().toString())
-                      ? file.getFileName()
+                  duplicates.contains(pathPredicatePair.path.getFileName().toString())
+                      ? pathPredicatePair
+                              .path
+                              .getFileName()
                               .toString()
-                              .replaceFirst("\\.jar$", "-" + Files.size(file))
+                              .replaceFirst("\\.jar$", "-" + Files.size(pathPredicatePair.path))
                           + ".jar"
-                      : file.getFileName().toString()));
+                      : pathPredicatePair.path.getFileName().toString()));
     }
 
     // Add others to layer configuration

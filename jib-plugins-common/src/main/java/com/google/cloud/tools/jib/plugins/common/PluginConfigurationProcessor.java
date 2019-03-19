@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.DockerDaemonImage;
-import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
@@ -187,8 +186,8 @@ public class PluginConfigurationProcessor {
             rawConfiguration.getFromCredHelper().orElse(null));
 
     JibContainerBuilder jibContainerBuilder =
-        Jib.from(baseImage)
-            .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
+        projectProperties
+            .getContainerBuilderWithLayers(baseImage)
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())

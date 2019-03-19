@@ -37,8 +37,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Tests for {@link JavaLayerConfigurationsHelper}. */
-public class JavaLayerConfigurationsHelperTest {
+/** Tests for {@link JavaContainerBuilderHelper}. */
+public class JavaContainerBuilderHelperTest {
 
   private static <T> void assertLayerEntriesUnordered(
       List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
@@ -72,7 +72,7 @@ public class JavaLayerConfigurationsHelperTest {
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
 
     JavaLayerConfigurations configuration =
-        JavaLayerConfigurationsHelper.fromExplodedWar(
+        JavaContainerBuilderHelper.fromExplodedWar(
             temporaryExplodedWar,
             AbsoluteUnixPath.get("/my/app"),
             extraFilesDirectory,
