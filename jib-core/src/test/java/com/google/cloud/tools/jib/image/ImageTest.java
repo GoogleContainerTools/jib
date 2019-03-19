@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,5 +76,22 @@ public class ImageTest {
         ImmutableSet.of(AbsoluteUnixPath.get("/a/path"), AbsoluteUnixPath.get("/another/path")),
         image.getVolumes());
     Assert.assertEquals("john", image.getUser());
+  }
+
+  @Test
+  public void testDefaults() {
+    Image<Layer> image = Image.builder(V22ManifestTemplate.class).build();
+    Assert.assertEquals("amd64", image.getArchitecture());
+    Assert.assertEquals("linux", image.getOs());
+    Assert.assertEquals(Collections.emptyList(), image.getLayers());
+    Assert.assertEquals(Collections.emptyList(), image.getHistory());
+  }
+
+  @Test
+  public void testOsArch() {
+    Image<Layer> image =
+        Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").setOs("js").build();
+    Assert.assertEquals("wasm", image.getArchitecture());
+    Assert.assertEquals("js", image.getOs());
   }
 }

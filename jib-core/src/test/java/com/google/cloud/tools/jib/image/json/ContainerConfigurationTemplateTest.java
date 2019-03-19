@@ -48,6 +48,8 @@ public class ContainerConfigurationTemplateTest {
     ContainerConfigurationTemplate containerConfigJson = new ContainerConfigurationTemplate();
 
     containerConfigJson.setCreated("1970-01-01T00:00:20Z");
+    containerConfigJson.setArchitecture("wasm");
+    containerConfigJson.setOs("js");
     containerConfigJson.setContainerEnvironment(Arrays.asList("VAR1=VAL1", "VAR2=VAL2"));
     containerConfigJson.setContainerEntrypoint(Arrays.asList("some", "entrypoint", "command"));
     containerConfigJson.setContainerCmd(Arrays.asList("arg1", "arg2"));
@@ -105,6 +107,8 @@ public class ContainerConfigurationTemplateTest {
         JsonTemplateMapper.readJsonFromFile(jsonFile, ContainerConfigurationTemplate.class);
 
     Assert.assertEquals("1970-01-01T00:00:20Z", containerConfigJson.getCreated());
+    Assert.assertEquals("wasm", containerConfigJson.getArchitecture());
+    Assert.assertEquals("js", containerConfigJson.getOs());
     Assert.assertEquals(
         Arrays.asList("VAR1=VAL1", "VAR2=VAL2"), containerConfigJson.getContainerEnvironment());
     Assert.assertEquals(

@@ -140,6 +140,13 @@ public class JsonToImageTranslator {
       }
     }
 
+    if (containerConfigurationTemplate.getArchitecture() != null) {
+      imageBuilder.setArchitecture(containerConfigurationTemplate.getArchitecture());
+    }
+    if (containerConfigurationTemplate.getOs() != null) {
+      imageBuilder.setOs(containerConfigurationTemplate.getOs());
+    }
+
     if (containerConfigurationTemplate.getContainerEntrypoint() != null) {
       imageBuilder.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
     }
