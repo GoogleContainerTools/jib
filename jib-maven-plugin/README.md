@@ -118,7 +118,7 @@ For example, to build the image `my-docker-id/my-app`, the configuration would b
 ```xml
 <configuration>
   <to>
-    <image>registry.hub.docker.com/my-docker-id/my-app</image>
+    <image>docker.io/my-docker-id/my-app</image>
   </to>
 </configuration>
 ```

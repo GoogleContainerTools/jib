@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.regex.Matcher;
@@ -32,7 +33,7 @@ import javax.annotation.Nullable;
  */
 public class ImageReference {
 
-  private static final String DOCKER_HUB_REGISTRY = "registry.hub.docker.com";
+  private static final String DOCKER_HUB_REGISTRY = "registry-1.docker.io";
   private static final String DEFAULT_TAG = "latest";
   private static final String LIBRARY_REPOSITORY_PREFIX = "library/";
 
@@ -120,6 +121,7 @@ public class ImageReference {
       repository = registry + "/" + repository;
       registry = DOCKER_HUB_REGISTRY;
     }
+
     /*
      * For Docker Hub, if the repository is only one component, then it should be prefixed with
      * 'library/'.
@@ -230,7 +232,7 @@ public class ImageReference {
 
   /** Construct with {@link #parse}. */
   private ImageReference(String registry, String repository, String tag) {
-    this.registry = registry;
+    this.registry = RegistryAliasGroup.getHost(registry);
     this.repository = repository;
     this.tag = tag;
   }
@@ -238,7 +240,7 @@ public class ImageReference {
   /**
    * Gets the registry portion of the {@link ImageReference}.
    *
-   * @return the registry
+   * @return the registry host
    */
   public String getRegistry() {
     return registry;
