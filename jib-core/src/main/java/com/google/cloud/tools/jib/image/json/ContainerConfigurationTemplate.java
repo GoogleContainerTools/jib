@@ -173,7 +173,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   /**
-   * Set the architecture for which this container was built. See the <a
+   * Sets the architecture for which this container was built. See the <a
    * href="https://github.com/opencontainers/image-spec/blob/master/config.md#properties">OCI Image
    * Configuration specification</a> for acceptable values.
    *
@@ -184,7 +184,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   /**
-   * Set the operating system for which this container was built. See the <a
+   * Sets the operating system for which this container was built. See the <a
    * href="https://github.com/opencontainers/image-spec/blob/master/config.md#properties">OCI Image
    * Configuration specification</a> for acceptable values.
    *
@@ -283,7 +283,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   /**
-   * Return the architecture for which this container was built. See the <a
+   * Returns the architecture for which this container was built. See the <a
    * href="https://github.com/opencontainers/image-spec/blob/master/config.md#properties">OCI Image
    * Configuration specification</a> for acceptable values.
    *
@@ -294,7 +294,7 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
   }
 
   /**
-   * Return the operating system for which this container was built. See the <a
+   * Returns the operating system for which this container was built. See the <a
    * href="https://github.com/opencontainers/image-spec/blob/master/config.md#properties">OCI Image
    * Configuration specification</a> for acceptable values.
    *

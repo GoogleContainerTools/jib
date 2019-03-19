@@ -93,7 +93,5 @@ public class ImageTest {
         Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").setOs("js").build();
     Assert.assertEquals("wasm", image.getArchitecture());
     Assert.assertEquals("js", image.getOs());
-    Assert.assertEquals(Collections.emptyList(), image.getLayers());
-    Assert.assertEquals(Collections.emptyList(), image.getHistory());
   }
 }
