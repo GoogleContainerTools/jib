@@ -264,6 +264,11 @@ public class JavaLayerConfigurationsTest {
         Collections.singletonList(
             new LayerEntry(sourceRoot.resolve("file"), basePath.resolve("file"), null)),
         configurations.getExtraFilesLayerEntries());
+    Assert.assertEquals(Collections.emptyList(), configurations.getClassLayerEntries());
+    Assert.assertEquals(Collections.emptyList(), configurations.getResourceLayerEntries());
+    Assert.assertEquals(Collections.emptyList(), configurations.getDependencyLayerEntries());
+    Assert.assertEquals(
+        Collections.emptyList(), configurations.getSnapshotDependencyLayerEntries());
   }
 
   @Test
@@ -281,6 +286,11 @@ public class JavaLayerConfigurationsTest {
         Collections.singletonList(
             new LayerEntry(sourceRoot.resolve("leaf"), basePath.resolve("leaf"), null)),
         configurations.getClassLayerEntries());
+    Assert.assertEquals(Collections.emptyList(), configurations.getResourceLayerEntries());
+    Assert.assertEquals(Collections.emptyList(), configurations.getDependencyLayerEntries());
+    Assert.assertEquals(
+        Collections.emptyList(), configurations.getSnapshotDependencyLayerEntries());
+    Assert.assertEquals(Collections.emptyList(), configurations.getExtraFilesLayerEntries());
   }
 
   @Test
