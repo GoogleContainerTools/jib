@@ -160,6 +160,8 @@ public class ImageToJsonTranslator {
     }
 
     template.setCreated(image.getCreated() == null ? null : image.getCreated().toString());
+    template.setArchitecture(image.getArchitecture());
+    template.setOs(image.getOs());
     template.setContainerEnvironment(environmentMapToList(image.getEnvironment()));
     template.setContainerEntrypoint(image.getEntrypoint());
     template.setContainerCmd(image.getProgramArguments());

@@ -58,6 +58,8 @@ public class ImageToJsonTranslatorTest {
     Image.Builder<Layer> testImageBuilder =
         Image.builder(imageFormat)
             .setCreated(Instant.ofEpochSecond(20))
+            .setArchitecture("wasm")
+            .setOs("js")
             .addEnvironmentVariable("VAR1", "VAL1")
             .addEnvironmentVariable("VAR2", "VAL2")
             .setEntrypoint(Arrays.asList("some", "entrypoint", "command"))

@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - Allow skipping `JavaContainerBuilder#setMainClass()` to skip setting the entrypoint
+- `os` and `architecture` are taken from base image ([#1564](https://github.com/GoogleContainerTools/jib/pull/1564))
 
 ### Fixed
 

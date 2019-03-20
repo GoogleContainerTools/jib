@@ -50,6 +50,8 @@ public class Image<T extends Layer> {
     private final Set<AbsoluteUnixPath> volumesBuilder = new HashSet<>();
 
     @Nullable private Instant created;
+    private String architecture = "amd64";
+    private String os = "linux";
     @Nullable private ImmutableList<String> entrypoint;
     @Nullable private ImmutableList<String> programArguments;
     @Nullable private DockerHealthCheck healthCheck;
@@ -68,6 +70,28 @@ public class Image<T extends Layer> {
      */
     public Builder<T> setCreated(Instant created) {
       this.created = created;
+      return this;
+    }
+
+    /**
+     * Sets the image architecture.
+     *
+     * @param architecture the architecture
+     * @return this
+     */
+    public Builder<T> setArchitecture(String architecture) {
+      this.architecture = architecture;
+      return this;
+    }
+
+    /**
+     * Sets the image operating system.
+     *
+     * @param os the operating system
+     * @return this
+     */
+    public Builder<T> setOs(String os) {
+      this.os = os;
       return this;
     }
 
@@ -230,6 +254,8 @@ public class Image<T extends Layer> {
       return new Image<>(
           imageFormat,
           created,
+          architecture,
+          os,
           imageLayersBuilder.build(),
           historyBuilder.build(),
           ImmutableMap.copyOf(environmentBuilder),
@@ -254,6 +280,12 @@ public class Image<T extends Layer> {
 
   /** The image creation time. */
   @Nullable private final Instant created;
+
+  /** The image architecture. */
+  private final String architecture;
+
+  /** The image operating system. */
+  private final String os;
 
   /** The layers of the image, in the order in which they are applied. */
   private final ImageLayers<T> layers;
@@ -291,6 +323,8 @@ public class Image<T extends Layer> {
   private Image(
       Class<? extends ManifestTemplate> imageFormat,
       @Nullable Instant created,
+      String architecture,
+      String os,
       ImageLayers<T> layers,
       ImmutableList<HistoryEntry> history,
       @Nullable ImmutableMap<String, String> environment,
@@ -304,6 +338,8 @@ public class Image<T extends Layer> {
       @Nullable String user) {
     this.imageFormat = imageFormat;
     this.created = created;
+    this.architecture = architecture;
+    this.os = os;
     this.layers = layers;
     this.history = history;
     this.environment = environment;
@@ -324,6 +360,14 @@ public class Image<T extends Layer> {
   @Nullable
   public Instant getCreated() {
     return created;
+  }
+
+  public String getArchitecture() {
+    return architecture;
+  }
+
+  public String getOs() {
+    return os;
   }
 
   @Nullable
