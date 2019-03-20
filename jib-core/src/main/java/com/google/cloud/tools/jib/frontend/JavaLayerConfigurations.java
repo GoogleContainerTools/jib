@@ -164,7 +164,6 @@ public class JavaLayerConfigurations {
         AbsoluteUnixPath basePathInContainer,
         Map<AbsoluteUnixPath, FilePermissions> permissionsMap)
         throws IOException {
-
       if (layerBuilders.get(layerType) == null) {
         layerBuilders.put(layerType, LayerConfiguration.builder());
       }
