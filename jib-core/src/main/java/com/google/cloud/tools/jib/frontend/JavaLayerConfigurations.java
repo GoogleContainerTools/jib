@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
@@ -68,11 +67,7 @@ public class JavaLayerConfigurations {
     private final Map<LayerType, LayerConfiguration.Builder> layerBuilders =
         new EnumMap<>(LayerType.class);
 
-    private Builder() {
-      for (LayerType layerType : LayerType.values()) {
-        layerBuilders.put(layerType, LayerConfiguration.builder());
-      }
-    }
+    private Builder() {}
 
     /**
      * Adds a file to a layer. Only adds the single source file to the exact path in the container
@@ -111,8 +106,10 @@ public class JavaLayerConfigurations {
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
         @Nullable FilePermissions permissions) {
-      Preconditions.checkNotNull(layerBuilders.get(layerType))
-          .addEntry(sourceFile, pathInContainer, permissions);
+      if (!layerBuilders.containsKey(layerType)) {
+        layerBuilders.put(layerType, LayerConfiguration.builder());
+      }
+      layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer, permissions);
       return this;
     }
 
@@ -167,7 +164,10 @@ public class JavaLayerConfigurations {
         AbsoluteUnixPath basePathInContainer,
         Map<AbsoluteUnixPath, FilePermissions> permissionsMap)
         throws IOException {
-      LayerConfiguration.Builder builder = Preconditions.checkNotNull(layerBuilders.get(layerType));
+      if (!layerBuilders.containsKey(layerType)) {
+        layerBuilders.put(layerType, LayerConfiguration.builder());
+      }
+      LayerConfiguration.Builder builder = layerBuilders.get(layerType);
 
       new DirectoryWalker(sourceRoot)
           .filterRoot()
@@ -240,6 +240,9 @@ public class JavaLayerConfigurations {
   }
 
   private ImmutableList<LayerEntry> getLayerEntries(LayerType layerType) {
-    return Preconditions.checkNotNull(layerConfigurationMap.get(layerType)).getLayerEntries();
+    if (!layerConfigurationMap.containsKey(layerType)) {
+      return ImmutableList.of();
+    }
+    return layerConfigurationMap.get(layerType).getLayerEntries();
   }
 }
