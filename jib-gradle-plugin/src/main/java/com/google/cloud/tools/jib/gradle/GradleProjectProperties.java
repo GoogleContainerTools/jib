@@ -26,7 +26,7 @@ import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
-import com.google.cloud.tools.jib.plugins.common.JavaLayerConfigurationsHelper;
+import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
@@ -177,7 +177,7 @@ class GradleProjectProperties implements ProjectProperties {
       if (TaskCommon.getWarTask(project) != null) {
         logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
         Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
-        return JavaLayerConfigurationsHelper.fromExplodedWar(
+        return JavaContainerBuilderHelper.fromExplodedWar(
             baseImage, explodedWarPath, appRoot, extraDirectory, permissions);
       }
 
@@ -225,7 +225,7 @@ class GradleProjectProperties implements ProjectProperties {
       // Adds all the extra files.
       if (Files.exists(extraDirectory)) {
         jibContainerBuilder.addLayer(
-            JavaLayerConfigurationsHelper.extraDirectoryLayerConfiguration(
+            JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
                 extraDirectory, permissions));
       }
       return jibContainerBuilder;
