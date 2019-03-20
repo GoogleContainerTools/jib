@@ -85,16 +85,23 @@ public class JavaContainerBuilderHelper {
         path -> path.startsWith(webInfClasses) && path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResource = isDependency.or(isClassFile).negate();
 
-    JibContainerBuilder jibContainerBuilder =
+    JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(baseImage)
             .setAppRoot(appRoot)
             .setResourcesDestination(RelativeUnixPath.get(""))
             .setClassesDestination(RelativeUnixPath.get("WEB-INF/classes"))
-            .setDependenciesDestination(RelativeUnixPath.get("WEB-INF/lib"))
-            .addResources(explodedWar, isResource)
-            .addClasses(webInfClasses, isClassFile)
-            .addDependencies(webInfLib, isDependency)
-            .toContainerBuilder();
+            .setDependenciesDestination(RelativeUnixPath.get("WEB-INF/lib"));
+
+    if (Files.exists(explodedWar)) {
+      javaContainerBuilder.addResources(explodedWar, isResource);
+    }
+    if (Files.exists(webInfClasses)) {
+      javaContainerBuilder.addClasses(webInfClasses, isClassFile);
+    }
+    if (Files.exists(webInfLib)) {
+      javaContainerBuilder.addDependencies(webInfLib, isDependency);
+    }
+    JibContainerBuilder jibContainerBuilder = javaContainerBuilder.toContainerBuilder();
 
     // Adds all the extra files.
     if (Files.exists(extraFilesDirectory)) {
