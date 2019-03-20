@@ -236,7 +236,7 @@ public class PluginConfigurationProcessor {
   @VisibleForTesting
   static List<String> computeEntrypoint(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
-      throws MainClassInferenceException, InvalidAppRootException {
+      throws MainClassInferenceException, InvalidAppRootException, IOException {
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
     if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
       if (rawConfiguration.getMainClass().isPresent()

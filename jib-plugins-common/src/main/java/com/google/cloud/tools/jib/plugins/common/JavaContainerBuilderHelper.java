@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.RelativeUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,7 +46,8 @@ public class JavaContainerBuilderHelper {
   public static LayerConfiguration extraDirectoryLayerConfiguration(
       Path extraDirectory, Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions)
       throws IOException {
-    LayerConfiguration.Builder builder = LayerConfiguration.builder().setName("extra files");
+    LayerConfiguration.Builder builder =
+        LayerConfiguration.builder().setName(LayerType.EXTRA_FILES.getName());
     new DirectoryWalker(extraDirectory)
         .filterRoot()
         .walk(
@@ -61,6 +63,7 @@ public class JavaContainerBuilderHelper {
   /**
    * Constructs a new {@link JavaLayerConfigurations} for a WAR project.
    *
+   * @param baseImage the base image of the container
    * @param explodedWar the exploded WAR directory
    * @param appRoot root directory in the image where the app will be placed
    * @param extraFilesDirectory path to the source directory for the extra files layer

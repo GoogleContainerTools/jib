@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.RelativeUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
@@ -256,8 +257,13 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addDependencies(
       Path dependenciesDirectory, Predicate<Path> pathFilter) throws IOException {
-    classpathOrder.add(LayerType.DEPENDENCIES);
-    return addDirectory(addedDependencies, dependenciesDirectory, pathFilter);
+    return addDependencies(
+        new DirectoryWalker(dependenciesDirectory)
+            .filterRoot()
+            .filter(pathFilter)
+            .filter(path -> !Files.isDirectory(path))
+            .walk()
+            .asList());
   }
 
   /**

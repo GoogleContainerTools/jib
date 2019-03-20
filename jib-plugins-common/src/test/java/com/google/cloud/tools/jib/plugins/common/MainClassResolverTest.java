@@ -19,10 +19,7 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEvent;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -47,7 +44,6 @@ public class MainClassResolverTest {
 
   @Mock private Consumer<JibEvent> mockJibEventConsumer;
   @Mock private ProjectProperties mockProjectProperties;
-  @Mock private JavaLayerConfigurations mockJavaLayerConfigurations;
 
   @Before
   public void setup() {
@@ -55,12 +51,10 @@ public class MainClassResolverTest {
         .thenReturn(new EventHandlers().add(mockJibEventConsumer));
     Mockito.when(mockProjectProperties.getPluginName()).thenReturn("plugin");
     Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
-    Mockito.when(mockProjectProperties.getJavaLayerConfigurations())
-        .thenReturn(mockJavaLayerConfigurations);
   }
 
   @Test
-  public void testResolveMainClass() throws MainClassInferenceException {
+  public void testResolveMainClass() throws MainClassInferenceException, IOException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("some.main.class");
     Assert.assertEquals(
         "some.main.class", MainClassResolver.resolveMainClass(null, mockProjectProperties));
@@ -69,12 +63,10 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testResolveMainClass_notValid() throws MainClassInferenceException {
+  public void testResolveMainClass_notValid() throws MainClassInferenceException, IOException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
-        .thenReturn(
-            ImmutableList.of(
-                new LayerEntry(FAKE_CLASSES_PATH, AbsoluteUnixPath.get("/ignored"), null)));
+    Mockito.when(mockProjectProperties.getClassFiles())
+        .thenReturn(ImmutableList.of(FAKE_CLASSES_PATH));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockJibEventConsumer)
@@ -85,14 +77,12 @@ public class MainClassResolverTest {
   public void testResolveMainClass_multipleInferredWithBackup()
       throws MainClassInferenceException, URISyntaxException, IOException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
+    Mockito.when(mockProjectProperties.getClassFiles())
         .thenReturn(
             new DirectoryWalker(
                     Paths.get(Resources.getResource("core/class-finder-tests/multiple").toURI()))
                 .walk()
-                .stream()
-                .map(path -> new LayerEntry(path, AbsoluteUnixPath.get("/ignored"), null))
-                .collect(ImmutableList.toImmutableList()));
+                .asList());
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockJibEventConsumer)
@@ -103,14 +93,12 @@ public class MainClassResolverTest {
   public void testResolveMainClass_multipleInferredWithoutBackup()
       throws URISyntaxException, IOException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn(null);
-    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
+    Mockito.when(mockProjectProperties.getClassFiles())
         .thenReturn(
             new DirectoryWalker(
                     Paths.get(Resources.getResource("core/class-finder-tests/multiple").toURI()))
                 .walk()
-                .stream()
-                .map(path -> new LayerEntry(path, AbsoluteUnixPath.get("/ignored"), null))
-                .collect(ImmutableList.toImmutableList()));
+                .asList());
     try {
       MainClassResolver.resolveMainClass(null, mockProjectProperties);
       Assert.fail();
@@ -124,12 +112,11 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testResolveMainClass_noneInferredWithBackup() throws MainClassInferenceException {
+  public void testResolveMainClass_noneInferredWithBackup()
+      throws MainClassInferenceException, IOException {
     Mockito.when(mockProjectProperties.getMainClassFromJar()).thenReturn("${start-class}");
-    Mockito.when(mockProjectProperties.getJavaLayerConfigurations().getClassLayerEntries())
-        .thenReturn(
-            ImmutableList.of(
-                new LayerEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"), null)));
+    Mockito.when(mockProjectProperties.getClassFiles())
+        .thenReturn(ImmutableList.of(Paths.get("ignored")));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
     Mockito.verify(mockJibEventConsumer)
@@ -137,11 +124,9 @@ public class MainClassResolverTest {
   }
 
   @Test
-  public void testResolveMainClass_noneInferredWithoutBackup() {
-    Mockito.when(mockJavaLayerConfigurations.getClassLayerEntries())
-        .thenReturn(
-            ImmutableList.of(
-                new LayerEntry(Paths.get("ignored"), AbsoluteUnixPath.get("/ignored"), null)));
+  public void testResolveMainClass_noneInferredWithoutBackup() throws IOException {
+    Mockito.when(mockProjectProperties.getClassFiles())
+        .thenReturn(ImmutableList.of(Paths.get("ignored")));
     try {
       MainClassResolver.resolveMainClass(null, mockProjectProperties);
       Assert.fail();

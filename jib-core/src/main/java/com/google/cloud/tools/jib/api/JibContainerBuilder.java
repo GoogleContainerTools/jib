@@ -525,7 +525,7 @@ public class JibContainerBuilder {
    * @throws IOException if an I/O exception occurs
    */
   @VisibleForTesting
-  BuildConfiguration toBuildConfiguration(
+  public BuildConfiguration toBuildConfiguration(
       Containerizer containerizer, ExecutorService executorService)
       throws CacheDirectoryCreationException, IOException {
     buildConfigurationBuilder
