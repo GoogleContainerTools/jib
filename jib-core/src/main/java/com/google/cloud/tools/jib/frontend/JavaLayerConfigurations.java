@@ -106,7 +106,7 @@ public class JavaLayerConfigurations {
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
         @Nullable FilePermissions permissions) {
-      if (layerBuilders.get(layerType) == null) {
+      if (!layerBuilders.containsKey(layerType)) {
         layerBuilders.put(layerType, LayerConfiguration.builder());
       }
       layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer, permissions);
@@ -164,7 +164,7 @@ public class JavaLayerConfigurations {
         AbsoluteUnixPath basePathInContainer,
         Map<AbsoluteUnixPath, FilePermissions> permissionsMap)
         throws IOException {
-      if (layerBuilders.get(layerType) == null) {
+      if (!layerBuilders.containsKey(layerType)) {
         layerBuilders.put(layerType, LayerConfiguration.builder());
       }
       LayerConfiguration.Builder builder = layerBuilders.get(layerType);
@@ -240,7 +240,7 @@ public class JavaLayerConfigurations {
   }
 
   private ImmutableList<LayerEntry> getLayerEntries(LayerType layerType) {
-    if (layerConfigurationMap.get(layerType) == null) {
+    if (!layerConfigurationMap.containsKey(layerType)) {
       return ImmutableList.of();
     }
     return layerConfigurationMap.get(layerType).getLayerEntries();
