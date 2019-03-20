@@ -185,6 +185,7 @@ public class JavaLayerConfigurations {
       ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
           ImmutableMap.builderWithExpectedSize(layerBuilders.size());
 
+      // ImmutableMap.Builder will preserve the order of EnumMap.
       layerBuilders.forEach(
           (type, builder) ->
               layerConfigurationsMap.put(type, builder.setName(type.getName()).build()));
