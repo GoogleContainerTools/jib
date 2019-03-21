@@ -20,8 +20,6 @@ import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import java.util.Optional;
 import java.util.function.Function;
 import org.apache.maven.settings.Server;
-import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 /**
  * Retrieves credentials for servers defined in <a
@@ -31,17 +29,14 @@ class MavenSettingsServerCredentials implements Function<String, Optional<AuthPr
 
   static final String CREDENTIAL_SOURCE = "Maven settings";
 
-  private final SettingsDecryptionResult decryptedSettings;
-  private final Settings settings;
+  private final DecryptedMavenSettings settings;
 
   /**
    * Create new instance.
    *
-   * @param settings the Maven settings object
-   * @param eventDispatcher the Jib event dispatcher
+   * @param settings decrypted Maven settings
    */
-  MavenSettingsServerCredentials(SettingsDecryptionResult decryptedSettings, Settings settings) {
-    this.decryptedSettings = decryptedSettings;
+  MavenSettingsServerCredentials(DecryptedMavenSettings settings) {
     this.settings = settings;
   }
 
@@ -92,16 +87,10 @@ class MavenSettingsServerCredentials implements Function<String, Optional<AuthPr
   }
 
   private Optional<Server> getServer(String registry) {
-    for (Server server : decryptedSettings.getServers()) {
+    for (Server server : settings.getServers()) {
       if (registry.equals(server.getId())) {
         return Optional.of(server);
       }
-    }
-
-    // if no decrypted servers returned then treat as if no decryption was required
-    Server server = settings.getServer(registry);
-    if (server != null) {
-      return Optional.of(server);
     }
     return Optional.empty();
   }

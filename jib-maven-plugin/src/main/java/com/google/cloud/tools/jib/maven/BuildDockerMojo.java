@@ -47,8 +47,6 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 /** Builds a container image and exports to the default Docker daemon. */
 @Mojo(
@@ -111,19 +109,18 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
-      Settings settings = getSession().getSettings();
-      SettingsDecryptionResult decryptedSettings =
-          DecryptedMavenSettings.decryptMavenSettings(settings, getSettingsDecrypter());
+      DecryptedMavenSettings decryptedSettings =
+          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter());
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
               mavenRawConfiguration,
-              new MavenSettingsServerCredentials(decryptedSettings, settings),
+              new MavenSettingsServerCredentials(decryptedSettings),
               projectProperties,
               dockerExecutable,
               getDockerClientEnvironment(),
               mavenHelpfulSuggestionsBuilder.build());
-      ProxyProvider.init(decryptedSettings, settings);
+      ProxyProvider.init(decryptedSettings);
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =

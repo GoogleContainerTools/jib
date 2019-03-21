@@ -18,11 +18,8 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import java.util.List;
 import javax.annotation.Nullable;
 import org.apache.maven.settings.Proxy;
-import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 /** Propagates proxy configuration from Maven settings to system properties. */
 class ProxyProvider {
@@ -33,19 +30,22 @@ class ProxyProvider {
   /**
    * Initializes proxy settings based on Maven settings.
    *
-   * @param decryptedSettings decrypted setting result
    * @param settings Maven settings
    * @param eventDispatcher the Jib event dispatcher
    */
-  static void init(SettingsDecryptionResult decryptedSettings, Settings settings) {
-    configureProxy(decryptedSettings, settings, "https");
-    configureProxy(decryptedSettings, settings, "http");
+  static void init(DecryptedMavenSettings settings) {
+    configureProxy(settings, "https");
+    configureProxy(settings, "http");
   }
 
-  private static void configureProxy(
-      SettingsDecryptionResult decryptedSettings, Settings settings, String protocol) {
-    setProxyProperties(decryptedSettings.getProxies(), protocol);
-    setProxyProperties(settings.getProxies(), protocol);
+  private static void configureProxy(DecryptedMavenSettings settings, String protocol) {
+    settings
+        .getProxies()
+        .stream()
+        .filter(Proxy::isActive)
+        .filter(proxy -> protocol.equals(proxy.getProtocol()))
+        .findFirst()
+        .ifPresent(ProxyProvider::setProxyProperties);
   }
 
   /**
@@ -65,15 +65,6 @@ class ProxyProvider {
     setPropertySafe(protocol + ".proxyUser", proxy.getUsername());
     setPropertySafe(protocol + ".proxyPassword", proxy.getPassword());
     setPropertySafe("http.nonProxyHosts", proxy.getNonProxyHosts());
-  }
-
-  private static void setProxyProperties(List<Proxy> proxies, String protocol) {
-    proxies
-        .stream()
-        .filter(Proxy::isActive)
-        .filter(proxy -> protocol.equals(proxy.getProtocol()))
-        .findFirst()
-        .ifPresent(ProxyProvider::setProxyProperties);
   }
 
   private static void setPropertySafe(String property, @Nullable String value) {

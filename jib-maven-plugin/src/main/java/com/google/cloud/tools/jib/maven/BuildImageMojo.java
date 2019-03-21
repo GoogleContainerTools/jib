@@ -43,8 +43,6 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
-import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 /** Builds a container image. */
 @Mojo(
@@ -105,16 +103,15 @@ public class BuildImageMojo extends JibPluginConfiguration {
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
 
-      Settings settings = getSession().getSettings();
-      SettingsDecryptionResult decryptedSettings =
-          DecryptedMavenSettings.decryptMavenSettings(settings, getSettingsDecrypter());
+      DecryptedMavenSettings decryptedSettings =
+          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter());
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
               mavenRawConfiguration,
-              new MavenSettingsServerCredentials(decryptedSettings, settings),
+              new MavenSettingsServerCredentials(decryptedSettings),
               projectProperties);
-      ProxyProvider.init(decryptedSettings, settings);
+      ProxyProvider.init(decryptedSettings);
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =
