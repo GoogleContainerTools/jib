@@ -204,7 +204,7 @@ class GradleProjectProperties implements ProjectProperties {
       }
 
       // Adds class files
-      for (File classesOutputDirectory : classesOutputDirectories) {
+      for (File classesOutputDirectory : classesOutputDirectories.filter(File::exists)) {
         if (classesOutputDirectory.exists()) {
           javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
         }

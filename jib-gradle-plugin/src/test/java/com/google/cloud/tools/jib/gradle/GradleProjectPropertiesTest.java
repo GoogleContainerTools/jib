@@ -129,6 +129,15 @@ public class GradleProjectPropertiesTest {
     }
   }
 
+  private static List<LayerConfiguration> getLayerConfigurationByName(
+      BuildConfiguration buildConfiguration, String name) {
+    return buildConfiguration
+        .getLayerConfigurations()
+        .stream()
+        .filter(layer -> layer.getName().equals(name))
+        .collect(Collectors.toList());
+  }
+
   private static <T> void assertLayerEntriesUnordered(
       List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
     List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
@@ -145,15 +154,6 @@ public class GradleProjectPropertiesTest {
       List<String> expectedPaths, List<LayerEntry> entries) {
     assertLayerEntriesUnordered(
         expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
-  }
-
-  private static List<LayerConfiguration> getLayerConfigurationByName(
-      BuildConfiguration buildConfiguration, String name) {
-    return buildConfiguration
-        .getLayerConfigurations()
-        .stream()
-        .filter(layer -> layer.getName().equals(name))
-        .collect(Collectors.toList());
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -347,7 +347,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void test_correctFiles()
+  public void testGetContainerBuilderWithLayers_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     BuildConfiguration configuration =
@@ -383,7 +383,8 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void test_noClassesFiles() throws InvalidImageReferenceException {
+  public void testGetContainerBuilderWithLayers_noClassesFiles()
+      throws InvalidImageReferenceException {
     Path nonexistentFile = Paths.get("/nonexistent/file");
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
@@ -392,7 +393,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void test_extraFiles()
+  public void testGetContainerBuilderWithLayers_extraFiles()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildConfiguration configuration = setupBuildConfiguration(extraFilesDirectory, "/app");
     assertSourcePathsUnordered(
@@ -409,7 +410,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetForProject_nonDefaultAppRoot()
+  public void testGetContainerBuilderWithLayers_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildConfiguration configuration = setupBuildConfiguration(extraFilesDirectory, "/my/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
@@ -441,7 +442,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetForProject_defaultAppRoot()
+  public void testGetContainerBuilderWithLayers_defaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildConfiguration configuration =
         setupBuildConfiguration(extraFilesDirectory, JavaLayerConfigurations.DEFAULT_APP_ROOT);
@@ -471,7 +472,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testWebApp()
+  public void testGetContainerBuilderWithLayers_war()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     Path webAppDirectory = Paths.get(Resources.getResource("gradle/webapp").toURI());
@@ -549,7 +550,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testWebApp_defaultWebAppRoot()
+  public void testGetContainerBuilderWithLayers_defaultWebAppRoot()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     setUpWarProject(Paths.get(Resources.getResource("gradle/webapp").toURI()));
@@ -589,7 +590,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetForWarProject_noErrorIfWebInfClassesDoesNotExist()
+  public void testGetContainerBuilderWithLayers_noErrorIfWebInfClassesDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
@@ -598,7 +599,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetForWarProject_noErrorIfWebInfLibDoesNotExist()
+  public void testGetContainerBuilderWithLayers_noErrorIfWebInfLibDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
@@ -607,7 +608,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetForWarProject_noErrorIfWebInfDoesNotExist()
+  public void testGetContainerBuilderWithLayers_noErrorIfWebInfDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war");
     setUpWarProject(temporaryFolder.getRoot().toPath());

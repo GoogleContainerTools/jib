@@ -85,6 +85,15 @@ public class MavenProjectPropertiesTest {
     }
   }
 
+  private static List<LayerConfiguration> getLayerEntriesByName(
+      BuildConfiguration buildConfiguration, String name) {
+    return buildConfiguration
+        .getLayerConfigurations()
+        .stream()
+        .filter(layer -> layer.getName().equals(name))
+        .collect(Collectors.toList());
+  }
+
   private static <T> void assertLayerEntriesUnordered(
       List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
     List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
@@ -137,15 +146,6 @@ public class MavenProjectPropertiesTest {
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
         layers.extraFilesLayerEntries.get(0).getLayerEntries());
-  }
-
-  private static List<LayerConfiguration> getLayerEntriesByName(
-      BuildConfiguration buildConfiguration, String name) {
-    return buildConfiguration
-        .getLayerConfigurations()
-        .stream()
-        .filter(layer -> layer.getName().equals(name))
-        .collect(Collectors.toList());
   }
 
   @Rule public final TestRepository testRepository = new TestRepository();
@@ -369,7 +369,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void test_correctFiles()
+  public void testGetContainerBuilderWithLayers_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     BuildConfiguration configuration =
@@ -412,7 +412,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void test_extraFiles()
+  public void testGetContainerBuilderWithLayers_extraFiles()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildConfiguration configuration =
         setupBuildConfiguration(extraFilesDirectory, AbsoluteUnixPath.get("/app"));
@@ -430,7 +430,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetForProject_nonDefaultAppRoot()
+  public void testGetContainerBuilderWithLayers_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildConfiguration configuration =
         setupBuildConfiguration(extraFilesDirectory, AbsoluteUnixPath.get("/my/app"));
@@ -438,7 +438,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetForWarProject_nonDefaultAppRoot()
+  public void testGetContainerBuilderWithLayers_warNonDefaultAppRoot()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     Path outputPath = Paths.get(Resources.getResource("maven/webapp").toURI());
@@ -518,7 +518,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetForJarProject_nonDefaultAppRoot()
+  public void testGetContainerBuilderWithLayers_jarNonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     // Test when the default packaging is set
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
@@ -529,7 +529,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetForWarProject_noErrorIfWebInfDoesNotExist()
+  public void testGetContainerBuilderWithLayers_noErrorIfWebInfDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("final-name");
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
@@ -541,7 +541,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetForWarProject_noErrorIfWebInfLibDoesNotExist()
+  public void testGetContainerBuilderWithLayers_noErrorIfWebInfLibDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("final-name", "WEB-INF", "classes");
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
@@ -553,7 +553,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetForWarProject_noErrorIfWebInfClassesDoesNotExist()
+  public void testGetContainerBuilderWithLayers_noErrorIfWebInfClassesDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("final-name", "WEB-INF", "lib");
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");

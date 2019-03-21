@@ -24,7 +24,6 @@ import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.RelativeUnixPath;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -32,7 +31,7 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.function.Predicate;
 
-/** Helper for constructing {@link JavaLayerConfigurations}. */
+/** Helper for constructing {@link JavaContainerBuilder}-based {@link JibContainerBuilder}s. */
 public class JavaContainerBuilderHelper {
 
   /**
@@ -61,14 +60,14 @@ public class JavaContainerBuilderHelper {
   }
 
   /**
-   * Constructs a new {@link JavaLayerConfigurations} for a WAR project.
+   * Constructs a new {@link JibContainerBuilder} for a WAR project.
    *
    * @param baseImage the base image of the container
    * @param explodedWar the exploded WAR directory
    * @param appRoot root directory in the image where the app will be placed
    * @param extraFilesDirectory path to the source directory for the extra files layer
    * @param extraDirectoryPermissions map from path on container to file permissions
-   * @return {@link JavaLayerConfigurations} for the layers for the exploded WAR
+   * @return {@link JibContainerBuilder} containing the layers for the exploded WAR
    * @throws IOException if adding layer contents fails
    */
   public static JibContainerBuilder fromExplodedWar(
