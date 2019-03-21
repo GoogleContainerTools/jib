@@ -108,7 +108,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
           PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
               mavenRawConfiguration,
               new MavenSettingsServerCredentials(
-                  getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
+                  getSession().getSettings(), getSettingsDecrypter()),
               projectProperties);
       ProxyProvider.init(getSession().getSettings());
 
