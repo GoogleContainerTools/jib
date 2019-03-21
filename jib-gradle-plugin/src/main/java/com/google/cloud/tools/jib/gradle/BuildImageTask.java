@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
@@ -76,8 +75,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
   @TaskAction
   public void buildImage()
       throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
-          CacheDirectoryCreationException, MainClassInferenceException,
-          InferredAuthRetrievalException {
+          CacheDirectoryCreationException, MainClassInferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     TaskCommon.disableHttpLogging();

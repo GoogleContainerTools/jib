@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
@@ -98,7 +97,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
               projectProperties,
               tarOutputPath,
               mavenHelpfulSuggestionsBuilder.build());
-      ProxyProvider.init(getSession().getSettings());
+      ProxyProvider.init(decryptedSettings, settings);
 
       HelpfulSuggestions helpfulSuggestions =
           mavenHelpfulSuggestionsBuilder
@@ -148,8 +147,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
     } catch (InvalidImageReferenceException
         | IOException
         | CacheDirectoryCreationException
-        | MainClassInferenceException
-        | InferredAuthRetrievalException ex) {
+        | MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {

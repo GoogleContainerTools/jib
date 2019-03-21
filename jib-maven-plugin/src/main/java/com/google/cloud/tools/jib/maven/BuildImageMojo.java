@@ -27,7 +27,6 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
@@ -44,6 +43,8 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 /** Builds a container image. */
 @Mojo(
@@ -104,13 +105,16 @@ public class BuildImageMojo extends JibPluginConfiguration {
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
 
+      Settings settings = getSession().getSettings();
+      SettingsDecryptionResult decryptedSettings =
+          DecryptedMavenSettings.decryptMavenSettings(settings, getSettingsDecrypter());
+
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
               mavenRawConfiguration,
-              new MavenSettingsServerCredentials(
-                  getSession().getSettings(), getSettingsDecrypter()),
+              new MavenSettingsServerCredentials(decryptedSettings, settings),
               projectProperties);
-      ProxyProvider.init(getSession().getSettings());
+      ProxyProvider.init(decryptedSettings, settings);
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =
@@ -165,8 +169,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     } catch (InvalidImageReferenceException
         | IOException
         | CacheDirectoryCreationException
-        | MainClassInferenceException
-        | InferredAuthRetrievalException ex) {
+        | MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {

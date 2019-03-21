@@ -47,6 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
@@ -57,14 +58,14 @@ public class PluginConfigurationProcessor {
 
   public static PluginConfigurationProcessor processCommonConfigurationForDockerDaemonImage(
       RawConfiguration rawConfiguration,
-      InferredAuthProvider inferredAuthProvider,
+      Function<String, Optional<AuthProperty>> inferredAuthProvider,
       ProjectProperties projectProperties,
       @Nullable Path dockerExecutable,
       @Nullable Map<String, String> dockerEnvironment,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
+          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -87,13 +88,13 @@ public class PluginConfigurationProcessor {
 
   public static PluginConfigurationProcessor processCommonConfigurationForTarImage(
       RawConfiguration rawConfiguration,
-      InferredAuthProvider inferredAuthProvider,
+      Function<String, Optional<AuthProperty>> inferredAuthProvider,
       ProjectProperties projectProperties,
       Path tarImagePath,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
+          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
@@ -110,11 +111,10 @@ public class PluginConfigurationProcessor {
 
   public static PluginConfigurationProcessor processCommonConfigurationForRegistryImage(
       RawConfiguration rawConfiguration,
-      InferredAuthProvider inferredAuthProvider,
+      Function<String, Optional<AuthProperty>> inferredAuthProvider,
       ProjectProperties projectProperties)
-      throws InferredAuthRetrievalException, InvalidImageReferenceException,
-          MainClassInferenceException, InvalidAppRootException, IOException,
-          InvalidWorkingDirectoryException, InvalidContainerVolumeException,
+      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
+          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
@@ -150,14 +150,14 @@ public class PluginConfigurationProcessor {
   @VisibleForTesting
   static PluginConfigurationProcessor processCommonConfiguration(
       RawConfiguration rawConfiguration,
-      InferredAuthProvider inferredAuthProvider,
+      Function<String, Optional<AuthProperty>> inferredAuthProvider,
       ProjectProperties projectProperties,
       Containerizer containerizer,
       ImageReference targetImageReference,
       boolean isTargetImageCredentialPresent)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
+          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException {
     JibSystemProperties.checkHttpTimeoutProperty();
     JibSystemProperties.checkProxyPortProperty();
 
@@ -382,9 +382,9 @@ public class PluginConfigurationProcessor {
       String usernamePropertyName,
       String passwordPropertyName,
       AuthProperty knownAuth,
-      InferredAuthProvider inferredAuthProvider,
+      Function<String, Optional<AuthProperty>> inferredAuthProvider,
       @Nullable String credHelper)
-      throws FileNotFoundException, InferredAuthRetrievalException {
+      throws FileNotFoundException {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
             CredentialRetrieverFactory.forImage(imageReference, eventDispatcher));
@@ -401,7 +401,7 @@ public class PluginConfigurationProcessor {
           optionalCredential.get(), knownAuth.getAuthDescriptor());
     } else {
       Optional<AuthProperty> optionalInferredAuth =
-          inferredAuthProvider.getAuth(imageReference.getRegistry());
+          inferredAuthProvider.apply(imageReference.getRegistry());
       credentialPresent = optionalInferredAuth.isPresent();
       if (optionalInferredAuth.isPresent()) {
         AuthProperty auth = optionalInferredAuth.get();

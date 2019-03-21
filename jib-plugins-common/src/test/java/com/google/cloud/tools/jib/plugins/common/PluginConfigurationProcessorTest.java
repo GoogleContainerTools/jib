@@ -91,9 +91,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testPluginConfigurationProcessor_defaults()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
-          InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
@@ -113,9 +112,8 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testPluginConfigurationProcessor_cacheDirectorySystemProperties()
-      throws InferredAuthRetrievalException, InvalidContainerVolumeException,
-          MainClassInferenceException, InvalidAppRootException, IOException,
-          InvalidWorkingDirectoryException, InvalidImageReferenceException,
+      throws InvalidContainerVolumeException, MainClassInferenceException, InvalidAppRootException,
+          IOException, InvalidWorkingDirectoryException, InvalidImageReferenceException,
           IncompatibleBaseImageJavaVersionException {
     System.setProperty(PropertyNames.BASE_IMAGE_CACHE, "new/base/cache");
     System.setProperty(PropertyNames.APPLICATION_CACHE, "/new/application/cache");
@@ -132,8 +130,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testPluginConfigurationProcessor_warProjectBaseImage()
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
+          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
@@ -147,9 +145,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
-          InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
 
@@ -187,9 +184,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_defaultWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
-          InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
@@ -205,9 +201,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_defaulNonWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
-          InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
@@ -227,9 +222,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testUser()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
-          InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     Mockito.when(rawConfiguration.getUser()).thenReturn(Optional.of("customUser"));
 
     PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
@@ -243,9 +237,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testUser_null()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
-          InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
     BuildConfiguration buildConfiguration =
         getBuildConfiguration(processor.getJibContainerBuilder());
@@ -257,9 +250,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_warningOnJvmFlags()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
-          InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getJvmFlags()).thenReturn(Collections.singletonList("jvmFlag"));
@@ -279,9 +271,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypoint_warningOnMainclass()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
-          InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
@@ -301,9 +292,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testEntrypointClasspath_nonDefaultAppRoot()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
-          InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/my/app");
 
     PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
@@ -324,9 +314,8 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testWebAppEntrypoint_inheritedFromBaseImage()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
-          MainClassInferenceException, InvalidAppRootException, InferredAuthRetrievalException,
-          InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
@@ -644,8 +633,8 @@ public class PluginConfigurationProcessorTest {
 
   private PluginConfigurationProcessor createPluginConfigurationProcessor()
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          InferredAuthRetrievalException, IOException, InvalidWorkingDirectoryException,
-          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
+          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException {
     return PluginConfigurationProcessor.processCommonConfiguration(
         rawConfiguration,
         ignored -> Optional.empty(),

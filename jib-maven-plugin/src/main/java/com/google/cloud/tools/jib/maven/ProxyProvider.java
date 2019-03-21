@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
@@ -34,14 +33,11 @@ class ProxyProvider {
   /**
    * Initializes proxy settings based on Maven settings.
    *
+   * @param decryptedSettings decrypted setting result
    * @param settings Maven settings
-   * @param settingsDecrypter the Maven decrypter component
    * @param eventDispatcher the Jib event dispatcher
    */
-  static void init(
-      SettingsDecryptionResult decryptedSettings,
-      Settings settings,
-      EventDispatcher eventDispatcher) {
+  static void init(SettingsDecryptionResult decryptedSettings, Settings settings) {
     configureProxy(decryptedSettings, settings, "https");
     configureProxy(decryptedSettings, settings, "http");
   }

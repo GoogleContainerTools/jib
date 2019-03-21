@@ -17,9 +17,8 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthProvider;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import java.util.Optional;
+import java.util.function.Function;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.crypto.SettingsDecryptionResult;
@@ -28,7 +27,7 @@ import org.apache.maven.settings.crypto.SettingsDecryptionResult;
  * Retrieves credentials for servers defined in <a
  * href="https://maven.apache.org/settings.html">Maven settings</a>.
  */
-class MavenSettingsServerCredentials implements InferredAuthProvider {
+class MavenSettingsServerCredentials implements Function<String, Optional<AuthProperty>> {
 
   static final String CREDENTIAL_SOURCE = "Maven settings";
 
@@ -47,14 +46,13 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
   }
 
   /**
-   * Attempts to retrieve credentials for {@code registry} from Maven settings.
+   * Retrieves credentials for {@code registry} from Maven settings.
    *
    * @param registry the registry
    * @return the auth info for the registry, or {@link Optional#empty} if none could be retrieved
-   * @throws InferredAuthRetrievalException if the credentials could not be retrieved
    */
   @Override
-  public Optional<AuthProperty> getAuth(String registry) throws InferredAuthRetrievalException {
+  public Optional<AuthProperty> apply(String registry) {
     Optional<Server> optionalServer = getServer(registry);
     if (!optionalServer.isPresent()) {
       return Optional.empty();
