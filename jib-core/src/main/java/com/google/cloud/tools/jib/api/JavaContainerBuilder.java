@@ -33,6 +33,7 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -247,6 +248,21 @@ public class JavaContainerBuilder {
   }
 
   /**
+   * Adds dependency JARs to the image given a root directory. Duplicate JAR filenames are renamed
+   * with the filesize in order to avoid collisions.
+   *
+   * @param dependenciesDirectory the directory containing dependency JARs to add to the image
+   * @return this
+   * @throws IOException if adding the layer fails
+   */
+  public JavaContainerBuilder addDependencies(Path dependenciesDirectory) throws IOException {
+    if (!Files.isDirectory(dependenciesDirectory)) {
+      return addDependencies(Collections.singletonList(dependenciesDirectory));
+    }
+    return addDependencies(dependenciesDirectory, path -> true);
+  }
+
+  /**
    * Adds dependency JARs to the image. Duplicate JAR filenames are renamed with the filesize in
    * order to avoid collisions.
    *
@@ -265,7 +281,6 @@ public class JavaContainerBuilder {
             .walk()
             .asList());
   }
-
   /**
    * Adds the contents of a resources directory to the image.
    *

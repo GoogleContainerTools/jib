@@ -98,7 +98,7 @@ public class JavaContainerBuilderHelper {
       javaContainerBuilder.addClasses(webInfClasses, isClassFile);
     }
     if (Files.exists(webInfLib)) {
-      javaContainerBuilder.addDependencies(webInfLib, isDependency);
+      javaContainerBuilder.addDependencies(webInfLib);
     }
     JibContainerBuilder jibContainerBuilder = javaContainerBuilder.toContainerBuilder();
 
