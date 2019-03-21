@@ -16,12 +16,13 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.plugins.common.AuthProperty;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Optional;
+import java.util.List;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.settings.Proxy;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.building.SettingsProblem;
 import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 import org.junit.Assert;
@@ -32,89 +33,58 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link MavenSettingsServerCredentials}. */
+/** Tests for {@link DecryptedMavenSettingsTest}. */
 @RunWith(MockitoJUnitRunner.class)
 public class DecryptedMavenSettingsTest {
 
-  @Mock private Settings mockSettings;
-  @Mock private Server mockServer1;
-  @Mock private SettingsDecrypter mockSettingsDecrypter;
-  @Mock private SettingsDecryptionResult mockSettingsDecryptionResult;
+  @Mock private Server server1;
+  @Mock private Server server2;
+  @Mock private Proxy proxy;
+  @Mock private Settings settings;
+  @Mock private SettingsDecrypter settingsDecrypter;
+  @Mock private SettingsDecryptionResult decryptionResult;
 
-  private MavenSettingsServerCredentials testMavenSettingsServerCredentials =
-      new MavenSettingsServerCredentials(mockSettingsDecryptionResult, mockSettings);
+  private final List<Server> servers = Arrays.asList(server1, server2);
+  private final List<Proxy> proxies = Arrays.asList(proxy);
+
+  private DecryptedMavenSettings decryptedSettings;
 
   @Before
-  public void setUp() {
-    Mockito.when(mockSettingsDecryptionResult.getProblems()).thenReturn(Collections.emptyList());
-    Mockito.when(mockSettingsDecryptionResult.getServer()).thenReturn(mockServer1);
-    Mockito.when(mockSettingsDecrypter.decrypt(Mockito.any()))
-        .thenReturn(mockSettingsDecryptionResult);
+  public void setUp() throws MojoExecutionException {
+    Mockito.when(settingsDecrypter.decrypt(Mockito.any())).thenReturn(decryptionResult);
+    Mockito.when(decryptionResult.getProblems()).thenReturn(Collections.emptyList());
+
+    decryptedSettings = DecryptedMavenSettings.from(settings, settingsDecrypter);
   }
 
   @Test
-  public void testRetrieve_found() {
-    Mockito.when(mockSettings.getServer("server1")).thenReturn(mockServer1);
+  public void testFrom_decrypterFailure() {}
 
-    Mockito.when(mockServer1.getUsername()).thenReturn("server1 username");
-    Mockito.when(mockServer1.getPassword()).thenReturn("server1 password");
-
-    Optional<AuthProperty> auth = testMavenSettingsServerCredentials.apply("server1");
-    Assert.assertTrue(auth.isPresent());
-    Assert.assertEquals("server1 username", auth.get().getUsername());
-    Assert.assertEquals("server1 password", auth.get().getPassword());
+  @Test
+  public void testGetServers() {
+    Mockito.when(decryptionResult.getServers()).thenReturn(servers);
+    Assert.assertEquals(servers, decryptedSettings.getServers());
   }
 
   @Test
-  public void testRetrieve_notFound() {
-    Assert.assertFalse(testMavenSettingsServerCredentials.apply("serverUnknown").isPresent());
+  public void testGetProxies() {
+    Mockito.when(decryptionResult.getProxies()).thenReturn(proxies);
+    Assert.assertEquals(proxies, decryptedSettings.getProxies());
   }
 
   @Test
-  public void testRetrieve_withNullServer() {
-    Assert.assertFalse(testMavenSettingsServerCredentials.apply(null).isPresent());
+  public void testGetServers_emptyListFromDecryption() {
+    Mockito.when(decryptionResult.getServers()).thenReturn(Collections.emptyList());
+    Mockito.when(settings.getServers()).thenReturn(servers);
+
+    Assert.assertEquals(servers, decryptedSettings.getServers());
   }
 
   @Test
-  public void testRetrieve_withDecrypter_success() {
-    // essentially the same as testRetrieve_found()
-    Mockito.when(mockSettings.getServer("server1")).thenReturn(mockServer1);
-    Mockito.when(mockServer1.getUsername()).thenReturn("server1 username");
-    Mockito.when(mockServer1.getPassword()).thenReturn("server1 password");
+  public void testGetProxies_emptyListFromDecryption() {
+    Mockito.when(decryptionResult.getProxies()).thenReturn(Collections.emptyList());
+    Mockito.when(settings.getProxies()).thenReturn(proxies);
 
-    Optional<AuthProperty> auth = testMavenSettingsServerCredentials.apply("server1");
-    Assert.assertTrue(auth.isPresent());
-    Assert.assertEquals("server1 username", auth.get().getUsername());
-    Assert.assertEquals("server1 password", auth.get().getPassword());
-
-    Mockito.verify(mockSettingsDecrypter).decrypt(Mockito.any());
-    Mockito.verify(mockSettingsDecryptionResult).getProblems();
-    Mockito.verify(mockSettingsDecryptionResult, Mockito.atLeastOnce()).getServer();
-  }
-
-  @Test
-  public void testRetrieve_withDecrypter_failure() {
-
-    SettingsProblem mockProblem = Mockito.mock(SettingsProblem.class);
-    Mockito.when(mockProblem.getSeverity()).thenReturn(SettingsProblem.Severity.ERROR);
-    // Maven's SettingsProblem has a more structured toString, but irrelevant here
-    Mockito.when(mockProblem.toString()).thenReturn("MockProblemText");
-    Mockito.when(mockSettingsDecryptionResult.getProblems())
-        .thenReturn(Collections.singletonList(mockProblem));
-
-    // essentially the same as testRetrieve_found()
-    Mockito.when(mockSettings.getServer("server1")).thenReturn(mockServer1);
-
-    try {
-      testMavenSettingsServerCredentials.apply("server1");
-      Assert.fail("decryption should have failed");
-    } catch (NullPointerException ex) {
-      Assert.assertEquals(
-          ex.getMessage(), "Unable to decrypt password for server1: MockProblemText");
-      Mockito.verify(mockSettingsDecrypter).decrypt(Mockito.any());
-      Mockito.verify(mockSettingsDecryptionResult).getProblems();
-      Mockito.verifyNoMoreInteractions(
-          mockSettingsDecryptionResult); // getServer() should never be called
-    }
+    Assert.assertEquals(proxies, decryptedSettings.getProxies());
   }
 }

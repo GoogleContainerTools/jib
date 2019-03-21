@@ -20,8 +20,6 @@ import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import java.util.Arrays;
 import java.util.Optional;
 import org.apache.maven.settings.Server;
-import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,16 +32,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MavenSettingsServerCredentialsTest {
 
-  @Mock private Settings mockSettings;
+  @Mock private DecryptedMavenSettings mockSettings;
   @Mock private Server mockServer1;
-  @Mock private SettingsDecryptionResult mockDecryptedSettings;
 
-  private MavenSettingsServerCredentials testMavenSettingsServerCredentials =
-      new MavenSettingsServerCredentials(mockDecryptedSettings, mockSettings);
+  private final MavenSettingsServerCredentials testMavenSettingsServerCredentials =
+      new MavenSettingsServerCredentials(mockSettings);
 
   @Before
   public void setUp() {
-    Mockito.when(mockDecryptedSettings.getServers()).thenReturn(Arrays.asList(mockServer1));
+    Mockito.when(mockSettings.getServers()).thenReturn(Arrays.asList(mockServer1));
     Mockito.when(mockServer1.getId()).thenReturn("server1");
     Mockito.when(mockServer1.getUsername()).thenReturn("server1 username");
     Mockito.when(mockServer1.getPassword()).thenReturn("server1 password");
