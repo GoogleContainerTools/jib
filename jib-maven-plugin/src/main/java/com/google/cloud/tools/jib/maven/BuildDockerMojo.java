@@ -119,7 +119,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               dockerExecutable,
               getDockerClientEnvironment(),
               mavenHelpfulSuggestionsBuilder.build());
-      ProxyProvider.init(getSession().getSettings());
+      ProxyProvider.init(getSession().getSettings(), getSettingsDecrypter(), eventDispatcher);
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =

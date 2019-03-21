@@ -25,12 +25,10 @@ import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.building.SettingsProblem;
 import org.apache.maven.settings.crypto.DefaultSettingsDecryptionRequest;
-import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.apache.maven.settings.crypto.SettingsDecryptionRequest;
 import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
@@ -58,23 +56,22 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
     return matcher.matches() || matcher.find();
   }
 
+  private final SettingsDecryptionResult decryptedSettings;
   private final Settings settings;
-  @Nullable private final SettingsDecrypter settingsDecrypter;
   private final EventDispatcher eventDispatcher;
 
   /**
    * Create new instance.
    *
    * @param settings the Maven settings object
-   * @param settingsDecrypter the Maven decrypter component
    * @param eventDispatcher the Jib event dispatcher
    */
   MavenSettingsServerCredentials(
+      SettingsDecryptionResult decryptedSettings,
       Settings settings,
-      @Nullable SettingsDecrypter settingsDecrypter,
       EventDispatcher eventDispatcher) {
+    this.decryptedSettings = decryptedSettings;
     this.settings = settings;
-    this.settingsDecrypter = settingsDecrypter;
     this.eventDispatcher = eventDispatcher;
   }
 
@@ -87,17 +84,19 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
    */
   @Override
   public Optional<AuthProperty> getAuth(String registry) throws InferredAuthRetrievalException {
-    Server registryServer = settings.getServer(registry);
-    if (registryServer == null) {
+    Optional<Server> optionalServer = getServer(registry);
+    if (!optionalServer.isPresent()) {
       return Optional.empty();
     }
+
+    Server server = optionalServer.get();
+    if (server) return Optional.empty();
 
     if (settingsDecrypter != null) {
       // SettingsDecrypter and SettingsDecryptionResult do not document the meanings of the return
       // results. SettingsDecryptionResult#getServers() does note that the list of decrypted servers
       // can be empty.  We handle the results as follows:
       //    - if there are any ERROR or FATAL problems reported, then decryption failed
-      //    - if no decrypted servers returned then treat as if no decryption was required
       SettingsDecryptionRequest request = new DefaultSettingsDecryptionRequest(registryServer);
       SettingsDecryptionResult result = settingsDecrypter.decrypt(request);
       // un-encrypted passwords are passed through, so a problem indicates a real issue
@@ -108,6 +107,7 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
               "Unable to decrypt password for " + registry + ": " + problem);
         }
       }
+      //    - if no decrypted servers returned then treat as if no decryption was required
       if (result.getServer() != null) {
         registryServer = result.getServer();
       }
@@ -150,5 +150,20 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
             return CREDENTIAL_SOURCE;
           }
         });
+  }
+
+  private Optional<Server> getServer(String registry) {
+    for (Server server : decryptedSettings.getServers()) {
+      if (registry.equals(server.getId())) {
+        return Optional.of(server);
+      }
+    }
+
+    // if no decrypted servers returned then treat as if no decryption was required
+    Server server = settings.getServer(registry);
+    if (server != null) {
+      return Optional.of(server);
+    }
+    return Optional.empty();
   }
 }
