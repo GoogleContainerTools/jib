@@ -80,13 +80,36 @@ public class LayerConfiguration {
      *     sourceFile}
      * @param permissions the file permissions on the container. If null, then default permissions
      *     are used (644 for files, 755 for directories)
+     * @param lastModified file last modified value, default to 1 second since the epoch
+     *     (https://github.com/GoogleContainerTools/jib/issues/1079)
+     * @return this
+     * @see Builder#addEntry(Path, AbsoluteUnixPath)
+     */
+    public Builder addEntry(
+        Path sourceFile,
+        AbsoluteUnixPath pathInContainer,
+        @Nullable FilePermissions permissions,
+        long lastModified) {
+      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions, lastModified));
+      return this;
+    }
+
+    /**
+     * Adds an entry to the layer with the given permissions. Only adds the single source file to
+     * the exact path in the container file system. See {@link Builder#addEntry(Path,
+     * AbsoluteUnixPath)} for more information.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param permissions the file permissions on the container. If null, then default permissions
+     *     are used (644 for files, 755 for directories)
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
      */
     public Builder addEntry(
         Path sourceFile, AbsoluteUnixPath pathInContainer, @Nullable FilePermissions permissions) {
-      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions));
-      return this;
+      return addEntry(sourceFile, pathInContainer, permissions, -1);
     }
 
     /**
