@@ -148,6 +148,10 @@ public class MavenProjectPropertiesTest {
         layers.extraFilesLayerEntries.get(0).getLayerEntries());
   }
 
+  private static Path getResource(String path) throws URISyntaxException {
+    return Paths.get(Resources.getResource(path).toURI());
+  }
+
   @Rule public final TestRepository testRepository = new TestRepository();
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -188,9 +192,8 @@ public class MavenProjectPropertiesTest {
     manifest = new Xpp3Dom("manifest");
     jarPluginMainClass = new Xpp3Dom("mainClass");
 
-    Path outputPath = Paths.get(Resources.getResource("maven/application/output").toURI());
-    Path dependenciesPath =
-        Paths.get(Resources.getResource("maven/application/dependencies").toURI());
+    Path outputPath = getResource("maven/application/output");
+    Path dependenciesPath = getResource("maven/application/dependencies");
 
     Mockito.when(mockMavenProject.getBuild()).thenReturn(mockBuild);
     Mockito.when(mockBuild.getOutputDirectory()).thenReturn(outputPath.toString());
@@ -210,11 +213,10 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockMavenProject.getArtifacts()).thenReturn(artifacts);
 
     Path emptyDirectory =
-        Paths.get(Resources.getResource("maven/webapp").toURI())
-            .resolve("final-name/WEB-INF/classes/empty_dir");
+        getResource("maven/webapp").resolve("final-name/WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
 
-    extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
+    extraFilesDirectory = getResource("core/layer");
 
     Mockito.when(mockMavenProject.getProperties()).thenReturn(mockMavenProperties);
   }
@@ -376,9 +378,8 @@ public class MavenProjectPropertiesTest {
         setupBuildConfiguration(Paths.get("nonexistent"), AbsoluteUnixPath.get("/app"));
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
 
-    Path dependenciesPath =
-        Paths.get(Resources.getResource("maven/application/dependencies").toURI());
-    Path applicationDirectory = Paths.get(Resources.getResource("maven/application").toURI());
+    Path dependenciesPath = getResource("maven/application/dependencies");
+    Path applicationDirectory = getResource("maven/application");
     assertSourcePathsUnordered(
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
@@ -441,7 +442,7 @@ public class MavenProjectPropertiesTest {
   public void testGetContainerBuilderWithLayers_warNonDefaultAppRoot()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Path outputPath = Paths.get(Resources.getResource("maven/webapp").toURI());
+    Path outputPath = getResource("maven/webapp");
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
     Mockito.when(mockBuild.getDirectory()).thenReturn(outputPath.toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
@@ -522,7 +523,6 @@ public class MavenProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     // Test when the default packaging is set
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
-
     BuildConfiguration configuration =
         setupBuildConfiguration(extraFilesDirectory, AbsoluteUnixPath.get("/my/app"));
     assertNonDefaultAppRoot(configuration);
@@ -567,28 +567,24 @@ public class MavenProjectPropertiesTest {
   @Test
   public void testIsWarProject_WarPackagingIsWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
-
     Assert.assertTrue(MojoCommon.isWarProject(mockMavenProject));
   }
 
   @Test
   public void testIsWarProject_GwtAppPackagingIsWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-app");
-
     Assert.assertTrue(MojoCommon.isWarProject(mockMavenProject));
   }
 
   @Test
   public void testIsWarProject_JarPackagingIsNotWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
-
     Assert.assertFalse(MojoCommon.isWarProject(mockMavenProject));
   }
 
   @Test
   public void testIsWarProject_GwtLibPackagingIsNotWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-lib");
-
     Assert.assertFalse(MojoCommon.isWarProject(mockMavenProject));
   }
 

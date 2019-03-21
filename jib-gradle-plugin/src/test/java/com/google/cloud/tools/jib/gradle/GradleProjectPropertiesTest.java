@@ -156,6 +156,10 @@ public class GradleProjectPropertiesTest {
         expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
+  private static Path getResource(String path) throws URISyntaxException {
+    return Paths.get(Resources.getResource(path).toURI());
+  }
+
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private FileResolver mockFileResolver;
@@ -193,38 +197,21 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockGradle.getStartParameter()).thenReturn(mockStartParameter);
     Mockito.when(mockStartParameter.getConsoleOutput()).thenReturn(ConsoleOutput.Auto);
 
-    Set<Path> classesFiles =
-        ImmutableSet.of(Paths.get(Resources.getResource("gradle/application/classes").toURI()));
+    Set<Path> classesFiles = ImmutableSet.of(getResource("gradle/application/classes"));
     FileCollection classesFileCollection = new TestFileCollection(classesFiles);
-    Path resourcesOutputDir =
-        Paths.get(Resources.getResource("gradle/application/resources").toURI());
+    Path resourcesOutputDir = getResource("gradle/application/resources");
 
     Set<Path> allFiles = new HashSet<>(classesFiles);
     allFiles.add(resourcesOutputDir);
-    allFiles.add(
-        Paths.get(
-            Resources.getResource("gradle/application/dependencies/library.jarC.jar").toURI()));
-    allFiles.add(
-        Paths.get(Resources.getResource("gradle/application/dependencies/libraryB.jar").toURI()));
-    allFiles.add(
-        Paths.get(Resources.getResource("gradle/application/dependencies/libraryA.jar").toURI()));
-    allFiles.add(
-        Paths.get(
-            Resources.getResource("gradle/application/dependencies/dependency-1.0.0.jar").toURI()));
-    allFiles.add(
-        Paths.get(
-            Resources.getResource("gradle/application/dependencies/more/dependency-1.0.0.jar")
-                .toURI()));
-    allFiles.add(
-        Paths.get(
-            Resources.getResource(
-                    "gradle/application/dependencies/another/one/dependency-1.0.0.jar")
-                .toURI()));
-    allFiles.add(
-        Paths.get(
-            Resources.getResource("gradle/application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar")
-                .toURI()));
+    allFiles.add(getResource("gradle/application/dependencies/library.jarC.jar"));
+    allFiles.add(getResource("gradle/application/dependencies/libraryB.jar"));
+    allFiles.add(getResource("gradle/application/dependencies/libraryA.jar"));
+    allFiles.add(getResource("gradle/application/dependencies/dependency-1.0.0.jar"));
+    allFiles.add(getResource("gradle/application/dependencies/more/dependency-1.0.0.jar"));
+    allFiles.add(getResource("gradle/application/dependencies/another/one/dependency-1.0.0.jar"));
+    allFiles.add(getResource("gradle/application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar"));
     FileCollection runtimeFileCollection = new TestFileCollection(allFiles);
+
     Mockito.when(mockSourceSetContainer.getByName("main")).thenReturn(mockMainSourceSet);
     Mockito.when(mockMainSourceSet.getOutput()).thenReturn(mockMainSourceSetOutput);
     Mockito.when(mockMainSourceSetOutput.getClassesDirs()).thenReturn(classesFileCollection);
@@ -233,11 +220,10 @@ public class GradleProjectPropertiesTest {
 
     // We can't commit an empty directory in Git, so create (if not exist).
     Path emptyDirectory =
-        Paths.get(Resources.getResource("gradle/webapp").toURI())
-            .resolve("jib-exploded-war/WEB-INF/classes/empty_dir");
+        getResource("gradle/webapp").resolve("jib-exploded-war/WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
 
-    extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
+    extraFilesDirectory = getResource("core/layer");
 
     gradleProjectProperties =
         new GradleProjectProperties(
@@ -271,19 +257,19 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testIsWarProject() throws URISyntaxException {
-    setUpWarProject(Paths.get(Resources.getResource("gradle/webapp").toURI()));
+    setUpWarProject(getResource("gradle/webapp"));
     Assert.assertTrue(gradleProjectProperties.isWarProject());
   }
 
   @Test
   public void testGetWar_warProject() throws URISyntaxException {
-    setUpWarProject(Paths.get(Resources.getResource("gradle/webapp").toURI()));
+    setUpWarProject(getResource("gradle/webapp"));
     Assert.assertNotNull(TaskCommon.getWarTask(mockProject));
   }
 
   @Test
   public void testGetWar_noWarPlugin() throws URISyntaxException {
-    setUpWarProject(Paths.get(Resources.getResource("gradle/webapp").toURI()));
+    setUpWarProject(getResource("gradle/webapp"));
     Mockito.when(mockConvention.findPlugin(WarPluginConvention.class)).thenReturn(null);
 
     Assert.assertNull(TaskCommon.getWarTask(mockProject));
@@ -354,7 +340,7 @@ public class GradleProjectPropertiesTest {
         setupBuildConfiguration(Paths.get("nonexistent/path"), "/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
 
-    Path applicationDirectory = Paths.get(Resources.getResource("gradle/application").toURI());
+    Path applicationDirectory = getResource("gradle/application");
     assertSourcePathsUnordered(
         ImmutableList.of(
             applicationDirectory.resolve("dependencies/dependencyX-1.0.0-SNAPSHOT.jar")),
@@ -475,7 +461,7 @@ public class GradleProjectPropertiesTest {
   public void testGetContainerBuilderWithLayers_war()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Path webAppDirectory = Paths.get(Resources.getResource("gradle/webapp").toURI());
+    Path webAppDirectory = getResource("gradle/webapp");
     setUpWarProject(webAppDirectory);
 
     BuildConfiguration configuration = setupBuildConfiguration(extraFilesDirectory, "/my/app");
@@ -553,7 +539,7 @@ public class GradleProjectPropertiesTest {
   public void testGetContainerBuilderWithLayers_defaultWebAppRoot()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    setUpWarProject(Paths.get(Resources.getResource("gradle/webapp").toURI()));
+    setUpWarProject(getResource("gradle/webapp"));
 
     BuildConfiguration configuration =
         setupBuildConfiguration(extraFilesDirectory, JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT);
