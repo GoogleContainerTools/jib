@@ -35,8 +35,7 @@ public class MavenSettingsServerCredentialsTest {
   @Mock private DecryptedMavenSettings mockSettings;
   @Mock private Server mockServer1;
 
-  private final MavenSettingsServerCredentials testMavenSettingsServerCredentials =
-      new MavenSettingsServerCredentials(mockSettings);
+  private MavenSettingsServerCredentials testMavenSettingsServerCredentials;
 
   @Before
   public void setUp() {
@@ -44,6 +43,7 @@ public class MavenSettingsServerCredentialsTest {
     Mockito.when(mockServer1.getId()).thenReturn("server1");
     Mockito.when(mockServer1.getUsername()).thenReturn("server1 username");
     Mockito.when(mockServer1.getPassword()).thenReturn("server1 password");
+    testMavenSettingsServerCredentials = new MavenSettingsServerCredentials(mockSettings);
   }
 
   @Test
@@ -57,10 +57,5 @@ public class MavenSettingsServerCredentialsTest {
   @Test
   public void testRetrieve_notFound() {
     Assert.assertFalse(testMavenSettingsServerCredentials.apply("serverUnknown").isPresent());
-  }
-
-  @Test
-  public void testRetrieve_withNullServer() {
-    Assert.assertFalse(testMavenSettingsServerCredentials.apply(null).isPresent());
   }
 }

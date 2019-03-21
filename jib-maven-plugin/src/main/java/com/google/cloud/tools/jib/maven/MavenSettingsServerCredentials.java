@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import org.apache.maven.settings.Server;
 
 /**
@@ -48,13 +49,14 @@ class MavenSettingsServerCredentials implements Function<String, Optional<AuthPr
    */
   @Override
   public Optional<AuthProperty> apply(String registry) {
-    Optional<Server> optionalServer = getServer(registry);
-    if (!optionalServer.isPresent()) {
+    Predicate<Server> idMatches = server -> registry.equals(server.getId());
+    Optional<Server> server = settings.getServers().stream().filter(idMatches).findFirst();
+    if (!server.isPresent()) {
       return Optional.empty();
     }
 
-    String username = optionalServer.get().getUsername();
-    String password = optionalServer.get().getPassword();
+    String username = server.get().getUsername();
+    String password = server.get().getPassword();
 
     return Optional.of(
         new AuthProperty() {
@@ -84,14 +86,5 @@ class MavenSettingsServerCredentials implements Function<String, Optional<AuthPr
             return CREDENTIAL_SOURCE;
           }
         });
-  }
-
-  private Optional<Server> getServer(String registry) {
-    for (Server server : settings.getServers()) {
-      if (registry.equals(server.getId())) {
-        return Optional.of(server);
-      }
-    }
-    return Optional.empty();
   }
 }
