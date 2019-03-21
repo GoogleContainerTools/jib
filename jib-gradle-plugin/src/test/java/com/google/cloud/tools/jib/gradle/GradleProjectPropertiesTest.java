@@ -110,22 +110,21 @@ public class GradleProjectPropertiesTest {
   /** Helper for reading back layers in a {@code BuildConfiguration}. */
   private static class ContainerBuilderLayers {
 
-    private final List<LayerConfiguration> resourcesLayerConfigurations;
-    private final List<LayerConfiguration> classesLayerConfigurations;
-    private final List<LayerConfiguration> dependenciesLayerConfigurations;
-    private final List<LayerConfiguration> snapshotsLayerConfigurations;
-    private final List<LayerConfiguration> extraFilesLayerConfigurations;
+    private final List<LayerConfiguration> resourcesLayerEntries;
+    private final List<LayerConfiguration> classesLayerEntries;
+    private final List<LayerConfiguration> dependenciesLayerEntries;
+    private final List<LayerConfiguration> snapshotsLayerEntries;
+    private final List<LayerConfiguration> extraFilesLayerEntries;
 
     private ContainerBuilderLayers(BuildConfiguration configuration) {
-      resourcesLayerConfigurations =
+      resourcesLayerEntries =
           getLayerConfigurationByName(configuration, LayerType.RESOURCES.getName());
-      classesLayerConfigurations =
-          getLayerConfigurationByName(configuration, LayerType.CLASSES.getName());
-      dependenciesLayerConfigurations =
+      classesLayerEntries = getLayerConfigurationByName(configuration, LayerType.CLASSES.getName());
+      dependenciesLayerEntries =
           getLayerConfigurationByName(configuration, LayerType.DEPENDENCIES.getName());
-      snapshotsLayerConfigurations =
+      snapshotsLayerEntries =
           getLayerConfigurationByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
-      extraFilesLayerConfigurations =
+      extraFilesLayerEntries =
           getLayerConfigurationByName(configuration, LayerType.EXTRA_FILES.getName());
     }
   }
@@ -367,29 +366,29 @@ public class GradleProjectPropertiesTest {
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertSourcePathsUnordered(
         ImmutableList.of(
+            applicationDirectory.resolve("dependencies/dependencyX-1.0.0-SNAPSHOT.jar")),
+        layers.snapshotsLayerEntries.get(0).getLayerEntries());
+    assertSourcePathsUnordered(
+        ImmutableList.of(
             applicationDirectory.resolve("dependencies/dependency-1.0.0.jar"),
             applicationDirectory.resolve("dependencies/more/dependency-1.0.0.jar"),
             applicationDirectory.resolve("dependencies/another/one/dependency-1.0.0.jar"),
             applicationDirectory.resolve("dependencies/libraryA.jar"),
             applicationDirectory.resolve("dependencies/libraryB.jar"),
             applicationDirectory.resolve("dependencies/library.jarC.jar")),
-        layers.dependenciesLayerConfigurations.get(0).getLayerEntries());
-    assertSourcePathsUnordered(
-        ImmutableList.of(
-            applicationDirectory.resolve("dependencies/dependencyX-1.0.0-SNAPSHOT.jar")),
-        layers.snapshotsLayerConfigurations.get(0).getLayerEntries());
+        layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             applicationDirectory.resolve("resources/resourceA"),
             applicationDirectory.resolve("resources/resourceB"),
             applicationDirectory.resolve("resources/world")),
-        layers.resourcesLayerConfigurations.get(0).getLayerEntries());
+        layers.resourcesLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             applicationDirectory.resolve("classes/HelloWorld.class"),
             applicationDirectory.resolve("classes/some.class")),
-        layers.classesLayerConfigurations.get(0).getLayerEntries());
-    Assert.assertEquals(0, layers.extraFilesLayerConfigurations.size());
+        layers.classesLayerEntries.get(0).getLayerEntries());
+    Assert.assertEquals(0, layers.extraFilesLayerEntries.size());
   }
 
   @Test
@@ -416,8 +415,6 @@ public class GradleProjectPropertiesTest {
                 Containerizer.to(RegistryImage.named("to")),
                 MoreExecutors.newDirectExecutorService());
 
-    List<LayerConfiguration> extraFilesLayerConfigurations =
-        getLayerConfigurationByName(configuration, LayerType.EXTRA_FILES.getName());
     assertSourcePathsUnordered(
         ImmutableList.of(
             extraFilesDirectory.resolve("a"),
@@ -426,7 +423,9 @@ public class GradleProjectPropertiesTest {
             extraFilesDirectory.resolve("c"),
             extraFilesDirectory.resolve("c/cat"),
             extraFilesDirectory.resolve("foo")),
-        extraFilesLayerConfigurations.get(0).getLayerEntries());
+        getLayerConfigurationByName(configuration, LayerType.EXTRA_FILES.getName())
+            .get(0)
+            .getLayerEntries());
   }
 
   @Test
@@ -453,22 +452,22 @@ public class GradleProjectPropertiesTest {
             "/my/app/libs/libraryA.jar",
             "/my/app/libs/libraryB.jar",
             "/my/app/libs/library.jarC.jar"),
-        layers.dependenciesLayerConfigurations.get(0).getLayerEntries());
+        layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayerConfigurations.get(0).getLayerEntries());
+        layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/resources/resourceA",
             "/my/app/resources/resourceB",
             "/my/app/resources/world"),
-        layers.resourcesLayerConfigurations.get(0).getLayerEntries());
+        layers.resourcesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/my/app/classes/HelloWorld.class", "/my/app/classes/some.class"),
-        layers.classesLayerConfigurations.get(0).getLayerEntries());
+        layers.classesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        layers.extraFilesLayerConfigurations.get(0).getLayerEntries());
+        layers.extraFilesLayerEntries.get(0).getLayerEntries());
   }
 
   @Test
@@ -495,20 +494,20 @@ public class GradleProjectPropertiesTest {
             "/app/libs/libraryA.jar",
             "/app/libs/libraryB.jar",
             "/app/libs/library.jarC.jar"),
-        layers.dependenciesLayerConfigurations.get(0).getLayerEntries());
+        layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayerConfigurations.get(0).getLayerEntries());
+        layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/app/resources/resourceA", "/app/resources/resourceB", "/app/resources/world"),
-        layers.resourcesLayerConfigurations.get(0).getLayerEntries());
+        layers.resourcesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/app/classes/HelloWorld.class", "/app/classes/some.class"),
-        layers.classesLayerConfigurations.get(0).getLayerEntries());
+        layers.classesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        layers.extraFilesLayerConfigurations.get(0).getLayerEntries());
+        layers.extraFilesLayerEntries.get(0).getLayerEntries());
   }
 
   @Test
@@ -534,11 +533,11 @@ public class GradleProjectPropertiesTest {
     assertSourcePathsUnordered(
         ImmutableList.of(
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/lib/dependency-1.0.0.jar")),
-        layers.dependenciesLayerConfigurations.get(0).getLayerEntries());
+        layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
-        layers.snapshotsLayerConfigurations.get(0).getLayerEntries());
+        layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             webAppDirectory.resolve("jib-exploded-war/META-INF"),
@@ -551,14 +550,14 @@ public class GradleProjectPropertiesTest {
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/package/test.properties"),
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/lib"),
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/web.xml")),
-        layers.resourcesLayerConfigurations.get(0).getLayerEntries());
+        layers.resourcesLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/HelloWorld.class"),
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/empty_dir"),
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/package"),
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/package/Other.class")),
-        layers.classesLayerConfigurations.get(0).getLayerEntries());
+        layers.classesLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             extraFilesDirectory.resolve("a"),
@@ -567,14 +566,14 @@ public class GradleProjectPropertiesTest {
             extraFilesDirectory.resolve("c"),
             extraFilesDirectory.resolve("c/cat"),
             extraFilesDirectory.resolve("foo")),
-        layers.extraFilesLayerConfigurations.get(0).getLayerEntries());
+        layers.extraFilesLayerEntries.get(0).getLayerEntries());
 
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
-        layers.dependenciesLayerConfigurations.get(0).getLayerEntries());
+        layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayerConfigurations.get(0).getLayerEntries());
+        layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/META-INF",
@@ -587,17 +586,17 @@ public class GradleProjectPropertiesTest {
             "/my/app/WEB-INF/classes/package/test.properties",
             "/my/app/WEB-INF/lib",
             "/my/app/WEB-INF/web.xml"),
-        layers.resourcesLayerConfigurations.get(0).getLayerEntries());
+        layers.resourcesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/WEB-INF/classes/HelloWorld.class",
             "/my/app/WEB-INF/classes/empty_dir",
             "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/Other.class"),
-        layers.classesLayerConfigurations.get(0).getLayerEntries());
+        layers.classesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        layers.extraFilesLayerConfigurations.get(0).getLayerEntries());
+        layers.extraFilesLayerEntries.get(0).getLayerEntries());
   }
 
   @Test
@@ -621,10 +620,10 @@ public class GradleProjectPropertiesTest {
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertExtractionPathsUnordered(
         Collections.singletonList("/jetty/webapps/ROOT/WEB-INF/lib/dependency-1.0.0.jar"),
-        layers.dependenciesLayerConfigurations.get(0).getLayerEntries());
+        layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/jetty/webapps/ROOT/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayerConfigurations.get(0).getLayerEntries());
+        layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/jetty/webapps/ROOT/META-INF",
@@ -637,17 +636,17 @@ public class GradleProjectPropertiesTest {
             "/jetty/webapps/ROOT/WEB-INF/classes/package/test.properties",
             "/jetty/webapps/ROOT/WEB-INF/lib",
             "/jetty/webapps/ROOT/WEB-INF/web.xml"),
-        layers.resourcesLayerConfigurations.get(0).getLayerEntries());
+        layers.resourcesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/jetty/webapps/ROOT/WEB-INF/classes/HelloWorld.class",
             "/jetty/webapps/ROOT/WEB-INF/classes/empty_dir",
             "/jetty/webapps/ROOT/WEB-INF/classes/package",
             "/jetty/webapps/ROOT/WEB-INF/classes/package/Other.class"),
-        layers.classesLayerConfigurations.get(0).getLayerEntries());
+        layers.classesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        layers.extraFilesLayerConfigurations.get(0).getLayerEntries());
+        layers.extraFilesLayerEntries.get(0).getLayerEntries());
   }
 
   @Test
