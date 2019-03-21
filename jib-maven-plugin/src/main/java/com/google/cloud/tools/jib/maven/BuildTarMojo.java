@@ -40,6 +40,8 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 /**
  * Builds a container image and exports to disk at {@code ${project.build.directory}/jib-image.tar}.
@@ -83,13 +85,16 @@ public class BuildTarMojo extends JibPluginConfiguration {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
+      Settings settings = getSession().getSettings();
+      SettingsDecryptionResult decryptedSettings =
+          DecryptedMavenSettings.decryptMavenSettings(settings, getSettingsDecrypter());
+
       Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
       Path tarOutputPath = buildOutput.resolve("jib-image.tar");
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForTarImage(
               mavenRawConfiguration,
-              new MavenSettingsServerCredentials(
-                  getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
+              new MavenSettingsServerCredentials(decryptedSettings, settings),
               projectProperties,
               tarOutputPath,
               mavenHelpfulSuggestionsBuilder.build());

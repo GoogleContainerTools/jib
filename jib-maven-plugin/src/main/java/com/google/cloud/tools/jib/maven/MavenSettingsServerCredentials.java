@@ -16,20 +16,12 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthProvider;
 import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
-import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.building.SettingsProblem;
-import org.apache.maven.settings.crypto.DefaultSettingsDecryptionRequest;
-import org.apache.maven.settings.crypto.SettingsDecryptionRequest;
 import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 /**
@@ -40,25 +32,8 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
 
   static final String CREDENTIAL_SOURCE = "Maven settings";
 
-  // pattern cribbed directly from
-  // https://github.com/sonatype/plexus-cipher/blob/master/src/main/java/org/sonatype/plexus/components/cipher/DefaultPlexusCipher.java
-  private static final Pattern ENCRYPTED_STRING_PATTERN =
-      Pattern.compile(".*?[^\\\\]?\\{(.*?[^\\\\])\\}.*");
-
-  /**
-   * Return true if the given string appears to have been encrypted with the <a
-   * href="https://maven.apache.org/guides/mini/guide-encryption.html#How_to_encrypt_server_passwords">Maven
-   * password encryption</a>. Such passwords appear between unescaped braces.
-   */
-  @VisibleForTesting
-  static boolean isEncrypted(String password) {
-    Matcher matcher = ENCRYPTED_STRING_PATTERN.matcher(password);
-    return matcher.matches() || matcher.find();
-  }
-
   private final SettingsDecryptionResult decryptedSettings;
   private final Settings settings;
-  private final EventDispatcher eventDispatcher;
 
   /**
    * Create new instance.
@@ -66,13 +41,9 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
    * @param settings the Maven settings object
    * @param eventDispatcher the Jib event dispatcher
    */
-  MavenSettingsServerCredentials(
-      SettingsDecryptionResult decryptedSettings,
-      Settings settings,
-      EventDispatcher eventDispatcher) {
+  MavenSettingsServerCredentials(SettingsDecryptionResult decryptedSettings, Settings settings) {
     this.decryptedSettings = decryptedSettings;
     this.settings = settings;
-    this.eventDispatcher = eventDispatcher;
   }
 
   /**
@@ -89,38 +60,8 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
       return Optional.empty();
     }
 
-    Server server = optionalServer.get();
-    if (server) return Optional.empty();
-
-    if (settingsDecrypter != null) {
-      // SettingsDecrypter and SettingsDecryptionResult do not document the meanings of the return
-      // results. SettingsDecryptionResult#getServers() does note that the list of decrypted servers
-      // can be empty.  We handle the results as follows:
-      //    - if there are any ERROR or FATAL problems reported, then decryption failed
-      SettingsDecryptionRequest request = new DefaultSettingsDecryptionRequest(registryServer);
-      SettingsDecryptionResult result = settingsDecrypter.decrypt(request);
-      // un-encrypted passwords are passed through, so a problem indicates a real issue
-      for (SettingsProblem problem : result.getProblems()) {
-        if (problem.getSeverity() == SettingsProblem.Severity.ERROR
-            || problem.getSeverity() == SettingsProblem.Severity.FATAL) {
-          throw new InferredAuthRetrievalException(
-              "Unable to decrypt password for " + registry + ": " + problem);
-        }
-      }
-      //    - if no decrypted servers returned then treat as if no decryption was required
-      if (result.getServer() != null) {
-        registryServer = result.getServer();
-      }
-    } else if (isEncrypted(registryServer.getPassword())) {
-      eventDispatcher.dispatch(
-          LogEvent.warn(
-              "Server password for registry "
-                  + registry
-                  + " appears to be encrypted, but there is no decrypter available"));
-    }
-
-    String username = registryServer.getUsername();
-    String password = registryServer.getPassword();
+    String username = optionalServer.get().getUsername();
+    String password = optionalServer.get().getPassword();
 
     return Optional.of(
         new AuthProperty() {
