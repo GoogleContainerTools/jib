@@ -174,7 +174,7 @@ class GradleProjectProperties implements ProjectProperties {
   @Override
   public JibContainerBuilder getContainerBuilderWithLayers(RegistryImage baseImage) {
     try {
-      if (TaskCommon.getWarTask(project) != null) {
+      if (isWarProject()) {
         logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
         Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
         return JavaContainerBuilderHelper.fromExplodedWar(
