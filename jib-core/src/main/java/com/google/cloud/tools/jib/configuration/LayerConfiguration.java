@@ -80,8 +80,7 @@ public class LayerConfiguration {
      *     sourceFile}
      * @param permissions the file permissions on the container. If null, then default permissions
      *     are used (644 for files, 755 for directories)
-     * @param lastModified file last modified value, default to 1 second since the epoch
-     *     (https://github.com/GoogleContainerTools/jib/issues/1079)
+     * @param lastModified the modification time of the file
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
      */
@@ -109,7 +108,7 @@ public class LayerConfiguration {
      */
     public Builder addEntry(
         Path sourceFile, AbsoluteUnixPath pathInContainer, @Nullable FilePermissions permissions) {
-      return addEntry(sourceFile, pathInContainer, permissions, -1);
+      return addEntry(sourceFile, pathInContainer, permissions, 1000);
     }
 
     /**

@@ -79,7 +79,8 @@ public class LayerEntry {
   }
 
   /**
-   * Backward compatible constructor.
+   * Instantiates with a source file and the path to place the source file in the container file
+   * system.
    *
    * @param sourceFile the source file to add to the layer
    * @param extractionPath the path in the container file system corresponding to the {@code
@@ -93,9 +94,9 @@ public class LayerEntry {
   }
 
   /**
-   * The timestamp of the entry.
+   * Returns the modification time of the file in the entry.
    *
-   * @return the modTime to set on the tar entry in the docker layer.
+   * @return the modification time
    */
   public long getLastModifiedTime() {
     return lastModifiedTime;
