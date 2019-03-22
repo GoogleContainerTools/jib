@@ -544,7 +544,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   SettingsDecrypter getSettingsDecrypter() {
-    return Preconditions.checkNotNull(settingsDecrypter);
+    return settingsDecrypter;
   }
 
   @VisibleForTesting
