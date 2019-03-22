@@ -110,13 +110,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
           PluginConfigurationProcessor.getAppRootChecked(
               gradleRawConfiguration, TaskCommon.isWarProject(getProject()));
       GradleProjectProperties projectProperties =
-          GradleProjectProperties.getForProject(
-              getProject(),
-              getLogger(),
-              jibExtension.getExtraDirectory().getPath(),
-              jibExtension.getExtraDirectory().getPermissions(),
-              appRoot);
-
+          GradleProjectProperties.getForProject(getProject(), getLogger(), appRoot);
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
 

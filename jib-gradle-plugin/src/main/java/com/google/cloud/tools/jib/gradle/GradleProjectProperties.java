@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
@@ -41,10 +40,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -76,13 +72,8 @@ class GradleProjectProperties implements ProjectProperties {
 
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(
-      Project project,
-      Logger logger,
-      Path extraDirectory,
-      Map<String, String> permissions,
-      AbsoluteUnixPath appRoot) {
-    return new GradleProjectProperties(
-        project, logger, extraDirectory, convertPermissionsMap(permissions), appRoot);
+      Project project, Logger logger, AbsoluteUnixPath appRoot) {
+    return new GradleProjectProperties(project, logger, appRoot);
   }
 
   static Path getExplodedWarDirectory(Project project) {
@@ -151,21 +142,12 @@ class GradleProjectProperties implements ProjectProperties {
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final EventHandlers eventHandlers;
   private final Logger logger;
-  private final Path extraDirectory;
-  private final Map<AbsoluteUnixPath, FilePermissions> permissions;
   private final AbsoluteUnixPath appRoot;
 
   @VisibleForTesting
-  GradleProjectProperties(
-      Project project,
-      Logger logger,
-      Path extraDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> permissions,
-      AbsoluteUnixPath appRoot) {
+  GradleProjectProperties(Project project, Logger logger, AbsoluteUnixPath appRoot) {
     this.project = project;
     this.logger = logger;
-    this.extraDirectory = extraDirectory;
-    this.permissions = permissions;
     this.appRoot = appRoot;
 
     eventHandlers = makeEventHandlers(project, logger, singleThreadedExecutor);
@@ -177,8 +159,7 @@ class GradleProjectProperties implements ProjectProperties {
       if (isWarProject()) {
         logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
         Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
-        return JavaContainerBuilderHelper.fromExplodedWar(
-            baseImage, explodedWarPath, appRoot, extraDirectory, permissions);
+        return JavaContainerBuilderHelper.fromExplodedWar(baseImage, explodedWarPath, appRoot);
       }
 
       JavaPluginConvention javaPluginConvention =
@@ -222,15 +203,7 @@ class GradleProjectProperties implements ProjectProperties {
               .map(File::toPath)
               .collect(Collectors.toList()));
 
-      JibContainerBuilder jibContainerBuilder = javaContainerBuilder.toContainerBuilder();
-
-      // Adds all the extra files.
-      if (Files.exists(extraDirectory)) {
-        jibContainerBuilder.addLayer(
-            JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-                extraDirectory, permissions));
-      }
-      return jibContainerBuilder;
+      return javaContainerBuilder.toContainerBuilder();
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
@@ -339,24 +312,5 @@ class GradleProjectProperties implements ProjectProperties {
       version = javaPluginConvention.getTargetCompatibility();
     }
     return Integer.valueOf(version.getMajorVersion());
-  }
-
-  /**
-   * Validates and converts a {@code String->String} file-path-to-file-permissions map to an
-   * equivalent {@code AbsoluteUnixPath->FilePermission} map.
-   *
-   * @param stringMap the map to convert (example entry: {@code "/path/on/container" -> "755"})
-   * @return the converted map
-   */
-  @VisibleForTesting
-  static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsMap(
-      Map<String, String> stringMap) {
-    Map<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
-    for (Entry<String, String> entry : stringMap.entrySet()) {
-      AbsoluteUnixPath key = AbsoluteUnixPath.get(entry.getKey());
-      FilePermissions value = FilePermissions.fromOctalString(entry.getValue());
-      permissionsMap.put(key, value);
-    }
-    return permissionsMap;
   }
 }

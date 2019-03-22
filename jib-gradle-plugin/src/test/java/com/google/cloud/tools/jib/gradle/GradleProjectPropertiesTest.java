@@ -114,7 +114,6 @@ public class GradleProjectPropertiesTest {
     private final List<LayerConfiguration> classesLayerEntries;
     private final List<LayerConfiguration> dependenciesLayerEntries;
     private final List<LayerConfiguration> snapshotsLayerEntries;
-    private final List<LayerConfiguration> extraFilesLayerEntries;
 
     private ContainerBuilderLayers(BuildConfiguration configuration) {
       resourcesLayerEntries =
@@ -124,8 +123,6 @@ public class GradleProjectPropertiesTest {
           getLayerConfigurationByName(configuration, LayerType.DEPENDENCIES.getName());
       snapshotsLayerEntries =
           getLayerConfigurationByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
-      extraFilesLayerEntries =
-          getLayerConfigurationByName(configuration, LayerType.EXTRA_FILES.getName());
     }
   }
 
@@ -179,8 +176,6 @@ public class GradleProjectPropertiesTest {
   @Mock private TaskContainer taskContainer;
   @Mock private War war;
 
-  private Path extraFilesDirectory;
-
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
 
@@ -223,15 +218,8 @@ public class GradleProjectPropertiesTest {
         getResource("gradle/webapp").resolve("jib-exploded-war/WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
 
-    extraFilesDirectory = getResource("core/layer");
-
     gradleProjectProperties =
-        new GradleProjectProperties(
-            mockProject,
-            mockLogger,
-            extraFilesDirectory,
-            ImmutableMap.of(),
-            AbsoluteUnixPath.get("/app"));
+        new GradleProjectProperties(mockProject, mockLogger, AbsoluteUnixPath.get("/app"));
   }
 
   @Test
@@ -288,12 +276,11 @@ public class GradleProjectPropertiesTest {
             FilePermissions.fromOctalString("123"),
             AbsoluteUnixPath.get("/test/file2"),
             FilePermissions.fromOctalString("456")),
-        GradleProjectProperties.convertPermissionsMap(
+        TaskCommon.convertPermissionsMap(
             ImmutableMap.of("/test/folder/file1", "123", "/test/file2", "456")));
 
     try {
-      GradleProjectProperties.convertPermissionsMap(
-          ImmutableMap.of("a path", "not valid permission"));
+      TaskCommon.convertPermissionsMap(ImmutableMap.of("a path", "not valid permission"));
       Assert.fail();
     } catch (IllegalArgumentException ignored) {
       // pass
@@ -336,8 +323,7 @@ public class GradleProjectPropertiesTest {
   public void testGetContainerBuilderWithLayers_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    BuildConfiguration configuration =
-        setupBuildConfiguration(Paths.get("nonexistent/path"), "/app");
+    BuildConfiguration configuration = setupBuildConfiguration("/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
 
     Path applicationDirectory = getResource("gradle/application");
@@ -365,7 +351,6 @@ public class GradleProjectPropertiesTest {
             applicationDirectory.resolve("classes/HelloWorld.class"),
             applicationDirectory.resolve("classes/some.class")),
         layers.classesLayerEntries.get(0).getLayerEntries());
-    Assert.assertEquals(0, layers.extraFilesLayerEntries.size());
   }
 
   @Test
@@ -379,26 +364,9 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetContainerBuilderWithLayers_extraFiles()
-      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration(extraFilesDirectory, "/app");
-    assertSourcePathsUnordered(
-        ImmutableList.of(
-            extraFilesDirectory.resolve("a"),
-            extraFilesDirectory.resolve("a/b"),
-            extraFilesDirectory.resolve("a/b/bar"),
-            extraFilesDirectory.resolve("c"),
-            extraFilesDirectory.resolve("c/cat"),
-            extraFilesDirectory.resolve("foo")),
-        getLayerConfigurationByName(configuration, LayerType.EXTRA_FILES.getName())
-            .get(0)
-            .getLayerEntries());
-  }
-
-  @Test
   public void testGetContainerBuilderWithLayers_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration(extraFilesDirectory, "/my/app");
+    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
 
     assertExtractionPathsUnordered(
@@ -422,16 +390,13 @@ public class GradleProjectPropertiesTest {
     assertExtractionPathsUnordered(
         Arrays.asList("/my/app/classes/HelloWorld.class", "/my/app/classes/some.class"),
         layers.classesLayerEntries.get(0).getLayerEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        layers.extraFilesLayerEntries.get(0).getLayerEntries());
   }
 
   @Test
   public void testGetContainerBuilderWithLayers_defaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildConfiguration configuration =
-        setupBuildConfiguration(extraFilesDirectory, JavaLayerConfigurations.DEFAULT_APP_ROOT);
+        setupBuildConfiguration(JavaLayerConfigurations.DEFAULT_APP_ROOT);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -452,9 +417,6 @@ public class GradleProjectPropertiesTest {
     assertExtractionPathsUnordered(
         Arrays.asList("/app/classes/HelloWorld.class", "/app/classes/some.class"),
         layers.classesLayerEntries.get(0).getLayerEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        layers.extraFilesLayerEntries.get(0).getLayerEntries());
   }
 
   @Test
@@ -464,7 +426,7 @@ public class GradleProjectPropertiesTest {
     Path webAppDirectory = getResource("gradle/webapp");
     setUpWarProject(webAppDirectory);
 
-    BuildConfiguration configuration = setupBuildConfiguration(extraFilesDirectory, "/my/app");
+    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertSourcePathsUnordered(
         ImmutableList.of(
@@ -494,15 +456,6 @@ public class GradleProjectPropertiesTest {
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/package"),
             webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/package/Other.class")),
         layers.classesLayerEntries.get(0).getLayerEntries());
-    assertSourcePathsUnordered(
-        ImmutableList.of(
-            extraFilesDirectory.resolve("a"),
-            extraFilesDirectory.resolve("a/b"),
-            extraFilesDirectory.resolve("a/b/bar"),
-            extraFilesDirectory.resolve("c"),
-            extraFilesDirectory.resolve("c/cat"),
-            extraFilesDirectory.resolve("foo")),
-        layers.extraFilesLayerEntries.get(0).getLayerEntries());
 
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
@@ -530,9 +483,6 @@ public class GradleProjectPropertiesTest {
             "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/Other.class"),
         layers.classesLayerEntries.get(0).getLayerEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        layers.extraFilesLayerEntries.get(0).getLayerEntries());
   }
 
   @Test
@@ -542,7 +492,7 @@ public class GradleProjectPropertiesTest {
     setUpWarProject(getResource("gradle/webapp"));
 
     BuildConfiguration configuration =
-        setupBuildConfiguration(extraFilesDirectory, JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT);
+        setupBuildConfiguration(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertExtractionPathsUnordered(
         Collections.singletonList("/jetty/webapps/ROOT/WEB-INF/lib/dependency-1.0.0.jar"),
@@ -570,9 +520,6 @@ public class GradleProjectPropertiesTest {
             "/jetty/webapps/ROOT/WEB-INF/classes/package",
             "/jetty/webapps/ROOT/WEB-INF/classes/package/Other.class"),
         layers.classesLayerEntries.get(0).getLayerEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        layers.extraFilesLayerEntries.get(0).getLayerEntries());
   }
 
   @Test
@@ -580,8 +527,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration(
-        extraFilesDirectory, JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT); // should pass
+    setupBuildConfiguration(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT); // should pass
   }
 
   @Test
@@ -589,8 +535,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration(
-        extraFilesDirectory, JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT); // should pass
+    setupBuildConfiguration(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT); // should pass
   }
 
   @Test
@@ -598,18 +543,12 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration(
-        extraFilesDirectory, JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT); // should pass
+    setupBuildConfiguration(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT); // should pass
   }
 
-  private BuildConfiguration setupBuildConfiguration(Path extraFilesDirectory, String appRoot)
+  private BuildConfiguration setupBuildConfiguration(String appRoot)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-    return new GradleProjectProperties(
-            mockProject,
-            mockLogger,
-            extraFilesDirectory,
-            Collections.emptyMap(),
-            AbsoluteUnixPath.get(appRoot))
+    return new GradleProjectProperties(mockProject, mockLogger, AbsoluteUnixPath.get(appRoot))
         .getContainerBuilderWithLayers(RegistryImage.named("base"))
         .toBuildConfiguration(
             Containerizer.to(RegistryImage.named("to")), MoreExecutors.newDirectExecutorService());

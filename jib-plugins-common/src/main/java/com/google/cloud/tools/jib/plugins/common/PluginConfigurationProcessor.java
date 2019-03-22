@@ -38,6 +38,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -202,6 +203,14 @@ public class PluginConfigurationProcessor {
           LogEvent.warn(
               "Setting image creation time to current time; your image may not be reproducible."));
       jibContainerBuilder.setCreationTime(Instant.now());
+    }
+
+    // Adds all the extra files.
+    if (Files.exists(rawConfiguration.getExtraDirectory())) {
+      jibContainerBuilder.addLayer(
+          JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
+              rawConfiguration.getExtraDirectory(),
+              rawConfiguration.getExtraDirectoryPermissions()));
     }
 
     PluginConfigurationProcessor.configureContainerizer(

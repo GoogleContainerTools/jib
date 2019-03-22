@@ -65,18 +65,11 @@ public class JavaContainerBuilderHelper {
    * @param baseImage the base image of the container
    * @param explodedWar the exploded WAR directory
    * @param appRoot root directory in the image where the app will be placed
-   * @param extraFilesDirectory path to the source directory for the extra files layer
-   * @param extraDirectoryPermissions map from path on container to file permissions
    * @return {@link JibContainerBuilder} containing the layers for the exploded WAR
    * @throws IOException if adding layer contents fails
    */
   public static JibContainerBuilder fromExplodedWar(
-      RegistryImage baseImage,
-      Path explodedWar,
-      AbsoluteUnixPath appRoot,
-      Path extraFilesDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions)
-      throws IOException {
+      RegistryImage baseImage, Path explodedWar, AbsoluteUnixPath appRoot) throws IOException {
     Path webInfLib = explodedWar.resolve("WEB-INF/lib");
     Path webInfClasses = explodedWar.resolve("WEB-INF/classes");
     Predicate<Path> isDependency = path -> path.startsWith(webInfLib);
@@ -100,16 +93,7 @@ public class JavaContainerBuilderHelper {
     if (Files.exists(webInfLib)) {
       javaContainerBuilder.addDependencies(webInfLib);
     }
-    JibContainerBuilder jibContainerBuilder = javaContainerBuilder.toContainerBuilder();
-
-    // Adds all the extra files.
-    if (Files.exists(extraFilesDirectory)) {
-      jibContainerBuilder.addLayer(
-          JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-              extraFilesDirectory, extraDirectoryPermissions));
-    }
-
-    return jibContainerBuilder;
+    return javaContainerBuilder.toContainerBuilder();
   }
 
   private JavaContainerBuilderHelper() {}

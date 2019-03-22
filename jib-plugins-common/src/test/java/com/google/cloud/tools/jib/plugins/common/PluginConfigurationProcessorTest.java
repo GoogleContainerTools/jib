@@ -69,6 +69,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
+    Mockito.when(rawConfiguration.getExtraDirectory()).thenReturn(Paths.get("nonexistent/path"));
 
     Mockito.when(projectProperties.getToolName()).thenReturn("tool");
     Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");

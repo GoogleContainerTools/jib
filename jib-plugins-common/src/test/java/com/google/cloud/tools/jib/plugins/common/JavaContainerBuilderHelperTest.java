@@ -108,11 +108,7 @@ public class JavaContainerBuilderHelperTest {
 
     BuildConfiguration configuration =
         JavaContainerBuilderHelper.fromExplodedWar(
-                RegistryImage.named("base"),
-                temporaryExplodedWar,
-                AbsoluteUnixPath.get("/my/app"),
-                extraFilesDirectory,
-                Collections.emptyMap())
+                RegistryImage.named("base"), temporaryExplodedWar, AbsoluteUnixPath.get("/my/app"))
             .toBuildConfiguration(
                 Containerizer.to(RegistryImage.named("target")),
                 MoreExecutors.newDirectExecutorService());
@@ -125,8 +121,6 @@ public class JavaContainerBuilderHelperTest {
         getLayerConfigurationByName(configuration, LayerType.DEPENDENCIES.getName());
     List<LayerConfiguration> snapshotsLayerConfigurations =
         getLayerConfigurationByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
-    List<LayerConfiguration> extraFilesLayerConfigurations =
-        getLayerConfigurationByName(configuration, LayerType.EXTRA_FILES.getName());
 
     assertSourcePathsUnordered(
         Collections.singletonList(temporaryExplodedWar.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
@@ -155,15 +149,6 @@ public class JavaContainerBuilderHelperTest {
             temporaryExplodedWar.resolve("WEB-INF/classes/package"),
             temporaryExplodedWar.resolve("WEB-INF/classes/package/Other.class")),
         classesLayerConfigurations.get(0).getLayerEntries());
-    assertSourcePathsUnordered(
-        Arrays.asList(
-            extraFilesDirectory.resolve("a"),
-            extraFilesDirectory.resolve("a/b"),
-            extraFilesDirectory.resolve("a/b/bar"),
-            extraFilesDirectory.resolve("c"),
-            extraFilesDirectory.resolve("c/cat"),
-            extraFilesDirectory.resolve("foo")),
-        extraFilesLayerConfigurations.get(0).getLayerEntries());
 
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
@@ -191,8 +176,5 @@ public class JavaContainerBuilderHelperTest {
             "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/Other.class"),
         classesLayerConfigurations.get(0).getLayerEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        extraFilesLayerConfigurations.get(0).getLayerEntries());
   }
 }

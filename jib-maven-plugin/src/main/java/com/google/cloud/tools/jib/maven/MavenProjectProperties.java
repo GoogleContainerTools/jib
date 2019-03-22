@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
@@ -38,10 +37,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -72,19 +69,12 @@ public class MavenProjectProperties implements ProjectProperties {
    * @param project the {@link MavenProject} for the plugin.
    * @param session the {@link MavenSession} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution
-   * @param extraDirectory path to the directory for the extra files layer
-   * @param permissions map from path on container to file permissions for extra-layer files
    * @param appRoot root directory in the image where the app will be placed
    * @return a MavenProjectProperties from the given project and logger.
    */
   static MavenProjectProperties getForProject(
-      MavenProject project,
-      MavenSession session,
-      Log log,
-      Path extraDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> permissions,
-      AbsoluteUnixPath appRoot) {
-    return new MavenProjectProperties(project, session, log, extraDirectory, permissions, appRoot);
+      MavenProject project, MavenSession session, Log log, AbsoluteUnixPath appRoot) {
+    return new MavenProjectProperties(project, session, log, appRoot);
   }
 
   /**
@@ -194,21 +184,12 @@ public class MavenProjectProperties implements ProjectProperties {
   private final MavenProject project;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final EventHandlers eventHandlers;
-  private final Path extraDirectory;
-  private final Map<AbsoluteUnixPath, FilePermissions> permissions;
   private final AbsoluteUnixPath appRoot;
 
   @VisibleForTesting
   MavenProjectProperties(
-      MavenProject project,
-      MavenSession session,
-      Log log,
-      Path extraDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> permissions,
-      AbsoluteUnixPath appRoot) {
+      MavenProject project, MavenSession session, Log log, AbsoluteUnixPath appRoot) {
     this.project = project;
-    this.extraDirectory = extraDirectory;
-    this.permissions = permissions;
     this.appRoot = appRoot;
     eventHandlers = makeEventHandlers(session, log, singleThreadedExecutor);
   }
@@ -220,35 +201,25 @@ public class MavenProjectProperties implements ProjectProperties {
       if (MojoCommon.isWarProject(project)) {
         Path explodedWarPath =
             Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
-        return JavaContainerBuilderHelper.fromExplodedWar(
-            baseImage, explodedWarPath, appRoot, extraDirectory, permissions);
+        return JavaContainerBuilderHelper.fromExplodedWar(baseImage, explodedWarPath, appRoot);
       }
 
       Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
       Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
 
       // Add dependencies, resources, and classes
-      JibContainerBuilder jibContainerBuilder =
-          JavaContainerBuilder.from(baseImage)
-              .setAppRoot(appRoot)
-              .addResources(classesOutputDirectory, isClassFile.negate())
-              .addClasses(classesOutputDirectory, isClassFile)
-              .addDependencies(
-                  project
-                      .getArtifacts()
-                      .stream()
-                      .map(Artifact::getFile)
-                      .map(File::toPath)
-                      .collect(Collectors.toList()))
-              .toContainerBuilder();
-
-      // Adds all the extra files.
-      if (Files.exists(extraDirectory)) {
-        jibContainerBuilder.addLayer(
-            JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-                extraDirectory, permissions));
-      }
-      return jibContainerBuilder;
+      return JavaContainerBuilder.from(baseImage)
+          .setAppRoot(appRoot)
+          .addResources(classesOutputDirectory, isClassFile.negate())
+          .addClasses(classesOutputDirectory, isClassFile)
+          .addDependencies(
+              project
+                  .getArtifacts()
+                  .stream()
+                  .map(Artifact::getFile)
+                  .map(File::toPath)
+                  .collect(Collectors.toList()))
+          .toContainerBuilder();
 
     } catch (IOException ex) {
       throw new IOException(
