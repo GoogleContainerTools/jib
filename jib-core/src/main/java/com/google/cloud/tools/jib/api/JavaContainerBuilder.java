@@ -469,22 +469,22 @@ public class JavaContainerBuilder {
             .filter(entry -> entry.getValue() > 1)
             .map(Entry::getKey)
             .collect(Collectors.toList());
-    for (Path path : addedDependencies) {
+    for (Path file : addedDependencies) {
       // Add dependencies to layer configuration
       layerConfigurationsBuilder.addFile(
-          path.getFileName().toString().contains("SNAPSHOT")
+          file.getFileName().toString().contains("SNAPSHOT")
               ? LayerType.SNAPSHOT_DEPENDENCIES
               : LayerType.DEPENDENCIES,
-          path,
+          file,
           appRoot
               .resolve(dependenciesDestination)
               .resolve(
-                  duplicates.contains(path.getFileName().toString())
-                      ? path.getFileName()
+                  duplicates.contains(file.getFileName().toString())
+                      ? file.getFileName()
                               .toString()
-                              .replaceFirst("\\.jar$", "-" + Files.size(path))
+                              .replaceFirst("\\.jar$", "-" + Files.size(file))
                           + ".jar"
-                      : path.getFileName().toString()));
+                      : file.getFileName().toString()));
     }
 
     // Add others to layer configuration
