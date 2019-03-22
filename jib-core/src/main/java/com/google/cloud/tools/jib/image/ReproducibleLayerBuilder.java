@@ -107,6 +107,7 @@ public class ReproducibleLayerBuilder {
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
       entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
+      entry.setModTime(layerEntry.getLastModifiedTime());
 
       uniqueTarArchiveEntries.add(entry);
     }
@@ -120,8 +121,6 @@ public class ReproducibleLayerBuilder {
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     for (TarArchiveEntry entry : sortedFilesystemEntries) {
       // Strips out all non-reproducible elements from tar archive entries.
-      // 1 second since the epoch (https://github.com/GoogleContainerTools/jib/issues/1079)
-      entry.setModTime(1000);
       entry.setGroupId(0);
       entry.setUserId(0);
       entry.setUserName("");

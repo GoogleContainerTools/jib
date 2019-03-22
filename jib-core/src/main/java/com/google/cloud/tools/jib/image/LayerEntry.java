@@ -40,6 +40,7 @@ public class LayerEntry {
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
   private final FilePermissions permissions;
+  private final long lastModifiedTime;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -58,9 +59,14 @@ public class LayerEntry {
    *     sourceFile}
    * @param permissions the file permissions on the container. Use {@code null} to use defaults (644
    *     for files, 755 for directories)
+   * @param lastModifiedTime the file modification time, default to 1 second since the epoch
+   *     (https://github.com/GoogleContainerTools/jib/issues/1079)
    */
   public LayerEntry(
-      Path sourceFile, AbsoluteUnixPath extractionPath, @Nullable FilePermissions permissions) {
+      Path sourceFile,
+      AbsoluteUnixPath extractionPath,
+      @Nullable FilePermissions permissions,
+      long lastModifiedTime) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
     this.permissions =
@@ -69,6 +75,31 @@ public class LayerEntry {
                 ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
                 : FilePermissions.DEFAULT_FILE_PERMISSIONS
             : permissions;
+    this.lastModifiedTime = lastModifiedTime;
+  }
+
+  /**
+   * Instantiates with a source file and the path to place the source file in the container file
+   * system.
+   *
+   * @param sourceFile the source file to add to the layer
+   * @param extractionPath the path in the container file system corresponding to the {@code
+   *     sourceFile}
+   * @param permissions the file permissions on the container. Use {@code null} to use defaults (644
+   *     for files, 755 for directories)
+   */
+  public LayerEntry(
+      Path sourceFile, AbsoluteUnixPath extractionPath, @Nullable FilePermissions permissions) {
+    this(sourceFile, extractionPath, permissions, 1000);
+  }
+
+  /**
+   * Returns the modification time of the file in the entry.
+   *
+   * @return the modification time
+   */
+  public long getLastModifiedTime() {
+    return lastModifiedTime;
   }
 
   /**
