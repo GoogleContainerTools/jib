@@ -75,7 +75,7 @@ public class LayerEntry {
                 ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
                 : FilePermissions.DEFAULT_FILE_PERMISSIONS
             : permissions;
-    this.lastModifiedTime = Math.max(lastModifiedTime, 1000);
+    this.lastModifiedTime = lastModifiedTime;
   }
 
   /**
@@ -90,7 +90,7 @@ public class LayerEntry {
    */
   public LayerEntry(
       Path sourceFile, AbsoluteUnixPath extractionPath, @Nullable FilePermissions permissions) {
-    this(sourceFile, extractionPath, permissions, -1);
+    this(sourceFile, extractionPath, permissions, 1000);
   }
 
   /**
