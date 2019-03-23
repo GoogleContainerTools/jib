@@ -232,8 +232,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "false", property = PropertyNames.SKIP)
   private boolean skip;
 
-  // @Nullable to suppress NullAway complaining a non-null field uninitialized; not null in practice
-  @Nullable @Component protected SettingsDecrypter settingsDecrypter;
+  @Component protected SettingsDecrypter settingsDecrypter;
 
   MavenSession getSession() {
     return Preconditions.checkNotNull(session);
@@ -545,7 +544,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   SettingsDecrypter getSettingsDecrypter() {
-    return Preconditions.checkNotNull(settingsDecrypter);
+    return settingsDecrypter;
   }
 
   @VisibleForTesting

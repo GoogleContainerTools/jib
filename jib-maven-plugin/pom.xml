@@ -368,7 +368,7 @@
               </annotationProcessorPaths>
               <compilerArgs>
                 <arg>-XDcompilePolicy=simple</arg>
-                <arg>-Xplugin:ErrorProne -Xep:NullAway:ERROR -XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools</arg>
+                <arg>-Xplugin:ErrorProne -Xep:NullAway:ERROR -XepOpt:NullAway:ExcludedFieldAnnotations=org.apache.maven.plugins.annotations.Component -XepOpt:NullAway:AnnotatedPackages=com.google.cloud.tools</arg>
               </compilerArgs>
             </configuration>
           </execution>
