@@ -89,7 +89,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
           PluginConfigurationProcessor.processCommonConfigurationForTarImage(
               mavenRawConfiguration,
               new MavenSettingsServerCredentials(
-                  getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
+                  getSession().getSettings(), getSettingsDecrypter()),
               projectProperties,
               tarOutputPath,
               mavenHelpfulSuggestionsBuilder.build());
