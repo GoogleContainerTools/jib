@@ -34,11 +34,11 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -231,8 +231,11 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public ImmutableList<Path> getClassFiles() throws IOException {
-    return new DirectoryWalker(Paths.get(project.getBuild().getOutputDirectory())).walk().asList();
+  public List<Path> getClassFiles() throws IOException {
+    return new DirectoryWalker(Paths.get(project.getBuild().getOutputDirectory()))
+        .filter(path -> path.getFileName().endsWith(".class"))
+        .walk()
+        .asList();
   }
 
   @Override

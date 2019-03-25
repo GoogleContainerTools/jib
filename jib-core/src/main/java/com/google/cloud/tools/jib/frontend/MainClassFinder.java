@@ -146,8 +146,8 @@ public class MainClassFinder {
    * @param files the files to check
    * @param eventDispatcher used for dispatching log events.
    */
-  public MainClassFinder(ImmutableList<Path> files, EventDispatcher eventDispatcher) {
-    this.files = files;
+  public MainClassFinder(List<Path> files, EventDispatcher eventDispatcher) {
+    this.files = ImmutableList.copyOf(files);
     this.eventDispatcher = eventDispatcher;
   }
 

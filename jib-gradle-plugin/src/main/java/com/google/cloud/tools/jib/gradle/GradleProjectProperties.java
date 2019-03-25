@@ -185,12 +185,10 @@ class GradleProjectProperties implements ProjectProperties {
       }
 
       // Adds class files
-      for (File classesOutputDirectory : classesOutputDirectories.filter(File::exists)) {
-        if (classesOutputDirectory.exists()) {
-          javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
-        }
+      for (File classesOutputDirectory : classesOutputDirectories) {
+        javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
       }
-      if (classesOutputDirectories.filter(File::exists).isEmpty()) {
+      if (classesOutputDirectories.isEmpty()) {
         logger.warn("No classes files were found - did you compile your project?");
       }
 
@@ -211,15 +209,20 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public ImmutableList<Path> getClassFiles() throws IOException {
+  public List<Path> getClassFiles() throws IOException {
     // TODO: Consolidate with getContainerBuilderWithLayers
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
-    FileCollection classesOutputDirectories = mainSourceSet.getOutput().getClassesDirs();
+    FileCollection classesOutputDirectories =
+        mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
     ImmutableList.Builder<Path> classFiles = ImmutableList.builder();
     for (File classesOutputDirectory : classesOutputDirectories) {
-      classFiles.addAll(new DirectoryWalker(classesOutputDirectory.toPath()).walk().asList());
+      classFiles.addAll(
+          new DirectoryWalker(classesOutputDirectory.toPath())
+              .filter(path -> path.getFileName().endsWith(".class"))
+              .walk()
+              .asList());
     }
     return classFiles.build();
   }
