@@ -217,11 +217,7 @@ class GradleProjectProperties implements ProjectProperties {
         mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
     List<Path> classFiles = new ArrayList<>();
     for (File classesOutputDirectory : classesOutputDirectories) {
-      classFiles.addAll(
-          new DirectoryWalker(classesOutputDirectory.toPath())
-              .filter(path -> path.getFileName().endsWith(".class"))
-              .walk()
-              .asList());
+      classFiles.addAll(new DirectoryWalker(classesOutputDirectory.toPath()).walk().asList());
     }
     return classFiles;
   }
