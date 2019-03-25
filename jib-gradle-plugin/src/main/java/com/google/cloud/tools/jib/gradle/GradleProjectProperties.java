@@ -34,7 +34,6 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -216,7 +215,7 @@ class GradleProjectProperties implements ProjectProperties {
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
     FileCollection classesOutputDirectories =
         mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
-    ImmutableList.Builder<Path> classFiles = ImmutableList.builder();
+    List<Path> classFiles = new ArrayList<>();
     for (File classesOutputDirectory : classesOutputDirectories) {
       classFiles.addAll(
           new DirectoryWalker(classesOutputDirectory.toPath())
@@ -224,7 +223,7 @@ class GradleProjectProperties implements ProjectProperties {
               .walk()
               .asList());
     }
-    return classFiles.build();
+    return classFiles;
   }
 
   @Override

@@ -72,16 +72,18 @@ public class MavenProjectPropertiesTest {
     private final List<LayerConfiguration> snapshotsLayerEntries;
 
     private ContainerBuilderLayers(BuildConfiguration configuration) {
-      resourcesLayerEntries = getLayerEntriesByName(configuration, LayerType.RESOURCES.getName());
-      classesLayerEntries = getLayerEntriesByName(configuration, LayerType.CLASSES.getName());
+      resourcesLayerEntries =
+          getLayerConfigurationsByName(configuration, LayerType.RESOURCES.getName());
+      classesLayerEntries =
+          getLayerConfigurationsByName(configuration, LayerType.CLASSES.getName());
       dependenciesLayerEntries =
-          getLayerEntriesByName(configuration, LayerType.DEPENDENCIES.getName());
+          getLayerConfigurationsByName(configuration, LayerType.DEPENDENCIES.getName());
       snapshotsLayerEntries =
-          getLayerEntriesByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+          getLayerConfigurationsByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
     }
   }
 
-  private static List<LayerConfiguration> getLayerEntriesByName(
+  private static List<LayerConfiguration> getLayerConfigurationsByName(
       BuildConfiguration buildConfiguration, String name) {
     return buildConfiguration
         .getLayerConfigurations()

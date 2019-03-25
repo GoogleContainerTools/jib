@@ -65,7 +65,7 @@ public class JavaContainerBuilderHelperTest {
         expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
-  private static List<LayerConfiguration> getLayerConfigurationByName(
+  private static List<LayerConfiguration> getLayerConfigurationsByName(
       BuildConfiguration buildConfiguration, String name) {
     return buildConfiguration
         .getLayerConfigurations()
@@ -114,13 +114,13 @@ public class JavaContainerBuilderHelperTest {
                 MoreExecutors.newDirectExecutorService());
 
     List<LayerConfiguration> resourcesLayerConfigurations =
-        getLayerConfigurationByName(configuration, LayerType.RESOURCES.getName());
+        getLayerConfigurationsByName(configuration, LayerType.RESOURCES.getName());
     List<LayerConfiguration> classesLayerConfigurations =
-        getLayerConfigurationByName(configuration, LayerType.CLASSES.getName());
+        getLayerConfigurationsByName(configuration, LayerType.CLASSES.getName());
     List<LayerConfiguration> dependenciesLayerConfigurations =
-        getLayerConfigurationByName(configuration, LayerType.DEPENDENCIES.getName());
+        getLayerConfigurationsByName(configuration, LayerType.DEPENDENCIES.getName());
     List<LayerConfiguration> snapshotsLayerConfigurations =
-        getLayerConfigurationByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+        getLayerConfigurationsByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
 
     assertSourcePathsUnordered(
         Collections.singletonList(temporaryExplodedWar.resolve("WEB-INF/lib/dependency-1.0.0.jar")),

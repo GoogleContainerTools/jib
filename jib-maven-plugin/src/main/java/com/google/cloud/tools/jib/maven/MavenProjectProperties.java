@@ -198,7 +198,7 @@ public class MavenProjectProperties implements ProjectProperties {
   public JibContainerBuilder getContainerBuilderWithLayers(RegistryImage baseImage)
       throws IOException {
     try {
-      if (MojoCommon.isWarProject(project)) {
+      if (isWarProject()) {
         Path explodedWarPath =
             Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
         return JavaContainerBuilderHelper.fromExplodedWar(baseImage, explodedWarPath, appRoot);

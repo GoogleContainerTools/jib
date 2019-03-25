@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.RelativeUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
@@ -33,7 +32,6 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -229,8 +227,8 @@ public class JavaContainerBuilder {
       if (!Files.exists(file)) {
         throw new NoSuchFileException(file.toString());
       }
-      addedDependencies.add(file);
     }
+    addedDependencies.addAll(dependencyFiles);
     classpathOrder.add(LayerType.DEPENDENCIES);
     return this;
   }
@@ -247,40 +245,6 @@ public class JavaContainerBuilder {
     return addDependencies(Arrays.asList(dependencyFiles));
   }
 
-  /**
-   * Adds the contents of a dependency JAR directory to the image. Duplicate JAR filenames are
-   * renamed with the filesize in order to avoid collisions.
-   *
-   * @param dependenciesDirectory the directory containing dependency JARs to add to the image
-   * @return this
-   * @throws IOException if adding the layer fails
-   */
-  public JavaContainerBuilder addDependencies(Path dependenciesDirectory) throws IOException {
-    if (!Files.isDirectory(dependenciesDirectory)) {
-      return addDependencies(Collections.singletonList(dependenciesDirectory));
-    }
-    return addDependencies(dependenciesDirectory, path -> true);
-  }
-
-  /**
-   * Adds the contents of a dependency JAR directory to the image. Duplicate JAR filenames are
-   * renamed with the filesize in order to avoid collisions.
-   *
-   * @param dependenciesDirectory the directory containing dependency JARs to add to the image
-   * @param pathFilter filter that determines which files (not directories) should be added
-   * @return this
-   * @throws IOException if adding the layer fails
-   */
-  public JavaContainerBuilder addDependencies(
-      Path dependenciesDirectory, Predicate<Path> pathFilter) throws IOException {
-    return addDependencies(
-        new DirectoryWalker(dependenciesDirectory)
-            .filterRoot()
-            .filter(pathFilter)
-            .filter(path -> !Files.isDirectory(path))
-            .walk()
-            .asList());
-  }
   /**
    * Adds the contents of a resources directory to the image.
    *

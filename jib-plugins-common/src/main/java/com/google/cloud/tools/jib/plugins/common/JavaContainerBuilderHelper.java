@@ -50,11 +50,11 @@ public class JavaContainerBuilderHelper {
     new DirectoryWalker(extraDirectory)
         .filterRoot()
         .walk(
-            path -> {
+            localPath -> {
               AbsoluteUnixPath pathOnContainer =
-                  AbsoluteUnixPath.get("/").resolve(extraDirectory.relativize(path));
+                  AbsoluteUnixPath.get("/").resolve(extraDirectory.relativize(localPath));
               builder.addEntry(
-                  path, pathOnContainer, extraDirectoryPermissions.get(pathOnContainer));
+                  localPath, pathOnContainer, extraDirectoryPermissions.get(pathOnContainer));
             });
     return builder.build();
   }
@@ -91,7 +91,7 @@ public class JavaContainerBuilderHelper {
       javaContainerBuilder.addClasses(webInfClasses, isClassFile);
     }
     if (Files.exists(webInfLib)) {
-      javaContainerBuilder.addDependencies(webInfLib);
+      javaContainerBuilder.addDependencies(new DirectoryWalker(webInfLib).filterRoot().walk());
     }
     return javaContainerBuilder.toContainerBuilder();
   }

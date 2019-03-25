@@ -117,16 +117,17 @@ public class GradleProjectPropertiesTest {
 
     private ContainerBuilderLayers(BuildConfiguration configuration) {
       resourcesLayerEntries =
-          getLayerConfigurationByName(configuration, LayerType.RESOURCES.getName());
-      classesLayerEntries = getLayerConfigurationByName(configuration, LayerType.CLASSES.getName());
+          getLayerConfigurationsByName(configuration, LayerType.RESOURCES.getName());
+      classesLayerEntries =
+          getLayerConfigurationsByName(configuration, LayerType.CLASSES.getName());
       dependenciesLayerEntries =
-          getLayerConfigurationByName(configuration, LayerType.DEPENDENCIES.getName());
+          getLayerConfigurationsByName(configuration, LayerType.DEPENDENCIES.getName());
       snapshotsLayerEntries =
-          getLayerConfigurationByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+          getLayerConfigurationsByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
     }
   }
 
-  private static List<LayerConfiguration> getLayerConfigurationByName(
+  private static List<LayerConfiguration> getLayerConfigurationsByName(
       BuildConfiguration buildConfiguration, String name) {
     return buildConfiguration
         .getLayerConfigurations()
