@@ -382,9 +382,13 @@ Gradle: use `grade --debug -DjibSerialize=true` to enable more detailed logging 
 
 ### How do I enable debugging?
 
-If using the `distroless/java` base image, then use the [`JAVA_TOOL_OPTIONS`](#how-do-i-set-parameters-for-my-image-at-runtime) to pass along debugging configuration arguments.  For example, to have the remote VM accept debug connections on port 5005, but not suspend:
+If using the `distroless/java` base image, then use the [`JAVA_TOOL_OPTIONS`](#how-do-i-set-parameters-for-my-image-at-runtime) to pass along debugging configuration arguments.  For example, to have the remote VM accept debug connections on port 5005, but not suspend for JDK 5-8:
 ```
 -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+```
+for JDK 9+:
+```
+-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
 ```
 
 Then connect your debugger to port 5005 on the given host.  You can port-forward the container port to a localhost port for easy access.
