@@ -393,9 +393,7 @@ Using Docker: `docker run -p 5005:5005 <image>`
 
 Using Kubernetes: `kubectl port-forward <pod name> 5005:5005`
 
-Beware: in Java 8 and earlier, specifying only a port meant that
-the JDWP socket was open to all incoming connections which is
-insecure.  It is recommended to limit the debug port to localhost.
+Beware: in Java 8 and earlier, specifying only a port meant that the JDWP socket was open to all incoming connections which is insecure.  It is recommended to limit the debug port to localhost.
 
 ### Why is my image created 48 years ago?
 
