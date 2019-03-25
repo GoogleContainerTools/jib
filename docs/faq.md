@@ -415,28 +415,9 @@ jib.container.useCurrentTimestamp = true
 
 #### Please tell me more about reproducibility!
 
-_Reproducible_ means that building and rebuilding with Jib should
-produce an identical container image: the files should be the same,
-the file permissions should be the same, the file names should be
-the same, and the file creation and modification timestamps should
-be the same.
+_Reproducible_ means that given the same inputs, a build should produce the same outputs.  Container images are uniquely identified by a digest (or a hash) of the image contents and image metadata.  Tools and infrastructure such the Docker daemon, Docker Hub, registries, Kubernetes, etc) treat images with different digests as being different.
 
-Say that you ran `mvn jib:dockerBuild` with
-`<container><userCurrentTimestamp>true`. Jib will build an image
-whose creation time is the current timestamp. Now, a few seconds
-later, you run `mvn jib:dockerBuild` again without changing anything
-in your project. That is, the image created by the second `mvn
-jib:dockerBuild` build is identical to the first image except for
-the timestamp. But since the two images have different timestamps,
-the images will appear to be different to tools and infrastructure
-such Docker daemon, Docker Hub, registries, Kubernetes, etc). For
-example, now `docker images` will list two images, whereas without
-<useCurrentTimestamp>, the Docker daemon would have thought that
-the image already existed and resulted in no-op. Likewise, when you
-push the second image to a remote registry, the registry will treat
-it as a new image that doesn't exist. Tools will think it is a
-different image and download it again and cache it as a different
-image, even if it is the exactly same image except the timestamp.
+To ensure that a Jib build is reproducible — that the rebuilt container image has the same digest — Jib adds files and directories in a consistent order, and sets consistent creation- and modification-times and permissions for all files and directories.  Jib also ensures that the image metadata is recorded in a consistent order, and that the container image has a consistent creation time.  To ensure consistent times, files and directories are recorded as having a creation and modification time of 1 second past the Unix Epoch (1970-01-01 00:00:01.000 UTC), and the container image is recorded as being created on the Unix Epoch.  By setting `container.useCurrentTimestamp=true` then rebuilding an image will produce a different timestamp for the image creation time, and so the container images will have different digests and appear to be different.
 
 For more details see [reproducible-builds.org](https://reproducible-builds.org).
 
