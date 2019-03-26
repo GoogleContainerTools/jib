@@ -382,16 +382,18 @@ Gradle: use `grade --debug -DjibSerialize=true` to enable more detailed logging 
 
 ### How do I enable debugging?
 
-If using the `distroless/java` base image, then use the [`JAVA_TOOL_OPTIONS`](#how-do-i-set-parameters-for-my-image-at-runtime) to pass along debugging configuration arguments.  For example, to have the remote VM accept debug connections on port 5005, but not suspend:
+If using the `distroless/java` base image, then use the [`JAVA_TOOL_OPTIONS`](#how-do-i-set-parameters-for-my-image-at-runtime) to pass along debugging configuration arguments.  For example, to have the remote VM accept local debug connections on port 5005, but not suspend:
 ```
--agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=localhost:5005
 ```
 
-Then connect your debugger to port 5005 on the given host.  You can port-forward the container port to a localhost port for easy access.
+Then connect your debugger to port 5005 on your local host.  You can port-forward the container port to a localhost port for easy access.
 
 Using Docker: `docker run -p 5005:5005 <image>`
 
 Using Kubernetes: `kubectl port-forward <pod name> 5005:5005`
+
+Beware: in Java 8 and earlier, specifying only a port meant that the JDWP socket was open to all incoming connections which is insecure.  It is recommended to limit the debug port to localhost.
 
 ### Why is my image created 48 years ago?
 
@@ -412,6 +414,15 @@ For reproducibility purposes, Jib sets the creation time of the container images
 ```groovy
 jib.container.useCurrentTimestamp = true
 ```
+
+#### Please tell me more about reproducibility!
+
+_Reproducible_ means that given the same inputs, a build should produce the same outputs.  Container images are uniquely identified by a digest (or a hash) of the image contents and image metadata.  Tools and infrastructure such the Docker daemon, Docker Hub, registries, Kubernetes, etc) treat images with different digests as being different.
+
+To ensure that a Jib build is reproducible — that the rebuilt container image has the same digest — Jib adds files and directories in a consistent order, and sets consistent creation- and modification-times and permissions for all files and directories.  Jib also ensures that the image metadata is recorded in a consistent order, and that the container image has a consistent creation time.  To ensure consistent times, files and directories are recorded as having a creation and modification time of 1 second past the Unix Epoch (1970-01-01 00:00:01.000 UTC), and the container image is recorded as being created on the Unix Epoch.  Setting `container.useCurrentTimestamp=true` and then rebuilding an image will produce a different timestamp for the image creation time, and so the container images will have different digests and appear to be different.
+
+For more details see [reproducible-builds.org](https://reproducible-builds.org).
+
 
 ### I would like to run my application with a javaagent.
 
