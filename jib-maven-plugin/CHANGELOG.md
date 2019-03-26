@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - `os` and `architecture` are taken from base image ([#1564](https://github.com/GoogleContainerTools/jib/pull/1564))
 
 ### Fixed
+- Fixed an issue that pushing to Docker Hub fails when the host part of the image reference is `docker.io` ([#1549](https://github.com/GoogleContainerTools/jib/issues/1549))
 
 ## 1.0.2
 
