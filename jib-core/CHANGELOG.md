@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - `os` and `architecture` are taken from base image ([#1564](https://github.com/GoogleContainerTools/jib/pull/1564))
 
 ### Fixed
+- `ImageReference` assumes `registry-1.docker.io` as the registry if the host part of an image reference is `docker.io` ([#1549](https://github.com/GoogleContainerTools/jib/issues/1549))
 
 ## 0.1.2
 
