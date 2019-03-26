@@ -31,7 +31,6 @@ class ProxyProvider {
    * Initializes proxy settings based on Maven settings.
    *
    * @param settings Maven settings
-   * @param eventDispatcher the Jib event dispatcher
    */
   static void init(DecryptedMavenSettings settings) {
     configureProxy(settings, "https");

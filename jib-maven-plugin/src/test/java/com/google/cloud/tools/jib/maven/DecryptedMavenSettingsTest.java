@@ -23,6 +23,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.settings.Proxy;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.building.SettingsProblem;
 import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 import org.junit.Assert;
@@ -58,7 +59,20 @@ public class DecryptedMavenSettingsTest {
   }
 
   @Test
-  public void testFrom_decrypterFailure() {}
+  public void testFrom_decrypterFailure() {
+    SettingsProblem problem = Mockito.mock(SettingsProblem.class);
+    Mockito.when(problem.getSeverity()).thenReturn(SettingsProblem.Severity.ERROR);
+    // Maven's SettingsProblem has a more structured toString, but irrelevant here
+    Mockito.when(problem.toString()).thenReturn("MockProblemText");
+    Mockito.when(decryptionResult.getProblems()).thenReturn(Arrays.asList(problem));
+
+    try {
+      DecryptedMavenSettings.from(settings, settingsDecrypter);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertEquals("Unable to decrypt settings.xml: MockProblemText", ex.getMessage());
+    }
+  }
 
   @Test
   public void testGetServers() {
