@@ -33,7 +33,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link DecryptedMavenSettingsTest}. */
+/** Tests for {@link DecryptedMavenSettings}. */
 @RunWith(MockitoJUnitRunner.class)
 public class DecryptedMavenSettingsTest {
 

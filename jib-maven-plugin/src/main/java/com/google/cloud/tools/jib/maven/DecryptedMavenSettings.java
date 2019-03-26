@@ -27,7 +27,7 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.apache.maven.settings.crypto.SettingsDecryptionRequest;
 import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
-/** ADD JAVADOC */
+/** Provides decrypted Maven settings information. */
 class DecryptedMavenSettings {
 
   static DecryptedMavenSettings from(Settings settings, SettingsDecrypter decryptor)
