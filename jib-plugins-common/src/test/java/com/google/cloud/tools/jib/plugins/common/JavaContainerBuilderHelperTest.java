@@ -16,12 +16,19 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.RegistryImage;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -37,8 +44,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Tests for {@link JavaLayerConfigurationsHelper}. */
-public class JavaLayerConfigurationsHelperTest {
+/** Tests for {@link JavaContainerBuilderHelper}. */
+public class JavaContainerBuilderHelperTest {
 
   private static <T> void assertLayerEntriesUnordered(
       List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
@@ -58,10 +65,38 @@ public class JavaLayerConfigurationsHelperTest {
         expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
+  private static List<LayerConfiguration> getLayerConfigurationsByName(
+      BuildConfiguration buildConfiguration, String name) {
+    return buildConfiguration
+        .getLayerConfigurations()
+        .stream()
+        .filter(layer -> layer.getName().equals(name))
+        .collect(Collectors.toList());
+  }
+
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testFromExplodedWar() throws URISyntaxException, IOException {
+  public void testExtraDirectoryLayerConfiguration() throws URISyntaxException, IOException {
+    Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
+    LayerConfiguration layerConfiguration =
+        JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
+            extraFilesDirectory, Collections.emptyMap());
+    assertSourcePathsUnordered(
+        Arrays.asList(
+            extraFilesDirectory.resolve("a"),
+            extraFilesDirectory.resolve("a/b"),
+            extraFilesDirectory.resolve("a/b/bar"),
+            extraFilesDirectory.resolve("c"),
+            extraFilesDirectory.resolve("c/cat"),
+            extraFilesDirectory.resolve("foo")),
+        layerConfiguration.getLayerEntries());
+  }
+
+  @Test
+  public void testFromExplodedWar()
+      throws URISyntaxException, IOException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
     // Copy test files to a temporary directory that we can safely operate on
     Path resourceExplodedWar =
         Paths.get(Resources.getResource("plugins-common/exploded-war").toURI());
@@ -71,20 +106,29 @@ public class JavaLayerConfigurationsHelperTest {
     Files.createDirectories(temporaryExplodedWar.resolve("WEB-INF/classes/empty_dir"));
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
 
-    JavaLayerConfigurations configuration =
-        JavaLayerConfigurationsHelper.fromExplodedWar(
-            temporaryExplodedWar,
-            AbsoluteUnixPath.get("/my/app"),
-            extraFilesDirectory,
-            Collections.emptyMap());
+    BuildConfiguration configuration =
+        JavaContainerBuilderHelper.fromExplodedWar(
+                RegistryImage.named("base"), temporaryExplodedWar, AbsoluteUnixPath.get("/my/app"))
+            .toBuildConfiguration(
+                Containerizer.to(RegistryImage.named("target")),
+                MoreExecutors.newDirectExecutorService());
+
+    List<LayerConfiguration> resourcesLayerConfigurations =
+        getLayerConfigurationsByName(configuration, LayerType.RESOURCES.getName());
+    List<LayerConfiguration> classesLayerConfigurations =
+        getLayerConfigurationsByName(configuration, LayerType.CLASSES.getName());
+    List<LayerConfiguration> dependenciesLayerConfigurations =
+        getLayerConfigurationsByName(configuration, LayerType.DEPENDENCIES.getName());
+    List<LayerConfiguration> snapshotsLayerConfigurations =
+        getLayerConfigurationsByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
 
     assertSourcePathsUnordered(
         Collections.singletonList(temporaryExplodedWar.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
-        configuration.getDependencyLayerEntries());
+        dependenciesLayerConfigurations.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         Collections.singletonList(
             temporaryExplodedWar.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
-        configuration.getSnapshotDependencyLayerEntries());
+        snapshotsLayerConfigurations.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         Arrays.asList(
             temporaryExplodedWar.resolve("META-INF"),
@@ -97,30 +141,21 @@ public class JavaLayerConfigurationsHelperTest {
             temporaryExplodedWar.resolve("WEB-INF/classes/package/test.properties"),
             temporaryExplodedWar.resolve("WEB-INF/lib"),
             temporaryExplodedWar.resolve("WEB-INF/web.xml")),
-        configuration.getResourceLayerEntries());
+        resourcesLayerConfigurations.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         Arrays.asList(
             temporaryExplodedWar.resolve("WEB-INF/classes/HelloWorld.class"),
             temporaryExplodedWar.resolve("WEB-INF/classes/empty_dir"),
             temporaryExplodedWar.resolve("WEB-INF/classes/package"),
             temporaryExplodedWar.resolve("WEB-INF/classes/package/Other.class")),
-        configuration.getClassLayerEntries());
-    assertSourcePathsUnordered(
-        Arrays.asList(
-            extraFilesDirectory.resolve("a"),
-            extraFilesDirectory.resolve("a/b"),
-            extraFilesDirectory.resolve("a/b/bar"),
-            extraFilesDirectory.resolve("c"),
-            extraFilesDirectory.resolve("c/cat"),
-            extraFilesDirectory.resolve("foo")),
-        configuration.getExtraFilesLayerEntries());
+        classesLayerConfigurations.get(0).getLayerEntries());
 
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
-        configuration.getDependencyLayerEntries());
+        dependenciesLayerConfigurations.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
-        configuration.getSnapshotDependencyLayerEntries());
+        snapshotsLayerConfigurations.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/META-INF",
@@ -133,16 +168,13 @@ public class JavaLayerConfigurationsHelperTest {
             "/my/app/WEB-INF/classes/package/test.properties",
             "/my/app/WEB-INF/lib",
             "/my/app/WEB-INF/web.xml"),
-        configuration.getResourceLayerEntries());
+        resourcesLayerConfigurations.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/WEB-INF/classes/HelloWorld.class",
             "/my/app/WEB-INF/classes/empty_dir",
             "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/Other.class"),
-        configuration.getClassLayerEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"),
-        configuration.getExtraFilesLayerEntries());
+        classesLayerConfigurations.get(0).getLayerEntries());
   }
 }

@@ -56,7 +56,7 @@ public class JavaLayerConfigurations {
     }
 
     @VisibleForTesting
-    String getName() {
+    public String getName() {
       return name;
     }
   }

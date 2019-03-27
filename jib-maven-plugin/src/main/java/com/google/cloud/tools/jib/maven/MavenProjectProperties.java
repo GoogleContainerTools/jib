@@ -16,13 +16,16 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.configuration.FilePermissions;
+import com.google.cloud.tools.jib.api.JavaContainerBuilder;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
@@ -31,14 +34,17 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Plugin;
-import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.utils.Os;
@@ -63,34 +69,12 @@ public class MavenProjectProperties implements ProjectProperties {
    * @param project the {@link MavenProject} for the plugin.
    * @param session the {@link MavenSession} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution
-   * @param extraDirectory path to the directory for the extra files layer
-   * @param permissions map from path on container to file permissions for extra-layer files
    * @param appRoot root directory in the image where the app will be placed
    * @return a MavenProjectProperties from the given project and logger.
-   * @throws MojoExecutionException if no class files are found in the output directory.
    */
   static MavenProjectProperties getForProject(
-      MavenProject project,
-      MavenSession session,
-      Log log,
-      Path extraDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> permissions,
-      AbsoluteUnixPath appRoot)
-      throws MojoExecutionException {
-    try {
-      return new MavenProjectProperties(
-          project,
-          session,
-          log,
-          MavenLayerConfigurations.getForProject(project, extraDirectory, permissions, appRoot));
-
-    } catch (IOException ex) {
-      throw new MojoExecutionException(
-          "Obtaining project build output files failed; make sure you have compiled your project "
-              + "before trying to build the image. (Did you accidentally run \"mvn clean "
-              + "jib:build\" instead of \"mvn clean compile jib:build\"?)",
-          ex);
-    }
+      MavenProject project, MavenSession session, Log log, AbsoluteUnixPath appRoot) {
+    return new MavenProjectProperties(project, session, log, appRoot);
   }
 
   /**
@@ -200,23 +184,54 @@ public class MavenProjectProperties implements ProjectProperties {
   private final MavenProject project;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final EventHandlers eventHandlers;
-  private final JavaLayerConfigurations javaLayerConfigurations;
+  private final AbsoluteUnixPath appRoot;
 
   @VisibleForTesting
   MavenProjectProperties(
-      MavenProject project,
-      MavenSession session,
-      Log log,
-      JavaLayerConfigurations javaLayerConfigurations) {
+      MavenProject project, MavenSession session, Log log, AbsoluteUnixPath appRoot) {
     this.project = project;
-    this.javaLayerConfigurations = javaLayerConfigurations;
-
+    this.appRoot = appRoot;
     eventHandlers = makeEventHandlers(session, log, singleThreadedExecutor);
   }
 
   @Override
-  public JavaLayerConfigurations getJavaLayerConfigurations() {
-    return javaLayerConfigurations;
+  public JibContainerBuilder createContainerBuilder(RegistryImage baseImage) throws IOException {
+    try {
+      if (isWarProject()) {
+        Path explodedWarPath =
+            Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
+        return JavaContainerBuilderHelper.fromExplodedWar(baseImage, explodedWarPath, appRoot);
+      }
+
+      Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
+      Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+
+      // Add dependencies, resources, and classes
+      return JavaContainerBuilder.from(baseImage)
+          .setAppRoot(appRoot)
+          .addResources(classesOutputDirectory, isClassFile.negate())
+          .addClasses(classesOutputDirectory, isClassFile)
+          .addDependencies(
+              project
+                  .getArtifacts()
+                  .stream()
+                  .map(Artifact::getFile)
+                  .map(File::toPath)
+                  .collect(Collectors.toList()))
+          .toContainerBuilder();
+
+    } catch (IOException ex) {
+      throw new IOException(
+          "Obtaining project build output files failed; make sure you have compiled your project "
+              + "before trying to build the image. (Did you accidentally run \"mvn clean "
+              + "jib:build\" instead of \"mvn clean compile jib:build\"?)",
+          ex);
+    }
+  }
+
+  @Override
+  public List<Path> getClassFiles() throws IOException {
+    return new DirectoryWalker(Paths.get(project.getBuild().getOutputDirectory())).walk().asList();
   }
 
   @Override

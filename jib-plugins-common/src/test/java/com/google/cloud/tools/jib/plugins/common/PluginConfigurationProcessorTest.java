@@ -17,11 +17,13 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
@@ -29,14 +31,21 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Resources;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,6 +65,24 @@ public class PluginConfigurationProcessorTest {
         jibContainerBuilder, Containerizer.to(RegistryImage.named("ignored")));
   }
 
+  private static <T> void assertLayerEntriesUnordered(
+      List<T> expectedPaths, List<LayerEntry> entries, Function<LayerEntry, T> fieldSelector) {
+    List<T> expected = expectedPaths.stream().sorted().collect(Collectors.toList());
+    List<T> actual = entries.stream().map(fieldSelector).sorted().collect(Collectors.toList());
+    Assert.assertEquals(expected, actual);
+  }
+
+  private static void assertSourcePathsUnordered(
+      List<Path> expectedPaths, List<LayerEntry> entries) {
+    assertLayerEntriesUnordered(expectedPaths, entries, LayerEntry::getSourceFile);
+  }
+
+  private static void assertExtractionPathsUnordered(
+      List<String> expectedPaths, List<LayerEntry> entries) {
+    assertLayerEntriesUnordered(
+        expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
+  }
+
   @Mock private RawConfiguration rawConfiguration;
   @Mock private ProjectProperties projectProperties;
   @Mock private Containerizer containerizer;
@@ -64,18 +91,21 @@ public class PluginConfigurationProcessorTest {
   @Mock private Consumer<LogEvent> logger;
 
   @Before
-  public void setUp() {
+  public void setUp() throws IOException, InvalidImageReferenceException {
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
+    Mockito.when(rawConfiguration.getExtraDirectory()).thenReturn(Paths.get("nonexistent/path"));
 
     Mockito.when(projectProperties.getToolName()).thenReturn("tool");
-    Mockito.when(projectProperties.getJavaLayerConfigurations())
-        .thenReturn(JavaLayerConfigurations.builder().build());
     Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");
     Mockito.when(projectProperties.getEventHandlers())
         .thenReturn(new EventHandlers().add(JibEventType.LOGGING, logger));
     Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
+    Mockito.when(projectProperties.createContainerBuilder(Mockito.any()))
+        .thenReturn(
+            Jib.from("base")
+                .setLayers(JavaLayerConfigurations.builder().build().getLayerConfigurations()));
 
     Mockito.when(containerizer.setToolName(Mockito.anyString())).thenReturn(containerizer);
     Mockito.when(containerizer.setEventHandlers(Mockito.any(EventHandlers.class)))
@@ -108,6 +138,52 @@ public class PluginConfigurationProcessorTest {
 
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
     Mockito.verify(logger, Mockito.never()).accept(Mockito.argThat(isLogWarn));
+  }
+
+  @Test
+  public void testPluginConfigurationProcessor_extraDirectory()
+      throws URISyntaxException, InferredAuthRetrievalException, InvalidContainerVolumeException,
+          MainClassInferenceException, InvalidAppRootException, IOException,
+          IncompatibleBaseImageJavaVersionException, InvalidWorkingDirectoryException,
+          InvalidImageReferenceException, CacheDirectoryCreationException {
+    Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI());
+    Mockito.when(rawConfiguration.getExtraDirectory()).thenReturn(extraDirectory);
+    Mockito.when(rawConfiguration.getExtraDirectoryPermissions())
+        .thenReturn(
+            ImmutableMap.of(AbsoluteUnixPath.get("/foo"), FilePermissions.fromOctalString("123")));
+
+    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processor.getJibContainerBuilder());
+    List<LayerEntry> extraFiles =
+        buildConfiguration
+            .getLayerConfigurations()
+            .stream()
+            .filter(layer -> layer.getName().equals("extra files"))
+            .collect(Collectors.toList())
+            .get(0)
+            .getLayerEntries();
+
+    assertSourcePathsUnordered(
+        Arrays.asList(
+            extraDirectory.resolve("a"),
+            extraDirectory.resolve("a/b"),
+            extraDirectory.resolve("a/b/bar"),
+            extraDirectory.resolve("c"),
+            extraDirectory.resolve("c/cat"),
+            extraDirectory.resolve("foo")),
+        extraFiles);
+    assertExtractionPathsUnordered(
+        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"), extraFiles);
+
+    Optional<LayerEntry> fooEntry =
+        extraFiles
+            .stream()
+            .filter(
+                layerEntry -> layerEntry.getExtractionPath().equals(AbsoluteUnixPath.get("/foo")))
+            .findFirst();
+    Assert.assertTrue(fooEntry.isPresent());
+    Assert.assertEquals("123", fooEntry.get().getPermissions().toOctalString());
   }
 
   @Test
@@ -163,7 +239,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testComputeEntrypoint_inheritKeyword()
-      throws MainClassInferenceException, InvalidAppRootException {
+      throws MainClassInferenceException, InvalidAppRootException, IOException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Collections.singletonList("INHERIT")));
 
@@ -173,7 +249,7 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testComputeEntrypoint_inheritKeywordInNonSingletonList()
-      throws MainClassInferenceException, InvalidAppRootException {
+      throws MainClassInferenceException, InvalidAppRootException, IOException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("INHERIT", "")));
 

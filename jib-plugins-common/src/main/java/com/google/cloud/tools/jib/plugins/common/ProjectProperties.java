@@ -16,9 +16,12 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /** Project property methods that require maven/gradle-specific implementations. */
@@ -43,7 +46,16 @@ public interface ProjectProperties {
 
   String getPluginName();
 
-  JavaLayerConfigurations getJavaLayerConfigurations();
+  /**
+   * Starts the containerization process.
+   *
+   * @param baseImage the base image
+   * @return a {@link JibContainerBuilder} with classes, resources, and dependencies added to it
+   * @throws IOException if there is a problem walking the project files
+   */
+  JibContainerBuilder createContainerBuilder(RegistryImage baseImage) throws IOException;
+
+  List<Path> getClassFiles() throws IOException;
 
   Path getDefaultCacheDirectory();
 
