@@ -102,7 +102,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(projectProperties.getEventHandlers())
         .thenReturn(new EventHandlers().add(JibEventType.LOGGING, logger));
     Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
-    Mockito.when(projectProperties.getContainerBuilderWithLayers(Mockito.any()))
+    Mockito.when(projectProperties.createContainerBuilder(Mockito.any()))
         .thenReturn(
             Jib.from("base")
                 .setLayers(JavaLayerConfigurations.builder().build().getLayerConfigurations()));

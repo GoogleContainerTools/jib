@@ -46,7 +46,14 @@ public interface ProjectProperties {
 
   String getPluginName();
 
-  JibContainerBuilder getContainerBuilderWithLayers(RegistryImage baseImage) throws IOException;
+  /**
+   * Starts the containerization process.
+   *
+   * @param baseImage the base image
+   * @return a {@link JibContainerBuilder} with classes, resources, and dependencies added to it
+   * @throws IOException if there is a problem walking the project files
+   */
+  JibContainerBuilder createContainerBuilder(RegistryImage baseImage) throws IOException;
 
   List<Path> getClassFiles() throws IOException;
 

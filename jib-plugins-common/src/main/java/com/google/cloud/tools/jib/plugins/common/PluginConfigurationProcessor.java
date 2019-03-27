@@ -188,7 +188,7 @@ public class PluginConfigurationProcessor {
 
     JibContainerBuilder jibContainerBuilder =
         projectProperties
-            .getContainerBuilderWithLayers(baseImage)
+            .createContainerBuilder(baseImage)
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())

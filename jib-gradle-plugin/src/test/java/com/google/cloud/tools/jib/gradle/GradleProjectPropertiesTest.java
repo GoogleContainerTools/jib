@@ -321,7 +321,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetContainerBuilderWithLayers_correctFiles()
+  public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     BuildConfiguration configuration = setupBuildConfiguration("/app");
@@ -355,17 +355,16 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetContainerBuilderWithLayers_noClassesFiles()
-      throws InvalidImageReferenceException {
+  public void testCreateContainerBuilder_noClassesFiles() throws InvalidImageReferenceException {
     Path nonexistentFile = Paths.get("/nonexistent/file");
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
-    gradleProjectProperties.getContainerBuilderWithLayers(RegistryImage.named("base"));
+    gradleProjectProperties.createContainerBuilder(RegistryImage.named("base"));
     Mockito.verify(mockLogger).warn("No classes files were found - did you compile your project?");
   }
 
   @Test
-  public void testGetContainerBuilderWithLayers_nonDefaultAppRoot()
+  public void testCreateContainerBuilder_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildConfiguration configuration = setupBuildConfiguration("/my/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
@@ -394,7 +393,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetContainerBuilderWithLayers_defaultAppRoot()
+  public void testCreateContainerBuilder_defaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildConfiguration configuration =
         setupBuildConfiguration(JavaLayerConfigurations.DEFAULT_APP_ROOT);
@@ -421,7 +420,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetContainerBuilderWithLayers_war()
+  public void testCreateContainerBuilder_war()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     Path webAppDirectory = getResource("gradle/webapp");
@@ -487,7 +486,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetContainerBuilderWithLayers_defaultWebAppRoot()
+  public void testCreateContainerBuilder_defaultWebAppRoot()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     setUpWarProject(getResource("gradle/webapp"));
@@ -524,7 +523,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetContainerBuilderWithLayers_noErrorIfWebInfClassesDoesNotExist()
+  public void testCreateContainerBuilder_noErrorIfWebInfClassesDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
@@ -532,7 +531,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetContainerBuilderWithLayers_noErrorIfWebInfLibDoesNotExist()
+  public void testCreateContainerBuilder_noErrorIfWebInfLibDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
@@ -540,7 +539,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testGetContainerBuilderWithLayers_noErrorIfWebInfDoesNotExist()
+  public void testCreateContainerBuilder_noErrorIfWebInfDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war");
     setUpWarProject(temporaryFolder.getRoot().toPath());
@@ -550,7 +549,7 @@ public class GradleProjectPropertiesTest {
   private BuildConfiguration setupBuildConfiguration(String appRoot)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     return new GradleProjectProperties(mockProject, mockLogger, AbsoluteUnixPath.get(appRoot))
-        .getContainerBuilderWithLayers(RegistryImage.named("base"))
+        .createContainerBuilder(RegistryImage.named("base"))
         .toBuildConfiguration(
             Containerizer.to(RegistryImage.named("to")), MoreExecutors.newDirectExecutorService());
   }

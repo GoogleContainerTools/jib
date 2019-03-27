@@ -153,7 +153,7 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public JibContainerBuilder getContainerBuilderWithLayers(RegistryImage baseImage) {
+  public JibContainerBuilder createContainerBuilder(RegistryImage baseImage) {
     try {
       if (isWarProject()) {
         logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
@@ -209,7 +209,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public List<Path> getClassFiles() throws IOException {
-    // TODO: Consolidate with getContainerBuilderWithLayers
+    // TODO: Consolidate with createContainerBuilder
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);

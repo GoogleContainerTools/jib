@@ -195,8 +195,7 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public JibContainerBuilder getContainerBuilderWithLayers(RegistryImage baseImage)
-      throws IOException {
+  public JibContainerBuilder createContainerBuilder(RegistryImage baseImage) throws IOException {
     try {
       if (isWarProject()) {
         Path explodedWarPath =
