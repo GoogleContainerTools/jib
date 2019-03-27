@@ -142,10 +142,10 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testPluginConfigurationProcessor_extraDirectory()
-      throws URISyntaxException, InferredAuthRetrievalException, InvalidContainerVolumeException,
-          MainClassInferenceException, InvalidAppRootException, IOException,
-          IncompatibleBaseImageJavaVersionException, InvalidWorkingDirectoryException,
-          InvalidImageReferenceException, CacheDirectoryCreationException {
+      throws URISyntaxException, InvalidContainerVolumeException, MainClassInferenceException,
+          InvalidAppRootException, IOException, IncompatibleBaseImageJavaVersionException,
+          InvalidWorkingDirectoryException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
     Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     Mockito.when(rawConfiguration.getExtraDirectory()).thenReturn(extraDirectory);
     Mockito.when(rawConfiguration.getExtraDirectoryPermissions())
