@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
-- Can now decrypt proxy configuration in `settings.xml`. ([#1369](https://github.com/GoogleContainerTools/jib/issues/1369))
+- Can now decrypt proxy configurations in `settings.xml`. ([#1369](https://github.com/GoogleContainerTools/jib/issues/1369))
 
 ### Changed
 - `os` and `architecture` are taken from base image ([#1564](https://github.com/GoogleContainerTools/jib/pull/1564))
