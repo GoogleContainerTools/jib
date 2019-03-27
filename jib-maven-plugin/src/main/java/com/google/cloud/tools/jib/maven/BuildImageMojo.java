@@ -27,7 +27,6 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
@@ -98,13 +97,15 @@ public class BuildImageMojo extends JibPluginConfiguration {
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
 
+      DecryptedMavenSettings decryptedSettings =
+          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter());
+
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
               mavenRawConfiguration,
-              new MavenSettingsServerCredentials(
-                  getSession().getSettings(), getSettingsDecrypter()),
+              new MavenSettingsServerCredentials(decryptedSettings),
               projectProperties);
-      ProxyProvider.init(getSession().getSettings());
+      ProxyProvider.init(decryptedSettings);
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =
@@ -159,8 +160,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     } catch (InvalidImageReferenceException
         | IOException
         | CacheDirectoryCreationException
-        | MainClassInferenceException
-        | InferredAuthRetrievalException ex) {
+        | MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {

@@ -17,75 +17,46 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthProvider;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import org.apache.maven.settings.Server;
-import org.apache.maven.settings.Settings;
-import org.apache.maven.settings.building.SettingsProblem;
-import org.apache.maven.settings.crypto.DefaultSettingsDecryptionRequest;
-import org.apache.maven.settings.crypto.SettingsDecrypter;
-import org.apache.maven.settings.crypto.SettingsDecryptionRequest;
-import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 /**
  * Retrieves credentials for servers defined in <a
  * href="https://maven.apache.org/settings.html">Maven settings</a>.
  */
-class MavenSettingsServerCredentials implements InferredAuthProvider {
+class MavenSettingsServerCredentials implements Function<String, Optional<AuthProperty>> {
 
   static final String CREDENTIAL_SOURCE = "Maven settings";
 
-  private final Settings settings;
-  private final SettingsDecrypter settingsDecrypter;
+  private final DecryptedMavenSettings settings;
 
   /**
    * Create new instance.
    *
-   * @param settings the Maven settings object
-   * @param settingsDecrypter the Maven decrypter component
-   * @param eventDispatcher the Jib event dispatcher
+   * @param settings decrypted Maven settings
    */
-  MavenSettingsServerCredentials(Settings settings, SettingsDecrypter settingsDecrypter) {
+  MavenSettingsServerCredentials(DecryptedMavenSettings settings) {
     this.settings = settings;
-    this.settingsDecrypter = settingsDecrypter;
   }
 
   /**
-   * Attempts to retrieve credentials for {@code registry} from Maven settings.
+   * Retrieves credentials for {@code registry} from Maven settings.
    *
    * @param registry the registry
    * @return the auth info for the registry, or {@link Optional#empty} if none could be retrieved
-   * @throws InferredAuthRetrievalException if the credentials could not be retrieved
    */
   @Override
-  public Optional<AuthProperty> getAuth(String registry) throws InferredAuthRetrievalException {
-    Server registryServer = settings.getServer(registry);
-    if (registryServer == null) {
+  public Optional<AuthProperty> apply(String registry) {
+    Predicate<Server> idMatches = server -> registry.equals(server.getId());
+    Optional<Server> server = settings.getServers().stream().filter(idMatches).findFirst();
+    if (!server.isPresent()) {
       return Optional.empty();
     }
 
-    // SettingsDecrypter and SettingsDecryptionResult do not document the meanings of the return
-    // results. SettingsDecryptionResult#getServers() does note that the list of decrypted servers
-    // can be empty.  We handle the results as follows:
-    //    - if there are any ERROR or FATAL problems reported, then decryption failed
-    //    - if no decrypted servers returned then treat as if no decryption was required
-    SettingsDecryptionRequest request = new DefaultSettingsDecryptionRequest(registryServer);
-    SettingsDecryptionResult result = settingsDecrypter.decrypt(request);
-    // un-encrypted passwords are passed through, so a problem indicates a real issue
-    for (SettingsProblem problem : result.getProblems()) {
-      if (problem.getSeverity() == SettingsProblem.Severity.ERROR
-          || problem.getSeverity() == SettingsProblem.Severity.FATAL) {
-        throw new InferredAuthRetrievalException(
-            "Unable to decrypt password for " + registry + ": " + problem);
-      }
-    }
-    if (result.getServer() != null) {
-      registryServer = result.getServer();
-    }
-
-    String username = registryServer.getUsername();
-    String password = registryServer.getPassword();
+    String username = server.get().getUsername();
+    String password = server.get().getPassword();
 
     return Optional.of(
         new AuthProperty() {

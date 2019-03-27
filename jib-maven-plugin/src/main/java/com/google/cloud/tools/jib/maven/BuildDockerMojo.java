@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
@@ -104,16 +103,18 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
+      DecryptedMavenSettings decryptedSettings =
+          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter());
+
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
               mavenRawConfiguration,
-              new MavenSettingsServerCredentials(
-                  getSession().getSettings(), getSettingsDecrypter()),
+              new MavenSettingsServerCredentials(decryptedSettings),
               projectProperties,
               dockerExecutable,
               getDockerClientEnvironment(),
               mavenHelpfulSuggestionsBuilder.build());
-      ProxyProvider.init(getSession().getSettings());
+      ProxyProvider.init(decryptedSettings);
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =
@@ -167,8 +168,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     } catch (InvalidImageReferenceException
         | IOException
         | CacheDirectoryCreationException
-        | MainClassInferenceException
-        | InferredAuthRetrievalException ex) {
+        | MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {

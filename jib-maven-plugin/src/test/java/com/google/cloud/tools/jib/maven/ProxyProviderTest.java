@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import org.apache.maven.settings.Proxy;
-import org.apache.maven.settings.Settings;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -199,7 +198,7 @@ public class ProxyProviderTest {
     httpsProxy.setHost("proxy2 host");
     httpsProxy.setActive(false);
 
-    Settings settings = Mockito.mock(Settings.class);
+    DecryptedMavenSettings settings = Mockito.mock(DecryptedMavenSettings.class);
     Mockito.when(settings.getProxies()).thenReturn(Arrays.asList(httpProxy, httpsProxy));
     ProxyProvider.init(settings);
 
@@ -229,7 +228,7 @@ public class ProxyProviderTest {
     proxy4.setHost("proxy4 host");
     proxy4.setActive(true);
 
-    Settings settings = Mockito.mock(Settings.class);
+    DecryptedMavenSettings settings = Mockito.mock(DecryptedMavenSettings.class);
     Mockito.when(settings.getProxies()).thenReturn(Arrays.asList(proxy1, proxy2, proxy3, proxy4));
     ProxyProvider.init(settings);
 
@@ -259,7 +258,7 @@ public class ProxyProviderTest {
     proxy4.setHost("proxy4 host");
     proxy4.setActive(true);
 
-    Settings settings = Mockito.mock(Settings.class);
+    DecryptedMavenSettings settings = Mockito.mock(DecryptedMavenSettings.class);
     Mockito.when(settings.getProxies()).thenReturn(Arrays.asList(proxy1, proxy2, proxy3, proxy4));
     ProxyProvider.init(settings);
 
