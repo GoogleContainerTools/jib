@@ -19,12 +19,10 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
-import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import java.nio.file.Path;
+import java.io.IOException;
 import javax.annotation.Nullable;
 import javax.lang.model.SourceVersion;
 
@@ -47,10 +45,11 @@ public class MainClassResolver {
    * @param projectProperties properties containing plugin information and help messages
    * @return the name of the main class to be used for the container entrypoint
    * @throws MainClassInferenceException if no valid main class is configured or discovered
+   * @throws IOException if getting the class files from {@code projectProperties} fails
    */
   public static String resolveMainClass(
       @Nullable String mainClass, ProjectProperties projectProperties)
-      throws MainClassInferenceException {
+      throws MainClassInferenceException, IOException {
     // If mainClass is null, try to find via projectProperties.
     if (mainClass == null) {
       mainClass = getMainClassFromJar(projectProperties);
@@ -106,7 +105,7 @@ public class MainClassResolver {
   }
 
   private static String findMainClassInClassFiles(ProjectProperties projectProperties)
-      throws MainClassInferenceException {
+      throws MainClassInferenceException, IOException {
     new DefaultEventDispatcher(projectProperties.getEventHandlers())
         .dispatch(
             LogEvent.debug(
@@ -114,17 +113,9 @@ public class MainClassResolver {
                     + projectProperties.getJarPluginName()
                     + "; attempting to infer main class."));
 
-    ImmutableList<Path> classesSourceFiles =
-        projectProperties
-            .getJavaLayerConfigurations()
-            .getClassLayerEntries()
-            .stream()
-            .map(LayerEntry::getSourceFile)
-            .collect(ImmutableList.toImmutableList());
-
     MainClassFinder.Result mainClassFinderResult =
         new MainClassFinder(
-                classesSourceFiles,
+                projectProperties.getClassFiles(),
                 new DefaultEventDispatcher(projectProperties.getEventHandlers()))
             .find();
 

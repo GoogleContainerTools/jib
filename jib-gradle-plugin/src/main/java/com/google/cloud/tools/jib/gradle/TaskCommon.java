@@ -17,6 +17,11 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
+import com.google.cloud.tools.jib.configuration.FilePermissions;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.common.annotations.VisibleForTesting;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
@@ -60,6 +65,25 @@ class TaskCommon {
 
     // Disables Google HTTP client logging.
     java.util.logging.Logger.getLogger(HttpTransport.class.getName()).setLevel(Level.OFF);
+  }
+
+  /**
+   * Validates and converts a {@code String->String} file-path-to-file-permissions map to an
+   * equivalent {@code AbsoluteUnixPath->FilePermission} map.
+   *
+   * @param stringMap the map to convert (example entry: {@code "/path/on/container" -> "755"})
+   * @return the converted map
+   */
+  @VisibleForTesting
+  static Map<AbsoluteUnixPath, FilePermissions> convertPermissionsMap(
+      Map<String, String> stringMap) {
+    Map<AbsoluteUnixPath, FilePermissions> permissionsMap = new HashMap<>();
+    for (Map.Entry<String, String> entry : stringMap.entrySet()) {
+      AbsoluteUnixPath key = AbsoluteUnixPath.get(entry.getKey());
+      FilePermissions value = FilePermissions.fromOctalString(entry.getValue());
+      permissionsMap.put(key, value);
+    }
+    return permissionsMap;
   }
 
   private TaskCommon() {}

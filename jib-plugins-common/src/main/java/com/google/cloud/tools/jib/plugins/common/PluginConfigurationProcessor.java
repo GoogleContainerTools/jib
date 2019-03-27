@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.DockerDaemonImage;
-import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
@@ -39,6 +38,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -187,8 +187,8 @@ public class PluginConfigurationProcessor {
             rawConfiguration.getFromCredHelper().orElse(null));
 
     JibContainerBuilder jibContainerBuilder =
-        Jib.from(baseImage)
-            .setLayers(projectProperties.getJavaLayerConfigurations().getLayerConfigurations())
+        projectProperties
+            .createContainerBuilder(baseImage)
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
@@ -203,6 +203,14 @@ public class PluginConfigurationProcessor {
           LogEvent.warn(
               "Setting image creation time to current time; your image may not be reproducible."));
       jibContainerBuilder.setCreationTime(Instant.now());
+    }
+
+    // Adds all the extra files.
+    if (Files.exists(rawConfiguration.getExtraDirectory())) {
+      jibContainerBuilder.addLayer(
+          JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
+              rawConfiguration.getExtraDirectory(),
+              rawConfiguration.getExtraDirectoryPermissions()));
     }
 
     PluginConfigurationProcessor.configureContainerizer(
@@ -237,7 +245,7 @@ public class PluginConfigurationProcessor {
   @VisibleForTesting
   static List<String> computeEntrypoint(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
-      throws MainClassInferenceException, InvalidAppRootException {
+      throws MainClassInferenceException, InvalidAppRootException, IOException {
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
     if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
       if (rawConfiguration.getMainClass().isPresent()
