@@ -17,14 +17,16 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.ProjectInfo;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.RelativeUnixPath;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -32,8 +34,10 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -54,6 +58,31 @@ public class JavaContainerBuilder {
     }
   }
 
+  /** Represents the different types of layers for a Java application. */
+  @VisibleForTesting
+  public enum LayerType {
+    DEPENDENCIES("dependencies"),
+    SNAPSHOT_DEPENDENCIES("snapshot dependencies"),
+    RESOURCES("resources"),
+    CLASSES("classes"),
+    EXTRA_FILES("extra files");
+
+    private final String name;
+
+    /**
+     * Initializes with a name for the layer.
+     *
+     * @param name name to set for the layer; does not affect the contents of the layer
+     */
+    LayerType(String name) {
+      this.name = name;
+    }
+
+    public String getName() {
+      return name;
+    }
+  }
+
   /**
    * Creates a new {@link JavaContainerBuilder} that uses distroless java as the base image. For
    * more information on {@code gcr.io/distroless/java}, see <a
@@ -71,6 +100,18 @@ public class JavaContainerBuilder {
   }
 
   /**
+   * The default app root in the image. For example, if this is set to {@code "/app"}, dependency
+   * JARs will be in {@code "/app/libs"}.
+   */
+  public static final String DEFAULT_APP_ROOT = "/app";
+
+  /**
+   * The default webapp root in the image. For example, if this is set to {@code
+   * "/jetty/webapps/ROOT"}, dependency JARs will be in {@code "/jetty/webapps/ROOT/WEB-INF/lib"}.
+   */
+  public static final String DEFAULT_WEB_APP_ROOT = "/jetty/webapps/ROOT";
+
+  /**
    * Creates a new {@link JavaContainerBuilder} that uses distroless jetty as the base image. For
    * more information on {@code gcr.io/distroless/java}, see <a
    * href="https://github.com/GoogleContainerTools/distroless">the distroless repository</a>.
@@ -81,7 +122,7 @@ public class JavaContainerBuilder {
   public static JavaContainerBuilder fromDistrolessJetty() {
     try {
       return from(RegistryImage.named("gcr.io/distroless/java/jetty"))
-          .setAppRoot(AbsoluteUnixPath.get(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT));
+          .setAppRoot(AbsoluteUnixPath.get(DEFAULT_WEB_APP_ROOT));
     } catch (InvalidImageReferenceException ignored) {
       throw new IllegalStateException("Unreachable");
     }
@@ -401,11 +442,12 @@ public class JavaContainerBuilder {
           "Failed to construct entrypoint because no files were added to the JavaContainerBuilder");
     }
 
-    JavaLayerConfigurations.Builder layerConfigurationsBuilder = JavaLayerConfigurations.builder();
+    Map<LayerType, LayerConfiguration.Builder> layerBuilders = new EnumMap<>(LayerType.class);
 
     // Add classes to layer configuration
     for (PathPredicatePair directory : addedClasses) {
-      layerConfigurationsBuilder.addDirectoryContents(
+      addDirectoryContentsToLayer(
+          layerBuilders,
           LayerType.CLASSES,
           directory.path,
           directory.predicate,
@@ -414,7 +456,8 @@ public class JavaContainerBuilder {
 
     // Add resources to layer configuration
     for (PathPredicatePair directory : addedResources) {
-      layerConfigurationsBuilder.addDirectoryContents(
+      addDirectoryContentsToLayer(
+          layerBuilders,
           LayerType.RESOURCES,
           directory.path,
           directory.predicate,
@@ -435,7 +478,8 @@ public class JavaContainerBuilder {
             .collect(Collectors.toList());
     for (Path file : addedDependencies) {
       // Add dependencies to layer configuration
-      layerConfigurationsBuilder.addFile(
+      addFileToLayer(
+          layerBuilders,
           file.getFileName().toString().contains("SNAPSHOT")
               ? LayerType.SNAPSHOT_DEPENDENCIES
               : LayerType.DEPENDENCIES,
@@ -454,16 +498,28 @@ public class JavaContainerBuilder {
     // Add others to layer configuration
     for (Path path : addedOthers) {
       if (Files.isDirectory(path)) {
-        layerConfigurationsBuilder.addDirectoryContents(
-            LayerType.EXTRA_FILES, path, path1 -> true, appRoot.resolve(othersDestination));
+        addDirectoryContentsToLayer(
+            layerBuilders,
+            LayerType.EXTRA_FILES,
+            path,
+            path1 -> true,
+            appRoot.resolve(othersDestination));
       } else {
-        layerConfigurationsBuilder.addFile(
+        addFileToLayer(
+            layerBuilders,
             LayerType.EXTRA_FILES,
             path,
             appRoot.resolve(othersDestination).resolve(path.getFileName()));
       }
     }
-    jibContainerBuilder.setLayers(layerConfigurationsBuilder.build().getLayerConfigurations());
+
+    // Add layer configurations to container builder
+    ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
+        ImmutableMap.builder();
+    layerBuilders.forEach(
+        (type, builder) ->
+            layerConfigurationsMap.put(type, builder.setName(type.getName()).build()));
+    jibContainerBuilder.setLayers(layerConfigurationsMap.build().values().asList());
 
     if (mainClass != null) {
       // Construct entrypoint. Ensure classpath elements are in the same order as the files were
@@ -506,5 +562,39 @@ public class JavaContainerBuilder {
     }
     addedPaths.add(new PathPredicatePair(directory, filter));
     return this;
+  }
+
+  private void addFileToLayer(
+      Map<LayerType, LayerConfiguration.Builder> layerBuilders,
+      LayerType layerType,
+      Path sourceFile,
+      AbsoluteUnixPath pathInContainer) {
+    if (!layerBuilders.containsKey(layerType)) {
+      layerBuilders.put(layerType, LayerConfiguration.builder());
+    }
+    layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer);
+  }
+
+  private void addDirectoryContentsToLayer(
+      Map<LayerType, LayerConfiguration.Builder> layerBuilders,
+      LayerType layerType,
+      Path sourceRoot,
+      Predicate<Path> pathFilter,
+      AbsoluteUnixPath basePathInContainer)
+      throws IOException {
+    if (!layerBuilders.containsKey(layerType)) {
+      layerBuilders.put(layerType, LayerConfiguration.builder());
+    }
+    LayerConfiguration.Builder builder = layerBuilders.get(layerType);
+
+    new DirectoryWalker(sourceRoot)
+        .filterRoot()
+        .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
+        .walk(
+            path -> {
+              AbsoluteUnixPath pathOnContainer =
+                  basePathInContainer.resolve(sourceRoot.relativize(path));
+              builder.addEntry(path, pathOnContainer);
+            });
   }
 }
