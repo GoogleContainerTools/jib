@@ -501,7 +501,7 @@ public class JavaContainerBuilder {
             layerBuilders,
             LayerType.EXTRA_FILES,
             path,
-            path1 -> true,
+            ignored -> true,
             appRoot.resolve(othersDestination));
       } else {
         addFileToLayer(
