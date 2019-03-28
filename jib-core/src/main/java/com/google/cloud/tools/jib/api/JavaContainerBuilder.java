@@ -164,6 +164,8 @@ public class JavaContainerBuilder {
   private final JibContainerBuilder jibContainerBuilder;
   private final List<String> jvmFlags = new ArrayList<>();
   private final LinkedHashSet<LayerType> classpathOrder = new LinkedHashSet<>(4);
+  private final Map<LayerType, LayerConfiguration.Builder> layerBuilders =
+      new EnumMap<>(LayerType.class);
 
   // Keeps track of files to add to the image, by system path
   private final List<PathPredicatePair> addedResources = new ArrayList<>();
@@ -442,12 +444,9 @@ public class JavaContainerBuilder {
           "Failed to construct entrypoint because no files were added to the JavaContainerBuilder");
     }
 
-    Map<LayerType, LayerConfiguration.Builder> layerBuilders = new EnumMap<>(LayerType.class);
-
     // Add classes to layer configuration
     for (PathPredicatePair directory : addedClasses) {
-      addDirectoryContentsToLayer(
-          layerBuilders,
+      addDirectoryContentsToLayerBuilders(
           LayerType.CLASSES,
           directory.path,
           directory.predicate,
@@ -456,8 +455,7 @@ public class JavaContainerBuilder {
 
     // Add resources to layer configuration
     for (PathPredicatePair directory : addedResources) {
-      addDirectoryContentsToLayer(
-          layerBuilders,
+      addDirectoryContentsToLayerBuilders(
           LayerType.RESOURCES,
           directory.path,
           directory.predicate,
@@ -478,8 +476,7 @@ public class JavaContainerBuilder {
             .collect(Collectors.toList());
     for (Path file : addedDependencies) {
       // Add dependencies to layer configuration
-      addFileToLayer(
-          layerBuilders,
+      addFileToLayerBuilders(
           file.getFileName().toString().contains("SNAPSHOT")
               ? LayerType.SNAPSHOT_DEPENDENCIES
               : LayerType.DEPENDENCIES,
@@ -498,15 +495,10 @@ public class JavaContainerBuilder {
     // Add others to layer configuration
     for (Path path : addedOthers) {
       if (Files.isDirectory(path)) {
-        addDirectoryContentsToLayer(
-            layerBuilders,
-            LayerType.EXTRA_FILES,
-            path,
-            path1 -> true,
-            appRoot.resolve(othersDestination));
+        addDirectoryContentsToLayerBuilders(
+            LayerType.EXTRA_FILES, path, path1 -> true, appRoot.resolve(othersDestination));
       } else {
-        addFileToLayer(
-            layerBuilders,
+        addFileToLayerBuilders(
             LayerType.EXTRA_FILES,
             path,
             appRoot.resolve(othersDestination).resolve(path.getFileName()));
@@ -564,19 +556,15 @@ public class JavaContainerBuilder {
     return this;
   }
 
-  private void addFileToLayer(
-      Map<LayerType, LayerConfiguration.Builder> layerBuilders,
-      LayerType layerType,
-      Path sourceFile,
-      AbsoluteUnixPath pathInContainer) {
+  private void addFileToLayerBuilders(
+      LayerType layerType, Path sourceFile, AbsoluteUnixPath pathInContainer) {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, LayerConfiguration.builder());
     }
     layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer);
   }
 
-  private void addDirectoryContentsToLayer(
-      Map<LayerType, LayerConfiguration.Builder> layerBuilders,
+  private void addDirectoryContentsToLayerBuilders(
       LayerType layerType,
       Path sourceRoot,
       Predicate<Path> pathFilter,
