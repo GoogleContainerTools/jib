@@ -17,14 +17,14 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.JavaContainerBuilder;
+import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
@@ -396,7 +396,7 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_defaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildConfiguration configuration =
-        setupBuildConfiguration(JavaLayerConfigurations.DEFAULT_APP_ROOT);
+        setupBuildConfiguration(JavaContainerBuilder.DEFAULT_APP_ROOT);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -492,7 +492,7 @@ public class GradleProjectPropertiesTest {
     setUpWarProject(getResource("gradle/webapp"));
 
     BuildConfiguration configuration =
-        setupBuildConfiguration(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT);
+        setupBuildConfiguration(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertExtractionPathsUnordered(
         Collections.singletonList("/jetty/webapps/ROOT/WEB-INF/lib/dependency-1.0.0.jar"),
@@ -527,7 +527,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT); // should pass
+    setupBuildConfiguration(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT); // should pass
   }
 
   @Test
@@ -535,7 +535,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT); // should pass
+    setupBuildConfiguration(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT); // should pass
   }
 
   @Test
@@ -543,7 +543,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration(JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT); // should pass
+    setupBuildConfiguration(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT); // should pass
   }
 
   private BuildConfiguration setupBuildConfiguration(String appRoot)

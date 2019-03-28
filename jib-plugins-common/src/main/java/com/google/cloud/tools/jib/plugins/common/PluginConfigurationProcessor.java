@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.DockerDaemonImage;
+import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
@@ -29,7 +30,6 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -341,8 +341,8 @@ public class PluginConfigurationProcessor {
 
   /**
    * Gets the value of the {@code appRoot} parameter. If the parameter is empty, returns {@link
-   * JavaLayerConfigurations#DEFAULT_WEB_APP_ROOT} for WAR projects or {@link
-   * JavaLayerConfigurations#DEFAULT_APP_ROOT} for other projects.
+   * JavaContainerBuilder#DEFAULT_WEB_APP_ROOT} for WAR projects or {@link
+   * JavaContainerBuilder#DEFAULT_APP_ROOT} for other projects.
    *
    * @param rawConfiguration raw configuration data
    * @param isWarProject whether or not the project is a WAR project
@@ -356,8 +356,8 @@ public class PluginConfigurationProcessor {
     if (appRoot.isEmpty()) {
       appRoot =
           isWarProject
-              ? JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT
-              : JavaLayerConfigurations.DEFAULT_APP_ROOT;
+              ? JavaContainerBuilder.DEFAULT_WEB_APP_ROOT
+              : JavaContainerBuilder.DEFAULT_APP_ROOT;
     }
     try {
       return AbsoluteUnixPath.get(appRoot);

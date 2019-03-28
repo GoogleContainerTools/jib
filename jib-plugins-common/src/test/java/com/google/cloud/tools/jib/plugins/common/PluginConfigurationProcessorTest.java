@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -103,9 +102,7 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(new EventHandlers().add(JibEventType.LOGGING, logger));
     Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
     Mockito.when(projectProperties.createContainerBuilder(Mockito.any()))
-        .thenReturn(
-            Jib.from("base")
-                .setLayers(JavaLayerConfigurations.builder().build().getLayerConfigurations()));
+        .thenReturn(Jib.from("base"));
 
     Mockito.when(containerizer.setToolName(Mockito.anyString())).thenReturn(containerizer);
     Mockito.when(containerizer.setEventHandlers(Mockito.any(EventHandlers.class)))
