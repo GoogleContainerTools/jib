@@ -26,7 +26,6 @@ import com.google.cloud.tools.jib.frontend.MainClassFinder;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -514,12 +513,9 @@ public class JavaContainerBuilder {
     }
 
     // Add layer configurations to container builder
-    ImmutableMap.Builder<LayerType, LayerConfiguration> layerConfigurationsMap =
-        ImmutableMap.builder();
-    layerBuilders.forEach(
-        (type, builder) ->
-            layerConfigurationsMap.put(type, builder.setName(type.getName()).build()));
-    jibContainerBuilder.setLayers(layerConfigurationsMap.build().values().asList());
+    List<LayerConfiguration> layers = new ArrayList<>();
+    layerBuilders.forEach((type, builder) -> layers.add(builder.setName(type.getName()).build()));
+    jibContainerBuilder.setLayers(layers);
 
     if (mainClass != null) {
       // Construct entrypoint. Ensure classpath elements are in the same order as the files were
