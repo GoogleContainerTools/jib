@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 /** Thrown when the registry shut down the connection. */
-public class RegistryBrokenPipeException extends RegistryException {
+class RegistryBrokenPipeException extends RegistryException {
 
   RegistryBrokenPipeException(Throwable cause) {
     super(
