@@ -33,7 +33,6 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
-import java.net.SocketException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Locale;
@@ -247,12 +246,6 @@ class RegistryEndpointCaller<T> {
 
       return registryEndpointProvider.handleResponse(response);
 
-    } catch (SSLException | SocketException ex) {
-      if (isBrokenPipe(ex)) {
-        throw new RegistryBrokenPipeException(ex);
-      }
-      throw ex;
-
     } catch (HttpResponseException ex) {
       // First, see if the endpoint provider handles an exception as an expected response.
       try {
@@ -312,6 +305,12 @@ class RegistryEndpointCaller<T> {
       }
     } catch (NoHttpResponseException ex) {
       throw new RegistryNoResponseException(ex);
+
+    } catch (IOException ex) {
+      if (isBrokenPipe(ex)) {
+        throw new RegistryBrokenPipeException(ex);
+      }
+      throw ex;
     }
   }
 }
