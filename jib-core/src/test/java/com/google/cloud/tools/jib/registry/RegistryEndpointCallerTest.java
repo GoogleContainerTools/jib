@@ -507,6 +507,14 @@ public class RegistryEndpointCallerTest {
     Assert.assertTrue(RegistryEndpointCaller.isBrokenPipe(exception));
   }
 
+  @Test
+  public void testIsBrokenPipe_terminatesWhenCauseIsOriginal() {
+    IOException exception = Mockito.mock(IOException.class);
+    Mockito.when(exception.getCause()).thenReturn(exception);
+
+    Assert.assertFalse(RegistryEndpointCaller.isBrokenPipe(exception));
+  }
+
   /**
    * Verifies that a response with {@code httpStatusCode} throws {@link
    * RegistryUnauthorizedException}.

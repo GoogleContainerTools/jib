@@ -63,10 +63,16 @@ class RegistryEndpointCaller<T> {
   // https://github.com/GoogleContainerTools/jib/issues/1316
   @VisibleForTesting
   static boolean isBrokenPipe(IOException original) {
-    for (Throwable exception = original; exception != null; exception = exception.getCause()) {
+    Throwable exception = original;
+    while (exception != null) {
       String message = exception.getMessage();
       if (message != null && message.toLowerCase(Locale.US).contains("broken pipe")) {
         return true;
+      }
+
+      exception = exception.getCause();
+      if (exception == original) { // just in case if there's a circular chain
+        return false;
       }
     }
     return false;

@@ -23,7 +23,7 @@ class RegistryBrokenPipeException extends RegistryException {
     super(
         "I/O error due to broken pipe: the server shut down the connection. "
             + "Check the server log if possible. This could also be a proxy issue. For example,"
-            + "a proxy may prevent sending bytes that is too large.",
+            + "a proxy may prevent sending packets that are too large.",
         cause);
   }
 }
