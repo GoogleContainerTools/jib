@@ -515,6 +515,41 @@ public class RegistryEndpointCallerTest {
     Assert.assertFalse(RegistryEndpointCaller.isBrokenPipe(exception));
   }
 
+  @Test
+  public void testNewRegistryErrorException_jsonErrorOutput() {
+    HttpResponseException httpException = Mockito.mock(HttpResponseException.class);
+    Mockito.when(httpException.getContent())
+        .thenReturn(
+            "{\"errors\": [{\"code\": \"MANIFEST_UNKNOWN\", \"message\": \"manifest unknown\"}]}");
+
+    RegistryErrorException registryException =
+        secureEndpointCaller.newRegistryErrorException(httpException);
+    Assert.assertSame(httpException, registryException.getCause());
+    Assert.assertEquals(
+        "Tried to actionDescription but failed because: manifest unknown | If this is a bug, "
+            + "please file an issue at https://github.com/GoogleContainerTools/jib/issues/new",
+        registryException.getMessage());
+  }
+
+  @Test
+  public void testNewRegistryErrorException_nonJsonErrorOutput() {
+    HttpResponseException httpException = Mockito.mock(HttpResponseException.class);
+    // Registry returning non-structured error output
+    Mockito.when(httpException.getContent()).thenReturn(">>>> (404) page not found <<<<<");
+    Mockito.when(httpException.getStatusCode()).thenReturn(404);
+
+    RegistryErrorException registryException =
+        secureEndpointCaller.newRegistryErrorException(httpException);
+    Assert.assertSame(httpException, registryException.getCause());
+    Assert.assertEquals(
+        "Tried to actionDescription but failed because: registry returned error code 404; "
+            + "possible causes include invalid or wrong reference. Actual error output follows:\n"
+            + ">>>>> (404) page not found <<<<<\n"
+            + " | If this is a bug, please file an issue at "
+            + "https://github.com/GoogleContainerTools/jib/issues/new",
+        registryException.getMessage());
+  }
+
   /**
    * Verifies that a response with {@code httpStatusCode} throws {@link
    * RegistryUnauthorizedException}.
