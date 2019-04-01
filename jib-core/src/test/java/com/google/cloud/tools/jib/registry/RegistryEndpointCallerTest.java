@@ -535,7 +535,7 @@ public class RegistryEndpointCallerTest {
   public void testNewRegistryErrorException_nonJsonErrorOutput() {
     HttpResponseException httpException = Mockito.mock(HttpResponseException.class);
     // Registry returning non-structured error output
-    Mockito.when(httpException.getContent()).thenReturn(">>>> (404) page not found <<<<<");
+    Mockito.when(httpException.getContent()).thenReturn(">>>>> (404) page not found <<<<<");
     Mockito.when(httpException.getStatusCode()).thenReturn(404);
 
     RegistryErrorException registryException =
