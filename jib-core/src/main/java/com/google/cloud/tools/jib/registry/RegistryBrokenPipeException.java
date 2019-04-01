@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC.
+ * Copyright 2019 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,14 @@
 
 package com.google.cloud.tools.jib.registry;
 
-/** Thrown when a registry did not respond. */
-class RegistryNoResponseException extends RegistryException {
+/** Thrown when the registry shut down the connection. */
+class RegistryBrokenPipeException extends RegistryException {
 
-  RegistryNoResponseException(Throwable cause) {
-    super(cause);
+  RegistryBrokenPipeException(Throwable cause) {
+    super(
+        "I/O error due to broken pipe: the server shut down the connection. "
+            + "Check the server log if possible. This could also be a proxy issue. For example,"
+            + "a proxy may prevent sending packets that are too large.",
+        cause);
   }
 }

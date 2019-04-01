@@ -32,11 +32,13 @@ import com.google.cloud.tools.jib.http.Response;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
+import java.net.SocketException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
 import org.hamcrest.CoreMatchers;
@@ -483,6 +485,34 @@ public class RegistryEndpointCallerTest {
     secureEndpointCaller.call();
 
     Assert.assertEquals(Integer.valueOf(7593), mockConnection.getRequestedHttpTimeout());
+  }
+
+  @Test
+  public void testIsBrokenPipe_notBrokenPipe() {
+    Assert.assertFalse(RegistryEndpointCaller.isBrokenPipe(new IOException()));
+    Assert.assertFalse(RegistryEndpointCaller.isBrokenPipe(new SocketException()));
+    Assert.assertFalse(RegistryEndpointCaller.isBrokenPipe(new SSLException("mock")));
+  }
+
+  @Test
+  public void testIsBrokenPipe_brokenPipe() {
+    Assert.assertTrue(RegistryEndpointCaller.isBrokenPipe(new IOException("cool broken pipe !")));
+    Assert.assertTrue(RegistryEndpointCaller.isBrokenPipe(new SocketException("BROKEN PIPE")));
+    Assert.assertTrue(RegistryEndpointCaller.isBrokenPipe(new SSLException("calm BrOkEn PiPe")));
+  }
+
+  @Test
+  public void testIsBrokenPipe_nestedBrokenPipe() {
+    IOException exception = new IOException(new SSLException(new SocketException("Broken pipe")));
+    Assert.assertTrue(RegistryEndpointCaller.isBrokenPipe(exception));
+  }
+
+  @Test
+  public void testIsBrokenPipe_terminatesWhenCauseIsOriginal() {
+    IOException exception = Mockito.mock(IOException.class);
+    Mockito.when(exception.getCause()).thenReturn(exception);
+
+    Assert.assertFalse(RegistryEndpointCaller.isBrokenPipe(exception));
   }
 
   /**

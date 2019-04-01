@@ -35,6 +35,7 @@ import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.util.Locale;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
@@ -57,6 +58,24 @@ class RegistryEndpointCaller<T> {
 
   private static boolean isHttpsProtocol(URL url) {
     return "https".equals(url.getProtocol());
+  }
+
+  // https://github.com/GoogleContainerTools/jib/issues/1316
+  @VisibleForTesting
+  static boolean isBrokenPipe(IOException original) {
+    Throwable exception = original;
+    while (exception != null) {
+      String message = exception.getMessage();
+      if (message != null && message.toLowerCase(Locale.US).contains("broken pipe")) {
+        return true;
+      }
+
+      exception = exception.getCause();
+      if (exception == original) { // just in case if there's a circular chain
+        return false;
+      }
+    }
+    return false;
   }
 
   private final EventDispatcher eventDispatcher;
@@ -292,6 +311,12 @@ class RegistryEndpointCaller<T> {
       }
     } catch (NoHttpResponseException ex) {
       throw new RegistryNoResponseException(ex);
+
+    } catch (IOException ex) {
+      if (isBrokenPipe(ex)) {
+        throw new RegistryBrokenPipeException(ex);
+      }
+      throw ex;
     }
   }
 }
