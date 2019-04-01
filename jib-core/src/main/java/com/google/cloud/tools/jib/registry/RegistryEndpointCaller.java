@@ -263,17 +263,7 @@ class RegistryEndpointCaller<T> {
             || httpResponseException.getStatusCode()
                 == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
           // The name or reference was invalid.
-          ErrorResponseTemplate errorResponse =
-              JsonTemplateMapper.readJson(
-                  httpResponseException.getContent(), ErrorResponseTemplate.class);
-          RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
-              new RegistryErrorExceptionBuilder(
-                  registryEndpointProvider.getActionDescription(), httpResponseException);
-          for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
-            registryErrorExceptionBuilder.addReason(errorEntry);
-          }
-
-          throw registryErrorExceptionBuilder.build();
+          throw newRegistryErrorException(httpResponseException);
 
         } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
           throw new RegistryUnauthorizedException(
@@ -318,5 +308,30 @@ class RegistryEndpointCaller<T> {
       }
       throw ex;
     }
+  }
+
+  @VisibleForTesting
+  RegistryErrorException newRegistryErrorException(HttpResponseException httpResponseException) {
+    RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
+        new RegistryErrorExceptionBuilder(
+            registryEndpointProvider.getActionDescription(), httpResponseException);
+
+    try {
+      ErrorResponseTemplate errorResponse =
+          JsonTemplateMapper.readJson(
+              httpResponseException.getContent(), ErrorResponseTemplate.class);
+      for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
+        registryErrorExceptionBuilder.addReason(errorEntry);
+      }
+    } catch (IOException ex) {
+      registryErrorExceptionBuilder.addReason(
+          "registry returned error code "
+              + httpResponseException.getStatusCode()
+              + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
+              + httpResponseException.getContent()
+              + "\n");
+    }
+
+    return registryErrorExceptionBuilder.build();
   }
 }
