@@ -74,8 +74,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildImage()
-      throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
-          CacheDirectoryCreationException, MainClassInferenceException {
+      throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
+          MainClassInferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     TaskCommon.disableHttpLogging();
@@ -148,6 +148,9 @@ public class BuildImageTask extends DefaultTask implements JibTask {
           HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForGradle(
               ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
           ex);
+
+    } catch (InvalidImageReferenceException ex) {
+      throw new GradleException(HelpfulSuggestions.forInvalidImageReference(ex.getMessage()), ex);
     }
   }
 

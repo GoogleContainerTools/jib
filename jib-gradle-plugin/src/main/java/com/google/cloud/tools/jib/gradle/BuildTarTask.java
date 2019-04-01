@@ -96,8 +96,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildTar()
-      throws InvalidImageReferenceException, BuildStepsExecutionException, IOException,
-          CacheDirectoryCreationException, MainClassInferenceException {
+      throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException,
+          MainClassInferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
     TaskCommon.disableHttpLogging();
@@ -165,6 +165,9 @@ public class BuildTarTask extends DefaultTask implements JibTask {
           HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForGradle(
               ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
           ex);
+
+    } catch (InvalidImageReferenceException ex) {
+      throw new GradleException(HelpfulSuggestions.forInvalidImageReference(ex.getMessage()), ex);
     }
   }
 

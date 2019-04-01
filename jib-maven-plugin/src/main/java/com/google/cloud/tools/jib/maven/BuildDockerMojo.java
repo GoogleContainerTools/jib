@@ -165,10 +165,11 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
           ex);
 
-    } catch (InvalidImageReferenceException
-        | IOException
-        | CacheDirectoryCreationException
-        | MainClassInferenceException ex) {
+    } catch (InvalidImageReferenceException ex) {
+      throw new MojoExecutionException(
+          HelpfulSuggestions.forInvalidImageReference(ex.getMessage()), ex);
+
+    } catch (IOException | CacheDirectoryCreationException | MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {
