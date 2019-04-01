@@ -167,7 +167,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
           ex);
 
     } catch (InvalidImageReferenceException ex) {
-      throw new GradleException(HelpfulSuggestions.forInvalidImageReference(ex.getMessage()), ex);
+      throw new GradleException(
+          HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
     }
   }
 

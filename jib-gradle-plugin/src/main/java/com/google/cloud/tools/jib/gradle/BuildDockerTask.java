@@ -171,7 +171,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
           ex);
 
     } catch (InvalidImageReferenceException ex) {
-      throw new GradleException(HelpfulSuggestions.forInvalidImageReference(ex.getMessage()), ex);
+      throw new GradleException(
+          HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
     }
   }
 

@@ -137,7 +137,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
     } catch (InvalidImageReferenceException ex) {
       throw new MojoExecutionException(
-          HelpfulSuggestions.forInvalidImageReference(ex.getMessage()), ex);
+          HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
 
     } catch (IOException | CacheDirectoryCreationException | MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
