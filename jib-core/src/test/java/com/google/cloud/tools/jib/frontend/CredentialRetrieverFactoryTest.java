@@ -147,7 +147,7 @@ public class CredentialRetrieverFactoryTest {
         CredentialRetrieverFactory.forImage(
             ImageReference.of("registry", "repository", null), mockEventDispatcher);
 
-    Mockito.when(mockDockerConfigCredentialRetriever.retrieve())
+    Mockito.when(mockDockerConfigCredentialRetriever.retrieve(mockEventDispatcher))
         .thenReturn(Optional.of(FAKE_CREDENTIALS));
 
     Assert.assertEquals(
