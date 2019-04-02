@@ -119,7 +119,7 @@ public class DockerConfigCredentialRetriever {
         } catch (IOException
             | CredentialHelperUnhandledServerUrlException
             | CredentialHelperNotFoundException ex) {
-          // Warns the user that the specified (or inferred) credential helper cannot be used.
+          // Warns the user that the specified credential helper cannot be used.
           if (eventDispatcher != null && ex.getMessage() != null) {
             eventDispatcher.dispatch(LogEvent.warn(ex.getMessage()));
             if (ex.getCause() != null && ex.getCause().getMessage() != null) {
