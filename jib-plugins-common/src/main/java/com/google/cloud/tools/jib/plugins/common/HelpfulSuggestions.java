@@ -79,7 +79,7 @@ public class HelpfulSuggestions {
     return suggest(
         "Invalid image reference " + reference,
         "check that the reference is formatted correctly according to "
-            + "https://docs.docker.com/engine/reference/commandline/tag/#extended-description "
+            + "https://docs.docker.com/engine/reference/commandline/tag/#extended-description\n"
             + "For example, slash-separated name components cannot have uppercase letters");
   }
 
