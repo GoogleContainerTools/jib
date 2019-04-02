@@ -220,7 +220,8 @@ public class CredentialRetrieverFactory {
       DockerConfigCredentialRetriever dockerConfigCredentialRetriever) {
     return () -> {
       try {
-        Optional<Credential> dockerConfigCredentials = dockerConfigCredentialRetriever.retrieve();
+        Optional<Credential> dockerConfigCredentials =
+            dockerConfigCredentialRetriever.retrieve(eventDispatcher);
         if (dockerConfigCredentials.isPresent()) {
           dispatchEvent(
               LogEvent.info(
