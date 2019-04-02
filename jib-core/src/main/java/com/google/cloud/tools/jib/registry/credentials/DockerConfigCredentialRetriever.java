@@ -121,9 +121,9 @@ public class DockerConfigCredentialRetriever {
             | CredentialHelperNotFoundException ex) {
           // Warns the user that the specified (or inferred) credential helper cannot be used.
           if (eventDispatcher != null && ex.getMessage() != null) {
-            eventDispatcher.dispatch(LogEvent.info(ex.getMessage()));
+            eventDispatcher.dispatch(LogEvent.warn(ex.getMessage()));
             if (ex.getCause() != null && ex.getCause().getMessage() != null) {
-              eventDispatcher.dispatch(LogEvent.info("  Caused by: " + ex.getCause().getMessage()));
+              eventDispatcher.dispatch(LogEvent.warn("  Caused by: " + ex.getCause().getMessage()));
             }
           }
         }

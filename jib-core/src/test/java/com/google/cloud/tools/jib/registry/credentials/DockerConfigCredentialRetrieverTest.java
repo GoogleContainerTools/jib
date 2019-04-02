@@ -116,7 +116,7 @@ public class DockerConfigCredentialRetrieverTest {
   }
 
   @Test
-  public void testRetrieve_useCredHelper_info()
+  public void testRetrieve_useCredHelper_warn()
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
     Mockito.when(mockDockerConfig.getCredentialHelperFor("another registry"))
@@ -130,8 +130,8 @@ public class DockerConfigCredentialRetrieverTest {
         .retrieve(mockDockerConfig, mockEventDispatcher);
 
     Mockito.verify(mockEventDispatcher)
-        .dispatch(LogEvent.info("The system does not have docker-credential-path CLI"));
-    Mockito.verify(mockEventDispatcher).dispatch(LogEvent.info("  Caused by: cause"));
+        .dispatch(LogEvent.warn("The system does not have docker-credential-path CLI"));
+    Mockito.verify(mockEventDispatcher).dispatch(LogEvent.warn("  Caused by: cause"));
   }
 
   @Test
