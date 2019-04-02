@@ -19,7 +19,14 @@ package com.google.cloud.tools.jib.image;
 /** Thrown when attempting to parse an invalid image reference. */
 public class InvalidImageReferenceException extends Exception {
 
+  private final String reference;
+
   public InvalidImageReferenceException(String reference) {
     super("Invalid image reference: " + reference);
+    this.reference = reference;
+  }
+
+  public String getInvalidReference() {
+    return reference;
   }
 }

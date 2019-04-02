@@ -82,6 +82,11 @@ public class HelpfulSuggestionsTest {
             + "parameter, or set maven-compiler-plugin's '<target>' or '<release>' version "
             + "to 8 or below in your build configuration",
         HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForMaven(8, 11));
+    Assert.assertEquals(
+        "Invalid image reference gcr.io/invalid_REF, perhaps you should check that the reference "
+            + "is formatted correctly according to https://docs.docker.com/engine/reference/commandline/tag/#extended-description\n"
+            + "For example, slash-separated name components cannot have uppercase letters",
+        HelpfulSuggestions.forInvalidImageReference("gcr.io/invalid_REF"));
     Assert.assertEquals("messagePrefix", TEST_HELPFUL_SUGGESTIONS.none());
     Assert.assertEquals(
         "messagePrefix, perhaps you should use a registry that supports HTTPS so credentials can be sent safely, or set the 'sendCredentialsOverHttp' system property to true",

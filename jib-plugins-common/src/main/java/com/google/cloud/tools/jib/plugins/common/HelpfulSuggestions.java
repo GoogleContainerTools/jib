@@ -75,6 +75,14 @@ public class HelpfulSuggestions {
             + " or below");
   }
 
+  public static String forInvalidImageReference(String reference) {
+    return suggest(
+        "Invalid image reference " + reference,
+        "check that the reference is formatted correctly according to "
+            + "https://docs.docker.com/engine/reference/commandline/tag/#extended-description\n"
+            + "For example, slash-separated name components cannot have uppercase letters");
+  }
+
   /**
    * @param messagePrefix the initial message text
    * @param suggestion a suggested fix for the problem described by {@link #messagePrefix}

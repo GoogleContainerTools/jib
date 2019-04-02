@@ -87,8 +87,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildDocker()
-      throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
-          CacheDirectoryCreationException, MainClassInferenceException {
+      throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
+          MainClassInferenceException {
     Path dockerExecutable = dockerClientParameters.getExecutablePath();
     boolean isDockerInstalled =
         dockerExecutable == null
@@ -169,6 +169,10 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
           HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForGradle(
               ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
           ex);
+
+    } catch (InvalidImageReferenceException ex) {
+      throw new GradleException(
+          HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
     }
   }
 
