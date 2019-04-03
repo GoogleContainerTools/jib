@@ -186,7 +186,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for the {@code extraDirectory} parameter. */
   public static class ExtraDirectoryParameters {
 
-    @Nullable private List<File> path = Collections.emptyList();
+    @Parameter private List<File> path = Collections.emptyList();
 
     @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
 
