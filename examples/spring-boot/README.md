@@ -45,10 +45,10 @@ curl localhost:8080
 \* If you are using Gradle, use `./gradlew jib --image=$IMAGE` instead of the `./mvnw` command
 
 <!-- Run a @springboot app on #Kubernetes in seconds @kubernetesio #jib #java -->
-Give it a [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Run+a+%40springboot+app+on+%23Kubernetes+in+seconds+%40kubernetesio+%23jib+%23java&url=https://github.com/GoogleContainerTools/jib/tree/master/examples/spring-boot-kubernetes&hashtags=docker)
+Give it a [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Run+a+%40springboot+app+on+%23Kubernetes+in+seconds+%40kubernetesio+%23jib+%23java&url=https://github.com/GoogleContainerTools/jib/tree/master/examples/spring-boot&hashtags=docker)
 
 ## More information
 
 Learn [more about Jib](https://github.com/GoogleContainerTools/jib).
 
-[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/examples/spring-boot-kubernetes)](https://github.com/igrigorik/ga-beacon)
+[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/examples/spring-boot)](https://github.com/igrigorik/ga-beacon)
