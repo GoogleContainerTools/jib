@@ -186,7 +186,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for the {@code extraDirectory} parameter. */
   public static class ExtraDirectoryParameters {
 
-    @Nullable @Parameter private List<File> path;
+    @Nullable private List<File> path = Collections.emptyList();
 
     @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
 
@@ -303,9 +303,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     List<String> tags =
         property != null ? ConfigurationPropertyValidator.parseListProperty(property) : to.tags;
     String source = property != null ? PropertyNames.TO_TAGS : "<to><tags>";
-    tags.forEach(
-        tag ->
-            Preconditions.checkArgument(!Strings.isNullOrEmpty(tag), "%s has empty tag", source));
+    if (tags.stream().anyMatch(Strings::isNullOrEmpty)) {
+      throw new IllegalArgumentException(source + " has empty tag");
+    }
     return new HashSet<>(tags);
   }
 

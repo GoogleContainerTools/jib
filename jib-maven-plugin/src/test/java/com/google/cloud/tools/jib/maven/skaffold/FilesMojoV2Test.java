@@ -123,8 +123,8 @@ public class FilesMojoV2Test {
             complexServiceRoot.resolve("src/main/resources2").toString(),
             complexServiceRoot.resolve("src/main/other-jib").toString(),
             // this test expects standard .m2 locations
-            Paths.get(System.getProperty("user.home"))
-                .resolve(
+            Paths.get(
+                    System.getProperty("user.home"),
                     ".m2/repository/com/google/guava/guava/HEAD-jre-SNAPSHOT/guava-HEAD-jre-SNAPSHOT.jar")
                 .toString()));
   }
