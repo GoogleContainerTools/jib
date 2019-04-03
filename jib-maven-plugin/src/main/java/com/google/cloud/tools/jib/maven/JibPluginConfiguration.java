@@ -507,7 +507,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the configured extra directory path
    */
-  List<Path> getExtraDirectoryPath() {
+  List<Path> getExtraDirectoryPaths() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     String property = getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
     if (property != null) {
