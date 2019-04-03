@@ -18,13 +18,9 @@ See [multi-module](multi-module) for containerizing projects with multiple modul
 
 See [vertx](vertx) for containerizing [Eclipse Vert.x](https://vertx.io/) applications.
 
-<!-- ### SpringBoot Example 
+### Spring Boot example
 
-You can find usage by Gradle or Maven with SpringBoot in [spring-boot](spring-boot-draft#Quickstart) -->
-
-### Spring Boot Kubernetes example
-
-See [spring-boot-kubernetes](spring-boot-kubernetes) for containerizing a [Spring Boot](https://spring.io/projects/spring-boot) application and running it on [Kubernetes](https://kubernetes.io).
+See [spring-boot](spring-boot) for containerizing a [Spring Boot](https://spring.io/projects/spring-boot) application and running it on [Kubernetes](https://kubernetes.io).
 
 ### Ktor example
 

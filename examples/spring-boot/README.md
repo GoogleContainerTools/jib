@@ -1,6 +1,22 @@
-# Dockerize and deploy a Spring Boot application to Kubernetes
+# Dockerize a Spring Boot application using Jib
 
-This is an example of how to easily build a Docker image for a Spring Boot application with Jib and deploy it to Kubernetes with `kubectl`.
+This is an example of how to easily build a Docker image for a Spring Boot application with Jib.
+
+## Try it yourself
+
+You can containerize the application with one of the following commands.
+
+**Maven:**
+```shell
+./mvnw compile jib:build -Dimage=<your image, eg. gcr.io/my-project/spring-boot-jib>
+```
+
+**Gradle:**
+```shell
+./gradlew jib --image=<your image, eg. gcr.io/my-project/spring-boot-jib>
+```
+
+## Deploying to Kubernetes using `kubectl`
 
 <!-- Dockerize and deploy a @springboot app to #Kubernetes in seconds @kubernetesio @docker #jib -->
 <p align="center">
@@ -9,9 +25,7 @@ This is an example of how to easily build a Docker image for a Spring Boot appli
   </a>
 </p>
 
-## Try it yourself
-
-*Make sure you have `kubectl` [configured with a cluster](https://cloud.google.com/kubernetes-engine/docs/how-to/creating-a-cluster).*
+*Make sure you have `kubectl` installed and [configured with a cluster](https://cloud.google.com/kubernetes-engine/docs/how-to/creating-a-cluster).*
 
 ```shell
 IMAGE=<your image, eg. gcr.io/my-project/spring-boot-jib>
@@ -28,10 +42,10 @@ curl localhost:8080
 > Greetings from Kubernetes!
 ```
 
+\* If you are using Gradle, use `./gradlew jib --image=$IMAGE` instead of the `./mvnw` command
+
 <!-- Run a @springboot app on #Kubernetes in seconds @kubernetesio #jib #java -->
 Give it a [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=Run+a+%40springboot+app+on+%23Kubernetes+in+seconds+%40kubernetesio+%23jib+%23java&url=https://github.com/GoogleContainerTools/jib/tree/master/examples/spring-boot-kubernetes&hashtags=docker)
-
-*For Gradle just run `./gradlew jib --image=$IMAGE` instead.*
 
 ## More information
 
