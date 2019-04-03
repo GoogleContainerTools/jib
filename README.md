@@ -40,7 +40,7 @@ For more information, check out the [official blog post](https://cloudplatform.g
 
 The [examples](examples) directory includes the following examples (and more).
    * [helloworld](examples/helloworld)
-   * [Spring Boot](examples/spring-boot-kubernetes)
+   * [Spring Boot](examples/spring-boot)
    * [Micronaut](examples/micronaut)
    * [Multi-module project](examples/multi-module)
    * [Spark Java using Java Agent](examples/java-agent)
