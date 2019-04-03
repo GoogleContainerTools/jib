@@ -21,7 +21,9 @@ import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import java.io.File;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -150,16 +152,18 @@ public class FilesMojo extends AbstractMojo {
     }
   }
 
-  private Path resolveExtraDirectory() {
-    if (extraDirectory.getPath() == null) {
-      return Preconditions.checkNotNull(project)
-          .getBasedir()
-          .getAbsoluteFile()
-          .toPath()
-          .resolve("src")
-          .resolve("main")
-          .resolve("jib");
+  private List<Path> resolveExtraDirectory() {
+    List<File> paths = extraDirectory.getPath();
+    if (paths == null || paths.isEmpty()) {
+      return Collections.singletonList(
+          Preconditions.checkNotNull(project)
+              .getBasedir()
+              .getAbsoluteFile()
+              .toPath()
+              .resolve("src")
+              .resolve("main")
+              .resolve("jib"));
     }
-    return extraDirectory.getPath().getAbsoluteFile().toPath();
+    return paths.stream().map(File::getAbsoluteFile).map(File::toPath).collect(Collectors.toList());
   }
 }

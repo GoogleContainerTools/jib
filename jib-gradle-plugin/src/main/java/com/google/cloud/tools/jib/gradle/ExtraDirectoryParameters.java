@@ -22,7 +22,9 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
@@ -34,36 +36,39 @@ public class ExtraDirectoryParameters {
     return projectDirectory.resolve("src").resolve("main").resolve("jib");
   }
 
-  private Path path;
+  private List<Path> paths;
   private Map<String, String> permissions = Collections.emptyMap();
 
   @Inject
   public ExtraDirectoryParameters(Path projectDirectory) {
-    path = resolveDefaultExtraDirectory(projectDirectory);
+    paths = Collections.singletonList(resolveDefaultExtraDirectory(projectDirectory));
   }
 
   @Input
-  public String getPathString() {
+  public List<String> getPathStrings() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH) != null) {
-      return System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
-    }
-    return path.toString();
+    return getPaths().stream().map(Path::toString).collect(Collectors.toList());
   }
 
   @Internal
-  public Path getPath() {
+  public List<Path> getPaths() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH) != null) {
-      return Paths.get(System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH));
+    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
+    if (property != null) {
+      List<String> pathStrings = ConfigurationPropertyValidator.parseListProperty(property);
+      return pathStrings.stream().map(Paths::get).collect(Collectors.toList());
     }
-    return path;
+    return paths;
   }
 
   public void setPath(File path) {
-    this.path = path.toPath();
+    this.paths = Collections.singletonList(path.toPath());
+  }
+
+  public void setPath(List<File> paths) {
+    this.paths = paths.stream().map(File::toPath).collect(Collectors.toList());
   }
 
   /**

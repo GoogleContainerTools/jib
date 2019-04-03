@@ -186,7 +186,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for the {@code extraDirectory} parameter. */
   public static class ExtraDirectoryParameters {
 
-    @Nullable @Parameter private File path;
+    @Nullable @Parameter private List<File> path;
 
     @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
 
@@ -197,11 +197,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
      * @param path the value to set {@code path} to
      */
     public void set(File path) {
-      this.path = path;
+      this.path = Collections.singletonList(path);
     }
 
     @Nullable
-    public File getPath() {
+    public List<File> getPath() {
       return path;
     }
   }
@@ -507,15 +507,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return the configured extra directory path
    */
-  Optional<Path> getExtraDirectoryPath() {
+  List<Path> getExtraDirectoryPath() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     String property = getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
     if (property != null) {
-      return Optional.of(Paths.get(property));
+      List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
+      return paths.stream().map(Paths::get).collect(Collectors.toList());
     }
-    return extraDirectory.path == null
-        ? Optional.empty()
-        : Optional.of(extraDirectory.path.toPath());
+    return extraDirectory.path.stream().map(File::toPath).collect(Collectors.toList());
   }
 
   /**
