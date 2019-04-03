@@ -148,18 +148,17 @@ public class JibExtensionTest {
   @Test
   public void testExtraDirectory() {
     Assert.assertEquals(
-        fakeProject.getProjectDir().toPath().resolve("src").resolve("main").resolve("jib"),
+        Paths.get(fakeProject.getProjectDir().getPath(), "src", "main", "jib"),
         testJibExtension.getExtraDirectory().getPath());
     Assert.assertEquals(
         Collections.emptyMap(), testJibExtension.getExtraDirectory().getPermissions());
 
     testJibExtension.extraDirectory(
         extraDirectory -> {
-          extraDirectory.setPath(Paths.get("test").resolve("path").toFile());
+          extraDirectory.setPath(Paths.get("test", "path").toFile());
           extraDirectory.setPermissions(ImmutableMap.of("file1", "123", "file2", "456"));
         });
-    Assert.assertEquals(
-        Paths.get("test").resolve("path"), testJibExtension.getExtraDirectory().getPath());
+    Assert.assertEquals(Paths.get("test", "path"), testJibExtension.getExtraDirectory().getPath());
     Assert.assertEquals(
         ImmutableMap.of("file1", "123", "file2", "456"),
         testJibExtension.getExtraDirectory().getPermissions());

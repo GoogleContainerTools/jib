@@ -53,7 +53,7 @@ public class DockerConfigCredentialRetriever {
    *     href="https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement">https://docs.docker.com/engine/reference/commandline/login/#privileged-user-requirement</a>
    */
   private static final Path DOCKER_CONFIG_FILE =
-      Paths.get(System.getProperty("user.home")).resolve(".docker").resolve("config.json");
+      Paths.get(System.getProperty("user.home"), ".docker", "config.json");
 
   private final String registry;
   private final Path dockerConfigFile;
