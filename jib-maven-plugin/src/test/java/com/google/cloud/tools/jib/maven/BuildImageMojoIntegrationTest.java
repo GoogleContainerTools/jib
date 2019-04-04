@@ -399,6 +399,15 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
+  public void testExecute_multipleExtraDirectories()
+      throws DigestException, VerificationException, IOException, InterruptedException {
+    String targetImage = getGcrImageReference("simpleimage:maven");
+    Assert.assertEquals(
+        "Hello, world. An argument.\n",
+        buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-extra-dirs.xml", false));
+  }
+
+  @Test
   public void testExecute_defaultTarget() throws IOException {
     // Test error when 'to' is missing
     try {
