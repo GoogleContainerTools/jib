@@ -212,6 +212,26 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
+  public void testDockerDaemon_simple_multipleExtraDirectories()
+      throws DigestException, IOException, InterruptedException {
+    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. \nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
+        JibRunHelper.buildToDockerDaemonAndRun(
+            simpleTestProject, targetImage, "build-extra-dirs.gradle"));
+  }
+
+  @Test
+  public void testDockerDaemon_simple_multipleExtraDirectoriesWithAlternativeConfig()
+      throws DigestException, IOException, InterruptedException {
+    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. \nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
+        JibRunHelper.buildToDockerDaemonAndRun(
+            simpleTestProject, targetImage, "build-extra-dirs2.gradle"));
+  }
+
+  @Test
   public void testBuild_complex() throws IOException, InterruptedException {
     String targetImage = "localhost:6000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();

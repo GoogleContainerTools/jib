@@ -159,7 +159,8 @@ public class JibExtensionTest {
           extraDirectory.setPermissions(ImmutableMap.of("file1", "123", "file2", "456"));
         });
     Assert.assertEquals(
-        Arrays.asList(Paths.get("test", "path")), testJibExtension.getExtraDirectory().getPaths());
+        Arrays.asList(Paths.get(fakeProject.getProjectDir().getPath(), "test", "path")),
+        testJibExtension.getExtraDirectory().getPaths());
     Assert.assertEquals(
         ImmutableMap.of("file1", "123", "file2", "456"),
         testJibExtension.getExtraDirectory().getPermissions());

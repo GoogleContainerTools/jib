@@ -1,0 +1,22 @@
+plugins {
+  id 'java'
+  id 'com.google.cloud.tools.jib'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+for (File f : [file('src/main/custom-extra-dir')]) {
+  System.out.println(f);
+}
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile files('libs/dependency-1.0.0.jar')
+}
+
+jib.to.image = System.getProperty("_TARGET_IMAGE")
+jib.extraDirectory = ['src/main/custom-extra-dir', 'src/main/custom-extra-dir2']

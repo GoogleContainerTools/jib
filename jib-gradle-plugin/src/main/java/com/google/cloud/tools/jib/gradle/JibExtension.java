@@ -78,8 +78,7 @@ public class JibExtension {
     from = objectFactory.newInstance(BaseImageParameters.class);
     to = objectFactory.newInstance(TargetImageParameters.class);
     container = objectFactory.newInstance(ContainerParameters.class);
-    extraDirectory =
-        objectFactory.newInstance(ExtraDirectoryParameters.class, project.getProjectDir().toPath());
+    extraDirectory = objectFactory.newInstance(ExtraDirectoryParameters.class, project);
 
     allowInsecureRegistries = objectFactory.property(Boolean.class);
 
@@ -105,6 +104,10 @@ public class JibExtension {
 
   public void setExtraDirectory(File extraDirectory) {
     this.extraDirectory.setPath(extraDirectory);
+  }
+
+  public void setExtraDirectory(Object extraDirectories) {
+    this.extraDirectory.setPath(extraDirectories);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {

@@ -26,22 +26,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
+import org.gradle.api.Project;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
 /** Object in {@link JibExtension} that configures the extra directory. */
 public class ExtraDirectoryParameters {
 
-  private static Path resolveDefaultExtraDirectory(Path projectDirectory) {
-    return projectDirectory.resolve("src").resolve("main").resolve("jib");
-  }
+  private final Project project;
 
   private List<Path> paths;
   private Map<String, String> permissions = Collections.emptyMap();
 
   @Inject
-  public ExtraDirectoryParameters(Path projectDirectory) {
-    paths = Collections.singletonList(resolveDefaultExtraDirectory(projectDirectory));
+  public ExtraDirectoryParameters(Project project) {
+    this.project = project;
+    paths =
+        Collections.singletonList(
+            project.getProjectDir().toPath().resolve("src").resolve("main").resolve("jib"));
   }
 
   @Input
@@ -63,12 +65,9 @@ public class ExtraDirectoryParameters {
     return paths;
   }
 
-  public void setPath(File path) {
-    this.paths = Collections.singletonList(path.toPath());
-  }
-
-  public void setPath(List<File> paths) {
-    this.paths = paths.stream().map(File::toPath).collect(Collectors.toList());
+  public void setPath(Object paths) {
+    this.paths =
+        project.files(paths).getFiles().stream().map(File::toPath).collect(Collectors.toList());
   }
 
   /**
