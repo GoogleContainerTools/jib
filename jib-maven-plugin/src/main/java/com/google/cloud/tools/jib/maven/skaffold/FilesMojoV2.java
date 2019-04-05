@@ -196,7 +196,10 @@ public class FilesMojoV2 extends AbstractMojo {
                 .collect(Collectors.toList());
           }
           // <extraDirectory>...</extraDirectory>
-          return Collections.singletonList(Paths.get(extraDirectoryConfiguration.getValue()));
+          String value = extraDirectoryConfiguration.getValue();
+          if (value != null) {
+            return Collections.singletonList(Paths.get(extraDirectoryConfiguration.getValue()));
+          }
         }
       }
     }
