@@ -44,8 +44,10 @@
         <version>${jib-maven-plugin.version}</version>
         <configuration>
           <extraDirectory>
-            <path>${project.basedir}/src/main/jib-custom</path>
-            <path>${project.basedir}/src/main/jib-custom-2</path>
+            <paths>
+              <path>${project.basedir}/src/main/jib-custom</path>
+              <path>${project.basedir}/src/main/jib-custom-2</path>
+            </paths>
           </extraDirectory>
         </configuration>
       </plugin>
