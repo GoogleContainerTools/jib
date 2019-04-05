@@ -516,7 +516,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
       return paths.stream().map(Paths::get).collect(Collectors.toList());
     }
-    return extraDirectory.paths.stream().map(File::toPath).collect(Collectors.toList());
+    return extraDirectory.getPaths().stream().map(File::toPath).collect(Collectors.toList());
   }
 
   /**
