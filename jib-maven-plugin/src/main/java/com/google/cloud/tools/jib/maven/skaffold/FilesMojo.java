@@ -23,6 +23,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -107,7 +108,7 @@ public class FilesMojo extends AbstractMojo {
     // and is expected to run on all projects irrespective of their configuring of the jib plugin).
     if (project.getPlugin(MavenProjectProperties.PLUGIN_KEY) != null) {
       // print out extra directory
-      resolveExtraDirectory().stream().forEach(System.out::println);
+      resolveExtraDirectoris().stream().forEach(System.out::println);
     }
 
     // Grab non-project SNAPSHOT dependencies for this project
@@ -152,17 +153,13 @@ public class FilesMojo extends AbstractMojo {
     }
   }
 
-  private List<Path> resolveExtraDirectory() {
-    List<File> paths = extraDirectory.getPath();
-    if (paths == null || paths.isEmpty()) {
-      return Collections.singletonList(
-          Preconditions.checkNotNull(project)
-              .getBasedir()
-              .getAbsoluteFile()
-              .toPath()
-              .resolve("src")
-              .resolve("main")
-              .resolve("jib"));
+  private List<Path> resolveExtraDirectoris() {
+    List<File> paths = extraDirectory.getPaths();
+    if (paths.isEmpty()) {
+      Path projectBase =
+          Preconditions.checkNotNull(project).getBasedir().getAbsoluteFile().toPath();
+      Path srcMainJib = Paths.get("src", "main", "jib");
+      return Collections.singletonList(projectBase.resolve(srcMainJib));
     }
     return paths.stream().map(File::getAbsoluteFile).map(File::toPath).collect(Collectors.toList());
   }

@@ -186,7 +186,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for the {@code extraDirectory} parameter. */
   public static class ExtraDirectoryParameters {
 
-    @Parameter private List<File> path = Collections.emptyList();
+    // retained for backward-compatibility for <extraDirectory><path>...<path></extraDirectory>
+    @Nullable @Parameter private File path;
+
+    @Parameter private List<File> paths = Collections.emptyList();
 
     @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
 
@@ -197,12 +200,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
      * @param path the value to set {@code path} to
      */
     public void set(File path) {
-      this.path = Collections.singletonList(path);
+      this.paths = Collections.singletonList(path);
     }
 
-    @Nullable
-    public List<File> getPath() {
-      return path;
+    public List<File> getPaths() {
+      return path != null ? Collections.singletonList(path) : paths;
     }
   }
 
@@ -514,7 +516,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
       return paths.stream().map(Paths::get).collect(Collectors.toList());
     }
-    return extraDirectory.path.stream().map(File::toPath).collect(Collectors.toList());
+    return extraDirectory.paths.stream().map(File::toPath).collect(Collectors.toList());
   }
 
   /**
