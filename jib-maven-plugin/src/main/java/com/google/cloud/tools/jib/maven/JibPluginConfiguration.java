@@ -304,8 +304,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     String property = getProperty(PropertyNames.TO_TAGS);
     List<String> tags =
         property != null ? ConfigurationPropertyValidator.parseListProperty(property) : to.tags;
-    String source = property != null ? PropertyNames.TO_TAGS : "<to><tags>";
     if (tags.stream().anyMatch(Strings::isNullOrEmpty)) {
+      String source = property != null ? PropertyNames.TO_TAGS : "<to><tags>";
       throw new IllegalArgumentException(source + " has empty tag");
     }
     return new HashSet<>(tags);
