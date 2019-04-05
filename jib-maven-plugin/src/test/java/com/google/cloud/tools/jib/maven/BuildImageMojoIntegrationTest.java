@@ -403,7 +403,7 @@ public class BuildImageMojoIntegrationTest {
       throws DigestException, VerificationException, IOException, InterruptedException {
     String targetImage = getGcrImageReference("simpleimage:maven");
     Assert.assertEquals(
-        "Hello, world. An argument.\n",
+        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-extra-dirs.xml", false));
   }
 
