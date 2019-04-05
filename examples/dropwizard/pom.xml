@@ -70,12 +70,10 @@
                             <port>8080</port>
                         </ports>
 
-                        <!-- good defaults intended for Java 8 containers -->
+                        <!-- good defaults intended for Java 8 (>= 8u191) containers -->
                         <jvmFlags>
                             <jmxFlag>-server</jmxFlag>
                             <jmxFlag>-Djava.awt.headless=true</jmxFlag>
-                            <jmxFlag>-XX:+UnlockExperimentalVMOptions</jmxFlag>
-                            <jmxFlag>-XX:+UseCGroupMemoryLimitForHeap</jmxFlag>
                             <jmxFlag>-XX:InitialRAMFraction=2</jmxFlag>
                             <jmxFlag>-XX:MinRAMFraction=2</jmxFlag>
                             <jmxFlag>-XX:MaxRAMFraction=2</jmxFlag>

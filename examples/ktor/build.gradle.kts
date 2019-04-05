@@ -43,12 +43,10 @@ jib {
         ports = listOf("8080")
         mainClass = main_class
 
-        // good defauls intended for Java 8 containers
+        // good defauls intended for Java 8 (>= 8u191) containers
         jvmFlags = listOf(
                 "-server",
                 "-Djava.awt.headless=true",
-                "-XX:+UnlockExperimentalVMOptions",
-                "-XX:+UseCGroupMemoryLimitForHeap",
                 "-XX:InitialRAMFraction=2",
                 "-XX:MinRAMFraction=2",
                 "-XX:MaxRAMFraction=2",

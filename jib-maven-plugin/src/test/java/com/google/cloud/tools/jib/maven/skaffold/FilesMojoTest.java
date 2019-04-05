@@ -117,8 +117,8 @@ public class FilesMojoTest {
             complexServiceRoot.resolve("src/main/resources2"),
             complexServiceRoot.resolve("src/main/other-jib"),
             // this test expects standard .m2 locations
-            Paths.get(System.getProperty("user.home"))
-                .resolve(
-                    ".m2/repository/com/google/guava/guava/HEAD-jre-SNAPSHOT/guava-HEAD-jre-SNAPSHOT.jar")));
+            Paths.get(
+                System.getProperty("user.home"),
+                ".m2/repository/com/google/guava/guava/HEAD-jre-SNAPSHOT/guava-HEAD-jre-SNAPSHOT.jar")));
   }
 }
