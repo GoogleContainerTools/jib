@@ -65,6 +65,13 @@ public class ExtraDirectoryParameters {
     return paths;
   }
 
+  /**
+   * Sets paths. {@code paths} can be any suitable object describing file paths convertible by
+   * {@link Project#files} (such as {@code List<File>}).
+   *
+   * @param paths paths to set.
+   */
+  // non-plural to retain backward-compatibility for the "jib.extraDirectory.path" config parameter
   public void setPath(Object paths) {
     this.paths =
         project.files(paths).getFiles().stream().map(File::toPath).collect(Collectors.toList());

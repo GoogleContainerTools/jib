@@ -94,7 +94,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
-    Mockito.when(rawConfiguration.getExtraDirectory())
+    Mockito.when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(Paths.get("nonexistent/path")));
 
     Mockito.when(projectProperties.getToolName()).thenReturn("tool");
@@ -145,7 +145,7 @@ public class PluginConfigurationProcessorTest {
           InvalidWorkingDirectoryException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI());
-    Mockito.when(rawConfiguration.getExtraDirectory()).thenReturn(Arrays.asList(extraDirectory));
+    Mockito.when(rawConfiguration.getExtraDirectories()).thenReturn(Arrays.asList(extraDirectory));
     Mockito.when(rawConfiguration.getExtraDirectoryPermissions())
         .thenReturn(
             ImmutableMap.of(AbsoluteUnixPath.get("/foo"), FilePermissions.fromOctalString("123")));

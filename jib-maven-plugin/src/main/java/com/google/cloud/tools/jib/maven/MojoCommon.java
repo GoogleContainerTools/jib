@@ -50,7 +50,7 @@ class MojoCommon {
    * @param jibPluginConfiguration the build configuration
    * @return the list of resolved extra directories
    */
-  static List<Path> getExtraDirectoryPath(JibPluginConfiguration jibPluginConfiguration) {
+  static List<Path> getExtraDirectoryPaths(JibPluginConfiguration jibPluginConfiguration) {
     List<Path> paths = jibPluginConfiguration.getExtraDirectoryPaths();
     if (!paths.isEmpty()) {
       return paths;

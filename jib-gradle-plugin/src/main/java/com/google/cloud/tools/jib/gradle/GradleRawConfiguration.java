@@ -146,7 +146,7 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public List<Path> getExtraDirectory() {
+  public List<Path> getExtraDirectories() {
     return jibExtension.getExtraDirectory().getPaths();
   }
 

@@ -106,6 +106,13 @@ public class JibExtension {
     this.extraDirectory.setPath(extraDirectory);
   }
 
+  /**
+   * Sets extra directory paths. {@code extraDirectories} can be any suitable object describing file
+   * paths convertible by {@link Project#files} (such as {@code List<File>}).
+   *
+   * @param extraDirectories paths to set.
+   */
+  // non-plural to retain backward-compatibility for the "jib.extraDirectory" config parameter
   public void setExtraDirectory(Object extraDirectories) {
     this.extraDirectory.setPath(extraDirectories);
   }
