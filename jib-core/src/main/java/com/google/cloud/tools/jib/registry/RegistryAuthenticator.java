@@ -131,6 +131,7 @@ public class RegistryAuthenticator {
    *
    * @param authenticationMethod the {@code WWW-Authenticate} header value
    * @param registryEndpointRequestProperties the registry request properties
+   * @param userAgent the {@code User-Agent} header value to use in later authentication calls
    * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
    * @throws RegistryAuthenticationFailedException if authentication fails
    * @see <a
@@ -139,7 +140,8 @@ public class RegistryAuthenticator {
   @Nullable
   static RegistryAuthenticator fromAuthenticationMethod(
       String authenticationMethod,
-      RegistryEndpointRequestProperties registryEndpointRequestProperties)
+      RegistryEndpointRequestProperties registryEndpointRequestProperties,
+      String userAgent)
       throws RegistryAuthenticationFailedException {
     // If the authentication method starts with 'basic ' (case insensitive), no registry
     // authentication is needed.
@@ -175,7 +177,7 @@ public class RegistryAuthenticator {
             ? serviceMatcher.group(1)
             : registryEndpointRequestProperties.getServerUrl();
 
-    return new RegistryAuthenticator(realm, service, registryEndpointRequestProperties);
+    return new RegistryAuthenticator(realm, service, registryEndpointRequestProperties, userAgent);
   }
 
   private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(
@@ -217,14 +219,17 @@ public class RegistryAuthenticator {
   private final String realm;
   private final String service;
   @Nullable private Credential credential;
+  private final String userAgent;
 
   RegistryAuthenticator(
       String realm,
       String service,
-      RegistryEndpointRequestProperties registryEndpointRequestProperties) {
+      RegistryEndpointRequestProperties registryEndpointRequestProperties,
+      String userAgent) {
     this.realm = realm;
     this.service = service;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
+    this.userAgent = userAgent;
   }
 
   /**
@@ -295,7 +300,9 @@ public class RegistryAuthenticator {
     try (Connection connection =
         Connection.getConnectionFactory().apply(getAuthenticationUrl(scope))) {
       Request.Builder requestBuilder =
-          Request.builder().setHttpTimeout(JibSystemProperties.getHttpTimeout());
+          Request.builder()
+              .setHttpTimeout(JibSystemProperties.getHttpTimeout())
+              .setUserAgent(userAgent);
 
       if (isOAuth2Auth()) {
         String parameters = getAuthRequestParameters(scope);
