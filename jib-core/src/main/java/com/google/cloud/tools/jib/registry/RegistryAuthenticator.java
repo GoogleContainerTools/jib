@@ -54,6 +54,7 @@ public class RegistryAuthenticator {
     private final String serverUrl;
     private final String repository;
     private boolean allowInsecureRegistries = false;
+    @Nullable private String userAgentSuffix;
 
     /**
      * Instantiates a new initializer for {@link RegistryAuthenticator}.
@@ -73,6 +74,11 @@ public class RegistryAuthenticator {
       return this;
     }
 
+    public Initializer setUserAgentSuffix(@Nullable String userAgentSuffix) {
+      this.userAgentSuffix = userAgentSuffix;
+      return this;
+    }
+
     /**
      * Gets a {@link RegistryAuthenticator} for a custom registry server and repository.
      *
@@ -88,6 +94,7 @@ public class RegistryAuthenticator {
       try {
         return RegistryClient.factory(eventDispatcher, serverUrl, repository)
             .setAllowInsecureRegistries(allowInsecureRegistries)
+            .setUserAgentSuffix(userAgentSuffix)
             .newRegistryClient()
             .getRegistryAuthenticator();
 
