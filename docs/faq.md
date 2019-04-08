@@ -24,7 +24,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How can I examine network traffic?](#how-can-i-examine-network-traffic)\
 [How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)\
 [How do I enable debugging?](#how-do-i-enable-debugging)\
-[Why is my image created 48 years ago?](#why-is-my-image-created-48-years-ago)\
+[Why is my image created 48+ years ago?](#why-is-my-image-created-48-years-ago)\
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
 [How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)
 
@@ -395,7 +395,7 @@ Using Kubernetes: `kubectl port-forward <pod name> 5005:5005`
 
 Beware: in Java 8 and earlier, specifying only a port meant that the JDWP socket was open to all incoming connections which is insecure.  It is recommended to limit the debug port to localhost.
 
-### Why is my image created 48 years ago?
+### Why is my image created 48+ years ago?
 
 For reproducibility purposes, Jib sets the creation time of the container images to 0 (January 1st, 1970). If you would like to forgo reproducibility and use the real creation time, set the `useCurrentTimestamp` parameter to `true` in your build configuration.
 
