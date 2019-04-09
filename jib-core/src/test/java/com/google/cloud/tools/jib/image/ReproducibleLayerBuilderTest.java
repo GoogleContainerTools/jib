@@ -106,7 +106,8 @@ public class ReproducibleLayerBuilderTest {
                 .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/apple/blobA"))
                 .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/banana/blobA"))
                 .build()
-                .getLayerEntries());
+                .getLayerEntries(),
+            ignored -> Instant.ofEpochMilli(1000));
 
     // Writes the layer tar to a temporary file.
     Blob unwrittenBlob = layerBuilder.build();
@@ -168,13 +169,15 @@ public class ReproducibleLayerBuilderTest {
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
                     new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA"), null),
-                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"), null)))
+                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"), null)),
+                ignored -> Instant.ofEpochMilli(1000))
             .build();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
                     new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB"), null),
-                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"), null)))
+                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"), null)),
+                ignored -> Instant.ofEpochMilli(1000))
             .build();
 
     byte[] layerContent = Blobs.writeToByteArray(layer);
@@ -189,7 +192,8 @@ public class ReproducibleLayerBuilderTest {
 
     Blob blob =
         new ReproducibleLayerBuilder(
-                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"), null)))
+                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"), null)),
+                ignored -> Instant.ofEpochMilli(1000))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -222,7 +226,8 @@ public class ReproducibleLayerBuilderTest {
                     new LayerEntry(
                         folder,
                         AbsoluteUnixPath.get("/somewhere/folder"),
-                        FilePermissions.fromOctalString("456"))))
+                        FilePermissions.fromOctalString("456"))),
+                ignored -> Instant.ofEpochMilli(1000))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
