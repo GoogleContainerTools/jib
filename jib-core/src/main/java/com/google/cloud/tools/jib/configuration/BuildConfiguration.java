@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.configuration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.frontend.TimestampProvider;
+import com.google.cloud.tools.jib.frontend.FileTimestampProvider;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -59,7 +59,7 @@ public class BuildConfiguration {
     @Nullable private Path baseImageLayersCacheDirectory;
     private boolean allowInsecureRegistries = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
-    private TimestampProvider fileTimestampProvider = TimestampProvider.DEFAULT;
+    private FileTimestampProvider fileTimestampProvider = FileTimestampProvider.DEFAULT;
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
     private EventDispatcher eventDispatcher =
@@ -176,7 +176,7 @@ public class BuildConfiguration {
      * @param fileTimestampProvider the function that returns a timestamp given a file
      * @return this
      */
-    public Builder setFileTimestampProvider(TimestampProvider fileTimestampProvider) {
+    public Builder setFileTimestampProvider(FileTimestampProvider fileTimestampProvider) {
       this.fileTimestampProvider = fileTimestampProvider;
       return this;
     }
@@ -313,7 +313,7 @@ public class BuildConfiguration {
   private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
-  private final TimestampProvider fileTimestampProvider;
+  private final FileTimestampProvider fileTimestampProvider;
   private final String toolName;
   private final EventDispatcher eventDispatcher;
   private final ExecutorService executorService;
@@ -329,7 +329,7 @@ public class BuildConfiguration {
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
-      TimestampProvider fileTimestampProvider,
+      FileTimestampProvider fileTimestampProvider,
       String toolName,
       EventDispatcher eventDispatcher,
       ExecutorService executorService) {
@@ -422,11 +422,11 @@ public class BuildConfiguration {
   }
 
   /**
-   * Gets the {@link TimestampProvider} used to set file modification times.
+   * Gets the {@link FileTimestampProvider} used to set file modification times.
    *
-   * @return the file {@link TimestampProvider}
+   * @return the file {@link FileTimestampProvider}
    */
-  public TimestampProvider getFileTimestampProvider() {
+  public FileTimestampProvider getFileTimestampProvider() {
     return fileTimestampProvider;
   }
 

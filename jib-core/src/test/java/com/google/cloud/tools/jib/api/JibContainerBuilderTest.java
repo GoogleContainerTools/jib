@@ -255,12 +255,10 @@ public class JibContainerBuilderTest {
     buildConfiguration =
         jibContainerBuilder
             .setFileModificationTime(
-                path -> {
-                  if (path.equals(AbsoluteUnixPath.get("/"))) {
-                    return Instant.ofEpochSecond(987);
-                  }
-                  return Instant.ofEpochSecond(654);
-                })
+                path ->
+                    path.equals(AbsoluteUnixPath.get("/"))
+                        ? Instant.ofEpochSecond(987)
+                        : Instant.ofEpochSecond(654))
             .toBuildConfiguration(containerizer, MoreExecutors.newDirectExecutorService());
 
     Assert.assertEquals(

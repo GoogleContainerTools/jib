@@ -26,7 +26,7 @@ import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.TimestampProvider;
+import com.google.cloud.tools.jib.frontend.FileTimestampProvider;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
@@ -422,7 +422,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setFileModificationTime(
-      TimestampProvider fileModificationTimeProvider) {
+      FileTimestampProvider fileModificationTimeProvider) {
     buildConfigurationBuilder.setFileTimestampProvider(fileModificationTimeProvider);
     return this;
   }

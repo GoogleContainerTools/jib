@@ -21,10 +21,10 @@ import java.time.Instant;
 
 /** Provides a timestamp given a file's extraction path. */
 @FunctionalInterface
-public interface TimestampProvider {
+public interface FileTimestampProvider {
 
   /** A provider that returns Epoch + 1 second for all files. */
-  TimestampProvider DEFAULT = ignored -> Instant.ofEpochSecond(1);
+  FileTimestampProvider DEFAULT = ignored -> Instant.ofEpochSecond(1);
 
   /**
    * Returns the modification timestamp to apply to a file on the container.

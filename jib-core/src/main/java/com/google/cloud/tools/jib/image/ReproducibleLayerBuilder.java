@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.frontend.TimestampProvider;
+import com.google.cloud.tools.jib.frontend.FileTimestampProvider;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
@@ -84,10 +84,10 @@ public class ReproducibleLayerBuilder {
   }
 
   private final ImmutableList<LayerEntry> layerEntries;
-  private final TimestampProvider fileTimestampProvider;
+  private final FileTimestampProvider fileTimestampProvider;
 
   public ReproducibleLayerBuilder(
-      ImmutableList<LayerEntry> layerEntries, TimestampProvider fileTimestampProvider) {
+      ImmutableList<LayerEntry> layerEntries, FileTimestampProvider fileTimestampProvider) {
     this.layerEntries = layerEntries;
     this.fileTimestampProvider = fileTimestampProvider;
   }
