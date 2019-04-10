@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `JibContainerBuilder#setFileModificationTime()` and `TimestampProvider` for setting the modification times of files added to the contianer ([#1607](https://github.com/GoogleContainerTools/jib/issues/1607))
+
 ### Changed
 
 ### Fixed
