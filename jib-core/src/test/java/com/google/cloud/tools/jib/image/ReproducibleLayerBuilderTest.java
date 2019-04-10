@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.frontend.TimestampProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
@@ -170,14 +171,14 @@ public class ReproducibleLayerBuilderTest {
                 ImmutableList.of(
                     new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA"), null),
                     new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"), null)),
-                ignored -> Instant.ofEpochMilli(1000))
+                TimestampProvider.DEFAULT)
             .build();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
                     new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB"), null),
                     new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"), null)),
-                ignored -> Instant.ofEpochMilli(1000))
+                TimestampProvider.DEFAULT)
             .build();
 
     byte[] layerContent = Blobs.writeToByteArray(layer);
@@ -187,13 +188,13 @@ public class ReproducibleLayerBuilderTest {
   }
 
   @Test
-  public void testBuild_timestamp() throws IOException {
+  public void testBuild_timestampDefault() throws IOException {
     Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
 
     Blob blob =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"), null)),
-                ignored -> Instant.ofEpochMilli(1000))
+                TimestampProvider.DEFAULT)
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -205,6 +206,28 @@ public class ReproducibleLayerBuilderTest {
     try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
       Assert.assertEquals(
           Date.from(Instant.EPOCH.plusSeconds(1)), in.getNextEntry().getLastModifiedDate());
+    }
+  }
+
+  @Test
+  public void testBuild_timestampNonDefault() throws IOException {
+    Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
+
+    Blob blob =
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"), null)),
+                ignored -> Instant.ofEpochSecond(123))
+            .build();
+
+    Path tarFile = temporaryFolder.newFile().toPath();
+    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
+      blob.writeTo(out);
+    }
+
+    // Reads the file back.
+    try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
+      Assert.assertEquals(
+          Date.from(Instant.EPOCH.plusSeconds(123)), in.getNextEntry().getLastModifiedDate());
     }
   }
 
@@ -227,7 +250,7 @@ public class ReproducibleLayerBuilderTest {
                         folder,
                         AbsoluteUnixPath.get("/somewhere/folder"),
                         FilePermissions.fromOctalString("456"))),
-                ignored -> Instant.ofEpochMilli(1000))
+                TimestampProvider.DEFAULT)
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
