@@ -70,14 +70,6 @@ public class LayerEntry {
    * Instantiates with a source file and the path to place the source file in the container file
    * system.
    *
-   * <p>For example, {@code new LayerEntry(Paths.get("HelloWorld.class"),
-   * AbsoluteUnixPath.get("/app/classes/HelloWorld.class"))} adds a file {@code HelloWorld.class} to
-   * the container file system at {@code /app/classes/HelloWorld.class}.
-   *
-   * <p>For example, {@code new LayerEntry(Paths.get("com"),
-   * AbsoluteUnixPath.get("/app/classes/com"))} adds a directory to the container file system at
-   * {@code /app/classes/com}. This does <b>not</b> add the contents of {@code com/}.
-   *
    * @param sourceFile the source file to add to the layer
    * @param extractionPath the path in the container file system corresponding to the {@code
    *     sourceFile}
