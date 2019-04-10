@@ -31,10 +31,12 @@ import javax.annotation.Nullable;
 class AuthenticationMethodRetriever implements RegistryEndpointProvider<RegistryAuthenticator> {
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+  private final String userAgent;
 
   AuthenticationMethodRetriever(
-      RegistryEndpointRequestProperties registryEndpointRequestProperties) {
+      RegistryEndpointRequestProperties registryEndpointRequestProperties, String userAgent) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
+    this.userAgent = userAgent;
   }
 
   @Nullable
@@ -96,7 +98,7 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
     // Parses the header to retrieve the components.
     try {
       return RegistryAuthenticator.fromAuthenticationMethod(
-          authenticationMethod, registryEndpointRequestProperties);
+          authenticationMethod, registryEndpointRequestProperties, userAgent);
 
     } catch (RegistryAuthenticationFailedException ex) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)

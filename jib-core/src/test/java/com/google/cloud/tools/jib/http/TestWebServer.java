@@ -37,14 +37,15 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 
 /** Simple local web server for testing. */
-class TestWebServer implements Closeable {
+public class TestWebServer implements Closeable {
 
   private final boolean https;
   private final ServerSocket serverSocket;
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final Semaphore threadStarted = new Semaphore(0);
+  private final StringBuffer inputRead = new StringBuffer();
 
-  TestWebServer(boolean https)
+  public TestWebServer(boolean https)
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     this.https = https;
     serverSocket = createServerSocket(https);
@@ -52,7 +53,7 @@ class TestWebServer implements Closeable {
     threadStarted.acquire();
   }
 
-  String getEndpoint() {
+  public String getEndpoint() {
     String host = serverSocket.getInetAddress().getHostAddress();
     return (https ? "https" : "http") + "://" + host + ":" + serverSocket.getLocalPort();
   }
@@ -93,12 +94,18 @@ class TestWebServer implements Closeable {
       socket.getOutputStream().flush();
 
       InputStream in = socket.getInputStream();
-      for (int ch = in.read(); ch != -1; ch = in.read()) ;
+      for (int ch = in.read(); ch != -1; ch = in.read()) {
+        inputRead.append((char) ch);
+      }
     }
     return null;
   }
 
   private void ignoreReturn(Future<Void> future) {
     // do nothing; to make Error Prone happy
+  }
+
+  public String getInputRead() {
+    return inputRead.toString();
   }
 }
