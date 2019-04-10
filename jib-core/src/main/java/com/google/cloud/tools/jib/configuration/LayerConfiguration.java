@@ -81,17 +81,12 @@ public class LayerConfiguration {
      *     sourceFile}
      * @param permissions the file permissions on the container. If null, then default permissions
      *     are used (644 for files, 755 for directories)
-     * @param lastModified the provider of the file modification timestamp
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
      */
     public Builder addEntry(
-        Path sourceFile,
-        AbsoluteUnixPath pathInContainer,
-        @Nullable FilePermissions permissions,
-        FileTimestampProvider lastModified) {
-      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions, lastModified));
-      return this;
+        Path sourceFile, AbsoluteUnixPath pathInContainer, @Nullable FilePermissions permissions) {
+      return addEntry(sourceFile, pathInContainer, permissions, FileTimestampProvider.DEFAULT);
     }
 
     /**
@@ -104,13 +99,16 @@ public class LayerConfiguration {
      *     sourceFile}
      * @param permissions the file permissions on the container. If null, then default permissions
      *     are used (644 for files, 755 for directories)
+     * @param lastModified the provider of the file modification timestamp
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
      */
     public Builder addEntry(
-        Path sourceFile, AbsoluteUnixPath pathInContainer, @Nullable FilePermissions permissions) {
-      layerEntries.add(
-          new LayerEntry(sourceFile, pathInContainer, permissions, FileTimestampProvider.DEFAULT));
+        Path sourceFile,
+        AbsoluteUnixPath pathInContainer,
+        @Nullable FilePermissions permissions,
+        FileTimestampProvider lastModified) {
+      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions, lastModified));
       return this;
     }
 
