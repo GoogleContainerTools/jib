@@ -17,20 +17,18 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.frontend.TimestampProvider;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 
 /**
@@ -86,11 +84,10 @@ public class ReproducibleLayerBuilder {
   }
 
   private final ImmutableList<LayerEntry> layerEntries;
-  private final Function<AbsoluteUnixPath, Instant> fileTimestampProvider;
+  private final TimestampProvider fileTimestampProvider;
 
   public ReproducibleLayerBuilder(
-      ImmutableList<LayerEntry> layerEntries,
-      Function<AbsoluteUnixPath, Instant> fileTimestampProvider) {
+      ImmutableList<LayerEntry> layerEntries, TimestampProvider fileTimestampProvider) {
     this.layerEntries = layerEntries;
     this.fileTimestampProvider = fileTimestampProvider;
   }
@@ -114,7 +111,8 @@ public class ReproducibleLayerBuilder {
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
       entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
-      entry.setModTime(fileTimestampProvider.apply(layerEntry.getExtractionPath()).toEpochMilli());
+      entry.setModTime(
+          fileTimestampProvider.generateTimestamp(layerEntry.getExtractionPath()).toEpochMilli());
 
       uniqueTarArchiveEntries.add(entry);
     }

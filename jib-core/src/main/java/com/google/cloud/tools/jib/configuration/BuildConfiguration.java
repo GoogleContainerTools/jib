@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.configuration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.frontend.TimestampProvider;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -29,14 +29,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /** Immutable configuration options for the builder process. */
@@ -61,8 +59,7 @@ public class BuildConfiguration {
     @Nullable private Path baseImageLayersCacheDirectory;
     private boolean allowInsecureRegistries = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
-    private Function<AbsoluteUnixPath, Instant> fileTimestampProvider =
-        ignored -> Instant.ofEpochMilli(1000);
+    private TimestampProvider fileTimestampProvider = TimestampProvider.DEFAULT;
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
     private EventDispatcher eventDispatcher =
@@ -179,8 +176,7 @@ public class BuildConfiguration {
      * @param fileTimestampProvider the function that returns a timestamp given a file
      * @return this
      */
-    public Builder setFileTimestampProvider(
-        Function<AbsoluteUnixPath, Instant> fileTimestampProvider) {
+    public Builder setFileTimestampProvider(TimestampProvider fileTimestampProvider) {
       this.fileTimestampProvider = fileTimestampProvider;
       return this;
     }
@@ -317,7 +313,7 @@ public class BuildConfiguration {
   private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
-  private final Function<AbsoluteUnixPath, Instant> fileTimestampProvider;
+  private final TimestampProvider fileTimestampProvider;
   private final String toolName;
   private final EventDispatcher eventDispatcher;
   private final ExecutorService executorService;
@@ -333,7 +329,7 @@ public class BuildConfiguration {
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
-      Function<AbsoluteUnixPath, Instant> fileTimestampProvider,
+      TimestampProvider fileTimestampProvider,
       String toolName,
       EventDispatcher eventDispatcher,
       ExecutorService executorService) {
@@ -425,7 +421,12 @@ public class BuildConfiguration {
     return layerConfigurations;
   }
 
-  public Function<AbsoluteUnixPath, Instant> getFileTimestampProvider() {
+  /**
+   * Gets the {@link TimestampProvider} used to set file modification times.
+   *
+   * @return the file {@link TimestampProvider}
+   */
+  public TimestampProvider getFileTimestampProvider() {
     return fileTimestampProvider;
   }
 
