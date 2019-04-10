@@ -55,7 +55,6 @@ public class HelloWorld {
       System.out.println(new String(Files.readAllBytes(Paths.get("/baz")), StandardCharsets.UTF_8));
     }
 
-
     // Prints jvm flags
     for (String jvmFlag : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
       System.out.println(jvmFlag);

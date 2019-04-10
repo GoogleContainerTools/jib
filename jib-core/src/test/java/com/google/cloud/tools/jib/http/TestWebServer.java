@@ -43,7 +43,7 @@ public class TestWebServer implements Closeable {
   private final ServerSocket serverSocket;
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final Semaphore threadStarted = new Semaphore(0);
-  private final StringBuffer inputRead = new StringBuffer();
+  private final StringBuilder inputRead = new StringBuilder();
 
   public TestWebServer(boolean https)
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
