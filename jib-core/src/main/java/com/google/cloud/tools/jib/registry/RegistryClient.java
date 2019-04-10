@@ -181,7 +181,7 @@ public class RegistryClient {
     // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer
     // realm="https://gcr.io/v2/token",service="gcr.io"')
     return callRegistryEndpoint(
-        new AuthenticationMethodRetriever(registryEndpointRequestProperties));
+        new AuthenticationMethodRetriever(registryEndpointRequestProperties, getUserAgent()));
   }
 
   /**

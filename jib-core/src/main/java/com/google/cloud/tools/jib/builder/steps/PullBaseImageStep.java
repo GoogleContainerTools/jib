@@ -176,6 +176,7 @@ class PullBaseImageStep
                       buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
                       buildConfiguration.getBaseImageConfiguration().getImageRepository())
                   .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
+                  .setUserAgentSuffix(buildConfiguration.getToolName())
                   .initialize();
           if (registryAuthenticator == null) {
             buildConfiguration

@@ -17,8 +17,13 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.http.TestWebServer;
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.GeneralSecurityException;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,7 +40,8 @@ public class RegistryAuthenticatorTest {
     registryAuthenticator =
         RegistryAuthenticator.fromAuthenticationMethod(
             "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
-            registryEndpointRequestProperties);
+            registryEndpointRequestProperties,
+            "user-agent");
   }
 
   @Test
@@ -44,7 +50,8 @@ public class RegistryAuthenticatorTest {
     RegistryAuthenticator registryAuthenticator =
         RegistryAuthenticator.fromAuthenticationMethod(
             "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
-            registryEndpointRequestProperties);
+            registryEndpointRequestProperties,
+            "user-agent");
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
         registryAuthenticator.getAuthenticationUrl("scope"));
@@ -52,7 +59,8 @@ public class RegistryAuthenticatorTest {
     registryAuthenticator =
         RegistryAuthenticator.fromAuthenticationMethod(
             "bEaReR realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
-            registryEndpointRequestProperties);
+            registryEndpointRequestProperties,
+            "user-agent");
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
         registryAuthenticator.getAuthenticationUrl("scope"));
@@ -111,17 +119,20 @@ public class RegistryAuthenticatorTest {
     Assert.assertNull(
         RegistryAuthenticator.fromAuthenticationMethod(
             "Basic realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
-            registryEndpointRequestProperties));
+            registryEndpointRequestProperties,
+            "user-agent"));
 
     Assert.assertNull(
         RegistryAuthenticator.fromAuthenticationMethod(
             "BASIC realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
-            registryEndpointRequestProperties));
+            registryEndpointRequestProperties,
+            "user-agent"));
 
     Assert.assertNull(
         RegistryAuthenticator.fromAuthenticationMethod(
             "bASIC realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
-            registryEndpointRequestProperties));
+            registryEndpointRequestProperties,
+            "user-agent"));
   }
 
   @Test
@@ -129,7 +140,8 @@ public class RegistryAuthenticatorTest {
     try {
       RegistryAuthenticator.fromAuthenticationMethod(
           "realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
-          registryEndpointRequestProperties);
+          registryEndpointRequestProperties,
+          "user-agent");
       Assert.fail("Authentication method without 'Bearer ' or 'Basic ' should fail");
 
     } catch (RegistryAuthenticationFailedException ex) {
@@ -143,7 +155,7 @@ public class RegistryAuthenticatorTest {
   public void testFromAuthenticationMethod_noRealm() {
     try {
       RegistryAuthenticator.fromAuthenticationMethod(
-          "Bearer scope=\"somescope\"", registryEndpointRequestProperties);
+          "Bearer scope=\"somescope\"", registryEndpointRequestProperties, "user-agent");
       Assert.fail("Authentication method without 'realm' should fail");
 
     } catch (RegistryAuthenticationFailedException ex) {
@@ -158,10 +170,29 @@ public class RegistryAuthenticatorTest {
       throws MalformedURLException, RegistryAuthenticationFailedException {
     RegistryAuthenticator registryAuthenticator =
         RegistryAuthenticator.fromAuthenticationMethod(
-            "Bearer realm=\"https://somerealm\"", registryEndpointRequestProperties);
+            "Bearer realm=\"https://somerealm\"", registryEndpointRequestProperties, "user-agent");
 
     Assert.assertEquals(
         new URL("https://somerealm?service=someserver&scope=repository:someimage:scope"),
         registryAuthenticator.getAuthenticationUrl("scope"));
+  }
+
+  @Test
+  public void testUserAgent()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    try (TestWebServer server = new TestWebServer(false)) {
+      try {
+        RegistryAuthenticator authenticator =
+            RegistryAuthenticator.fromAuthenticationMethod(
+                "Bearer realm=\"" + server.getEndpoint() + "\"",
+                registryEndpointRequestProperties,
+                "Competent-Agent");
+        authenticator.authenticatePush();
+      } catch (RegistryAuthenticationFailedException ex) {
+        // Doesn't matter if auth fails. We only examine what we sent.
+      }
+      Assert.assertThat(
+          server.getInputRead(), CoreMatchers.containsString("User-Agent: Competent-Agent"));
+    }
   }
 }
