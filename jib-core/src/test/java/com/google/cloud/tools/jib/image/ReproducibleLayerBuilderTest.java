@@ -108,7 +108,7 @@ public class ReproducibleLayerBuilderTest {
                 .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/banana/blobA"))
                 .build()
                 .getLayerEntries(),
-            ignored -> Instant.ofEpochMilli(1000));
+            TimestampProvider.DEFAULT);
 
     // Writes the layer tar to a temporary file.
     Blob unwrittenBlob = layerBuilder.build();
