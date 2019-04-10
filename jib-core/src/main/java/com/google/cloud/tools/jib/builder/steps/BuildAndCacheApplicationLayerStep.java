@@ -133,11 +133,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
         return optionalCachedLayer.get();
       }
 
-      Blob layerBlob =
-          new ReproducibleLayerBuilder(
-                  layerConfiguration.getLayerEntries(),
-                  buildConfiguration.getFileTimestampProvider())
-              .build();
+      Blob layerBlob = new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()).build();
       CachedLayer cachedLayer =
           cache.writeUncompressedLayer(layerBlob, layerConfiguration.getLayerEntries());
 

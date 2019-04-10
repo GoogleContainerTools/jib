@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.frontend.FileTimestampProvider;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -40,6 +41,7 @@ public class LayerEntry {
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
   private final FilePermissions permissions;
+  private final FileTimestampProvider modifiedTimeProvider;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -61,6 +63,34 @@ public class LayerEntry {
    */
   public LayerEntry(
       Path sourceFile, AbsoluteUnixPath extractionPath, @Nullable FilePermissions permissions) {
+    this(sourceFile, extractionPath, permissions, FileTimestampProvider.DEFAULT);
+  }
+
+  /**
+   * Instantiates with a source file and the path to place the source file in the container file
+   * system.
+   *
+   * <p>For example, {@code new LayerEntry(Paths.get("HelloWorld.class"),
+   * AbsoluteUnixPath.get("/app/classes/HelloWorld.class"))} adds a file {@code HelloWorld.class} to
+   * the container file system at {@code /app/classes/HelloWorld.class}.
+   *
+   * <p>For example, {@code new LayerEntry(Paths.get("com"),
+   * AbsoluteUnixPath.get("/app/classes/com"))} adds a directory to the container file system at
+   * {@code /app/classes/com}. This does <b>not</b> add the contents of {@code com/}.
+   *
+   * @param sourceFile the source file to add to the layer
+   * @param extractionPath the path in the container file system corresponding to the {@code
+   *     sourceFile}
+   * @param permissions the file permissions on the container. Use {@code null} to use defaults (644
+   *     for files, 755 for directories)
+   * @param modifiedTimeProvider the file modification time provider, default to 1 second since the
+   *     epoch (https://github.com/GoogleContainerTools/jib/issues/1079)
+   */
+  public LayerEntry(
+      Path sourceFile,
+      AbsoluteUnixPath extractionPath,
+      @Nullable FilePermissions permissions,
+      FileTimestampProvider modifiedTimeProvider) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
     this.permissions =
@@ -69,6 +99,17 @@ public class LayerEntry {
                 ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
                 : FilePermissions.DEFAULT_FILE_PERMISSIONS
             : permissions;
+    this.modifiedTimeProvider = modifiedTimeProvider;
+  }
+
+  /**
+   * Returns a {@link FileTimestampProvider} that returns the modification time of the file in the
+   * entry.
+   *
+   * @return the modification time
+   */
+  public FileTimestampProvider getModifiedTimeProvider() {
+    return modifiedTimeProvider;
   }
 
   /**

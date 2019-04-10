@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import java.nio.file.Path;
 import java.time.Instant;
 
-/** Provides a timestamp given a file's extraction path. */
+/** Provides a timestamp given the source path of a file to be added to the container. */
 @FunctionalInterface
 public interface FileTimestampProvider {
 
@@ -29,8 +29,8 @@ public interface FileTimestampProvider {
   /**
    * Returns the modification timestamp to apply to a file on the container.
    *
-   * @param pathOnContainer the file's extraction path
+   * @param sourcePath the source path of the file to be added to the container.
    * @return the timestamp
    */
-  Instant generateTimestamp(AbsoluteUnixPath pathOnContainer);
+  Instant generateTimestamp(Path sourcePath);
 }

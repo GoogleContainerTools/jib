@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.FileTimestampProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
@@ -107,8 +106,7 @@ public class ReproducibleLayerBuilderTest {
                 .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/apple/blobA"))
                 .addEntry(blobA, AbsoluteUnixPath.get("/extract/here/banana/blobA"))
                 .build()
-                .getLayerEntries(),
-            FileTimestampProvider.DEFAULT);
+                .getLayerEntries());
 
     // Writes the layer tar to a temporary file.
     Blob unwrittenBlob = layerBuilder.build();
@@ -170,15 +168,13 @@ public class ReproducibleLayerBuilderTest {
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
                     new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA"), null),
-                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"), null)),
-                FileTimestampProvider.DEFAULT)
+                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"), null)))
             .build();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
                     new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB"), null),
-                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"), null)),
-                FileTimestampProvider.DEFAULT)
+                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"), null)))
             .build();
 
     byte[] layerContent = Blobs.writeToByteArray(layer);
@@ -193,8 +189,7 @@ public class ReproducibleLayerBuilderTest {
 
     Blob blob =
         new ReproducibleLayerBuilder(
-                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"), null)),
-                FileTimestampProvider.DEFAULT)
+                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"), null)))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -215,8 +210,12 @@ public class ReproducibleLayerBuilderTest {
 
     Blob blob =
         new ReproducibleLayerBuilder(
-                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"), null)),
-                ignored -> Instant.ofEpochSecond(123))
+                ImmutableList.of(
+                    new LayerEntry(
+                        file,
+                        AbsoluteUnixPath.get("/fileA"),
+                        null,
+                        ignored -> Instant.ofEpochSecond(123))))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -249,8 +248,7 @@ public class ReproducibleLayerBuilderTest {
                     new LayerEntry(
                         folder,
                         AbsoluteUnixPath.get("/somewhere/folder"),
-                        FilePermissions.fromOctalString("456"))),
-                FileTimestampProvider.DEFAULT)
+                        FilePermissions.fromOctalString("456"))))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();

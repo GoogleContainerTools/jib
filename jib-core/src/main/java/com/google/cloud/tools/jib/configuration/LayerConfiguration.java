@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.frontend.FileTimestampProvider;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -80,12 +81,36 @@ public class LayerConfiguration {
      *     sourceFile}
      * @param permissions the file permissions on the container. If null, then default permissions
      *     are used (644 for files, 755 for directories)
+     * @param lastModified the provider of the file modification timestamp
+     * @return this
+     * @see Builder#addEntry(Path, AbsoluteUnixPath)
+     */
+    public Builder addEntry(
+        Path sourceFile,
+        AbsoluteUnixPath pathInContainer,
+        @Nullable FilePermissions permissions,
+        FileTimestampProvider lastModified) {
+      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions, lastModified));
+      return this;
+    }
+
+    /**
+     * Adds an entry to the layer with the given permissions. Only adds the single source file to
+     * the exact path in the container file system. See {@link Builder#addEntry(Path,
+     * AbsoluteUnixPath)} for more information.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param permissions the file permissions on the container. If null, then default permissions
+     *     are used (644 for files, 755 for directories)
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
      */
     public Builder addEntry(
         Path sourceFile, AbsoluteUnixPath pathInContainer, @Nullable FilePermissions permissions) {
-      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions));
+      layerEntries.add(
+          new LayerEntry(sourceFile, pathInContainer, permissions, FileTimestampProvider.DEFAULT));
       return this;
     }
 

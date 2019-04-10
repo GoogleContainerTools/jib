@@ -26,7 +26,6 @@ import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.FileTimestampProvider;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.registry.InsecureRegistryException;
@@ -401,29 +400,6 @@ public class JibContainerBuilder {
    */
   public JibContainerBuilder setCreationTime(Instant creationTime) {
     containerConfigurationBuilder.setCreationTime(creationTime);
-    return this;
-  }
-
-  /**
-   * Sets the modification time of all the files on the container.
-   *
-   * @param fileModificationTime the modification time
-   * @return this
-   */
-  public JibContainerBuilder setFileModificationTime(Instant fileModificationTime) {
-    return setFileModificationTime(ignored -> fileModificationTime);
-  }
-
-  /**
-   * Sets the function used to change the file modification time on the container.
-   *
-   * @param fileModificationTimeProvider a function that takes a file's path on the container and
-   *     returns the instant to set the file's modification time to
-   * @return this
-   */
-  public JibContainerBuilder setFileModificationTime(
-      FileTimestampProvider fileModificationTimeProvider) {
-    buildConfigurationBuilder.setFileTimestampProvider(fileModificationTimeProvider);
     return this;
   }
 

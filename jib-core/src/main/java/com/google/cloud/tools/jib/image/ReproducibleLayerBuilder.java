@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.frontend.FileTimestampProvider;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
@@ -84,12 +83,9 @@ public class ReproducibleLayerBuilder {
   }
 
   private final ImmutableList<LayerEntry> layerEntries;
-  private final FileTimestampProvider fileTimestampProvider;
 
-  public ReproducibleLayerBuilder(
-      ImmutableList<LayerEntry> layerEntries, FileTimestampProvider fileTimestampProvider) {
+  public ReproducibleLayerBuilder(ImmutableList<LayerEntry> layerEntries) {
     this.layerEntries = layerEntries;
-    this.fileTimestampProvider = fileTimestampProvider;
   }
 
   /**
@@ -112,7 +108,10 @@ public class ReproducibleLayerBuilder {
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
       entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
       entry.setModTime(
-          fileTimestampProvider.generateTimestamp(layerEntry.getExtractionPath()).toEpochMilli());
+          layerEntry
+              .getModifiedTimeProvider()
+              .generateTimestamp(layerEntry.getSourceFile())
+              .toEpochMilli());
 
       uniqueTarArchiveEntries.add(entry);
     }

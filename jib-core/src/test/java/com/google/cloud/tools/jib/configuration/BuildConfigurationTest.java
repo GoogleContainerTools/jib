@@ -103,8 +103,7 @@ public class BuildConfigurationTest {
             .setAllowInsecureRegistries(true)
             .setLayerConfigurations(expectedLayerConfigurations)
             .setToolName(expectedCreatedBy)
-            .setExecutorService(MoreExecutors.newDirectExecutorService())
-            .setFileTimestampProvider(ignored -> Instant.ofEpochSecond(123));
+            .setExecutorService(MoreExecutors.newDirectExecutorService());
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
@@ -155,9 +154,6 @@ public class BuildConfigurationTest {
         expectedEntrypoint, buildConfiguration.getContainerConfiguration().getEntrypoint());
     Assert.assertEquals(expectedCreatedBy, buildConfiguration.getToolName());
     Assert.assertNotNull(buildConfiguration.getExecutorService());
-    Assert.assertEquals(
-        Instant.ofEpochSecond(123),
-        buildConfiguration.getFileTimestampProvider().generateTimestamp(AbsoluteUnixPath.get("/")));
   }
 
   @Test
@@ -201,9 +197,6 @@ public class BuildConfigurationTest {
     Assert.assertFalse(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
     Assert.assertEquals("jib", buildConfiguration.getToolName());
-    Assert.assertEquals(
-        Instant.ofEpochSecond(1),
-        buildConfiguration.getFileTimestampProvider().generateTimestamp(AbsoluteUnixPath.get("/")));
   }
 
   @Test

@@ -224,53 +224,6 @@ public class JibContainerBuilderTest {
     Assert.assertEquals("toolName", buildConfiguration.getToolName());
   }
 
-  @Test
-  public void testToBuildConfiguration_timestamps()
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-    RegistryImage baseImage =
-        RegistryImage.named("base/image").addCredentialRetriever(mockCredentialRetriever);
-    RegistryImage targetImage =
-        RegistryImage.named(ImageReference.of("gcr.io", "my-project/my-app", null))
-            .addCredential("username", "password");
-    Containerizer containerizer =
-        Containerizer.to(targetImage)
-            .setBaseImageLayersCache(Paths.get("base/image/layers"))
-            .setApplicationLayersCache(Paths.get("application/layers"))
-            .setExecutorService(mockExecutorService)
-            .setEventHandlers(new EventHandlers().add(mockJibEventConsumer));
-
-    JibContainerBuilder jibContainerBuilder =
-        new JibContainerBuilder(baseImage, spyBuildConfigurationBuilder)
-            .setLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2))
-            .setFileModificationTime(Instant.ofEpochSecond(123));
-    BuildConfiguration buildConfiguration =
-        jibContainerBuilder.toBuildConfiguration(
-            containerizer, containerizer.getExecutorService().get());
-
-    Assert.assertEquals(
-        Instant.ofEpochSecond(123),
-        buildConfiguration.getFileTimestampProvider().generateTimestamp(AbsoluteUnixPath.get("/")));
-
-    // Changes jibContainerBuilder.
-    buildConfiguration =
-        jibContainerBuilder
-            .setFileModificationTime(
-                path ->
-                    path.equals(AbsoluteUnixPath.get("/"))
-                        ? Instant.ofEpochSecond(987)
-                        : Instant.ofEpochSecond(654))
-            .toBuildConfiguration(containerizer, MoreExecutors.newDirectExecutorService());
-
-    Assert.assertEquals(
-        Instant.ofEpochSecond(987),
-        buildConfiguration.getFileTimestampProvider().generateTimestamp(AbsoluteUnixPath.get("/")));
-    Assert.assertEquals(
-        Instant.ofEpochSecond(654),
-        buildConfiguration
-            .getFileTimestampProvider()
-            .generateTimestamp(AbsoluteUnixPath.get("/differentPath")));
-  }
-
   /** Verify that an internally-created ExecutorService is shutdown. */
   @Test
   public void testContainerize_executorCreated() throws Exception {

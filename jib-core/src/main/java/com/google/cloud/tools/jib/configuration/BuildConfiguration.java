@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.configuration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.frontend.FileTimestampProvider;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -59,7 +58,6 @@ public class BuildConfiguration {
     @Nullable private Path baseImageLayersCacheDirectory;
     private boolean allowInsecureRegistries = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
-    private FileTimestampProvider fileTimestampProvider = FileTimestampProvider.DEFAULT;
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
     private EventDispatcher eventDispatcher =
@@ -171,17 +169,6 @@ public class BuildConfiguration {
     }
 
     /**
-     * Sets the function used to set the modification time of the files on the container.
-     *
-     * @param fileTimestampProvider the function that returns a timestamp given a file
-     * @return this
-     */
-    public Builder setFileTimestampProvider(FileTimestampProvider fileTimestampProvider) {
-      this.fileTimestampProvider = fileTimestampProvider;
-      return this;
-    }
-
-    /**
      * Sets the name of the tool that is executing the build.
      *
      * @param toolName the tool name
@@ -260,7 +247,6 @@ public class BuildConfiguration {
               targetFormat,
               allowInsecureRegistries,
               layerConfigurations,
-              fileTimestampProvider,
               toolName,
               eventDispatcher,
               Preconditions.checkNotNull(executorService));
@@ -313,7 +299,6 @@ public class BuildConfiguration {
   private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean allowInsecureRegistries;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
-  private final FileTimestampProvider fileTimestampProvider;
   private final String toolName;
   private final EventDispatcher eventDispatcher;
   private final ExecutorService executorService;
@@ -329,7 +314,6 @@ public class BuildConfiguration {
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
       ImmutableList<LayerConfiguration> layerConfigurations,
-      FileTimestampProvider fileTimestampProvider,
       String toolName,
       EventDispatcher eventDispatcher,
       ExecutorService executorService) {
@@ -342,7 +326,6 @@ public class BuildConfiguration {
     this.targetFormat = targetFormat;
     this.allowInsecureRegistries = allowInsecureRegistries;
     this.layerConfigurations = layerConfigurations;
-    this.fileTimestampProvider = fileTimestampProvider;
     this.toolName = toolName;
     this.eventDispatcher = eventDispatcher;
     this.executorService = executorService;
@@ -419,15 +402,6 @@ public class BuildConfiguration {
    */
   public ImmutableList<LayerConfiguration> getLayerConfigurations() {
     return layerConfigurations;
-  }
-
-  /**
-   * Gets the {@link FileTimestampProvider} used to set file modification times.
-   *
-   * @return the file {@link FileTimestampProvider}
-   */
-  public FileTimestampProvider getFileTimestampProvider() {
-    return fileTimestampProvider;
   }
 
   /**

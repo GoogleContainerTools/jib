@@ -39,7 +39,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import org.junit.Assert;
@@ -126,8 +125,6 @@ public class BuildAndCacheApplicationLayerStepTest {
 
     Mockito.when(mockBuildConfiguration.getEventDispatcher()).thenReturn(mockEventDispatcher);
     Mockito.when(mockBuildConfiguration.getApplicationLayersCache()).thenReturn(cache);
-    Mockito.when(mockBuildConfiguration.getFileTimestampProvider())
-        .thenReturn(ignored -> Instant.EPOCH);
   }
 
   private ImageLayers<Layer> buildFakeLayersToCache() throws ExecutionException {
