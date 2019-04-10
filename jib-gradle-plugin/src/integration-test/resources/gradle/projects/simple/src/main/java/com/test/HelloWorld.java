@@ -50,6 +50,11 @@ public class HelloWorld {
       System.out.println(
           new String(Files.readAllBytes(Paths.get("/bar/cat")), StandardCharsets.UTF_8));
     }
+    // Prints the contents of the files in the second extra directory.
+    if (Files.exists(Paths.get("/baz"))) {
+      System.out.println(new String(Files.readAllBytes(Paths.get("/baz")), StandardCharsets.UTF_8));
+    }
+
 
     // Prints jvm flags
     for (String jvmFlag : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
