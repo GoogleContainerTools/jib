@@ -43,20 +43,16 @@ public class LayerConfigurationTest {
 
     ImmutableSet<LayerEntry> expectedLayerEntries =
         ImmutableSet.of(
-            new LayerEntry(testDirectory, AbsoluteUnixPath.get("/app/layer/"), null),
-            new LayerEntry(testDirectory.resolve("a"), AbsoluteUnixPath.get("/app/layer/a/"), null),
+            new LayerEntry(testDirectory, AbsoluteUnixPath.get("/app/layer/")),
+            new LayerEntry(testDirectory.resolve("a"), AbsoluteUnixPath.get("/app/layer/a/")),
+            new LayerEntry(testDirectory.resolve("a/b"), AbsoluteUnixPath.get("/app/layer/a/b/")),
             new LayerEntry(
-                testDirectory.resolve("a/b"), AbsoluteUnixPath.get("/app/layer/a/b/"), null),
+                testDirectory.resolve("a/b/bar"), AbsoluteUnixPath.get("/app/layer/a/b/bar/")),
+            new LayerEntry(testDirectory.resolve("c/"), AbsoluteUnixPath.get("/app/layer/c")),
             new LayerEntry(
-                testDirectory.resolve("a/b/bar"),
-                AbsoluteUnixPath.get("/app/layer/a/b/bar/"),
-                null),
-            new LayerEntry(testDirectory.resolve("c/"), AbsoluteUnixPath.get("/app/layer/c"), null),
-            new LayerEntry(
-                testDirectory.resolve("c/cat/"), AbsoluteUnixPath.get("/app/layer/c/cat"), null),
-            new LayerEntry(
-                testDirectory.resolve("foo"), AbsoluteUnixPath.get("/app/layer/foo"), null),
-            new LayerEntry(testFile, AbsoluteUnixPath.get("/app/fileA"), null));
+                testDirectory.resolve("c/cat/"), AbsoluteUnixPath.get("/app/layer/c/cat")),
+            new LayerEntry(testDirectory.resolve("foo"), AbsoluteUnixPath.get("/app/layer/foo")),
+            new LayerEntry(testFile, AbsoluteUnixPath.get("/app/fileA")));
 
     Assert.assertEquals(
         expectedLayerEntries, ImmutableSet.copyOf(layerConfiguration.getLayerEntries()));

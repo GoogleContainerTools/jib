@@ -17,12 +17,13 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.FileTimestampProvider;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -86,7 +87,7 @@ public class LayerConfiguration {
      */
     public Builder addEntry(
         Path sourceFile, AbsoluteUnixPath pathInContainer, @Nullable FilePermissions permissions) {
-      return addEntry(sourceFile, pathInContainer, permissions, FileTimestampProvider.DEFAULT);
+      return addEntry(sourceFile, pathInContainer, permissions, Instant.ofEpochSecond(1));
     }
 
     /**
@@ -107,8 +108,15 @@ public class LayerConfiguration {
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
         @Nullable FilePermissions permissions,
-        FileTimestampProvider lastModified) {
-      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions, lastModified));
+        Instant lastModified) {
+      layerEntries.add(
+          new LayerEntry(
+              sourceFile,
+              pathInContainer,
+              permissions == null
+                  ? LayerEntry.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile)
+                  : permissions,
+              lastModified));
       return this;
     }
 
@@ -129,13 +137,67 @@ public class LayerConfiguration {
      */
     public Builder addEntryRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer)
         throws IOException {
+      return addEntryRecursive(
+          sourceFile, pathInContainer, LayerEntry.DEFAULT_FILE_PERMISSIONS_PROVIDER);
+    }
+
+    /**
+     * Adds an entry to the layer. If the source file is a directory, the directory and its contents
+     * will be added recursively.
+     *
+     * @param sourceFile the source file to add to the layer recursively
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param filePermissionProvider a provider that takes a source file and returns the file
+     *     permissions that should be set when it is added to the container
+     * @return this
+     * @throws IOException if an exception occurred when recursively listing the directory
+     */
+    public Builder addEntryRecursive(
+        Path sourceFile,
+        AbsoluteUnixPath pathInContainer,
+        Function<Path, FilePermissions> filePermissionProvider)
+        throws IOException {
+      return addEntryRecursive(
+          sourceFile,
+          pathInContainer,
+          filePermissionProvider,
+          LayerEntry.DEFAULT_FILE_TIMESTAMP_PROVIDER);
+    }
+
+    /**
+     * Adds an entry to the layer. If the source file is a directory, the directory and its contents
+     * will be added recursively.
+     *
+     * @param sourceFile the source file to add to the layer recursively
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param filePermissionProvider a provider that takes a source file and returns the file
+     *     permissions that should be set when it is added to the container
+     * @param fileTimestampProvider a provider that takes a source file and returns the file
+     *     modification time that should be set when it is added to the container
+     * @return this
+     * @throws IOException if an exception occurred when recursively listing the directory
+     */
+    public Builder addEntryRecursive(
+        Path sourceFile,
+        AbsoluteUnixPath pathInContainer,
+        Function<Path, FilePermissions> filePermissionProvider,
+        Function<Path, Instant> fileTimestampProvider)
+        throws IOException {
+      FilePermissions permissions = filePermissionProvider.apply(sourceFile);
+      Instant modifiedTime = fileTimestampProvider.apply(sourceFile);
       if (!Files.isDirectory(sourceFile)) {
-        return addEntry(sourceFile, pathInContainer);
+        return addEntry(sourceFile, pathInContainer, permissions, modifiedTime);
       }
-      addEntry(sourceFile, pathInContainer);
+      addEntry(sourceFile, pathInContainer, permissions, modifiedTime);
       try (Stream<Path> files = Files.list(sourceFile)) {
         for (Path file : files.collect(Collectors.toList())) {
-          addEntryRecursive(file, pathInContainer.resolve(file.getFileName()));
+          addEntryRecursive(
+              file,
+              pathInContainer.resolve(file.getFileName()),
+              filePermissionProvider,
+              fileTimestampProvider);
         }
       }
       return this;

@@ -128,11 +128,10 @@ public class CacheTest {
     layerEntries1 =
         ImmutableList.of(
             new LayerEntry(
-                directory.resolve("source/file"), AbsoluteUnixPath.get("/extraction/path"), null),
+                directory.resolve("source/file"), AbsoluteUnixPath.get("/extraction/path")),
             new LayerEntry(
                 directory.resolve("another/source/file"),
-                AbsoluteUnixPath.get("/another/extraction/path"),
-                null));
+                AbsoluteUnixPath.get("/another/extraction/path")));
 
     layerBlob2 = Blobs.from("layerBlob2");
     layerDigest2 = digestOf(compress(layerBlob2));

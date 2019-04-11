@@ -18,11 +18,11 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.FileTimestampProvider;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Objects;
-import javax.annotation.Nullable;
+import java.util.function.Function;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -38,10 +38,21 @@ import javax.annotation.Nullable;
  */
 public class LayerEntry {
 
+  /** Provider that returns default file permissions (644 for files, 755 for directories). */
+  public static final Function<Path, FilePermissions> DEFAULT_FILE_PERMISSIONS_PROVIDER =
+      sourceFile ->
+          Files.isDirectory(sourceFile)
+              ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
+              : FilePermissions.DEFAULT_FILE_PERMISSIONS;
+
+  /** Provider that returns default file modification time (EPOCH + 1 second). */
+  public static final Function<Path, Instant> DEFAULT_FILE_TIMESTAMP_PROVIDER =
+      ignored -> Instant.ofEpochSecond(1);
+
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
   private final FilePermissions permissions;
-  private final FileTimestampProvider modifiedTimeProvider;
+  private final Instant modifiedTime;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -58,12 +69,9 @@ public class LayerEntry {
    * @param sourceFile the source file to add to the layer
    * @param extractionPath the path in the container file system corresponding to the {@code
    *     sourceFile}
-   * @param permissions the file permissions on the container. Use {@code null} to use defaults (644
-   *     for files, 755 for directories)
    */
-  public LayerEntry(
-      Path sourceFile, AbsoluteUnixPath extractionPath, @Nullable FilePermissions permissions) {
-    this(sourceFile, extractionPath, permissions, FileTimestampProvider.DEFAULT);
+  public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath) {
+    this(sourceFile, extractionPath, DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile));
   }
 
   /**
@@ -75,33 +83,41 @@ public class LayerEntry {
    *     sourceFile}
    * @param permissions the file permissions on the container. Use {@code null} to use defaults (644
    *     for files, 755 for directories)
-   * @param modifiedTimeProvider the file modification time provider, default to 1 second since the
-   *     epoch (https://github.com/GoogleContainerTools/jib/issues/1079)
+   */
+  public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath, FilePermissions permissions) {
+    this(
+        sourceFile, extractionPath, permissions, DEFAULT_FILE_TIMESTAMP_PROVIDER.apply(sourceFile));
+  }
+
+  /**
+   * Instantiates with a source file and the path to place the source file in the container file
+   * system.
+   *
+   * @param sourceFile the source file to add to the layer
+   * @param extractionPath the path in the container file system corresponding to the {@code
+   *     sourceFile}
+   * @param permissions the file permissions on the container
+   * @param modifiedTime the file modification time, default to 1 second since the epoch
+   *     (https://github.com/GoogleContainerTools/jib/issues/1079)
    */
   public LayerEntry(
       Path sourceFile,
       AbsoluteUnixPath extractionPath,
-      @Nullable FilePermissions permissions,
-      FileTimestampProvider modifiedTimeProvider) {
+      FilePermissions permissions,
+      Instant modifiedTime) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
-    this.permissions =
-        permissions == null
-            ? Files.isDirectory(sourceFile)
-                ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
-                : FilePermissions.DEFAULT_FILE_PERMISSIONS
-            : permissions;
-    this.modifiedTimeProvider = modifiedTimeProvider;
+    this.permissions = permissions;
+    this.modifiedTime = modifiedTime;
   }
 
   /**
-   * Returns a {@link FileTimestampProvider} that returns the modification time of the file in the
-   * entry.
+   * Returns the modification time of the file in the entry.
    *
    * @return the modification time
    */
-  public FileTimestampProvider getModifiedTimeProvider() {
-    return modifiedTimeProvider;
+  public Instant getLastModifiedTime() {
+    return modifiedTime;
   }
 
   /**

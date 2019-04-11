@@ -167,14 +167,14 @@ public class ReproducibleLayerBuilderTest {
     Blob layer =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA"), null),
-                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"), null)))
+                    new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA")),
+                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"))))
             .build();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB"), null),
-                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"), null)))
+                    new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB")),
+                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"))))
             .build();
 
     byte[] layerContent = Blobs.writeToByteArray(layer);
@@ -189,7 +189,7 @@ public class ReproducibleLayerBuilderTest {
 
     Blob blob =
         new ReproducibleLayerBuilder(
-                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"), null)))
+                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"))))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -214,8 +214,8 @@ public class ReproducibleLayerBuilderTest {
                     new LayerEntry(
                         file,
                         AbsoluteUnixPath.get("/fileA"),
-                        null,
-                        ignored -> Instant.ofEpochSecond(123))))
+                        FilePermissions.DEFAULT_FILE_PERMISSIONS,
+                        Instant.ofEpochSecond(123))))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -240,7 +240,7 @@ public class ReproducibleLayerBuilderTest {
     Blob blob =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA"), null),
+                    new LayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA")),
                     new LayerEntry(
                         fileB,
                         AbsoluteUnixPath.get("/somewhere/fileB"),

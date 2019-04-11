@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- `TimestampProvider` for setting the modification times of `LayerConfiguration`s added to the container ([#1607](https://github.com/GoogleContainerTools/jib/issues/1607))
+- Methods to `LayerConfiguration` for setting the modification times of files added to the container ([#1607](https://github.com/GoogleContainerTools/jib/issues/1607))
 
 ### Changed
 
