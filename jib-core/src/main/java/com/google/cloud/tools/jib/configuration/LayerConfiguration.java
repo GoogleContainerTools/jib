@@ -26,7 +26,6 @@ import java.time.Instant;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 /** Configures how to build a layer in the container image. Instantiate with {@link #builder}. */
 public class LayerConfiguration {
@@ -69,7 +68,10 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder addEntry(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      return addEntry(sourceFile, pathInContainer, null);
+      return addEntry(
+          sourceFile,
+          pathInContainer,
+          LayerEntry.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, pathInContainer));
     }
 
     /**
@@ -84,9 +86,11 @@ public class LayerConfiguration {
      *     are used (644 for files, 755 for directories)
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
+     * @see FilePermissions#DEFAULT_FILE_PERMISSIONS
+     * @see FilePermissions#DEFAULT_FOLDER_PERMISSIONS
      */
     public Builder addEntry(
-        Path sourceFile, AbsoluteUnixPath pathInContainer, @Nullable FilePermissions permissions) {
+        Path sourceFile, AbsoluteUnixPath pathInContainer, FilePermissions permissions) {
       return addEntry(sourceFile, pathInContainer, permissions, Instant.ofEpochSecond(1));
     }
 
@@ -103,20 +107,15 @@ public class LayerConfiguration {
      * @param lastModified the file modification timestamp
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
+     * @see FilePermissions#DEFAULT_FILE_PERMISSIONS
+     * @see FilePermissions#DEFAULT_FOLDER_PERMISSIONS
      */
     public Builder addEntry(
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
-        @Nullable FilePermissions permissions,
+        FilePermissions permissions,
         Instant lastModified) {
-      layerEntries.add(
-          new LayerEntry(
-              sourceFile,
-              pathInContainer,
-              permissions == null
-                  ? LayerEntry.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, pathInContainer)
-                  : permissions,
-              lastModified));
+      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions, lastModified));
       return this;
     }
 
