@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.util.function.BiFunction;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,7 +33,7 @@ import org.junit.Test;
 public class LayerConfigurationTest {
 
   @Test
-  public void testAddEntryRecursive() throws IOException, URISyntaxException {
+  public void testAddEntryRecursive_defaults() throws IOException, URISyntaxException {
     Path testDirectory = Paths.get(Resources.getResource("core/layer").toURI()).toAbsolutePath();
     Path testFile = Paths.get(Resources.getResource("core/fileA").toURI());
 
@@ -53,6 +55,78 @@ public class LayerConfigurationTest {
                 testDirectory.resolve("c/cat/"), AbsoluteUnixPath.get("/app/layer/c/cat")),
             new LayerEntry(testDirectory.resolve("foo"), AbsoluteUnixPath.get("/app/layer/foo")),
             new LayerEntry(testFile, AbsoluteUnixPath.get("/app/fileA")));
+
+    Assert.assertEquals(
+        expectedLayerEntries, ImmutableSet.copyOf(layerConfiguration.getLayerEntries()));
+  }
+
+  @Test
+  public void testAddEntryRecursive_permissionsAndTimestamps()
+      throws IOException, URISyntaxException {
+    Path testDirectory = Paths.get(Resources.getResource("core/layer").toURI()).toAbsolutePath();
+    Path testFile = Paths.get(Resources.getResource("core/fileA").toURI());
+
+    FilePermissions permissions1 = FilePermissions.fromOctalString("111");
+    FilePermissions permissions2 = FilePermissions.fromOctalString("777");
+    Instant timestamp1 = Instant.ofEpochSecond(123);
+    Instant timestamp2 = Instant.ofEpochSecond(987);
+
+    BiFunction<Path, AbsoluteUnixPath, FilePermissions> permissionsProvider =
+        (source, destination) ->
+            destination.toString().startsWith("/app/layer/a") ? permissions1 : permissions2;
+    BiFunction<Path, AbsoluteUnixPath, Instant> timestampProvider =
+        (source, destination) ->
+            destination.toString().startsWith("/app/layer/a") ? timestamp1 : timestamp2;
+
+    LayerConfiguration layerConfiguration =
+        LayerConfiguration.builder()
+            .addEntryRecursive(
+                testDirectory,
+                AbsoluteUnixPath.get("/app/layer/"),
+                permissionsProvider,
+                timestampProvider)
+            .addEntryRecursive(
+                testFile,
+                AbsoluteUnixPath.get("/app/fileA"),
+                permissionsProvider,
+                timestampProvider)
+            .build();
+
+    ImmutableSet<LayerEntry> expectedLayerEntries =
+        ImmutableSet.of(
+            new LayerEntry(
+                testDirectory, AbsoluteUnixPath.get("/app/layer/"), permissions2, timestamp2),
+            new LayerEntry(
+                testDirectory.resolve("a"),
+                AbsoluteUnixPath.get("/app/layer/a/"),
+                permissions1,
+                timestamp1),
+            new LayerEntry(
+                testDirectory.resolve("a/b"),
+                AbsoluteUnixPath.get("/app/layer/a/b/"),
+                permissions1,
+                timestamp1),
+            new LayerEntry(
+                testDirectory.resolve("a/b/bar"),
+                AbsoluteUnixPath.get("/app/layer/a/b/bar/"),
+                permissions1,
+                timestamp1),
+            new LayerEntry(
+                testDirectory.resolve("c/"),
+                AbsoluteUnixPath.get("/app/layer/c"),
+                permissions2,
+                timestamp2),
+            new LayerEntry(
+                testDirectory.resolve("c/cat/"),
+                AbsoluteUnixPath.get("/app/layer/c/cat"),
+                permissions2,
+                timestamp2),
+            new LayerEntry(
+                testDirectory.resolve("foo"),
+                AbsoluteUnixPath.get("/app/layer/foo"),
+                permissions2,
+                timestamp2),
+            new LayerEntry(testFile, AbsoluteUnixPath.get("/app/fileA"), permissions2, timestamp2));
 
     Assert.assertEquals(
         expectedLayerEntries, ImmutableSet.copyOf(layerConfiguration.getLayerEntries()));

@@ -167,11 +167,12 @@ public class LayerEntry {
     LayerEntry otherLayerEntry = (LayerEntry) other;
     return sourceFile.equals(otherLayerEntry.sourceFile)
         && extractionPath.equals(otherLayerEntry.extractionPath)
-        && Objects.equals(permissions, otherLayerEntry.permissions);
+        && Objects.equals(permissions, otherLayerEntry.permissions)
+        && Objects.equals(modifiedTime, otherLayerEntry.modifiedTime);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceFile, extractionPath, permissions);
+    return Objects.hash(sourceFile, extractionPath, permissions, modifiedTime);
   }
 }
