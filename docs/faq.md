@@ -26,7 +26,8 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How do I enable debugging?](#how-do-i-enable-debugging)\
 [Why is my image created 48+ years ago?](#why-is-my-image-created-48-years-ago)\
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
-[How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)
+[How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)\
+[Can I learn more about container images?](#can-i-learn-more-about-container-images)
 
 ### But, I'm not a Java developer.
 
@@ -479,3 +480,7 @@ To tag the image with a timestamp, simply set the timestamp as the tag for `to.i
 ```groovy
 jib.to.image = 'gcr.io/my-gcp-project/my-app:' + System.nanoTime()
 ```
+
+### Can I learn more about container images?
+
+If you like to learn more about container images [@coollog](https://github.com/coollog) has a guide: [build containers the hard way](https://containers.gitbook.io/build-containers-the-hard-way/) which takes a deep dive into everything involved in getting your code into a container and onto a container registry.
