@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- `LayerConfiguration` takes file modification time as an `Instant` instead of a `long`
+
 ### Fixed
 
 ## 0.9.0
