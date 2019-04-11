@@ -22,7 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -39,15 +39,16 @@ import java.util.function.Function;
 public class LayerEntry {
 
   /** Provider that returns default file permissions (644 for files, 755 for directories). */
-  public static final Function<Path, FilePermissions> DEFAULT_FILE_PERMISSIONS_PROVIDER =
-      sourceFile ->
-          Files.isDirectory(sourceFile)
-              ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
-              : FilePermissions.DEFAULT_FILE_PERMISSIONS;
+  public static final BiFunction<Path, AbsoluteUnixPath, FilePermissions>
+      DEFAULT_FILE_PERMISSIONS_PROVIDER =
+          (sourcePath, destinationPath) ->
+              Files.isDirectory(sourcePath)
+                  ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
+                  : FilePermissions.DEFAULT_FILE_PERMISSIONS;
 
   /** Provider that returns default file modification time (EPOCH + 1 second). */
-  public static final Function<Path, Instant> DEFAULT_FILE_TIMESTAMP_PROVIDER =
-      ignored -> Instant.ofEpochSecond(1);
+  public static final BiFunction<Path, AbsoluteUnixPath, Instant> DEFAULT_FILE_TIMESTAMP_PROVIDER =
+      (sourcePath, destinationPath) -> Instant.ofEpochSecond(1);
 
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
@@ -71,7 +72,10 @@ public class LayerEntry {
    *     sourceFile}
    */
   public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath) {
-    this(sourceFile, extractionPath, DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile));
+    this(
+        sourceFile,
+        extractionPath,
+        DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, extractionPath));
   }
 
   /**
@@ -86,7 +90,10 @@ public class LayerEntry {
    */
   public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath, FilePermissions permissions) {
     this(
-        sourceFile, extractionPath, permissions, DEFAULT_FILE_TIMESTAMP_PROVIDER.apply(sourceFile));
+        sourceFile,
+        extractionPath,
+        permissions,
+        DEFAULT_FILE_TIMESTAMP_PROVIDER.apply(sourceFile, extractionPath));
   }
 
   /**
