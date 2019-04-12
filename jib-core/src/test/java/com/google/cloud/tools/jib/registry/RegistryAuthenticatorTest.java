@@ -25,7 +25,6 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
