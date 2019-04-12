@@ -47,13 +47,13 @@ public class LayerEntry {
                   : FilePermissions.DEFAULT_FILE_PERMISSIONS;
 
   /** Provider that returns default file modification time (EPOCH + 1 second). */
-  public static final BiFunction<Path, AbsoluteUnixPath, Instant> DEFAULT_FILE_TIMESTAMP_PROVIDER =
+  public static final BiFunction<Path, AbsoluteUnixPath, Instant> DEFAULT_MODIFIED_TIME_PROVIDER =
       (sourcePath, destinationPath) -> Instant.ofEpochSecond(1);
 
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
   private final FilePermissions permissions;
-  private final Instant modifiedTime;
+  private final Instant lastModifiedTime;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -93,7 +93,7 @@ public class LayerEntry {
         sourceFile,
         extractionPath,
         permissions,
-        DEFAULT_FILE_TIMESTAMP_PROVIDER.apply(sourceFile, extractionPath));
+        DEFAULT_MODIFIED_TIME_PROVIDER.apply(sourceFile, extractionPath));
   }
 
   /**
@@ -104,18 +104,18 @@ public class LayerEntry {
    * @param extractionPath the path in the container file system corresponding to the {@code
    *     sourceFile}
    * @param permissions the file permissions on the container
-   * @param modifiedTime the file modification time, default to 1 second since the epoch
+   * @param lastModifiedTime the file modification time, default to 1 second since the epoch
    *     (https://github.com/GoogleContainerTools/jib/issues/1079)
    */
   public LayerEntry(
       Path sourceFile,
       AbsoluteUnixPath extractionPath,
       FilePermissions permissions,
-      Instant modifiedTime) {
+      Instant lastModifiedTime) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
     this.permissions = permissions;
-    this.modifiedTime = modifiedTime;
+    this.lastModifiedTime = lastModifiedTime;
   }
 
   /**
@@ -124,7 +124,7 @@ public class LayerEntry {
    * @return the modification time
    */
   public Instant getLastModifiedTime() {
-    return modifiedTime;
+    return lastModifiedTime;
   }
 
   /**
@@ -168,11 +168,11 @@ public class LayerEntry {
     return sourceFile.equals(otherLayerEntry.sourceFile)
         && extractionPath.equals(otherLayerEntry.extractionPath)
         && Objects.equals(permissions, otherLayerEntry.permissions)
-        && Objects.equals(modifiedTime, otherLayerEntry.modifiedTime);
+        && Objects.equals(lastModifiedTime, otherLayerEntry.lastModifiedTime);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceFile, extractionPath, permissions, modifiedTime);
+    return Objects.hash(sourceFile, extractionPath, permissions, lastModifiedTime);
   }
 }

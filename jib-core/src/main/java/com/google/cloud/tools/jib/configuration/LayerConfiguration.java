@@ -82,8 +82,8 @@ public class LayerConfiguration {
      * @param sourceFile the source file to add to the layer
      * @param pathInContainer the path in the container file system corresponding to the {@code
      *     sourceFile}
-     * @param permissions the file permissions on the container. If null, then default permissions
-     *     are used (644 for files, 755 for directories)
+     * @param permissions the file permissions on the container (Defaults to 644 for files, 755 for
+     *     directories)
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
      * @see FilePermissions#DEFAULT_FILE_PERMISSIONS
@@ -91,7 +91,11 @@ public class LayerConfiguration {
      */
     public Builder addEntry(
         Path sourceFile, AbsoluteUnixPath pathInContainer, FilePermissions permissions) {
-      return addEntry(sourceFile, pathInContainer, permissions, Instant.ofEpochSecond(1));
+      return addEntry(
+          sourceFile,
+          pathInContainer,
+          permissions,
+          LayerEntry.DEFAULT_MODIFIED_TIME_PROVIDER.apply(sourceFile, pathInContainer));
     }
 
     /**
@@ -102,9 +106,9 @@ public class LayerConfiguration {
      * @param sourceFile the source file to add to the layer
      * @param pathInContainer the path in the container file system corresponding to the {@code
      *     sourceFile}
-     * @param permissions the file permissions on the container. If null, then default permissions
-     *     are used (644 for files, 755 for directories)
-     * @param lastModified the file modification timestamp
+     * @param permissions the file permissions on the container (Defaults to 644 for files, 755 for
+     *     directories)
+     * @param lastModifiedTime the file modification timestamp
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
      * @see FilePermissions#DEFAULT_FILE_PERMISSIONS
@@ -114,8 +118,8 @@ public class LayerConfiguration {
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
         FilePermissions permissions,
-        Instant lastModified) {
-      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions, lastModified));
+        Instant lastModifiedTime) {
+      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions, lastModifiedTime));
       return this;
     }
 
@@ -161,7 +165,7 @@ public class LayerConfiguration {
           sourceFile,
           pathInContainer,
           filePermissionProvider,
-          LayerEntry.DEFAULT_FILE_TIMESTAMP_PROVIDER);
+          LayerEntry.DEFAULT_MODIFIED_TIME_PROVIDER);
     }
 
     /**
@@ -173,8 +177,8 @@ public class LayerConfiguration {
      *     sourceFile}
      * @param filePermissionProvider a provider that takes a source path and destination path on the
      *     container and returns the file permissions that should be set for that path
-     * @param fileTimestampProvider a provider that takes a source path and destination path on the
-     *     container and returns the file modification time that should be set for that path
+     * @param lastModifiedTimeProvider a provider that takes a source path and destination path on
+     *     the container and returns the file modification time that should be set for that path
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
      */
@@ -182,21 +186,21 @@ public class LayerConfiguration {
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
         BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider,
-        BiFunction<Path, AbsoluteUnixPath, Instant> fileTimestampProvider)
+        BiFunction<Path, AbsoluteUnixPath, Instant> lastModifiedTimeProvider)
         throws IOException {
       FilePermissions permissions = filePermissionProvider.apply(sourceFile, pathInContainer);
-      Instant modifiedTime = fileTimestampProvider.apply(sourceFile, pathInContainer);
-      if (!Files.isDirectory(sourceFile)) {
-        return addEntry(sourceFile, pathInContainer, permissions, modifiedTime);
-      }
+      Instant modifiedTime = lastModifiedTimeProvider.apply(sourceFile, pathInContainer);
       addEntry(sourceFile, pathInContainer, permissions, modifiedTime);
+      if (!Files.isDirectory(sourceFile)) {
+        return this;
+      }
       try (Stream<Path> files = Files.list(sourceFile)) {
         for (Path file : files.collect(Collectors.toList())) {
           addEntryRecursive(
               file,
               pathInContainer.resolve(file.getFileName()),
               filePermissionProvider,
-              fileTimestampProvider);
+              lastModifiedTimeProvider);
         }
       }
       return this;
