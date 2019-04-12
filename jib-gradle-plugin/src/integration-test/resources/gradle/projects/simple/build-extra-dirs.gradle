@@ -6,10 +6,6 @@ plugins {
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-for (File f : [file('src/main/custom-extra-dir')]) {
-  System.out.println(f);
-}
-
 repositories {
   mavenCentral()
 }
