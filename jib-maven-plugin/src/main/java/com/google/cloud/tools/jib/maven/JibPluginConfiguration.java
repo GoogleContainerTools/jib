@@ -99,7 +99,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /** Used to configure {@code extraDirectory.permissions} parameter. */
+  /** Used to configure {@code extraDirectories.permissions} parameter. */
   public static class PermissionConfiguration {
 
     @Nullable @Parameter private String file;
@@ -183,29 +183,38 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String workingDirectory;
   }
 
-  /** Configuration for the {@code extraDirectory} parameter. */
-  public static class ExtraDirectoryParameters {
-
-    // retained for backward-compatibility for <extraDirectory><path>...<path></extraDirectory>
-    @Deprecated @Nullable @Parameter private File path;
+  /** Configuration for the {@code extraDirectories} parameter. */
+  public static class ExtraDirectoriesParameters {
 
     @Parameter private List<File> paths = Collections.emptyList();
 
     @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
 
-    /**
-     * Allows users to configure {@code path} using just {@code <extraDirectory>} instead of {@code
-     * <extraDirectory><path>}.
-     *
-     * @param path the value to set {@code path} to
-     */
+    public List<File> getPaths() {
+      return paths;
+    }
+  }
+
+  /** Configuration for the {@code extraDirectory} parameter. */
+  @Deprecated
+  public static class DeprecatedExtraDirectoryParameters {
+
+    // retained for backward-compatibility for <extraDirectory><path>...<path></extraDirectory>
+    @Deprecated @Nullable @Parameter private File path;
+
+    @Deprecated @Parameter
+    private List<PermissionConfiguration> permissions = Collections.emptyList();
+
+    // Allows users to configure a single path using just <extraDirectory> instead of
+    // <extraDirectory><path>.
     @Deprecated
     public void set(File path) {
-      this.paths = Collections.singletonList(path);
+      this.path = path;
     }
 
+    @Deprecated
     public List<File> getPaths() {
-      return path != null ? Collections.singletonList(path) : paths;
+      return path == null ? Collections.emptyList() : Collections.singletonList(path);
     }
   }
 
@@ -224,7 +233,12 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter private ContainerParameters container = new ContainerParameters();
 
   // this parameter is cloned in FilesMojo
-  @Parameter private ExtraDirectoryParameters extraDirectory = new ExtraDirectoryParameters();
+  @Deprecated @Parameter
+  private DeprecatedExtraDirectoryParameters extraDirectory =
+      new DeprecatedExtraDirectoryParameters();
+
+  // this parameter is cloned in FilesMojo
+  @Parameter private ExtraDirectoriesParameters extraDirectories = new ExtraDirectoriesParameters();
 
   @Parameter(
       defaultValue = "false",
@@ -511,13 +525,39 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the list of configured extra directory paths
    */
   List<Path> getExtraDirectories() {
+    return getExtraDirectories(extraDirectories, extraDirectory, project, session);
+  }
+
+  // TODO: remove after deprecating DeprecatedExtraDirectoryParameters.
+  public static List<Path> getExtraDirectories(
+      ExtraDirectoriesParameters extraDirectories,
+      DeprecatedExtraDirectoryParameters extraDirectory,
+      MavenProject project,
+      MavenSession session) {
     // TODO: Should inform user about nonexistent directory if using custom directory.
-    String property = getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
+    String deprecatedProperty = getProperty(PropertyNames.EXTRA_DIRECTORY_PATH, project, session);
+    if (deprecatedProperty != null) {
+      // TODO: log deprecation warning
+    }
+    List<File> deprecatedPaths = extraDirectory.getPaths();
+    if (!deprecatedPaths.isEmpty()) {
+      // TODO: log deprecation warning
+    }
+
+    String property = getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS, project, session);
+    if (property == null) {
+      property = deprecatedProperty;
+    }
     if (property != null) {
       List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
       return paths.stream().map(Paths::get).collect(Collectors.toList());
     }
-    return extraDirectory.getPaths().stream().map(File::toPath).collect(Collectors.toList());
+
+    List<File> paths = extraDirectories.getPaths();
+    if (paths.isEmpty()) {
+      paths = deprecatedPaths;
+    }
+    return paths.stream().map(File::toPath).collect(Collectors.toList());
   }
 
   /**
@@ -556,6 +596,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Nullable
   String getProperty(String propertyName) {
+    return MavenProjectProperties.getProperty(propertyName, project, session);
+  }
+
+  // TODO: remove after deprecating DeprecatedExtraDirectoryParameters.
+  @Nullable
+  private static String getProperty(
+      String propertyName, MavenProject project, MavenSession session) {
     return MavenProjectProperties.getProperty(propertyName, project, session);
   }
 }

@@ -180,20 +180,34 @@ public class FilesMojoV2 extends AbstractMojo {
     if (jibMavenPlugin != null) {
       Xpp3Dom pluginConfiguration = (Xpp3Dom) jibMavenPlugin.getConfiguration();
       if (pluginConfiguration != null) {
+
         Xpp3Dom extraDirectoryConfiguration = pluginConfiguration.getChild("extraDirectory");
         if (extraDirectoryConfiguration != null) {
-          Xpp3Dom pathChild = extraDirectoryConfiguration.getChild("path");
-          if (pathChild != null) {
-            // <extraDirectory><path>...</path></extraDirectory>
-            return Collections.singletonList(Paths.get(pathChild.getValue()));
-          }
-          Xpp3Dom pathsChild = extraDirectoryConfiguration.getChild("paths");
-          if (pathsChild != null) {
-            // <extraDirectory><paths><path>...<path><path>...<path></paths></extraDirectory>
-            return Arrays.stream(pathsChild.getChildren())
+          // TODO: log deprecation warning
+        }
+
+        Xpp3Dom extraDirectoriesConfiguration = pluginConfiguration.getChild("extraDirectories");
+        if (extraDirectoriesConfiguration != null) {
+          Xpp3Dom child = extraDirectoryConfiguration.getChild("paths");
+          if (child != null) {
+            // <extraDirectories><paths><path>...<path><path>...<path></paths></extraDirectories>
+            return Arrays.stream(child.getChildren())
                 .map(Xpp3Dom::getValue)
                 .map(Paths::get)
                 .collect(Collectors.toList());
+          }
+          // <extraDirectories>...</extraDirectories>
+          String value = extraDirectoryConfiguration.getValue();
+          if (value != null) {
+            return Collections.singletonList(Paths.get(extraDirectoryConfiguration.getValue()));
+          }
+        }
+
+        if (extraDirectoryConfiguration != null) {
+          Xpp3Dom child = extraDirectoryConfiguration.getChild("path");
+          if (child != null) {
+            // <extraDirectory><path>...</path></extraDirectory>
+            return Collections.singletonList(Paths.get(child.getValue()));
           }
           // <extraDirectory>...</extraDirectory>
           String value = extraDirectoryConfiguration.getValue();

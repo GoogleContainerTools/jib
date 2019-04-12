@@ -16,12 +16,13 @@
 
 package com.google.cloud.tools.jib.maven.skaffold;
 
-import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryParameters;
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration;
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration.DeprecatedExtraDirectoryParameters;
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoriesParameters;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
-import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -78,7 +79,12 @@ public class FilesMojo extends AbstractMojo {
   @Nullable @Component private ProjectDependenciesResolver projectDependenciesResolver;
 
   // This parameter is cloned from JibPluginConfiguration
-  @Parameter private ExtraDirectoryParameters extraDirectory = new ExtraDirectoryParameters();
+  @Deprecated @Parameter
+  private DeprecatedExtraDirectoryParameters extraDirectory =
+      new DeprecatedExtraDirectoryParameters();
+
+  // This parameter is cloned from JibPluginConfiguration
+  @Parameter private ExtraDirectoriesParameters extraDirectories = new ExtraDirectoriesParameters();
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
@@ -154,13 +160,16 @@ public class FilesMojo extends AbstractMojo {
   }
 
   private List<Path> resolveExtraDirectories() {
-    List<File> paths = extraDirectory.getPaths();
+    List<Path> paths =
+        JibPluginConfiguration.getExtraDirectories(
+            extraDirectories, extraDirectory, project, session);
+
     if (paths.isEmpty()) {
       Path projectBase =
           Preconditions.checkNotNull(project).getBasedir().getAbsoluteFile().toPath();
       Path srcMainJib = Paths.get("src", "main", "jib");
       return Collections.singletonList(projectBase.resolve(srcMainJib));
     }
-    return paths.stream().map(File::getAbsoluteFile).map(File::toPath).collect(Collectors.toList());
+    return paths.stream().map(Path::toAbsolutePath).collect(Collectors.toList());
   }
 }
