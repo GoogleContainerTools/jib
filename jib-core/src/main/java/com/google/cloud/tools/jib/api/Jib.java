@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.base.Preconditions;
 
 /** Build containers with Jib. */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
@@ -46,7 +47,7 @@ public class Jib {
    * @return a new {@link JibContainerBuilder} to continue building the container
    */
   public static JibContainerBuilder from(ImageReference baseImageReference) {
-    return new JibContainerBuilder(RegistryImage.named(baseImageReference));
+    return new JibContainerBuilder(new RegistrySourceTargetImage(baseImageReference));
   }
 
   /**
@@ -57,7 +58,8 @@ public class Jib {
    * @return a new {@link JibContainerBuilder} to continue building the container
    */
   public static JibContainerBuilder from(RegistryImage registryImage) {
-    return new JibContainerBuilder(registryImage);
+    Preconditions.checkArgument(registryImage instanceof SourceImage);
+    return new JibContainerBuilder((SourceImage) registryImage);
   }
 
   /**

@@ -17,9 +17,6 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
-import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.nio.file.Path;
@@ -35,9 +32,9 @@ import java.nio.file.Path;
  * }</pre>
  */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
-public class TarImage implements TargetImage {
+public interface TarImage {
 
-  /** Finishes constructing a {@link TarImage}. */
+  /** Finishes constructing a {@link TarTargetImage}. */
   public static class Builder {
 
     private final ImageReference imageReference;
@@ -50,10 +47,10 @@ public class TarImage implements TargetImage {
      * Sets the output file to save the tarball archive to.
      *
      * @param outputFile the output file
-     * @return a new {@link TarImage}
+     * @return a new {@link TarTargetImage}
      */
     public TarImage saveTo(Path outputFile) {
-      return new TarImage(imageReference, outputFile);
+      return new TarTargetImage(imageReference, outputFile);
     }
   }
 
@@ -62,7 +59,7 @@ public class TarImage implements TargetImage {
    * name of the image if loaded into the Docker daemon.
    *
    * @param imageReference the image reference
-   * @return a {@link Builder} to finish constructing a new {@link TarImage}
+   * @return a {@link Builder} to finish constructing a new {@link TarTargetImage}
    */
   public static Builder named(ImageReference imageReference) {
     return new Builder(imageReference);
@@ -72,38 +69,10 @@ public class TarImage implements TargetImage {
    * Configures the output tarball archive with an image reference to set as its tag.
    *
    * @param imageReference the image reference
-   * @return a {@link Builder} to finish constructing a new {@link TarImage}
+   * @return a {@link Builder} to finish constructing a new {@link TarTargetImage}
    * @throws InvalidImageReferenceException if {@code imageReference} is not a valid image reference
    */
   public static Builder named(String imageReference) throws InvalidImageReferenceException {
     return named(ImageReference.parse(imageReference));
-  }
-
-  private final ImageReference imageReference;
-  private final Path outputFile;
-
-  /** Instantiate with {@link #named}. */
-  private TarImage(ImageReference imageReference, Path outputFile) {
-    this.imageReference = imageReference;
-    this.outputFile = outputFile;
-  }
-
-  @Override
-  public ImageConfiguration toImageConfiguration() {
-    return ImageConfiguration.builder(imageReference).build();
-  }
-
-  @Override
-  public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
-    return BuildSteps.forBuildToTar(outputFile, buildConfiguration);
-  }
-
-  /**
-   * Gets the output file to save the tarball archive to.
-   *
-   * @return the output file
-   */
-  Path getOutputFile() {
-    return outputFile;
   }
 }

@@ -53,7 +53,8 @@ public class Containerizer {
    * @return a new {@link Containerizer}
    */
   public static Containerizer to(RegistryImage registryImage) {
-    return new Containerizer(registryImage);
+    Preconditions.checkArgument(registryImage instanceof TargetImage);
+    return new Containerizer((TargetImage) registryImage);
   }
 
   /**
@@ -63,7 +64,8 @@ public class Containerizer {
    * @return a new {@link Containerizer}
    */
   public static Containerizer to(DockerDaemonImage dockerDaemonImage) {
-    return new Containerizer(dockerDaemonImage);
+    Preconditions.checkArgument(dockerDaemonImage instanceof TargetImage);
+    return new Containerizer((TargetImage) dockerDaemonImage);
   }
 
   /**
@@ -73,7 +75,8 @@ public class Containerizer {
    * @return a new {@link Containerizer}
    */
   public static Containerizer to(TarImage tarImage) {
-    return new Containerizer(tarImage);
+    Preconditions.checkArgument(tarImage instanceof TargetImage);
+    return new Containerizer((TargetImage) tarImage);
   }
 
   private final TargetImage targetImage;
@@ -133,6 +136,7 @@ public class Containerizer {
     baseImageLayersCacheDirectory = cacheDirectory;
     return this;
   }
+
   /**
    * Sets the directory to use for caching application layers. This cache can be shared between
    * multiple images. If not set, a temporary directory will be used as the application layers

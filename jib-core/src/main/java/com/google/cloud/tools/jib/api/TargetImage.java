@@ -24,18 +24,7 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 /** Represents a destination for the Jib-built image. */
 interface TargetImage {
 
-  /**
-   * Converts into an {@link ImageConfiguration}. For internal use only.
-   *
-   * @return an {@link ImageConfiguration}
-   */
   ImageConfiguration toImageConfiguration();
 
-  /**
-   * Converts into {@link BuildSteps}. For internal use only.
-   *
-   * @param buildConfiguration the {@link BuildConfiguration} to use
-   * @return {@link BuildSteps}
-   */
   BuildSteps toBuildSteps(BuildConfiguration buildConfiguration);
 }
