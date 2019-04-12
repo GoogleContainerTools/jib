@@ -16,13 +16,15 @@
 
 package com.google.cloud.tools.jib.maven.skaffold;
 
-import com.google.cloud.tools.jib.maven.JibPluginConfiguration;
-import com.google.cloud.tools.jib.maven.JibPluginConfiguration.DeprecatedExtraDirectoryParameters;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoriesParameters;
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryParameters;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -80,8 +82,7 @@ public class FilesMojo extends AbstractMojo {
 
   // This parameter is cloned from JibPluginConfiguration
   @Deprecated @Parameter
-  private DeprecatedExtraDirectoryParameters extraDirectory =
-      new DeprecatedExtraDirectoryParameters();
+  private ExtraDirectoryParameters extraDirectory = new ExtraDirectoryParameters();
 
   // This parameter is cloned from JibPluginConfiguration
   @Parameter private ExtraDirectoriesParameters extraDirectories = new ExtraDirectoriesParameters();
@@ -160,16 +161,35 @@ public class FilesMojo extends AbstractMojo {
   }
 
   private List<Path> resolveExtraDirectories() {
-    List<Path> paths =
-        JibPluginConfiguration.getExtraDirectories(
-            extraDirectories, extraDirectory, project, session);
+    // TODO: Should inform user about nonexistent directory if using custom directory.
+    String deprecatedProperty =
+        MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH, project, session);
+    String newProperty =
+        MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS, project, session);
 
+    List<File> deprecatedPaths = extraDirectory.getPaths();
+    List<File> newPaths = extraDirectories.getPaths();
+
+    if (deprecatedProperty != null) {
+      // TODO: log deprecation warning
+    }
+    if (!deprecatedPaths.isEmpty()) {
+      // TODO: log deprecation warning
+    }
+
+    String property = newProperty != null ? newProperty : deprecatedProperty;
+    if (property != null) {
+      List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
+      return paths.stream().map(Paths::get).map(Path::toAbsolutePath).collect(Collectors.toList());
+    }
+
+    List<File> paths = !newPaths.isEmpty() ? newPaths : deprecatedPaths;
     if (paths.isEmpty()) {
       Path projectBase =
           Preconditions.checkNotNull(project).getBasedir().getAbsoluteFile().toPath();
       Path srcMainJib = Paths.get("src", "main", "jib");
       return Collections.singletonList(projectBase.resolve(srcMainJib));
     }
-    return paths.stream().map(Path::toAbsolutePath).collect(Collectors.toList());
+    return paths.stream().map(File::getAbsoluteFile).map(File::toPath).collect(Collectors.toList());
   }
 }

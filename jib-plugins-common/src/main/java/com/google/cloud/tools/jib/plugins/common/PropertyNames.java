@@ -48,7 +48,11 @@ public class PropertyNames {
   public static final String ALLOW_INSECURE_REGISTRIES = "jib.allowInsecureRegistries";
   @Deprecated public static final String EXTRA_DIRECTORY_PATH = "jib.extraDirectory.path";
   public static final String EXTRA_DIRECTORIES_PATHS = "jib.extraDirectories.paths";
+
+  @Deprecated
   public static final String EXTRA_DIRECTORY_PERMISSIONS = "jib.extraDirectory.permissions";
+
+  public static final String EXTRA_DIRECTORIES_PERMISSIONS = "jib.extraDirectories.permissions";
   public static final String DOCKER_CLIENT_EXECUTABLE = "jib.dockerClient.executable";
   public static final String DOCKER_CLIENT_ENVIRONMENT = "jib.dockerClient.environment";
   public static final String SKIP = "jib.skip";
