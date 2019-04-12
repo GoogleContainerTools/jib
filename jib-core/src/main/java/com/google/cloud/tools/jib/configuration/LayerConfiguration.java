@@ -82,8 +82,7 @@ public class LayerConfiguration {
      * @param sourceFile the source file to add to the layer
      * @param pathInContainer the path in the container file system corresponding to the {@code
      *     sourceFile}
-     * @param permissions the file permissions on the container (Defaults to 644 for files, 755 for
-     *     directories)
+     * @param permissions the file permissions on the container
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
      * @see FilePermissions#DEFAULT_FILE_PERMISSIONS
@@ -106,8 +105,7 @@ public class LayerConfiguration {
      * @param sourceFile the source file to add to the layer
      * @param pathInContainer the path in the container file system corresponding to the {@code
      *     sourceFile}
-     * @param permissions the file permissions on the container (Defaults to 644 for files, 755 for
-     *     directories)
+     * @param permissions the file permissions on the container
      * @param lastModifiedTime the file modification timestamp
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
