@@ -483,4 +483,4 @@ jib.to.image = 'gcr.io/my-gcp-project/my-app:' + System.nanoTime()
 
 ### Can I learn more about container images?
 
-If you like to learn more about container images [@coollog](https://github.com/coollog) has a guide: [build containers the hard way](https://containers.gitbook.io/build-containers-the-hard-way/) which takes a deep dive into everything involved in getting your code into a container and onto a container registry.
+If you'd like to learn more about container images, [@coollog](https://github.com/coollog) has a guide: [Build Containers the Hard Way](https://containers.gitbook.io/build-containers-the-hard-way/), which takes a deep dive into everything involved in getting your code into a container and onto a container registry.
