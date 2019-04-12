@@ -113,7 +113,7 @@ public class JibPluginConfigurationTest {
 
     sessionProperties.put("jib.extraDirectory.path", "custom-jib");
     Assert.assertEquals(
-        Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectoryPaths());
+        Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
     sessionProperties.put("jib.extraDirectory.permissions", "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();
@@ -175,7 +175,7 @@ public class JibPluginConfigurationTest {
 
     project.getProperties().setProperty("jib.extraDirectory.path", "custom-jib");
     Assert.assertEquals(
-        Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectoryPaths());
+        Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
     project
         .getProperties()
         .setProperty("jib.extraDirectory.permissions", "/test/file1=123,/another/file=456");

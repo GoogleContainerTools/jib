@@ -187,7 +187,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   public static class ExtraDirectoryParameters {
 
     // retained for backward-compatibility for <extraDirectory><path>...<path></extraDirectory>
-    @Nullable @Parameter private File path;
+    @Deprecated @Nullable @Parameter private File path;
 
     @Parameter private List<File> paths = Collections.emptyList();
 
@@ -199,6 +199,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
      *
      * @param path the value to set {@code path} to
      */
+    @Deprecated
     public void set(File path) {
       this.paths = Collections.singletonList(path);
     }
@@ -505,11 +506,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /**
-   * Gets the configured extra directory path.
+   * Gets the list of configured extra directory paths.
    *
-   * @return the configured extra directory path
+   * @return the list of configured extra directory paths
    */
-  List<Path> getExtraDirectoryPaths() {
+  List<Path> getExtraDirectories() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     String property = getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
     if (property != null) {

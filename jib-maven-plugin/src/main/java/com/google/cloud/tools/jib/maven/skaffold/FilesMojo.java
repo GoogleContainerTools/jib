@@ -108,7 +108,7 @@ public class FilesMojo extends AbstractMojo {
     // and is expected to run on all projects irrespective of their configuring of the jib plugin).
     if (project.getPlugin(MavenProjectProperties.PLUGIN_KEY) != null) {
       // print out extra directory
-      resolveExtraDirectoris().stream().forEach(System.out::println);
+      resolveExtraDirectories().stream().forEach(System.out::println);
     }
 
     // Grab non-project SNAPSHOT dependencies for this project
@@ -153,7 +153,7 @@ public class FilesMojo extends AbstractMojo {
     }
   }
 
-  private List<Path> resolveExtraDirectoris() {
+  private List<Path> resolveExtraDirectories() {
     List<File> paths = extraDirectory.getPaths();
     if (paths.isEmpty()) {
       Path projectBase =
