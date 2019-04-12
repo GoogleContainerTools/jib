@@ -25,6 +25,7 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -180,6 +181,7 @@ public class RegistryAuthenticatorTest {
   @Test
   public void testUserAgent()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
     try (TestWebServer server = new TestWebServer(false)) {
       try {
         RegistryAuthenticator authenticator =
