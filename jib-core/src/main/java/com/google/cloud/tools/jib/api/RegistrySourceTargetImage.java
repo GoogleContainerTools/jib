@@ -27,20 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * Defines an image on a container registry that can be used as either a source or target image.
- *
- * <p>The registry portion of the image reference determines which registry to the image lives (or
- * should live) on. The repository portion is the namespace within the registry. The tag is a label
- * to easily identify an image among all the images in the repository. See {@link ImageReference}
- * for more details.
- *
- * <p>When configuring credentials (via {@link #addCredential} for example), make sure the
- * credentials are valid push (for using this as a target image) or pull (for using this as a source
- * image) credentials for the repository specified via the image reference.
- */
-// TODO: Add tests once JibContainerBuilder#containerize() is added.
-public class RegistrySourceTargetImage implements RegistryImage, SourceImage, TargetImage {
+class RegistrySourceTargetImage implements RegistryImage, SourceImage, TargetImage {
 
   private final ImageReference imageReference;
   private final List<CredentialRetriever> credentialRetrievers = new ArrayList<>();

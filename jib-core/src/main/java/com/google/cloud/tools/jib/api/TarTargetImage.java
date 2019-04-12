@@ -23,17 +23,6 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.image.ImageReference;
 import java.nio.file.Path;
 
-/**
- * Builds to a tarball archive.
- *
- * <p>Usage example:
- *
- * <pre>{@code
- * TarImage tarImage = TarImage.named("myimage")
- *                             .saveTo(Paths.get("image.tar"));
- * }</pre>
- */
-// TODO: Add tests once JibContainerBuilder#containerize() is added.
 class TarTargetImage implements TarImage, TargetImage {
 
   private final ImageReference imageReference;

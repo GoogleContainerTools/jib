@@ -27,8 +27,6 @@ import java.nio.file.Path;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-/** Builds to the Docker daemon. */
-// TODO: Add tests once JibContainerBuilder#containerize() is added.
 class DockerDaemonTargetImage implements DockerDaemonImage, TargetImage {
 
   private final ImageReference imageReference;

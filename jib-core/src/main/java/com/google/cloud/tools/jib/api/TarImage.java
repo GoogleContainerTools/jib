@@ -34,7 +34,7 @@ import java.nio.file.Path;
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
 public interface TarImage {
 
-  /** Finishes constructing a {@link TarTargetImage}. */
+  /** Finishes constructing a {@link TarImage}. */
   public static class Builder {
 
     private final ImageReference imageReference;
@@ -59,7 +59,7 @@ public interface TarImage {
    * name of the image if loaded into the Docker daemon.
    *
    * @param imageReference the image reference
-   * @return a {@link Builder} to finish constructing a new {@link TarTargetImage}
+   * @return a {@link Builder} to finish constructing a new {@link TarImage}
    */
   public static Builder named(ImageReference imageReference) {
     return new Builder(imageReference);
@@ -69,7 +69,7 @@ public interface TarImage {
    * Configures the output tarball archive with an image reference to set as its tag.
    *
    * @param imageReference the image reference
-   * @return a {@link Builder} to finish constructing a new {@link TarTargetImage}
+   * @return a {@link Builder} to finish constructing a new {@link TarImage}
    * @throws InvalidImageReferenceException if {@code imageReference} is not a valid image reference
    */
   public static Builder named(String imageReference) throws InvalidImageReferenceException {
