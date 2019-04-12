@@ -22,9 +22,10 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 /** Configures how to build a layer in the container image. Instantiate with {@link #builder}. */
 public class LayerConfiguration {
@@ -67,7 +68,10 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder addEntry(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      return addEntry(sourceFile, pathInContainer, null);
+      return addEntry(
+          sourceFile,
+          pathInContainer,
+          LayerEntry.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, pathInContainer));
     }
 
     /**
@@ -78,37 +82,43 @@ public class LayerConfiguration {
      * @param sourceFile the source file to add to the layer
      * @param pathInContainer the path in the container file system corresponding to the {@code
      *     sourceFile}
-     * @param permissions the file permissions on the container. If null, then default permissions
-     *     are used (644 for files, 755 for directories)
-     * @param lastModified the modification time of the file
+     * @param permissions the file permissions on the container
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
+     * @see FilePermissions#DEFAULT_FILE_PERMISSIONS
+     * @see FilePermissions#DEFAULT_FOLDER_PERMISSIONS
+     */
+    public Builder addEntry(
+        Path sourceFile, AbsoluteUnixPath pathInContainer, FilePermissions permissions) {
+      return addEntry(
+          sourceFile,
+          pathInContainer,
+          permissions,
+          LayerEntry.DEFAULT_MODIFIED_TIME_PROVIDER.apply(sourceFile, pathInContainer));
+    }
+
+    /**
+     * Adds an entry to the layer with the given permissions. Only adds the single source file to
+     * the exact path in the container file system. See {@link Builder#addEntry(Path,
+     * AbsoluteUnixPath)} for more information.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param permissions the file permissions on the container
+     * @param lastModifiedTime the file modification timestamp
+     * @return this
+     * @see Builder#addEntry(Path, AbsoluteUnixPath)
+     * @see FilePermissions#DEFAULT_FILE_PERMISSIONS
+     * @see FilePermissions#DEFAULT_FOLDER_PERMISSIONS
      */
     public Builder addEntry(
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
-        @Nullable FilePermissions permissions,
-        long lastModified) {
-      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions, lastModified));
+        FilePermissions permissions,
+        Instant lastModifiedTime) {
+      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions, lastModifiedTime));
       return this;
-    }
-
-    /**
-     * Adds an entry to the layer with the given permissions. Only adds the single source file to
-     * the exact path in the container file system. See {@link Builder#addEntry(Path,
-     * AbsoluteUnixPath)} for more information.
-     *
-     * @param sourceFile the source file to add to the layer
-     * @param pathInContainer the path in the container file system corresponding to the {@code
-     *     sourceFile}
-     * @param permissions the file permissions on the container. If null, then default permissions
-     *     are used (644 for files, 755 for directories)
-     * @return this
-     * @see Builder#addEntry(Path, AbsoluteUnixPath)
-     */
-    public Builder addEntry(
-        Path sourceFile, AbsoluteUnixPath pathInContainer, @Nullable FilePermissions permissions) {
-      return addEntry(sourceFile, pathInContainer, permissions, 1000);
     }
 
     /**
@@ -128,13 +138,67 @@ public class LayerConfiguration {
      */
     public Builder addEntryRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer)
         throws IOException {
+      return addEntryRecursive(
+          sourceFile, pathInContainer, LayerEntry.DEFAULT_FILE_PERMISSIONS_PROVIDER);
+    }
+
+    /**
+     * Adds an entry to the layer. If the source file is a directory, the directory and its contents
+     * will be added recursively.
+     *
+     * @param sourceFile the source file to add to the layer recursively
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param filePermissionProvider a provider that takes a source path and destination path on the
+     *     container and returns the file permissions that should be set for that path
+     * @return this
+     * @throws IOException if an exception occurred when recursively listing the directory
+     */
+    public Builder addEntryRecursive(
+        Path sourceFile,
+        AbsoluteUnixPath pathInContainer,
+        BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider)
+        throws IOException {
+      return addEntryRecursive(
+          sourceFile,
+          pathInContainer,
+          filePermissionProvider,
+          LayerEntry.DEFAULT_MODIFIED_TIME_PROVIDER);
+    }
+
+    /**
+     * Adds an entry to the layer. If the source file is a directory, the directory and its contents
+     * will be added recursively.
+     *
+     * @param sourceFile the source file to add to the layer recursively
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param filePermissionProvider a provider that takes a source path and destination path on the
+     *     container and returns the file permissions that should be set for that path
+     * @param lastModifiedTimeProvider a provider that takes a source path and destination path on
+     *     the container and returns the file modification time that should be set for that path
+     * @return this
+     * @throws IOException if an exception occurred when recursively listing the directory
+     */
+    public Builder addEntryRecursive(
+        Path sourceFile,
+        AbsoluteUnixPath pathInContainer,
+        BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider,
+        BiFunction<Path, AbsoluteUnixPath, Instant> lastModifiedTimeProvider)
+        throws IOException {
+      FilePermissions permissions = filePermissionProvider.apply(sourceFile, pathInContainer);
+      Instant modifiedTime = lastModifiedTimeProvider.apply(sourceFile, pathInContainer);
+      addEntry(sourceFile, pathInContainer, permissions, modifiedTime);
       if (!Files.isDirectory(sourceFile)) {
-        return addEntry(sourceFile, pathInContainer);
+        return this;
       }
-      addEntry(sourceFile, pathInContainer);
       try (Stream<Path> files = Files.list(sourceFile)) {
         for (Path file : files.collect(Collectors.toList())) {
-          addEntryRecursive(file, pathInContainer.resolve(file.getFileName()));
+          addEntryRecursive(
+              file,
+              pathInContainer.resolve(file.getFileName()),
+              filePermissionProvider,
+              lastModifiedTimeProvider);
         }
       }
       return this;

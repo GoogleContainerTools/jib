@@ -167,14 +167,14 @@ public class ReproducibleLayerBuilderTest {
     Blob layer =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA"), null),
-                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"), null)))
+                    new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA")),
+                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"))))
             .build();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB"), null),
-                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"), null)))
+                    new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB")),
+                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"))))
             .build();
 
     byte[] layerContent = Blobs.writeToByteArray(layer);
@@ -184,12 +184,12 @@ public class ReproducibleLayerBuilderTest {
   }
 
   @Test
-  public void testBuild_timestamp() throws IOException {
+  public void testBuild_timestampDefault() throws IOException {
     Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
 
     Blob blob =
         new ReproducibleLayerBuilder(
-                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"), null)))
+                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"))))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -205,6 +205,32 @@ public class ReproducibleLayerBuilderTest {
   }
 
   @Test
+  public void testBuild_timestampNonDefault() throws IOException {
+    Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
+
+    Blob blob =
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(
+                    new LayerEntry(
+                        file,
+                        AbsoluteUnixPath.get("/fileA"),
+                        FilePermissions.DEFAULT_FILE_PERMISSIONS,
+                        Instant.ofEpochSecond(123))))
+            .build();
+
+    Path tarFile = temporaryFolder.newFile().toPath();
+    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
+      blob.writeTo(out);
+    }
+
+    // Reads the file back.
+    try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
+      Assert.assertEquals(
+          Date.from(Instant.EPOCH.plusSeconds(123)), in.getNextEntry().getLastModifiedDate());
+    }
+  }
+
+  @Test
   public void testBuild_permissions() throws IOException {
     Path testRoot = temporaryFolder.getRoot().toPath();
     Path folder = Files.createDirectories(testRoot.resolve("files1"));
@@ -214,7 +240,7 @@ public class ReproducibleLayerBuilderTest {
     Blob blob =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA"), null),
+                    new LayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA")),
                     new LayerEntry(
                         fileB,
                         AbsoluteUnixPath.get("/somewhere/fileB"),

@@ -107,7 +107,7 @@ public class ReproducibleLayerBuilder {
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
       entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
-      entry.setModTime(layerEntry.getLastModifiedTime());
+      entry.setModTime(layerEntry.getLastModifiedTime().toEpochMilli());
 
       uniqueTarArchiveEntries.add(entry);
     }

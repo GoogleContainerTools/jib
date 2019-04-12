@@ -20,8 +20,9 @@ import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Objects;
-import javax.annotation.Nullable;
+import java.util.function.BiFunction;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -37,10 +38,22 @@ import javax.annotation.Nullable;
  */
 public class LayerEntry {
 
+  /** Provider that returns default file permissions (644 for files, 755 for directories). */
+  public static final BiFunction<Path, AbsoluteUnixPath, FilePermissions>
+      DEFAULT_FILE_PERMISSIONS_PROVIDER =
+          (sourcePath, destinationPath) ->
+              Files.isDirectory(sourcePath)
+                  ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
+                  : FilePermissions.DEFAULT_FILE_PERMISSIONS;
+
+  /** Provider that returns default file modification time (EPOCH + 1 second). */
+  public static final BiFunction<Path, AbsoluteUnixPath, Instant> DEFAULT_MODIFIED_TIME_PROVIDER =
+      (sourcePath, destinationPath) -> Instant.ofEpochSecond(1);
+
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
   private final FilePermissions permissions;
-  private final long lastModifiedTime;
+  private final Instant lastModifiedTime;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -57,25 +70,12 @@ public class LayerEntry {
    * @param sourceFile the source file to add to the layer
    * @param extractionPath the path in the container file system corresponding to the {@code
    *     sourceFile}
-   * @param permissions the file permissions on the container. Use {@code null} to use defaults (644
-   *     for files, 755 for directories)
-   * @param lastModifiedTime the file modification time, default to 1 second since the epoch
-   *     (https://github.com/GoogleContainerTools/jib/issues/1079)
    */
-  public LayerEntry(
-      Path sourceFile,
-      AbsoluteUnixPath extractionPath,
-      @Nullable FilePermissions permissions,
-      long lastModifiedTime) {
-    this.sourceFile = sourceFile;
-    this.extractionPath = extractionPath;
-    this.permissions =
-        permissions == null
-            ? Files.isDirectory(sourceFile)
-                ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
-                : FilePermissions.DEFAULT_FILE_PERMISSIONS
-            : permissions;
-    this.lastModifiedTime = lastModifiedTime;
+  public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath) {
+    this(
+        sourceFile,
+        extractionPath,
+        DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, extractionPath));
   }
 
   /**
@@ -88,9 +88,34 @@ public class LayerEntry {
    * @param permissions the file permissions on the container. Use {@code null} to use defaults (644
    *     for files, 755 for directories)
    */
+  public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath, FilePermissions permissions) {
+    this(
+        sourceFile,
+        extractionPath,
+        permissions,
+        DEFAULT_MODIFIED_TIME_PROVIDER.apply(sourceFile, extractionPath));
+  }
+
+  /**
+   * Instantiates with a source file and the path to place the source file in the container file
+   * system.
+   *
+   * @param sourceFile the source file to add to the layer
+   * @param extractionPath the path in the container file system corresponding to the {@code
+   *     sourceFile}
+   * @param permissions the file permissions on the container
+   * @param lastModifiedTime the file modification time, default to 1 second since the epoch
+   *     (https://github.com/GoogleContainerTools/jib/issues/1079)
+   */
   public LayerEntry(
-      Path sourceFile, AbsoluteUnixPath extractionPath, @Nullable FilePermissions permissions) {
-    this(sourceFile, extractionPath, permissions, 1000);
+      Path sourceFile,
+      AbsoluteUnixPath extractionPath,
+      FilePermissions permissions,
+      Instant lastModifiedTime) {
+    this.sourceFile = sourceFile;
+    this.extractionPath = extractionPath;
+    this.permissions = permissions;
+    this.lastModifiedTime = lastModifiedTime;
   }
 
   /**
@@ -98,7 +123,7 @@ public class LayerEntry {
    *
    * @return the modification time
    */
-  public long getLastModifiedTime() {
+  public Instant getLastModifiedTime() {
     return lastModifiedTime;
   }
 
@@ -142,11 +167,12 @@ public class LayerEntry {
     LayerEntry otherLayerEntry = (LayerEntry) other;
     return sourceFile.equals(otherLayerEntry.sourceFile)
         && extractionPath.equals(otherLayerEntry.extractionPath)
-        && Objects.equals(permissions, otherLayerEntry.permissions);
+        && Objects.equals(permissions, otherLayerEntry.permissions)
+        && Objects.equals(lastModifiedTime, otherLayerEntry.lastModifiedTime);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceFile, extractionPath, permissions);
+    return Objects.hash(sourceFile, extractionPath, permissions, lastModifiedTime);
   }
 }
