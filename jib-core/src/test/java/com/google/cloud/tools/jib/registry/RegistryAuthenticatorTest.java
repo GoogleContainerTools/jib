@@ -27,6 +27,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /** Tests for {@link RegistryAuthenticator}. */
@@ -178,10 +179,10 @@ public class RegistryAuthenticatorTest {
         registryAuthenticator.getAuthenticationUrl("scope"));
   }
 
+  @Ignore
   @Test
   public void testUserAgent()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
     try (TestWebServer server = new TestWebServer(false)) {
       try {
         RegistryAuthenticator authenticator =
