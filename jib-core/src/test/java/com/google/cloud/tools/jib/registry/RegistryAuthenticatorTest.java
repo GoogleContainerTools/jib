@@ -26,6 +26,7 @@ import java.security.GeneralSecurityException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /** Tests for {@link RegistryAuthenticator}. */
@@ -178,6 +179,7 @@ public class RegistryAuthenticatorTest {
   }
 
   @Test
+  @Ignore
   public void testUserAgent()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     try (TestWebServer server = new TestWebServer(false)) {
