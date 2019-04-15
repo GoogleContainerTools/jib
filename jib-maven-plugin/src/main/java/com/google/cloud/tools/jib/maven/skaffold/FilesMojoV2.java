@@ -182,11 +182,11 @@ public class FilesMojoV2 extends AbstractMojo {
       if (pluginConfiguration != null) {
 
         Xpp3Dom extraDirectoryConfiguration = pluginConfiguration.getChild("extraDirectory");
+        Xpp3Dom extraDirectoriesConfiguration = pluginConfiguration.getChild("extraDirectories");
         if (extraDirectoryConfiguration != null) {
           // TODO: log deprecation warning
         }
 
-        Xpp3Dom extraDirectoriesConfiguration = pluginConfiguration.getChild("extraDirectories");
         if (extraDirectoriesConfiguration != null) {
           Xpp3Dom child = extraDirectoryConfiguration.getChild("paths");
           if (child != null) {
@@ -195,11 +195,6 @@ public class FilesMojoV2 extends AbstractMojo {
                 .map(Xpp3Dom::getValue)
                 .map(Paths::get)
                 .collect(Collectors.toList());
-          }
-          // <extraDirectories>...</extraDirectories>
-          String value = extraDirectoryConfiguration.getValue();
-          if (value != null) {
-            return Collections.singletonList(Paths.get(extraDirectoryConfiguration.getValue()));
           }
         }
 
