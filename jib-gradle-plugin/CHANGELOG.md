@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
+
+### Fixed
+
+## 1.1.0
+
+### Changed
 - `os` and `architecture` are taken from base image ([#1564](https://github.com/GoogleContainerTools/jib/pull/1564))
 
 ### Fixed
