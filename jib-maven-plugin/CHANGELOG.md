@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Bug adding base image layers in reverse order when registry uses V2 image manifest, schema version 2 ([#1627](https://github.com/GoogleContainerTools/jib/issues/1627))
+
 ## 1.1.0
 
 ### Added
