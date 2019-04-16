@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
-import java.io.File;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
@@ -78,8 +77,7 @@ public class JibExtension {
     from = objectFactory.newInstance(BaseImageParameters.class);
     to = objectFactory.newInstance(TargetImageParameters.class);
     container = objectFactory.newInstance(ContainerParameters.class);
-    extraDirectory =
-        objectFactory.newInstance(ExtraDirectoryParameters.class, project.getProjectDir().toPath());
+    extraDirectory = objectFactory.newInstance(ExtraDirectoryParameters.class, project);
 
     allowInsecureRegistries = objectFactory.property(Boolean.class);
 
@@ -103,8 +101,15 @@ public class JibExtension {
     action.execute(extraDirectory);
   }
 
-  public void setExtraDirectory(File extraDirectory) {
-    this.extraDirectory.setPath(extraDirectory);
+  /**
+   * Sets extra directory paths. {@code extraDirectories} can be any suitable object describing file
+   * paths convertible by {@link Project#files} (such as {@code List<File>}).
+   *
+   * @param extraDirectories paths to set.
+   */
+  // non-plural to retain backward-compatibility for the "jib.extraDirectory" config parameter
+  public void setExtraDirectory(Object extraDirectories) {
+    this.extraDirectory.setPath(extraDirectories);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {

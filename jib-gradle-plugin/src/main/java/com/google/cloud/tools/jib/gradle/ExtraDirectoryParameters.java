@@ -22,48 +22,59 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
+import org.gradle.api.Project;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
 /** Object in {@link JibExtension} that configures the extra directory. */
 public class ExtraDirectoryParameters {
 
-  private static Path resolveDefaultExtraDirectory(Path projectDirectory) {
-    return projectDirectory.resolve("src").resolve("main").resolve("jib");
-  }
+  private final Project project;
 
-  private Path path;
+  private List<Path> paths;
   private Map<String, String> permissions = Collections.emptyMap();
 
   @Inject
-  public ExtraDirectoryParameters(Path projectDirectory) {
-    path = resolveDefaultExtraDirectory(projectDirectory);
+  public ExtraDirectoryParameters(Project project) {
+    this.project = project;
+    paths =
+        Collections.singletonList(
+            project.getProjectDir().toPath().resolve("src").resolve("main").resolve("jib"));
   }
 
   @Input
-  public String getPathString() {
+  public List<String> getPathStrings() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH) != null) {
-      return System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
-    }
-    return path.toString();
+    return getPaths().stream().map(Path::toString).collect(Collectors.toList());
   }
 
   @Internal
-  public Path getPath() {
+  public List<Path> getPaths() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH) != null) {
-      return Paths.get(System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH));
+    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
+    if (property != null) {
+      List<String> pathStrings = ConfigurationPropertyValidator.parseListProperty(property);
+      return pathStrings.stream().map(Paths::get).collect(Collectors.toList());
     }
-    return path;
+    return paths;
   }
 
-  public void setPath(File path) {
-    this.path = path.toPath();
+  /**
+   * Sets paths. {@code paths} can be any suitable object describing file paths convertible by
+   * {@link Project#files} (such as {@code List<File>}).
+   *
+   * @param paths paths to set.
+   */
+  // non-plural to retain backward-compatibility for the "jib.extraDirectory.path" config parameter
+  public void setPath(Object paths) {
+    this.paths =
+        project.files(paths).getFiles().stream().map(File::toPath).collect(Collectors.toList());
   }
 
   /**

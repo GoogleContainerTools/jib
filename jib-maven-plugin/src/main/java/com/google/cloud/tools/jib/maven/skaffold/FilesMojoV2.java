@@ -25,6 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -110,7 +112,7 @@ public class FilesMojoV2 extends AbstractMojo {
       // configuring of the jib plugin).
       if (project.getPlugin(MavenProjectProperties.PLUGIN_KEY) != null) {
         // Add extra directory
-        skaffoldFilesOutput.addInput(resolveExtraDirectory(project));
+        resolveExtraDirectories(project).forEach(skaffoldFilesOutput::addInput);
       }
 
       // Grab non-project SNAPSHOT dependencies for this project
@@ -165,12 +167,12 @@ public class FilesMojoV2 extends AbstractMojo {
     }
   }
 
-  private Path resolveExtraDirectory(MavenProject project) {
+  private List<Path> resolveExtraDirectories(MavenProject project) {
     // Try getting extra directory from project/session properties
     String extraDirectoryProperty =
         MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH, project, session);
     if (extraDirectoryProperty != null) {
-      return Paths.get(extraDirectoryProperty);
+      return Collections.singletonList(Paths.get(extraDirectoryProperty));
     }
 
     // Try getting extra directory from project pom
@@ -180,24 +182,31 @@ public class FilesMojoV2 extends AbstractMojo {
       if (pluginConfiguration != null) {
         Xpp3Dom extraDirectoryConfiguration = pluginConfiguration.getChild("extraDirectory");
         if (extraDirectoryConfiguration != null) {
-          Xpp3Dom child = extraDirectoryConfiguration.getChild("path");
-          if (child != null) {
+          Xpp3Dom pathChild = extraDirectoryConfiguration.getChild("path");
+          if (pathChild != null) {
             // <extraDirectory><path>...</path></extraDirectory>
-            return Paths.get(child.getValue());
+            return Collections.singletonList(Paths.get(pathChild.getValue()));
+          }
+          Xpp3Dom pathsChild = extraDirectoryConfiguration.getChild("paths");
+          if (pathsChild != null) {
+            // <extraDirectory><paths><path>...<path><path>...<path></paths></extraDirectory>
+            return Arrays.stream(pathsChild.getChildren())
+                .map(Xpp3Dom::getValue)
+                .map(Paths::get)
+                .collect(Collectors.toList());
           }
           // <extraDirectory>...</extraDirectory>
-          return Paths.get(extraDirectoryConfiguration.getValue());
+          String value = extraDirectoryConfiguration.getValue();
+          if (value != null) {
+            return Collections.singletonList(Paths.get(extraDirectoryConfiguration.getValue()));
+          }
         }
       }
     }
 
     // Return default if not found
-    return Preconditions.checkNotNull(project)
-        .getBasedir()
-        .getAbsoluteFile()
-        .toPath()
-        .resolve("src")
-        .resolve("main")
-        .resolve("jib");
+    Path projectBase = Preconditions.checkNotNull(project).getBasedir().getAbsoluteFile().toPath();
+    Path srcMainJib = Paths.get("src", "main", "jib");
+    return Collections.singletonList(projectBase.resolve(srcMainJib));
   }
 }

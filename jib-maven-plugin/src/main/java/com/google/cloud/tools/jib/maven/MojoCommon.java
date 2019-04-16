@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfigu
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,22 +44,21 @@ class MojoCommon {
   }
 
   /**
-   * Gets the extra directory path from a {@link JibPluginConfiguration}. Returns {@code (project
-   * dir)/src/main/jib} if null.
+   * Gets the list of extra directory paths from a {@link JibPluginConfiguration}. Returns {@code
+   * (project dir)/src/main/jib} by default if not configured.
    *
    * @param jibPluginConfiguration the build configuration
-   * @return the resolved extra directory
+   * @return the list of resolved extra directories
    */
-  static Path getExtraDirectoryPath(JibPluginConfiguration jibPluginConfiguration) {
-    return jibPluginConfiguration
-        .getExtraDirectoryPath()
-        .orElse(
-            Preconditions.checkNotNull(jibPluginConfiguration.getProject())
-                .getBasedir()
-                .toPath()
-                .resolve("src")
-                .resolve("main")
-                .resolve("jib"));
+  static List<Path> getExtraDirectories(JibPluginConfiguration jibPluginConfiguration) {
+    List<Path> paths = jibPluginConfiguration.getExtraDirectories();
+    if (!paths.isEmpty()) {
+      return paths;
+    }
+
+    MavenProject project = Preconditions.checkNotNull(jibPluginConfiguration.getProject());
+    return Collections.singletonList(
+        project.getBasedir().toPath().resolve("src").resolve("main").resolve("jib"));
   }
 
   /**

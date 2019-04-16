@@ -283,6 +283,14 @@ public class BuildImageMojoIntegrationTest {
             .trim());
   }
 
+  private static void assertLayerSizer(int expected, String imageReference)
+      throws IOException, InterruptedException {
+    Command command =
+        new Command("docker", "inspect", "-f", "{{join .RootFS.Layers \",\"}}", imageReference);
+    String layers = command.run().trim();
+    Assert.assertEquals(expected, Splitter.on(",").splitToList(layers).size());
+  }
+
   @Nullable private String detachedContainerName;
 
   @Before
@@ -344,6 +352,7 @@ public class BuildImageMojoIntegrationTest {
             new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
     Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
     assertWorkingDirectory("/home", targetImage);
+    assertLayerSizer(8, targetImage);
   }
 
   @Test
@@ -396,6 +405,16 @@ public class BuildImageMojoIntegrationTest {
         "",
         buildAndRunAdditionalTag(
             emptyTestProject.getProjectRoot(), targetImage, "maven-2" + System.nanoTime()));
+  }
+
+  @Test
+  public void testExecute_multipleExtraDirectories()
+      throws DigestException, VerificationException, IOException, InterruptedException {
+    String targetImage = getGcrImageReference("simpleimage:maven");
+    Assert.assertEquals(
+        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\nbaz\n",
+        buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-extra-dirs.xml", false));
+    assertLayerSizer(9, targetImage); // one more than usual
   }
 
   @Test

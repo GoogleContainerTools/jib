@@ -206,11 +206,12 @@ public class PluginConfigurationProcessor {
     }
 
     // Adds all the extra files.
-    if (Files.exists(rawConfiguration.getExtraDirectory())) {
-      jibContainerBuilder.addLayer(
-          JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-              rawConfiguration.getExtraDirectory(),
-              rawConfiguration.getExtraDirectoryPermissions()));
+    for (Path directory : rawConfiguration.getExtraDirectories()) {
+      if (Files.exists(directory)) {
+        jibContainerBuilder.addLayer(
+            JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
+                directory, rawConfiguration.getExtraDirectoryPermissions()));
+      }
     }
 
     PluginConfigurationProcessor.configureContainerizer(

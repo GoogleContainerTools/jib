@@ -46,11 +46,16 @@ public class FilesMojoV2Test {
   public static final TestProject multiTestProject = new TestProject(testPlugin, "multi");
 
   private static void verifyFiles(
-      Path projectRoot, String module, List<String> buildFiles, List<String> inputFiles)
+      Path projectRoot,
+      String pomXml,
+      String module,
+      List<String> buildFiles,
+      List<String> inputFiles)
       throws VerificationException, IOException {
 
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
+    verifier.addCliOption("--file=" + pomXml);
     verifier.addCliOption("-q");
     if (!Strings.isNullOrEmpty(module)) {
       verifier.addCliOption("-pl");
@@ -77,6 +82,7 @@ public class FilesMojoV2Test {
 
     verifyFiles(
         projectRoot,
+        "pom.xml",
         null,
         Collections.singletonList(projectRoot.resolve("pom.xml").toString()),
         Arrays.asList(
@@ -86,12 +92,30 @@ public class FilesMojoV2Test {
   }
 
   @Test
+  public void testFilesMojo_singleModuleWithMultipleExtraDirectories()
+      throws VerificationException, IOException {
+    Path projectRoot = simpleTestProject.getProjectRoot();
+
+    verifyFiles(
+        projectRoot,
+        "pom-extra-dirs.xml",
+        null,
+        Collections.singletonList(projectRoot.resolve("pom-extra-dirs.xml").toString()),
+        Arrays.asList(
+            projectRoot.resolve("src/main/java").toString(),
+            projectRoot.resolve("src/main/resources").toString(),
+            projectRoot.resolve("src/main/jib-custom").toString(),
+            projectRoot.resolve("src/main/jib-custom-2").toString()));
+  }
+
+  @Test
   public void testFilesMojo_multiModuleSimpleService() throws VerificationException, IOException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path simpleServiceRoot = projectRoot.resolve("simple-service");
 
     verifyFiles(
         projectRoot,
+        "pom.xml",
         "simple-service",
         Arrays.asList(
             projectRoot.resolve("pom.xml").toString(),
@@ -110,6 +134,7 @@ public class FilesMojoV2Test {
 
     verifyFiles(
         projectRoot,
+        "pom.xml",
         "complex-service",
         Arrays.asList(
             projectRoot.resolve("pom.xml").toString(),
