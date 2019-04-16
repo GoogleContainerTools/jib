@@ -118,4 +118,9 @@ public class LogEvent implements JibEvent {
   public int hashCode() {
     return Objects.hash(level, message);
   }
+
+  @Override
+  public String toString() {
+    return "LogEvent [level=" + level + ", message=" + message + "]";
+  }
 }
