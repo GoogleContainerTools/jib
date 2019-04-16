@@ -111,10 +111,10 @@ public class JibPluginConfigurationTest {
     sessionProperties.put("jib.container.workingDirectory", "working directory");
     Assert.assertEquals("working directory", testPluginConfiguration.getWorkingDirectory());
 
-    sessionProperties.put("jib.extraDirectory.path", "custom-jib");
+    sessionProperties.put("jib.extraDirectories.paths", "custom-jib");
     Assert.assertEquals(
         Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
-    sessionProperties.put("jib.extraDirectory.permissions", "/test/file1=123,/another/file=456");
+    sessionProperties.put("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();
     Assert.assertEquals("/test/file1", permissions.get(0).getFile().get());
@@ -173,12 +173,12 @@ public class JibPluginConfigurationTest {
     project.getProperties().setProperty("jib.container.workingDirectory", "working directory");
     Assert.assertEquals("working directory", testPluginConfiguration.getWorkingDirectory());
 
-    project.getProperties().setProperty("jib.extraDirectory.path", "custom-jib");
+    project.getProperties().setProperty("jib.extraDirectories.paths", "custom-jib");
     Assert.assertEquals(
         Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
     project
         .getProperties()
-        .setProperty("jib.extraDirectory.permissions", "/test/file1=123,/another/file=456");
+        .setProperty("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();
     Assert.assertEquals("/test/file1", permissions.get(0).getFile().get());
@@ -199,5 +199,37 @@ public class JibPluginConfigurationTest {
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals("jib.to.tags has empty tag", ex.getMessage());
     }
+  }
+
+  @Test
+  public void testDeprecatedSystemProperties() {
+    sessionProperties.put("jib.extraDirectory.path", "custom-jib");
+    Assert.assertEquals(
+        Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
+    sessionProperties.put("jib.extraDirectory.permissions", "/test/file13=650,/another/file24=777");
+    List<PermissionConfiguration> permissions =
+        testPluginConfiguration.getExtraDirectoryPermissions();
+    Assert.assertEquals("/test/file13", permissions.get(0).getFile().get());
+    Assert.assertEquals("650", permissions.get(0).getMode().get());
+    Assert.assertEquals("/another/file24", permissions.get(1).getFile().get());
+    Assert.assertEquals("777", permissions.get(1).getMode().get());
+  }
+
+  @Test
+  public void testDeprecatedProperties() {
+    Properties projectProperties = project.getProperties();
+
+    projectProperties.setProperty("jib.extraDirectory.path", "this-is-extra");
+    Assert.assertEquals(
+        Arrays.asList(Paths.get("this-is-extra")), testPluginConfiguration.getExtraDirectories());
+
+    projectProperties.setProperty(
+        "jib.extraDirectory.permissions", "/test/file1=654,/dir/file2=321");
+    List<PermissionConfiguration> permissions =
+        testPluginConfiguration.getExtraDirectoryPermissions();
+    Assert.assertEquals("/test/file1", permissions.get(0).getFile().get());
+    Assert.assertEquals("654", permissions.get(0).getMode().get());
+    Assert.assertEquals("/dir/file2", permissions.get(1).getFile().get());
+    Assert.assertEquals("321", permissions.get(1).getMode().get());
   }
 }

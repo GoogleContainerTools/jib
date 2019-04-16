@@ -23,10 +23,8 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,7 +36,7 @@ import javax.annotation.Nullable;
 public class ConfigurationPropertyValidator {
 
   /** Matches key-value pairs in the form of "key=value" */
-  private static final Pattern ENVIRONMENT_PATTERN = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
+  private static final Pattern KEY_VALUE_PATTERN = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
 
   /**
    * Gets a {@link Credential} from a username and password. First tries system properties, then
@@ -149,18 +147,18 @@ public class ConfigurationPropertyValidator {
    * @return the map of parsed values
    */
   public static Map<String, String> parseMapProperty(String property) {
-    Map<String, String> result = new HashMap<>();
+    Map<String, String> result = new LinkedHashMap<>(); // LinkedHashMap to keep insertion order
 
     // Split on non-escaped commas
     List<String> entries = parseListProperty(property);
     for (String entry : entries) {
-      Matcher matcher = ENVIRONMENT_PATTERN.matcher(entry);
+      Matcher matcher = KEY_VALUE_PATTERN.matcher(entry);
       if (!matcher.matches()) {
         throw new IllegalArgumentException("'" + entry + "' is not a valid key-value pair");
       }
       result.put(matcher.group("name"), matcher.group("value"));
     }
-    return ImmutableMap.copyOf(result);
+    return result;
   }
 
   /**
@@ -183,7 +181,7 @@ public class ConfigurationPropertyValidator {
       }
     }
     items.add(property.substring(startIndex));
-    return ImmutableList.copyOf(items);
+    return items;
   }
 
   private ConfigurationPropertyValidator() {}

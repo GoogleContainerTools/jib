@@ -47,6 +47,7 @@ import org.apache.maven.project.DependencyResolutionException;
 import org.apache.maven.project.DependencyResolutionResult;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectDependenciesResolver;
+import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyFilter;
 
 /**
@@ -150,7 +151,7 @@ public class FilesMojo extends AbstractMojo {
       resolutionResult
           .getDependencies()
           .stream()
-          .map(org.eclipse.aether.graph.Dependency::getArtifact)
+          .map(Dependency::getArtifact)
           .filter(org.eclipse.aether.artifact.Artifact::isSnapshot)
           .map(org.eclipse.aether.artifact.Artifact::getFile)
           .forEach(System.out::println);
@@ -171,10 +172,13 @@ public class FilesMojo extends AbstractMojo {
     List<File> newPaths = extraDirectories.getPaths();
 
     if (deprecatedProperty != null) {
-      // TODO: log deprecation warning
+      getLog()
+          .warn(
+              "The property 'jib.extraDirectory.path' is deprecated; "
+                  + "use 'jib.extraDirectories.paths' instead");
     }
     if (!deprecatedPaths.isEmpty()) {
-      // TODO: log deprecation warning
+      getLog().warn("<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>.");
     }
 
     String property = newProperty != null ? newProperty : deprecatedProperty;

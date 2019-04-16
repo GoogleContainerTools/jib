@@ -532,10 +532,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     List<File> newPaths = extraDirectories.getPaths();
 
     if (deprecatedProperty != null) {
-      // TODO: log deprecation warning
+      getLog()
+          .warn(
+              "The property 'jib.extraDirectory.path' is deprecated; "
+                  + "use 'jib.extraDirectories.paths' instead");
     }
     if (!deprecatedPaths.isEmpty()) {
-      // TODO: log deprecation warning
+      getLog().warn("<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>.");
     }
 
     String property = newProperty != null ? newProperty : deprecatedProperty;
@@ -557,7 +560,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     String deprecatedProperty = getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS);
     String newProperty = getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
     if (deprecatedProperty != null) {
-      // TODO: log deprecation warning
+      getLog()
+          .warn(
+              "The property 'jib.extraDirectory.permissions' is deprecated; "
+                  + "use 'jib.extraDirectories.permissions' instead");
     }
 
     String property = newProperty != null ? newProperty : deprecatedProperty;

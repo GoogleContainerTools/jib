@@ -184,11 +184,12 @@ public class FilesMojoV2 extends AbstractMojo {
         Xpp3Dom extraDirectoryConfiguration = pluginConfiguration.getChild("extraDirectory");
         Xpp3Dom extraDirectoriesConfiguration = pluginConfiguration.getChild("extraDirectories");
         if (extraDirectoryConfiguration != null) {
-          // TODO: log deprecation warning
+          getLog()
+              .warn("<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>.");
         }
 
         if (extraDirectoriesConfiguration != null) {
-          Xpp3Dom child = extraDirectoryConfiguration.getChild("paths");
+          Xpp3Dom child = extraDirectoriesConfiguration.getChild("paths");
           if (child != null) {
             // <extraDirectories><paths><path>...<path><path>...<path></paths></extraDirectories>
             return Arrays.stream(child.getChildren())
