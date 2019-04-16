@@ -53,8 +53,12 @@ public class JavaContainerBuilderHelper {
             localPath -> {
               AbsoluteUnixPath pathOnContainer =
                   AbsoluteUnixPath.get("/").resolve(extraDirectory.relativize(localPath));
-              builder.addEntry(
-                  localPath, pathOnContainer, extraDirectoryPermissions.get(pathOnContainer));
+              FilePermissions permissions = extraDirectoryPermissions.get(pathOnContainer);
+              if (permissions == null) {
+                builder.addEntry(localPath, pathOnContainer);
+              } else {
+                builder.addEntry(localPath, pathOnContainer, permissions);
+              }
             });
     return builder.build();
   }

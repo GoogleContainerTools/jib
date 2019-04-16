@@ -5,9 +5,15 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Overloads for `LayerConfiguration#addEntryRecursive` that take providers allowing for setting file permissions/file modification timestamps on a per-file basis ([#1607](https://github.com/GoogleContainerTools/jib/issues/1607))
+
 ### Changed
 
+- `LayerConfiguration` takes file modification time as an `Instant` instead of a `long`
+
 ### Fixed
+
+- Fixed an issue where the library creates wrong images by adding base image layers in reverse order when registry uses the old V2 image manifest, schema version 1 (such as Quay) ([#1627](https://github.com/GoogleContainerTools/jib/issues/1627))
 
 ## 0.9.0
 
@@ -18,10 +24,12 @@ All notable changes to this project will be documented in this file.
 - Methods in `JavaContainerBuilder` for setting the destination directories for classes, resources, directories, and additional classpath files
 
 ### Changed
+
 - Allow skipping `JavaContainerBuilder#setMainClass()` to skip setting the entrypoint
 - `os` and `architecture` are taken from base image ([#1564](https://github.com/GoogleContainerTools/jib/pull/1564))
 
 ### Fixed
+
 - `ImageReference` assumes `registry-1.docker.io` as the registry if the host part of an image reference is `docker.io` ([#1549](https://github.com/GoogleContainerTools/jib/issues/1549))
 
 ## 0.1.2

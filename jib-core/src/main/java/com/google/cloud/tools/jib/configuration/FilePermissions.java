@@ -25,8 +25,10 @@ import java.util.Set;
 /** Represents read/write/execute file permissions for owner, group, and others. */
 public class FilePermissions {
 
+  /** Default permissions for files added to the container. */
   public static final FilePermissions DEFAULT_FILE_PERMISSIONS = new FilePermissions(0644);
 
+  /** Default permissions for folders added to the container. */
   public static final FilePermissions DEFAULT_FOLDER_PERMISSIONS = new FilePermissions(0755);
 
   /**

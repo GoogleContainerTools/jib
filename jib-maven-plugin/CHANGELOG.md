@@ -4,12 +4,25 @@ All notable changes to this project will be documented in this file.
 ## [unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+- Fixed an issue where the plugin creates wrong images by adding base image layers in reverse order when registry uses the old V2 image manifest, schema version 1 (such as Quay) ([#1627](https://github.com/GoogleContainerTools/jib/issues/1627))
+
+## 1.1.0
+
+### Added
+
 - Can now decrypt proxy configurations in `settings.xml`. ([#1369](https://github.com/GoogleContainerTools/jib/issues/1369))
 
 ### Changed
+
 - `os` and `architecture` are taken from base image ([#1564](https://github.com/GoogleContainerTools/jib/pull/1564))
 
 ### Fixed
+
 - Fixed an issue where pushing to Docker Hub fails when the host part of an image reference is `docker.io` ([#1549](https://github.com/GoogleContainerTools/jib/issues/1549))
 
 ## 1.0.2

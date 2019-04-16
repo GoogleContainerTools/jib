@@ -59,19 +59,15 @@ public class LayerEntriesSelectorTest {
     Path file2 = Files.createFile(folder.resolve("files").resolve("two"));
     Path file3 = Files.createFile(folder.resolve("gile"));
 
-    LayerEntry testLayerEntry1 =
-        new LayerEntry(file1, AbsoluteUnixPath.get("/extraction/path"), null);
-    LayerEntry testLayerEntry2 =
-        new LayerEntry(file2, AbsoluteUnixPath.get("/extraction/path"), null);
-    LayerEntry testLayerEntry3 =
-        new LayerEntry(file3, AbsoluteUnixPath.get("/extraction/path"), null);
+    LayerEntry testLayerEntry1 = new LayerEntry(file1, AbsoluteUnixPath.get("/extraction/path"));
+    LayerEntry testLayerEntry2 = new LayerEntry(file2, AbsoluteUnixPath.get("/extraction/path"));
+    LayerEntry testLayerEntry3 = new LayerEntry(file3, AbsoluteUnixPath.get("/extraction/path"));
     LayerEntry testLayerEntry4 =
         new LayerEntry(
             file3,
             AbsoluteUnixPath.get("/extraction/path"),
             FilePermissions.fromOctalString("755"));
-    LayerEntry testLayerEntry5 =
-        new LayerEntry(file3, AbsoluteUnixPath.get("/extraction/patha"), null);
+    LayerEntry testLayerEntry5 = new LayerEntry(file3, AbsoluteUnixPath.get("/extraction/patha"));
     LayerEntry testLayerEntry6 =
         new LayerEntry(
             file3,
@@ -135,8 +131,7 @@ public class LayerEntriesSelectorTest {
     Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
     Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
-    LayerEntry layerEntry =
-        new LayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"), null);
+    LayerEntry layerEntry = new LayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
     DescriptorDigest expectedSelector =
         LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry));
 

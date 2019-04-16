@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.image.ReferenceLayer;
 import com.google.cloud.tools.jib.image.ReferenceNoDiffIdLayer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
@@ -72,7 +73,8 @@ public class JsonToImageTranslator {
       throws LayerPropertyNotFoundException {
     Image.Builder<Layer> imageBuilder = Image.builder(V21ManifestTemplate.class);
 
-    for (DescriptorDigest digest : manifestTemplate.getLayerDigests()) {
+    // V21 layers are in reverse order of V22. (The first layer is the latest one.)
+    for (DescriptorDigest digest : Lists.reverse(manifestTemplate.getLayerDigests())) {
       imageBuilder.addLayer(new DigestOnlyLayer(digest));
     }
 

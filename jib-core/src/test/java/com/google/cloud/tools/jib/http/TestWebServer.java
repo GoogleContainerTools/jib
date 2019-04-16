@@ -17,9 +17,11 @@
 package com.google.cloud.tools.jib.http;
 
 import com.google.common.io.Resources;
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
@@ -89,14 +91,18 @@ public class TestWebServer implements Closeable {
   private Void serve200() throws IOException {
     threadStarted.release();
     try (Socket socket = serverSocket.accept()) {
+
+      InputStream in = socket.getInputStream();
+      BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+      for (String line = reader.readLine();
+          line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
+          line = reader.readLine()) {
+        inputRead.append(line + "\n");
+      }
+
       String response = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
       socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
       socket.getOutputStream().flush();
-
-      InputStream in = socket.getInputStream();
-      for (int ch = in.read(); ch != -1; ch = in.read()) {
-        inputRead.append((char) ch);
-      }
     }
     return null;
   }
