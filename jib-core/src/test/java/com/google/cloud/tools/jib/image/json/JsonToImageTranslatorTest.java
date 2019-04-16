@@ -59,11 +59,15 @@ public class JsonToImageTranslatorTest {
     Image<Layer> image = JsonToImageTranslator.toImage(manifestTemplate);
 
     List<Layer> layers = image.getLayers();
-    Assert.assertEquals(1, layers.size());
+    Assert.assertEquals(2, layers.size());
+    Assert.assertEquals(
+        DescriptorDigest.fromDigest(
+            "sha256:5bd451067f9ab05e97cda8476c82f86d9b69c2dffb60a8ad2fe3723942544ab3"),
+        layers.get(0).getBlobDescriptor().getDigest());
     Assert.assertEquals(
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
-        layers.get(0).getBlobDescriptor().getDigest());
+        layers.get(1).getBlobDescriptor().getDigest());
   }
 
   @Test
