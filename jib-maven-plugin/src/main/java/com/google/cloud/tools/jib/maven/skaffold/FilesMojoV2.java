@@ -167,12 +167,22 @@ public class FilesMojoV2 extends AbstractMojo {
     }
   }
 
-  private List<Path> resolveExtraDirectories(MavenProject project) {
+  private List<Path> resolveExtraDirectories(MavenProject project) throws MojoExecutionException {
     // Try getting extra directory from project/session properties
-    String extraDirectoryProperty =
+    String deprecatedProperty =
         MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH, project, session);
-    if (extraDirectoryProperty != null) {
-      return Collections.singletonList(Paths.get(extraDirectoryProperty));
+    String newProperty =
+        MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS, project, session);
+
+    if (deprecatedProperty != null && newProperty != null) {
+      throw new MojoExecutionException(
+          "You should not use the deprecated property 'jib.extraDirectory.path' while using "
+              + "the new 'jib.extraDirectories.paths'");
+    }
+
+    String property = newProperty != null ? newProperty : deprecatedProperty;
+    if (property != null) {
+      return Collections.singletonList(Paths.get(property));
     }
 
     // Try getting extra directory from project pom
@@ -183,9 +193,10 @@ public class FilesMojoV2 extends AbstractMojo {
 
         Xpp3Dom extraDirectoryConfiguration = pluginConfiguration.getChild("extraDirectory");
         Xpp3Dom extraDirectoriesConfiguration = pluginConfiguration.getChild("extraDirectories");
-        if (extraDirectoryConfiguration != null) {
-          getLog()
-              .warn("<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>.");
+        if (extraDirectoryConfiguration != null && extraDirectoriesConfiguration != null) {
+          throw new MojoExecutionException(
+              "You should not use the deprecated <extraDirectory> config while using "
+                  + "the new <extraDirectories>");
         }
 
         if (extraDirectoriesConfiguration != null) {
