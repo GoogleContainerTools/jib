@@ -18,7 +18,9 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,11 +67,12 @@ public class V21ManifestTemplate implements ManifestTemplate {
   /** The list of layer references. */
   private final List<LayerObjectTemplate> fsLayers = new ArrayList<>();
 
-  private final List<V1CompatibilityTemplate> history = new ArrayList<>();
+  private final List<HistoryObjectTemplate> history = new ArrayList<>();
 
   /**
    * Template for inner JSON object representing a layer as part of the list of layer references.
    */
+  @VisibleForTesting
   static class LayerObjectTemplate implements JsonTemplate {
 
     @Nullable private DescriptorDigest blobSum;
@@ -80,11 +83,10 @@ public class V21ManifestTemplate implements ManifestTemplate {
     }
   }
 
-  /** Template for inner JSON object representing the V1-compatible format for a layer. */
-  private static class V1CompatibilityTemplate implements JsonTemplate {
+  /** Template for inner JSON object representing history for a layer. */
+  private static class HistoryObjectTemplate implements JsonTemplate {
 
-    // TODO: Change to its own JSON template that can extract the layer diff ID.
-    @Nullable private String v1Compatibility;
+    @Nullable private String v1Compatibility; // free-form string
   }
 
   public List<DescriptorDigest> getLayerDigests() {
@@ -106,9 +108,25 @@ public class V21ManifestTemplate implements ManifestTemplate {
     return Collections.unmodifiableList(fsLayers);
   }
 
-  @VisibleForTesting
+  /**
+   * Attempts to parse the container configuration JSON (of format {@code
+   * application/vnd.docker.container.image.v1+json}) from the {@code v1Compatibility} value of the
+   * first {@code history} entry, which corresponds to the latest layer.
+   *
+   * @return container configuration if the first history string holds it; {@code null} otherwise
+   */
   @Nullable
-  String getV1Compatibility(int index) {
-    return history.get(index).v1Compatibility;
+  public ContainerConfigurationTemplate getContainerConfiguration() {
+    if (history.isEmpty() || history.get(0).v1Compatibility == null) {
+      return null;
+    }
+
+    try {
+      return JsonTemplateMapper.readJson(
+          history.get(0).v1Compatibility, ContainerConfigurationTemplate.class);
+    } catch (IOException ex) {
+      // not a container configuration; ignore and continue
+      return null;
+    }
   }
 }

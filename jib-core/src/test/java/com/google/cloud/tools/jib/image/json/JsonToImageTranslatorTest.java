@@ -47,7 +47,8 @@ public class JsonToImageTranslatorTest {
 
   @Test
   public void testToImage_v21()
-      throws IOException, LayerPropertyNotFoundException, DigestException, URISyntaxException {
+      throws IOException, LayerPropertyNotFoundException, DigestException, URISyntaxException,
+          BadContainerConfigurationFormatException {
     // Loads the JSON string.
     Path jsonFile =
         Paths.get(getClass().getClassLoader().getResource("core/json/v21manifest.json").toURI());

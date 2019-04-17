@@ -68,9 +68,11 @@ public class JsonToImageTranslator {
    * @param manifestTemplate the template containing the image layers.
    * @return the translated {@link Image}.
    * @throws LayerPropertyNotFoundException if adding image layers fails.
+   * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
+   *     format
    */
   public static Image<Layer> toImage(V21ManifestTemplate manifestTemplate)
-      throws LayerPropertyNotFoundException {
+      throws LayerPropertyNotFoundException, BadContainerConfigurationFormatException {
     Image.Builder<Layer> imageBuilder = Image.builder(V21ManifestTemplate.class);
 
     // V21 layers are in reverse order of V22. (The first layer is the latest one.)
@@ -78,6 +80,10 @@ public class JsonToImageTranslator {
       imageBuilder.addLayer(new DigestOnlyLayer(digest));
     }
 
+    if (manifestTemplate.getContainerConfiguration() != null) {
+      configureImageBuilderWithContainerConfiguration(
+          imageBuilder, manifestTemplate.getContainerConfiguration());
+    }
     return imageBuilder.build();
   }
 
@@ -114,8 +120,6 @@ public class JsonToImageTranslator {
     }
 
     List<DescriptorDigest> diffIds = containerConfigurationTemplate.getDiffIds();
-    List<HistoryEntry> historyObjects = containerConfigurationTemplate.getHistory();
-
     if (layers.size() != diffIds.size()) {
       throw new LayerCountMismatchException(
           "Mismatch between image manifest and container configuration");
@@ -129,6 +133,17 @@ public class JsonToImageTranslator {
 
       imageBuilder.addLayer(new ReferenceLayer(noDiffIdLayer.getBlobDescriptor(), diffId));
     }
+
+    configureImageBuilderWithContainerConfiguration(imageBuilder, containerConfigurationTemplate);
+    return imageBuilder.build();
+  }
+
+  private static void configureImageBuilderWithContainerConfiguration(
+      Image.Builder<Layer> imageBuilder,
+      ContainerConfigurationTemplate containerConfigurationTemplate)
+      throws BadContainerConfigurationFormatException {
+
+    List<HistoryEntry> historyObjects = containerConfigurationTemplate.getHistory();
     for (HistoryEntry historyObject : historyObjects) {
       imageBuilder.addHistory(historyObject);
     }
@@ -198,10 +213,12 @@ public class JsonToImageTranslator {
       }
     }
 
+    if (containerConfigurationTemplate.getContainerLabels() != null) {
+      imageBuilder.addLabels(containerConfigurationTemplate.getContainerLabels());
+    }
+
     imageBuilder.setWorkingDirectory(containerConfigurationTemplate.getContainerWorkingDir());
     imageBuilder.setUser(containerConfigurationTemplate.getContainerUser());
-
-    return imageBuilder.build();
   }
 
   /**

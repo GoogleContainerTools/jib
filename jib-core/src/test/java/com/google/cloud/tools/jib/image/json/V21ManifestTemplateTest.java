@@ -24,6 +24,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
+import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -44,6 +45,13 @@ public class V21ManifestTemplateTest {
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
         manifestJson.getFsLayers().get(0).getDigest());
 
-    Assert.assertEquals("some v1-compatible object", manifestJson.getV1Compatibility(0));
+    ContainerConfigurationTemplate containerConfiguration =
+        manifestJson.getContainerConfiguration();
+    Assert.assertEquals(
+        Arrays.asList("JAVA_HOME=/opt/openjdk", "PATH=/opt/openjdk/bin"),
+        containerConfiguration.getContainerEnvironment());
+    Assert.assertEquals(
+        Arrays.asList("/opt/openjdk/bin/java"), containerConfiguration.getContainerEntrypoint());
+    // Assert.assertEquals("some v1-compatible object", manifestJson.getV1Compatibility(0));
   }
 }
