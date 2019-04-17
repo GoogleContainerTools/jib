@@ -161,7 +161,7 @@ public class FilesMojo extends AbstractMojo {
     }
   }
 
-  private List<Path> resolveExtraDirectories() {
+  private List<Path> resolveExtraDirectories() throws MojoExecutionException {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     String deprecatedProperty =
         MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH, project, session);
@@ -171,14 +171,15 @@ public class FilesMojo extends AbstractMojo {
     List<File> deprecatedPaths = extraDirectory.getPaths();
     List<File> newPaths = extraDirectories.getPaths();
 
-    if (deprecatedProperty != null) {
-      getLog()
-          .warn(
-              "The property 'jib.extraDirectory.path' is deprecated; "
-                  + "use 'jib.extraDirectories.paths' instead");
+    if (deprecatedProperty != null && newProperty != null) {
+      throw new MojoExecutionException(
+          "You should not use the deprecated property 'jib.extraDirectory.path' while using "
+              + "the new 'jib.extraDirectories.paths'");
     }
-    if (!deprecatedPaths.isEmpty()) {
-      getLog().warn("<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>.");
+    if (!deprecatedPaths.isEmpty() && !newPaths.isEmpty()) {
+      throw new MojoExecutionException(
+          "You should not use the deprecated <extraDirectory> config while using "
+              + "the new <extraDirectories>");
     }
 
     String property = newProperty != null ? newProperty : deprecatedProperty;
