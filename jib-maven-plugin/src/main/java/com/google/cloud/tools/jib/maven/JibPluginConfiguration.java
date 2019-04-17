@@ -188,7 +188,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for the {@code extraDirectory} parameter. */
   public static class ExtraDirectoryParameters {
 
-    @Nullable @Parameter private File path;
+    // retained for backward-compatibility for <extraDirectory><path>...<path></extraDirectory>
+    @Deprecated @Nullable @Parameter private File path;
+
+    @Parameter private List<File> paths = Collections.emptyList();
 
     @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
 
@@ -198,13 +201,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
      *
      * @param path the value to set {@code path} to
      */
+    @Deprecated
     public void set(File path) {
-      this.path = path;
+      this.paths = Collections.singletonList(path);
     }
 
-    @Nullable
-    public File getPath() {
-      return path;
+    public List<File> getPaths() {
+      return path != null ? Collections.singletonList(path) : paths;
     }
   }
 
@@ -519,19 +522,18 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /**
-   * Gets the configured extra directory path.
+   * Gets the list of configured extra directory paths.
    *
-   * @return the configured extra directory path
+   * @return the list of configured extra directory paths
    */
-  Optional<Path> getExtraDirectoryPath() {
+  List<Path> getExtraDirectories() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
     String property = getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
     if (property != null) {
-      return Optional.of(Paths.get(property));
+      List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
+      return paths.stream().map(Paths::get).collect(Collectors.toList());
     }
-    return extraDirectory.path == null
-        ? Optional.empty()
-        : Optional.of(extraDirectory.path.toPath());
+    return extraDirectory.getPaths().stream().map(File::toPath).collect(Collectors.toList());
   }
 
   /**

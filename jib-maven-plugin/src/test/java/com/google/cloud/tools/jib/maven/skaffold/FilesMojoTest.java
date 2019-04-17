@@ -44,11 +44,12 @@ public class FilesMojoTest {
   @ClassRule
   public static final TestProject multiTestProject = new TestProject(testPlugin, "multi");
 
-  private static void verifyFiles(Path projectRoot, String module, List<Path> files)
+  private static void verifyFiles(Path projectRoot, String pomXml, String module, List<Path> files)
       throws VerificationException, IOException {
 
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
+    verifier.addCliOption("--file=" + pomXml);
     verifier.addCliOption("-q");
     if (!Strings.isNullOrEmpty(module)) {
       verifier.addCliOption("-pl");
@@ -73,6 +74,7 @@ public class FilesMojoTest {
 
     verifyFiles(
         projectRoot,
+        "pom.xml",
         null,
         ImmutableList.of(
             projectRoot.resolve("pom.xml"),
@@ -82,12 +84,30 @@ public class FilesMojoTest {
   }
 
   @Test
+  public void testFilesMojo_singleModuleWithMultipleExtraDirectories()
+      throws VerificationException, IOException {
+    Path projectRoot = simpleTestProject.getProjectRoot();
+
+    verifyFiles(
+        projectRoot,
+        "pom-extra-dirs.xml",
+        null,
+        ImmutableList.of(
+            projectRoot.resolve("pom-extra-dirs.xml"),
+            projectRoot.resolve("src/main/java"),
+            projectRoot.resolve("src/main/resources"),
+            projectRoot.resolve("src/main/jib-custom"),
+            projectRoot.resolve("src/main/jib-custom-2")));
+  }
+
+  @Test
   public void testFilesMojo_multiModuleSimpleService() throws VerificationException, IOException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path simpleServiceRoot = projectRoot.resolve("simple-service");
 
     verifyFiles(
         projectRoot,
+        "pom.xml",
         "simple-service",
         ImmutableList.of(
             projectRoot.resolve("pom.xml"),
@@ -105,6 +125,7 @@ public class FilesMojoTest {
 
     verifyFiles(
         projectRoot,
+        "pom.xml",
         "complex-service",
         ImmutableList.of(
             projectRoot.resolve("pom.xml"),

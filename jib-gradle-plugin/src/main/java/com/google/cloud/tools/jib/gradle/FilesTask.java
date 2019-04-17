@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -149,9 +150,8 @@ public class FilesTask extends DefaultTask {
     printProjectFiles(project);
 
     // Print extra layer
-    if (Files.exists(jibExtension.getExtraDirectory().getPath())) {
-      System.out.println(jibExtension.getExtraDirectory().getPath());
-    }
+    List<Path> extraDirectories = jibExtension.getExtraDirectory().getPaths();
+    extraDirectories.stream().filter(Files::exists).forEach(System.out::println);
 
     // Find project dependencies
     Set<ProjectDependency> projectDependencies = findProjectDependencies(project);

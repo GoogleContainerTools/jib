@@ -3,21 +3,27 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>example</groupId>
-  <artifactId>helloworld</artifactId>
+  <groupId>com.test</groupId>
+  <artifactId>my-artifact-id</artifactId>
   <version>1</version>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jib-maven-plugin.version>1.1.1</jib-maven-plugin.version>
-    <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <jib-maven-plugin.version>@@PluginVersion@@</jib-maven-plugin.version>
+    <jib.to.image>${_TARGET_IMAGE}</jib.to.image>
+    <jib.container.args>An argument.</jib.container.args>
+    <jib.container.ports>1000/tcp,2000-2003/udp</jib.container.ports>
+    <jib.container.labels>key1=value1,key2=value2</jib.container.labels>
   </properties>
 
   <dependencies>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>23.6-jre</version>
+      <groupId>com.test</groupId>
+      <artifactId>dependency</artifactId>
+      <version>1.0.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/libs/dependency-1.0.0.jar</systemPath>
     </dependency>
   </dependencies>
 
@@ -26,31 +32,24 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>${maven-compiler-plugin.version}</version>
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
         </configuration>
       </plugin>
 
-      <!-- Jib -->
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
-          <to>
-            <image>gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib</image>
-          </to>
+          <extraDirectory>
+            <paths>
+              <path>${project.basedir}/src/main/jib-custom</path>
+              <path>${project.basedir}/src/main/jib-custom-2</path>
+            </paths>
+          </extraDirectory>
         </configuration>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>build</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

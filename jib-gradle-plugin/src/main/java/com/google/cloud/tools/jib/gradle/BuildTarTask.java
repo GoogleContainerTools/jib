@@ -33,6 +33,7 @@ import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -79,9 +80,13 @@ public class BuildTarTask extends DefaultTask implements JibTask {
    */
   @InputFiles
   public FileCollection getInputFiles() {
-    return GradleProjectProperties.getInputFiles(
-        Preconditions.checkNotNull(jibExtension).getExtraDirectory().getPath().toFile(),
-        getProject());
+    List<Path> extraDirectories =
+        Preconditions.checkNotNull(jibExtension).getExtraDirectory().getPaths();
+    return extraDirectories
+        .stream()
+        .map(Path::toFile)
+        .map(directory -> GradleProjectProperties.getInputFiles(directory, getProject()))
+        .reduce(getProject().files(), getProject()::files);
   }
 
   /**

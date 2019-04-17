@@ -156,8 +156,8 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public Path getExtraDirectory() {
-    return MojoCommon.getExtraDirectoryPath(jibPluginConfiguration);
+  public List<Path> getExtraDirectories() {
+    return MojoCommon.getExtraDirectories(jibPluginConfiguration);
   }
 
   @Override

@@ -86,6 +86,14 @@ public class SingleProjectIntegrationTest {
             .trim());
   }
 
+  private static void assertLayerSizer(int expected, String imageReference)
+      throws IOException, InterruptedException {
+    Command command =
+        new Command("docker", "inspect", "-f", "{{join .RootFS.Layers \",\"}}", imageReference);
+    String layers = command.run().trim();
+    Assert.assertEquals(expected, Splitter.on(",").splitToList(layers).size());
+  }
+
   /**
    * Asserts that the test project has the required exposed ports, labels and volumes.
    *
@@ -188,6 +196,7 @@ public class SingleProjectIntegrationTest {
     assertEntrypoint(
         "[java -cp /d1:/d2:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
         targetImage);
+    assertLayerSizer(8, targetImage);
   }
 
   @Test
@@ -221,6 +230,28 @@ public class SingleProjectIntegrationTest {
                   + "parameter, or set targetCompatibility = 8 or below in your build "
                   + "configuration"));
     }
+  }
+
+  @Test
+  public void testDockerDaemon_simple_multipleExtraDirectories()
+      throws DigestException, IOException, InterruptedException {
+    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. \nrw-r--r--\nrw-r--r--\nfoo\ncat\nbaz\n",
+        JibRunHelper.buildToDockerDaemonAndRun(
+            simpleTestProject, targetImage, "build-extra-dirs.gradle"));
+    assertLayerSizer(9, targetImage); // one more than usual
+  }
+
+  @Test
+  public void testDockerDaemon_simple_multipleExtraDirectoriesWithAlternativeConfig()
+      throws DigestException, IOException, InterruptedException {
+    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. \nrw-r--r--\nrw-r--r--\nfoo\ncat\nbaz\n",
+        JibRunHelper.buildToDockerDaemonAndRun(
+            simpleTestProject, targetImage, "build-extra-dirs2.gradle"));
+    assertLayerSizer(9, targetImage); // one more than usual
   }
 
   @Test
