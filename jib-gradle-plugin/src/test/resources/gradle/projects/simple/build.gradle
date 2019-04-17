@@ -21,4 +21,7 @@ jib {
   extraDirectory {
     path = file('src/main/custom-extra-dir')
   }
+  container {
+    extraClasspath = ['/d1','/d2']
+  }
 }

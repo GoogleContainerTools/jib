@@ -77,6 +77,15 @@ public class SingleProjectIntegrationTest {
             .trim());
   }
 
+  private static void assertEntrypoint(String expected, String imageReference)
+      throws IOException, InterruptedException {
+    Assert.assertEquals(
+        expected,
+        new Command("docker", "inspect", "-f", "{{.Config.Entrypoint}}", imageReference)
+            .run()
+            .trim());
+  }
+
   /**
    * Asserts that the test project has the required exposed ports, labels and volumes.
    *
@@ -176,6 +185,9 @@ public class SingleProjectIntegrationTest {
     assertDockerInspect(targetImage);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     assertWorkingDirectory("/home", targetImage);
+    assertEntrypoint(
+        "[java -cp /d1:/d2:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
+        targetImage);
   }
 
   @Test
