@@ -162,6 +162,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private Map<String, String> environment = Collections.emptyMap();
 
+    @Parameter private List<String> extraClasspath;
+
     @Nullable @Parameter private String mainClass;
 
     @Nullable @Parameter private List<String> args;
@@ -379,6 +381,20 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return ConfigurationPropertyValidator.parseMapProperty(property);
     }
     return container.environment;
+  }
+
+  /**
+   * Gets the extra classpath elements.
+   *
+   * @return the extra classpath elements
+   */
+  @Nullable
+  List<String> getExtraClasspath() {
+    String property = getProperty(PropertyNames.CONTAINER_EXTRA_CLASSPATH);
+    if (property != null) {
+      return ConfigurationPropertyValidator.parseListProperty(property);
+    }
+    return container.extraClasspath;
   }
 
   /**

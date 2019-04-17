@@ -283,6 +283,15 @@ public class BuildImageMojoIntegrationTest {
             .trim());
   }
 
+  private static void assertEntrypoint(String expected, String imageReference)
+      throws IOException, InterruptedException {
+    Assert.assertEquals(
+        expected,
+        new Command("docker", "inspect", "-f", "{{.Config.Entrypoint}}", imageReference)
+            .run()
+            .trim());
+  }
+
   @Nullable private String detachedContainerName;
 
   @Before
@@ -426,6 +435,9 @@ public class BuildImageMojoIntegrationTest {
         buildAndRunComplex(
             targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml"));
     assertWorkingDirectory("", targetImage);
+    assertEntrypoint(
+        "[java -Xms512m -Xdebug -cp /app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
+        targetImage);
   }
 
   @Test

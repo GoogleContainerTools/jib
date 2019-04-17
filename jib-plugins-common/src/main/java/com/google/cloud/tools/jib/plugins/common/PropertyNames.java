@@ -31,6 +31,7 @@ public class PropertyNames {
   public static final String TO_AUTH_PASSWORD = "jib.to.auth.password";
   public static final String CONTAINER_APP_ROOT = "jib.container.appRoot";
   public static final String CONTAINER_ARGS = "jib.container.args";
+  public static final String CONTAINER_EXTRA_CLASSPATH = "jib.container.extraClasspath";
   public static final String CONTAINER_ENTRYPOINT = "jib.container.entrypoint";
   public static final String CONTAINER_ENVIRONMENT = "jib.container.environment";
   public static final String CONTAINER_FORMAT = "jib.container.format";

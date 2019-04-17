@@ -58,6 +58,7 @@ public class JibPluginConfigurationTest {
   public void testDefaults() {
     Assert.assertEquals("", testPluginConfiguration.getAppRoot());
     Assert.assertNull(testPluginConfiguration.getWorkingDirectory());
+    Assert.assertNull(testPluginConfiguration.getExtraClasspath());
   }
 
   @Test
@@ -109,6 +110,9 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
     sessionProperties.put("jib.container.workingDirectory", "working directory");
     Assert.assertEquals("working directory", testPluginConfiguration.getWorkingDirectory());
+    sessionProperties.put("jib.container.extraClasspath", "/foo,/bar");
+    Assert.assertEquals(
+        ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
 
     sessionProperties.put("jib.extraDirectory.path", "custom-jib");
     Assert.assertEquals(
@@ -171,6 +175,9 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
     project.getProperties().setProperty("jib.container.workingDirectory", "working directory");
     Assert.assertEquals("working directory", testPluginConfiguration.getWorkingDirectory());
+    project.getProperties().setProperty("jib.container.extraClasspath", "/foo,/bar");
+    Assert.assertEquals(
+        ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
 
     project.getProperties().setProperty("jib.extraDirectory.path", "custom-jib");
     Assert.assertEquals(

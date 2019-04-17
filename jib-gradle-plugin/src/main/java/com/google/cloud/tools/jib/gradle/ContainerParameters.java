@@ -37,6 +37,7 @@ public class ContainerParameters {
   private List<String> jvmFlags = Collections.emptyList();
   private Map<String, String> environment = Collections.emptyMap();
   @Nullable private List<String> entrypoint;
+  @Nullable private List<String> extraClasspath;
   @Nullable private String mainClass;
   @Nullable private List<String> args;
   private ImageFormat format = ImageFormat.Docker;
@@ -105,6 +106,23 @@ public class ContainerParameters {
 
   public void setEnvironment(Map<String, String> environment) {
     this.environment = environment;
+  }
+
+  @Input
+  @Nullable
+  @Optional
+  public List<String> getExtraClasspath() {
+    if (System.getProperty(PropertyNames.CONTAINER_EXTRA_CLASSPATH) != null) {
+      // TODO: this should probably support Java-style ":" or ";" separators
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.CONTAINER_EXTRA_CLASSPATH));
+    }
+
+    return extraClasspath;
+  }
+
+  public void setExtraClasspath(List<String> classpath) {
+    this.extraClasspath = classpath;
   }
 
   @Input
