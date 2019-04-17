@@ -162,7 +162,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private Map<String, String> environment = Collections.emptyMap();
 
-    @Parameter private List<String> extraClasspath;
+    @Nullable @Parameter private List<String> extraClasspath;
 
     @Nullable @Parameter private String mainClass;
 
