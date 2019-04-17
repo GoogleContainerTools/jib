@@ -540,6 +540,16 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (!deprecatedPaths.isEmpty()) {
       getLog().warn("<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>.");
     }
+    if (deprecatedProperty != null && newProperty != null) {
+      throw new IllegalArgumentException(
+          "You should not use the deprecated property 'jib.extraDirectory.path' while using "
+              + "the new 'jib.extraDirectories.paths'");
+    }
+    if (!deprecatedPaths.isEmpty() && !newPaths.isEmpty()) {
+      throw new IllegalArgumentException(
+          "You should not use the deprecated <extraDirectory> config while using "
+              + "the new <extraDirectories>");
+    }
 
     String property = newProperty != null ? newProperty : deprecatedProperty;
     if (property != null) {
@@ -559,11 +569,25 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   List<PermissionConfiguration> getExtraDirectoryPermissions() {
     String deprecatedProperty = getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS);
     String newProperty = getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
+
+    List<PermissionConfiguration> deprecatedPermissions = extraDirectory.permissions;
+    List<PermissionConfiguration> newPermissions = extraDirectories.permissions;
+
     if (deprecatedProperty != null) {
       getLog()
           .warn(
               "The property 'jib.extraDirectory.permissions' is deprecated; "
                   + "use 'jib.extraDirectories.permissions' instead");
+    }
+    if (deprecatedProperty != null && newProperty != null) {
+      throw new IllegalArgumentException(
+          "You should not use the deprecated property 'jib.extraDirectory.permissions' while using "
+              + "the new 'jib.extraDirectories.permissions'");
+    }
+    if (!deprecatedPermissions.isEmpty() && !newPermissions.isEmpty()) {
+      throw new IllegalArgumentException(
+          "You should not use the deprecated <extraDirectory> config while using "
+              + "the new <extraDirectories>");
     }
 
     String property = newProperty != null ? newProperty : deprecatedProperty;
