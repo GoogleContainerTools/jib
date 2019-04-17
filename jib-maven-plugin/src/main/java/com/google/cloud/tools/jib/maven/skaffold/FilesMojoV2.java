@@ -202,7 +202,7 @@ public class FilesMojoV2 extends AbstractMojo {
         if (extraDirectoriesConfiguration != null) {
           Xpp3Dom child = extraDirectoriesConfiguration.getChild("paths");
           if (child != null) {
-            // <extraDirectories><paths><path>...<path><path>...<path></paths></extraDirectories>
+            // <extraDirectories><paths><path>...</path><path>...</path></paths></extraDirectories>
             return Arrays.stream(child.getChildren())
                 .map(Xpp3Dom::getValue)
                 .map(Paths::get)
