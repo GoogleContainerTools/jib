@@ -143,10 +143,7 @@ public class JsonToImageTranslator {
       ContainerConfigurationTemplate containerConfigurationTemplate)
       throws BadContainerConfigurationFormatException {
 
-    List<HistoryEntry> historyObjects = containerConfigurationTemplate.getHistory();
-    for (HistoryEntry historyObject : historyObjects) {
-      imageBuilder.addHistory(historyObject);
-    }
+    containerConfigurationTemplate.getHistory().forEach(imageBuilder::addHistory);
 
     if (containerConfigurationTemplate.getCreated() != null) {
       try {
@@ -164,13 +161,8 @@ public class JsonToImageTranslator {
       imageBuilder.setOs(containerConfigurationTemplate.getOs());
     }
 
-    if (containerConfigurationTemplate.getContainerEntrypoint() != null) {
-      imageBuilder.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
-    }
-
-    if (containerConfigurationTemplate.getContainerCmd() != null) {
-      imageBuilder.setProgramArguments(containerConfigurationTemplate.getContainerCmd());
-    }
+    imageBuilder.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
+    imageBuilder.setProgramArguments(containerConfigurationTemplate.getContainerCmd());
 
     List<String> baseHealthCheckCommand = containerConfigurationTemplate.getContainerHealthTest();
     if (baseHealthCheckCommand != null) {
@@ -213,10 +205,7 @@ public class JsonToImageTranslator {
       }
     }
 
-    if (containerConfigurationTemplate.getContainerLabels() != null) {
-      imageBuilder.addLabels(containerConfigurationTemplate.getContainerLabels());
-    }
-
+    imageBuilder.addLabels(containerConfigurationTemplate.getContainerLabels());
     imageBuilder.setWorkingDirectory(containerConfigurationTemplate.getContainerWorkingDir());
     imageBuilder.setUser(containerConfigurationTemplate.getContainerUser());
   }
