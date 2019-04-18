@@ -455,7 +455,7 @@ public class BuildImageMojoIntegrationTest {
             targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml"));
     assertWorkingDirectory("", targetImage);
     assertEntrypoint(
-        "[java -Xms512m -Xdebug -cp /app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
+        "[java -Xms512m -Xdebug -cp /other:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
         targetImage);
   }
 
