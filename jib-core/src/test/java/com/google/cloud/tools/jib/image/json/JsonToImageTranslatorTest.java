@@ -114,7 +114,7 @@ public class JsonToImageTranslatorTest {
   }
 
   @Test
-  public void testvolumeMapToList() throws BadContainerConfigurationFormatException {
+  public void testVolumeMapToList() throws BadContainerConfigurationFormatException {
     ImmutableSortedMap<String, Map<?, ?>> input =
         ImmutableSortedMap.of(
             "/var/job-result-data", ImmutableMap.of(), "/var/log/my-app-logs", ImmutableMap.of());
@@ -222,5 +222,8 @@ public class JsonToImageTranslatorTest {
             AbsoluteUnixPath.get("/var/log/my-app-logs")),
         image.getVolumes());
     Assert.assertEquals("tomcat", image.getUser());
+    Assert.assertEquals("value1", image.getLabels().get("key1"));
+    Assert.assertEquals("value2", image.getLabels().get("key2"));
+    Assert.assertEquals(2, image.getLabels().size());
   }
 }
