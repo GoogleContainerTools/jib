@@ -538,17 +538,15 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
                   + "use 'jib.extraDirectories.paths' instead");
     }
     if (!deprecatedPaths.isEmpty()) {
-      getLog().warn("<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>.");
+      getLog().warn("<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>");
     }
     if (deprecatedProperty != null && newProperty != null) {
       throw new IllegalArgumentException(
-          "You should not use the deprecated property 'jib.extraDirectory.path' while using "
-              + "the new 'jib.extraDirectories.paths'");
+          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'");
     }
     if (!deprecatedPaths.isEmpty() && !newPaths.isEmpty()) {
       throw new IllegalArgumentException(
-          "You should not use the deprecated <extraDirectory> config while using "
-              + "the new <extraDirectories>");
+          "You cannot configure both <extraDirectory> and <extraDirectories>");
     }
 
     String property = newProperty != null ? newProperty : deprecatedProperty;
@@ -581,13 +579,12 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
     if (deprecatedProperty != null && newProperty != null) {
       throw new IllegalArgumentException(
-          "You should not use the deprecated property 'jib.extraDirectory.permissions' while using "
-              + "the new 'jib.extraDirectories.permissions'");
+          "You cannot configure both 'jib.extraDirectory.permissions' and "
+              + "'jib.extraDirectories.permissions'");
     }
     if (!deprecatedPermissions.isEmpty() && !newPermissions.isEmpty()) {
       throw new IllegalArgumentException(
-          "You should not use the deprecated <extraDirectory> config while using "
-              + "the new <extraDirectories>");
+          "You cannot configure both <extraDirectory> and <extraDirectories>");
     }
 
     String property = newProperty != null ? newProperty : deprecatedProperty;

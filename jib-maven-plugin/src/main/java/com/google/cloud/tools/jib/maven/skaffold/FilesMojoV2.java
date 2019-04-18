@@ -176,8 +176,7 @@ public class FilesMojoV2 extends AbstractMojo {
 
     if (deprecatedProperty != null && newProperty != null) {
       throw new MojoExecutionException(
-          "You should not use the deprecated property 'jib.extraDirectory.path' while using "
-              + "the new 'jib.extraDirectories.paths'");
+          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'");
     }
 
     String property = newProperty != null ? newProperty : deprecatedProperty;
@@ -195,8 +194,7 @@ public class FilesMojoV2 extends AbstractMojo {
         Xpp3Dom extraDirectoriesConfiguration = pluginConfiguration.getChild("extraDirectories");
         if (extraDirectoryConfiguration != null && extraDirectoriesConfiguration != null) {
           throw new MojoExecutionException(
-              "You should not use the deprecated <extraDirectory> config while using "
-                  + "the new <extraDirectories>");
+              "You cannot configure both <extraDirectory> and <extraDirectories>");
         }
 
         if (extraDirectoriesConfiguration != null) {

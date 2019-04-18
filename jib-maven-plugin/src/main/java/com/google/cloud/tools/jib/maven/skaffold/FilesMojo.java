@@ -173,13 +173,11 @@ public class FilesMojo extends AbstractMojo {
 
     if (deprecatedProperty != null && newProperty != null) {
       throw new MojoExecutionException(
-          "You should not use the deprecated property 'jib.extraDirectory.path' while using "
-              + "the new 'jib.extraDirectories.paths'");
+          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'");
     }
     if (!deprecatedPaths.isEmpty() && !newPaths.isEmpty()) {
       throw new MojoExecutionException(
-          "You should not use the deprecated <extraDirectory> config while using "
-              + "the new <extraDirectories>");
+          "You cannot configure both <extraDirectory> and <extraDirectories>");
     }
 
     String property = newProperty != null ? newProperty : deprecatedProperty;
