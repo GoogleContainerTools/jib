@@ -81,7 +81,7 @@ public class JsonToImageTranslator {
     }
 
     if (manifestTemplate.getContainerConfiguration() != null) {
-      configureImageBuilderWithContainerConfiguration(
+      configureBuilderWithContainerConfiguration(
           imageBuilder, manifestTemplate.getContainerConfiguration());
     }
     return imageBuilder.build();
@@ -134,11 +134,11 @@ public class JsonToImageTranslator {
       imageBuilder.addLayer(new ReferenceLayer(noDiffIdLayer.getBlobDescriptor(), diffId));
     }
 
-    configureImageBuilderWithContainerConfiguration(imageBuilder, containerConfigurationTemplate);
+    configureBuilderWithContainerConfiguration(imageBuilder, containerConfigurationTemplate);
     return imageBuilder.build();
   }
 
-  private static void configureImageBuilderWithContainerConfiguration(
+  private static void configureBuilderWithContainerConfiguration(
       Image.Builder<Layer> imageBuilder,
       ContainerConfigurationTemplate containerConfigurationTemplate)
       throws BadContainerConfigurationFormatException {
