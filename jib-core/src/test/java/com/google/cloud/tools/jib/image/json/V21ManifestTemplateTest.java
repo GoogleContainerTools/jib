@@ -52,6 +52,5 @@ public class V21ManifestTemplateTest {
         containerConfiguration.getContainerEnvironment());
     Assert.assertEquals(
         Arrays.asList("/opt/openjdk/bin/java"), containerConfiguration.getContainerEntrypoint());
-    // Assert.assertEquals("some v1-compatible object", manifestJson.getV1Compatibility(0));
   }
 }

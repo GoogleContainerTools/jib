@@ -86,7 +86,10 @@ public class V21ManifestTemplate implements ManifestTemplate {
   /** Template for inner JSON object representing history for a layer. */
   private static class HistoryObjectTemplate implements JsonTemplate {
 
-    @Nullable private String v1Compatibility; // free-form string
+    // The value is basically free-form; they may be structured differently in practice, e.g.,
+    // {"architecture": "amd64", "config": {"User": "1001", ...}, "parent": ...}
+    // {"id": ..., "container_config": {"Cmd":[""]}}
+    @Nullable private String v1Compatibility;
   }
 
   public List<DescriptorDigest> getLayerDigests() {
@@ -117,13 +120,16 @@ public class V21ManifestTemplate implements ManifestTemplate {
    */
   @Nullable
   public ContainerConfigurationTemplate getContainerConfiguration() {
-    if (history.isEmpty() || history.get(0).v1Compatibility == null) {
-      return null;
-    }
-
     try {
-      return JsonTemplateMapper.readJson(
-          history.get(0).v1Compatibility, ContainerConfigurationTemplate.class);
+      if (history.isEmpty()) {
+        return null;
+      }
+      String v1Compatibility = history.get(0).v1Compatibility;
+      if (v1Compatibility == null) {
+        return null;
+      }
+
+      return JsonTemplateMapper.readJson(v1Compatibility, ContainerConfigurationTemplate.class);
     } catch (IOException ex) {
       // not a container configuration; ignore and continue
       return null;
