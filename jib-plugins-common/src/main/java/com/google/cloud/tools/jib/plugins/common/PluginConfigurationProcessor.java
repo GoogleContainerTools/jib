@@ -274,7 +274,7 @@ public class PluginConfigurationProcessor {
       return null;
     }
 
-    List<String> classpath = new ArrayList<>(rawExtraClasspath.orElseGet(Collections::emptyList));
+    List<String> classpath = new ArrayList<>(rawExtraClasspath.orElse(Collections.emptyList()));
     classpath.addAll(JavaEntrypointConstructor.defaultClasspath(appRoot));
     String mainClass =
         MainClassResolver.resolveMainClass(
