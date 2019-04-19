@@ -49,9 +49,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link ImageToTarball}. */
+/** Tests for {@link ImageTarball}. */
 @RunWith(MockitoJUnitRunner.class)
-public class ImageToTarballTest {
+public class ImageTarballTest {
 
   @Mock private Layer mockLayer1;
   @Mock private Layer mockLayer2;
