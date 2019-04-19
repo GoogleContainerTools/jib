@@ -30,7 +30,7 @@ import java.io.OutputStream;
 import java.util.Collections;
 
 /** Translates an {@link Image} to a tarball that can be loaded into Docker. */
-public class ImageToTarballTranslator {
+public class ImageTarball {
 
   /** File name for the container configuration in the tarball. */
   private static final String CONTAINER_CONFIGURATION_JSON_FILE_NAME = "config.json";
@@ -51,7 +51,7 @@ public class ImageToTarballTranslator {
    * @param image the image to convert into a tarball
    * @param imageReference image reference to set in the manifest
    */
-  public ImageToTarballTranslator(Image<Layer> image, ImageReference imageReference) {
+  public ImageTarball(Image<Layer> image, ImageReference imageReference) {
     this.image = image;
     this.imageReference = imageReference;
   }

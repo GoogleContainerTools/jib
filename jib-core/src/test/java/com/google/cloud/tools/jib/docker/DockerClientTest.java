@@ -51,7 +51,7 @@ public class DockerClientTest {
 
   @Mock private ProcessBuilder mockProcessBuilder;
   @Mock private Process mockProcess;
-  @Mock private ImageToTarballTranslator imageTarball;
+  @Mock private ImageTarball imageTarball;
 
   @Before
   public void setUp() throws IOException {

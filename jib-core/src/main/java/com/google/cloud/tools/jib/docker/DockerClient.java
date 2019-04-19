@@ -168,8 +168,7 @@ public class DockerClient {
    * @throws InterruptedException if the 'docker load' process is interrupted.
    * @throws IOException if streaming the blob to 'docker load' fails.
    */
-  public String load(ImageToTarballTranslator imageTarball)
-      throws InterruptedException, IOException {
+  public String load(ImageTarball imageTarball) throws InterruptedException, IOException {
     // Runs 'docker load'.
     Process dockerProcess = docker("load");
 

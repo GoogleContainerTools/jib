@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
+import com.google.cloud.tools.jib.docker.ImageTarball;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.ImageReference;
@@ -105,8 +105,7 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
       buildConfiguration
           .getEventDispatcher()
           .dispatch(
-              LogEvent.debug(
-                  dockerClient.load(new ImageToTarballTranslator(image, targetImageReference))));
+              LogEvent.debug(dockerClient.load(new ImageTarball(image, targetImageReference))));
 
       // Tags the image with all the additional tags, skipping the one 'docker load' already loaded.
       for (String tag : buildConfiguration.getAllTargetImageTags()) {

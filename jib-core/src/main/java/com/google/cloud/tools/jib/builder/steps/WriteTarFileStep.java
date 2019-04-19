@@ -22,7 +22,7 @@ import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
+import com.google.cloud.tools.jib.docker.ImageTarball;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.Image;
@@ -103,8 +103,7 @@ public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildR
       Files.createDirectories(outputPath.getParent());
       try (OutputStream outputStream =
           new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
-        new ImageToTarballTranslator(
-                image, buildConfiguration.getTargetImageConfiguration().getImage())
+        new ImageTarball(image, buildConfiguration.getTargetImageConfiguration().getImage())
             .writeTo(outputStream);
       }
 

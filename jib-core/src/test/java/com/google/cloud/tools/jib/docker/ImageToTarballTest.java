@@ -30,10 +30,10 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -49,9 +49,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link ImageToTarballTranslator}. */
+/** Tests for {@link ImageToTarball}. */
 @RunWith(MockitoJUnitRunner.class)
-public class ImageToTarballTranslatorTest {
+public class ImageToTarballTest {
 
   @Mock private Layer mockLayer1;
   @Mock private Layer mockLayer2;
@@ -83,12 +83,12 @@ public class ImageToTarballTranslatorTest {
     Image<Layer> testImage =
         Image.builder(V22ManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();
 
-    ImageToTarballTranslator imageToTarball =
-        new ImageToTarballTranslator(testImage, ImageReference.parse("my/image:tag"));
+    ImageTarball imageToTarball = new ImageTarball(testImage, ImageReference.parse("my/image:tag"));
 
-    try (PipedInputStream in = new PipedInputStream();
-        PipedOutputStream out = new PipedOutputStream(in);
-        TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    imageToTarball.writeTo(out);
+    ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+    try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
       imageToTarball.writeTo(out);
 
       // Verifies layer with fileA was added.
