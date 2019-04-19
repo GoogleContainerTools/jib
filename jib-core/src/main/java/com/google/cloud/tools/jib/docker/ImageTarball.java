@@ -82,6 +82,6 @@ public class ImageTarball {
             JsonTemplateMapper.toBlob(Collections.singletonList(manifestTemplate))),
         MANIFEST_JSON_FILE_NAME);
 
-    tarStreamBuilder.toBlob().writeTo(out);
+    tarStreamBuilder.writeAsTarArchiveTo(out);
   }
 }
