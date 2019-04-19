@@ -46,9 +46,10 @@ public class LayerEntry {
                   ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
                   : FilePermissions.DEFAULT_FILE_PERMISSIONS;
 
+  public static final Instant DEFAULT_MODIFIED_TIME = Instant.ofEpochSecond(1);
   /** Provider that returns default file modification time (EPOCH + 1 second). */
   public static final BiFunction<Path, AbsoluteUnixPath, Instant> DEFAULT_MODIFIED_TIME_PROVIDER =
-      (sourcePath, destinationPath) -> Instant.ofEpochSecond(1);
+      (sourcePath, destinationPath) -> DEFAULT_MODIFIED_TIME;
 
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
