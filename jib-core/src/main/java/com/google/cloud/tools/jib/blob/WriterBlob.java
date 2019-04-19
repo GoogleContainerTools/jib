@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.blob;
 
-import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
+import com.google.cloud.tools.jib.hash.DigestUtil;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -31,10 +31,6 @@ class WriterBlob implements Blob {
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    CountingDigestOutputStream countingDigestOutputStream =
-        new CountingDigestOutputStream(outputStream);
-    writer.writeTo(countingDigestOutputStream);
-    countingDigestOutputStream.flush();
-    return countingDigestOutputStream.toBlobDescriptor();
+    return DigestUtil.computeDigest(out -> writer.writeTo(out), outputStream);
   }
 }

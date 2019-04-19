@@ -16,22 +16,27 @@
 
 package com.google.cloud.tools.jib.hash;
 
-import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.common.base.Verify;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import javax.annotation.Nullable;
 
 /** A {@link DigestOutputStream} that also keeps track of the total number of bytes written. */
 public class CountingDigestOutputStream extends DigestOutputStream {
 
   private static final String SHA_256_ALGORITHM = "SHA-256";
 
-  /** Keeps track of the total number of bytes appended. */
-  private long totalBytes = 0;
+  private long bytesSoFar = 0;
+
+  /** The total number of bytes used to compute a digest. Resets when {@link computeDigest) is called. */
+  private long bytesHashed;
+
+  @Nullable private DescriptorDigest descriptorDigest;
 
   /**
    * Wraps the {@code outputStream}.
@@ -49,12 +54,10 @@ public class CountingDigestOutputStream extends DigestOutputStream {
   }
 
   /**
-   * Builds a {@link BlobDescriptor} with the hash and size of the bytes written. The buffer resets
-   * after this method is called, so this method should only be called once per BlobDescriptor.
-   *
-   * @return the built {@link BlobDescriptor}.
+   * Computes the hash and size of the bytes written. The buffer resets after this method is called,
+   * so this method should only be called once per computation.
    */
-  public BlobDescriptor toBlobDescriptor() {
+  public void computeDigest() {
     try {
       byte[] hashedBytes = digest.digest();
 
@@ -65,8 +68,9 @@ public class CountingDigestOutputStream extends DigestOutputStream {
       }
       String hash = stringBuilder.toString();
 
-      DescriptorDigest digest = DescriptorDigest.fromHash(hash);
-      return new BlobDescriptor(totalBytes, digest);
+      bytesHashed = bytesSoFar;
+      descriptorDigest = DescriptorDigest.fromHash(hash);
+      bytesSoFar = 0;
 
     } catch (DigestException ex) {
       throw new RuntimeException("SHA-256 algorithm produced invalid hash: " + ex.getMessage(), ex);
@@ -74,19 +78,30 @@ public class CountingDigestOutputStream extends DigestOutputStream {
   }
 
   /** @return the total number of bytes that were hashed */
-  public long getTotalBytes() {
-    return totalBytes;
+  public long getBytesHahsed() {
+    if (descriptorDigest == null) {
+      computeDigest();
+    }
+    return bytesHashed;
+  }
+
+  /** @return the digest hash */
+  public DescriptorDigest getDigest() {
+    if (descriptorDigest == null) {
+      computeDigest();
+    }
+    return Verify.verifyNotNull(descriptorDigest);
   }
 
   @Override
   public void write(byte[] data, int offset, int length) throws IOException {
     super.write(data, offset, length);
-    totalBytes += length;
+    bytesSoFar += length;
   }
 
   @Override
   public void write(int singleByte) throws IOException {
     super.write(singleByte);
-    totalBytes++;
+    bytesSoFar++;
   }
 }

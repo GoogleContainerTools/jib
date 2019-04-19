@@ -16,12 +16,15 @@
 
 package com.google.cloud.tools.jib.json;
 
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -125,6 +128,21 @@ public class JsonTemplateMapper {
    */
   public static Blob toBlob(JsonTemplate template) {
     return toBlob((Object) template);
+  }
+
+  public static void writeTo(JsonTemplate template, OutputStream out)
+      throws JsonGenerationException, JsonMappingException, IOException {
+    writeTo((Object) template, out);
+  }
+
+  public static void writeTo(List<? extends JsonTemplate> templates, OutputStream out)
+      throws JsonGenerationException, JsonMappingException, IOException {
+    writeTo((Object) templates, out);
+  }
+
+  private static void writeTo(Object template, OutputStream out)
+      throws JsonGenerationException, JsonMappingException, IOException {
+    objectMapper.writeValue(out, template);
   }
 
   /**

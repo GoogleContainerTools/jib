@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.blob;
 
+import com.google.cloud.tools.jib.hash.DigestUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -39,7 +40,7 @@ class InputStreamBlob implements Blob {
       throw new IllegalStateException("Cannot rewrite Blob backed by an InputStream");
     }
     try (InputStream inputStream = this.inputStream) {
-      return BlobDescriptor.fromPipe(inputStream, outputStream);
+      return DigestUtil.computeDigest(inputStream, outputStream);
 
     } finally {
       isWritten = true;

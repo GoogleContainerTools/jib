@@ -97,7 +97,7 @@ class DefaultCacheStorageWriter {
           GZIPInputStream decompressorStream = new GZIPInputStream(fileInputStream)) {
         ByteStreams.copy(decompressorStream, diffIdCaptureOutputStream);
       }
-      return diffIdCaptureOutputStream.toBlobDescriptor().getDigest();
+      return diffIdCaptureOutputStream.getDigest();
     }
   }
 
@@ -257,9 +257,8 @@ class DefaultCacheStorageWriter {
 
       // The GZIPOutputStream must be closed in order to write out the remaining compressed data.
       compressorStream.close();
-      BlobDescriptor compressedBlobDescriptor = compressedDigestOutputStream.toBlobDescriptor();
-      DescriptorDigest layerDigest = compressedBlobDescriptor.getDigest();
-      long layerSize = compressedBlobDescriptor.getSize();
+      DescriptorDigest layerDigest = compressedDigestOutputStream.getDigest();
+      long layerSize = compressedDigestOutputStream.getBytesHahsed();
 
       // Renames the temporary layer file to the correct filename.
       Path layerFile =

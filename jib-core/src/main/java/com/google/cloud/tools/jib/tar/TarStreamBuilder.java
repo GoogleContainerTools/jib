@@ -35,7 +35,7 @@ public class TarStreamBuilder {
    * an output stream.
    */
   @FunctionalInterface
-  private interface Contents {
+  private static interface Contents {
 
     void writeTo(OutputStream out) throws IOException;
   }

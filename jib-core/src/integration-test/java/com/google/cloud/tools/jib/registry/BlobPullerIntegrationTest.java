@@ -69,8 +69,7 @@ public class BlobPullerIntegrationTest {
         .writeTo(layerOutputStream);
     Assert.assertTrue(expectedSize.sum() > 0);
     Assert.assertEquals(expectedSize.sum(), totalByteCount.sum());
-
-    Assert.assertEquals(realDigest, layerOutputStream.toBlobDescriptor().getDigest());
+    Assert.assertEquals(realDigest, layerOutputStream.getDigest());
   }
 
   @Test

@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
+import com.google.cloud.tools.jib.hash.DigestUtil;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
@@ -42,10 +43,7 @@ public class DefaultCacheStorageWriterTest {
   }
 
   private static BlobDescriptor getCompressedBlobDescriptor(Blob blob) throws IOException {
-    CountingDigestOutputStream compressedDigestOutputStream =
-        new CountingDigestOutputStream(ByteStreams.nullOutputStream());
-    compress(blob).writeTo(compressedDigestOutputStream);
-    return compressedDigestOutputStream.toBlobDescriptor();
+    return DigestUtil.computeDigest(compress(blob));
   }
 
   private static Blob compress(Blob blob) {

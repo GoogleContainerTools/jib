@@ -121,6 +121,7 @@ public class ImageTarballTest {
       String manifestJson =
           CharStreams.toString(
               new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
+      System.out.println(manifestJson);
       JsonTemplateMapper.readListOfJson(manifestJson, DockerLoadManifestEntryTemplate.class);
     }
   }
