@@ -184,6 +184,92 @@ public class ReproducibleLayerBuilderTest {
   }
 
   @Test
+  public void testBuild_parentDirBehavior() throws IOException {
+    Path testRoot = temporaryFolder.getRoot().toPath();
+
+    // the path doesn't really matter on source files, but these are structured
+    Path parent = Files.createDirectories(testRoot.resolve("parent"));
+    Path file = Files.createFile(parent.resolve("file"));
+    Path ignoredParent = Files.createDirectories(testRoot.resolve("ignoredParent"));
+    Path file2 = Files.createFile(ignoredParent.resolve("file2"));
+    Path file3 =
+        Files.createFile(
+            Files.createDirectories(testRoot.resolve("absentParent")).resolve("file3"));
+
+    Blob layer =
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(
+                    new LayerEntry(
+                        parent,
+                        AbsoluteUnixPath.get("/root/parent"),
+                        FilePermissions.fromOctalString("111"),
+                        Instant.ofEpochMilli(1111)),
+                    new LayerEntry(
+                        file,
+                        AbsoluteUnixPath.get("/root/parent/file"),
+                        FilePermissions.fromOctalString("222"),
+                        Instant.ofEpochMilli(2222)),
+                    new LayerEntry(
+                        file2,
+                        AbsoluteUnixPath.get("/root/ignoredParent/file2"),
+                        FilePermissions.fromOctalString("333"),
+                        Instant.ofEpochMilli(3333)),
+                    new LayerEntry(
+                        parent,
+                        AbsoluteUnixPath.get("/root/ignoredParent"),
+                        FilePermissions.fromOctalString("444"),
+                        Instant.ofEpochMilli(4444)),
+                    new LayerEntry(
+                        file3,
+                        AbsoluteUnixPath.get("/root/absenteeParent/file3"),
+                        FilePermissions.fromOctalString("555"),
+                        Instant.ofEpochMilli(5555))))
+            .build();
+
+    Blob equivalentLayer =
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(
+                    new LayerEntry(
+                        parent,
+                        AbsoluteUnixPath.get("/root/parent"),
+                        FilePermissions.fromOctalString("111"),
+                        Instant.ofEpochMilli(1111)),
+                    new LayerEntry(
+                        file,
+                        AbsoluteUnixPath.get("/root/parent/file"),
+                        FilePermissions.fromOctalString("222"),
+                        Instant.ofEpochMilli(2222)),
+                    // layer directories added AFTER their child files are given default permissions
+                    new LayerEntry(
+                        parent,
+                        AbsoluteUnixPath.get("/root/ignoredParent"),
+                        FilePermissions.DEFAULT_FOLDER_PERMISSIONS,
+                        LayerEntry.DEFAULT_MODIFIED_TIME),
+                    new LayerEntry(
+                        file2,
+                        AbsoluteUnixPath.get("/root/ignoredParent/file2"),
+                        FilePermissions.fromOctalString("333"),
+                        Instant.ofEpochMilli(3333)),
+                    // layer directories not included are given default permissions
+                    new LayerEntry(
+                        parent,
+                        AbsoluteUnixPath.get("/root/absenteeParent"),
+                        FilePermissions.DEFAULT_FOLDER_PERMISSIONS,
+                        LayerEntry.DEFAULT_MODIFIED_TIME),
+                    new LayerEntry(
+                        file3,
+                        AbsoluteUnixPath.get("/root/absenteeParent/file3"),
+                        FilePermissions.fromOctalString("555"),
+                        Instant.ofEpochMilli(5555))))
+            .build();
+
+    byte[] layerContent = Blobs.writeToByteArray(layer);
+    byte[] equivalentLayerContent = Blobs.writeToByteArray(equivalentLayer);
+
+    Assert.assertThat(layerContent, CoreMatchers.is(equivalentLayerContent));
+  }
+
+  @Test
   public void testBuild_timestampDefault() throws IOException {
     Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
 
