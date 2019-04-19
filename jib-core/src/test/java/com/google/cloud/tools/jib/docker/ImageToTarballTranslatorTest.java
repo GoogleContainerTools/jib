@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.docker;
 
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.docker.json.DockerLoadManifestEntryTemplate;
@@ -31,9 +30,10 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -57,7 +57,7 @@ public class ImageToTarballTranslatorTest {
   @Mock private Layer mockLayer2;
 
   @Test
-  public void testToTarballBlob()
+  public void testWriteTo()
       throws InvalidImageReferenceException, IOException, URISyntaxException,
           LayerPropertyNotFoundException, DigestException {
     Path fileA = Paths.get(Resources.getResource("core/fileA").toURI());
@@ -83,13 +83,14 @@ public class ImageToTarballTranslatorTest {
     Image<Layer> testImage =
         Image.builder(V22ManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();
 
-    Blob tarballBlob =
-        new ImageToTarballTranslator(testImage).toTarballBlob(ImageReference.parse("my/image:tag"));
+    ImageToTarballTranslator imageToTarball =
+        new ImageToTarballTranslator(testImage, ImageReference.parse("my/image:tag"));
 
-    try (ByteArrayInputStream tarballBytesStream =
-            new ByteArrayInputStream(Blobs.writeToByteArray(tarballBlob));
-        TarArchiveInputStream tarArchiveInputStream =
-            new TarArchiveInputStream(tarballBytesStream)) {
+    try (PipedInputStream in = new PipedInputStream();
+        PipedOutputStream out = new PipedOutputStream(in);
+        TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
+      imageToTarball.writeTo(out);
+
       // Verifies layer with fileA was added.
       TarArchiveEntry headerFileALayer = tarArchiveInputStream.getNextTarEntry();
       Assert.assertEquals(fakeDigestA.getHash() + ".tar.gz", headerFileALayer.getName());

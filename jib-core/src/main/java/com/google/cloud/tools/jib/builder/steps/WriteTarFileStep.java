@@ -103,8 +103,8 @@ public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildR
       Files.createDirectories(outputPath.getParent());
       try (OutputStream outputStream =
           new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
-        new ImageToTarballTranslator(image)
-            .toTarballBlob(buildConfiguration.getTargetImageConfiguration().getImage())
+        new ImageToTarballTranslator(
+                image, buildConfiguration.getTargetImageConfiguration().getImage())
             .writeTo(outputStream);
       }
 

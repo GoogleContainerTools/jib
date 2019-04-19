@@ -106,8 +106,7 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
           .getEventDispatcher()
           .dispatch(
               LogEvent.debug(
-                  dockerClient.load(
-                      new ImageToTarballTranslator(image).toTarballBlob(targetImageReference))));
+                  dockerClient.load(new ImageToTarballTranslator(image, targetImageReference))));
 
       // Tags the image with all the additional tags, skipping the one 'docker load' already loaded.
       for (String tag : buildConfiguration.getAllTargetImageTags()) {

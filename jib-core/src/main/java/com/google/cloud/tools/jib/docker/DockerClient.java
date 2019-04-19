@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.docker;
 
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
@@ -164,18 +163,19 @@ public class DockerClient {
    *
    * @see <a
    *     href="https://docs.docker.com/engine/reference/commandline/load/">https://docs.docker.com/engine/reference/commandline/load</a>
-   * @param imageTarballBlob the built container tarball.
+   * @param imageTarball the built container tarball.
    * @return stdout from {@code docker}.
    * @throws InterruptedException if the 'docker load' process is interrupted.
    * @throws IOException if streaming the blob to 'docker load' fails.
    */
-  public String load(Blob imageTarballBlob) throws InterruptedException, IOException {
+  public String load(ImageToTarballTranslator imageTarball)
+      throws InterruptedException, IOException {
     // Runs 'docker load'.
     Process dockerProcess = docker("load");
 
     try (OutputStream stdin = dockerProcess.getOutputStream()) {
       try {
-        imageTarballBlob.writeTo(stdin);
+        imageTarball.writeTo(stdin);
 
       } catch (IOException ex) {
         // Tries to read from stderr.
