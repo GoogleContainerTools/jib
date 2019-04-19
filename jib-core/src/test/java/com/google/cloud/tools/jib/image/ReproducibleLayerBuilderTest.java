@@ -188,85 +188,79 @@ public class ReproducibleLayerBuilderTest {
     Path testRoot = temporaryFolder.getRoot().toPath();
 
     // the path doesn't really matter on source files, but these are structured
-    Path parent = Files.createDirectories(testRoot.resolve("parent"));
-    Path file = Files.createFile(parent.resolve("file"));
-    Path ignoredParent = Files.createDirectories(testRoot.resolve("ignoredParent"));
-    Path file2 = Files.createFile(ignoredParent.resolve("file2"));
-    Path file3 =
+    Path parent = Files.createDirectories(testRoot.resolve("aaa"));
+    Path fileA = Files.createFile(parent.resolve("fileA"));
+    Path ignoredParent = Files.createDirectories(testRoot.resolve("bbb-ignored"));
+    Path fileB = Files.createFile(ignoredParent.resolve("fileB"));
+    Path fileC =
         Files.createFile(
-            Files.createDirectories(testRoot.resolve("absentParent")).resolve("file3"));
+            Files.createDirectories(testRoot.resolve("ccc-absent")).resolve("fileC"));
 
     Blob layer =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
                     new LayerEntry(
                         parent,
-                        AbsoluteUnixPath.get("/root/parent"),
+                        AbsoluteUnixPath.get("/root/aaa"),
                         FilePermissions.fromOctalString("111"),
-                        Instant.ofEpochMilli(1111)),
+                        Instant.ofEpochSecond(10)),
                     new LayerEntry(
-                        file,
-                        AbsoluteUnixPath.get("/root/parent/file"),
+                        fileA,
+                        AbsoluteUnixPath.get("/root/aaa/fileA"),
                         FilePermissions.fromOctalString("222"),
-                        Instant.ofEpochMilli(2222)),
+                        Instant.ofEpochSecond(20)),
                     new LayerEntry(
-                        file2,
-                        AbsoluteUnixPath.get("/root/ignoredParent/file2"),
+                        fileB,
+                        AbsoluteUnixPath.get("/root/bbb-ignored/fileB"),
                         FilePermissions.fromOctalString("333"),
-                        Instant.ofEpochMilli(3333)),
+                        Instant.ofEpochSecond(30)),
                     new LayerEntry(
-                        parent,
-                        AbsoluteUnixPath.get("/root/ignoredParent"),
+                        ignoredParent,
+                        AbsoluteUnixPath.get("/root/bbb-ignored"),
                         FilePermissions.fromOctalString("444"),
-                        Instant.ofEpochMilli(4444)),
+                        Instant.ofEpochSecond(40)),
                     new LayerEntry(
-                        file3,
-                        AbsoluteUnixPath.get("/root/absenteeParent/file3"),
+                        fileC,
+                        AbsoluteUnixPath.get("/root/ccc-absent/file3"),
                         FilePermissions.fromOctalString("555"),
-                        Instant.ofEpochMilli(5555))))
+                        Instant.ofEpochSecond(50))))
             .build();
 
-    Blob equivalentLayer =
-        new ReproducibleLayerBuilder(
-                ImmutableList.of(
-                    new LayerEntry(
-                        parent,
-                        AbsoluteUnixPath.get("/root/parent"),
-                        FilePermissions.fromOctalString("111"),
-                        Instant.ofEpochMilli(1111)),
-                    new LayerEntry(
-                        file,
-                        AbsoluteUnixPath.get("/root/parent/file"),
-                        FilePermissions.fromOctalString("222"),
-                        Instant.ofEpochMilli(2222)),
-                    // layer directories added AFTER their child files are given default permissions
-                    new LayerEntry(
-                        parent,
-                        AbsoluteUnixPath.get("/root/ignoredParent"),
-                        FilePermissions.DEFAULT_FOLDER_PERMISSIONS,
-                        LayerEntry.DEFAULT_MODIFIED_TIME),
-                    new LayerEntry(
-                        file2,
-                        AbsoluteUnixPath.get("/root/ignoredParent/file2"),
-                        FilePermissions.fromOctalString("333"),
-                        Instant.ofEpochMilli(3333)),
-                    // layer directories not included are given default permissions
-                    new LayerEntry(
-                        parent,
-                        AbsoluteUnixPath.get("/root/absenteeParent"),
-                        FilePermissions.DEFAULT_FOLDER_PERMISSIONS,
-                        LayerEntry.DEFAULT_MODIFIED_TIME),
-                    new LayerEntry(
-                        file3,
-                        AbsoluteUnixPath.get("/root/absenteeParent/file3"),
-                        FilePermissions.fromOctalString("555"),
-                        Instant.ofEpochMilli(5555))))
-            .build();
+    Path tarFile = temporaryFolder.newFile().toPath();
+    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
+      layer.writeTo(out);
+    }
 
-    byte[] layerContent = Blobs.writeToByteArray(layer);
-    byte[] equivalentLayerContent = Blobs.writeToByteArray(equivalentLayer);
+    try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
+      // root (default folder permissions)
+      TarArchiveEntry root = in.getNextTarEntry();
+      Assert.assertEquals(040755, root.getMode());
+      Assert.assertEquals(Instant.ofEpochSecond(1), root.getModTime().toInstant());
 
-    Assert.assertThat(layerContent, CoreMatchers.is(equivalentLayerContent));
+      // parentAAA (custom permissions, custom timestamp)
+      TarArchiveEntry rootParentAAA = in.getNextTarEntry();
+      Assert.assertEquals(040111, rootParentAAA.getMode());
+      Assert.assertEquals(Instant.ofEpochSecond(10), rootParentAAA.getModTime().toInstant());
+
+      // skip over fileA
+      in.getNextTarEntry();
+
+      // parentBBB (default permissions - ignored custom permissions, since fileB added first)
+      TarArchiveEntry rootParentBBB = in.getNextTarEntry();
+      Assert.assertEquals(040755, rootParentBBB.getMode());
+      Assert.assertEquals(Instant.ofEpochSecond(1), root.getModTime().toInstant());
+
+      // skip over fileB
+      in.getNextTarEntry();
+
+      // parentCCC (default permissions - no entry provided)
+      TarArchiveEntry rootParentCCC = in.getNextTarEntry();
+      Assert.assertEquals(040755, rootParentCCC.getMode());
+      Assert.assertEquals(Instant.ofEpochSecond(1), root.getModTime().toInstant());
+
+      // we don't care about fileC
+    }
+
   }
 
   @Test
