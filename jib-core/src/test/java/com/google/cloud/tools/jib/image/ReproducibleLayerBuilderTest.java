@@ -193,8 +193,7 @@ public class ReproducibleLayerBuilderTest {
     Path ignoredParent = Files.createDirectories(testRoot.resolve("bbb-ignored"));
     Path fileB = Files.createFile(ignoredParent.resolve("fileB"));
     Path fileC =
-        Files.createFile(
-            Files.createDirectories(testRoot.resolve("ccc-absent")).resolve("fileC"));
+        Files.createFile(Files.createDirectories(testRoot.resolve("ccc-absent")).resolve("fileC"));
 
     Blob layer =
         new ReproducibleLayerBuilder(
@@ -260,7 +259,6 @@ public class ReproducibleLayerBuilderTest {
 
       // we don't care about fileC
     }
-
   }
 
   @Test
