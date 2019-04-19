@@ -246,8 +246,9 @@ public class ReproducibleLayerBuilderTest {
 
       // parentBBB (default permissions - ignored custom permissions, since fileB added first)
       TarArchiveEntry rootParentBBB = in.getNextTarEntry();
+      // TODO (#1650): we want 040444 here.
       Assert.assertEquals(040755, rootParentBBB.getMode());
-      // TODO (#1650): The behavior we WANT is that that we get Instant.ofEpochSecond(40) here.
+      // TODO (#1650): we want Instant.ofEpochSecond(40) here.
       Assert.assertEquals(Instant.ofEpochSecond(1), root.getModTime().toInstant());
 
       // skip over fileB
