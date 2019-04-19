@@ -88,12 +88,6 @@ public class DockerClientTest {
     Mockito.when(mockProcess.getInputStream())
         .thenReturn(new ByteArrayInputStream("output".getBytes(StandardCharsets.UTF_8)));
 
-    Mockito.doAnswer(
-            AdditionalAnswers.answerVoid(
-                (VoidAnswer1<OutputStream>)
-                    out -> out.write("jib".getBytes(StandardCharsets.UTF_8))))
-        .when(imageTarball)
-        .writeTo(Mockito.any(OutputStream.class));
     String output = testDockerClient.load(imageTarball);
 
     Assert.assertEquals(
