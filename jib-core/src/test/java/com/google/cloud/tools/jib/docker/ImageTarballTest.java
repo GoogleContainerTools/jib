@@ -89,7 +89,6 @@ public class ImageTarballTest {
     imageToTarball.writeTo(out);
     ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
     try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
-      imageToTarball.writeTo(out);
 
       // Verifies layer with fileA was added.
       TarArchiveEntry headerFileALayer = tarArchiveInputStream.getNextTarEntry();
@@ -121,7 +120,6 @@ public class ImageTarballTest {
       String manifestJson =
           CharStreams.toString(
               new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-      System.out.println(manifestJson);
       JsonTemplateMapper.readListOfJson(manifestJson, DockerLoadManifestEntryTemplate.class);
     }
   }

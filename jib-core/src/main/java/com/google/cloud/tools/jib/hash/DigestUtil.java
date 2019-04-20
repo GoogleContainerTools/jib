@@ -37,21 +37,29 @@ public class DigestUtil {
   @FunctionalInterface
   public static interface Contents {
 
+    static Contents fromJson(Object jsonObject) {
+      return outStream -> new ObjectMapper().writeValue(outStream, jsonObject);
+    }
+
     void writeTo(OutputStream out) throws IOException;
   }
 
   public static DescriptorDigest computeJsonDigest(JsonTemplate template) throws IOException {
-    return computeJsonDigest((Object) template);
+    return computeDigest(template, ByteStreams.nullOutputStream()).getDigest();
   }
 
   public static DescriptorDigest computeJsonDigest(List<? extends JsonTemplate> templates)
       throws IOException {
-    return computeJsonDigest((Object) templates);
+    return computeDigest(Contents.fromJson(templates), ByteStreams.nullOutputStream()).getDigest();
   }
 
-  private static DescriptorDigest computeJsonDigest(Object jsonObject) throws IOException {
-    Contents contents = outStream -> new ObjectMapper().writeValue(outStream, jsonObject);
-    return computeDigest(contents).getDigest();
+  public static BlobDescriptor computeDigest(JsonTemplate template, OutputStream outStream)
+      throws IOException {
+    return computeDigest(Contents.fromJson(template), outStream);
+  }
+
+  public static BlobDescriptor computeDigest(InputStream inStream) throws IOException {
+    return computeDigest(inStream, ByteStreams.nullOutputStream());
   }
 
   public static BlobDescriptor computeDigest(Blob blob) throws IOException {
@@ -67,10 +75,6 @@ public class DigestUtil {
    */
   public static BlobDescriptor computeDigest(Contents contents) throws IOException {
     return computeDigest(contents, ByteStreams.nullOutputStream());
-  }
-
-  public static BlobDescriptor computeDigest(InputStream inStream) throws IOException {
-    return computeDigest(inStream, ByteStreams.nullOutputStream());
   }
 
   /**

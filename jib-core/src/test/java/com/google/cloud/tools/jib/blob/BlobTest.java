@@ -106,7 +106,6 @@ public class BlobTest {
     byte[] expectedBytes = expected.getBytes(StandardCharsets.UTF_8);
     Assert.assertEquals(expectedBytes.length, blobDescriptor.getSize());
 
-    ;
     DescriptorDigest expectedDigest =
         DigestUtil.computeDigest(new ByteArrayInputStream(expectedBytes)).getDigest();
     Assert.assertEquals(expectedDigest, blobDescriptor.getDigest());

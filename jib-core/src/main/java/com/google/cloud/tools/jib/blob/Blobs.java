@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.blob;
 
 import com.google.cloud.tools.jib.filesystem.FileOperations;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,6 +34,10 @@ public class Blobs {
 
   public static Blob from(Path file) {
     return new FileBlob(file);
+  }
+
+  public static Blob from(JsonTemplate template) {
+    return new JsonBlob(template);
   }
 
   /**
