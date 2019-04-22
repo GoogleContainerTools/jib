@@ -50,6 +50,7 @@ public class Containerizer {
       UserCacheHome.getCacheHome().resolve("google-cloud-tools-java").resolve("jib");
 
   private static final String DEFAULT_TOOL_NAME = "jib-core";
+
   private static final String DESCRIPTION_FOR_DOCKER_REGISTRY = "Building and pushing image";
   private static final String DESCRIPTION_FOR_DOCKER_DAEMON = "Building image to Docker daemon";
   private static final String DESCRIPTION_FOR_TARBALL = "Building image tarball";

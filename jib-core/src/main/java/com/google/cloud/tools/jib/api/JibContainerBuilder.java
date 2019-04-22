@@ -86,16 +86,20 @@ public class JibContainerBuilder {
   private List<LayerConfiguration> layerConfigurations = new ArrayList<>();
 
   /** Instantiate with {@link Jib#from}. */
-  JibContainerBuilder(ImageConfiguration baseImageConfiguration) {
-    this(baseImageConfiguration, BuildConfiguration.builder());
+  JibContainerBuilder(RegistryImage baseImage) {
+    this(baseImage, BuildConfiguration.builder());
   }
 
   @VisibleForTesting
   JibContainerBuilder(
-      ImageConfiguration baseImageConfiguration,
-      BuildConfiguration.Builder buildConfigurationBuilder) {
+      RegistryImage baseImage, BuildConfiguration.Builder buildConfigurationBuilder) {
     this.buildConfigurationBuilder = buildConfigurationBuilder;
-    buildConfigurationBuilder.setBaseImageConfiguration(baseImageConfiguration);
+
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(baseImage.getImageReference())
+            .setCredentialRetrievers(baseImage.getCredentialRetrievers())
+            .build();
+    buildConfigurationBuilder.setBaseImageConfiguration(imageConfiguration);
   }
 
   /**
