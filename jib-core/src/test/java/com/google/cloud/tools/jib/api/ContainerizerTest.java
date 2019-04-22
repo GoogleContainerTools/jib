@@ -112,9 +112,9 @@ public class ContainerizerTest {
             RegistryImage.named("registry/image").addCredentialRetriever(credentialRetriever));
 
     ImageConfiguration imageConfiguration = containerizer.getImageConfiguration();
-    Assert.assertEquals(ImageReference.parse("registry/image"), imageConfiguration.getImage());
+    Assert.assertEquals("registry/image", imageConfiguration.getImage().toString());
     Assert.assertEquals(
-        Arrays.asList(credentialRetriever), imageConfiguration.getCredentialRetrievers().size());
+        Arrays.asList(credentialRetriever), imageConfiguration.getCredentialRetrievers());
   }
 
   @Test
@@ -122,7 +122,7 @@ public class ContainerizerTest {
     Containerizer containerizer = Containerizer.to(DockerDaemonImage.named("docker/deamon/image"));
 
     ImageConfiguration imageConfiguration = containerizer.getImageConfiguration();
-    Assert.assertEquals(ImageReference.parse("docker/deamon/image"), imageConfiguration.getImage());
+    Assert.assertEquals("docker/deamon/image", imageConfiguration.getImage().toString());
     Assert.assertEquals(0, imageConfiguration.getCredentialRetrievers().size());
   }
 
@@ -132,7 +132,7 @@ public class ContainerizerTest {
         Containerizer.to(TarImage.named("tar/image").saveTo(Paths.get("output/file")));
 
     ImageConfiguration imageConfiguration = containerizer.getImageConfiguration();
-    Assert.assertEquals(ImageReference.parse("tar/image"), imageConfiguration.getImage());
+    Assert.assertEquals("tar/image", imageConfiguration.getImage().toString());
     Assert.assertEquals(0, imageConfiguration.getCredentialRetrievers().size());
   }
 }

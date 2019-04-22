@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /** Builds to the Docker daemon. */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
@@ -53,7 +54,7 @@ public class DockerDaemonImage {
   }
 
   private final ImageReference imageReference;
-  private Path dockerExecutable;
+  @Nullable private Path dockerExecutable;
   private Map<String, String> dockerEnvironment = Collections.emptyMap();
 
   /** Instantiate with {@link #named}. */
