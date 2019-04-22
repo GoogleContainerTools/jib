@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
@@ -548,10 +550,13 @@ public class GradleProjectPropertiesTest {
 
   private BuildConfiguration setupBuildConfiguration(String appRoot)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-    return new GradleProjectProperties(mockProject, mockLogger, AbsoluteUnixPath.get(appRoot))
-        .createContainerBuilder(RegistryImage.named("base"))
-        .toBuildConfiguration(
-            Containerizer.to(RegistryImage.named("to")), MoreExecutors.newDirectExecutorService());
+    JibContainerBuilder jibContainerBuilder =
+        new GradleProjectProperties(mockProject, mockLogger, AbsoluteUnixPath.get(appRoot))
+            .createContainerBuilder(RegistryImage.named("base"));
+    return JibContainerBuilderTestHelper.toBuildConfiguration(
+        jibContainerBuilder,
+        Containerizer.to(RegistryImage.named("to"))
+            .setExecutorService(MoreExecutors.newDirectExecutorService()));
   }
 
   private void setUpWarProject(Path webAppDirectory) {
