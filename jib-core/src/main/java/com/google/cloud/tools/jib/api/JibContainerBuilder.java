@@ -17,13 +17,16 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageFormat;
@@ -83,14 +86,16 @@ public class JibContainerBuilder {
   private List<LayerConfiguration> layerConfigurations = new ArrayList<>();
 
   /** Instantiate with {@link Jib#from}. */
-  JibContainerBuilder(SourceImage baseImage) {
-    this(baseImage, BuildConfiguration.builder());
+  JibContainerBuilder(ImageConfiguration baseImageConfiguration) {
+    this(baseImageConfiguration, BuildConfiguration.builder());
   }
 
   @VisibleForTesting
-  JibContainerBuilder(SourceImage baseImage, BuildConfiguration.Builder buildConfigurationBuilder) {
+  JibContainerBuilder(
+      ImageConfiguration baseImageConfiguration,
+      BuildConfiguration.Builder buildConfigurationBuilder) {
     this.buildConfigurationBuilder = buildConfigurationBuilder;
-    buildConfigurationBuilder.setBaseImageConfiguration(baseImage.toImageConfiguration());
+    buildConfigurationBuilder.setBaseImageConfiguration(baseImageConfiguration);
   }
 
   /**
@@ -474,30 +479,12 @@ public class JibContainerBuilder {
 
     BuildConfiguration buildConfiguration = toBuildConfiguration(containerizer, executorService);
 
-    // Logs the different source files used.
-    buildConfiguration
-        .getEventDispatcher()
-        .dispatch(LogEvent.info("Containerizing application with the following files:"));
+    EventDispatcher eventDispatcher = buildConfiguration.getEventDispatcher();
+    logSources(eventDispatcher);
 
-    for (LayerConfiguration layerConfiguration : layerConfigurations) {
-      if (layerConfiguration.getLayerEntries().isEmpty()) {
-        continue;
-      }
-
-      buildConfiguration
-          .getEventDispatcher()
-          .dispatch(
-              LogEvent.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":"));
-
-      for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
-        buildConfiguration
-            .getEventDispatcher()
-            .dispatch(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
-      }
-    }
-
-    try {
-      BuildResult result = containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(eventDispatcher, containerizer.getDescription())) {
+      BuildResult result = containerizer.createStepsRunner(buildConfiguration).run();
       return new JibContainer(result.getImageDigest(), result.getImageId());
 
     } catch (ExecutionException ex) {
@@ -525,11 +512,11 @@ public class JibContainerBuilder {
    * @throws IOException if an I/O exception occurs
    */
   @VisibleForTesting
-  public BuildConfiguration toBuildConfiguration(
+  BuildConfiguration toBuildConfiguration(
       Containerizer containerizer, ExecutorService executorService)
       throws CacheDirectoryCreationException, IOException {
     buildConfigurationBuilder
-        .setTargetImageConfiguration(containerizer.getTargetImage().toImageConfiguration())
+        .setTargetImageConfiguration(containerizer.getImageConfiguration())
         .setAdditionalTargetImageTags(containerizer.getAdditionalTags())
         .setBaseImageLayersCacheDirectory(containerizer.getBaseImageLayersCacheDirectory())
         .setApplicationLayersCacheDirectory(containerizer.getApplicationLayersCacheDirectory())
@@ -547,5 +534,23 @@ public class JibContainerBuilder {
                     new DefaultEventDispatcher(eventHandlers)));
 
     return buildConfigurationBuilder.build();
+  }
+
+  private void logSources(EventDispatcher eventDispatcher) {
+    // Logs the different source files used.
+    eventDispatcher.dispatch(LogEvent.info("Containerizing application with the following files:"));
+
+    for (LayerConfiguration layerConfiguration : layerConfigurations) {
+      if (layerConfiguration.getLayerEntries().isEmpty()) {
+        continue;
+      }
+
+      eventDispatcher.dispatch(
+          LogEvent.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":"));
+
+      for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
+        eventDispatcher.dispatch(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
+      }
+    }
   }
 }

@@ -20,6 +20,8 @@ import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.events.TimerEvent;
 import java.nio.file.Path;
 import java.util.concurrent.ExecutionException;
 
@@ -39,7 +41,7 @@ public class BuildSteps {
   public static BuildSteps forBuildToDockerRegistry(BuildConfiguration buildConfiguration) {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_REGISTRY,
-        buildConfiguration,
+        buildConfiguration.getEventDispatcher(),
         StepsRunner.begin(buildConfiguration)
             .retrieveTargetRegistryCredentials()
             .authenticatePush()
@@ -64,7 +66,7 @@ public class BuildSteps {
       DockerClient dockerClient, BuildConfiguration buildConfiguration) {
     return new BuildSteps(
         DESCRIPTION_FOR_DOCKER_DAEMON,
-        buildConfiguration,
+        buildConfiguration.getEventDispatcher(),
         StepsRunner.begin(buildConfiguration)
             .pullBaseImage()
             .pullAndCacheBaseImageLayers()
@@ -83,7 +85,7 @@ public class BuildSteps {
   public static BuildSteps forBuildToTar(Path outputPath, BuildConfiguration buildConfiguration) {
     return new BuildSteps(
         DESCRIPTION_FOR_TARBALL,
-        buildConfiguration,
+        buildConfiguration.getEventDispatcher(),
         StepsRunner.begin(buildConfiguration)
             .pullBaseImage()
             .pullAndCacheBaseImageLayers()
@@ -93,23 +95,18 @@ public class BuildSteps {
   }
 
   private final String description;
-  private final BuildConfiguration buildConfiguration;
+  private final EventDispatcher eventDispatcher;
   private final StepsRunner stepsRunner;
 
   /**
    * @param description a description of what the steps do
-   * @param buildConfiguration the configuration parameters for the build
+   * @param eventDispatcher the {@link EventDispatcher} used to dispatch the {@link TimerEvent}s
    * @param stepsRunner runs the necessary steps to build an image
    */
-  private BuildSteps(
-      String description, BuildConfiguration buildConfiguration, StepsRunner stepsRunner) {
+  private BuildSteps(String description, EventDispatcher eventDispatcher, StepsRunner stepsRunner) {
     this.description = description;
-    this.buildConfiguration = buildConfiguration;
+    this.eventDispatcher = eventDispatcher;
     this.stepsRunner = stepsRunner;
-  }
-
-  public BuildConfiguration getBuildConfiguration() {
-    return buildConfiguration;
   }
 
   /**
@@ -120,8 +117,7 @@ public class BuildSteps {
    * @throws ExecutionException if an exception occurs during execution
    */
   public BuildResult run() throws InterruptedException, ExecutionException {
-    try (TimerEventDispatcher ignored =
-        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
+    try (TimerEventDispatcher ignored = new TimerEventDispatcher(eventDispatcher, description)) {
       return stepsRunner.run();
     }
   }

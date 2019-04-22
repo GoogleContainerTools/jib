@@ -17,11 +17,16 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.builder.steps.StepsRunner;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.UserCacheHome;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,6 +35,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /** Configures how to containerize. */
@@ -44,6 +50,9 @@ public class Containerizer {
       UserCacheHome.getCacheHome().resolve("google-cloud-tools-java").resolve("jib");
 
   private static final String DEFAULT_TOOL_NAME = "jib-core";
+  private static final String DESCRIPTION_FOR_DOCKER_REGISTRY = "Building and pushing image";
+  private static final String DESCRIPTION_FOR_DOCKER_DAEMON = "Building image to Docker daemon";
+  private static final String DESCRIPTION_FOR_TARBALL = "Building image tarball";
 
   /**
    * Gets a new {@link Containerizer} that containerizes to a container registry.
@@ -53,7 +62,27 @@ public class Containerizer {
    * @return a new {@link Containerizer}
    */
   public static Containerizer to(RegistryImage registryImage) {
-    return new Containerizer(registryImage);
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(registryImage.getImageReference())
+            .setCredentialRetrievers(registryImage.getCredentialRetrievers())
+            .build();
+
+    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
+        buildConfiguration ->
+            StepsRunner.begin(buildConfiguration)
+                .retrieveTargetRegistryCredentials()
+                .authenticatePush()
+                .pullBaseImage()
+                .pullAndCacheBaseImageLayers()
+                .pushBaseImageLayers()
+                .buildAndCacheApplicationLayers()
+                .buildImage()
+                .pushContainerConfiguration()
+                .pushApplicationLayers()
+                .pushImage();
+
+    return new Containerizer(
+        DESCRIPTION_FOR_DOCKER_REGISTRY, imageConfiguration, stepsRunnerFactory);
   }
 
   /**
@@ -63,7 +92,24 @@ public class Containerizer {
    * @return a new {@link Containerizer}
    */
   public static Containerizer to(DockerDaemonImage dockerDaemonImage) {
-    return new Containerizer(dockerDaemonImage);
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(dockerDaemonImage.getImageReference()).build();
+
+    DockerClient.Builder dockerClientBuilder = DockerClient.builder();
+    dockerDaemonImage.getDockerExecutable().ifPresent(dockerClientBuilder::setDockerExecutable);
+    dockerClientBuilder.setDockerEnvironment(
+        ImmutableMap.copyOf(dockerDaemonImage.getDockerEnvironment()));
+
+    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
+        buildConfiguration ->
+            StepsRunner.begin(buildConfiguration)
+                .pullBaseImage()
+                .pullAndCacheBaseImageLayers()
+                .buildAndCacheApplicationLayers()
+                .buildImage()
+                .loadDocker(dockerClientBuilder.build());
+
+    return new Containerizer(DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory);
   }
 
   /**
@@ -73,10 +119,25 @@ public class Containerizer {
    * @return a new {@link Containerizer}
    */
   public static Containerizer to(TarImage tarImage) {
-    return new Containerizer(tarImage);
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(tarImage.getImageReference()).build();
+
+    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
+        buildConfiguration ->
+            StepsRunner.begin(buildConfiguration)
+                .pullBaseImage()
+                .pullAndCacheBaseImageLayers()
+                .buildAndCacheApplicationLayers()
+                .buildImage()
+                .writeTarFile(tarImage.getOutputFile());
+
+    return new Containerizer(DESCRIPTION_FOR_TARBALL, imageConfiguration, stepsRunnerFactory);
   }
 
-  private final TargetImage targetImage;
+  private final String description;
+  private final ImageConfiguration imageConfiguration;
+  private final Function<BuildConfiguration, StepsRunner> stepsRunnerFactory;
+
   private final Set<String> additionalTags = new HashSet<>();
   @Nullable private ExecutorService executorService;
   private Path baseImageLayersCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
@@ -86,8 +147,13 @@ public class Containerizer {
   private String toolName = DEFAULT_TOOL_NAME;
 
   /** Instantiate with {@link #to}. */
-  private Containerizer(TargetImage targetImage) {
-    this.targetImage = targetImage;
+  private Containerizer(
+      String description,
+      ImageConfiguration imageConfiguration,
+      Function<BuildConfiguration, StepsRunner> stepsRunnerFactory) {
+    this.description = description;
+    this.imageConfiguration = imageConfiguration;
+    this.stepsRunnerFactory = stepsRunnerFactory;
   }
 
   /**
@@ -181,10 +247,6 @@ public class Containerizer {
     return this;
   }
 
-  TargetImage getTargetImage() {
-    return targetImage;
-  }
-
   Set<String> getAdditionalTags() {
     return additionalTags;
   }
@@ -222,5 +284,17 @@ public class Containerizer {
 
   String getToolName() {
     return toolName;
+  }
+
+  String getDescription() {
+    return description;
+  }
+
+  ImageConfiguration getImageConfiguration() {
+    return imageConfiguration;
+  }
+
+  StepsRunner createStepsRunner(BuildConfiguration buildConfiguration) {
+    return stepsRunnerFactory.apply(buildConfiguration);
   }
 }
