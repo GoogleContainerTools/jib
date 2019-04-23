@@ -68,9 +68,11 @@ public class JsonToImageTranslator {
    * @param manifestTemplate the template containing the image layers.
    * @return the translated {@link Image}.
    * @throws LayerPropertyNotFoundException if adding image layers fails.
+   * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
+   *     format
    */
   public static Image<Layer> toImage(V21ManifestTemplate manifestTemplate)
-      throws LayerPropertyNotFoundException {
+      throws LayerPropertyNotFoundException, BadContainerConfigurationFormatException {
     Image.Builder<Layer> imageBuilder = Image.builder(V21ManifestTemplate.class);
 
     // V21 layers are in reverse order of V22. (The first layer is the latest one.)
@@ -78,6 +80,10 @@ public class JsonToImageTranslator {
       imageBuilder.addLayer(new DigestOnlyLayer(digest));
     }
 
+    if (manifestTemplate.getContainerConfiguration() != null) {
+      configureBuilderWithContainerConfiguration(
+          imageBuilder, manifestTemplate.getContainerConfiguration());
+    }
     return imageBuilder.build();
   }
 
@@ -114,8 +120,6 @@ public class JsonToImageTranslator {
     }
 
     List<DescriptorDigest> diffIds = containerConfigurationTemplate.getDiffIds();
-    List<HistoryEntry> historyObjects = containerConfigurationTemplate.getHistory();
-
     if (layers.size() != diffIds.size()) {
       throw new LayerCountMismatchException(
           "Mismatch between image manifest and container configuration");
@@ -129,9 +133,17 @@ public class JsonToImageTranslator {
 
       imageBuilder.addLayer(new ReferenceLayer(noDiffIdLayer.getBlobDescriptor(), diffId));
     }
-    for (HistoryEntry historyObject : historyObjects) {
-      imageBuilder.addHistory(historyObject);
-    }
+
+    configureBuilderWithContainerConfiguration(imageBuilder, containerConfigurationTemplate);
+    return imageBuilder.build();
+  }
+
+  private static void configureBuilderWithContainerConfiguration(
+      Image.Builder<Layer> imageBuilder,
+      ContainerConfigurationTemplate containerConfigurationTemplate)
+      throws BadContainerConfigurationFormatException {
+
+    containerConfigurationTemplate.getHistory().forEach(imageBuilder::addHistory);
 
     if (containerConfigurationTemplate.getCreated() != null) {
       try {
@@ -149,13 +161,8 @@ public class JsonToImageTranslator {
       imageBuilder.setOs(containerConfigurationTemplate.getOs());
     }
 
-    if (containerConfigurationTemplate.getContainerEntrypoint() != null) {
-      imageBuilder.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
-    }
-
-    if (containerConfigurationTemplate.getContainerCmd() != null) {
-      imageBuilder.setProgramArguments(containerConfigurationTemplate.getContainerCmd());
-    }
+    imageBuilder.setEntrypoint(containerConfigurationTemplate.getContainerEntrypoint());
+    imageBuilder.setProgramArguments(containerConfigurationTemplate.getContainerCmd());
 
     List<String> baseHealthCheckCommand = containerConfigurationTemplate.getContainerHealthTest();
     if (baseHealthCheckCommand != null) {
@@ -198,10 +205,9 @@ public class JsonToImageTranslator {
       }
     }
 
+    imageBuilder.addLabels(containerConfigurationTemplate.getContainerLabels());
     imageBuilder.setWorkingDirectory(containerConfigurationTemplate.getContainerWorkingDir());
     imageBuilder.setUser(containerConfigurationTemplate.getContainerUser());
-
-    return imageBuilder.build();
   }
 
   /**
