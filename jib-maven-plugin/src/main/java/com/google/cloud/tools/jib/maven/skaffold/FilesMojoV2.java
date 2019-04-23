@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven.skaffold;
 
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldFilesOutput;
 import com.google.common.annotations.VisibleForTesting;
@@ -181,7 +182,8 @@ public class FilesMojoV2 extends AbstractMojo {
 
     String property = newProperty != null ? newProperty : deprecatedProperty;
     if (property != null) {
-      return Collections.singletonList(Paths.get(property));
+      List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
+      return paths.stream().map(Paths::get).collect(Collectors.toList());
     }
 
     // Try getting extra directory from project pom
