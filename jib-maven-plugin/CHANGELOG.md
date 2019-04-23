@@ -5,9 +5,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Container configurations in the base image are now propagated when registry uses the old V2 image manifest, schema version 1 (such as Quay) ([#1641](https://github.com/GoogleContainerTools/jib/issues/1641))
+
 ### Changed
 
 ### Fixed
+
+- Labels in the base image are now propagated. ([#1643](https://github.com/GoogleContainerTools/jib/issues/1643))
 
 ## 1.1.2
 
