@@ -154,6 +154,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for {@code container} parameter. */
   public static class ContainerParameters {
 
+    // Note: `entrypoint` and `args` are @Nullable to handle inheriting values from the base image
+
     @Parameter private boolean useCurrentTimestamp = false;
 
     @Nullable @Parameter private List<String> entrypoint;
@@ -161,6 +163,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private List<String> jvmFlags = Collections.emptyList();
 
     @Parameter private Map<String, String> environment = Collections.emptyMap();
+
+    @Parameter private List<String> extraClasspath = Collections.emptyList();
 
     @Nullable @Parameter private String mainClass;
 
@@ -382,6 +386,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return ConfigurationPropertyValidator.parseMapProperty(property);
     }
     return container.environment;
+  }
+
+  /**
+   * Gets the extra classpath elements.
+   *
+   * @return the extra classpath elements
+   */
+  List<String> getExtraClasspath() {
+    String property = getProperty(PropertyNames.CONTAINER_EXTRA_CLASSPATH);
+    if (property != null) {
+      return ConfigurationPropertyValidator.parseListProperty(property);
+    }
+    return container.extraClasspath;
   }
 
   /**

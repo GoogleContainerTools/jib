@@ -32,15 +32,11 @@ public class JavaEntrypointConstructor {
   public static final RelativeUnixPath DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE =
       RelativeUnixPath.get("libs");
 
-  public static List<String> makeDefaultEntrypoint(
-      AbsoluteUnixPath appRoot, List<String> jvmFlags, String mainClass) {
-    return makeEntrypoint(
-        Arrays.asList(
-            appRoot.resolve(DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE).toString(),
-            appRoot.resolve(DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE).toString(),
-            appRoot.resolve(DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE).resolve("*").toString()),
-        jvmFlags,
-        mainClass);
+  public static List<String> defaultClasspath(AbsoluteUnixPath appRoot) {
+    return Arrays.asList(
+        appRoot.resolve(DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE).toString(),
+        appRoot.resolve(DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE).toString(),
+        appRoot.resolve(DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE).resolve("*").toString());
   }
 
   /**

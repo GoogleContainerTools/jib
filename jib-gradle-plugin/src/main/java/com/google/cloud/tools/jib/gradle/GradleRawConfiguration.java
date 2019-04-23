@@ -81,6 +81,11 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public List<String> getExtraClasspath() {
+    return jibExtension.getContainer().getExtraClasspath();
+  }
+
+  @Override
   public Optional<String> getMainClass() {
     return Optional.ofNullable(jibExtension.getContainer().getMainClass());
   }

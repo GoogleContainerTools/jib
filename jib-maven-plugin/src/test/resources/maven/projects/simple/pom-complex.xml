@@ -59,6 +59,7 @@
               <arg>An argument.</arg>
             </args>
             <mainClass>com.test.HelloWorld</mainClass>
+            <extraClasspath><path>/other</path></extraClasspath>
             <jvmFlags>
               <jvmFlag>-Xms512m</jvmFlag>
               <jvmFlag>-Xdebug</jvmFlag>

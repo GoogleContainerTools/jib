@@ -42,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -247,13 +248,19 @@ public class PluginConfigurationProcessor {
   static List<String> computeEntrypoint(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws MainClassInferenceException, InvalidAppRootException, IOException {
+    AbsoluteUnixPath appRoot =
+        getAppRootChecked(rawConfiguration, projectProperties.isWarProject());
+
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
+    List<String> rawExtraClasspath = rawConfiguration.getExtraClasspath();
     if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
       if (rawConfiguration.getMainClass().isPresent()
-          || !rawConfiguration.getJvmFlags().isEmpty()) {
+          || !rawConfiguration.getJvmFlags().isEmpty()
+          || !rawExtraClasspath.isEmpty()) {
         new DefaultEventDispatcher(projectProperties.getEventHandlers())
             .dispatch(
-                LogEvent.warn("mainClass and jvmFlags are ignored when entrypoint is specified"));
+                LogEvent.warn(
+                    "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
       }
 
       if (rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))) {
@@ -266,13 +273,13 @@ public class PluginConfigurationProcessor {
       return null;
     }
 
-    AbsoluteUnixPath appRoot =
-        getAppRootChecked(rawConfiguration, projectProperties.isWarProject());
+    List<String> classpath = new ArrayList<>(rawExtraClasspath);
+    classpath.addAll(JavaEntrypointConstructor.defaultClasspath(appRoot));
     String mainClass =
         MainClassResolver.resolveMainClass(
             rawConfiguration.getMainClass().orElse(null), projectProperties);
-    return JavaEntrypointConstructor.makeDefaultEntrypoint(
-        appRoot, rawConfiguration.getJvmFlags(), mainClass);
+    return JavaEntrypointConstructor.makeEntrypoint(
+        classpath, rawConfiguration.getJvmFlags(), mainClass);
   }
 
   /**

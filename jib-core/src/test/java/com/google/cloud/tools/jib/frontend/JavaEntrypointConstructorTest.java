@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.frontend;
 
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,50 +27,23 @@ import org.junit.Test;
 public class JavaEntrypointConstructorTest {
 
   @Test
+  public void testDefaultClasspath() {
+    List<String> classpath =
+        JavaEntrypointConstructor.defaultClasspath(AbsoluteUnixPath.get("/dir"));
+    Assert.assertEquals(
+        ImmutableList.of("/dir/resources", "/dir/classes", "/dir/libs/*"), classpath);
+  }
+
+  @Test
   public void testMakeEntrypoint() {
-    String expectedResourcesPath = "/app/resources";
-    String expectedClassesPath = "/app/classes";
-    String expectedDependenciesPath = "/app/libs/*";
     List<String> expectedJvmFlags = Arrays.asList("-flag", "anotherFlag");
     String expectedMainClass = "SomeMainClass";
 
     List<String> entrypoint =
         JavaEntrypointConstructor.makeEntrypoint(
-            Arrays.asList(expectedResourcesPath, expectedClassesPath, expectedDependenciesPath),
-            expectedJvmFlags,
-            expectedMainClass);
+            Arrays.asList("/d1", "/d2", "/d3"), expectedJvmFlags, expectedMainClass);
     Assert.assertEquals(
-        Arrays.asList(
-            "java",
-            "-flag",
-            "anotherFlag",
-            "-cp",
-            "/app/resources:/app/classes:/app/libs/*",
-            "SomeMainClass"),
+        Arrays.asList("java", "-flag", "anotherFlag", "-cp", "/d1:/d2:/d3", "SomeMainClass"),
         entrypoint);
-
-    // Checks that this is also the default entrypoint.
-    Assert.assertEquals(
-        JavaEntrypointConstructor.makeDefaultEntrypoint(
-            AbsoluteUnixPath.get("/app"), expectedJvmFlags, expectedMainClass),
-        entrypoint);
-  }
-
-  @Test
-  public void testMakeDefaultEntrypoint_classpathString() {
-    // Checks that this is also the default entrypoint.
-    List<String> entrypoint =
-        JavaEntrypointConstructor.makeDefaultEntrypoint(
-            AbsoluteUnixPath.get("/app"), Collections.emptyList(), "MyMain");
-    Assert.assertEquals("/app/resources:/app/classes:/app/libs/*", entrypoint.get(2));
-  }
-
-  @Test
-  public void testMakeDefaultEntrypoint_classpathStringWithNonDefaultAppRoot() {
-    // Checks that this is also the default entrypoint.
-    List<String> entrypoint =
-        JavaEntrypointConstructor.makeDefaultEntrypoint(
-            AbsoluteUnixPath.get("/my/app"), Collections.emptyList(), "Main");
-    Assert.assertEquals("/my/app/resources:/my/app/classes:/my/app/libs/*", entrypoint.get(2));
   }
 }
