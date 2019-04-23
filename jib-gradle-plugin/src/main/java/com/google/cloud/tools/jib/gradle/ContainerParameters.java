@@ -37,7 +37,7 @@ public class ContainerParameters {
   private List<String> jvmFlags = Collections.emptyList();
   private Map<String, String> environment = Collections.emptyMap();
   @Nullable private List<String> entrypoint;
-  @Nullable private List<String> extraClasspath;
+  private List<String> extraClasspath = Collections.emptyList();
   @Nullable private String mainClass;
   @Nullable private List<String> args;
   private ImageFormat format = ImageFormat.Docker;
@@ -109,7 +109,6 @@ public class ContainerParameters {
   }
 
   @Input
-  @Nullable
   @Optional
   public List<String> getExtraClasspath() {
     if (System.getProperty(PropertyNames.CONTAINER_EXTRA_CLASSPATH) != null) {

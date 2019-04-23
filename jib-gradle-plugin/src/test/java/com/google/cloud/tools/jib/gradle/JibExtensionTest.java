@@ -113,7 +113,8 @@ public class JibExtensionTest {
   public void testContainer() {
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getJvmFlags());
     Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getEnvironment());
-    Assert.assertNull(testJibExtension.getContainer().getExtraClasspath());
+    Assert.assertEquals(
+        Collections.emptyList(), testJibExtension.getContainer().getExtraClasspath());
     Assert.assertNull(testJibExtension.getContainer().getMainClass());
     Assert.assertNull(testJibExtension.getContainer().getArgs());
     Assert.assertSame(ImageFormat.Docker, testJibExtension.getContainer().getFormat());
