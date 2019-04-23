@@ -113,7 +113,6 @@ public class ContainerParameters {
   @Optional
   public List<String> getExtraClasspath() {
     if (System.getProperty(PropertyNames.CONTAINER_EXTRA_CLASSPATH) != null) {
-      // TODO: this should probably support Java-style ":" or ";" separators
       return ConfigurationPropertyValidator.parseListProperty(
           System.getProperty(PropertyNames.CONTAINER_EXTRA_CLASSPATH));
     }

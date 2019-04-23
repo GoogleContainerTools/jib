@@ -151,11 +151,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /**
-   * Configuration for {@code container} parameter. Note that {@code entrypoint} and {@code args}
-   * are {@code @Nullable} do handle inheriting values from the base image.
-   */
+  /** Configuration for {@code container} parameter. */
   public static class ContainerParameters {
+
+    // Note: `entrypoint` and `args` are @Nullable to handle inheriting values from the base image
 
     @Parameter private boolean useCurrentTimestamp = false;
 

@@ -59,7 +59,7 @@ public class JibPluginConfigurationTest {
   public void testDefaults() {
     Assert.assertEquals("", testPluginConfiguration.getAppRoot());
     Assert.assertNull(testPluginConfiguration.getWorkingDirectory());
-    Assert.assertNull(testPluginConfiguration.getExtraClasspath());
+    Assert.assertTrue(testPluginConfiguration.getExtraClasspath().isEmpty());
   }
 
   @Test
