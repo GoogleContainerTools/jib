@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Labels in the base image are now propagated. ([#1643](https://github.com/GoogleContainerTools/jib/issues/1643))
+- Labels in the base image are now propagated ([#1643](https://github.com/GoogleContainerTools/jib/issues/1643))
 
 ## 0.9.1
 
@@ -25,7 +25,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fixed an issue where automatically generated parent directories in a layer did not get their timestamp configured correctly to epoch + 1s. ([#1648](https://github.com/GoogleContainerTools/jib/issues/1648))
+- Fixed an issue where automatically generated parent directories in a layer did not get their timestamp configured correctly to epoch + 1s ([#1648](https://github.com/GoogleContainerTools/jib/issues/1648))
 - Fixed an issue where the library creates wrong images by adding base image layers in reverse order when registry uses the old V2 image manifest, schema version 1 (such as Quay) ([#1627](https://github.com/GoogleContainerTools/jib/issues/1627))
 
 ## 0.9.0

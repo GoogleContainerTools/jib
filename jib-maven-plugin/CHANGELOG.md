@@ -11,13 +11,13 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Labels in the base image are now propagated. ([#1643](https://github.com/GoogleContainerTools/jib/issues/1643))
+- Labels in the base image are now propagated ([#1643](https://github.com/GoogleContainerTools/jib/issues/1643))
 
 ## 1.1.2
 
 ### Fixed
 
-- Fixed an issue where automatically generated parent directories in a layer did not get their timestamp configured correctly to epoch + 1s. ([#1648](https://github.com/GoogleContainerTools/jib/issues/1648))
+- Fixed an issue where automatically generated parent directories in a layer did not get their timestamp configured correctly to epoch + 1s ([#1648](https://github.com/GoogleContainerTools/jib/issues/1648))
 
 ## 1.1.1
 
