@@ -300,7 +300,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getExtraClasspath())
-        .thenReturn(Optional.of(Collections.singletonList("/foo")));
+        .thenReturn(Collections.singletonList("/foo"));
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
     PluginConfigurationProcessor processor = createPluginConfigurationProcessor();

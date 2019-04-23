@@ -43,7 +43,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -253,11 +252,11 @@ public class PluginConfigurationProcessor {
         getAppRootChecked(rawConfiguration, projectProperties.isWarProject());
 
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
-    Optional<List<String>> rawExtraClasspath = rawConfiguration.getExtraClasspath();
+    List<String> rawExtraClasspath = rawConfiguration.getExtraClasspath();
     if (rawEntrypoint.isPresent() && !rawEntrypoint.get().isEmpty()) {
       if (rawConfiguration.getMainClass().isPresent()
           || !rawConfiguration.getJvmFlags().isEmpty()
-          || rawExtraClasspath.isPresent()) {
+          || !rawExtraClasspath.isEmpty()) {
         new DefaultEventDispatcher(projectProperties.getEventHandlers())
             .dispatch(
                 LogEvent.warn(
@@ -274,7 +273,7 @@ public class PluginConfigurationProcessor {
       return null;
     }
 
-    List<String> classpath = new ArrayList<>(rawExtraClasspath.orElse(Collections.emptyList()));
+    List<String> classpath = new ArrayList<>(rawExtraClasspath);
     classpath.addAll(JavaEntrypointConstructor.defaultClasspath(appRoot));
     String mainClass =
         MainClassResolver.resolveMainClass(

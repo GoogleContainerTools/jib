@@ -46,7 +46,7 @@ public interface RawConfiguration {
 
   Optional<List<String>> getEntrypoint();
 
-  Optional<List<String>> getExtraClasspath();
+  List<String> getExtraClasspath();
 
   Optional<List<String>> getProgramArguments();
 
