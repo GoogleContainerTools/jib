@@ -43,12 +43,7 @@
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
-          <extraDirectories>
-            <paths>
-              <path>${project.basedir}/src/main/jib-custom</path>
-              <path>${project.basedir}/src/main/jib-custom-2</path>
-            </paths>
-          </extraDirectories>
+          <extraDirectory>deprecated-config</extraDirectory>
         </configuration>
       </plugin>
     </plugins>

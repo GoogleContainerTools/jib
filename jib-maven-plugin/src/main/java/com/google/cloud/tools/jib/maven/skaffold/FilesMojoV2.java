@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.maven.skaffold;
 
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldFilesOutput;
 import com.google.common.annotations.VisibleForTesting;
@@ -167,12 +168,22 @@ public class FilesMojoV2 extends AbstractMojo {
     }
   }
 
-  private List<Path> resolveExtraDirectories(MavenProject project) {
+  private List<Path> resolveExtraDirectories(MavenProject project) throws MojoExecutionException {
     // Try getting extra directory from project/session properties
-    String extraDirectoryProperty =
+    String deprecatedProperty =
         MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH, project, session);
-    if (extraDirectoryProperty != null) {
-      return Collections.singletonList(Paths.get(extraDirectoryProperty));
+    String newProperty =
+        MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS, project, session);
+
+    if (deprecatedProperty != null && newProperty != null) {
+      throw new MojoExecutionException(
+          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'");
+    }
+
+    String property = newProperty != null ? newProperty : deprecatedProperty;
+    if (property != null) {
+      List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
+      return paths.stream().map(Paths::get).collect(Collectors.toList());
     }
 
     // Try getting extra directory from project pom
@@ -180,20 +191,30 @@ public class FilesMojoV2 extends AbstractMojo {
     if (jibMavenPlugin != null) {
       Xpp3Dom pluginConfiguration = (Xpp3Dom) jibMavenPlugin.getConfiguration();
       if (pluginConfiguration != null) {
+
         Xpp3Dom extraDirectoryConfiguration = pluginConfiguration.getChild("extraDirectory");
-        if (extraDirectoryConfiguration != null) {
-          Xpp3Dom pathChild = extraDirectoryConfiguration.getChild("path");
-          if (pathChild != null) {
-            // <extraDirectory><path>...</path></extraDirectory>
-            return Collections.singletonList(Paths.get(pathChild.getValue()));
-          }
-          Xpp3Dom pathsChild = extraDirectoryConfiguration.getChild("paths");
-          if (pathsChild != null) {
-            // <extraDirectory><paths><path>...<path><path>...<path></paths></extraDirectory>
-            return Arrays.stream(pathsChild.getChildren())
+        Xpp3Dom extraDirectoriesConfiguration = pluginConfiguration.getChild("extraDirectories");
+        if (extraDirectoryConfiguration != null && extraDirectoriesConfiguration != null) {
+          throw new MojoExecutionException(
+              "You cannot configure both <extraDirectory> and <extraDirectories>");
+        }
+
+        if (extraDirectoriesConfiguration != null) {
+          Xpp3Dom child = extraDirectoriesConfiguration.getChild("paths");
+          if (child != null) {
+            // <extraDirectories><paths><path>...</path><path>...</path></paths></extraDirectories>
+            return Arrays.stream(child.getChildren())
                 .map(Xpp3Dom::getValue)
                 .map(Paths::get)
                 .collect(Collectors.toList());
+          }
+        }
+
+        if (extraDirectoryConfiguration != null) {
+          Xpp3Dom child = extraDirectoryConfiguration.getChild("path");
+          if (child != null) {
+            // <extraDirectory><path>...</path></extraDirectory>
+            return Collections.singletonList(Paths.get(child.getValue()));
           }
           // <extraDirectory>...</extraDirectory>
           String value = extraDirectoryConfiguration.getValue();
