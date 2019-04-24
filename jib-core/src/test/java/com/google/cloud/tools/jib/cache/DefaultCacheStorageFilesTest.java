@@ -161,6 +161,12 @@ public class DefaultCacheStorageFilesTest {
   }
 
   @Test
+  public void testGetImagesDirectory() {
+    Assert.assertEquals(
+        Paths.get("cache/directory/images"), testDefaultCacheStorageFiles.getImagesDirectory());
+  }
+
+  @Test
   public void testGetImageDirectory() throws InvalidImageReferenceException {
     Path imagesDirectory = Paths.get("cache", "directory", "images");
     Assert.assertEquals(imagesDirectory, testDefaultCacheStorageFiles.getImagesDirectory());

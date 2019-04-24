@@ -73,10 +73,12 @@ public class DefaultCacheStorageWriterTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private DefaultCacheStorageFiles defaultCacheStorageFiles;
+  private Path cacheRoot;
 
   @Before
   public void setUp() throws IOException {
-    defaultCacheStorageFiles = new DefaultCacheStorageFiles(temporaryFolder.newFolder().toPath());
+    cacheRoot = temporaryFolder.newFolder().toPath();
+    defaultCacheStorageFiles = new DefaultCacheStorageFiles(cacheRoot);
   }
 
   @Test
@@ -120,21 +122,13 @@ public class DefaultCacheStorageWriterTest {
     new DefaultCacheStorageWriter(defaultCacheStorageFiles)
         .writeMetadata(imageReference, manifestTemplate);
 
-    Assert.assertTrue(
-        Files.exists(
-            defaultCacheStorageFiles
-                .getImageDirectory(imageReference)
-                .resolve("manifest.amd64.linux.json")));
+    Path savedManifestPath =
+        cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.amd64.linux.json");
+    Assert.assertTrue(Files.exists(savedManifestPath));
 
-    V21ManifestTemplate expectedManifest =
-        JsonTemplateMapper.readJsonFromFile(
-            defaultCacheStorageFiles
-                .getImageDirectory(imageReference)
-                .resolve("manifest.amd64.linux.json"),
-            V21ManifestTemplate.class);
-    Assert.assertEquals(
-        expectedManifest.getContainerConfiguration().get().getArchitecture(),
-        manifestTemplate.getContainerConfiguration().get().getArchitecture());
+    V21ManifestTemplate savedManifest =
+        JsonTemplateMapper.readJsonFromFile(savedManifestPath, V21ManifestTemplate.class);
+    Assert.assertEquals("amd64", savedManifest.getContainerConfiguration().get().getArchitecture());
   }
 
   @Test
@@ -155,36 +149,22 @@ public class DefaultCacheStorageWriterTest {
     new DefaultCacheStorageWriter(defaultCacheStorageFiles)
         .writeMetadata(imageReference, manifestTemplate, containerConfigurationTemplate);
 
-    Assert.assertTrue(
-        Files.exists(
-            defaultCacheStorageFiles
-                .getImageDirectory(imageReference)
-                .resolve("manifest.wasm.js.json")));
-    Assert.assertTrue(
-        Files.exists(
-            defaultCacheStorageFiles
-                .getImageDirectory(imageReference)
-                .resolve("config.wasm.js.json")));
+    Path savedManifestPath =
+        cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.wasm.js.json");
+    Path savedConfigPath =
+        cacheRoot.resolve("images/image.reference/project/thing!tag/config.wasm.js.json");
+    Assert.assertTrue(Files.exists(savedManifestPath));
+    Assert.assertTrue(Files.exists(savedConfigPath));
 
-    V22ManifestTemplate expectedManifest =
-        JsonTemplateMapper.readJsonFromFile(
-            defaultCacheStorageFiles
-                .getImageDirectory(imageReference)
-                .resolve("manifest.wasm.js.json"),
-            V22ManifestTemplate.class);
+    V22ManifestTemplate savedManifest =
+        JsonTemplateMapper.readJsonFromFile(savedManifestPath, V22ManifestTemplate.class);
     Assert.assertEquals(
-        expectedManifest.getContainerConfiguration().getDigest(),
-        manifestTemplate.getContainerConfiguration().getDigest());
+        "8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad",
+        savedManifest.getContainerConfiguration().getDigest().getHash());
 
-    ContainerConfigurationTemplate expectedContainerConfig =
-        JsonTemplateMapper.readJsonFromFile(
-            defaultCacheStorageFiles
-                .getImageDirectory(imageReference)
-                .resolve("config.wasm.js.json"),
-            ContainerConfigurationTemplate.class);
-    Assert.assertEquals(
-        expectedContainerConfig.getArchitecture(),
-        containerConfigurationTemplate.getArchitecture());
+    ContainerConfigurationTemplate savedContainerConfig =
+        JsonTemplateMapper.readJsonFromFile(savedConfigPath, ContainerConfigurationTemplate.class);
+    Assert.assertEquals("wasm", savedContainerConfig.getArchitecture());
   }
 
   private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)
