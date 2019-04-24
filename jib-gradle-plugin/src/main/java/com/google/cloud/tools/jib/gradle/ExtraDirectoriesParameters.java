@@ -22,45 +22,58 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
+import java.util.stream.Collectors;
+import javax.inject.Inject;
+import org.gradle.api.Project;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
 /** Object in {@link JibExtension} that configures the extra directory. */
-@Deprecated
-public class ExtraDirectoryParameters {
+public class ExtraDirectoriesParameters {
 
-  @Deprecated @Nullable private Path path;
-  @Deprecated private Map<String, String> permissions = Collections.emptyMap();
+  private final Project project;
 
-  @Deprecated
+  private List<Path> paths;
+  private Map<String, String> permissions = Collections.emptyMap();
+
+  @Inject
+  public ExtraDirectoriesParameters(Project project) {
+    this.project = project;
+    paths =
+        Collections.singletonList(
+            project.getProjectDir().toPath().resolve("src").resolve("main").resolve("jib"));
+  }
+
   @Input
-  @Nullable
-  public String getPathString() {
+  public List<String> getPathStrings() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    return getPath() == null ? null : getPath().toString();
+    return getPaths().stream().map(Path::toString).collect(Collectors.toList());
   }
 
-  @Deprecated
   @Internal
-  @Nullable
-  public Path getPath() {
+  public List<Path> getPaths() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
+    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
     if (property != null) {
-      return Paths.get(property);
+      List<String> pathStrings = ConfigurationPropertyValidator.parseListProperty(property);
+      return pathStrings.stream().map(Paths::get).collect(Collectors.toList());
     }
-    return path;
+    return paths;
   }
 
-  // for the deprecated "jib.extraDirectory.path" config parameter
-  @Deprecated
-  public void setPath(File file) {
-    // TODO: warn
-    this.path = file.toPath();
+  /**
+   * Sets paths. {@code paths} can be any suitable object describing file paths convertible by
+   * {@link Project#files} (such as {@code List<File>}).
+   *
+   * @param paths paths to set.
+   */
+  public void setPaths(Object paths) {
+    this.paths =
+        project.files(paths).getFiles().stream().map(File::toPath).collect(Collectors.toList());
   }
 
   /**
@@ -70,19 +83,16 @@ public class ExtraDirectoryParameters {
    *
    * @return the permissions map from path on container to file permissions
    */
-  @Deprecated
   @Input
   public Map<String, String> getPermissions() {
-    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS);
+    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
     if (property != null) {
       return ConfigurationPropertyValidator.parseMapProperty(property);
     }
     return permissions;
   }
 
-  @Deprecated
   public void setPermissions(Map<String, String> permissions) {
-    // TODO: warn
     this.permissions = permissions;
   }
 }

@@ -81,7 +81,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   @InputFiles
   public FileCollection getInputFiles() {
     List<Path> extraDirectories =
-        Preconditions.checkNotNull(jibExtension).getExtraDirectory().getPaths();
+        Preconditions.checkNotNull(jibExtension).getExtraDirectoriesPaths();
     return extraDirectories
         .stream()
         .map(Path::toFile)
