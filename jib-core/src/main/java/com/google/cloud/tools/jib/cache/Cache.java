@@ -60,9 +60,9 @@ public class Cache {
   }
 
   /**
-   * Saves an image manifest and container configuration.
+   * Saves a manifest and container configuration for a V2.2 or OCI image.
    *
-   * @param imageReference the image reference the save the manifest and container configuration for
+   * @param imageReference the image reference to save the manifest and container configuration for
    * @param manifestTemplate the V2.2 or OCI manifest
    * @param containerConfigurationTemplate the container configuration
    * @throws IOException if an I/O exception occurs
@@ -78,7 +78,7 @@ public class Cache {
   /**
    * Saves a V2.1 image manifest.
    *
-   * @param imageReference the image reference the save the manifest and container configuration for
+   * @param imageReference the image reference to save the manifest and container configuration for
    * @param manifestTemplate the V2.1 manifest
    * @throws IOException if an I/O exception occurs
    */

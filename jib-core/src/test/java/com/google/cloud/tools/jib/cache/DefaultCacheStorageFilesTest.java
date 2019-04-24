@@ -164,15 +164,20 @@ public class DefaultCacheStorageFilesTest {
   public void testGetImageDirectory() throws InvalidImageReferenceException {
     Path imagesDirectory = Paths.get("cache", "directory", "images");
     Assert.assertEquals(imagesDirectory, testDefaultCacheStorageFiles.getImagesDirectory());
+
     Assert.assertEquals(
-        imagesDirectory.resolve("reg.istry/repo/sitory/tag"),
+        imagesDirectory.resolve("reg.istry/repo/sitory!tag"),
         testDefaultCacheStorageFiles.getImageDirectory(
             ImageReference.parse("reg.istry/repo/sitory:tag")));
     Assert.assertEquals(
         imagesDirectory.resolve(
-            "reg.istry/repo/sha256/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+            "reg.istry/repo!sha256!aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
         testDefaultCacheStorageFiles.getImageDirectory(
             ImageReference.parse(
                 "reg.istry/repo@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
+    Assert.assertEquals(
+        imagesDirectory.resolve("reg.istry!5000/repo/sitory!tag"),
+        testDefaultCacheStorageFiles.getImageDirectory(
+            ImageReference.parse("reg.istry:5000/repo/sitory:tag")));
   }
 }

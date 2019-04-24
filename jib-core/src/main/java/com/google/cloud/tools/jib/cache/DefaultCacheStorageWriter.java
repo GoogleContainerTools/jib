@@ -107,6 +107,26 @@ class DefaultCacheStorageWriter {
     }
   }
 
+  private static void writeMetadata(JsonTemplate jsonTemplate, Path destination)
+      throws IOException {
+    Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
+    temporaryFile.toFile().deleteOnExit();
+    Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(jsonTemplate), temporaryFile);
+
+    // Attempts an atomic move first, and falls back to non-atomic if the file system does not
+    // support atomic moves.
+    try {
+      Files.move(
+          temporaryFile,
+          destination,
+          StandardCopyOption.ATOMIC_MOVE,
+          StandardCopyOption.REPLACE_EXISTING);
+
+    } catch (AtomicMoveNotSupportedException ignored) {
+      Files.move(temporaryFile, destination, StandardCopyOption.REPLACE_EXISTING);
+    }
+  }
+
   private final DefaultCacheStorageFiles defaultCacheStorageFiles;
 
   DefaultCacheStorageWriter(DefaultCacheStorageFiles defaultCacheStorageFiles) {
@@ -211,9 +231,9 @@ class DefaultCacheStorageWriter {
   }
 
   /**
-   * Writes the manifest and container configuration for a given image reference.
+   * Saves the manifest and container configuration for a V2.2 or OCI image.
    *
-   * @param imageReference the image reference
+   * @param imageReference the image reference to store the metadata for
    * @param manifestTemplate the manifest
    * @param containerConfiguration the container configuration
    */
@@ -235,14 +255,14 @@ class DefaultCacheStorageWriter {
 
     // TODO: Lock properly
     // Write manifest and configuration
-    writeMetadataFile(manifestTemplate, imageDirectory.resolve("manifest" + destinationSuffix));
-    writeMetadataFile(containerConfiguration, imageDirectory.resolve("config" + destinationSuffix));
+    writeMetadata(manifestTemplate, imageDirectory.resolve("manifest" + destinationSuffix));
+    writeMetadata(containerConfiguration, imageDirectory.resolve("config" + destinationSuffix));
   }
 
   /**
    * Writes a V2.1 manifest for a given image reference.
    *
-   * @param imageReference the image reference
+   * @param imageReference the image reference to store the metadata for
    * @param manifestTemplate the manifest
    */
   void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
@@ -252,17 +272,19 @@ class DefaultCacheStorageWriter {
     Files.createDirectories(imageDirectory);
 
     ContainerConfigurationTemplate containerConfiguration =
-        manifestTemplate.getContainerConfiguration();
+        manifestTemplate.getContainerConfiguration().orElse(null);
     String fileName =
-        "manifest."
-            + (containerConfiguration == null ? "amd64" : containerConfiguration.getArchitecture())
-            + "."
-            + (containerConfiguration == null ? "linux" : containerConfiguration.getOs())
-            + ".json";
+        containerConfiguration == null
+            ? "manifest.amd64.linux.json"
+            : "manifest."
+                + containerConfiguration.getArchitecture()
+                + "."
+                + containerConfiguration.getOs()
+                + ".json";
 
     // TODO: Lock properly
     // Write manifest
-    writeMetadataFile(manifestTemplate, imageDirectory.resolve(fileName));
+    writeMetadata(manifestTemplate, imageDirectory.resolve(fileName));
   }
 
   /**
@@ -363,16 +385,5 @@ class DefaultCacheStorageWriter {
     } catch (AtomicMoveNotSupportedException ignored) {
       Files.move(temporarySelectorFile, selectorFile, StandardCopyOption.REPLACE_EXISTING);
     }
-  }
-
-  private void writeMetadataFile(JsonTemplate template, Path destination) throws IOException {
-    Path temporaryFile = Files.createTempFile(null, null);
-    temporaryFile.toFile().deleteOnExit();
-    Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(template), temporaryFile);
-    Files.move(
-        temporaryFile,
-        destination,
-        StandardCopyOption.ATOMIC_MOVE,
-        StandardCopyOption.REPLACE_EXISTING);
   }
 }

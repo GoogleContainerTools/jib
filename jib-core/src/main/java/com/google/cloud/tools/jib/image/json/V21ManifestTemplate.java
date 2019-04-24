@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -118,21 +119,21 @@ public class V21ManifestTemplate implements ManifestTemplate {
    *
    * @return container configuration if the first history string holds it; {@code null} otherwise
    */
-  @Nullable
-  public ContainerConfigurationTemplate getContainerConfiguration() {
+  public Optional<ContainerConfigurationTemplate> getContainerConfiguration() {
     try {
       if (history.isEmpty()) {
-        return null;
+        return Optional.empty();
       }
       String v1Compatibility = history.get(0).v1Compatibility;
       if (v1Compatibility == null) {
-        return null;
+        return Optional.empty();
       }
 
-      return JsonTemplateMapper.readJson(v1Compatibility, ContainerConfigurationTemplate.class);
+      return Optional.of(
+          JsonTemplateMapper.readJson(v1Compatibility, ContainerConfigurationTemplate.class));
     } catch (IOException ex) {
       // not a container configuration; ignore and continue
-      return null;
+      return Optional.empty();
     }
   }
 }

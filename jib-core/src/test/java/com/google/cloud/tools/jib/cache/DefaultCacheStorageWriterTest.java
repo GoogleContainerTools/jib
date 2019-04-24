@@ -133,8 +133,8 @@ public class DefaultCacheStorageWriterTest {
                 .resolve("manifest.amd64.linux.json"),
             V21ManifestTemplate.class);
     Assert.assertEquals(
-        expectedManifest.getContainerConfiguration().getArchitecture(),
-        manifestTemplate.getContainerConfiguration().getArchitecture());
+        expectedManifest.getContainerConfiguration().get().getArchitecture(),
+        manifestTemplate.getContainerConfiguration().get().getArchitecture());
   }
 
   @Test

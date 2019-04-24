@@ -130,12 +130,14 @@ class DefaultCacheStorageFiles {
    *
    * @param imageReference the image reference
    * @return a path in the form of {@code
-   *     (jib-cache)/images/registry[/port]/repository/(tag|digest-type/digest)}
+   *     (jib-cache)/images/registry[!port]/repository!(tag|digest-type!digest)}
    */
   Path getImageDirectory(ImageReference imageReference) {
-    // Split image reference on '/', ':', and '@' to build directory structure
-    Iterable<String> directories =
-        Splitter.onPattern("\\/|:|@").split(imageReference.toStringWithTag());
+    // Replace ':' and '@' with '!' to avoid directory-naming restrictions
+    String replacedReference = imageReference.toStringWithTag().replace(':', '!').replace('@', '!');
+
+    // Split image reference on '/' to build directory structure
+    Iterable<String> directories = Splitter.on('/').split(replacedReference);
     Path destination = getImagesDirectory();
     for (String dir : directories) {
       destination = destination.resolve(dir);

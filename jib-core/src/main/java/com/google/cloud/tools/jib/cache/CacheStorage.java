@@ -89,7 +89,7 @@ interface CacheStorage {
       throws IOException, CacheCorruptedException;
 
   /**
-   * Saves the manifest and container configuration.
+   * Saves the manifest and container configuration for a V2.2 or OCI image.
    *
    * @param imageReference the image reference to store the metadata for
    * @param manifestTemplate the image's manifest
