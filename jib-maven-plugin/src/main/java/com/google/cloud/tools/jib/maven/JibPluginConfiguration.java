@@ -220,7 +220,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
-  MavenSession session;
+  private MavenSession session;
 
   @Nullable
   @Parameter(defaultValue = "${project}", readonly = true)
@@ -616,6 +616,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @VisibleForTesting
   void setProject(MavenProject project) {
     this.project = project;
+  }
+
+  @VisibleForTesting
+  void setSession(MavenSession session) {
+    this.session = session;
   }
 
   @Nullable

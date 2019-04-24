@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -41,6 +42,7 @@ public class JibPluginConfigurationTest {
   private final MavenProject project = new MavenProject();
   private final Properties sessionProperties = new Properties();
   @Mock private MavenSession session;
+  @Mock private Log log;
   private JibPluginConfiguration testPluginConfiguration;
 
   @Before
@@ -50,9 +52,14 @@ public class JibPluginConfigurationTest {
         new JibPluginConfiguration() {
           @Override
           public void execute() {}
+
+          @Override
+          public Log getLog() {
+            return log;
+          }
         };
     testPluginConfiguration.setProject(project);
-    testPluginConfiguration.session = session;
+    testPluginConfiguration.setSession(session);
   }
 
   @Test
@@ -213,6 +220,11 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("650", permissions.get(0).getMode().get());
     Assert.assertEquals("/another/file24", permissions.get(1).getFile().get());
     Assert.assertEquals("777", permissions.get(1).getMode().get());
+
+    Mockito.verify(log, Mockito.times(1))
+        .warn(
+            "The property 'jib.extraDirectory.path' is deprecated; "
+                + "use 'jib.extraDirectories.paths' instead");
   }
 
   @Test
@@ -231,5 +243,41 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("654", permissions.get(0).getMode().get());
     Assert.assertEquals("/dir/file2", permissions.get(1).getFile().get());
     Assert.assertEquals("321", permissions.get(1).getMode().get());
+
+    Mockito.verify(log, Mockito.times(1))
+        .warn(
+            "The property 'jib.extraDirectory.path' is deprecated; "
+                + "use 'jib.extraDirectories.paths' instead");
+  }
+
+  @Test
+  public void testGetExtraDirectories_bothSystemPropertiesUsed() {
+    sessionProperties.put("jib.extraDirectory.path", "deprecated-property");
+    sessionProperties.put("jib.extraDirectories.paths", "new-property");
+
+    try {
+      testPluginConfiguration.getExtraDirectories();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetExtraDirectories_bothPropertiesUsed() {
+    Properties projectProperties = project.getProperties();
+    projectProperties.setProperty("jib.extraDirectory.path", "deprecated-property");
+    projectProperties.setProperty("jib.extraDirectories.paths", "new-property");
+
+    try {
+      testPluginConfiguration.getExtraDirectories();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
+          ex.getMessage());
+    }
   }
 }
