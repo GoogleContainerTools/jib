@@ -21,7 +21,6 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
-import com.google.cloud.tools.jib.builder.BuildSteps;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
@@ -44,7 +43,10 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
 
-/** Runs a {@link BuildSteps} and builds helpful error messages. */
+/** Runs a build steps and builds helpful error messages. */
+// TODO: find a better name for the class, since there is no "steps" visible or mentioned at all;
+// this class is really a thin helper whose main job is to call
+// "jibContainerBuilder.containerize(containerizer)".
 public class BuildStepsRunner {
 
   private static final String STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY =
@@ -159,7 +161,7 @@ public class BuildStepsRunner {
   }
 
   /**
-   * Runs the {@link BuildSteps}.
+   * Runs the build steps.
    *
    * @param jibContainerBuilder the {@link JibContainerBuilder}
    * @param containerizer the {@link Containerizer}
