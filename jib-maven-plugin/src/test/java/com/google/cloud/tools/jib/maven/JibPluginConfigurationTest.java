@@ -280,4 +280,37 @@ public class JibPluginConfigurationTest {
           ex.getMessage());
     }
   }
+
+  @Test
+  public void testGetExtraDirectoryPermissions_bothSystemPropertiesUsed() {
+    sessionProperties.put("jib.extraDirectory.permissions", "deprecated-property");
+    sessionProperties.put("jib.extraDirectories.permissions", "new-property");
+
+    try {
+      testPluginConfiguration.getExtraDirectoryPermissions();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "You cannot configure both 'jib.extraDirectory.permissions' and "
+              + "'jib.extraDirectories.permissions'",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetExtraDirectoryPermissions_bothPropertiesUsed() {
+    Properties projectProperties = project.getProperties();
+    projectProperties.setProperty("jib.extraDirectory.permissions", "deprecated-property");
+    projectProperties.setProperty("jib.extraDirectories.permissions", "new-property");
+
+    try {
+      testPluginConfiguration.getExtraDirectoryPermissions();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "You cannot configure both 'jib.extraDirectory.permissions' and "
+              + "'jib.extraDirectories.permissions'",
+          ex.getMessage());
+    }
+  }
 }
