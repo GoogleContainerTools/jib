@@ -21,11 +21,19 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
@@ -97,6 +105,46 @@ public class DefaultCacheStorageWriterTest {
     Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
     Assert.assertTrue(Files.exists(selectorFile));
     Assert.assertEquals(layerDigest.getHash(), Blobs.writeToString(Blobs.from(selectorFile)));
+  }
+
+  @Test
+  public void testWriteMetadata()
+      throws IOException, URISyntaxException, InvalidImageReferenceException {
+    Path containerConfigurationJsonFile =
+        Paths.get(
+            getClass().getClassLoader().getResource("core/json/containerconfig.json").toURI());
+    ContainerConfigurationTemplate containerConfigurationTemplate =
+        JsonTemplateMapper.readJsonFromFile(
+            containerConfigurationJsonFile, ContainerConfigurationTemplate.class);
+    Path manifestJsonFile =
+        Paths.get(getClass().getClassLoader().getResource("core/json/v22manifest.json").toURI());
+    BuildableManifestTemplate manifestTemplate =
+        JsonTemplateMapper.readJsonFromFile(manifestJsonFile, V22ManifestTemplate.class);
+    ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
+
+    new DefaultCacheStorageWriter(defaultCacheStorageFiles)
+        .writeMetadata(imageReference, manifestTemplate, containerConfigurationTemplate);
+
+    Assert.assertTrue(
+        Files.exists(
+            defaultCacheStorageFiles
+                .getImageDirectory(imageReference)
+                .resolve("manifest.wasm.js.json")));
+    Assert.assertTrue(
+        Files.exists(
+            defaultCacheStorageFiles
+                .getImageDirectory(imageReference)
+                .resolve("config.wasm.js.json")));
+
+    V22ManifestTemplate expectedManifest =
+        JsonTemplateMapper.readJsonFromFile(
+            defaultCacheStorageFiles
+                .getImageDirectory(imageReference)
+                .resolve("manifest.wasm.js.json"),
+            V22ManifestTemplate.class);
+    Assert.assertEquals(
+        expectedManifest.getContainerConfiguration().getDigest(),
+        manifestTemplate.getContainerConfiguration().getDigest());
   }
 
   private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)

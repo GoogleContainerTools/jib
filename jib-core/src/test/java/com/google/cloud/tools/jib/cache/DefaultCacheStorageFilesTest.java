@@ -17,6 +17,9 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
 import org.hamcrest.CoreMatchers;
@@ -155,5 +158,21 @@ public class DefaultCacheStorageFilesTest {
   public void testGetTemporaryDirectory() {
     Assert.assertEquals(
         Paths.get("cache/directory/tmp"), testDefaultCacheStorageFiles.getTemporaryDirectory());
+  }
+
+  @Test
+  public void testGetImageDirectory() throws InvalidImageReferenceException {
+    Path imagesDirectory = Paths.get("cache", "directory", "images");
+    Assert.assertEquals(imagesDirectory, testDefaultCacheStorageFiles.getImagesDirectory());
+    Assert.assertEquals(
+        imagesDirectory.resolve("reg.istry/repo/sitory/tag"),
+        testDefaultCacheStorageFiles.getImageDirectory(
+            ImageReference.parse("reg.istry/repo/sitory:tag")));
+    Assert.assertEquals(
+        imagesDirectory.resolve(
+            "reg.istry/repo/sha256/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+        testDefaultCacheStorageFiles.getImageDirectory(
+            ImageReference.parse(
+                "reg.istry/repo@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
   }
 }

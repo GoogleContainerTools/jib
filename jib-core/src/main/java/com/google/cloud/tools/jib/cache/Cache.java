@@ -18,7 +18,10 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -53,6 +56,22 @@ public class Cache {
 
   private Cache(CacheStorage cacheStorage) {
     this.cacheStorage = cacheStorage;
+  }
+
+  /**
+   * Saves an image manifest and container configuration.
+   *
+   * @param imageReference the image reference the save the manifest and container configuration for
+   * @param manifestTemplate the manifest
+   * @param containerConfigurationTemplate the container configuration
+   * @throws IOException if an I/O exception occurs
+   */
+  public void writeMetadata(
+      ImageReference imageReference,
+      ManifestTemplate manifestTemplate,
+      ContainerConfigurationTemplate containerConfigurationTemplate)
+      throws IOException {
+    cacheStorage.writeMetadata(imageReference, manifestTemplate, containerConfigurationTemplate);
   }
 
   /**

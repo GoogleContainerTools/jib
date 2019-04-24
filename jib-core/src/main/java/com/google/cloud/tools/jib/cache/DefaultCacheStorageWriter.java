@@ -22,6 +22,10 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.TemporaryDirectory;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -202,6 +206,52 @@ class DefaultCacheStorageWriter {
 
       return cachedLayerBuilder.build();
     }
+  }
+
+  /**
+   * Writes the manifest and container configuration for a given image reference.
+   *
+   * @param imageReference the image reference
+   * @param manifestTemplate the manifest
+   * @param containerConfiguration the container configuration
+   */
+  void writeMetadata(
+      ImageReference imageReference,
+      ManifestTemplate manifestTemplate,
+      ContainerConfigurationTemplate containerConfiguration)
+      throws IOException {
+    // Create the images directory
+    Path imageDirectory = defaultCacheStorageFiles.getImageDirectory(imageReference);
+    Files.createDirectories(imageDirectory);
+
+    String destinationSuffix =
+        "."
+            + containerConfiguration.getArchitecture()
+            + "."
+            + containerConfiguration.getOs()
+            + ".json";
+
+    // TODO: Lock properly
+    // Write manifest
+    Path temporaryManifest = Files.createTempFile(null, null);
+    temporaryManifest.toFile().deleteOnExit();
+    Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(manifestTemplate), temporaryManifest);
+    Files.move(
+        temporaryManifest,
+        imageDirectory.resolve("manifest" + destinationSuffix),
+        StandardCopyOption.ATOMIC_MOVE,
+        StandardCopyOption.REPLACE_EXISTING);
+
+    // Write configuration
+    Path temporaryConfiguration = Files.createTempFile(null, null);
+    temporaryConfiguration.toFile().deleteOnExit();
+    Blobs.writeToFileWithLock(
+        JsonTemplateMapper.toBlob(containerConfiguration), temporaryConfiguration);
+    Files.move(
+        temporaryConfiguration,
+        imageDirectory.resolve("config" + destinationSuffix),
+        StandardCopyOption.ATOMIC_MOVE,
+        StandardCopyOption.REPLACE_EXISTING);
   }
 
   /**

@@ -18,6 +18,9 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
@@ -83,4 +86,17 @@ interface CacheStorage {
    */
   Optional<DescriptorDigest> select(DescriptorDigest selector)
       throws IOException, CacheCorruptedException;
+
+  /**
+   * Saves the manifest and container configuration.
+   *
+   * @param imageReference the image reference to store the metadata for
+   * @param manifestTemplate the image's manifest
+   * @param containerConfigurationTemplate the image's container configuration
+   */
+  void writeMetadata(
+      ImageReference imageReference,
+      ManifestTemplate manifestTemplate,
+      ContainerConfigurationTemplate containerConfigurationTemplate)
+      throws IOException;
 }
