@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
+import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
@@ -63,8 +64,8 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Integration tests for {@link BuildSteps}. */
-public class BuildStepsIntegrationTest {
+/** Integration tests for {@link StepsRunnerFactory}. */
+public class StepsRunnerIntegrationTest {
 
   /**
    * Helper class to hold a {@link ProgressEventHandler} and verify that it handles a full progress.
@@ -89,7 +90,7 @@ public class BuildStepsIntegrationTest {
 
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
   private static final ExecutorService executorService = Executors.newCachedThreadPool();
-  private static final Logger logger = LoggerFactory.getLogger(BuildStepsIntegrationTest.class);
+  private static final Logger logger = LoggerFactory.getLogger(StepsRunnerIntegrationTest.class);
   private static final String DISTROLESS_DIGEST =
       "sha256:f488c213f278bc5f9ffe3ddf30c5dbb2303a15a74146b738d12453088e662880";
 
@@ -176,18 +177,18 @@ public class BuildStepsIntegrationTest {
     ProgressChecker progressChecker = new ProgressChecker();
 
     long lastTime = System.nanoTime();
+    BuildConfiguration buildConfiguration1 =
+        getBuildConfigurationBuilder(
+                ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+                ImageReference.of("localhost:5000", "testimage", "testtag"))
+            .setEventDispatcher(
+                new DefaultEventDispatcher(
+                    new EventHandlers()
+                        .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
+                        .add(JibEventType.LAYER_COUNT, layerCountConsumer)))
+            .build();
     BuildResult image1 =
-        BuildSteps.forBuildToDockerRegistry(
-                getBuildConfigurationBuilder(
-                        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-                        ImageReference.of("localhost:5000", "testimage", "testtag"))
-                    .setEventDispatcher(
-                        new DefaultEventDispatcher(
-                            new EventHandlers()
-                                .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
-                                .add(JibEventType.LAYER_COUNT, layerCountConsumer)))
-                    .build())
-            .run();
+        StepsRunnerFactory.forBuildToDockerRegistry().apply(buildConfiguration1).run();
     progressChecker.checkCompletion();
     Assert.assertEquals(
         layerCounts,
@@ -204,13 +205,14 @@ public class BuildStepsIntegrationTest {
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     lastTime = System.nanoTime();
+    BuildConfiguration buildConfiguration2 =
+        getBuildConfigurationBuilder(
+                ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+                ImageReference.of("localhost:5000", "testimage", "testtag"))
+            .build();
     BuildResult image2 =
-        BuildSteps.forBuildToDockerRegistry(
-                getBuildConfigurationBuilder(
-                        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-                        ImageReference.of("localhost:5000", "testimage", "testtag"))
-                    .build())
-            .run();
+        StepsRunnerFactory.forBuildToDockerRegistry().apply(buildConfiguration2).run();
+
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     Assert.assertEquals(image1, image2);
@@ -232,19 +234,20 @@ public class BuildStepsIntegrationTest {
   @Test
   public void testSteps_forBuildToDockerRegistry_multipleTags()
       throws IOException, InterruptedException, ExecutionException {
-    BuildSteps buildImageSteps =
-        BuildSteps.forBuildToDockerRegistry(
-            getBuildConfigurationBuilder(
-                    ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-                    ImageReference.of("localhost:5000", "testimage", "testtag"))
-                .setAdditionalTargetImageTags(ImmutableSet.of("testtag2", "testtag3"))
-                .build());
+    BuildConfiguration buildConfiguration =
+        getBuildConfigurationBuilder(
+                ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+                ImageReference.of("localhost:5000", "testimage", "testtag"))
+            .setAdditionalTargetImageTags(ImmutableSet.of("testtag2", "testtag3"))
+            .build();
+    StepsRunner StepsRunner =
+        StepsRunnerFactory.forBuildToDockerRegistry().apply(buildConfiguration);
 
     long lastTime = System.nanoTime();
-    buildImageSteps.run();
+    StepsRunner.run();
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
     lastTime = System.nanoTime();
-    buildImageSteps.run();
+    StepsRunner.run();
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     String imageReference = "localhost:5000/testimage:testtag";
@@ -271,12 +274,12 @@ public class BuildStepsIntegrationTest {
   @Test
   public void testSteps_forBuildToDockerRegistry_dockerHubBaseImage()
       throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException {
-    BuildSteps.forBuildToDockerRegistry(
-            getBuildConfigurationBuilder(
-                    ImageReference.parse("openjdk:8-jre-alpine"),
-                    ImageReference.of("localhost:5000", "testimage", "testtag"))
-                .build())
-        .run();
+    BuildConfiguration buildConfiguration =
+        getBuildConfigurationBuilder(
+                ImageReference.parse("openjdk:8-jre-alpine"),
+                ImageReference.of("localhost:5000", "testimage", "testtag"))
+            .build();
+    StepsRunnerFactory.forBuildToDockerRegistry().apply(buildConfiguration).run();
 
     String imageReference = "localhost:5000/testimage:testtag";
     new Command("docker", "pull", imageReference).run();
@@ -299,7 +302,9 @@ public class BuildStepsIntegrationTest {
                         .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
                         .add(JibEventType.LAYER_COUNT, layerCountConsumer)))
             .build();
-    BuildSteps.forBuildToDockerDaemon(DockerClient.newDefaultClient(), buildConfiguration).run();
+    StepsRunnerFactory.forBuildToDockerDaemon(DockerClient.newDefaultClient())
+        .apply(buildConfiguration)
+        .run();
 
     progressChecker.checkCompletion();
     Assert.assertEquals(
@@ -325,7 +330,9 @@ public class BuildStepsIntegrationTest {
                 ImageReference.of(null, imageReference, null))
             .setAdditionalTargetImageTags(ImmutableSet.of("testtag2", "testtag3"))
             .build();
-    BuildSteps.forBuildToDockerDaemon(DockerClient.newDefaultClient(), buildConfiguration).run();
+    StepsRunnerFactory.forBuildToDockerDaemon(DockerClient.newDefaultClient())
+        .apply(buildConfiguration)
+        .run();
 
     assertDockerInspect(imageReference);
     Assert.assertEquals(
@@ -356,7 +363,7 @@ public class BuildStepsIntegrationTest {
                         .add(JibEventType.LAYER_COUNT, layerCountConsumer)))
             .build();
     Path outputPath = temporaryFolder.newFolder().toPath().resolve("test.tar");
-    BuildSteps.forBuildToTar(outputPath, buildConfiguration).run();
+    StepsRunnerFactory.forBuildToTar(outputPath).apply(buildConfiguration).run();
 
     progressChecker.checkCompletion();
     Assert.assertEquals(
