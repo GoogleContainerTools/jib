@@ -57,7 +57,10 @@ public class ExtraDirectoryParameters {
   public List<Path> getPaths() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
+    String deprecatedProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
+    String newProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
+
+    String property = newProperty != null ? newProperty : deprecatedProperty;
     if (property != null) {
       List<String> pathStrings = ConfigurationPropertyValidator.parseListProperty(property);
       return pathStrings.stream().map(Paths::get).collect(Collectors.toList());
@@ -71,10 +74,15 @@ public class ExtraDirectoryParameters {
    *
    * @param paths paths to set.
    */
-  // non-plural to retain backward-compatibility for the "jib.extraDirectory.path" config parameter
-  public void setPath(Object paths) {
+  public void setPaths(Object paths) {
     this.paths =
         project.files(paths).getFiles().stream().map(File::toPath).collect(Collectors.toList());
+  }
+
+  // for the deprecated "jib.extraDirectory.path" config parameter
+  @Deprecated
+  public void setPath(File path) {
+    this.paths = Collections.singletonList(path.toPath());
   }
 
   /**
@@ -86,9 +94,12 @@ public class ExtraDirectoryParameters {
    */
   @Input
   public Map<String, String> getPermissions() {
-    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS) != null) {
-      return ConfigurationPropertyValidator.parseMapProperty(
-          System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS));
+    String deprecatedProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS);
+    String newProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
+
+    String property = newProperty != null ? newProperty : deprecatedProperty;
+    if (property != null) {
+      return ConfigurationPropertyValidator.parseMapProperty(property);
     }
     return permissions;
   }

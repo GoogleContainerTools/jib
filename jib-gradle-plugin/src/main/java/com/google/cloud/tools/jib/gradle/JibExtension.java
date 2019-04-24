@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import java.io.File;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
@@ -48,8 +49,8 @@ import org.gradle.api.tasks.Optional;
  *     format = OCI
  *     appRoot = '/app'
  *   }
- *   extraDirectory {
- *     path = file('path/to/extra/dir')
+ *   extraDirectories {
+ *     paths = ['/path/to/extra/dir', 'can/be/relative/to/project/root']
  *     permissions = [
  *       '/path/on/container/file1': 744,
  *       '/path/on/container/file2': 123
@@ -67,7 +68,7 @@ public class JibExtension {
   private final BaseImageParameters from;
   private final TargetImageParameters to;
   private final ContainerParameters container;
-  private final ExtraDirectoryParameters extraDirectory;
+  private final ExtraDirectoryParameters extraDirectories;
 
   private final Property<Boolean> allowInsecureRegistries;
 
@@ -77,7 +78,7 @@ public class JibExtension {
     from = objectFactory.newInstance(BaseImageParameters.class);
     to = objectFactory.newInstance(TargetImageParameters.class);
     container = objectFactory.newInstance(ContainerParameters.class);
-    extraDirectory = objectFactory.newInstance(ExtraDirectoryParameters.class, project);
+    extraDirectories = objectFactory.newInstance(ExtraDirectoryParameters.class, project);
 
     allowInsecureRegistries = objectFactory.property(Boolean.class);
 
@@ -98,7 +99,7 @@ public class JibExtension {
   }
 
   public void extraDirectory(Action<? super ExtraDirectoryParameters> action) {
-    action.execute(extraDirectory);
+    action.execute(extraDirectories);
   }
 
   /**
@@ -107,9 +108,14 @@ public class JibExtension {
    *
    * @param extraDirectories paths to set.
    */
-  // non-plural to retain backward-compatibility for the "jib.extraDirectory" config parameter
-  public void setExtraDirectory(Object extraDirectories) {
-    this.extraDirectory.setPath(extraDirectories);
+  public void setExtraDirectories(Object extraDirectories) {
+    this.extraDirectories.setPaths(extraDirectories);
+  }
+
+  @Deprecated
+  // for the deprecated "jib.extraDirectory" config parameter
+  public void setExtraDirectory(File extraDirectories) {
+    this.extraDirectories.setPath(extraDirectories);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
@@ -137,7 +143,7 @@ public class JibExtension {
   @Nested
   @Optional
   public ExtraDirectoryParameters getExtraDirectory() {
-    return extraDirectory;
+    return extraDirectories;
   }
 
   @Input
