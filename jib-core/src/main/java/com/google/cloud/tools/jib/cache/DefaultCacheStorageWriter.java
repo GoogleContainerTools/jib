@@ -107,6 +107,14 @@ class DefaultCacheStorageWriter {
     }
   }
 
+  /**
+   * Writes a json template to the destination path by writing to a temporary file then moving the
+   * file.
+   *
+   * @param jsonTemplate the json template
+   * @param destination the destination path
+   * @throws IOException if an I/O exception occurs
+   */
   private static void writeMetadata(JsonTemplate jsonTemplate, Path destination)
       throws IOException {
     Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
