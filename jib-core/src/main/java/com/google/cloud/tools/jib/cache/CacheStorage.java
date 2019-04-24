@@ -93,6 +93,7 @@ interface CacheStorage {
    * @param imageReference the image reference to store the metadata for
    * @param manifestTemplate the image's manifest
    * @param containerConfigurationTemplate the image's container configuration
+   * @throws IOException if an I/O exception occurs
    */
   void writeMetadata(
       ImageReference imageReference,
