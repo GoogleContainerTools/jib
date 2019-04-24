@@ -19,8 +19,9 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
@@ -97,7 +98,17 @@ interface CacheStorage {
    */
   void writeMetadata(
       ImageReference imageReference,
-      ManifestTemplate manifestTemplate,
+      BuildableManifestTemplate manifestTemplate,
       ContainerConfigurationTemplate containerConfigurationTemplate)
+      throws IOException;
+
+  /**
+   * Saves a V2.1 manifest.
+   *
+   * @param imageReference the image reference to store the metadata for
+   * @param manifestTemplate the image's manifest
+   * @throws IOException if an I/O exception occurs
+   */
+  void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
       throws IOException;
 }

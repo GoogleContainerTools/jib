@@ -23,8 +23,10 @@ import com.google.cloud.tools.jib.filesystem.TemporaryDirectory;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
@@ -217,7 +219,7 @@ class DefaultCacheStorageWriter {
    */
   void writeMetadata(
       ImageReference imageReference,
-      ManifestTemplate manifestTemplate,
+      BuildableManifestTemplate manifestTemplate,
       ContainerConfigurationTemplate containerConfiguration)
       throws IOException {
     // Create the images directory
@@ -232,26 +234,35 @@ class DefaultCacheStorageWriter {
             + ".json";
 
     // TODO: Lock properly
-    // Write manifest
-    Path temporaryManifest = Files.createTempFile(null, null);
-    temporaryManifest.toFile().deleteOnExit();
-    Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(manifestTemplate), temporaryManifest);
-    Files.move(
-        temporaryManifest,
-        imageDirectory.resolve("manifest" + destinationSuffix),
-        StandardCopyOption.ATOMIC_MOVE,
-        StandardCopyOption.REPLACE_EXISTING);
+    // Write manifest and configuration
+    writeMetadataFile(manifestTemplate, imageDirectory.resolve("manifest" + destinationSuffix));
+    writeMetadataFile(containerConfiguration, imageDirectory.resolve("config" + destinationSuffix));
+  }
 
-    // Write configuration
-    Path temporaryConfiguration = Files.createTempFile(null, null);
-    temporaryConfiguration.toFile().deleteOnExit();
-    Blobs.writeToFileWithLock(
-        JsonTemplateMapper.toBlob(containerConfiguration), temporaryConfiguration);
-    Files.move(
-        temporaryConfiguration,
-        imageDirectory.resolve("config" + destinationSuffix),
-        StandardCopyOption.ATOMIC_MOVE,
-        StandardCopyOption.REPLACE_EXISTING);
+  /**
+   * Writes a V2.1 manifest for a given image reference.
+   *
+   * @param imageReference the image reference
+   * @param manifestTemplate the manifest
+   */
+  void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
+      throws IOException {
+    // Create the images directory
+    Path imageDirectory = defaultCacheStorageFiles.getImageDirectory(imageReference);
+    Files.createDirectories(imageDirectory);
+
+    ContainerConfigurationTemplate containerConfiguration =
+        manifestTemplate.getContainerConfiguration();
+    String fileName =
+        "manifest."
+            + (containerConfiguration == null ? "amd64" : containerConfiguration.getArchitecture())
+            + "."
+            + (containerConfiguration == null ? "linux" : containerConfiguration.getOs())
+            + ".json";
+
+    // TODO: Lock properly
+    // Write manifest
+    writeMetadataFile(manifestTemplate, imageDirectory.resolve(fileName));
   }
 
   /**
@@ -352,5 +363,16 @@ class DefaultCacheStorageWriter {
     } catch (AtomicMoveNotSupportedException ignored) {
       Files.move(temporarySelectorFile, selectorFile, StandardCopyOption.REPLACE_EXISTING);
     }
+  }
+
+  private void writeMetadataFile(JsonTemplate template, Path destination) throws IOException {
+    Path temporaryFile = Files.createTempFile(null, null);
+    temporaryFile.toFile().deleteOnExit();
+    Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(template), temporaryFile);
+    Files.move(
+        temporaryFile,
+        destination,
+        StandardCopyOption.ATOMIC_MOVE,
+        StandardCopyOption.REPLACE_EXISTING);
   }
 }

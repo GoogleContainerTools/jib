@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.ByteStreams;
@@ -108,7 +109,36 @@ public class DefaultCacheStorageWriterTest {
   }
 
   @Test
-  public void testWriteMetadata()
+  public void testWriteMetadata_v21()
+      throws IOException, URISyntaxException, InvalidImageReferenceException {
+    Path manifestJsonFile =
+        Paths.get(getClass().getClassLoader().getResource("core/json/v21manifest.json").toURI());
+    V21ManifestTemplate manifestTemplate =
+        JsonTemplateMapper.readJsonFromFile(manifestJsonFile, V21ManifestTemplate.class);
+    ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
+
+    new DefaultCacheStorageWriter(defaultCacheStorageFiles)
+        .writeMetadata(imageReference, manifestTemplate);
+
+    Assert.assertTrue(
+        Files.exists(
+            defaultCacheStorageFiles
+                .getImageDirectory(imageReference)
+                .resolve("manifest.amd64.linux.json")));
+
+    V21ManifestTemplate expectedManifest =
+        JsonTemplateMapper.readJsonFromFile(
+            defaultCacheStorageFiles
+                .getImageDirectory(imageReference)
+                .resolve("manifest.amd64.linux.json"),
+            V21ManifestTemplate.class);
+    Assert.assertEquals(
+        expectedManifest.getContainerConfiguration().getArchitecture(),
+        manifestTemplate.getContainerConfiguration().getArchitecture());
+  }
+
+  @Test
+  public void testWriteMetadata_v22()
       throws IOException, URISyntaxException, InvalidImageReferenceException {
     Path containerConfigurationJsonFile =
         Paths.get(
@@ -145,6 +175,16 @@ public class DefaultCacheStorageWriterTest {
     Assert.assertEquals(
         expectedManifest.getContainerConfiguration().getDigest(),
         manifestTemplate.getContainerConfiguration().getDigest());
+
+    ContainerConfigurationTemplate expectedContainerConfig =
+        JsonTemplateMapper.readJsonFromFile(
+            defaultCacheStorageFiles
+                .getImageDirectory(imageReference)
+                .resolve("config.wasm.js.json"),
+            ContainerConfigurationTemplate.class);
+    Assert.assertEquals(
+        expectedContainerConfig.getArchitecture(),
+        containerConfigurationTemplate.getArchitecture());
   }
 
   private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)
