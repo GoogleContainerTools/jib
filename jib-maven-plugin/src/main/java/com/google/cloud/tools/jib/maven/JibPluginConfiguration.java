@@ -99,7 +99,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /** Used to configure {@code extraDirectory.permissions} parameter. */
+  /** Used to configure {@code extraDirectories.permissions} parameter. */
   public static class PermissionConfiguration {
 
     @Nullable @Parameter private String file;
@@ -154,6 +154,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for {@code container} parameter. */
   public static class ContainerParameters {
 
+    // Note: `entrypoint` and `args` are @Nullable to handle inheriting values from the base image
+
     @Parameter private boolean useCurrentTimestamp = false;
 
     @Nullable @Parameter private List<String> entrypoint;
@@ -161,6 +163,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private List<String> jvmFlags = Collections.emptyList();
 
     @Parameter private Map<String, String> environment = Collections.emptyMap();
+
+    @Parameter private List<String> extraClasspath = Collections.emptyList();
 
     @Nullable @Parameter private String mainClass;
 
@@ -183,35 +187,44 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String workingDirectory;
   }
 
-  /** Configuration for the {@code extraDirectory} parameter. */
-  public static class ExtraDirectoryParameters {
-
-    // retained for backward-compatibility for <extraDirectory><path>...<path></extraDirectory>
-    @Deprecated @Nullable @Parameter private File path;
+  /** Configuration for the {@code extraDirectories} parameter. */
+  public static class ExtraDirectoriesParameters {
 
     @Parameter private List<File> paths = Collections.emptyList();
 
     @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
 
-    /**
-     * Allows users to configure {@code path} using just {@code <extraDirectory>} instead of {@code
-     * <extraDirectory><path>}.
-     *
-     * @param path the value to set {@code path} to
-     */
+    public List<File> getPaths() {
+      return paths;
+    }
+  }
+
+  /** Configuration for the {@code extraDirectory} parameter. */
+  @Deprecated
+  public static class ExtraDirectoryParameters {
+
+    // retained for backward-compatibility for <extraDirectory><path>...<path></extraDirectory>
+    @Deprecated @Nullable @Parameter private File path;
+
+    @Deprecated @Parameter
+    private List<PermissionConfiguration> permissions = Collections.emptyList();
+
+    // Allows users to configure a single path using just <extraDirectory> instead of
+    // <extraDirectory><path>.
     @Deprecated
     public void set(File path) {
-      this.paths = Collections.singletonList(path);
+      this.path = path;
     }
 
+    @Deprecated
     public List<File> getPaths() {
-      return path != null ? Collections.singletonList(path) : paths;
+      return path == null ? Collections.emptyList() : Collections.singletonList(path);
     }
   }
 
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
-  MavenSession session;
+  private MavenSession session;
 
   @Nullable
   @Parameter(defaultValue = "${project}", readonly = true)
@@ -224,7 +237,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter private ContainerParameters container = new ContainerParameters();
 
   // this parameter is cloned in FilesMojo
-  @Parameter private ExtraDirectoryParameters extraDirectory = new ExtraDirectoryParameters();
+  @Deprecated @Parameter
+  private ExtraDirectoryParameters extraDirectory = new ExtraDirectoryParameters();
+
+  // this parameter is cloned in FilesMojo
+  @Parameter private ExtraDirectoriesParameters extraDirectories = new ExtraDirectoriesParameters();
 
   @Parameter(
       defaultValue = "false",
@@ -385,6 +402,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /**
+   * Gets the extra classpath elements.
+   *
+   * @return the extra classpath elements
+   */
+  List<String> getExtraClasspath() {
+    String property = getProperty(PropertyNames.CONTAINER_EXTRA_CLASSPATH);
+    if (property != null) {
+      return ConfigurationPropertyValidator.parseListProperty(property);
+    }
+    return container.extraClasspath;
+  }
+
+  /**
    * Gets the name of the main class.
    *
    * @return the configured main class name
@@ -512,12 +542,38 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    */
   List<Path> getExtraDirectories() {
     // TODO: Should inform user about nonexistent directory if using custom directory.
-    String property = getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
+    String deprecatedProperty = getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
+    String newProperty = getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
+
+    List<File> deprecatedPaths = extraDirectory.getPaths();
+    List<File> newPaths = extraDirectories.getPaths();
+
+    if (deprecatedProperty != null) {
+      getLog()
+          .warn(
+              "The property 'jib.extraDirectory.path' is deprecated; "
+                  + "use 'jib.extraDirectories.paths' instead");
+    }
+    if (!deprecatedPaths.isEmpty()) {
+      getLog().warn("<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>");
+    }
+    if (deprecatedProperty != null && newProperty != null) {
+      throw new IllegalArgumentException(
+          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'");
+    }
+    if (!deprecatedPaths.isEmpty() && !newPaths.isEmpty()) {
+      throw new IllegalArgumentException(
+          "You cannot configure both <extraDirectory> and <extraDirectories>");
+    }
+
+    String property = newProperty != null ? newProperty : deprecatedProperty;
     if (property != null) {
       List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
       return paths.stream().map(Paths::get).collect(Collectors.toList());
     }
-    return extraDirectory.getPaths().stream().map(File::toPath).collect(Collectors.toList());
+
+    List<File> paths = !newPaths.isEmpty() ? newPaths : deprecatedPaths;
+    return paths.stream().map(File::toPath).collect(Collectors.toList());
   }
 
   /**
@@ -526,7 +582,29 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured extra layer file permissions
    */
   List<PermissionConfiguration> getExtraDirectoryPermissions() {
-    String property = getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS);
+    String deprecatedProperty = getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS);
+    String newProperty = getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
+
+    List<PermissionConfiguration> deprecatedPermissions = extraDirectory.permissions;
+    List<PermissionConfiguration> newPermissions = extraDirectories.permissions;
+
+    if (deprecatedProperty != null) {
+      getLog()
+          .warn(
+              "The property 'jib.extraDirectory.permissions' is deprecated; "
+                  + "use 'jib.extraDirectories.permissions' instead");
+    }
+    if (deprecatedProperty != null && newProperty != null) {
+      throw new IllegalArgumentException(
+          "You cannot configure both 'jib.extraDirectory.permissions' and "
+              + "'jib.extraDirectories.permissions'");
+    }
+    if (!deprecatedPermissions.isEmpty() && !newPermissions.isEmpty()) {
+      throw new IllegalArgumentException(
+          "You cannot configure both <extraDirectory> and <extraDirectories>");
+    }
+
+    String property = newProperty != null ? newProperty : deprecatedProperty;
     if (property != null) {
       return ConfigurationPropertyValidator.parseMapProperty(property)
           .entrySet()
@@ -534,7 +612,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
           .map(entry -> new PermissionConfiguration(entry.getKey(), entry.getValue()))
           .collect(Collectors.toList());
     }
-    return extraDirectory.permissions;
+
+    return !extraDirectories.getPaths().isEmpty()
+        ? extraDirectories.permissions
+        : extraDirectory.permissions;
   }
 
   boolean getAllowInsecureRegistries() {
@@ -552,6 +633,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @VisibleForTesting
   void setProject(MavenProject project) {
     this.project = project;
+  }
+
+  @VisibleForTesting
+  void setSession(MavenSession session) {
+    this.session = session;
   }
 
   @Nullable

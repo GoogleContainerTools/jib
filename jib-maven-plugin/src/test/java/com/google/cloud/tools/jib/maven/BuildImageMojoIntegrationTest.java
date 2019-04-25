@@ -98,13 +98,9 @@ public class BuildImageMojoIntegrationTest {
     return Integer.valueOf(split.iterator().next()) >= 11;
   }
 
-  /**
-   * Builds and runs jib:build on a project at {@code projectRoot} pushing to {@code
-   * imageReference}.
-   */
-  private static String buildAndRun(
-      Path projectRoot, String imageReference, String pomXml, boolean runTwice)
-      throws VerificationException, IOException, InterruptedException, DigestException {
+  private static Verifier build(
+      Path projectRoot, String imageReference, String pomXml, boolean buildTwice)
+      throws VerificationException, IOException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
@@ -117,7 +113,7 @@ public class BuildImageMojoIntegrationTest {
     verifier.executeGoal("jib:build");
     float timeOne = getBuildTimeFromVerifierLog(verifier);
 
-    if (runTwice) {
+    if (buildTwice) {
       verifier.resetStreams();
       verifier.executeGoal("jib:build");
       float timeTwo = getBuildTimeFromVerifierLog(verifier);
@@ -126,7 +122,17 @@ public class BuildImageMojoIntegrationTest {
       Assert.assertTrue(String.format(failMessage, timeOne, timeTwo), timeOne > timeTwo);
     }
 
-    verifier.verifyErrorFreeLog();
+    return verifier;
+  }
+
+  /**
+   * Builds with {@code jib:build} on a project at {@code projectRoot} pushing to {@code
+   * imageReference} and run the image after pulling it.
+   */
+  private static String buildAndRun(
+      Path projectRoot, String imageReference, String pomXml, boolean buildTwice)
+      throws VerificationException, IOException, InterruptedException, DigestException {
+    build(projectRoot, imageReference, pomXml, buildTwice).verifyErrorFreeLog();
 
     String output = pullAndRunBuiltImage(imageReference);
 
@@ -283,6 +289,15 @@ public class BuildImageMojoIntegrationTest {
             .trim());
   }
 
+  private static void assertEntrypoint(String expected, String imageReference)
+      throws IOException, InterruptedException {
+    Assert.assertEquals(
+        expected,
+        new Command("docker", "inspect", "-f", "{{.Config.Entrypoint}}", imageReference)
+            .run()
+            .trim());
+  }
+
   private static void assertLayerSizer(int expected, String imageReference)
       throws IOException, InterruptedException {
     Command command =
@@ -418,6 +433,29 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
+  public void testExecute_bothDeprecatedAndNewExtraDirectoryConfigUsed() throws IOException {
+    try {
+      build(
+          simpleTestProject.getProjectRoot(), "foo", "pom-deprecated-and-new-extra-dir.xml", false);
+      Assert.fail();
+    } catch (VerificationException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "You cannot configure both <extraDirectory> and <extraDirectories>"));
+    }
+  }
+
+  @Test
+  public void testExecute_deprecatedExtraDirectoryConfigUsed()
+      throws IOException, VerificationException {
+    String targetImage = getGcrImageReference("simpleimage:maven");
+    build(simpleTestProject.getProjectRoot(), targetImage, "pom-deprecated-extra-dir.xml", false)
+        .verifyTextInLog(
+            "<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>");
+  }
+
+  @Test
   public void testExecute_defaultTarget() throws IOException {
     // Test error when 'to' is missing
     try {
@@ -445,6 +483,9 @@ public class BuildImageMojoIntegrationTest {
         buildAndRunComplex(
             targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml"));
     assertWorkingDirectory("", targetImage);
+    assertEntrypoint(
+        "[java -Xms512m -Xdebug -cp /other:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
+        targetImage);
   }
 
   @Test

@@ -379,8 +379,10 @@ public class ContainerizerIntegrationTest {
     JibContainerBuilder containerBuilder =
         Jib.from(baseImage)
             .setEntrypoint(
-                JavaEntrypointConstructor.makeDefaultEntrypoint(
-                    AbsoluteUnixPath.get("/app"), Collections.emptyList(), "HelloWorld"))
+                JavaEntrypointConstructor.makeEntrypoint(
+                    JavaEntrypointConstructor.defaultClasspath(AbsoluteUnixPath.get("/app")),
+                    Collections.emptyList(),
+                    "HelloWorld"))
             .setProgramArguments(Collections.singletonList("An argument."))
             .setEnvironment(ImmutableMap.of("env1", "envvalue1", "env2", "envvalue2"))
             .setExposedPorts(
