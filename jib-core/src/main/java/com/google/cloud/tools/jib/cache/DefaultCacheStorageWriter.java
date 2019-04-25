@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.filesystem.TemporaryDirectory;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -39,6 +40,7 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -118,6 +120,7 @@ class DefaultCacheStorageWriter {
    */
   private static void writeMetadata(JsonTemplate jsonTemplate, Path destination)
       throws IOException {
+    LockFile lock = LockFile.lock(Paths.get(destination.toString() + ".lock"));
     Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
     temporaryFile.toFile().deleteOnExit();
     Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(jsonTemplate), temporaryFile);
@@ -134,6 +137,7 @@ class DefaultCacheStorageWriter {
     } catch (AtomicMoveNotSupportedException ignored) {
       Files.move(temporaryFile, destination, StandardCopyOption.REPLACE_EXISTING);
     }
+    lock.release();
   }
 
   private final DefaultCacheStorageFiles defaultCacheStorageFiles;
