@@ -81,7 +81,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   @InputFiles
   public FileCollection getInputFiles() {
     List<Path> extraDirectories =
-        Preconditions.checkNotNull(jibExtension).getExtraDirectoriesPaths();
+        Preconditions.checkNotNull(jibExtension).getExtraDirectories().getPaths();
     return extraDirectories
         .stream()
         .map(Path::toFile)
@@ -105,6 +105,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
           MainClassInferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
+    TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
     TaskCommon.disableHttpLogging();
 
     try {

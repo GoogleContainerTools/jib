@@ -57,7 +57,9 @@ public class ExtraDirectoriesParameters {
   public List<Path> getPaths() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
+    String deprecatedProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
+    String newProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
+    String property = newProperty != null ? newProperty : deprecatedProperty;
     if (property != null) {
       List<String> pathStrings = ConfigurationPropertyValidator.parseListProperty(property);
       return pathStrings.stream().map(Paths::get).collect(Collectors.toList());
@@ -67,13 +69,18 @@ public class ExtraDirectoriesParameters {
 
   /**
    * Sets paths. {@code paths} can be any suitable object describing file paths convertible by
-   * {@link Project#files} (such as {@code List<File>}).
+   * {@link Project#files} (such as {@link File}, {@code List<File>}, or {@code List<String>}).
    *
    * @param paths paths to set.
    */
   public void setPaths(Object paths) {
     this.paths =
         project.files(paths).getFiles().stream().map(File::toPath).collect(Collectors.toList());
+  }
+
+  @Deprecated
+  public void setPath(File path) {
+    setPaths(path);
   }
 
   /**
@@ -85,7 +92,9 @@ public class ExtraDirectoriesParameters {
    */
   @Input
   public Map<String, String> getPermissions() {
-    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
+    String deprecatedProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS);
+    String newProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
+    String property = newProperty != null ? newProperty : deprecatedProperty;
     if (property != null) {
       return ConfigurationPropertyValidator.parseMapProperty(property);
     }
