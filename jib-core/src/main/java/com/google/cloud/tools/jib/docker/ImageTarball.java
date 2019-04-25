@@ -26,10 +26,11 @@ import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collections;
 
 /** Translates an {@link Image} to a tarball that can be loaded into Docker. */
-public class ImageToTarballTranslator {
+public class ImageTarball {
 
   /** File name for the container configuration in the tarball. */
   private static final String CONTAINER_CONFIGURATION_JSON_FILE_NAME = "config.json";
@@ -42,16 +43,20 @@ public class ImageToTarballTranslator {
 
   private final Image<Layer> image;
 
+  private final ImageReference imageReference;
+
   /**
    * Instantiate with an {@link Image}.
    *
    * @param image the image to convert into a tarball
+   * @param imageReference image reference to set in the manifest
    */
-  public ImageToTarballTranslator(Image<Layer> image) {
+  public ImageTarball(Image<Layer> image, ImageReference imageReference) {
     this.image = image;
+    this.imageReference = imageReference;
   }
 
-  public Blob toTarballBlob(ImageReference imageReference) throws IOException {
+  public void writeTo(OutputStream out) throws IOException {
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     DockerLoadManifestEntryTemplate manifestTemplate = new DockerLoadManifestEntryTemplate();
 
@@ -77,6 +82,6 @@ public class ImageToTarballTranslator {
             JsonTemplateMapper.toBlob(Collections.singletonList(manifestTemplate))),
         MANIFEST_JSON_FILE_NAME);
 
-    return tarStreamBuilder.toBlob();
+    tarStreamBuilder.writeAsTarArchiveTo(out);
   }
 }
