@@ -49,6 +49,7 @@ public class FilesMojoV2Test {
       Path projectRoot,
       String pomXml,
       String module,
+      List<String> extraCliOptions,
       List<String> buildFiles,
       List<String> inputFiles)
       throws VerificationException, IOException {
@@ -62,6 +63,7 @@ public class FilesMojoV2Test {
       verifier.addCliOption(module);
       verifier.addCliOption("-am");
     }
+    extraCliOptions.forEach(verifier::addCliOption);
     verifier.executeGoal("jib:" + FilesMojoV2.GOAL_NAME);
 
     verifier.verifyErrorFreeLog();
@@ -84,6 +86,7 @@ public class FilesMojoV2Test {
         projectRoot,
         "pom.xml",
         null,
+        Collections.emptyList(),
         Collections.singletonList(projectRoot.resolve("pom.xml").toString()),
         Arrays.asList(
             projectRoot.resolve("src/main/java").toString(),
@@ -100,6 +103,7 @@ public class FilesMojoV2Test {
         projectRoot,
         "pom-extra-dirs.xml",
         null,
+        Collections.emptyList(),
         Collections.singletonList(projectRoot.resolve("pom-extra-dirs.xml").toString()),
         Arrays.asList(
             projectRoot.resolve("src/main/java").toString(),
@@ -117,6 +121,7 @@ public class FilesMojoV2Test {
         projectRoot,
         "pom.xml",
         "simple-service",
+        Collections.emptyList(),
         Arrays.asList(
             projectRoot.resolve("pom.xml").toString(),
             simpleServiceRoot.resolve("pom.xml").toString()),
@@ -136,6 +141,7 @@ public class FilesMojoV2Test {
         projectRoot,
         "pom.xml",
         "complex-service",
+        Collections.emptyList(),
         Arrays.asList(
             projectRoot.resolve("pom.xml").toString(),
             libRoot.resolve("pom.xml").toString(),
@@ -152,5 +158,22 @@ public class FilesMojoV2Test {
                     System.getProperty("user.home"),
                     ".m2/repository/com/google/guava/guava/HEAD-jre-SNAPSHOT/guava-HEAD-jre-SNAPSHOT.jar")
                 .toString()));
+  }
+
+  @Test
+  public void testFilesMojo_extraDirectoriesProperty() throws VerificationException, IOException {
+    Path projectRoot = simpleTestProject.getProjectRoot();
+
+    verifyFiles(
+        projectRoot,
+        "pom.xml",
+        null,
+        Arrays.asList("-Djib.extraDirectories.paths=/some/extra/dir,/another/extra/dir"),
+        Collections.singletonList(projectRoot.resolve("pom.xml").toString()),
+        Arrays.asList(
+            projectRoot.resolve("src/main/java").toString(),
+            projectRoot.resolve("src/main/resources").toString(),
+            Paths.get("/some/extra/dir").toString(),
+            Paths.get("/another/extra/dir").toString()));
   }
 }

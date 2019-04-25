@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
@@ -136,6 +137,6 @@ public class ReproducibleLayerBuilder {
       tarStreamBuilder.addTarArchiveEntry(entry);
     }
 
-    return tarStreamBuilder.toBlob();
+    return Blobs.from(outputStream -> tarStreamBuilder.writeAsTarArchiveTo(outputStream));
   }
 }
