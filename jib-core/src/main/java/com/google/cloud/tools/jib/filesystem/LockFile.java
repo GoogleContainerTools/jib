@@ -62,9 +62,13 @@ public class LockFile {
   public void release() {
     try {
       lock.release();
+    } catch (IOException ex) {
+      throw new IllegalStateException("Unable to release lock", ex);
+    }
+
+    try {
       Files.delete(lockFile);
     } catch (IOException ignored) {
-
     }
   }
 }
