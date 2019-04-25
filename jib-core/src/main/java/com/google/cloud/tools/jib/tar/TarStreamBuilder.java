@@ -38,12 +38,12 @@ public class TarStreamBuilder {
   /**
    * Writes each entry in the filesystem to the tarball archive stream.
    *
-   * @param tarByteStream the stream to write to.
+   * @param out the stream to write to.
    * @throws IOException if building the tarball fails.
    */
-  private void writeEntriesAsTarArchive(OutputStream tarByteStream) throws IOException {
+  public void writeAsTarArchiveTo(OutputStream out) throws IOException {
     try (TarArchiveOutputStream tarArchiveOutputStream =
-        new TarArchiveOutputStream(tarByteStream, StandardCharsets.UTF_8.name())) {
+        new TarArchiveOutputStream(out, StandardCharsets.UTF_8.name())) {
       // Enables PAX extended headers to support long file names.
       tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
       for (Map.Entry<TarArchiveEntry, Blob> entry : archiveMap.entrySet()) {
@@ -89,10 +89,5 @@ public class TarStreamBuilder {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(size);
     archiveMap.put(entry, blob);
-  }
-
-  /** @return a new {@link Blob} that can stream the uncompressed tarball archive BLOB. */
-  public Blob toBlob() {
-    return Blobs.from(this::writeEntriesAsTarArchive);
   }
 }
