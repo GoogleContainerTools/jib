@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
-import com.google.cloud.tools.jib.builder.StepsRunnerFactory;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
@@ -69,10 +68,22 @@ public class Containerizer {
             .setCredentialRetrievers(registryImage.getCredentialRetrievers())
             .build();
 
+    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
+        buildConfiguration ->
+            StepsRunner.begin(buildConfiguration)
+                .retrieveTargetRegistryCredentials()
+                .authenticatePush()
+                .pullBaseImage()
+                .pullAndCacheBaseImageLayers()
+                .pushBaseImageLayers()
+                .buildAndCacheApplicationLayers()
+                .buildImage()
+                .pushContainerConfiguration()
+                .pushApplicationLayers()
+                .pushImage();
+
     return new Containerizer(
-        DESCRIPTION_FOR_DOCKER_REGISTRY,
-        imageConfiguration,
-        StepsRunnerFactory.forBuildToDockerRegistry());
+        DESCRIPTION_FOR_DOCKER_REGISTRY, imageConfiguration, stepsRunnerFactory);
   }
 
   /**
@@ -90,10 +101,16 @@ public class Containerizer {
     dockerClientBuilder.setDockerEnvironment(
         ImmutableMap.copyOf(dockerDaemonImage.getDockerEnvironment()));
 
-    return new Containerizer(
-        DESCRIPTION_FOR_DOCKER_DAEMON,
-        imageConfiguration,
-        StepsRunnerFactory.forBuildToDockerDaemon(dockerClientBuilder.build()));
+    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
+        buildConfiguration ->
+            StepsRunner.begin(buildConfiguration)
+                .pullBaseImage()
+                .pullAndCacheBaseImageLayers()
+                .buildAndCacheApplicationLayers()
+                .buildImage()
+                .loadDocker(dockerClientBuilder.build());
+
+    return new Containerizer(DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory);
   }
 
   /**
@@ -106,10 +123,16 @@ public class Containerizer {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(tarImage.getImageReference()).build();
 
-    return new Containerizer(
-        DESCRIPTION_FOR_TARBALL,
-        imageConfiguration,
-        StepsRunnerFactory.forBuildToTar(tarImage.getOutputFile()));
+    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
+        buildConfiguration ->
+            StepsRunner.begin(buildConfiguration)
+                .pullBaseImage()
+                .pullAndCacheBaseImageLayers()
+                .buildAndCacheApplicationLayers()
+                .buildImage()
+                .writeTarFile(tarImage.getOutputFile());
+
+    return new Containerizer(DESCRIPTION_FOR_TARBALL, imageConfiguration, stepsRunnerFactory);
   }
 
   private final String description;
