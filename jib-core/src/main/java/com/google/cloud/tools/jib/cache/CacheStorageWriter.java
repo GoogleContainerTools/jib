@@ -44,7 +44,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /** Writes to the default cache storage engine. */
-class DefaultCacheStorageWriter {
+class CacheStorageWriter {
 
   /** Holds information about a layer that was written. */
   private static class WrittenLayer {
@@ -136,10 +136,10 @@ class DefaultCacheStorageWriter {
     }
   }
 
-  private final DefaultCacheStorageFiles defaultCacheStorageFiles;
+  private final CacheStorageFiles cacheStorageFiles;
 
-  DefaultCacheStorageWriter(DefaultCacheStorageFiles defaultCacheStorageFiles) {
-    this.defaultCacheStorageFiles = defaultCacheStorageFiles;
+  CacheStorageWriter(CacheStorageFiles cacheStorageFiles) {
+    this.cacheStorageFiles = cacheStorageFiles;
   }
 
   /**
@@ -154,12 +154,12 @@ class DefaultCacheStorageWriter {
    */
   CachedLayer write(Blob compressedLayerBlob) throws IOException {
     // Creates the layers directory if it doesn't exist.
-    Files.createDirectories(defaultCacheStorageFiles.getLayersDirectory());
+    Files.createDirectories(cacheStorageFiles.getLayersDirectory());
 
     // Creates the temporary directory.
-    Files.createDirectories(defaultCacheStorageFiles.getTemporaryDirectory());
+    Files.createDirectories(cacheStorageFiles.getTemporaryDirectory());
     try (TemporaryDirectory temporaryDirectory =
-        new TemporaryDirectory(defaultCacheStorageFiles.getTemporaryDirectory())) {
+        new TemporaryDirectory(cacheStorageFiles.getTemporaryDirectory())) {
       Path temporaryLayerDirectory = temporaryDirectory.getDirectory();
 
       // Writes the layer file to the temporary directory.
@@ -168,13 +168,12 @@ class DefaultCacheStorageWriter {
 
       // Moves the temporary directory to the final location.
       moveIfDoesNotExist(
-          temporaryLayerDirectory,
-          defaultCacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
+          temporaryLayerDirectory, cacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
 
       // Updates cachedLayer with the blob information.
       Path layerFile =
-          defaultCacheStorageFiles.getLayerFile(writtenLayer.layerDigest, writtenLayer.layerDiffId);
-      return DefaultCachedLayer.builder()
+          cacheStorageFiles.getLayerFile(writtenLayer.layerDigest, writtenLayer.layerDiffId);
+      return CachedLayer.builder()
           .setLayerDigest(writtenLayer.layerDigest)
           .setLayerDiffId(writtenLayer.layerDiffId)
           .setLayerSize(writtenLayer.layerSize)
@@ -201,13 +200,13 @@ class DefaultCacheStorageWriter {
    */
   CachedLayer write(UncompressedCacheWrite uncompressedCacheWrite) throws IOException {
     // Creates the layers directory if it doesn't exist.
-    Files.createDirectories(defaultCacheStorageFiles.getLayersDirectory());
+    Files.createDirectories(cacheStorageFiles.getLayersDirectory());
 
     // Creates the temporary directory. The temporary directory must be in the same FileStore as the
     // final location for Files.move to work.
-    Files.createDirectories(defaultCacheStorageFiles.getTemporaryDirectory());
+    Files.createDirectories(cacheStorageFiles.getTemporaryDirectory());
     try (TemporaryDirectory temporaryDirectory =
-        new TemporaryDirectory(defaultCacheStorageFiles.getTemporaryDirectory())) {
+        new TemporaryDirectory(cacheStorageFiles.getTemporaryDirectory())) {
       Path temporaryLayerDirectory = temporaryDirectory.getDirectory();
 
       // Writes the layer file to the temporary directory.
@@ -217,14 +216,13 @@ class DefaultCacheStorageWriter {
 
       // Moves the temporary directory to the final location.
       moveIfDoesNotExist(
-          temporaryLayerDirectory,
-          defaultCacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
+          temporaryLayerDirectory, cacheStorageFiles.getLayerDirectory(writtenLayer.layerDigest));
 
       // Updates cachedLayer with the blob information.
       Path layerFile =
-          defaultCacheStorageFiles.getLayerFile(writtenLayer.layerDigest, writtenLayer.layerDiffId);
-      DefaultCachedLayer.Builder cachedLayerBuilder =
-          DefaultCachedLayer.builder()
+          cacheStorageFiles.getLayerFile(writtenLayer.layerDigest, writtenLayer.layerDiffId);
+      CachedLayer.Builder cachedLayerBuilder =
+          CachedLayer.builder()
               .setLayerDigest(writtenLayer.layerDigest)
               .setLayerDiffId(writtenLayer.layerDiffId)
               .setLayerSize(writtenLayer.layerSize)
@@ -255,7 +253,7 @@ class DefaultCacheStorageWriter {
     Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration().getDigest());
 
     // Create the images directory
-    Path imageDirectory = defaultCacheStorageFiles.getImageDirectory(imageReference);
+    Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
     // TODO: Lock properly
@@ -273,7 +271,7 @@ class DefaultCacheStorageWriter {
   void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
       throws IOException {
     // Create the images directory
-    Path imageDirectory = defaultCacheStorageFiles.getImageDirectory(imageReference);
+    Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
     // TODO: Lock properly
@@ -292,7 +290,7 @@ class DefaultCacheStorageWriter {
   private WrittenLayer writeCompressedLayerBlobToDirectory(
       Blob compressedLayerBlob, Path layerDirectory) throws IOException {
     // Writes the layer file to the temporary directory.
-    Path temporaryLayerFile = defaultCacheStorageFiles.getTemporaryLayerFile(layerDirectory);
+    Path temporaryLayerFile = cacheStorageFiles.getTemporaryLayerFile(layerDirectory);
 
     BlobDescriptor layerBlobDescriptor;
     try (OutputStream fileOutputStream =
@@ -304,7 +302,7 @@ class DefaultCacheStorageWriter {
     DescriptorDigest layerDiffId = getDiffIdByDecompressingFile(temporaryLayerFile);
 
     // Renames the temporary layer file to the correct filename.
-    Path layerFile = layerDirectory.resolve(defaultCacheStorageFiles.getLayerFilename(layerDiffId));
+    Path layerFile = layerDirectory.resolve(cacheStorageFiles.getLayerFilename(layerDiffId));
     moveIfDoesNotExist(temporaryLayerFile, layerFile);
 
     return new WrittenLayer(
@@ -321,7 +319,7 @@ class DefaultCacheStorageWriter {
    */
   private WrittenLayer writeUncompressedLayerBlobToDirectory(
       Blob uncompressedLayerBlob, Path layerDirectory) throws IOException {
-    Path temporaryLayerFile = defaultCacheStorageFiles.getTemporaryLayerFile(layerDirectory);
+    Path temporaryLayerFile = cacheStorageFiles.getTemporaryLayerFile(layerDirectory);
 
     try (CountingDigestOutputStream compressedDigestOutputStream =
         new CountingDigestOutputStream(
@@ -339,8 +337,7 @@ class DefaultCacheStorageWriter {
       long layerSize = compressedBlobDescriptor.getSize();
 
       // Renames the temporary layer file to the correct filename.
-      Path layerFile =
-          layerDirectory.resolve(defaultCacheStorageFiles.getLayerFilename(layerDiffId));
+      Path layerFile = layerDirectory.resolve(cacheStorageFiles.getLayerFilename(layerDiffId));
       moveIfDoesNotExist(temporaryLayerFile, layerFile);
 
       return new WrittenLayer(layerDigest, layerDiffId, layerSize);
@@ -357,7 +354,7 @@ class DefaultCacheStorageWriter {
    */
   private void writeSelector(DescriptorDigest selector, DescriptorDigest layerDigest)
       throws IOException {
-    Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
+    Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
 
     // Creates the selectors directory if it doesn't exist.
     Files.createDirectories(selectorFile.getParent());

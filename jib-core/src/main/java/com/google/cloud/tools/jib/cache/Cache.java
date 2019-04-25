@@ -33,9 +33,6 @@ import javax.annotation.concurrent.Immutable;
 /**
  * Cache for storing data to be shared between Jib executions.
  *
- * <p>Uses the default cache storage engine ({@link DefaultCacheStorage}) with layer entries as the
- * selector ({@link LayerEntriesSelector}).
- *
  * <p>This class is immutable and safe to use across threads.
  */
 @Immutable
@@ -50,13 +47,15 @@ public class Cache {
    */
   public static Cache withDirectory(Path cacheDirectory) throws IOException {
     Files.createDirectories(cacheDirectory);
-    return new Cache(DefaultCacheStorage.withDirectory(cacheDirectory));
+    return new Cache(new CacheStorageFiles(cacheDirectory));
   }
 
-  private final CacheStorage cacheStorage;
+  private final CacheStorageWriter cacheStorageWriter;
+  private final CacheStorageReader cacheStorageReader;
 
-  private Cache(CacheStorage cacheStorage) {
-    this.cacheStorage = cacheStorage;
+  private Cache(CacheStorageFiles cacheStorageFiles) {
+    this.cacheStorageWriter = new CacheStorageWriter(cacheStorageFiles);
+    this.cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
   }
 
   /**
@@ -72,7 +71,8 @@ public class Cache {
       BuildableManifestTemplate manifestTemplate,
       ContainerConfigurationTemplate containerConfigurationTemplate)
       throws IOException {
-    cacheStorage.writeMetadata(imageReference, manifestTemplate, containerConfigurationTemplate);
+    cacheStorageWriter.writeMetadata(
+        imageReference, manifestTemplate, containerConfigurationTemplate);
   }
 
   /**
@@ -84,7 +84,7 @@ public class Cache {
    */
   public void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
       throws IOException {
-    cacheStorage.writeMetadata(imageReference, manifestTemplate);
+    cacheStorageWriter.writeMetadata(imageReference, manifestTemplate);
   }
 
   /**
@@ -97,7 +97,7 @@ public class Cache {
    * @throws IOException if an I/O exception occurs
    */
   public CachedLayer writeCompressedLayer(Blob compressedLayerBlob) throws IOException {
-    return cacheStorage.write(compressedLayerBlob);
+    return cacheStorageWriter.write(compressedLayerBlob);
   }
 
   /**
@@ -111,7 +111,7 @@ public class Cache {
    */
   public CachedLayer writeUncompressedLayer(
       Blob uncompressedLayerBlob, ImmutableList<LayerEntry> layerEntries) throws IOException {
-    return cacheStorage.write(
+    return cacheStorageWriter.write(
         new UncompressedCacheWrite(
             uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries)));
   }
@@ -127,12 +127,12 @@ public class Cache {
   public Optional<CachedLayer> retrieve(ImmutableList<LayerEntry> layerEntries)
       throws IOException, CacheCorruptedException {
     Optional<DescriptorDigest> optionalSelectedLayerDigest =
-        cacheStorage.select(LayerEntriesSelector.generateSelector(layerEntries));
+        cacheStorageReader.select(LayerEntriesSelector.generateSelector(layerEntries));
     if (!optionalSelectedLayerDigest.isPresent()) {
       return Optional.empty();
     }
 
-    return cacheStorage.retrieve(optionalSelectedLayerDigest.get());
+    return cacheStorageReader.retrieve(optionalSelectedLayerDigest.get());
   }
 
   /**
@@ -145,6 +145,6 @@ public class Cache {
    */
   public Optional<CachedLayer> retrieve(DescriptorDigest layerDigest)
       throws IOException, CacheCorruptedException {
-    return cacheStorage.retrieve(layerDigest);
+    return cacheStorageReader.retrieve(layerDigest);
   }
 }
