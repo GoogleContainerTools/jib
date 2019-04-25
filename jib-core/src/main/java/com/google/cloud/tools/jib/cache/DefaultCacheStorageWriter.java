@@ -258,19 +258,10 @@ class DefaultCacheStorageWriter {
     Path imageDirectory = defaultCacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
-    String manifestFilename =
-        "manifest."
-            + containerConfiguration.getArchitecture()
-            + "."
-            + containerConfiguration.getOs()
-            + ".json";
-    String configFilename =
-        manifestTemplate.getContainerConfiguration().getDigest().getHash() + ".json";
-
     // TODO: Lock properly
     // Write manifest and configuration
-    writeMetadata(manifestTemplate, imageDirectory.resolve(manifestFilename));
-    writeMetadata(containerConfiguration, imageDirectory.resolve(configFilename));
+    writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
+    writeMetadata(containerConfiguration, imageDirectory.resolve("config.json"));
   }
 
   /**
@@ -285,20 +276,9 @@ class DefaultCacheStorageWriter {
     Path imageDirectory = defaultCacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
-    ContainerConfigurationTemplate containerConfiguration =
-        manifestTemplate.getContainerConfiguration().orElse(null);
-    String fileName =
-        containerConfiguration == null
-            ? "manifest.amd64.linux.json"
-            : "manifest."
-                + containerConfiguration.getArchitecture()
-                + "."
-                + containerConfiguration.getOs()
-                + ".json";
-
     // TODO: Lock properly
     // Write manifest
-    writeMetadata(manifestTemplate, imageDirectory.resolve(fileName));
+    writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
   }
 
   /**

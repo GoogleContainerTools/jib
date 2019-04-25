@@ -123,7 +123,7 @@ public class DefaultCacheStorageWriterTest {
         .writeMetadata(imageReference, manifestTemplate);
 
     Path savedManifestPath =
-        cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.amd64.linux.json");
+        cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.json");
     Assert.assertTrue(Files.exists(savedManifestPath));
 
     V21ManifestTemplate savedManifest =
@@ -150,10 +150,9 @@ public class DefaultCacheStorageWriterTest {
         .writeMetadata(imageReference, manifestTemplate, containerConfigurationTemplate);
 
     Path savedManifestPath =
-        cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.wasm.js.json");
+        cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.json");
     Path savedConfigPath =
-        cacheRoot.resolve(
-            "images/image.reference/project/thing!tag/8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad.json");
+        cacheRoot.resolve("images/image.reference/project/thing!tag/config.json");
     Assert.assertTrue(Files.exists(savedManifestPath));
     Assert.assertTrue(Files.exists(savedConfigPath));
 
