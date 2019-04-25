@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Can now prepend paths in the container to the computed classpath with `extraClasspath` ([#1642](https://github.com/GoogleContainerTools/jib/pull/1642))
+- Can now prepend paths in the container to the computed classpath with `<jib><container><extraClasspath>` ([#1642](https://github.com/GoogleContainerTools/jib/pull/1642))
 
 ### Changed
 
