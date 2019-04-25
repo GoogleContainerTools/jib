@@ -152,7 +152,8 @@ public class DefaultCacheStorageWriterTest {
     Path savedManifestPath =
         cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.wasm.js.json");
     Path savedConfigPath =
-        cacheRoot.resolve("images/image.reference/project/thing!tag/config.wasm.js.json");
+        cacheRoot.resolve(
+            "images/image.reference/project/thing!tag/8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad.json");
     Assert.assertTrue(Files.exists(savedManifestPath));
     Assert.assertTrue(Files.exists(savedConfigPath));
 

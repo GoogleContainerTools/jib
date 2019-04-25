@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -250,21 +251,26 @@ class DefaultCacheStorageWriter {
       BuildableManifestTemplate manifestTemplate,
       ContainerConfigurationTemplate containerConfiguration)
       throws IOException {
+    Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration());
+    Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration().getDigest());
+
     // Create the images directory
     Path imageDirectory = defaultCacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
-    String destinationSuffix =
-        "."
+    String manifestFilename =
+        "manifest."
             + containerConfiguration.getArchitecture()
             + "."
             + containerConfiguration.getOs()
             + ".json";
+    String configFilename =
+        manifestTemplate.getContainerConfiguration().getDigest().getHash() + ".json";
 
     // TODO: Lock properly
     // Write manifest and configuration
-    writeMetadata(manifestTemplate, imageDirectory.resolve("manifest" + destinationSuffix));
-    writeMetadata(containerConfiguration, imageDirectory.resolve("config" + destinationSuffix));
+    writeMetadata(manifestTemplate, imageDirectory.resolve(manifestFilename));
+    writeMetadata(containerConfiguration, imageDirectory.resolve(configFilename));
   }
 
   /**
