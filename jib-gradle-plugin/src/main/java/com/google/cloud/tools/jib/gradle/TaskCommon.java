@@ -78,7 +78,9 @@ class TaskCommon {
               + "deprecated; use 'jib.extraDirectories', 'jib.extraDirectories.paths' and "
               + "'jib.extraDirectories.permissions'");
 
-      if (jibExtension.extraDirectoriesConfigured) {
+      if (jibExtension.extraDirectoriesConfigured
+          || System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS) != null
+          || System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS) != null) {
         throw new IllegalArgumentException(
             "You cannot configure both 'jib.extraDirectory' and 'jib.extraDirectories'");
       }
