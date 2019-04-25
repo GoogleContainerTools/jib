@@ -45,8 +45,6 @@ public class LockFileTest {
             intPointer[0] = valueBeforeSleep + 1;
 
             lockFile.release();
-            Assert.assertFalse(
-                Files.exists(temporaryFolder.getRoot().toPath().resolve("testLock")));
 
           } catch (InterruptedException | IOException ex) {
             throw new AssertionError(ex);
