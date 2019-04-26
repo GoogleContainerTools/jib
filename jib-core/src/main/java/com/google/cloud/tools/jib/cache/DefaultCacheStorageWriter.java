@@ -120,24 +120,24 @@ class DefaultCacheStorageWriter {
    */
   private static void writeMetadata(JsonTemplate jsonTemplate, Path destination)
       throws IOException {
-    LockFile lock = LockFile.lock(Paths.get(destination.toString() + ".lock"));
-    Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
-    temporaryFile.toFile().deleteOnExit();
-    Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(jsonTemplate), temporaryFile);
+    try (LockFile ignored1 = LockFile.lock(Paths.get(destination.toString() + ".lock"))) {
+      Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
+      temporaryFile.toFile().deleteOnExit();
+      Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(jsonTemplate), temporaryFile);
 
-    // Attempts an atomic move first, and falls back to non-atomic if the file system does not
-    // support atomic moves.
-    try {
-      Files.move(
-          temporaryFile,
-          destination,
-          StandardCopyOption.ATOMIC_MOVE,
-          StandardCopyOption.REPLACE_EXISTING);
+      // Attempts an atomic move first, and falls back to non-atomic if the file system does not
+      // support atomic moves.
+      try {
+        Files.move(
+            temporaryFile,
+            destination,
+            StandardCopyOption.ATOMIC_MOVE,
+            StandardCopyOption.REPLACE_EXISTING);
 
-    } catch (AtomicMoveNotSupportedException ignored) {
-      Files.move(temporaryFile, destination, StandardCopyOption.REPLACE_EXISTING);
+      } catch (AtomicMoveNotSupportedException ignored2) {
+        Files.move(temporaryFile, destination, StandardCopyOption.REPLACE_EXISTING);
+      }
     }
-    lock.release();
   }
 
   private final DefaultCacheStorageFiles defaultCacheStorageFiles;

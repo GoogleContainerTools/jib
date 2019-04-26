@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.filesystem;
 
+import java.io.Closeable;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileLock;
@@ -23,7 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /** Creates and deletes lock files. */
-public class LockFile {
+public class LockFile implements Closeable {
 
   private final Path lockFile;
   private final FileLock lock;
@@ -59,7 +60,8 @@ public class LockFile {
   }
 
   /** Releases the lock file. */
-  public void release() {
+  @Override
+  public void close() {
     try {
       lock.release();
     } catch (IOException ex) {

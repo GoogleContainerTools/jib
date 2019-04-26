@@ -29,22 +29,19 @@ public class LockFileTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testLockAndRelease() throws InterruptedException {
+  public void testLockAndRelease() throws InterruptedException, IOException {
     int[] intPointer = {0};
 
     // Runnable that would produce a race condition without a lock file
     Runnable procedure =
         () -> {
-          try {
-            LockFile lockFile =
-                LockFile.lock(temporaryFolder.getRoot().toPath().resolve("testLock"));
+          try (LockFile ignored =
+              LockFile.lock(temporaryFolder.getRoot().toPath().resolve("testLock"))) {
             Assert.assertTrue(Files.exists(temporaryFolder.getRoot().toPath().resolve("testLock")));
 
             int valueBeforeSleep = intPointer[0];
             Thread.sleep(100);
             intPointer[0] = valueBeforeSleep + 1;
-
-            lockFile.release();
 
           } catch (InterruptedException | IOException ex) {
             throw new AssertionError(ex);
