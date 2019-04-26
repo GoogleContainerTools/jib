@@ -29,7 +29,7 @@ public class LockFileTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testLockAndRelease() throws InterruptedException, IOException {
+  public void testLockAndRelease() throws InterruptedException {
     int[] intPointer = {0};
 
     // Runnable that would produce a race condition without a lock file
