@@ -39,8 +39,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.zip.GZIPInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -56,7 +54,6 @@ import org.junit.rules.TemporaryFolder;
  * file orderings.
  */
 public class ReproducibleImageTest {
-  private static String LAYERS_PATH_IN_RESOURCES = "layers/";
 
   @ClassRule public static final TemporaryFolder imageLocation = new TemporaryFolder();
 
@@ -72,14 +69,14 @@ public class ReproducibleImageTest {
     Path fileB = Files.createFile(root.resolve("fileB.txt"));
     Path fileC = Files.createFile(root.resolve("fileC.txt"));
     Path subdir = Files.createDirectory(root.resolve("dir"));
-    Path fileD = Files.createFile(subdir.resolve("fileD.txt"));
+    Path subsubdir = Files.createDirectory(subdir.resolve("subdir"));
+    Files.createFile(subdir.resolve("fileD.txt"));
+    Files.createFile(subsubdir.resolve("fileE.txt"));
 
     imageTar = new File(imageLocation.getRoot(), "image.tar");
     Containerizer containerizer =
         Containerizer.to(TarImage.named("jib-core/reproducible").saveTo(imageTar.toPath()));
 
-    ExecutorService executorService = Executors.newCachedThreadPool();
-    containerizer.setExecutorService(executorService);
     Jib.fromScratch()
         .setEntrypoint("echo", "Hello World")
         .addLayer(ImmutableList.of(fileA), AbsoluteUnixPath.get("/app"))
@@ -90,8 +87,6 @@ public class ReproducibleImageTest {
                 .addEntryRecursive(subdir, AbsoluteUnixPath.get("/app"))
                 .build())
         .containerize(containerizer);
-    Assert.assertFalse(executorService.isShutdown());
-    executorService.shutdown();
   }
 
   @Test
@@ -104,20 +99,29 @@ public class ReproducibleImageTest {
           }
         });
     Assert.assertEquals(
-        ImmutableSet.of("app/fileA.txt", "app/fileB.txt", "app/fileC.txt", "app/fileD.txt"), paths);
+        ImmutableSet.of(
+            "app/fileA.txt",
+            "app/fileB.txt",
+            "app/fileC.txt",
+            "app/fileD.txt",
+            "app/subdir/fileE.txt"),
+        paths);
+  }
+
+  @Test
+  public void testAllFileAndDirectories() throws IOException {
+    layerEntriesDo(
+        (layerName, layerEntry) ->
+            Assert.assertTrue(layerEntry.isFile() || layerEntry.isDirectory()));
   }
 
   @Test
   public void testTimestampsEpochPlus1s() throws IOException {
     layerEntriesDo(
         (layerName, layerEntry) -> {
-          if (layerEntry.isFile() || layerEntry.isDirectory()) {
-            Instant modificationTime = layerEntry.getLastModifiedDate().toInstant();
-            Assert.assertEquals(
-                layerName + ": " + layerEntry.getName(),
-                Instant.ofEpochSecond(1),
-                modificationTime);
-          }
+          Instant modificationTime = layerEntry.getLastModifiedDate().toInstant();
+          Assert.assertEquals(
+              layerName + ": " + layerEntry.getName(), Instant.ofEpochSecond(1), modificationTime);
         });
   }
 
