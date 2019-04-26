@@ -258,12 +258,9 @@ class DefaultCacheStorageWriter {
     Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration());
     Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration().getDigest());
 
-    // Create the images directory
     Path imageDirectory = defaultCacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
-    // TODO: Lock properly
-    // Write manifest and configuration
     writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
     writeMetadata(containerConfiguration, imageDirectory.resolve("config.json"));
   }
@@ -276,12 +273,9 @@ class DefaultCacheStorageWriter {
    */
   void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
       throws IOException {
-    // Create the images directory
     Path imageDirectory = defaultCacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
-    // TODO: Lock properly
-    // Write manifest
     writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
   }
 
