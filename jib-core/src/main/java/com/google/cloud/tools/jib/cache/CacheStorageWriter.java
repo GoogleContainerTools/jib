@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.filesystem.TemporaryDirectory;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -39,6 +40,7 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -118,21 +120,23 @@ class CacheStorageWriter {
    */
   private static void writeMetadata(JsonTemplate jsonTemplate, Path destination)
       throws IOException {
-    Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
-    temporaryFile.toFile().deleteOnExit();
-    Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(jsonTemplate), temporaryFile);
+    try (LockFile ignored1 = LockFile.lock(Paths.get(destination.toString() + ".lock"))) {
+      Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
+      temporaryFile.toFile().deleteOnExit();
+      Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(jsonTemplate), temporaryFile);
 
-    // Attempts an atomic move first, and falls back to non-atomic if the file system does not
-    // support atomic moves.
-    try {
-      Files.move(
-          temporaryFile,
-          destination,
-          StandardCopyOption.ATOMIC_MOVE,
-          StandardCopyOption.REPLACE_EXISTING);
+      // Attempts an atomic move first, and falls back to non-atomic if the file system does not
+      // support atomic moves.
+      try {
+        Files.move(
+            temporaryFile,
+            destination,
+            StandardCopyOption.ATOMIC_MOVE,
+            StandardCopyOption.REPLACE_EXISTING);
 
-    } catch (AtomicMoveNotSupportedException ignored) {
-      Files.move(temporaryFile, destination, StandardCopyOption.REPLACE_EXISTING);
+      } catch (AtomicMoveNotSupportedException ignored2) {
+        Files.move(temporaryFile, destination, StandardCopyOption.REPLACE_EXISTING);
+      }
     }
   }
 
@@ -252,12 +256,9 @@ class CacheStorageWriter {
     Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration());
     Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration().getDigest());
 
-    // Create the images directory
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
-    // TODO: Lock properly
-    // Write manifest and configuration
     writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
     writeMetadata(containerConfiguration, imageDirectory.resolve("config.json"));
   }
@@ -270,12 +271,9 @@ class CacheStorageWriter {
    */
   void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
       throws IOException {
-    // Create the images directory
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
-    // TODO: Lock properly
-    // Write manifest
     writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
   }
 
