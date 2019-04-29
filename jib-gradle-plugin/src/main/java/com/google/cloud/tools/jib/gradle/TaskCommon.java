@@ -82,7 +82,7 @@ class TaskCommon {
           || System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS) != null
           || System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS) != null) {
         throw new IllegalArgumentException(
-            "You cannot configure both 'jib.extraDirectory' and 'jib.extraDirectories'");
+            "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'");
       }
     }
   }

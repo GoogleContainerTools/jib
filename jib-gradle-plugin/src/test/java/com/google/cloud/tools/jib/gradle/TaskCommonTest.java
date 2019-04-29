@@ -94,7 +94,7 @@ public class TaskCommonTest {
       Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals(
-          "You cannot configure both 'jib.extraDirectory' and 'jib.extraDirectories'",
+          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
           ex.getMessage());
     }
   }
@@ -119,7 +119,7 @@ public class TaskCommonTest {
       Assert.fail();
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals(
-          "You cannot configure both 'jib.extraDirectory' and 'jib.extraDirectories'",
+          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
           ex.getMessage());
     }
   }

@@ -34,13 +34,15 @@ import org.gradle.api.tasks.Internal;
 public class ExtraDirectoriesParameters {
 
   private final Project project;
+  @Deprecated private final JibExtension jibExtension;
 
   private List<Path> paths;
   private Map<String, String> permissions = Collections.emptyMap();
 
   @Inject
-  public ExtraDirectoriesParameters(Project project) {
+  public ExtraDirectoriesParameters(Project project, JibExtension jibExtension) {
     this.project = project;
+    this.jibExtension = jibExtension;
     paths =
         Collections.singletonList(
             project.getProjectDir().toPath().resolve("src").resolve("main").resolve("jib"));
@@ -74,13 +76,15 @@ public class ExtraDirectoriesParameters {
    * @param paths paths to set.
    */
   public void setPaths(Object paths) {
+    jibExtension.extraDirectoriesConfigured = true;
     this.paths =
         project.files(paths).getFiles().stream().map(File::toPath).collect(Collectors.toList());
   }
 
   @Deprecated
   public void setPath(File path) {
-    setPaths(path);
+    jibExtension.extraDirectoryConfigured = true;
+    this.paths = Collections.singletonList(path.toPath());
   }
 
   /**
