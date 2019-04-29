@@ -48,7 +48,11 @@ public class LockFile implements Closeable {
    * @throws IOException if creating the lock file fails
    */
   public static LockFile lock(Path lockFile) throws IOException {
-    lockMap.computeIfAbsent(lockFile, key -> new ReentrantLock()).lock();
+    try {
+      lockMap.computeIfAbsent(lockFile, key -> new ReentrantLock()).lockInterruptibly();
+    } catch (InterruptedException ex) {
+      throw new IOException("Interrupted while trying to acquire lock", ex);
+    }
     Files.createDirectories(lockFile.getParent());
     FileLock fileLock = new FileOutputStream(lockFile.toFile()).getChannel().lock();
     return new LockFile(lockFile, fileLock);
@@ -64,10 +68,10 @@ public class LockFile implements Closeable {
       throw new IllegalStateException("Unable to release lock", ex);
 
     } finally {
-      Preconditions.checkNotNull(lockMap.get(lockFile)).unlock();
       try {
+        Preconditions.checkNotNull(lockMap.get(lockFile)).unlock();
         Files.delete(lockFile);
-      } catch (IOException ignored) {
+      } catch (IllegalMonitorStateException | IOException ignored) {
       }
     }
   }
