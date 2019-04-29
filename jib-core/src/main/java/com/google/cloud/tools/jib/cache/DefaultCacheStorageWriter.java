@@ -19,9 +19,17 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.filesystem.TemporaryDirectory;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -98,6 +106,34 @@ class DefaultCacheStorageWriter {
         ByteStreams.copy(decompressorStream, diffIdCaptureOutputStream);
       }
       return diffIdCaptureOutputStream.toBlobDescriptor().getDigest();
+    }
+  }
+
+  /**
+   * Writes a json template to the destination path by writing to a temporary file then moving the
+   * file.
+   *
+   * @param jsonTemplate the json template
+   * @param destination the destination path
+   * @throws IOException if an I/O exception occurs
+   */
+  private static void writeMetadata(JsonTemplate jsonTemplate, Path destination)
+      throws IOException {
+    Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
+    temporaryFile.toFile().deleteOnExit();
+    Blobs.writeToFile(JsonTemplateMapper.toBlob(jsonTemplate), temporaryFile);
+
+    // Attempts an atomic move first, and falls back to non-atomic if the file system does not
+    // support atomic moves.
+    try {
+      Files.move(
+          temporaryFile,
+          destination,
+          StandardCopyOption.ATOMIC_MOVE,
+          StandardCopyOption.REPLACE_EXISTING);
+
+    } catch (AtomicMoveNotSupportedException ignored2) {
+      Files.move(temporaryFile, destination, StandardCopyOption.REPLACE_EXISTING);
     }
   }
 
@@ -201,6 +237,46 @@ class DefaultCacheStorageWriter {
       }
 
       return cachedLayerBuilder.build();
+    }
+  }
+
+  /**
+   * Saves the manifest and container configuration for a V2.2 or OCI image.
+   *
+   * @param imageReference the image reference to store the metadata for
+   * @param manifestTemplate the manifest
+   * @param containerConfiguration the container configuration
+   */
+  void writeMetadata(
+      ImageReference imageReference,
+      BuildableManifestTemplate manifestTemplate,
+      ContainerConfigurationTemplate containerConfiguration)
+      throws IOException {
+    Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration());
+    Preconditions.checkNotNull(manifestTemplate.getContainerConfiguration().getDigest());
+
+    Path imageDirectory = defaultCacheStorageFiles.getImageDirectory(imageReference);
+    Files.createDirectories(imageDirectory);
+
+    try (LockFile ignored1 = LockFile.lock(imageDirectory.resolve("lock"))) {
+      writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
+      writeMetadata(containerConfiguration, imageDirectory.resolve("config.json"));
+    }
+  }
+
+  /**
+   * Writes a V2.1 manifest for a given image reference.
+   *
+   * @param imageReference the image reference to store the metadata for
+   * @param manifestTemplate the manifest
+   */
+  void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
+      throws IOException {
+    Path imageDirectory = defaultCacheStorageFiles.getImageDirectory(imageReference);
+    Files.createDirectories(imageDirectory);
+
+    try (LockFile ignored1 = LockFile.lock(imageDirectory.resolve("lock"))) {
+      writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
     }
   }
 

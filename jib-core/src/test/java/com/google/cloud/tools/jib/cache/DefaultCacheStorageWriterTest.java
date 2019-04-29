@@ -21,11 +21,20 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
@@ -64,10 +73,12 @@ public class DefaultCacheStorageWriterTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private DefaultCacheStorageFiles defaultCacheStorageFiles;
+  private Path cacheRoot;
 
   @Before
   public void setUp() throws IOException {
-    defaultCacheStorageFiles = new DefaultCacheStorageFiles(temporaryFolder.newFolder().toPath());
+    cacheRoot = temporaryFolder.newFolder().toPath();
+    defaultCacheStorageFiles = new DefaultCacheStorageFiles(cacheRoot);
   }
 
   @Test
@@ -97,6 +108,63 @@ public class DefaultCacheStorageWriterTest {
     Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
     Assert.assertTrue(Files.exists(selectorFile));
     Assert.assertEquals(layerDigest.getHash(), Blobs.writeToString(Blobs.from(selectorFile)));
+  }
+
+  @Test
+  public void testWriteMetadata_v21()
+      throws IOException, URISyntaxException, InvalidImageReferenceException {
+    Path manifestJsonFile =
+        Paths.get(getClass().getClassLoader().getResource("core/json/v21manifest.json").toURI());
+    V21ManifestTemplate manifestTemplate =
+        JsonTemplateMapper.readJsonFromFile(manifestJsonFile, V21ManifestTemplate.class);
+    ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
+
+    new DefaultCacheStorageWriter(defaultCacheStorageFiles)
+        .writeMetadata(imageReference, manifestTemplate);
+
+    Path savedManifestPath =
+        cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.json");
+    Assert.assertTrue(Files.exists(savedManifestPath));
+
+    V21ManifestTemplate savedManifest =
+        JsonTemplateMapper.readJsonFromFile(savedManifestPath, V21ManifestTemplate.class);
+    Assert.assertEquals("amd64", savedManifest.getContainerConfiguration().get().getArchitecture());
+  }
+
+  @Test
+  public void testWriteMetadata_v22()
+      throws IOException, URISyntaxException, InvalidImageReferenceException {
+    Path containerConfigurationJsonFile =
+        Paths.get(
+            getClass().getClassLoader().getResource("core/json/containerconfig.json").toURI());
+    ContainerConfigurationTemplate containerConfigurationTemplate =
+        JsonTemplateMapper.readJsonFromFile(
+            containerConfigurationJsonFile, ContainerConfigurationTemplate.class);
+    Path manifestJsonFile =
+        Paths.get(getClass().getClassLoader().getResource("core/json/v22manifest.json").toURI());
+    BuildableManifestTemplate manifestTemplate =
+        JsonTemplateMapper.readJsonFromFile(manifestJsonFile, V22ManifestTemplate.class);
+    ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
+
+    new DefaultCacheStorageWriter(defaultCacheStorageFiles)
+        .writeMetadata(imageReference, manifestTemplate, containerConfigurationTemplate);
+
+    Path savedManifestPath =
+        cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.json");
+    Path savedConfigPath =
+        cacheRoot.resolve("images/image.reference/project/thing!tag/config.json");
+    Assert.assertTrue(Files.exists(savedManifestPath));
+    Assert.assertTrue(Files.exists(savedConfigPath));
+
+    V22ManifestTemplate savedManifest =
+        JsonTemplateMapper.readJsonFromFile(savedManifestPath, V22ManifestTemplate.class);
+    Assert.assertEquals(
+        "8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad",
+        savedManifest.getContainerConfiguration().getDigest().getHash());
+
+    ContainerConfigurationTemplate savedContainerConfig =
+        JsonTemplateMapper.readJsonFromFile(savedConfigPath, ContainerConfigurationTemplate.class);
+    Assert.assertEquals("wasm", savedContainerConfig.getArchitecture());
   }
 
   private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)
