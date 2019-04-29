@@ -16,22 +16,28 @@
 
 package com.google.cloud.tools.jib.filesystem;
 
+import com.google.common.base.Preconditions;
 import java.io.Closeable;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /** Creates and deletes lock files. */
 public class LockFile implements Closeable {
 
-  private final Path lockFile;
-  private final FileLock lock;
+  private static final ConcurrentHashMap<Path, Lock> lockMap = new ConcurrentHashMap<>();
 
-  private LockFile(Path lockFile, FileLock lock) {
+  private final Path lockFile;
+  private final FileLock fileLock;
+
+  private LockFile(Path lockFile, FileLock fileLock) {
     this.lockFile = lockFile;
-    this.lock = lock;
+    this.fileLock = fileLock;
   }
 
   /**
@@ -42,35 +48,31 @@ public class LockFile implements Closeable {
    * @throws IOException if creating the lock file fails
    */
   public static LockFile lock(Path lockFile) throws IOException {
-    Files.createDirectories(lockFile.getParent());
-    while (true) {
-      try {
-        FileLock fileLock = new FileOutputStream(lockFile.toFile()).getChannel().tryLock();
-        if (fileLock != null) {
-          return new LockFile(lockFile, fileLock);
-        }
-      } catch (Exception ignored) {
-      }
-
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ignored) {
-      }
+    try {
+      lockMap.computeIfAbsent(lockFile, key -> new ReentrantLock()).lockInterruptibly();
+    } catch (InterruptedException ex) {
+      throw new IOException("Interrupted while trying to acquire lock", ex);
     }
+    Files.createDirectories(lockFile.getParent());
+    FileLock fileLock = new FileOutputStream(lockFile.toFile()).getChannel().lock();
+    return new LockFile(lockFile, fileLock);
   }
 
   /** Releases the lock file. */
   @Override
   public void close() {
     try {
-      lock.release();
+      fileLock.release();
+
     } catch (IOException ex) {
       throw new IllegalStateException("Unable to release lock", ex);
-    }
 
-    try {
-      Files.delete(lockFile);
-    } catch (IOException ignored) {
+    } finally {
+      try {
+        Preconditions.checkNotNull(lockMap.get(lockFile)).unlock();
+        Files.delete(lockFile);
+      } catch (IllegalMonitorStateException | IOException ignored) {
+      }
     }
   }
 }
