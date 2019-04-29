@@ -172,7 +172,7 @@ public class JibExtensionTest {
     Assert.assertFalse(testJibExtension.extraDirectoriesConfigured);
 
     Assert.assertEquals(
-        Arrays.asList(Paths.get(fakeProject.getProjectDir().getPath(), "test", "path")),
+        Arrays.asList(Paths.get("test", "path")),
         testJibExtension.getExtraDirectories().getPaths());
     Assert.assertEquals(
         ImmutableMap.of("file1", "123", "file2", "456"),
