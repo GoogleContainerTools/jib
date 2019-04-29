@@ -30,21 +30,10 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 public class TarStreamBuilder {
 
   /**
-   * Represents contents of a tar entry. It may represent "yet-to-be-realized" contents; for
-   * example, loading the actual contents from a file may happen only when writing the contents into
-   * an output stream.
+   * Maps from {@link TarArchiveEntry} to a {@link Blob}. The order of the entries is the order they
+   * belong in the tarball.
    */
-  @FunctionalInterface
-  private static interface WritableContents {
-
-    void writeTo(OutputStream out) throws IOException;
-  }
-
-  /**
-   * Maps from {@link TarArchiveEntry} to a {@link WritableContents}. The order of the entries is
-   * the order they belong in the tarball.
-   */
-  private final LinkedHashMap<TarArchiveEntry, WritableContents> archiveMap = new LinkedHashMap<>();
+  private final LinkedHashMap<TarArchiveEntry, Blob> archiveMap = new LinkedHashMap<>();
 
   /**
    * Writes each entry in the filesystem to the tarball archive stream.
@@ -57,7 +46,7 @@ public class TarStreamBuilder {
         new TarArchiveOutputStream(out, StandardCharsets.UTF_8.name())) {
       // Enables PAX extended headers to support long file names.
       tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
-      for (Map.Entry<TarArchiveEntry, WritableContents> entry : archiveMap.entrySet()) {
+      for (Map.Entry<TarArchiveEntry, Blob> entry : archiveMap.entrySet()) {
         tarArchiveOutputStream.putArchiveEntry(entry.getKey());
         entry.getValue().writeTo(tarArchiveOutputStream);
         tarArchiveOutputStream.closeArchiveEntry();
@@ -71,17 +60,13 @@ public class TarStreamBuilder {
    * @param entry the {@link TarArchiveEntry}
    */
   public void addTarArchiveEntry(TarArchiveEntry entry) {
-    if (!entry.isFile()) {
-      archiveMap.put(entry, ignored -> {});
-    } else {
-      Blob fileBlob = Blobs.from(entry.getFile().toPath());
-      archiveMap.put(entry, outputStream -> fileBlob.writeTo(outputStream));
-    }
+    archiveMap.put(
+        entry, entry.isFile() ? Blobs.from(entry.getFile().toPath()) : Blobs.from(ignored -> {}));
   }
 
   /**
-   * Adds byte contents to the archive. Note that this should be used with raw bytes and not file
-   * contents; for adding files to the archive, use {@link #addTarArchiveEntry}.
+   * Adds a blob to the archive. Note that this should be used with raw bytes and not file contents;
+   * for adding files to the archive, use {@link #addTarArchiveEntry}.
    *
    * @param contents the bytes to add to the tarball
    * @param name the name of the entry (i.e. filename)
@@ -89,7 +74,7 @@ public class TarStreamBuilder {
   public void addByteEntry(byte[] contents, String name) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(contents.length);
-    archiveMap.put(entry, outputStream -> outputStream.write(contents));
+    archiveMap.put(entry, Blobs.from(outputStream -> outputStream.write(contents)));
   }
 
   /**
@@ -103,6 +88,6 @@ public class TarStreamBuilder {
   public void addBlobEntry(Blob blob, long size, String name) {
     TarArchiveEntry entry = new TarArchiveEntry(name);
     entry.setSize(size);
-    archiveMap.put(entry, outputStream -> blob.writeTo(outputStream));
+    archiveMap.put(entry, blob);
   }
 }
