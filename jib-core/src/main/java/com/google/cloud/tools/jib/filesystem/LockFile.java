@@ -33,10 +33,12 @@ public class LockFile implements Closeable {
 
   private final Path lockFile;
   private final FileLock fileLock;
+  private final Lock lock;
 
-  private LockFile(Path lockFile, FileLock fileLock) {
+  private LockFile(Path lockFile, FileLock fileLock, Lock lock) {
     this.lockFile = lockFile;
     this.fileLock = fileLock;
+    this.lock = lock;
   }
 
   /**
@@ -55,7 +57,7 @@ public class LockFile implements Closeable {
     lock.lock();
     Files.createDirectories(lockFile.getParent());
     FileLock fileLock = new FileOutputStream(lockFile.toFile()).getChannel().lock();
-    return new LockFile(lockFile, fileLock);
+    return new LockFile(lockFile, fileLock, lock);
   }
 
   /** Releases the lock file. */
@@ -71,9 +73,6 @@ public class LockFile implements Closeable {
       Files.delete(lockFile);
     } catch (IOException ignored) {
     }
-    Lock lock = LOCK_MAP.get(lockFile);
-    if (lock != null) {
-      lock.unlock();
-    }
+    lock.unlock();
   }
 }
