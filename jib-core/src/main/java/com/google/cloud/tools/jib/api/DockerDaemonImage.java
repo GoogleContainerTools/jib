@@ -26,7 +26,6 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Builds to the Docker daemon. */
-// TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class DockerDaemonImage {
 
   /**

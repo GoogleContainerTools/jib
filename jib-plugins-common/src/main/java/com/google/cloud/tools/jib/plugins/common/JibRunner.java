@@ -43,11 +43,8 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
 
-/** Runs a build steps and builds helpful error messages. */
-// TODO: find a better name for the class, since there is no "steps" visible or mentioned at all;
-// this class is really a thin helper whose main job is to call
-// "jibContainerBuilder.containerize(containerizer)".
-public class BuildStepsRunner {
+/** Runs Jib and builds helpful error messages. */
+public class JibRunner {
 
   private static final String STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY =
       "Containerizing application to ";
@@ -86,11 +83,11 @@ public class BuildStepsRunner {
    *
    * @param targetImageReference the target image reference
    * @param additionalTags additional tags to push to
-   * @return a {@link BuildStepsRunner} for building to a registry
+   * @return a {@link JibRunner} for building to a registry
    */
-  public static BuildStepsRunner forBuildImage(
+  public static JibRunner forBuildImage(
       ImageReference targetImageReference, Set<String> additionalTags) {
-    return new BuildStepsRunner(
+    return new JibRunner(
         buildMessageWithTargetImageReferences(
             targetImageReference,
             additionalTags,
@@ -105,11 +102,11 @@ public class BuildStepsRunner {
    *
    * @param targetImageReference the target image reference
    * @param additionalTags additional tags to push to
-   * @return a {@link BuildStepsRunner} for building to a Docker daemon
+   * @return a {@link JibRunner} for building to a Docker daemon
    */
-  public static BuildStepsRunner forBuildToDockerDaemon(
+  public static JibRunner forBuildToDockerDaemon(
       ImageReference targetImageReference, Set<String> additionalTags) {
-    return new BuildStepsRunner(
+    return new JibRunner(
         buildMessageWithTargetImageReferences(
             targetImageReference, additionalTags, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
         buildMessageWithTargetImageReferences(
@@ -120,10 +117,10 @@ public class BuildStepsRunner {
    * Creates a runner to build an image tarball. Creates a directory for the cache, if needed.
    *
    * @param outputPath the path to output the tarball to
-   * @return a {@link BuildStepsRunner} for building a tarball
+   * @return a {@link JibRunner} for building a tarball
    */
-  public static BuildStepsRunner forBuildTar(Path outputPath) {
-    return new BuildStepsRunner(
+  public static JibRunner forBuildTar(Path outputPath) {
+    return new JibRunner(
         String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
         String.format(SUCCESS_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()));
   }
@@ -155,7 +152,7 @@ public class BuildStepsRunner {
   @Nullable private Path imageIdOutputPath;
 
   @VisibleForTesting
-  BuildStepsRunner(String startupMessage, String successMessage) {
+  JibRunner(String startupMessage, String successMessage) {
     this.startupMessage = startupMessage;
     this.successMessage = successMessage;
   }
@@ -249,7 +246,7 @@ public class BuildStepsRunner {
    * @param imageDigestOutputPath the location to write the image digest or {@code null} to skip
    * @return this
    */
-  public BuildStepsRunner writeImageDigest(@Nullable Path imageDigestOutputPath) {
+  public JibRunner writeImageDigest(@Nullable Path imageDigestOutputPath) {
     this.imageDigestOutputPath = imageDigestOutputPath;
     return this;
   }
@@ -260,7 +257,7 @@ public class BuildStepsRunner {
    * @param imageIdOutputPath the location to write the image id or {@code null} to skip
    * @return this
    */
-  public BuildStepsRunner writeImageId(@Nullable Path imageIdOutputPath) {
+  public JibRunner writeImageId(@Nullable Path imageIdOutputPath) {
     this.imageIdOutputPath = imageIdOutputPath;
     return this;
   }

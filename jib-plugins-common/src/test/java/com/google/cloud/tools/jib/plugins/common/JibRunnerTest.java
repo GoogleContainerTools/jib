@@ -41,9 +41,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link BuildStepsRunner}. */
+/** Tests for {@link JibRunner}. */
 @RunWith(MockitoJUnitRunner.class)
-public class BuildStepsRunnerTest {
+public class JibRunnerTest {
 
   private static final HelpfulSuggestions TEST_HELPFUL_SUGGESTIONS =
       new HelpfulSuggestions(
@@ -70,17 +70,17 @@ public class BuildStepsRunnerTest {
   @Mock private RegistryCredentialsNotSentException mockRegistryCredentialsNotSentException;
   @Mock private HttpResponseException mockHttpResponseException;
 
-  private BuildStepsRunner testBuildImageStepsRunner;
+  private JibRunner testJibRunner;
 
   @Before
   public void setUpMocks() {
-    testBuildImageStepsRunner = new BuildStepsRunner("ignored", "ignored");
+    testJibRunner = new JibRunner("ignored", "ignored");
   }
 
   @Test
   public void testBuildImage_pass()
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
-    testBuildImageStepsRunner.build(
+    testJibRunner.build(
         mockJibContainerBuilder, mockContainerizer, mockEventDispatcher, TEST_HELPFUL_SUGGESTIONS);
   }
 
@@ -95,7 +95,7 @@ public class BuildStepsRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(
+      testJibRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
@@ -117,7 +117,7 @@ public class BuildStepsRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(
+      testJibRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
@@ -140,7 +140,7 @@ public class BuildStepsRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(
+      testJibRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
@@ -168,7 +168,7 @@ public class BuildStepsRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(
+      testJibRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
@@ -197,7 +197,7 @@ public class BuildStepsRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(
+      testJibRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
@@ -220,7 +220,7 @@ public class BuildStepsRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(
+      testJibRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
@@ -242,7 +242,7 @@ public class BuildStepsRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testBuildImageStepsRunner.build(
+      testJibRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,

@@ -24,13 +24,13 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
-import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
+import com.google.cloud.tools.jib.plugins.common.JibRunner;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
@@ -128,8 +128,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
 
       try {
-        BuildStepsRunner.forBuildToDockerDaemon(
-                targetImageReference, getTargetImageAdditionalTags())
+        JibRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
             .writeImageDigest(buildOutput.resolve("jib-image.digest"))
             .writeImageId(buildOutput.resolve("jib-image.id"))
             .build(

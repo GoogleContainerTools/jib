@@ -38,7 +38,6 @@ import java.util.Optional;
  * credentials are valid push (for using this as a target image) or pull (for using this as a source
  * image) credentials for the repository specified via the image reference.
  */
-// TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class RegistryImage {
 
   /**

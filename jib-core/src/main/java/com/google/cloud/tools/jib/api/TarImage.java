@@ -31,7 +31,6 @@ import java.nio.file.Path;
  *                             .saveTo(Paths.get("image.tar"));
  * }</pre>
  */
-// TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class TarImage {
 
   /** Finishes constructing a {@link TarImage}. */
