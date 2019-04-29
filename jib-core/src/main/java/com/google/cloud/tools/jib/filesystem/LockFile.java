@@ -24,7 +24,6 @@ import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -49,12 +48,7 @@ public class LockFile implements Closeable {
    * @throws IOException if creating the lock file fails
    */
   public static LockFile lock(Path lockFile) throws IOException {
-    lockMap.putIfAbsent(lockFile, new ReentrantLock());
-    try {
-      Preconditions.checkNotNull(lockMap.get(lockFile)).tryLock(5, TimeUnit.MINUTES);
-    } catch (InterruptedException ex) {
-      throw new IllegalStateException("Interrupted while trying to acquire lock", ex);
-    }
+    lockMap.computeIfAbsent(lockFile, key -> new ReentrantLock()).lock();
     Files.createDirectories(lockFile.getParent());
     FileLock fileLock = new FileOutputStream(lockFile.toFile()).getChannel().lock();
     return new LockFile(lockFile, fileLock);
@@ -65,14 +59,16 @@ public class LockFile implements Closeable {
   public void close() {
     try {
       fileLock.release();
+
     } catch (IOException ex) {
       throw new IllegalStateException("Unable to release lock", ex);
-    }
 
-    try {
-      Files.delete(lockFile);
-    } catch (IOException ignored) {
+    } finally {
+      Preconditions.checkNotNull(lockMap.get(lockFile)).unlock();
+      try {
+        Files.delete(lockFile);
+      } catch (IOException ignored) {
+      }
     }
-    Preconditions.checkNotNull(lockMap.get(lockFile)).unlock();
   }
 }
