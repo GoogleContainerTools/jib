@@ -49,10 +49,14 @@ public class LockFile implements Closeable {
    */
   public static LockFile lock(Path lockFile) throws IOException {
     try {
+      // This first lock is to prevent multiple threads from calling FileChannel.lock(), which would
+      // otherwise throw OverlappingFileLockException
       lockMap.computeIfAbsent(lockFile, key -> new ReentrantLock()).lockInterruptibly();
+
     } catch (InterruptedException ex) {
       throw new IOException("Interrupted while trying to acquire lock", ex);
     }
+
     Files.createDirectories(lockFile.getParent());
     FileLock fileLock = new FileOutputStream(lockFile.toFile()).getChannel().lock();
     return new LockFile(lockFile, fileLock);
@@ -71,6 +75,7 @@ public class LockFile implements Closeable {
       try {
         Preconditions.checkNotNull(lockMap.get(lockFile)).unlock();
         Files.delete(lockFile);
+
       } catch (IllegalMonitorStateException | IOException ignored) {
       }
     }
