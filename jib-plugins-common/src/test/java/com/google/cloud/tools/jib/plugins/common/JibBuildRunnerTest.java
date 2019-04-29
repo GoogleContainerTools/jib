@@ -41,9 +41,9 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link JibRunner}. */
+/** Tests for {@link JibBuildRunner}. */
 @RunWith(MockitoJUnitRunner.class)
-public class JibRunnerTest {
+public class JibBuildRunnerTest {
 
   private static final HelpfulSuggestions TEST_HELPFUL_SUGGESTIONS =
       new HelpfulSuggestions(

@@ -83,7 +83,7 @@ public class JibBuildRunner {
    *
    * @param targetImageReference the target image reference
    * @param additionalTags additional tags to push to
-   * @return a {@link JibRunner} for building to a registry
+   * @return a {@link JibBuildRunner} for building to a registry
    */
   public static JibBuildRunner forBuildImage(
       ImageReference targetImageReference, Set<String> additionalTags) {
@@ -102,7 +102,7 @@ public class JibBuildRunner {
    *
    * @param targetImageReference the target image reference
    * @param additionalTags additional tags to push to
-   * @return a {@link JibRunner} for building to a Docker daemon
+   * @return a {@link JibBuildRunner} for building to a Docker daemon
    */
   public static JibBuildRunner forBuildToDockerDaemon(
       ImageReference targetImageReference, Set<String> additionalTags) {
@@ -117,7 +117,7 @@ public class JibBuildRunner {
    * Creates a runner to build an image tarball. Creates a directory for the cache, if needed.
    *
    * @param outputPath the path to output the tarball to
-   * @return a {@link JibRunner} for building a tarball
+   * @return a {@link JibBuildRunner} for building a tarball
    */
   public static JibBuildRunner forBuildTar(Path outputPath) {
     return new JibBuildRunner(
