@@ -157,7 +157,7 @@ class CacheStorageWriter {
    * @return the {@link CachedLayer} representing the written entry
    * @throws IOException if an I/O exception occurs
    */
-  CachedLayer write(Blob compressedLayerBlob) throws IOException {
+  CachedLayer writeCompressed(Blob compressedLayerBlob) throws IOException {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(cacheStorageFiles.getLayersDirectory());
 
@@ -204,7 +204,7 @@ class CacheStorageWriter {
    * @return the {@link CachedLayer} representing the written entry
    * @throws IOException if an I/O exception occurs
    */
-  CachedLayer write(Blob uncompressedLayerBlob, @Nullable DescriptorDigest selector)
+  CachedLayer writeUncompressed(Blob uncompressedLayerBlob, @Nullable DescriptorDigest selector)
       throws IOException {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(cacheStorageFiles.getLayersDirectory());

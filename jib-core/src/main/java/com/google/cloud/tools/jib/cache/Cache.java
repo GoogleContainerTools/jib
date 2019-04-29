@@ -97,7 +97,7 @@ public class Cache {
    * @throws IOException if an I/O exception occurs
    */
   public CachedLayer writeCompressedLayer(Blob compressedLayerBlob) throws IOException {
-    return cacheStorageWriter.write(compressedLayerBlob);
+    return cacheStorageWriter.writeCompressed(compressedLayerBlob);
   }
 
   /**
@@ -111,7 +111,7 @@ public class Cache {
    */
   public CachedLayer writeUncompressedLayer(
       Blob uncompressedLayerBlob, ImmutableList<LayerEntry> layerEntries) throws IOException {
-    return cacheStorageWriter.write(
+    return cacheStorageWriter.writeUncompressed(
         uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries));
   }
 
