@@ -20,17 +20,17 @@ import com.google.cloud.tools.jib.hash.DigestUtil;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/** A {@link Blob} that writes with a {@link BlobWriter} function and hashes the bytes. */
-class WriterBlob implements Blob {
+/** A {@link Blob} that writes with a {@link WritableContents} function and hashes the bytes. */
+class WritableContentsBlob implements Blob {
 
-  private final BlobWriter writer;
+  private final WritableContents writableContents;
 
-  WriterBlob(BlobWriter writer) {
-    this.writer = writer;
+  WritableContentsBlob(WritableContents writableContents) {
+    this.writableContents = writableContents;
   }
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    return DigestUtil.computeDigest(out -> writer.writeTo(out), outputStream);
+    return DigestUtil.computeDigest(writableContents, outputStream);
   }
 }

@@ -24,7 +24,7 @@ import java.io.OutputStream;
  * of the number of times it is called.
  */
 @FunctionalInterface
-public interface BlobWriter {
+public interface WritableContents {
 
   void writeTo(OutputStream outputStream) throws IOException;
 }
