@@ -22,16 +22,21 @@ import java.io.IOException;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /** Creates and deletes lock files. */
 public class LockFile implements Closeable {
 
-  private final Path lockFile;
-  private final FileLock lock;
+  private static final ConcurrentHashMap<Path, Lock> LOCK_MAP = new ConcurrentHashMap<>();
 
-  private LockFile(Path lockFile, FileLock lock) {
+  private final Path lockFile;
+  private final FileLock fileLock;
+
+  private LockFile(Path lockFile, FileLock fileLock) {
     this.lockFile = lockFile;
-    this.lock = lock;
+    this.fileLock = fileLock;
   }
 
   /**
@@ -42,28 +47,22 @@ public class LockFile implements Closeable {
    * @throws IOException if creating the lock file fails
    */
   public static LockFile lock(Path lockFile) throws IOException {
-    Files.createDirectories(lockFile.getParent());
-    while (true) {
-      try {
-        FileLock fileLock = new FileOutputStream(lockFile.toFile()).getChannel().tryLock();
-        if (fileLock != null) {
-          return new LockFile(lockFile, fileLock);
-        }
-      } catch (Exception ignored) {
-      }
-
-      try {
-        Thread.sleep(500);
-      } catch (InterruptedException ignored) {
-      }
+    Lock lock = LOCK_MAP.get(lockFile);
+    if (lock == null) {
+      lock = new ReentrantLock();
+      LOCK_MAP.put(lockFile, lock);
     }
+    lock.lock();
+    Files.createDirectories(lockFile.getParent());
+    FileLock fileLock = new FileOutputStream(lockFile.toFile()).getChannel().lock();
+    return new LockFile(lockFile, fileLock);
   }
 
   /** Releases the lock file. */
   @Override
   public void close() {
     try {
-      lock.release();
+      fileLock.release();
     } catch (IOException ex) {
       throw new IllegalStateException("Unable to release lock", ex);
     }
@@ -71,6 +70,10 @@ public class LockFile implements Closeable {
     try {
       Files.delete(lockFile);
     } catch (IOException ignored) {
+    }
+    Lock lock = LOCK_MAP.get(lockFile);
+    if (lock != null) {
+      lock.unlock();
     }
   }
 }
