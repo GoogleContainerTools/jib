@@ -24,13 +24,14 @@ import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /** Creates and deletes lock files. */
 public class LockFile implements Closeable {
 
-  private static final ConcurrentHashMap<Path, Lock> LOCK_MAP = new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<Path, Lock> lockMap = new ConcurrentHashMap<>();
 
   private final Path lockFile;
   private final FileLock fileLock;
@@ -48,8 +49,12 @@ public class LockFile implements Closeable {
    * @throws IOException if creating the lock file fails
    */
   public static LockFile lock(Path lockFile) throws IOException {
-    LOCK_MAP.putIfAbsent(lockFile, new ReentrantLock());
-    Preconditions.checkNotNull(LOCK_MAP.get(lockFile)).lock();
+    lockMap.putIfAbsent(lockFile, new ReentrantLock());
+    try {
+      Preconditions.checkNotNull(lockMap.get(lockFile)).tryLock(5, TimeUnit.MINUTES);
+    } catch (InterruptedException ex) {
+      throw new IllegalStateException("Interrupted while trying to acquire lock", ex);
+    }
     Files.createDirectories(lockFile.getParent());
     FileLock fileLock = new FileOutputStream(lockFile.toFile()).getChannel().lock();
     return new LockFile(lockFile, fileLock);
@@ -68,6 +73,6 @@ public class LockFile implements Closeable {
       Files.delete(lockFile);
     } catch (IOException ignored) {
     }
-    Preconditions.checkNotNull(LOCK_MAP.get(lockFile)).unlock();
+    Preconditions.checkNotNull(lockMap.get(lockFile)).unlock();
   }
 }
