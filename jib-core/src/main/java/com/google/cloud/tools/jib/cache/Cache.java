@@ -112,8 +112,7 @@ public class Cache {
   public CachedLayer writeUncompressedLayer(
       Blob uncompressedLayerBlob, ImmutableList<LayerEntry> layerEntries) throws IOException {
     return cacheStorageWriter.write(
-        new UncompressedCacheWrite(
-            uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries)));
+            uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries));
   }
 
   /**

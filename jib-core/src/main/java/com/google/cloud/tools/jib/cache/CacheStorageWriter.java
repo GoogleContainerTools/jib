@@ -44,6 +44,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import javax.annotation.Nullable;
 
 /** Writes to the default cache storage engine. */
 class CacheStorageWriter {
@@ -187,22 +188,23 @@ class CacheStorageWriter {
   }
 
   /**
-   * Writes the {@link UncompressedCacheWrite}.
-   *
-   * <p>The {@link UncompressedCacheWrite} is written out to the cache directory in the form:
+   * Writes an uncompressed {@link Blob} out to the cache directory in the form:
    *
    * <ul>
-   *   <li>The {@link UncompressedCacheWrite#getUncompressedLayerBlob} is written to the layer
-   *       directory under the layers directory corresponding to the layer blob.
-   *   <li>The {@link UncompressedCacheWrite#getSelector} is written to the selector file under the
-   *       selectors directory.
+   *   <li>The {@code uncompressedLayerBlob} is written to the layer directory under the layers
+   *       directory corresponding to the layer blob.
+   *   <li>The {@code selector} is written to the selector file under the selectors directory.
    * </ul>
    *
-   * @param uncompressedCacheWrite the {@link UncompressedCacheWrite} to write out
+   * @param uncompressedLayerBlob the {@link Blob} containing the uncompressed layer contents to
+   *     write out
+   * @param selector the optional selector digest to also reference this layer data. A selector
+   *     digest may be a secondary identifier for a layer that is distinct from the default layer
+   *     digest.
    * @return the {@link CachedLayer} representing the written entry
    * @throws IOException if an I/O exception occurs
    */
-  CachedLayer write(UncompressedCacheWrite uncompressedCacheWrite) throws IOException {
+  CachedLayer write(Blob uncompressedLayerBlob, @Nullable DescriptorDigest selector) throws IOException {
     // Creates the layers directory if it doesn't exist.
     Files.createDirectories(cacheStorageFiles.getLayersDirectory());
 
@@ -215,8 +217,7 @@ class CacheStorageWriter {
 
       // Writes the layer file to the temporary directory.
       WrittenLayer writtenLayer =
-          writeUncompressedLayerBlobToDirectory(
-              uncompressedCacheWrite.getUncompressedLayerBlob(), temporaryLayerDirectory);
+          writeUncompressedLayerBlobToDirectory(uncompressedLayerBlob, temporaryLayerDirectory);
 
       // Moves the temporary directory to the final location.
       moveIfDoesNotExist(
@@ -233,8 +234,8 @@ class CacheStorageWriter {
               .setLayerBlob(Blobs.from(layerFile));
 
       // Write the selector file.
-      if (uncompressedCacheWrite.getSelector().isPresent()) {
-        writeSelector(uncompressedCacheWrite.getSelector().get(), writtenLayer.layerDigest);
+      if (selector != null) {
+        writeSelector(selector, writtenLayer.layerDigest);
       }
 
       return cachedLayerBuilder.build();

@@ -98,8 +98,7 @@ public class CacheStorageWriterTest {
     DescriptorDigest selector = getDigest(Blobs.from("selector"));
 
     CachedLayer cachedLayer =
-        new CacheStorageWriter(cacheStorageFiles)
-            .write(new UncompressedCacheWrite(uncompressedLayerBlob, selector));
+        new CacheStorageWriter(cacheStorageFiles).write(uncompressedLayerBlob, selector);
 
     verifyCachedLayer(cachedLayer, uncompressedLayerBlob);
 
