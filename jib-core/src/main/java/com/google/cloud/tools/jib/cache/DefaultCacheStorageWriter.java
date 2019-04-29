@@ -40,7 +40,6 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -120,23 +119,21 @@ class DefaultCacheStorageWriter {
    */
   private static void writeMetadata(JsonTemplate jsonTemplate, Path destination)
       throws IOException {
-    try (LockFile ignored1 = LockFile.lock(Paths.get(destination.toString() + ".lock"))) {
-      Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
-      temporaryFile.toFile().deleteOnExit();
-      Blobs.writeToFile(JsonTemplateMapper.toBlob(jsonTemplate), temporaryFile);
+    Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
+    temporaryFile.toFile().deleteOnExit();
+    Blobs.writeToFile(JsonTemplateMapper.toBlob(jsonTemplate), temporaryFile);
 
-      // Attempts an atomic move first, and falls back to non-atomic if the file system does not
-      // support atomic moves.
-      try {
-        Files.move(
-            temporaryFile,
-            destination,
-            StandardCopyOption.ATOMIC_MOVE,
-            StandardCopyOption.REPLACE_EXISTING);
+    // Attempts an atomic move first, and falls back to non-atomic if the file system does not
+    // support atomic moves.
+    try {
+      Files.move(
+          temporaryFile,
+          destination,
+          StandardCopyOption.ATOMIC_MOVE,
+          StandardCopyOption.REPLACE_EXISTING);
 
-      } catch (AtomicMoveNotSupportedException ignored2) {
-        Files.move(temporaryFile, destination, StandardCopyOption.REPLACE_EXISTING);
-      }
+    } catch (AtomicMoveNotSupportedException ignored2) {
+      Files.move(temporaryFile, destination, StandardCopyOption.REPLACE_EXISTING);
     }
   }
 
@@ -261,8 +258,10 @@ class DefaultCacheStorageWriter {
     Path imageDirectory = defaultCacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
-    writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
-    writeMetadata(containerConfiguration, imageDirectory.resolve("config.json"));
+    try (LockFile ignored1 = LockFile.lock(imageDirectory.resolve("lock"))) {
+      writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
+      writeMetadata(containerConfiguration, imageDirectory.resolve("config.json"));
+    }
   }
 
   /**
@@ -276,7 +275,9 @@ class DefaultCacheStorageWriter {
     Path imageDirectory = defaultCacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
-    writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
+    try (LockFile ignored1 = LockFile.lock(imageDirectory.resolve("lock"))) {
+      writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
+    }
   }
 
   /**
