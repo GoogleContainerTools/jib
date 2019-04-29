@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.filesystem;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,7 +31,7 @@ public class LockFileTest {
 
   @Test
   public void testLockAndRelease() throws InterruptedException {
-    int[] intPointer = {0};
+    AtomicInteger atomicInt = new AtomicInteger(0);
 
     // Runnable that would produce a race condition without a lock file
     Runnable procedure =
@@ -39,9 +40,9 @@ public class LockFileTest {
               LockFile.lock(temporaryFolder.getRoot().toPath().resolve("testLock"))) {
             Assert.assertTrue(Files.exists(temporaryFolder.getRoot().toPath().resolve("testLock")));
 
-            int valueBeforeSleep = intPointer[0];
+            int valueBeforeSleep = atomicInt.intValue();
             Thread.sleep(100);
-            intPointer[0] = valueBeforeSleep + 1;
+            atomicInt.set(valueBeforeSleep + 1);
 
           } catch (InterruptedException | IOException ex) {
             throw new AssertionError(ex);
@@ -55,6 +56,6 @@ public class LockFileTest {
     thread.join();
 
     // Assert no overlap while lock was in place
-    Assert.assertEquals(2, intPointer[0]);
+    Assert.assertEquals(2, atomicInt.intValue());
   }
 }
