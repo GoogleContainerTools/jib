@@ -27,7 +27,6 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
-import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.io.ByteStreams;
@@ -110,18 +109,16 @@ class DefaultCacheStorageWriter {
   }
 
   /**
-   * Writes a json template to the destination path by writing to a temporary file then moving the
-   * file.
+   * Writes a blob to the destination path by writing to a temporary file then moving the file.
    *
-   * @param jsonTemplate the json template
+   * @param blob the blob
    * @param destination the destination path
    * @throws IOException if an I/O exception occurs
    */
-  private static void writeMetadata(JsonTemplate jsonTemplate, Path destination)
-      throws IOException {
+  private static void writeBlob(Blob blob, Path destination) throws IOException {
     Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
     temporaryFile.toFile().deleteOnExit();
-    Blobs.writeToFile(JsonTemplateMapper.toBlob(jsonTemplate), temporaryFile);
+    Blobs.writeToFile(blob, temporaryFile);
 
     // Attempts an atomic move first, and falls back to non-atomic if the file system does not
     // support atomic moves.
@@ -259,8 +256,10 @@ class DefaultCacheStorageWriter {
     Files.createDirectories(imageDirectory);
 
     try (LockFile ignored1 = LockFile.lock(imageDirectory.resolve("lock"))) {
-      writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
-      writeMetadata(containerConfiguration, imageDirectory.resolve("config.json"));
+      writeBlob(
+          JsonTemplateMapper.toBlob(manifestTemplate), imageDirectory.resolve("manifest.json"));
+      writeBlob(
+          JsonTemplateMapper.toBlob(containerConfiguration), imageDirectory.resolve("config.json"));
     }
   }
 
@@ -276,7 +275,8 @@ class DefaultCacheStorageWriter {
     Files.createDirectories(imageDirectory);
 
     try (LockFile ignored1 = LockFile.lock(imageDirectory.resolve("lock"))) {
-      writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
+      writeBlob(
+          JsonTemplateMapper.toBlob(manifestTemplate), imageDirectory.resolve("manifest.json"));
     }
   }
 
@@ -361,22 +361,6 @@ class DefaultCacheStorageWriter {
     // Creates the selectors directory if it doesn't exist.
     Files.createDirectories(selectorFile.getParent());
 
-    // Writes the selector to a temporary file and then moves the file to the intended location.
-    Path temporarySelectorFile = Files.createTempFile(null, null);
-    temporarySelectorFile.toFile().deleteOnExit();
-    Blobs.writeToFileWithLock(Blobs.from(layerDigest.getHash()), temporarySelectorFile);
-
-    // Attempts an atomic move first, and falls back to non-atomic if the file system does not
-    // support atomic moves.
-    try {
-      Files.move(
-          temporarySelectorFile,
-          selectorFile,
-          StandardCopyOption.ATOMIC_MOVE,
-          StandardCopyOption.REPLACE_EXISTING);
-
-    } catch (AtomicMoveNotSupportedException ignored) {
-      Files.move(temporarySelectorFile, selectorFile, StandardCopyOption.REPLACE_EXISTING);
-    }
+    writeBlob(Blobs.from(layerDigest.getHash()), selectorFile);
   }
 }
