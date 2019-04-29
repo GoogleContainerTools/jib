@@ -123,7 +123,7 @@ class DefaultCacheStorageWriter {
     try (LockFile ignored1 = LockFile.lock(Paths.get(destination.toString() + ".lock"))) {
       Path temporaryFile = Files.createTempFile(destination.getParent(), null, null);
       temporaryFile.toFile().deleteOnExit();
-      Blobs.writeToFileWithLock(JsonTemplateMapper.toBlob(jsonTemplate), temporaryFile);
+      Blobs.writeToFile(JsonTemplateMapper.toBlob(jsonTemplate), temporaryFile);
 
       // Attempts an atomic move first, and falls back to non-atomic if the file system does not
       // support atomic moves.
