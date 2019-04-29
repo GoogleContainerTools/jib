@@ -70,17 +70,17 @@ public class JibRunnerTest {
   @Mock private RegistryCredentialsNotSentException mockRegistryCredentialsNotSentException;
   @Mock private HttpResponseException mockHttpResponseException;
 
-  private JibRunner testJibRunner;
+  private JibBuildRunner testJibBuildRunner;
 
   @Before
   public void setUpMocks() {
-    testJibRunner = new JibRunner("ignored", "ignored");
+    testJibBuildRunner = new JibBuildRunner("ignored", "ignored");
   }
 
   @Test
   public void testBuildImage_pass()
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
-    testJibRunner.build(
+    testJibBuildRunner.build(
         mockJibContainerBuilder, mockContainerizer, mockEventDispatcher, TEST_HELPFUL_SUGGESTIONS);
   }
 
@@ -95,7 +95,7 @@ public class JibRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibRunner.build(
+      testJibBuildRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
@@ -117,7 +117,7 @@ public class JibRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibRunner.build(
+      testJibBuildRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
@@ -140,7 +140,7 @@ public class JibRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibRunner.build(
+      testJibBuildRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
@@ -168,7 +168,7 @@ public class JibRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibRunner.build(
+      testJibBuildRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
@@ -197,7 +197,7 @@ public class JibRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibRunner.build(
+      testJibBuildRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
@@ -220,7 +220,7 @@ public class JibRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibRunner.build(
+      testJibBuildRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,
@@ -242,7 +242,7 @@ public class JibRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibRunner.build(
+      testJibBuildRunner.build(
           mockJibContainerBuilder,
           mockContainerizer,
           mockEventDispatcher,

@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
 
 /** Runs Jib and builds helpful error messages. */
-public class JibRunner {
+public class JibBuildRunner {
 
   private static final String STARTUP_MESSAGE_PREFIX_FOR_DOCKER_REGISTRY =
       "Containerizing application to ";
@@ -85,9 +85,9 @@ public class JibRunner {
    * @param additionalTags additional tags to push to
    * @return a {@link JibRunner} for building to a registry
    */
-  public static JibRunner forBuildImage(
+  public static JibBuildRunner forBuildImage(
       ImageReference targetImageReference, Set<String> additionalTags) {
-    return new JibRunner(
+    return new JibBuildRunner(
         buildMessageWithTargetImageReferences(
             targetImageReference,
             additionalTags,
@@ -104,9 +104,9 @@ public class JibRunner {
    * @param additionalTags additional tags to push to
    * @return a {@link JibRunner} for building to a Docker daemon
    */
-  public static JibRunner forBuildToDockerDaemon(
+  public static JibBuildRunner forBuildToDockerDaemon(
       ImageReference targetImageReference, Set<String> additionalTags) {
-    return new JibRunner(
+    return new JibBuildRunner(
         buildMessageWithTargetImageReferences(
             targetImageReference, additionalTags, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
         buildMessageWithTargetImageReferences(
@@ -119,8 +119,8 @@ public class JibRunner {
    * @param outputPath the path to output the tarball to
    * @return a {@link JibRunner} for building a tarball
    */
-  public static JibRunner forBuildTar(Path outputPath) {
-    return new JibRunner(
+  public static JibBuildRunner forBuildTar(Path outputPath) {
+    return new JibBuildRunner(
         String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
         String.format(SUCCESS_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()));
   }
@@ -152,7 +152,7 @@ public class JibRunner {
   @Nullable private Path imageIdOutputPath;
 
   @VisibleForTesting
-  JibRunner(String startupMessage, String successMessage) {
+  JibBuildRunner(String startupMessage, String successMessage) {
     this.startupMessage = startupMessage;
     this.successMessage = successMessage;
   }
@@ -246,7 +246,7 @@ public class JibRunner {
    * @param imageDigestOutputPath the location to write the image digest or {@code null} to skip
    * @return this
    */
-  public JibRunner writeImageDigest(@Nullable Path imageDigestOutputPath) {
+  public JibBuildRunner writeImageDigest(@Nullable Path imageDigestOutputPath) {
     this.imageDigestOutputPath = imageDigestOutputPath;
     return this;
   }
@@ -257,7 +257,7 @@ public class JibRunner {
    * @param imageIdOutputPath the location to write the image id or {@code null} to skip
    * @return this
    */
-  public JibRunner writeImageId(@Nullable Path imageIdOutputPath) {
+  public JibBuildRunner writeImageId(@Nullable Path imageIdOutputPath) {
     this.imageIdOutputPath = imageIdOutputPath;
     return this;
   }
