@@ -30,7 +30,7 @@ import org.gradle.api.Project;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
-/** Object in {@link JibExtension} that configures the extra directory. */
+/** Object in {@link JibExtension} that configures the extra directories. */
 public class ExtraDirectoriesParameters {
 
   private final Project project;

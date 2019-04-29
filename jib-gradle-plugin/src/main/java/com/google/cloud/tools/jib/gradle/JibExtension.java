@@ -115,12 +115,12 @@ public class JibExtension {
   // for the deprecated "jib.extraDirectory" config parameter
   public void setExtraDirectory(File extraDirectory) {
     extraDirectoryConfigured = true;
-    this.extraDirectories.setPaths(extraDirectory);
+    this.extraDirectories.setPath(extraDirectory);
   }
 
   /**
    * Sets extra directory paths. {@code extraDirectories} can be any suitable object describing file
-   * paths convertible by {@link Project#files} (such as {@code List<File>} or {@code
+   * paths convertible by {@link Project#files} (such as {@link File}, {@code List<File>} or {@code
    * List<String>}).
    *
    * @param extraDirectories paths to set.
