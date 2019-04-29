@@ -31,6 +31,7 @@ public class PropertyNames {
   public static final String TO_AUTH_PASSWORD = "jib.to.auth.password";
   public static final String CONTAINER_APP_ROOT = "jib.container.appRoot";
   public static final String CONTAINER_ARGS = "jib.container.args";
+  public static final String CONTAINER_EXTRA_CLASSPATH = "jib.container.extraClasspath";
   public static final String CONTAINER_ENTRYPOINT = "jib.container.entrypoint";
   public static final String CONTAINER_ENVIRONMENT = "jib.container.environment";
   public static final String CONTAINER_FORMAT = "jib.container.format";
@@ -46,8 +47,13 @@ public class PropertyNames {
   public static final String BASE_IMAGE_CACHE = "jib.baseImageCache";
   public static final String APPLICATION_CACHE = "jib.applicationCache";
   public static final String ALLOW_INSECURE_REGISTRIES = "jib.allowInsecureRegistries";
-  public static final String EXTRA_DIRECTORY_PATH = "jib.extraDirectory.path";
+  @Deprecated public static final String EXTRA_DIRECTORY_PATH = "jib.extraDirectory.path";
+  public static final String EXTRA_DIRECTORIES_PATHS = "jib.extraDirectories.paths";
+
+  @Deprecated
   public static final String EXTRA_DIRECTORY_PERMISSIONS = "jib.extraDirectory.permissions";
+
+  public static final String EXTRA_DIRECTORIES_PERMISSIONS = "jib.extraDirectories.permissions";
   public static final String DOCKER_CLIENT_EXECUTABLE = "jib.dockerClient.executable";
   public static final String DOCKER_CLIENT_ENVIRONMENT = "jib.dockerClient.environment";
   public static final String SKIP = "jib.skip";

@@ -35,16 +35,16 @@ public class TarStreamBuilder {
    * an output stream.
    */
   @FunctionalInterface
-  private static interface Contents {
+  private static interface WritableContents {
 
     void writeTo(OutputStream out) throws IOException;
   }
 
   /**
-   * Maps from {@link TarArchiveEntry} to a {@link Contents}. The order of the entries is the order
-   * they belong in the tarball.
+   * Maps from {@link TarArchiveEntry} to a {@link WritableContents}. The order of the entries is
+   * the order they belong in the tarball.
    */
-  private final LinkedHashMap<TarArchiveEntry, Contents> archiveMap = new LinkedHashMap<>();
+  private final LinkedHashMap<TarArchiveEntry, WritableContents> archiveMap = new LinkedHashMap<>();
 
   /**
    * Writes each entry in the filesystem to the tarball archive stream.
@@ -57,7 +57,7 @@ public class TarStreamBuilder {
         new TarArchiveOutputStream(out, StandardCharsets.UTF_8.name())) {
       // Enables PAX extended headers to support long file names.
       tarArchiveOutputStream.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
-      for (Map.Entry<TarArchiveEntry, Contents> entry : archiveMap.entrySet()) {
+      for (Map.Entry<TarArchiveEntry, WritableContents> entry : archiveMap.entrySet()) {
         tarArchiveOutputStream.putArchiveEntry(entry.getKey());
         entry.getValue().writeTo(tarArchiveOutputStream);
         tarArchiveOutputStream.closeArchiveEntry();

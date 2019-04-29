@@ -273,7 +273,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testEntrypoint_defaulNonWarPackaging()
+  public void testEntrypoint_defaultNonWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
@@ -287,6 +287,30 @@ public class PluginConfigurationProcessorTest {
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
         Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
+        buildConfiguration.getContainerConfiguration().getEntrypoint());
+
+    ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
+    Mockito.verify(logger, Mockito.never()).accept(Mockito.argThat(isLogWarn));
+  }
+
+  @Test
+  public void testEntrypoint_extraClasspathNonWarPackaging()
+      throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException {
+    Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
+    Mockito.when(rawConfiguration.getExtraClasspath())
+        .thenReturn(Collections.singletonList("/foo"));
+    Mockito.when(projectProperties.isWarProject()).thenReturn(false);
+
+    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
+    JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
+    BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
+
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertEquals(
+        Arrays.asList(
+            "java", "-cp", "/foo:/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
 
     ArgumentMatcher<LogEvent> isLogWarn = logEvent -> logEvent.getLevel() == LogEvent.Level.WARN;
@@ -339,7 +363,9 @@ public class PluginConfigurationProcessorTest {
         Arrays.asList("custom", "entrypoint"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verify(logger)
-        .accept(LogEvent.warn("mainClass and jvmFlags are ignored when entrypoint is specified"));
+        .accept(
+            LogEvent.warn(
+                "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
   }
 
   @Test
@@ -360,7 +386,9 @@ public class PluginConfigurationProcessorTest {
         Arrays.asList("custom", "entrypoint"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
     Mockito.verify(logger)
-        .accept(LogEvent.warn("mainClass and jvmFlags are ignored when entrypoint is specified"));
+        .accept(
+            LogEvent.warn(
+                "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
   }
 
   @Test
