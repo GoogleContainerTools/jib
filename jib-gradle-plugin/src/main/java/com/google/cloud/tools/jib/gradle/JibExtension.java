@@ -152,6 +152,14 @@ public class JibExtension {
     return container;
   }
 
+  @Deprecated
+  @Nested
+  @Optional
+  public ExtraDirectoriesParameters getExtraDirectory() {
+    extraDirectoryConfigured = true;
+    return extraDirectories;
+  }
+
   @Nested
   @Optional
   public ExtraDirectoriesParameters getExtraDirectories() {
