@@ -17,13 +17,15 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.builder.steps.BuildResult;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.DockerDaemonImage;
+import com.google.cloud.tools.jib.api.Jib;
+import com.google.cloud.tools.jib.api.JibContainer;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.RegistryImage;
+import com.google.cloud.tools.jib.api.TarImage;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LayerCountEvent;
@@ -34,9 +36,9 @@ import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -45,6 +47,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -55,7 +58,7 @@ import java.util.stream.Stream;
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -63,8 +66,9 @@ import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Integration tests for {@link BuildSteps}. */
-public class BuildStepsIntegrationTest {
+// TODO: now it looks like we can move everything here into JibIntegrationTest.
+/** Integration tests for {@link Containerizer}. */
+public class ContainerizerIntegrationTest {
 
   /**
    * Helper class to hold a {@link ProgressEventHandler} and verify that it handles a full progress.
@@ -88,12 +92,23 @@ public class BuildStepsIntegrationTest {
   }
 
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
+
   private static final ExecutorService executorService = Executors.newCachedThreadPool();
-  private static final Logger logger = LoggerFactory.getLogger(BuildStepsIntegrationTest.class);
+  private static final Logger logger = LoggerFactory.getLogger(ContainerizerIntegrationTest.class);
   private static final String DISTROLESS_DIGEST =
       "sha256:f488c213f278bc5f9ffe3ddf30c5dbb2303a15a74146b738d12453088e662880";
-
   private static final double DOUBLE_ERROR_MARGIN = 1e-10;
+
+  public static ImmutableList<LayerConfiguration> fakeLayerConfigurations;
+
+  @BeforeClass
+  public static void setUp() throws URISyntaxException, IOException {
+    fakeLayerConfigurations =
+        ImmutableList.of(
+            makeLayerConfiguration("core/application/dependencies", "/app/libs/"),
+            makeLayerConfiguration("core/application/resources", "/app/resources/"),
+            makeLayerConfiguration("core/application/classes", "/app/classes/"));
+  }
 
   @AfterClass
   public static void cleanUp() {
@@ -105,15 +120,14 @@ public class BuildStepsIntegrationTest {
    * LayerConfiguration} from those files.
    */
   private static LayerConfiguration makeLayerConfiguration(
-      String resourcePath, AbsoluteUnixPath pathInContainer)
-      throws URISyntaxException, IOException {
+      String resourcePath, String pathInContainer) throws URISyntaxException, IOException {
     try (Stream<Path> fileStream =
         Files.list(Paths.get(Resources.getResource(resourcePath).toURI()))) {
       LayerConfiguration.Builder layerConfigurationBuilder = LayerConfiguration.builder();
       fileStream.forEach(
           sourceFile ->
               layerConfigurationBuilder.addEntry(
-                  sourceFile, pathInContainer.resolve(sourceFile.getFileName())));
+                  sourceFile, AbsoluteUnixPath.get(pathInContainer + sourceFile.getFileName())));
       return layerConfigurationBuilder.build();
     }
   }
@@ -148,8 +162,6 @@ public class BuildStepsIntegrationTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private ImmutableList<LayerConfiguration> fakeLayerConfigurations;
-
   private final Map<BuildStepType, Integer> layerCounts = new ConcurrentHashMap<>();
   private final Consumer<LayerCountEvent> layerCountConsumer =
       layerCountEvent ->
@@ -158,36 +170,23 @@ public class BuildStepsIntegrationTest {
               layerCountEvent.getCount(),
               (oldValue, count) -> oldValue + count);
 
-  @Before
-  public void setUp() throws IOException, URISyntaxException {
-    fakeLayerConfigurations =
-        ImmutableList.of(
-            makeLayerConfiguration(
-                "core/application/dependencies", AbsoluteUnixPath.get("/app/libs/")),
-            makeLayerConfiguration(
-                "core/application/resources", AbsoluteUnixPath.get("/app/resources/")),
-            makeLayerConfiguration(
-                "core/application/classes", AbsoluteUnixPath.get("/app/classes/")));
-  }
+  private final ProgressChecker progressChecker = new ProgressChecker();
+  private final EventHandlers eventHandlers =
+      new EventHandlers()
+          .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
+          .add(JibEventType.LAYER_COUNT, layerCountConsumer);
 
   @Test
   public void testSteps_forBuildToDockerRegistry()
-      throws IOException, InterruptedException, ExecutionException {
-    ProgressChecker progressChecker = new ProgressChecker();
-
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException {
     long lastTime = System.nanoTime();
-    BuildResult image1 =
-        BuildSteps.forBuildToDockerRegistry(
-                getBuildConfigurationBuilder(
-                        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-                        ImageReference.of("localhost:5000", "testimage", "testtag"))
-                    .setEventDispatcher(
-                        new DefaultEventDispatcher(
-                            new EventHandlers()
-                                .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
-                                .add(JibEventType.LAYER_COUNT, layerCountConsumer)))
-                    .build())
-            .run();
+    JibContainer image1 =
+        buildRegistryImage(
+            ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+            ImageReference.of("localhost:5000", "testimage", "testtag"),
+            Collections.emptyList());
+
     progressChecker.checkCompletion();
     Assert.assertEquals(
         layerCounts,
@@ -204,13 +203,12 @@ public class BuildStepsIntegrationTest {
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     lastTime = System.nanoTime();
-    BuildResult image2 =
-        BuildSteps.forBuildToDockerRegistry(
-                getBuildConfigurationBuilder(
-                        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-                        ImageReference.of("localhost:5000", "testimage", "testtag"))
-                    .build())
-            .run();
+    JibContainer image2 =
+        buildRegistryImage(
+            ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+            ImageReference.of("localhost:5000", "testimage", "testtag"),
+            Collections.emptyList());
+
     logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
     Assert.assertEquals(image1, image2);
@@ -221,7 +219,7 @@ public class BuildStepsIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
 
-    String imageReferenceByDigest = "localhost:5000/testimage@" + image1.getImageDigest();
+    String imageReferenceByDigest = "localhost:5000/testimage@" + image1.getDigest();
     localRegistry.pull(imageReferenceByDigest);
     assertDockerInspect(imageReferenceByDigest);
     Assert.assertEquals(
@@ -231,21 +229,12 @@ public class BuildStepsIntegrationTest {
 
   @Test
   public void testSteps_forBuildToDockerRegistry_multipleTags()
-      throws IOException, InterruptedException, ExecutionException {
-    BuildSteps buildImageSteps =
-        BuildSteps.forBuildToDockerRegistry(
-            getBuildConfigurationBuilder(
-                    ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-                    ImageReference.of("localhost:5000", "testimage", "testtag"))
-                .setAdditionalTargetImageTags(ImmutableSet.of("testtag2", "testtag3"))
-                .build());
-
-    long lastTime = System.nanoTime();
-    buildImageSteps.run();
-    logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
-    lastTime = System.nanoTime();
-    buildImageSteps.run();
-    logger.info("Secondary build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException {
+    buildRegistryImage(
+        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+        ImageReference.of("localhost:5000", "testimage", "testtag"),
+        Arrays.asList("testtag2", "testtag3"));
 
     String imageReference = "localhost:5000/testimage:testtag";
     localRegistry.pull(imageReference);
@@ -269,14 +258,13 @@ public class BuildStepsIntegrationTest {
   }
 
   @Test
-  public void testSteps_forBuildToDockerRegistry_dockerHubBaseImage()
-      throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException {
-    BuildSteps.forBuildToDockerRegistry(
-            getBuildConfigurationBuilder(
-                    ImageReference.parse("openjdk:8-jre-alpine"),
-                    ImageReference.of("localhost:5000", "testimage", "testtag"))
-                .build())
-        .run();
+  public void tesBuildToDockerRegistry_dockerHubBaseImage()
+      throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException,
+          RegistryException, CacheDirectoryCreationException {
+    buildRegistryImage(
+        ImageReference.parse("openjdk:8-jre-alpine"),
+        ImageReference.of("localhost:5000", "testimage", "testtag"),
+        Collections.emptyList());
 
     String imageReference = "localhost:5000/testimage:testtag";
     new Command("docker", "pull", imageReference).run();
@@ -285,30 +273,22 @@ public class BuildStepsIntegrationTest {
   }
 
   @Test
-  public void testSteps_forBuildToDockerDaemon()
-      throws IOException, InterruptedException, ExecutionException {
-    ProgressChecker progressChecker = new ProgressChecker();
-
-    BuildConfiguration buildConfiguration =
-        getBuildConfigurationBuilder(
-                ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-                ImageReference.of(null, "testdocker", null))
-            .setEventDispatcher(
-                new DefaultEventDispatcher(
-                    new EventHandlers()
-                        .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
-                        .add(JibEventType.LAYER_COUNT, layerCountConsumer)))
-            .build();
-    BuildSteps.forBuildToDockerDaemon(DockerClient.newDefaultClient(), buildConfiguration).run();
+  public void testBuildToDockerDaemon()
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException {
+    buildDockerDaemonImage(
+        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+        ImageReference.of(null, "testdocker", null),
+        Collections.emptyList());
 
     progressChecker.checkCompletion();
     Assert.assertEquals(
-        layerCounts,
         ImmutableMap.of(
             BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER,
             4,
             BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
-            3));
+            3),
+        layerCounts);
 
     assertDockerInspect("testdocker");
     Assert.assertEquals(
@@ -316,16 +296,14 @@ public class BuildStepsIntegrationTest {
   }
 
   @Test
-  public void testSteps_forBuildToDockerDaemon_multipleTags()
-      throws IOException, InterruptedException, ExecutionException {
+  public void testBuildToDockerDaemon_multipleTags()
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException {
     String imageReference = "testdocker";
-    BuildConfiguration buildConfiguration =
-        getBuildConfigurationBuilder(
-                ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-                ImageReference.of(null, imageReference, null))
-            .setAdditionalTargetImageTags(ImmutableSet.of("testtag2", "testtag3"))
-            .build();
-    BuildSteps.forBuildToDockerDaemon(DockerClient.newDefaultClient(), buildConfiguration).run();
+    buildDockerDaemonImage(
+        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+        ImageReference.of(null, imageReference, null),
+        Arrays.asList("testtag2", "testtag3"));
 
     assertDockerInspect(imageReference);
     Assert.assertEquals(
@@ -341,43 +319,65 @@ public class BuildStepsIntegrationTest {
   }
 
   @Test
-  public void testSteps_forBuildToTarball()
-      throws IOException, InterruptedException, ExecutionException {
-    ProgressChecker progressChecker = new ProgressChecker();
-
-    BuildConfiguration buildConfiguration =
-        getBuildConfigurationBuilder(
-                ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
-                ImageReference.of(null, "testtar", null))
-            .setEventDispatcher(
-                new DefaultEventDispatcher(
-                    new EventHandlers()
-                        .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
-                        .add(JibEventType.LAYER_COUNT, layerCountConsumer)))
-            .build();
+  public void testBuildTarball()
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException {
     Path outputPath = temporaryFolder.newFolder().toPath().resolve("test.tar");
-    BuildSteps.forBuildToTar(outputPath, buildConfiguration).run();
+    buildTarImage(
+        ImageReference.of("gcr.io", "distroless/java", DISTROLESS_DIGEST),
+        ImageReference.of(null, "testtar", null),
+        outputPath,
+        Collections.emptyList());
 
     progressChecker.checkCompletion();
     Assert.assertEquals(
-        layerCounts,
         ImmutableMap.of(
             BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER,
             4,
             BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
-            3));
+            3),
+        layerCounts);
 
     new Command("docker", "load", "--input", outputPath.toString()).run();
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", "testtar").run());
   }
 
-  private BuildConfiguration.Builder getBuildConfigurationBuilder(
-      ImageReference baseImage, ImageReference targetImage) throws IOException {
-    ImageConfiguration baseImageConfiguration = ImageConfiguration.builder(baseImage).build();
-    ImageConfiguration targetImageConfiguration = ImageConfiguration.builder(targetImage).build();
-    ContainerConfiguration containerConfiguration =
-        ContainerConfiguration.builder()
+  private JibContainer buildRegistryImage(
+      ImageReference baseImage, ImageReference targetImage, List<String> additionalTags)
+      throws IOException, InterruptedException, RegistryException, CacheDirectoryCreationException,
+          ExecutionException {
+    return buildImage(
+        baseImage, Containerizer.to(RegistryImage.named(targetImage)), additionalTags);
+  }
+
+  private JibContainer buildDockerDaemonImage(
+      ImageReference baseImage, ImageReference targetImage, List<String> additionalTags)
+      throws IOException, InterruptedException, RegistryException, CacheDirectoryCreationException,
+          ExecutionException {
+    return buildImage(
+        baseImage, Containerizer.to(DockerDaemonImage.named(targetImage)), additionalTags);
+  }
+
+  private JibContainer buildTarImage(
+      ImageReference baseImage,
+      ImageReference targetImage,
+      Path outputPath,
+      List<String> additionalTags)
+      throws IOException, InterruptedException, RegistryException, CacheDirectoryCreationException,
+          ExecutionException {
+    return buildImage(
+        baseImage,
+        Containerizer.to(TarImage.named(targetImage).saveTo(outputPath)),
+        additionalTags);
+  }
+
+  private JibContainer buildImage(
+      ImageReference baseImage, Containerizer containerizer, List<String> additionalTags)
+      throws IOException, InterruptedException, RegistryException, CacheDirectoryCreationException,
+          ExecutionException {
+    JibContainerBuilder containerBuilder =
+        Jib.from(baseImage)
             .setEntrypoint(
                 JavaEntrypointConstructor.makeEntrypoint(
                     JavaEntrypointConstructor.defaultClasspath(AbsoluteUnixPath.get("/app")),
@@ -388,17 +388,18 @@ public class BuildStepsIntegrationTest {
             .setExposedPorts(
                 ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
             .setLabels(ImmutableMap.of("key1", "value1", "key2", "value2"))
-            .build();
+            .setLayers(fakeLayerConfigurations);
+
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
-    return BuildConfiguration.builder()
-        .setBaseImageConfiguration(baseImageConfiguration)
-        .setTargetImageConfiguration(targetImageConfiguration)
-        .setContainerConfiguration(containerConfiguration)
-        .setBaseImageLayersCacheDirectory(cacheDirectory)
-        .setApplicationLayersCacheDirectory(cacheDirectory)
+    containerizer
+        .setBaseImageLayersCache(cacheDirectory)
+        .setApplicationLayersCache(cacheDirectory)
         .setAllowInsecureRegistries(true)
-        .setLayerConfigurations(fakeLayerConfigurations)
         .setToolName("jib-integration-test")
-        .setExecutorService(executorService);
+        .setExecutorService(executorService)
+        .setEventHandlers(eventHandlers);
+    additionalTags.forEach(containerizer::withAdditionalTag);
+
+    return containerBuilder.containerize(containerizer);
   }
 }
