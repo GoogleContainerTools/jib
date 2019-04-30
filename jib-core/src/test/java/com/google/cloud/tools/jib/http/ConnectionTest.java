@@ -158,6 +158,6 @@ public class ConnectionTest {
 
     Assert.assertEquals(
         "crepecake", new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
-    Assert.assertEquals("crepecake".length(), totalByteCount);
+    Assert.assertEquals("crepecake".length(), totalByteCount.longValue());
   }
 }

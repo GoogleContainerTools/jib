@@ -43,6 +43,6 @@ public class ResponseTest {
 
     Response response = new Response(httpResponseMock);
 
-    Assert.assertEquals(expectedResponse, ByteStreams.toByteArray(response.getBody()));
+    Assert.assertArrayEquals(expectedResponse, ByteStreams.toByteArray(response.getBody()));
   }
 }

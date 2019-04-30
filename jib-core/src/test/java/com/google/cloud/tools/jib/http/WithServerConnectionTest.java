@@ -38,7 +38,7 @@ public class WithServerConnectionTest {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
-      Assert.assertEquals(
+      Assert.assertArrayEquals(
           "Hello World!".getBytes(StandardCharsets.UTF_8),
           ByteStreams.toByteArray(response.getBody()));
     }
@@ -84,7 +84,7 @@ public class WithServerConnectionTest {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
-      Assert.assertEquals(
+      Assert.assertArrayEquals(
           "Hello World!".getBytes(StandardCharsets.UTF_8),
           ByteStreams.toByteArray(response.getBody()));
     }

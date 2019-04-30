@@ -316,7 +316,7 @@ public class RegistryAuthenticator {
       if (isOAuth2Auth()) {
         String parameters = getAuthRequestParameters(scope);
         requestBuilder.setBody(
-            new BlobHttpContent(Blobs.from(parameters), MediaType.FORM_DATA.toString(), null));
+            new BlobHttpContent(Blobs.from(parameters), MediaType.FORM_DATA.toString()));
       } else if (credential != null) {
         requestBuilder.setAuthorization(
             Authorization.withBasicCredentials(credential.getUsername(), credential.getPassword()));

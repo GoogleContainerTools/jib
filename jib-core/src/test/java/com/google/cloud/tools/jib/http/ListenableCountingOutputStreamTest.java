@@ -58,18 +58,16 @@ public class ListenableCountingOutputStreamTest {
     Queue<Instant> instantQueue = new ArrayDeque<>();
     instantQueue.add(Instant.EPOCH);
 
-    try (ListenableCountingOutputStream listenableCountingOutputStream =
-        new ListenableCountingOutputStream(
-            byteArrayOutputStream,
+    try (DelayedConsumer<Long> byteCounter =
             new DelayedConsumer<>(
-                byteCounts::add, (a, b) -> a + b, Duration.ofSeconds(3), instantQueue::remove))) {
+                byteCounts::add, (a, b) -> a + b, Duration.ofSeconds(3), instantQueue::remove);
+        ListenableCountingOutputStream listenableCountingOutputStream =
+            new ListenableCountingOutputStream(byteArrayOutputStream, byteCounter)) {
       instantQueue.add(Instant.EPOCH);
       listenableCountingOutputStream.write(100);
       instantQueue.add(Instant.EPOCH);
       listenableCountingOutputStream.write(new byte[] {101, 102, 103});
-      System.out.println(instantQueue);
       instantQueue.add(Instant.EPOCH.plusSeconds(4));
-      System.out.println(instantQueue);
       listenableCountingOutputStream.write(new byte[] {104, 105, 106});
 
       instantQueue.add(Instant.EPOCH.plusSeconds(10));
@@ -79,8 +77,6 @@ public class ListenableCountingOutputStreamTest {
       listenableCountingOutputStream.write(new byte[] {109});
       instantQueue.add(Instant.EPOCH.plusSeconds(13));
       listenableCountingOutputStream.write(new byte[] {0, 110}, 1, 1);
-
-      instantQueue.add(Instant.EPOCH.plusSeconds(14));
     }
 
     Assert.assertEquals(Arrays.asList(7L, 2L, 2L), byteCounts);

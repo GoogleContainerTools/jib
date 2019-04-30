@@ -66,10 +66,10 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
   public Void handleResponse(Response response) throws IOException, UnexpectedBlobDigestException {
     blobSizeConsumer.accept(response.getContentLength());
 
-    Consumer<Long> delayedConsumer =
-        new DelayedConsumer<>(writtenByteCountConsumer, (a, b) -> a + b);
-    try (OutputStream outputStream =
-        new ListenableCountingOutputStream(destinationOutputStream, delayedConsumer)) {
+    try (DelayedConsumer<Long> delayedByteConsumer =
+            new DelayedConsumer<>(writtenByteCountConsumer, (a, b) -> a + b);
+        OutputStream outputStream =
+            new ListenableCountingOutputStream(destinationOutputStream, delayedByteConsumer)) {
       BlobDescriptor receivedBlobDescriptor =
           DigestUtil.computeDigest(response.getBody(), outputStream);
 

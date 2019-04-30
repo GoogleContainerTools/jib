@@ -16,19 +16,22 @@
 
 package com.google.cloud.tools.jib.event.progress;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javax.annotation.Nullable;
 
 /**
  * Wraps a {@link Consumer} so that multiple consume calls within a short time are blocked and
  * delayed into a single call.
  */
-public class DelayedConsumer<T> implements Consumer<T> {
+public class DelayedConsumer<T> implements Consumer<T>, Closeable {
 
-  private final Consumer<T> originalConsumer;
+  private final Consumer<T> consumer;
 
   /** Delay between each call to {@link #byteCountConsumer}. */
   private final Duration delayBetweenCallbacks;
@@ -45,9 +48,14 @@ public class DelayedConsumer<T> implements Consumer<T> {
   /** Last time {@link #byteCountConsumer} was called. */
   private Instant previousCallback;
 
-  private Consumer<T> consumer;
+  @Nullable private T valueSoFar;
 
-  /** Wraps a consumer with the delay of 100 ms. */
+  /**
+   * Wraps a consumer with the delay of 100 ms.
+   *
+   * @param callback {@link Consumer} callback to wrap
+   * @param adder adds up multiple delayed values
+   */
   public DelayedConsumer(Consumer<T> callback, BinaryOperator<T> adder) {
     this(callback, adder, Duration.ofMillis(100), Instant::now);
   }
@@ -57,7 +65,6 @@ public class DelayedConsumer<T> implements Consumer<T> {
       BinaryOperator<T> adder,
       Duration delayBetweenCallbacks,
       Supplier<Instant> getNow) {
-    this.originalConsumer = consumer;
     this.consumer = consumer;
     this.adder = adder;
     this.delayBetweenCallbacks = delayBetweenCallbacks;
@@ -68,14 +75,20 @@ public class DelayedConsumer<T> implements Consumer<T> {
 
   @Override
   public void accept(T value) {
+    valueSoFar = valueSoFar == null ? value : adder.apply(valueSoFar, value);
+
     Instant now = getNow.get();
     if (previousCallback.plus(delayBetweenCallbacks).isBefore(now)) {
+      consumer.accept(valueSoFar);
       previousCallback = now;
-      consumer.accept(value);
-      consumer = originalConsumer;
-    } else {
-      Consumer<T> currentConsumer = consumer;
-      consumer = nextValue -> currentConsumer.accept(adder.apply(nextValue, value));
+      valueSoFar = null;
+    }
+  }
+
+  @Override
+  public void close() throws IOException {
+    if (valueSoFar != null) {
+      consumer.accept(valueSoFar);
     }
   }
 }
