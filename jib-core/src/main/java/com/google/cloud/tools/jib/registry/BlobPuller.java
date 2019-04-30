@@ -18,9 +18,9 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.event.progress.DelayedConsumer;
 import com.google.cloud.tools.jib.hash.DigestUtil;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
-import com.google.cloud.tools.jib.http.BlobProgressListener;
 import com.google.cloud.tools.jib.http.ListenableCountingOutputStream;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -47,30 +47,29 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
   private final OutputStream destinationOutputStream;
 
   private final Consumer<Long> blobSizeConsumer;
-  private final BlobProgressListener blobProgressListener;
+  private final Consumer<Long> writtenByteCountConsumer;
 
   BlobPuller(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       DescriptorDigest blobDigest,
       OutputStream destinationOutputStream,
       Consumer<Long> blobSizeConsumer,
-      BlobProgressListener blobProgressListener) {
+      Consumer<Long> writtenByteCountConsumer) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.blobDigest = blobDigest;
     this.destinationOutputStream = destinationOutputStream;
     this.blobSizeConsumer = blobSizeConsumer;
-    this.blobProgressListener = blobProgressListener;
+    this.writtenByteCountConsumer = writtenByteCountConsumer;
   }
 
   @Override
   public Void handleResponse(Response response) throws IOException, UnexpectedBlobDigestException {
     blobSizeConsumer.accept(response.getContentLength());
 
+    Consumer<Long> delayedConsumer =
+        new DelayedConsumer<>(writtenByteCountConsumer, (a, b) -> a + b);
     try (OutputStream outputStream =
-        new ListenableCountingOutputStream(
-            destinationOutputStream,
-            blobProgressListener::handleByteCount,
-            blobProgressListener.getDelayBetweenCallbacks())) {
+        new ListenableCountingOutputStream(destinationOutputStream, delayedConsumer)) {
       BlobDescriptor receivedBlobDescriptor =
           DigestUtil.computeDigest(response.getBody(), outputStream);
 

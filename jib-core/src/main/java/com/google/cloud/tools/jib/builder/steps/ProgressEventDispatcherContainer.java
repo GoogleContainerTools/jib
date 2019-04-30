@@ -18,10 +18,9 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.http.BlobProgressListener;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
-import java.time.Duration;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /**
@@ -32,7 +31,7 @@ import javax.annotation.Nullable;
  * response headers are received, only after which can the {@link ProgressEventDispatcher} be
  * created.
  */
-class ProgressEventDispatcherContainer implements BlobProgressListener, Closeable {
+class ProgressEventDispatcherContainer implements Consumer<Long>, Closeable {
 
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   private final String description;
@@ -49,14 +48,9 @@ class ProgressEventDispatcherContainer implements BlobProgressListener, Closeabl
   }
 
   @Override
-  public void handleByteCount(long byteCount) {
+  public void accept(Long byteCount) {
     Preconditions.checkNotNull(progressEventDispatcher);
     progressEventDispatcher.dispatchProgress(byteCount);
-  }
-
-  @Override
-  public Duration getDelayBetweenCallbacks() {
-    return Duration.ofMillis(100);
   }
 
   @Override

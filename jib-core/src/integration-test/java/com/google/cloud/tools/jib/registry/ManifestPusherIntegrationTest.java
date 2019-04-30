@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.hash.DigestUtil;
-import com.google.cloud.tools.jib.http.TestBlobProgressListener;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -87,14 +86,13 @@ public class ManifestPusherIntegrationTest {
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     Assert.assertFalse(
-        registryClient.pushBlob(
-            testLayerBlobDigest, testLayerBlob, null, new TestBlobProgressListener(ignored -> {})));
+        registryClient.pushBlob(testLayerBlobDigest, testLayerBlob, null, ignored -> {}));
     Assert.assertFalse(
         registryClient.pushBlob(
             testContainerConfigurationBlobDigest,
             testContainerConfigurationBlob,
             null,
-            new TestBlobProgressListener(ignored -> {})));
+            ignored -> {}));
 
     // Pushes the manifest.
     DescriptorDigest imageDigest = registryClient.pushManifest(expectedManifestTemplate, "latest");

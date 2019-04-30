@@ -27,6 +27,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.concurrent.atomic.LongAdder;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,10 +56,10 @@ public class ConnectionTest {
       ArgumentCaptor.forClass(BlobHttpContent.class);
 
   private final GenericUrl fakeUrl = new GenericUrl("http://crepecake/fake/url");
+  private final LongAdder totalByteCount = new LongAdder();
+
   private Request fakeRequest;
   private HttpResponse mockHttpResponse;
-
-  private long totalByteCount = 0;
 
   @InjectMocks
   private final Connection testConnection =
@@ -111,9 +112,7 @@ public class ConnectionTest {
             .setUserAgent("fake user agent")
             .setBody(
                 new BlobHttpContent(
-                    Blobs.from("crepecake"),
-                    "fake.content.type",
-                    new TestBlobProgressListener(byteCount -> totalByteCount += byteCount)))
+                    Blobs.from("crepecake"), "fake.content.type", totalByteCount::add))
             .setAuthorization(Authorization.withBasicCredentials("fake-username", "fake-secret"))
             .setHttpTimeout(httpTimeout)
             .build();

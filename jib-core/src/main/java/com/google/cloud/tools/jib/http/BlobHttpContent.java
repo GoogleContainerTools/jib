@@ -18,8 +18,10 @@ package com.google.cloud.tools.jib.http;
 
 import com.google.api.client.http.HttpContent;
 import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.event.progress.DelayedConsumer;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /** {@link Blob}-backed {@link HttpContent}. */
@@ -27,13 +29,13 @@ public class BlobHttpContent implements HttpContent {
 
   private final Blob blob;
   private final String contentType;
-  @Nullable private final BlobProgressListener blobProgressListener;
+  @Nullable private final Consumer<Long> writtenByteCountConsumer;
 
   public BlobHttpContent(
-      Blob blob, String contentType, @Nullable BlobProgressListener blobProgressListener) {
+      Blob blob, String contentType, @Nullable Consumer<Long> writtenByteCountConsumer) {
     this.blob = blob;
     this.contentType = contentType;
-    this.blobProgressListener = blobProgressListener;
+    this.writtenByteCountConsumer = writtenByteCountConsumer;
   }
 
   @Override
@@ -54,13 +56,11 @@ public class BlobHttpContent implements HttpContent {
 
   @Override
   public void writeTo(OutputStream outputStream) throws IOException {
-    outputStream =
-        blobProgressListener == null
-            ? outputStream
-            : new ListenableCountingOutputStream(
-                outputStream,
-                blobProgressListener::handleByteCount,
-                blobProgressListener.getDelayBetweenCallbacks());
+    if (writtenByteCountConsumer != null) {
+      Consumer<Long> delayedConsumer =
+          new DelayedConsumer<>(writtenByteCountConsumer, (a, b) -> a + b);
+      outputStream = new ListenableCountingOutputStream(outputStream, delayedConsumer);
+    }
     blob.writeTo(outputStream);
     outputStream.flush();
   }

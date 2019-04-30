@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.http;
 
+import com.google.cloud.tools.jib.event.progress.DelayedConsumer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Duration;
@@ -38,8 +39,7 @@ public class ListenableCountingOutputStreamTest {
     List<Long> byteCounts = new ArrayList<>();
 
     try (ListenableCountingOutputStream listenableCountingOutputStream =
-        new ListenableCountingOutputStream(
-            byteArrayOutputStream, byteCounts::add, Duration.ofSeconds(-1))) {
+        new ListenableCountingOutputStream(byteArrayOutputStream, byteCounts::add)) {
       listenableCountingOutputStream.write(0);
       listenableCountingOutputStream.write(new byte[] {1, 2, 3});
       listenableCountingOutputStream.write(new byte[] {1, 2, 3, 4, 5}, 3, 2);
@@ -60,12 +60,16 @@ public class ListenableCountingOutputStreamTest {
 
     try (ListenableCountingOutputStream listenableCountingOutputStream =
         new ListenableCountingOutputStream(
-            byteArrayOutputStream, byteCounts::add, Duration.ofSeconds(3), instantQueue::remove)) {
+            byteArrayOutputStream,
+            new DelayedConsumer<>(
+                byteCounts::add, (a, b) -> a + b, Duration.ofSeconds(3), instantQueue::remove))) {
       instantQueue.add(Instant.EPOCH);
       listenableCountingOutputStream.write(100);
       instantQueue.add(Instant.EPOCH);
       listenableCountingOutputStream.write(new byte[] {101, 102, 103});
+      System.out.println(instantQueue);
       instantQueue.add(Instant.EPOCH.plusSeconds(4));
+      System.out.println(instantQueue);
       listenableCountingOutputStream.write(new byte[] {104, 105, 106});
 
       instantQueue.add(Instant.EPOCH.plusSeconds(10));
