@@ -20,7 +20,6 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
@@ -29,11 +28,15 @@ import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.MockConnection;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.common.io.ByteStreams;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
@@ -83,7 +86,9 @@ public class RegistryEndpointCallerTest {
     @Nullable
     @Override
     public String handleResponse(Response response) throws IOException {
-      return Blobs.writeToString(response.getBody());
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      ByteStreams.copy(response.getBody(), outputStream);
+      return outputStream.toString("UTF-8");
     }
 
     @Override
@@ -122,7 +127,8 @@ public class RegistryEndpointCallerTest {
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
     Mockito.when(mockInsecureConnectionFactory.apply(Mockito.any()))
         .thenReturn(mockInsecureConnection);
-    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("body"));
+    Mockito.when(mockResponse.getBody())
+        .thenReturn(new ByteArrayInputStream("body".getBytes(StandardCharsets.UTF_8)));
   }
 
   @After

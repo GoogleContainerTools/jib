@@ -79,7 +79,7 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
   /** Parses the response body into a {@link ManifestTemplate}. */
   @Override
   public T handleResponse(Response response) throws IOException, UnknownManifestFormatException {
-    return getManifestTemplateFromJson(Blobs.writeToString(response.getBody()));
+    return getManifestTemplateFromJson(Blobs.writeToString(Blobs.from(response.getBody())));
   }
 
   @Override

@@ -16,15 +16,15 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
+import com.google.cloud.tools.jib.hash.DigestUtil;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.TestBlobProgressListener;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.common.io.ByteStreams;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -68,12 +68,13 @@ public class BlobPullerTest {
 
   @Test
   public void testHandleResponse() throws IOException, UnexpectedBlobDigestException {
-    Blob testBlob = Blobs.from("some BLOB content");
-    DescriptorDigest testBlobDigest = testBlob.writeTo(ByteStreams.nullOutputStream()).getDigest();
+    InputStream blobContent =
+        new ByteArrayInputStream("some BLOB content".getBytes(StandardCharsets.UTF_8));
+    DescriptorDigest testBlobDigest = DigestUtil.computeDigest(blobContent).getDigest();
 
     Response mockResponse = Mockito.mock(Response.class);
     Mockito.when(mockResponse.getContentLength()).thenReturn((long) "some BLOB content".length());
-    Mockito.when(mockResponse.getBody()).thenReturn(testBlob);
+    Mockito.when(mockResponse.getBody()).thenReturn(blobContent);
 
     LongAdder byteCount = new LongAdder();
     BlobPuller blobPuller =
@@ -93,11 +94,12 @@ public class BlobPullerTest {
 
   @Test
   public void testHandleResponse_unexpectedDigest() throws IOException {
-    Blob testBlob = Blobs.from("some BLOB content");
-    DescriptorDigest testBlobDigest = testBlob.writeTo(ByteStreams.nullOutputStream()).getDigest();
+    InputStream blobContent =
+        new ByteArrayInputStream("some BLOB content".getBytes(StandardCharsets.UTF_8));
+    DescriptorDigest testBlobDigest = DigestUtil.computeDigest(blobContent).getDigest();
 
     Response mockResponse = Mockito.mock(Response.class);
-    Mockito.when(mockResponse.getBody()).thenReturn(testBlob);
+    Mockito.when(mockResponse.getBody()).thenReturn(blobContent);
 
     try {
       testBlobPuller.handleResponse(mockResponse);

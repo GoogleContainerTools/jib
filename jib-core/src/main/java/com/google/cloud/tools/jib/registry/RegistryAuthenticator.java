@@ -323,7 +323,7 @@ public class RegistryAuthenticator {
 
       Request request = requestBuilder.build();
       Response response = isOAuth2Auth() ? connection.post(request) : connection.get(request);
-      String responseString = Blobs.writeToString(response.getBody());
+      String responseString = Blobs.writeToString(Blobs.from(response.getBody()));
 
       AuthenticationResponseTemplate responseJson =
           JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);

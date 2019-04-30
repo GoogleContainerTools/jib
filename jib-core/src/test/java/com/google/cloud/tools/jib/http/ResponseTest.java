@@ -17,10 +17,11 @@
 package com.google.cloud.tools.jib.http;
 
 import com.google.api.client.http.HttpResponse;
-import com.google.cloud.tools.jib.blob.Blob;
+import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import org.junit.Assert;
 import org.junit.Test;
@@ -44,10 +45,10 @@ public class ResponseTest {
     Mockito.when(httpResponseMock.getContent()).thenReturn(responseInputStream);
 
     Response response = new Response(httpResponseMock);
-    Blob responseStream = response.getBody();
+    InputStream responseStream = response.getBody();
 
     ByteArrayOutputStream responseOutputStream = new ByteArrayOutputStream();
-    responseStream.writeTo(responseOutputStream);
+    ByteStreams.copy(responseStream, responseOutputStream);
 
     Assert.assertEquals(
         expectedResponse, new String(responseOutputStream.toByteArray(), StandardCharsets.UTF_8));

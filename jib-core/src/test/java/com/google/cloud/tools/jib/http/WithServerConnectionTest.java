@@ -16,8 +16,10 @@
 
 package com.google.cloud.tools.jib.http;
 
-import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.common.io.ByteStreams;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
@@ -28,6 +30,12 @@ import org.junit.Test;
 /** Tests for {@link Connection} using an actual local server. */
 public class WithServerConnectionTest {
 
+  private static String inputStreamToUtf8String(InputStream in) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    ByteStreams.copy(in, out);
+    return out.toString("UTF-8");
+  }
+
   @Test
   public void testGet()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
@@ -37,7 +45,7 @@ public class WithServerConnectionTest {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
-      Assert.assertEquals("Hello World!", Blobs.writeToString(response.getBody()));
+      Assert.assertEquals("Hello World!", inputStreamToUtf8String(response.getBody()));
     }
   }
 
@@ -81,7 +89,7 @@ public class WithServerConnectionTest {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
-      Assert.assertEquals("Hello World!", Blobs.writeToString(response.getBody()));
+      Assert.assertEquals("Hello World!", inputStreamToUtf8String(response.getBody()));
     }
   }
 }

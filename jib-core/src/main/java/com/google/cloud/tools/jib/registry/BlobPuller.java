@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.hash.DigestUtil;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.BlobProgressListener;
 import com.google.cloud.tools.jib.http.ListenableCountingOutputStream;
@@ -70,7 +71,8 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
             destinationOutputStream,
             blobProgressListener::handleByteCount,
             blobProgressListener.getDelayBetweenCallbacks())) {
-      BlobDescriptor receivedBlobDescriptor = response.getBody().writeTo(outputStream);
+      BlobDescriptor receivedBlobDescriptor =
+          DigestUtil.computeDigest(response.getBody(), outputStream);
 
       if (!blobDigest.equals(receivedBlobDescriptor.getDigest())) {
         throw new UnexpectedBlobDigestException(
