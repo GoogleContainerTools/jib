@@ -114,7 +114,7 @@ public class ConnectionTest {
                     Blobs.from("crepecake"),
                     "fake.content.type",
                     new TestBlobProgressListener(byteCount -> totalByteCount += byteCount)))
-            .setAuthorization(Authorizations.withBasicCredentials("fake-username", "fake-secret"))
+            .setAuthorization(Authorization.withBasicCredentials("fake-username", "fake-secret"))
             .setHttpTimeout(httpTimeout)
             .build();
 

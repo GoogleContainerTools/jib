@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryException;
@@ -102,7 +101,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
 
       return (registryCredential == null || registryCredential.isOAuth2RefreshToken())
           ? null
-          : Authorizations.withBasicCredentials(
+          : Authorization.withBasicCredentials(
               registryCredential.getUsername(), registryCredential.getPassword());
     }
   }

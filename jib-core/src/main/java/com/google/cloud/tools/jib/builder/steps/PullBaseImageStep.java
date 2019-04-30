@@ -29,7 +29,6 @@ import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -160,7 +159,7 @@ class PullBaseImageStep
         Authorization registryAuthorization =
             registryCredential == null || registryCredential.isOAuth2RefreshToken()
                 ? null
-                : Authorizations.withBasicCredentials(
+                : Authorization.withBasicCredentials(
                     registryCredential.getUsername(), registryCredential.getPassword());
 
         try {

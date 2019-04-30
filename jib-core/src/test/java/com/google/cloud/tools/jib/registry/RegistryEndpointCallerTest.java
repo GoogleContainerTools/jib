@@ -23,15 +23,15 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
-import com.google.cloud.tools.jib.http.Authorizations;
+import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.MockConnection;
 import com.google.cloud.tools.jib.http.Response;
-import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.SocketException;
@@ -86,9 +86,8 @@ public class RegistryEndpointCallerTest {
     @Nullable
     @Override
     public String handleResponse(Response response) throws IOException {
-      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-      ByteStreams.copy(response.getBody(), outputStream);
-      return outputStream.toString("UTF-8");
+      return CharStreams.toString(
+          new InputStreamReader(response.getBody(), StandardCharsets.UTF_8));
     }
 
     @Override
@@ -641,7 +640,7 @@ public class RegistryEndpointCallerTest {
         "userAgent",
         (port == -1) ? "apiRouteBase" : ("apiRouteBase:" + port),
         new TestRegistryEndpointProvider(),
-        Authorizations.withBasicToken("token"),
+        Authorization.withBasicToken("token"),
         new RegistryEndpointRequestProperties("serverUrl", "imageName"),
         allowInsecure,
         mockConnectionFactory,
