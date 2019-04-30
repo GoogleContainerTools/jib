@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.hash;
 
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.WritableContents;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -94,9 +93,5 @@ public class DigestUtil {
     contents.writeTo(digestOutStream);
     digestOutStream.flush();
     return new BlobDescriptor(digestOutStream.getBytesHahsed(), digestOutStream.getDigest());
-  }
-
-  public static BlobDescriptor computeDigest(Blob blob) throws IOException {
-    return blob.writeTo(ByteStreams.nullOutputStream());
   }
 }

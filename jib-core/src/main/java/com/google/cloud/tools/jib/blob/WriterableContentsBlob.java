@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.hash.DigestUtil;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/** A {@link Blob} that writes with a {@link WritableContents} function and hashes the bytes. */
+/** A {@link Blob} that holds {@link WritableContents}. */
 class WritableContentsBlob implements Blob {
 
   private final WritableContents writableContents;
