@@ -18,7 +18,11 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -53,6 +57,34 @@ public class Cache {
 
   private Cache(CacheStorage cacheStorage) {
     this.cacheStorage = cacheStorage;
+  }
+
+  /**
+   * Saves a manifest and container configuration for a V2.2 or OCI image.
+   *
+   * @param imageReference the image reference to save the manifest and container configuration for
+   * @param manifestTemplate the V2.2 or OCI manifest
+   * @param containerConfigurationTemplate the container configuration
+   * @throws IOException if an I/O exception occurs
+   */
+  public void writeMetadata(
+      ImageReference imageReference,
+      BuildableManifestTemplate manifestTemplate,
+      ContainerConfigurationTemplate containerConfigurationTemplate)
+      throws IOException {
+    cacheStorage.writeMetadata(imageReference, manifestTemplate, containerConfigurationTemplate);
+  }
+
+  /**
+   * Saves a V2.1 image manifest.
+   *
+   * @param imageReference the image reference to save the manifest and container configuration for
+   * @param manifestTemplate the V2.1 manifest
+   * @throws IOException if an I/O exception occurs
+   */
+  public void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
+      throws IOException {
+    cacheStorage.writeMetadata(imageReference, manifestTemplate);
   }
 
   /**

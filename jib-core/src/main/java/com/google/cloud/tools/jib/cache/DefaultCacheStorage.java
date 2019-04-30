@@ -18,6 +18,10 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -89,5 +93,21 @@ class DefaultCacheStorage implements CacheStorage {
   public Optional<DescriptorDigest> select(DescriptorDigest selector)
       throws IOException, CacheCorruptedException {
     return defaultCacheStorageReader.select(selector);
+  }
+
+  @Override
+  public void writeMetadata(
+      ImageReference imageReference,
+      BuildableManifestTemplate manifestTemplate,
+      ContainerConfigurationTemplate containerConfigurationTemplate)
+      throws IOException {
+    defaultCacheStorageWriter.writeMetadata(
+        imageReference, manifestTemplate, containerConfigurationTemplate);
+  }
+
+  @Override
+  public void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
+      throws IOException {
+    defaultCacheStorageWriter.writeMetadata(imageReference, manifestTemplate);
   }
 }

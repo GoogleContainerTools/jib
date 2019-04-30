@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
@@ -543,9 +545,12 @@ public class MavenProjectPropertiesTest {
 
   private BuildConfiguration setupBuildConfiguration(AbsoluteUnixPath appRoot)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-    return new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog, appRoot)
-        .createContainerBuilder(RegistryImage.named("base"))
-        .toBuildConfiguration(
-            Containerizer.to(RegistryImage.named("to")), MoreExecutors.newDirectExecutorService());
+    JibContainerBuilder JibContainerBuilder =
+        new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog, appRoot)
+            .createContainerBuilder(RegistryImage.named("base"));
+    return JibContainerBuilderTestHelper.toBuildConfiguration(
+        JibContainerBuilder,
+        Containerizer.to(RegistryImage.named("to"))
+            .setExecutorService(MoreExecutors.newDirectExecutorService()));
   }
 }

@@ -82,8 +82,8 @@ public class MavenProjectProperties implements ProjectProperties {
    * checks for a property defined in the POM, then returns null if neither are defined.
    *
    * @param propertyName the name of the system property
-   * @param project Maven project
-   * @param session Maven session
+   * @param project the Maven project
+   * @param session the Maven session
    * @return the value of the system property, or null if not defined
    */
   @Nullable

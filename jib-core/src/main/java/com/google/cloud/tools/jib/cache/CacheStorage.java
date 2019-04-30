@@ -18,6 +18,10 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
@@ -83,4 +87,28 @@ interface CacheStorage {
    */
   Optional<DescriptorDigest> select(DescriptorDigest selector)
       throws IOException, CacheCorruptedException;
+
+  /**
+   * Saves the manifest and container configuration for a V2.2 or OCI image.
+   *
+   * @param imageReference the image reference to store the metadata for
+   * @param manifestTemplate the image's manifest
+   * @param containerConfigurationTemplate the image's container configuration
+   * @throws IOException if an I/O exception occurs
+   */
+  void writeMetadata(
+      ImageReference imageReference,
+      BuildableManifestTemplate manifestTemplate,
+      ContainerConfigurationTemplate containerConfigurationTemplate)
+      throws IOException;
+
+  /**
+   * Saves a V2.1 manifest.
+   *
+   * @param imageReference the image reference to store the metadata for
+   * @param manifestTemplate the image's manifest
+   * @throws IOException if an I/O exception occurs
+   */
+  void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
+      throws IOException;
 }
