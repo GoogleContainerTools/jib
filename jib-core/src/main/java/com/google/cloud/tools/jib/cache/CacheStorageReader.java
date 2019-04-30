@@ -31,12 +31,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /** Reads from the default cache storage engine. */
-class DefaultCacheStorageReader {
+class CacheStorageReader {
 
-  private final DefaultCacheStorageFiles defaultCacheStorageFiles;
+  private final CacheStorageFiles cacheStorageFiles;
 
-  DefaultCacheStorageReader(DefaultCacheStorageFiles defaultCacheStorageFiles) {
-    this.defaultCacheStorageFiles = defaultCacheStorageFiles;
+  CacheStorageReader(CacheStorageFiles cacheStorageFiles) {
+    this.cacheStorageFiles = cacheStorageFiles;
   }
 
   /**
@@ -47,8 +47,7 @@ class DefaultCacheStorageReader {
    * @throws IOException if an I/O exception occurs
    */
   Set<DescriptorDigest> fetchDigests() throws IOException, CacheCorruptedException {
-    try (Stream<Path> layerDirectories =
-        Files.list(defaultCacheStorageFiles.getLayersDirectory())) {
+    try (Stream<Path> layerDirectories = Files.list(cacheStorageFiles.getLayersDirectory())) {
       List<Path> layerDirectoriesList = layerDirectories.collect(Collectors.toList());
       Set<DescriptorDigest> layerDigests = new HashSet<>(layerDirectoriesList.size());
       for (Path layerDirectory : layerDirectoriesList) {
@@ -73,17 +72,16 @@ class DefaultCacheStorageReader {
    */
   Optional<CachedLayer> retrieve(DescriptorDigest layerDigest)
       throws IOException, CacheCorruptedException {
-    Path layerDirectory = defaultCacheStorageFiles.getLayerDirectory(layerDigest);
+    Path layerDirectory = cacheStorageFiles.getLayerDirectory(layerDigest);
     if (!Files.exists(layerDirectory)) {
       return Optional.empty();
     }
 
-    DefaultCachedLayer.Builder cachedLayerBuilder =
-        DefaultCachedLayer.builder().setLayerDigest(layerDigest);
+    CachedLayer.Builder cachedLayerBuilder = CachedLayer.builder().setLayerDigest(layerDigest);
 
     try (Stream<Path> filesInLayerDirectory = Files.list(layerDirectory)) {
       for (Path fileInLayerDirectory : filesInLayerDirectory.collect(Collectors.toList())) {
-        if (DefaultCacheStorageFiles.isLayerFile(fileInLayerDirectory)) {
+        if (CacheStorageFiles.isLayerFile(fileInLayerDirectory)) {
           if (cachedLayerBuilder.hasLayerBlob()) {
             throw new CacheCorruptedException(
                 "Multiple layer files found for layer with digest "
@@ -93,7 +91,7 @@ class DefaultCacheStorageReader {
           }
           cachedLayerBuilder
               .setLayerBlob(Blobs.from(fileInLayerDirectory))
-              .setLayerDiffId(DefaultCacheStorageFiles.getDiffId(fileInLayerDirectory))
+              .setLayerDiffId(CacheStorageFiles.getDiffId(fileInLayerDirectory))
               .setLayerSize(Files.size(fileInLayerDirectory));
         }
       }
@@ -112,7 +110,7 @@ class DefaultCacheStorageReader {
    */
   Optional<DescriptorDigest> select(DescriptorDigest selector)
       throws CacheCorruptedException, IOException {
-    Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
+    Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
     if (!Files.exists(selectorFile)) {
       return Optional.empty();
     }

@@ -23,7 +23,7 @@ import java.nio.file.Path;
 import java.security.DigestException;
 
 /** Resolves the files used in the default cache storage engine. */
-class DefaultCacheStorageFiles {
+class CacheStorageFiles {
 
   private static final String LAYERS_DIRECTORY = "layers";
   private static final String IMAGES_DIRECTORY = "images";
@@ -61,7 +61,7 @@ class DefaultCacheStorageFiles {
 
   private final Path cacheDirectory;
 
-  DefaultCacheStorageFiles(Path cacheDirectory) {
+  CacheStorageFiles(Path cacheDirectory) {
     this.cacheDirectory = cacheDirectory;
   }
 

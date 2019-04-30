@@ -42,8 +42,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Tests for {@link DefaultCacheStorageWriter}. */
-public class DefaultCacheStorageWriterTest {
+/** Tests for {@link CacheStorageWriter}. */
+public class CacheStorageWriterTest {
 
   private static BlobDescriptor getDigest(Blob blob) throws IOException {
     return blob.writeTo(ByteStreams.nullOutputStream());
@@ -64,13 +64,13 @@ public class DefaultCacheStorageWriterTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private DefaultCacheStorageFiles defaultCacheStorageFiles;
+  private CacheStorageFiles cacheStorageFiles;
   private Path cacheRoot;
 
   @Before
   public void setUp() throws IOException {
     cacheRoot = temporaryFolder.newFolder().toPath();
-    defaultCacheStorageFiles = new DefaultCacheStorageFiles(cacheRoot);
+    cacheStorageFiles = new CacheStorageFiles(cacheRoot);
   }
 
   @Test
@@ -78,8 +78,7 @@ public class DefaultCacheStorageWriterTest {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
 
     CachedLayer cachedLayer =
-        new DefaultCacheStorageWriter(defaultCacheStorageFiles)
-            .write(compress(uncompressedLayerBlob));
+        new CacheStorageWriter(cacheStorageFiles).writeCompressed(compress(uncompressedLayerBlob));
 
     verifyCachedLayer(cachedLayer, uncompressedLayerBlob);
   }
@@ -91,13 +90,13 @@ public class DefaultCacheStorageWriterTest {
     DescriptorDigest selector = getDigest(Blobs.from("selector")).getDigest();
 
     CachedLayer cachedLayer =
-        new DefaultCacheStorageWriter(defaultCacheStorageFiles)
-            .write(new UncompressedCacheWrite(uncompressedLayerBlob, selector));
+        new CacheStorageWriter(cacheStorageFiles)
+            .writeUncompressed(uncompressedLayerBlob, selector);
 
     verifyCachedLayer(cachedLayer, uncompressedLayerBlob);
 
     // Verifies that the files are present.
-    Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
+    Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
     Assert.assertTrue(Files.exists(selectorFile));
     Assert.assertEquals(layerDigest.getHash(), Blobs.writeToString(Blobs.from(selectorFile)));
   }
@@ -111,8 +110,7 @@ public class DefaultCacheStorageWriterTest {
         JsonTemplateMapper.readJsonFromFile(manifestJsonFile, V21ManifestTemplate.class);
     ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
 
-    new DefaultCacheStorageWriter(defaultCacheStorageFiles)
-        .writeMetadata(imageReference, manifestTemplate);
+    new CacheStorageWriter(cacheStorageFiles).writeMetadata(imageReference, manifestTemplate);
 
     Path savedManifestPath =
         cacheRoot.resolve("images/image.reference/project/thing!tag/manifest.json");
@@ -138,7 +136,7 @@ public class DefaultCacheStorageWriterTest {
         JsonTemplateMapper.readJsonFromFile(manifestJsonFile, V22ManifestTemplate.class);
     ImageReference imageReference = ImageReference.parse("image.reference/project/thing:tag");
 
-    new DefaultCacheStorageWriter(defaultCacheStorageFiles)
+    new CacheStorageWriter(cacheStorageFiles)
         .writeMetadata(imageReference, manifestTemplate, containerConfigurationTemplate);
 
     Path savedManifestPath =
@@ -175,7 +173,6 @@ public class DefaultCacheStorageWriterTest {
     // Verifies that the files are present.
     Assert.assertTrue(
         Files.exists(
-            defaultCacheStorageFiles.getLayerFile(
-                cachedLayer.getDigest(), cachedLayer.getDiffId())));
+            cacheStorageFiles.getLayerFile(cachedLayer.getDigest(), cachedLayer.getDiffId())));
   }
 }
