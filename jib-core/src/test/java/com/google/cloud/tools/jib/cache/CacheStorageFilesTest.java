@@ -26,21 +26,21 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link DefaultCacheStorageFiles}. */
-public class DefaultCacheStorageFilesTest {
+/** Tests for {@link CacheStorageFiles}. */
+public class CacheStorageFilesTest {
 
-  private static final DefaultCacheStorageFiles testDefaultCacheStorageFiles =
-      new DefaultCacheStorageFiles(Paths.get("cache/directory"));
+  private static final CacheStorageFiles TEST_CACHE_STORAGE_FILES =
+      new CacheStorageFiles(Paths.get("cache/directory"));
 
   @Test
   public void testIsLayerFile() {
     Assert.assertTrue(
-        DefaultCacheStorageFiles.isLayerFile(
+        CacheStorageFiles.isLayerFile(
             Paths.get("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     Assert.assertTrue(
-        DefaultCacheStorageFiles.isLayerFile(
+        CacheStorageFiles.isLayerFile(
             Paths.get("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")));
-    Assert.assertFalse(DefaultCacheStorageFiles.isLayerFile(Paths.get("is.not.layer.file")));
+    Assert.assertFalse(CacheStorageFiles.isLayerFile(Paths.get("is.not.layer.file")));
   }
 
   @Test
@@ -48,7 +48,7 @@ public class DefaultCacheStorageFilesTest {
     Assert.assertEquals(
         DescriptorDigest.fromHash(
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
-        DefaultCacheStorageFiles.getDiffId(
+        CacheStorageFiles.getDiffId(
             Paths.get(
                 "layer",
                 "file",
@@ -56,14 +56,14 @@ public class DefaultCacheStorageFilesTest {
     Assert.assertEquals(
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-        DefaultCacheStorageFiles.getDiffId(
+        CacheStorageFiles.getDiffId(
             Paths.get("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
   }
 
   @Test
   public void testGetDiffId_corrupted() {
     try {
-      DefaultCacheStorageFiles.getDiffId(Paths.get("not long enough"));
+      CacheStorageFiles.getDiffId(Paths.get("not long enough"));
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
@@ -73,7 +73,7 @@ public class DefaultCacheStorageFilesTest {
     }
 
     try {
-      DefaultCacheStorageFiles.getDiffId(
+      CacheStorageFiles.getDiffId(
           Paths.get(
               "not valid hash bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
       Assert.fail("Should have thrown CacheCorruptedException");
@@ -103,7 +103,7 @@ public class DefaultCacheStorageFilesTest {
             "layers",
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
-        testDefaultCacheStorageFiles.getLayerFile(layerDigest, diffId));
+        TEST_CACHE_STORAGE_FILES.getLayerFile(layerDigest, diffId));
   }
 
   @Test
@@ -114,7 +114,7 @@ public class DefaultCacheStorageFilesTest {
 
     Assert.assertEquals(
         "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-        testDefaultCacheStorageFiles.getLayerFilename(diffId));
+        TEST_CACHE_STORAGE_FILES.getLayerFilename(diffId));
   }
 
   @Test
@@ -129,14 +129,13 @@ public class DefaultCacheStorageFilesTest {
             "directory",
             "selectors",
             "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"),
-        testDefaultCacheStorageFiles.getSelectorFile(selector));
+        TEST_CACHE_STORAGE_FILES.getSelectorFile(selector));
   }
 
   @Test
   public void testGetLayersDirectory() {
     Assert.assertEquals(
-        Paths.get("cache", "directory", "layers"),
-        testDefaultCacheStorageFiles.getLayersDirectory());
+        Paths.get("cache", "directory", "layers"), TEST_CACHE_STORAGE_FILES.getLayersDirectory());
   }
 
   @Test
@@ -151,39 +150,39 @@ public class DefaultCacheStorageFilesTest {
             "directory",
             "layers",
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-        testDefaultCacheStorageFiles.getLayerDirectory(layerDigest));
+        TEST_CACHE_STORAGE_FILES.getLayerDirectory(layerDigest));
   }
 
   @Test
   public void testGetTemporaryDirectory() {
     Assert.assertEquals(
-        Paths.get("cache/directory/tmp"), testDefaultCacheStorageFiles.getTemporaryDirectory());
+        Paths.get("cache/directory/tmp"), TEST_CACHE_STORAGE_FILES.getTemporaryDirectory());
   }
 
   @Test
   public void testGetImagesDirectory() {
     Assert.assertEquals(
-        Paths.get("cache/directory/images"), testDefaultCacheStorageFiles.getImagesDirectory());
+        Paths.get("cache/directory/images"), TEST_CACHE_STORAGE_FILES.getImagesDirectory());
   }
 
   @Test
   public void testGetImageDirectory() throws InvalidImageReferenceException {
     Path imagesDirectory = Paths.get("cache", "directory", "images");
-    Assert.assertEquals(imagesDirectory, testDefaultCacheStorageFiles.getImagesDirectory());
+    Assert.assertEquals(imagesDirectory, TEST_CACHE_STORAGE_FILES.getImagesDirectory());
 
     Assert.assertEquals(
         imagesDirectory.resolve("reg.istry/repo/sitory!tag"),
-        testDefaultCacheStorageFiles.getImageDirectory(
+        TEST_CACHE_STORAGE_FILES.getImageDirectory(
             ImageReference.parse("reg.istry/repo/sitory:tag")));
     Assert.assertEquals(
         imagesDirectory.resolve(
             "reg.istry/repo!sha256!aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-        testDefaultCacheStorageFiles.getImageDirectory(
+        TEST_CACHE_STORAGE_FILES.getImageDirectory(
             ImageReference.parse(
                 "reg.istry/repo@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
     Assert.assertEquals(
         imagesDirectory.resolve("reg.istry!5000/repo/sitory!tag"),
-        testDefaultCacheStorageFiles.getImageDirectory(
+        TEST_CACHE_STORAGE_FILES.getImageDirectory(
             ImageReference.parse("reg.istry:5000/repo/sitory:tag")));
   }
 }

@@ -26,9 +26,9 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link DefaultCachedLayer}. */
+/** Tests for {@link CachedLayer}. */
 @RunWith(MockitoJUnitRunner.class)
-public class DefaultCachedLayerTest {
+public class CachedLayerTest {
 
   @Mock private DescriptorDigest mockLayerDigest;
   @Mock private DescriptorDigest mockLayerDiffId;
@@ -36,7 +36,7 @@ public class DefaultCachedLayerTest {
   @Test
   public void testBuilder_fail() {
     try {
-      DefaultCachedLayer.builder().build();
+      CachedLayer.builder().build();
       Assert.fail("missing required");
 
     } catch (NullPointerException ex) {
@@ -44,7 +44,7 @@ public class DefaultCachedLayerTest {
     }
 
     try {
-      DefaultCachedLayer.builder().setLayerDigest(mockLayerDigest).build();
+      CachedLayer.builder().setLayerDigest(mockLayerDigest).build();
       Assert.fail("missing required");
 
     } catch (NullPointerException ex) {
@@ -52,10 +52,7 @@ public class DefaultCachedLayerTest {
     }
 
     try {
-      DefaultCachedLayer.builder()
-          .setLayerDigest(mockLayerDigest)
-          .setLayerDiffId(mockLayerDiffId)
-          .build();
+      CachedLayer.builder().setLayerDigest(mockLayerDigest).setLayerDiffId(mockLayerDiffId).build();
       Assert.fail("missing required");
 
     } catch (NullPointerException ex) {
@@ -65,8 +62,8 @@ public class DefaultCachedLayerTest {
 
   @Test
   public void testBuilder_pass() throws IOException {
-    DefaultCachedLayer.Builder cachedLayerBuilder =
-        DefaultCachedLayer.builder()
+    CachedLayer.Builder cachedLayerBuilder =
+        CachedLayer.builder()
             .setLayerDigest(mockLayerDigest)
             .setLayerDiffId(mockLayerDiffId)
             .setLayerSize(1337);
