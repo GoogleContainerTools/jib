@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC.
+ * Copyright 2019 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,14 +14,16 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.blob;
+package com.google.cloud.tools.jib.hash;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * This function writes the contents of a BLOB. This function should write the same BLOB regardless
- * of the number of times it is called.
+ * As a function, writes some contents to an output stream. As a class, represents contents that can
+ * be written to an output stream. This may be "unrealized-before-write" contents; for example, a
+ * file may be open and read for input contents only when this function is called to write to an
+ * output stream.
  */
 @FunctionalInterface
 public interface WritableContents {

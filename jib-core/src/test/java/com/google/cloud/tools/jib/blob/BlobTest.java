@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.blob;
 
 import com.google.cloud.tools.jib.hash.DigestUtil;
+import com.google.cloud.tools.jib.hash.WritableContents;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
@@ -57,7 +58,7 @@ public class BlobTest {
   }
 
   @Test
-  public void testFromBlobWriter() throws IOException {
+  public void testFromWritableContents() throws IOException {
     String expected = "crepecake";
 
     WritableContents writableContents =

@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.blob;
 
 import com.google.cloud.tools.jib.hash.DigestUtil;
+import com.google.cloud.tools.jib.hash.WritableContents;
 import java.io.IOException;
 import java.io.OutputStream;
 

@@ -64,9 +64,9 @@ public class BlobPullerIntegrationTest {
               expectedSize.add(size);
             },
             new TestBlobProgressListener(totalByteCount::add));
+    Assert.assertEquals(realDigest, pulledBlob.writeTo(ByteStreams.nullOutputStream()).getDigest());
     Assert.assertTrue(expectedSize.sum() > 0);
     Assert.assertEquals(expectedSize.sum(), totalByteCount.sum());
-    Assert.assertEquals(realDigest, pulledBlob.writeTo(ByteStreams.nullOutputStream()).getDigest());
   }
 
   @Test

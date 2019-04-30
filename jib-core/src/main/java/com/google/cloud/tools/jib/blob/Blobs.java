@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.blob;
 
 import com.google.cloud.tools.jib.filesystem.FileOperations;
+import com.google.cloud.tools.jib.hash.WritableContents;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.hash;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.blob.WritableContents;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -27,7 +26,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-/** Utility class for input/output streams. */
+/**
+ * Utility class for computing a digest for various inputs while optionally writing to an output
+ * stream.
+ */
+// Note: intentionally this class does not depend on Blob, as Blob classes depend on this class.
+// TODO: BlobDescriptor is merely a tuple of (size, digest). Rename BlobDescriptor to something
+// more general.
 public class DigestUtil {
 
   public static DescriptorDigest computeJsonDigest(JsonTemplate template) throws IOException {
