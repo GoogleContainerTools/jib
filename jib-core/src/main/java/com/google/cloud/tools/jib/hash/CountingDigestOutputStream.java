@@ -34,7 +34,7 @@ public class CountingDigestOutputStream extends DigestOutputStream {
   private long bytesSoFar = 0;
 
   /** The total number of bytes used to compute a digest. Resets when {@link computeDigest) is called. */
-  private long bytesHashed;
+  private long bytesHashed = 0;
 
   @Nullable private DescriptorDigest descriptorDigest;
 
@@ -54,8 +54,8 @@ public class CountingDigestOutputStream extends DigestOutputStream {
   }
 
   /**
-   * Computes the hash and size of the bytes written. The buffer resets after this method is called,
-   * so this method should only be called once per computation.
+   * Computes the hash and remembers the size of the bytes written to compute the hash. The buffer
+   * resets after this method is called, so this method should only be called once per computation.
    */
   public void computeDigest() {
     try {
@@ -77,7 +77,7 @@ public class CountingDigestOutputStream extends DigestOutputStream {
     }
   }
 
-  /** @return the total number of bytes that were hashed */
+  /** @return the number of bytes written and used to compute the most recent digest */
   public long getBytesHahsed() {
     if (descriptorDigest == null) {
       computeDigest();
@@ -85,7 +85,7 @@ public class CountingDigestOutputStream extends DigestOutputStream {
     return bytesHashed;
   }
 
-  /** @return the digest hash */
+  /** @return the most recently computed digest hash */
   public DescriptorDigest getDigest() {
     if (descriptorDigest == null) {
       computeDigest();

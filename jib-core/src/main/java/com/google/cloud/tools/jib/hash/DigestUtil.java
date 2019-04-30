@@ -68,8 +68,8 @@ public class DigestUtil {
 
   /**
    * Computes the digest by consuming the contents of an {@link InputStream} and optionally copying
-   * it to an {@link OutputStream}. Returns the computed digested along with the bytes consumed to
-   * compute the digest. Does not close either stream.
+   * it to an {@link OutputStream}. Returns the computed digest along with the size of the bytes
+   * consumed to compute the digest. Does not close either stream.
    *
    * @param inStream the stream to read the contents from
    * @param optionalOutStream the stream to which the contents are copied
@@ -84,10 +84,10 @@ public class DigestUtil {
 
   /**
    * Computes the digest by consuming the contents and optionally copying it to an {@link
-   * OutputStream}. Returns the computed digested along with the bytes consumed. Does not close the
-   * stream.
+   * OutputStream}. Returns the computed digest along with the size of the bytes consumed to compute
+   * the digest. Does not close the stream.
    *
-   * @param contents the contents for which the digest is computed
+   * @param contents the contents to compute digest for
    * @param optionalOutStream the stream to which the contents are copied
    * @return computed digest and bytes consumed
    * @throws IOException if reading from or writing fails

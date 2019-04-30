@@ -75,6 +75,17 @@ public class CacheTest {
   }
 
   /**
+   * Gets the digest of {@code blob}.
+   *
+   * @param blob the {@link Blob}
+   * @return the {@link DescriptorDigest} of {@code blob}
+   * @throws IOException if an I/O exception occurs
+   */
+  private static DescriptorDigest digestOf(Blob blob) throws IOException {
+    return blob.writeTo(ByteStreams.nullOutputStream()).getDigest();
+  }
+
+  /**
    * Gets the size of {@code blob}.
    *
    * @param blob the {@link Blob}
@@ -86,10 +97,6 @@ public class CacheTest {
         new CountingOutputStream(ByteStreams.nullOutputStream());
     blob.writeTo(countingOutputStream);
     return countingOutputStream.getCount();
-  }
-
-  private static DescriptorDigest digestOf(Blob blob) throws IOException {
-    return blob.writeTo(ByteStreams.nullOutputStream()).getDigest();
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();

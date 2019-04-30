@@ -45,7 +45,7 @@ import org.junit.rules.TemporaryFolder;
 /** Tests for {@link DefaultCacheStorageWriter}. */
 public class DefaultCacheStorageWriterTest {
 
-  private static BlobDescriptor digestOf(Blob blob) throws IOException {
+  private static BlobDescriptor getDigest(Blob blob) throws IOException {
     return blob.writeTo(ByteStreams.nullOutputStream());
   }
 
@@ -87,8 +87,8 @@ public class DefaultCacheStorageWriterTest {
   @Test
   public void testWrite_uncompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
-    DescriptorDigest layerDigest = digestOf(compress(uncompressedLayerBlob)).getDigest();
-    DescriptorDigest selector = digestOf(Blobs.from("selector")).getDigest();
+    DescriptorDigest layerDigest = getDigest(compress(uncompressedLayerBlob)).getDigest();
+    DescriptorDigest selector = getDigest(Blobs.from("selector")).getDigest();
 
     CachedLayer cachedLayer =
         new DefaultCacheStorageWriter(defaultCacheStorageFiles)
@@ -161,8 +161,8 @@ public class DefaultCacheStorageWriterTest {
 
   private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)
       throws IOException {
-    BlobDescriptor layerBlobDescriptor = digestOf(compress(uncompressedLayerBlob));
-    DescriptorDigest layerDiffId = digestOf(uncompressedLayerBlob).getDigest();
+    BlobDescriptor layerBlobDescriptor = getDigest(compress(uncompressedLayerBlob));
+    DescriptorDigest layerDiffId = getDigest(uncompressedLayerBlob).getDigest();
 
     // Verifies cachedLayer is correct.
     Assert.assertEquals(layerBlobDescriptor.getDigest(), cachedLayer.getDigest());
