@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.HashSet;
 import java.util.List;
@@ -81,13 +80,13 @@ class CacheStorageReader {
    * @throws IOException if an I/O exception occurs
    */
   Optional<ManifestTemplate> retrieveManifest(ImageReference imageReference) throws IOException {
-    Path manifestPath =
-        cacheStorageFiles.getImageDirectory(imageReference).resolve("manifest.json");
+    Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
+    Path manifestPath = imageDirectory.resolve("manifest.json");
     if (!Files.exists(manifestPath)) {
       return Optional.empty();
     }
 
-    try (LockFile ignored = LockFile.lock(Paths.get(manifestPath.toString() + ".lock"))) {
+    try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
       // TODO: Consolidate with ManifestPuller
       ObjectNode node =
           new ObjectMapper().readValue(Files.newInputStream(manifestPath), ObjectNode.class);
@@ -128,12 +127,13 @@ class CacheStorageReader {
    */
   Optional<ContainerConfigurationTemplate> retrieveContainerConfiguration(
       ImageReference imageReference) throws IOException {
-    Path configPath = cacheStorageFiles.getImageDirectory(imageReference).resolve("config.json");
+    Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
+    Path configPath = imageDirectory.resolve("config.json");
     if (!Files.exists(configPath)) {
       return Optional.empty();
     }
 
-    try (LockFile ignored = LockFile.lock(Paths.get(configPath.toString() + ".lock"))) {
+    try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
       return Optional.of(
           JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class));
     }
