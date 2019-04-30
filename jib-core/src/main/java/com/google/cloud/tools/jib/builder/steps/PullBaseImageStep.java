@@ -237,7 +237,7 @@ class PullBaseImageStep
             || v22ManifestTemplate.getContainerConfiguration().getDigest() == null) {
           throw new UnknownManifestFormatException(
               "Invalid container configuration in Docker V2.2 manifest: \n"
-                  + Blobs.writeToString(JsonTemplateMapper.toBlob(v22ManifestTemplate)));
+                  + JsonTemplateMapper.toUtf8String(v22ManifestTemplate));
         }
 
         DescriptorDigest containerConfigurationDigest =

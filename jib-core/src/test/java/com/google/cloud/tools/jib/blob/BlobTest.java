@@ -16,7 +16,8 @@
 
 package com.google.cloud.tools.jib.blob;
 
-import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
+import com.google.cloud.tools.jib.hash.DigestUtil;
+import com.google.cloud.tools.jib.hash.WritableContents;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
@@ -32,7 +33,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 /** Tests for {@link Blob}. */
 public class BlobTest {
@@ -58,13 +58,13 @@ public class BlobTest {
   }
 
   @Test
-  public void testFromBlobWriter() throws IOException {
+  public void testFromWritableContents() throws IOException {
     String expected = "crepecake";
 
-    BlobWriter writer =
+    WritableContents writableContents =
         outputStream -> outputStream.write(expected.getBytes(StandardCharsets.UTF_8));
 
-    verifyBlobWriteTo(expected, Blobs.from(writer));
+    verifyBlobWriteTo(expected, Blobs.from(writableContents));
   }
 
   @Test
@@ -107,10 +107,8 @@ public class BlobTest {
     byte[] expectedBytes = expected.getBytes(StandardCharsets.UTF_8);
     Assert.assertEquals(expectedBytes.length, blobDescriptor.getSize());
 
-    CountingDigestOutputStream countingDigestOutputStream =
-        new CountingDigestOutputStream(Mockito.mock(OutputStream.class));
-    countingDigestOutputStream.write(expectedBytes);
-    DescriptorDigest expectedDigest = countingDigestOutputStream.toBlobDescriptor().getDigest();
+    DescriptorDigest expectedDigest =
+        DigestUtil.computeDigest(new ByteArrayInputStream(expectedBytes)).getDigest();
     Assert.assertEquals(expectedDigest, blobDescriptor.getDigest());
   }
 }

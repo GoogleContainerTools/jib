@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC.
+ * Copyright 2019 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,25 +16,22 @@
 
 package com.google.cloud.tools.jib.blob;
 
-import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
+import com.google.cloud.tools.jib.hash.DigestUtil;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/** A {@link Blob} that writes with a {@link BlobWriter} function and hashes the bytes. */
-class WriterBlob implements Blob {
+/** A {@link Blob} that holds {@link JsonTemplate}. */
+class JsonBlob implements Blob {
 
-  private final BlobWriter writer;
+  private final JsonTemplate template;
 
-  WriterBlob(BlobWriter writer) {
-    this.writer = writer;
+  JsonBlob(JsonTemplate template) {
+    this.template = template;
   }
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    CountingDigestOutputStream countingDigestOutputStream =
-        new CountingDigestOutputStream(outputStream);
-    writer.writeTo(countingDigestOutputStream);
-    countingDigestOutputStream.flush();
-    return countingDigestOutputStream.toBlobDescriptor();
+    return DigestUtil.computeDigest(template, outputStream);
   }
 }

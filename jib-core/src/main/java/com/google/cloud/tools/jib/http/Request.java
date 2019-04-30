@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.http;
 
+import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpHeaders;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -27,7 +28,7 @@ public class Request {
   private final HttpHeaders headers;
 
   /** The HTTP request body. */
-  @Nullable private final BlobHttpContent body;
+  @Nullable private final HttpContent body;
 
   /** HTTP connection and read timeout. */
   @Nullable private final Integer httpTimeout;
@@ -35,7 +36,7 @@ public class Request {
   public static class Builder {
 
     private final HttpHeaders headers = new HttpHeaders().setAccept("*/*");
-    @Nullable private BlobHttpContent body;
+    @Nullable private HttpContent body;
     @Nullable private Integer httpTimeout;
 
     public Request build() {
@@ -92,11 +93,11 @@ public class Request {
     /**
      * Sets the body and its corresponding {@code Content-Type} header.
      *
-     * @param blobHttpContent the body content
+     * @param httpContent the body content
      * @return this
      */
-    public Builder setBody(@Nullable BlobHttpContent blobHttpContent) {
-      this.body = blobHttpContent;
+    public Builder setBody(@Nullable HttpContent httpContent) {
+      this.body = httpContent;
       return this;
     }
   }
@@ -116,7 +117,7 @@ public class Request {
   }
 
   @Nullable
-  BlobHttpContent getHttpContent() {
+  HttpContent getHttpContent() {
     return body;
   }
 

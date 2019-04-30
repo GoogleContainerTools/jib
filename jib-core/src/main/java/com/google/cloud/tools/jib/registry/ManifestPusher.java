@@ -18,14 +18,14 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpResponseException;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.hash.DigestUtil;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -82,7 +82,7 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   @Override
   public BlobHttpContent getContent() {
     return new BlobHttpContent(
-        JsonTemplateMapper.toBlob(manifestTemplate),
+        Blobs.from(manifestTemplate),
         manifestTemplate.getManifestMediaType(),
         // TODO: Consider giving progress on manifest push as well?
         null);
@@ -125,10 +125,7 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   @Override
   public DescriptorDigest handleResponse(Response response) throws IOException {
     // Checks if the image digest is as expected.
-    DescriptorDigest expectedDigest =
-        JsonTemplateMapper.toBlob(manifestTemplate)
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest();
+    DescriptorDigest expectedDigest = DigestUtil.computeJsonDigest(manifestTemplate);
 
     List<String> receivedDigests = response.getHeader(RESPONSE_DIGEST_HEADER);
     if (receivedDigests.size() == 1) {

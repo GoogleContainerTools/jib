@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.blob;
 
 import com.google.cloud.tools.jib.filesystem.FileOperations;
+import com.google.cloud.tools.jib.hash.WritableContents;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +38,10 @@ public class Blobs {
     return new FileBlob(file);
   }
 
+  public static Blob from(JsonTemplate template) {
+    return new JsonBlob(template);
+  }
+
   /**
    * Creates a {@link StringBlob} with UTF-8 encoding.
    *
@@ -46,8 +52,8 @@ public class Blobs {
     return new StringBlob(content);
   }
 
-  public static Blob from(BlobWriter writer) {
-    return new WriterBlob(writer);
+  public static Blob from(WritableContents writable) {
+    return new WritableContentsBlob(writable);
   }
 
   /**

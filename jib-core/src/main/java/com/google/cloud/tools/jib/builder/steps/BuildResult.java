@@ -17,12 +17,12 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.hash.DigestUtil;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.util.Objects;
@@ -49,10 +49,7 @@ public class BuildResult {
     BuildableManifestTemplate manifestTemplate =
         imageToJsonTranslator.getManifestTemplate(
             targetFormat, containerConfigurationBlobDescriptor);
-    DescriptorDigest imageDigest =
-        JsonTemplateMapper.toBlob(manifestTemplate)
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest();
+    DescriptorDigest imageDigest = DigestUtil.computeJsonDigest(manifestTemplate);
     DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
     return new BuildResult(imageDigest, imageId);
   }

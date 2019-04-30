@@ -16,15 +16,22 @@
 
 package com.google.cloud.tools.jib.blob;
 
+import com.google.cloud.tools.jib.hash.DigestUtil;
+import com.google.cloud.tools.jib.hash.WritableContents;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/**
- * This function writes the contents of a BLOB. This function should write the same BLOB regardless
- * of the number of times it is called.
- */
-@FunctionalInterface
-public interface BlobWriter {
+/** A {@link Blob} that holds {@link WritableContents}. */
+class WritableContentsBlob implements Blob {
 
-  void writeTo(OutputStream outputStream) throws IOException;
+  private final WritableContents writableContents;
+
+  WritableContentsBlob(WritableContents writableContents) {
+    this.writableContents = writableContents;
+  }
+
+  @Override
+  public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
+    return DigestUtil.computeDigest(writableContents, outputStream);
+  }
 }
