@@ -76,7 +76,7 @@ public class DefaultCacheStorageWriterTest {
   @Test
   public void testWrite_uncompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
-    DescriptorDigest layerDigest = getDigest(uncompressedLayerBlob).getDigest();
+    DescriptorDigest layerDigest = getDigest(compress(uncompressedLayerBlob)).getDigest();
 
     DescriptorDigest selector = getDigest(Blobs.from("selector")).getDigest();
 
@@ -94,7 +94,7 @@ public class DefaultCacheStorageWriterTest {
 
   private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)
       throws IOException {
-    BlobDescriptor layerBlobDescriptor = getDigest(uncompressedLayerBlob);
+    BlobDescriptor layerBlobDescriptor = getDigest(compress(uncompressedLayerBlob));
     DescriptorDigest layerDiffId = getDigest(uncompressedLayerBlob).getDigest();
 
     // Verifies cachedLayer is correct.
