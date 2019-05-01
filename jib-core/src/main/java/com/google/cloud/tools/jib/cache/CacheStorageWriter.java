@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.filesystem.TemporaryDirectory;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
@@ -36,6 +37,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
@@ -364,7 +366,9 @@ class CacheStorageWriter {
     // Writes the selector to a temporary file and then moves the file to the intended location.
     Path temporarySelectorFile = Files.createTempFile(null, null);
     temporarySelectorFile.toFile().deleteOnExit();
-    Blobs.writeToFileWithLock(Blobs.from(layerDigest.getHash()), temporarySelectorFile);
+    try (OutputStream fileOut = FileOperations.newLockingOutputStream(temporarySelectorFile)) {
+      fileOut.write(layerDigest.getHash().getBytes(StandardCharsets.UTF_8));
+    }
 
     // Attempts an atomic move first, and falls back to non-atomic if the file system does not
     // support atomic moves.

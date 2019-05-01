@@ -16,10 +16,11 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestException;
@@ -89,9 +90,11 @@ public class CacheStorageReaderTest {
     // Creates the test layer directory.
     DescriptorDigest layerDigest = layerDigest1;
     DescriptorDigest layerDiffId = layerDigest2;
-    Blob layerBlob = Blobs.from("layerBlob");
     Files.createDirectories(cacheStorageFiles.getLayerDirectory(layerDigest));
-    Blobs.writeToFileWithLock(layerBlob, cacheStorageFiles.getLayerFile(layerDigest, layerDiffId));
+    try (OutputStream out =
+        Files.newOutputStream(cacheStorageFiles.getLayerFile(layerDigest, layerDiffId))) {
+      out.write("layerBlob".getBytes(StandardCharsets.UTF_8));
+    }
 
     // Checks that the CachedLayer is retrieved correctly.
     Optional<CachedLayer> optionalCachedLayer = cacheStorageReader.retrieve(layerDigest);
