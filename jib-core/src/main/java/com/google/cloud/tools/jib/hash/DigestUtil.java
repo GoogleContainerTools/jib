@@ -16,10 +16,11 @@
 
 package com.google.cloud.tools.jib.hash;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.blob.BlobWriter;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,32 +30,20 @@ import java.util.List;
 /** Utility class for input/output streams. */
 public class DigestUtil {
 
-  /**
-   * Represents contents. It may represent "yet-to-be-realized" contents; for example, loading the
-   * actual contents from a file may happen only when writing the contents into an output stream.
-   */
-  @FunctionalInterface
-  public static interface Contents {
-
-    static Contents fromJson(Object jsonObject) {
-      return outStream -> new ObjectMapper().writeValue(outStream, jsonObject);
-    }
-
-    void writeTo(OutputStream out) throws IOException;
-  }
-
   public static DescriptorDigest computeJsonDigest(JsonTemplate template) throws IOException {
     return computeDigest(template, ByteStreams.nullOutputStream()).getDigest();
   }
 
   public static DescriptorDigest computeJsonDigest(List<? extends JsonTemplate> templates)
       throws IOException {
-    return computeDigest(Contents.fromJson(templates), ByteStreams.nullOutputStream()).getDigest();
+    BlobWriter contents = contentsOut -> JsonTemplateMapper.writeTo(templates, contentsOut);
+    return computeDigest(contents, ByteStreams.nullOutputStream()).getDigest();
   }
 
   public static BlobDescriptor computeDigest(JsonTemplate template, OutputStream outStream)
       throws IOException {
-    return computeDigest(Contents.fromJson(template), outStream);
+    BlobWriter contents = contentsOut -> JsonTemplateMapper.writeTo(template, contentsOut);
+    return computeDigest(contents, outStream);
   }
 
   public static BlobDescriptor computeDigest(InputStream inStream) throws IOException {
@@ -64,11 +53,11 @@ public class DigestUtil {
   /**
    * Computes the digest by consuming the contents.
    *
-   * @param contents the contents for which the digest is computed
+   * @param contents the writable contents for which the digest is computed
    * @return computed digest and bytes consumed
    * @throws IOException if reading fails
    */
-  public static BlobDescriptor computeDigest(Contents contents) throws IOException {
+  public static BlobDescriptor computeDigest(BlobWriter contents) throws IOException {
     return computeDigest(contents, ByteStreams.nullOutputStream());
   }
 
@@ -84,7 +73,7 @@ public class DigestUtil {
    */
   public static BlobDescriptor computeDigest(InputStream inStream, OutputStream outStream)
       throws IOException {
-    Contents contents = anyOutSteam -> ByteStreams.copy(inStream, anyOutSteam);
+    BlobWriter contents = contentsOut -> ByteStreams.copy(inStream, contentsOut);
     return computeDigest(contents, outStream);
   }
 
@@ -93,12 +82,12 @@ public class DigestUtil {
    * OutputStream}. Returns the computed digested along with the bytes consumed. Does not close the
    * stream.
    *
-   * @param contents the contents for which the digest is computed
+   * @param contents the writable contents for which the digest is computed
    * @param outStream the stream to which the contents are copied
    * @return computed digest and bytes consumed
    * @throws IOException if reading from or writing fails
    */
-  public static BlobDescriptor computeDigest(Contents contents, OutputStream outStream)
+  public static BlobDescriptor computeDigest(BlobWriter contents, OutputStream outStream)
       throws IOException {
     CountingDigestOutputStream digestOutStream = new CountingDigestOutputStream(outStream);
     contents.writeTo(digestOutStream);

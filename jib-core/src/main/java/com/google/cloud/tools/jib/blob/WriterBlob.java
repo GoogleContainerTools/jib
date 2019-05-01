@@ -23,14 +23,14 @@ import java.io.OutputStream;
 /** A {@link Blob} that writes with a {@link BlobWriter} function and hashes the bytes. */
 class WriterBlob implements Blob {
 
-  private final BlobWriter writer;
+  private final BlobWriter writableContents;
 
-  WriterBlob(BlobWriter writer) {
-    this.writer = writer;
+  WriterBlob(BlobWriter writableContents) {
+    this.writableContents = writableContents;
   }
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    return DigestUtil.computeDigest(out -> writer.writeTo(out), outputStream);
+    return DigestUtil.computeDigest(writableContents, outputStream);
   }
 }
