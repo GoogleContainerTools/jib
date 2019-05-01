@@ -33,8 +33,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Tests for {@link DefaultCacheStorageReader}. */
-public class DefaultCacheStorageReaderTest {
+/** Tests for {@link CacheStorageReader}. */
+public class CacheStorageReaderTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -53,27 +53,24 @@ public class DefaultCacheStorageReaderTest {
 
   @Test
   public void testListDigests() throws IOException, CacheCorruptedException {
-    DefaultCacheStorageFiles defaultCacheStorageFiles =
-        new DefaultCacheStorageFiles(temporaryFolder.newFolder().toPath());
+    CacheStorageFiles cacheStorageFiles =
+        new CacheStorageFiles(temporaryFolder.newFolder().toPath());
 
-    DefaultCacheStorageReader defaultCacheStorageReader =
-        new DefaultCacheStorageReader(defaultCacheStorageFiles);
+    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
 
     // Creates test layer directories.
-    Files.createDirectories(
-        defaultCacheStorageFiles.getLayersDirectory().resolve(layerDigest1.getHash()));
-    Files.createDirectories(
-        defaultCacheStorageFiles.getLayersDirectory().resolve(layerDigest2.getHash()));
+    Files.createDirectories(cacheStorageFiles.getLayersDirectory().resolve(layerDigest1.getHash()));
+    Files.createDirectories(cacheStorageFiles.getLayersDirectory().resolve(layerDigest2.getHash()));
 
     // Checks that layer directories created are all listed.
     Assert.assertEquals(
         new HashSet<>(Arrays.asList(layerDigest1, layerDigest2)),
-        defaultCacheStorageReader.fetchDigests());
+        cacheStorageReader.fetchDigests());
 
     // Checks that non-digest directories means the cache is corrupted.
-    Files.createDirectory(defaultCacheStorageFiles.getLayersDirectory().resolve("not a hash"));
+    Files.createDirectory(cacheStorageFiles.getLayersDirectory().resolve("not a hash"));
     try {
-      defaultCacheStorageReader.fetchDigests();
+      cacheStorageReader.fetchDigests();
       Assert.fail("Listing digests should have failed");
 
     } catch (CacheCorruptedException ex) {
@@ -84,22 +81,20 @@ public class DefaultCacheStorageReaderTest {
 
   @Test
   public void testRetrieve() throws IOException, CacheCorruptedException {
-    DefaultCacheStorageFiles defaultCacheStorageFiles =
-        new DefaultCacheStorageFiles(temporaryFolder.newFolder().toPath());
+    CacheStorageFiles cacheStorageFiles =
+        new CacheStorageFiles(temporaryFolder.newFolder().toPath());
 
-    DefaultCacheStorageReader defaultCacheStorageReader =
-        new DefaultCacheStorageReader(defaultCacheStorageFiles);
+    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
 
     // Creates the test layer directory.
     DescriptorDigest layerDigest = layerDigest1;
     DescriptorDigest layerDiffId = layerDigest2;
     Blob layerBlob = Blobs.from("layerBlob");
-    Files.createDirectories(defaultCacheStorageFiles.getLayerDirectory(layerDigest));
-    Blobs.writeToFileWithLock(
-        layerBlob, defaultCacheStorageFiles.getLayerFile(layerDigest, layerDiffId));
+    Files.createDirectories(cacheStorageFiles.getLayerDirectory(layerDigest));
+    Blobs.writeToFileWithLock(layerBlob, cacheStorageFiles.getLayerFile(layerDigest, layerDiffId));
 
     // Checks that the CachedLayer is retrieved correctly.
-    Optional<CachedLayer> optionalCachedLayer = defaultCacheStorageReader.retrieve(layerDigest);
+    Optional<CachedLayer> optionalCachedLayer = cacheStorageReader.retrieve(layerDigest);
     Assert.assertTrue(optionalCachedLayer.isPresent());
     Assert.assertEquals(layerDigest, optionalCachedLayer.get().getDigest());
     Assert.assertEquals(layerDiffId, optionalCachedLayer.get().getDiffId());
@@ -107,9 +102,9 @@ public class DefaultCacheStorageReaderTest {
     Assert.assertEquals("layerBlob", Blobs.writeToString(optionalCachedLayer.get().getBlob()));
 
     // Checks that multiple .layer files means the cache is corrupted.
-    Files.createFile(defaultCacheStorageFiles.getLayerFile(layerDigest, layerDigest));
+    Files.createFile(cacheStorageFiles.getLayerFile(layerDigest, layerDigest));
     try {
-      defaultCacheStorageReader.retrieve(layerDigest);
+      cacheStorageReader.retrieve(layerDigest);
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
@@ -117,26 +112,25 @@ public class DefaultCacheStorageReaderTest {
           "Multiple layer files found for layer with digest "
               + layerDigest.getHash()
               + " in directory: "
-              + defaultCacheStorageFiles.getLayerDirectory(layerDigest),
+              + cacheStorageFiles.getLayerDirectory(layerDigest),
           ex.getMessage());
     }
   }
 
   @Test
   public void testSelect_invalidLayerDigest() throws IOException {
-    DefaultCacheStorageFiles defaultCacheStorageFiles =
-        new DefaultCacheStorageFiles(temporaryFolder.newFolder().toPath());
+    CacheStorageFiles cacheStorageFiles =
+        new CacheStorageFiles(temporaryFolder.newFolder().toPath());
 
-    DefaultCacheStorageReader defaultCacheStorageReader =
-        new DefaultCacheStorageReader(defaultCacheStorageFiles);
+    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
 
     DescriptorDigest selector = layerDigest1;
-    Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
+    Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
     Files.createDirectories(selectorFile.getParent());
     Files.write(selectorFile, Blobs.writeToByteArray(Blobs.from("not a valid layer digest")));
 
     try {
-      defaultCacheStorageReader.select(selector);
+      cacheStorageReader.select(selector);
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
@@ -150,18 +144,17 @@ public class DefaultCacheStorageReaderTest {
 
   @Test
   public void testSelect() throws IOException, CacheCorruptedException {
-    DefaultCacheStorageFiles defaultCacheStorageFiles =
-        new DefaultCacheStorageFiles(temporaryFolder.newFolder().toPath());
+    CacheStorageFiles cacheStorageFiles =
+        new CacheStorageFiles(temporaryFolder.newFolder().toPath());
 
-    DefaultCacheStorageReader defaultCacheStorageReader =
-        new DefaultCacheStorageReader(defaultCacheStorageFiles);
+    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
 
     DescriptorDigest selector = layerDigest1;
-    Path selectorFile = defaultCacheStorageFiles.getSelectorFile(selector);
+    Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
     Files.createDirectories(selectorFile.getParent());
     Files.write(selectorFile, Blobs.writeToByteArray(Blobs.from(layerDigest2.getHash())));
 
-    Optional<DescriptorDigest> selectedLayerDigest = defaultCacheStorageReader.select(selector);
+    Optional<DescriptorDigest> selectedLayerDigest = cacheStorageReader.select(selector);
     Assert.assertTrue(selectedLayerDigest.isPresent());
     Assert.assertEquals(layerDigest2, selectedLayerDigest.get());
   }

@@ -46,7 +46,7 @@ public class Jib {
    * @return a new {@link JibContainerBuilder} to continue building the container
    */
   public static JibContainerBuilder from(ImageReference baseImageReference) {
-    return new JibContainerBuilder(RegistryImage.named(baseImageReference));
+    return from(RegistryImage.named(baseImageReference));
   }
 
   /**
