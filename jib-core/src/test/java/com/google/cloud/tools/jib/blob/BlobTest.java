@@ -30,7 +30,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -65,35 +64,6 @@ public class BlobTest {
         outputStream -> outputStream.write(expected.getBytes(StandardCharsets.UTF_8));
 
     verifyBlobWriteTo(expected, Blobs.from(writableContents));
-  }
-
-  @Test
-  public void testWriteToFileWithLock_newFile() throws IOException {
-    String expected = "crepecake";
-    Path blobFile = Files.createTempFile("blob", "bin");
-    Assert.assertTrue(Files.deleteIfExists(blobFile)); // ensure it doesn't exist
-
-    Blobs.writeToFileWithLock(Blobs.from(expected), blobFile);
-
-    Assert.assertTrue(Files.exists(blobFile));
-    verifyBlobWriteTo(expected, Blobs.from(blobFile));
-  }
-
-  @Test
-  public void testWriteToFileWithLock_existingFile() throws IOException {
-    Path blobFile = Files.createTempFile("blob", "bin");
-    // write out more bytes to ensure properly truncated
-    byte[] dataBytes = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    Files.write(blobFile, dataBytes, StandardOpenOption.WRITE);
-    Assert.assertTrue(Files.exists(blobFile));
-    Assert.assertEquals(10, Files.size(blobFile));
-
-    String expected = "crepecake";
-    Blobs.writeToFileWithLock(Blobs.from(expected), blobFile);
-
-    Assert.assertTrue(Files.exists(blobFile));
-    Assert.assertEquals(9, Files.size(blobFile));
-    verifyBlobWriteTo(expected, Blobs.from(blobFile));
   }
 
   /** Checks that the {@link Blob} streams the expected string. */

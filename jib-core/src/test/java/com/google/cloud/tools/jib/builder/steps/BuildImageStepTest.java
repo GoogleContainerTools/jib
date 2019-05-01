@@ -16,9 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
@@ -65,7 +63,7 @@ public class BuildImageStepTest {
   @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStepResources;
   @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStepClasses;
   @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStepExtraFiles;
-
+  @Mock private CachedLayer mockCachedLayer;
   private DescriptorDigest testDescriptorDigest;
   private HistoryEntry nonEmptyLayerHistory;
   private HistoryEntry emptyLayerHistory;
@@ -75,33 +73,6 @@ public class BuildImageStepTest {
     testDescriptorDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    CachedLayer testCachedLayer =
-        new CachedLayer() {
-          @Override
-          public DescriptorDigest getDigest() {
-            return testDescriptorDigest;
-          }
-
-          @Override
-          public DescriptorDigest getDiffId() {
-            return testDescriptorDigest;
-          }
-
-          @Override
-          public long getSize() {
-            return 0;
-          }
-
-          @Override
-          public Blob getBlob() {
-            return Blobs.from("ignored");
-          }
-
-          @Override
-          public BlobDescriptor getBlobDescriptor() {
-            return new BlobDescriptor(0, testDescriptorDigest);
-          }
-        };
 
     Mockito.when(mockBuildConfiguration.getEventDispatcher()).thenReturn(mockEventDispatcher);
     Mockito.when(mockBuildConfiguration.getContainerConfiguration())
@@ -113,6 +84,8 @@ public class BuildImageStepTest {
     Mockito.when(mockContainerConfiguration.getExposedPorts()).thenReturn(ImmutableSet.of());
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
     Mockito.when(mockContainerConfiguration.getUser()).thenReturn("root");
+    Mockito.when(mockCachedLayer.getBlobDescriptor())
+        .thenReturn(new BlobDescriptor(0, testDescriptorDigest));
 
     nonEmptyLayerHistory =
         HistoryEntry.builder()
@@ -154,7 +127,7 @@ public class BuildImageStepTest {
             .addHistory(emptyLayerHistory)
             .build();
     Mockito.when(mockPullAndCacheBaseImageLayerStep.getFuture())
-        .thenReturn(Futures.immediateFuture(testCachedLayer));
+        .thenReturn(Futures.immediateFuture(mockCachedLayer));
     Mockito.when(mockPullAndCacheBaseImageLayersStep.getFuture())
         .thenReturn(
             Futures.immediateFuture(
@@ -175,7 +148,7 @@ public class BuildImageStepTest {
         .forEach(
             layerStep ->
                 Mockito.when(layerStep.getFuture())
-                    .thenReturn(Futures.immediateFuture(testCachedLayer)));
+                    .thenReturn(Futures.immediateFuture(mockCachedLayer)));
 
     Mockito.when(mockBuildAndCacheApplicationLayerStepClasses.getLayerType()).thenReturn("classes");
     Mockito.when(mockBuildAndCacheApplicationLayerStepDependencies.getLayerType())
