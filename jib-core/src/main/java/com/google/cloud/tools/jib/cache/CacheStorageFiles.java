@@ -41,6 +41,12 @@ class CacheStorageFiles {
     return file.getFileName().toString().length() == DescriptorDigest.HASH_LENGTH;
   }
 
+  private final Path cacheDirectory;
+
+  CacheStorageFiles(Path cacheDirectory) {
+    this.cacheDirectory = cacheDirectory;
+  }
+
   /**
    * Gets the diff ID portion of the layer filename.
    *
@@ -48,21 +54,24 @@ class CacheStorageFiles {
    * @return the diff ID portion of the layer file filename
    * @throws CacheCorruptedException if no valid diff ID could be parsed
    */
-  static DescriptorDigest getDiffId(Path layerFile) throws CacheCorruptedException {
+  DescriptorDigest getDiffId(Path layerFile) throws CacheCorruptedException {
     try {
       String diffId = layerFile.getFileName().toString();
       return DescriptorDigest.fromHash(diffId);
 
     } catch (DigestException | IndexOutOfBoundsException ex) {
       throw new CacheCorruptedException(
-          "Layer file did not include valid diff ID: " + layerFile, ex);
+          cacheDirectory, "Layer file did not include valid diff ID: " + layerFile, ex);
     }
   }
 
-  private final Path cacheDirectory;
-
-  CacheStorageFiles(Path cacheDirectory) {
-    this.cacheDirectory = cacheDirectory;
+  /**
+   * Gets the cache directory.
+   *
+   * @return the cache directory
+   */
+  Path getCacheDirectory() {
+    return cacheDirectory;
   }
 
   /**

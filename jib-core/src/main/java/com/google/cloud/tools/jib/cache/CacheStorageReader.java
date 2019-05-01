@@ -66,7 +66,10 @@ class CacheStorageReader {
           layerDigests.add(DescriptorDigest.fromHash(layerDirectory.getFileName().toString()));
 
         } catch (DigestException ex) {
-          throw new CacheCorruptedException("Found non-digest file in layers directory", ex);
+          throw new CacheCorruptedException(
+              cacheStorageFiles.getCacheDirectory(),
+              "Found non-digest file in layers directory",
+              ex);
         }
       }
       return layerDigests;
@@ -94,12 +97,15 @@ class CacheStorageReader {
       ObjectNode node =
           new ObjectMapper().readValue(Files.newInputStream(manifestPath), ObjectNode.class);
       if (!node.has("schemaVersion")) {
-        throw new CacheCorruptedException("Cannot find field 'schemaVersion' in manifest");
+        throw new CacheCorruptedException(
+            cacheStorageFiles.getCacheDirectory(), "Cannot find field 'schemaVersion' in manifest");
       }
 
       int schemaVersion = node.get("schemaVersion").asInt(-1);
       if (schemaVersion == -1) {
-        throw new CacheCorruptedException("`schemaVersion` field is not an integer in manifest");
+        throw new CacheCorruptedException(
+            cacheStorageFiles.getCacheDirectory(),
+            "`schemaVersion` field is not an integer in manifest");
       }
 
       if (schemaVersion == 1) {
@@ -120,12 +126,15 @@ class CacheStorageReader {
           manifestTemplate =
               JsonTemplateMapper.readJsonFromFile(manifestPath, OCIManifestTemplate.class);
         } else {
-          throw new CacheCorruptedException("Unknown manifest mediaType: " + mediaType);
+          throw new CacheCorruptedException(
+              cacheStorageFiles.getCacheDirectory(), "Unknown manifest mediaType: " + mediaType);
         }
 
         Path configPath = imageDirectory.resolve("config.json");
         if (!Files.exists(configPath)) {
-          return Optional.empty();
+          throw new CacheCorruptedException(
+              cacheStorageFiles.getCacheDirectory(),
+              "Manifest found, but missing container configuration");
         }
         ContainerConfigurationTemplate config =
             JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
@@ -133,6 +142,7 @@ class CacheStorageReader {
         return Optional.of(new ManifestAndConfig(manifestTemplate, config));
       }
       throw new CacheCorruptedException(
+          cacheStorageFiles.getCacheDirectory(),
           "Unknown schemaVersion in manifest: " + schemaVersion + " - only 1 and 2 are supported");
     }
   }
@@ -159,6 +169,7 @@ class CacheStorageReader {
         if (CacheStorageFiles.isLayerFile(fileInLayerDirectory)) {
           if (cachedLayerBuilder.hasLayerBlob()) {
             throw new CacheCorruptedException(
+                cacheStorageFiles.getCacheDirectory(),
                 "Multiple layer files found for layer with digest "
                     + layerDigest.getHash()
                     + " in directory: "
@@ -166,7 +177,7 @@ class CacheStorageReader {
           }
           cachedLayerBuilder
               .setLayerBlob(Blobs.from(fileInLayerDirectory))
-              .setLayerDiffId(CacheStorageFiles.getDiffId(fileInLayerDirectory))
+              .setLayerDiffId(cacheStorageFiles.getDiffId(fileInLayerDirectory))
               .setLayerSize(Files.size(fileInLayerDirectory));
         }
       }
@@ -197,6 +208,7 @@ class CacheStorageReader {
 
     } catch (DigestException ex) {
       throw new CacheCorruptedException(
+          cacheStorageFiles.getCacheDirectory(),
           "Expected valid layer digest as contents of selector file `"
               + selectorFile
               + "` for selector `"

@@ -102,7 +102,8 @@ public class CacheStorageReaderTest {
       Assert.fail("Listing digests should have failed");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertEquals("Found non-digest file in layers directory", ex.getMessage());
+      Assert.assertThat(
+          ex.getMessage(), CoreMatchers.startsWith("Found non-digest file in layers directory"));
       Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
     }
   }
@@ -191,12 +192,13 @@ public class CacheStorageReaderTest {
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertEquals(
-          "Multiple layer files found for layer with digest "
-              + layerDigest.getHash()
-              + " in directory: "
-              + cacheStorageFiles.getLayerDirectory(layerDigest),
-          ex.getMessage());
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.startsWith(
+              "Multiple layer files found for layer with digest "
+                  + layerDigest.getHash()
+                  + " in directory: "
+                  + cacheStorageFiles.getLayerDirectory(layerDigest)));
     }
   }
 
@@ -217,11 +219,12 @@ public class CacheStorageReaderTest {
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertEquals(
-          "Expected valid layer digest as contents of selector file `"
-              + selectorFile
-              + "` for selector `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`, but got: not a valid layer digest",
-          ex.getMessage());
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.startsWith(
+              "Expected valid layer digest as contents of selector file `"
+                  + selectorFile
+                  + "` for selector `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`, but got: not a valid layer digest"));
     }
   }
 
