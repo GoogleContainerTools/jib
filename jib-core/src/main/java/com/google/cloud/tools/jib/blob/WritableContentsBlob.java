@@ -21,11 +21,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /** A {@link Blob} that writes with a {@link BlobWriter} function and hashes the bytes. */
-class WriterBlob implements Blob {
+class WritableContentsBlob implements Blob {
 
   private final BlobWriter writableContents;
 
-  WriterBlob(BlobWriter writableContents) {
+  WritableContentsBlob(BlobWriter writableContents) {
     this.writableContents = writableContents;
   }
 

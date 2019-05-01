@@ -50,8 +50,8 @@ public class Blobs {
     return new StringBlob(content);
   }
 
-  public static Blob from(BlobWriter writer) {
-    return new WriterBlob(writer);
+  public static Blob from(BlobWriter writableContents) {
+    return new WritableContentsBlob(writableContents);
   }
 
   /**

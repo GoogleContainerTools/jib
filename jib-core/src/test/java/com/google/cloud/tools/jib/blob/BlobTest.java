@@ -57,13 +57,13 @@ public class BlobTest {
   }
 
   @Test
-  public void testFromBlobWriter() throws IOException {
+  public void testFromWritableContents() throws IOException {
     String expected = "crepecake";
 
-    BlobWriter writer =
-        outputStream -> outputStream.write(expected.getBytes(StandardCharsets.UTF_8));
+    BlobWriter writableContents =
+        contentsOut -> contentsOut.write(expected.getBytes(StandardCharsets.UTF_8));
 
-    verifyBlobWriteTo(expected, Blobs.from(writer));
+    verifyBlobWriteTo(expected, Blobs.from(writableContents));
   }
 
   @Test
