@@ -108,7 +108,8 @@ public class CacheStorageReaderTest {
   }
 
   @Test
-  public void testRetrieveManifest_v21() throws IOException, URISyntaxException {
+  public void testRetrieveManifest_v21()
+      throws IOException, URISyntaxException, CacheCorruptedException {
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
     setupCachedMetadataV21(cacheDirectory);
 
@@ -117,12 +118,16 @@ public class CacheStorageReaderTest {
 
     V21ManifestTemplate manifestTemplate =
         (V21ManifestTemplate)
-            cacheStorageReader.retrieveManifest(ImageReference.of("test", "image", "tag")).get();
+            cacheStorageReader
+                .retrieveMetadata(ImageReference.of("test", "image", "tag"))
+                .get()
+                .getManifest();
     Assert.assertEquals(1, manifestTemplate.getSchemaVersion());
   }
 
   @Test
-  public void testRetrieveManifest_v22() throws IOException, URISyntaxException {
+  public void testRetrieveManifest_v22()
+      throws IOException, URISyntaxException, CacheCorruptedException {
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
     setupCachedMetadataV22(cacheDirectory);
 
@@ -131,12 +136,16 @@ public class CacheStorageReaderTest {
 
     V22ManifestTemplate manifestTemplate =
         (V22ManifestTemplate)
-            cacheStorageReader.retrieveManifest(ImageReference.of("test", "image", "tag")).get();
+            cacheStorageReader
+                .retrieveMetadata(ImageReference.of("test", "image", "tag"))
+                .get()
+                .getManifest();
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
   }
 
   @Test
-  public void testRetrieveContainerConfiguration() throws IOException, URISyntaxException {
+  public void testRetrieveContainerConfiguration()
+      throws IOException, URISyntaxException, CacheCorruptedException {
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
     setupCachedMetadataV22(cacheDirectory);
 
@@ -145,7 +154,9 @@ public class CacheStorageReaderTest {
 
     ContainerConfigurationTemplate configurationTemplate =
         cacheStorageReader
-            .retrieveContainerConfiguration(ImageReference.of("test", "image", "tag"))
+            .retrieveMetadata(ImageReference.of("test", "image", "tag"))
+            .get()
+            .getConfig()
             .get();
     Assert.assertEquals("wasm", configurationTemplate.getArchitecture());
     Assert.assertEquals("js", configurationTemplate.getOs());

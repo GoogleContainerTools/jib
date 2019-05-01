@@ -22,7 +22,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
-import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -117,27 +117,16 @@ public class Cache {
   }
 
   /**
-   * Retrieves the cached manifest for an image reference.
+   * Retrieves the cached manifest and container configuration for an image reference.
    *
    * @param imageReference the image reference
-   * @return the manifest for the image reference, if found
+   * @return the manifest and container configuration for the image reference, if found
    * @throws IOException if an I/O exception occurs
+   * @throws CacheCorruptedException if the cache is corrupted
    */
-  public Optional<ManifestTemplate> retrieveManifest(ImageReference imageReference)
-      throws IOException {
-    return cacheStorageReader.retrieveManifest(imageReference);
-  }
-
-  /**
-   * Retrieves the cached container configuration for an image reference.
-   *
-   * @param imageReference the image reference
-   * @return the container configuration for the image reference, if found
-   * @throws IOException if an I/O exception occurs
-   */
-  public Optional<ContainerConfigurationTemplate> retrieveContainerConfiguration(
-      ImageReference imageReference) throws IOException {
-    return cacheStorageReader.retrieveContainerConfiguration(imageReference);
+  public Optional<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
+      throws IOException, CacheCorruptedException {
+    return cacheStorageReader.retrieveMetadata(imageReference);
   }
 
   /**

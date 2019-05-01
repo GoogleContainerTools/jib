@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -73,13 +74,15 @@ class CacheStorageReader {
   }
 
   /**
-   * Retrieves the cached manifest for an image reference.
+   * Retrieves the cached manifest and container configuration for an image reference.
    *
    * @param imageReference the image reference
-   * @return the manifest for the image reference, if found
+   * @return the manifest and container configuration for the image reference, if found
    * @throws IOException if an I/O exception occurs
+   * @throws CacheCorruptedException if the cache is corrupted
    */
-  Optional<ManifestTemplate> retrieveManifest(ImageReference imageReference) throws IOException {
+  Optional<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
+      throws IOException, CacheCorruptedException {
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Path manifestPath = imageDirectory.resolve("manifest.json");
     if (!Files.exists(manifestPath)) {
@@ -91,51 +94,46 @@ class CacheStorageReader {
       ObjectNode node =
           new ObjectMapper().readValue(Files.newInputStream(manifestPath), ObjectNode.class);
       if (!node.has("schemaVersion")) {
-        return Optional.empty();
+        throw new CacheCorruptedException("Cannot find field 'schemaVersion' in manifest");
       }
+
       int schemaVersion = node.get("schemaVersion").asInt(-1);
       if (schemaVersion == -1) {
-        return Optional.empty();
+        throw new CacheCorruptedException("`schemaVersion` field is not an integer");
       }
 
       if (schemaVersion == 1) {
         return Optional.of(
-            JsonTemplateMapper.readJsonFromFile(manifestPath, V21ManifestTemplate.class));
+            new ManifestAndConfig(
+                JsonTemplateMapper.readJsonFromFile(manifestPath, V21ManifestTemplate.class),
+                null));
       }
       if (schemaVersion == 2) {
         // 'schemaVersion' of 2 can be either Docker V2.2 or OCI.
         String mediaType = node.get("mediaType").asText();
+
+        ManifestTemplate manifestTemplate;
         if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-          return Optional.of(
-              JsonTemplateMapper.readJsonFromFile(manifestPath, V22ManifestTemplate.class));
+          manifestTemplate =
+              JsonTemplateMapper.readJsonFromFile(manifestPath, V22ManifestTemplate.class);
+        } else if (OCIManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+          manifestTemplate =
+              JsonTemplateMapper.readJsonFromFile(manifestPath, OCIManifestTemplate.class);
+        } else {
+          throw new CacheCorruptedException("Unknown mediaType: " + mediaType);
         }
-        if (OCIManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
-          return Optional.of(
-              JsonTemplateMapper.readJsonFromFile(manifestPath, OCIManifestTemplate.class));
+
+        Path configPath = imageDirectory.resolve("config.json");
+        if (!Files.exists(configPath)) {
+          return Optional.empty();
         }
+        ContainerConfigurationTemplate config =
+            JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
+
+        return Optional.of(new ManifestAndConfig(manifestTemplate, config));
       }
-      return Optional.empty();
-    }
-  }
-
-  /**
-   * Retrieves the cached container configuration for an image reference.
-   *
-   * @param imageReference the image reference
-   * @return the container configuration for the image reference, if found
-   * @throws IOException if an I/O exception occurs
-   */
-  Optional<ContainerConfigurationTemplate> retrieveContainerConfiguration(
-      ImageReference imageReference) throws IOException {
-    Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
-    Path configPath = imageDirectory.resolve("config.json");
-    if (!Files.exists(configPath)) {
-      return Optional.empty();
-    }
-
-    try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
-      return Optional.of(
-          JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class));
+      throw new CacheCorruptedException(
+          "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");
     }
   }
 
