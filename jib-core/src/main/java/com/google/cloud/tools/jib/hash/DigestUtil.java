@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.hash;
 
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.blob.WrContents;
+import com.google.cloud.tools.jib.blob.WritableContents;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
@@ -36,13 +36,13 @@ public class DigestUtil {
 
   public static DescriptorDigest computeJsonDigest(List<? extends JsonTemplate> templates)
       throws IOException {
-    WrContents contents = contentsOut -> JsonTemplateMapper.writeTo(templates, contentsOut);
+    WritableContents contents = contentsOut -> JsonTemplateMapper.writeTo(templates, contentsOut);
     return computeDigest(contents, ByteStreams.nullOutputStream()).getDigest();
   }
 
   public static BlobDescriptor computeDigest(JsonTemplate template, OutputStream outStream)
       throws IOException {
-    WrContents contents = contentsOut -> JsonTemplateMapper.writeTo(template, contentsOut);
+    WritableContents contents = contentsOut -> JsonTemplateMapper.writeTo(template, contentsOut);
     return computeDigest(contents, outStream);
   }
 
@@ -57,7 +57,7 @@ public class DigestUtil {
    * @return computed digest and bytes consumed
    * @throws IOException if reading fails
    */
-  public static BlobDescriptor computeDigest(WrContents contents) throws IOException {
+  public static BlobDescriptor computeDigest(WritableContents contents) throws IOException {
     return computeDigest(contents, ByteStreams.nullOutputStream());
   }
 
@@ -73,7 +73,7 @@ public class DigestUtil {
    */
   public static BlobDescriptor computeDigest(InputStream inStream, OutputStream outStream)
       throws IOException {
-    WrContents contents = contentsOut -> ByteStreams.copy(inStream, contentsOut);
+    WritableContents contents = contentsOut -> ByteStreams.copy(inStream, contentsOut);
     return computeDigest(contents, outStream);
   }
 
@@ -87,7 +87,7 @@ public class DigestUtil {
    * @return computed digest and bytes consumed
    * @throws IOException if reading from or writing fails
    */
-  public static BlobDescriptor computeDigest(WrContents contents, OutputStream outStream)
+  public static BlobDescriptor computeDigest(WritableContents contents, OutputStream outStream)
       throws IOException {
     CountingDigestOutputStream digestOutStream = new CountingDigestOutputStream(outStream);
     contents.writeTo(digestOutStream);
