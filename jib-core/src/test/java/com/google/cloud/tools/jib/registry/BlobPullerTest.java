@@ -70,6 +70,7 @@ public class BlobPullerTest {
     InputStream blobContent =
         new ByteArrayInputStream("some BLOB content".getBytes(StandardCharsets.UTF_8));
     DescriptorDigest testBlobDigest = DigestUtil.computeDigest(blobContent).getDigest();
+    blobContent.reset();
 
     Response mockResponse = Mockito.mock(Response.class);
     Mockito.when(mockResponse.getContentLength()).thenReturn((long) "some BLOB content".length());
@@ -96,6 +97,7 @@ public class BlobPullerTest {
     InputStream blobContent =
         new ByteArrayInputStream("some BLOB content".getBytes(StandardCharsets.UTF_8));
     DescriptorDigest testBlobDigest = DigestUtil.computeDigest(blobContent).getDigest();
+    blobContent.reset();
 
     Response mockResponse = Mockito.mock(Response.class);
     Mockito.when(mockResponse.getBody()).thenReturn(blobContent);

@@ -27,60 +27,60 @@ public class ListenableCountingOutputStream extends OutputStream {
   private final OutputStream underlyingOutputStream;
 
   /** Receives a count of bytes written since the last call. */
-  private final Consumer<Long> byteCountConsumer;
+  private final Consumer<Long> byteCountListener;
 
-  /** Number of bytes to provide to {@link #byteCountConsumer}. */
+  /** Number of bytes to provide to {@link #byteCountListener}. */
   private long byteCount = 0;
 
   /**
    * Wraps the {@code underlyingOutputStream} to count the bytes written.
    *
    * @param underlyingOutputStream the wrapped {@link OutputStream}
-   * @param byteCountConsumer the byte count {@link Consumer}
+   * @param byteCountListener the byte count {@link Consumer}
    */
   public ListenableCountingOutputStream(
-      OutputStream underlyingOutputStream, Consumer<Long> byteCountConsumer) {
+      OutputStream underlyingOutputStream, Consumer<Long> byteCountListener) {
     this.underlyingOutputStream = underlyingOutputStream;
-    this.byteCountConsumer = byteCountConsumer;
+    this.byteCountListener = byteCountListener;
   }
 
   @Override
   public void write(int singleByte) throws IOException {
     underlyingOutputStream.write(singleByte);
-    addAndCallByteCountConsumer(1);
+    countAndCallListener(1);
   }
 
   @Override
   public void write(byte[] byteArray) throws IOException {
     underlyingOutputStream.write(byteArray);
-    addAndCallByteCountConsumer(byteArray.length);
+    countAndCallListener(byteArray.length);
   }
 
   @Override
   public void write(byte byteArray[], int offset, int length) throws IOException {
     underlyingOutputStream.write(byteArray, offset, length);
-    addAndCallByteCountConsumer(length);
+    countAndCallListener(length);
   }
 
   @Override
   public void flush() throws IOException {
     underlyingOutputStream.flush();
-    addAndCallByteCountConsumer(0);
+    countAndCallListener(0);
   }
 
   @Override
   public void close() throws IOException {
     underlyingOutputStream.close();
-    addAndCallByteCountConsumer(0);
+    countAndCallListener(0);
   }
 
-  private void addAndCallByteCountConsumer(int written) {
+  private void countAndCallListener(int written) {
     this.byteCount += written;
     if (byteCount == 0) {
       return;
     }
 
-    byteCountConsumer.accept(byteCount);
+    byteCountListener.accept(byteCount);
     byteCount = 0;
   }
 }

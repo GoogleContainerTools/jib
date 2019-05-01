@@ -46,30 +46,30 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
    */
   private final OutputStream destinationOutputStream;
 
-  private final Consumer<Long> blobSizeConsumer;
-  private final Consumer<Long> writtenByteCountConsumer;
+  private final Consumer<Long> blobSizeListener;
+  private final Consumer<Long> writtenByteCountListener;
 
   BlobPuller(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       DescriptorDigest blobDigest,
       OutputStream destinationOutputStream,
-      Consumer<Long> blobSizeConsumer,
-      Consumer<Long> writtenByteCountConsumer) {
+      Consumer<Long> blobSizeListener,
+      Consumer<Long> writtenByteCountListener) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.blobDigest = blobDigest;
     this.destinationOutputStream = destinationOutputStream;
-    this.blobSizeConsumer = blobSizeConsumer;
-    this.writtenByteCountConsumer = writtenByteCountConsumer;
+    this.blobSizeListener = blobSizeListener;
+    this.writtenByteCountListener = writtenByteCountListener;
   }
 
   @Override
   public Void handleResponse(Response response) throws IOException, UnexpectedBlobDigestException {
-    blobSizeConsumer.accept(response.getContentLength());
+    blobSizeListener.accept(response.getContentLength());
 
-    try (DelayedConsumer<Long> delayedByteConsumer =
-            new DelayedConsumer<>(writtenByteCountConsumer, (a, b) -> a + b);
+    try (DelayedConsumer<Long> delayedCountListener =
+            new DelayedConsumer<>(writtenByteCountListener, (a, b) -> a + b);
         OutputStream outputStream =
-            new ListenableCountingOutputStream(destinationOutputStream, delayedByteConsumer)) {
+            new ListenableCountingOutputStream(destinationOutputStream, delayedCountListener)) {
       BlobDescriptor receivedBlobDescriptor =
           DigestUtil.computeDigest(response.getBody(), outputStream);
 

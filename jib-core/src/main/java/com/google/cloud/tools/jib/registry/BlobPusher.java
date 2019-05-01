@@ -112,12 +112,12 @@ class BlobPusher {
   private class Writer implements RegistryEndpointProvider<URL> {
 
     private final URL location;
-    private final Consumer<Long> writtenByteCountConsumer;
+    private final Consumer<Long> writtenByteCountListener;
 
     @Nullable
     @Override
     public BlobHttpContent getContent() {
-      return new BlobHttpContent(blob, MediaType.OCTET_STREAM.toString(), writtenByteCountConsumer);
+      return new BlobHttpContent(blob, MediaType.OCTET_STREAM.toString(), writtenByteCountListener);
     }
 
     @Override
@@ -147,9 +147,9 @@ class BlobPusher {
       return BlobPusher.this.getActionDescription();
     }
 
-    private Writer(URL location, Consumer<Long> writtenByteCountConsumer) {
+    private Writer(URL location, Consumer<Long> writtenByteCountListener) {
       this.location = location;
-      this.writtenByteCountConsumer = writtenByteCountConsumer;
+      this.writtenByteCountListener = writtenByteCountListener;
     }
   }
 
@@ -219,8 +219,8 @@ class BlobPusher {
    * @param blobProgressListener the listener for {@link Blob} push progress
    * @return a {@link RegistryEndpointProvider} for writing the BLOB to an upload location
    */
-  RegistryEndpointProvider<URL> writer(URL location, Consumer<Long> writtenByteCountConsumer) {
-    return new Writer(location, writtenByteCountConsumer);
+  RegistryEndpointProvider<URL> writer(URL location, Consumer<Long> writtenByteCountListener) {
+    return new Writer(location, writtenByteCountListener);
   }
 
   /**

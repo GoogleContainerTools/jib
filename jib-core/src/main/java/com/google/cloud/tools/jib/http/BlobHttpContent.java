@@ -28,16 +28,16 @@ public class BlobHttpContent implements HttpContent {
 
   private final Blob blob;
   private final String contentType;
-  private final Consumer<Long> writtenByteCountConsumer;
+  private final Consumer<Long> writtenByteCountListener;
 
   public BlobHttpContent(Blob blob, String contentType) {
     this(blob, contentType, ignored -> {});
   }
 
-  public BlobHttpContent(Blob blob, String contentType, Consumer<Long> writtenByteCountConsumer) {
+  public BlobHttpContent(Blob blob, String contentType, Consumer<Long> writtenByteCountListener) {
     this.blob = blob;
     this.contentType = contentType;
-    this.writtenByteCountConsumer = writtenByteCountConsumer;
+    this.writtenByteCountListener = writtenByteCountListener;
   }
 
   @Override
@@ -58,9 +58,9 @@ public class BlobHttpContent implements HttpContent {
 
   @Override
   public void writeTo(OutputStream outputStream) throws IOException {
-    try (DelayedConsumer<Long> delayedConsumer =
-        new DelayedConsumer<>(writtenByteCountConsumer, (a, b) -> a + b)) {
-      blob.writeTo(new ListenableCountingOutputStream(outputStream, delayedConsumer));
+    try (DelayedConsumer<Long> delayedCountListener =
+        new DelayedConsumer<>(writtenByteCountListener, (a, b) -> a + b)) {
+      blob.writeTo(new ListenableCountingOutputStream(outputStream, delayedCountListener));
       outputStream.flush();
     }
   }
