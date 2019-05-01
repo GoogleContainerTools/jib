@@ -99,7 +99,7 @@ class CacheStorageReader {
 
       int schemaVersion = node.get("schemaVersion").asInt(-1);
       if (schemaVersion == -1) {
-        throw new CacheCorruptedException("`schemaVersion` field is not an integer");
+        throw new CacheCorruptedException("`schemaVersion` field is not an integer in manifest");
       }
 
       if (schemaVersion == 1) {
@@ -120,7 +120,7 @@ class CacheStorageReader {
           manifestTemplate =
               JsonTemplateMapper.readJsonFromFile(manifestPath, OCIManifestTemplate.class);
         } else {
-          throw new CacheCorruptedException("Unknown mediaType: " + mediaType);
+          throw new CacheCorruptedException("Unknown manifest mediaType: " + mediaType);
         }
 
         Path configPath = imageDirectory.resolve("config.json");
@@ -133,7 +133,7 @@ class CacheStorageReader {
         return Optional.of(new ManifestAndConfig(manifestTemplate, config));
       }
       throw new CacheCorruptedException(
-          "Unknown schemaVersion: " + schemaVersion + " - only 1 and 2 are supported");
+          "Unknown schemaVersion in manifest: " + schemaVersion + " - only 1 and 2 are supported");
     }
   }
 
