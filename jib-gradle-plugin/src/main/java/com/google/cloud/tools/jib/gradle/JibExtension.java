@@ -118,18 +118,6 @@ public class JibExtension {
     this.extraDirectories.setPath(extraDirectory);
   }
 
-  /**
-   * Sets extra directory paths. {@code extraDirectories} can be any suitable object describing file
-   * paths convertible by {@link Project#files} (such as {@link File}, {@code List<File>} or {@code
-   * List<String>}).
-   *
-   * @param extraDirectories paths to set.
-   */
-  public void setExtraDirectories(Object extraDirectories) {
-    extraDirectoriesConfigured = true;
-    this.extraDirectories.setPaths(extraDirectories);
-  }
-
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
     this.allowInsecureRegistries.set(allowInsecureRegistries);
   }
