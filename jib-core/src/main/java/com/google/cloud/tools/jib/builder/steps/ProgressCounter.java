@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
-import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /**
@@ -31,14 +30,14 @@ import javax.annotation.Nullable;
  * response headers are received, only after which can the {@link ProgressEventDispatcher} be
  * created.
  */
-class ProgressEventDispatcherContainer implements Consumer<Long>, Closeable {
+class ProgressEventDispatcherWrapper implements Closeable {
 
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   private final String description;
   private final BuildStepType type;
   @Nullable private ProgressEventDispatcher progressEventDispatcher;
 
-  ProgressEventDispatcherContainer(
+  ProgressEventDispatcherWrapper(
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       String description,
       BuildStepType type) {
@@ -47,10 +46,9 @@ class ProgressEventDispatcherContainer implements Consumer<Long>, Closeable {
     this.type = type;
   }
 
-  @Override
-  public void accept(Long byteCount) {
+  void dispatchProgress(long progressUnits) {
     Preconditions.checkNotNull(progressEventDispatcher);
-    progressEventDispatcher.dispatchProgress(byteCount);
+    progressEventDispatcher.dispatchProgress(progressUnits);
   }
 
   @Override
@@ -59,8 +57,9 @@ class ProgressEventDispatcherContainer implements Consumer<Long>, Closeable {
     progressEventDispatcher.close();
   }
 
-  void initializeWithBlobSize(long blobSize) {
+  void setProgressTarget(long allocationUnits) {
     Preconditions.checkState(progressEventDispatcher == null);
-    progressEventDispatcher = progressEventDispatcherFactory.create(type, description, blobSize);
+    progressEventDispatcher =
+        progressEventDispatcherFactory.create(type, description, allocationUnits);
   }
 }

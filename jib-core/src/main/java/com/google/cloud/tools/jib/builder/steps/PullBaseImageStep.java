@@ -242,8 +242,8 @@ class PullBaseImageStep
         DescriptorDigest containerConfigurationDigest =
             v22ManifestTemplate.getContainerConfiguration().getDigest();
 
-        try (ProgressEventDispatcherContainer progressEventDispatcherContainer =
-            new ProgressEventDispatcherContainer(
+        try (ProgressEventDispatcherWrapper progressEventDispatcherWrapper =
+            new ProgressEventDispatcherWrapper(
                 progressEventDispatcher.newChildProducer(),
                 "pull container configuration " + containerConfigurationDigest,
                 BuildStepType.PULL_BASE_IMAGE)) {
@@ -251,8 +251,8 @@ class PullBaseImageStep
               Blobs.writeToString(
                   registryClient.pullBlob(
                       containerConfigurationDigest,
-                      progressEventDispatcherContainer::initializeWithBlobSize,
-                      progressEventDispatcherContainer));
+                      progressEventDispatcherWrapper::setProgressTarget,
+                      progressEventDispatcherWrapper::dispatchProgress));
 
           ContainerConfigurationTemplate containerConfigurationTemplate =
               JsonTemplateMapper.readJson(
