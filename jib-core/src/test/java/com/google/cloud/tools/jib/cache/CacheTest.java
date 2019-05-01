@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.hash.DigestUtil;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
@@ -76,6 +75,17 @@ public class CacheTest {
   }
 
   /**
+   * Gets the digest of {@code blob}.
+   *
+   * @param blob the {@link Blob}
+   * @return the {@link DescriptorDigest} of {@code blob}
+   * @throws IOException if an I/O exception occurs
+   */
+  private static DescriptorDigest digestOf(Blob blob) throws IOException {
+    return blob.writeTo(ByteStreams.nullOutputStream()).getDigest();
+  }
+
+  /**
    * Gets the size of {@code blob}.
    *
    * @param blob the {@link Blob}
@@ -112,8 +122,8 @@ public class CacheTest {
     Files.createFile(directory.resolve("another/source/file"));
 
     layerBlob1 = Blobs.from("layerBlob1");
-    layerDigest1 = DigestUtil.computeDigest(compress(layerBlob1)).getDigest();
-    layerDiffId1 = DigestUtil.computeDigest(layerBlob1).getDigest();
+    layerDigest1 = digestOf(compress(layerBlob1));
+    layerDiffId1 = digestOf(layerBlob1);
     layerSize1 = sizeOf(compress(layerBlob1));
     layerEntries1 =
         ImmutableList.of(
@@ -124,8 +134,8 @@ public class CacheTest {
                 AbsoluteUnixPath.get("/another/extraction/path")));
 
     layerBlob2 = Blobs.from("layerBlob2");
-    layerDigest2 = DigestUtil.computeDigest(compress(layerBlob2)).getDigest();
-    layerDiffId2 = DigestUtil.computeDigest(layerBlob2).getDigest();
+    layerDigest2 = digestOf(compress(layerBlob2));
+    layerDiffId2 = digestOf(layerBlob2);
     layerSize2 = sizeOf(compress(layerBlob2));
     layerEntries2 = ImmutableList.of();
   }

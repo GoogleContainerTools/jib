@@ -19,8 +19,8 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.hash.DigestUtil;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,8 +36,8 @@ import org.junit.rules.TemporaryFolder;
 /** Tests for {@link DefaultCacheStorageWriter}. */
 public class DefaultCacheStorageWriterTest {
 
-  private static BlobDescriptor getCompressedBlobDescriptor(Blob blob) throws IOException {
-    return DigestUtil.computeDigest(compress(blob));
+  private static BlobDescriptor getDigest(Blob blob) throws IOException {
+    return blob.writeTo(ByteStreams.nullOutputStream());
   }
 
   private static Blob compress(Blob blob) {
@@ -76,9 +76,9 @@ public class DefaultCacheStorageWriterTest {
   @Test
   public void testWrite_uncompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
-    DescriptorDigest layerDigest = getCompressedBlobDescriptor(uncompressedLayerBlob).getDigest();
+    DescriptorDigest layerDigest = getDigest(uncompressedLayerBlob).getDigest();
 
-    DescriptorDigest selector = DigestUtil.computeDigest(Blobs.from("selector")).getDigest();
+    DescriptorDigest selector = getDigest(Blobs.from("selector")).getDigest();
 
     CachedLayer cachedLayer =
         new DefaultCacheStorageWriter(defaultCacheStorageFiles)
@@ -94,8 +94,8 @@ public class DefaultCacheStorageWriterTest {
 
   private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)
       throws IOException {
-    BlobDescriptor layerBlobDescriptor = getCompressedBlobDescriptor(uncompressedLayerBlob);
-    DescriptorDigest layerDiffId = DigestUtil.computeDigest(uncompressedLayerBlob).getDigest();
+    BlobDescriptor layerBlobDescriptor = getDigest(uncompressedLayerBlob);
+    DescriptorDigest layerDiffId = getDigest(uncompressedLayerBlob).getDigest();
 
     // Verifies cachedLayer is correct.
     Assert.assertEquals(layerBlobDescriptor.getDigest(), cachedLayer.getDigest());

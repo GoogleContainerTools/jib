@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.hash;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
@@ -60,10 +59,6 @@ public class DigestUtil {
 
   public static BlobDescriptor computeDigest(InputStream inStream) throws IOException {
     return computeDigest(inStream, ByteStreams.nullOutputStream());
-  }
-
-  public static BlobDescriptor computeDigest(Blob blob) throws IOException {
-    return computeDigest(out -> blob.writeTo(out), ByteStreams.nullOutputStream());
   }
 
   /**

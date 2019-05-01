@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.hash.DigestUtil;
 import com.google.cloud.tools.jib.http.TestBlobProgressListener;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -65,9 +64,9 @@ public class BlobPullerIntegrationTest {
               expectedSize.add(size);
             },
             new TestBlobProgressListener(totalByteCount::add));
+    Assert.assertEquals(realDigest, pulledBlob.writeTo(ByteStreams.nullOutputStream()).getDigest());
     Assert.assertTrue(expectedSize.sum() > 0);
     Assert.assertEquals(expectedSize.sum(), totalByteCount.sum());
-    Assert.assertEquals(realDigest, DigestUtil.computeDigest(pulledBlob).getDigest());
   }
 
   @Test
