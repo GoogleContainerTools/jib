@@ -46,7 +46,7 @@ public class V21ManifestTemplateTest {
         manifestJson.getFsLayers().get(0).getDigest());
 
     ContainerConfigurationTemplate containerConfiguration =
-        manifestJson.getContainerConfiguration();
+        manifestJson.getContainerConfiguration().orElse(null);
     Assert.assertEquals(
         Arrays.asList("JAVA_HOME=/opt/openjdk", "PATH=/opt/openjdk/bin"),
         containerConfiguration.getContainerEnvironment());

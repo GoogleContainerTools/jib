@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Container configurations in the base image are now propagated when registry uses the old V2 image manifest, schema version 1 (such as Quay) ([#1641](https://github.com/GoogleContainerTools/jib/issues/1641))
+- Can now prepend paths in the container to the computed classpath with `jib.container.extraClasspath` ([#1642](https://github.com/GoogleContainerTools/jib/pull/1642))
 
 ### Changed
 

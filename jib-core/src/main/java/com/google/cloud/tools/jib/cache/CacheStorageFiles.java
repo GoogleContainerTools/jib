@@ -17,13 +17,16 @@
 package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.common.base.Splitter;
 import java.nio.file.Path;
 import java.security.DigestException;
 
 /** Resolves the files used in the default cache storage engine. */
-class DefaultCacheStorageFiles {
+class CacheStorageFiles {
 
   private static final String LAYERS_DIRECTORY = "layers";
+  private static final String IMAGES_DIRECTORY = "images";
   private static final String SELECTORS_DIRECTORY = "selectors";
   private static final String TEMPORARY_DIRECTORY = "tmp";
   private static final String TEMPORARY_LAYER_FILE_NAME = ".tmp.layer";
@@ -58,7 +61,7 @@ class DefaultCacheStorageFiles {
 
   private final Path cacheDirectory;
 
-  DefaultCacheStorageFiles(Path cacheDirectory) {
+  CacheStorageFiles(Path cacheDirectory) {
     this.cacheDirectory = cacheDirectory;
   }
 
@@ -111,6 +114,35 @@ class DefaultCacheStorageFiles {
    */
   Path getLayerDirectory(DescriptorDigest layerDigest) {
     return getLayersDirectory().resolve(layerDigest.getHash());
+  }
+
+  /**
+   * Gets the directory to store the image manifest and configuration.
+   *
+   * @return the directory for the image manifest and configuration
+   */
+  Path getImagesDirectory() {
+    return cacheDirectory.resolve(IMAGES_DIRECTORY);
+  }
+
+  /**
+   * Gets the directory corresponding to the given image reference.
+   *
+   * @param imageReference the image reference
+   * @return a path in the form of {@code
+   *     (jib-cache)/images/registry[!port]/repository!(tag|digest-type!digest)}
+   */
+  Path getImageDirectory(ImageReference imageReference) {
+    // Replace ':' and '@' with '!' to avoid directory-naming restrictions
+    String replacedReference = imageReference.toStringWithTag().replace(':', '!').replace('@', '!');
+
+    // Split image reference on '/' to build directory structure
+    Iterable<String> directories = Splitter.on('/').split(replacedReference);
+    Path destination = getImagesDirectory();
+    for (String dir : directories) {
+      destination = destination.resolve(dir);
+    }
+    return destination;
   }
 
   /**

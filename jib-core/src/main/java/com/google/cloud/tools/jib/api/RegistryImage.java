@@ -17,9 +17,6 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
-import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
@@ -41,8 +38,7 @@ import java.util.Optional;
  * credentials are valid push (for using this as a target image) or pull (for using this as a source
  * image) credentials for the repository specified via the image reference.
  */
-// TODO: Add tests once JibContainerBuilder#containerize() is added.
-public class RegistryImage implements SourceImage, TargetImage {
+public class RegistryImage {
 
   /**
    * Instantiate with the image reference to use.
@@ -118,15 +114,11 @@ public class RegistryImage implements SourceImage, TargetImage {
     return this;
   }
 
-  @Override
-  public ImageConfiguration toImageConfiguration() {
-    return ImageConfiguration.builder(imageReference)
-        .setCredentialRetrievers(credentialRetrievers)
-        .build();
+  ImageReference getImageReference() {
+    return imageReference;
   }
 
-  @Override
-  public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
-    return BuildSteps.forBuildToDockerRegistry(buildConfiguration);
+  List<CredentialRetriever> getCredentialRetrievers() {
+    return credentialRetrievers;
   }
 }

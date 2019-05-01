@@ -80,9 +80,9 @@ public class JsonToImageTranslator {
       imageBuilder.addLayer(new DigestOnlyLayer(digest));
     }
 
-    if (manifestTemplate.getContainerConfiguration() != null) {
+    if (manifestTemplate.getContainerConfiguration().isPresent()) {
       configureBuilderWithContainerConfiguration(
-          imageBuilder, manifestTemplate.getContainerConfiguration());
+          imageBuilder, manifestTemplate.getContainerConfiguration().get());
     }
     return imageBuilder.build();
   }
