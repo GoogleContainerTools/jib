@@ -129,7 +129,14 @@ public class SingleProjectIntegrationTest {
                 + "            }"));
   }
 
-  private static void assertExtraDirectoryDeprecationWarning(BuildResult buildResult) {
+  private static void assertExtraDirectoryDeprecationWarning(String pomXml)
+      throws DigestException, IOException, InterruptedException {
+    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+    BuildResult buildResult =
+        JibRunHelper.buildToDockerDaemon(simpleTestProject, targetImage, pomXml);
+    Assert.assertEquals(
+        "Hello, world. \nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
+        new Command("docker", "run", "--rm", targetImage).run());
     Assert.assertThat(
         buildResult.getOutput(),
         CoreMatchers.containsString(
@@ -244,40 +251,19 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testDockerDaemon_simple_deprecatedExtraDirectory()
       throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
-    BuildResult buildResult =
-        JibRunHelper.buildToDockerDaemon(
-            simpleTestProject, targetImage, "build-extra-dir-deprecated.gradle");
-    Assert.assertEquals(
-        "Hello, world. \nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
-        new Command("docker", "run", "--rm", targetImage).run());
-    assertExtraDirectoryDeprecationWarning(buildResult);
+    assertExtraDirectoryDeprecationWarning("build-extra-dir-deprecated.gradle");
   }
 
   @Test
   public void testDockerDaemon_simple_deprecatedExtraDirectory2()
       throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
-    BuildResult buildResult =
-        JibRunHelper.buildToDockerDaemon(
-            simpleTestProject, targetImage, "build-extra-dir-deprecated2.gradle");
-    Assert.assertEquals(
-        "Hello, world. \nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
-        new Command("docker", "run", "--rm", targetImage).run());
-    assertExtraDirectoryDeprecationWarning(buildResult);
+    assertExtraDirectoryDeprecationWarning("build-extra-dir-deprecated.gradle2");
   }
 
   @Test
   public void testDockerDaemon_simple_deprecatedExtraDirectory3()
       throws DigestException, IOException, InterruptedException {
-    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
-    BuildResult buildResult =
-        JibRunHelper.buildToDockerDaemon(
-            simpleTestProject, targetImage, "build-extra-dir-deprecated3.gradle");
-    Assert.assertEquals(
-        "Hello, world. \nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
-        new Command("docker", "run", "--rm", targetImage).run());
-    assertExtraDirectoryDeprecationWarning(buildResult);
+    assertExtraDirectoryDeprecationWarning("build-extra-dir-deprecated.gradle3");
   }
 
   @Test
