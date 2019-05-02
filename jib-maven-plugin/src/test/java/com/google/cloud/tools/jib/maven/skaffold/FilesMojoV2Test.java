@@ -175,7 +175,7 @@ public class FilesMojoV2Test {
         Arrays.asList(
             projectRoot.resolve("src/main/java").toString(),
             projectRoot.resolve("src/main/resources").toString(),
-            Paths.get("/some/extra/dir").toString(),
-            Paths.get("/another/extra/dir").toString()));
+            Paths.get("/").toAbsolutePath().resolve("some/extra/dir").toString(),
+            Paths.get("/").toAbsolutePath().resolve("another/extra/dir").toString()));
   }
 }
