@@ -476,6 +476,9 @@ public class JibContainerBuilder {
       Containerizer containerizer, Supplier<ExecutorService> defaultExecutorServiceFactory)
       throws IOException, CacheDirectoryCreationException, InterruptedException, RegistryException,
           ExecutionException {
+    if (containerizer.getOfflineMode() && containerizer.getImageConfiguration().isOnlineImage()) {
+      throw new IllegalStateException("Cannot build to a container registry in offline mode");
+    }
 
     boolean shutdownExecutorService = !containerizer.getExecutorService().isPresent();
     ExecutorService executorService =

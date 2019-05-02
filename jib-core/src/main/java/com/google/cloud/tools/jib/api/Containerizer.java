@@ -66,6 +66,7 @@ public class Containerizer {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(registryImage.getImageReference())
             .setCredentialRetrievers(registryImage.getCredentialRetrievers())
+            .setIsOnlineImage()
             .build();
 
     Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
