@@ -25,12 +25,11 @@ import com.google.cloud.tools.jib.registry.RegistryException;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
 import com.google.common.io.CharStreams;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -40,7 +39,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -95,28 +93,31 @@ public class ReproducibleImageTest {
   }
 
   @Test
-  public void testTarBallStructure() throws IOException {
+  public void testTarballStructure() throws IOException {
     // known content should produce known results
-    Iterator<String> fileNames =
-        Iterators.forArray(
+    List<String> expected =
+        ImmutableList.of(
             "c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz",
             "6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz",
             "530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz",
             "config.json",
             "manifest.json");
-    try (TarArchiveInputStream input = new TarArchiveInputStream(new FileInputStream(imageTar))) {
+
+    List<String> actual = new ArrayList<>();
+    try (TarArchiveInputStream input =
+        new TarArchiveInputStream(Files.newInputStream(imageTar.toPath()))) {
       TarArchiveEntry imageEntry;
       while ((imageEntry = input.getNextTarEntry()) != null) {
-        Assert.assertTrue(fileNames.hasNext());
-        Assert.assertEquals(fileNames.next(), imageEntry.getName());
+        actual.add(imageEntry.getName());
       }
-      Assert.assertFalse("more files expected: " + fileNames, fileNames.hasNext());
     }
+
+    Assert.assertEquals(expected, actual);
   }
 
   @Test
   public void testManifest() throws IOException {
-    try (FileInputStream input = new FileInputStream(imageTar)) {
+    try (InputStream input = Files.newInputStream(imageTar.toPath())) {
       String exectedManifest =
           "[{\"config\":\"config.json\",\"repoTags\":[\"jib-core/reproducible:latest\"],"
               + "\"layers\":[\"c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz\",\"6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz\",\"530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz\"]}]";
@@ -127,7 +128,7 @@ public class ReproducibleImageTest {
 
   @Test
   public void testConfiguration() throws IOException {
-    try (FileInputStream input = new FileInputStream(imageTar)) {
+    try (InputStream input = Files.newInputStream(imageTar.toPath())) {
       String exectedConfig =
           "{\"created\":\"1970-01-01T00:00:00Z\",\"architecture\":\"amd64\",\"os\":\"linux\","
               + "\"config\":{\"Env\":[],\"Entrypoint\":[\"echo\",\"Hello World\"],\"ExposedPorts\":{},\"Labels\":{},\"Volumes\":{}},"
@@ -228,7 +229,8 @@ public class ReproducibleImageTest {
   private void layerEntriesDo(BiConsumer<String, TarArchiveEntry> layerConsumer)
       throws IOException {
 
-    try (TarArchiveInputStream input = new TarArchiveInputStream(new FileInputStream(imageTar))) {
+    try (TarArchiveInputStream input =
+        new TarArchiveInputStream(Files.newInputStream(imageTar.toPath()))) {
       TarArchiveEntry imageEntry;
       while ((imageEntry = input.getNextTarEntry()) != null) {
         String imageEntryName = imageEntry.getName();
@@ -247,7 +249,8 @@ public class ReproducibleImageTest {
 
   private static String extractFromTarFileAsString(File tarFile, String filename)
       throws IOException {
-    try (TarArchiveInputStream input = new TarArchiveInputStream(new FileInputStream(tarFile))) {
+    try (TarArchiveInputStream input =
+        new TarArchiveInputStream(Files.newInputStream(tarFile.toPath()))) {
       TarArchiveEntry imageEntry;
       while ((imageEntry = input.getNextTarEntry()) != null) {
         if (filename.equals(imageEntry.getName())) {
