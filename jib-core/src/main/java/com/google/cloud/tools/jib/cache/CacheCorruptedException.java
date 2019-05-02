@@ -28,7 +28,8 @@ public class CacheCorruptedException extends Exception {
             + ". You may need to clear the cache by deleting the '"
             + cacheDirectory
             + "' directory (if this is a bug, please file an issue at "
-            + ProjectInfo.GITHUB_NEW_ISSUE_URL,
+            + ProjectInfo.GITHUB_NEW_ISSUE_URL
+            + ")",
         cause);
   }
 
@@ -38,6 +39,7 @@ public class CacheCorruptedException extends Exception {
             + ". You may need to clear the cache by deleting the '"
             + cacheDirectory
             + "' directory (if this is a bug, please file an issue at "
-            + ProjectInfo.GITHUB_NEW_ISSUE_URL);
+            + ProjectInfo.GITHUB_NEW_ISSUE_URL
+            + ")");
   }
 }
