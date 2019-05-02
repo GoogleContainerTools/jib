@@ -75,7 +75,7 @@ class TaskCommon {
         || System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS) != null) {
       logger.warn(
           "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-              + "are deprecated; use 'jib.extraDirectories', 'jib.extraDirectories.paths' and "
+              + "are deprecated; use 'jib.extraDirectories.paths' and "
               + "'jib.extraDirectories.permissions'");
 
       if (jibExtension.extraDirectoriesConfigured

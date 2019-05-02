@@ -141,7 +141,7 @@ public class SingleProjectIntegrationTest {
         buildResult.getOutput(),
         CoreMatchers.containsString(
             "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories', 'jib.extraDirectories.paths' and "
+                + "are deprecated; use 'jib.extraDirectories.paths' and "
                 + "'jib.extraDirectories.permissions'"));
   }
 
@@ -257,13 +257,13 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testDockerDaemon_simple_deprecatedExtraDirectory2()
       throws DigestException, IOException, InterruptedException {
-    assertExtraDirectoryDeprecationWarning("build-extra-dir-deprecated.gradle2");
+    assertExtraDirectoryDeprecationWarning("build-extra-dir-deprecated2.gradle");
   }
 
   @Test
   public void testDockerDaemon_simple_deprecatedExtraDirectory3()
       throws DigestException, IOException, InterruptedException {
-    assertExtraDirectoryDeprecationWarning("build-extra-dir-deprecated.gradle3");
+    assertExtraDirectoryDeprecationWarning("build-extra-dir-deprecated3.gradle");
   }
 
   @Test

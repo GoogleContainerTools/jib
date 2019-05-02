@@ -69,7 +69,7 @@ public class TaskCommonTest {
     Mockito.verify(logger, Mockito.times(1))
         .warn(
             "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories', 'jib.extraDirectories.paths' and "
+                + "are deprecated; use 'jib.extraDirectories.paths' and "
                 + "'jib.extraDirectories.permissions'");
   }
 
@@ -80,7 +80,7 @@ public class TaskCommonTest {
     Mockito.verify(logger, Mockito.times(1))
         .warn(
             "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories', 'jib.extraDirectories.paths' and "
+                + "are deprecated; use 'jib.extraDirectories.paths' and "
                 + "'jib.extraDirectories.permissions'");
   }
 
@@ -106,7 +106,7 @@ public class TaskCommonTest {
     Mockito.verify(logger, Mockito.times(1))
         .warn(
             "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-                + "are deprecated; use 'jib.extraDirectories', 'jib.extraDirectories.paths' and "
+                + "are deprecated; use 'jib.extraDirectories.paths' and "
                 + "'jib.extraDirectories.permissions'");
   }
 
