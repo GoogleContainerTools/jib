@@ -169,6 +169,13 @@ public class FilesMojoV2 extends AbstractMojo {
   }
 
   private List<Path> resolveExtraDirectories(MavenProject project) throws MojoExecutionException {
+    return collectExtraDirectories(project)
+        .stream()
+        .map(path -> path.isAbsolute() ? path : project.getBasedir().toPath().resolve(path))
+        .collect(Collectors.toList());
+  }
+
+  private List<Path> collectExtraDirectories(MavenProject project) throws MojoExecutionException {
     // Try getting extra directory from project/session properties
     String deprecatedProperty =
         MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH, project, session);
