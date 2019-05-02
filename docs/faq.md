@@ -346,19 +346,19 @@ Jib currently requires configuring your build tool to use the appropriate [Java 
 
 ### What should I do when the registry responds with UNAUTHORIZED?
 
-When the registry returns "401 Unauthorized" and/or `"code":"UNAUTHORIZED"`, most of the time it genuinely means the registry does not see (yet) that you have the right to pull/push images. This is often due to credential misconfiguration. Examples:
+If the registry returns "401 Unauthorized" or `"code":"UNAUTHORIZED"`, it is often due to credential misconfiguration. Examples:
 
-* You did not configure auth information in the places where Jib searches for by default.
-   - `$HOME/.docker/config.json`, [one of the configuration files](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files) for the `docker` command line tool. Check the linked document, the [credential store](https://docs.docker.com/engine/reference/commandline/login/#credentials-store) and [credential helper](https://docs.docker.com/engine/reference/commandline/login/#credential-helpers) sections, and [this](https://github.com/GoogleContainerTools/jib/issues/101) for how to configure auth. For example, you can do `docker login` to save auth in `config.json`, but it is often recommended to configure a credential helper (also configurable in `config.json`).
+* You did not configure auth information in the default places where Jib searches.
+   - `$HOME/.docker/config.json`, [one of the configuration files](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files) for the `docker` command line tool. See [configuration files document](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files), [credential store](https://docs.docker.com/engine/reference/commandline/login/#credentials-store) and [credential helper](https://docs.docker.com/engine/reference/commandline/login/#credential-helpers) sections, and [this](https://github.com/GoogleContainerTools/jib/issues/101) for how to configure auth. For example, you can do `docker login` to save auth in `config.json`, but it is often recommended to configure a credential helper (also configurable in `config.json`).
    - Some common credential helpers on `$PATH` (for example, `docker-credential-osxkeychain`, `docker-credential-ecr-login`, etc.) for well-known registries.
    - Jib configurations
       - Configuring credential helpers: [`<from/to><credHelper>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#using-docker-credential-helpers) for Maven / [`from/to.credHelper`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-docker-credential-helpers) for Gradle
       - Specific credentials (not recommend): [`<from/to><auth><username>/<password>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#using-specific-credentials) or in [`settings.xml`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#using-maven-settings) for Maven / [`from/to.auth.username/password`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-specific-credentials) for Gradle
       - These parameters can also be set through properties: [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#system-properties) / [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#system-properties)
-* You configured a credential helper, but the helper is not on `$PATH`. This is especially common when running Jib inside IDE where the IDE binary is launched directly from an OS menu.
-* Typo in username or password. Sometimes wrong registry names for the given auth information.
+* You configured a credential helper, but the helper is not on `$PATH`. This is especially common when running Jib inside IDE where the IDE binary is launched directly from an OS menu and does not have access to your shell's environment.
+* Typos in username, password, image names, or registry names.
 
-If you encounter other issues interacting with a registry than `UNAUTHORIZED`, check ["How can I diagnose problems pulling or pushing from remote registries?"](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries).
+If you encounter issues interacting with a registry other than `UNAUTHORIZED`, check ["How can I diagnose problems pulling or pushing from remote registries?"](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries).
 
 ### How can I diagnose problems pulling or pushing from remote registries?
 
