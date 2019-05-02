@@ -41,7 +41,7 @@ public class ImageTarball {
   /** File name extension for the layer content files. */
   private static final String LAYER_FILE_EXTENSION = ".tar.gz";
 
-  private final Image<Layer> image;
+  private final Image image;
 
   private final ImageReference imageReference;
 
@@ -51,7 +51,7 @@ public class ImageTarball {
    * @param image the image to convert into a tarball
    * @param imageReference image reference to set in the manifest
    */
-  public ImageTarball(Image<Layer> image, ImageReference imageReference) {
+  public ImageTarball(Image image, ImageReference imageReference) {
     this.image = image;
     this.imageReference = imageReference;
   }

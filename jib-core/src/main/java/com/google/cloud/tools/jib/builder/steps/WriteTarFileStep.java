@@ -26,7 +26,6 @@ import com.google.cloud.tools.jib.docker.ImageTarball;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -97,7 +96,7 @@ public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildR
     try (ProgressEventDispatcher ignored =
         progressEventDispatcherFactory.create(
             BuildStepType.WRITE_TAR_FILE, "writing to tar file", 1)) {
-      Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
+      Image image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
 
       // Builds the image to a tarball.
       Files.createDirectories(outputPath.getParent());
