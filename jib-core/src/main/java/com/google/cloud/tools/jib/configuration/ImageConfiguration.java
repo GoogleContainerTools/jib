@@ -47,22 +47,12 @@ public class ImageConfiguration {
     }
 
     /**
-     * Indicates that the target can only be reached online.
-     *
-     * @return this
-     */
-    public Builder setIsOnlineImage() {
-      this.isOnlineImage = true;
-      return this;
-    }
-
-    /**
      * Builds the {@link ImageConfiguration}.
      *
      * @return the corresponding {@link ImageConfiguration}
      */
     public ImageConfiguration build() {
-      return new ImageConfiguration(imageReference, credentialRetrievers, isOnlineImage);
+      return new ImageConfiguration(imageReference, credentialRetrievers);
     }
 
     private Builder(ImageReference imageReference) {
@@ -82,15 +72,11 @@ public class ImageConfiguration {
 
   private final ImageReference image;
   private final ImmutableList<CredentialRetriever> credentialRetrievers;
-  private final boolean isOnlineImage;
 
   private ImageConfiguration(
-      ImageReference image,
-      ImmutableList<CredentialRetriever> credentialRetrievers,
-      boolean isOnlineImage) {
+      ImageReference image, ImmutableList<CredentialRetriever> credentialRetrievers) {
     this.image = image;
     this.credentialRetrievers = credentialRetrievers;
-    this.isOnlineImage = isOnlineImage;
   }
 
   public ImageReference getImage() {
@@ -111,9 +97,5 @@ public class ImageConfiguration {
 
   public ImmutableList<CredentialRetriever> getCredentialRetrievers() {
     return credentialRetrievers;
-  }
-
-  public boolean isOnlineImage() {
-    return isOnlineImage;
   }
 }
