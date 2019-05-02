@@ -119,7 +119,7 @@ public class JibIntegrationTest {
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
     LocalRegistry tempRegistry = new LocalRegistry(5001);
-    tempRegistry.start();
+    tempRegistry.startLocalRegistry();
     tempRegistry.pullAndPushToLocal("busybox", "busybox");
     Path cacheDirectory = cacheFolder.getRoot().toPath();
 
@@ -149,7 +149,7 @@ public class JibIntegrationTest {
       Assert.fail();
     } catch (ExecutionException ex) {
       Assert.assertEquals(
-          "Cannot run Jib in offline mode; localhost:5001/busybox not found in cache",
+          "Cannot run Jib in offline mode; localhost:5001/busybox not found in local Jib cache",
           ex.getCause().getMessage());
     }
 
@@ -160,7 +160,7 @@ public class JibIntegrationTest {
             .setAllowInsecureRegistries(true));
 
     // Run again in offline mode, should succeed this time
-    tempRegistry.stop();
+    tempRegistry.stopLocalRegistry();
     jibContainerBuilder.containerize(
         Containerizer.to(DockerDaemonImage.named(targetImageReferenceOffline))
             .setBaseImageLayersCache(cacheDirectory)

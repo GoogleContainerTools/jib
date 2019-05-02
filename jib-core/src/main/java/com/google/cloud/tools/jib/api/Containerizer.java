@@ -239,7 +239,8 @@ public class Containerizer {
 
   /**
    * Sets whether or not to run the build in offline mode. In offline mode, the base image is
-   * retrieved from the cache instead of pulled from a registry.
+   * retrieved from the cache instead of pulled from a registry, and the build will fail if the base
+   * image is not in the cache.
    *
    * @param offline if {@code true}, the build will run in offline mode
    * @return this
@@ -297,7 +298,7 @@ public class Containerizer {
     return allowInsecureRegistries;
   }
 
-  boolean getOfflineMode() {
+  boolean isOfflineMode() {
     return offline;
   }
 

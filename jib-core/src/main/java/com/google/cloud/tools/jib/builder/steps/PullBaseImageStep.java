@@ -132,7 +132,7 @@ class PullBaseImageStep
                     + buildConfiguration.getBaseImageConfiguration().getImage()
                     + "..."));
 
-    if (buildConfiguration.getOffline()) {
+    if (buildConfiguration.isOffline()) {
       return new BaseImageWithAuthorization(pullBaseImageOffline(), null);
     }
 
@@ -302,7 +302,8 @@ class PullBaseImageStep
     Optional<ManifestAndConfig> metadata =
         buildConfiguration.getBaseImageLayersCache().retrieveMetadata(baseImage);
     if (!metadata.isPresent()) {
-      throw new IOException("Cannot run Jib in offline mode; " + baseImage + " not found in cache");
+      throw new IOException(
+          "Cannot run Jib in offline mode; " + baseImage + " not found in local Jib cache");
     }
 
     ManifestTemplate manifestTemplate = metadata.get().getManifest();

@@ -52,16 +52,16 @@ public class LocalRegistry extends ExternalResource {
   /** Starts the local registry. */
   @Override
   protected void before() throws IOException, InterruptedException {
-    start();
+    startLocalRegistry();
   }
 
   @Override
   protected void after() {
-    stop();
+    stopLocalRegistry();
   }
 
   /** Starts the registry */
-  public void start() throws IOException, InterruptedException {
+  public void startLocalRegistry() throws IOException, InterruptedException {
     // Runs the Docker registry.
     ArrayList<String> dockerTokens =
         new ArrayList<>(
@@ -107,7 +107,7 @@ public class LocalRegistry extends ExternalResource {
   }
 
   /** Stops the registry. */
-  public void stop() {
+  public void stopLocalRegistry() {
     try {
       logout();
       new Command("docker", "stop", containerName).run();

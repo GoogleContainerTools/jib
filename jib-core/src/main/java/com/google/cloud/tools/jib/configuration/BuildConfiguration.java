@@ -416,7 +416,7 @@ public class BuildConfiguration {
    *
    * @return {@code true} if the build will run in offline mode; {@code false} otherwise
    */
-  public boolean getOffline() {
+  public boolean isOffline() {
     return offline;
   }
 

@@ -82,9 +82,11 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
       Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerDigest);
       if (optionalCachedLayer.isPresent()) {
         return optionalCachedLayer.get();
-      } else if (buildConfiguration.getOffline()) {
+      } else if (buildConfiguration.isOffline()) {
         throw new IOException(
-            "Cannot run Jib in offline mode; Cache is missing image layer " + layerDigest);
+            "Cannot run Jib in offline mode; local Jib cache for base image is missing image layer "
+                + layerDigest
+                + ". You may need to rerun Jib in online mode to re-download the base image layers.");
       }
 
       RegistryClient registryClient =
