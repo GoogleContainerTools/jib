@@ -55,7 +55,7 @@ public class ImageToJsonTranslatorTest {
 
   private void setUp(Class<? extends BuildableManifestTemplate> imageFormat)
       throws DigestException, LayerPropertyNotFoundException {
-    Image.Builder<Layer> testImageBuilder =
+    Image.Builder testImageBuilder =
         Image.builder(imageFormat)
             .setCreated(Instant.ofEpochSecond(20))
             .setArchitecture("wasm")
