@@ -527,6 +527,7 @@ public class JibContainerBuilder {
         .setContainerConfiguration(containerConfigurationBuilder.build())
         .setLayerConfigurations(layerConfigurations)
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
+        .setOffline(containerizer.getOfflineMode())
         .setToolName(containerizer.getToolName())
         .setExecutorService(executorService);
 

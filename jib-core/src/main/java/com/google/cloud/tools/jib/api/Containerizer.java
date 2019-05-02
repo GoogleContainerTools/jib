@@ -145,6 +145,7 @@ public class Containerizer {
   @Nullable private Path applicationLayersCacheDirectory;
   @Nullable private EventHandlers eventHandlers;
   private boolean allowInsecureRegistries = false;
+  private boolean offline = false;
   private String toolName = DEFAULT_TOOL_NAME;
 
   /** Instantiate with {@link #to}. */
@@ -236,6 +237,18 @@ public class Containerizer {
   }
 
   /**
+   * Sets whether or not to run the build in offline mode. In offline mode, the base image is
+   * retrieved from the cache instead of pulled from a registry.
+   *
+   * @param offline if {@code true}, the build will run in offline mode
+   * @return this
+   */
+  public Containerizer setOfflineMode(boolean offline) {
+    this.offline = offline;
+    return this;
+  }
+
+  /**
    * Sets the name of the tool that is using Jib Core. The tool name is sent as part of the {@code
    * User-Agent} in registry requests and set as the {@code created_by} in the container layer
    * history. Defaults to {@code jib-core}.
@@ -281,6 +294,10 @@ public class Containerizer {
 
   boolean getAllowInsecureRegistries() {
     return allowInsecureRegistries;
+  }
+
+  boolean getOfflineMode() {
+    return offline;
   }
 
   String getToolName() {
