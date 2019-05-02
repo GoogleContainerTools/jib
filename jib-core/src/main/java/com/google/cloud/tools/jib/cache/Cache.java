@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -113,6 +114,19 @@ public class Cache {
       Blob uncompressedLayerBlob, ImmutableList<LayerEntry> layerEntries) throws IOException {
     return cacheStorageWriter.writeUncompressed(
         uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries));
+  }
+
+  /**
+   * Retrieves the cached manifest and container configuration for an image reference.
+   *
+   * @param imageReference the image reference
+   * @return the manifest and container configuration for the image reference, if found
+   * @throws IOException if an I/O exception occurs
+   * @throws CacheCorruptedException if the cache is corrupted
+   */
+  public Optional<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
+      throws IOException, CacheCorruptedException {
+    return cacheStorageReader.retrieveMetadata(imageReference);
   }
 
   /**

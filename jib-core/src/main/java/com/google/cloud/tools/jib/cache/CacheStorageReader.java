@@ -16,8 +16,19 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
+import com.google.cloud.tools.jib.image.json.ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -55,10 +66,84 @@ class CacheStorageReader {
           layerDigests.add(DescriptorDigest.fromHash(layerDirectory.getFileName().toString()));
 
         } catch (DigestException ex) {
-          throw new CacheCorruptedException("Found non-digest file in layers directory", ex);
+          throw new CacheCorruptedException(
+              cacheStorageFiles.getCacheDirectory(),
+              "Found non-digest file in layers directory",
+              ex);
         }
       }
       return layerDigests;
+    }
+  }
+
+  /**
+   * Retrieves the cached manifest and container configuration for an image reference.
+   *
+   * @param imageReference the image reference
+   * @return the manifest and container configuration for the image reference, if found
+   * @throws IOException if an I/O exception occurs
+   * @throws CacheCorruptedException if the cache is corrupted
+   */
+  Optional<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
+      throws IOException, CacheCorruptedException {
+    Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
+    Path manifestPath = imageDirectory.resolve("manifest.json");
+    if (!Files.exists(manifestPath)) {
+      return Optional.empty();
+    }
+
+    try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
+      // TODO: Consolidate with ManifestPuller
+      ObjectNode node =
+          new ObjectMapper().readValue(Files.newInputStream(manifestPath), ObjectNode.class);
+      if (!node.has("schemaVersion")) {
+        throw new CacheCorruptedException(
+            cacheStorageFiles.getCacheDirectory(), "Cannot find field 'schemaVersion' in manifest");
+      }
+
+      int schemaVersion = node.get("schemaVersion").asInt(-1);
+      if (schemaVersion == -1) {
+        throw new CacheCorruptedException(
+            cacheStorageFiles.getCacheDirectory(),
+            "`schemaVersion` field is not an integer in manifest");
+      }
+
+      if (schemaVersion == 1) {
+        return Optional.of(
+            new ManifestAndConfig(
+                JsonTemplateMapper.readJsonFromFile(manifestPath, V21ManifestTemplate.class),
+                null));
+      }
+      if (schemaVersion == 2) {
+        // 'schemaVersion' of 2 can be either Docker V2.2 or OCI.
+        String mediaType = node.get("mediaType").asText();
+
+        ManifestTemplate manifestTemplate;
+        if (V22ManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+          manifestTemplate =
+              JsonTemplateMapper.readJsonFromFile(manifestPath, V22ManifestTemplate.class);
+        } else if (OCIManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+          manifestTemplate =
+              JsonTemplateMapper.readJsonFromFile(manifestPath, OCIManifestTemplate.class);
+        } else {
+          throw new CacheCorruptedException(
+              cacheStorageFiles.getCacheDirectory(), "Unknown manifest mediaType: " + mediaType);
+        }
+
+        Path configPath = imageDirectory.resolve("config.json");
+        if (!Files.exists(configPath)) {
+          throw new CacheCorruptedException(
+              cacheStorageFiles.getCacheDirectory(),
+              "Manifest found, but missing container configuration");
+        }
+        ContainerConfigurationTemplate config =
+            JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
+
+        return Optional.of(new ManifestAndConfig(manifestTemplate, config));
+      }
+      throw new CacheCorruptedException(
+          cacheStorageFiles.getCacheDirectory(),
+          "Unknown schemaVersion in manifest: " + schemaVersion + " - only 1 and 2 are supported");
     }
   }
 
@@ -84,6 +169,7 @@ class CacheStorageReader {
         if (CacheStorageFiles.isLayerFile(fileInLayerDirectory)) {
           if (cachedLayerBuilder.hasLayerBlob()) {
             throw new CacheCorruptedException(
+                cacheStorageFiles.getCacheDirectory(),
                 "Multiple layer files found for layer with digest "
                     + layerDigest.getHash()
                     + " in directory: "
@@ -91,7 +177,7 @@ class CacheStorageReader {
           }
           cachedLayerBuilder
               .setLayerBlob(Blobs.from(fileInLayerDirectory))
-              .setLayerDiffId(CacheStorageFiles.getDiffId(fileInLayerDirectory))
+              .setLayerDiffId(cacheStorageFiles.getDiffId(fileInLayerDirectory))
               .setLayerSize(Files.size(fileInLayerDirectory));
         }
       }
@@ -122,6 +208,7 @@ class CacheStorageReader {
 
     } catch (DigestException ex) {
       throw new CacheCorruptedException(
+          cacheStorageFiles.getCacheDirectory(),
           "Expected valid layer digest as contents of selector file `"
               + selectorFile
               + "` for selector `"
