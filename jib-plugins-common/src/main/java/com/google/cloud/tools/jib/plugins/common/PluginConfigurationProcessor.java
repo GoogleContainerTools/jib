@@ -461,6 +461,7 @@ public class PluginConfigurationProcessor {
       RawConfiguration rawConfiguration,
       ProjectProperties projectProperties) {
     containerizer
+        .setOfflineMode(projectProperties.isOffline())
         .setToolName(projectProperties.getToolName())
         .setEventHandlers(projectProperties.getEventHandlers())
         .setAllowInsecureRegistries(rawConfiguration.getAllowInsecureRegistries())
