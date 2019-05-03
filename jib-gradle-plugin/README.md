@@ -175,7 +175,6 @@ Field | Type | Default | Description
 `to` | [`to`](#to-closure) | *Required* | Configures the target image to build your application to.
 `from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
 `container` | [`container`](#container-closure) | See [`container`](#container-closure) | Configures the container that is run from your built image.
-`extraDirectory` | `extraDirectory` / `File` | `(project-dir)/src/main/jib` | Deprecated. Use `extraDirectories`.
 `extraDirectories` | [`extraDirectories`](#extradirectories-closure) | See [`extraDirectories`](#extradirectories-closure) | Configures the directories used to add arbitrary files to the image.
 `allowInsecureRegistries` | `boolean` | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 
@@ -226,7 +225,7 @@ Property | Type | Default | Description
 Property | Type | Default | Description
 --- | --- | --- | ---
 `paths` | `Object` | `(project-dir)/src/main/jib` | Extra directories acceptable by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc. Can be absolute or relative to the project root.
-`permissions` | `Map<String, String>` | *None* | Permission map for the files added from extra directories.
+`permissions` | `Map<String, String>` | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to 755 for directories and 644 for files.
 
 <a name="dockerclient-closure"></a>**(`jibDockerBuild` only)** `dockerClient` is an object that can be configured directly on the `jibDockerBuild` task, and has the following properties:
 
