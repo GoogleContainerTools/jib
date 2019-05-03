@@ -225,7 +225,7 @@ Property | Type | Default | Description
 
 Property | Type
 --- | ---
-`paths` | `Object...` acceptable by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String|File|Path>`, etc.
+`paths` | `Object...` acceptable by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc.
 `permissions` | `Map<String, String>`
 
 <a name="dockerclient-closure"></a>**(`jibDockerBuild` only)** `dockerClient` is an object that can be configured directly on the `jibDockerBuild` task, and has the following properties:
