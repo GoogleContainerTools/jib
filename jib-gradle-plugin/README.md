@@ -175,7 +175,8 @@ Field | Type | Default | Description
 `to` | [`to`](#to-closure) | *Required* | Configures the target image to build your application to.
 `from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
 `container` | [`container`](#container-closure) | See [`container`](#container-closure) | Configures the container that is run from your built image.
-`extraDirectory` | [`extraDirectory`](#extradirectory-closure) / `File` | `(project-dir)/src/main/jib` | Configures the directory used to add arbitrary files to the image.
+`extraDirectory` | `extraDirectory` / `File` | `(project-dir)/src/main/jib` | Deprecated. Use `extraDirectories`.
+`extraDirectories` | [`extraDirectories`](#extradirectories-closure) | `[(project-dir)/src/main/jib]` | Configures the directories used to add arbitrary files to the image.
 `allowInsecureRegistries` | `boolean` | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 
 <a name="from-closure"></a>`from` is a closure with the following properties:
@@ -220,11 +221,11 @@ Property | Type | Default | Description
 `volumes` | `List<String>` | *None* | Specifies a list of mount points on the container.
 `workingDirectory` | `String` | *None* | The working directory in the container.
 
-<a name="extradirectory-closure"></a>`extraDirectory` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
+<a name="extradirectories-closure"></a>`extraDirectories` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
 
 Property | Type
 --- | ---
-`path` | `File`
+`paths` | `Object...` acceptable by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String|File|Path>`, etc.
 `permissions` | `Map<String, String>`
 
 <a name="dockerclient-closure"></a>**(`jibDockerBuild` only)** `dockerClient` is an object that can be configured directly on the `jibDockerBuild` task, and has the following properties:
@@ -300,20 +301,20 @@ jib {
 
 You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
-You can configure a different directory by using the `jib.extraDirectory` parameter in your `build.gradle`:
+You can configure different directories by using the `jib.extraDirectories.paths` parameter in your `build.gradle`:
 ```groovy
 jib {
-  // Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib'
-  extraDirectory = file('src/main/custom-extra-dir')
+  // Copies files from 'src/main/custom-extra-dir' and '/home/user/jib-extras' instead of 'src/main/jib'
+  extraDirectories.paths = ['src/main/custom-extra-dir', '/home/user/jib-extras']
 }
 ```
 
-Alternatively, the `jib.extraDirectory` parameter can be used as a closure to set a custom extra directory, as well as the extra files' permissions on the container:
+Alternatively, the `jib.extraDirectories` parameter can be used as a closure to set custom extra directories, as well as the extra files' permissions on the container:
 
 ```groovy
 jib {
-  extraDirectory {
-    path = file('src/main/custom-extra-dir')  // Copies files from 'src/main/custom-extra-dir'
+  extraDirectories {
+    paths = 'src/main/custom-extra-dir'  // Copies files from 'src/main/custom-extra-dir'
     permissions = [
         '/path/on/container/to/fileA': '755',  // Read/write/execute for owner, read/execute for group/other
         '/path/to/another/file': '644'  // Read/write for owner, read-only for group/other
