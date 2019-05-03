@@ -15,7 +15,6 @@ dependencies {
 }
 
 jib.to.image = System.getProperty("_TARGET_IMAGE")
-jib.extraDirectories {
-  paths = files('src/main/custom-extra-dir', 'src/main/custom-extra-dir2')
-  permissions = ['/baz':'705']
+jib.extraDirectory {
+  path = file('src/main/custom-extra-dir')
 }

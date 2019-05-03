@@ -18,7 +18,13 @@
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
         <configuration>
-          <extraDirectory>${project.basedir}/src/main/other-jib</extraDirectory>
+          <extraDirectories>
+            <paths>
+              <path>src/main/jib1</path> <!-- should resolve to this projectRoot -->
+              <path>${project.basedir}/src/main/jib2</path> <!-- provided as absolute within project -->
+              <path>/some/random/absolute/path/jib3</path> <!-- provided as absolute outside of project -->
+            </paths>
+          </extraDirectories>
         </configuration>
       </plugin>
     </plugins>

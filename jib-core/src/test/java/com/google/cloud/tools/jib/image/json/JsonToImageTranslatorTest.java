@@ -57,7 +57,7 @@ public class JsonToImageTranslatorTest {
     V21ManifestTemplate manifestTemplate =
         JsonTemplateMapper.readJsonFromFile(jsonFile, V21ManifestTemplate.class);
 
-    Image<Layer> image = JsonToImageTranslator.toImage(manifestTemplate);
+    Image image = JsonToImageTranslator.toImage(manifestTemplate);
 
     List<Layer> layers = image.getLayers();
     Assert.assertEquals(2, layers.size());
@@ -181,8 +181,7 @@ public class JsonToImageTranslatorTest {
     T manifestTemplate =
         JsonTemplateMapper.readJsonFromFile(manifestJsonFile, manifestTemplateClass);
 
-    Image<Layer> image =
-        JsonToImageTranslator.toImage(manifestTemplate, containerConfigurationTemplate);
+    Image image = JsonToImageTranslator.toImage(manifestTemplate, containerConfigurationTemplate);
 
     List<Layer> layers = image.getLayers();
     Assert.assertEquals(1, layers.size());

@@ -34,7 +34,6 @@ import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
@@ -69,17 +68,16 @@ class PullBaseImageStep
   /** Structure for the result returned by this step. */
   static class BaseImageWithAuthorization {
 
-    private final Image<Layer> baseImage;
+    private final Image baseImage;
     private final @Nullable Authorization baseImageAuthorization;
 
     @VisibleForTesting
-    BaseImageWithAuthorization(
-        Image<Layer> baseImage, @Nullable Authorization baseImageAuthorization) {
+    BaseImageWithAuthorization(Image baseImage, @Nullable Authorization baseImageAuthorization) {
       this.baseImage = baseImage;
       this.baseImageAuthorization = baseImageAuthorization;
     }
 
-    Image<Layer> getBaseImage() {
+    Image getBaseImage() {
       return baseImage;
     }
 
@@ -219,7 +217,7 @@ class PullBaseImageStep
    * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
    *     format
    */
-  private Image<Layer> pullBaseImage(
+  private Image pullBaseImage(
       @Nullable Authorization registryAuthorization,
       ProgressEventDispatcher progressEventDispatcher)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
@@ -295,7 +293,7 @@ class PullBaseImageStep
    * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
    *     format
    */
-  private Image<Layer> pullBaseImageOffline()
+  private Image pullBaseImageOffline()
       throws IOException, CacheCorruptedException, BadContainerConfigurationFormatException,
           LayerCountMismatchException {
     ImageReference baseImage = buildConfiguration.getBaseImageConfiguration().getImage();

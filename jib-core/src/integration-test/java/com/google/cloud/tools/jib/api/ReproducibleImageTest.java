@@ -26,9 +26,12 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
+import com.google.common.io.CharStreams;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -87,6 +90,53 @@ public class ReproducibleImageTest {
                 .addEntryRecursive(subdir, AbsoluteUnixPath.get("/app"))
                 .build())
         .containerize(containerizer);
+  }
+
+  @Test
+  public void testTarballStructure() throws IOException {
+    // known content should produce known results
+    List<String> expected =
+        ImmutableList.of(
+            "c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz",
+            "6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz",
+            "530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz",
+            "config.json",
+            "manifest.json");
+
+    List<String> actual = new ArrayList<>();
+    try (TarArchiveInputStream input =
+        new TarArchiveInputStream(Files.newInputStream(imageTar.toPath()))) {
+      TarArchiveEntry imageEntry;
+      while ((imageEntry = input.getNextTarEntry()) != null) {
+        actual.add(imageEntry.getName());
+      }
+    }
+
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testManifest() throws IOException {
+    try (InputStream input = Files.newInputStream(imageTar.toPath())) {
+      String exectedManifest =
+          "[{\"config\":\"config.json\",\"repoTags\":[\"jib-core/reproducible:latest\"],"
+              + "\"layers\":[\"c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz\",\"6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz\",\"530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz\"]}]";
+      String generatedManifest = extractFromTarFileAsString(imageTar, "manifest.json");
+      Assert.assertEquals(exectedManifest, generatedManifest);
+    }
+  }
+
+  @Test
+  public void testConfiguration() throws IOException {
+    try (InputStream input = Files.newInputStream(imageTar.toPath())) {
+      String exectedConfig =
+          "{\"created\":\"1970-01-01T00:00:00Z\",\"architecture\":\"amd64\",\"os\":\"linux\","
+              + "\"config\":{\"Env\":[],\"Entrypoint\":[\"echo\",\"Hello World\"],\"ExposedPorts\":{},\"Labels\":{},\"Volumes\":{}},"
+              + "\"history\":[{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"jib-core:null\",\"comment\":\"\"},{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"jib-core:null\",\"comment\":\"\"},{\"created\":\"1970-01-01T00:00:00Z\",\"author\":\"Jib\",\"created_by\":\"jib-core:null\",\"comment\":\"\"}],"
+              + "\"rootfs\":{\"type\":\"layers\",\"diff_ids\":[\"sha256:18e4f44e6d1835bd968339b166057bd17ab7d4cbb56dc7262a5cafea7cf8d405\",\"sha256:13369c34f073f2b9c1fa6431e23d925f1a8eac65b1726c8cc8fcc2596c69b414\",\"sha256:4f92c507112d7880ca0f504ef8272b7fdee107263270125036a260a741565923\"]}}";
+      String generatedConfig = extractFromTarFileAsString(imageTar, "config.json");
+      Assert.assertEquals(exectedConfig, generatedConfig);
+    }
   }
 
   @Test
@@ -179,7 +229,8 @@ public class ReproducibleImageTest {
   private void layerEntriesDo(BiConsumer<String, TarArchiveEntry> layerConsumer)
       throws IOException {
 
-    try (TarArchiveInputStream input = new TarArchiveInputStream(new FileInputStream(imageTar))) {
+    try (TarArchiveInputStream input =
+        new TarArchiveInputStream(Files.newInputStream(imageTar.toPath()))) {
       TarArchiveEntry imageEntry;
       while ((imageEntry = input.getNextTarEntry()) != null) {
         String imageEntryName = imageEntry.getName();
@@ -194,5 +245,19 @@ public class ReproducibleImageTest {
         }
       }
     }
+  }
+
+  private static String extractFromTarFileAsString(File tarFile, String filename)
+      throws IOException {
+    try (TarArchiveInputStream input =
+        new TarArchiveInputStream(Files.newInputStream(tarFile.toPath()))) {
+      TarArchiveEntry imageEntry;
+      while ((imageEntry = input.getNextTarEntry()) != null) {
+        if (filename.equals(imageEntry.getName())) {
+          return CharStreams.toString(new InputStreamReader(input, StandardCharsets.UTF_8));
+        }
+      }
+    }
+    throw new AssertionError("file not found: " + filename);
   }
 }
