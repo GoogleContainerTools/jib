@@ -226,7 +226,7 @@ Property | Type | Default | Description
 Property | Type | Default | Description
 --- | --- | --- | ---
 `paths` | `Object` | `(project-dir)/src/main/jib` | Extra directories acceptable by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc. Can be absolute or relative to the project root.
-`permissions` | `Map<String, String>` | *None* | Permission map for the files added from extra directories
+`permissions` | `Map<String, String>` | *None* | Permission map for the files added from extra directories.
 
 <a name="dockerclient-closure"></a>**(`jibDockerBuild` only)** `dockerClient` is an object that can be configured directly on the `jibDockerBuild` task, and has the following properties:
 

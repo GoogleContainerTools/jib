@@ -272,7 +272,7 @@ Property | Type | Default | Description
 Property | Type | Default | Description
 --- | --- | --- | ---
 `paths` | list | `[(project-dir)/src/main/jib]` | List of extra directories. Can be absolute or relative to the project root.
-`permissions` | list | *None* | Permission map for the files added from extra directories
+`permissions` | list | *None* | Permission map for the files added from extra directories.
 
 <a name="dockerclient-object"></a>**(`jib:dockerBuild` only)** `dockerClient` is an object with the following properties:
 
