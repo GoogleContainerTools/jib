@@ -224,7 +224,7 @@ Property | Type | Default | Description
 <a name="extradirectories-closure"></a>`extraDirectories` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
 
 Property | Type | Default | Description
---- | ---
+--- | --- | --- | ---
 `paths` | `Object` | `(project-dir)/src/main/jib` | Extra directories acceptable by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc. Can be absolute or relative to the project root.
 `permissions` | `Map<String, String>` | *None* | Permission map for the files added from extra directories
 

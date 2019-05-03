@@ -270,7 +270,7 @@ Property | Type | Default | Description
 <a name="extradirectories-object"></a>`extraDirectories` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
 
 Property | Type | Default | Description
---- | ---
+--- | --- | --- | ---
 `paths` | list | `[(project-dir)/src/main/jib]` | List of extra directories. Can be absolute or relative to the project root.
 `permissions` | list | *None* | Permission map for the files added from extra directories
 
