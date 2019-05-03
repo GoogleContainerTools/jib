@@ -221,7 +221,7 @@ Field | Type | Default | Description
 `from` | [`from`](#from-object) | See [`from`](#from-object) | Configures the base image to build your application on top of.
 `container` | [`container`](#container-object) | See [`container`](#container-object) | Configures the container that is run from your image.
 `extraDirectory` | `extraDirectory` / string | `(project-dir)/src/main/jib` | Deprecated. Use `extraDirectories`.
-`extraDirectories` | [`extraDirectories`](#extradirectories-object) | `[(project-dir)/src/main/jib]` | Configures the directories used to add arbitrary files to the image.
+`extraDirectories` | [`extraDirectories`](#extradirectories-object) | See [`extraDirectories`](#extradirectories-object) | Configures the directories used to add arbitrary files to the image.
 `allowInsecureRegistries` | boolean | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 `skip` | boolean | `false` | If set to true, Jib execution is skipped (useful for multi-module projects). This can also be specified via the `-Djib.skip` command line option.
 
@@ -269,10 +269,10 @@ Property | Type | Default | Description
 
 <a name="extradirectories-object"></a>`extraDirectories` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
 
-Property | Type
+Property | Type | Default | Description
 --- | ---
-`path` | list
-`permissions` | list
+`paths` | list | `[(project-dir)/src/main/jib]` | List of extra directories. Can be absolute or relative to the project root.
+`permissions` | list | *None* | Permission map for the files added from extra directories
 
 <a name="dockerclient-object"></a>**(`jib:dockerBuild` only)** `dockerClient` is an object with the following properties:
 

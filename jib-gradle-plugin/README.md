@@ -176,7 +176,7 @@ Field | Type | Default | Description
 `from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
 `container` | [`container`](#container-closure) | See [`container`](#container-closure) | Configures the container that is run from your built image.
 `extraDirectory` | `extraDirectory` / `File` | `(project-dir)/src/main/jib` | Deprecated. Use `extraDirectories`.
-`extraDirectories` | [`extraDirectories`](#extradirectories-closure) | `[(project-dir)/src/main/jib]` | Configures the directories used to add arbitrary files to the image.
+`extraDirectories` | [`extraDirectories`](#extradirectories-closure) | See [`extraDirectories`](#extradirectories-closure) | Configures the directories used to add arbitrary files to the image.
 `allowInsecureRegistries` | `boolean` | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 
 <a name="from-closure"></a>`from` is a closure with the following properties:
@@ -223,10 +223,10 @@ Property | Type | Default | Description
 
 <a name="extradirectories-closure"></a>`extraDirectories` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
 
-Property | Type
+Property | Type | Default | Description
 --- | ---
-`paths` | `Object...` acceptable by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc.
-`permissions` | `Map<String, String>`
+`paths` | `Object...` | `(project-dir)/src/main/jib` | Extra directories acceptable by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc. Can be absolute or relative to the project root.
+`permissions` | `Map<String, String>` | *None* | Permission map for the files added from extra directories
 
 <a name="dockerclient-closure"></a>**(`jibDockerBuild` only)** `dockerClient` is an object that can be configured directly on the `jibDockerBuild` task, and has the following properties:
 
