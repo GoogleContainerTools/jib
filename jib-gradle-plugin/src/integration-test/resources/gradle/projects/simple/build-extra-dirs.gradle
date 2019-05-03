@@ -15,4 +15,4 @@ dependencies {
 }
 
 jib.to.image = System.getProperty("_TARGET_IMAGE")
-jib.extraDirectory = ['src/main/custom-extra-dir', 'src/main/custom-extra-dir2']
+jib.extraDirectories.paths = ['src/main/custom-extra-dir', 'src/main/custom-extra-dir2']

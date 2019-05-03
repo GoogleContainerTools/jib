@@ -150,7 +150,7 @@ public class FilesTask extends DefaultTask {
     printProjectFiles(project);
 
     // Print extra layer
-    List<Path> extraDirectories = jibExtension.getExtraDirectory().getPaths();
+    List<Path> extraDirectories = jibExtension.getExtraDirectories().getPaths();
     extraDirectories.stream().filter(Files::exists).forEach(System.out::println);
 
     // Find project dependencies

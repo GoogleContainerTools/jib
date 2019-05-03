@@ -89,7 +89,7 @@ public class JibRunHelper {
     assertCreationTimeEpoch(additionalImageReference);
   }
 
-  static void buildToDockerDaemon(
+  static BuildResult buildToDockerDaemon(
       TestProject testProject, String imageReference, String gradleBuildFile)
       throws IOException, InterruptedException, DigestException {
     BuildResult buildResult =
@@ -106,6 +106,8 @@ public class JibRunHelper {
 
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+
+    return buildResult;
   }
 
   static String buildToDockerDaemonAndRun(

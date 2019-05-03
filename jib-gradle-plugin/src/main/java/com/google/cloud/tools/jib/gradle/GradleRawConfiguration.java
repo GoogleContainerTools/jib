@@ -152,11 +152,11 @@ class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public List<Path> getExtraDirectories() {
-    return jibExtension.getExtraDirectory().getPaths();
+    return jibExtension.getExtraDirectories().getPaths();
   }
 
   @Override
   public Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions() {
-    return TaskCommon.convertPermissionsMap(jibExtension.getExtraDirectory().getPermissions());
+    return TaskCommon.convertPermissionsMap(jibExtension.getExtraDirectories().getPermissions());
   }
 }
