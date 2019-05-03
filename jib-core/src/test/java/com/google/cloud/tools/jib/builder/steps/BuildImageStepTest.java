@@ -27,7 +27,6 @@ import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableList;
@@ -101,7 +100,7 @@ public class BuildImageStepTest {
             .setEmptyLayer(true)
             .build();
 
-    Image<Layer> baseImage =
+    Image baseImage =
         Image.builder(V22ManifestTemplate.class)
             .setArchitecture("wasm")
             .setOs("js")
@@ -172,7 +171,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStepDependencies,
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(
         testDescriptorDigest, image.getLayers().asList().get(0).getBlobDescriptor().getDigest());
   }
@@ -201,7 +200,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStepDependencies,
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals("wasm", image.getArchitecture());
     Assert.assertEquals("js", image.getOs());
     Assert.assertEquals(
@@ -264,7 +263,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStepDependencies,
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals("/my/directory", image.getWorkingDirectory());
   }
@@ -286,7 +285,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStepDependencies,
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
     Assert.assertEquals(ImmutableList.of("test"), image.getProgramArguments());
@@ -309,7 +308,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStepDependencies,
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
     Assert.assertEquals(ImmutableList.of("catalina.sh", "run"), image.getProgramArguments());
@@ -332,7 +331,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStepDependencies,
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals(ImmutableList.of("myEntrypoint"), image.getEntrypoint());
     Assert.assertNull(image.getProgramArguments());
@@ -352,7 +351,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses,
                 mockBuildAndCacheApplicationLayerStepExtraFiles));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
 
     // Make sure history is as expected
     HistoryEntry expectedAddedBaseLayerHistory =

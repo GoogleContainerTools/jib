@@ -33,13 +33,13 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Represents an image. */
-public class Image<T extends Layer> {
+public class Image {
 
   /** Builds the immutable {@link Image}. */
-  public static class Builder<T extends Layer> {
+  public static class Builder {
 
     private final Class<? extends ManifestTemplate> imageFormat;
-    private final ImageLayers.Builder<T> imageLayersBuilder = ImageLayers.builder();
+    private final ImageLayers.Builder imageLayersBuilder = ImageLayers.builder();
     private final ImmutableList.Builder<HistoryEntry> historyBuilder = ImmutableList.builder();
 
     // Don't use ImmutableMap.Builder because it does not allow for replacing existing keys with new
@@ -68,7 +68,7 @@ public class Image<T extends Layer> {
      * @param created the creation time
      * @return this
      */
-    public Builder<T> setCreated(Instant created) {
+    public Builder setCreated(Instant created) {
       this.created = created;
       return this;
     }
@@ -79,7 +79,7 @@ public class Image<T extends Layer> {
      * @param architecture the architecture
      * @return this
      */
-    public Builder<T> setArchitecture(String architecture) {
+    public Builder setArchitecture(String architecture) {
       this.architecture = architecture;
       return this;
     }
@@ -90,7 +90,7 @@ public class Image<T extends Layer> {
      * @param os the operating system
      * @return this
      */
-    public Builder<T> setOs(String os) {
+    public Builder setOs(String os) {
       this.os = os;
       return this;
     }
@@ -101,7 +101,7 @@ public class Image<T extends Layer> {
      * @param environment the map of environment variables
      * @return this
      */
-    public Builder<T> addEnvironment(@Nullable Map<String, String> environment) {
+    public Builder addEnvironment(@Nullable Map<String, String> environment) {
       if (environment != null) {
         this.environmentBuilder.putAll(environment);
       }
@@ -115,7 +115,7 @@ public class Image<T extends Layer> {
      * @param value the value to set it to
      * @return this
      */
-    public Builder<T> addEnvironmentVariable(String name, String value) {
+    public Builder addEnvironmentVariable(String name, String value) {
       environmentBuilder.put(name, value);
       return this;
     }
@@ -126,7 +126,7 @@ public class Image<T extends Layer> {
      * @param entrypoint the list of entrypoint tokens
      * @return this
      */
-    public Builder<T> setEntrypoint(@Nullable List<String> entrypoint) {
+    public Builder setEntrypoint(@Nullable List<String> entrypoint) {
       this.entrypoint = (entrypoint == null) ? null : ImmutableList.copyOf(entrypoint);
       return this;
     }
@@ -137,7 +137,7 @@ public class Image<T extends Layer> {
      * @param user the username/UID and optionally the groupname/GID
      * @return this
      */
-    public Builder<T> setUser(@Nullable String user) {
+    public Builder setUser(@Nullable String user) {
       this.user = user;
       return this;
     }
@@ -148,7 +148,7 @@ public class Image<T extends Layer> {
      * @param programArguments the list of arguments to append to the image entrypoint
      * @return this
      */
-    public Builder<T> setProgramArguments(@Nullable List<String> programArguments) {
+    public Builder setProgramArguments(@Nullable List<String> programArguments) {
       this.programArguments =
           (programArguments == null) ? null : ImmutableList.copyOf(programArguments);
       return this;
@@ -160,7 +160,7 @@ public class Image<T extends Layer> {
      * @param healthCheck the healthcheck configuration
      * @return this
      */
-    public Builder<T> setHealthCheck(@Nullable DockerHealthCheck healthCheck) {
+    public Builder setHealthCheck(@Nullable DockerHealthCheck healthCheck) {
       this.healthCheck = healthCheck;
       return this;
     }
@@ -171,7 +171,7 @@ public class Image<T extends Layer> {
      * @param exposedPorts the exposed ports to add
      * @return this
      */
-    public Builder<T> addExposedPorts(@Nullable Set<Port> exposedPorts) {
+    public Builder addExposedPorts(@Nullable Set<Port> exposedPorts) {
       if (exposedPorts != null) {
         exposedPortsBuilder.addAll(exposedPorts);
       }
@@ -184,7 +184,7 @@ public class Image<T extends Layer> {
      * @param volumes the directories to create volumes
      * @return this
      */
-    public Builder<T> addVolumes(@Nullable Set<AbsoluteUnixPath> volumes) {
+    public Builder addVolumes(@Nullable Set<AbsoluteUnixPath> volumes) {
       if (volumes != null) {
         volumesBuilder.addAll(ImmutableSet.copyOf(volumes));
       }
@@ -197,7 +197,7 @@ public class Image<T extends Layer> {
      * @param labels the map of labels to add
      * @return this
      */
-    public Builder<T> addLabels(@Nullable Map<String, String> labels) {
+    public Builder addLabels(@Nullable Map<String, String> labels) {
       if (labels != null) {
         labelsBuilder.putAll(labels);
       }
@@ -211,7 +211,7 @@ public class Image<T extends Layer> {
      * @param value the value of the label
      * @return this
      */
-    public Builder<T> addLabel(String name, String value) {
+    public Builder addLabel(String name, String value) {
       labelsBuilder.put(name, value);
       return this;
     }
@@ -222,7 +222,7 @@ public class Image<T extends Layer> {
      * @param workingDirectory the working directory
      * @return this
      */
-    public Builder<T> setWorkingDirectory(@Nullable String workingDirectory) {
+    public Builder setWorkingDirectory(@Nullable String workingDirectory) {
       this.workingDirectory = workingDirectory;
       return this;
     }
@@ -234,7 +234,7 @@ public class Image<T extends Layer> {
      * @return this
      * @throws LayerPropertyNotFoundException if adding the layer fails
      */
-    public Builder<T> addLayer(T layer) throws LayerPropertyNotFoundException {
+    public Builder addLayer(Layer layer) throws LayerPropertyNotFoundException {
       imageLayersBuilder.add(layer);
       return this;
     }
@@ -245,13 +245,13 @@ public class Image<T extends Layer> {
      * @param history the history object to add
      * @return this
      */
-    public Builder<T> addHistory(HistoryEntry history) {
+    public Builder addHistory(HistoryEntry history) {
       historyBuilder.add(history);
       return this;
     }
 
-    public Image<T> build() {
-      return new Image<>(
+    public Image build() {
+      return new Image(
           imageFormat,
           created,
           architecture,
@@ -270,9 +270,8 @@ public class Image<T extends Layer> {
     }
   }
 
-  public static <T extends Layer> Builder<T> builder(
-      Class<? extends ManifestTemplate> imageFormat) {
-    return new Builder<>(imageFormat);
+  public static Builder builder(Class<? extends ManifestTemplate> imageFormat) {
+    return new Builder(imageFormat);
   }
 
   /** The image format. */
@@ -288,7 +287,7 @@ public class Image<T extends Layer> {
   private final String os;
 
   /** The layers of the image, in the order in which they are applied. */
-  private final ImageLayers<T> layers;
+  private final ImageLayers layers;
 
   /** The commands used to build each layer of the image */
   private final ImmutableList<HistoryEntry> history;
@@ -325,7 +324,7 @@ public class Image<T extends Layer> {
       @Nullable Instant created,
       String architecture,
       String os,
-      ImageLayers<T> layers,
+      ImageLayers layers,
       ImmutableList<HistoryEntry> history,
       @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
@@ -415,7 +414,7 @@ public class Image<T extends Layer> {
     return user;
   }
 
-  public ImmutableList<T> getLayers() {
+  public ImmutableList<Layer> getLayers() {
     return layers.getLayers();
   }
 

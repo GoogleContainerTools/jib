@@ -30,17 +30,19 @@ import org.gradle.api.Project;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
-/** Object in {@link JibExtension} that configures the extra directory. */
-public class ExtraDirectoryParameters {
+/** Object in {@link JibExtension} that configures the extra directories. */
+public class ExtraDirectoriesParameters {
 
   private final Project project;
+  @Deprecated private final JibExtension jibExtension;
 
   private List<Path> paths;
   private Map<String, String> permissions = Collections.emptyMap();
 
   @Inject
-  public ExtraDirectoryParameters(Project project) {
+  public ExtraDirectoriesParameters(Project project, JibExtension jibExtension) {
     this.project = project;
+    this.jibExtension = jibExtension;
     paths =
         Collections.singletonList(
             project.getProjectDir().toPath().resolve("src").resolve("main").resolve("jib"));
@@ -57,7 +59,9 @@ public class ExtraDirectoryParameters {
   public List<Path> getPaths() {
     // Gradle warns about @Input annotations on File objects, so we have to expose a getter for a
     // String to make them go away.
-    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
+    String deprecatedProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH);
+    String newProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS);
+    String property = newProperty != null ? newProperty : deprecatedProperty;
     if (property != null) {
       List<String> pathStrings = ConfigurationPropertyValidator.parseListProperty(property);
       return pathStrings.stream().map(Paths::get).collect(Collectors.toList());
@@ -67,14 +71,20 @@ public class ExtraDirectoryParameters {
 
   /**
    * Sets paths. {@code paths} can be any suitable object describing file paths convertible by
-   * {@link Project#files} (such as {@code List<File>}).
+   * {@link Project#files} (such as {@link File}, {@code List<File>}, or {@code List<String>}).
    *
    * @param paths paths to set.
    */
-  // non-plural to retain backward-compatibility for the "jib.extraDirectory.path" config parameter
-  public void setPath(Object paths) {
+  public void setPaths(Object paths) {
+    jibExtension.extraDirectoriesConfigured = true;
     this.paths =
         project.files(paths).getFiles().stream().map(File::toPath).collect(Collectors.toList());
+  }
+
+  @Deprecated
+  public void setPath(File path) {
+    jibExtension.extraDirectoryConfigured = true;
+    this.paths = Collections.singletonList(path.toPath());
   }
 
   /**
@@ -86,9 +96,11 @@ public class ExtraDirectoryParameters {
    */
   @Input
   public Map<String, String> getPermissions() {
-    if (System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS) != null) {
-      return ConfigurationPropertyValidator.parseMapProperty(
-          System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS));
+    String deprecatedProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS);
+    String newProperty = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS);
+    String property = newProperty != null ? newProperty : deprecatedProperty;
+    if (property != null) {
+      return ConfigurationPropertyValidator.parseMapProperty(property);
     }
     return permissions;
   }

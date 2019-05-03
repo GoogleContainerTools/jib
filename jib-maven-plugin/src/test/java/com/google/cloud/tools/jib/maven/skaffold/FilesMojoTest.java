@@ -136,7 +136,9 @@ public class FilesMojoTest {
             complexServiceRoot.resolve("src/main/java"),
             complexServiceRoot.resolve("src/main/resources1"),
             complexServiceRoot.resolve("src/main/resources2"),
-            complexServiceRoot.resolve("src/main/other-jib"),
+            complexServiceRoot.resolve("src/main/jib1"),
+            complexServiceRoot.resolve("src/main/jib2"),
+            Paths.get("/some/random/absolute/path/jib3"),
             // this test expects standard .m2 locations
             Paths.get(
                 System.getProperty("user.home"),
