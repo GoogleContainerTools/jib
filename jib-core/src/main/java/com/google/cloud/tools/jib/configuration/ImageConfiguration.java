@@ -30,7 +30,6 @@ public class ImageConfiguration {
 
     private ImageReference imageReference;
     private ImmutableList<CredentialRetriever> credentialRetrievers = ImmutableList.of();
-    private boolean isOnlineImage = false;
 
     /**
      * Sets the providers for registry credentials. The order determines the priority in which the

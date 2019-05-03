@@ -139,6 +139,7 @@ public class Containerizer {
   private final String description;
   private final ImageConfiguration imageConfiguration;
   private final Function<BuildConfiguration, StepsRunner> stepsRunnerFactory;
+  private final boolean mustBeOnline;
 
   private final Set<String> additionalTags = new HashSet<>();
   @Nullable private ExecutorService executorService;
@@ -147,7 +148,6 @@ public class Containerizer {
   @Nullable private EventHandlers eventHandlers;
   private boolean allowInsecureRegistries = false;
   private boolean offline = false;
-  private boolean mustBeOnline;
   private String toolName = DEFAULT_TOOL_NAME;
 
   /** Instantiate with {@link #to}. */
