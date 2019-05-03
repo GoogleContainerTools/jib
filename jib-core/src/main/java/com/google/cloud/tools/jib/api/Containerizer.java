@@ -39,7 +39,6 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /** Configures how to containerize. */
-// TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class Containerizer {
 
   /**
@@ -83,7 +82,7 @@ public class Containerizer {
                 .pushImage();
 
     return new Containerizer(
-        DESCRIPTION_FOR_DOCKER_REGISTRY, imageConfiguration, stepsRunnerFactory);
+        DESCRIPTION_FOR_DOCKER_REGISTRY, imageConfiguration, stepsRunnerFactory, true);
   }
 
   /**
@@ -110,7 +109,8 @@ public class Containerizer {
                 .buildImage()
                 .loadDocker(dockerClientBuilder.build());
 
-    return new Containerizer(DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory);
+    return new Containerizer(
+        DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, false);
   }
 
   /**
@@ -132,12 +132,14 @@ public class Containerizer {
                 .buildImage()
                 .writeTarFile(tarImage.getOutputFile());
 
-    return new Containerizer(DESCRIPTION_FOR_TARBALL, imageConfiguration, stepsRunnerFactory);
+    return new Containerizer(
+        DESCRIPTION_FOR_TARBALL, imageConfiguration, stepsRunnerFactory, false);
   }
 
   private final String description;
   private final ImageConfiguration imageConfiguration;
   private final Function<BuildConfiguration, StepsRunner> stepsRunnerFactory;
+  private final boolean mustBeOnline;
 
   private final Set<String> additionalTags = new HashSet<>();
   @Nullable private ExecutorService executorService;
@@ -145,16 +147,19 @@ public class Containerizer {
   @Nullable private Path applicationLayersCacheDirectory;
   @Nullable private EventHandlers eventHandlers;
   private boolean allowInsecureRegistries = false;
+  private boolean offline = false;
   private String toolName = DEFAULT_TOOL_NAME;
 
   /** Instantiate with {@link #to}. */
   private Containerizer(
       String description,
       ImageConfiguration imageConfiguration,
-      Function<BuildConfiguration, StepsRunner> stepsRunnerFactory) {
+      Function<BuildConfiguration, StepsRunner> stepsRunnerFactory,
+      boolean mustBeOnline) {
     this.description = description;
     this.imageConfiguration = imageConfiguration;
     this.stepsRunnerFactory = stepsRunnerFactory;
+    this.mustBeOnline = mustBeOnline;
   }
 
   /**
@@ -236,6 +241,22 @@ public class Containerizer {
   }
 
   /**
+   * Sets whether or not to run the build in offline mode. In offline mode, the base image is
+   * retrieved from the cache instead of pulled from a registry, and the build will fail if the base
+   * image is not in the cache or if the target is an image registry.
+   *
+   * @param offline if {@code true}, the build will run in offline mode
+   * @return this
+   */
+  public Containerizer setOfflineMode(boolean offline) {
+    if (mustBeOnline && offline) {
+      throw new IllegalStateException("Cannot build to a container registry in offline mode");
+    }
+    this.offline = offline;
+    return this;
+  }
+
+  /**
    * Sets the name of the tool that is using Jib Core. The tool name is sent as part of the {@code
    * User-Agent} in registry requests and set as the {@code created_by} in the container layer
    * history. Defaults to {@code jib-core}.
@@ -281,6 +302,10 @@ public class Containerizer {
 
   boolean getAllowInsecureRegistries() {
     return allowInsecureRegistries;
+  }
+
+  boolean isOfflineMode() {
+    return offline;
   }
 
   String getToolName() {

@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Labels in the base image are now propagated ([#1643](https://github.com/GoogleContainerTools/jib/issues/1643))
+- Fixed an issue with using OCI base images ([#1683](https://github.com/GoogleContainerTools/jib/issues/1683))
 
 ## 1.1.2
 
