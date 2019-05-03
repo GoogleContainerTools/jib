@@ -104,6 +104,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
     Mockito.when(projectProperties.createContainerBuilder(Mockito.any()))
         .thenReturn(Jib.from("base"));
+    Mockito.when(projectProperties.isOffline()).thenReturn(false);
 
     Mockito.when(containerizer.setToolName(Mockito.anyString())).thenReturn(containerizer);
     Mockito.when(containerizer.setEventHandlers(Mockito.any(EventHandlers.class)))
@@ -114,6 +115,7 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(containerizer);
     Mockito.when(containerizer.setApplicationLayersCache(Mockito.any(Path.class)))
         .thenReturn(containerizer);
+    Mockito.when(containerizer.setOfflineMode(Mockito.anyBoolean())).thenReturn(containerizer);
   }
 
   @Test

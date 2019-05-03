@@ -216,6 +216,30 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
+  public void testBuild_failOffline() {
+    String targetImage =
+        "gcr.io/"
+            + IntegrationTestingConfiguration.getGCPProject()
+            + "/simpleimageoffline:gradle"
+            + System.nanoTime();
+
+    try {
+      simpleTestProject.build(
+          "--offline",
+          "clean",
+          "jib",
+          "-Djib.useOnlyProjectCache=true",
+          "-Djib.console=plain",
+          "-D_TARGET_IMAGE=" + targetImage);
+      Assert.fail();
+    } catch (UnexpectedBuildFailure ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString("Cannot build to a container registry in offline mode"));
+    }
+  }
+
+  @Test
   public void testDockerDaemon_simpleOnJava11()
       throws DigestException, IOException, InterruptedException {
     Assume.assumeTrue(isJava11RuntimeOrHigher());
