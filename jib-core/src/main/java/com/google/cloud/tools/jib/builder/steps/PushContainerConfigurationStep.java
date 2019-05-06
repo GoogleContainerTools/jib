@@ -26,7 +26,6 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -90,7 +89,7 @@ class PushContainerConfigurationStep
                 BuildStepType.PUSH_CONTAINER_CONFIGURATION, "pushing container configuration", 1);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
-      Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
+      Image image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
       Blob containerConfigurationBlob =
           new ImageToJsonTranslator(image).getContainerConfigurationBlob();
       BlobDescriptor blobDescriptor =

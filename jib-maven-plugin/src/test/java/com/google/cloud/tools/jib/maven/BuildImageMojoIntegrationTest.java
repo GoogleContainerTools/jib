@@ -371,6 +371,26 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
+  public void testExecute_failOffline() throws IOException {
+    String targetImage = getGcrImageReference("simpleimageoffline:maven");
+
+    // Test empty output error
+    try {
+      Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+      verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+      verifier.setAutoclean(false);
+      verifier.addCliOption("--offline");
+      verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
+      Assert.fail();
+
+    } catch (VerificationException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString("Cannot build to a container registry in offline mode"));
+    }
+  }
+
+  @Test
   public void testExecute_simpleOnJava11()
       throws DigestException, VerificationException, IOException, InterruptedException {
     Assume.assumeTrue(isJava11RuntimeOrHigher());

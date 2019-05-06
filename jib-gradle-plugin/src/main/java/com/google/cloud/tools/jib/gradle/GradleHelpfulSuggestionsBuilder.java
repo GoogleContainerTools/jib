@@ -66,12 +66,8 @@ class GradleHelpfulSuggestionsBuilder {
         "gradle clean",
         baseImageReference,
         !isCredHelperDefinedForBaseImage && !baseImageHasConfiguredCredentials,
-        "from.credHelper",
-        ignored -> "from.auth",
         targetImageReference,
         !isCredHelperDefinedForTargetImage && !targetImageHasConfiguredCredentials,
-        "to.credHelper",
-        ignored -> "to.auth",
         "jib.to.image",
         "--image",
         "build.gradle");

@@ -80,7 +80,7 @@ public class ImageTarballTest {
     Mockito.when(mockLayer2.getBlobDescriptor())
         .thenReturn(new BlobDescriptor(fileBSize, fakeDigestB));
     Mockito.when(mockLayer2.getDiffId()).thenReturn(fakeDigestB);
-    Image<Layer> testImage =
+    Image testImage =
         Image.builder(V22ManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();
 
     ImageTarball imageToTarball = new ImageTarball(testImage, ImageReference.parse("my/image:tag"));

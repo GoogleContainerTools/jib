@@ -129,14 +129,14 @@ public class ImageToJsonTranslator {
                 String::compareTo, keyMapper, ignored -> Collections.emptyMap()));
   }
 
-  private final Image<Layer> image;
+  private final Image image;
 
   /**
    * Instantiate with an {@link Image}.
    *
    * @param image the image to translate
    */
-  public ImageToJsonTranslator(Image<Layer> image) {
+  public ImageToJsonTranslator(Image image) {
     this.image = image;
   }
 

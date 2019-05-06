@@ -18,11 +18,18 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.common.io.Resources;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -36,6 +43,27 @@ import org.junit.rules.TemporaryFolder;
 
 /** Tests for {@link CacheStorageReader}. */
 public class CacheStorageReaderTest {
+
+  private static void setupCachedMetadataV21(Path cacheDirectory)
+      throws IOException, URISyntaxException {
+    Path imageDirectory = cacheDirectory.resolve("images/test/image!tag");
+    Files.createDirectories(imageDirectory);
+    Files.copy(
+        Paths.get(Resources.getResource("core/json/v21manifest.json").toURI()),
+        imageDirectory.resolve("manifest.json"));
+  }
+
+  private static void setupCachedMetadataV22(Path cacheDirectory)
+      throws IOException, URISyntaxException {
+    Path imageDirectory = cacheDirectory.resolve("images/test/image!tag");
+    Files.createDirectories(imageDirectory);
+    Files.copy(
+        Paths.get(Resources.getResource("core/json/v22manifest.json").toURI()),
+        imageDirectory.resolve("manifest.json"));
+    Files.copy(
+        Paths.get(Resources.getResource("core/json/containerconfig.json").toURI()),
+        imageDirectory.resolve("config.json"));
+  }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -75,9 +103,65 @@ public class CacheStorageReaderTest {
       Assert.fail("Listing digests should have failed");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertEquals("Found non-digest file in layers directory", ex.getMessage());
+      Assert.assertThat(
+          ex.getMessage(), CoreMatchers.startsWith("Found non-digest file in layers directory"));
       Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
     }
+  }
+
+  @Test
+  public void testRetrieveManifest_v21()
+      throws IOException, URISyntaxException, CacheCorruptedException {
+    Path cacheDirectory = temporaryFolder.newFolder().toPath();
+    setupCachedMetadataV21(cacheDirectory);
+
+    CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
+    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+
+    V21ManifestTemplate manifestTemplate =
+        (V21ManifestTemplate)
+            cacheStorageReader
+                .retrieveMetadata(ImageReference.of("test", "image", "tag"))
+                .get()
+                .getManifest();
+    Assert.assertEquals(1, manifestTemplate.getSchemaVersion());
+  }
+
+  @Test
+  public void testRetrieveManifest_v22()
+      throws IOException, URISyntaxException, CacheCorruptedException {
+    Path cacheDirectory = temporaryFolder.newFolder().toPath();
+    setupCachedMetadataV22(cacheDirectory);
+
+    CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
+    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+
+    V22ManifestTemplate manifestTemplate =
+        (V22ManifestTemplate)
+            cacheStorageReader
+                .retrieveMetadata(ImageReference.of("test", "image", "tag"))
+                .get()
+                .getManifest();
+    Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
+  }
+
+  @Test
+  public void testRetrieveContainerConfiguration()
+      throws IOException, URISyntaxException, CacheCorruptedException {
+    Path cacheDirectory = temporaryFolder.newFolder().toPath();
+    setupCachedMetadataV22(cacheDirectory);
+
+    CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
+    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+
+    ContainerConfigurationTemplate configurationTemplate =
+        cacheStorageReader
+            .retrieveMetadata(ImageReference.of("test", "image", "tag"))
+            .get()
+            .getConfig()
+            .get();
+    Assert.assertEquals("wasm", configurationTemplate.getArchitecture());
+    Assert.assertEquals("js", configurationTemplate.getOs());
   }
 
   @Test
@@ -111,12 +195,13 @@ public class CacheStorageReaderTest {
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertEquals(
-          "Multiple layer files found for layer with digest "
-              + layerDigest.getHash()
-              + " in directory: "
-              + cacheStorageFiles.getLayerDirectory(layerDigest),
-          ex.getMessage());
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.startsWith(
+              "Multiple layer files found for layer with digest "
+                  + layerDigest.getHash()
+                  + " in directory: "
+                  + cacheStorageFiles.getLayerDirectory(layerDigest)));
     }
   }
 
@@ -137,11 +222,12 @@ public class CacheStorageReaderTest {
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertEquals(
-          "Expected valid layer digest as contents of selector file `"
-              + selectorFile
-              + "` for selector `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`, but got: not a valid layer digest",
-          ex.getMessage());
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.startsWith(
+              "Expected valid layer digest as contents of selector file `"
+                  + selectorFile
+                  + "` for selector `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa`, but got: not a valid layer digest"));
     }
   }
 

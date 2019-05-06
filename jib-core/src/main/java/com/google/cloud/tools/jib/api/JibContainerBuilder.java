@@ -476,7 +476,6 @@ public class JibContainerBuilder {
       Containerizer containerizer, Supplier<ExecutorService> defaultExecutorServiceFactory)
       throws IOException, CacheDirectoryCreationException, InterruptedException, RegistryException,
           ExecutionException {
-
     boolean shutdownExecutorService = !containerizer.getExecutorService().isPresent();
     ExecutorService executorService =
         containerizer.getExecutorService().orElseGet(defaultExecutorServiceFactory);
@@ -527,6 +526,7 @@ public class JibContainerBuilder {
         .setContainerConfiguration(containerConfigurationBuilder.build())
         .setLayerConfigurations(layerConfigurations)
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
+        .setOffline(containerizer.isOfflineMode())
         .setToolName(containerizer.getToolName())
         .setExecutorService(executorService);
 

@@ -48,7 +48,7 @@ public class ImageTest {
 
   @Test
   public void test_smokeTest() throws LayerPropertyNotFoundException {
-    Image<Layer> image =
+    Image image =
         Image.builder(V22ManifestTemplate.class)
             .setCreated(Instant.ofEpochSecond(10000))
             .addEnvironmentVariable("crepecake", "is great")
@@ -80,7 +80,7 @@ public class ImageTest {
 
   @Test
   public void testDefaults() {
-    Image<Layer> image = Image.builder(V22ManifestTemplate.class).build();
+    Image image = Image.builder(V22ManifestTemplate.class).build();
     Assert.assertEquals("amd64", image.getArchitecture());
     Assert.assertEquals("linux", image.getOs());
     Assert.assertEquals(Collections.emptyList(), image.getLayers());
@@ -89,7 +89,7 @@ public class ImageTest {
 
   @Test
   public void testOsArch() {
-    Image<Layer> image =
+    Image image =
         Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").setOs("js").build();
     Assert.assertEquals("wasm", image.getArchitecture());
     Assert.assertEquals("js", image.getOs());

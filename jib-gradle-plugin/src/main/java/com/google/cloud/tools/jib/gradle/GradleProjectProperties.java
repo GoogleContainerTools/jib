@@ -311,4 +311,9 @@ class GradleProjectProperties implements ProjectProperties {
     }
     return Integer.valueOf(version.getMajorVersion());
   }
+
+  @Override
+  public boolean isOffline() {
+    return project.getGradle().getStartParameter().isOffline();
+  }
 }

@@ -184,6 +184,7 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   private final MavenProject project;
+  private final MavenSession session;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final EventHandlers eventHandlers;
   private final AbsoluteUnixPath appRoot;
@@ -193,6 +194,7 @@ public class MavenProjectProperties implements ProjectProperties {
       MavenProject project, MavenSession session, Log log, AbsoluteUnixPath appRoot) {
     this.project = project;
     this.appRoot = appRoot;
+    this.session = session;
     eventHandlers = makeEventHandlers(session, log, singleThreadedExecutor);
   }
 
@@ -334,5 +336,10 @@ public class MavenProjectProperties implements ProjectProperties {
       }
     }
     return 6; // maven-compiler-plugin default is 1.6
+  }
+
+  @Override
+  public boolean isOffline() {
+    return session.isOffline();
   }
 }

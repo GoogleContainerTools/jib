@@ -129,12 +129,8 @@ public class ConfigurationPropertyValidatorTest {
             "",
             mockImageReference,
             false,
-            "",
-            unused -> "",
             mockImageReference,
             false,
-            "",
-            unused -> "",
             "to",
             "--to",
             "build.txt");

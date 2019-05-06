@@ -28,5 +28,5 @@ jib {
     workingDirectory = '/home'
     extraClasspath = ['/d1','/d2']
   }
-  extraDirectory = file('src/main/custom-extra-dir')
+  extraDirectories.paths = file('src/main/custom-extra-dir')
 }

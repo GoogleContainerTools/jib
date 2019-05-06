@@ -69,7 +69,7 @@ public class FilesTaskV2 extends DefaultTask {
     addProjectFiles(project);
 
     // Add extra layer
-    List<Path> extraDirectories = jibExtension.getExtraDirectory().getPaths();
+    List<Path> extraDirectories = jibExtension.getExtraDirectories().getPaths();
     extraDirectories.stream().filter(Files::exists).forEach(skaffoldFilesOutput::addInput);
 
     // Find project dependencies
