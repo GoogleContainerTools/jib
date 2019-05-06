@@ -30,7 +30,7 @@ public class LockFileTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testLockAndRelease() throws InterruptedException {
+  public void testLockAndRelease() throws InterruptedException, IOException {
     AtomicInteger atomicInt = new AtomicInteger(0);
 
     // Runnable that would produce a race condition without a lock file
@@ -39,11 +39,6 @@ public class LockFileTest {
           try (LockFile ignored =
               LockFile.lock(temporaryFolder.getRoot().toPath().resolve("testLock"))) {
             Assert.assertTrue(Files.exists(temporaryFolder.getRoot().toPath().resolve("testLock")));
-
-            // Try deleting file
-            Files.delete(temporaryFolder.getRoot().toPath().resolve("testLock"));
-            Assert.assertFalse(
-                Files.exists(temporaryFolder.getRoot().toPath().resolve("testLock")));
 
             int valueBeforeSleep = atomicInt.intValue();
             Thread.sleep(500);
@@ -57,7 +52,11 @@ public class LockFileTest {
     // Run the runnable once in this thread + once in the main thread
     Thread thread = new Thread(procedure);
     thread.start();
-    procedure.run();
+
+    while (!Files.exists(temporaryFolder.getRoot().toPath().resolve("testLock"))) {
+      // wait until lock file exists so we can delete it
+    }
+    Files.delete(temporaryFolder.getRoot().toPath().resolve("testLock"));
     thread.join();
 
     // Assert no overlap while lock was in place
