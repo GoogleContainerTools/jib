@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.http.TestBlobProgressListener;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -54,23 +54,19 @@ public class BlobPullerIntegrationTest {
     DescriptorDigest realDigest = manifestTemplate.getLayerDigests().get(0);
 
     // Pulls a layer BLOB of the busybox image.
-    CountingDigestOutputStream layerOutputStream =
-        new CountingDigestOutputStream(ByteStreams.nullOutputStream());
     LongAdder totalByteCount = new LongAdder();
     LongAdder expectedSize = new LongAdder();
-    registryClient
-        .pullBlob(
+    Blob pulledBlob =
+        registryClient.pullBlob(
             realDigest,
             size -> {
               Assert.assertEquals(0, expectedSize.sum());
               expectedSize.add(size);
             },
-            new TestBlobProgressListener(totalByteCount::add))
-        .writeTo(layerOutputStream);
+            new TestBlobProgressListener(totalByteCount::add));
+    Assert.assertEquals(realDigest, pulledBlob.writeTo(ByteStreams.nullOutputStream()).getDigest());
     Assert.assertTrue(expectedSize.sum() > 0);
     Assert.assertEquals(expectedSize.sum(), totalByteCount.sum());
-
-    Assert.assertEquals(realDigest, layerOutputStream.toBlobDescriptor().getDigest());
   }
 
   @Test

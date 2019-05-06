@@ -19,11 +19,10 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.cache.LayerEntriesSelector.LayerEntryTemplate;
 import com.google.cloud.tools.jib.configuration.FilePermissions;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -108,10 +107,7 @@ public class LayerEntriesSelectorTest {
 
   @Test
   public void testGenerateSelector_empty() throws IOException {
-    DescriptorDigest expectedSelector =
-        JsonTemplateMapper.toBlob(ImmutableList.of())
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest();
+    DescriptorDigest expectedSelector = Digests.computeJsonDigest(ImmutableList.of());
     Assert.assertEquals(
         expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of()));
   }
@@ -119,9 +115,7 @@ public class LayerEntriesSelectorTest {
   @Test
   public void testGenerateSelector() throws IOException {
     DescriptorDigest expectedSelector =
-        JsonTemplateMapper.toBlob(toLayerEntryTemplates(inOrderLayerEntries))
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest();
+        Digests.computeJsonDigest(toLayerEntryTemplates(inOrderLayerEntries));
     Assert.assertEquals(
         expectedSelector, LayerEntriesSelector.generateSelector(outOfOrderLayerEntries));
   }

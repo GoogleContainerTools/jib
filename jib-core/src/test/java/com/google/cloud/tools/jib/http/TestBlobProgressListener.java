@@ -23,7 +23,7 @@ import java.util.function.Consumer;
  * Test implementation of {@link BlobProgressListener} that always forwards to a {@link Consumer
  * <Long>}.
  */
-public class TestBlobProgressListener implements BlobProgressListener, Consumer<Long> {
+public class TestBlobProgressListener implements BlobProgressListener {
 
   private final Consumer<Long> byteCountConsumer;
 
@@ -39,10 +39,5 @@ public class TestBlobProgressListener implements BlobProgressListener, Consumer<
   @Override
   public Duration getDelayBetweenCallbacks() {
     return Duration.ofSeconds(-1);
-  }
-
-  @Override
-  public void accept(Long byteCount) {
-    handleByteCount(byteCount);
   }
 }

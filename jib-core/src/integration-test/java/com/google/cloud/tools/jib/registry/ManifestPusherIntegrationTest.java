@@ -21,12 +21,11 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.TestBlobProgressListener;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.security.DigestException;
 import org.junit.Assert;
@@ -114,11 +113,7 @@ public class ManifestPusherIntegrationTest {
     V22ManifestTemplate manifestTemplateByDigest =
         registryClient.pullManifest(imageDigest.toString(), V22ManifestTemplate.class);
     Assert.assertEquals(
-        JsonTemplateMapper.toBlob(manifestTemplate)
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest(),
-        JsonTemplateMapper.toBlob(manifestTemplateByDigest)
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest());
+        Digests.computeJsonDigest(manifestTemplate),
+        Digests.computeJsonDigest(manifestTemplateByDigest));
   }
 }

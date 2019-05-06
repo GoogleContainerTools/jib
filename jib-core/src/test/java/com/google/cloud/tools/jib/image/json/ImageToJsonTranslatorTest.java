@@ -190,9 +190,6 @@ public class ImageToJsonTranslatorTest {
     T manifestTemplate =
         imageToJsonTranslator.getManifestTemplate(manifestTemplateClass, blobDescriptor);
 
-    ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonTemplateMapper.toBlob(manifestTemplate).writeTo(jsonStream);
-
-    Assert.assertEquals(expectedJson, new String(jsonStream.toByteArray(), StandardCharsets.UTF_8));
+    Assert.assertEquals(expectedJson, JsonTemplateMapper.toUtf8String(manifestTemplate));
   }
 }

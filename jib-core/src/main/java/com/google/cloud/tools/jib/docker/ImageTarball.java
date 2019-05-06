@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
@@ -77,10 +78,9 @@ public class ImageTarball {
 
     // Adds the manifest to tarball.
     manifestTemplate.setRepoTags(imageReference.toStringWithTag());
-    tarStreamBuilder.addByteEntry(
-        Blobs.writeToByteArray(
-            JsonTemplateMapper.toBlob(Collections.singletonList(manifestTemplate))),
-        MANIFEST_JSON_FILE_NAME);
+    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
+    JsonTemplateMapper.writeTo(Collections.singletonList(manifestTemplate), outStream);
+    tarStreamBuilder.addByteEntry(outStream.toByteArray(), MANIFEST_JSON_FILE_NAME);
 
     tarStreamBuilder.writeAsTarArchiveTo(out);
   }

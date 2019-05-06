@@ -248,7 +248,7 @@ class PullBaseImageStep
             || buildableManifestTemplate.getContainerConfiguration().getDigest() == null) {
           throw new UnknownManifestFormatException(
               "Invalid container configuration in Docker V2.2/OCI manifest: \n"
-                  + Blobs.writeToString(JsonTemplateMapper.toBlob(buildableManifestTemplate)));
+                  + JsonTemplateMapper.toUtf8String(buildableManifestTemplate));
         }
 
         DescriptorDigest containerConfigurationDigest =

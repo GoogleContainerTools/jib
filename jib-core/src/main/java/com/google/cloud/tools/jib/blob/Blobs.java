@@ -16,13 +16,12 @@
 
 package com.google.cloud.tools.jib.blob;
 
-import com.google.cloud.tools.jib.filesystem.FileOperations;
+import com.google.cloud.tools.jib.hash.WritableContents;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 /** Static methods for {@link Blob}. */
@@ -36,6 +35,10 @@ public class Blobs {
     return new FileBlob(file);
   }
 
+  public static Blob from(JsonTemplate template) {
+    return new JsonBlob(template);
+  }
+
   /**
    * Creates a {@link StringBlob} with UTF-8 encoding.
    *
@@ -46,8 +49,8 @@ public class Blobs {
     return new StringBlob(content);
   }
 
-  public static Blob from(BlobWriter writer) {
-    return new WriterBlob(writer);
+  public static Blob from(WritableContents writable) {
+    return new WritableContentsBlob(writable);
   }
 
   /**
@@ -72,34 +75,6 @@ public class Blobs {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     blob.writeTo(byteArrayOutputStream);
     return byteArrayOutputStream.toByteArray();
-  }
-
-  /**
-   * Writes the BLOB to a file.
-   *
-   * @param blob the BLOB to to write
-   * @param blobFile the file to write to
-   * @return the {@link BlobDescriptor} of the written BLOB
-   * @throws IOException if writing the BLOB fails
-   */
-  public static BlobDescriptor writeToFile(Blob blob, Path blobFile) throws IOException {
-    try (OutputStream outputStream = Files.newOutputStream(blobFile)) {
-      return blob.writeTo(outputStream);
-    }
-  }
-
-  /**
-   * Writes the BLOB to a file with an exclusive lock.
-   *
-   * @param blob the BLOB to to write
-   * @param blobFile the file to write to
-   * @return the {@link BlobDescriptor} of the written BLOB
-   * @throws IOException if writing the BLOB fails
-   */
-  public static BlobDescriptor writeToFileWithLock(Blob blob, Path blobFile) throws IOException {
-    try (OutputStream outputStream = FileOperations.newLockingOutputStream(blobFile)) {
-      return blob.writeTo(outputStream);
-    }
   }
 
   private Blobs() {}

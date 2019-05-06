@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.cache;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
@@ -46,15 +45,8 @@ import org.junit.rules.TemporaryFolder;
 /** Tests for {@link CacheStorageWriter}. */
 public class CacheStorageWriterTest {
 
-  private static DescriptorDigest getDigest(Blob blob) throws IOException {
-    return blob.writeTo(new CountingDigestOutputStream(ByteStreams.nullOutputStream())).getDigest();
-  }
-
-  private static BlobDescriptor getCompressedBlobDescriptor(Blob blob) throws IOException {
-    CountingDigestOutputStream compressedDigestOutputStream =
-        new CountingDigestOutputStream(ByteStreams.nullOutputStream());
-    compress(blob).writeTo(compressedDigestOutputStream);
-    return compressedDigestOutputStream.toBlobDescriptor();
+  private static BlobDescriptor getDigest(Blob blob) throws IOException {
+    return blob.writeTo(ByteStreams.nullOutputStream());
   }
 
   private static Blob compress(Blob blob) {
@@ -94,8 +86,8 @@ public class CacheStorageWriterTest {
   @Test
   public void testWrite_uncompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
-    DescriptorDigest layerDigest = getCompressedBlobDescriptor(uncompressedLayerBlob).getDigest();
-    DescriptorDigest selector = getDigest(Blobs.from("selector"));
+    DescriptorDigest layerDigest = getDigest(compress(uncompressedLayerBlob)).getDigest();
+    DescriptorDigest selector = getDigest(Blobs.from("selector")).getDigest();
 
     CachedLayer cachedLayer =
         new CacheStorageWriter(cacheStorageFiles)
@@ -167,8 +159,8 @@ public class CacheStorageWriterTest {
 
   private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)
       throws IOException {
-    BlobDescriptor layerBlobDescriptor = getCompressedBlobDescriptor(uncompressedLayerBlob);
-    DescriptorDigest layerDiffId = getDigest(uncompressedLayerBlob);
+    BlobDescriptor layerBlobDescriptor = getDigest(compress(uncompressedLayerBlob));
+    DescriptorDigest layerDiffId = getDigest(uncompressedLayerBlob).getDigest();
 
     // Verifies cachedLayer is correct.
     Assert.assertEquals(layerBlobDescriptor.getDigest(), cachedLayer.getDigest());
