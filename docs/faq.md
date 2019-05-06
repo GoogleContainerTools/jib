@@ -347,13 +347,13 @@ Jib currently requires configuring your build tool to use the appropriate [Java 
 
 ### What should I do when the registry responds with Forbidden or DENIED?
 
-If the registry returns "403 Forbidden" or `"code":"DENIED"`, it often means Jib successfully authenticated using credentials you provided but the credentials do not have permissions to pull or push images. Make sure your account/role has the permissions to do the operation.
+If the registry returns `403 Forbidden` or `"code":"DENIED"`, it often means Jib successfully authenticated using your credentials but the credentials do not have permissions to pull or push images. Make sure your account/role has the permissions to do the operation.
 
-However, depending on registry implementations, it is also possible that the registry actually meant you are not authenticated. Sometimes, it may be due to Jib picking up different credentials, credentials incorrectly configured, or typos in auth configuration. Or, it may be that your credentials work for pulling the base image but not for pushing. See [What should I do when the registry responds with UNAUTHORIZED?](#what-should-i-do-when-the-registry-responds-with-unauthorized) to ensure you have set up credentials correctly.
+Depending on registry implementations, it is also possible that the registry actually meant you are not authenticated. See [What should I do when the registry responds with UNAUTHORIZED?](#what-should-i-do-when-the-registry-responds-with-unauthorized) to ensure you have set up credentials correctly.
 
 ### What should I do when the registry responds with UNAUTHORIZED?
 
-If the registry returns "401 Unauthorized" or `"code":"UNAUTHORIZED"`, it is often due to credential misconfiguration. Examples:
+If the registry returns `401 Unauthorized` or `"code":"UNAUTHORIZED"`, it is often due to credential misconfiguration. Examples:
 
 * You did not configure auth information in the default places where Jib searches.
    - `$HOME/.docker/config.json`, [one of the configuration files](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files) for the `docker` command line tool. See [configuration files document](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files), [credential store](https://docs.docker.com/engine/reference/commandline/login/#credentials-store) and [credential helper](https://docs.docker.com/engine/reference/commandline/login/#credential-helpers) sections, and [this](https://github.com/GoogleContainerTools/jib/issues/101) for how to configure auth. For example, you can do `docker login` to save auth in `config.json`, but it is often recommended to configure a credential helper (also configurable in `config.json`).
@@ -362,10 +362,10 @@ If the registry returns "401 Unauthorized" or `"code":"UNAUTHORIZED"`, it is oft
       - Configuring credential helpers: [`<from/to><credHelper>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#using-docker-credential-helpers) for Maven / [`from/to.credHelper`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-docker-credential-helpers) for Gradle
       - Specific credentials (not recommend): [`<from/to><auth><username>/<password>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#using-specific-credentials) or in [`settings.xml`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#using-maven-settings) for Maven / [`from/to.auth.username/password`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-specific-credentials) for Gradle
       - These parameters can also be set through properties: [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#system-properties) / [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#system-properties)
-* There exist different auth configurations in multiple places, and Jib is not picking up the auth information you are working on.
+* Different auth configurations exist in multiple places, and Jib is not picking up the auth information you are working on.
 * You configured a credential helper, but the helper is not on `$PATH`. This is especially common when running Jib inside IDE where the IDE binary is launched directly from an OS menu and does not have access to your shell's environment.
 * Typos in username, password, image names, or registry names.
-* You are using a private registry without HTTPS. See [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries) if this is the case.
+* You are using a private registry without HTTPS. See [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries).
 
 If you encounter issues interacting with a registry other than `UNAUTHORIZED`, check ["How can I diagnose problems pulling or pushing from remote registries?"](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries).
 

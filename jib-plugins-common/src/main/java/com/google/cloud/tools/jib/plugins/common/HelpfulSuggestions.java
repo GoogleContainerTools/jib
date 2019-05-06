@@ -183,19 +183,15 @@ public class HelpfulSuggestions {
     Preconditions.checkNotNull(baseImageReference);
     Preconditions.checkNotNull(targetImageReference);
 
-    final String unauthorizedEntity;
+    String unauthorizedEntity = registry;
     if (registry.equals(baseImageReference.getRegistry())
         && repository.equals(baseImageReference.getRepository())
         && noCredentialsDefinedForBaseImage) {
       unauthorizedEntity = baseImageReference.toString();
-
     } else if (registry.equals(targetImageReference.getRegistry())
         && repository.equals(targetImageReference.getRepository())
         && noCredentialsDefinedForTargetImage) {
       unauthorizedEntity = targetImageReference.toString();
-
-    } else {
-      unauthorizedEntity = registry;
     }
 
     return suggest(
