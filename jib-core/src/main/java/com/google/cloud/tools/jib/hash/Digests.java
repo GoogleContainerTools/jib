@@ -33,7 +33,7 @@ import java.util.List;
 // Note: intentionally this class does not depend on Blob, as Blob classes depend on this class.
 // TODO: BlobDescriptor is merely a tuple of (size, digest). Rename BlobDescriptor to something
 // more general.
-public class DigestUtil {
+public class Digests {
 
   public static DescriptorDigest computeJsonDigest(JsonTemplate template) throws IOException {
     return computeDigest(template, ByteStreams.nullOutputStream()).getDigest();

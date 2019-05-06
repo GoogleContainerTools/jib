@@ -20,7 +20,7 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.hash.DigestUtil;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -90,7 +90,7 @@ public class ManifestPusherTest {
 
   @Test
   public void testHandleResponse_valid() throws IOException {
-    DescriptorDigest expectedDigest = DigestUtil.computeJsonDigest(fakeManifestTemplate);
+    DescriptorDigest expectedDigest = Digests.computeJsonDigest(fakeManifestTemplate);
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Collections.singletonList(expectedDigest.toString()));
     Assert.assertEquals(expectedDigest, testManifestPusher.handleResponse(mockResponse));
@@ -98,7 +98,7 @@ public class ManifestPusherTest {
 
   @Test
   public void testHandleResponse_noDigest() throws IOException {
-    DescriptorDigest expectedDigest = DigestUtil.computeJsonDigest(fakeManifestTemplate);
+    DescriptorDigest expectedDigest = Digests.computeJsonDigest(fakeManifestTemplate);
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Collections.emptyList());
 
@@ -109,7 +109,7 @@ public class ManifestPusherTest {
 
   @Test
   public void testHandleResponse_multipleDigests() throws IOException {
-    DescriptorDigest expectedDigest = DigestUtil.computeJsonDigest(fakeManifestTemplate);
+    DescriptorDigest expectedDigest = Digests.computeJsonDigest(fakeManifestTemplate);
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Arrays.asList("too", "many"));
 
@@ -121,7 +121,7 @@ public class ManifestPusherTest {
 
   @Test
   public void testHandleResponse_invalidDigest() throws IOException {
-    DescriptorDigest expectedDigest = DigestUtil.computeJsonDigest(fakeManifestTemplate);
+    DescriptorDigest expectedDigest = Digests.computeJsonDigest(fakeManifestTemplate);
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Collections.singletonList("not valid"));
 
