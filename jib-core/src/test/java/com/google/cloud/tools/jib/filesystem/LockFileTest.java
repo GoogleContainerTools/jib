@@ -40,6 +40,11 @@ public class LockFileTest {
               LockFile.lock(temporaryFolder.getRoot().toPath().resolve("testLock"))) {
             Assert.assertTrue(Files.exists(temporaryFolder.getRoot().toPath().resolve("testLock")));
 
+            // Try deleting file
+            Files.delete(temporaryFolder.getRoot().toPath().resolve("testLock"));
+            Assert.assertFalse(
+                Files.exists(temporaryFolder.getRoot().toPath().resolve("testLock")));
+
             int valueBeforeSleep = atomicInt.intValue();
             Thread.sleep(500);
             atomicInt.set(valueBeforeSleep + 1);
