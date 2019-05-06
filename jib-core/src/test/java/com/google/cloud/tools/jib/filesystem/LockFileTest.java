@@ -41,7 +41,7 @@ public class LockFileTest {
             Assert.assertTrue(Files.exists(temporaryFolder.getRoot().toPath().resolve("testLock")));
 
             int valueBeforeSleep = atomicInt.intValue();
-            Thread.sleep(100);
+            Thread.sleep(500);
             atomicInt.set(valueBeforeSleep + 1);
 
           } catch (InterruptedException | IOException ex) {
