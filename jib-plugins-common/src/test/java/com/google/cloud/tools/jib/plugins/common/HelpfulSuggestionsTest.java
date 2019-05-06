@@ -51,7 +51,7 @@ public class HelpfulSuggestionsTest {
         "messagePrefix, perhaps you should check that 'cacheDirectory' is not used by another application or set the `jib.useOnlyProjectCache` system property",
         TEST_HELPFUL_SUGGESTIONS.forCacheDirectoryNotOwned(Paths.get("cacheDirectory")));
     Assert.assertEquals(
-        "messagePrefix, perhaps you should make sure you have permissions for imageReference and set correct credentials for the registry. See https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied for help",
+        "messagePrefix, perhaps you should make sure you have permissions for imageReference and set correct credentials. See https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied for help",
         TEST_HELPFUL_SUGGESTIONS.forHttpStatusCodeForbidden("imageReference"));
     Assert.assertEquals(
         "messagePrefix, perhaps you should make sure your credentials for 'baseregistry/baserepository' are set up correctly. See https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-unauthorized for help",

@@ -175,7 +175,7 @@ public class HelpfulSuggestions {
     return suggest(
         "make sure you have permissions for "
             + imageReference
-            + " and set correct credentials for the registry. See "
+            + " and set correct credentials. See "
             + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied for help");
   }
 
@@ -183,24 +183,24 @@ public class HelpfulSuggestions {
     Preconditions.checkNotNull(baseImageReference);
     Preconditions.checkNotNull(targetImageReference);
 
-    final String unauthorizedRegistry;
+    final String unauthorizedEntity;
     if (registry.equals(baseImageReference.getRegistry())
         && repository.equals(baseImageReference.getRepository())
         && noCredentialsDefinedForBaseImage) {
-      unauthorizedRegistry = baseImageReference.toString();
+      unauthorizedEntity = baseImageReference.toString();
 
     } else if (registry.equals(targetImageReference.getRegistry())
         && repository.equals(targetImageReference.getRepository())
         && noCredentialsDefinedForTargetImage) {
-      unauthorizedRegistry = targetImageReference.toString();
+      unauthorizedEntity = targetImageReference.toString();
 
     } else {
-      unauthorizedRegistry = registry;
+      unauthorizedEntity = registry;
     }
 
     return suggest(
         "make sure your credentials for '"
-            + unauthorizedRegistry
+            + unauthorizedEntity
             + "' are set up correctly. See "
             + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-unauthorized for help");
   }
