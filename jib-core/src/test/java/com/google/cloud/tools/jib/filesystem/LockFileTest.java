@@ -30,7 +30,7 @@ public class LockFileTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testLockAndRelease() throws InterruptedException, IOException {
+  public void testLockAndRelease() throws InterruptedException {
     AtomicInteger atomicInt = new AtomicInteger(0);
 
     // Runnable that would produce a race condition without a lock file
@@ -41,7 +41,7 @@ public class LockFileTest {
             Assert.assertTrue(Files.exists(temporaryFolder.getRoot().toPath().resolve("testLock")));
 
             int valueBeforeSleep = atomicInt.intValue();
-            Thread.sleep(500);
+            Thread.sleep(100);
             atomicInt.set(valueBeforeSleep + 1);
 
           } catch (InterruptedException | IOException ex) {
