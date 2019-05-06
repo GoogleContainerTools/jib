@@ -73,10 +73,16 @@ public class LockFile implements Closeable {
 
     } finally {
       try {
-        Preconditions.checkNotNull(lockMap.get(lockFile)).unlock();
         Files.delete(lockFile);
 
-      } catch (IllegalMonitorStateException | IOException ignored) {
+      } catch (IOException ignored) {
+
+      } finally {
+        try {
+          Preconditions.checkNotNull(lockMap.get(lockFile)).unlock();
+
+        } catch (IllegalMonitorStateException ignored) {
+        }
       }
     }
   }

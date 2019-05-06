@@ -52,11 +52,7 @@ public class LockFileTest {
     // Run the runnable once in this thread + once in the main thread
     Thread thread = new Thread(procedure);
     thread.start();
-
-    while (!Files.exists(temporaryFolder.getRoot().toPath().resolve("testLock"))) {
-      // wait until lock file exists so we can delete it
-    }
-    Files.delete(temporaryFolder.getRoot().toPath().resolve("testLock"));
+    procedure.run();
     thread.join();
 
     // Assert no overlap while lock was in place
