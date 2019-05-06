@@ -51,12 +51,8 @@ public class JibBuildRunnerTest {
           "clearCacheCommand",
           ImageReference.of("someregistry", "somerepository", null),
           false,
-          "baseImageCredHelperConfiguration",
-          registry -> "baseImageAuthConfiguration " + registry,
           ImageReference.of("toRegistry", "torepository", null),
           false,
-          "targetImageCredHelperConfiguration",
-          registry -> "targetImageAuthConfiguration " + registry,
           "toConfig",
           "toFlag",
           "buildFile");
