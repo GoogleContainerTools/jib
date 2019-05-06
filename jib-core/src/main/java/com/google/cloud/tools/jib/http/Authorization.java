@@ -59,7 +59,7 @@ public class Authorization {
   private final String scheme;
   private final String token;
 
-  Authorization(String scheme, String token) {
+  private Authorization(String scheme, String token) {
     this.scheme = scheme;
     this.token = token;
   }
