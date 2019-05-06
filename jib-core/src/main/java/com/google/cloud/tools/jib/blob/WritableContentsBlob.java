@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.blob;
 
-import com.google.cloud.tools.jib.hash.DigestUtil;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.hash.WritableContents;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -32,6 +32,6 @@ class WritableContentsBlob implements Blob {
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    return DigestUtil.computeDigest(writableContents, outputStream);
+    return Digests.computeDigest(writableContents, outputStream);
   }
 }

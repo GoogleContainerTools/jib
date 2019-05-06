@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.DigestOnlyLayer;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.ReferenceLayer;
@@ -71,9 +70,9 @@ public class JsonToImageTranslator {
    * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
    *     format
    */
-  public static Image<Layer> toImage(V21ManifestTemplate manifestTemplate)
+  public static Image toImage(V21ManifestTemplate manifestTemplate)
       throws LayerPropertyNotFoundException, BadContainerConfigurationFormatException {
-    Image.Builder<Layer> imageBuilder = Image.builder(V21ManifestTemplate.class);
+    Image.Builder imageBuilder = Image.builder(V21ManifestTemplate.class);
 
     // V21 layers are in reverse order of V22. (The first layer is the latest one.)
     for (DescriptorDigest digest : Lists.reverse(manifestTemplate.getLayerDigests())) {
@@ -101,7 +100,7 @@ public class JsonToImageTranslator {
    * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
    *     format
    */
-  public static Image<Layer> toImage(
+  public static Image toImage(
       BuildableManifestTemplate manifestTemplate,
       ContainerConfigurationTemplate containerConfigurationTemplate)
       throws LayerCountMismatchException, LayerPropertyNotFoundException,
@@ -125,7 +124,7 @@ public class JsonToImageTranslator {
           "Mismatch between image manifest and container configuration");
     }
 
-    Image.Builder<Layer> imageBuilder = Image.builder(manifestTemplate.getClass());
+    Image.Builder imageBuilder = Image.builder(manifestTemplate.getClass());
 
     for (int layerIndex = 0; layerIndex < layers.size(); layerIndex++) {
       ReferenceNoDiffIdLayer noDiffIdLayer = layers.get(layerIndex);
@@ -139,8 +138,7 @@ public class JsonToImageTranslator {
   }
 
   private static void configureBuilderWithContainerConfiguration(
-      Image.Builder<Layer> imageBuilder,
-      ContainerConfigurationTemplate containerConfigurationTemplate)
+      Image.Builder imageBuilder, ContainerConfigurationTemplate containerConfigurationTemplate)
       throws BadContainerConfigurationFormatException {
 
     containerConfigurationTemplate.getHistory().forEach(imageBuilder::addHistory);

@@ -27,8 +27,8 @@
     <jib.container.labels>key1=value1,key2=value2</jib.container.labels>
     <jib.container.volumes>/var/log,/var/log2</jib.container.volumes>
     <jib.container.format>Docker</jib.container.format>
-    <jib.extraDirectory.path>${project.basedir}/src/main/jib-custom</jib.extraDirectory.path>
-    <jib.extraDirectory.permissions>/foo=755,/bar/cat=777</jib.extraDirectory.permissions>
+    <jib.extraDirectories.paths>${project.basedir}/src/main/jib-custom</jib.extraDirectories.paths>
+    <jib.extraDirectories.permissions>/foo=755,/bar/cat=777</jib.extraDirectories.permissions>
     <jib.allowInsecureRegistries>true</jib.allowInsecureRegistries>
   </properties>
 

@@ -57,6 +57,7 @@ public class BuildConfiguration {
     @Nullable private Path applicationLayersCacheDirectory;
     @Nullable private Path baseImageLayersCacheDirectory;
     private boolean allowInsecureRegistries = false;
+    private boolean offline = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
@@ -158,6 +159,17 @@ public class BuildConfiguration {
     }
 
     /**
+     * Sets whether or not to perform the build in offline mode.
+     *
+     * @param offline if {@code true}, the build will run in offline mode
+     * @return this
+     */
+    public Builder setOffline(boolean offline) {
+      this.offline = offline;
+      return this;
+    }
+
+    /**
      * Sets the layers to build.
      *
      * @param layerConfigurations the configurations for the layers
@@ -246,6 +258,7 @@ public class BuildConfiguration {
               Cache.withDirectory(Preconditions.checkNotNull(applicationLayersCacheDirectory)),
               targetFormat,
               allowInsecureRegistries,
+              offline,
               layerConfigurations,
               toolName,
               eventDispatcher,
@@ -298,6 +311,7 @@ public class BuildConfiguration {
   private final Cache applicationLayersCache;
   private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean allowInsecureRegistries;
+  private final boolean offline;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
   private final String toolName;
   private final EventDispatcher eventDispatcher;
@@ -313,6 +327,7 @@ public class BuildConfiguration {
       Cache applicationLayersCache,
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
+      boolean offline,
       ImmutableList<LayerConfiguration> layerConfigurations,
       String toolName,
       EventDispatcher eventDispatcher,
@@ -325,6 +340,7 @@ public class BuildConfiguration {
     this.applicationLayersCache = applicationLayersCache;
     this.targetFormat = targetFormat;
     this.allowInsecureRegistries = allowInsecureRegistries;
+    this.offline = offline;
     this.layerConfigurations = layerConfigurations;
     this.toolName = toolName;
     this.eventDispatcher = eventDispatcher;
@@ -393,6 +409,15 @@ public class BuildConfiguration {
    */
   public boolean getAllowInsecureRegistries() {
     return allowInsecureRegistries;
+  }
+
+  /**
+   * Gets whether or not to run the build in offline mode.
+   *
+   * @return {@code true} if the build will run in offline mode; {@code false} otherwise
+   */
+  public boolean isOffline() {
+    return offline;
   }
 
   /**

@@ -72,4 +72,6 @@ public interface ProjectProperties {
   String getVersion();
 
   int getMajorJavaVersion();
+
+  boolean isOffline();
 }

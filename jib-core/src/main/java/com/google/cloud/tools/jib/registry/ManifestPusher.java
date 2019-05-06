@@ -21,7 +21,7 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.hash.DigestUtil;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
@@ -123,7 +123,7 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   @Override
   public DescriptorDigest handleResponse(Response response) throws IOException {
     // Checks if the image digest is as expected.
-    DescriptorDigest expectedDigest = DigestUtil.computeJsonDigest(manifestTemplate);
+    DescriptorDigest expectedDigest = Digests.computeJsonDigest(manifestTemplate);
 
     List<String> receivedDigests = response.getHeader(RESPONSE_DIGEST_HEADER);
     if (receivedDigests.size() == 1) {

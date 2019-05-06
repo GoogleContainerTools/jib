@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.hash.DigestUtil;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.json.JsonTemplate;
@@ -141,7 +141,7 @@ class LayerEntriesSelector {
    */
   static DescriptorDigest generateSelector(ImmutableList<LayerEntry> layerEntries)
       throws IOException {
-    return DigestUtil.computeJsonDigest(toSortedJsonTemplates(layerEntries));
+    return Digests.computeJsonDigest(toSortedJsonTemplates(layerEntries));
   }
 
   private LayerEntriesSelector() {}

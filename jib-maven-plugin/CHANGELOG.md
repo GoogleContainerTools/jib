@@ -7,12 +7,17 @@ All notable changes to this project will be documented in this file.
 
 - Container configurations in the base image are now propagated when registry uses the old V2 image manifest, schema version 1 (such as Quay) ([#1641](https://github.com/GoogleContainerTools/jib/issues/1641))
 - Can now prepend paths in the container to the computed classpath with `<jib><container><extraClasspath>` ([#1642](https://github.com/GoogleContainerTools/jib/pull/1642))
+- Can now build in offline mode using `--offline` ([#718](https://github.com/GoogleContainerTools/jib/issues/718))
+- Now supports multiple extra directories with `<container><extraDirectories>{<paths><path>|<permissions>}` ([#1020](https://github.com/GoogleContainerTools/jib/issues/1020))
 
 ### Changed
+
+- `<extraDirectory>(<path>|<permissions>)` are deprecated in favor of the new `<extraDirectories>{<paths><path>|<permissions>}` configurations ([#1626](https://github.com/GoogleContainerTools/jib/pull/1626))
 
 ### Fixed
 
 - Labels in the base image are now propagated ([#1643](https://github.com/GoogleContainerTools/jib/issues/1643))
+- Fixed an issue with using OCI base images ([#1683](https://github.com/GoogleContainerTools/jib/issues/1683))
 
 ## 1.1.2
 

@@ -48,7 +48,7 @@ public class CacheStorageFilesTest {
     Assert.assertEquals(
         DescriptorDigest.fromHash(
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
-        CacheStorageFiles.getDiffId(
+        TEST_CACHE_STORAGE_FILES.getDiffId(
             Paths.get(
                 "layer",
                 "file",
@@ -56,33 +56,35 @@ public class CacheStorageFilesTest {
     Assert.assertEquals(
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-        CacheStorageFiles.getDiffId(
+        TEST_CACHE_STORAGE_FILES.getDiffId(
             Paths.get("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
   }
 
   @Test
   public void testGetDiffId_corrupted() {
     try {
-      CacheStorageFiles.getDiffId(Paths.get("not long enough"));
+      TEST_CACHE_STORAGE_FILES.getDiffId(Paths.get("not long enough"));
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertEquals(
-          "Layer file did not include valid diff ID: not long enough", ex.getMessage());
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.startsWith("Layer file did not include valid diff ID: not long enough"));
       Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
     }
 
     try {
-      CacheStorageFiles.getDiffId(
+      TEST_CACHE_STORAGE_FILES.getDiffId(
           Paths.get(
               "not valid hash bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
-      Assert.assertEquals(
-          "Layer file did not include valid diff ID: "
-              + "not valid hash bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-          ex.getMessage());
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.startsWith(
+              "Layer file did not include valid diff ID: "
+                  + "not valid hash bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
       Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
     }
   }

@@ -25,7 +25,7 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.hash.DigestUtil;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
@@ -164,7 +164,7 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
                 }));
       }
 
-      DescriptorDigest imageDigest = DigestUtil.computeJsonDigest(manifestTemplate);
+      DescriptorDigest imageDigest = Digests.computeJsonDigest(manifestTemplate);
       DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
       BuildResult result = new BuildResult(imageDigest, imageId);
 

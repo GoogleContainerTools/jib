@@ -6,12 +6,14 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Container configurations in the base image are now propagated when registry uses the old V2 image manifest, schema version 1 (such as Quay) ([#1641](https://github.com/GoogleContainerTools/jib/issues/1641))
+- `Containerizer#setOfflineMode` to retrieve the base image from Jib's cache rather than a container registry ([#718](https://github.com/GoogleContainerTools/jib/issues/718))
 
 ### Changed
 
 ### Fixed
 
 - Labels in the base image are now propagated ([#1643](https://github.com/GoogleContainerTools/jib/issues/1643))
+- Fixed an issue with using OCI base images ([#1683](https://github.com/GoogleContainerTools/jib/issues/1683))
 
 ## 0.9.1
 

@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.blob;
 
-import com.google.cloud.tools.jib.hash.DigestUtil;
+import com.google.cloud.tools.jib.hash.Digests;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +36,7 @@ class StringBlob implements Blob {
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
     try (InputStream stringIn =
         new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8))) {
-      return DigestUtil.computeDigest(stringIn, outputStream);
+      return Digests.computeDigest(stringIn, outputStream);
     }
   }
 }

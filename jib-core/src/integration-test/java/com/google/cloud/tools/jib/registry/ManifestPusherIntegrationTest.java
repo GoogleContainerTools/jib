@@ -21,7 +21,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.hash.DigestUtil;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -111,7 +111,7 @@ public class ManifestPusherIntegrationTest {
     V22ManifestTemplate manifestTemplateByDigest =
         registryClient.pullManifest(imageDigest.toString(), V22ManifestTemplate.class);
     Assert.assertEquals(
-        DigestUtil.computeJsonDigest(manifestTemplate),
-        DigestUtil.computeJsonDigest(manifestTemplateByDigest));
+        Digests.computeJsonDigest(manifestTemplate),
+        Digests.computeJsonDigest(manifestTemplateByDigest));
   }
 }
