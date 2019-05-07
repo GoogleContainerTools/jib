@@ -220,7 +220,7 @@ Field | Type | Default | Description
 `to` | [`to`](#to-object) | *Required* | Configures the target image to build your application to.
 `from` | [`from`](#from-object) | See [`from`](#from-object) | Configures the base image to build your application on top of.
 `container` | [`container`](#container-object) | See [`container`](#container-object) | Configures the container that is run from your image.
-`extraDirectory` | [`extraDirectory`](#extradirectory-object) / string | `(project-dir)/src/main/jib` | Configures the directory used to add arbitrary files to the image.
+`extraDirectories` | [`extraDirectories`](#extradirectories-object) | See [`extraDirectories`](#extradirectories-object) | Configures the directories used to add arbitrary files to the image.
 `allowInsecureRegistries` | boolean | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 `skip` | boolean | `false` | If set to true, Jib execution is skipped (useful for multi-module projects). This can also be specified via the `-Djib.skip` command line option.
 
@@ -266,12 +266,12 @@ Property | Type | Default | Description
 `volumes` | list | *None* | Specifies a list of mount points on the container.
 `workingDirectory` | string | *None* | The working directory in the container.
 
-<a name="extradirectory-object"></a>`extraDirectory` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
+<a name="extradirectories-object"></a>`extraDirectories` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
 
-Property | Type
---- | ---
-`path` | string
-`permissions` | list
+Property | Type | Default | Description
+--- | --- | --- | ---
+`paths` | list | `[(project-dir)/src/main/jib]` | List of extra directories. Can be absolute or relative to the project root.
+`permissions` | list | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
 
 <a name="dockerclient-object"></a>**(`jib:dockerBuild` only)** `dockerClient` is an object with the following properties:
 
@@ -362,20 +362,25 @@ In this configuration, the image:
 
 You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
-You can configure a different directory by using the `<extraDirectory>` parameter in your `pom.xml`:
+You can configure different directories by using the `<extraDirectories>` parameter in your `pom.xml`:
 ```xml
 <configuration>
-  <!-- Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib' -->
-  <extraDirectory>${project.basedir}/src/main/custom-extra-dir</extraDirectory>
+  <!-- Copies files from 'src/main/custom-extra-dir' and '/home/user/jib-extras' instead of 'src/main/jib' -->
+  <extraDirectories>
+    <paths>
+      <path>src/main/custom-extra-dir</path>
+      <path>/home/user/jib-extras</path>
+    </paths>
+  </extraDirectories>
 </configuration>
 ```
 
-Alternatively, the `<extraDirectory>` parameter can be used as an object to set a custom extra directory, as well as the extra files' permissions on the container:
+Alternatively, the `<extraDirectories>` parameter can be used as an object to set custom extra directories, as well as the extra files' permissions on the container:
 
 ```xml
 <configuration>
-  <extraDirectory>
-    <path>${project.basedir}/src/main/custom-extra-dir</path> <!-- Copies files from 'src/main/custom-extra-dir' -->
+  <extraDirectories>
+    <paths>src/main/custom-extra-dir</paths> <!-- Copies files from 'src/main/custom-extra-dir' -->
     <permissions>
       <permission>
         <file>/path/on/container/to/fileA</file>
@@ -386,7 +391,7 @@ Alternatively, the `<extraDirectory>` parameter can be used as an object to set 
         <mode>644</mode> <!-- Read/write for owner, read-only for group/other -->
       </permission>
     </permissions>
-  </extraDirectory>
+  </extraDirectories>
 </configuration>
 ```
 
