@@ -45,6 +45,10 @@ public class Digests {
     return computeDigest(contents, ByteStreams.nullOutputStream()).getDigest();
   }
 
+  public static BlobDescriptor computeDigest(JsonTemplate template) throws IOException {
+    return computeDigest(template, ByteStreams.nullOutputStream());
+  }
+
   public static BlobDescriptor computeDigest(JsonTemplate template, OutputStream optionalOutStream)
       throws IOException {
     WritableContents contents = contentsOut -> JsonTemplateMapper.writeTo(template, contentsOut);
@@ -97,6 +101,6 @@ public class Digests {
     CountingDigestOutputStream digestOutStream = new CountingDigestOutputStream(optionalOutStream);
     contents.writeTo(digestOutStream);
     digestOutStream.flush();
-    return new BlobDescriptor(digestOutStream.getBytesHahsed(), digestOutStream.getDigest());
+    return digestOutStream.computeDigest();
   }
 }

@@ -18,13 +18,13 @@ package com.google.cloud.tools.jib.image.json;
 
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.configuration.Port;
 import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -145,7 +145,7 @@ public class ImageToJsonTranslator {
    *
    * @return the container configuration {@link Blob}
    */
-  public Blob getContainerConfigurationBlob() {
+  public JsonTemplate getContainerConfiguration() {
     // Set up the JSON template.
     ContainerConfigurationTemplate template = new ContainerConfigurationTemplate();
 
@@ -188,8 +188,7 @@ public class ImageToJsonTranslator {
       template.setContainerHealthCheckRetries(healthCheck.getRetries().orElse(null));
     }
 
-    // Serializes into JSON.
-    return Blobs.from(template);
+    return template;
   }
 
   /**

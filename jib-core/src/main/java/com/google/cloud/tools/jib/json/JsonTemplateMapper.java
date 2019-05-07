@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -129,6 +130,16 @@ public class JsonTemplateMapper {
     return toUtf8String((Object) templates);
   }
 
+  public static byte[] toByteArray(JsonTemplate template)
+      throws JsonGenerationException, JsonMappingException, IOException {
+    return toByteArray((Object) template);
+  }
+
+  public static byte[] toByteArray(List<? extends JsonTemplate> templates)
+      throws JsonGenerationException, JsonMappingException, IOException {
+    return toByteArray((Object) templates);
+  }
+
   public static void writeTo(JsonTemplate template, OutputStream out)
       throws JsonGenerationException, JsonMappingException, IOException {
     writeTo((Object) template, out);
@@ -141,9 +152,14 @@ public class JsonTemplateMapper {
 
   private static String toUtf8String(Object template)
       throws JsonGenerationException, JsonMappingException, IOException {
+    return new String(toByteArray(template), StandardCharsets.UTF_8);
+  }
+
+  private static byte[] toByteArray(Object template)
+      throws JsonGenerationException, JsonMappingException, IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     writeTo(template, out);
-    return out.toString("UTF-8");
+    return out.toByteArray();
   }
 
   private static void writeTo(Object template, OutputStream out)

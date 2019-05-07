@@ -88,7 +88,7 @@ public class BlobPullerTest {
     Assert.assertEquals(
         "some BLOB content",
         new String(layerContentOutputStream.toByteArray(), StandardCharsets.UTF_8));
-    Assert.assertEquals(testBlobDigest, layerOutputStream.getDigest());
+    Assert.assertEquals(testBlobDigest, layerOutputStream.computeDigest().getDigest());
     Assert.assertEquals("some BLOB content".length(), byteCount.sum());
   }
 

@@ -97,6 +97,6 @@ public class DigestUtil {
     CountingDigestOutputStream digestOutStream = new CountingDigestOutputStream(optionalOutStream);
     contents.writeTo(digestOutStream);
     digestOutStream.flush();
-    return new BlobDescriptor(digestOutStream.getBytesHahsed(), digestOutStream.getDigest());
+    return digestOutStream.computeDigest();
   }
 }
