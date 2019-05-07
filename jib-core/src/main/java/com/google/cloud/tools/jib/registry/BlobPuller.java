@@ -67,7 +67,7 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
     blobSizeListener.accept(response.getContentLength());
 
     try (DelayedConsumer<Long> delayedCountListener =
-            new DelayedConsumer<>(writtenByteCountListener, (a, b) -> a + b);
+            new DelayedConsumer<>(writtenByteCountListener, (count1, count2) -> count1 + count2);
         OutputStream outputStream =
             new ListenableCountingOutputStream(destinationOutputStream, delayedCountListener)) {
       BlobDescriptor receivedBlobDescriptor =

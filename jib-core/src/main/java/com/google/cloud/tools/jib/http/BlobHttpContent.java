@@ -59,7 +59,7 @@ public class BlobHttpContent implements HttpContent {
   @Override
   public void writeTo(OutputStream outputStream) throws IOException {
     try (DelayedConsumer<Long> delayedCountListener =
-        new DelayedConsumer<>(writtenByteCountListener, (a, b) -> a + b)) {
+        new DelayedConsumer<>(writtenByteCountListener, (count1, count2) -> count1 + count2)) {
       blob.writeTo(new ListenableCountingOutputStream(outputStream, delayedCountListener));
       outputStream.flush();
     }
