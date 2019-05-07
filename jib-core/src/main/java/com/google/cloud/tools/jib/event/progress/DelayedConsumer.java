@@ -26,27 +26,28 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
- * Wraps a {@link Consumer} so that multiple consume calls within a short time are blocked and
- * delayed into a single call.
+ * Wraps a {@link Consumer} so that multiple consume calls ({@link #accept}) within a short period
+ * of time are merged into a single later call.
  */
 public class DelayedConsumer<T> implements Consumer<T>, Closeable {
 
   private final Consumer<T> consumer;
 
-  /** Delay between each call to {@link #byteCountConsumer}. */
+  /** Delay between each call to the underlying {@link #accept}. */
   private final Duration delayBetweenCallbacks;
 
-  /**
-   * Binary operator that will "add up" multiple delayed values. Used to accumulate past values in
-   * case delays happen so that callback is called once with the "added" value after the delay.
-   */
-  private final BinaryOperator<T> adder;
+  /** Last time the underlying {@link #accept} was called. */
+  private Instant previousCallback;
 
-  /** Returns the current {@link Instant}. */
+  /** "Clock" that returns the current {@link Instant}. */
   private final Supplier<Instant> getNow;
 
-  /** Last time {@link #byteCountConsumer} was called. */
-  private Instant previousCallback;
+  /**
+   * Binary operator to be used to merge ("add up") multiple delayed values. Used to accumulate past
+   * values in case delays happen so that callback is called once with the "added" value after the
+   * delay.
+   */
+  private final BinaryOperator<T> valueAdder;
 
   @Nullable private T valueSoFar;
 
@@ -54,19 +55,19 @@ public class DelayedConsumer<T> implements Consumer<T>, Closeable {
    * Wraps a consumer with the delay of 100 ms.
    *
    * @param callback {@link Consumer} callback to wrap
-   * @param adder adds up multiple delayed values
+   * @param valueAdder merger to add up multiple delayed values
    */
-  public DelayedConsumer(Consumer<T> callback, BinaryOperator<T> adder) {
-    this(callback, adder, Duration.ofMillis(100), Instant::now);
+  public DelayedConsumer(Consumer<T> callback, BinaryOperator<T> valueAdder) {
+    this(callback, valueAdder, Duration.ofMillis(100), Instant::now);
   }
 
   public DelayedConsumer(
       Consumer<T> consumer,
-      BinaryOperator<T> adder,
+      BinaryOperator<T> valueAdder,
       Duration delayBetweenCallbacks,
       Supplier<Instant> getNow) {
     this.consumer = consumer;
-    this.adder = adder;
+    this.valueAdder = valueAdder;
     this.delayBetweenCallbacks = delayBetweenCallbacks;
     this.getNow = getNow;
 
@@ -75,7 +76,7 @@ public class DelayedConsumer<T> implements Consumer<T>, Closeable {
 
   @Override
   public void accept(T value) {
-    valueSoFar = valueSoFar == null ? value : adder.apply(valueSoFar, value);
+    valueSoFar = valueSoFar == null ? value : valueAdder.apply(valueSoFar, value);
 
     Instant now = getNow.get();
     if (previousCallback.plus(delayBetweenCallbacks).isBefore(now)) {
