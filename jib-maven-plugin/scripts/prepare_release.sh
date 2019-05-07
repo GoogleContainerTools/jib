@@ -52,7 +52,7 @@ if [[ $(git status -uno --porcelain) ]]; then
 fi
 
 # Runs integration tests.
-./mvnw -X -PintegrationTest verify
+./mvnw -e -PintegrationTest verify
 
 # Checks out a new branch for this version release (eg. 1.5.7).
 BRANCH=maven_release_v${VERSION}
