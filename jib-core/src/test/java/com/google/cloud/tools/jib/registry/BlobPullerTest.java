@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
-import com.google.cloud.tools.jib.hash.DigestUtil;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.ByteArrayInputStream;
@@ -69,7 +69,7 @@ public class BlobPullerTest {
   public void testHandleResponse() throws IOException, UnexpectedBlobDigestException {
     InputStream blobContent =
         new ByteArrayInputStream("some BLOB content".getBytes(StandardCharsets.UTF_8));
-    DescriptorDigest testBlobDigest = DigestUtil.computeDigest(blobContent).getDigest();
+    DescriptorDigest testBlobDigest = Digests.computeDigest(blobContent).getDigest();
     blobContent.reset();
 
     Response mockResponse = Mockito.mock(Response.class);
@@ -96,7 +96,7 @@ public class BlobPullerTest {
   public void testHandleResponse_unexpectedDigest() throws IOException {
     InputStream blobContent =
         new ByteArrayInputStream("some BLOB content".getBytes(StandardCharsets.UTF_8));
-    DescriptorDigest testBlobDigest = DigestUtil.computeDigest(blobContent).getDigest();
+    DescriptorDigest testBlobDigest = Digests.computeDigest(blobContent).getDigest();
     blobContent.reset();
 
     Response mockResponse = Mockito.mock(Response.class);
