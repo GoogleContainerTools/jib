@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import java.io.Closeable;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,10 +35,12 @@ public class LockFile implements Closeable {
 
   private final Path lockFile;
   private final FileLock fileLock;
+  private final OutputStream outputStream;
 
-  private LockFile(Path lockFile, FileLock fileLock) {
+  private LockFile(Path lockFile, FileLock fileLock, OutputStream outputStream) {
     this.lockFile = lockFile;
     this.fileLock = fileLock;
+    this.outputStream = outputStream;
   }
 
   /**
@@ -58,8 +61,17 @@ public class LockFile implements Closeable {
     }
 
     Files.createDirectories(lockFile.getParent());
-    FileLock fileLock = new FileOutputStream(lockFile.toFile()).getChannel().lock();
-    return new LockFile(lockFile, fileLock);
+    FileOutputStream outputStream = new FileOutputStream(lockFile.toFile());
+    FileLock fileLock = null;
+    try {
+      fileLock = outputStream.getChannel().lock();
+      return new LockFile(lockFile, fileLock, outputStream);
+
+    } finally {
+      if (fileLock == null) {
+        outputStream.close();
+      }
+    }
   }
 
   /** Releases the lock file. */
@@ -67,17 +79,13 @@ public class LockFile implements Closeable {
   public void close() {
     try {
       fileLock.release();
+      outputStream.close();
 
     } catch (IOException ex) {
       throw new IllegalStateException("Unable to release lock", ex);
 
     } finally {
-      try {
-        Preconditions.checkNotNull(lockMap.get(lockFile)).unlock();
-        Files.delete(lockFile);
-
-      } catch (IllegalMonitorStateException | IOException ignored) {
-      }
+      Preconditions.checkNotNull(lockMap.get(lockFile)).unlock();
     }
   }
 }
