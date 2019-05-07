@@ -42,7 +42,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '1.1.2'
+  id 'com.google.cloud.tools.jib' version '1.2.0'
 }
 ```
 
