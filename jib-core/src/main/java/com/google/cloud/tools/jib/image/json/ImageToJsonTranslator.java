@@ -193,8 +193,8 @@ public class ImageToJsonTranslator {
 
   /**
    * Gets the manifest as a JSON template. The {@code containerConfigurationBlobDescriptor} must be
-   * the [@link BlobDescriptor} obtained by writing out the container configuration {@link Blob}
-   * returned from {@link #getContainerConfigurationBlob()}.
+   * the {@link BlobDescriptor} obtained by writing out the container configuration JSON returned
+   * from {@link #getContainerConfiguration()}.
    *
    * @param <T> child type of {@link BuildableManifestTemplate}.
    * @param manifestTemplateClass the JSON template to translate the image to.

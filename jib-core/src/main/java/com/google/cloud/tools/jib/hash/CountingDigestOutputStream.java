@@ -51,6 +51,8 @@ public class CountingDigestOutputStream extends DigestOutputStream {
    * Computes the hash and returns it along with the size of the bytes written to compute the hash.
    * The buffer resets after this method is called, so this method should only be called once per
    * computation.
+   *
+   * @return the computed hash and the size of the bytes consumed
    */
   public BlobDescriptor computeDigest() {
     try {
