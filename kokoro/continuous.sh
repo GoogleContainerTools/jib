@@ -32,5 +32,5 @@ fi
 
 (cd github/jib/jib-core; ./gradlew clean build integrationTest --info --stacktrace)
 (cd github/jib/jib-plugins-common; ./gradlew clean build --info --stacktrace)
-(cd github/jib/jib-maven-plugin; ./mvnw clean install -PintegrationTest -B -U -X)
+(cd github/jib/jib-maven-plugin; ./mvnw clean install -PintegrationTest -B -U -e)
 (cd github/jib/jib-gradle-plugin; ./gradlew clean build integrationTest --info --stacktrace)
