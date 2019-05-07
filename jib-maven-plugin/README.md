@@ -271,7 +271,7 @@ Property | Type | Default | Description
 Property | Type | Default | Description
 --- | --- | --- | ---
 `paths` | list | `[(project-dir)/src/main/jib]` | List of extra directories. Can be absolute or relative to the project root.
-`permissions` | list | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to 755 for directories and 644 for files.
+`permissions` | list | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
 
 <a name="dockerclient-object"></a>**(`jib:dockerBuild` only)** `dockerClient` is an object with the following properties:
 
@@ -380,9 +380,7 @@ Alternatively, the `<extraDirectories>` parameter can be used as an object to se
 ```xml
 <configuration>
   <extraDirectories>
-    <paths>
-      <path>src/main/custom-extra-dir</path> <!-- Copies files from 'src/main/custom-extra-dir' -->
-    </paths>
+    <paths>src/main/custom-extra-dir</paths> <!-- Copies files from 'src/main/custom-extra-dir' -->
     <permissions>
       <permission>
         <file>/path/on/container/to/fileA</file>
