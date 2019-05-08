@@ -72,7 +72,7 @@ public class DefaultCredentialRetrieversTest {
         DefaultCredentialRetrievers.init(mockCredentialRetrieverFactory).asList();
     Assert.assertEquals(
         Arrays.asList(
-            mockInferCredentialHelperCredentialRetriever, mockDockerConfigCredentialRetriever),
+            mockDockerConfigCredentialRetriever, mockInferCredentialHelperCredentialRetriever),
         credentialRetrievers);
   }
 
@@ -89,8 +89,8 @@ public class DefaultCredentialRetrieversTest {
             mockKnownCredentialRetriever,
             mockDockerCredentialHelperCredentialRetriever,
             mockInferredCredentialRetriever,
-            mockInferCredentialHelperCredentialRetriever,
-            mockDockerConfigCredentialRetriever),
+            mockDockerConfigCredentialRetriever,
+            mockInferCredentialHelperCredentialRetriever),
         credentialRetrievers);
 
     Mockito.verify(mockCredentialRetrieverFactory).known(knownCredential, "credentialSource");
@@ -111,8 +111,8 @@ public class DefaultCredentialRetrieversTest {
     Assert.assertEquals(
         Arrays.asList(
             mockDockerCredentialHelperCredentialRetriever,
-            mockInferCredentialHelperCredentialRetriever,
-            mockDockerConfigCredentialRetriever),
+            mockDockerConfigCredentialRetriever,
+            mockInferCredentialHelperCredentialRetriever),
         credentialRetrievers);
     Mockito.verify(mockCredentialRetrieverFactory)
         .dockerCredentialHelper(fakeCredentialHelperPath.toString());
