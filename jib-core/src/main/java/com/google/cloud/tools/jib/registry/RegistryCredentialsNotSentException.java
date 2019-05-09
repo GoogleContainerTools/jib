@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.api.RegistryException;
+
 /** Thrown when registry request was unauthorized because credentials weren't sent. */
 public class RegistryCredentialsNotSentException extends RegistryException {
 

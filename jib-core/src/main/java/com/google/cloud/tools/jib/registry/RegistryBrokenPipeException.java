@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.api.RegistryException;
+
 /** Thrown when the registry shut down the connection. */
 class RegistryBrokenPipeException extends RegistryException {
 

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.configuration;
+package com.google.cloud.tools.jib.api;
 
 import org.junit.Assert;
 import org.junit.Test;

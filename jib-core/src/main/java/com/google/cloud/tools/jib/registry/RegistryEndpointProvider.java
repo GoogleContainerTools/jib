@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpResponseException;
+import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import java.io.IOException;

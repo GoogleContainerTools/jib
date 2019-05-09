@@ -16,10 +16,11 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.io.IOException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -31,8 +32,7 @@ public class RegistryAuthenticatorIntegrationTest {
 
   @Test
   public void testAuthenticate()
-      throws RegistryAuthenticationFailedException, InvalidImageReferenceException, IOException,
-          RegistryException {
+      throws IOException, RegistryException, InvalidImageReferenceException {
     ImageReference dockerHubImageReference = ImageReference.parse("library/busybox");
     RegistryAuthenticator registryAuthenticator =
         RegistryAuthenticator.initializer(

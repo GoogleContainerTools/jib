@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.docker.json;
 
-import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
 import java.io.IOException;

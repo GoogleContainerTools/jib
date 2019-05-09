@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.image;
+package com.google.cloud.tools.jib.api;
 
 import java.security.DigestException;
 import java.util.HashMap;

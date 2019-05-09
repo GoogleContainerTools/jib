@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.common.base.Preconditions;
 import java.nio.file.Path;
 import javax.annotation.Nullable;

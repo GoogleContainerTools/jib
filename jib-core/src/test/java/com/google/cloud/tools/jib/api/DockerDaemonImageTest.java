@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
 import java.util.Optional;

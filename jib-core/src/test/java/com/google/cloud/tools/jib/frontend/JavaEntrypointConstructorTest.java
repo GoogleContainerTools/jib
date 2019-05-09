@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.common.collect.ImmutableList;
 import java.util.Arrays;
 import java.util.List;

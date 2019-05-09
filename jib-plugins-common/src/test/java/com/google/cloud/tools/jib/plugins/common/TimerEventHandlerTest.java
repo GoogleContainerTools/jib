@@ -25,7 +25,7 @@ import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link com.google.cloud.tools.jib.plugins.common.TimerEventHandler}. */
+/** Tests for {@link TimerEventHandler}. */
 public class TimerEventHandlerTest {
 
   private final Deque<String> logMessageQueue = new ArrayDeque<>();

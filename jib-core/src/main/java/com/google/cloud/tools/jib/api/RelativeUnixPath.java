@@ -14,8 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.filesystem;
+package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.filesystem.UnixPathParser;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import javax.annotation.concurrent.Immutable;

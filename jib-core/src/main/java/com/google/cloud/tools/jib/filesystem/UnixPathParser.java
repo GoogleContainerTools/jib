@@ -20,7 +20,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 
 /** Parses Unix-style paths. */
-class UnixPathParser {
+public class UnixPathParser {
 
   /**
    * Parses a Unix-style path into a list of path components.
@@ -28,7 +28,7 @@ class UnixPathParser {
    * @param unixPath the Unix-style path
    * @return a list of path components
    */
-  static ImmutableList<String> parse(String unixPath) {
+  public static ImmutableList<String> parse(String unixPath) {
     ImmutableList.Builder<String> pathComponents = ImmutableList.builder();
     for (String pathComponent : Splitter.on('/').split(unixPath)) {
       if (pathComponent.isEmpty()) {

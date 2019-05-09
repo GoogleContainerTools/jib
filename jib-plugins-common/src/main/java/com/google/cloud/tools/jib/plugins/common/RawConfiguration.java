@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.configuration.FilePermissions;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import java.nio.file.Path;
 import java.util.List;
