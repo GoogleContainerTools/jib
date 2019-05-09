@@ -115,7 +115,9 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
     ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(httpResponseException);
     if (errorCode == ErrorCodes.MANIFEST_INVALID || errorCode == ErrorCodes.TAG_INVALID) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
-          .addReason("Registry may not support Image Manifest Version 2, Schema 2")
+          .addReason(
+              "Registry may not support pushing OCI Manifest or "
+                  + "Docker Image Manifest Version 2, Schema 2")
           .build();
     }
     // rethrow: unhandled error response code.
