@@ -28,6 +28,10 @@ import java.nio.file.Paths;
 public class HelloWorld {
 
   public static void main(String[] args) throws URISyntaxException, IOException {
+    Package pack = HelloWorld.class.getPackage();
+    System.out.println(pack.getImplementationTitle());
+    System.out.println(pack.getImplementationVersion());
+
     Path worldFile = Paths.get(Resources.getResource("world").toURI());
     String world = new String(Files.readAllBytes(worldFile), StandardCharsets.UTF_8);
 

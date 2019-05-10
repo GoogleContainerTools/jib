@@ -276,7 +276,7 @@ public class PluginConfigurationProcessor {
     List<String> classpath = new ArrayList<>(rawExtraClasspath);
     boolean packagedApp = true;
     if (packagedApp) {
-      classpath.add("/app/classpath");
+      classpath.add("/app/classpath/*");
       classpath.add("/app/libs/*");
     } else {
       classpath.addAll(JavaEntrypointConstructor.defaultClasspath(appRoot));
