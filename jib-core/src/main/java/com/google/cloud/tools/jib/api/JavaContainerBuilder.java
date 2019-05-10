@@ -473,21 +473,15 @@ public class JavaContainerBuilder {
             .collect(Collectors.toList());
     for (Path file : addedDependencies) {
       // Add dependencies to layer configuration
+      String jarName = file.getFileName().toString();
+      if (duplicates.contains(jarName)) {
+        jarName = jarName.replaceFirst("\\.jar$", "-" + Files.size(file)) + ".jar";
+      }
       addFileToLayer(
           layerBuilders,
-          file.getFileName().toString().contains("SNAPSHOT")
-              ? LayerType.SNAPSHOT_DEPENDENCIES
-              : LayerType.DEPENDENCIES,
+          jarName.contains("SNAPSHOT") ? LayerType.SNAPSHOT_DEPENDENCIES : LayerType.DEPENDENCIES,
           file,
-          appRoot
-              .resolve(dependenciesDestination)
-              .resolve(
-                  duplicates.contains(file.getFileName().toString())
-                      ? file.getFileName()
-                              .toString()
-                              .replaceFirst("\\.jar$", "-" + Files.size(file))
-                          + ".jar"
-                      : file.getFileName().toString()));
+          appRoot.resolve(dependenciesDestination).resolve(jarName));
     }
 
     // Add others to layer configuration

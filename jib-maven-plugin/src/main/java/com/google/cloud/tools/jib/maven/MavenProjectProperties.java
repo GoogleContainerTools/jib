@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -200,11 +201,20 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @Override
   public JibContainerBuilder createContainerBuilder(RegistryImage baseImage) throws IOException {
+    boolean putRunnableArtifact = true;
     try {
       if (isWarProject()) {
         Path explodedWarPath =
             Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
         return JavaContainerBuilderHelper.fromExplodedWar(baseImage, explodedWarPath, appRoot);
+      } else if (putRunnableArtifact) {
+        Path artifact =
+            Paths.get(project.getBuild().getDirectory())
+                .resolve(project.getBuild().getFinalName() + "." + project.getPackaging());
+        return JavaContainerBuilder.from(baseImage)
+            .addDependencies(getDependencies())
+            .addToClasspath(artifact)
+            .toContainerBuilder();
       }
 
       Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
@@ -215,13 +225,7 @@ public class MavenProjectProperties implements ProjectProperties {
           .setAppRoot(appRoot)
           .addResources(classesOutputDirectory, isClassFile.negate())
           .addClasses(classesOutputDirectory, isClassFile)
-          .addDependencies(
-              project
-                  .getArtifacts()
-                  .stream()
-                  .map(Artifact::getFile)
-                  .map(File::toPath)
-                  .collect(Collectors.toList()))
+          .addDependencies(getDependencies())
           .toContainerBuilder();
 
     } catch (IOException ex) {
@@ -341,5 +345,10 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public boolean isOffline() {
     return session.isOffline();
+  }
+
+  private List<Path> getDependencies() {
+    Set<Artifact> artifacts = project.getArtifacts();
+    return artifacts.stream().map(Artifact::getFile).map(File::toPath).collect(Collectors.toList());
   }
 }
