@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - Docker credentials (`~/.docker/config.json`) are now given priority over registry-based inferred credential helpers ([#1704](https://github.com/GoogleContainerTools/jib/pulls/1704))
+- Failing to decrypt `settings.xml` does not cause the build to fail. ([#1709](https://github.com/GoogleContainerTools/jib/issues/1709))
 
 ### Fixed
 
