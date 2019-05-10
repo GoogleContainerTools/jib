@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;

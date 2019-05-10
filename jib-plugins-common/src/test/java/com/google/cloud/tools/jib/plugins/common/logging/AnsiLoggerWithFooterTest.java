@@ -28,7 +28,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/** Tests for {@link com.google.cloud.tools.jib.plugins.common.logging.AnsiLoggerWithFooter}. */
+/** Tests for {@link AnsiLoggerWithFooter}. */
 public class AnsiLoggerWithFooterTest {
 
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();

@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.security.DigestException;
 import org.junit.Assert;
 import org.junit.Before;

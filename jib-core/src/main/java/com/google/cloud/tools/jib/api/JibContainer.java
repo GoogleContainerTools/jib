@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.util.Objects;
 
 /** The container built by Jib. */

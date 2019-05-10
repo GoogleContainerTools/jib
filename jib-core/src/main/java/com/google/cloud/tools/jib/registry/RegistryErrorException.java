@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.api.RegistryException;
 import javax.annotation.Nullable;
 
 /**

@@ -16,11 +16,12 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.http.TestBlobProgressListener;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import java.security.DigestException;
 import org.junit.Assert;

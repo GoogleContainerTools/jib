@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,19 +14,22 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.image;
+package com.google.cloud.tools.jib.api;
 
-/** Thrown when attempting to parse an invalid image reference. */
-public class InvalidImageReferenceException extends Exception {
+import javax.annotation.Nullable;
 
-  private final String reference;
+/** Thrown when interacting with a registry. */
+public class RegistryException extends Exception {
 
-  public InvalidImageReferenceException(String reference) {
-    super("Invalid image reference: " + reference);
-    this.reference = reference;
+  public RegistryException(String message, @Nullable Throwable cause) {
+    super(message, cause);
   }
 
-  public String getInvalidReference() {
-    return reference;
+  public RegistryException(String message) {
+    super(message);
+  }
+
+  public RegistryException(Throwable cause) {
+    super(cause);
   }
 }

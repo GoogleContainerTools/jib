@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.configuration;
+package com.google.cloud.tools.jib.api;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;

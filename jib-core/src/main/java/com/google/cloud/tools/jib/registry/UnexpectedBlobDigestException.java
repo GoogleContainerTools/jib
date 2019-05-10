@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.api.RegistryException;
+
 /** Thrown when a pulled BLOB did not have the same digest as requested. */
 class UnexpectedBlobDigestException extends RegistryException {
 

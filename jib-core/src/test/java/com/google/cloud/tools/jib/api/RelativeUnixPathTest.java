@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.filesystem;
+package com.google.cloud.tools.jib.api;
 
 import com.google.common.collect.ImmutableList;
 import org.junit.Assert;

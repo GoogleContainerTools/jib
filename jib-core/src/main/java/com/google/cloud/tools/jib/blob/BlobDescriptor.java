@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.blob;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 
 /** Contains properties describing a BLOB, including its digest and possibly its size (in bytes). */
 public class BlobDescriptor {

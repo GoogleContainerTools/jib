@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.json;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
