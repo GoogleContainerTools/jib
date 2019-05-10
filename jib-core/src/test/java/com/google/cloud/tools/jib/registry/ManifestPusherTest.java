@@ -18,12 +18,12 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponseException;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
@@ -163,7 +163,8 @@ public class ManifestPusherTest {
         new HttpResponseException.Builder(
                 HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
             .setContent(
-                "{\"errors\":[{\"code\":\"TAG_INVALID\",\"message\":\"manifest tag did not match URI\"}]}")
+                "{\"errors\":[{\"code\":\"TAG_INVALID\","
+                    + "\"message\":\"manifest tag did not match URI\"}]}")
             .build();
     try {
       testManifestPusher.handleHttpResponseException(exception);
@@ -173,7 +174,8 @@ public class ManifestPusherTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "Registry may not support Image Manifest Version 2, Schema 2"));
+              "Registry may not support pushing OCI Manifest or "
+                  + "Docker Image Manifest Version 2, Schema 2"));
     }
   }
 
@@ -185,7 +187,8 @@ public class ManifestPusherTest {
         new HttpResponseException.Builder(
                 HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
             .setContent(
-                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\",\"message\":\"manifest invalid\",\"detail\":{}}]}")
+                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\","
+                    + "\"message\":\"manifest invalid\",\"detail\":{}}]}")
             .build();
     try {
       testManifestPusher.handleHttpResponseException(exception);
@@ -195,7 +198,8 @@ public class ManifestPusherTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "Registry may not support Image Manifest Version 2, Schema 2"));
+              "Registry may not support pushing OCI Manifest or "
+                  + "Docker Image Manifest Version 2, Schema 2"));
     }
   }
 
@@ -206,8 +210,9 @@ public class ManifestPusherTest {
         new HttpResponseException.Builder(
                 HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE, "UNSUPPORTED MEDIA TYPE", new HttpHeaders())
             .setContent(
-                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\",\"detail\":"
-                    + "{\"message\":\"manifest schema version not supported\"},\"message\":\"manifest invalid\"}]}")
+                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\","
+                    + "\"detail\":{\"message\":\"manifest schema version not supported\"},"
+                    + "\"message\":\"manifest invalid\"}]}")
             .build();
     try {
       testManifestPusher.handleHttpResponseException(exception);
@@ -217,7 +222,8 @@ public class ManifestPusherTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "Registry may not support Image Manifest Version 2, Schema 2"));
+              "Registry may not support pushing OCI Manifest or "
+                  + "Docker Image Manifest Version 2, Schema 2"));
     }
   }
 

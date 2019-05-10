@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.blob;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.hash.WritableContents;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

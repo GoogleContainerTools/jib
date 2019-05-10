@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import javax.annotation.Nullable;
 

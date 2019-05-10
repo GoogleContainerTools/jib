@@ -137,8 +137,8 @@ public class DefaultCredentialRetrievers {
     if (inferredCredentialRetriever != null) {
       credentialRetrievers.add(inferredCredentialRetriever);
     }
-    credentialRetrievers.add(credentialRetrieverFactory.inferCredentialHelper());
     credentialRetrievers.add(credentialRetrieverFactory.dockerConfig());
+    credentialRetrievers.add(credentialRetrieverFactory.inferCredentialHelper());
     return credentialRetrievers;
   }
 }

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.registry;
+package com.google.cloud.tools.jib.api;
 
 import com.google.api.client.http.HttpResponseException;
 

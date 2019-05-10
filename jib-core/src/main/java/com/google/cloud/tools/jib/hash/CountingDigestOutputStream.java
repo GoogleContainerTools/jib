@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.hash;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;

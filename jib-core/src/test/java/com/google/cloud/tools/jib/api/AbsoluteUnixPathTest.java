@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.filesystem;
+package com.google.cloud.tools.jib.api;
 
 import java.nio.file.Paths;
 import org.junit.Assert;

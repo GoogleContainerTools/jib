@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import java.io.IOException;
 import java.security.DigestException;
 import org.hamcrest.CoreMatchers;

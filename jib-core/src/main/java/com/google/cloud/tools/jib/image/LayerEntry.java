@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.cloud.tools.jib.configuration.FilePermissions;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.FilePermissions;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;

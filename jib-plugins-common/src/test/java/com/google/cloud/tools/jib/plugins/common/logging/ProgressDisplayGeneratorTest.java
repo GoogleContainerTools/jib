@@ -22,7 +22,7 @@ import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator}. */
+/** Tests for {@link ProgressDisplayGenerator}. */
 public class ProgressDisplayGeneratorTest {
 
   private static String getBar(String bar, double value) {

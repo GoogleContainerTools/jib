@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.api.client.http.HttpTransport;
-import com.google.cloud.tools.jib.configuration.FilePermissions;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.util.HashMap;
 import java.util.Map;

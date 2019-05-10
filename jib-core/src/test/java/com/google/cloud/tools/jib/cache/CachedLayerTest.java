@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;

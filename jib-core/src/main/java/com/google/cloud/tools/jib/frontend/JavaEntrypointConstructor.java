@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.filesystem.RelativeUnixPath;
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.RelativeUnixPath;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

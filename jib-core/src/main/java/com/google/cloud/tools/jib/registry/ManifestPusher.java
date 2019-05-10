@@ -18,13 +18,13 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpResponseException;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -113,7 +113,9 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
     ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(httpResponseException);
     if (errorCode == ErrorCodes.MANIFEST_INVALID || errorCode == ErrorCodes.TAG_INVALID) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
-          .addReason("Registry may not support Image Manifest Version 2, Schema 2")
+          .addReason(
+              "Registry may not support pushing OCI Manifest or "
+                  + "Docker Image Manifest Version 2, Schema 2")
           .build();
     }
     // rethrow: unhandled error response code.

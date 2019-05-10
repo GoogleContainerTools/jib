@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.registry;
+package com.google.cloud.tools.jib.api;
 
 import java.text.MessageFormat;
 
@@ -25,13 +25,14 @@ public class RegistryAuthenticationFailedException extends RegistryException {
   private final String serverUrl;
   private final String imageName;
 
-  RegistryAuthenticationFailedException(String serverUrl, String imageName, Throwable cause) {
+  public RegistryAuthenticationFailedException(
+      String serverUrl, String imageName, Throwable cause) {
     super(MessageFormat.format(REASON, serverUrl, imageName, cause.getMessage()), cause);
     this.serverUrl = serverUrl;
     this.imageName = imageName;
   }
 
-  RegistryAuthenticationFailedException(String serverUrl, String imageName, String reason) {
+  public RegistryAuthenticationFailedException(String serverUrl, String imageName, String reason) {
     super(MessageFormat.format(REASON, serverUrl, imageName, reason));
     this.serverUrl = serverUrl;
     this.imageName = imageName;

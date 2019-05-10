@@ -42,7 +42,7 @@ In your Gradle Java project, add the plugin to your `build.gradle`:
 
 ```groovy
 plugins {
-  id 'com.google.cloud.tools.jib' version '1.1.2'
+  id 'com.google.cloud.tools.jib' version '1.2.0'
 }
 ```
 
@@ -175,7 +175,7 @@ Field | Type | Default | Description
 `to` | [`to`](#to-closure) | *Required* | Configures the target image to build your application to.
 `from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
 `container` | [`container`](#container-closure) | See [`container`](#container-closure) | Configures the container that is run from your built image.
-`extraDirectory` | [`extraDirectory`](#extradirectory-closure) / `File` | `(project-dir)/src/main/jib` | Configures the directory used to add arbitrary files to the image.
+`extraDirectories` | [`extraDirectories`](#extradirectories-closure) | See [`extraDirectories`](#extradirectories-closure) | Configures the directories used to add arbitrary files to the image.
 `allowInsecureRegistries` | `boolean` | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 
 <a name="from-closure"></a>`from` is a closure with the following properties:
@@ -210,6 +210,7 @@ Property | Type | Default | Description
 `args` | `List<String>` | *None* | Additional program arguments appended to the command to start the container (similar to Docker's [CMD](https://docs.docker.com/engine/reference/builder/#cmd) instruction in relation with [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint)). In the default case where you do not set a custom `entrypoint`, this parameter is effectively the arguments to the main method of your Java application.
 `entrypoint` | `List<String>` | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored. You may also set `jib.container.entrypoint = 'INHERIT'` to indicate that the `entrypoint` and `args` should be inherited from the base image.\*
 `environment` | `Map<String, String>` | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
+`extraClasspath` | `List<String>` | *None* | Additional paths in the container to prepend to the computed Java classpath.
 `format` | `String` | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `jvmFlags` | `List<String>` | *None* | Additional flags to pass into the JVM when running your application.
 `labels` | `Map<String, String>` | *None* | Key-value pairs for applying image metadata (similar to Docker's [LABEL](https://docs.docker.com/engine/reference/builder/#label) instruction).
@@ -220,12 +221,12 @@ Property | Type | Default | Description
 `volumes` | `List<String>` | *None* | Specifies a list of mount points on the container.
 `workingDirectory` | `String` | *None* | The working directory in the container.
 
-<a name="extradirectory-closure"></a>`extraDirectory` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
+<a name="extradirectories-closure"></a>`extraDirectories` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
 
-Property | Type
---- | ---
-`path` | `File`
-`permissions` | `Map<String, String>`
+Property | Type | Default | Description
+--- | --- | --- | ---
+`paths` | `Object` | `(project-dir)/src/main/jib` | Extra directories acceptable by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc. Can be absolute or relative to the project root.
+`permissions` | `Map<String, String>` | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
 
 <a name="dockerclient-closure"></a>**(`jibDockerBuild` only)** `dockerClient` is an object that can be configured directly on the `jibDockerBuild` task, and has the following properties:
 
@@ -300,20 +301,20 @@ jib {
 
 You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
-You can configure a different directory by using the `jib.extraDirectory` parameter in your `build.gradle`:
+You can configure different directories by using the `jib.extraDirectories.paths` parameter in your `build.gradle`:
 ```groovy
 jib {
-  // Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib'
-  extraDirectory = file('src/main/custom-extra-dir')
+  // Copies files from 'src/main/custom-extra-dir' and '/home/user/jib-extras' instead of 'src/main/jib'
+  extraDirectories.paths = ['src/main/custom-extra-dir', '/home/user/jib-extras']
 }
 ```
 
-Alternatively, the `jib.extraDirectory` parameter can be used as a closure to set a custom extra directory, as well as the extra files' permissions on the container:
+Alternatively, the `jib.extraDirectories` parameter can be used as a closure to set custom extra directories, as well as the extra files' permissions on the container:
 
 ```groovy
 jib {
-  extraDirectory {
-    path = file('src/main/custom-extra-dir')  // Copies files from 'src/main/custom-extra-dir'
+  extraDirectories {
+    paths = 'src/main/custom-extra-dir'  // Copies files from 'src/main/custom-extra-dir'
     permissions = [
         '/path/on/container/to/fileA': '755',  // Read/write/execute for owner, read/execute for group/other
         '/path/to/another/file': '644'  // Read/write for owner, read-only for group/other

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.image;
+package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.common.base.Preconditions;

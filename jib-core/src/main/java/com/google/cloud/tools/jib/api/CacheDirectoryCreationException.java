@@ -14,22 +14,14 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.registry;
+package com.google.cloud.tools.jib.api;
 
-import javax.annotation.Nullable;
+/** Thrown when a directory to be used as the cache could not be created. */
+public class CacheDirectoryCreationException extends Exception {
 
-/** Thrown when interacting with a registry. */
-public class RegistryException extends Exception {
+  private static final String MESSAGE = "Could not create cache directory";
 
-  public RegistryException(String message, @Nullable Throwable cause) {
-    super(message, cause);
-  }
-
-  public RegistryException(String message) {
-    super(message);
-  }
-
-  public RegistryException(Throwable cause) {
-    super(cause);
+  public CacheDirectoryCreationException(Throwable cause) {
+    super(MESSAGE, cause);
   }
 }

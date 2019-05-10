@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.registry;
+package com.google.cloud.tools.jib.api;
 
 import java.net.URL;
 
@@ -23,7 +23,7 @@ import java.net.URL;
  */
 public class InsecureRegistryException extends RegistryException {
 
-  InsecureRegistryException(URL insecureUrl) {
+  public InsecureRegistryException(URL insecureUrl) {
     super(
         "Failed to verify the server at "
             + insecureUrl

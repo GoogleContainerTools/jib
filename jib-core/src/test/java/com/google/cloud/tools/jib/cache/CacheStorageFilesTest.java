@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
