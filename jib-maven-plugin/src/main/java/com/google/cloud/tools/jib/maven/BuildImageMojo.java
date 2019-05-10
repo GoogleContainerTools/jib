@@ -98,7 +98,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
 
       DecryptedMavenSettings decryptedSettings =
-          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter());
+          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter(), getLog());
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(

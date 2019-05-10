@@ -77,7 +77,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
       DecryptedMavenSettings decryptedSettings =
-          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter());
+          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter(), getLog());
 
       Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
       Path tarOutputPath = buildOutput.resolve("jib-image.tar");

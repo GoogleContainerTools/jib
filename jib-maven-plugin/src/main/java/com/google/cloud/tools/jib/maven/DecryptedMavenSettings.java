@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.maven;
 
 import java.util.List;
-import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.settings.Proxy;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
@@ -27,19 +27,19 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.apache.maven.settings.crypto.SettingsDecryptionRequest;
 import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
-/** Provides decrypted Maven settings information. */
+/**
+ * Provides decrypted Maven settings information. Un-encrypted passwords or the passwords that
+ * failed to decrypt are passed through.
+ */
 class DecryptedMavenSettings {
 
-  static DecryptedMavenSettings from(Settings settings, SettingsDecrypter decryptor)
-      throws MojoExecutionException {
+  static DecryptedMavenSettings from(Settings settings, SettingsDecrypter decryptor, Log log) {
     SettingsDecryptionRequest request = new DefaultSettingsDecryptionRequest(settings);
     SettingsDecryptionResult result = decryptor.decrypt(request);
-    // Un-encrypted passwords are passed through, so a problem indicates a real issue.
-    // If there are any ERROR or FATAL problems reported, then decryption failed.
     for (SettingsProblem problem : result.getProblems()) {
       if (problem.getSeverity() == SettingsProblem.Severity.ERROR
           || problem.getSeverity() == SettingsProblem.Severity.FATAL) {
-        throw new MojoExecutionException("Unable to decrypt settings.xml: " + problem);
+        log.warn("Unable to decrypt settings.xml: " + problem);
       }
     }
     return new DecryptedMavenSettings(result, settings);

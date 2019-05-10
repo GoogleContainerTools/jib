@@ -104,7 +104,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
       DecryptedMavenSettings decryptedSettings =
-          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter());
+          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter(), getLog());
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(

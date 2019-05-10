@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.settings.Proxy;
 import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
@@ -44,6 +44,7 @@ public class DecryptedMavenSettingsTest {
   @Mock private Settings settings;
   @Mock private SettingsDecrypter settingsDecrypter;
   @Mock private SettingsDecryptionResult decryptionResult;
+  @Mock private Log log;
 
   private final List<Server> servers = Arrays.asList(server1, server2);
   private final List<Proxy> proxies = Arrays.asList(proxy);
@@ -51,11 +52,11 @@ public class DecryptedMavenSettingsTest {
   private DecryptedMavenSettings decryptedSettings;
 
   @Before
-  public void setUp() throws MojoExecutionException {
+  public void setUp() {
     Mockito.when(settingsDecrypter.decrypt(Mockito.any())).thenReturn(decryptionResult);
     Mockito.when(decryptionResult.getProblems()).thenReturn(Collections.emptyList());
 
-    decryptedSettings = DecryptedMavenSettings.from(settings, settingsDecrypter);
+    decryptedSettings = DecryptedMavenSettings.from(settings, settingsDecrypter, log);
   }
 
   @Test
@@ -66,12 +67,8 @@ public class DecryptedMavenSettingsTest {
     Mockito.when(problem.toString()).thenReturn("MockProblemText");
     Mockito.when(decryptionResult.getProblems()).thenReturn(Arrays.asList(problem));
 
-    try {
-      DecryptedMavenSettings.from(settings, settingsDecrypter);
-      Assert.fail();
-    } catch (MojoExecutionException ex) {
-      Assert.assertEquals("Unable to decrypt settings.xml: MockProblemText", ex.getMessage());
-    }
+    DecryptedMavenSettings.from(settings, settingsDecrypter, log);
+    Mockito.verify(log).warn("Unable to decrypt settings.xml: MockProblemText");
   }
 
   @Test
