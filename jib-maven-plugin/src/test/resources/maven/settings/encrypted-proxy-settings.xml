@@ -1,0 +1,22 @@
+<settings>
+  <proxies>
+    <proxy>
+      <id>http</id>
+      <active>true</active>
+      <protocol>http</protocol>
+      <host>proxy1.example.com</host>
+      <port>8080</port>
+      <username>proxyuser</username>
+      <password>{AmwLphSL7qQHMPGxPn6NHQFNkU+ME6BU550hxoQrKHk=}</password> <!-- password1 -->
+    </proxy>
+    <proxy>
+      <id>https</id>
+      <active>true</active>
+      <protocol>https</protocol>
+      <host>proxy2.example.com</host>
+      <port>8443</port>
+      <username>proxyuser</username>
+      <password>password2</password>
+    </proxy>
+  </proxies>
+</settings>

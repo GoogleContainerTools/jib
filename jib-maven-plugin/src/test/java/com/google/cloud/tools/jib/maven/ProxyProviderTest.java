@@ -17,19 +17,34 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.common.collect.ImmutableList;
-import java.util.Arrays;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.settings.Proxy;
+import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.crypto.SettingsDecrypter;
+import org.hamcrest.core.StringStartsWith;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Test for {@link ProxyProvider}. */
+@RunWith(MockitoJUnitRunner.class)
 public class ProxyProviderTest {
+
+  private static Settings noActiveProxiesSettings;
+  private static Settings httpOnlyProxySettings;
+  private static Settings httpsOnlyProxySettings;
+  private static Settings mixedProxyEncryptedSettings;
+  private static Settings badProxyEncryptedSettings;
+  private static SettingsDecrypter settingsDescypter;
+  private static SettingsDecrypter emptySettingsDescypter;
 
   private static final ImmutableList<String> proxyProperties =
       ImmutableList.of(
@@ -45,6 +60,31 @@ public class ProxyProviderTest {
 
   // HashMap to allow saving null values.
   private final HashMap<String, String> savedProperties = new HashMap<>();
+
+  @BeforeClass
+  public static void setUpTestFixtures() {
+    noActiveProxiesSettings =
+        SettingsFixture.newSettings(
+            Paths.get("src/test/resources/maven/settings/no-active-proxy-settings.xml"));
+    httpOnlyProxySettings =
+        SettingsFixture.newSettings(
+            Paths.get("src/test/resources/maven/settings/http-only-proxy-settings.xml"));
+    httpsOnlyProxySettings =
+        SettingsFixture.newSettings(
+            Paths.get("src/test/resources/maven/settings/https-only-proxy-settings.xml"));
+    mixedProxyEncryptedSettings =
+        SettingsFixture.newSettings(
+            Paths.get("src/test/resources/maven/settings/encrypted-proxy-settings.xml"));
+    badProxyEncryptedSettings =
+        SettingsFixture.newSettings(
+            Paths.get("src/test/resources/maven/settings/bad-encrypted-proxy-settings.xml"));
+    settingsDescypter =
+        SettingsFixture.newSettingsDecrypter(
+            Paths.get("src/test/resources/maven/settings/settings-security.xml"));
+    emptySettingsDescypter =
+        SettingsFixture.newSettingsDecrypter(
+            Paths.get("src/test/resources/maven/settings/settings-security.empty.xml"));
+  }
 
   @Before
   public void setUp() {
@@ -187,82 +227,49 @@ public class ProxyProviderTest {
   }
 
   @Test
-  public void testInit_noActiveProxy() {
-    Proxy httpProxy = new Proxy();
-    httpProxy.setProtocol("http");
-    httpProxy.setHost("proxy1 host");
-    httpProxy.setActive(false);
+  public void testPopulateSystemProxyProperties_noActiveProxy() throws MojoExecutionException {
 
-    Proxy httpsProxy = new Proxy();
-    httpsProxy.setProtocol("https");
-    httpsProxy.setHost("proxy2 host");
-    httpsProxy.setActive(false);
-
-    DecryptedMavenSettings settings = Mockito.mock(DecryptedMavenSettings.class);
-    Mockito.when(settings.getProxies()).thenReturn(Arrays.asList(httpProxy, httpsProxy));
-    ProxyProvider.init(settings);
+    ProxyProvider.populateSystemProxyProperties(noActiveProxiesSettings, settingsDescypter);
 
     Assert.assertNull(System.getProperty("http.proxyHost"));
     Assert.assertNull(System.getProperty("https.proxyHost"));
   }
 
   @Test
-  public void testInit_firstActiveHttpProxy() {
-    Proxy proxy1 = new Proxy();
-    proxy1.setProtocol("http");
-    proxy1.setHost("proxy1 host");
-    proxy1.setActive(false);
+  public void testPopulateSystemProxyProperties_firstActiveHttpProxy()
+      throws MojoExecutionException {
+    ProxyProvider.populateSystemProxyProperties(httpOnlyProxySettings, settingsDescypter);
 
-    Proxy proxy2 = new Proxy();
-    proxy2.setProtocol("http");
-    proxy2.setHost("proxy2 host");
-    proxy2.setActive(true);
-
-    Proxy proxy3 = new Proxy();
-    proxy3.setProtocol("http");
-    proxy3.setHost("proxy3 host");
-    proxy3.setActive(false);
-
-    Proxy proxy4 = new Proxy();
-    proxy4.setProtocol("http");
-    proxy4.setHost("proxy4 host");
-    proxy4.setActive(true);
-
-    DecryptedMavenSettings settings = Mockito.mock(DecryptedMavenSettings.class);
-    Mockito.when(settings.getProxies()).thenReturn(Arrays.asList(proxy1, proxy2, proxy3, proxy4));
-    ProxyProvider.init(settings);
-
-    Assert.assertEquals("proxy2 host", System.getProperty("http.proxyHost"));
+    Assert.assertEquals("proxy2.example.com", System.getProperty("http.proxyHost"));
     Assert.assertNull(System.getProperty("https.proxyHost"));
   }
 
   @Test
-  public void testInit_firstActiveHttpsProxy() {
-    Proxy proxy1 = new Proxy();
-    proxy1.setProtocol("https");
-    proxy1.setHost("proxy1 host");
-    proxy1.setActive(false);
+  public void testPopulateSystemProxyProperties_firstActiveHttpsProxy()
+      throws MojoExecutionException {
+    ProxyProvider.populateSystemProxyProperties(httpsOnlyProxySettings, settingsDescypter);
 
-    Proxy proxy2 = new Proxy();
-    proxy2.setProtocol("https");
-    proxy2.setHost("proxy2 host");
-    proxy2.setActive(true);
-
-    Proxy proxy3 = new Proxy();
-    proxy3.setProtocol("https");
-    proxy3.setHost("proxy3 host");
-    proxy3.setActive(false);
-
-    Proxy proxy4 = new Proxy();
-    proxy4.setProtocol("https");
-    proxy4.setHost("proxy4 host");
-    proxy4.setActive(true);
-
-    DecryptedMavenSettings settings = Mockito.mock(DecryptedMavenSettings.class);
-    Mockito.when(settings.getProxies()).thenReturn(Arrays.asList(proxy1, proxy2, proxy3, proxy4));
-    ProxyProvider.init(settings);
-
+    Assert.assertEquals("proxy2.example.com", System.getProperty("https.proxyHost"));
     Assert.assertNull(System.getProperty("http.proxyHost"));
-    Assert.assertEquals("proxy2 host", System.getProperty("https.proxyHost"));
+  }
+
+  @Test
+  public void testPopulateSystemProxyProperties_EncryptedProxy() throws MojoExecutionException {
+    ProxyProvider.populateSystemProxyProperties(mixedProxyEncryptedSettings, settingsDescypter);
+
+    Assert.assertEquals("password1", System.getProperty("http.proxyPassword"));
+    Assert.assertEquals("password2", System.getProperty("https.proxyPassword"));
+  }
+
+  @Test
+  public void testPopulateSystemProxyProperties_decryptionFailure() {
+    try {
+      ProxyProvider.populateSystemProxyProperties(badProxyEncryptedSettings, settingsDescypter);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          StringStartsWith.startsWith("Unable to decrypt proxy info from settings.xml:"));
+    }
   }
 }

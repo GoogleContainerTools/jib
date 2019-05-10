@@ -97,15 +97,14 @@ public class BuildImageMojo extends JibPluginConfiguration {
       EventDispatcher eventDispatcher =
           new DefaultEventDispatcher(projectProperties.getEventHandlers());
 
-      DecryptedMavenSettings decryptedSettings =
-          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter());
-
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
               mavenRawConfiguration,
-              new MavenSettingsServerCredentials(decryptedSettings),
+              new MavenSettingsServerCredentials(
+                  getSession().getSettings(), getSettingsDecrypter()),
               projectProperties);
-      ProxyProvider.init(decryptedSettings);
+      ProxyProvider.populateSystemProxyProperties(
+          getSession().getSettings(), getSettingsDecrypter());
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =

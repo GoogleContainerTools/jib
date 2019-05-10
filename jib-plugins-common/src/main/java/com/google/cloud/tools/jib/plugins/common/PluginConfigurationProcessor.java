@@ -59,7 +59,7 @@ public class PluginConfigurationProcessor {
 
   public static PluginConfigurationProcessor processCommonConfigurationForDockerDaemonImage(
       RawConfiguration rawConfiguration,
-      Function<String, Optional<AuthProperty>> inferredAuthProvider,
+      InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
       @Nullable Path dockerExecutable,
       @Nullable Map<String, String> dockerEnvironment,
@@ -89,7 +89,7 @@ public class PluginConfigurationProcessor {
 
   public static PluginConfigurationProcessor processCommonConfigurationForTarImage(
       RawConfiguration rawConfiguration,
-      Function<String, Optional<AuthProperty>> inferredAuthProvider,
+      InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
       Path tarImagePath,
       HelpfulSuggestions helpfulSuggestions)
@@ -112,7 +112,7 @@ public class PluginConfigurationProcessor {
 
   public static PluginConfigurationProcessor processCommonConfigurationForRegistryImage(
       RawConfiguration rawConfiguration,
-      Function<String, Optional<AuthProperty>> inferredAuthProvider,
+      InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
@@ -151,7 +151,7 @@ public class PluginConfigurationProcessor {
   @VisibleForTesting
   static PluginConfigurationProcessor processCommonConfiguration(
       RawConfiguration rawConfiguration,
-      Function<String, Optional<AuthProperty>> inferredAuthProvider,
+      InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
       Containerizer containerizer,
       ImageReference targetImageReference,
@@ -398,7 +398,7 @@ public class PluginConfigurationProcessor {
       String usernamePropertyName,
       String passwordPropertyName,
       AuthProperty knownAuth,
-      Function<String, Optional<AuthProperty>> inferredAuthProvider,
+      InferredAuthProvider inferredAuthProvider,
       @Nullable String credHelper)
       throws FileNotFoundException {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
@@ -416,15 +416,19 @@ public class PluginConfigurationProcessor {
       defaultCredentialRetrievers.setKnownCredential(
           optionalCredential.get(), knownAuth.getAuthDescriptor());
     } else {
-      Optional<AuthProperty> optionalInferredAuth =
-          inferredAuthProvider.apply(imageReference.getRegistry());
-      credentialPresent = optionalInferredAuth.isPresent();
-      if (optionalInferredAuth.isPresent()) {
-        AuthProperty auth = optionalInferredAuth.get();
-        String username = Verify.verifyNotNull(auth.getUsername());
-        String password = Verify.verifyNotNull(auth.getPassword());
-        Credential credential = Credential.from(username, password);
-        defaultCredentialRetrievers.setInferredCredential(credential, auth.getAuthDescriptor());
+      try {
+        Optional<AuthProperty> optionalInferredAuth =
+            inferredAuthProvider.inferredAuth(imageReference.getRegistry());
+        credentialPresent = optionalInferredAuth.isPresent();
+        if (optionalInferredAuth.isPresent()) {
+          AuthProperty auth = optionalInferredAuth.get();
+          String username = Verify.verifyNotNull(auth.getUsername());
+          String password = Verify.verifyNotNull(auth.getPassword());
+          Credential credential = Credential.from(username, password);
+          defaultCredentialRetrievers.setInferredCredential(credential, auth.getAuthDescriptor());
+        }
+      } catch (InferredAuthException ex) {
+        eventDispatcher.dispatch(LogEvent.warn("InferredAuthException: " + ex.getMessage()));
       }
     }
     defaultCredentialRetrievers.setCredentialHelper(credHelper);
