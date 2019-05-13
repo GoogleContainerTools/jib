@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -45,20 +46,25 @@ class ProxyProvider {
   static void populateSystemProxyProperties(Settings settings, SettingsDecrypter decrypter)
       throws MojoExecutionException {
     List<Proxy> proxies =
-        settings
-            .getProxies()
+        PROXY_PROTOCOLS
             .stream()
-            .filter(Proxy::isActive)
-            .filter(proxy -> PROXY_PROTOCOLS.contains(proxy.getProtocol()))
+            .map(
+                protocol ->
+                    settings
+                        .getProxies()
+                        .stream()
+                        .filter(Proxy::isActive)
+                        .filter(proxy -> protocol.equals(proxy.getProtocol()))
+                        .findFirst())
+            .filter(Optional::isPresent)
+            .map(Optional::get)
             .collect(Collectors.toList());
 
-    System.out.println(proxies.size());
     if (proxies.size() == 0) {
       return;
     }
 
     SettingsDecryptionRequest request = new DefaultSettingsDecryptionRequest().setProxies(proxies);
-    System.out.println("Decrypter" + decrypter);
     SettingsDecryptionResult result = decrypter.decrypt(request);
 
     for (SettingsProblem problem : result.getProblems()) {

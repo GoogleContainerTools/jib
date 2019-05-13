@@ -43,7 +43,7 @@ public class ProxyProviderTest {
   private static Settings httpsOnlyProxySettings;
   private static Settings mixedProxyEncryptedSettings;
   private static Settings badProxyEncryptedSettings;
-  private static SettingsDecrypter settingsDescypter;
+  private static SettingsDecrypter settingsDecrypter;
   private static SettingsDecrypter emptySettingsDescypter;
 
   private static final ImmutableList<String> proxyProperties =
@@ -78,7 +78,7 @@ public class ProxyProviderTest {
     badProxyEncryptedSettings =
         SettingsFixture.newSettings(
             Paths.get("src/test/resources/maven/settings/bad-encrypted-proxy-settings.xml"));
-    settingsDescypter =
+    settingsDecrypter =
         SettingsFixture.newSettingsDecrypter(
             Paths.get("src/test/resources/maven/settings/settings-security.xml"));
     emptySettingsDescypter =
@@ -229,7 +229,7 @@ public class ProxyProviderTest {
   @Test
   public void testPopulateSystemProxyProperties_noActiveProxy() throws MojoExecutionException {
 
-    ProxyProvider.populateSystemProxyProperties(noActiveProxiesSettings, settingsDescypter);
+    ProxyProvider.populateSystemProxyProperties(noActiveProxiesSettings, settingsDecrypter);
 
     Assert.assertNull(System.getProperty("http.proxyHost"));
     Assert.assertNull(System.getProperty("https.proxyHost"));
@@ -238,7 +238,7 @@ public class ProxyProviderTest {
   @Test
   public void testPopulateSystemProxyProperties_firstActiveHttpProxy()
       throws MojoExecutionException {
-    ProxyProvider.populateSystemProxyProperties(httpOnlyProxySettings, settingsDescypter);
+    ProxyProvider.populateSystemProxyProperties(httpOnlyProxySettings, settingsDecrypter);
 
     Assert.assertEquals("proxy2.example.com", System.getProperty("http.proxyHost"));
     Assert.assertNull(System.getProperty("https.proxyHost"));
@@ -247,7 +247,7 @@ public class ProxyProviderTest {
   @Test
   public void testPopulateSystemProxyProperties_firstActiveHttpsProxy()
       throws MojoExecutionException {
-    ProxyProvider.populateSystemProxyProperties(httpsOnlyProxySettings, settingsDescypter);
+    ProxyProvider.populateSystemProxyProperties(httpsOnlyProxySettings, settingsDecrypter);
 
     Assert.assertEquals("proxy2.example.com", System.getProperty("https.proxyHost"));
     Assert.assertNull(System.getProperty("http.proxyHost"));
@@ -255,7 +255,7 @@ public class ProxyProviderTest {
 
   @Test
   public void testPopulateSystemProxyProperties_EncryptedProxy() throws MojoExecutionException {
-    ProxyProvider.populateSystemProxyProperties(mixedProxyEncryptedSettings, settingsDescypter);
+    ProxyProvider.populateSystemProxyProperties(mixedProxyEncryptedSettings, settingsDecrypter);
 
     Assert.assertEquals("password1", System.getProperty("http.proxyPassword"));
     Assert.assertEquals("password2", System.getProperty("https.proxyPassword"));
@@ -264,7 +264,7 @@ public class ProxyProviderTest {
   @Test
   public void testPopulateSystemProxyProperties_decryptionFailure() {
     try {
-      ProxyProvider.populateSystemProxyProperties(badProxyEncryptedSettings, settingsDescypter);
+      ProxyProvider.populateSystemProxyProperties(badProxyEncryptedSettings, settingsDecrypter);
       Assert.fail();
     } catch (MojoExecutionException ex) {
       Assert.assertThat(
