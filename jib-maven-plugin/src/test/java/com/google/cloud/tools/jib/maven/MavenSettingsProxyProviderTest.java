@@ -265,6 +265,28 @@ public class MavenSettingsProxyProviderTest {
   }
 
   @Test
+  public void testActivateHttpAndHttpsProxies_dontOverwriteUserHttp()
+      throws MojoExecutionException {
+    System.setProperty("http.proxyHost", "host");
+    MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
+        mixedProxyEncryptedSettings, settingsDecrypter);
+
+    Assert.assertNull(System.getProperty("http.proxyPassword"));
+    Assert.assertEquals("password2", System.getProperty("https.proxyPassword"));
+  }
+
+  @Test
+  public void testActivateHttpAndHttpsProxies_dontOverwriteUserHttps()
+      throws MojoExecutionException {
+    System.setProperty("https.proxyHost", "host");
+    MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
+        mixedProxyEncryptedSettings, settingsDecrypter);
+
+    Assert.assertEquals("password1", System.getProperty("http.proxyPassword"));
+    Assert.assertNull(System.getProperty("https.proxyPassword"));
+  }
+
+  @Test
   public void testActivateHttpAndHttpsProxies_decryptionFailure() {
     try {
       MavenSettingsProxyProvider.activateHttpAndHttpsProxies(

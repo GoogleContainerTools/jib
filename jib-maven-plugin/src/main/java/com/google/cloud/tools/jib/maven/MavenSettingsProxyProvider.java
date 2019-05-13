@@ -47,7 +47,7 @@ class MavenSettingsProxyProvider {
     List<Proxy> proxies = new ArrayList<>(2);
     for (String protocol : ImmutableList.of("http", "https")) {
       if (areProxyPropertiesSet(protocol)) {
-        return;
+        continue;
       }
       settings
           .getProxies()
