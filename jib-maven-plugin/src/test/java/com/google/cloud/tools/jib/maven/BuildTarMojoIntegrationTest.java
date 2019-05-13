@@ -85,8 +85,7 @@ public class BuildTarMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_jibContainerize() throws VerificationException, IOException {
-    SkippedGoalVerifier.verifyJibContainerize(
-        skippedTestProject, BuildDockerMojo.GOAL_NAME, ":foo");
+  public void testExecute_jibContainerizeSkips() throws VerificationException, IOException {
+    SkippedGoalVerifier.verifyJibContainerizeSkips(simpleTestProject, BuildDockerMojo.GOAL_NAME);
   }
 }

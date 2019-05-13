@@ -47,12 +47,13 @@ class SkippedGoalVerifier {
                 + "[INFO] BUILD SUCCESS"));
   }
 
-  /** Verifies that a Jib goal is skipped with {@code jib.comntainerize=group:artifact}. */
-  static void verifyJibContainerize(TestProject testProject, String goal, String spec)
+  /** Verifies that a Jib goal is skipped with {@code jib.containerize=noGroup:noArtifact}. */
+  static void verifyJibContainerizeSkips(TestProject testProject, String goal)
       throws VerificationException, IOException {
     Verifier verifier = new Verifier(testProject.getProjectRoot().toString());
     verifier.setAutoclean(false);
-    verifier.setSystemProperty("jib.containerize", spec);
+    // noGroup:noArtifact should never match
+    verifier.setSystemProperty("jib.containerize", "noGroup:noArtifact");
 
     verifier.executeGoal("jib:" + goal);
 
@@ -60,7 +61,7 @@ class SkippedGoalVerifier {
     Assert.assertThat(
         new String(Files.readAllBytes(logFile), StandardCharsets.UTF_8),
         CoreMatchers.containsString(
-            "[INFO] Skipping containerization of this module (jib.containerize)\n"
+            "[INFO] Skipping containerization of this module (not specified in jib.containerize)\n"
                 + "[INFO] ------------------------------------------------------------------------\n"
                 + "[INFO] BUILD SUCCESS"));
   }

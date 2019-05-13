@@ -628,7 +628,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /**
-   * Return false if the `jib.comntainerized` property is specified and does not match this
+   * Return false if the `jib.containerize` property is specified and does not match this
    * module/project. Used by the Skaffold-Jib binding.
    *
    * @return true if this module should be containerized

@@ -76,7 +76,10 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       return;
     } else if (!isContainerizable()) {
       getLog()
-          .info("Skipping containerization of this module (" + PropertyNames.CONTAINERIZE + ")");
+          .info(
+              "Skipping containerization of this module (not specified in "
+                  + PropertyNames.CONTAINERIZE
+                  + ")");
       return;
     }
     if ("pom".equals(getProject().getPackaging())) {
