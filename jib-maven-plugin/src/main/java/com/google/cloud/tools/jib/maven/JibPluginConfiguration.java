@@ -23,6 +23,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.File;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -645,8 +646,18 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
         || moduleSpecification.equals(":" + project.getArtifactId())) {
       return true;
     }
-    Path projectBase = project.getBasedir().toPath();
-    return projectBase.endsWith(moduleSpecification);
+    // Relative paths never have a colon on *nix nor Windows.  This moduleSpecification could be an
+    // :artifactId or groupId:artifactId for a different artifact.
+    if (moduleSpecification.contains(":")) {
+      return false;
+    }
+    try {
+      Path projectBase = project.getBasedir().toPath();
+      return projectBase.endsWith(moduleSpecification);
+    } catch (InvalidPathException ex) {
+      // ignore since moduleSpecification may not actually be a path
+      return false;
+    }
   }
 
   SettingsDecrypter getSettingsDecrypter() {
