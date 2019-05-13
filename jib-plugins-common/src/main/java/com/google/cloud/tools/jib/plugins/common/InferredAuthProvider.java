@@ -23,6 +23,7 @@ public interface InferredAuthProvider {
 
   /**
    * Find auth credentials for a specific registry.
+   *
    * @param registry we want credential for
    * @return auth information for the registry (can be empty)
    * @throws InferredAuthException if the auth discovery process resulted in a fatal error
