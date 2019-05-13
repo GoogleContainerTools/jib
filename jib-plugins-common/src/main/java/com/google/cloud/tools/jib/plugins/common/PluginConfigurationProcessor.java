@@ -417,7 +417,7 @@ public class PluginConfigurationProcessor {
     } else {
       try {
         Optional<AuthProperty> optionalInferredAuth =
-            inferredAuthProvider.inferredAuth(imageReference.getRegistry());
+            inferredAuthProvider.inferAuth(imageReference.getRegistry());
         credentialPresent = optionalInferredAuth.isPresent();
         if (optionalInferredAuth.isPresent()) {
           AuthProperty auth = optionalInferredAuth.get();

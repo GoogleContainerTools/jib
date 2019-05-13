@@ -28,5 +28,5 @@ public interface InferredAuthProvider {
    * @return auth information for the registry (can be empty)
    * @throws InferredAuthException if the auth discovery process resulted in a fatal error
    */
-  Optional<AuthProperty> inferredAuth(String registry) throws InferredAuthException;
+  Optional<AuthProperty> inferAuth(String registry) throws InferredAuthException;
 }

@@ -56,7 +56,7 @@ class MavenSettingsServerCredentials implements InferredAuthProvider {
    * @return the auth info for the registry, or {@link Optional#empty} if none could be retrieved
    */
   @Override
-  public Optional<AuthProperty> inferredAuth(String registry) throws InferredAuthException {
+  public Optional<AuthProperty> inferAuth(String registry) throws InferredAuthException {
 
     Server server = settings.getServer(registry);
     if (server == null) {

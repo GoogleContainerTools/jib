@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.plugins.common.InferredAuthException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import org.hamcrest.core.StringStartsWith;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -52,19 +52,18 @@ public class MavenSettingsServerCredentialsTest {
   @Test
   public void testInferredAuth_decrypterFailure() {
     try {
-      mavenSettingsServerCredentials.inferredAuth("badServer");
+      mavenSettingsServerCredentials.inferAuth("badServer");
       Assert.fail();
     } catch (InferredAuthException ex) {
       Assert.assertThat(
           ex.getMessage(),
-          StringStartsWith.startsWith(
-              "Unable to decrypt server(badServer) info from settings.xml:"));
+          CoreMatchers.startsWith("Unable to decrypt server(badServer) info from settings.xml:"));
     }
   }
 
   @Test
   public void testInferredAuth_successEncrypted() throws InferredAuthException {
-    Optional<AuthProperty> auth = mavenSettingsServerCredentials.inferredAuth("encryptedServer");
+    Optional<AuthProperty> auth = mavenSettingsServerCredentials.inferAuth("encryptedServer");
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("encryptedUser", auth.get().getUsername());
     Assert.assertEquals("password1", auth.get().getPassword());
@@ -72,7 +71,7 @@ public class MavenSettingsServerCredentialsTest {
 
   @Test
   public void testInferredAuth_successUnencrypted() throws InferredAuthException {
-    Optional<AuthProperty> auth = mavenSettingsServerCredentials.inferredAuth("simpleServer");
+    Optional<AuthProperty> auth = mavenSettingsServerCredentials.inferAuth("simpleServer");
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("simpleUser", auth.get().getUsername());
     Assert.assertEquals("password2", auth.get().getPassword());
@@ -81,7 +80,7 @@ public class MavenSettingsServerCredentialsTest {
   @Test
   public void testInferredAuth_successNoPasswordDoesNotBlowUp() throws InferredAuthException {
     Optional<AuthProperty> auth =
-        mavenSettingsServerCredentialsNoMasterPassword.inferredAuth("simpleServer");
+        mavenSettingsServerCredentialsNoMasterPassword.inferAuth("simpleServer");
     Assert.assertTrue(auth.isPresent());
     Assert.assertEquals("simpleUser", auth.get().getUsername());
     Assert.assertEquals("password2", auth.get().getPassword());
@@ -89,6 +88,6 @@ public class MavenSettingsServerCredentialsTest {
 
   @Test
   public void testInferredAuth_notFound() throws InferredAuthException {
-    Assert.assertFalse(mavenSettingsServerCredentials.inferredAuth("serverUnknown").isPresent());
+    Assert.assertFalse(mavenSettingsServerCredentials.inferAuth("serverUnknown").isPresent());
   }
 }
