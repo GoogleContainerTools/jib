@@ -155,8 +155,13 @@ public class BuildDockerMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_skipJibGoal() throws VerificationException, IOException {
-    SkippedGoalVerifier.verifyGoalIsSkipped(emptyTestProject, BuildDockerMojo.GOAL_NAME);
+  public void testExecute_jibSkip() throws VerificationException, IOException {
+    SkippedGoalVerifier.verifyJibSkip(emptyTestProject, BuildDockerMojo.GOAL_NAME);
+  }
+
+  @Test
+  public void testExecute_jibContainerize() throws VerificationException, IOException {
+    SkippedGoalVerifier.verifyJibContainerize(emptyTestProject, BuildDockerMojo.GOAL_NAME, ":foo");
   }
 
   @Test

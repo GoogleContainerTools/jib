@@ -626,6 +626,29 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     return skip;
   }
 
+  /**
+   * Return false if the `jib.comntainerized` property is specified and does not match this
+   * module/project. Used by the Skaffold-Jib binding.
+   *
+   * @return true if this module should be containerized
+   */
+  boolean isContainerizable() {
+    String moduleSpecification = getProperty(PropertyNames.CONTAINERIZE);
+    if (project == null || Strings.isNullOrEmpty(moduleSpecification)) {
+      return true;
+    }
+    // modules can be specified in one of three ways:
+    // 1) a `groupId:artifactId`
+    // 2) an `:artifactId`
+    // 3) relative path within the repository
+    if (moduleSpecification.equals(project.getGroupId() + ":" + project.getArtifactId())
+        || moduleSpecification.equals(":" + project.getArtifactId())) {
+      return true;
+    }
+    Path projectBase = project.getBasedir().toPath();
+    return projectBase.endsWith(moduleSpecification);
+  }
+
   SettingsDecrypter getSettingsDecrypter() {
     return settingsDecrypter;
   }

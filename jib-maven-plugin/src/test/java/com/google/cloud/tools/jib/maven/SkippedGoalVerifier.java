@@ -26,11 +26,11 @@ import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 
-/** A simple verifier utility to test goal skipping accross all our jib goals. */
+/** A simple verifier utility to test goal skipping across all our jib goals. */
 class SkippedGoalVerifier {
 
-  /** Verifies that a Jib goal is skipped. */
-  static void verifyGoalIsSkipped(TestProject testProject, String goal)
+  /** Verifies that a Jib goal is skipped with {@code jib.skip=true}. */
+  static void verifyJibSkip(TestProject testProject, String goal)
       throws VerificationException, IOException {
     Verifier verifier = new Verifier(testProject.getProjectRoot().toString());
     verifier.setAutoclean(false);
@@ -43,6 +43,24 @@ class SkippedGoalVerifier {
         new String(Files.readAllBytes(logFile), StandardCharsets.UTF_8),
         CoreMatchers.containsString(
             "[INFO] Skipping containerization because jib-maven-plugin: skip = true\n"
+                + "[INFO] ------------------------------------------------------------------------\n"
+                + "[INFO] BUILD SUCCESS"));
+  }
+
+  /** Verifies that a Jib goal is skipped with {@code jib.comntainerize=group:artifact}. */
+  static void verifyJibContainerize(TestProject testProject, String goal, String spec)
+      throws VerificationException, IOException {
+    Verifier verifier = new Verifier(testProject.getProjectRoot().toString());
+    verifier.setAutoclean(false);
+    verifier.setSystemProperty("jib.containerize", spec);
+
+    verifier.executeGoal("jib:" + goal);
+
+    Path logFile = Paths.get(verifier.getBasedir(), verifier.getLogFileName());
+    Assert.assertThat(
+        new String(Files.readAllBytes(logFile), StandardCharsets.UTF_8),
+        CoreMatchers.containsString(
+            "[INFO] Skipping containerization of this module (jib.containerize)\n"
                 + "[INFO] ------------------------------------------------------------------------\n"
                 + "[INFO] BUILD SUCCESS"));
   }

@@ -58,6 +58,7 @@ public class PropertyNames {
   public static final String DOCKER_CLIENT_ENVIRONMENT = "jib.dockerClient.environment";
   public static final String SKIP = "jib.skip";
   public static final String CONSOLE = "jib.console";
+  public static final String CONTAINERIZE = "jib.containerize";
 
   private PropertyNames() {}
 }

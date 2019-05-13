@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfigu
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.io.File;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -319,5 +320,58 @@ public class JibPluginConfigurationTest {
               + "'jib.extraDirectories.permissions'",
           ex.getMessage());
     }
+  }
+
+  @Test
+  public void testIsContainerizable_noProperty() {
+    Properties projectProperties = project.getProperties();
+
+    projectProperties.remove("jib.containerize");
+    Assert.assertTrue(testPluginConfiguration.isContainerizable());
+
+    projectProperties.setProperty("jib.containerize", "");
+    Assert.assertTrue(testPluginConfiguration.isContainerizable());
+  }
+
+  @Test
+  public void testIsContainerizable_artifactId() {
+    project.setGroupId("group");
+    project.setArtifactId("artifact");
+    project.setFile(new File("/repository/project/pom.xml")); // sets baseDir
+
+    Properties projectProperties = project.getProperties();
+    projectProperties.setProperty("jib.containerize", ":artifact");
+    Assert.assertTrue(testPluginConfiguration.isContainerizable());
+
+    projectProperties.setProperty("jib.containerize", ":artifact2");
+    Assert.assertFalse(testPluginConfiguration.isContainerizable());
+  }
+
+  @Test
+  public void testIsContainerizable_groupAndArtifactId() {
+    project.setGroupId("group");
+    project.setArtifactId("artifact");
+    project.setFile(new File("/repository/project/pom.xml")); // sets baseDir
+
+    Properties projectProperties = project.getProperties();
+    projectProperties.setProperty("jib.containerize", "group:artifact");
+    Assert.assertTrue(testPluginConfiguration.isContainerizable());
+
+    projectProperties.setProperty("jib.containerize", "group:artifact2");
+    Assert.assertFalse(testPluginConfiguration.isContainerizable());
+  }
+
+  @Test
+  public void testIsContainerizable_directory() {
+    project.setGroupId("group");
+    project.setArtifactId("artifact");
+    project.setFile(new File("/repository/project/pom.xml")); // sets baseDir
+
+    Properties projectProperties = project.getProperties();
+    projectProperties.setProperty("jib.containerize", "project");
+    Assert.assertTrue(testPluginConfiguration.isContainerizable());
+
+    projectProperties.setProperty("jib.containerize", "project2");
+    Assert.assertFalse(testPluginConfiguration.isContainerizable());
   }
 }
