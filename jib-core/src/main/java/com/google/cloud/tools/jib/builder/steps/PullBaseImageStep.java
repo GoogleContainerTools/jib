@@ -253,8 +253,8 @@ class PullBaseImageStep
         DescriptorDigest containerConfigurationDigest =
             buildableManifestTemplate.getContainerConfiguration().getDigest();
 
-        try (ProgressEventDispatcherWrapper progressEventDispatcherWrapper =
-            new ProgressEventDispatcherWrapper(
+        try (ThrottledProgressEventDispatcherWrapper progressEventDispatcherWrapper =
+            new ThrottledProgressEventDispatcherWrapper(
                 progressEventDispatcher.newChildProducer(),
                 "pull container configuration " + containerConfigurationDigest,
                 BuildStepType.PULL_BASE_IMAGE)) {

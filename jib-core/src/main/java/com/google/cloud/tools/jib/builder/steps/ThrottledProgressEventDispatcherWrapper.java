@@ -18,26 +18,29 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
+import com.google.cloud.tools.jib.event.progress.ThrottledConsumer;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
 import javax.annotation.Nullable;
 
 /**
- * Contains a {@link ProgressEventDispatcher}. This class is mutable and should only be used within
- * a local context.
+ * Contains a {@link ProgressEventDispatcher} and throttles dispatching progress events with the
+ * default delay used by {@link ThrottledConsumer}. This class is mutable and should only be used
+ * within a local context.
  *
  * <p>This class is necessary because the total BLOb size (allocation units) is not known until the
  * response headers are received, only after which can the {@link ProgressEventDispatcher} be
  * created.
  */
-class ProgressEventDispatcherWrapper implements Closeable {
+class ThrottledProgressEventDispatcherWrapper implements Closeable {
 
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   private final String description;
   private final BuildStepType type;
   @Nullable private ProgressEventDispatcher progressEventDispatcher;
+  @Nullable private ThrottledConsumer<Long> throttledDispatcher;
 
-  ProgressEventDispatcherWrapper(
+  ThrottledProgressEventDispatcherWrapper(
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       String description,
       BuildStepType type) {
@@ -46,14 +49,16 @@ class ProgressEventDispatcherWrapper implements Closeable {
     this.type = type;
   }
 
-  void dispatchProgress(long progressUnits) {
-    Preconditions.checkNotNull(progressEventDispatcher);
-    progressEventDispatcher.dispatchProgress(progressUnits);
+  public void dispatchProgress(Long progressUnits) {
+    Preconditions.checkNotNull(throttledDispatcher);
+    throttledDispatcher.accept(progressUnits);
   }
 
   @Override
   public void close() {
     Preconditions.checkNotNull(progressEventDispatcher);
+    Preconditions.checkNotNull(throttledDispatcher);
+    throttledDispatcher.close();
     progressEventDispatcher.close();
   }
 
@@ -61,5 +66,8 @@ class ProgressEventDispatcherWrapper implements Closeable {
     Preconditions.checkState(progressEventDispatcher == null);
     progressEventDispatcher =
         progressEventDispatcherFactory.create(type, description, allocationUnits);
+    throttledDispatcher =
+        new ThrottledConsumer<>(
+            progressEventDispatcher::dispatchProgress, (unit1, unit2) -> unit1 + unit2);
   }
 }

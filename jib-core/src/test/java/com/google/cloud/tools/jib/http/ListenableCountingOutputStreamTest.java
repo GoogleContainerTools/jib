@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.http;
 
-import com.google.cloud.tools.jib.event.progress.DelayedConsumer;
+import com.google.cloud.tools.jib.event.progress.ThrottledConsumer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Duration;
@@ -58,8 +58,8 @@ public class ListenableCountingOutputStreamTest {
     Queue<Instant> instantQueue = new ArrayDeque<>();
     instantQueue.add(Instant.EPOCH);
 
-    try (DelayedConsumer<Long> byteCounter =
-            new DelayedConsumer<>(
+    try (ThrottledConsumer<Long> byteCounter =
+            new ThrottledConsumer<>(
                 byteCounts::add, (a, b) -> a + b, Duration.ofSeconds(3), instantQueue::remove);
         ListenableCountingOutputStream listenableCountingOutputStream =
             new ListenableCountingOutputStream(byteArrayOutputStream, byteCounter)) {

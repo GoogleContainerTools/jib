@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.http;
 
 import com.google.api.client.http.HttpContent;
 import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.event.progress.DelayedConsumer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.function.Consumer;
@@ -58,10 +57,7 @@ public class BlobHttpContent implements HttpContent {
 
   @Override
   public void writeTo(OutputStream outputStream) throws IOException {
-    try (DelayedConsumer<Long> delayedCountListener =
-        new DelayedConsumer<>(writtenByteCountListener, (count1, count2) -> count1 + count2)) {
-      blob.writeTo(new ListenableCountingOutputStream(outputStream, delayedCountListener));
-      outputStream.flush();
-    }
+    blob.writeTo(new ListenableCountingOutputStream(outputStream, writtenByteCountListener));
+    outputStream.flush();
   }
 }

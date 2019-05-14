@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.event.progress;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.function.BinaryOperator;
@@ -29,7 +28,7 @@ import javax.annotation.Nullable;
  * Wraps a {@link Consumer} so that multiple consume calls ({@link #accept}) within a short period
  * of time are merged into a single later call.
  */
-public class DelayedConsumer<T> implements Consumer<T>, Closeable {
+public class ThrottledConsumer<T> implements Consumer<T>, Closeable {
 
   private final Consumer<T> consumer;
 
@@ -57,11 +56,11 @@ public class DelayedConsumer<T> implements Consumer<T>, Closeable {
    * @param callback {@link Consumer} callback to wrap
    * @param valueAdder merger to add up multiple delayed values
    */
-  public DelayedConsumer(Consumer<T> callback, BinaryOperator<T> valueAdder) {
+  public ThrottledConsumer(Consumer<T> callback, BinaryOperator<T> valueAdder) {
     this(callback, valueAdder, Duration.ofMillis(100), Instant::now);
   }
 
-  public DelayedConsumer(
+  public ThrottledConsumer(
       Consumer<T> consumer,
       BinaryOperator<T> valueAdder,
       Duration delayBetweenCallbacks,
@@ -79,7 +78,8 @@ public class DelayedConsumer<T> implements Consumer<T>, Closeable {
     valueSoFar = valueSoFar == null ? value : valueAdder.apply(valueSoFar, value);
 
     Instant now = getNow.get();
-    if (previousCallback.plus(delayBetweenCallbacks).isBefore(now)) {
+    Instant nextFireTime = previousCallback.plus(delayBetweenCallbacks);
+    if (now.isAfter(nextFireTime)) {
       consumer.accept(valueSoFar);
       previousCallback = now;
       valueSoFar = null;
@@ -87,7 +87,7 @@ public class DelayedConsumer<T> implements Consumer<T>, Closeable {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
     if (valueSoFar != null) {
       consumer.accept(valueSoFar);
     }

@@ -95,8 +95,8 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
               .setAuthorization(pullAuthorization)
               .newRegistryClient();
 
-      try (ProgressEventDispatcherWrapper progressEventDispatcherWrapper =
-          new ProgressEventDispatcherWrapper(
+      try (ThrottledProgressEventDispatcherWrapper progressEventDispatcherWrapper =
+          new ThrottledProgressEventDispatcherWrapper(
               progressEventDispatcher.newChildProducer(),
               "pulling base image layer " + layerDigest,
               BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER)) {
