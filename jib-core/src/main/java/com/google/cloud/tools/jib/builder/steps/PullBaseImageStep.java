@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.async.AsyncStep;
@@ -31,6 +32,7 @@ import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -112,23 +114,20 @@ class PullBaseImageStep
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, ExecutionException, BadContainerConfigurationFormatException,
           CacheCorruptedException {
+    EventDispatcher eventDispatcher = buildConfiguration.getEventDispatcher();
     // Skip this step if this is a scratch image
     ImageConfiguration baseImageConfiguration = buildConfiguration.getBaseImageConfiguration();
     if (baseImageConfiguration.getImage().isScratch()) {
-      buildConfiguration
-          .getEventDispatcher()
-          .dispatch(LogEvent.progress("Getting scratch base image..."));
+      eventDispatcher.dispatch(LogEvent.progress("Getting scratch base image..."));
       return new BaseImageWithAuthorization(
           Image.builder(buildConfiguration.getTargetFormat()).build(), null);
     }
 
-    buildConfiguration
-        .getEventDispatcher()
-        .dispatch(
-            LogEvent.progress(
-                "Getting base image "
-                    + buildConfiguration.getBaseImageConfiguration().getImage()
-                    + "..."));
+    eventDispatcher.dispatch(
+        LogEvent.progress(
+            "Getting base image "
+                + buildConfiguration.getBaseImageConfiguration().getImage()
+                + "..."));
 
     if (buildConfiguration.isOffline()) {
       return new BaseImageWithAuthorization(pullBaseImageOffline(), null);
@@ -144,13 +143,11 @@ class PullBaseImageStep
         return new BaseImageWithAuthorization(pullBaseImage(null, progressEventDispatcher), null);
 
       } catch (RegistryUnauthorizedException ex) {
-        buildConfiguration
-            .getEventDispatcher()
-            .dispatch(
-                LogEvent.lifecycle(
-                    "The base image requires auth. Trying again for "
-                        + buildConfiguration.getBaseImageConfiguration().getImage()
-                        + "..."));
+        eventDispatcher.dispatch(
+            LogEvent.lifecycle(
+                "The base image requires auth. Trying again for "
+                    + buildConfiguration.getBaseImageConfiguration().getImage()
+                    + "..."));
 
         // If failed, then, retrieve base registry credentials and try with retrieved credentials.
         // TODO: Refactor the logic in RetrieveRegistryCredentialsStep out to
@@ -176,22 +173,23 @@ class PullBaseImageStep
         } catch (RegistryUnauthorizedException registryUnauthorizedException) {
           // The registry requires us to authenticate using the Docker Token Authentication.
           // See https://docs.docker.com/registry/spec/auth/token
-          RegistryAuthenticator registryAuthenticator =
-              RegistryAuthenticator.initializer(
-                      buildConfiguration.getEventDispatcher(),
-                      buildConfiguration.getBaseImageConfiguration().getImageRegistry(),
-                      buildConfiguration.getBaseImageConfiguration().getImageRepository())
-                  .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
-                  .setUserAgentSuffix(buildConfiguration.getToolName())
-                  .initialize();
+          RegistryAuthenticator registryAuthenticator = null;
+          try {
+            registryAuthenticator =
+                buildConfiguration
+                    .newBaseImageRegistryClientFactory()
+                    .newRegistryClient()
+                    .getRegistryAuthenticator();
+          } catch (InsecureRegistryException insecureRegistryException) {
+            // Cannot skip certificate validation or use HTTP; fall through.
+          }
           if (registryAuthenticator == null) {
-            buildConfiguration
-                .getEventDispatcher()
-                .dispatch(
-                    LogEvent.error(
-                        "Failed to retrieve authentication challenge for registry that required token authentication"));
+            eventDispatcher.dispatch(
+                LogEvent.error(
+                    "Failed to retrieve authentication challenge for registry that required token authentication"));
             throw registryUnauthorizedException;
           }
+
           registryAuthorization =
               registryAuthenticator.setCredential(registryCredential).authenticatePull();
 

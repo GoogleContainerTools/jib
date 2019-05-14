@@ -17,12 +17,9 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
-import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Authorizations;
@@ -50,67 +47,6 @@ import javax.annotation.Nullable;
  */
 public class RegistryAuthenticator {
 
-  /** Initializer for {@link RegistryAuthenticator}. */
-  public static class Initializer {
-
-    private final EventDispatcher eventDispatcher;
-    private final String serverUrl;
-    private final String repository;
-    private boolean allowInsecureRegistries = false;
-    @Nullable private String userAgentSuffix;
-
-    /**
-     * Instantiates a new initializer for {@link RegistryAuthenticator}.
-     *
-     * @param eventDispatcher the event dispatcher used for dispatching log events
-     * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
-     * @param repository the image/repository name (also known as, namespace)
-     */
-    private Initializer(EventDispatcher eventDispatcher, String serverUrl, String repository) {
-      this.eventDispatcher = eventDispatcher;
-      this.serverUrl = serverUrl;
-      this.repository = repository;
-    }
-
-    public Initializer setAllowInsecureRegistries(boolean allowInsecureRegistries) {
-      this.allowInsecureRegistries = allowInsecureRegistries;
-      return this;
-    }
-
-    public Initializer setUserAgentSuffix(@Nullable String userAgentSuffix) {
-      this.userAgentSuffix = userAgentSuffix;
-      return this;
-    }
-
-    /**
-     * Gets a {@link RegistryAuthenticator} for a custom registry server and repository.
-     *
-     * @return the {@link RegistryAuthenticator} to authenticate pulls/pushes with the registry, or
-     *     {@code null} if no token authentication is necessary
-     * @throws RegistryAuthenticationFailedException if failed to create the registry authenticator
-     * @throws IOException if communicating with the endpoint fails
-     * @throws RegistryException if communicating with the endpoint fails
-     */
-    @Nullable
-    public RegistryAuthenticator initialize()
-        throws RegistryAuthenticationFailedException, IOException, RegistryException {
-      try {
-        return RegistryClient.factory(eventDispatcher, serverUrl, repository)
-            .setAllowInsecureRegistries(allowInsecureRegistries)
-            .setUserAgentSuffix(userAgentSuffix)
-            .newRegistryClient()
-            .getRegistryAuthenticator();
-
-      } catch (MalformedURLException ex) {
-        throw new RegistryAuthenticationFailedException(serverUrl, repository, ex);
-
-      } catch (InsecureRegistryException ex) {
-        // Cannot skip certificate validation or use HTTP, so just return null.
-        return null;
-      }
-    }
-  }
-
   /**
    * Sets a {@code Credential} to help the authentication.
    *
@@ -120,19 +56,6 @@ public class RegistryAuthenticator {
   public RegistryAuthenticator setCredential(@Nullable Credential credential) {
     this.credential = credential;
     return this;
-  }
-
-  /**
-   * Gets a new initializer for {@link RegistryAuthenticator}.
-   *
-   * @param eventDispatcher the event dispatcher used for dispatching log events
-   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
-   * @param repository the image/repository name (also known as, namespace)
-   * @return the new {@link Initializer}
-   */
-  public static Initializer initializer(
-      EventDispatcher eventDispatcher, String serverUrl, String repository) {
-    return new Initializer(eventDispatcher, serverUrl, repository);
   }
 
   // TODO: Replace with a WWW-Authenticate header parser.
