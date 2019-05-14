@@ -74,6 +74,13 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     if (isSkipped()) {
       getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
       return;
+    } else if (!isContainerizable()) {
+      getLog()
+          .info(
+              "Skipping containerization of this module (not specified in "
+                  + PropertyNames.CONTAINERIZE
+                  + ")");
+      return;
     }
     if ("pom".equals(getProject().getPackaging())) {
       getLog().info("Skipping containerization because packaging is 'pom'...");
