@@ -19,18 +19,17 @@ package com.google.cloud.tools.jib.event.progress;
 import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 /**
- * Wraps a {@link Consumer} so that multiple consume calls ({@link #accept}) within a short period
- * of time are merged into a single later call.
+ * Wraps a {@link Consumer<Long>} so that multiple consume calls ({@link #accept}) within a short
+ * period of time are merged into a single later call with the value accumulated up to that point.
  */
-public class ThrottledConsumer<T> implements Consumer<T>, Closeable {
+public class ThrottledLongConsumer implements Consumer<Long>, Closeable {
 
-  private final Consumer<T> consumer;
+  private final Consumer<Long> consumer;
 
   /** Delay between each call to the underlying {@link #accept}. */
   private final Duration delayBetweenCallbacks;
@@ -41,14 +40,7 @@ public class ThrottledConsumer<T> implements Consumer<T>, Closeable {
   /** "Clock" that returns the current {@link Instant}. */
   private final Supplier<Instant> getNow;
 
-  /**
-   * Binary operator to be used to merge ("add up") multiple delayed values. Used to accumulate past
-   * values in case delays happen so that callback is called once with the "added" value after the
-   * delay.
-   */
-  private final BinaryOperator<T> valueAdder;
-
-  @Nullable private T valueSoFar;
+  @Nullable private Long valueSoFar;
 
   /**
    * Wraps a consumer with the delay of 100 ms.
@@ -56,17 +48,13 @@ public class ThrottledConsumer<T> implements Consumer<T>, Closeable {
    * @param callback {@link Consumer} callback to wrap
    * @param valueAdder merger to add up multiple delayed values
    */
-  public ThrottledConsumer(Consumer<T> callback, BinaryOperator<T> valueAdder) {
-    this(callback, valueAdder, Duration.ofMillis(100), Instant::now);
+  public ThrottledLongConsumer(Consumer<Long> callback) {
+    this(callback, Duration.ofMillis(100), Instant::now);
   }
 
-  public ThrottledConsumer(
-      Consumer<T> consumer,
-      BinaryOperator<T> valueAdder,
-      Duration delayBetweenCallbacks,
-      Supplier<Instant> getNow) {
+  public ThrottledLongConsumer(
+      Consumer<Long> consumer, Duration delayBetweenCallbacks, Supplier<Instant> getNow) {
     this.consumer = consumer;
-    this.valueAdder = valueAdder;
     this.delayBetweenCallbacks = delayBetweenCallbacks;
     this.getNow = getNow;
 
@@ -74,8 +62,8 @@ public class ThrottledConsumer<T> implements Consumer<T>, Closeable {
   }
 
   @Override
-  public void accept(T value) {
-    valueSoFar = valueSoFar == null ? value : valueAdder.apply(valueSoFar, value);
+  public void accept(Long value) {
+    valueSoFar = valueSoFar == null ? value : valueSoFar + value;
 
     Instant now = getNow.get();
     Instant nextFireTime = previousCallback.plus(delayBetweenCallbacks);
