@@ -23,6 +23,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.File;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -624,6 +625,39 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   boolean isSkipped() {
     return skip;
+  }
+
+  /**
+   * Return false if the `jib.containerize` property is specified and does not match this
+   * module/project. Used by the Skaffold-Jib binding.
+   *
+   * @return true if this module should be containerized
+   */
+  boolean isContainerizable() {
+    String moduleSpecification = getProperty(PropertyNames.CONTAINERIZE);
+    if (project == null || Strings.isNullOrEmpty(moduleSpecification)) {
+      return true;
+    }
+    // modules can be specified in one of three ways:
+    // 1) a `groupId:artifactId`
+    // 2) an `:artifactId`
+    // 3) relative path within the repository
+    if (moduleSpecification.equals(project.getGroupId() + ":" + project.getArtifactId())
+        || moduleSpecification.equals(":" + project.getArtifactId())) {
+      return true;
+    }
+    // Relative paths never have a colon on *nix nor Windows.  This moduleSpecification could be an
+    // :artifactId or groupId:artifactId for a different artifact.
+    if (moduleSpecification.contains(":")) {
+      return false;
+    }
+    try {
+      Path projectBase = project.getBasedir().toPath();
+      return projectBase.endsWith(moduleSpecification);
+    } catch (InvalidPathException ex) {
+      // ignore since moduleSpecification may not actually be a path
+      return false;
+    }
   }
 
   SettingsDecrypter getSettingsDecrypter() {
