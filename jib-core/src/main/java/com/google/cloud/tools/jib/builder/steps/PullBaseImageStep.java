@@ -173,28 +173,27 @@ class PullBaseImageStep
         } catch (RegistryUnauthorizedException registryUnauthorizedException) {
           // The registry requires us to authenticate using the Docker Token Authentication.
           // See https://docs.docker.com/registry/spec/auth/token
-          RegistryAuthenticator registryAuthenticator = null;
           try {
-            registryAuthenticator =
+            RegistryAuthenticator registryAuthenticator =
                 buildConfiguration
                     .newBaseImageRegistryClientFactory()
                     .newRegistryClient()
                     .getRegistryAuthenticator();
+            if (registryAuthenticator != null) {
+              Authorization pullAuthorization =
+                  registryAuthenticator.setCredential(registryCredential).authenticatePull();
+
+              return new BaseImageWithAuthorization(
+                  pullBaseImage(pullAuthorization, progressEventDispatcher), pullAuthorization);
+            }
+
           } catch (InsecureRegistryException insecureRegistryException) {
             // Cannot skip certificate validation or use HTTP; fall through.
           }
-          if (registryAuthenticator == null) {
-            eventDispatcher.dispatch(
-                LogEvent.error(
-                    "Failed to retrieve authentication challenge for registry that required token authentication"));
-            throw registryUnauthorizedException;
-          }
-
-          registryAuthorization =
-              registryAuthenticator.setCredential(registryCredential).authenticatePull();
-
-          return new BaseImageWithAuthorization(
-              pullBaseImage(registryAuthorization, progressEventDispatcher), registryAuthorization);
+          eventDispatcher.dispatch(
+              LogEvent.error(
+                  "Failed to retrieve authentication challenge for registry that required token authentication"));
+          throw registryUnauthorizedException;
         }
       }
     }
