@@ -101,7 +101,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
 
       return (registryCredential == null || registryCredential.isOAuth2RefreshToken())
           ? null
-          : Authorization.withBasicCredentials(
+          : Authorization.fromBasicCredentials(
               registryCredential.getUsername(), registryCredential.getPassword());
     }
   }

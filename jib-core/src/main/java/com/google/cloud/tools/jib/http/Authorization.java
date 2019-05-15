@@ -33,7 +33,7 @@ public class Authorization {
    * @param token the token
    * @return an {@link Authorization} with a {@code Bearer} token
    */
-  public static Authorization withBearerToken(String token) {
+  public static Authorization fromBearerToken(String token) {
     return new Authorization("Bearer", token);
   }
 
@@ -42,7 +42,7 @@ public class Authorization {
    * @param secret the secret
    * @return an {@link Authorization} with a {@code Basic} credentials
    */
-  public static Authorization withBasicCredentials(String username, String secret) {
+  public static Authorization fromBasicCredentials(String username, String secret) {
     String credentials = username + ":" + secret;
     String token = Base64.encodeBase64String(credentials.getBytes(StandardCharsets.UTF_8));
     return new Authorization("Basic", token);
@@ -52,7 +52,7 @@ public class Authorization {
    * @param token the token
    * @return an {@link Authorization} with a base64-encoded {@code username:password} string
    */
-  public static Authorization withBasicToken(String token) {
+  public static Authorization fromBasicToken(String token) {
     return new Authorization("Basic", token);
   }
 

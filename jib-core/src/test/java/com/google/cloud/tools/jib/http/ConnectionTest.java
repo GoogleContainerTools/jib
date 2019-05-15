@@ -113,7 +113,7 @@ public class ConnectionTest {
             .setBody(
                 new BlobHttpContent(
                     Blobs.from("crepecake"), "fake.content.type", totalByteCount::add))
-            .setAuthorization(Authorization.withBasicCredentials("fake-username", "fake-secret"))
+            .setAuthorization(Authorization.fromBasicCredentials("fake-username", "fake-secret"))
             .setHttpTimeout(httpTimeout)
             .build();
 

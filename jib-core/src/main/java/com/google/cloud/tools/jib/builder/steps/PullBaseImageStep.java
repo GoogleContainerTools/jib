@@ -165,7 +165,7 @@ class PullBaseImageStep
         Authorization registryAuthorization =
             registryCredential == null || registryCredential.isOAuth2RefreshToken()
                 ? null
-                : Authorization.withBasicCredentials(
+                : Authorization.fromBasicCredentials(
                     registryCredential.getUsername(), registryCredential.getPassword());
 
         try {

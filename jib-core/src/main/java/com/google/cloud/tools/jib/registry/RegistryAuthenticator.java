@@ -322,7 +322,7 @@ public class RegistryAuthenticator {
             new BlobHttpContent(Blobs.from(parameters), MediaType.FORM_DATA.toString()));
       } else if (credential != null) {
         requestBuilder.setAuthorization(
-            Authorization.withBasicCredentials(credential.getUsername(), credential.getPassword()));
+            Authorization.fromBasicCredentials(credential.getUsername(), credential.getPassword()));
       }
 
       Request request = requestBuilder.build();
@@ -342,7 +342,7 @@ public class RegistryAuthenticator {
                 + "; parameters: "
                 + getAuthRequestParameters(scope));
       }
-      return Authorization.withBearerToken(responseJson.getToken());
+      return Authorization.fromBearerToken(responseJson.getToken());
 
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(

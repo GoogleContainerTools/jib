@@ -643,7 +643,7 @@ public class RegistryEndpointCallerTest {
         "userAgent",
         (port == -1) ? "apiRouteBase" : ("apiRouteBase:" + port),
         new TestRegistryEndpointProvider(),
-        Authorization.withBasicToken("token"),
+        Authorization.fromBasicToken("token"),
         new RegistryEndpointRequestProperties("serverUrl", "imageName"),
         allowInsecure,
         mockConnectionFactory,
