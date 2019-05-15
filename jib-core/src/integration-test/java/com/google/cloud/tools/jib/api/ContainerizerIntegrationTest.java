@@ -369,8 +369,8 @@ public class ContainerizerIntegrationTest {
         Jib.from(baseImage)
             .setEntrypoint(
                 JavaEntrypointConstructor.makeEntrypoint(
-                    JavaEntrypointConstructor.defaultClasspath(
-                        AbsoluteUnixPath.get("/app"), "exploded"),
+                    JavaEntrypointConstructor.defaultExplodedClasspath(
+                        AbsoluteUnixPath.get("/app")),
                     Collections.emptyList(),
                     "HelloWorld"))
             .setProgramArguments(Collections.singletonList("An argument."))

@@ -246,7 +246,8 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testComputeEntrypoint_inheritKeyword()
-      throws MainClassInferenceException, InvalidAppRootException, IOException {
+      throws MainClassInferenceException, InvalidAppRootException, IOException,
+          InvalidContainerizingModeException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Collections.singletonList("INHERIT")));
 
@@ -256,7 +257,8 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testComputeEntrypoint_inheritKeywordInNonSingletonList()
-      throws MainClassInferenceException, InvalidAppRootException, IOException {
+      throws MainClassInferenceException, InvalidAppRootException, IOException,
+          InvalidContainerizingModeException {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("INHERIT", "")));
 

@@ -34,7 +34,7 @@ public class JavaEntrypointConstructor {
   public static final RelativeUnixPath DEFAULT_RELATIVE_OTHERS_PATH_ON_IMAGE =
       RelativeUnixPath.get("classpath");
 
-  public static List<String> defaultClasspath(AbsoluteUnixPath appRoot, String containerizingMode) {
+  public static List<String> defaultExplodedClasspath(AbsoluteUnixPath appRoot) {
     return Arrays.asList(
         appRoot.resolve(DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE).toString(),
         appRoot.resolve(DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE).toString(),

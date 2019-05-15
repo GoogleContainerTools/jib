@@ -246,12 +246,14 @@ public class PluginConfigurationProcessor {
    * @return the entrypoint
    * @throws MainClassInferenceException if no valid main class is configured or discovered
    * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
+   * @throws InvalidContainerizingModeException
    */
   @Nullable
   @VisibleForTesting
   static List<String> computeEntrypoint(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
-      throws MainClassInferenceException, InvalidAppRootException, IOException {
+      throws MainClassInferenceException, InvalidAppRootException, IOException,
+          InvalidContainerizingModeException {
     AbsoluteUnixPath appRoot =
         getAppRootChecked(rawConfiguration, projectProperties.isWarProject());
 
@@ -278,11 +280,15 @@ public class PluginConfigurationProcessor {
     }
 
     List<String> classpath = new ArrayList<>(rawExtraClasspath);
-    if ("packaged".equals(rawConfiguration.getContainerizingMode())) {
-      classpath.add("/app/classpath/*");
-      classpath.add("/app/libs/*");
-    } else {
-      classpath.addAll(JavaEntrypointConstructor.defaultClasspath(appRoot, "exploded"));
+    switch (getContainerizingModeChecked(rawConfiguration)) {
+      case EXPLODED:
+        classpath.addAll(JavaEntrypointConstructor.defaultExplodedClasspath(appRoot));
+        break;
+      case PACKAGED:
+        classpath.addAll(JavaEntrypointConstructor.defaultPackagedClasspath(appRoot));
+        break;
+      default:
+        throw new RuntimeException("BUG: fix the program");
     }
     String mainClass =
         MainClassResolver.resolveMainClass(
