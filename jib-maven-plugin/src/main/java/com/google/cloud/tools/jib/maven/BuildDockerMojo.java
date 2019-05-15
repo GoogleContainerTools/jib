@@ -110,18 +110,17 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
-      DecryptedMavenSettings decryptedSettings =
-          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter());
-
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
               mavenRawConfiguration,
-              new MavenSettingsServerCredentials(decryptedSettings),
+              new MavenSettingsServerCredentials(
+                  getSession().getSettings(), getSettingsDecrypter()),
               projectProperties,
               dockerExecutable,
               getDockerClientEnvironment(),
               mavenHelpfulSuggestionsBuilder.build());
-      ProxyProvider.init(decryptedSettings);
+      MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
+          getSession().getSettings(), getSettingsDecrypter());
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =

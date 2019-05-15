@@ -1,0 +1,13 @@
+<settings>
+  <proxies>
+    <proxy>
+      <id>http</id>
+      <active>true</active>
+      <protocol>http</protocol>
+      <host>proxy.example.com</host>
+      <port>8080</port>
+      <username>proxyuser</username>
+      <password>{i-made-this-up=}</password>
+    </proxy>
+  </proxies>
+</settings>

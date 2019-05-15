@@ -1,0 +1,25 @@
+<settings>
+  <proxies>
+    <proxy>
+      <id>http1</id>
+      <active>false</active>
+      <protocol>http</protocol>
+      <host>proxy1.example.com</host>
+      <port>8080</port>
+    </proxy>
+    <proxy>
+      <id>http2</id>
+      <active>true</active>
+      <protocol>http</protocol>
+      <host>proxy2.example.com</host>
+      <port>8080</port>
+    </proxy>
+    <proxy>
+      <id>http3</id>
+      <active>true</active>
+      <protocol>http</protocol>
+      <host>proxy3.example.com</host>
+      <port>8080</port>
+    </proxy>
+  </proxies>
+</settings>

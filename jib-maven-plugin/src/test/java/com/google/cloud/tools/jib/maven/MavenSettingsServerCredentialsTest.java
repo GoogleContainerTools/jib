@@ -17,45 +17,77 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
-import java.util.Arrays;
+import com.google.cloud.tools.jib.plugins.common.InferredAuthException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
-import org.apache.maven.settings.Server;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link MavenSettingsServerCredentials}. */
-@RunWith(MockitoJUnitRunner.class)
 public class MavenSettingsServerCredentialsTest {
 
-  @Mock private DecryptedMavenSettings mockSettings;
-  @Mock private Server mockServer1;
-
-  private MavenSettingsServerCredentials testMavenSettingsServerCredentials;
+  private MavenSettingsServerCredentials mavenSettingsServerCredentialsNoMasterPassword;
+  private MavenSettingsServerCredentials mavenSettingsServerCredentials;
+  private Path testSettings = Paths.get("src/test/resources/maven/settings/settings.xml");
+  private Path testSettingsSecurity =
+      Paths.get("src/test/resources/maven/settings/settings-security.xml");
+  private Path testSettingsSecurityEmpty =
+      Paths.get("src/test/resources/maven/settings/settings-security.empty.xml");
 
   @Before
   public void setUp() {
-    Mockito.when(mockSettings.getServers()).thenReturn(Arrays.asList(mockServer1));
-    Mockito.when(mockServer1.getId()).thenReturn("server1");
-    Mockito.when(mockServer1.getUsername()).thenReturn("server1 username");
-    Mockito.when(mockServer1.getPassword()).thenReturn("server1 password");
-    testMavenSettingsServerCredentials = new MavenSettingsServerCredentials(mockSettings);
+    mavenSettingsServerCredentials =
+        new MavenSettingsServerCredentials(
+            SettingsFixture.newSettings(testSettings),
+            SettingsFixture.newSettingsDecrypter(testSettingsSecurity));
+    mavenSettingsServerCredentialsNoMasterPassword =
+        new MavenSettingsServerCredentials(
+            SettingsFixture.newSettings(testSettings),
+            SettingsFixture.newSettingsDecrypter(testSettingsSecurityEmpty));
   }
 
   @Test
-  public void testRetrieve_found() {
-    Optional<AuthProperty> auth = testMavenSettingsServerCredentials.apply("server1");
+  public void testInferredAuth_decrypterFailure() {
+    try {
+      mavenSettingsServerCredentials.inferAuth("badServer");
+      Assert.fail();
+    } catch (InferredAuthException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.startsWith("Unable to decrypt server(badServer) info from settings.xml:"));
+    }
+  }
+
+  @Test
+  public void testInferredAuth_successEncrypted() throws InferredAuthException {
+    Optional<AuthProperty> auth = mavenSettingsServerCredentials.inferAuth("encryptedServer");
     Assert.assertTrue(auth.isPresent());
-    Assert.assertEquals("server1 username", auth.get().getUsername());
-    Assert.assertEquals("server1 password", auth.get().getPassword());
+    Assert.assertEquals("encryptedUser", auth.get().getUsername());
+    Assert.assertEquals("password1", auth.get().getPassword());
   }
 
   @Test
-  public void testRetrieve_notFound() {
-    Assert.assertFalse(testMavenSettingsServerCredentials.apply("serverUnknown").isPresent());
+  public void testInferredAuth_successUnencrypted() throws InferredAuthException {
+    Optional<AuthProperty> auth = mavenSettingsServerCredentials.inferAuth("simpleServer");
+    Assert.assertTrue(auth.isPresent());
+    Assert.assertEquals("simpleUser", auth.get().getUsername());
+    Assert.assertEquals("password2", auth.get().getPassword());
+  }
+
+  @Test
+  public void testInferredAuth_successNoPasswordDoesNotBlowUp() throws InferredAuthException {
+    Optional<AuthProperty> auth =
+        mavenSettingsServerCredentialsNoMasterPassword.inferAuth("simpleServer");
+    Assert.assertTrue(auth.isPresent());
+    Assert.assertEquals("simpleUser", auth.get().getUsername());
+    Assert.assertEquals("password2", auth.get().getPassword());
+  }
+
+  @Test
+  public void testInferredAuth_notFound() throws InferredAuthException {
+    Assert.assertFalse(mavenSettingsServerCredentials.inferAuth("serverUnknown").isPresent());
   }
 }
