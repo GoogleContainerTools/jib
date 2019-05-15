@@ -181,7 +181,7 @@ class PullBaseImageStep
                     .getRegistryAuthenticator();
             if (registryAuthenticator != null) {
               Authorization pullAuthorization =
-                  registryAuthenticator.setCredential(registryCredential).authenticatePull();
+                  registryAuthenticator.authenticatePull(registryCredential);
 
               return new BaseImageWithAuthorization(
                   pullBaseImage(pullAuthorization, progressEventDispatcher), pullAuthorization);

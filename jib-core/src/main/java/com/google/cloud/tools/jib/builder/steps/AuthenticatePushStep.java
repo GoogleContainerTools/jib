@@ -94,7 +94,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
               .newRegistryClient()
               .getRegistryAuthenticator();
       if (registryAuthenticator != null) {
-        return registryAuthenticator.setCredential(registryCredential).authenticatePush();
+        return registryAuthenticator.authenticatePush(registryCredential);
       }
     } catch (InsecureRegistryException ex) {
       // Cannot skip certificate validation or use HTTP; fall through.

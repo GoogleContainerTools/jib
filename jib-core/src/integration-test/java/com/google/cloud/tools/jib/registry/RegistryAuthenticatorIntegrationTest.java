@@ -39,7 +39,7 @@ public class RegistryAuthenticatorIntegrationTest {
             .newRegistryClient()
             .getRegistryAuthenticator();
     Assert.assertNotNull(registryAuthenticator);
-    Authorization authorization = registryAuthenticator.authenticatePull();
+    Authorization authorization = registryAuthenticator.authenticatePull(null);
 
     // Checks that some token was received.
     Assert.assertTrue(0 < authorization.getToken().length());
