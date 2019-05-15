@@ -159,4 +159,9 @@ class GradleRawConfiguration implements RawConfiguration {
   public Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions() {
     return TaskCommon.convertPermissionsMap(jibExtension.getExtraDirectories().getPermissions());
   }
+
+  @Override
+  public String getContainerizingMode() {
+    return jibExtension.getContainerizingMode();
+  }
 }

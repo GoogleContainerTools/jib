@@ -250,6 +250,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       property = PropertyNames.ALLOW_INSECURE_REGISTRIES)
   private boolean allowInsecureRegistries;
 
+  @Parameter(defaultValue = "exploded", property = PropertyNames.CONTAINERIZING_MODE)
+  private String containerizingMode;
+
   @Parameter(defaultValue = "false", property = PropertyNames.SKIP)
   private boolean skip;
 
@@ -621,6 +624,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   boolean getAllowInsecureRegistries() {
     return allowInsecureRegistries;
+  }
+
+  public String getContainerizingMode() {
+    return containerizingMode;
   }
 
   boolean isSkipped() {

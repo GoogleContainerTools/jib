@@ -29,7 +29,7 @@ public class JavaEntrypointConstructorTest {
   @Test
   public void testDefaultClasspath() {
     List<String> classpath =
-        JavaEntrypointConstructor.defaultClasspath(AbsoluteUnixPath.get("/dir"));
+        JavaEntrypointConstructor.defaultClasspath(AbsoluteUnixPath.get("/dir"), "exploded");
     Assert.assertEquals(
         ImmutableList.of("/dir/resources", "/dir/classes", "/dir/libs/*"), classpath);
   }

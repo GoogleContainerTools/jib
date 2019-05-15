@@ -164,4 +164,9 @@ class MavenRawConfiguration implements RawConfiguration {
   public Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions() {
     return MojoCommon.convertPermissionsList(jibPluginConfiguration.getExtraDirectoryPermissions());
   }
+
+  @Override
+  public String getContainerizingMode() {
+    return jibPluginConfiguration.getContainerizingMode();
+  }
 }

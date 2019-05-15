@@ -31,11 +31,19 @@ public class JavaEntrypointConstructor {
       RelativeUnixPath.get("classes");
   public static final RelativeUnixPath DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE =
       RelativeUnixPath.get("libs");
+  public static final RelativeUnixPath DEFAULT_RELATIVE_OTHERS_PATH_ON_IMAGE =
+      RelativeUnixPath.get("classpath");
 
-  public static List<String> defaultClasspath(AbsoluteUnixPath appRoot) {
+  public static List<String> defaultClasspath(AbsoluteUnixPath appRoot, String containerizingMode) {
     return Arrays.asList(
         appRoot.resolve(DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE).toString(),
         appRoot.resolve(DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE).toString(),
+        appRoot.resolve(DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE).resolve("*").toString());
+  }
+
+  public static List<String> defaultPackagedClasspath(AbsoluteUnixPath appRoot) {
+    return Arrays.asList(
+        appRoot.resolve(DEFAULT_RELATIVE_OTHERS_PATH_ON_IMAGE).resolve("*").toString(),
         appRoot.resolve(DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE).resolve("*").toString());
   }
 

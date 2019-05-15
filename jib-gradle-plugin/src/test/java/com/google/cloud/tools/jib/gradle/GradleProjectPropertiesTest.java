@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -361,7 +362,8 @@ public class GradleProjectPropertiesTest {
     Path nonexistentFile = Paths.get("/nonexistent/file");
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
-    gradleProjectProperties.createContainerBuilder(RegistryImage.named("base"));
+    gradleProjectProperties.createContainerBuilder(
+        RegistryImage.named("base"), ContainerizingMode.EXPLODED);
     Mockito.verify(mockLogger).warn("No classes files were found - did you compile your project?");
   }
 
@@ -552,7 +554,7 @@ public class GradleProjectPropertiesTest {
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JibContainerBuilder jibContainerBuilder =
         new GradleProjectProperties(mockProject, mockLogger, AbsoluteUnixPath.get(appRoot))
-            .createContainerBuilder(RegistryImage.named("base"));
+            .createContainerBuilder(RegistryImage.named("base"), ContainerizingMode.EXPLODED);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         jibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))

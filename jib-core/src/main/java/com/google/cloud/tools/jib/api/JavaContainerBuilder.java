@@ -173,7 +173,8 @@ public class JavaContainerBuilder {
       JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE;
   private RelativeUnixPath dependenciesDestination =
       JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE;
-  private RelativeUnixPath othersDestination = RelativeUnixPath.get("classpath");
+  private RelativeUnixPath othersDestination =
+      JavaEntrypointConstructor.DEFAULT_RELATIVE_OTHERS_PATH_ON_IMAGE;
   @Nullable private String mainClass;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {

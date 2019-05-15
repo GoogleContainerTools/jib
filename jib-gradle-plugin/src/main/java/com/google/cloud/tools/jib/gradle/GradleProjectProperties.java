@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
@@ -153,7 +154,8 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public JibContainerBuilder createContainerBuilder(RegistryImage baseImage) {
+  public JibContainerBuilder createContainerBuilder(
+      RegistryImage baseImage, ContainerizingMode containerizingMode) {
     try {
       if (isWarProject()) {
         logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());

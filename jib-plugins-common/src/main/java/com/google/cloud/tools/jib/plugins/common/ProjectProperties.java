@@ -50,10 +50,12 @@ public interface ProjectProperties {
    * Starts the containerization process.
    *
    * @param baseImage the base image
+   * @param containerizingMode mode to containerize the app
    * @return a {@link JibContainerBuilder} with classes, resources, and dependencies added to it
    * @throws IOException if there is a problem walking the project files
    */
-  JibContainerBuilder createContainerBuilder(RegistryImage baseImage) throws IOException;
+  JibContainerBuilder createContainerBuilder(
+      RegistryImage baseImage, ContainerizingMode containerizingMode) throws IOException;
 
   List<Path> getClassFiles() throws IOException;
 
