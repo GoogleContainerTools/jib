@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
  * Wraps a {@code Consumer<Long>} so that multiple consume calls ({@link #accept}) within a short
  * period of time are merged into a single later call with the value accumulated up to that point.
  */
-public class ThrottledLongConsumer implements Consumer<Long>, Closeable {
+public class ThrottledAccumulatingConsumer implements Consumer<Long>, Closeable {
 
   private final Consumer<Long> consumer;
 
@@ -47,11 +47,11 @@ public class ThrottledLongConsumer implements Consumer<Long>, Closeable {
    *
    * @param callback {@link Consumer} callback to wrap
    */
-  public ThrottledLongConsumer(Consumer<Long> callback) {
+  public ThrottledAccumulatingConsumer(Consumer<Long> callback) {
     this(callback, Duration.ofMillis(100), Instant::now);
   }
 
-  public ThrottledLongConsumer(
+  public ThrottledAccumulatingConsumer(
       Consumer<Long> consumer, Duration delayBetweenCallbacks, Supplier<Instant> getNow) {
     this.consumer = consumer;
     this.delayBetweenCallbacks = delayBetweenCallbacks;
