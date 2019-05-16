@@ -68,7 +68,7 @@ public class ContainerizerIntegrationTest {
         new ProgressEventHandler(
             update -> {
               lastProgress = update.getProgress();
-              areTasksFinished = update.getUnfinishedAllocations().isEmpty();
+              areTasksFinished = update.getUnfinishedTasks().isEmpty();
             });
 
     private volatile double lastProgress = 0.0;

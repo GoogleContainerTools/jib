@@ -94,7 +94,7 @@ public class AllocationCompletionTrackerTest {
       Assert.fail();
 
     } catch (IllegalStateException ex) {
-      Assert.assertEquals("Progress exceeds max for 'child1': 2 > 1", ex.getMessage());
+      Assert.assertEquals("Progress exceeds max for 'child1': 1 more beyond 1", ex.getMessage());
     }
   }
 
