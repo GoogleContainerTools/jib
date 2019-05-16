@@ -57,7 +57,7 @@ public class BlobHttpContent implements HttpContent {
 
   @Override
   public void writeTo(OutputStream outputStream) throws IOException {
-    blob.writeTo(new ListenableCountingOutputStream(outputStream, writtenByteCountListener));
+    blob.writeTo(new NotifyingOutputStream(outputStream, writtenByteCountListener));
     outputStream.flush();
   }
 }

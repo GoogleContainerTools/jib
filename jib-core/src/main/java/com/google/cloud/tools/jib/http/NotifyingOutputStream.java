@@ -21,7 +21,7 @@ import java.io.OutputStream;
 import java.util.function.Consumer;
 
 /** Counts the number of bytes written and reports the count to a callback. */
-public class ListenableCountingOutputStream extends OutputStream {
+public class NotifyingOutputStream extends OutputStream {
 
   /** The underlying {@link OutputStream} to wrap and forward bytes to. */
   private final OutputStream underlyingOutputStream;
@@ -38,7 +38,7 @@ public class ListenableCountingOutputStream extends OutputStream {
    * @param underlyingOutputStream the wrapped {@link OutputStream}
    * @param byteCountListener the byte count {@link Consumer}
    */
-  public ListenableCountingOutputStream(
+  public NotifyingOutputStream(
       OutputStream underlyingOutputStream, Consumer<Long> byteCountListener) {
     this.underlyingOutputStream = underlyingOutputStream;
     this.byteCountListener = byteCountListener;

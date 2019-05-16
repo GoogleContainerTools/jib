@@ -29,8 +29,8 @@ import java.util.Queue;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link ListenableCountingOutputStream}. */
-public class ListenableCountingOutputStreamTest {
+/** Tests for {@link NotifyingOutputStream}. */
+public class NotifyingOutputStreamTest {
 
   @Test
   public void testCallback_correctSequence() throws IOException {
@@ -38,11 +38,11 @@ public class ListenableCountingOutputStreamTest {
 
     List<Long> byteCounts = new ArrayList<>();
 
-    try (ListenableCountingOutputStream listenableCountingOutputStream =
-        new ListenableCountingOutputStream(byteArrayOutputStream, byteCounts::add)) {
-      listenableCountingOutputStream.write(0);
-      listenableCountingOutputStream.write(new byte[] {1, 2, 3});
-      listenableCountingOutputStream.write(new byte[] {1, 2, 3, 4, 5}, 3, 2);
+    try (NotifyingOutputStream notifyingOutputStream =
+        new NotifyingOutputStream(byteArrayOutputStream, byteCounts::add)) {
+      notifyingOutputStream.write(0);
+      notifyingOutputStream.write(new byte[] {1, 2, 3});
+      notifyingOutputStream.write(new byte[] {1, 2, 3, 4, 5}, 3, 2);
     }
 
     Assert.assertEquals(Arrays.asList(1L, 3L, 2L), byteCounts);
@@ -61,22 +61,22 @@ public class ListenableCountingOutputStreamTest {
     try (ThrottledLongConsumer byteCounter =
             new ThrottledLongConsumer(
                 byteCounts::add, Duration.ofSeconds(3), instantQueue::remove);
-        ListenableCountingOutputStream listenableCountingOutputStream =
-            new ListenableCountingOutputStream(byteArrayOutputStream, byteCounter)) {
+        NotifyingOutputStream notifyingOutputStream =
+            new NotifyingOutputStream(byteArrayOutputStream, byteCounter)) {
       instantQueue.add(Instant.EPOCH);
-      listenableCountingOutputStream.write(100);
+      notifyingOutputStream.write(100);
       instantQueue.add(Instant.EPOCH);
-      listenableCountingOutputStream.write(new byte[] {101, 102, 103});
+      notifyingOutputStream.write(new byte[] {101, 102, 103});
       instantQueue.add(Instant.EPOCH.plusSeconds(4));
-      listenableCountingOutputStream.write(new byte[] {104, 105, 106});
+      notifyingOutputStream.write(new byte[] {104, 105, 106});
 
       instantQueue.add(Instant.EPOCH.plusSeconds(10));
-      listenableCountingOutputStream.write(new byte[] {107, 108});
+      notifyingOutputStream.write(new byte[] {107, 108});
 
       instantQueue.add(Instant.EPOCH.plusSeconds(10));
-      listenableCountingOutputStream.write(new byte[] {109});
+      notifyingOutputStream.write(new byte[] {109});
       instantQueue.add(Instant.EPOCH.plusSeconds(13));
-      listenableCountingOutputStream.write(new byte[] {0, 110}, 1, 1);
+      notifyingOutputStream.write(new byte[] {0, 110}, 1, 1);
     }
 
     Assert.assertEquals(Arrays.asList(7L, 2L, 2L), byteCounts);
