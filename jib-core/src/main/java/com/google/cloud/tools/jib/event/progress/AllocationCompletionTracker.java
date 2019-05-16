@@ -117,14 +117,13 @@ class AllocationCompletionTracker {
    */
   @VisibleForTesting
   List<Allocation> getUnfinishedAllocations() {
-    return ImmutableList.copyOf(
-        completionMap
-            .values()
-            .stream()
-            .filter(IndexedRemainingUnits::isUnfinished)
-            .sorted()
-            .map(remainingUnits -> remainingUnits.allocation)
-            .collect(Collectors.toList()));
+    return completionMap
+        .values()
+        .stream()
+        .filter(IndexedRemainingUnits::isUnfinished)
+        .sorted()
+        .map(remainingUnits -> remainingUnits.allocation)
+        .collect(Collectors.toList());
   }
 
   /**
@@ -163,7 +162,7 @@ class AllocationCompletionTracker {
     }
   }
 
-  ImmutableList<String> getUnfinishedTasks() {
+  ImmutableList<String> getUnfinishedLeafTasks() {
     List<Allocation> allUnfinished = getUnfinishedAllocations();
     Set<Allocation> unfinishedLeaves = new LinkedHashSet<>(allUnfinished);
 

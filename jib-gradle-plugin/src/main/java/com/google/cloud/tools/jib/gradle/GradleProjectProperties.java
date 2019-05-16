@@ -113,7 +113,7 @@ class GradleProjectProperties implements ProjectProperties {
                 update -> {
                   List<String> footer =
                       ProgressDisplayGenerator.generateProgressDisplay(
-                          update.getProgress(), update.getUnfinishedTasks());
+                          update.getProgress(), update.getUnfinishedLeafTasks());
                   footer.add("");
                   consoleLogger.setFooter(footer);
                 }));

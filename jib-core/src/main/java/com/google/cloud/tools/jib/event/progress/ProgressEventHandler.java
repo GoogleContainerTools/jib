@@ -36,11 +36,11 @@ public class ProgressEventHandler implements Consumer<ProgressEvent> {
   public static class Update {
 
     private final double progress;
-    private final ImmutableList<String> unfinishedTasks;
+    private final ImmutableList<String> unfinishedLeafTasks;
 
-    private Update(double progress, ImmutableList<String> unfinishedTasks) {
+    private Update(double progress, ImmutableList<String> unfinishedLeafTasks) {
       this.progress = progress;
-      this.unfinishedTasks = unfinishedTasks;
+      this.unfinishedLeafTasks = unfinishedLeafTasks;
     }
 
     /**
@@ -58,8 +58,8 @@ public class ProgressEventHandler implements Consumer<ProgressEvent> {
      *
      * @return a list of unfinished "leaf" tasks
      */
-    public ImmutableList<String> getUnfinishedTasks() {
-      return unfinishedTasks;
+    public ImmutableList<String> getUnfinishedLeafTasks() {
+      return unfinishedLeafTasks;
     }
   }
 
@@ -92,7 +92,7 @@ public class ProgressEventHandler implements Consumer<ProgressEvent> {
 
     if (completionTracker.updateProgress(allocation, progressUnits)) {
       // Note: Could produce false positives.
-      updateNotifier.accept(new Update(progress.sum(), completionTracker.getUnfinishedTasks()));
+      updateNotifier.accept(new Update(progress.sum(), completionTracker.getUnfinishedLeafTasks()));
     }
   }
 }

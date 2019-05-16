@@ -132,7 +132,7 @@ public class MavenProjectProperties implements ProjectProperties {
                 update ->
                     consoleLogger.setFooter(
                         ProgressDisplayGenerator.generateProgressDisplay(
-                            update.getProgress(), update.getUnfinishedTasks()))));
+                            update.getProgress(), update.getUnfinishedLeafTasks()))));
   }
 
   @VisibleForTesting

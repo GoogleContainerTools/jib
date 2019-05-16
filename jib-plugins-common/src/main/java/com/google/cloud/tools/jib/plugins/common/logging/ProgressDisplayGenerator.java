@@ -41,16 +41,16 @@ public class ProgressDisplayGenerator {
    * Generates a progress display.
    *
    * @param progress the overall progress, with {@code 1.0} meaning fully complete
-   * @param unfinishedTasks the unfinished tasks
+   * @param unfinishedLeafTasks the unfinished leaf tasks
    * @return the progress display as a list of lines
    */
   public static List<String> generateProgressDisplay(
-      double progress, List<String> unfinishedTasks) {
+      double progress, List<String> unfinishedLeafTasks) {
     List<String> lines = new ArrayList<>();
 
     lines.add(HEADER);
     lines.add(generateProgressBar(progress));
-    for (String task : unfinishedTasks) {
+    for (String task : unfinishedLeafTasks) {
       lines.add("> " + task);
     }
 
