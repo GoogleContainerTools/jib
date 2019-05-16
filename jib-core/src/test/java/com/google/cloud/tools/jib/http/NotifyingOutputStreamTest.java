@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.http;
 
-import com.google.cloud.tools.jib.event.progress.ThrottledLongConsumer;
+import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Duration;
@@ -58,8 +58,8 @@ public class NotifyingOutputStreamTest {
     Queue<Instant> instantQueue = new ArrayDeque<>();
     instantQueue.add(Instant.EPOCH);
 
-    try (ThrottledLongConsumer byteCounter =
-            new ThrottledLongConsumer(
+    try (ThrottledAccumulatingConsumer byteCounter =
+            new ThrottledAccumulatingConsumer(
                 byteCounts::add, Duration.ofSeconds(3), instantQueue::remove);
         NotifyingOutputStream notifyingOutputStream =
             new NotifyingOutputStream(byteArrayOutputStream, byteCounter)) {
