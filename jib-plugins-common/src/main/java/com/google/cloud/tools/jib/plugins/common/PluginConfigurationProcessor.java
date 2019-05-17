@@ -45,6 +45,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -246,7 +247,7 @@ public class PluginConfigurationProcessor {
    * @return the entrypoint
    * @throws MainClassInferenceException if no valid main class is configured or discovered
    * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
-   * @throws InvalidContainerizingModeException
+   * @throws InvalidContainerizingModeException if {@code containerizingMode} value is invalid
    */
   @Nullable
   @VisibleForTesting
@@ -394,7 +395,7 @@ public class PluginConfigurationProcessor {
       throws InvalidContainerizingModeException {
     String mode = rawConfiguration.getContainerizingMode();
     try {
-      return ContainerizingMode.valueOf(mode);
+      return ContainerizingMode.valueOf(mode.toUpperCase(Locale.US));
     } catch (IllegalArgumentException ex) {
       throw new InvalidContainerizingModeException(mode, mode);
     }
