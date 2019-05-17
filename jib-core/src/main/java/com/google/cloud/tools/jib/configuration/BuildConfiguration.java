@@ -61,7 +61,7 @@ public class BuildConfiguration {
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
-    private EventHandlers eventHandlers = EventHandlers.none();
+    private EventHandlers eventHandlers = EventHandlers.NONE;
     @Nullable private ExecutorService executorService;
 
     private Builder() {}

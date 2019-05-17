@@ -26,7 +26,7 @@ import org.junit.Test;
 /** Integration tests for {@link AuthenticationMethodRetriever}. */
 public class AuthenticationMethodRetrieverIntegrationTest {
 
-  private static final EventHandlers EVENT_HANDLERS = EventHandlers.none();
+  private static final EventHandlers EVENT_HANDLERS = EventHandlers.NONE;
 
   @Test
   public void testGetRegistryAuthenticator() throws IOException, RegistryException {

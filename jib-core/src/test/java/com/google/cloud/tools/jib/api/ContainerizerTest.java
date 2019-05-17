@@ -53,7 +53,7 @@ public class ContainerizerTest {
   private void verifyTo(Containerizer containerizer) throws CacheDirectoryCreationException {
     Assert.assertTrue(containerizer.getAdditionalTags().isEmpty());
     Assert.assertFalse(containerizer.getExecutorService().isPresent());
-    Assert.assertFalse(containerizer.getEventHandlers().isPresent());
+    Assert.assertEquals(EventHandlers.NONE, containerizer.getEventHandlers());
     Assert.assertEquals(
         Containerizer.DEFAULT_BASE_CACHE_DIRECTORY,
         containerizer.getBaseImageLayersCacheDirectory());
@@ -76,8 +76,7 @@ public class ContainerizerTest {
     Assert.assertEquals(ImmutableSet.of("tag1", "tag2"), containerizer.getAdditionalTags());
     Assert.assertTrue(containerizer.getExecutorService().isPresent());
     Assert.assertEquals(mockExecutorService, containerizer.getExecutorService().get());
-    Assert.assertTrue(containerizer.getEventHandlers().isPresent());
-    Assert.assertEquals(mockEventHandlers, containerizer.getEventHandlers().get());
+    Assert.assertEquals(mockEventHandlers, containerizer.getEventHandlers());
     Assert.assertEquals(
         Paths.get("base/image/layers"), containerizer.getBaseImageLayersCacheDirectory());
     Assert.assertEquals(

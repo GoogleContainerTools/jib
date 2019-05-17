@@ -521,7 +521,7 @@ public class JibContainerBuilder {
         .setOffline(containerizer.isOfflineMode())
         .setToolName(containerizer.getToolName())
         .setExecutorService(executorService)
-        .setEventHandlers(containerizer.getEventHandlers().orElse(EventHandlers.none()))
+        .setEventHandlers(containerizer.getEventHandlers())
         .build();
   }
 
