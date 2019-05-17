@@ -186,7 +186,7 @@ You can also bind `jib:build` to a Maven lifecycle, such as `package`, by adding
 
 ```xml
 <plugin>
-  <groupId>com.google.com.tools</groupId>
+  <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
   ...
   <executions>
