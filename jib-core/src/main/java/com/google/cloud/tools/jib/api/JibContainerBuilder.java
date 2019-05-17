@@ -510,7 +510,7 @@ public class JibContainerBuilder {
   BuildConfiguration toBuildConfiguration(
       Containerizer containerizer, ExecutorService executorService)
       throws CacheDirectoryCreationException, IOException {
-    buildConfigurationBuilder
+    return buildConfigurationBuilder
         .setTargetImageConfiguration(containerizer.getImageConfiguration())
         .setAdditionalTargetImageTags(containerizer.getAdditionalTags())
         .setBaseImageLayersCacheDirectory(containerizer.getBaseImageLayersCacheDirectory())
@@ -520,11 +520,9 @@ public class JibContainerBuilder {
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
         .setOffline(containerizer.isOfflineMode())
         .setToolName(containerizer.getToolName())
-        .setExecutorService(executorService);
-
-    containerizer.getEventHandlers().ifPresent(buildConfigurationBuilder::setEventHandlers);
-
-    return buildConfigurationBuilder.build();
+        .setExecutorService(executorService)
+        .setEventHandlers(containerizer.getEventHandlers().orElse(EventHandlers.none()))
+        .build();
   }
 
   private void logSources(EventHandlers eventHandlers) {
