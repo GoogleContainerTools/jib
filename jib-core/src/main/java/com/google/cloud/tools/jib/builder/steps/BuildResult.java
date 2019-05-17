@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
-import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -41,9 +40,7 @@ public class BuildResult {
       throws IOException {
     ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
     BlobDescriptor containerConfigurationBlobDescriptor =
-        imageToJsonTranslator
-            .getContainerConfigurationBlob()
-            .writeTo(ByteStreams.nullOutputStream());
+        Digests.computeDigest(imageToJsonTranslator.getContainerConfiguration());
     BuildableManifestTemplate manifestTemplate =
         imageToJsonTranslator.getManifestTemplate(
             targetFormat, containerConfigurationBlobDescriptor);

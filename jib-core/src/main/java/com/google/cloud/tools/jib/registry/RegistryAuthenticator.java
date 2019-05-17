@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
@@ -31,10 +30,13 @@ import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
+import com.google.common.io.CharStreams;
 import com.google.common.net.MediaType;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -235,17 +237,17 @@ public class RegistryAuthenticator {
       if (isOAuth2Auth(credential)) {
         String parameters = getAuthRequestParameters(credential, scope);
         requestBuilder.setBody(
-            new BlobHttpContent(Blobs.from(parameters), MediaType.FORM_DATA.toString(), null));
+            new BlobHttpContent(Blobs.from(parameters), MediaType.FORM_DATA.toString()));
       } else if (credential != null) {
         requestBuilder.setAuthorization(
-            Authorizations.withBasicCredentials(
-                credential.getUsername(), credential.getPassword()));
+            Authorization.fromBasicCredentials(credential.getUsername(), credential.getPassword()));
       }
 
       Request request = requestBuilder.build();
       Response response =
           isOAuth2Auth(credential) ? connection.post(request) : connection.get(request);
-      String responseString = Blobs.writeToString(response.getBody());
+      String responseString =
+          CharStreams.toString(new InputStreamReader(response.getBody(), StandardCharsets.UTF_8));
 
       AuthenticationResponseTemplate responseJson =
           JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
@@ -259,7 +261,7 @@ public class RegistryAuthenticator {
                 + "; parameters: "
                 + getAuthRequestParameters(credential, scope));
       }
-      return Authorizations.withBearerToken(responseJson.getToken());
+      return Authorization.fromBearerToken(responseJson.getToken());
 
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(

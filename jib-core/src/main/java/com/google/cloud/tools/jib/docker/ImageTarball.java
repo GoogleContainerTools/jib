@@ -17,15 +17,13 @@
 package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.docker.json.DockerLoadManifestEntryTemplate;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
@@ -71,16 +69,17 @@ public class ImageTarball {
     }
 
     // Adds the container configuration to the tarball.
-    Blob containerConfigurationBlob =
-        new ImageToJsonTranslator(image).getContainerConfigurationBlob();
+    JsonTemplate containerConfiguration =
+        new ImageToJsonTranslator(image).getContainerConfiguration();
     tarStreamBuilder.addByteEntry(
-        Blobs.writeToByteArray(containerConfigurationBlob), CONTAINER_CONFIGURATION_JSON_FILE_NAME);
+        JsonTemplateMapper.toByteArray(containerConfiguration),
+        CONTAINER_CONFIGURATION_JSON_FILE_NAME);
 
     // Adds the manifest to tarball.
     manifestTemplate.setRepoTags(imageReference.toStringWithTag());
-    ByteArrayOutputStream outStream = new ByteArrayOutputStream();
-    JsonTemplateMapper.writeTo(Collections.singletonList(manifestTemplate), outStream);
-    tarStreamBuilder.addByteEntry(outStream.toByteArray(), MANIFEST_JSON_FILE_NAME);
+    tarStreamBuilder.addByteEntry(
+        JsonTemplateMapper.toByteArray(Collections.singletonList(manifestTemplate)),
+        MANIFEST_JSON_FILE_NAME);
 
     tarStreamBuilder.writeAsTarArchiveTo(out);
   }

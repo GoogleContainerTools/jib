@@ -95,16 +95,16 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
               .setAuthorization(pullAuthorization)
               .newRegistryClient();
 
-      try (ProgressEventDispatcherContainer progressEventDispatcherContainer =
-          new ProgressEventDispatcherContainer(
+      try (ThrottledProgressEventDispatcherWrapper progressEventDispatcherWrapper =
+          new ThrottledProgressEventDispatcherWrapper(
               progressEventDispatcher.newChildProducer(),
               "pulling base image layer " + layerDigest,
               BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER)) {
         return cache.writeCompressedLayer(
             registryClient.pullBlob(
                 layerDigest,
-                progressEventDispatcherContainer::initializeWithBlobSize,
-                progressEventDispatcherContainer));
+                progressEventDispatcherWrapper::setProgressTarget,
+                progressEventDispatcherWrapper::dispatchProgress));
       }
     }
   }

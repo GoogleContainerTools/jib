@@ -36,7 +36,6 @@ import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -163,7 +162,7 @@ class PullBaseImageStep
         Authorization registryAuthorization =
             registryCredential == null || registryCredential.isOAuth2RefreshToken()
                 ? null
-                : Authorizations.withBasicCredentials(
+                : Authorization.fromBasicCredentials(
                     registryCredential.getUsername(), registryCredential.getPassword());
 
         try {
@@ -251,8 +250,8 @@ class PullBaseImageStep
         DescriptorDigest containerConfigurationDigest =
             buildableManifestTemplate.getContainerConfiguration().getDigest();
 
-        try (ProgressEventDispatcherContainer progressEventDispatcherContainer =
-            new ProgressEventDispatcherContainer(
+        try (ThrottledProgressEventDispatcherWrapper progressEventDispatcherWrapper =
+            new ThrottledProgressEventDispatcherWrapper(
                 progressEventDispatcher.newChildProducer(),
                 "pull container configuration " + containerConfigurationDigest,
                 BuildStepType.PULL_BASE_IMAGE)) {
@@ -260,8 +259,8 @@ class PullBaseImageStep
               Blobs.writeToString(
                   registryClient.pullBlob(
                       containerConfigurationDigest,
-                      progressEventDispatcherContainer::initializeWithBlobSize,
-                      progressEventDispatcherContainer));
+                      progressEventDispatcherWrapper::setProgressTarget,
+                      progressEventDispatcherWrapper::dispatchProgress));
 
           ContainerConfigurationTemplate containerConfigurationTemplate =
               JsonTemplateMapper.readJson(

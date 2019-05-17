@@ -18,28 +18,29 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.http.BlobProgressListener;
+import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
-import java.time.Duration;
 import javax.annotation.Nullable;
 
 /**
- * Contains a {@link ProgressEventDispatcher}. This class is mutable and should only be used within
- * a local context.
+ * Contains a {@link ProgressEventDispatcher} and throttles dispatching progress events with the
+ * default delay used by {@link ThrottledConsumer}. This class is mutable and should only be used
+ * within a local context.
  *
  * <p>This class is necessary because the total BLOb size (allocation units) is not known until the
  * response headers are received, only after which can the {@link ProgressEventDispatcher} be
  * created.
  */
-class ProgressEventDispatcherContainer implements BlobProgressListener, Closeable {
+class ThrottledProgressEventDispatcherWrapper implements Closeable {
 
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   private final String description;
   private final BuildStepType type;
   @Nullable private ProgressEventDispatcher progressEventDispatcher;
+  @Nullable private ThrottledAccumulatingConsumer throttledDispatcher;
 
-  ProgressEventDispatcherContainer(
+  ThrottledProgressEventDispatcherWrapper(
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       String description,
       BuildStepType type) {
@@ -48,25 +49,24 @@ class ProgressEventDispatcherContainer implements BlobProgressListener, Closeabl
     this.type = type;
   }
 
-  @Override
-  public void handleByteCount(long byteCount) {
-    Preconditions.checkNotNull(progressEventDispatcher);
-    progressEventDispatcher.dispatchProgress(byteCount);
-  }
-
-  @Override
-  public Duration getDelayBetweenCallbacks() {
-    return Duration.ofMillis(100);
+  public void dispatchProgress(Long progressUnits) {
+    Preconditions.checkNotNull(throttledDispatcher);
+    throttledDispatcher.accept(progressUnits);
   }
 
   @Override
   public void close() {
     Preconditions.checkNotNull(progressEventDispatcher);
+    Preconditions.checkNotNull(throttledDispatcher);
+    throttledDispatcher.close();
     progressEventDispatcher.close();
   }
 
-  void initializeWithBlobSize(long blobSize) {
+  void setProgressTarget(long allocationUnits) {
     Preconditions.checkState(progressEventDispatcher == null);
-    progressEventDispatcher = progressEventDispatcherFactory.create(type, description, blobSize);
+    progressEventDispatcher =
+        progressEventDispatcherFactory.create(type, description, allocationUnits);
+    throttledDispatcher =
+        new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress);
   }
 }

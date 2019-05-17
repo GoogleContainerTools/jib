@@ -26,7 +26,6 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.BlobProgressListener;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -247,14 +246,15 @@ public class RegistryClient {
    * written out.
    *
    * @param blobDigest the digest of the BLOB to download
-   * @param blobSizeConsumer callback to receive the total size of the BLOb to pull
-   * @param blobProgressListener listener for progress of the pull
+   * @param blobSizeListener callback to receive the total size of the BLOb to pull
+   * @param writtenByteCountListener listens on byte count written to an output stream during the
+   *     pull
    * @return a {@link Blob}
    */
   public Blob pullBlob(
       DescriptorDigest blobDigest,
-      Consumer<Long> blobSizeConsumer,
-      BlobProgressListener blobProgressListener) {
+      Consumer<Long> blobSizeListener,
+      Consumer<Long> writtenByteCountListener) {
     return Blobs.from(
         outputStream -> {
           try {
@@ -263,8 +263,8 @@ public class RegistryClient {
                     registryEndpointRequestProperties,
                     blobDigest,
                     outputStream,
-                    blobSizeConsumer,
-                    blobProgressListener));
+                    blobSizeListener,
+                    writtenByteCountListener));
 
           } catch (RegistryException ex) {
             throw new IOException(ex);
@@ -280,7 +280,7 @@ public class RegistryClient {
    * @param blob the BLOB to push
    * @param sourceRepository if pushing to the same registry then the source image, or {@code null}
    *     otherwise; used to optimize the BLOB push
-   * @param blobProgressListener listener for BLOb push progress
+   * @param writtenByteCountListener listens on byte count written to the registry during the push
    * @return {@code true} if the BLOB already exists on the registry and pushing was skipped; false
    *     if the BLOB was pushed
    * @throws IOException if communicating with the endpoint fails
@@ -290,7 +290,7 @@ public class RegistryClient {
       DescriptorDigest blobDigest,
       Blob blob,
       @Nullable String sourceRepository,
-      BlobProgressListener blobProgressListener)
+      Consumer<Long> writtenByteCountListener)
       throws IOException, RegistryException {
     BlobPusher blobPusher =
         new BlobPusher(registryEndpointRequestProperties, blobDigest, blob, sourceRepository);
@@ -312,7 +312,7 @@ public class RegistryClient {
 
         // PATCH <Location> with BLOB
         URL putLocation =
-            callRegistryEndpoint(blobPusher.writer(patchLocation, blobProgressListener));
+            callRegistryEndpoint(blobPusher.writer(patchLocation, writtenByteCountListener));
         Preconditions.checkNotNull(putLocation);
 
         timerEventDispatcher2.lap("pushBlob PUT " + blobDigest);
