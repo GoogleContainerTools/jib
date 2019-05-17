@@ -32,7 +32,7 @@ import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -113,16 +113,16 @@ class PullBaseImageStep
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, ExecutionException, BadContainerConfigurationFormatException,
           CacheCorruptedException {
-    EventDispatcher eventDispatcher = buildConfiguration.getEventDispatcher();
+    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
     // Skip this step if this is a scratch image
     ImageConfiguration baseImageConfiguration = buildConfiguration.getBaseImageConfiguration();
     if (baseImageConfiguration.getImage().isScratch()) {
-      eventDispatcher.dispatch(LogEvent.progress("Getting scratch base image..."));
+      eventHandlers.dispatch(LogEvent.progress("Getting scratch base image..."));
       return new BaseImageWithAuthorization(
           Image.builder(buildConfiguration.getTargetFormat()).build(), null);
     }
 
-    eventDispatcher.dispatch(
+    eventHandlers.dispatch(
         LogEvent.progress(
             "Getting base image "
                 + buildConfiguration.getBaseImageConfiguration().getImage()
@@ -136,13 +136,13 @@ class PullBaseImageStep
             progressEventDispatcherFactory.create(
                 BuildStepType.PULL_BASE_IMAGE, "pulling base image manifest", 2);
         TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       // First, try with no credentials.
       try {
         return new BaseImageWithAuthorization(pullBaseImage(null, progressEventDispatcher), null);
 
       } catch (RegistryUnauthorizedException ex) {
-        eventDispatcher.dispatch(
+        eventHandlers.dispatch(
             LogEvent.lifecycle(
                 "The base image requires auth. Trying again for "
                     + buildConfiguration.getBaseImageConfiguration().getImage()
@@ -189,7 +189,7 @@ class PullBaseImageStep
           } catch (InsecureRegistryException insecureRegistryException) {
             // Cannot skip certificate validation or use HTTP; fall through.
           }
-          eventDispatcher.dispatch(
+          eventHandlers.dispatch(
               LogEvent.error(
                   "Failed to retrieve authentication challenge for registry that required token authentication"));
           throw registryUnauthorizedException;

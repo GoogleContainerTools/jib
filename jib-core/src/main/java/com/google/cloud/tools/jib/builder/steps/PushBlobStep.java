@@ -85,7 +85,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
                 blobDescriptor.getSize());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventDispatcher(), DESCRIPTION + blobDescriptor);
+                buildConfiguration.getEventHandlers(), DESCRIPTION + blobDescriptor);
         ThrottledAccumulatingConsumer throttledProgressReporter =
             new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
       RegistryClient registryClient =
@@ -97,7 +97,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
       // check if the BLOB is available
       if (registryClient.checkBlob(blobDescriptor.getDigest()) != null) {
         buildConfiguration
-            .getEventDispatcher()
+            .getEventHandlers()
             .dispatch(LogEvent.info("BLOB : " + blobDescriptor + " already exists on registry"));
         return blobDescriptor;
       }

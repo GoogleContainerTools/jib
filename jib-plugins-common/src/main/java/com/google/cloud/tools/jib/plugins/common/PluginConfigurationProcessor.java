@@ -26,8 +26,7 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
@@ -121,12 +120,10 @@ public class PluginConfigurationProcessor {
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
     RegistryImage targetImage = RegistryImage.named(targetImageReference);
 
-    EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(projectProperties.getEventHandlers());
     boolean isTargetImageCredentialPresent =
         configureCredentialRetrievers(
             rawConfiguration,
-            eventDispatcher,
+            projectProperties.getEventHandlers(),
             targetImage,
             targetImageReference,
             PropertyNames.TO_AUTH_USERNAME,
@@ -164,10 +161,9 @@ public class PluginConfigurationProcessor {
     ImageReference baseImageReference =
         ImageReference.parse(getBaseImage(rawConfiguration, projectProperties));
 
-    EventDispatcher eventDispatcher =
-        new DefaultEventDispatcher(projectProperties.getEventHandlers());
+    EventHandlers eventHandlers = projectProperties.getEventHandlers();
     if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
-      eventDispatcher.dispatch(
+      eventHandlers.dispatch(
           LogEvent.warn(
               "Authentication over HTTP is enabled. It is strongly recommended that you do not "
                   + "enable this on a public network!"));
@@ -177,7 +173,7 @@ public class PluginConfigurationProcessor {
     boolean isBaseImageCredentialPresent =
         configureCredentialRetrievers(
             rawConfiguration,
-            eventDispatcher,
+            eventHandlers,
             baseImage,
             baseImageReference,
             PropertyNames.FROM_AUTH_USERNAME,
@@ -199,7 +195,7 @@ public class PluginConfigurationProcessor {
     getWorkingDirectoryChecked(rawConfiguration)
         .ifPresent(jibContainerBuilder::setWorkingDirectory);
     if (rawConfiguration.getUseCurrentTimestamp()) {
-      eventDispatcher.dispatch(
+      eventHandlers.dispatch(
           LogEvent.warn(
               "Setting image creation time to current time; your image may not be reproducible."));
       jibContainerBuilder.setCreationTime(Instant.now());
@@ -256,7 +252,8 @@ public class PluginConfigurationProcessor {
       if (rawConfiguration.getMainClass().isPresent()
           || !rawConfiguration.getJvmFlags().isEmpty()
           || !rawExtraClasspath.isEmpty()) {
-        new DefaultEventDispatcher(projectProperties.getEventHandlers())
+        projectProperties
+            .getEventHandlers()
             .dispatch(
                 LogEvent.warn(
                     "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
@@ -391,7 +388,7 @@ public class PluginConfigurationProcessor {
   // TODO: find a way to reduce the number of arguments.
   private static boolean configureCredentialRetrievers(
       RawConfiguration rawConfiguration,
-      EventDispatcher eventDispatcher,
+      EventHandlers eventHandlers,
       RegistryImage registryImage,
       ImageReference imageReference,
       String usernamePropertyName,
@@ -402,14 +399,10 @@ public class PluginConfigurationProcessor {
       throws FileNotFoundException {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(imageReference, eventDispatcher));
+            CredentialRetrieverFactory.forImage(imageReference, eventHandlers));
     Optional<Credential> optionalCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            eventDispatcher,
-            usernamePropertyName,
-            passwordPropertyName,
-            knownAuth,
-            rawConfiguration);
+            eventHandlers, usernamePropertyName, passwordPropertyName, knownAuth, rawConfiguration);
     boolean credentialPresent = optionalCredential.isPresent();
     if (optionalCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(
@@ -427,7 +420,7 @@ public class PluginConfigurationProcessor {
           defaultCredentialRetrievers.setInferredCredential(credential, auth.getAuthDescriptor());
         }
       } catch (InferredAuthException ex) {
-        eventDispatcher.dispatch(LogEvent.warn("InferredAuthException: " + ex.getMessage()));
+        eventHandlers.dispatch(LogEvent.warn("InferredAuthException: " + ex.getMessage()));
       }
     }
     defaultCredentialRetrievers.setCredentialHelper(credHelper);
@@ -443,7 +436,7 @@ public class PluginConfigurationProcessor {
       throws InvalidImageReferenceException {
     return ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
         rawConfiguration.getToImage().orElse(null),
-        new DefaultEventDispatcher(projectProperties.getEventHandlers()),
+        projectProperties.getEventHandlers(),
         projectProperties.getName(),
         projectProperties.getVersion().equals("unspecified")
             ? "latest"

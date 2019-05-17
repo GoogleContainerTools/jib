@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
@@ -142,7 +141,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .build(
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
-                new DefaultEventDispatcher(projectProperties.getEventHandlers()),
+                projectProperties.getEventHandlers(),
                 helpfulSuggestions);
 
       } finally {
