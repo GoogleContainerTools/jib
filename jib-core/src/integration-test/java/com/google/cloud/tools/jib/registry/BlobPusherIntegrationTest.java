@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.http.TestBlobProgressListener;
 import java.io.IOException;
 import java.security.DigestException;
 import org.junit.Assert;
@@ -48,8 +47,6 @@ public class BlobPusherIntegrationTest {
         RegistryClient.factory(EVENT_DISPATCHER, "localhost:5000", "testimage")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
-    Assert.assertFalse(
-        registryClient.pushBlob(
-            testBlobDigest, testBlob, null, new TestBlobProgressListener(ignored -> {})));
+    Assert.assertFalse(registryClient.pushBlob(testBlobDigest, testBlob, null, ignored -> {}));
   }
 }

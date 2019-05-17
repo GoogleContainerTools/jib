@@ -45,10 +45,14 @@ public class Digests {
     return computeDigest(contents, ByteStreams.nullOutputStream()).getDigest();
   }
 
-  public static BlobDescriptor computeDigest(JsonTemplate template, OutputStream optionalOutStream)
+  public static BlobDescriptor computeDigest(JsonTemplate template) throws IOException {
+    return computeDigest(template, ByteStreams.nullOutputStream());
+  }
+
+  public static BlobDescriptor computeDigest(JsonTemplate template, OutputStream outStream)
       throws IOException {
     WritableContents contents = contentsOut -> JsonTemplateMapper.writeTo(template, contentsOut);
-    return computeDigest(contents, optionalOutStream);
+    return computeDigest(contents, outStream);
   }
 
   public static BlobDescriptor computeDigest(InputStream inStream) throws IOException {
@@ -67,36 +71,36 @@ public class Digests {
   }
 
   /**
-   * Computes the digest by consuming the contents of an {@link InputStream} and optionally copying
-   * it to an {@link OutputStream}. Returns the computed digest along with the size of the bytes
-   * consumed to compute the digest. Does not close either stream.
+   * Computes the digest by consuming the contents of an {@link InputStream} while copying it to an
+   * {@link OutputStream}. Returns the computed digest along with the size of the bytes consumed to
+   * compute the digest. Does not close either stream.
    *
    * @param inStream the stream to read the contents from
-   * @param optionalOutStream the stream to which the contents are copied
+   * @param outStream the stream to which the contents are copied
    * @return computed digest and bytes consumed
    * @throws IOException if reading from or writing fails
    */
-  public static BlobDescriptor computeDigest(InputStream inStream, OutputStream optionalOutStream)
+  public static BlobDescriptor computeDigest(InputStream inStream, OutputStream outStream)
       throws IOException {
     WritableContents contents = contentsOut -> ByteStreams.copy(inStream, contentsOut);
-    return computeDigest(contents, optionalOutStream);
+    return computeDigest(contents, outStream);
   }
 
   /**
-   * Computes the digest by consuming the contents and optionally copying it to an {@link
-   * OutputStream}. Returns the computed digest along with the size of the bytes consumed to compute
-   * the digest. Does not close the stream.
+   * Computes the digest by consuming the contents while copying it to an {@link OutputStream}.
+   * Returns the computed digest along with the size of the bytes consumed to compute the digest.
+   * Does not close the stream.
    *
    * @param contents the contents to compute digest for
-   * @param optionalOutStream the stream to which the contents are copied
+   * @param outStream the stream to which the contents are copied
    * @return computed digest and bytes consumed
    * @throws IOException if reading from or writing fails
    */
-  public static BlobDescriptor computeDigest(
-      WritableContents contents, OutputStream optionalOutStream) throws IOException {
-    CountingDigestOutputStream digestOutStream = new CountingDigestOutputStream(optionalOutStream);
+  public static BlobDescriptor computeDigest(WritableContents contents, OutputStream outStream)
+      throws IOException {
+    CountingDigestOutputStream digestOutStream = new CountingDigestOutputStream(outStream);
     contents.writeTo(digestOutStream);
     digestOutStream.flush();
-    return new BlobDescriptor(digestOutStream.getBytesHahsed(), digestOutStream.getDigest());
+    return digestOutStream.computeDigest();
   }
 }

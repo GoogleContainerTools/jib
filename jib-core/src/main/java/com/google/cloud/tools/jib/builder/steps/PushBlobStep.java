@@ -27,36 +27,16 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.http.BlobProgressListener;
+import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
-import java.time.Duration;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pushes a BLOB to the target registry. */
 class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor> {
-
-  private static class ForwardingProgressListener implements BlobProgressListener {
-
-    private final ProgressEventDispatcher progressEventDispatcher;
-
-    private ForwardingProgressListener(ProgressEventDispatcher progressEventDispatcher) {
-      this.progressEventDispatcher = progressEventDispatcher;
-    }
-
-    @Override
-    public void handleByteCount(long byteCount) {
-      progressEventDispatcher.dispatchProgress(byteCount);
-    }
-
-    @Override
-    public Duration getDelayBetweenCallbacks() {
-      return Duration.ofMillis(100);
-    }
-  }
 
   private static final String DESCRIPTION = "Pushing BLOB ";
 
@@ -105,7 +85,9 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
                 blobDescriptor.getSize());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventDispatcher(), DESCRIPTION + blobDescriptor)) {
+                buildConfiguration.getEventDispatcher(), DESCRIPTION + blobDescriptor);
+        ThrottledAccumulatingConsumer throttledProgressReporter =
+            new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
       RegistryClient registryClient =
           buildConfiguration
               .newTargetImageRegistryClientFactory()
@@ -121,11 +103,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
       }
 
       // todo: leverage cross-repository mounts
-      registryClient.pushBlob(
-          blobDescriptor.getDigest(),
-          blob,
-          null,
-          new ForwardingProgressListener(progressEventDispatcher));
+      registryClient.pushBlob(blobDescriptor.getDigest(), blob, null, throttledProgressReporter);
 
       return blobDescriptor;
     }

@@ -16,10 +16,11 @@
 
 package com.google.cloud.tools.jib.http;
 
-import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import javax.net.ssl.SSLException;
 import org.junit.Assert;
@@ -37,7 +38,9 @@ public class WithServerConnectionTest {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
-      Assert.assertEquals("Hello World!", Blobs.writeToString(response.getBody()));
+      Assert.assertArrayEquals(
+          "Hello World!".getBytes(StandardCharsets.UTF_8),
+          ByteStreams.toByteArray(response.getBody()));
     }
   }
 
@@ -81,7 +84,9 @@ public class WithServerConnectionTest {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
-      Assert.assertEquals("Hello World!", Blobs.writeToString(response.getBody()));
+      Assert.assertArrayEquals(
+          "Hello World!".getBytes(StandardCharsets.UTF_8),
+          ByteStreams.toByteArray(response.getBody()));
     }
   }
 }
