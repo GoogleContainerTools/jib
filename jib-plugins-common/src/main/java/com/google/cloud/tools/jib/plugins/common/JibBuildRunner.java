@@ -27,7 +27,7 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.common.annotations.VisibleForTesting;
@@ -162,7 +162,7 @@ public class JibBuildRunner {
    *
    * @param jibContainerBuilder the {@link JibContainerBuilder}
    * @param containerizer the {@link Containerizer}
-   * @param eventDispatcher the {@link EventDispatcher}
+   * @param eventHandlers the {@link EventHandlers}
    * @param helpfulSuggestions suggestions to use in help messages for exceptions
    * @return the built {@link JibContainer}
    * @throws BuildStepsExecutionException if another exception is thrown during the build
@@ -172,17 +172,17 @@ public class JibBuildRunner {
   public JibContainer build(
       JibContainerBuilder jibContainerBuilder,
       Containerizer containerizer,
-      EventDispatcher eventDispatcher,
+      EventHandlers eventHandlers,
       HelpfulSuggestions helpfulSuggestions)
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
     try {
-      eventDispatcher.dispatch(LogEvent.lifecycle(""));
-      eventDispatcher.dispatch(LogEvent.lifecycle(startupMessage));
+      eventHandlers.dispatch(LogEvent.lifecycle(""));
+      eventHandlers.dispatch(LogEvent.lifecycle(startupMessage));
 
       JibContainer jibContainer = jibContainerBuilder.containerize(containerizer);
 
-      eventDispatcher.dispatch(LogEvent.lifecycle(""));
-      eventDispatcher.dispatch(LogEvent.lifecycle(successMessage));
+      eventHandlers.dispatch(LogEvent.lifecycle(""));
+      eventHandlers.dispatch(LogEvent.lifecycle(successMessage));
 
       // when an image is built, write out the digest and id
       if (imageDigestOutputPath != null) {

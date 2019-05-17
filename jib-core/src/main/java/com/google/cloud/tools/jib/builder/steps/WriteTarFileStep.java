@@ -90,7 +90,7 @@ public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildR
 
   private BuildResult writeTarFile() throws ExecutionException, IOException {
     buildConfiguration
-        .getEventDispatcher()
+        .getEventHandlers()
         .dispatch(LogEvent.progress("Building image to tar file..."));
 
     try (ProgressEventDispatcher ignored =

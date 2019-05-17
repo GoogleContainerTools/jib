@@ -90,7 +90,7 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
   private BuildResult afterPushBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, IOException {
     buildConfiguration
-        .getEventDispatcher()
+        .getEventHandlers()
         .dispatch(LogEvent.progress("Loading to Docker daemon..."));
 
     try (ProgressEventDispatcher ignored =
@@ -102,7 +102,7 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
 
       // Load the image to docker daemon.
       buildConfiguration
-          .getEventDispatcher()
+          .getEventHandlers()
           .dispatch(
               LogEvent.debug(dockerClient.load(new ImageTarball(image, targetImageReference))));
 

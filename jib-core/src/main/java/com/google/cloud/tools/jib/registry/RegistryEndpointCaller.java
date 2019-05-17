@@ -22,7 +22,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -81,7 +81,7 @@ class RegistryEndpointCaller<T> {
     return false;
   }
 
-  private final EventDispatcher eventDispatcher;
+  private final EventHandlers eventHandlers;
   private final URL initialRequestUrl;
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
@@ -98,7 +98,7 @@ class RegistryEndpointCaller<T> {
   /**
    * Constructs with parameters for making the request.
    *
-   * @param eventDispatcher the event dispatcher used for dispatching log events
+   * @param eventHandlers the event dispatcher used for dispatching log events
    * @param userAgent {@code User-Agent} header to send with the request
    * @param apiRouteBase the endpoint's API root, without the protocol
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
@@ -108,7 +108,7 @@ class RegistryEndpointCaller<T> {
    * @throws MalformedURLException if the URL generated for the endpoint is malformed
    */
   RegistryEndpointCaller(
-      EventDispatcher eventDispatcher,
+      EventHandlers eventHandlers,
       String userAgent,
       String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
@@ -117,7 +117,7 @@ class RegistryEndpointCaller<T> {
       boolean allowInsecureRegistries)
       throws MalformedURLException {
     this(
-        eventDispatcher,
+        eventHandlers,
         userAgent,
         apiRouteBase,
         registryEndpointProvider,
@@ -130,7 +130,7 @@ class RegistryEndpointCaller<T> {
 
   @VisibleForTesting
   RegistryEndpointCaller(
-      EventDispatcher eventDispatcher,
+      EventHandlers eventHandlers,
       String userAgent,
       String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
@@ -140,7 +140,7 @@ class RegistryEndpointCaller<T> {
       Function<URL, Connection> connectionFactory,
       @Nullable Function<URL, Connection> insecureConnectionFactory)
       throws MalformedURLException {
-    this.eventDispatcher = eventDispatcher;
+    this.eventHandlers = eventHandlers;
     this.initialRequestUrl =
         registryEndpointProvider.getApiRoute(DEFAULT_PROTOCOL + "://" + apiRouteBase);
     this.userAgent = userAgent;
@@ -193,7 +193,7 @@ class RegistryEndpointCaller<T> {
     }
 
     try {
-      eventDispatcher.dispatch(
+      eventHandlers.dispatch(
           LogEvent.info(
               "Cannot verify server at " + url + ". Attempting again with no TLS verification."));
       return call(url, getInsecureConnectionFactory());
@@ -207,7 +207,7 @@ class RegistryEndpointCaller<T> {
   private T fallBackToHttp(URL url) throws IOException, RegistryException {
     GenericUrl httpUrl = new GenericUrl(url);
     httpUrl.setScheme("http");
-    eventDispatcher.dispatch(
+    eventHandlers.dispatch(
         LogEvent.info(
             "Failed to connect to " + url + " over HTTPS. Attempting again with HTTP: " + httpUrl));
     return call(httpUrl.toURL(), connectionFactory);

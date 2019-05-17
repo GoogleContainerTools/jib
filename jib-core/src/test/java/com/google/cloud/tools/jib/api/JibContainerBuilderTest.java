@@ -140,7 +140,7 @@ public class JibContainerBuilderTest {
             .setBaseImageLayersCache(Paths.get("base/image/layers"))
             .setApplicationLayersCache(Paths.get("application/layers"))
             .setExecutorService(mockExecutorService)
-            .setEventHandlers(new EventHandlers().add(mockJibEventConsumer));
+            .setEventHandlers(EventHandlers.builder().add(mockJibEventConsumer).build());
 
     RegistryImage baseImage =
         RegistryImage.named("base/image").addCredentialRetriever(mockCredentialRetriever);
@@ -188,7 +188,7 @@ public class JibContainerBuilderTest {
 
     Assert.assertEquals(mockExecutorService, buildConfiguration.getExecutorService());
 
-    buildConfiguration.getEventDispatcher().dispatch(mockJibEvent);
+    buildConfiguration.getEventHandlers().dispatch(mockJibEvent);
     Mockito.verify(mockJibEventConsumer).accept(mockJibEvent);
 
     Assert.assertEquals("jib-core", buildConfiguration.getToolName());

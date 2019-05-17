@@ -119,7 +119,7 @@ public class MavenProjectProperties implements ProjectProperties {
     }
     ConsoleLogger consoleLogger = logEventHandlerBuilder.build();
 
-    return new EventHandlers()
+    return EventHandlers.builder()
         .add(
             JibEventType.LOGGING,
             logEvent -> consoleLogger.log(logEvent.getLevel(), logEvent.getMessage()))
@@ -132,7 +132,8 @@ public class MavenProjectProperties implements ProjectProperties {
                 update ->
                     consoleLogger.setFooter(
                         ProgressDisplayGenerator.generateProgressDisplay(
-                            update.getProgress(), update.getUnfinishedAllocations()))));
+                            update.getProgress(), update.getUnfinishedAllocations()))))
+        .build();
   }
 
   @VisibleForTesting

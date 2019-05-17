@@ -21,8 +21,6 @@ import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
@@ -104,8 +102,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               mavenRawConfiguration, MojoCommon.isWarProject(getProject()));
       MavenProjectProperties projectProperties =
           MavenProjectProperties.getForProject(getProject(), getSession(), getLog(), appRoot);
-      EventDispatcher eventDispatcher =
-          new DefaultEventDispatcher(projectProperties.getEventHandlers());
 
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
@@ -140,7 +136,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
             .build(
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
-                eventDispatcher,
+                projectProperties.getEventHandlers(),
                 helpfulSuggestions);
 
       } finally {

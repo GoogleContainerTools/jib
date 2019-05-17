@@ -81,11 +81,11 @@ class PullAndCacheBaseImageLayersStep
                 "checking base image layers",
                 baseImageLayers.size());
         TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       ImmutableList.Builder<PullAndCacheBaseImageLayerStep> pullAndCacheBaseImageLayerStepsBuilder =
           ImmutableList.builderWithExpectedSize(baseImageLayers.size());
       buildConfiguration
-          .getEventDispatcher()
+          .getEventHandlers()
           .dispatch(
               new LayerCountEvent(
                   BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER, baseImageLayers.size()));
