@@ -34,8 +34,9 @@ public class HelloWorld {
     System.out.println(pack.getImplementationTitle());
     System.out.println(pack.getImplementationVersion());
 
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     try (Reader reader = new InputStreamReader(
-        HelloWorld.class.getResourceAsStream("world"), StandardCharsets.UTF_8)) {
+        classLoader.getResourceAsStream("world"), StandardCharsets.UTF_8)) {
       String world = CharStreams.toString(reader);
       System.out.println("Hello " + world);
     }
