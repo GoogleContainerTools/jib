@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.http.TestBlobProgressListener;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
@@ -64,7 +63,7 @@ public class BlobPullerIntegrationTest {
               Assert.assertEquals(0, expectedSize.sum());
               expectedSize.add(size);
             },
-            new TestBlobProgressListener(totalByteCount::add));
+            totalByteCount::add);
     Assert.assertEquals(realDigest, pulledBlob.writeTo(ByteStreams.nullOutputStream()).getDigest());
     Assert.assertTrue(expectedSize.sum() > 0);
     Assert.assertEquals(expectedSize.sum(), totalByteCount.sum());
@@ -84,7 +83,7 @@ public class BlobPullerIntegrationTest {
 
     try {
       registryClient
-          .pullBlob(nonexistentDigest, ignored -> {}, new TestBlobProgressListener(ignored -> {}))
+          .pullBlob(nonexistentDigest, ignored -> {}, ignored -> {})
           .writeTo(ByteStreams.nullOutputStream());
       Assert.fail("Trying to pull nonexistent blob should have errored");
 

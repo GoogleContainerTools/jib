@@ -35,7 +35,7 @@ public class AuthenticationMethodRetrieverIntegrationTest {
             .newRegistryClient();
     RegistryAuthenticator registryAuthenticator = registryClient.getRegistryAuthenticator();
     Assert.assertNotNull(registryAuthenticator);
-    Authorization authorization = registryAuthenticator.authenticatePull();
+    Authorization authorization = registryAuthenticator.authenticatePull(null);
 
     RegistryClient authorizedRegistryClient =
         RegistryClient.factory(EVENT_DISPATCHER, "registry.hub.docker.com", "library/busybox")

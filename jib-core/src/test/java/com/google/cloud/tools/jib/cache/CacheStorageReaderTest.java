@@ -215,7 +215,7 @@ public class CacheStorageReaderTest {
     DescriptorDigest selector = layerDigest1;
     Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
     Files.createDirectories(selectorFile.getParent());
-    Files.write(selectorFile, Blobs.writeToByteArray(Blobs.from("not a valid layer digest")));
+    Files.write(selectorFile, "not a valid layer digest".getBytes(StandardCharsets.UTF_8));
 
     try {
       cacheStorageReader.select(selector);
@@ -241,7 +241,7 @@ public class CacheStorageReaderTest {
     DescriptorDigest selector = layerDigest1;
     Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
     Files.createDirectories(selectorFile.getParent());
-    Files.write(selectorFile, Blobs.writeToByteArray(Blobs.from(layerDigest2.getHash())));
+    Files.write(selectorFile, layerDigest2.getHash().getBytes(StandardCharsets.UTF_8));
 
     Optional<DescriptorDigest> selectedLayerDigest = cacheStorageReader.select(selector);
     Assert.assertTrue(selectedLayerDigest.isPresent());
