@@ -253,7 +253,7 @@ public class StepsRunner {
 
     try (ProgressEventDispatcher progressEventDispatcher =
         ProgressEventDispatcher.newRoot(
-            buildConfiguration.getEventDispatcher(),
+            buildConfiguration.getEventHandlers(),
             rootProgressAllocationDescription,
             stepsCount)) {
       rootProgressEventDispatcher = progressEventDispatcher;

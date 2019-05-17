@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
@@ -59,10 +60,24 @@ public class EventHandlers {
   }
 
   /**
+   * Dispatches {@code jibEvent} to all the handlers that can handle it.
+   *
+   * @param jibEvent the {@link JibEvent} to dispatch
+   */
+  public void dispatch(JibEvent jibEvent) {
+    if (handlers.isEmpty()) {
+      return;
+    }
+    handlers.get(JibEvent.class).forEach(handler -> handler.handle(jibEvent));
+    handlers.get(jibEvent.getClass()).forEach(handler -> handler.handle(jibEvent));
+  }
+
+  /**
    * Gets the handlers added.
    *
    * @return the map from {@link JibEvent} type to a list of {@link Handler}s
    */
+  @VisibleForTesting
   ImmutableMultimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> getHandlers() {
     return ImmutableMultimap.copyOf(handlers);
   }

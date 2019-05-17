@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.progress.Allocation;
 import com.google.common.base.Preconditions;
@@ -54,34 +54,34 @@ public class ProgressEventDispatcher implements Closeable {
   /**
    * Creates a new {@link ProgressEventDispatcher} with a root {@link Allocation}.
    *
-   * @param eventDispatcher the {@link EventDispatcher}
+   * @param eventHandlers the {@link EventHandlers}
    * @param description user-facing description of what the allocation represents
    * @param allocationUnits number of allocation units
    * @return a new {@link ProgressEventDispatcher}
    */
   public static ProgressEventDispatcher newRoot(
-      EventDispatcher eventDispatcher, String description, long allocationUnits) {
+      EventHandlers eventHandlers, String description, long allocationUnits) {
     return newProgressEventDispatcher(
-        eventDispatcher, Allocation.newRoot(description, allocationUnits), BuildStepType.ALL);
+        eventHandlers, Allocation.newRoot(description, allocationUnits), BuildStepType.ALL);
   }
 
   /**
    * Creates a new {@link ProgressEventDispatcher} and dispatches a new {@link ProgressEvent} with
    * progress 0 for {@code allocation}.
    *
-   * @param eventDispatcher the {@link EventDispatcher}
+   * @param eventHandlers the {@link EventHandlers}
    * @param allocation the {@link Allocation} to manage
    * @return a new {@link ProgressEventDispatcher}
    */
   private static ProgressEventDispatcher newProgressEventDispatcher(
-      EventDispatcher eventDispatcher, Allocation allocation, BuildStepType buildStepType) {
+      EventHandlers eventHandlers, Allocation allocation, BuildStepType buildStepType) {
     ProgressEventDispatcher progressEventDispatcher =
-        new ProgressEventDispatcher(eventDispatcher, allocation, buildStepType);
+        new ProgressEventDispatcher(eventHandlers, allocation, buildStepType);
     progressEventDispatcher.dispatchProgress(0);
     return progressEventDispatcher;
   }
 
-  private final EventDispatcher eventDispatcher;
+  private final EventHandlers eventHandlers;
   private final Allocation allocation;
   private final BuildStepType buildStepType;
 
@@ -89,8 +89,8 @@ public class ProgressEventDispatcher implements Closeable {
   private boolean closed = false;
 
   private ProgressEventDispatcher(
-      EventDispatcher eventDispatcher, Allocation allocation, BuildStepType buildStepType) {
-    this.eventDispatcher = eventDispatcher;
+      EventHandlers eventHandlers, Allocation allocation, BuildStepType buildStepType) {
+    this.eventHandlers = eventHandlers;
     this.allocation = allocation;
     this.buildStepType = buildStepType;
 
@@ -117,7 +117,7 @@ public class ProgressEventDispatcher implements Closeable {
         Preconditions.checkState(!used);
         used = true;
         return newProgressEventDispatcher(
-            eventDispatcher, allocation.newChild(description, allocationUnits), buildStepType);
+            eventHandlers, allocation.newChild(description, allocationUnits), buildStepType);
       }
     };
   }
@@ -139,7 +139,7 @@ public class ProgressEventDispatcher implements Closeable {
    */
   public void dispatchProgress(long progressUnits) {
     long unitsDecremented = decrementRemainingAllocationUnits(progressUnits);
-    eventDispatcher.dispatch(new ProgressEvent(allocation, unitsDecremented, buildStepType));
+    eventHandlers.dispatch(new ProgressEvent(allocation, unitsDecremented, buildStepType));
   }
 
   /**

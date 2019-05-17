@@ -88,7 +88,7 @@ class PushContainerConfigurationStep
             progressEventDispatcherFactory.create(
                 BuildStepType.PUSH_CONTAINER_CONFIGURATION, "pushing container configuration", 1);
         TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       Image image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
       Blob containerConfigurationBlob =
           new ImageToJsonTranslator(image).getContainerConfigurationBlob();

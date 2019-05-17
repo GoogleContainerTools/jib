@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.frontend;
 
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -138,17 +138,17 @@ public class MainClassFinder {
   }
 
   private final ImmutableList<Path> files;
-  private final EventDispatcher eventDispatcher;
+  private final EventHandlers eventHandlers;
 
   /**
    * Finds a class with {@code psvm} (see class javadoc) in {@code files}.
    *
    * @param files the files to check
-   * @param eventDispatcher used for dispatching log events.
+   * @param eventHandlers used for dispatching log events.
    */
-  public MainClassFinder(List<Path> files, EventDispatcher eventDispatcher) {
+  public MainClassFinder(List<Path> files, EventHandlers eventHandlers) {
     this.files = ImmutableList.copyOf(files);
-    this.eventDispatcher = eventDispatcher;
+    this.eventHandlers = eventHandlers;
   }
 
   /**
@@ -198,11 +198,11 @@ public class MainClassFinder {
 
     } catch (ArrayIndexOutOfBoundsException ignored) {
       // Not a valid class file (thrown by ClassReader if it reads an invalid format)
-      eventDispatcher.dispatch(LogEvent.warn("Invalid class file found: " + file));
+      eventHandlers.dispatch(LogEvent.warn("Invalid class file found: " + file));
 
     } catch (IOException ignored) {
       // Could not read class file.
-      eventDispatcher.dispatch(LogEvent.warn("Could not read file: " + file));
+      eventHandlers.dispatch(LogEvent.warn("Could not read file: " + file));
     }
 
     return Optional.empty();
