@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
-import com.google.cloud.tools.jib.http.ListenableCountingOutputStream;
+import com.google.cloud.tools.jib.http.NotifyingOutputStream;
 import com.google.cloud.tools.jib.http.Response;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -66,7 +66,7 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
     blobSizeListener.accept(response.getContentLength());
 
     try (OutputStream outputStream =
-        new ListenableCountingOutputStream(destinationOutputStream, writtenByteCountListener)) {
+        new NotifyingOutputStream(destinationOutputStream, writtenByteCountListener)) {
       BlobDescriptor receivedBlobDescriptor =
           Digests.computeDigest(response.getBody(), outputStream);
 

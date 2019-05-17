@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.event.progress.ThrottledLongConsumer;
+import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
 import javax.annotation.Nullable;
@@ -38,7 +38,7 @@ class ThrottledProgressEventDispatcherWrapper implements Closeable {
   private final String description;
   private final BuildStepType type;
   @Nullable private ProgressEventDispatcher progressEventDispatcher;
-  @Nullable private ThrottledLongConsumer throttledDispatcher;
+  @Nullable private ThrottledAccumulatingConsumer throttledDispatcher;
 
   ThrottledProgressEventDispatcherWrapper(
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
@@ -66,6 +66,7 @@ class ThrottledProgressEventDispatcherWrapper implements Closeable {
     Preconditions.checkState(progressEventDispatcher == null);
     progressEventDispatcher =
         progressEventDispatcherFactory.create(type, description, allocationUnits);
-    throttledDispatcher = new ThrottledLongConsumer(progressEventDispatcher::dispatchProgress);
+    throttledDispatcher =
+        new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress);
   }
 }

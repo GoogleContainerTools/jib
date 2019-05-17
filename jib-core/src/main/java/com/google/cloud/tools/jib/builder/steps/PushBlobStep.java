@@ -27,7 +27,7 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.event.progress.ThrottledLongConsumer;
+import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -86,8 +86,8 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
                 buildConfiguration.getEventDispatcher(), DESCRIPTION + blobDescriptor);
-        ThrottledLongConsumer throttledProgressReporter =
-            new ThrottledLongConsumer(progressEventDispatcher::dispatchProgress)) {
+        ThrottledAccumulatingConsumer throttledProgressReporter =
+            new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
       RegistryClient registryClient =
           buildConfiguration
               .newTargetImageRegistryClientFactory()
