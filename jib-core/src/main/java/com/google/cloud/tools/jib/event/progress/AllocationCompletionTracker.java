@@ -164,7 +164,7 @@ class AllocationCompletionTracker {
 
   ImmutableList<String> getUnfinishedLeafTasks() {
     List<Allocation> allUnfinished = getUnfinishedAllocations();
-    Set<Allocation> unfinishedLeaves = new LinkedHashSet<>(allUnfinished);
+    Set<Allocation> unfinishedLeaves = new LinkedHashSet<>(allUnfinished); // preserves order
 
     for (Allocation allocation : allUnfinished) {
       Optional<Allocation> parent = allocation.getParent();
