@@ -1,0 +1,25 @@
+<settings>
+  <proxies>
+    <proxy>
+      <id>https1</id>
+      <active>false</active>
+      <protocol>https</protocol>
+      <host>proxy1.example.com</host>
+      <port>8443</port>
+    </proxy>
+    <proxy>
+      <id>https2</id>
+      <active>true</active>
+      <protocol>https</protocol>
+      <host>proxy2.example.com</host>
+      <port>8443</port>
+    </proxy>
+    <proxy>
+      <id>https3</id>
+      <active>true</active>
+      <protocol>https</protocol>
+      <host>proxy3.example.com</host>
+      <port>8443</port>
+    </proxy>
+  </proxies>
+</settings>

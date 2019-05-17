@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryExceptio
 import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
@@ -57,6 +58,13 @@ public class BuildTarMojo extends JibPluginConfiguration {
     if (isSkipped()) {
       getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
       return;
+    } else if (!isContainerizable()) {
+      getLog()
+          .info(
+              "Skipping containerization of this module (not specified in "
+                  + PropertyNames.CONTAINERIZE
+                  + ")");
+      return;
     }
     if ("pom".equals(getProject().getPackaging())) {
       getLog().info("Skipping containerization because packaging is 'pom'...");
@@ -76,19 +84,18 @@ public class BuildTarMojo extends JibPluginConfiguration {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
-      DecryptedMavenSettings decryptedSettings =
-          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter());
-
       Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
       Path tarOutputPath = buildOutput.resolve("jib-image.tar");
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForTarImage(
               mavenRawConfiguration,
-              new MavenSettingsServerCredentials(decryptedSettings),
+              new MavenSettingsServerCredentials(
+                  getSession().getSettings(), getSettingsDecrypter()),
               projectProperties,
               tarOutputPath,
               mavenHelpfulSuggestionsBuilder.build());
-      ProxyProvider.init(decryptedSettings);
+      MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
+          getSession().getSettings(), getSettingsDecrypter());
 
       HelpfulSuggestions helpfulSuggestions =
           mavenHelpfulSuggestionsBuilder

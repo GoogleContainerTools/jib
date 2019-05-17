@@ -26,7 +26,7 @@ import org.junit.Test;
 public class SkaffoldFilesOutputTest {
 
   private static final String TEST_JSON =
-      "{\"build\":[\"buildFile1\",\"buildFile2\"],\"inputs\":[\"input1\",\"input2\"],\"ignore\":[\"ignore1\",\"ignore2\"]}";
+      "{\"version\":null,\"build\":[\"buildFile1\",\"buildFile2\"],\"inputs\":[\"input1\",\"input2\"],\"ignore\":[\"ignore1\",\"ignore2\"]}";
 
   @Test
   public void testGetJsonString() throws IOException {
@@ -44,7 +44,8 @@ public class SkaffoldFilesOutputTest {
   public void testGetJsonString_empty() throws IOException {
     SkaffoldFilesOutput skaffoldFilesOutput = new SkaffoldFilesOutput();
     Assert.assertEquals(
-        "{\"build\":[],\"inputs\":[],\"ignore\":[]}", skaffoldFilesOutput.getJsonString());
+        "{\"version\":null,\"build\":[],\"inputs\":[],\"ignore\":[]}",
+        skaffoldFilesOutput.getJsonString());
   }
 
   @Test

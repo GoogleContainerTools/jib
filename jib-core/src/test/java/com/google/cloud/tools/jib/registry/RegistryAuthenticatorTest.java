@@ -55,7 +55,7 @@ public class RegistryAuthenticatorTest {
             "user-agent");
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
-        registryAuthenticator.getAuthenticationUrl("scope"));
+        registryAuthenticator.getAuthenticationUrl(null, "scope"));
 
     registryAuthenticator =
         RegistryAuthenticator.fromAuthenticationMethod(
@@ -64,55 +64,56 @@ public class RegistryAuthenticatorTest {
             "user-agent");
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
-        registryAuthenticator.getAuthenticationUrl("scope"));
+        registryAuthenticator.getAuthenticationUrl(null, "scope"));
   }
 
   @Test
   public void testAuthRequestParameters_basicAuth() {
     Assert.assertEquals(
         "service=someservice&scope=repository:someimage:scope",
-        registryAuthenticator.getAuthRequestParameters("scope"));
+        registryAuthenticator.getAuthRequestParameters(null, "scope"));
   }
 
   @Test
   public void testAuthRequestParameters_oauth2() {
-    registryAuthenticator.setCredential(Credential.from("<token>", "oauth2_access_token"));
+    Credential credential = Credential.from("<token>", "oauth2_access_token");
     Assert.assertEquals(
         "service=someservice&scope=repository:someimage:scope"
             + "&client_id=jib.da031fe481a93ac107a95a96462358f9"
             + "&grant_type=refresh_token&refresh_token=oauth2_access_token",
-        registryAuthenticator.getAuthRequestParameters("scope"));
+        registryAuthenticator.getAuthRequestParameters(credential, "scope"));
   }
 
   @Test
   public void isOAuth2Auth_nullCredential() {
-    Assert.assertFalse(registryAuthenticator.isOAuth2Auth());
+    Assert.assertFalse(registryAuthenticator.isOAuth2Auth(null));
   }
 
   @Test
   public void isOAuth2Auth_basicAuth() {
-    registryAuthenticator.setCredential(Credential.from("name", "password"));
-    Assert.assertFalse(registryAuthenticator.isOAuth2Auth());
+    Credential credential = Credential.from("name", "password");
+    Assert.assertFalse(registryAuthenticator.isOAuth2Auth(credential));
   }
 
   @Test
   public void isOAuth2Auth_oauth2() {
-    registryAuthenticator.setCredential(Credential.from("<token>", "oauth2_token"));
-    Assert.assertTrue(registryAuthenticator.isOAuth2Auth());
+    Credential credential = Credential.from("<token>", "oauth2_token");
+    Assert.assertTrue(registryAuthenticator.isOAuth2Auth(credential));
   }
 
   @Test
   public void getAuthenticationUrl_basicAuth() throws MalformedURLException {
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
-        registryAuthenticator.getAuthenticationUrl("scope"));
+        registryAuthenticator.getAuthenticationUrl(null, "scope"));
   }
 
   @Test
   public void istAuthenticationUrl_oauth2() throws MalformedURLException {
-    registryAuthenticator.setCredential(Credential.from("<token>", "oauth2_token"));
+    Credential credential = Credential.from("<token>", "oauth2_token");
     Assert.assertEquals(
-        new URL("https://somerealm"), registryAuthenticator.getAuthenticationUrl("scope"));
+        new URL("https://somerealm"),
+        registryAuthenticator.getAuthenticationUrl(credential, "scope"));
   }
 
   @Test
@@ -175,7 +176,7 @@ public class RegistryAuthenticatorTest {
 
     Assert.assertEquals(
         new URL("https://somerealm?service=someserver&scope=repository:someimage:scope"),
-        registryAuthenticator.getAuthenticationUrl("scope"));
+        registryAuthenticator.getAuthenticationUrl(null, "scope"));
   }
 
   @Test
@@ -188,7 +189,7 @@ public class RegistryAuthenticatorTest {
                 "Bearer realm=\"" + server.getEndpoint() + "\"",
                 registryEndpointRequestProperties,
                 "Competent-Agent");
-        authenticator.authenticatePush();
+        authenticator.authenticatePush(null);
       } catch (RegistryAuthenticationFailedException ex) {
         // Doesn't matter if auth fails. We only examine what we sent.
       }

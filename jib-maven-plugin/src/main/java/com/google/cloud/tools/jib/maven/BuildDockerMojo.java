@@ -74,6 +74,13 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     if (isSkipped()) {
       getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
       return;
+    } else if (!isContainerizable()) {
+      getLog()
+          .info(
+              "Skipping containerization of this module (not specified in "
+                  + PropertyNames.CONTAINERIZE
+                  + ")");
+      return;
     }
     if ("pom".equals(getProject().getPackaging())) {
       getLog().info("Skipping containerization because packaging is 'pom'...");
@@ -103,18 +110,17 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
-      DecryptedMavenSettings decryptedSettings =
-          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter());
-
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
               mavenRawConfiguration,
-              new MavenSettingsServerCredentials(decryptedSettings),
+              new MavenSettingsServerCredentials(
+                  getSession().getSettings(), getSettingsDecrypter()),
               projectProperties,
               dockerExecutable,
               getDockerClientEnvironment(),
               mavenHelpfulSuggestionsBuilder.build());
-      ProxyProvider.init(decryptedSettings);
+      MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
+          getSession().getSettings(), getSettingsDecrypter());
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =

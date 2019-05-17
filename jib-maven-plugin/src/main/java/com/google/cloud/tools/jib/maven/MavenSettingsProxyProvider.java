@@ -18,33 +18,62 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Nullable;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.settings.Proxy;
+import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.building.SettingsProblem;
+import org.apache.maven.settings.crypto.DefaultSettingsDecryptionRequest;
+import org.apache.maven.settings.crypto.SettingsDecrypter;
+import org.apache.maven.settings.crypto.SettingsDecryptionRequest;
+import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 /** Propagates proxy configuration from Maven settings to system properties. */
-class ProxyProvider {
+class MavenSettingsProxyProvider {
 
   private static final ImmutableList<String> PROXY_PROPERTIES =
       ImmutableList.of("proxyHost", "proxyPort", "proxyUser", "proxyPassword");
 
   /**
-   * Initializes proxy settings based on Maven settings.
+   * Initializes proxy settings based on Maven settings if they are not already set by the user
+   * directly.
    *
    * @param settings Maven settings
    */
-  static void init(DecryptedMavenSettings settings) {
-    configureProxy(settings, "https");
-    configureProxy(settings, "http");
-  }
+  static void activateHttpAndHttpsProxies(Settings settings, SettingsDecrypter decrypter)
+      throws MojoExecutionException {
+    List<Proxy> proxies = new ArrayList<>(2);
+    for (String protocol : ImmutableList.of("http", "https")) {
+      if (areProxyPropertiesSet(protocol)) {
+        continue;
+      }
+      settings
+          .getProxies()
+          .stream()
+          .filter(Proxy::isActive)
+          .filter(proxy -> protocol.equals(proxy.getProtocol()))
+          .findFirst()
+          .ifPresent(proxies::add);
+    }
 
-  private static void configureProxy(DecryptedMavenSettings settings, String protocol) {
-    settings
-        .getProxies()
-        .stream()
-        .filter(Proxy::isActive)
-        .filter(proxy -> protocol.equals(proxy.getProtocol()))
-        .findFirst()
-        .ifPresent(ProxyProvider::setProxyProperties);
+    if (proxies.size() == 0) {
+      return;
+    }
+
+    SettingsDecryptionRequest request = new DefaultSettingsDecryptionRequest().setProxies(proxies);
+    SettingsDecryptionResult result = decrypter.decrypt(request);
+
+    for (SettingsProblem problem : result.getProblems()) {
+      if (problem.getSeverity() == SettingsProblem.Severity.ERROR
+          || problem.getSeverity() == SettingsProblem.Severity.FATAL) {
+        throw new MojoExecutionException(
+            "Unable to decrypt proxy info from settings.xml: " + problem);
+      }
+    }
+
+    result.getProxies().forEach(MavenSettingsProxyProvider::setProxyProperties);
   }
 
   /**
@@ -55,9 +84,6 @@ class ProxyProvider {
   @VisibleForTesting
   static void setProxyProperties(Proxy proxy) {
     String protocol = proxy.getProtocol();
-    if (areProxyPropertiesSet(protocol)) {
-      return;
-    }
 
     setPropertySafe(protocol + ".proxyHost", proxy.getHost());
     setPropertySafe(protocol + ".proxyPort", String.valueOf(proxy.getPort()));

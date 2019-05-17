@@ -17,12 +17,9 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
-import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
@@ -51,91 +48,6 @@ import javax.annotation.Nullable;
  *     href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a>
  */
 public class RegistryAuthenticator {
-
-  /** Initializer for {@link RegistryAuthenticator}. */
-  public static class Initializer {
-
-    private final EventDispatcher eventDispatcher;
-    private final String serverUrl;
-    private final String repository;
-    private boolean allowInsecureRegistries = false;
-    @Nullable private String userAgentSuffix;
-
-    /**
-     * Instantiates a new initializer for {@link RegistryAuthenticator}.
-     *
-     * @param eventDispatcher the event dispatcher used for dispatching log events
-     * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
-     * @param repository the image/repository name (also known as, namespace)
-     */
-    private Initializer(EventDispatcher eventDispatcher, String serverUrl, String repository) {
-      this.eventDispatcher = eventDispatcher;
-      this.serverUrl = serverUrl;
-      this.repository = repository;
-    }
-
-    public Initializer setAllowInsecureRegistries(boolean allowInsecureRegistries) {
-      this.allowInsecureRegistries = allowInsecureRegistries;
-      return this;
-    }
-
-    public Initializer setUserAgentSuffix(@Nullable String userAgentSuffix) {
-      this.userAgentSuffix = userAgentSuffix;
-      return this;
-    }
-
-    /**
-     * Gets a {@link RegistryAuthenticator} for a custom registry server and repository.
-     *
-     * @return the {@link RegistryAuthenticator} to authenticate pulls/pushes with the registry, or
-     *     {@code null} if no token authentication is necessary
-     * @throws RegistryAuthenticationFailedException if failed to create the registry authenticator
-     * @throws IOException if communicating with the endpoint fails
-     * @throws RegistryException if communicating with the endpoint fails
-     */
-    @Nullable
-    public RegistryAuthenticator initialize()
-        throws RegistryAuthenticationFailedException, IOException, RegistryException {
-      try {
-        return RegistryClient.factory(eventDispatcher, serverUrl, repository)
-            .setAllowInsecureRegistries(allowInsecureRegistries)
-            .setUserAgentSuffix(userAgentSuffix)
-            .newRegistryClient()
-            .getRegistryAuthenticator();
-
-      } catch (MalformedURLException ex) {
-        throw new RegistryAuthenticationFailedException(serverUrl, repository, ex);
-
-      } catch (InsecureRegistryException ex) {
-        // Cannot skip certificate validation or use HTTP, so just return null.
-        return null;
-      }
-    }
-  }
-
-  /**
-   * Sets a {@code Credential} to help the authentication.
-   *
-   * @param credential the credential used to authenticate.
-   * @return this
-   */
-  public RegistryAuthenticator setCredential(@Nullable Credential credential) {
-    this.credential = credential;
-    return this;
-  }
-
-  /**
-   * Gets a new initializer for {@link RegistryAuthenticator}.
-   *
-   * @param eventDispatcher the event dispatcher used for dispatching log events
-   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
-   * @param repository the image/repository name (also known as, namespace)
-   * @return the new {@link Initializer}
-   */
-  public static Initializer initializer(
-      EventDispatcher eventDispatcher, String serverUrl, String repository) {
-    return new Initializer(eventDispatcher, serverUrl, repository);
-  }
 
   // TODO: Replace with a WWW-Authenticate header parser.
   /**
@@ -230,7 +142,6 @@ public class RegistryAuthenticator {
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final String realm;
   private final String service;
-  @Nullable private Credential credential;
   private final String userAgent;
 
   RegistryAuthenticator(
@@ -247,21 +158,25 @@ public class RegistryAuthenticator {
   /**
    * Authenticates permissions to pull.
    *
+   * @param credential the credential used to authenticate
    * @return an {@code Authorization} authenticating the pull
    * @throws RegistryAuthenticationFailedException if authentication fails
    */
-  public Authorization authenticatePull() throws RegistryAuthenticationFailedException {
-    return authenticate("pull");
+  public Authorization authenticatePull(@Nullable Credential credential)
+      throws RegistryAuthenticationFailedException {
+    return authenticate(credential, "pull");
   }
 
   /**
    * Authenticates permission to pull and push.
    *
+   * @param credential the credential used to authenticate
    * @return an {@code Authorization} authenticating the push
    * @throws RegistryAuthenticationFailedException if authentication fails
    */
-  public Authorization authenticatePush() throws RegistryAuthenticationFailedException {
-    return authenticate("pull,push");
+  public Authorization authenticatePush(@Nullable Credential credential)
+      throws RegistryAuthenticationFailedException {
+    return authenticate(credential, "pull,push");
   }
 
   @VisibleForTesting
@@ -275,16 +190,17 @@ public class RegistryAuthenticator {
   }
 
   @VisibleForTesting
-  URL getAuthenticationUrl(String scope) throws MalformedURLException {
-    return isOAuth2Auth()
+  URL getAuthenticationUrl(@Nullable Credential credential, String scope)
+      throws MalformedURLException {
+    return isOAuth2Auth(credential)
         ? new URL(realm) // Required parameters will be sent via POST .
         : new URL(realm + "?" + getServiceScopeRequestParameters(scope));
   }
 
   @VisibleForTesting
-  String getAuthRequestParameters(String scope) {
+  String getAuthRequestParameters(@Nullable Credential credential, String scope) {
     String serviceScope = getServiceScopeRequestParameters(scope);
-    return isOAuth2Auth()
+    return isOAuth2Auth(credential)
         ? serviceScope
             // https://github.com/GoogleContainerTools/jib/pull/1545
             + "&client_id=jib.da031fe481a93ac107a95a96462358f9"
@@ -295,29 +211,31 @@ public class RegistryAuthenticator {
   }
 
   @VisibleForTesting
-  boolean isOAuth2Auth() {
+  boolean isOAuth2Auth(@Nullable Credential credential) {
     return credential != null && credential.isOAuth2RefreshToken();
   }
 
   /**
    * Sends the authentication request and retrieves the Bearer authorization token.
    *
+   * @param credential the credential used to authenticate
    * @param scope the scope of permissions to authenticate for
    * @return the {@link Authorization} response
    * @throws RegistryAuthenticationFailedException if authentication fails
    * @see <a
    *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
    */
-  private Authorization authenticate(String scope) throws RegistryAuthenticationFailedException {
+  private Authorization authenticate(@Nullable Credential credential, String scope)
+      throws RegistryAuthenticationFailedException {
     try (Connection connection =
-        Connection.getConnectionFactory().apply(getAuthenticationUrl(scope))) {
+        Connection.getConnectionFactory().apply(getAuthenticationUrl(credential, scope))) {
       Request.Builder requestBuilder =
           Request.builder()
               .setHttpTimeout(JibSystemProperties.getHttpTimeout())
               .setUserAgent(userAgent);
 
-      if (isOAuth2Auth()) {
-        String parameters = getAuthRequestParameters(scope);
+      if (isOAuth2Auth(credential)) {
+        String parameters = getAuthRequestParameters(credential, scope);
         requestBuilder.setBody(
             new BlobHttpContent(Blobs.from(parameters), MediaType.FORM_DATA.toString()));
       } else if (credential != null) {
@@ -326,7 +244,8 @@ public class RegistryAuthenticator {
       }
 
       Request request = requestBuilder.build();
-      Response response = isOAuth2Auth() ? connection.post(request) : connection.get(request);
+      Response response =
+          isOAuth2Auth(credential) ? connection.post(request) : connection.get(request);
       String responseString =
           CharStreams.toString(new InputStreamReader(response.getBody(), StandardCharsets.UTF_8));
 
@@ -338,9 +257,9 @@ public class RegistryAuthenticator {
             registryEndpointRequestProperties.getServerUrl(),
             registryEndpointRequestProperties.getImageName(),
             "Did not get token in authentication response from "
-                + getAuthenticationUrl(scope)
+                + getAuthenticationUrl(credential, scope)
                 + "; parameters: "
-                + getAuthRequestParameters(scope));
+                + getAuthRequestParameters(credential, scope));
       }
       return Authorization.fromBearerToken(responseJson.getToken());
 
