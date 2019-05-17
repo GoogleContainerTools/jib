@@ -32,7 +32,7 @@ public class LogEventTest {
   // Note that in actual code, the event handler should NOT perform thread unsafe operations like
   // here.
   private final EventHandlers eventHandlers =
-      new EventHandlers().add(JibEventType.LOGGING, receivedLogEvents::offer);
+      EventHandlers.builder().add(JibEventType.LOGGING, receivedLogEvents::offer).build();
 
   @Test
   public void testFactories() {

@@ -36,7 +36,7 @@ import org.junit.rules.TemporaryFolder;
 public class BlobPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EventHandlers EVENT_HANDLERS = new EventHandlers();
+  private static final EventHandlers EVENT_HANDLERS = EventHandlers.none();
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 

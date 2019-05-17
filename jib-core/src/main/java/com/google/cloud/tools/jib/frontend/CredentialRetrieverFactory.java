@@ -73,7 +73,7 @@ public class CredentialRetrieverFactory {
    */
   public static CredentialRetrieverFactory forImage(ImageReference imageReference) {
     return new CredentialRetrieverFactory(
-        imageReference, new EventHandlers(), DockerCredentialHelper::new);
+        imageReference, EventHandlers.none(), DockerCredentialHelper::new);
   }
 
   private final EventHandlers eventHandlers;

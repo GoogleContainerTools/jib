@@ -47,7 +47,7 @@ public class ProgressEventTest {
   }
 
   private static EventHandlers makeEventHandlers(Consumer<ProgressEvent> progressEventConsumer) {
-    return new EventHandlers().add(JibEventType.PROGRESS, progressEventConsumer);
+    return EventHandlers.builder().add(JibEventType.PROGRESS, progressEventConsumer).build();
   }
 
   private static final double DOUBLE_ERROR_MARGIN = 1e-10;

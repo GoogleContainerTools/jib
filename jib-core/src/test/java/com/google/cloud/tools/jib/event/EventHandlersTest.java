@@ -55,14 +55,15 @@ public class EventHandlersTest {
   public void testAdd() {
     int[] counter = new int[1];
     EventHandlers eventHandlers =
-        new EventHandlers()
+        EventHandlers.builder()
             .add(
                 new JibEventType<>(TestJibEvent1.class),
                 testJibEvent1 -> Assert.assertEquals("payload", testJibEvent1.getPayload()))
             .add(
                 new JibEventType<>(TestJibEvent2.class),
                 testJibEvent2 -> testJibEvent2.sayHello("Jib"))
-            .add(jibEvent -> counter[0]++);
+            .add(jibEvent -> counter[0]++)
+            .build();
     Assert.assertTrue(eventHandlers.getHandlers().containsKey(JibEvent.class));
     Assert.assertTrue(eventHandlers.getHandlers().containsKey(TestJibEvent1.class));
     Assert.assertTrue(eventHandlers.getHandlers().containsKey(TestJibEvent2.class));
@@ -91,7 +92,7 @@ public class EventHandlersTest {
     List<String> emissions = new ArrayList<>();
 
     EventHandlers eventHandlers =
-        new EventHandlers()
+        EventHandlers.builder()
             .add(
                 new JibEventType<>(TestJibEvent2.class),
                 testJibEvent2 -> emissions.add("handled 2 first"))
@@ -101,7 +102,8 @@ public class EventHandlersTest {
             .add(
                 new JibEventType<>(TestJibEvent3.class),
                 testJibEvent3 -> emissions.add("handled 3"))
-            .add(jibEvent -> emissions.add("handled generic"));
+            .add(jibEvent -> emissions.add("handled generic"))
+            .build();
 
     TestJibEvent2 testJibEvent2 = new TestJibEvent2();
     TestJibEvent3 testJibEvent3 = new TestJibEvent3();

@@ -161,9 +161,10 @@ public class ContainerizerIntegrationTest {
 
   private final ProgressChecker progressChecker = new ProgressChecker();
   private final EventHandlers eventHandlers =
-      new EventHandlers()
+      EventHandlers.builder()
           .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
-          .add(JibEventType.LAYER_COUNT, layerCountConsumer);
+          .add(JibEventType.LAYER_COUNT, layerCountConsumer)
+          .build();
 
   @Test
   public void testSteps_forBuildToDockerRegistry()

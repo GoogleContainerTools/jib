@@ -25,38 +25,69 @@ import java.util.function.Consumer;
 /** Builds a set of event handlers to handle {@link JibEvent}s. */
 public class EventHandlers {
 
-  /** Maps from {@link JibEvent} class to handlers for that event type. */
-  private final Multimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> handlers =
-      ArrayListMultimap.create();
+  /** Builder for {@link EventHandlers}. */
+  public static class Builder {
 
-  /**
-   * Adds the {@code eventConsumer} to handle the {@link JibEvent} with class {@code eventClass}.
-   * The order in which handlers are added is the order in which they are called when the event is
-   * dispatched.
-   *
-   * <p><b>Note: Implementations of {@code eventConsumer} must be thread-safe.</b>
-   *
-   * @param eventType the event type that {@code eventConsumer} should handle
-   * @param eventConsumer the event handler
-   * @param <E> the type of {@code eventClass}
-   * @return this
-   */
-  public <E extends JibEvent> EventHandlers add(
-      JibEventType<E> eventType, Consumer<E> eventConsumer) {
-    Class<E> eventClass = eventType.getEventClass();
-    handlers.put(eventClass, new Handler<>(eventClass, eventConsumer));
-    return this;
+    private final Multimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> handlers =
+        ArrayListMultimap.create();
+
+    /**
+     * Adds the {@code eventConsumer} to handle the {@link JibEvent} with class {@code eventClass}.
+     * The order in which handlers are added is the order in which they are called when the event is
+     * dispatched.
+     *
+     * <p><b>Note: Implementations of {@code eventConsumer} must be thread-safe.</b>
+     *
+     * @param eventType the event type that {@code eventConsumer} should handle
+     * @param eventConsumer the event handler
+     * @param <E> the type of {@code eventClass}
+     * @return this
+     */
+    public <E extends JibEvent> Builder add(JibEventType<E> eventType, Consumer<E> eventConsumer) {
+      Class<E> eventClass = eventType.getEventClass();
+      handlers.put(eventClass, new Handler<>(eventClass, eventConsumer));
+      return this;
+    }
+
+    /**
+     * Adds the {@code eventConsumer} to handle all {@link JibEvent} types. See {@link
+     * #add(JibEventType, Consumer)} for more details.
+     *
+     * @param eventConsumer the event handler
+     * @return this
+     */
+    public Builder add(Consumer<JibEvent> eventConsumer) {
+      return add(JibEventType.ALL, eventConsumer);
+    }
+
+    public EventHandlers build() {
+      return new EventHandlers(handlers);
+    }
+  }
+
+  /** Maps from {@link JibEvent} class to handlers for that event type. */
+  private final ImmutableMultimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> handlers;
+
+  private EventHandlers(Multimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> handlers) {
+    this.handlers = ImmutableMultimap.copyOf(handlers);
   }
 
   /**
-   * Adds the {@code eventConsumer} to handle all {@link JibEvent} types. See {@link
-   * #add(JibEventType, Consumer)} for more details.
+   * Returns an empty {@link EventHandlers}.
    *
-   * @param eventConsumer the event handler
-   * @return this
+   * @return the {@link EventHandlers}
    */
-  public EventHandlers add(Consumer<JibEvent> eventConsumer) {
-    return add(JibEventType.ALL, eventConsumer);
+  public static EventHandlers none() {
+    return new Builder().build();
+  }
+
+  /**
+   * Creates a new {@link EventHandlers.Builder}.
+   *
+   * @return the builder
+   */
+  public static Builder builder() {
+    return new Builder();
   }
 
   /**

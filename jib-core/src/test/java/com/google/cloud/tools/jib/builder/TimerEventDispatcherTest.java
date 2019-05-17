@@ -43,7 +43,7 @@ public class TimerEventDispatcherTest {
   @Test
   public void testLogging() {
     EventHandlers eventHandlers =
-        new EventHandlers().add(JibEventType.TIMING, timerEventQueue::add);
+        EventHandlers.builder().add(JibEventType.TIMING, timerEventQueue::add).build();
 
     Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH);
     try (TimerEventDispatcher parentTimerEventDispatcher =

@@ -36,7 +36,7 @@ import org.junit.Test;
 public class ManifestPusherIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EventHandlers EVENT_HANDLERS = new EventHandlers();
+  private static final EventHandlers EVENT_HANDLERS = EventHandlers.none();
 
   @Test
   public void testPush_missingBlobs() throws IOException, RegistryException, InterruptedException {

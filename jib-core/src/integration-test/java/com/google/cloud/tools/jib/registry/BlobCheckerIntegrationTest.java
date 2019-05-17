@@ -30,7 +30,7 @@ import org.junit.Test;
 public class BlobCheckerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EventHandlers EVENT_HANDLERS = new EventHandlers();
+  private static final EventHandlers EVENT_HANDLERS = EventHandlers.none();
 
   @Test
   public void testCheck_exists() throws IOException, RegistryException, InterruptedException {

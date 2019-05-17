@@ -31,7 +31,7 @@ import org.junit.Test;
 public class ManifestPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EventHandlers EVENT_HANDLERS = new EventHandlers();
+  private static final EventHandlers EVENT_HANDLERS = EventHandlers.none();
 
   @Test
   public void testPull_v21() throws IOException, RegistryException, InterruptedException {
