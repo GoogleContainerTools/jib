@@ -253,9 +253,7 @@ public class StepsRunner {
 
     try (ProgressEventDispatcher progressEventDispatcher =
         ProgressEventDispatcher.newRoot(
-            buildConfiguration.getEventHandlers(),
-            rootProgressAllocationDescription,
-            stepsCount)) {
+            buildConfiguration.getEventHandlers(), rootProgressAllocationDescription, stepsCount)) {
       rootProgressEventDispatcher = progressEventDispatcher;
       stepsRunnable.run();
       return Preconditions.checkNotNull(steps.finalStep).getFuture().get();

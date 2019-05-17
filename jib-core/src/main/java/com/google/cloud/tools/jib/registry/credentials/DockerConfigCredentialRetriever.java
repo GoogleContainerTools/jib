@@ -30,7 +30,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 /**
  * Retrieves registry credentials from the Docker config.
@@ -75,7 +74,7 @@ public class DockerConfigCredentialRetriever {
    * @return {@link Credential} found for {@code registry}, or {@link Optional#empty} if not found
    * @throws IOException if failed to parse the config JSON
    */
-  public Optional<Credential> retrieve(@Nullable EventHandlers eventHandlers) throws IOException {
+  public Optional<Credential> retrieve(EventHandlers eventHandlers) throws IOException {
     if (!Files.exists(dockerConfigFile)) {
       return Optional.empty();
     }
@@ -93,7 +92,7 @@ public class DockerConfigCredentialRetriever {
    * @return the retrieved credentials, or {@code Optional#empty} if none are found
    */
   @VisibleForTesting
-  Optional<Credential> retrieve(DockerConfig dockerConfig, @Nullable EventHandlers eventHandlers) {
+  Optional<Credential> retrieve(DockerConfig dockerConfig, EventHandlers eventHandlers) {
     for (String registryAlias : RegistryAliasGroup.getAliasesGroup(registry)) {
       // First, tries to find defined auth.
       String auth = dockerConfig.getAuthFor(registryAlias);
@@ -118,7 +117,7 @@ public class DockerConfigCredentialRetriever {
             | CredentialHelperUnhandledServerUrlException
             | CredentialHelperNotFoundException ex) {
           // Warns the user that the specified credential helper cannot be used.
-          if (eventHandlers != null && ex.getMessage() != null) {
+          if (ex.getMessage() != null) {
             eventHandlers.dispatch(LogEvent.warn(ex.getMessage()));
             if (ex.getCause() != null && ex.getCause().getMessage() != null) {
               eventHandlers.dispatch(LogEvent.warn("  Caused by: " + ex.getCause().getMessage()));

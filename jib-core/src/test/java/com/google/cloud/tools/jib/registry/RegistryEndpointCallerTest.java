@@ -23,7 +23,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -113,7 +113,7 @@ public class RegistryEndpointCallerTest {
     return mockHttpResponse(code307, new HttpHeaders().setLocation(redirectLocation));
   }
 
-  @Mock private EventDispatcher mockEventDispatcher;
+  @Mock private EventHandlers mockEventHandlers;
   @Mock private Connection mockConnection;
   @Mock private Connection mockInsecureConnection;
   @Mock private Response mockResponse;
@@ -174,7 +174,7 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockConnectionFactory);
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.info(
                 "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification."));
@@ -202,11 +202,11 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockConnectionFactory);
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.info(
                 "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification."));
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.info(
                 "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api"));
@@ -230,7 +230,7 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockConnectionFactory);
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.info(
                 "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api"));
@@ -353,11 +353,11 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockConnectionFactory);
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.info(
                 "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification."));
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.info(
                 "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api"));
@@ -639,7 +639,7 @@ public class RegistryEndpointCallerTest {
   private RegistryEndpointCaller<String> createRegistryEndpointCaller(
       boolean allowInsecure, int port) throws MalformedURLException {
     return new RegistryEndpointCaller<>(
-        mockEventDispatcher,
+        mockEventHandlers,
         "userAgent",
         (port == -1) ? "apiRouteBase" : ("apiRouteBase:" + port),
         new TestRegistryEndpointProvider(),

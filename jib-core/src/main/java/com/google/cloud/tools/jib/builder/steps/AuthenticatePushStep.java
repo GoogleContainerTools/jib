@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.InsecureRegistryException;
-import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
@@ -75,9 +74,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
 
   @Override
   @Nullable
-  public Authorization call()
-      throws ExecutionException, RegistryAuthenticationFailedException, IOException,
-          RegistryException {
+  public Authorization call() throws ExecutionException, IOException, RegistryException {
     Credential registryCredential = NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
 
     String registry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
@@ -86,7 +83,7 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
                 BuildStepType.AUTHENTICATE_PUSH, "authenticating push to " + registry, 1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(
-                buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, registry))) {
+                buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, registry))) {
       RegistryAuthenticator registryAuthenticator =
           buildConfiguration
               .newTargetImageRegistryClientFactory()

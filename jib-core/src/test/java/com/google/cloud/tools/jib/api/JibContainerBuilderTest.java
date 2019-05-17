@@ -188,7 +188,7 @@ public class JibContainerBuilderTest {
 
     Assert.assertEquals(mockExecutorService, buildConfiguration.getExecutorService());
 
-    buildConfiguration.getEventDispatcher().dispatch(mockJibEvent);
+    buildConfiguration.getEventHandlers().dispatch(mockJibEvent);
     Mockito.verify(mockJibEventConsumer).accept(mockJibEvent);
 
     Assert.assertEquals("jib-core", buildConfiguration.getToolName());

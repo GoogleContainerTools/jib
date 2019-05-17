@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.event;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
@@ -44,6 +47,9 @@ public class EventHandlersTest {
       message = "Hello " + name;
     }
   }
+
+  /** Test {@link JibEvent}. */
+  private static class TestJibEvent3 implements JibEvent {}
 
   @Test
   public void testAdd() {
@@ -78,5 +84,38 @@ public class EventHandlersTest {
     Mockito.verify(mockTestJibEvent1).getPayload();
     Mockito.verifyNoMoreInteractions(mockTestJibEvent1);
     testJibEvent2.assertMessageCorrect("Jib");
+  }
+
+  @Test
+  public void testDispatch() {
+    List<String> emissions = new ArrayList<>();
+
+    EventHandlers eventHandlers =
+        new EventHandlers()
+            .add(
+                new JibEventType<>(TestJibEvent2.class),
+                testJibEvent2 -> emissions.add("handled 2 first"))
+            .add(
+                new JibEventType<>(TestJibEvent2.class),
+                testJibEvent2 -> emissions.add("handled 2 second"))
+            .add(
+                new JibEventType<>(TestJibEvent3.class),
+                testJibEvent3 -> emissions.add("handled 3"))
+            .add(jibEvent -> emissions.add("handled generic"));
+
+    TestJibEvent2 testJibEvent2 = new TestJibEvent2();
+    TestJibEvent3 testJibEvent3 = new TestJibEvent3();
+
+    eventHandlers.dispatch(testJibEvent2);
+    eventHandlers.dispatch(testJibEvent3);
+
+    Assert.assertEquals(
+        Arrays.asList(
+            "handled generic",
+            "handled 2 first",
+            "handled 2 second",
+            "handled generic",
+            "handled 3"),
+        emissions);
   }
 }

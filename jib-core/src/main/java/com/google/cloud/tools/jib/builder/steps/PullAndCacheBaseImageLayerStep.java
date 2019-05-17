@@ -75,7 +75,7 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
                 1);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, layerDigest))) {
+                buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, layerDigest))) {
       Cache cache = buildConfiguration.getBaseImageLayersCache();
 
       // Checks if the layer already exists in the cache.

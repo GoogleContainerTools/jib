@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import java.security.DigestException;
@@ -30,13 +30,13 @@ import org.junit.Test;
 public class BlobCheckerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EventDispatcher EVENT_DISPATCHER = jibEvent -> {};
+  private static final EventHandlers EVENT_HANDLERS = new EventHandlers();
 
   @Test
   public void testCheck_exists() throws IOException, RegistryException, InterruptedException {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_DISPATCHER, "localhost:5000", "busybox")
+        RegistryClient.factory(EVENT_HANDLERS, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     V22ManifestTemplate manifestTemplate =
@@ -51,7 +51,7 @@ public class BlobCheckerIntegrationTest {
       throws IOException, RegistryException, DigestException, InterruptedException {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_DISPATCHER, "localhost:5000", "busybox")
+        RegistryClient.factory(EVENT_HANDLERS, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     DescriptorDigest fakeBlobDigest =

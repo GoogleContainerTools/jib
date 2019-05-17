@@ -57,7 +57,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
                 "setting up to build application layers",
                 layerCount);
         TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
           ImmutableList.builderWithExpectedSize(layerCount);
       for (LayerConfiguration layerConfiguration : buildConfiguration.getLayerConfigurations()) {
@@ -77,7 +77,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
       ImmutableList<BuildAndCacheApplicationLayerStep> steps =
           buildAndCacheApplicationLayerSteps.build();
       buildConfiguration
-          .getEventDispatcher()
+          .getEventHandlers()
           .dispatch(
               new LayerCountEvent(BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER, steps.size()));
       return steps;
@@ -115,7 +115,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
   public CachedLayer call() throws IOException, CacheCorruptedException {
     String description = "Building " + layerType + " layer";
 
-    buildConfiguration.getEventDispatcher().dispatch(LogEvent.progress(description + "..."));
+    buildConfiguration.getEventHandlers().dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create(
@@ -123,7 +123,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
                 "building " + layerType + " layer",
                 1);
         TimerEventDispatcher ignored2 =
-            new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
+            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), description)) {
       Cache cache = buildConfiguration.getApplicationLayersCache();
 
       // Don't build the layer if it exists already.
@@ -138,7 +138,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
           cache.writeUncompressedLayer(layerBlob, layerConfiguration.getLayerEntries());
 
       buildConfiguration
-          .getEventDispatcher()
+          .getEventHandlers()
           .dispatch(LogEvent.debug(description + " built " + cachedLayer.getDigest()));
 
       return cachedLayer;
