@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.builder;
 
+import com.google.cloud.tools.jib.api.event.BuildStepType;
 import com.google.cloud.tools.jib.api.event.EventHandlers;
-import com.google.cloud.tools.jib.api.event.events.BuildStepType;
 import com.google.cloud.tools.jib.api.event.events.ProgressEvent;
 import java.util.List;
 import org.junit.Assert;

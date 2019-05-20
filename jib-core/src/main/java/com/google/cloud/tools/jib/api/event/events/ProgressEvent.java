@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.api.event.events;
 
 import com.google.cloud.tools.jib.api.event.Allocation;
+import com.google.cloud.tools.jib.api.event.BuildStepType;
 import com.google.cloud.tools.jib.api.event.JibEvent;
 
 /**

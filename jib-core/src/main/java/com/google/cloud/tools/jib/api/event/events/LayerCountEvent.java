@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.api.event.events;
 
+import com.google.cloud.tools.jib.api.event.BuildStepType;
 import com.google.cloud.tools.jib.api.event.JibEvent;
 
 /** Event used for counting layers processed during a build step. */

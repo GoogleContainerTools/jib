@@ -17,8 +17,8 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.api.event.Allocation;
+import com.google.cloud.tools.jib.api.event.BuildStepType;
 import com.google.cloud.tools.jib.api.event.EventHandlers;
-import com.google.cloud.tools.jib.api.event.events.BuildStepType;
 import com.google.cloud.tools.jib.api.event.events.ProgressEvent;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
