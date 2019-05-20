@@ -34,7 +34,7 @@ public class RegistryAuthenticatorIntegrationTest {
     ImageReference dockerHubImageReference = ImageReference.parse("library/busybox");
     RegistryAuthenticator registryAuthenticator =
         RegistryClient.factory(
-                EventHandlers.none(),
+                EventHandlers.NONE,
                 dockerHubImageReference.getRegistry(),
                 dockerHubImageReference.getRepository())
             .newRegistryClient()

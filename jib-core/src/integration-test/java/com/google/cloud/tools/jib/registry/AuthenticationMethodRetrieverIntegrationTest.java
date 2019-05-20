@@ -26,19 +26,17 @@ import org.junit.Test;
 /** Integration tests for {@link AuthenticationMethodRetriever}. */
 public class AuthenticationMethodRetrieverIntegrationTest {
 
-  private static final EventHandlers EVENT_HANDLERS = EventHandlers.none();
-
   @Test
   public void testGetRegistryAuthenticator() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_HANDLERS, "registry.hub.docker.com", "library/busybox")
+        RegistryClient.factory(EventHandlers.NONE, "registry.hub.docker.com", "library/busybox")
             .newRegistryClient();
     RegistryAuthenticator registryAuthenticator = registryClient.getRegistryAuthenticator();
     Assert.assertNotNull(registryAuthenticator);
     Authorization authorization = registryAuthenticator.authenticatePull(null);
 
     RegistryClient authorizedRegistryClient =
-        RegistryClient.factory(EVENT_HANDLERS, "registry.hub.docker.com", "library/busybox")
+        RegistryClient.factory(EventHandlers.NONE, "registry.hub.docker.com", "library/busybox")
             .setAuthorization(authorization)
             .newRegistryClient();
     authorizedRegistryClient.pullManifest("latest");

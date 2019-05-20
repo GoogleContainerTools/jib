@@ -65,20 +65,14 @@ public class EventHandlers {
     }
   }
 
+  /** An empty {@link EventHandlers}. */
+  public static final EventHandlers NONE = new Builder().build();
+
   /** Maps from {@link JibEvent} class to handlers for that event type. */
   private final ImmutableMultimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> handlers;
 
   private EventHandlers(Multimap<Class<? extends JibEvent>, Handler<? extends JibEvent>> handlers) {
     this.handlers = ImmutableMultimap.copyOf(handlers);
-  }
-
-  /**
-   * Returns an empty {@link EventHandlers}.
-   *
-   * @return the {@link EventHandlers}
-   */
-  public static EventHandlers none() {
-    return new Builder().build();
   }
 
   /**
