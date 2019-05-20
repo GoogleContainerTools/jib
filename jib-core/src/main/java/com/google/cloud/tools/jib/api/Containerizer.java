@@ -17,11 +17,11 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.api.event.EventHandlers;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.UserCacheHome;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;

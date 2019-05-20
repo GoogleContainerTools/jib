@@ -14,12 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.event.progress;
+package com.google.cloud.tools.jib.api.event;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link Allocation}. */
+/** Tests for {@link com.google.cloud.tools.jib.api.event.Allocation}. */
 public class AllocationTest {
 
   /** Error margin for checking equality of two doubles. */

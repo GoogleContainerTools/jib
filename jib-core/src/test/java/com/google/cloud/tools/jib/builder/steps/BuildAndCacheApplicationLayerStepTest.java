@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.event.EventHandlers;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -26,7 +27,6 @@ import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.ImageLayers;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;

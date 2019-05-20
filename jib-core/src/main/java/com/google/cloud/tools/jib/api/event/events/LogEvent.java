@@ -14,9 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.event.events;
+package com.google.cloud.tools.jib.api.event.events;
 
-import com.google.cloud.tools.jib.event.JibEvent;
+import com.google.cloud.tools.jib.api.event.JibEvent;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Objects;
 

@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.api.event.EventHandlers;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.FromAuthConfiguration;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.collect.ImmutableMap;

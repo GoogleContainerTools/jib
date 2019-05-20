@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.event.progress;
+package com.google.cloud.tools.jib.api.event;
 
 import java.util.Optional;
 import javax.annotation.Nullable;

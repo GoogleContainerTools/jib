@@ -25,7 +25,7 @@ import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
-import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.api.event.EventHandlers;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import java.io.IOException;
 import java.net.UnknownHostException;

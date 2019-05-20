@@ -14,12 +14,10 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.event.progress;
+package com.google.cloud.tools.jib.api.event;
 
 import com.google.cloud.tools.jib.MultithreadedExecutor;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
-import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.api.event.events.ProgressEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,10 +28,10 @@ import java.util.concurrent.atomic.DoubleAccumulator;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link ProgressEventHandler}. */
+/** Tests for {@link com.google.cloud.tools.jib.api.event.ProgressEventHandler}. */
 public class ProgressEventHandlerTest {
 
-  /** {@link Allocation} tree for testing. */
+  /** {@link com.google.cloud.tools.jib.api.event.Allocation} tree for testing. */
   private static class AllocationTree {
 
     /** The root node. */

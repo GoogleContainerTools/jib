@@ -17,14 +17,14 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.api.event.EventHandlers;
+import com.google.cloud.tools.jib.api.event.events.LogEvent;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.ImageFormat;
 import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;

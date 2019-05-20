@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.plugins.common.logging;
 
-import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.event.events.LogEvent.Level;
+import com.google.cloud.tools.jib.api.event.events.LogEvent;
+import com.google.cloud.tools.jib.api.event.events.LogEvent.Level;
 import java.util.List;
 
 /** Logs messages to the console. Implementations must be thread-safe. */

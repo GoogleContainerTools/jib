@@ -17,9 +17,9 @@
 package com.google.cloud.tools.jib.registry.credentials;
 
 import com.google.api.client.util.Base64;
+import com.google.cloud.tools.jib.api.event.EventHandlers;
+import com.google.cloud.tools.jib.api.event.events.LogEvent;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryAliasGroup;
 import com.google.cloud.tools.jib.registry.credentials.json.DockerConfigTemplate;

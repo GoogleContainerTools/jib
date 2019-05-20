@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEvent;
-import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.api.event.EventHandlers;
+import com.google.cloud.tools.jib.api.event.JibEvent;
+import com.google.cloud.tools.jib.api.event.events.LogEvent;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;

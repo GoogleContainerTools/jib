@@ -17,12 +17,12 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.builder.BuildStepType;
+import com.google.cloud.tools.jib.api.event.EventHandlers;
+import com.google.cloud.tools.jib.api.event.JibEventType;
+import com.google.cloud.tools.jib.api.event.ProgressEventHandler;
+import com.google.cloud.tools.jib.api.event.events.BuildStepType;
+import com.google.cloud.tools.jib.api.event.events.LayerCountEvent;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
-import com.google.cloud.tools.jib.event.events.LayerCountEvent;
-import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.registry.LocalRegistry;

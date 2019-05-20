@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.event;
+package com.google.cloud.tools.jib.api.event;
 
 import java.util.ArrayList;
 import java.util.Arrays;

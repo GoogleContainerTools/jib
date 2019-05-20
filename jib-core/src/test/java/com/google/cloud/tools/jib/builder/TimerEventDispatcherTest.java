@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
-import com.google.cloud.tools.jib.event.events.TimerEvent;
-import com.google.cloud.tools.jib.event.events.TimerEvent.State;
+import com.google.cloud.tools.jib.api.event.EventHandlers;
+import com.google.cloud.tools.jib.api.event.JibEventType;
+import com.google.cloud.tools.jib.api.event.events.TimerEvent;
+import com.google.cloud.tools.jib.api.event.events.TimerEvent.State;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;

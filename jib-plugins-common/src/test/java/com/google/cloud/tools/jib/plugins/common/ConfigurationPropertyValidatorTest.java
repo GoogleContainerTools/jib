@@ -18,9 +18,9 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.event.EventHandlers;
+import com.google.cloud.tools.jib.api.event.events.LogEvent;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.Optional;

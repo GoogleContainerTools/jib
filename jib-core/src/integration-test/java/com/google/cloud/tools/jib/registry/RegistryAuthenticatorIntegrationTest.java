@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.RegistryException;
-import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.api.event.EventHandlers;
 import com.google.cloud.tools.jib.http.Authorization;
 import java.io.IOException;
 import org.junit.Assert;

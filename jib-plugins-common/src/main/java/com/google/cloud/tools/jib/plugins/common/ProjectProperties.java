@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.api.event.EventHandlers;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;

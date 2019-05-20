@@ -14,11 +14,11 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.event.events;
+package com.google.cloud.tools.jib.api.event.events;
 
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
-import com.google.cloud.tools.jib.event.events.LogEvent.Level;
+import com.google.cloud.tools.jib.api.event.EventHandlers;
+import com.google.cloud.tools.jib.api.event.JibEventType;
+import com.google.cloud.tools.jib.api.event.events.LogEvent.Level;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import org.junit.Assert;

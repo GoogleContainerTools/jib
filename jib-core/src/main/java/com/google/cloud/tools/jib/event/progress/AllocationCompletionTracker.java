@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event.progress;
 
+import com.google.cloud.tools.jib.api.event.Allocation;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.PriorityQueue;
@@ -29,7 +30,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  * <p>This implementation is thread-safe.
  */
-class AllocationCompletionTracker {
+public class AllocationCompletionTracker {
 
   /**
    * Holds the progress units completed along with a creation order. This is used as the value of
@@ -82,7 +83,7 @@ class AllocationCompletionTracker {
    *     present. Note that this may return {@code true} even if the map was not updated if called
    *     concurrently, but never {@code false} if the map was updated.
    */
-  boolean updateProgress(Allocation allocation, long units) {
+  public boolean updateProgress(Allocation allocation, long units) {
     if (units == 0L) {
       // Puts the allocation in the map if not present, with progress initialized to 0.
       boolean alreadyPresent = completionMap.containsKey(allocation);
@@ -112,7 +113,7 @@ class AllocationCompletionTracker {
    *
    * @return a list of unfinished {@link Allocation}s
    */
-  ImmutableList<Allocation> getUnfinishedAllocations() {
+  public ImmutableList<Allocation> getUnfinishedAllocations() {
     Queue<InsertionOrderUnits> unfinishedInsertionOrderUnits = new PriorityQueue<>();
 
     for (InsertionOrderUnits insertionOrderUnits : completionMap.values()) {

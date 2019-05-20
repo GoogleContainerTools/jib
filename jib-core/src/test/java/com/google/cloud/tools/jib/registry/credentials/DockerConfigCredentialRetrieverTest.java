@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
+import com.google.cloud.tools.jib.api.event.EventHandlers;
+import com.google.cloud.tools.jib.api.event.events.LogEvent;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;

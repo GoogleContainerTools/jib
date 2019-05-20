@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.event.events.TimerEvent;
-import com.google.cloud.tools.jib.event.events.TimerEvent.State;
+import com.google.cloud.tools.jib.api.event.events.TimerEvent;
+import com.google.cloud.tools.jib.api.event.events.TimerEvent.State;
 import java.util.function.Consumer;
 
 /** Handles {@link TimerEvent}s by producing log messages. */

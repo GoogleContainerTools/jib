@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.builder.BuildStepType;
+import com.google.cloud.tools.jib.api.event.events.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.common.base.Preconditions;
