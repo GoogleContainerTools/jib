@@ -30,13 +30,12 @@ import org.junit.Test;
 public class BlobCheckerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EventHandlers EVENT_HANDLERS = EventHandlers.NONE;
 
   @Test
   public void testCheck_exists() throws IOException, RegistryException, InterruptedException {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_HANDLERS, "localhost:5000", "busybox")
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     V22ManifestTemplate manifestTemplate =
@@ -51,7 +50,7 @@ public class BlobCheckerIntegrationTest {
       throws IOException, RegistryException, DigestException, InterruptedException {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_HANDLERS, "localhost:5000", "busybox")
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     DescriptorDigest fakeBlobDigest =

@@ -36,7 +36,6 @@ import org.junit.rules.TemporaryFolder;
 public class BlobPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EventHandlers EVENT_HANDLERS = EventHandlers.NONE;
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -45,7 +44,7 @@ public class BlobPullerIntegrationTest {
     // Pulls the busybox image.
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_HANDLERS, "localhost:5000", "busybox")
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     V21ManifestTemplate manifestTemplate =
@@ -77,7 +76,7 @@ public class BlobPullerIntegrationTest {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_HANDLERS, "localhost:5000", "busybox")
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
 

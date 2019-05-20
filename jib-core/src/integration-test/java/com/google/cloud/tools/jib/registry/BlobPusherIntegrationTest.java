@@ -31,7 +31,6 @@ import org.junit.Test;
 public class BlobPusherIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EventHandlers EVENT_HANDLERS = EventHandlers.NONE;
 
   @Test
   public void testPush()
@@ -44,7 +43,7 @@ public class BlobPusherIntegrationTest {
             "52a9e4d4ba4333ce593707f98564fee1e6d898db0d3602408c0b2a6a424d357c");
 
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_HANDLERS, "localhost:5000", "testimage")
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "testimage")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     Assert.assertFalse(registryClient.pushBlob(testBlobDigest, testBlob, null, ignored -> {}));

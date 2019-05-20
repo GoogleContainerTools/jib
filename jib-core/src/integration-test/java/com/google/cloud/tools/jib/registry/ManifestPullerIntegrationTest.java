@@ -31,13 +31,12 @@ import org.junit.Test;
 public class ManifestPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EventHandlers EVENT_HANDLERS = EventHandlers.NONE;
 
   @Test
   public void testPull_v21() throws IOException, RegistryException, InterruptedException {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_HANDLERS, "localhost:5000", "busybox")
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     V21ManifestTemplate manifestTemplate =
@@ -51,7 +50,7 @@ public class ManifestPullerIntegrationTest {
   public void testPull_v22() throws IOException, RegistryException, InterruptedException {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_HANDLERS, "gcr.io", "distroless/java").newRegistryClient();
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java").newRegistryClient();
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
@@ -65,7 +64,7 @@ public class ManifestPullerIntegrationTest {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     try {
       RegistryClient registryClient =
-          RegistryClient.factory(EVENT_HANDLERS, "localhost:5000", "busybox")
+          RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
               .setAllowInsecureRegistries(true)
               .newRegistryClient();
       registryClient.pullManifest("nonexistent-tag");
