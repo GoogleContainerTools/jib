@@ -31,7 +31,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link com.google.cloud.tools.jib.api.MainClassFinder}. */
+/** Tests for {@link MainClassFinder}. */
 @RunWith(MockitoJUnitRunner.class)
 public class MainClassFinderTest {
 
