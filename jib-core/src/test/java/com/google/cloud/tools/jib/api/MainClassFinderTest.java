@@ -14,11 +14,11 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.frontend;
+package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.api.MainClassFinder.Result.Type;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
-import com.google.cloud.tools.jib.frontend.MainClassFinder.Result.Type;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -31,7 +31,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link MainClassFinder}. */
+/** Tests for {@link com.google.cloud.tools.jib.api.MainClassFinder}. */
 @RunWith(MockitoJUnitRunner.class)
 public class MainClassFinderTest {
 
