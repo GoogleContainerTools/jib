@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.api.event;
+package com.google.cloud.tools.jib.api;
 
 /** Types corresponding to steps in the containerization process. */
 public enum BuildStepType {

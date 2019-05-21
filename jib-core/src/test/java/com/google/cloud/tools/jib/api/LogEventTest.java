@@ -14,17 +14,15 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.api.event.events;
+package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.api.event.EventHandlers;
-import com.google.cloud.tools.jib.api.event.JibEventType;
-import com.google.cloud.tools.jib.api.event.events.LogEvent.Level;
+import com.google.cloud.tools.jib.api.LogEvent.Level;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link LogEvent}. */
+/** Tests for {@link com.google.cloud.tools.jib.api.LogEvent}. */
 public class LogEventTest {
 
   private final Deque<LogEvent> receivedLogEvents = new ArrayDeque<>();

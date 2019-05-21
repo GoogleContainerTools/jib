@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.api.event;
+package com.google.cloud.tools.jib.api;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,16 +24,16 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-/** Tests for {@link EventHandlers}. */
+/** Tests for {@link com.google.cloud.tools.jib.api.EventHandlers}. */
 public class EventHandlersTest {
 
-  /** Test {@link JibEvent}. */
+  /** Test {@link com.google.cloud.tools.jib.api.JibEvent}. */
   private interface TestJibEvent1 extends JibEvent {
 
     String getPayload();
   }
 
-  /** Test implementation of {@link JibEvent}. */
+  /** Test implementation of {@link com.google.cloud.tools.jib.api.JibEvent}. */
   private static class TestJibEvent2 implements JibEvent {
 
     @Nullable private String message;
@@ -48,7 +48,7 @@ public class EventHandlersTest {
     }
   }
 
-  /** Test {@link JibEvent}. */
+  /** Test {@link com.google.cloud.tools.jib.api.JibEvent}. */
   private static class TestJibEvent3 implements JibEvent {}
 
   @Test

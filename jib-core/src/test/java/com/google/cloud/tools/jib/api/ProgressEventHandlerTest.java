@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.api.event;
+package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.MultithreadedExecutor;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;

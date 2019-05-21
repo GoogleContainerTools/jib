@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.api.event.EventHandlers;
-import com.google.cloud.tools.jib.api.event.events.LogEvent;
+import com.google.cloud.tools.jib.api.EventHandlers;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;

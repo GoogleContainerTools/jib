@@ -14,11 +14,8 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.api.event.events;
+package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.api.event.BuildStepType;
-import com.google.cloud.tools.jib.api.event.EventHandlers;
-import com.google.cloud.tools.jib.api.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.progress.Allocation;
 import java.util.HashMap;
