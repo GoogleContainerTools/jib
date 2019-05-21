@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common.logging;
 
-import com.google.cloud.tools.jib.api.event.Allocation;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

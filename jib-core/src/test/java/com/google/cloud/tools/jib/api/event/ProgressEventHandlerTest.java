@@ -17,7 +17,9 @@
 package com.google.cloud.tools.jib.api.event;
 
 import com.google.cloud.tools.jib.MultithreadedExecutor;
-import com.google.cloud.tools.jib.api.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.progress.Allocation;
+import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -28,10 +30,10 @@ import java.util.concurrent.atomic.DoubleAccumulator;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link com.google.cloud.tools.jib.api.event.ProgressEventHandler}. */
+/** Tests for {@link ProgressEventHandler}. */
 public class ProgressEventHandlerTest {
 
-  /** {@link com.google.cloud.tools.jib.api.event.Allocation} tree for testing. */
+  /** {@link Allocation} tree for testing. */
   private static class AllocationTree {
 
     /** The root node. */

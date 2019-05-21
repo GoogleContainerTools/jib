@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.api.event.events;
+package com.google.cloud.tools.jib.event.events;
 
 import com.google.cloud.tools.jib.api.event.JibEvent;
 import java.time.Duration;

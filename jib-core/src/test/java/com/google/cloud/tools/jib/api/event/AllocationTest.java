@@ -16,10 +16,11 @@
 
 package com.google.cloud.tools.jib.api.event;
 
+import com.google.cloud.tools.jib.event.progress.Allocation;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link com.google.cloud.tools.jib.api.event.Allocation}. */
+/** Tests for {@link Allocation}. */
 public class AllocationTest {
 
   /** Error margin for checking equality of two doubles. */

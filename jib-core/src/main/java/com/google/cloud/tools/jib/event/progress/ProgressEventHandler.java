@@ -14,10 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.api.event;
+package com.google.cloud.tools.jib.event.progress;
 
-import com.google.cloud.tools.jib.api.event.events.ProgressEvent;
-import com.google.cloud.tools.jib.event.progress.AllocationCompletionTracker;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.common.collect.ImmutableList;
 import java.util.concurrent.atomic.DoubleAdder;
 import java.util.function.Consumer;

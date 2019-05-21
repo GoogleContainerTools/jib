@@ -14,11 +14,11 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.api.event.events;
+package com.google.cloud.tools.jib.event.events;
 
-import com.google.cloud.tools.jib.api.event.Allocation;
 import com.google.cloud.tools.jib.api.event.BuildStepType;
 import com.google.cloud.tools.jib.api.event.JibEvent;
+import com.google.cloud.tools.jib.event.progress.Allocation;
 
 /**
  * Event representing progress. The progress accounts for allocation units in an {@link Allocation},

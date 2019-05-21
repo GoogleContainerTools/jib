@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.event.progress;
 
 import com.google.cloud.tools.jib.MultithreadedExecutor;
-import com.google.cloud.tools.jib.api.event.Allocation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
