@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder;
 
 import com.google.cloud.tools.jib.api.event.EventHandlers;
-import com.google.cloud.tools.jib.api.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent.State;
 import java.time.Clock;
@@ -43,7 +42,7 @@ public class TimerEventDispatcherTest {
   @Test
   public void testLogging() {
     EventHandlers eventHandlers =
-        EventHandlers.builder().add(JibEventType.TIMING, timerEventQueue::add).build();
+        EventHandlers.builder().add(TimerEvent.class, timerEventQueue::add).build();
 
     Mockito.when(mockClock.instant()).thenReturn(Instant.EPOCH);
     try (TimerEventDispatcher parentTimerEventDispatcher =

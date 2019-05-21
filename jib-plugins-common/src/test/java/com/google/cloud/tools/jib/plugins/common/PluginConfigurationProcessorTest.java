@@ -27,7 +27,6 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.event.EventHandlers;
-import com.google.cloud.tools.jib.api.event.JibEventType;
 import com.google.cloud.tools.jib.api.event.events.LogEvent;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.image.LayerEntry;
@@ -100,7 +99,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(projectProperties.getToolName()).thenReturn("tool");
     Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");
     Mockito.when(projectProperties.getEventHandlers())
-        .thenReturn(EventHandlers.builder().add(JibEventType.LOGGING, logger).build());
+        .thenReturn(EventHandlers.builder().add(LogEvent.class, logger).build());
     Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
     Mockito.when(projectProperties.createContainerBuilder(Mockito.any()))
         .thenReturn(Jib.from("base"));

@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 
 - Multiple classes have been moved to the `com.google.cloud.tools.jib.api` package
 - Removed `EventDispatcher` and `DefaultEventDispatcher`; events are now dispatched directly from `EventHandlers`
+- `EventHandlers#add` now directly takes a `JibEvent` class rather than a `JibEventType`
 
 ### Fixed
 

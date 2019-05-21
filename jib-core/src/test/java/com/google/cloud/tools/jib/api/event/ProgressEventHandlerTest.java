@@ -60,7 +60,7 @@ public class ProgressEventHandlerTest {
       ProgressEventHandler progressEventHandler =
           new ProgressEventHandler(update -> maxProgress.accumulate(update.getProgress()));
       EventHandlers eventHandlers =
-          EventHandlers.builder().add(JibEventType.PROGRESS, progressEventHandler).build();
+          EventHandlers.builder().add(ProgressEvent.class, progressEventHandler).build();
 
       // Adds root, child1, and child1Child.
       multithreadedExecutor.invoke(

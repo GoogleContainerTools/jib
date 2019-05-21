@@ -39,26 +39,25 @@ public class EventHandlers {
      *
      * <p><b>Note: Implementations of {@code eventConsumer} must be thread-safe.</b>
      *
-     * @param eventType the event type that {@code eventConsumer} should handle
+     * @param eventClass the class of the event type that {@code eventConsumer} should handle
      * @param eventConsumer the event handler
      * @param <E> the type of {@code eventClass}
      * @return this
      */
-    public <E extends JibEvent> Builder add(JibEventType<E> eventType, Consumer<E> eventConsumer) {
-      Class<E> eventClass = eventType.getEventClass();
+    public <E extends JibEvent> Builder add(Class<E> eventClass, Consumer<E> eventConsumer) {
       handlers.put(eventClass, new Handler<>(eventClass, eventConsumer));
       return this;
     }
 
     /**
-     * Adds the {@code eventConsumer} to handle all {@link JibEvent} types. See {@link
-     * #add(JibEventType, Consumer)} for more details.
+     * Adds the {@code eventConsumer} to handle all {@link JibEvent} types. See {@link #add(Class,
+     * Consumer)} for more details.
      *
      * @param eventConsumer the event handler
      * @return this
      */
     public Builder add(Consumer<JibEvent> eventConsumer) {
-      return add(JibEventType.ALL, eventConsumer);
+      return add(JibEvent.class, eventConsumer);
     }
 
     public EventHandlers build() {

@@ -19,9 +19,9 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.api.event.BuildStepType;
 import com.google.cloud.tools.jib.api.event.EventHandlers;
-import com.google.cloud.tools.jib.api.event.JibEventType;
 import com.google.cloud.tools.jib.api.event.events.LayerCountEvent;
 import com.google.cloud.tools.jib.configuration.LayerConfiguration;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
@@ -162,8 +162,8 @@ public class ContainerizerIntegrationTest {
   private final ProgressChecker progressChecker = new ProgressChecker();
   private final EventHandlers eventHandlers =
       EventHandlers.builder()
-          .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
-          .add(JibEventType.LAYER_COUNT, layerCountConsumer)
+          .add(ProgressEvent.class, progressChecker.progressEventHandler)
+          .add(LayerCountEvent.class, layerCountConsumer)
           .build();
 
   @Test
