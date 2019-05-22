@@ -146,9 +146,19 @@ public class MainClassFinder {
     List<String> mainClasses = new ArrayList<>();
     for (Path file : files) {
       // Makes sure classFile is valid.
-      if (!Files.exists(file)
-          || !Files.isRegularFile(file)
-          || !file.toString().endsWith(".class")) {
+      if (!Files.exists(file)) {
+        eventHandlers.dispatch(
+            LogEvent.debug("MainClassFinder: " + file + " does not exist; ignoring"));
+        continue;
+      }
+      if (!Files.isRegularFile(file)) {
+        eventHandlers.dispatch(
+            LogEvent.debug("MainClassFinder: " + file + " is not a regular file; skipping"));
+        continue;
+      }
+      if (!file.toString().endsWith(".class")) {
+        eventHandlers.dispatch(
+            LogEvent.debug("MainClassFinder: " + file + " is not a class file; skipping"));
         continue;
       }
 
