@@ -116,8 +116,8 @@ public class MainClassResolver {
                     + "; attempting to infer main class."));
 
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(projectProperties.getClassFiles(), projectProperties.getEventHandlers())
-            .find();
+        MainClassFinder.find(
+            projectProperties.getClassFiles(), projectProperties.getEventHandlers());
 
     switch (mainClassFinderResult.getType()) {
       case MAIN_CLASS_FOUND:
