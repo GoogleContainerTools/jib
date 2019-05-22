@@ -94,7 +94,7 @@ public class AllocationCompletionTrackerTest {
       Assert.fail();
 
     } catch (IllegalStateException ex) {
-      Assert.assertEquals("Progress exceeds max for 'child1': 2 > 1", ex.getMessage());
+      Assert.assertEquals("Progress exceeds max for 'child1': 1 more beyond 1", ex.getMessage());
     }
   }
 
@@ -162,5 +162,61 @@ public class AllocationCompletionTrackerTest {
       Assert.assertEquals(
           Collections.emptyList(), allocationCompletionTracker.getUnfinishedAllocations());
     }
+  }
+
+  @Test
+  public void testGetUnfinishedLeafTasks() {
+    AllocationCompletionTracker tracker = new AllocationCompletionTracker();
+    tracker.updateProgress(AllocationTree.root, 0);
+    Assert.assertEquals(Arrays.asList("root"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child1, 0);
+    Assert.assertEquals(Arrays.asList("child1"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child2, 0);
+    Assert.assertEquals(Arrays.asList("child1", "child2"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child1Child, 0);
+    Assert.assertEquals(Arrays.asList("child2", "child1Child"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child1Child, 50);
+    Assert.assertEquals(Arrays.asList("child2", "child1Child"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child2, 100);
+    Assert.assertEquals(Arrays.asList("child2", "child1Child"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child2, 100);
+    Assert.assertEquals(Arrays.asList("child1Child"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child1Child, 50);
+    Assert.assertEquals(Collections.emptyList(), tracker.getUnfinishedLeafTasks());
+  }
+
+  @Test
+  public void testGetUnfinishedLeafTasks_differentUpdateOrder() {
+    AllocationCompletionTracker tracker = new AllocationCompletionTracker();
+    tracker.updateProgress(AllocationTree.root, 0);
+    Assert.assertEquals(Arrays.asList("root"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child2, 0);
+    Assert.assertEquals(Arrays.asList("child2"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child1, 0);
+    Assert.assertEquals(Arrays.asList("child2", "child1"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child1Child, 0);
+    Assert.assertEquals(Arrays.asList("child2", "child1Child"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child1Child, 50);
+    Assert.assertEquals(Arrays.asList("child2", "child1Child"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child2, 100);
+    Assert.assertEquals(Arrays.asList("child2", "child1Child"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child1Child, 50);
+    Assert.assertEquals(Arrays.asList("child2"), tracker.getUnfinishedLeafTasks());
+
+    tracker.updateProgress(AllocationTree.child2, 100);
+    Assert.assertEquals(Collections.emptyList(), tracker.getUnfinishedLeafTasks());
   }
 }

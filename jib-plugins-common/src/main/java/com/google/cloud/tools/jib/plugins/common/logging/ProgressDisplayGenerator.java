@@ -16,12 +16,8 @@
 
 package com.google.cloud.tools.jib.plugins.common.logging;
 
-import com.google.cloud.tools.jib.event.progress.Allocation;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * Generates a display of progress and unfinished tasks.
@@ -45,16 +41,18 @@ public class ProgressDisplayGenerator {
    * Generates a progress display.
    *
    * @param progress the overall progress, with {@code 1.0} meaning fully complete
-   * @param unfinishedAllocations the unfinished {@link Allocation}s
+   * @param unfinishedLeafTasks the unfinished leaf tasks
    * @return the progress display as a list of lines
    */
   public static List<String> generateProgressDisplay(
-      double progress, List<Allocation> unfinishedAllocations) {
+      double progress, List<String> unfinishedLeafTasks) {
     List<String> lines = new ArrayList<>();
 
     lines.add(HEADER);
     lines.add(generateProgressBar(progress));
-    lines.addAll(generateUnfinishedTasks(unfinishedAllocations));
+    for (String task : unfinishedLeafTasks) {
+      lines.add("> " + task);
+    }
 
     return lines;
   }
@@ -79,51 +77,6 @@ public class ProgressDisplayGenerator {
         .append(String.format(" %.1f", progress * 100))
         .append("% complete")
         .toString();
-  }
-
-  /**
-   * Generates the display of the unfinished tasks from a list of unfinished {@link Allocation}s
-   *
-   * @param unfinishedAllocations the list of unfinished {@link Allocation}s
-   * @return the display of the unfinished {@link Allocation}s
-   */
-  private static List<String> generateUnfinishedTasks(List<Allocation> unfinishedAllocations) {
-    List<String> lines = new ArrayList<>();
-    for (Allocation unfinishedAllocation : getLeafAllocations(unfinishedAllocations)) {
-      lines.add("> " + unfinishedAllocation.getDescription());
-    }
-    return lines;
-  }
-
-  /**
-   * Gets a list of just the leaf {@link Allocation}s in {@code unfinishedAllocations} in the same
-   * order as they appear in {@code unfinishedAllocations}.
-   *
-   * @param unfinishedAllocations the list of unfinished {@link Allocation}s
-   * @return the list of unfinished {@link Allocation}s
-   */
-  // TODO: Optimization: Change AllocationCompletionTracker#getUnfinishedAllocations to only return
-  // leaf Allocations so that this computation is unnecessary.
-  private static List<Allocation> getLeafAllocations(List<Allocation> unfinishedAllocations) {
-    // Prunes the set of all unfinished Allocations to leave just the leaves.
-    Set<Allocation> leafAllocationSet = new HashSet<>(unfinishedAllocations);
-    for (Allocation allocation : unfinishedAllocations) {
-      Optional<Allocation> parent = allocation.getParent();
-
-      while (parent.isPresent()) {
-        leafAllocationSet.remove(parent.get());
-        parent = parent.get().getParent();
-      }
-    }
-
-    // Makes a list of leaf allocations in the same order as the unfinishedAllocations.
-    List<Allocation> leafAllocations = new ArrayList<>();
-    for (Allocation allocation : unfinishedAllocations) {
-      if (leafAllocationSet.contains(allocation)) {
-        leafAllocations.add(allocation);
-      }
-    }
-    return leafAllocations;
   }
 
   private ProgressDisplayGenerator() {}
