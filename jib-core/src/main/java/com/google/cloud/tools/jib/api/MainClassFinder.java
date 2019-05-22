@@ -14,12 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.frontend;
+package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.api.EventHandlers;
-import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -27,7 +24,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -94,7 +90,7 @@ public class MainClassFinder {
      * @return the type of the result
      */
     public Type getType() {
-      return Preconditions.checkNotNull(type);
+      return type;
     }
 
     /**
@@ -137,29 +133,49 @@ public class MainClassFinder {
     }
   }
 
-  private final ImmutableList<Path> files;
-  private final EventHandlers eventHandlers;
-
   /**
-   * Finds a class with {@code psvm} (see class javadoc) in {@code files}.
+   * Tries to find classes with {@code psvm} (see class javadoc) in {@code files}.
    *
-   * @param files the files to check
-   * @param eventHandlers used for dispatching log events.
-   */
-  public MainClassFinder(List<Path> files, EventHandlers eventHandlers) {
-    this.files = ImmutableList.copyOf(files);
-    this.eventHandlers = eventHandlers;
-  }
-
-  /**
-   * Tries to find classes with {@code psvm} (see class javadoc) in {@link #files}.
-   *
+   * @param files the files to search
+   * @param eventHandlers the {@link EventHandlers} used for handling log messages
    * @return the {@link Result} of the main class finding attempt
    */
-  public Result find() {
+  public static Result find(List<Path> files, EventHandlers eventHandlers) {
     List<String> mainClasses = new ArrayList<>();
     for (Path file : files) {
-      findMainClass(file).ifPresent(mainClasses::add);
+      // Makes sure classFile is valid.
+      if (!Files.exists(file)) {
+        eventHandlers.dispatch(
+            LogEvent.debug("MainClassFinder: " + file + " does not exist; ignoring"));
+        continue;
+      }
+      if (!Files.isRegularFile(file)) {
+        eventHandlers.dispatch(
+            LogEvent.debug("MainClassFinder: " + file + " is not a regular file; skipping"));
+        continue;
+      }
+      if (!file.toString().endsWith(".class")) {
+        eventHandlers.dispatch(
+            LogEvent.debug("MainClassFinder: " + file + " is not a class file; skipping"));
+        continue;
+      }
+
+      MainClassVisitor mainClassVisitor = new MainClassVisitor();
+      try (InputStream classFileInputStream = Files.newInputStream(file)) {
+        ClassReader reader = new ClassReader(classFileInputStream);
+        reader.accept(mainClassVisitor, 0);
+        if (mainClassVisitor.visitedMainClass) {
+          mainClasses.add(reader.getClassName().replace('/', '.'));
+        }
+
+      } catch (ArrayIndexOutOfBoundsException ignored) {
+        // Not a valid class file (thrown by ClassReader if it reads an invalid format)
+        eventHandlers.dispatch(LogEvent.warn("Invalid class file found: " + file));
+
+      } catch (IOException ignored) {
+        // Could not read class file.
+        eventHandlers.dispatch(LogEvent.warn("Could not read file: " + file));
+      }
     }
 
     if (mainClasses.size() == 1) {
@@ -172,39 +188,5 @@ public class MainClassFinder {
     }
     // More than one main class found.
     return Result.multipleMainClasses(mainClasses);
-  }
-
-  /**
-   * Checks the {@code file} for being a {@code .class} file with {@code public static void
-   * main(String[] args)}.
-   *
-   * @param file the file
-   * @return name of the class containing a main method, or {@link Optional#empty} if {@code
-   *     classFile} is not a class
-   */
-  private Optional<String> findMainClass(Path file) {
-    // Makes sure classFile is valid.
-    if (!Files.exists(file) || !Files.isRegularFile(file) || !file.toString().endsWith(".class")) {
-      return Optional.empty();
-    }
-
-    MainClassVisitor mainClassVisitor = new MainClassVisitor();
-    try (InputStream classFileInputStream = Files.newInputStream(file)) {
-      ClassReader reader = new ClassReader(classFileInputStream);
-      reader.accept(mainClassVisitor, 0);
-      if (mainClassVisitor.visitedMainClass) {
-        return Optional.of(reader.getClassName().replace('/', '.'));
-      }
-
-    } catch (ArrayIndexOutOfBoundsException ignored) {
-      // Not a valid class file (thrown by ClassReader if it reads an invalid format)
-      eventHandlers.dispatch(LogEvent.warn("Invalid class file found: " + file));
-
-    } catch (IOException ignored) {
-      // Could not read class file.
-      eventHandlers.dispatch(LogEvent.warn("Could not read file: " + file));
-    }
-
-    return Optional.empty();
   }
 }

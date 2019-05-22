@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.frontend.MainClassFinder;
+import com.google.cloud.tools.jib.api.MainClassFinder;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -116,8 +116,8 @@ public class MainClassResolver {
                     + "; attempting to infer main class."));
 
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(projectProperties.getClassFiles(), projectProperties.getEventHandlers())
-            .find();
+        MainClassFinder.find(
+            projectProperties.getClassFiles(), projectProperties.getEventHandlers());
 
     switch (mainClassFinderResult.getType()) {
       case MAIN_CLASS_FOUND:
