@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.builder.BuildStepType;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LayerCountEvent;

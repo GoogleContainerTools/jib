@@ -14,11 +14,8 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.image;
+package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.FilePermissions;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;

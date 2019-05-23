@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.ProjectInfo;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.common.annotations.VisibleForTesting;

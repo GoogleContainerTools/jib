@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
