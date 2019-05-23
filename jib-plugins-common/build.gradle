@@ -32,7 +32,7 @@ dependencies {
   compile 'com.google.http-client:google-http-client:1.27.0'
   compile 'org.apache.commons:commons-compress:1.18'
   compile 'com.google.guava:guava:27.0.1-jre'
-  compile 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+  compile 'com.fasterxml.jackson.core:jackson-databind:2.9.9'
   compile 'org.ow2.asm:asm:7.0'
 
   testCompile 'junit:junit:4.12'
