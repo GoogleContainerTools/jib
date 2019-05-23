@@ -18,11 +18,10 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
-import java.nio.file.Files;
+import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
-import java.util.function.BiFunction;
 
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
@@ -37,19 +36,6 @@ import java.util.function.BiFunction;
  * </ul>
  */
 public class LayerEntry {
-
-  /** Provider that returns default file permissions (644 for files, 755 for directories). */
-  public static final BiFunction<Path, AbsoluteUnixPath, FilePermissions>
-      DEFAULT_FILE_PERMISSIONS_PROVIDER =
-          (sourcePath, destinationPath) ->
-              Files.isDirectory(sourcePath)
-                  ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
-                  : FilePermissions.DEFAULT_FILE_PERMISSIONS;
-
-  public static final Instant DEFAULT_MODIFIED_TIME = Instant.ofEpochSecond(1);
-  /** Provider that returns default file modification time (EPOCH + 1 second). */
-  public static final BiFunction<Path, AbsoluteUnixPath, Instant> DEFAULT_MODIFIED_TIME_PROVIDER =
-      (sourcePath, destinationPath) -> DEFAULT_MODIFIED_TIME;
 
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
@@ -76,7 +62,7 @@ public class LayerEntry {
     this(
         sourceFile,
         extractionPath,
-        DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, extractionPath));
+        LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, extractionPath));
   }
 
   /**
@@ -94,7 +80,7 @@ public class LayerEntry {
         sourceFile,
         extractionPath,
         permissions,
-        DEFAULT_MODIFIED_TIME_PROVIDER.apply(sourceFile, extractionPath));
+        LayerConfiguration.DEFAULT_MODIFIED_TIME_PROVIDER.apply(sourceFile, extractionPath));
   }
 
   /**
