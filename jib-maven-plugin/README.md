@@ -396,6 +396,8 @@ Alternatively, the `<extraDirectories>` parameter can be used as an object to se
 </configuration>
 ```
 
+Note that Jib does not follow symbolic links.  If a symbolic link is present, it will be removed prior to placing the files and directories.
+
 ### Authentication Methods
 
 Pushing/pulling from private registries require authorization credentials. These can be [retrieved using Docker credential helpers](#using-docker-credential-helpers) or [defined in your Maven settings](#using-maven-settings). If you do not define credentials explicitly, Jib will try to [use credentials defined in your Docker config](/../../issues/101) or infer common credential helpers.
