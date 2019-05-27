@@ -345,12 +345,14 @@ See more at [Using Google Container Registry (GCR) with Minikube](https://ryanes
 
 Jib currently requires configuring your build tool to use the appropriate [Java networking properties](https://docs.oracle.com/javase/8/docs/api/java/net/doc-files/net-properties.html) (`https.proxyHost`, `https.proxyPort`, `https.proxyUser`, `https.proxyPassword`).
 
+<a name="forbidden-denied"></a>
 ### What should I do when the registry responds with Forbidden or DENIED?
 
 If the registry returns `403 Forbidden` or `"code":"DENIED"`, it often means Jib successfully authenticated using your credentials but the credentials do not have permissions to pull or push images. Make sure your account/role has the permissions to do the operation.
 
 Depending on registry implementations, it is also possible that the registry actually meant you are not authenticated. See [What should I do when the registry responds with UNAUTHORIZED?](#what-should-i-do-when-the-registry-responds-with-unauthorized) to ensure you have set up credentials correctly.
 
+<a name="unauthorized"></a>
 ### What should I do when the registry responds with UNAUTHORIZED?
 
 If the registry returns `401 Unauthorized` or `"code":"UNAUTHORIZED"`, it is often due to credential misconfiguration. Examples:
@@ -369,6 +371,7 @@ If the registry returns `401 Unauthorized` or `"code":"UNAUTHORIZED"`, it is oft
 
 If you encounter issues interacting with a registry other than `UNAUTHORIZED`, check ["How can I diagnose problems pulling or pushing from remote registries?"](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries).
 
+<a name="diagnosing-errors"></a>
 ### How can I diagnose problems pulling or pushing from remote registries?
 
 There are a few reasons why Jib may be unable to connect to a remote registry, including:
