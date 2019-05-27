@@ -13,13 +13,13 @@ If you are encountering errors pulling or pushing to remote registries,
 please check our FAQ before filing an issue.  Specifically:
 
   - FORBIDDEN or DENIED errors
-    https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#forbidden-denied
+    https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied
 
   - UNAUTHORIZED errors:
-    https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#unauthorized
+    https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-unauthorized
 
   - Other errors accessing remote registries
-    https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#diagnosing-errors
+    https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries
 -->
 
 **Expected behavior**:
