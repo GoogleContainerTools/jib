@@ -30,7 +30,7 @@ import com.google.cloud.tools.jib.api.JibEventType;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;

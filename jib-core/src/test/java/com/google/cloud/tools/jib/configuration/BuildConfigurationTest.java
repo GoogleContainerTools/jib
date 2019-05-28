@@ -17,7 +17,9 @@
 package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.ImageFormat;
 import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.Port;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
@@ -100,7 +102,7 @@ public class BuildConfigurationTest {
             .setContainerConfiguration(containerConfiguration)
             .setApplicationLayersCacheDirectory(expectedApplicationLayersCacheDirectory)
             .setBaseImageLayersCacheDirectory(expectedBaseImageLayersCacheDirectory)
-            .setTargetFormat(OCIManifestTemplate.class)
+            .setTargetFormat(ImageFormat.OCI)
             .setAllowInsecureRegistries(true)
             .setLayerConfigurations(expectedLayerConfigurations)
             .setToolName(expectedCreatedBy)

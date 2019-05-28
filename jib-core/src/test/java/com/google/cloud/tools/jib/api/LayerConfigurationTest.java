@@ -14,11 +14,8 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.configuration;
+package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.FilePermissions;
-import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -30,7 +27,7 @@ import java.util.function.BiFunction;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link LayerConfiguration}. */
+/** Tests for {@link com.google.cloud.tools.jib.api.LayerConfiguration}. */
 public class LayerConfigurationTest {
 
   @Test

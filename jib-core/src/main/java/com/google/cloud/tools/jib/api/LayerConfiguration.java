@@ -14,11 +14,8 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.configuration;
+package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.FilePermissions;
-import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,6 +48,17 @@ public class LayerConfiguration {
     }
 
     /**
+     * Adds an entry to the layer.
+     *
+     * @param entry the layer entry to add
+     * @return this
+     */
+    public Builder addEntry(LayerEntry entry) {
+      layerEntries.add(entry);
+      return this;
+    }
+
+    /**
      * Adds an entry to the layer. Only adds the single source file to the exact path in the
      * container file system.
      *
@@ -72,7 +80,7 @@ public class LayerConfiguration {
       return addEntry(
           sourceFile,
           pathInContainer,
-          LayerEntry.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, pathInContainer));
+          DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, pathInContainer));
     }
 
     /**
@@ -95,7 +103,7 @@ public class LayerConfiguration {
           sourceFile,
           pathInContainer,
           permissions,
-          LayerEntry.DEFAULT_MODIFIED_TIME_PROVIDER.apply(sourceFile, pathInContainer));
+          DEFAULT_MODIFIED_TIME_PROVIDER.apply(sourceFile, pathInContainer));
     }
 
     /**
@@ -118,8 +126,7 @@ public class LayerConfiguration {
         AbsoluteUnixPath pathInContainer,
         FilePermissions permissions,
         Instant lastModifiedTime) {
-      layerEntries.add(new LayerEntry(sourceFile, pathInContainer, permissions, lastModifiedTime));
-      return this;
+      return addEntry(new LayerEntry(sourceFile, pathInContainer, permissions, lastModifiedTime));
     }
 
     /**
@@ -139,8 +146,7 @@ public class LayerConfiguration {
      */
     public Builder addEntryRecursive(Path sourceFile, AbsoluteUnixPath pathInContainer)
         throws IOException {
-      return addEntryRecursive(
-          sourceFile, pathInContainer, LayerEntry.DEFAULT_FILE_PERMISSIONS_PROVIDER);
+      return addEntryRecursive(sourceFile, pathInContainer, DEFAULT_FILE_PERMISSIONS_PROVIDER);
     }
 
     /**
@@ -161,10 +167,7 @@ public class LayerConfiguration {
         BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider)
         throws IOException {
       return addEntryRecursive(
-          sourceFile,
-          pathInContainer,
-          filePermissionProvider,
-          LayerEntry.DEFAULT_MODIFIED_TIME_PROVIDER);
+          sourceFile, pathInContainer, filePermissionProvider, DEFAULT_MODIFIED_TIME_PROVIDER);
     }
 
     /**
@@ -214,6 +217,21 @@ public class LayerConfiguration {
       return new LayerConfiguration(name, layerEntries.build());
     }
   }
+
+  /** Provider that returns default file permissions (644 for files, 755 for directories). */
+  public static final BiFunction<Path, AbsoluteUnixPath, FilePermissions>
+      DEFAULT_FILE_PERMISSIONS_PROVIDER =
+          (sourcePath, destinationPath) ->
+              Files.isDirectory(sourcePath)
+                  ? FilePermissions.DEFAULT_FOLDER_PERMISSIONS
+                  : FilePermissions.DEFAULT_FILE_PERMISSIONS;
+
+  /** Default file modification time (EPOCH + 1 second). */
+  public static final Instant DEFAULT_MODIFIED_TIME = Instant.ofEpochSecond(1);
+
+  /** Provider that returns default file modification time (EPOCH + 1 second). */
+  public static final BiFunction<Path, AbsoluteUnixPath, Instant> DEFAULT_MODIFIED_TIME_PROVIDER =
+      (sourcePath, destinationPath) -> DEFAULT_MODIFIED_TIME;
 
   /**
    * Gets a new {@link Builder} for {@link LayerConfiguration}.

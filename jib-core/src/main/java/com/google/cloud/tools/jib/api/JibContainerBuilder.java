@@ -22,9 +22,6 @@ import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.image.ImageFormat;
-import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -387,7 +384,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setFormat(ImageFormat imageFormat) {
-    buildConfigurationBuilder.setTargetFormat(imageFormat.getManifestTemplateClass());
+    buildConfigurationBuilder.setTargetFormat(imageFormat);
     return this;
   }
 
