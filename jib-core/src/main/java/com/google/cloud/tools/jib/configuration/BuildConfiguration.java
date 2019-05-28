@@ -16,11 +16,13 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.api.ImageFormat;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.annotations.VisibleForTesting;
@@ -140,8 +142,11 @@ public class BuildConfiguration {
      * @param targetFormat the target format
      * @return this
      */
-    public Builder setTargetFormat(Class<? extends BuildableManifestTemplate> targetFormat) {
-      this.targetFormat = targetFormat;
+    public Builder setTargetFormat(ImageFormat targetFormat) {
+      this.targetFormat =
+          targetFormat == ImageFormat.Docker
+              ? V22ManifestTemplate.class
+              : OCIManifestTemplate.class;
       return this;
     }
 
