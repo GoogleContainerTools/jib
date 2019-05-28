@@ -18,9 +18,10 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.api.LayerConfiguration;
+import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
