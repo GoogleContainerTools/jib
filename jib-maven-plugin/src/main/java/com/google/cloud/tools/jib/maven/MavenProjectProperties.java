@@ -100,24 +100,24 @@ public class MavenProjectProperties implements ProjectProperties {
 
   private static EventHandlers makeEventHandlers(
       MavenSession session, Log log, SingleThreadedExecutor singleThreadedExecutor) {
-    ConsoleLoggerBuilder logEventHandlerBuilder =
+    ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(session)
                 ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
                 : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(log::info))
             .lifecycle(log::info);
     if (log.isDebugEnabled()) {
-      logEventHandlerBuilder
+      consoleLoggerBuilder
           .debug(log::debug)
           // INFO messages also go to Log#debug since Log#info is used for LIFECYCLE.
           .info(log::debug);
     }
     if (log.isWarnEnabled()) {
-      logEventHandlerBuilder.warn(log::warn);
+      consoleLoggerBuilder.warn(log::warn);
     }
     if (log.isErrorEnabled()) {
-      logEventHandlerBuilder.error(log::error);
+      consoleLoggerBuilder.error(log::error);
     }
-    ConsoleLogger consoleLogger = logEventHandlerBuilder.build();
+    ConsoleLogger consoleLogger = consoleLoggerBuilder.build();
 
     return EventHandlers.builder()
         .add(
