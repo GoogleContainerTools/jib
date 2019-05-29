@@ -48,7 +48,7 @@ public class MainClassResolverTest {
   @Before
   public void setup() {
     Mockito.when(mockProjectProperties.getEventHandlers())
-        .thenReturn(new EventHandlers().add(mockJibEventConsumer));
+        .thenReturn(EventHandlers.builder().add(mockJibEventConsumer).build());
     Mockito.when(mockProjectProperties.getPluginName()).thenReturn("plugin");
     Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
   }

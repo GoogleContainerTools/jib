@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
@@ -53,7 +53,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ManifestPusherTest {
 
   @Mock private Response mockResponse;
-  @Mock private EventDispatcher mockEventDispatcher;
+  @Mock private EventHandlers mockEventHandlers;
 
   private Path v22manifestJsonFile;
   private V22ManifestTemplate fakeManifestTemplate;
@@ -70,7 +70,7 @@ public class ManifestPusherTest {
             new RegistryEndpointRequestProperties("someServerUrl", "someImageName"),
             fakeManifestTemplate,
             "test-image-tag",
-            mockEventDispatcher);
+            mockEventHandlers);
   }
 
   @Test
@@ -103,7 +103,7 @@ public class ManifestPusherTest {
         .thenReturn(Collections.emptyList());
 
     Assert.assertEquals(expectedDigest, testManifestPusher.handleResponse(mockResponse));
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(LogEvent.warn("Expected image digest " + expectedDigest + ", but received none"));
   }
 
@@ -114,7 +114,7 @@ public class ManifestPusherTest {
         .thenReturn(Arrays.asList("too", "many"));
 
     Assert.assertEquals(expectedDigest, testManifestPusher.handleResponse(mockResponse));
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.warn("Expected image digest " + expectedDigest + ", but received: too, many"));
   }
@@ -126,7 +126,7 @@ public class ManifestPusherTest {
         .thenReturn(Collections.singletonList("not valid"));
 
     Assert.assertEquals(expectedDigest, testManifestPusher.handleResponse(mockResponse));
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.warn("Expected image digest " + expectedDigest + ", but received: not valid"));
   }

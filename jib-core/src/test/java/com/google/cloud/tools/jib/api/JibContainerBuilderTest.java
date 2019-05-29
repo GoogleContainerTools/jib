@@ -21,12 +21,12 @@ import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEvent;
-import com.google.cloud.tools.jib.image.ImageFormat;
+import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
@@ -140,7 +140,7 @@ public class JibContainerBuilderTest {
             .setBaseImageLayersCache(Paths.get("base/image/layers"))
             .setApplicationLayersCache(Paths.get("application/layers"))
             .setExecutorService(mockExecutorService)
-            .setEventHandlers(new EventHandlers().add(mockJibEventConsumer));
+            .setEventHandlers(EventHandlers.builder().add(mockJibEventConsumer).build());
 
     RegistryImage baseImage =
         RegistryImage.named("base/image").addCredentialRetriever(mockCredentialRetriever);
@@ -188,13 +188,12 @@ public class JibContainerBuilderTest {
 
     Assert.assertEquals(mockExecutorService, buildConfiguration.getExecutorService());
 
-    buildConfiguration.getEventDispatcher().dispatch(mockJibEvent);
+    buildConfiguration.getEventHandlers().dispatch(mockJibEvent);
     Mockito.verify(mockJibEventConsumer).accept(mockJibEvent);
 
     Assert.assertEquals("jib-core", buildConfiguration.getToolName());
 
-    Assert.assertSame(
-        ImageFormat.Docker.getManifestTemplateClass(), buildConfiguration.getTargetFormat());
+    Assert.assertSame(V22ManifestTemplate.class, buildConfiguration.getTargetFormat());
 
     Assert.assertEquals("jib-core", buildConfiguration.getToolName());
 
@@ -208,8 +207,7 @@ public class JibContainerBuilderTest {
                     .withAdditionalTag("tag2")
                     .setToolName("toolName"),
                 MoreExecutors.newDirectExecutorService());
-    Assert.assertSame(
-        ImageFormat.OCI.getManifestTemplateClass(), buildConfiguration.getTargetFormat());
+    Assert.assertSame(OCIManifestTemplate.class, buildConfiguration.getTargetFormat());
     Assert.assertEquals(
         ImmutableSet.of("latest", "tag1", "tag2"), buildConfiguration.getAllTargetImageTags());
     Assert.assertEquals("toolName", buildConfiguration.getToolName());
@@ -291,7 +289,7 @@ public class JibContainerBuilderTest {
     Mockito.when(mockContainerizer.getAllowInsecureRegistries()).thenReturn(false);
     Mockito.when(mockContainerizer.getToolName()).thenReturn("mocktool");
     Mockito.when(mockContainerizer.getExecutorService()).thenReturn(Optional.empty());
-    Mockito.when(mockContainerizer.getEventHandlers()).thenReturn(Optional.empty());
+    Mockito.when(mockContainerizer.getEventHandlers()).thenReturn(EventHandlers.NONE);
     return mockContainerizer;
   }
 }

@@ -17,8 +17,6 @@
 package com.google.cloud.tools.jib.event.events;
 
 import com.google.cloud.tools.jib.builder.BuildStepType;
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.progress.Allocation;
@@ -48,10 +46,8 @@ public class ProgressEventTest {
     private AllocationTree() {}
   }
 
-  private static EventDispatcher makeEventDispatcher(
-      Consumer<ProgressEvent> progressEventConsumer) {
-    return new DefaultEventDispatcher(
-        new EventHandlers().add(JibEventType.PROGRESS, progressEventConsumer));
+  private static EventHandlers makeEventHandlers(Consumer<ProgressEvent> progressEventConsumer) {
+    return EventHandlers.builder().add(JibEventType.PROGRESS, progressEventConsumer).build();
   }
 
   private static final double DOUBLE_ERROR_MARGIN = 1e-10;
@@ -70,18 +66,18 @@ public class ProgressEventTest {
           progress += units * fractionOfRoot;
         };
 
-    EventDispatcher eventDispatcher = makeEventDispatcher(progressEventConsumer);
+    EventHandlers eventHandlers = makeEventHandlers(progressEventConsumer);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
     Assert.assertEquals(1.0 / 2 / 100 * 50, progress, DOUBLE_ERROR_MARGIN);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
     Assert.assertEquals(1.0 / 2, progress, DOUBLE_ERROR_MARGIN);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 10, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child2, 10, BuildStepType.ALL));
     Assert.assertEquals(1.0 / 2 + 1.0 / 2 / 200 * 10, progress, DOUBLE_ERROR_MARGIN);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 190, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child2, 190, BuildStepType.ALL));
     Assert.assertEquals(1.0, progress, DOUBLE_ERROR_MARGIN);
   }
 
@@ -95,21 +91,21 @@ public class ProgressEventTest {
           updateCompletionMap(allocation, units);
         };
 
-    EventDispatcher eventDispatcher = makeEventDispatcher(progressEventConsumer);
+    EventHandlers eventHandlers = makeEventHandlers(progressEventConsumer);
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
 
     Assert.assertEquals(1, allocationCompletionMap.size());
     Assert.assertEquals(50, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
 
     Assert.assertEquals(3, allocationCompletionMap.size());
     Assert.assertEquals(100, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
     Assert.assertEquals(1, allocationCompletionMap.get(AllocationTree.child1).longValue());
     Assert.assertEquals(1, allocationCompletionMap.get(AllocationTree.root).longValue());
 
-    eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 200, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child2, 200, BuildStepType.ALL));
 
     Assert.assertEquals(4, allocationCompletionMap.size());
     Assert.assertEquals(100, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
@@ -128,9 +124,8 @@ public class ProgressEventTest {
           called[0] = true;
         };
 
-    EventDispatcher buildImageDispatcher = makeEventDispatcher(buildImageConsumer);
-    buildImageDispatcher.dispatch(
-        new ProgressEvent(AllocationTree.child1, 50, BuildStepType.BUILD_IMAGE));
+    EventHandlers eventHandlers = makeEventHandlers(buildImageConsumer);
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1, 50, BuildStepType.BUILD_IMAGE));
     Assert.assertTrue(called[0]);
   }
 

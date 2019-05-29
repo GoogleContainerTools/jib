@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.common.base.Strings;
@@ -42,7 +42,7 @@ public class ConfigurationPropertyValidator {
    * Gets a {@link Credential} from a username and password. First tries system properties, then
    * tries build configuration, otherwise returns null.
    *
-   * @param eventDispatcher the {@link EventDispatcher} used to dispatch log events
+   * @param eventHandlers the {@link EventHandlers} used to dispatch log events
    * @param usernameProperty the name of the username system property
    * @param passwordProperty the name of the password system property
    * @param auth the configured credentials
@@ -51,7 +51,7 @@ public class ConfigurationPropertyValidator {
    *     {@link Optional#empty} if neither is configured.
    */
   public static Optional<Credential> getImageCredential(
-      EventDispatcher eventDispatcher,
+      EventHandlers eventHandlers,
       String usernameProperty,
       String passwordProperty,
       AuthProperty auth,
@@ -66,7 +66,7 @@ public class ConfigurationPropertyValidator {
 
     // Warn if a system property is missing
     if (!Strings.isNullOrEmpty(commandlinePassword) && Strings.isNullOrEmpty(commandlineUsername)) {
-      eventDispatcher.dispatch(
+      eventHandlers.dispatch(
           LogEvent.warn(
               passwordProperty
                   + " system property is set, but "
@@ -74,7 +74,7 @@ public class ConfigurationPropertyValidator {
                   + " is not; attempting other authentication methods."));
     }
     if (!Strings.isNullOrEmpty(commandlineUsername) && Strings.isNullOrEmpty(commandlinePassword)) {
-      eventDispatcher.dispatch(
+      eventHandlers.dispatch(
           LogEvent.warn(
               usernameProperty
                   + " system property is set, but "
@@ -87,14 +87,14 @@ public class ConfigurationPropertyValidator {
       return Optional.empty();
     }
     if (Strings.isNullOrEmpty(auth.getUsername())) {
-      eventDispatcher.dispatch(
+      eventHandlers.dispatch(
           LogEvent.warn(
               auth.getUsernameDescriptor()
                   + " is missing from build configuration; ignoring auth section."));
       return Optional.empty();
     }
     if (Strings.isNullOrEmpty(auth.getPassword())) {
-      eventDispatcher.dispatch(
+      eventHandlers.dispatch(
           LogEvent.warn(
               auth.getPasswordDescriptor()
                   + " is missing from build configuration; ignoring auth section."));
@@ -109,7 +109,7 @@ public class ConfigurationPropertyValidator {
    * {@code project-name:project-version} if target image is not configured
    *
    * @param targetImage the configured target image reference
-   * @param eventDispatcher the {@link EventDispatcher} used to dispatch log events
+   * @param eventHandlers the {@link EventHandlers} used to dispatch log events
    * @param generatedName the image name to use if {@code targetImage} is {@code null}
    * @param generatedTag the tag to use if {@code targetImage} is {@code null}
    * @param helpfulSuggestions used for generating the message notifying the user of the generated
@@ -121,13 +121,13 @@ public class ConfigurationPropertyValidator {
    */
   public static ImageReference getGeneratedTargetDockerTag(
       @Nullable String targetImage,
-      EventDispatcher eventDispatcher,
+      EventHandlers eventHandlers,
       String generatedName,
       String generatedTag,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException {
     if (Strings.isNullOrEmpty(targetImage)) {
-      eventDispatcher.dispatch(
+      eventHandlers.dispatch(
           LogEvent.lifecycle(helpfulSuggestions.forGeneratedTag(generatedName, generatedTag)));
 
       // Try to parse generated tag to verify that project name and version are valid (throws an

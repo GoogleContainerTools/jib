@@ -17,28 +17,36 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
+import com.google.cloud.tools.jib.plugins.common.InferredAuthException;
+import com.google.cloud.tools.jib.plugins.common.InferredAuthProvider;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import org.apache.maven.settings.Server;
+import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.building.SettingsProblem;
+import org.apache.maven.settings.crypto.DefaultSettingsDecryptionRequest;
+import org.apache.maven.settings.crypto.SettingsDecrypter;
+import org.apache.maven.settings.crypto.SettingsDecryptionRequest;
+import org.apache.maven.settings.crypto.SettingsDecryptionResult;
 
 /**
  * Retrieves credentials for servers defined in <a
  * href="https://maven.apache.org/settings.html">Maven settings</a>.
  */
-class MavenSettingsServerCredentials implements Function<String, Optional<AuthProperty>> {
+class MavenSettingsServerCredentials implements InferredAuthProvider {
 
   static final String CREDENTIAL_SOURCE = "Maven settings";
 
-  private final DecryptedMavenSettings settings;
+  private final Settings settings;
+  private final SettingsDecrypter decrypter;
 
   /**
    * Create new instance.
    *
    * @param settings decrypted Maven settings
    */
-  MavenSettingsServerCredentials(DecryptedMavenSettings settings) {
+  MavenSettingsServerCredentials(Settings settings, SettingsDecrypter decrypter) {
     this.settings = settings;
+    this.decrypter = decrypter;
   }
 
   /**
@@ -48,15 +56,28 @@ class MavenSettingsServerCredentials implements Function<String, Optional<AuthPr
    * @return the auth info for the registry, or {@link Optional#empty} if none could be retrieved
    */
   @Override
-  public Optional<AuthProperty> apply(String registry) {
-    Predicate<Server> idMatches = server -> registry.equals(server.getId());
-    Optional<Server> server = settings.getServers().stream().filter(idMatches).findFirst();
-    if (!server.isPresent()) {
+  public Optional<AuthProperty> inferAuth(String registry) throws InferredAuthException {
+
+    Server server = settings.getServer(registry);
+    if (server == null) {
       return Optional.empty();
     }
 
-    String username = server.get().getUsername();
-    String password = server.get().getPassword();
+    SettingsDecryptionRequest request = new DefaultSettingsDecryptionRequest(server);
+    SettingsDecryptionResult result = decrypter.decrypt(request);
+    // Un-encrypted passwords are passed through, so a problem indicates a real issue.
+    // If there are any ERROR or FATAL problems reported, then decryption failed.
+    for (SettingsProblem problem : result.getProblems()) {
+      if (problem.getSeverity() == SettingsProblem.Severity.ERROR
+          || problem.getSeverity() == SettingsProblem.Severity.FATAL) {
+        throw new InferredAuthException(
+            "Unable to decrypt server(" + registry + ") info from settings.xml: " + problem);
+      }
+    }
+    Server resultServer = result.getServer();
+
+    String username = resultServer.getUsername();
+    String password = resultServer.getPassword();
 
     return Optional.of(
         new AuthProperty() {

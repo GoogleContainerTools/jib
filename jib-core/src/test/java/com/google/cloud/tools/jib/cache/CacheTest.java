@@ -18,9 +18,9 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CountingOutputStream;
@@ -62,16 +62,10 @@ public class CacheTest {
    *
    * @param blob the {@link Blob} to decompress
    * @return the decompressed {@link Blob}
+   * @throws IOException if an I/O exception occurs
    */
-  private static Blob decompress(Blob blob) {
-    return Blobs.from(
-        outputStream -> {
-          ByteArrayInputStream compressedInputStream =
-              new ByteArrayInputStream(Blobs.writeToByteArray(blob));
-          try (GZIPInputStream decompressorStream = new GZIPInputStream(compressedInputStream)) {
-            ByteStreams.copy(decompressorStream, outputStream);
-          }
-        });
+  private static Blob decompress(Blob blob) throws IOException {
+    return Blobs.from(new GZIPInputStream(new ByteArrayInputStream(Blobs.writeToByteArray(blob))));
   }
 
   /**

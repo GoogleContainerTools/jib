@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent.State;
 import com.google.common.annotations.VisibleForTesting;
@@ -30,7 +30,7 @@ public class TimerEventDispatcher implements Closeable {
 
   private static final Clock DEFAULT_CLOCK = Clock.systemUTC();
 
-  private final EventDispatcher eventDispatcher;
+  private final EventHandlers eventHandlers;
   private final String description;
 
   private final Clock clock;
@@ -39,20 +39,17 @@ public class TimerEventDispatcher implements Closeable {
   /**
    * Creates a new {@link TimerEventDispatcher}.
    *
-   * @param eventDispatcher the {@link EventDispatcher} used to dispatch the {@link TimerEvent}s
+   * @param eventHandlers the {@link EventHandlers} used to dispatch the {@link TimerEvent}s
    * @param description the default description for the {@link TimerEvent}s
    */
-  public TimerEventDispatcher(EventDispatcher eventDispatcher, String description) {
-    this(eventDispatcher, description, DEFAULT_CLOCK, null);
+  public TimerEventDispatcher(EventHandlers eventHandlers, String description) {
+    this(eventHandlers, description, DEFAULT_CLOCK, null);
   }
 
   @VisibleForTesting
   TimerEventDispatcher(
-      EventDispatcher eventDispatcher,
-      String description,
-      Clock clock,
-      @Nullable Timer parentTimer) {
-    this.eventDispatcher = eventDispatcher;
+      EventHandlers eventHandlers, String description, Clock clock, @Nullable Timer parentTimer) {
+    this.eventHandlers = eventHandlers;
     this.description = description;
     this.clock = clock;
     this.timer = new Timer(clock, parentTimer);
@@ -67,7 +64,7 @@ public class TimerEventDispatcher implements Closeable {
    * @return the new {@link TimerEventDispatcher}
    */
   public TimerEventDispatcher subTimer(String description) {
-    return new TimerEventDispatcher(eventDispatcher, description, clock, timer);
+    return new TimerEventDispatcher(eventHandlers, description, clock, timer);
   }
 
   /**
@@ -98,7 +95,7 @@ public class TimerEventDispatcher implements Closeable {
   }
 
   private void dispatchTimerEvent(State state, Duration duration, String eventDescription) {
-    eventDispatcher.dispatch(
+    eventHandlers.dispatch(
         new TimerEvent(state, timer, duration, timer.getElapsedTime(), eventDescription));
   }
 }

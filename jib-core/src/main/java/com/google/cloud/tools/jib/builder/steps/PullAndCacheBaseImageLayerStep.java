@@ -75,7 +75,7 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
                 1);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, layerDigest))) {
+                buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, layerDigest))) {
       Cache cache = buildConfiguration.getBaseImageLayersCache();
 
       // Checks if the layer already exists in the cache.
@@ -95,16 +95,16 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
               .setAuthorization(pullAuthorization)
               .newRegistryClient();
 
-      try (ProgressEventDispatcherContainer progressEventDispatcherContainer =
-          new ProgressEventDispatcherContainer(
+      try (ThrottledProgressEventDispatcherWrapper progressEventDispatcherWrapper =
+          new ThrottledProgressEventDispatcherWrapper(
               progressEventDispatcher.newChildProducer(),
               "pulling base image layer " + layerDigest,
               BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER)) {
         return cache.writeCompressedLayer(
             registryClient.pullBlob(
                 layerDigest,
-                progressEventDispatcherContainer::initializeWithBlobSize,
-                progressEventDispatcherContainer));
+                progressEventDispatcherWrapper::setProgressTarget,
+                progressEventDispatcherWrapper::dispatchProgress));
       }
     }
   }

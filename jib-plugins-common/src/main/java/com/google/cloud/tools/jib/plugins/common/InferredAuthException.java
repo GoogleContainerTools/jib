@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC.
+ * Copyright 2019 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,14 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.http;
+package com.google.cloud.tools.jib.plugins.common;
 
-import java.time.Duration;
-
-/** Listens to BLOb send/receive progress. */
-public interface BlobProgressListener {
-
-  /**
-   * Callback to call with count of newly-processed bytes.
-   *
-   * @param byteCount sent/received byte count
-   */
-  void handleByteCount(long byteCount);
-
-  /**
-   * Gets the minimum delay between calls to {@link #handleByteCount}.
-   *
-   * @return the delay between callbacks
-   */
-  Duration getDelayBetweenCallbacks();
+/**
+ * Indicates that the {@link InferredAuthProvider} encountered a failure while trying to determine
+ * auth credentials (not thrown for missing).
+ */
+public class InferredAuthException extends Exception {
+  public InferredAuthException(String message) {
+    super(message);
+  }
 }

@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.builder.BuildStepType;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LayerCountEvent;
@@ -68,7 +67,7 @@ public class ContainerizerIntegrationTest {
         new ProgressEventHandler(
             update -> {
               lastProgress = update.getProgress();
-              areTasksFinished = update.getUnfinishedAllocations().isEmpty();
+              areTasksFinished = update.getUnfinishedLeafTasks().isEmpty();
             });
 
     private volatile double lastProgress = 0.0;
@@ -161,9 +160,10 @@ public class ContainerizerIntegrationTest {
 
   private final ProgressChecker progressChecker = new ProgressChecker();
   private final EventHandlers eventHandlers =
-      new EventHandlers()
+      EventHandlers.builder()
           .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
-          .add(JibEventType.LAYER_COUNT, layerCountConsumer);
+          .add(JibEventType.LAYER_COUNT, layerCountConsumer)
+          .build();
 
   @Test
   public void testSteps_forBuildToDockerRegistry()

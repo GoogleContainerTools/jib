@@ -125,7 +125,7 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
             BuildStepType.PUSH_IMAGE, "pushing image manifest", targetImageTags.size());
 
     try (TimerEventDispatcher ignored =
-        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+        new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       RegistryClient registryClient =
           buildConfiguration
               .newTargetImageRegistryClientFactory()
@@ -156,7 +156,7 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
                       progressEventDispatcherFactory.create(
                           BuildStepType.PUSH_IMAGE, "tagging with " + tag, 1)) {
                     buildConfiguration
-                        .getEventDispatcher()
+                        .getEventHandlers()
                         .dispatch(LogEvent.info("Tagging with " + tag + "..."));
                     registryClient.pushManifest(manifestTemplate, tag);
                   }

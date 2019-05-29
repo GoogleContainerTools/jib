@@ -143,7 +143,7 @@ public class Containerizer {
   @Nullable private ExecutorService executorService;
   private Path baseImageLayersCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
   @Nullable private Path applicationLayersCacheDirectory;
-  @Nullable private EventHandlers eventHandlers;
+  private EventHandlers eventHandlers = EventHandlers.NONE;
   private boolean allowInsecureRegistries = false;
   private boolean offline = false;
   private String toolName = DEFAULT_TOOL_NAME;
@@ -294,8 +294,8 @@ public class Containerizer {
     return applicationLayersCacheDirectory;
   }
 
-  Optional<EventHandlers> getEventHandlers() {
-    return Optional.ofNullable(eventHandlers);
+  EventHandlers getEventHandlers() {
+    return eventHandlers;
   }
 
   boolean getAllowInsecureRegistries() {

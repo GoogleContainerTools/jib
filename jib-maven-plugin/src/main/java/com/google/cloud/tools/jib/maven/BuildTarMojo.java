@@ -19,8 +19,6 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
@@ -79,25 +77,22 @@ public class BuildTarMojo extends JibPluginConfiguration {
               mavenRawConfiguration, MojoCommon.isWarProject(getProject()));
       MavenProjectProperties projectProperties =
           MavenProjectProperties.getForProject(getProject(), getSession(), getLog(), appRoot);
-      EventDispatcher eventDispatcher =
-          new DefaultEventDispatcher(projectProperties.getEventHandlers());
 
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
-
-      DecryptedMavenSettings decryptedSettings =
-          DecryptedMavenSettings.from(getSession().getSettings(), getSettingsDecrypter());
 
       Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
       Path tarOutputPath = buildOutput.resolve("jib-image.tar");
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForTarImage(
               mavenRawConfiguration,
-              new MavenSettingsServerCredentials(decryptedSettings),
+              new MavenSettingsServerCredentials(
+                  getSession().getSettings(), getSettingsDecrypter()),
               projectProperties,
               tarOutputPath,
               mavenHelpfulSuggestionsBuilder.build());
-      ProxyProvider.init(decryptedSettings);
+      MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
+          getSession().getSettings(), getSettingsDecrypter());
 
       HelpfulSuggestions helpfulSuggestions =
           mavenHelpfulSuggestionsBuilder
@@ -114,7 +109,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
             .build(
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
-                eventDispatcher,
+                projectProperties.getEventHandlers(),
                 helpfulSuggestions);
 
       } finally {

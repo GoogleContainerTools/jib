@@ -186,7 +186,7 @@ You can also bind `jib:build` to a Maven lifecycle, such as `package`, by adding
 
 ```xml
 <plugin>
-  <groupId>com.google.com.tools</groupId>
+  <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
   ...
   <executions>
@@ -395,6 +395,8 @@ Alternatively, the `<extraDirectories>` parameter can be used as an object to se
   </extraDirectories>
 </configuration>
 ```
+
+Note that Jib does not follow symbolic links.  If a symbolic link is present, it will be removed prior to placing the files and directories.
 
 ### Authentication Methods
 

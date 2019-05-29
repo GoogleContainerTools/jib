@@ -93,7 +93,7 @@ class BuildImageStep implements AsyncStep<AsyncStep<Image>>, Callable<AsyncStep<
             progressEventDispatcherFactory.create(
                 BuildStepType.BUILD_IMAGE, "building image format", 1);
         TimerEventDispatcher ignored2 =
-            new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       // Constructs the image.
       Image.Builder imageBuilder = Image.builder(buildConfiguration.getTargetFormat());
       Image baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();
@@ -192,8 +192,8 @@ class BuildImageStep implements AsyncStep<AsyncStep<Image>>, Callable<AsyncStep<
     if (entrypointToUse != null) {
       String logSuffix = shouldInherit ? " (inherited from base image)" : "";
       String message = "Container entrypoint set to " + entrypointToUse + logSuffix;
-      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
-      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(message));
+      buildConfiguration.getEventHandlers().dispatch(LogEvent.lifecycle(""));
+      buildConfiguration.getEventHandlers().dispatch(LogEvent.lifecycle(message));
     }
 
     return entrypointToUse;
@@ -226,7 +226,7 @@ class BuildImageStep implements AsyncStep<AsyncStep<Image>>, Callable<AsyncStep<
     if (programArgumentsToUse != null) {
       String logSuffix = shouldInherit ? " (inherited from base image)" : "";
       String message = "Container program arguments set to " + programArgumentsToUse + logSuffix;
-      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(message));
+      buildConfiguration.getEventHandlers().dispatch(LogEvent.lifecycle(message));
     }
 
     return programArgumentsToUse;

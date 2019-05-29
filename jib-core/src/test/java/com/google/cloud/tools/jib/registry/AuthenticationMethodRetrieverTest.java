@@ -149,6 +149,6 @@ public class AuthenticationMethodRetrieverTest {
 
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someImageName:someScope"),
-        registryAuthenticator.getAuthenticationUrl("someScope"));
+        registryAuthenticator.getAuthenticationUrl(null, "someScope"));
   }
 }

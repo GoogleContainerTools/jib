@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
+import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
@@ -27,7 +27,6 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Authorizations;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -75,35 +74,31 @@ class AuthenticatePushStep implements AsyncStep<Authorization>, Callable<Authori
 
   @Override
   @Nullable
-  public Authorization call()
-      throws ExecutionException, RegistryAuthenticationFailedException, IOException,
-          RegistryException {
-    String registry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
+  public Authorization call() throws ExecutionException, IOException, RegistryException {
+    Credential registryCredential = NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
 
+    String registry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create(
                 BuildStepType.AUTHENTICATE_PUSH, "authenticating push to " + registry, 1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(
-                buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, registry))) {
-      Credential registryCredential = NonBlockingSteps.get(retrieveTargetRegistryCredentialsStep);
-
+                buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, registry))) {
       RegistryAuthenticator registryAuthenticator =
-          RegistryAuthenticator.initializer(
-                  buildConfiguration.getEventDispatcher(),
-                  registry,
-                  buildConfiguration.getTargetImageConfiguration().getImageRepository())
-              .setAllowInsecureRegistries(buildConfiguration.getAllowInsecureRegistries())
-              .setUserAgentSuffix(buildConfiguration.getToolName())
-              .initialize();
+          buildConfiguration
+              .newTargetImageRegistryClientFactory()
+              .newRegistryClient()
+              .getRegistryAuthenticator();
       if (registryAuthenticator != null) {
-        return registryAuthenticator.setCredential(registryCredential).authenticatePush();
+        return registryAuthenticator.authenticatePush(registryCredential);
       }
-
-      return (registryCredential == null || registryCredential.isOAuth2RefreshToken())
-          ? null
-          : Authorizations.withBasicCredentials(
-              registryCredential.getUsername(), registryCredential.getPassword());
+    } catch (InsecureRegistryException ex) {
+      // Cannot skip certificate validation or use HTTP; fall through.
     }
+
+    return (registryCredential == null || registryCredential.isOAuth2RefreshToken())
+        ? null
+        : Authorization.fromBasicCredentials(
+            registryCredential.getUsername(), registryCredential.getPassword());
   }
 }

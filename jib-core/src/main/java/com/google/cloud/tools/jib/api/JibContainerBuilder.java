@@ -22,12 +22,8 @@ import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.image.ImageFormat;
-import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -390,7 +386,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setFormat(ImageFormat imageFormat) {
-    buildConfigurationBuilder.setTargetFormat(imageFormat.getManifestTemplateClass());
+    buildConfigurationBuilder.setTargetFormat(imageFormat);
     return this;
   }
 
@@ -475,11 +471,11 @@ public class JibContainerBuilder {
 
     BuildConfiguration buildConfiguration = toBuildConfiguration(containerizer, executorService);
 
-    EventDispatcher eventDispatcher = buildConfiguration.getEventDispatcher();
-    logSources(eventDispatcher);
+    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    logSources(eventHandlers);
 
     try (TimerEventDispatcher ignored =
-        new TimerEventDispatcher(eventDispatcher, containerizer.getDescription())) {
+        new TimerEventDispatcher(eventHandlers, containerizer.getDescription())) {
       BuildResult result = containerizer.createStepsRunner(buildConfiguration).run();
       return new JibContainer(result.getImageDigest(), result.getImageId());
 
@@ -511,7 +507,7 @@ public class JibContainerBuilder {
   BuildConfiguration toBuildConfiguration(
       Containerizer containerizer, ExecutorService executorService)
       throws CacheDirectoryCreationException, IOException {
-    buildConfigurationBuilder
+    return buildConfigurationBuilder
         .setTargetImageConfiguration(containerizer.getImageConfiguration())
         .setAdditionalTargetImageTags(containerizer.getAdditionalTags())
         .setBaseImageLayersCacheDirectory(containerizer.getBaseImageLayersCacheDirectory())
@@ -521,32 +517,25 @@ public class JibContainerBuilder {
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
         .setOffline(containerizer.isOfflineMode())
         .setToolName(containerizer.getToolName())
-        .setExecutorService(executorService);
-
-    containerizer
-        .getEventHandlers()
-        .ifPresent(
-            eventHandlers ->
-                buildConfigurationBuilder.setEventDispatcher(
-                    new DefaultEventDispatcher(eventHandlers)));
-
-    return buildConfigurationBuilder.build();
+        .setExecutorService(executorService)
+        .setEventHandlers(containerizer.getEventHandlers())
+        .build();
   }
 
-  private void logSources(EventDispatcher eventDispatcher) {
+  private void logSources(EventHandlers eventHandlers) {
     // Logs the different source files used.
-    eventDispatcher.dispatch(LogEvent.info("Containerizing application with the following files:"));
+    eventHandlers.dispatch(LogEvent.info("Containerizing application with the following files:"));
 
     for (LayerConfiguration layerConfiguration : layerConfigurations) {
       if (layerConfiguration.getLayerEntries().isEmpty()) {
         continue;
       }
 
-      eventDispatcher.dispatch(
+      eventHandlers.dispatch(
           LogEvent.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":"));
 
       for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
-        eventDispatcher.dispatch(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
+        eventHandlers.dispatch(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
       }
     }
   }

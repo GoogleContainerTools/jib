@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.FromAuthConfiguration;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.collect.ImmutableMap;
@@ -36,7 +36,7 @@ public class MavenRawConfigurationTest {
   @Test
   public void testGetters() {
     JibPluginConfiguration jibPluginConfiguration = Mockito.mock(JibPluginConfiguration.class);
-    EventDispatcher eventDispatcher = Mockito.mock(EventDispatcher.class);
+    EventHandlers eventHandlers = Mockito.mock(EventHandlers.class);
 
     Server server = Mockito.mock(Server.class);
     Mockito.when(server.getUsername()).thenReturn("maven settings user");
@@ -103,6 +103,6 @@ public class MavenRawConfigurationTest {
     Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
 
-    Mockito.verifyNoMoreInteractions(eventDispatcher);
+    Mockito.verifyNoMoreInteractions(eventHandlers);
   }
 }

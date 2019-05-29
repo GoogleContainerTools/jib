@@ -19,8 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.http.TestBlobProgressListener;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
@@ -37,7 +36,6 @@ import org.junit.rules.TemporaryFolder;
 public class BlobPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EventDispatcher EVENT_DISPATCHER = jibEvent -> {};
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -46,7 +44,7 @@ public class BlobPullerIntegrationTest {
     // Pulls the busybox image.
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_DISPATCHER, "localhost:5000", "busybox")
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     V21ManifestTemplate manifestTemplate =
@@ -64,7 +62,7 @@ public class BlobPullerIntegrationTest {
               Assert.assertEquals(0, expectedSize.sum());
               expectedSize.add(size);
             },
-            new TestBlobProgressListener(totalByteCount::add));
+            totalByteCount::add);
     Assert.assertEquals(realDigest, pulledBlob.writeTo(ByteStreams.nullOutputStream()).getDigest());
     Assert.assertTrue(expectedSize.sum() > 0);
     Assert.assertEquals(expectedSize.sum(), totalByteCount.sum());
@@ -78,13 +76,13 @@ public class BlobPullerIntegrationTest {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_DISPATCHER, "localhost:5000", "busybox")
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
 
     try {
       registryClient
-          .pullBlob(nonexistentDigest, ignored -> {}, new TestBlobProgressListener(ignored -> {}))
+          .pullBlob(nonexistentDigest, ignored -> {}, ignored -> {})
           .writeTo(ByteStreams.nullOutputStream());
       Assert.fail("Trying to pull nonexistent blob should have errored");
 

@@ -101,7 +101,7 @@ class GradleProjectProperties implements ProjectProperties {
     }
     ConsoleLogger consoleLogger = consoleLoggerBuilder.build();
 
-    return new EventHandlers()
+    return EventHandlers.builder()
         .add(
             JibEventType.LOGGING,
             logEvent -> consoleLogger.log(logEvent.getLevel(), logEvent.getMessage()))
@@ -114,10 +114,11 @@ class GradleProjectProperties implements ProjectProperties {
                 update -> {
                   List<String> footer =
                       ProgressDisplayGenerator.generateProgressDisplay(
-                          update.getProgress(), update.getUnfinishedAllocations());
+                          update.getProgress(), update.getUnfinishedLeafTasks());
                   footer.add("");
                   consoleLogger.setFooter(footer);
-                }));
+                }))
+        .build();
   }
 
   private static boolean isProgressFooterEnabled(Project project) {

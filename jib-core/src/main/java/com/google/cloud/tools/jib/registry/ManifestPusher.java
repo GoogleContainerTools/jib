@@ -20,7 +20,7 @@ import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
@@ -66,26 +66,24 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final BuildableManifestTemplate manifestTemplate;
   private final String imageTag;
-  private final EventDispatcher eventDispatcher;
+  private final EventHandlers eventHandlers;
 
   ManifestPusher(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       BuildableManifestTemplate manifestTemplate,
       String imageTag,
-      EventDispatcher eventDispatcher) {
+      EventHandlers eventHandlers) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.manifestTemplate = manifestTemplate;
     this.imageTag = imageTag;
-    this.eventDispatcher = eventDispatcher;
+    this.eventHandlers = eventHandlers;
   }
 
   @Override
   public BlobHttpContent getContent() {
+    // TODO: Consider giving progress on manifest push as well?
     return new BlobHttpContent(
-        Blobs.from(manifestTemplate),
-        manifestTemplate.getManifestMediaType(),
-        // TODO: Consider giving progress on manifest push as well?
-        null);
+        Blobs.from(manifestTemplate), manifestTemplate.getManifestMediaType());
   }
 
   @Override
@@ -143,7 +141,7 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
     }
 
     // The received digest is not as expected. Warns about this.
-    eventDispatcher.dispatch(
+    eventHandlers.dispatch(
         LogEvent.warn(makeUnexpectedImageDigestWarning(expectedDigest, receivedDigests)));
     return expectedDigest;
   }
