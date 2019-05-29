@@ -30,10 +30,6 @@ import java.nio.file.Paths;
 public class HelloWorld {
 
   public static void main(String[] args) throws URISyntaxException, IOException {
-    Package pack = HelloWorld.class.getPackage();
-    System.out.println(pack.getImplementationTitle());
-    System.out.println(pack.getImplementationVersion());
-
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     try (Reader reader = new InputStreamReader(
         classLoader.getResourceAsStream("world"), StandardCharsets.UTF_8)) {
