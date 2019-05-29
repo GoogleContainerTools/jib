@@ -96,6 +96,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
     Mockito.when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(Paths.get("nonexistent/path")));
+    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
 
     Mockito.when(projectProperties.getToolName()).thenReturn("tool");
     Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");
