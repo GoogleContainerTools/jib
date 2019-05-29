@@ -27,11 +27,18 @@ import org.junit.Test;
 public class JavaEntrypointConstructorTest {
 
   @Test
-  public void testDefaultClasspath() {
+  public void testDefaultExplodedClasspath() {
     List<String> classpath =
         JavaEntrypointConstructor.defaultExplodedClasspath(AbsoluteUnixPath.get("/dir"));
     Assert.assertEquals(
         ImmutableList.of("/dir/resources", "/dir/classes", "/dir/libs/*"), classpath);
+  }
+
+  @Test
+  public void testDefaultPackagedClasspath() {
+    List<String> classpath =
+        JavaEntrypointConstructor.defaultPackagedClasspath(AbsoluteUnixPath.get("/dir"));
+    Assert.assertEquals(ImmutableList.of("/dir/classpath/*", "/dir/libs/*"), classpath);
   }
 
   @Test

@@ -622,7 +622,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   public String getContainerizingMode() {
-    return containerizingMode;
+    String property = getProperty(PropertyNames.CONTAINERIZING_MODE);
+    return property != null ? property : containerizingMode;
   }
 
   boolean isSkipped() {
