@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LayerCountEvent;
@@ -150,11 +149,11 @@ public class ContainerizerIntegrationTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private final Map<BuildStepType, Integer> layerCounts = new ConcurrentHashMap<>();
+  private final Map<String, Integer> layerCounts = new ConcurrentHashMap<>();
   private final Consumer<LayerCountEvent> layerCountConsumer =
       layerCountEvent ->
           layerCounts.merge(
-              layerCountEvent.getBuildStepType(),
+              layerCountEvent.getDescription(),
               layerCountEvent.getCount(),
               (oldValue, count) -> oldValue + count);
 
@@ -178,16 +177,14 @@ public class ContainerizerIntegrationTest {
 
     progressChecker.checkCompletion();
     Assert.assertEquals(
-        layerCounts,
         ImmutableMap.of(
-            BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER,
+            "Setting up base image caching",
             4,
-            BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
+            "Building application layers",
             3,
-            BuildStepType.PUSH_BASE_LAYERS,
-            4,
-            BuildStepType.PUSH_APPLICATION_LAYERS,
-            3));
+            "Setting up to push layers",
+            7),
+        layerCounts);
 
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
@@ -272,11 +269,7 @@ public class ContainerizerIntegrationTest {
 
     progressChecker.checkCompletion();
     Assert.assertEquals(
-        ImmutableMap.of(
-            BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER,
-            4,
-            BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
-            3),
+        ImmutableMap.of("Setting up base image caching", 4, "Building application layers", 3),
         layerCounts);
 
     assertDockerInspect("testdocker");
@@ -320,11 +313,7 @@ public class ContainerizerIntegrationTest {
 
     progressChecker.checkCompletion();
     Assert.assertEquals(
-        ImmutableMap.of(
-            BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER,
-            4,
-            BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
-            3),
+        ImmutableMap.of("Setting up base image caching", 4, "Building application layers", 3),
         layerCounts);
 
     new Command("docker", "load", "--input", outputPath.toString()).run();

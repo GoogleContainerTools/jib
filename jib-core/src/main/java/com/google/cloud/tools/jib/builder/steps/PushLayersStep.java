@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.CachedLayer;
@@ -46,7 +45,6 @@ class PushLayersStep
   private final AuthenticatePushStep authenticatePushStep;
   private final AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CachedLayer>>>
       cachedLayerStep;
-  private final BuildStepType buildStepType;
 
   private final ListenableFuture<ImmutableList<AsyncStep<PushBlobStep>>> listenableFuture;
 
@@ -56,14 +54,12 @@ class PushLayersStep
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       AuthenticatePushStep authenticatePushStep,
       AsyncStep<? extends ImmutableList<? extends AsyncStep<? extends CachedLayer>>>
-          cachedLayerStep,
-      BuildStepType buildStepType) {
+          cachedLayerStep) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.authenticatePushStep = authenticatePushStep;
     this.cachedLayerStep = cachedLayerStep;
-    this.buildStepType = buildStepType;
 
     listenableFuture =
         AsyncDependencies.using(listeningExecutorService)
@@ -84,14 +80,13 @@ class PushLayersStep
           NonBlockingSteps.get(cachedLayerStep);
 
       try (ProgressEventDispatcher progressEventDispatcher =
-          progressEventDispatcherFactory.create(
-              buildStepType, "setting up to push layers", cachedLayers.size())) {
+          progressEventDispatcherFactory.create("setting up to push layers", cachedLayers.size())) {
         // Constructs a PushBlobStep for each layer.
         ImmutableList.Builder<AsyncStep<PushBlobStep>> pushBlobStepsBuilder =
             ImmutableList.builder();
         buildConfiguration
             .getEventHandlers()
-            .dispatch(new LayerCountEvent(buildStepType, cachedLayers.size()));
+            .dispatch(new LayerCountEvent(DESCRIPTION, cachedLayers.size()));
         for (AsyncStep<? extends CachedLayer> cachedLayerStep : cachedLayers) {
           ProgressEventDispatcher.Factory childProgressEventDispatcherFactory =
               progressEventDispatcher.newChildProducer();
@@ -120,7 +115,6 @@ class PushLayersStep
         progressEventDispatcherFactory,
         authenticatePushStep,
         new BlobDescriptor(cachedLayer.getSize(), cachedLayer.getDigest()),
-        cachedLayer.getBlob(),
-        buildStepType);
+        cachedLayer.getBlob());
   }
 }

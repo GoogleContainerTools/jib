@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
@@ -86,8 +85,7 @@ class PushContainerConfigurationStep
   private PushBlobStep afterBuildConfigurationFutureFuture()
       throws ExecutionException, IOException {
     try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create(
-                BuildStepType.PUSH_CONTAINER_CONFIGURATION, "pushing container configuration", 1);
+            progressEventDispatcherFactory.create("pushing container configuration", 1);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       Image image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
@@ -101,8 +99,7 @@ class PushContainerConfigurationStep
           progressEventDispatcher.newChildProducer(),
           authenticatePushStep,
           blobDescriptor,
-          Blobs.from(containerConfiguration),
-          BuildStepType.PUSH_CONTAINER_CONFIGURATION);
+          Blobs.from(containerConfiguration));
     }
   }
 }

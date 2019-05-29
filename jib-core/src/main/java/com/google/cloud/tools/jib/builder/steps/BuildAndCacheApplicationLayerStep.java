@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.Cache;
@@ -53,9 +52,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
-                "setting up to build application layers",
-                layerCount);
+                "setting up to build application layers", layerCount);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
@@ -78,8 +75,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
           buildAndCacheApplicationLayerSteps.build();
       buildConfiguration
           .getEventHandlers()
-          .dispatch(
-              new LayerCountEvent(BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER, steps.size()));
+          .dispatch(new LayerCountEvent(DESCRIPTION, steps.size()));
       return steps;
     }
   }
@@ -118,10 +114,7 @@ class BuildAndCacheApplicationLayerStep implements AsyncStep<CachedLayer>, Calla
     buildConfiguration.getEventHandlers().dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =
-            progressEventDispatcherFactory.create(
-                BuildStepType.BUILD_AND_CACHE_APPLICATION_LAYER,
-                "building " + layerType + " layer",
-                1);
+            progressEventDispatcherFactory.create("building " + layerType + " layer", 1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(buildConfiguration.getEventHandlers(), description)) {
       Cache cache = buildConfiguration.getApplicationLayersCache();

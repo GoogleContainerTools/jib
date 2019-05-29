@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.event.events;
 
-import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.progress.Allocation;
@@ -68,16 +67,16 @@ public class ProgressEventTest {
 
     EventHandlers eventHandlers = makeEventHandlers(progressEventConsumer);
 
-    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50));
     Assert.assertEquals(1.0 / 2 / 100 * 50, progress, DOUBLE_ERROR_MARGIN);
 
-    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50));
     Assert.assertEquals(1.0 / 2, progress, DOUBLE_ERROR_MARGIN);
 
-    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child2, 10, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child2, 10));
     Assert.assertEquals(1.0 / 2 + 1.0 / 2 / 200 * 10, progress, DOUBLE_ERROR_MARGIN);
 
-    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child2, 190, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child2, 190));
     Assert.assertEquals(1.0, progress, DOUBLE_ERROR_MARGIN);
   }
 
@@ -93,19 +92,19 @@ public class ProgressEventTest {
 
     EventHandlers eventHandlers = makeEventHandlers(progressEventConsumer);
 
-    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50));
 
     Assert.assertEquals(1, allocationCompletionMap.size());
     Assert.assertEquals(50, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
 
-    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 50));
 
     Assert.assertEquals(3, allocationCompletionMap.size());
     Assert.assertEquals(100, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
     Assert.assertEquals(1, allocationCompletionMap.get(AllocationTree.child1).longValue());
     Assert.assertEquals(1, allocationCompletionMap.get(AllocationTree.root).longValue());
 
-    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child2, 200, BuildStepType.ALL));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child2, 200));
 
     Assert.assertEquals(4, allocationCompletionMap.size());
     Assert.assertEquals(100, allocationCompletionMap.get(AllocationTree.child1Child).longValue());
@@ -120,12 +119,11 @@ public class ProgressEventTest {
     boolean[] called = new boolean[] {false};
     Consumer<ProgressEvent> buildImageConsumer =
         progressEvent -> {
-          Assert.assertEquals(BuildStepType.BUILD_IMAGE, progressEvent.getBuildStepType());
           called[0] = true;
         };
 
     EventHandlers eventHandlers = makeEventHandlers(buildImageConsumer);
-    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1, 50, BuildStepType.BUILD_IMAGE));
+    eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1, 50));
     Assert.assertTrue(called[0]);
   }
 

@@ -38,7 +38,7 @@ public class ProgressEventDispatcherTest {
     try (ProgressEventDispatcher progressEventDispatcher =
             ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 10);
         ProgressEventDispatcher ignored =
-            progressEventDispatcher.newChildProducer().create(BuildStepType.ALL, "ignored", 20)) {
+            progressEventDispatcher.newChildProducer().create("ignored", 20)) {
       // empty
     }
 
@@ -87,9 +87,9 @@ public class ProgressEventDispatcherTest {
     try (ProgressEventDispatcher progressEventDispatcher =
             ProgressEventDispatcher.newRoot(mockEventHandlers, "allocation description", 1);
         ProgressEventDispatcher ignored1 =
-            progressEventDispatcher.newChildProducer().create(BuildStepType.ALL, "ignored", 5);
+            progressEventDispatcher.newChildProducer().create("ignored", 5);
         ProgressEventDispatcher ignored2 =
-            progressEventDispatcher.newChildProducer().create(BuildStepType.ALL, "ignored", 4)) {
+            progressEventDispatcher.newChildProducer().create("ignored", 4)) {
       // empty
     }
 

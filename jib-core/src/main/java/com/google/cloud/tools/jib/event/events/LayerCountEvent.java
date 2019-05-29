@@ -16,33 +16,32 @@
 
 package com.google.cloud.tools.jib.event.events;
 
-import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.event.JibEvent;
 
-/** Event used for counting layers processed during a build step. */
+/** Event used for counting layers processed during a build step. For internal use for testing. */
 public class LayerCountEvent implements JibEvent {
 
-  private final BuildStepType buildStepType;
+  private final String description;
   private final int count;
 
   /**
    * Creates a new {@link LayerCountEvent}. For internal use only.
    *
-   * @param buildStepType the build step associated with the event
+   * @param description description for the event
    * @param count the number of layers counted
    */
-  public LayerCountEvent(BuildStepType buildStepType, int count) {
-    this.buildStepType = buildStepType;
+  public LayerCountEvent(String description, int count) {
+    this.description = description;
     this.count = count;
   }
 
   /**
-   * Gets the type of build step that fired the event.
+   * Gets the description for the event.
    *
-   * @return the type of build step that fired the event
+   * @return the description
    */
-  public BuildStepType getBuildStepType() {
-    return buildStepType;
+  public String getDescription() {
+    return description;
   }
 
   /**

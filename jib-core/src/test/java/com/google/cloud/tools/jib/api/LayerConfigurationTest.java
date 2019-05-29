@@ -27,7 +27,7 @@ import java.util.function.BiFunction;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link com.google.cloud.tools.jib.api.LayerConfiguration}. */
+/** Tests for {@link LayerConfiguration}. */
 public class LayerConfigurationTest {
 
   @Test

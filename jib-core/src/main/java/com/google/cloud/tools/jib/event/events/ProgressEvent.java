@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.event.events;
 
-import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.event.JibEvent;
 import com.google.cloud.tools.jib.event.progress.Allocation;
 
@@ -37,13 +36,9 @@ public class ProgressEvent implements JibEvent {
   /** Units of progress. */
   private final long progressUnits;
 
-  /** The step in the build process that the progress event corresponds to. */
-  private final BuildStepType buildStepType;
-
-  public ProgressEvent(Allocation allocation, long progressUnits, BuildStepType buildStepType) {
+  public ProgressEvent(Allocation allocation, long progressUnits) {
     this.allocation = allocation;
     this.progressUnits = progressUnits;
-    this.buildStepType = buildStepType;
   }
 
   /**
@@ -63,14 +58,5 @@ public class ProgressEvent implements JibEvent {
    */
   public long getUnits() {
     return progressUnits;
-  }
-
-  /**
-   * Gets the build step that the progress event corresponds to.
-   *
-   * @return the build step
-   */
-  public BuildStepType getBuildStepType() {
-    return buildStepType;
   }
 }
