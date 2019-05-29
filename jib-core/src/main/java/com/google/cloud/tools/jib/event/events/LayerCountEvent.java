@@ -14,7 +14,10 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.api;
+package com.google.cloud.tools.jib.event.events;
+
+import com.google.cloud.tools.jib.api.BuildStepType;
+import com.google.cloud.tools.jib.api.JibEvent;
 
 /** Event used for counting layers processed during a build step. */
 public class LayerCountEvent implements JibEvent {

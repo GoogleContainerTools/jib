@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.event.events.LayerCountEvent;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.common.annotations.VisibleForTesting;
