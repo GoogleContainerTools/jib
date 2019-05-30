@@ -205,21 +205,22 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public JibContainerBuilder createContainerBuilder(
       RegistryImage baseImage, ContainerizingMode containerizingMode) throws IOException {
+    JavaContainerBuilder javaContainerBuilder =
+        JavaContainerBuilder.from(baseImage).setAppRoot(appRoot);
+
     try {
       if (isWarProject()) {
         Path explodedWarPath =
-            Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
-        return JavaContainerBuilderHelper.fromExplodedWar(baseImage, explodedWarPath, appRoot);
+            Paths.get(project.getBuild().getDirectory(), project.getBuild().getFinalName());
+        return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
       }
 
       if (containerizingMode == ContainerizingMode.PACKAGED) {
-        Path artifact =
-            Paths.get(project.getBuild().getDirectory())
-                .resolve(project.getBuild().getFinalName() + "." + project.getPackaging());
-        return JavaContainerBuilder.from(baseImage)
-            .setAppRoot(appRoot)
+        String jarName = project.getBuild().getFinalName() + "." + project.getPackaging();
+        Path jar = Paths.get(project.getBuild().getDirectory(), jarName);
+        return javaContainerBuilder
             .addDependencies(getDependencies())
-            .addToClasspath(artifact)
+            .addToClasspath(jar)
             .toContainerBuilder();
       }
 
@@ -227,8 +228,7 @@ public class MavenProjectProperties implements ProjectProperties {
       Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
 
       // Add dependencies, resources, and classes
-      return JavaContainerBuilder.from(baseImage)
-          .setAppRoot(appRoot)
+      return javaContainerBuilder
           .addResources(classesOutputDirectory, isClassFile.negate())
           .addClasses(classesOutputDirectory, isClassFile)
           .addDependencies(getDependencies())

@@ -158,11 +158,14 @@ class GradleProjectProperties implements ProjectProperties {
   @Override
   public JibContainerBuilder createContainerBuilder(
       RegistryImage baseImage, ContainerizingMode containerizingMode) {
+    JavaContainerBuilder javaContainerBuilder =
+        JavaContainerBuilder.from(baseImage).setAppRoot(appRoot);
+
     try {
       if (isWarProject()) {
         logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
         Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
-        return JavaContainerBuilderHelper.fromExplodedWar(baseImage, explodedWarPath, appRoot);
+        return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
       }
 
       JavaPluginConvention javaPluginConvention =
@@ -178,9 +181,6 @@ class GradleProjectProperties implements ProjectProperties {
           allFiles
               .minus(classesOutputDirectories)
               .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
-
-      JavaContainerBuilder javaContainerBuilder =
-          JavaContainerBuilder.from(baseImage).setAppRoot(appRoot);
 
       // Adds resource files
       if (Files.exists(resourcesOutputDirectory)) {
