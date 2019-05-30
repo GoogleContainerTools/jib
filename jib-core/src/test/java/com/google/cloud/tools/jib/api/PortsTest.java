@@ -14,9 +14,8 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.frontend;
+package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.api.Port;
 import com.google.common.collect.ImmutableSet;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,8 +23,8 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link ExposedPortsParser}. */
-public class ExposedPortsParserTest {
+/** Tests for {@link Ports}. */
+public class PortsTest {
 
   @Test
   public void testParse() {
@@ -46,13 +45,13 @@ public class ExposedPortsParserTest {
                 Port.udp(6001),
                 Port.udp(6002))
             .build();
-    ImmutableSet<Port> result = ExposedPortsParser.parse(goodInputs);
+    ImmutableSet<Port> result = Ports.parse(goodInputs);
     Assert.assertEquals(expected, result);
 
     List<String> badInputs = Arrays.asList("abc", "/udp", "1000/abc", "a100/tcp", "20/udpabc");
     for (String input : badInputs) {
       try {
-        ExposedPortsParser.parse(Collections.singletonList(input));
+        Ports.parse(Collections.singletonList(input));
         Assert.fail();
       } catch (NumberFormatException ex) {
         Assert.assertEquals(
@@ -66,7 +65,7 @@ public class ExposedPortsParserTest {
     }
 
     try {
-      ExposedPortsParser.parse(Collections.singletonList("4002-4000"));
+      Ports.parse(Collections.singletonList("4002-4000"));
       Assert.fail();
     } catch (NumberFormatException ex) {
       Assert.assertEquals(
@@ -76,7 +75,7 @@ public class ExposedPortsParserTest {
     badInputs = Arrays.asList("0", "70000", "0-400", "1-70000");
     for (String input : badInputs) {
       try {
-        ExposedPortsParser.parse(Collections.singletonList(input));
+        Ports.parse(Collections.singletonList(input));
         Assert.fail();
       } catch (NumberFormatException ex) {
         Assert.assertEquals(

@@ -14,17 +14,16 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.frontend;
+package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.api.Port;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Utility for parsing exposed ports from text representations. */
-public class ExposedPortsParser {
+/** Utility for parsing Docker/OCI ports from text representations. */
+public class Ports {
 
   /**
    * Pattern used for parsing information out of exposed port configurations.
@@ -40,7 +39,8 @@ public class ExposedPortsParser {
    * <p>For example: ["1000", "2000-2002"] will expand to a list of {@link Port}s with the port
    * numbers [1000, 2000, 2001, 2002]
    *
-   * @param ports the list of port numbers/ranges
+   * @param ports the list of port numbers/ranges, with an optional protocol separated by a '/'
+   *     (defaults to TCP if missing).
    * @return the ports as a list of {@link Port}
    * @throws NumberFormatException if any of the ports are in an invalid format or out of range
    */
@@ -87,5 +87,5 @@ public class ExposedPortsParser {
     return result.build();
   }
 
-  private ExposedPortsParser() {}
+  private Ports() {}
 }

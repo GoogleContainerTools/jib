@@ -19,10 +19,9 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LayerCountEvent;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
-import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -160,8 +159,8 @@ public class ContainerizerIntegrationTest {
   private final ProgressChecker progressChecker = new ProgressChecker();
   private final EventHandlers eventHandlers =
       EventHandlers.builder()
-          .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
-          .add(JibEventType.LAYER_COUNT, layerCountConsumer)
+          .add(ProgressEvent.class, progressChecker.progressEventHandler)
+          .add(LayerCountEvent.class, layerCountConsumer)
           .build();
 
   @Test
@@ -371,8 +370,7 @@ public class ContainerizerIntegrationTest {
                     "java", "-cp", "/app/resources:/app/classes:/app/libs/*", "HelloWorld"))
             .setProgramArguments(Collections.singletonList("An argument."))
             .setEnvironment(ImmutableMap.of("env1", "envvalue1", "env2", "envvalue2"))
-            .setExposedPorts(
-                ExposedPortsParser.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
+            .setExposedPorts(Ports.parse(Arrays.asList("1000", "2000-2002/tcp", "3000/udp")))
             .setLabels(ImmutableMap.of("key1", "value1", "key2", "value2"))
             .setLayers(fakeLayerConfigurations);
 
