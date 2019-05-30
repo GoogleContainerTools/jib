@@ -267,6 +267,25 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testComputeEntrypoint_default()
+      throws MainClassInferenceException, InvalidAppRootException, IOException,
+          InvalidContainerizingModeException {
+    Assert.assertEquals(
+        Arrays.asList("java", "-cp", "/app/resources:/app/classes:/app/libs/*", "java.lang.Object"),
+        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+  }
+
+  @Test
+  public void testComputeEntrypoint_exploded()
+      throws MainClassInferenceException, InvalidAppRootException, IOException,
+          InvalidContainerizingModeException {
+    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
+    Assert.assertEquals(
+        Arrays.asList("java", "-cp", "/app/classpath/*:/app/libs/*", "java.lang.Object"),
+        PluginConfigurationProcessor.computeEntrypoint(rawConfiguration, projectProperties));
+  }
+
+  @Test
   public void testEntrypoint_defaultWarPackaging()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
