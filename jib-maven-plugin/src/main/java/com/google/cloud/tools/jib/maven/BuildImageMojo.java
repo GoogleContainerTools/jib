@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.ImageFormat;
 import com.google.cloud.tools.jib.api.ImageReference;
@@ -95,11 +94,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     try {
       RawConfiguration mavenRawConfiguration = new MavenRawConfiguration(this);
-      AbsoluteUnixPath appRoot =
-          PluginConfigurationProcessor.getAppRootChecked(
-              mavenRawConfiguration, MojoCommon.isWarProject(getProject()));
       MavenProjectProperties projectProperties =
-          MavenProjectProperties.getForProject(getProject(), getSession(), getLog(), appRoot);
+          MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
