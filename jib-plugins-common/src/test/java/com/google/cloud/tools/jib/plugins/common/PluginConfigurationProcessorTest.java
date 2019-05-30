@@ -513,6 +513,39 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testGetContainerizingModeChecked_exploded()
+      throws InvalidContainerizingModeException {
+    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
+
+    Assert.assertEquals(
+        ContainerizingMode.EXPLODED,
+        PluginConfigurationProcessor.getContainerizingModeChecked(rawConfiguration));
+  }
+
+  @Test
+  public void testGetContainerizingModeChecked_packaged()
+      throws InvalidContainerizingModeException {
+    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
+
+    Assert.assertEquals(
+        ContainerizingMode.PACKAGED,
+        PluginConfigurationProcessor.getContainerizingModeChecked(rawConfiguration));
+  }
+
+  @Test
+  public void testGetContainerizingModeChecked_invalidValue() {
+    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("this is wrong");
+
+    try {
+      PluginConfigurationProcessor.getContainerizingModeChecked(rawConfiguration);
+      Assert.fail();
+    } catch (InvalidContainerizingModeException ex) {
+      Assert.assertEquals("this is wrong", ex.getInvalidContainerizingMode());
+      Assert.assertEquals("this is wrong", ex.getMessage());
+    }
+  }
+
+  @Test
   public void testGetWorkingDirectoryChecked() throws InvalidWorkingDirectoryException {
     Mockito.when(rawConfiguration.getWorkingDirectory()).thenReturn(Optional.of("/valid/path"));
 

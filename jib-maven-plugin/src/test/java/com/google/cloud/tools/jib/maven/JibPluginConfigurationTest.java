@@ -68,6 +68,7 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("", testPluginConfiguration.getAppRoot());
     Assert.assertNull(testPluginConfiguration.getWorkingDirectory());
     Assert.assertTrue(testPluginConfiguration.getExtraClasspath().isEmpty());
+    Assert.assertEquals("exploded", testPluginConfiguration.getContainerizingMode());
   }
 
   @Test
