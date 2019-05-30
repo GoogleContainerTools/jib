@@ -434,7 +434,6 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testGetAppRootChecked() throws InvalidAppRootException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/some/root");
-    Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/some/root"),
@@ -444,7 +443,6 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testGetAppRootChecked_errorOnNonAbsolutePath() {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("relative/path");
-    Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
     try {
       PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
@@ -457,7 +455,6 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testGetAppRootChecked_errorOnWindowsPath() {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("\\windows\\path");
-    Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
     try {
       PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
@@ -470,7 +467,6 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testGetAppRootChecked_errorOnWindowsPathWithDriveLetter() {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("C:\\windows\\path");
-    Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
     try {
       PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
