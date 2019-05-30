@@ -43,21 +43,20 @@ public class EventHandlers {
      * @param <E> the type of {@code eventClass}
      * @return this
      */
-    public <E extends JibEvent> Builder add(JibEventType<E> eventType, Consumer<E> eventConsumer) {
-      Class<E> eventClass = eventType.getEventClass();
-      handlers.put(eventClass, new Handler<>(eventClass, eventConsumer));
+    public <E extends JibEvent> Builder add(Class<E> eventType, Consumer<E> eventConsumer) {
+      handlers.put(eventType, new Handler<>(eventType, eventConsumer));
       return this;
     }
 
     /**
-     * Adds the {@code eventConsumer} to handle all {@link JibEvent} types. See {@link
-     * #add(JibEventType, Consumer)} for more details.
+     * Adds the {@code eventConsumer} to handle all {@link JibEvent} types. See {@link #add(Class,
+     * Consumer)} for more details.
      *
      * @param eventConsumer the event handler
      * @return this
      */
     public Builder add(Consumer<JibEvent> eventConsumer) {
-      return add(JibEventType.ALL, eventConsumer);
+      return add(JibEvent.class, eventConsumer);
     }
 
     public EventHandlers build() {

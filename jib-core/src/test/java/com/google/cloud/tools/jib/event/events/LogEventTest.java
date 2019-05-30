@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.event.events;
 
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent.Level;
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -32,7 +31,7 @@ public class LogEventTest {
   // Note that in actual code, the event handler should NOT perform thread unsafe operations like
   // here.
   private final EventHandlers eventHandlers =
-      EventHandlers.builder().add(JibEventType.LOGGING, receivedLogEvents::offer).build();
+      EventHandlers.builder().add(LogEvent.class, receivedLogEvents::offer).build();
 
   @Test
   public void testFactories() {
