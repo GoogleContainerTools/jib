@@ -217,6 +217,7 @@ public class MavenProjectProperties implements ProjectProperties {
             Paths.get(project.getBuild().getDirectory())
                 .resolve(project.getBuild().getFinalName() + "." + project.getPackaging());
         return JavaContainerBuilder.from(baseImage)
+            .setAppRoot(appRoot)
             .addDependencies(getDependencies())
             .addToClasspath(artifact)
             .toContainerBuilder();
@@ -237,7 +238,7 @@ public class MavenProjectProperties implements ProjectProperties {
       throw new IOException(
           "Obtaining project build output files failed; make sure you have compiled your project "
               + "before trying to build the image. (Did you accidentally run \"mvn clean "
-              + "jib:build\" instead of \"mvn clean compile jib:build\"?)",
+              + "jib:build\" instead of \"mvn clean {compile|package} jib:build\"?)",
           ex);
     }
   }
