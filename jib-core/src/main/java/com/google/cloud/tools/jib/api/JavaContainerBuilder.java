@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -165,12 +164,9 @@ public class JavaContainerBuilder {
   private final List<Path> addedOthers = new ArrayList<>();
 
   private AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
-  private RelativeUnixPath classesDestination =
-      JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE;
-  private RelativeUnixPath resourcesDestination =
-      JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE;
-  private RelativeUnixPath dependenciesDestination =
-      JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE;
+  private RelativeUnixPath classesDestination = RelativeUnixPath.get("classes");
+  private RelativeUnixPath resourcesDestination = RelativeUnixPath.get("resources");
+  private RelativeUnixPath dependenciesDestination = RelativeUnixPath.get("libs");
   private RelativeUnixPath othersDestination = RelativeUnixPath.get("classpath");
   @Nullable private String mainClass;
 
@@ -534,8 +530,14 @@ public class JavaContainerBuilder {
                 "Bug in jib-core; please report the bug at " + ProjectInfo.GITHUB_NEW_ISSUE_URL);
         }
       }
-      jibContainerBuilder.setEntrypoint(
-          JavaEntrypointConstructor.makeEntrypoint(classpathElements, jvmFlags, mainClass));
+      String classpathString = String.join(":", classpathElements);
+      List<String> entrypoint = new ArrayList<>(4 + jvmFlags.size());
+      entrypoint.add("java");
+      entrypoint.addAll(jvmFlags);
+      entrypoint.add("-cp");
+      entrypoint.add(classpathString);
+      entrypoint.add(mainClass);
+      jibContainerBuilder.setEntrypoint(entrypoint);
     }
 
     return jibContainerBuilder;

@@ -30,7 +30,6 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -269,13 +268,23 @@ public class PluginConfigurationProcessor {
       return null;
     }
 
-    List<String> classpath = new ArrayList<>(rawExtraClasspath);
-    classpath.addAll(JavaEntrypointConstructor.defaultClasspath(appRoot));
     String mainClass =
         MainClassResolver.resolveMainClass(
             rawConfiguration.getMainClass().orElse(null), projectProperties);
-    return JavaEntrypointConstructor.makeEntrypoint(
-        classpath, rawConfiguration.getJvmFlags(), mainClass);
+
+    List<String> classpath = new ArrayList<>(rawExtraClasspath);
+    classpath.add(appRoot.resolve("resources").toString());
+    classpath.add(appRoot.resolve("classes").toString());
+    classpath.add(appRoot.resolve("libs/*").toString());
+    String classpathString = String.join(":", classpath);
+
+    List<String> entrypoint = new ArrayList<>(4 + rawConfiguration.getJvmFlags().size());
+    entrypoint.add("java");
+    entrypoint.addAll(rawConfiguration.getJvmFlags());
+    entrypoint.add("-cp");
+    entrypoint.add(classpathString);
+    entrypoint.add(mainClass);
+    return entrypoint;
   }
 
   /**

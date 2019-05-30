@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LayerCountEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -368,10 +367,8 @@ public class ContainerizerIntegrationTest {
     JibContainerBuilder containerBuilder =
         Jib.from(baseImage)
             .setEntrypoint(
-                JavaEntrypointConstructor.makeEntrypoint(
-                    JavaEntrypointConstructor.defaultClasspath(AbsoluteUnixPath.get("/app")),
-                    Collections.emptyList(),
-                    "HelloWorld"))
+                Arrays.asList(
+                    "java", "-cp", "/app/resources:/app/classes:/app/libs/*", "HelloWorld"))
             .setProgramArguments(Collections.singletonList("An argument."))
             .setEnvironment(ImmutableMap.of("env1", "envvalue1", "env2", "envvalue2"))
             .setExposedPorts(
