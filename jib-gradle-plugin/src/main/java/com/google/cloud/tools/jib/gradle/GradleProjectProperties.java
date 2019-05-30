@@ -21,8 +21,9 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
@@ -103,13 +104,13 @@ class GradleProjectProperties implements ProjectProperties {
 
     return EventHandlers.builder()
         .add(
-            JibEventType.LOGGING,
+            LogEvent.class,
             logEvent -> consoleLogger.log(logEvent.getLevel(), logEvent.getMessage()))
         .add(
-            JibEventType.TIMING,
+            TimerEvent.class,
             new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
         .add(
-            JibEventType.PROGRESS,
+            ProgressEvent.class,
             new ProgressEventHandler(
                 update -> {
                   List<String> footer =
