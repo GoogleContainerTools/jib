@@ -21,8 +21,9 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
@@ -70,9 +71,8 @@ class GradleProjectProperties implements ProjectProperties {
   private static final String MAIN_SOURCE_SET_NAME = "main";
 
   /** @return a GradleProjectProperties from the given project and logger. */
-  static GradleProjectProperties getForProject(
-      Project project, Logger logger, AbsoluteUnixPath appRoot) {
-    return new GradleProjectProperties(project, logger, appRoot);
+  static GradleProjectProperties getForProject(Project project, Logger logger) {
+    return new GradleProjectProperties(project, logger);
   }
 
   static Path getExplodedWarDirectory(Project project) {
@@ -102,13 +102,13 @@ class GradleProjectProperties implements ProjectProperties {
 
     return EventHandlers.builder()
         .add(
-            JibEventType.LOGGING,
+            LogEvent.class,
             logEvent -> consoleLogger.log(logEvent.getLevel(), logEvent.getMessage()))
         .add(
-            JibEventType.TIMING,
+            TimerEvent.class,
             new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
         .add(
-            JibEventType.PROGRESS,
+            ProgressEvent.class,
             new ProgressEventHandler(
                 update -> {
                   List<String> footer =
@@ -142,19 +142,18 @@ class GradleProjectProperties implements ProjectProperties {
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final EventHandlers eventHandlers;
   private final Logger logger;
-  private final AbsoluteUnixPath appRoot;
 
   @VisibleForTesting
-  GradleProjectProperties(Project project, Logger logger, AbsoluteUnixPath appRoot) {
+  GradleProjectProperties(Project project, Logger logger) {
     this.project = project;
     this.logger = logger;
-    this.appRoot = appRoot;
 
     eventHandlers = makeEventHandlers(project, logger, singleThreadedExecutor);
   }
 
   @Override
-  public JibContainerBuilder createContainerBuilder(RegistryImage baseImage) {
+  public JibContainerBuilder createContainerBuilder(
+      RegistryImage baseImage, AbsoluteUnixPath appRoot) {
     try {
       if (isWarProject()) {
         logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
@@ -265,7 +264,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public boolean isWarProject() {
-    return TaskCommon.isWarProject(project);
+    return TaskCommon.getWarTask(project) != null;
   }
 
   /**

@@ -221,8 +221,7 @@ public class GradleProjectPropertiesTest {
         getResource("gradle/webapp").resolve("jib-exploded-war/WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
 
-    gradleProjectProperties =
-        new GradleProjectProperties(mockProject, mockLogger, AbsoluteUnixPath.get("/app"));
+    gradleProjectProperties = new GradleProjectProperties(mockProject, mockLogger);
   }
 
   @Test
@@ -361,7 +360,8 @@ public class GradleProjectPropertiesTest {
     Path nonexistentFile = Paths.get("/nonexistent/file");
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
-    gradleProjectProperties.createContainerBuilder(RegistryImage.named("base"));
+    gradleProjectProperties.createContainerBuilder(
+        RegistryImage.named("base"), AbsoluteUnixPath.get("/anything"));
     Mockito.verify(mockLogger).warn("No classes files were found - did you compile your project?");
   }
 
@@ -551,8 +551,8 @@ public class GradleProjectPropertiesTest {
   private BuildConfiguration setupBuildConfiguration(String appRoot)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JibContainerBuilder jibContainerBuilder =
-        new GradleProjectProperties(mockProject, mockLogger, AbsoluteUnixPath.get(appRoot))
-            .createContainerBuilder(RegistryImage.named("base"));
+        new GradleProjectProperties(mockProject, mockLogger)
+            .createContainerBuilder(RegistryImage.named("base"), AbsoluteUnixPath.get(appRoot));
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         jibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))

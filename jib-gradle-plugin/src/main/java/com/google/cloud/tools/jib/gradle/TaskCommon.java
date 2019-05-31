@@ -36,10 +36,6 @@ import org.slf4j.LoggerFactory;
 /** Collection of common methods to share between Gradle tasks. */
 class TaskCommon {
 
-  static boolean isWarProject(Project project) {
-    return getWarTask(project) != null;
-  }
-
   @Nullable
   static War getWarTask(Project project) {
     WarPluginConvention warPluginConvention =

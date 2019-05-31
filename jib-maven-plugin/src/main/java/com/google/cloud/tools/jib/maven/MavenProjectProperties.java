@@ -21,8 +21,9 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
@@ -69,12 +70,10 @@ public class MavenProjectProperties implements ProjectProperties {
    * @param project the {@link MavenProject} for the plugin.
    * @param session the {@link MavenSession} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution
-   * @param appRoot root directory in the image where the app will be placed
    * @return a MavenProjectProperties from the given project and logger.
    */
-  static MavenProjectProperties getForProject(
-      MavenProject project, MavenSession session, Log log, AbsoluteUnixPath appRoot) {
-    return new MavenProjectProperties(project, session, log, appRoot);
+  static MavenProjectProperties getForProject(MavenProject project, MavenSession session, Log log) {
+    return new MavenProjectProperties(project, session, log);
   }
 
   /**
@@ -121,13 +120,13 @@ public class MavenProjectProperties implements ProjectProperties {
 
     return EventHandlers.builder()
         .add(
-            JibEventType.LOGGING,
+            LogEvent.class,
             logEvent -> consoleLogger.log(logEvent.getLevel(), logEvent.getMessage()))
         .add(
-            JibEventType.TIMING,
+            TimerEvent.class,
             new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
         .add(
-            JibEventType.PROGRESS,
+            ProgressEvent.class,
             new ProgressEventHandler(
                 update ->
                     consoleLogger.setFooter(
@@ -188,19 +187,17 @@ public class MavenProjectProperties implements ProjectProperties {
   private final MavenSession session;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final EventHandlers eventHandlers;
-  private final AbsoluteUnixPath appRoot;
 
   @VisibleForTesting
-  MavenProjectProperties(
-      MavenProject project, MavenSession session, Log log, AbsoluteUnixPath appRoot) {
+  MavenProjectProperties(MavenProject project, MavenSession session, Log log) {
     this.project = project;
-    this.appRoot = appRoot;
     this.session = session;
     eventHandlers = makeEventHandlers(session, log, singleThreadedExecutor);
   }
 
   @Override
-  public JibContainerBuilder createContainerBuilder(RegistryImage baseImage) throws IOException {
+  public JibContainerBuilder createContainerBuilder(
+      RegistryImage baseImage, AbsoluteUnixPath appRoot) throws IOException {
     try {
       if (isWarProject()) {
         Path explodedWarPath =
@@ -295,9 +292,16 @@ public class MavenProjectProperties implements ProjectProperties {
     return JAR_PLUGIN_NAME;
   }
 
+  /**
+   * Gets whether or not the given project is a war project. This is the case for projects with
+   * packaging {@code war} and {@code gwt-app}.
+   *
+   * @return {@code true} if the project is a war project, {@code false} if not
+   */
   @Override
   public boolean isWarProject() {
-    return MojoCommon.isWarProject(project);
+    String packaging = project.getPackaging();
+    return "war".equals(packaging) || "gwt-app".equals(packaging);
   }
 
   @Override

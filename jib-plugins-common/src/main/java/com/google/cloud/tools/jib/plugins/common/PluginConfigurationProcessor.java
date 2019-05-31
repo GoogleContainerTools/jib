@@ -23,14 +23,13 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
 import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
-import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -184,11 +183,12 @@ public class PluginConfigurationProcessor {
 
     JibContainerBuilder jibContainerBuilder =
         projectProperties
-            .createContainerBuilder(baseImage)
+            .createContainerBuilder(
+                baseImage, getAppRootChecked(rawConfiguration, projectProperties))
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
-            .setExposedPorts(ExposedPortsParser.parse(rawConfiguration.getPorts()))
+            .setExposedPorts(Ports.parse(rawConfiguration.getPorts()))
             .setVolumes(getVolumesSet(rawConfiguration))
             .setLabels(rawConfiguration.getLabels())
             .setUser(rawConfiguration.getUser().orElse(null));
@@ -243,8 +243,7 @@ public class PluginConfigurationProcessor {
   static List<String> computeEntrypoint(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws MainClassInferenceException, InvalidAppRootException, IOException {
-    AbsoluteUnixPath appRoot =
-        getAppRootChecked(rawConfiguration, projectProperties.isWarProject());
+    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
 
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
     List<String> rawExtraClasspath = rawConfiguration.getExtraClasspath();
@@ -269,13 +268,23 @@ public class PluginConfigurationProcessor {
       return null;
     }
 
-    List<String> classpath = new ArrayList<>(rawExtraClasspath);
-    classpath.addAll(JavaEntrypointConstructor.defaultClasspath(appRoot));
     String mainClass =
         MainClassResolver.resolveMainClass(
             rawConfiguration.getMainClass().orElse(null), projectProperties);
-    return JavaEntrypointConstructor.makeEntrypoint(
-        classpath, rawConfiguration.getJvmFlags(), mainClass);
+
+    List<String> classpath = new ArrayList<>(rawExtraClasspath);
+    classpath.add(appRoot.resolve("resources").toString());
+    classpath.add(appRoot.resolve("classes").toString());
+    classpath.add(appRoot.resolve("libs/*").toString());
+    String classpathString = String.join(":", classpath);
+
+    List<String> entrypoint = new ArrayList<>(4 + rawConfiguration.getJvmFlags().size());
+    entrypoint.add("java");
+    entrypoint.addAll(rawConfiguration.getJvmFlags());
+    entrypoint.add("-cp");
+    entrypoint.add(classpathString);
+    entrypoint.add(mainClass);
+    return entrypoint;
   }
 
   /**
@@ -349,17 +358,18 @@ public class PluginConfigurationProcessor {
    * JavaContainerBuilder#DEFAULT_APP_ROOT} for other projects.
    *
    * @param rawConfiguration raw configuration data
-   * @param isWarProject whether or not the project is a WAR project
+   * @param projectProperties the project properties
    * @return the app root value
    * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
    */
   @VisibleForTesting
-  public static AbsoluteUnixPath getAppRootChecked(
-      RawConfiguration rawConfiguration, boolean isWarProject) throws InvalidAppRootException {
+  static AbsoluteUnixPath getAppRootChecked(
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+      throws InvalidAppRootException {
     String appRoot = rawConfiguration.getAppRoot();
     if (appRoot.isEmpty()) {
       appRoot =
-          isWarProject
+          projectProperties.isWarProject()
               ? JavaContainerBuilder.DEFAULT_WEB_APP_ROOT
               : JavaContainerBuilder.DEFAULT_APP_ROOT;
     }

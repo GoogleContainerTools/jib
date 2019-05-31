@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.event.events;
 
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.progress.Allocation;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +45,7 @@ public class ProgressEventTest {
   }
 
   private static EventHandlers makeEventHandlers(Consumer<ProgressEvent> progressEventConsumer) {
-    return EventHandlers.builder().add(JibEventType.PROGRESS, progressEventConsumer).build();
+    return EventHandlers.builder().add(ProgressEvent.class, progressEventConsumer).build();
   }
 
   private static final double DOUBLE_ERROR_MARGIN = 1e-10;
