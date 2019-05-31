@@ -267,12 +267,12 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   /**
-   * Returns the input files for a task.
+   * Returns the input files for a task. These files include the runtimeClasspath of the application
+   * and any extraDirectories defined by the user to include in the container.
    *
    * @param project the gradle project
    * @param extraDirectories the image's configured extra directories
-   * @return the input files to the task are all the output files for all the dependencies of the
-   *     {@code classes} task
+   * @return the input files
    */
   static FileCollection getInputFiles(Project project, List<Path> extraDirectories) {
     JavaPluginConvention javaPluginConvention =

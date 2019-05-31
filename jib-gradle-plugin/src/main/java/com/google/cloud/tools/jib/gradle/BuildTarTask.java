@@ -73,8 +73,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   }
 
   /**
-   * @return the input files to this task are all the output files for all the dependencies of the
-   *     {@code classes} task.
+   * @return a collection of all the files that jib includes in the image. Only used to calculate
+   *     UP-TO-DATE.
    */
   @InputFiles
   public FileCollection getInputFiles() {
