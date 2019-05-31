@@ -32,18 +32,6 @@ import org.apache.maven.project.MavenProject;
 class MojoCommon {
 
   /**
-   * Gets whether or not the given project is a war project. This is the case for projects with
-   * packaging {@code war} and {@code gwt-app}.
-   *
-   * @param project the Maven project
-   * @return {@code true} if the project is a war project, {@code false} if not
-   */
-  static boolean isWarProject(MavenProject project) {
-    String packaging = project.getPackaging();
-    return "war".equals(packaging) || "gwt-app".equals(packaging);
-  }
-
-  /**
    * Gets the list of extra directory paths from a {@link JibPluginConfiguration}. Returns {@code
    * (project dir)/src/main/jib} by default if not configured.
    *

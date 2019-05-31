@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -82,11 +81,8 @@ public class BuildImageTask extends DefaultTask implements JibTask {
 
     try {
       RawConfiguration gradleRawConfiguration = new GradleRawConfiguration(jibExtension);
-      AbsoluteUnixPath appRoot =
-          PluginConfigurationProcessor.getAppRootChecked(
-              gradleRawConfiguration, TaskCommon.isWarProject(getProject()));
       GradleProjectProperties projectProperties =
-          GradleProjectProperties.getForProject(getProject(), getLogger(), appRoot);
+          GradleProjectProperties.getForProject(getProject(), getLogger());
 
       if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
         throw new GradleException(

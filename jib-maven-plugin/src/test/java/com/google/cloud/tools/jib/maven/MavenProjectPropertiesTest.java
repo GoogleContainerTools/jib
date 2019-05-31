@@ -176,8 +176,7 @@ public class MavenProjectPropertiesTest {
   public void setup() throws IOException, URISyntaxException {
     Mockito.when(mockMavenSession.getRequest()).thenReturn(mockMavenRequest);
     mavenProjectProperties =
-        new MavenProjectProperties(
-            mockMavenProject, mockMavenSession, mockLog, AbsoluteUnixPath.get("/app"));
+        new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog);
     jarPluginConfiguration = new Xpp3Dom("");
     archive = new Xpp3Dom("archive");
     manifest = new Xpp3Dom("manifest");
@@ -363,7 +362,7 @@ public class MavenProjectPropertiesTest {
   public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration(AbsoluteUnixPath.get("/app"));
+    BuildConfiguration configuration = setupBuildConfiguration("/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
 
     Path dependenciesPath = getResource("maven/application/dependencies");
@@ -403,7 +402,7 @@ public class MavenProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration(AbsoluteUnixPath.get("/my/app"));
+    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
     assertNonDefaultAppRoot(configuration);
   }
 
@@ -416,7 +415,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(outputPath.toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    BuildConfiguration configuration = setupBuildConfiguration(AbsoluteUnixPath.get("/my/app"));
+    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertSourcePathsUnordered(
         ImmutableList.of(outputPath.resolve("final-name/WEB-INF/lib/dependency-1.0.0.jar")),
@@ -479,7 +478,7 @@ public class MavenProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     // Test when the default packaging is set
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
-    BuildConfiguration configuration = setupBuildConfiguration(AbsoluteUnixPath.get("/my/app"));
+    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
     assertNonDefaultAppRoot(configuration);
   }
 
@@ -492,7 +491,7 @@ public class MavenProjectPropertiesTest {
         .thenReturn(temporaryFolder.getRoot().toPath().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration(AbsoluteUnixPath.get("/my/app")); // should pass
+    setupBuildConfiguration("/my/app"); // should pass
   }
 
   @Test
@@ -504,7 +503,7 @@ public class MavenProjectPropertiesTest {
         .thenReturn(temporaryFolder.getRoot().toPath().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration(AbsoluteUnixPath.get("/my/app")); // should pass
+    setupBuildConfiguration("/my/app"); // should pass
   }
 
   @Test
@@ -516,38 +515,38 @@ public class MavenProjectPropertiesTest {
         .thenReturn(temporaryFolder.getRoot().toPath().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration(AbsoluteUnixPath.get("/my/app")); // should pass
+    setupBuildConfiguration("/my/app"); // should pass
   }
 
   @Test
   public void testIsWarProject_WarPackagingIsWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
-    Assert.assertTrue(MojoCommon.isWarProject(mockMavenProject));
+    Assert.assertTrue(mavenProjectProperties.isWarProject());
   }
 
   @Test
   public void testIsWarProject_GwtAppPackagingIsWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-app");
-    Assert.assertTrue(MojoCommon.isWarProject(mockMavenProject));
+    Assert.assertTrue(mavenProjectProperties.isWarProject());
   }
 
   @Test
   public void testIsWarProject_JarPackagingIsNotWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
-    Assert.assertFalse(MojoCommon.isWarProject(mockMavenProject));
+    Assert.assertFalse(mavenProjectProperties.isWarProject());
   }
 
   @Test
   public void testIsWarProject_GwtLibPackagingIsNotWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-lib");
-    Assert.assertFalse(MojoCommon.isWarProject(mockMavenProject));
+    Assert.assertFalse(mavenProjectProperties.isWarProject());
   }
 
-  private BuildConfiguration setupBuildConfiguration(AbsoluteUnixPath appRoot)
+  private BuildConfiguration setupBuildConfiguration(String appRoot)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JibContainerBuilder JibContainerBuilder =
-        new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog, appRoot)
-            .createContainerBuilder(RegistryImage.named("base"));
+        new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
+            .createContainerBuilder(RegistryImage.named("base"), AbsoluteUnixPath.get(appRoot));
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         JibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))
