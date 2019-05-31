@@ -42,13 +42,11 @@ public class ProgressEventDispatcher implements Closeable {
     /**
      * Creates the {@link ProgressEventDispatcher} with an associated {@link Allocation}.
      *
-     * @param buildStepType the build step that the progress events correspond to
      * @param description user-facing description of what the allocation represents
      * @param allocationUnits number of allocation units
      * @return the new {@link ProgressEventDispatcher}
      */
-    ProgressEventDispatcher create(
-        BuildStepType buildStepType, String description, long allocationUnits);
+    ProgressEventDispatcher create(String description, long allocationUnits);
   }
 
   /**
@@ -62,7 +60,7 @@ public class ProgressEventDispatcher implements Closeable {
   public static ProgressEventDispatcher newRoot(
       EventHandlers eventHandlers, String description, long allocationUnits) {
     return newProgressEventDispatcher(
-        eventHandlers, Allocation.newRoot(description, allocationUnits), BuildStepType.ALL);
+        eventHandlers, Allocation.newRoot(description, allocationUnits));
   }
 
   /**
@@ -74,25 +72,22 @@ public class ProgressEventDispatcher implements Closeable {
    * @return a new {@link ProgressEventDispatcher}
    */
   private static ProgressEventDispatcher newProgressEventDispatcher(
-      EventHandlers eventHandlers, Allocation allocation, BuildStepType buildStepType) {
+      EventHandlers eventHandlers, Allocation allocation) {
     ProgressEventDispatcher progressEventDispatcher =
-        new ProgressEventDispatcher(eventHandlers, allocation, buildStepType);
+        new ProgressEventDispatcher(eventHandlers, allocation);
     progressEventDispatcher.dispatchProgress(0);
     return progressEventDispatcher;
   }
 
   private final EventHandlers eventHandlers;
   private final Allocation allocation;
-  private final BuildStepType buildStepType;
 
   private long remainingAllocationUnits;
   private boolean closed = false;
 
-  private ProgressEventDispatcher(
-      EventHandlers eventHandlers, Allocation allocation, BuildStepType buildStepType) {
+  private ProgressEventDispatcher(EventHandlers eventHandlers, Allocation allocation) {
     this.eventHandlers = eventHandlers;
     this.allocation = allocation;
-    this.buildStepType = buildStepType;
 
     remainingAllocationUnits = allocation.getAllocationUnits();
   }
@@ -112,12 +107,11 @@ public class ProgressEventDispatcher implements Closeable {
       private boolean used = false;
 
       @Override
-      public ProgressEventDispatcher create(
-          BuildStepType buildStepType, String description, long allocationUnits) {
+      public ProgressEventDispatcher create(String description, long allocationUnits) {
         Preconditions.checkState(!used);
         used = true;
         return newProgressEventDispatcher(
-            eventHandlers, allocation.newChild(description, allocationUnits), buildStepType);
+            eventHandlers, allocation.newChild(description, allocationUnits));
       }
     };
   }
@@ -139,7 +133,7 @@ public class ProgressEventDispatcher implements Closeable {
    */
   public void dispatchProgress(long progressUnits) {
     long unitsDecremented = decrementRemainingAllocationUnits(progressUnits);
-    eventHandlers.dispatch(new ProgressEvent(allocation, unitsDecremented, buildStepType));
+    eventHandlers.dispatch(new ProgressEvent(allocation, unitsDecremented));
   }
 
   /**

@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
@@ -94,8 +93,7 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
         .dispatch(LogEvent.progress("Loading to Docker daemon..."));
 
     try (ProgressEventDispatcher ignored =
-        progressEventDispatcherFactory.create(
-            BuildStepType.LOAD_DOCKER, "loading to Docker daemon", 1)) {
+        progressEventDispatcherFactory.create("loading to Docker daemon", 1)) {
       Image image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
       ImageReference targetImageReference =
           buildConfiguration.getTargetImageConfiguration().getImage();

@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.AsyncSteps;
-import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
@@ -146,8 +145,7 @@ public class StepsRunner {
                     buildConfiguration,
                     Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer(),
                     Preconditions.checkNotNull(steps.authenticatePushStep),
-                    Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep),
-                    BuildStepType.PUSH_BASE_LAYERS));
+                    Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep)));
   }
 
   public StepsRunner buildAndCacheApplicationLayers() {
@@ -195,8 +193,7 @@ public class StepsRunner {
                     Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer(),
                     Preconditions.checkNotNull(steps.authenticatePushStep),
                     AsyncSteps.immediate(
-                        Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps)),
-                    BuildStepType.PUSH_APPLICATION_LAYERS));
+                        Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps))));
   }
 
   public StepsRunner pushImage() {
