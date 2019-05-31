@@ -192,4 +192,15 @@ public class BuildDockerMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, world. \n", new Command("docker", "run", "--rm", "my-artifact-id:1").run());
   }
+
+  @Test
+  public void testExecute_jarContainerization()
+      throws DigestException, VerificationException, IOException, InterruptedException {
+    String targetImage = "jarcontainerizationimage:maven" + System.nanoTime();
+    buildToDockerDaemon(
+        simpleTestProject.getProjectRoot(), targetImage, "pom-jar-containerization.xml");
+    Assert.assertEquals(
+        "Hello, world. \nImplementation-Title: hello-world\nImplementation-Version: 1\n",
+        new Command("docker", "run", "--rm", targetImage).run());
+  }
 }
