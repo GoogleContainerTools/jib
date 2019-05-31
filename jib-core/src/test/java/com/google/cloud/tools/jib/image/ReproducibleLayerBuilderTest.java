@@ -92,6 +92,14 @@ public class ReproducibleLayerBuilderTest {
     Assert.assertEquals(TarArchiveEntry.DEFAULT_DIR_MODE, extractionPathEntry.getMode());
   }
 
+  private static LayerEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
+    return new LayerEntry(
+        source,
+        destination,
+        LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
+        LayerConfiguration.DEFAULT_MODIFIED_TIME);
+  }
+
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
@@ -168,14 +176,14 @@ public class ReproducibleLayerBuilderTest {
     Blob layer =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA")),
-                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"))))
+                    defaultLayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA")),
+                    defaultLayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"))))
             .build();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB")),
-                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"))))
+                    defaultLayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB")),
+                    defaultLayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"))))
             .build();
 
     byte[] layerContent = Blobs.writeToByteArray(layer);
@@ -270,7 +278,7 @@ public class ReproducibleLayerBuilderTest {
 
     Blob blob =
         new ReproducibleLayerBuilder(
-                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"))))
+                ImmutableList.of(defaultLayerEntry(file, AbsoluteUnixPath.get("/fileA"))))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -321,15 +329,17 @@ public class ReproducibleLayerBuilderTest {
     Blob blob =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA")),
+                    defaultLayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA")),
                     new LayerEntry(
                         fileB,
                         AbsoluteUnixPath.get("/somewhere/fileB"),
-                        FilePermissions.fromOctalString("123")),
+                        FilePermissions.fromOctalString("123"),
+                        LayerConfiguration.DEFAULT_MODIFIED_TIME),
                     new LayerEntry(
                         folder,
                         AbsoluteUnixPath.get("/somewhere/folder"),
-                        FilePermissions.fromOctalString("456"))))
+                        FilePermissions.fromOctalString("456"),
+                        LayerConfiguration.DEFAULT_MODIFIED_TIME)))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
