@@ -19,12 +19,10 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.builder.BuildStepType;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithAuthorization;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.event.events.LayerCountEvent;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
@@ -77,18 +75,11 @@ class PullAndCacheBaseImageLayersStep
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER,
-                "checking base image layers",
-                baseImageLayers.size());
+                "checking base image layers", baseImageLayers.size());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       ImmutableList.Builder<PullAndCacheBaseImageLayerStep> pullAndCacheBaseImageLayerStepsBuilder =
           ImmutableList.builderWithExpectedSize(baseImageLayers.size());
-      buildConfiguration
-          .getEventHandlers()
-          .dispatch(
-              new LayerCountEvent(
-                  BuildStepType.PULL_AND_CACHE_BASE_IMAGE_LAYER, baseImageLayers.size()));
       for (Layer layer : baseImageLayers) {
         pullAndCacheBaseImageLayerStepsBuilder.add(
             new PullAndCacheBaseImageLayerStep(
