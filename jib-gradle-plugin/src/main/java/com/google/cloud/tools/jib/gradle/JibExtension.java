@@ -118,7 +118,7 @@ public class JibExtension {
   // for the deprecated "jib.extraDirectory" config parameter
   public void setExtraDirectory(File extraDirectory) {
     extraDirectoryConfigured = true;
-    this.extraDirectories.setPath(extraDirectory);
+    extraDirectories.setPath(extraDirectory);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
@@ -168,6 +168,7 @@ public class JibExtension {
   @Input
   @Optional
   public String getContainerizingMode() {
-    return containerizingMode.get();
+    String property = System.getProperty(PropertyNames.CONTAINERIZING_MODE);
+    return property != null ? property : containerizingMode.get();
   }
 }
