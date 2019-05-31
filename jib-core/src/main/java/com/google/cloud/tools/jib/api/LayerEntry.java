@@ -23,14 +23,6 @@ import java.util.Objects;
 /**
  * Represents an entry in the layer. A layer consists of many entries that can be converted into tar
  * archive entries.
- *
- * <p>Note that:
- *
- * <ul>
- *   <li>Entry source files can be either files or directories.
- *   <li>Adding a directory does not include the contents of the directory. Each file under a
- *       directory must be added as a separate {@link LayerEntry}.
- * </ul>
  */
 public class LayerEntry {
 
@@ -51,38 +43,13 @@ public class LayerEntry {
    * AbsoluteUnixPath.get("/app/classes/com"))} adds a directory to the container file system at
    * {@code /app/classes/com}. This does <b>not</b> add the contents of {@code com/}.
    *
-   * @param sourceFile the source file to add to the layer
-   * @param extractionPath the path in the container file system corresponding to the {@code
-   *     sourceFile}
-   */
-  public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath) {
-    this(
-        sourceFile,
-        extractionPath,
-        LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, extractionPath));
-  }
-
-  /**
-   * Instantiates with a source file and the path to place the source file in the container file
-   * system.
+   * <p>Note that:
    *
-   * @param sourceFile the source file to add to the layer
-   * @param extractionPath the path in the container file system corresponding to the {@code
-   *     sourceFile}
-   * @param permissions the file permissions on the container. Use {@code null} to use defaults (644
-   *     for files, 755 for directories)
-   */
-  public LayerEntry(Path sourceFile, AbsoluteUnixPath extractionPath, FilePermissions permissions) {
-    this(
-        sourceFile,
-        extractionPath,
-        permissions,
-        LayerConfiguration.DEFAULT_MODIFIED_TIME_PROVIDER.apply(sourceFile, extractionPath));
-  }
-
-  /**
-   * Instantiates with a source file and the path to place the source file in the container file
-   * system.
+   * <ul>
+   *   <li>Entry source files can be either files or directories.
+   *   <li>Adding a directory does not include the contents of the directory. Each file under a
+   *       directory must be added as a separate {@link LayerEntry}.
+   * </ul>
    *
    * @param sourceFile the source file to add to the layer
    * @param extractionPath the path in the container file system corresponding to the {@code
