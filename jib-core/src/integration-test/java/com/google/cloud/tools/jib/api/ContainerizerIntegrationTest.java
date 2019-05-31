@@ -19,11 +19,11 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.JibEventType;
-import com.google.cloud.tools.jib.event.events.LayerCountEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
 import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
@@ -35,12 +35,9 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.hamcrest.CoreMatchers;
 import org.junit.AfterClass;
@@ -147,21 +144,20 @@ public class ContainerizerIntegrationTest {
     Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
   }
 
-  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+  private static void assertLayerSizer(int expected, String imageReference)
+      throws IOException, InterruptedException {
+    Command command =
+        new Command("docker", "inspect", "-f", "{{join .RootFS.Layers \",\"}}", imageReference);
+    String layers = command.run().trim();
+    Assert.assertEquals(expected, Splitter.on(",").splitToList(layers).size());
+  }
 
-  private final Map<String, Integer> layerCounts = new ConcurrentHashMap<>();
-  private final Consumer<LayerCountEvent> layerCountConsumer =
-      layerCountEvent ->
-          layerCounts.merge(
-              layerCountEvent.getDescription(),
-              layerCountEvent.getCount(),
-              (oldValue, count) -> oldValue + count);
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private final ProgressChecker progressChecker = new ProgressChecker();
   private final EventHandlers eventHandlers =
       EventHandlers.builder()
           .add(JibEventType.PROGRESS, progressChecker.progressEventHandler)
-          .add(JibEventType.LAYER_COUNT, layerCountConsumer)
           .build();
 
   @Test
@@ -176,15 +172,6 @@ public class ContainerizerIntegrationTest {
             Collections.emptyList());
 
     progressChecker.checkCompletion();
-    Assert.assertEquals(
-        ImmutableMap.of(
-            "Setting up base image caching",
-            4,
-            "Building application layers",
-            3,
-            "Setting up to push layers",
-            7),
-        layerCounts);
 
     logger.info("Initial build time: " + ((System.nanoTime() - lastTime) / 1_000_000));
 
@@ -202,6 +189,7 @@ public class ContainerizerIntegrationTest {
     String imageReference = "localhost:5000/testimage:testtag";
     localRegistry.pull(imageReference);
     assertDockerInspect(imageReference);
+    assertLayerSizer(7, imageReference);
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
 
@@ -268,11 +256,9 @@ public class ContainerizerIntegrationTest {
         Collections.emptyList());
 
     progressChecker.checkCompletion();
-    Assert.assertEquals(
-        ImmutableMap.of("Setting up base image caching", 4, "Building application layers", 3),
-        layerCounts);
 
     assertDockerInspect("testdocker");
+    assertLayerSizer(7, "testdocker");
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", "testdocker").run());
   }
@@ -312,11 +298,9 @@ public class ContainerizerIntegrationTest {
         Collections.emptyList());
 
     progressChecker.checkCompletion();
-    Assert.assertEquals(
-        ImmutableMap.of("Setting up base image caching", 4, "Building application layers", 3),
-        layerCounts);
 
     new Command("docker", "load", "--input", outputPath.toString()).run();
+    assertLayerSizer(7, "testtar");
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", "testtar").run());
   }
