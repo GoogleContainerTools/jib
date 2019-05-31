@@ -340,7 +340,7 @@ public class BuildImageMojoIntegrationTest {
           CoreMatchers.containsString(
               "Obtaining project build output files failed; make sure you have compiled your "
                   + "project before trying to build the image. (Did you accidentally run \"mvn "
-                  + "clean jib:build\" instead of \"mvn clean {compile|package} jib:build\"?)"));
+                  + "clean jib:build\" instead of \"mvn clean compile jib:build\"?)"));
     }
 
     Instant before = Instant.now();

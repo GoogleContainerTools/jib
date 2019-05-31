@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.security.DigestException;
 import java.time.Instant;
+import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.hamcrest.CoreMatchers;
@@ -202,5 +203,26 @@ public class BuildDockerMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, world. \nImplementation-Title: hello-world\nImplementation-Version: 1\n",
         new Command("docker", "run", "--rm", targetImage).run());
+  }
+
+  @Test
+  public void testExecute_jarContainerizationOnMissingJar()
+      throws VerificationException, IOException, InterruptedException, DigestException {
+    try {
+      Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+      verifier.setSystemProperty("_TARGET_IMAGE", "erroronmissingjar");
+      verifier.setAutoclean(false);
+      verifier.addCliOption("--file=pom-jar-containerization.xml");
+      verifier.executeGoals(Arrays.asList("clean", "jib:dockerBuild"));
+      Assert.fail();
+
+    } catch (VerificationException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "Obtaining project build output files failed; make sure you have packaged your "
+                  + "project before trying to build the image. (Did you accidentally run \"mvn "
+                  + "clean jib:build\" instead of \"mvn clean package jib:build\"?)"));
+    }
   }
 }

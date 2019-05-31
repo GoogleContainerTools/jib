@@ -211,30 +211,44 @@ public class MavenProjectProperties implements ProjectProperties {
         return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
       }
 
-      if (containerizingMode == ContainerizingMode.PACKAGED) {
-        String jarName = project.getBuild().getFinalName() + "." + project.getPackaging();
-        Path jar = Paths.get(project.getBuild().getDirectory(), jarName);
-        return javaContainerBuilder
-            .addDependencies(getDependencies())
-            .addToClasspath(jar)
-            .toContainerBuilder();
+      // Add dependencies
+      Set<Artifact> artifacts = project.getArtifacts();
+      List<Path> dependencies =
+          artifacts.stream().map(Artifact::getFile).map(File::toPath).collect(Collectors.toList());
+      javaContainerBuilder.addDependencies(dependencies);
+
+      switch (containerizingMode) {
+        case EXPLODED:
+          // Add resources, and classes
+          Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
+          Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+          javaContainerBuilder
+              .addResources(classesOutputDirectory, isClassFile.negate())
+              .addClasses(classesOutputDirectory, isClassFile);
+          break;
+
+        case PACKAGED:
+          // Add a JAR
+          String jarName = project.getBuild().getFinalName() + "." + project.getPackaging();
+          Path jar = Paths.get(project.getBuild().getDirectory(), jarName);
+          javaContainerBuilder.addToClasspath(jar);
+          break;
+
+        default:
+          throw new IllegalStateException("unknown containerizing mode: " + containerizingMode);
       }
 
-      Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
-      Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
-
-      // Add dependencies, resources, and classes
-      return javaContainerBuilder
-          .addResources(classesOutputDirectory, isClassFile.negate())
-          .addClasses(classesOutputDirectory, isClassFile)
-          .addDependencies(getDependencies())
-          .toContainerBuilder();
+      return javaContainerBuilder.toContainerBuilder();
 
     } catch (IOException ex) {
       throw new IOException(
-          "Obtaining project build output files failed; make sure you have compiled your project "
+          "Obtaining project build output files failed; make sure you have "
+              + (containerizingMode == ContainerizingMode.PACKAGED ? "packaged" : "compiled")
+              + " your project "
               + "before trying to build the image. (Did you accidentally run \"mvn clean "
-              + "jib:build\" instead of \"mvn clean {compile|package} jib:build\"?)",
+              + "jib:build\" instead of \"mvn clean "
+              + (containerizingMode == ContainerizingMode.PACKAGED ? "package" : "compile")
+              + " jib:build\"?)",
           ex);
     }
   }

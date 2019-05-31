@@ -278,7 +278,8 @@ public class PluginConfigurationProcessor {
     }
 
     List<String> classpath = new ArrayList<>(rawExtraClasspath);
-    switch (getContainerizingModeChecked(rawConfiguration)) {
+    ContainerizingMode mode = getContainerizingModeChecked(rawConfiguration);
+    switch (mode) {
       case EXPLODED:
         classpath.add(appRoot.resolve("resources").toString());
         classpath.add(appRoot.resolve("classes").toString());
@@ -289,7 +290,7 @@ public class PluginConfigurationProcessor {
         classpath.add(appRoot.resolve("libs/*").toString());
         break;
       default:
-        throw new RuntimeException("BUG: fix the program");
+        throw new IllegalStateException("unknown containerizing mode: " + mode);
     }
 
     String classpathString = String.join(":", classpath);
