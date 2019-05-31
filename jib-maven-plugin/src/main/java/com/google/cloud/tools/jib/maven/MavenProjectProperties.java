@@ -72,12 +72,10 @@ public class MavenProjectProperties implements ProjectProperties {
    * @param project the {@link MavenProject} for the plugin.
    * @param session the {@link MavenSession} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution
-   * @param appRoot root directory in the image where the app will be placed
    * @return a MavenProjectProperties from the given project and logger.
    */
-  static MavenProjectProperties getForProject(
-      MavenProject project, MavenSession session, Log log, AbsoluteUnixPath appRoot) {
-    return new MavenProjectProperties(project, session, log, appRoot);
+  static MavenProjectProperties getForProject(MavenProject project, MavenSession session, Log log) {
+    return new MavenProjectProperties(project, session, log);
   }
 
   /**
@@ -191,20 +189,18 @@ public class MavenProjectProperties implements ProjectProperties {
   private final MavenSession session;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final EventHandlers eventHandlers;
-  private final AbsoluteUnixPath appRoot;
 
   @VisibleForTesting
-  MavenProjectProperties(
-      MavenProject project, MavenSession session, Log log, AbsoluteUnixPath appRoot) {
+  MavenProjectProperties(MavenProject project, MavenSession session, Log log) {
     this.project = project;
-    this.appRoot = appRoot;
     this.session = session;
     eventHandlers = makeEventHandlers(session, log, singleThreadedExecutor);
   }
 
   @Override
   public JibContainerBuilder createContainerBuilder(
-      RegistryImage baseImage, ContainerizingMode containerizingMode) throws IOException {
+      RegistryImage baseImage, AbsoluteUnixPath appRoot, ContainerizingMode containerizingMode)
+      throws IOException {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(baseImage).setAppRoot(appRoot);
 
@@ -304,9 +300,16 @@ public class MavenProjectProperties implements ProjectProperties {
     return JAR_PLUGIN_NAME;
   }
 
+  /**
+   * Gets whether or not the given project is a war project. This is the case for projects with
+   * packaging {@code war} and {@code gwt-app}.
+   *
+   * @return {@code true} if the project is a war project, {@code false} if not
+   */
   @Override
   public boolean isWarProject() {
-    return MojoCommon.isWarProject(project);
+    String packaging = project.getPackaging();
+    return "war".equals(packaging) || "gwt-app".equals(packaging);
   }
 
   @Override

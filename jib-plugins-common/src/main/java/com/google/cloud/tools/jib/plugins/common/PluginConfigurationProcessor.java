@@ -188,7 +188,10 @@ public class PluginConfigurationProcessor {
 
     JibContainerBuilder jibContainerBuilder =
         projectProperties
-            .createContainerBuilder(baseImage, getContainerizingModeChecked(rawConfiguration))
+            .createContainerBuilder(
+                baseImage,
+                getAppRootChecked(rawConfiguration, projectProperties),
+                getContainerizingModeChecked(rawConfiguration))
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
@@ -249,8 +252,7 @@ public class PluginConfigurationProcessor {
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws MainClassInferenceException, InvalidAppRootException, IOException,
           InvalidContainerizingModeException {
-    AbsoluteUnixPath appRoot =
-        getAppRootChecked(rawConfiguration, projectProperties.isWarProject());
+    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
 
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
     List<String> rawExtraClasspath = rawConfiguration.getExtraClasspath();
@@ -375,17 +377,18 @@ public class PluginConfigurationProcessor {
    * JavaContainerBuilder#DEFAULT_APP_ROOT} for other projects.
    *
    * @param rawConfiguration raw configuration data
-   * @param isWarProject whether or not the project is a WAR project
+   * @param projectProperties the project properties
    * @return the app root value
    * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
    */
   @VisibleForTesting
-  public static AbsoluteUnixPath getAppRootChecked(
-      RawConfiguration rawConfiguration, boolean isWarProject) throws InvalidAppRootException {
+  static AbsoluteUnixPath getAppRootChecked(
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+      throws InvalidAppRootException {
     String appRoot = rawConfiguration.getAppRoot();
     if (appRoot.isEmpty()) {
       appRoot =
-          isWarProject
+          projectProperties.isWarProject()
               ? JavaContainerBuilder.DEFAULT_WEB_APP_ROOT
               : JavaContainerBuilder.DEFAULT_APP_ROOT;
     }

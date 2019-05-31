@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.cache;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -93,6 +94,14 @@ public class CacheTest {
     return countingOutputStream.getCount();
   }
 
+  private static LayerEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
+    return new LayerEntry(
+        source,
+        destination,
+        LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
+        LayerConfiguration.DEFAULT_MODIFIED_TIME);
+  }
+
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private Blob layerBlob1;
@@ -121,9 +130,9 @@ public class CacheTest {
     layerSize1 = sizeOf(compress(layerBlob1));
     layerEntries1 =
         ImmutableList.of(
-            new LayerEntry(
+            defaultLayerEntry(
                 directory.resolve("source/file"), AbsoluteUnixPath.get("/extraction/path")),
-            new LayerEntry(
+            defaultLayerEntry(
                 directory.resolve("another/source/file"),
                 AbsoluteUnixPath.get("/another/extraction/path")));
 

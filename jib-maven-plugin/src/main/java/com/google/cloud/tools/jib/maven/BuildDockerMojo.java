@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -98,11 +97,8 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     try {
       RawConfiguration mavenRawConfiguration = new MavenRawConfiguration(this);
-      AbsoluteUnixPath appRoot =
-          PluginConfigurationProcessor.getAppRootChecked(
-              mavenRawConfiguration, MojoCommon.isWarProject(getProject()));
       MavenProjectProperties projectProperties =
-          MavenProjectProperties.getForProject(getProject(), getSession(), getLog(), appRoot);
+          MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
 
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);

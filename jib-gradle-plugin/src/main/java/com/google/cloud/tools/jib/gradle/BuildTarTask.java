@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
@@ -110,11 +109,8 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
     try {
       RawConfiguration gradleRawConfiguration = new GradleRawConfiguration(jibExtension);
-      AbsoluteUnixPath appRoot =
-          PluginConfigurationProcessor.getAppRootChecked(
-              gradleRawConfiguration, TaskCommon.isWarProject(getProject()));
       GradleProjectProperties projectProperties =
-          GradleProjectProperties.getForProject(getProject(), getLogger(), appRoot);
+          GradleProjectProperties.getForProject(getProject(), getLogger());
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
 

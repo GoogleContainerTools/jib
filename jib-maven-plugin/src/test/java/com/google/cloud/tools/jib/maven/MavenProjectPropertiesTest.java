@@ -179,8 +179,7 @@ public class MavenProjectPropertiesTest {
   public void setUp() throws IOException, URISyntaxException {
     Mockito.when(mockMavenSession.getRequest()).thenReturn(mockMavenRequest);
     mavenProjectProperties =
-        new MavenProjectProperties(
-            mockMavenProject, mockMavenSession, mockLog, AbsoluteUnixPath.get("/app"));
+        new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog);
     jarPluginConfiguration = new Xpp3Dom("");
     archive = new Xpp3Dom("archive");
     manifest = new Xpp3Dom("manifest");
@@ -365,8 +364,7 @@ public class MavenProjectPropertiesTest {
   public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    BuildConfiguration configuration =
-        setupBuildConfiguration(AbsoluteUnixPath.get("/app"), ContainerizingMode.EXPLODED);
+    BuildConfiguration configuration = setupBuildConfiguration("/app", ContainerizingMode.EXPLODED);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
 
     Path dependenciesPath = getResource("maven/application/dependencies");
@@ -407,7 +405,7 @@ public class MavenProjectPropertiesTest {
   public void testCreateContainerBuilder_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildConfiguration configuration =
-        setupBuildConfiguration(AbsoluteUnixPath.get("/my/app"), ContainerizingMode.EXPLODED);
+        setupBuildConfiguration("/my/app", ContainerizingMode.EXPLODED);
     assertNonDefaultAppRoot(configuration);
   }
 
@@ -421,7 +419,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
     BuildConfiguration configuration =
-        setupBuildConfiguration(AbsoluteUnixPath.get("/app-root"), ContainerizingMode.PACKAGED);
+        setupBuildConfiguration("/app-root", ContainerizingMode.PACKAGED);
 
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     Assert.assertEquals(1, layers.dependenciesLayers.size());
@@ -474,7 +472,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
     BuildConfiguration configuration =
-        setupBuildConfiguration(AbsoluteUnixPath.get("/my/app"), ContainerizingMode.EXPLODED);
+        setupBuildConfiguration("/my/app", ContainerizingMode.EXPLODED);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertSourcePathsUnordered(
         ImmutableList.of(outputPath.resolve("final-name/WEB-INF/lib/dependency-1.0.0.jar")),
@@ -538,7 +536,7 @@ public class MavenProjectPropertiesTest {
     // Test when the default packaging is set
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
     BuildConfiguration configuration =
-        setupBuildConfiguration(AbsoluteUnixPath.get("/my/app"), ContainerizingMode.EXPLODED);
+        setupBuildConfiguration("/my/app", ContainerizingMode.EXPLODED);
     assertNonDefaultAppRoot(configuration);
   }
 
@@ -550,8 +548,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration(
-        AbsoluteUnixPath.get("/my/app"), ContainerizingMode.EXPLODED); // should pass
+    setupBuildConfiguration("/my/app", ContainerizingMode.EXPLODED); // should pass
   }
 
   @Test
@@ -562,8 +559,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration(
-        AbsoluteUnixPath.get("/my/app"), ContainerizingMode.EXPLODED); // should pass
+    setupBuildConfiguration("/my/app", ContainerizingMode.EXPLODED); // should pass
   }
 
   @Test
@@ -574,40 +570,40 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration(
-        AbsoluteUnixPath.get("/my/app"), ContainerizingMode.EXPLODED); // should pass
+    setupBuildConfiguration("/my/app", ContainerizingMode.EXPLODED); // should pass
   }
 
   @Test
   public void testIsWarProject_WarPackagingIsWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
-    Assert.assertTrue(MojoCommon.isWarProject(mockMavenProject));
+    Assert.assertTrue(mavenProjectProperties.isWarProject());
   }
 
   @Test
   public void testIsWarProject_GwtAppPackagingIsWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-app");
-    Assert.assertTrue(MojoCommon.isWarProject(mockMavenProject));
+    Assert.assertTrue(mavenProjectProperties.isWarProject());
   }
 
   @Test
   public void testIsWarProject_JarPackagingIsNotWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
-    Assert.assertFalse(MojoCommon.isWarProject(mockMavenProject));
+    Assert.assertFalse(mavenProjectProperties.isWarProject());
   }
 
   @Test
   public void testIsWarProject_GwtLibPackagingIsNotWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-lib");
-    Assert.assertFalse(MojoCommon.isWarProject(mockMavenProject));
+    Assert.assertFalse(mavenProjectProperties.isWarProject());
   }
 
   private BuildConfiguration setupBuildConfiguration(
-      AbsoluteUnixPath appRoot, ContainerizingMode containerizingMode)
+      String appRoot, ContainerizingMode containerizingMode)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JibContainerBuilder JibContainerBuilder =
-        new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog, appRoot)
-            .createContainerBuilder(RegistryImage.named("base"), containerizingMode);
+        new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
+            .createContainerBuilder(
+                RegistryImage.named("base"), AbsoluteUnixPath.get(appRoot), containerizingMode);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         JibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))
