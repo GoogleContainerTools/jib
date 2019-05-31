@@ -64,6 +64,7 @@ public class JibExtension {
 
   // Defines default configuration values.
   private static final boolean DEFAULT_ALLOW_INSECURE_REGISTIRIES = false;
+  private static final String DEFAULT_CONTAINERIZING_MODE = "exploded";
 
   private final BaseImageParameters from;
   private final TargetImageParameters to;
@@ -88,7 +89,7 @@ public class JibExtension {
 
     // Sets defaults.
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
-    containerizingMode.set("exploded");
+    containerizingMode.set(DEFAULT_CONTAINERIZING_MODE);
   }
 
   public void from(Action<? super BaseImageParameters> action) {
