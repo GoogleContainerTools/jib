@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event;
 
+import com.google.cloud.tools.jib.api.JibEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

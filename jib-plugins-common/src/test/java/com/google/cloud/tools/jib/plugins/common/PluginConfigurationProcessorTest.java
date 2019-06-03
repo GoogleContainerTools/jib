@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -98,8 +97,6 @@ public class PluginConfigurationProcessorTest {
 
     Mockito.when(projectProperties.getToolName()).thenReturn("tool");
     Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");
-    Mockito.when(projectProperties.getEventHandlers())
-        .thenReturn(EventHandlers.builder().add(LogEvent.class, logger).build());
     Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
     Mockito.when(
             projectProperties.createContainerBuilder(
@@ -108,8 +105,6 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(projectProperties.isOffline()).thenReturn(false);
 
     Mockito.when(containerizer.setToolName(Mockito.anyString())).thenReturn(containerizer);
-    Mockito.when(containerizer.setEventHandlers(Mockito.any(EventHandlers.class)))
-        .thenReturn(containerizer);
     Mockito.when(containerizer.setAllowInsecureRegistries(Mockito.anyBoolean()))
         .thenReturn(containerizer);
     Mockito.when(containerizer.setBaseImageLayersCache(Mockito.any(Path.class)))
@@ -365,8 +360,8 @@ public class PluginConfigurationProcessorTest {
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Mockito.verify(logger)
-        .accept(
+    Mockito.verify(projectProperties)
+        .log(
             LogEvent.warn(
                 "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
   }
@@ -388,8 +383,8 @@ public class PluginConfigurationProcessorTest {
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Mockito.verify(logger)
-        .accept(
+    Mockito.verify(projectProperties)
+        .log(
             LogEvent.warn(
                 "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
   }

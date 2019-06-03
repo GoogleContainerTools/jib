@@ -33,6 +33,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 
@@ -143,7 +144,7 @@ public class Containerizer {
   @Nullable private ExecutorService executorService;
   private Path baseImageLayersCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
   @Nullable private Path applicationLayersCacheDirectory;
-  private EventHandlers eventHandlers = EventHandlers.NONE;
+  private EventHandlers.Builder eventHandlersBuilder = EventHandlers.builder();
   private boolean allowInsecureRegistries = false;
   private boolean offline = false;
   private String toolName = DEFAULT_TOOL_NAME;
@@ -217,13 +218,32 @@ public class Containerizer {
   }
 
   /**
-   * Sets the {@link EventHandlers} to handle events dispatched during Jib's execution.
+   * Adds the {@code eventConsumer} to handle the {@link JibEvent} with class {@code eventClass}.
+   * The order in which handlers are added is the order in which they are called when the event is
+   * dispatched.
    *
-   * @param eventHandlers the {@link EventHandlers}
+   * <p><b>Note: Implementations of {@code eventConsumer} must be thread-safe.</b>
+   *
+   * @param eventType the event type that {@code eventConsumer} should handle
+   * @param eventConsumer the event handler
+   * @param <E> the type of {@code eventClass}
    * @return this
    */
-  public Containerizer setEventHandlers(EventHandlers eventHandlers) {
-    this.eventHandlers = eventHandlers;
+  public <E extends JibEvent> Containerizer addEventHandler(
+      Class<E> eventType, Consumer<E> eventConsumer) {
+    eventHandlersBuilder.add(eventType, eventConsumer);
+    return this;
+  }
+
+  /**
+   * Adds the {@code eventConsumer} to handle all {@link JibEvent} types. See {@link
+   * #addEventHandler(Class, Consumer)} for more details.
+   *
+   * @param eventConsumer the event handler
+   * @return this
+   */
+  public Containerizer addEventHandler(Consumer<JibEvent> eventConsumer) {
+    eventHandlersBuilder.add(eventConsumer);
     return this;
   }
 
@@ -294,8 +314,8 @@ public class Containerizer {
     return applicationLayersCacheDirectory;
   }
 
-  EventHandlers getEventHandlers() {
-    return eventHandlers;
+  EventHandlers.Builder getEventHandlersBuilder() {
+    return eventHandlersBuilder;
   }
 
   boolean getAllowInsecureRegistries() {

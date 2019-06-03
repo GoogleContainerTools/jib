@@ -71,9 +71,7 @@ public class MainClassResolver {
 
     Preconditions.checkNotNull(mainClass);
     if (!isValidJavaClass(mainClass)) {
-      projectProperties
-          .getEventHandlers()
-          .dispatch(LogEvent.warn("'mainClass' is not a valid Java class : " + mainClass));
+      projectProperties.log(LogEvent.warn("'mainClass' is not a valid Java class : " + mainClass));
     }
 
     return mainClass;
@@ -95,29 +93,24 @@ public class MainClassResolver {
 
   @Nullable
   private static String getMainClassFromJar(ProjectProperties projectProperties) {
-    projectProperties
-        .getEventHandlers()
-        .dispatch(
-            LogEvent.info(
-                "Searching for main class... Add a 'mainClass' configuration to '"
-                    + projectProperties.getPluginName()
-                    + "' to improve build speed."));
+    projectProperties.log(
+        LogEvent.info(
+            "Searching for main class... Add a 'mainClass' configuration to '"
+                + projectProperties.getPluginName()
+                + "' to improve build speed."));
     return projectProperties.getMainClassFromJar();
   }
 
   private static String findMainClassInClassFiles(ProjectProperties projectProperties)
       throws MainClassInferenceException, IOException {
-    projectProperties
-        .getEventHandlers()
-        .dispatch(
-            LogEvent.debug(
-                "Could not find a valid main class specified in "
-                    + projectProperties.getJarPluginName()
-                    + "; attempting to infer main class."));
+    projectProperties.log(
+        LogEvent.debug(
+            "Could not find a valid main class specified in "
+                + projectProperties.getJarPluginName()
+                + "; attempting to infer main class."));
 
     MainClassFinder.Result mainClassFinderResult =
-        MainClassFinder.find(
-            projectProperties.getClassFiles(), projectProperties.getEventHandlers());
+        MainClassFinder.find(projectProperties.getClassFiles(), projectProperties::log);
 
     switch (mainClassFinderResult.getType()) {
       case MAIN_CLASS_FOUND:

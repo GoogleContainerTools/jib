@@ -17,10 +17,10 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
@@ -78,47 +78,6 @@ class GradleProjectProperties implements ProjectProperties {
     return project.getBuildDir().toPath().resolve(ProjectProperties.EXPLODED_WAR_DIRECTORY_NAME);
   }
 
-  private static EventHandlers makeEventHandlers(
-      Project project, Logger logger, SingleThreadedExecutor singleThreadedExecutor) {
-    ConsoleLoggerBuilder consoleLoggerBuilder =
-        (isProgressFooterEnabled(project)
-                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
-                : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(logger::lifecycle))
-            .lifecycle(logger::lifecycle);
-    if (logger.isDebugEnabled()) {
-      consoleLoggerBuilder.debug(logger::debug);
-    }
-    if (logger.isInfoEnabled()) {
-      consoleLoggerBuilder.info(logger::info);
-    }
-    if (logger.isWarnEnabled()) {
-      consoleLoggerBuilder.warn(logger::warn);
-    }
-    if (logger.isErrorEnabled()) {
-      consoleLoggerBuilder.error(logger::error);
-    }
-    ConsoleLogger consoleLogger = consoleLoggerBuilder.build();
-
-    return EventHandlers.builder()
-        .add(
-            LogEvent.class,
-            logEvent -> consoleLogger.log(logEvent.getLevel(), logEvent.getMessage()))
-        .add(
-            TimerEvent.class,
-            new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
-        .add(
-            ProgressEvent.class,
-            new ProgressEventHandler(
-                update -> {
-                  List<String> footer =
-                      ProgressDisplayGenerator.generateProgressDisplay(
-                          update.getProgress(), update.getUnfinishedLeafTasks());
-                  footer.add("");
-                  consoleLogger.setFooter(footer);
-                }))
-        .build();
-  }
-
   private static boolean isProgressFooterEnabled(Project project) {
     if ("plain".equals(System.getProperty(PropertyNames.CONSOLE))) {
       return false;
@@ -139,15 +98,31 @@ class GradleProjectProperties implements ProjectProperties {
 
   private final Project project;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
-  private final EventHandlers eventHandlers;
   private final Logger logger;
+  private final ConsoleLogger consoleLogger;
 
   @VisibleForTesting
   GradleProjectProperties(Project project, Logger logger) {
     this.project = project;
     this.logger = logger;
-
-    eventHandlers = makeEventHandlers(project, logger, singleThreadedExecutor);
+    ConsoleLoggerBuilder consoleLoggerBuilder =
+        (isProgressFooterEnabled(project)
+                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
+                : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(logger::lifecycle))
+            .lifecycle(logger::lifecycle);
+    if (logger.isDebugEnabled()) {
+      consoleLoggerBuilder.debug(logger::debug);
+    }
+    if (logger.isInfoEnabled()) {
+      consoleLoggerBuilder.info(logger::info);
+    }
+    if (logger.isWarnEnabled()) {
+      consoleLoggerBuilder.warn(logger::warn);
+    }
+    if (logger.isErrorEnabled()) {
+      consoleLoggerBuilder.error(logger::error);
+    }
+    this.consoleLogger = consoleLoggerBuilder.build();
   }
 
   @Override
@@ -227,8 +202,27 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public EventHandlers getEventHandlers() {
-    return eventHandlers;
+  public void applyEventHandlers(Containerizer containerizer) {
+    containerizer
+        .addEventHandler(LogEvent.class, this::log)
+        .addEventHandler(
+            TimerEvent.class,
+            new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
+        .addEventHandler(
+            ProgressEvent.class,
+            new ProgressEventHandler(
+                update -> {
+                  List<String> footer =
+                      ProgressDisplayGenerator.generateProgressDisplay(
+                          update.getProgress(), update.getUnfinishedLeafTasks());
+                  footer.add("");
+                  consoleLogger.setFooter(footer);
+                }));
+  }
+
+  @Override
+  public void log(LogEvent logEvent) {
+    consoleLogger.log(logEvent.getLevel(), logEvent.getMessage());
   }
 
   @Override

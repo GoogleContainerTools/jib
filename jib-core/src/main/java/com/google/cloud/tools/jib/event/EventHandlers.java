@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event;
 
+import com.google.cloud.tools.jib.api.JibEvent;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;

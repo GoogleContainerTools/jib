@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
@@ -26,6 +25,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -139,25 +139,24 @@ public class MainClassFinder {
    * Tries to find classes with {@code psvm} (see class javadoc) in {@code files}.
    *
    * @param files the files to search
-   * @param eventHandlers the {@link EventHandlers} used for handling log messages
+   * @param logger a {@link Consumer} used to handle log events
    * @return the {@link Result} of the main class finding attempt
    */
-  public static Result find(List<Path> files, EventHandlers eventHandlers) {
+  public static Result find(List<Path> files, Consumer<LogEvent> logger) {
     List<String> mainClasses = new ArrayList<>();
     for (Path file : files) {
       // Makes sure classFile is valid.
       if (!Files.exists(file)) {
-        eventHandlers.dispatch(
-            LogEvent.debug("MainClassFinder: " + file + " does not exist; ignoring"));
+        logger.accept(LogEvent.debug("MainClassFinder: " + file + " does not exist; ignoring"));
         continue;
       }
       if (!Files.isRegularFile(file)) {
-        eventHandlers.dispatch(
+        logger.accept(
             LogEvent.debug("MainClassFinder: " + file + " is not a regular file; skipping"));
         continue;
       }
       if (!file.toString().endsWith(".class")) {
-        eventHandlers.dispatch(
+        logger.accept(
             LogEvent.debug("MainClassFinder: " + file + " is not a class file; skipping"));
         continue;
       }
@@ -172,11 +171,11 @@ public class MainClassFinder {
 
       } catch (ArrayIndexOutOfBoundsException ignored) {
         // Not a valid class file (thrown by ClassReader if it reads an invalid format)
-        eventHandlers.dispatch(LogEvent.warn("Invalid class file found: " + file));
+        logger.accept(LogEvent.warn("Invalid class file found: " + file));
 
       } catch (IOException ignored) {
         // Could not read class file.
-        eventHandlers.dispatch(LogEvent.warn("Could not read file: " + file));
+        logger.accept(LogEvent.warn("Could not read file: " + file));
       }
     }
 

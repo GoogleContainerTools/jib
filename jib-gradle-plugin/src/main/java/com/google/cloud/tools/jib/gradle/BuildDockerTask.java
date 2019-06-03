@@ -137,7 +137,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .build(
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
-                projectProperties.getEventHandlers(),
+                projectProperties::log,
                 helpfulSuggestions);
 
       } finally {
