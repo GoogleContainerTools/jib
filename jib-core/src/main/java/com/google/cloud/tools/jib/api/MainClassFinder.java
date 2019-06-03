@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.io.InputStream;

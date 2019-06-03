@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.MainClassFinder;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
