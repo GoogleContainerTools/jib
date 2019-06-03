@@ -369,9 +369,4 @@ public class MavenProjectProperties implements ProjectProperties {
   public boolean isOffline() {
     return session.isOffline();
   }
-
-  private List<Path> getDependencies() {
-    Set<Artifact> artifacts = project.getArtifacts();
-    return artifacts.stream().map(Artifact::getFile).map(File::toPath).collect(Collectors.toList());
-  }
 }
