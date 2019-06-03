@@ -142,7 +142,7 @@ public class ContainerizerIntegrationTest {
     Assert.assertThat(history, CoreMatchers.containsString("bazel build ..."));
   }
 
-  private static void assertLayerSizer(int expected, String imageReference)
+  private static void assertLayerSize(int expected, String imageReference)
       throws IOException, InterruptedException {
     Command command =
         new Command("docker", "inspect", "-f", "{{join .RootFS.Layers \",\"}}", imageReference);
@@ -187,7 +187,7 @@ public class ContainerizerIntegrationTest {
     String imageReference = "localhost:5000/testimage:testtag";
     localRegistry.pull(imageReference);
     assertDockerInspect(imageReference);
-    assertLayerSizer(7, imageReference);
+    assertLayerSize(7, imageReference);
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", imageReference).run());
 
@@ -256,7 +256,7 @@ public class ContainerizerIntegrationTest {
     progressChecker.checkCompletion();
 
     assertDockerInspect("testdocker");
-    assertLayerSizer(7, "testdocker");
+    assertLayerSize(7, "testdocker");
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", "testdocker").run());
   }
@@ -298,7 +298,7 @@ public class ContainerizerIntegrationTest {
     progressChecker.checkCompletion();
 
     new Command("docker", "load", "--input", outputPath.toString()).run();
-    assertLayerSizer(7, "testtar");
+    assertLayerSize(7, "testtar");
     Assert.assertEquals(
         "Hello, world. An argument.\n", new Command("docker", "run", "--rm", "testtar").run());
   }
