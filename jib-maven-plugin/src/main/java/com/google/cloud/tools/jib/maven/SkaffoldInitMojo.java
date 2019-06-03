@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
@@ -28,7 +27,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 @Mojo(name = SkaffoldInitMojo.GOAL_NAME, requiresDependencyCollection = ResolutionScope.NONE)
 public class SkaffoldInitMojo extends JibPluginConfiguration {
 
-  @VisibleForTesting static final String GOAL_NAME = "_skaffold-init";
+  static final String GOAL_NAME = "_skaffold-init";
 
   @Override
   public void execute() {
