@@ -20,6 +20,11 @@ import com.google.common.annotations.VisibleForTesting;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
+/**
+ * Prints out to.image configuration and project name, used for Jib project detection in Skaffold.
+ *
+ * <p>Expected use: {@code ./mvnw jib:_skaffold-init -q}
+ */
 @Mojo(name = SkaffoldInitMojo.GOAL_NAME, requiresDependencyCollection = ResolutionScope.NONE)
 public class SkaffoldInitMojo extends JibPluginConfiguration {
 

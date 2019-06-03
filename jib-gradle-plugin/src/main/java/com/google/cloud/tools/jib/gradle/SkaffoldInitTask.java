@@ -21,10 +21,14 @@ import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.TaskAction;
 
+/**
+ * Prints out to.image configuration and project name, used for Jib project detection in Skaffold.
+ *
+ * <p>Expected use: {@code ./gradlew _jibSkaffoldInit -q}
+ */
 public class SkaffoldInitTask extends DefaultTask {
 
-  @Nullable
-  private JibExtension jibExtension;
+  @Nullable private JibExtension jibExtension;
 
   public SkaffoldInitTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
