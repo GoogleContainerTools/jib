@@ -128,16 +128,16 @@ public class JibPlugin implements Plugin<Project> {
             Task dependsOnTask;
             if (warTask != null) {
               ExplodedWarTask explodedWarTask =
-                  (ExplodedWarTask)
-                      project
-                          .getTasks()
-                          .create(EXPLODED_WAR_TASK_NAME, ExplodedWarTask.class)
-                          .dependsOn(warTask);
+                  project.getTasks().create(EXPLODED_WAR_TASK_NAME, ExplodedWarTask.class);
+              explodedWarTask.dependsOn(warTask);
               explodedWarTask.setWarFile(warTask.getArchivePath().toPath());
               explodedWarTask.setExplodedWarDirectory(
                   GradleProjectProperties.getExplodedWarDirectory(projectAfterEvaluation));
               // Have all tasks depend on the 'jibExplodedWar' task.
               dependsOnTask = explodedWarTask;
+            } else if ("packaged".equals(jibExtension.getContainerizingMode())) {
+              // Have all tasks depend on the 'jar' task.
+              dependsOnTask = projectAfterEvaluation.getTasks().getByPath("jar");
             } else {
               // Have all tasks depend on the 'classes' task.
               dependsOnTask = projectAfterEvaluation.getTasks().getByPath("classes");

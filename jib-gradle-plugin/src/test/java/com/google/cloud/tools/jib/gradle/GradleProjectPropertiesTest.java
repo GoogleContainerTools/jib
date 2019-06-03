@@ -165,10 +165,8 @@ public class GradleProjectPropertiesTest {
 
   @Mock private FileResolver mockFileResolver;
   @Mock private Jar mockJar;
-  @Mock private Jar mockJar2;
   @Mock private Project mockProject;
   @Mock private Convention mockConvention;
-  @Mock private WarPluginConvention mockWarPluginConvention;
   @Mock private TaskContainer mockTaskContainer;
   @Mock private Logger mockLogger;
   @Mock private Gradle mockGradle;
@@ -177,7 +175,6 @@ public class GradleProjectPropertiesTest {
   @Mock private SourceSetContainer mockSourceSetContainer;
   @Mock private SourceSet mockMainSourceSet;
   @Mock private SourceSetOutput mockMainSourceSetOutput;
-  @Mock private TaskContainer taskContainer;
   @Mock private War war;
 
   private Manifest manifest;
@@ -228,21 +225,13 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testGetMainClassFromJar_success() {
     manifest.attributes(ImmutableMap.of("Main-Class", "some.main.class"));
-    Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(ImmutableSet.of(mockJar));
+    Mockito.when(mockTaskContainer.findByName("jar")).thenReturn(mockJar);
     Assert.assertEquals("some.main.class", gradleProjectProperties.getMainClassFromJar());
   }
 
   @Test
   public void testGetMainClassFromJar_missing() {
-    Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(Collections.emptySet());
-    Assert.assertNull(gradleProjectProperties.getMainClassFromJar());
-  }
-
-  @Test
-  public void testGetMainClassFromJar_multiple() {
-    manifest.attributes(ImmutableMap.of("Main-Class", "some.main.class"));
-    Mockito.when(mockProject.getTasksByName("jar", false))
-        .thenReturn(ImmutableSet.of(mockJar, mockJar2));
+    Mockito.when(mockTaskContainer.findByName("jar")).thenReturn(null);
     Assert.assertNull(gradleProjectProperties.getMainClassFromJar());
   }
 
@@ -567,11 +556,11 @@ public class GradleProjectPropertiesTest {
 
   private void setUpWarProject(Path webAppDirectory) {
     Mockito.when(mockProject.getBuildDir()).thenReturn(webAppDirectory.toFile());
-    Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
+    Mockito.when(mockTaskContainer.findByName("war")).thenReturn(war);
+
+    WarPluginConvention warPluginConvention = Mockito.mock(WarPluginConvention.class);
+    Mockito.when(warPluginConvention.getProject()).thenReturn(mockProject);
     Mockito.when(mockConvention.findPlugin(WarPluginConvention.class))
-        .thenReturn(mockWarPluginConvention);
-    Mockito.when(mockWarPluginConvention.getProject()).thenReturn(mockProject);
-    Mockito.when(mockProject.getTasks()).thenReturn(taskContainer);
-    Mockito.when(taskContainer.findByName("war")).thenReturn(war);
+        .thenReturn(warPluginConvention);
   }
 }

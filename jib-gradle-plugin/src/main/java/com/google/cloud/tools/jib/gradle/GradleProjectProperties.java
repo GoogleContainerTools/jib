@@ -179,19 +179,6 @@ class GradleProjectProperties implements ProjectProperties {
               .minus(classesOutputDirectories)
               .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
 
-      // Adds resource files
-      if (Files.exists(resourcesOutputDirectory)) {
-        javaContainerBuilder.addResources(resourcesOutputDirectory);
-      }
-
-      // Adds class files
-      for (File classesOutputDirectory : classesOutputDirectories) {
-        javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
-      }
-      if (classesOutputDirectories.isEmpty()) {
-        logger.warn("No classes files were found - did you compile your project?");
-      }
-
       // Adds dependency files
       javaContainerBuilder.addDependencies(
           dependencyFiles
@@ -200,6 +187,33 @@ class GradleProjectProperties implements ProjectProperties {
               .filter(File::exists)
               .map(File::toPath)
               .collect(Collectors.toList()));
+
+      switch (containerizingMode) {
+        case EXPLODED:
+          // Adds resource files
+          if (Files.exists(resourcesOutputDirectory)) {
+            javaContainerBuilder.addResources(resourcesOutputDirectory);
+          }
+
+          // Adds class files
+          for (File classesOutputDirectory : classesOutputDirectories) {
+            javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
+          }
+          if (classesOutputDirectories.isEmpty()) {
+            logger.warn("No classes files were found - did you compile your project?");
+          }
+          break;
+
+        case PACKAGED:
+          // Add a JAR
+          Jar jarTask = (Jar) project.getTasks().findByName("jar");
+          javaContainerBuilder.addToClasspath(
+              jarTask.getDestinationDir().toPath().resolve(jarTask.getArchiveName()));
+          break;
+
+        default:
+          throw new IllegalStateException("unknown containerizing mode: " + containerizingMode);
+      }
 
       return javaContainerBuilder.toContainerBuilder();
 
@@ -246,11 +260,11 @@ class GradleProjectProperties implements ProjectProperties {
   @Nullable
   @Override
   public String getMainClassFromJar() {
-    List<Task> jarTasks = new ArrayList<>(project.getTasksByName("jar", false));
-    if (jarTasks.size() != 1) {
+    Jar jarTask = (Jar) project.getTasks().findByName("jar");
+    if (jarTask == null) {
       return null;
     }
-    return (String) ((Jar) jarTasks.get(0)).getManifest().getAttributes().get("Main-Class");
+    return (String) jarTask.getManifest().getAttributes().get("Main-Class");
   }
 
   @Override
