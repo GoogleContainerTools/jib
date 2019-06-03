@@ -73,18 +73,14 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   }
 
   /**
-   * @return the input files to this task are all the output files for all the dependencies of the
-   *     {@code classes} task.
+   * @return a collection of all the files that jib includes in the image. Only used to calculate
+   *     UP-TO-DATE.
    */
   @InputFiles
   public FileCollection getInputFiles() {
     List<Path> extraDirectories =
         Preconditions.checkNotNull(jibExtension).getExtraDirectories().getPaths();
-    return extraDirectories
-        .stream()
-        .map(Path::toFile)
-        .map(directory -> GradleProjectProperties.getInputFiles(directory, getProject()))
-        .reduce(getProject().files(), getProject()::files);
+    return GradleProjectProperties.getInputFiles(getProject(), extraDirectories);
   }
 
   /**

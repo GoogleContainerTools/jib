@@ -41,7 +41,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.tools.ant.taskdefs.condition.Os;
@@ -268,27 +267,28 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   /**
-   * Returns the input files for a task.
+   * Returns the input files for a task. These files include the runtimeClasspath of the application
+   * and any extraDirectories defined by the user to include in the container.
    *
-   * @param extraDirectory the image's configured extra directory
    * @param project the gradle project
-   * @return the input files to the task are all the output files for all the dependencies of the
-   *     {@code classes} task
+   * @param extraDirectories the image's configured extra directories
+   * @return the input files
    */
-  static FileCollection getInputFiles(File extraDirectory, Project project) {
-    Task classesTask = project.getTasks().getByPath("classes");
-    Set<? extends Task> classesDependencies =
-        classesTask.getTaskDependencies().getDependencies(classesTask);
-
+  static FileCollection getInputFiles(Project project, List<Path> extraDirectories) {
+    JavaPluginConvention javaPluginConvention =
+        project.getConvention().getPlugin(JavaPluginConvention.class);
+    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
     List<FileCollection> dependencyFileCollections = new ArrayList<>();
-    for (Task task : classesDependencies) {
-      dependencyFileCollections.add(task.getOutputs().getFiles());
-    }
-    if (Files.exists(extraDirectory.toPath())) {
-      return project.files(dependencyFileCollections, extraDirectory);
-    } else {
-      return project.files(dependencyFileCollections);
-    }
+    dependencyFileCollections.add(mainSourceSet.getRuntimeClasspath());
+
+    extraDirectories
+        .stream()
+        .filter(Files::exists)
+        .map(Path::toFile)
+        .map(project::files)
+        .forEach(dependencyFileCollections::add);
+
+    return project.files(dependencyFileCollections);
   }
 
   @Override
