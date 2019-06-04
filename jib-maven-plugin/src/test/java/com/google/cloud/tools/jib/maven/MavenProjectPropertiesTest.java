@@ -32,7 +32,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -414,8 +413,8 @@ public class MavenProjectPropertiesTest {
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           URISyntaxException {
     Path jar = temporaryFolder.newFile("final-name.jar").toPath();
-    Artifact jarArtifact = makeArtifact(jar);
-    Mockito.when(mockMavenProject.getArtifact()).thenReturn(jarArtifact);
+    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
     BuildConfiguration configuration =
         setupBuildConfiguration("/app-root", ContainerizingMode.PACKAGED);
@@ -573,68 +572,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetJarArtifact_mainJarArtifactSet() throws IOException {
-    Path jar = temporaryFolder.newFile("helloworld-1.jar").toPath();
-    Artifact artifact = makeArtifact(jar);
-    Mockito.when(mockMavenProject.getArtifact()).thenReturn(artifact);
-
-    Assert.assertEquals(jar, mavenProjectProperties.getJarArtifact());
-  }
-
-  @Test
-  public void testGetJarArtifact_singleSupplementalJar() throws IOException {
-    Mockito.when(mockMavenProject.getArtifact()).thenReturn(Mockito.mock(Artifact.class));
-
-    Path jar = temporaryFolder.newFile("helloworld-1-enhanced.jar").toPath();
-    Artifact artifact = makeArtifact(jar);
-    Mockito.when(mockMavenProject.getAttachedArtifacts()).thenReturn(Arrays.asList(artifact));
-
-    Assert.assertEquals(jar, mavenProjectProperties.getJarArtifact());
-  }
-
-  @Test
-  public void testGetJarArtifact_mainArtifactIsNotJar() throws IOException {
-    Path war = temporaryFolder.newFile("helloworld-1.war").toPath();
-    Artifact warArtifact = makeArtifact(war);
-    Mockito.when(mockMavenProject.getArtifact()).thenReturn(warArtifact);
-
-    Path jar = temporaryFolder.newFile("helloworld-1-enhanced.jar").toPath();
-    Artifact jarArtifact = makeArtifact(jar);
-    Mockito.when(mockMavenProject.getAttachedArtifacts()).thenReturn(Arrays.asList(jarArtifact));
-
-    Assert.assertEquals(jar, mavenProjectProperties.getJarArtifact());
-  }
-
-  @Test
-  public void testGetJarArtifact_multipleSupplementalJars() throws IOException {
-    Mockito.when(mockMavenProject.getArtifact()).thenReturn(Mockito.mock(Artifact.class));
-
-    File jar1 = temporaryFolder.newFile("helloworld-1-enhanced.jar");
-    File jar2 = temporaryFolder.newFile("helloworld-1-shaded.jar");
-    Artifact artifact1 = makeArtifact(jar1.toPath());
-    Artifact artifact2 = makeArtifact(jar2.toPath());
-    Mockito.when(mockMavenProject.getAttachedArtifacts())
-        .thenReturn(Arrays.asList(artifact1, artifact2));
-
-    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
-
-    Assert.assertEquals(
-        temporaryFolder.getRoot().toPath().resolve("helloworld-1.jar"),
-        mavenProjectProperties.getJarArtifact());
-  }
-
-  @Test
-  public void testGetJarArtifact_multipleSupplementalNonJars() throws IOException {
-    Mockito.when(mockMavenProject.getArtifact()).thenReturn(Mockito.mock(Artifact.class));
-
-    File war1 = temporaryFolder.newFile("helloworld-1.war");
-    File war2 = temporaryFolder.newFile("helloworld-1-uber.war");
-    Artifact artifact1 = makeArtifact(war1.toPath());
-    Artifact artifact2 = makeArtifact(war2.toPath());
-    Mockito.when(mockMavenProject.getAttachedArtifacts())
-        .thenReturn(Arrays.asList(artifact1, artifact2));
-
+  public void testGetJarArtifact() {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
 
