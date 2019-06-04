@@ -16,7 +16,9 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.plugins.common.SkaffoldInitOutput;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.tasks.TaskAction;
@@ -36,10 +38,13 @@ public class SkaffoldInitTask extends DefaultTask {
   }
 
   @TaskAction
-  public void listModulesAndTargets() {
-    String target = Preconditions.checkNotNull(jibExtension).getTo().getImage();
+  public void listModulesAndTargets() throws IOException {
+    SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
+    skaffoldInitOutput.setImage(Preconditions.checkNotNull(jibExtension).getTo().getImage());
+    if (!getProject().equals(getProject().getRootProject())) {
+      skaffoldInitOutput.setProject(getProject().getName());
+    }
     System.out.println("\nBEGIN JIB");
-    System.out.println(target == null ? "?" : target);
-    System.out.println(getProject().getName());
+    System.out.println(skaffoldInitOutput.getJsonString());
   }
 }

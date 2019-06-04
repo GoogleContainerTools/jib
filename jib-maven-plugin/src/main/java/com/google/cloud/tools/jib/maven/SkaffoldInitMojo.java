@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.plugins.common.SkaffoldInitOutput;
+import java.io.IOException;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
@@ -30,10 +33,18 @@ public class SkaffoldInitMojo extends JibPluginConfiguration {
   static final String GOAL_NAME = "_skaffold-init";
 
   @Override
-  public void execute() {
-    String target = getTargetImage();
+  public void execute() throws MojoExecutionException {
+    SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
+    skaffoldInitOutput.setImage(getTargetImage());
+    if (!getProject().getName().equals(getProject().getParent().getName())) {
+      skaffoldInitOutput.setProject(getProject().getName());
+    }
+
     System.out.println("\nBEGIN JIB");
-    System.out.println(target == null ? "?" : target);
-    System.out.println(getProject().getName());
+    try {
+      System.out.println(skaffoldInitOutput.getJsonString());
+    } catch (IOException ex) {
+      throw new MojoExecutionException(ex.getMessage());
+    }
   }
 }
