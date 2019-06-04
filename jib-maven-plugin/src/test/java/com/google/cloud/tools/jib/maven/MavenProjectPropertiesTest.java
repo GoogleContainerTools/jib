@@ -573,7 +573,7 @@ public class MavenProjectPropertiesTest {
   }
 
   @Test
-  public void testGetJarArtifact_mainArtifactSet() throws IOException {
+  public void testGetJarArtifact_mainJarArtifactSet() throws IOException {
     Path jar = temporaryFolder.newFile("helloworld-1.jar").toPath();
     Artifact artifact = makeArtifact(jar);
     Mockito.when(mockMavenProject.getArtifact()).thenReturn(artifact);
@@ -588,6 +588,19 @@ public class MavenProjectPropertiesTest {
     Path jar = temporaryFolder.newFile("helloworld-1-enhanced.jar").toPath();
     Artifact artifact = makeArtifact(jar);
     Mockito.when(mockMavenProject.getAttachedArtifacts()).thenReturn(Arrays.asList(artifact));
+
+    Assert.assertEquals(jar, mavenProjectProperties.getJarArtifact());
+  }
+
+  @Test
+  public void testGetJarArtifact_mainArtifactIsNotJar() throws IOException {
+    Path war = temporaryFolder.newFile("helloworld-1.war").toPath();
+    Artifact warArtifact = makeArtifact(war);
+    Mockito.when(mockMavenProject.getArtifact()).thenReturn(warArtifact);
+
+    Path jar = temporaryFolder.newFile("helloworld-1-enhanced.jar").toPath();
+    Artifact jarArtifact = makeArtifact(jar);
+    Mockito.when(mockMavenProject.getAttachedArtifacts()).thenReturn(Arrays.asList(jarArtifact));
 
     Assert.assertEquals(jar, mavenProjectProperties.getJarArtifact());
   }
