@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -221,6 +222,7 @@ public class MavenProjectProperties implements ProjectProperties {
         case EXPLODED:
           // Add resources, and classes
           Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
+          // Don't use Path.endsWith(), since Path works on path elements.
           Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
           javaContainerBuilder
               .addResources(classesOutputDirectory, isClassFile.negate())
@@ -229,9 +231,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
         case PACKAGED:
           // Add a JAR
-          String jarName = project.getBuild().getFinalName() + "." + project.getPackaging();
-          Path jar = Paths.get(project.getBuild().getDirectory(), jarName);
-          javaContainerBuilder.addToClasspath(jar);
+          javaContainerBuilder.addToClasspath(getJarArtifact());
           break;
 
         default:
@@ -368,5 +368,47 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public boolean isOffline() {
     return session.isOffline();
+  }
+
+  @VisibleForTesting
+  Path getJarArtifact() {
+    // Assume the "main artifact" of the project is the JAR of our interest. For example,
+    // maven-jar-plugin sets the generated JAR as a main artifact, but other plugins may do the
+    // same.
+    //
+    File mainArtifact = project.getArtifact().getFile();
+    // getFile() can return null. For example, with maven-jar-plugin,
+    //
+    // 1) maven-jar-plugin is not executed together with Jib (i.e., "package" is not combined with a
+    // Jib goal) even if the JAR is generated previously and exists.
+    //
+    // 2) maven-jar-plugin's <classifier> config is defined, attaching the JAR as a supplemental
+    // artifact:
+    // https://github.com/apache/maven-jar-plugin/blob/80f58a84aacff6e671f5a601d62a3a3800b507dc/src/main/java/org/apache/maven/plugins/jar/AbstractJarMojo.java#L295-L307
+    if (mainArtifact != null && mainArtifact.toString().endsWith(".jar")) {
+      return mainArtifact.toPath();
+    }
+
+    List<Artifact> supplementalArtifacts = project.getAttachedArtifacts();
+    List<File> jars =
+        supplementalArtifacts
+            .stream()
+            .map(Artifact::getFile)
+            .filter(Objects::nonNull)
+            .filter(file -> file.toString().endsWith(".jar"))
+            .collect(Collectors.toList());
+    if (jars.size() == 1) {
+      return jars.get(0).toPath();
+    }
+
+    // Fall back and construct the JAR path according to the doc of maven-jar-plugin, assuming the
+    // JAR of our interest is following the convention of maven-jar-plugin.
+    // https://maven.apache.org/plugins/maven-jar-plugin/jar-mojo.html
+    // https://github.com/apache/maven-jar-plugin/blob/80f58a84aacff6e671f5a601d62a3a3800b507dc/src/main/java/org/apache/maven/plugins/jar/AbstractJarMojo.java#L177
+    //
+    // TODO: use maven-jar-plugin's <outputDirectory> and <classifier> (i.e.,
+    // "<outputDirectory>/<finalName>-<classifier>.jar").
+    String jarName = project.getBuild().getFinalName() + ".jar";
+    return Paths.get(project.getBuild().getDirectory(), jarName);
   }
 }

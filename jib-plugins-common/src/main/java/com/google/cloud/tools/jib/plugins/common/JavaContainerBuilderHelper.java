@@ -76,6 +76,7 @@ public class JavaContainerBuilderHelper {
     Path webInfClasses = explodedWar.resolve("WEB-INF/classes");
     Predicate<Path> isDependency = path -> path.startsWith(webInfLib);
     Predicate<Path> isClassFile =
+        // Don't use Path.endsWith(), since Path works on path elements.
         path -> path.startsWith(webInfClasses) && path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResource = isDependency.or(isClassFile).negate();
 
