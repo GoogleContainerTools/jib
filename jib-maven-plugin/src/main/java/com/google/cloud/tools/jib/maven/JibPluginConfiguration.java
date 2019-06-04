@@ -259,7 +259,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(session);
   }
 
-  MavenProject getProject() {
+  protected MavenProject getProject() {
     return Preconditions.checkNotNull(project);
   }
 
@@ -302,7 +302,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured target image reference
    */
   @Nullable
-  String getTargetImage() {
+  protected String getTargetImage() {
     String propertyAlternate = getProperty(PropertyNames.TO_IMAGE_ALTERNATE);
     if (propertyAlternate != null) {
       return propertyAlternate;

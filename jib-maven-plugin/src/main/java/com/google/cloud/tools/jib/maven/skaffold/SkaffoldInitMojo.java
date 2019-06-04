@@ -14,8 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.maven;
+package com.google.cloud.tools.jib.maven.skaffold;
 
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldInitOutput;
 import java.io.IOException;
 import org.apache.maven.plugin.MojoExecutionException;
