@@ -37,7 +37,7 @@ public class SkaffoldInitMojo extends JibPluginConfiguration {
   public void execute() throws MojoExecutionException {
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
     skaffoldInitOutput.setImage(getTargetImage());
-    if (!getProject().getName().equals(getProject().getParent().getName())) {
+    if (getProject().getParent() != null) {
       skaffoldInitOutput.setProject(getProject().getName());
     }
 
