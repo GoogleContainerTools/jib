@@ -202,7 +202,7 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public void applyEventHandlers(Containerizer containerizer) {
+  public void configureEventHandlers(Containerizer containerizer) {
     containerizer
         .addEventHandler(LogEvent.class, this::log)
         .addEventHandler(

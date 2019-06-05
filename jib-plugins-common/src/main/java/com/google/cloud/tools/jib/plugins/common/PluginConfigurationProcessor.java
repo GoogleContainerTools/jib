@@ -460,7 +460,7 @@ public class PluginConfigurationProcessor {
       Containerizer containerizer,
       RawConfiguration rawConfiguration,
       ProjectProperties projectProperties) {
-    projectProperties.applyEventHandlers(containerizer);
+    projectProperties.configureEventHandlers(containerizer);
     containerizer
         .setOfflineMode(projectProperties.isOffline())
         .setToolName(projectProperties.getToolName())

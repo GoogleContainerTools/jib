@@ -139,12 +139,12 @@ public class Containerizer {
   private final ImageConfiguration imageConfiguration;
   private final Function<BuildConfiguration, StepsRunner> stepsRunnerFactory;
   private final boolean mustBeOnline;
-
   private final Set<String> additionalTags = new HashSet<>();
+  private final EventHandlers.Builder eventHandlersBuilder = EventHandlers.builder();
+
   @Nullable private ExecutorService executorService;
   private Path baseImageLayersCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
   @Nullable private Path applicationLayersCacheDirectory;
-  private EventHandlers.Builder eventHandlersBuilder = EventHandlers.builder();
   private boolean allowInsecureRegistries = false;
   private boolean offline = false;
   private String toolName = DEFAULT_TOOL_NAME;
@@ -218,7 +218,7 @@ public class Containerizer {
   }
 
   /**
-   * Adds the {@code eventConsumer} to handle the {@link JibEvent} with class {@code eventClass}.
+   * Adds the {@code eventConsumer} to handle the {@link JibEvent} with class {@code eventType}.
    * The order in which handlers are added is the order in which they are called when the event is
    * dispatched.
    *
@@ -226,7 +226,7 @@ public class Containerizer {
    *
    * @param eventType the event type that {@code eventConsumer} should handle
    * @param eventConsumer the event handler
-   * @param <E> the type of {@code eventClass}
+   * @param <E> the type of {@code eventType}
    * @return this
    */
   public <E extends JibEvent> Containerizer addEventHandler(

@@ -47,7 +47,7 @@ public interface ProjectProperties {
    * @param containerizer the containerizer to add event handlers to
    */
   // TODO: Move out of ProjectProperties.
-  void applyEventHandlers(Containerizer containerizer);
+  void configureEventHandlers(Containerizer containerizer);
 
   void log(LogEvent logEvent);
 
