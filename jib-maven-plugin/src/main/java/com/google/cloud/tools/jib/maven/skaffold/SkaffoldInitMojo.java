@@ -41,7 +41,7 @@ public class SkaffoldInitMojo extends JibPluginConfiguration {
       skaffoldInitOutput.setProject(getProject().getName());
     }
 
-    System.out.println("\nBEGIN JIB");
+    System.out.println("\nBEGIN JIB JSON");
     try {
       System.out.println(skaffoldInitOutput.getJsonString());
     } catch (IOException ex) {
