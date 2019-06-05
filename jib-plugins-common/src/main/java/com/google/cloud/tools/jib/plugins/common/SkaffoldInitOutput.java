@@ -17,9 +17,11 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -38,25 +40,33 @@ import javax.annotation.Nullable;
  * }
  * }</pre>
  */
+@JsonInclude(Include.NON_NULL)
+@JsonAutoDetect(
+    fieldVisibility = Visibility.ANY,
+    setterVisibility = Visibility.NONE,
+    getterVisibility = Visibility.NONE)
 public class SkaffoldInitOutput {
 
-  @JsonInclude(Include.NON_NULL)
-  @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-  private static class SkaffoldInitTemplate {
+  @Nullable private String image;
 
-    @Nullable private String image;
+  @Nullable private String project;
 
-    @Nullable private String project;
+  public SkaffoldInitOutput() {}
+
+  @VisibleForTesting
+  public SkaffoldInitOutput(String json) throws IOException {
+    SkaffoldInitOutput skaffoldInitOutput =
+        new ObjectMapper().readValue(json, SkaffoldInitOutput.class);
+    this.image = skaffoldInitOutput.image;
+    this.project = skaffoldInitOutput.project;
   }
 
-  private final SkaffoldInitTemplate skaffoldInitTemplate = new SkaffoldInitTemplate();
-
   public void setImage(@Nullable String image) {
-    skaffoldInitTemplate.image = image;
+    this.image = image;
   }
 
   public void setProject(@Nullable String project) {
-    skaffoldInitTemplate.project = project;
+    this.project = project;
   }
 
   /**
@@ -67,8 +77,20 @@ public class SkaffoldInitOutput {
    */
   public String getJsonString() throws IOException {
     try (OutputStream outputStream = new ByteArrayOutputStream()) {
-      new ObjectMapper().writeValue(outputStream, skaffoldInitTemplate);
+      new ObjectMapper().writeValue(outputStream, this);
       return outputStream.toString();
     }
+  }
+
+  @VisibleForTesting
+  @Nullable
+  public String getImage() {
+    return image;
+  }
+
+  @VisibleForTesting
+  @Nullable
+  public String getProject() {
+    return project;
   }
 }
