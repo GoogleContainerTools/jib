@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
+import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
 import java.io.FileNotFoundException;

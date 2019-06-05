@@ -16,13 +16,13 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;

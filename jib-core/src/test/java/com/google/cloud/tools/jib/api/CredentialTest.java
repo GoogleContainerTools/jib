@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.configuration.credentials;
+package com.google.cloud.tools.jib.api;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -22,7 +22,7 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link Credential}. */
+/** Tests for {@link com.google.cloud.tools.jib.api.Credential}. */
 public class CredentialTest {
 
   @Test

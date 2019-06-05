@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
 import java.nio.file.Path;

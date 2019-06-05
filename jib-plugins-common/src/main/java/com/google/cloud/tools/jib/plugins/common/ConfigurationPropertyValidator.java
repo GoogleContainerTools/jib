@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.common.base.Strings;
 import java.util.ArrayList;

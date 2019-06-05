@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
 import java.util.Arrays;
