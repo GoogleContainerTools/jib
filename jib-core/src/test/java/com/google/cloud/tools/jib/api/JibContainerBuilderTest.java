@@ -288,7 +288,7 @@ public class JibContainerBuilderTest {
     Mockito.when(mockContainerizer.getAllowInsecureRegistries()).thenReturn(false);
     Mockito.when(mockContainerizer.getToolName()).thenReturn("mocktool");
     Mockito.when(mockContainerizer.getExecutorService()).thenReturn(Optional.empty());
-    Mockito.when(mockContainerizer.getEventHandlersBuilder()).thenReturn(EventHandlers.builder());
+    Mockito.when(mockContainerizer.buildEventHandlers()).thenReturn(EventHandlers.NONE);
     return mockContainerizer;
   }
 }

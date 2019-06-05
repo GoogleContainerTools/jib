@@ -314,8 +314,8 @@ public class Containerizer {
     return applicationLayersCacheDirectory;
   }
 
-  EventHandlers.Builder getEventHandlersBuilder() {
-    return eventHandlersBuilder;
+  EventHandlers buildEventHandlers() {
+    return eventHandlersBuilder.build();
   }
 
   boolean getAllowInsecureRegistries() {
