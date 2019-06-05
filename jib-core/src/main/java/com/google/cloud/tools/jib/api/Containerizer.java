@@ -218,8 +218,8 @@ public class Containerizer {
   }
 
   /**
-   * Adds the {@code eventConsumer} to handle the {@link JibEvent} with class {@code eventType}.
-   * The order in which handlers are added is the order in which they are called when the event is
+   * Adds the {@code eventConsumer} to handle the {@link JibEvent} with class {@code eventType}. The
+   * order in which handlers are added is the order in which they are called when the event is
    * dispatched.
    *
    * <p><b>Note: Implementations of {@code eventConsumer} must be thread-safe.</b>
