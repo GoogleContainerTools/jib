@@ -109,7 +109,8 @@ public class ConfigurationPropertyValidator {
    * {@code project-name:project-version} if target image is not configured
    *
    * @param targetImage the configured target image reference
-   * @param projectProperties the {@link ProjectProperties} used to handle the log events
+   * @param projectProperties the {@link ProjectProperties} providing the project name, version, and
+   *     log event handler
    * @param helpfulSuggestions used for generating the message notifying the user of the generated
    *     tag
    * @return an {@link ImageReference} parsed from the configured target image, or one of the form
