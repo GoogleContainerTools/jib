@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEvent;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
@@ -138,7 +137,7 @@ public class JibContainerBuilderTest {
             .setBaseImageLayersCache(Paths.get("base/image/layers"))
             .setApplicationLayersCache(Paths.get("application/layers"))
             .setExecutorService(mockExecutorService)
-            .setEventHandlers(EventHandlers.builder().add(mockJibEventConsumer).build());
+            .addEventHandler(mockJibEventConsumer);
 
     RegistryImage baseImage =
         RegistryImage.named("base/image").addCredentialRetriever(mockCredentialRetriever);
@@ -287,7 +286,7 @@ public class JibContainerBuilderTest {
     Mockito.when(mockContainerizer.getAllowInsecureRegistries()).thenReturn(false);
     Mockito.when(mockContainerizer.getToolName()).thenReturn("mocktool");
     Mockito.when(mockContainerizer.getExecutorService()).thenReturn(Optional.empty());
-    Mockito.when(mockContainerizer.getEventHandlers()).thenReturn(EventHandlers.NONE);
+    Mockito.when(mockContainerizer.buildEventHandlers()).thenReturn(EventHandlers.NONE);
     return mockContainerizer;
   }
 }

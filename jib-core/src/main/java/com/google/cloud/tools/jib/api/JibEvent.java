@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.event;
+package com.google.cloud.tools.jib.api;
 
 /**
  * Type for events dispatched by Jib Core. Implementation classes should <b>not</b> inherit from

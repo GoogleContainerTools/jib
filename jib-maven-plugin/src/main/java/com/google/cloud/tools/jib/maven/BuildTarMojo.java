@@ -104,7 +104,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
             .build(
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
-                projectProperties.getEventHandlers(),
+                projectProperties::log,
                 helpfulSuggestions);
 
       } finally {

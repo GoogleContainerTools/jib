@@ -16,9 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEvent;
-import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
@@ -26,7 +24,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.function.Consumer;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
@@ -42,13 +39,10 @@ public class MainClassResolverTest {
 
   private static final Path FAKE_CLASSES_PATH = Paths.get("a/b/c");
 
-  @Mock private Consumer<JibEvent> mockJibEventConsumer;
   @Mock private ProjectProperties mockProjectProperties;
 
   @Before
   public void setup() {
-    Mockito.when(mockProjectProperties.getEventHandlers())
-        .thenReturn(EventHandlers.builder().add(mockJibEventConsumer).build());
     Mockito.when(mockProjectProperties.getPluginName()).thenReturn("plugin");
     Mockito.when(mockProjectProperties.getJarPluginName()).thenReturn("jar-plugin");
   }
@@ -69,8 +63,8 @@ public class MainClassResolverTest {
         .thenReturn(ImmutableList.of(FAKE_CLASSES_PATH));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockJibEventConsumer)
-        .accept(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
+    Mockito.verify(mockProjectProperties)
+        .log(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
   }
 
   @Test
@@ -85,8 +79,8 @@ public class MainClassResolverTest {
                 .asList());
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockJibEventConsumer)
-        .accept(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
+    Mockito.verify(mockProjectProperties)
+        .log(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
   }
 
   @Test
@@ -119,8 +113,8 @@ public class MainClassResolverTest {
         .thenReturn(ImmutableList.of(Paths.get("ignored")));
     Assert.assertEquals(
         "${start-class}", MainClassResolver.resolveMainClass(null, mockProjectProperties));
-    Mockito.verify(mockJibEventConsumer)
-        .accept(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
+    Mockito.verify(mockProjectProperties)
+        .log(LogEvent.warn("'mainClass' is not a valid Java class : ${start-class}"));
   }
 
   @Test

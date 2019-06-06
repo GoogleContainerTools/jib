@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event;
 
+import com.google.cloud.tools.jib.api.JibEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,7 +61,7 @@ public class EventHandlersTest {
                 TestJibEvent1.class,
                 testJibEvent1 -> Assert.assertEquals("payload", testJibEvent1.getPayload()))
             .add(TestJibEvent2.class, testJibEvent2 -> testJibEvent2.sayHello("Jib"))
-            .add(jibEvent -> counter[0]++)
+            .add(JibEvent.class, jibEvent -> counter[0]++)
             .build();
     Assert.assertTrue(eventHandlers.getHandlers().containsKey(JibEvent.class));
     Assert.assertTrue(eventHandlers.getHandlers().containsKey(TestJibEvent1.class));
@@ -94,7 +95,7 @@ public class EventHandlersTest {
             .add(TestJibEvent2.class, testJibEvent2 -> emissions.add("handled 2 first"))
             .add(TestJibEvent2.class, testJibEvent2 -> emissions.add("handled 2 second"))
             .add(TestJibEvent3.class, testJibEvent3 -> emissions.add("handled 3"))
-            .add(jibEvent -> emissions.add("handled generic"))
+            .add(JibEvent.class, jibEvent -> emissions.add("handled generic"))
             .build();
 
     TestJibEvent2 testJibEvent2 = new TestJibEvent2();

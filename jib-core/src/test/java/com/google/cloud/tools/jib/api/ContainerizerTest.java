@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -34,7 +33,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ContainerizerTest {
 
   @Mock private ExecutorService mockExecutorService;
-  @Mock private EventHandlers mockEventHandlers;
 
   @Test
   public void testTo() throws CacheDirectoryCreationException {
@@ -52,7 +50,6 @@ public class ContainerizerTest {
   private void verifyTo(Containerizer containerizer) throws CacheDirectoryCreationException {
     Assert.assertTrue(containerizer.getAdditionalTags().isEmpty());
     Assert.assertFalse(containerizer.getExecutorService().isPresent());
-    Assert.assertEquals(EventHandlers.NONE, containerizer.getEventHandlers());
     Assert.assertEquals(
         Containerizer.DEFAULT_BASE_CACHE_DIRECTORY,
         containerizer.getBaseImageLayersCacheDirectory());
@@ -66,7 +63,6 @@ public class ContainerizerTest {
         .withAdditionalTag("tag1")
         .withAdditionalTag("tag2")
         .setExecutorService(mockExecutorService)
-        .setEventHandlers(mockEventHandlers)
         .setBaseImageLayersCache(Paths.get("base/image/layers"))
         .setApplicationLayersCache(Paths.get("application/layers"))
         .setAllowInsecureRegistries(true)
@@ -75,7 +71,6 @@ public class ContainerizerTest {
     Assert.assertEquals(ImmutableSet.of("tag1", "tag2"), containerizer.getAdditionalTags());
     Assert.assertTrue(containerizer.getExecutorService().isPresent());
     Assert.assertEquals(mockExecutorService, containerizer.getExecutorService().get());
-    Assert.assertEquals(mockEventHandlers, containerizer.getEventHandlers());
     Assert.assertEquals(
         Paths.get("base/image/layers"), containerizer.getBaseImageLayersCacheDirectory());
     Assert.assertEquals(
