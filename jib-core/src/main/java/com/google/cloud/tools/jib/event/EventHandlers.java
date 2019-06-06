@@ -44,7 +44,7 @@ public class EventHandlers {
      * @param <E> the type of {@code eventClass}
      * @return this
      */
-    public <E extends JibEvent> Builder add(Class<E> eventType, Consumer<E> eventConsumer) {
+    public <E extends JibEvent> Builder add(Class<E> eventType, Consumer<? super E> eventConsumer) {
       handlers.put(eventType, new Handler<>(eventType, eventConsumer));
       return this;
     }

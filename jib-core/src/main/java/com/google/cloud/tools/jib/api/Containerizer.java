@@ -230,7 +230,7 @@ public class Containerizer {
    * @return this
    */
   public <E extends JibEvent> Containerizer addEventHandler(
-      Class<E> eventType, Consumer<E> eventConsumer) {
+      Class<E> eventType, Consumer<? super E> eventConsumer) {
     eventHandlersBuilder.add(eventType, eventConsumer);
     return this;
   }
