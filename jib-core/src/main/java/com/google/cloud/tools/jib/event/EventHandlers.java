@@ -49,17 +49,6 @@ public class EventHandlers {
       return this;
     }
 
-    /**
-     * Adds the {@code eventConsumer} to handle all {@link JibEvent} types. See {@link #add(Class,
-     * Consumer)} for more details.
-     *
-     * @param eventConsumer the event handler
-     * @return this
-     */
-    public Builder add(Consumer<JibEvent> eventConsumer) {
-      return add(JibEvent.class, eventConsumer);
-    }
-
     public EventHandlers build() {
       return new EventHandlers(handlers);
     }

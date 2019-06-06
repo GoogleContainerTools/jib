@@ -243,7 +243,7 @@ public class Containerizer {
    * @return this
    */
   public Containerizer addEventHandler(Consumer<JibEvent> eventConsumer) {
-    eventHandlersBuilder.add(eventConsumer);
+    eventHandlersBuilder.add(JibEvent.class, eventConsumer);
     return this;
   }
 
