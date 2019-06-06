@@ -46,7 +46,7 @@ public class SkaffoldInitMojo extends JibPluginConfiguration {
     try {
       System.out.println(skaffoldInitOutput.getJsonString());
     } catch (IOException ex) {
-      throw new MojoExecutionException(ex.getMessage());
+      throw new MojoExecutionException(ex.getMessage(), ex);
     }
   }
 }
