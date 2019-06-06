@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven.skaffold;
 
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldInitOutput;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -31,7 +32,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 @Mojo(name = SkaffoldInitMojo.GOAL_NAME, requiresDependencyCollection = ResolutionScope.NONE)
 public class SkaffoldInitMojo extends JibPluginConfiguration {
 
-  static final String GOAL_NAME = "_skaffold-init";
+  @VisibleForTesting static final String GOAL_NAME = "_skaffold-init";
 
   @Override
   public void execute() throws MojoExecutionException {

@@ -38,12 +38,13 @@ public class SkaffoldInitTaskTest {
   @ClassRule public static final TestProject multiTestProject = new TestProject("multi-service");
 
   /**
-   * Verifies that the files task succeeded and returns the list of paths it prints out.
+   * Verifies that the files task succeeded and returns the list of JSON strings printed by the
+   * task.
    *
    * @param project the project to run the task on
-   * @return the JSON string printed by the task
+   * @return the JSON strings printed by the task
    */
-  private static List<String> verifyTaskSuccess(TestProject project) {
+  private static List<String> getJsons(TestProject project) {
     BuildResult buildResult =
         project.build(JibPlugin.INIT_TASK_NAME, "-q", "-D_TARGET_IMAGE=testimage");
     BuildTask jibTask = buildResult.task(":" + JibPlugin.INIT_TASK_NAME);
@@ -65,7 +66,7 @@ public class SkaffoldInitTaskTest {
 
   @Test
   public void testFilesTask_singleProject() throws IOException {
-    List<String> outputs = verifyTaskSuccess(simpleTestProject);
+    List<String> outputs = getJsons(simpleTestProject);
     Assert.assertEquals(1, outputs.size());
 
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
@@ -75,7 +76,7 @@ public class SkaffoldInitTaskTest {
 
   @Test
   public void testFilesTask_multiProject() throws IOException {
-    List<String> outputs = verifyTaskSuccess(multiTestProject);
+    List<String> outputs = getJsons(multiTestProject);
     Assert.assertEquals(3, outputs.size());
 
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
