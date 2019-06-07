@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.configuration.credentials;
+package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import java.util.Optional;

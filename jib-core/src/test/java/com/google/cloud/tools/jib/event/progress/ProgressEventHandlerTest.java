@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.event.progress;
 
 import com.google.cloud.tools.jib.MultithreadedExecutor;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -60,7 +59,7 @@ public class ProgressEventHandlerTest {
       ProgressEventHandler progressEventHandler =
           new ProgressEventHandler(update -> maxProgress.accumulate(update.getProgress()));
       EventHandlers eventHandlers =
-          EventHandlers.builder().add(JibEventType.PROGRESS, progressEventHandler).build();
+          EventHandlers.builder().add(ProgressEvent.class, progressEventHandler).build();
 
       // Adds root, child1, and child1Child.
       multithreadedExecutor.invoke(

@@ -16,11 +16,10 @@
 
 package com.google.cloud.tools.jib.frontend;
 
+import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.registry.credentials.CredentialHelperNotFoundException;
 import com.google.cloud.tools.jib.registry.credentials.CredentialHelperUnhandledServerUrlException;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
@@ -34,6 +33,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /** Static factories for various {@link CredentialRetriever}s. */
 public class CredentialRetrieverFactory {
@@ -56,13 +56,12 @@ public class CredentialRetrieverFactory {
    * Creates a new {@link CredentialRetrieverFactory} for an image.
    *
    * @param imageReference the image the credential are for
-   * @param eventHandlers an event handlers for dispatching log events
+   * @param logger a consumer for handling log events
    * @return a new {@link CredentialRetrieverFactory}
    */
   public static CredentialRetrieverFactory forImage(
-      ImageReference imageReference, EventHandlers eventHandlers) {
-    return new CredentialRetrieverFactory(
-        imageReference, eventHandlers, DockerCredentialHelper::new);
+      ImageReference imageReference, Consumer<LogEvent> logger) {
+    return new CredentialRetrieverFactory(imageReference, logger, DockerCredentialHelper::new);
   }
 
   /**
@@ -73,20 +72,20 @@ public class CredentialRetrieverFactory {
    */
   public static CredentialRetrieverFactory forImage(ImageReference imageReference) {
     return new CredentialRetrieverFactory(
-        imageReference, EventHandlers.NONE, DockerCredentialHelper::new);
+        imageReference, logEvent -> {}, DockerCredentialHelper::new);
   }
 
-  private final EventHandlers eventHandlers;
   private final ImageReference imageReference;
+  private final Consumer<LogEvent> logger;
   private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
 
   @VisibleForTesting
   CredentialRetrieverFactory(
       ImageReference imageReference,
-      EventHandlers eventHandlers,
+      Consumer<LogEvent> logger,
       DockerCredentialHelperFactory dockerCredentialHelperFactory) {
     this.imageReference = imageReference;
-    this.eventHandlers = eventHandlers;
+    this.logger = logger;
     this.dockerCredentialHelperFactory = dockerCredentialHelperFactory;
   }
 
@@ -126,13 +125,13 @@ public class CredentialRetrieverFactory {
    */
   public CredentialRetriever dockerCredentialHelper(Path credentialHelper) {
     return () -> {
-      eventHandlers.dispatch(LogEvent.info("Checking credentials from " + credentialHelper));
+      logger.accept(LogEvent.info("Checking credentials from " + credentialHelper));
 
       try {
         return Optional.of(retrieveFromDockerCredentialHelper(credentialHelper));
 
       } catch (CredentialHelperUnhandledServerUrlException ex) {
-        eventHandlers.dispatch(
+        logger.accept(
             LogEvent.info(
                 "No credentials for " + imageReference.getRegistry() + " in " + credentialHelper));
         return Optional.empty();
@@ -176,9 +175,9 @@ public class CredentialRetrieverFactory {
             | CredentialHelperUnhandledServerUrlException ex) {
           if (ex.getMessage() != null) {
             // Warns the user that the specified (or inferred) credential helper cannot be used.
-            eventHandlers.dispatch(LogEvent.info(ex.getMessage()));
+            logger.accept(LogEvent.info(ex.getMessage()));
             if (ex.getCause() != null && ex.getCause().getMessage() != null) {
-              eventHandlers.dispatch(LogEvent.info("  Caused by: " + ex.getCause().getMessage()));
+              logger.accept(LogEvent.info("  Caused by: " + ex.getCause().getMessage()));
             }
           }
 
@@ -220,16 +219,16 @@ public class CredentialRetrieverFactory {
     return () -> {
       try {
         Optional<Credential> dockerConfigCredentials =
-            dockerConfigCredentialRetriever.retrieve(eventHandlers);
+            dockerConfigCredentialRetriever.retrieve(logger);
         if (dockerConfigCredentials.isPresent()) {
-          eventHandlers.dispatch(
+          logger.accept(
               LogEvent.info(
                   "Using credentials from Docker config for " + imageReference.getRegistry()));
           return dockerConfigCredentials;
         }
 
       } catch (IOException ex) {
-        eventHandlers.dispatch(LogEvent.info("Unable to parse Docker config"));
+        logger.accept(LogEvent.info("Unable to parse Docker config"));
       }
       return Optional.empty();
     };
@@ -247,7 +246,7 @@ public class CredentialRetrieverFactory {
   }
 
   private void logGotCredentialsFrom(String credentialSource) {
-    eventHandlers.dispatch(
+    logger.accept(
         LogEvent.info("Using " + credentialSource + " for " + imageReference.getRegistry()));
   }
 }

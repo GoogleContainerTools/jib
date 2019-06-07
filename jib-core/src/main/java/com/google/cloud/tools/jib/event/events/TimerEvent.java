@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.event.events;
 
-import com.google.cloud.tools.jib.event.JibEvent;
+import com.google.cloud.tools.jib.api.JibEvent;
 import java.time.Duration;
 import java.util.Optional;
 

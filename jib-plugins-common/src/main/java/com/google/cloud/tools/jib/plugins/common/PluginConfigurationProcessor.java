@@ -18,19 +18,17 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DockerDaemonImage;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
-import com.google.cloud.tools.jib.frontend.ExposedPortsParser;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -123,7 +121,7 @@ public class PluginConfigurationProcessor {
     boolean isTargetImageCredentialPresent =
         configureCredentialRetrievers(
             rawConfiguration,
-            projectProperties.getEventHandlers(),
+            projectProperties,
             targetImage,
             targetImageReference,
             PropertyNames.TO_AUTH_USERNAME,
@@ -161,9 +159,8 @@ public class PluginConfigurationProcessor {
     ImageReference baseImageReference =
         ImageReference.parse(getBaseImage(rawConfiguration, projectProperties));
 
-    EventHandlers eventHandlers = projectProperties.getEventHandlers();
     if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
-      eventHandlers.dispatch(
+      projectProperties.log(
           LogEvent.warn(
               "Authentication over HTTP is enabled. It is strongly recommended that you do not "
                   + "enable this on a public network!"));
@@ -173,7 +170,7 @@ public class PluginConfigurationProcessor {
     boolean isBaseImageCredentialPresent =
         configureCredentialRetrievers(
             rawConfiguration,
-            eventHandlers,
+            projectProperties,
             baseImage,
             baseImageReference,
             PropertyNames.FROM_AUTH_USERNAME,
@@ -184,18 +181,19 @@ public class PluginConfigurationProcessor {
 
     JibContainerBuilder jibContainerBuilder =
         projectProperties
-            .createContainerBuilder(baseImage)
+            .createContainerBuilder(
+                baseImage, getAppRootChecked(rawConfiguration, projectProperties))
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
-            .setExposedPorts(ExposedPortsParser.parse(rawConfiguration.getPorts()))
+            .setExposedPorts(Ports.parse(rawConfiguration.getPorts()))
             .setVolumes(getVolumesSet(rawConfiguration))
             .setLabels(rawConfiguration.getLabels())
             .setUser(rawConfiguration.getUser().orElse(null));
     getWorkingDirectoryChecked(rawConfiguration)
         .ifPresent(jibContainerBuilder::setWorkingDirectory);
     if (rawConfiguration.getUseCurrentTimestamp()) {
-      eventHandlers.dispatch(
+      projectProperties.log(
           LogEvent.warn(
               "Setting image creation time to current time; your image may not be reproducible."));
       jibContainerBuilder.setCreationTime(Instant.now());
@@ -243,8 +241,7 @@ public class PluginConfigurationProcessor {
   static List<String> computeEntrypoint(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws MainClassInferenceException, InvalidAppRootException, IOException {
-    AbsoluteUnixPath appRoot =
-        getAppRootChecked(rawConfiguration, projectProperties.isWarProject());
+    AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
 
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
     List<String> rawExtraClasspath = rawConfiguration.getExtraClasspath();
@@ -252,11 +249,9 @@ public class PluginConfigurationProcessor {
       if (rawConfiguration.getMainClass().isPresent()
           || !rawConfiguration.getJvmFlags().isEmpty()
           || !rawExtraClasspath.isEmpty()) {
-        projectProperties
-            .getEventHandlers()
-            .dispatch(
-                LogEvent.warn(
-                    "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
+        projectProperties.log(
+            LogEvent.warn(
+                "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
       }
 
       if (rawEntrypoint.get().size() == 1 && "INHERIT".equals(rawEntrypoint.get().get(0))) {
@@ -269,13 +264,23 @@ public class PluginConfigurationProcessor {
       return null;
     }
 
-    List<String> classpath = new ArrayList<>(rawExtraClasspath);
-    classpath.addAll(JavaEntrypointConstructor.defaultClasspath(appRoot));
     String mainClass =
         MainClassResolver.resolveMainClass(
             rawConfiguration.getMainClass().orElse(null), projectProperties);
-    return JavaEntrypointConstructor.makeEntrypoint(
-        classpath, rawConfiguration.getJvmFlags(), mainClass);
+
+    List<String> classpath = new ArrayList<>(rawExtraClasspath);
+    classpath.add(appRoot.resolve("resources").toString());
+    classpath.add(appRoot.resolve("classes").toString());
+    classpath.add(appRoot.resolve("libs/*").toString());
+    String classpathString = String.join(":", classpath);
+
+    List<String> entrypoint = new ArrayList<>(4 + rawConfiguration.getJvmFlags().size());
+    entrypoint.add("java");
+    entrypoint.addAll(rawConfiguration.getJvmFlags());
+    entrypoint.add("-cp");
+    entrypoint.add(classpathString);
+    entrypoint.add(mainClass);
+    return entrypoint;
   }
 
   /**
@@ -349,17 +354,18 @@ public class PluginConfigurationProcessor {
    * JavaContainerBuilder#DEFAULT_APP_ROOT} for other projects.
    *
    * @param rawConfiguration raw configuration data
-   * @param isWarProject whether or not the project is a WAR project
+   * @param projectProperties the project properties
    * @return the app root value
    * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
    */
   @VisibleForTesting
-  public static AbsoluteUnixPath getAppRootChecked(
-      RawConfiguration rawConfiguration, boolean isWarProject) throws InvalidAppRootException {
+  static AbsoluteUnixPath getAppRootChecked(
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+      throws InvalidAppRootException {
     String appRoot = rawConfiguration.getAppRoot();
     if (appRoot.isEmpty()) {
       appRoot =
-          isWarProject
+          projectProperties.isWarProject()
               ? JavaContainerBuilder.DEFAULT_WEB_APP_ROOT
               : JavaContainerBuilder.DEFAULT_APP_ROOT;
     }
@@ -388,7 +394,7 @@ public class PluginConfigurationProcessor {
   // TODO: find a way to reduce the number of arguments.
   private static boolean configureCredentialRetrievers(
       RawConfiguration rawConfiguration,
-      EventHandlers eventHandlers,
+      ProjectProperties projectProperties,
       RegistryImage registryImage,
       ImageReference imageReference,
       String usernamePropertyName,
@@ -399,10 +405,14 @@ public class PluginConfigurationProcessor {
       throws FileNotFoundException {
     DefaultCredentialRetrievers defaultCredentialRetrievers =
         DefaultCredentialRetrievers.init(
-            CredentialRetrieverFactory.forImage(imageReference, eventHandlers));
+            CredentialRetrieverFactory.forImage(imageReference, projectProperties::log));
     Optional<Credential> optionalCredential =
         ConfigurationPropertyValidator.getImageCredential(
-            eventHandlers, usernamePropertyName, passwordPropertyName, knownAuth, rawConfiguration);
+            projectProperties::log,
+            usernamePropertyName,
+            passwordPropertyName,
+            knownAuth,
+            rawConfiguration);
     boolean credentialPresent = optionalCredential.isPresent();
     if (optionalCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(
@@ -420,7 +430,7 @@ public class PluginConfigurationProcessor {
           defaultCredentialRetrievers.setInferredCredential(credential, auth.getAuthDescriptor());
         }
       } catch (InferredAuthException ex) {
-        eventHandlers.dispatch(LogEvent.warn("InferredAuthException: " + ex.getMessage()));
+        projectProperties.log(LogEvent.warn("InferredAuthException: " + ex.getMessage()));
       }
     }
     defaultCredentialRetrievers.setCredentialHelper(credHelper);
@@ -435,13 +445,7 @@ public class PluginConfigurationProcessor {
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException {
     return ConfigurationPropertyValidator.getGeneratedTargetDockerTag(
-        rawConfiguration.getToImage().orElse(null),
-        projectProperties.getEventHandlers(),
-        projectProperties.getName(),
-        projectProperties.getVersion().equals("unspecified")
-            ? "latest"
-            : projectProperties.getVersion(),
-        helpfulSuggestions);
+        rawConfiguration.getToImage().orElse(null), projectProperties, helpfulSuggestions);
   }
 
   /**
@@ -456,10 +460,10 @@ public class PluginConfigurationProcessor {
       Containerizer containerizer,
       RawConfiguration rawConfiguration,
       ProjectProperties projectProperties) {
+    projectProperties.configureEventHandlers(containerizer);
     containerizer
         .setOfflineMode(projectProperties.isOffline())
         .setToolName(projectProperties.getToolName())
-        .setEventHandlers(projectProperties.getEventHandlers())
         .setAllowInsecureRegistries(rawConfiguration.getAllowInsecureRegistries())
         .setBaseImageLayersCache(
             getCheckedCacheDirectory(

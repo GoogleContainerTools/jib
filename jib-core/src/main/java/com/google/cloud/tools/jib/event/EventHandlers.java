@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event;
 
+import com.google.cloud.tools.jib.api.JibEvent;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
@@ -43,21 +44,9 @@ public class EventHandlers {
      * @param <E> the type of {@code eventClass}
      * @return this
      */
-    public <E extends JibEvent> Builder add(JibEventType<E> eventType, Consumer<E> eventConsumer) {
-      Class<E> eventClass = eventType.getEventClass();
-      handlers.put(eventClass, new Handler<>(eventClass, eventConsumer));
+    public <E extends JibEvent> Builder add(Class<E> eventType, Consumer<? super E> eventConsumer) {
+      handlers.put(eventType, new Handler<>(eventType, eventConsumer));
       return this;
-    }
-
-    /**
-     * Adds the {@code eventConsumer} to handle all {@link JibEvent} types. See {@link
-     * #add(JibEventType, Consumer)} for more details.
-     *
-     * @param eventConsumer the event handler
-     * @return this
-     */
-    public Builder add(Consumer<JibEvent> eventConsumer) {
-      return add(JibEventType.ALL, eventConsumer);
     }
 
     public EventHandlers build() {

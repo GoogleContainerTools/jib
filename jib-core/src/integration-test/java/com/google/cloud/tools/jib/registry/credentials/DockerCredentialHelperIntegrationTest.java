@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.registry.credentials;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
+import com.google.cloud.tools.jib.api.Credential;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;

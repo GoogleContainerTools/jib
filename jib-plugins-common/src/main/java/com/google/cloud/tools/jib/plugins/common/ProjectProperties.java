@@ -16,9 +16,11 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -39,8 +41,15 @@ public interface ProjectProperties {
   // TODO: Move out of ProjectProperties.
   void waitForLoggingThread();
 
+  /**
+   * Adds the plugin's event handlers to a containerizer.
+   *
+   * @param containerizer the containerizer to add event handlers to
+   */
   // TODO: Move out of ProjectProperties.
-  EventHandlers getEventHandlers();
+  void configureEventHandlers(Containerizer containerizer);
+
+  void log(LogEvent logEvent);
 
   String getToolName();
 
@@ -50,10 +59,12 @@ public interface ProjectProperties {
    * Starts the containerization process.
    *
    * @param baseImage the base image
+   * @param appRoot root directory in the image where the app will be placed
    * @return a {@link JibContainerBuilder} with classes, resources, and dependencies added to it
    * @throws IOException if there is a problem walking the project files
    */
-  JibContainerBuilder createContainerBuilder(RegistryImage baseImage) throws IOException;
+  JibContainerBuilder createContainerBuilder(RegistryImage baseImage, AbsoluteUnixPath appRoot)
+      throws IOException;
 
   List<Path> getClassFiles() throws IOException;
 

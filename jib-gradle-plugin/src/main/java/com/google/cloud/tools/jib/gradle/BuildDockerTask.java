@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
@@ -105,11 +104,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     try {
       RawConfiguration gradleRawConfiguration = new GradleRawConfiguration(jibExtension);
-      AbsoluteUnixPath appRoot =
-          PluginConfigurationProcessor.getAppRootChecked(
-              gradleRawConfiguration, TaskCommon.isWarProject(getProject()));
       GradleProjectProperties projectProperties =
-          GradleProjectProperties.getForProject(getProject(), getLogger(), appRoot);
+          GradleProjectProperties.getForProject(getProject(), getLogger());
 
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
@@ -141,7 +137,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
             .build(
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
-                projectProperties.getEventHandlers(),
+                projectProperties::log,
                 helpfulSuggestions);
 
       } finally {

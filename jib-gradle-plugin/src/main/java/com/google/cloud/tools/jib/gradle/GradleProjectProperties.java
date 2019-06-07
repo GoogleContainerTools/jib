@@ -17,12 +17,13 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
-import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
@@ -40,7 +41,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.tools.ant.taskdefs.condition.Os;
@@ -70,54 +70,12 @@ class GradleProjectProperties implements ProjectProperties {
   private static final String MAIN_SOURCE_SET_NAME = "main";
 
   /** @return a GradleProjectProperties from the given project and logger. */
-  static GradleProjectProperties getForProject(
-      Project project, Logger logger, AbsoluteUnixPath appRoot) {
-    return new GradleProjectProperties(project, logger, appRoot);
+  static GradleProjectProperties getForProject(Project project, Logger logger) {
+    return new GradleProjectProperties(project, logger);
   }
 
   static Path getExplodedWarDirectory(Project project) {
     return project.getBuildDir().toPath().resolve(ProjectProperties.EXPLODED_WAR_DIRECTORY_NAME);
-  }
-
-  private static EventHandlers makeEventHandlers(
-      Project project, Logger logger, SingleThreadedExecutor singleThreadedExecutor) {
-    ConsoleLoggerBuilder consoleLoggerBuilder =
-        (isProgressFooterEnabled(project)
-                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
-                : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(logger::lifecycle))
-            .lifecycle(logger::lifecycle);
-    if (logger.isDebugEnabled()) {
-      consoleLoggerBuilder.debug(logger::debug);
-    }
-    if (logger.isInfoEnabled()) {
-      consoleLoggerBuilder.info(logger::info);
-    }
-    if (logger.isWarnEnabled()) {
-      consoleLoggerBuilder.warn(logger::warn);
-    }
-    if (logger.isErrorEnabled()) {
-      consoleLoggerBuilder.error(logger::error);
-    }
-    ConsoleLogger consoleLogger = consoleLoggerBuilder.build();
-
-    return EventHandlers.builder()
-        .add(
-            JibEventType.LOGGING,
-            logEvent -> consoleLogger.log(logEvent.getLevel(), logEvent.getMessage()))
-        .add(
-            JibEventType.TIMING,
-            new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
-        .add(
-            JibEventType.PROGRESS,
-            new ProgressEventHandler(
-                update -> {
-                  List<String> footer =
-                      ProgressDisplayGenerator.generateProgressDisplay(
-                          update.getProgress(), update.getUnfinishedLeafTasks());
-                  footer.add("");
-                  consoleLogger.setFooter(footer);
-                }))
-        .build();
   }
 
   private static boolean isProgressFooterEnabled(Project project) {
@@ -140,21 +98,36 @@ class GradleProjectProperties implements ProjectProperties {
 
   private final Project project;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
-  private final EventHandlers eventHandlers;
   private final Logger logger;
-  private final AbsoluteUnixPath appRoot;
+  private final ConsoleLogger consoleLogger;
 
   @VisibleForTesting
-  GradleProjectProperties(Project project, Logger logger, AbsoluteUnixPath appRoot) {
+  GradleProjectProperties(Project project, Logger logger) {
     this.project = project;
     this.logger = logger;
-    this.appRoot = appRoot;
-
-    eventHandlers = makeEventHandlers(project, logger, singleThreadedExecutor);
+    ConsoleLoggerBuilder consoleLoggerBuilder =
+        (isProgressFooterEnabled(project)
+                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
+                : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(logger::lifecycle))
+            .lifecycle(logger::lifecycle);
+    if (logger.isDebugEnabled()) {
+      consoleLoggerBuilder.debug(logger::debug);
+    }
+    if (logger.isInfoEnabled()) {
+      consoleLoggerBuilder.info(logger::info);
+    }
+    if (logger.isWarnEnabled()) {
+      consoleLoggerBuilder.warn(logger::warn);
+    }
+    if (logger.isErrorEnabled()) {
+      consoleLoggerBuilder.error(logger::error);
+    }
+    this.consoleLogger = consoleLoggerBuilder.build();
   }
 
   @Override
-  public JibContainerBuilder createContainerBuilder(RegistryImage baseImage) {
+  public JibContainerBuilder createContainerBuilder(
+      RegistryImage baseImage, AbsoluteUnixPath appRoot) {
     try {
       if (isWarProject()) {
         logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
@@ -229,8 +202,27 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public EventHandlers getEventHandlers() {
-    return eventHandlers;
+  public void configureEventHandlers(Containerizer containerizer) {
+    containerizer
+        .addEventHandler(LogEvent.class, this::log)
+        .addEventHandler(
+            TimerEvent.class,
+            new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
+        .addEventHandler(
+            ProgressEvent.class,
+            new ProgressEventHandler(
+                update -> {
+                  List<String> footer =
+                      ProgressDisplayGenerator.generateProgressDisplay(
+                          update.getProgress(), update.getUnfinishedLeafTasks());
+                  footer.add("");
+                  consoleLogger.setFooter(footer);
+                }));
+  }
+
+  @Override
+  public void log(LogEvent logEvent) {
+    consoleLogger.log(logEvent.getLevel(), logEvent.getMessage());
   }
 
   @Override
@@ -265,31 +257,32 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public boolean isWarProject() {
-    return TaskCommon.isWarProject(project);
+    return TaskCommon.getWarTask(project) != null;
   }
 
   /**
-   * Returns the input files for a task.
+   * Returns the input files for a task. These files include the runtimeClasspath of the application
+   * and any extraDirectories defined by the user to include in the container.
    *
-   * @param extraDirectory the image's configured extra directory
    * @param project the gradle project
-   * @return the input files to the task are all the output files for all the dependencies of the
-   *     {@code classes} task
+   * @param extraDirectories the image's configured extra directories
+   * @return the input files
    */
-  static FileCollection getInputFiles(File extraDirectory, Project project) {
-    Task classesTask = project.getTasks().getByPath("classes");
-    Set<? extends Task> classesDependencies =
-        classesTask.getTaskDependencies().getDependencies(classesTask);
-
+  static FileCollection getInputFiles(Project project, List<Path> extraDirectories) {
+    JavaPluginConvention javaPluginConvention =
+        project.getConvention().getPlugin(JavaPluginConvention.class);
+    SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
     List<FileCollection> dependencyFileCollections = new ArrayList<>();
-    for (Task task : classesDependencies) {
-      dependencyFileCollections.add(task.getOutputs().getFiles());
-    }
-    if (Files.exists(extraDirectory.toPath())) {
-      return project.files(dependencyFileCollections, extraDirectory);
-    } else {
-      return project.files(dependencyFileCollections);
-    }
+    dependencyFileCollections.add(mainSourceSet.getRuntimeClasspath());
+
+    extraDirectories
+        .stream()
+        .filter(Files::exists)
+        .map(Path::toFile)
+        .map(project::files)
+        .forEach(dependencyFileCollections::add);
+
+    return project.files(dependencyFileCollections);
   }
 
   @Override

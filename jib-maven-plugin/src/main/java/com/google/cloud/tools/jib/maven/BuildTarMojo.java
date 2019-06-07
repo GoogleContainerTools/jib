@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
@@ -71,11 +70,8 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
     try {
       RawConfiguration mavenRawConfiguration = new MavenRawConfiguration(this);
-      AbsoluteUnixPath appRoot =
-          PluginConfigurationProcessor.getAppRootChecked(
-              mavenRawConfiguration, MojoCommon.isWarProject(getProject()));
       MavenProjectProperties projectProperties =
-          MavenProjectProperties.getForProject(getProject(), getSession(), getLog(), appRoot);
+          MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
 
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
@@ -108,7 +104,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
             .build(
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
-                projectProperties.getEventHandlers(),
+                projectProperties::log,
                 helpfulSuggestions);
 
       } finally {

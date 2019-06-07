@@ -26,11 +26,9 @@ import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.LayerEntry;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
@@ -99,16 +97,14 @@ public class PluginConfigurationProcessorTest {
 
     Mockito.when(projectProperties.getToolName()).thenReturn("tool");
     Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");
-    Mockito.when(projectProperties.getEventHandlers())
-        .thenReturn(EventHandlers.builder().add(JibEventType.LOGGING, logger).build());
     Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
-    Mockito.when(projectProperties.createContainerBuilder(Mockito.any()))
+    Mockito.when(
+            projectProperties.createContainerBuilder(
+                Mockito.any(RegistryImage.class), Mockito.any(AbsoluteUnixPath.class)))
         .thenReturn(Jib.from("base"));
     Mockito.when(projectProperties.isOffline()).thenReturn(false);
 
     Mockito.when(containerizer.setToolName(Mockito.anyString())).thenReturn(containerizer);
-    Mockito.when(containerizer.setEventHandlers(Mockito.any(EventHandlers.class)))
-        .thenReturn(containerizer);
     Mockito.when(containerizer.setAllowInsecureRegistries(Mockito.anyBoolean()))
         .thenReturn(containerizer);
     Mockito.when(containerizer.setBaseImageLayersCache(Mockito.any(Path.class)))
@@ -364,8 +360,8 @@ public class PluginConfigurationProcessorTest {
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Mockito.verify(logger)
-        .accept(
+    Mockito.verify(projectProperties)
+        .log(
             LogEvent.warn(
                 "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
   }
@@ -387,8 +383,8 @@ public class PluginConfigurationProcessorTest {
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Mockito.verify(logger)
-        .accept(
+    Mockito.verify(projectProperties)
+        .log(
             LogEvent.warn(
                 "mainClass, extraClasspath, and jvmFlags are ignored when entrypoint is specified"));
   }
@@ -436,7 +432,7 @@ public class PluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/some/root"),
-        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, false));
+        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
   }
 
   @Test
@@ -444,7 +440,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("relative/path");
 
     try {
-      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, false);
+      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
       Assert.fail();
     } catch (InvalidAppRootException ex) {
       Assert.assertEquals("relative/path", ex.getMessage());
@@ -456,7 +452,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("\\windows\\path");
 
     try {
-      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, false);
+      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
       Assert.fail();
     } catch (InvalidAppRootException ex) {
       Assert.assertEquals("\\windows\\path", ex.getMessage());
@@ -468,7 +464,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("C:\\windows\\path");
 
     try {
-      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, false);
+      PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties);
       Assert.fail();
     } catch (InvalidAppRootException ex) {
       Assert.assertEquals("C:\\windows\\path", ex.getMessage());
@@ -478,19 +474,21 @@ public class PluginConfigurationProcessorTest {
   @Test
   public void testGetAppRootChecked_defaultNonWarProject() throws InvalidAppRootException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("");
+    Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/app"),
-        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, false));
+        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
   }
 
   @Test
   public void testGetAppRootChecked_defaultWarProject() throws InvalidAppRootException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("");
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
     Assert.assertEquals(
         AbsoluteUnixPath.get("/jetty/webapps/ROOT"),
-        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, true));
+        PluginConfigurationProcessor.getAppRootChecked(rawConfiguration, projectProperties));
   }
 
   @Test

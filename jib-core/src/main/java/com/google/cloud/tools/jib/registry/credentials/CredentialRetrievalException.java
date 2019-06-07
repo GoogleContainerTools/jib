@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
+import com.google.cloud.tools.jib.api.CredentialRetriever;
 
 /** Thrown if something went wrong during {@link CredentialRetriever#retrieve}. */
 public class CredentialRetrievalException extends Exception {
