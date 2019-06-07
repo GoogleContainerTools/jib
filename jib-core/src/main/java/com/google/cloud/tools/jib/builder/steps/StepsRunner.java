@@ -16,19 +16,31 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.async.AsyncSteps;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
+import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.image.Image;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
@@ -40,231 +52,248 @@ import javax.annotation.Nullable;
  */
 public class StepsRunner {
 
-  /** Holds the individual steps. */
-  private static class Steps {
-
-    @Nullable private RetrieveRegistryCredentialsStep retrieveTargetRegistryCredentialsStep;
-    @Nullable private AuthenticatePushStep authenticatePushStep;
-    @Nullable private PullBaseImageStep pullBaseImageStep;
-    @Nullable private PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
-
-    @Nullable
-    private ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
-
-    @Nullable private PushLayersStep pushBaseImageLayersStep;
-    @Nullable private PushLayersStep pushApplicationLayersStep;
-    @Nullable private BuildImageStep buildImageStep;
-    @Nullable private PushContainerConfigurationStep pushContainerConfigurationStep;
-
-    @Nullable private AsyncStep<BuildResult> finalStep;
+  /** Holds the individual future results. */
+  private static class StepResults {
+    @Nullable private Future<ImageAndAuthorization> baseImageAndAuth;
+    @Nullable private Future<List<Future<CachedLayerAndName>>> baseImageLayers;
+    @Nullable private List<Future<CachedLayerAndName>> applicationLayers;
+    @Nullable private Future<Image> builtImage;
+    @Nullable private Future<Credential> targetRegistryCredentials;
+    @Nullable private Future<Authorization> pushAuthorization;
+    @Nullable private Future<List<Future<BlobDescriptor>>> baseImageLayerPushResults;
+    @Nullable private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults;
+    @Nullable private Future<BlobDescriptor> containerConfigurationPushResult;
+    @Nullable private Future<BuildResult> buildResult;
   }
 
-  /**
-   * Starts building the steps to run.
-   *
-   * @param buildConfiguration the {@link BuildConfiguration}
-   * @return a new {@link StepsRunner}
-   */
-  public static StepsRunner begin(BuildConfiguration buildConfiguration) {
+  @VisibleForTesting
+  static <E> List<E> realizeFutures(List<Future<E>> futures)
+      throws InterruptedException, ExecutionException {
+    List<E> values = new ArrayList<>();
+    for (Future<E> future : futures) {
+      values.add(future.get());
+    }
+    return values;
+  }
+
+  @VisibleForTesting
+  static ListeningExecutorService getListeningExecutorService(
+      BuildConfiguration buildConfiguration) {
     ExecutorService executorService =
         JibSystemProperties.isSerializedExecutionEnabled()
             ? MoreExecutors.newDirectExecutorService()
             : buildConfiguration.getExecutorService();
-
-    return new StepsRunner(MoreExecutors.listeningDecorator(executorService), buildConfiguration);
+    return MoreExecutors.listeningDecorator(executorService);
   }
 
-  private final Steps steps = new Steps();
+  private final StepResults results = new StepResults();
+  private Function<BuildConfiguration, BuildResult> buildPlan;
 
   private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
 
-  /** Runnable to run all the steps. */
-  private Runnable stepsRunnable = () -> {};
-
-  /** The total number of steps added. */
-  private int stepsCount = 0;
-
-  @Nullable private String rootProgressAllocationDescription;
-  @Nullable private ProgressEventDispatcher rootProgressEventDispatcher;
+  private final Runnable rootProgressCloser;
+  private final Queue<ProgressEventDispatcher.Factory> childProgressDispatcherSupplier =
+      new ArrayDeque<>();
 
   private StepsRunner(
-      ListeningExecutorService listeningExecutorService, BuildConfiguration buildConfiguration) {
+      ListeningExecutorService listeningExecutorService,
+      BuildConfiguration buildConfiguration,
+      String rootProgressDescription,
+      int rootProgressUnits) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
-  }
 
-  public StepsRunner retrieveTargetRegistryCredentials() {
-    return enqueueStep(
-        () ->
-            steps.retrieveTargetRegistryCredentialsStep =
-                RetrieveRegistryCredentialsStep.forTargetImage(
-                    listeningExecutorService,
-                    buildConfiguration,
-                    Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer()));
-  }
-
-  public StepsRunner authenticatePush() {
-    return enqueueStep(
-        () ->
-            steps.authenticatePushStep =
-                new AuthenticatePushStep(
-                    listeningExecutorService,
-                    buildConfiguration,
-                    Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer(),
-                    Preconditions.checkNotNull(steps.retrieveTargetRegistryCredentialsStep)));
-  }
-
-  public StepsRunner pullBaseImage() {
-    return enqueueStep(
-        () ->
-            steps.pullBaseImageStep =
-                new PullBaseImageStep(
-                    listeningExecutorService,
-                    buildConfiguration,
-                    Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer()));
-  }
-
-  public StepsRunner pullAndCacheBaseImageLayers() {
-    return enqueueStep(
-        () ->
-            steps.pullAndCacheBaseImageLayersStep =
-                new PullAndCacheBaseImageLayersStep(
-                    listeningExecutorService,
-                    buildConfiguration,
-                    Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer(),
-                    Preconditions.checkNotNull(steps.pullBaseImageStep)));
-  }
-
-  public StepsRunner pushBaseImageLayers() {
-    return enqueueStep(
-        () ->
-            steps.pushBaseImageLayersStep =
-                new PushLayersStep(
-                    listeningExecutorService,
-                    buildConfiguration,
-                    Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer(),
-                    Preconditions.checkNotNull(steps.authenticatePushStep),
-                    Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep)));
-  }
-
-  public StepsRunner buildAndCacheApplicationLayers() {
-    return enqueueStep(
-        () ->
-            steps.buildAndCacheApplicationLayerSteps =
-                BuildAndCacheApplicationLayerStep.makeList(
-                    listeningExecutorService,
-                    buildConfiguration,
-                    Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer()));
-  }
-
-  public StepsRunner buildImage() {
-    return enqueueStep(
-        () ->
-            steps.buildImageStep =
-                new BuildImageStep(
-                    listeningExecutorService,
-                    buildConfiguration,
-                    Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer(),
-                    Preconditions.checkNotNull(steps.pullBaseImageStep),
-                    Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep),
-                    Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps)));
-  }
-
-  public StepsRunner pushContainerConfiguration() {
-    return enqueueStep(
-        () ->
-            steps.pushContainerConfigurationStep =
-                new PushContainerConfigurationStep(
-                    listeningExecutorService,
-                    buildConfiguration,
-                    Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer(),
-                    Preconditions.checkNotNull(steps.authenticatePushStep),
-                    Preconditions.checkNotNull(steps.buildImageStep)));
-  }
-
-  public StepsRunner pushApplicationLayers() {
-    return enqueueStep(
-        () ->
-            steps.pushApplicationLayersStep =
-                new PushLayersStep(
-                    listeningExecutorService,
-                    buildConfiguration,
-                    Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer(),
-                    Preconditions.checkNotNull(steps.authenticatePushStep),
-                    AsyncSteps.immediate(
-                        Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps))));
-  }
-
-  public StepsRunner pushImage() {
-    rootProgressAllocationDescription = "building image to registry";
-
-    return enqueueStep(
-        () ->
-            steps.finalStep =
-                new PushImageStep(
-                    listeningExecutorService,
-                    buildConfiguration,
-                    Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer(),
-                    Preconditions.checkNotNull(steps.authenticatePushStep),
-                    Preconditions.checkNotNull(steps.pushBaseImageLayersStep),
-                    Preconditions.checkNotNull(steps.pushApplicationLayersStep),
-                    Preconditions.checkNotNull(steps.pushContainerConfigurationStep),
-                    Preconditions.checkNotNull(steps.buildImageStep)));
-  }
-
-  public StepsRunner loadDocker(DockerClient dockerClient) {
-    rootProgressAllocationDescription = "building image to Docker daemon";
-
-    return enqueueStep(
-        () ->
-            steps.finalStep =
-                new LoadDockerStep(
-                    listeningExecutorService,
-                    buildConfiguration,
-                    Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer(),
-                    dockerClient,
-                    Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep),
-                    Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps),
-                    Preconditions.checkNotNull(steps.buildImageStep)));
-  }
-
-  public StepsRunner writeTarFile(Path outputPath) {
-    rootProgressAllocationDescription = "building image to tar file";
-
-    return enqueueStep(
-        () ->
-            steps.finalStep =
-                new WriteTarFileStep(
-                    listeningExecutorService,
-                    buildConfiguration,
-                    Preconditions.checkNotNull(rootProgressEventDispatcher).newChildProducer(),
-                    outputPath,
-                    Preconditions.checkNotNull(steps.pullAndCacheBaseImageLayersStep),
-                    Preconditions.checkNotNull(steps.buildAndCacheApplicationLayerSteps),
-                    Preconditions.checkNotNull(steps.buildImageStep)));
-  }
-
-  public BuildResult run() throws ExecutionException, InterruptedException {
-    Preconditions.checkNotNull(rootProgressAllocationDescription);
-
-    try (ProgressEventDispatcher progressEventDispatcher =
+    ProgressEventDispatcher rootProgressDispatcher =
         ProgressEventDispatcher.newRoot(
-            buildConfiguration.getEventHandlers(), rootProgressAllocationDescription, stepsCount)) {
-      rootProgressEventDispatcher = progressEventDispatcher;
-      stepsRunnable.run();
-      return Preconditions.checkNotNull(steps.finalStep).getFuture().get();
+            buildConfiguration.getEventHandlers(), rootProgressDescription, rootProgressUnits);
+    for (int i = 0; i < rootProgressUnits; i++) {
+      childProgressDispatcherSupplier.add(rootProgressDispatcher.newChildProducer());
+    }
+    rootProgressCloser = () -> rootProgressDispatcher.close();
+  }
+
+  private void retrieveTargetRegistryCredentials() {
+    results.targetRegistryCredentials =
+        listeningExecutorService.submit(
+            RetrieveRegistryCredentialsStep.forTargetImage(
+                buildConfiguration, childProgressDispatcherSupplier.remove()));
+  }
+
+  private void authenticatePush() {
+    results.pushAuthorization =
+        listeningExecutorService.submit(
+            () ->
+                new AuthenticatePushStep(
+                        buildConfiguration,
+                        childProgressDispatcherSupplier.remove(),
+                        Preconditions.checkNotNull(results.targetRegistryCredentials).get())
+                    .call());
+  }
+
+  private void pullBaseImage() {
+    results.baseImageAndAuth =
+        listeningExecutorService.submit(
+            new PullBaseImageStep(buildConfiguration, childProgressDispatcherSupplier.remove()));
+  }
+
+  private void pullAndCacheBaseImageLayers() {
+    results.baseImageLayers =
+        listeningExecutorService.submit(
+            () ->
+                scheduleCallables(
+                    PullAndCacheBaseImageLayersStep.makeList(
+                        buildConfiguration,
+                        childProgressDispatcherSupplier.remove(),
+                        results.baseImageAndAuth.get())));
+  }
+
+  private void pushBaseImageLayers() {
+    results.baseImageLayerPushResults =
+        listeningExecutorService.submit(
+            () ->
+                scheduleCallables(
+                    PushLayerStep.makeList(
+                        buildConfiguration,
+                        childProgressDispatcherSupplier.remove(),
+                        Preconditions.checkNotNull(results.pushAuthorization).get(),
+                        Preconditions.checkNotNull(results.baseImageLayers).get())));
+  }
+
+  private void buildAndCacheApplicationLayers() {
+    results.applicationLayers =
+        scheduleCallables(
+            BuildAndCacheApplicationLayerStep.makeList(
+                buildConfiguration, childProgressDispatcherSupplier.remove()));
+  }
+
+  private void buildImage() {
+    results.builtImage =
+        listeningExecutorService.submit(
+            () ->
+                new BuildImageStep(
+                        buildConfiguration,
+                        childProgressDispatcherSupplier.remove(),
+                        Preconditions.checkNotNull(results.baseImageAndAuth).get().getImage(),
+                        realizeFutures(Preconditions.checkNotNull(results.baseImageLayers).get()),
+                        realizeFutures(Preconditions.checkNotNull(results.applicationLayers)))
+                    .call());
+  }
+
+  private void pushContainerConfiguration() {
+    results.containerConfigurationPushResult =
+        listeningExecutorService.submit(
+            () ->
+                new PushContainerConfigurationStep(
+                        buildConfiguration,
+                        childProgressDispatcherSupplier.remove(),
+                        Preconditions.checkNotNull(results.pushAuthorization).get(),
+                        Preconditions.checkNotNull(results.builtImage).get())
+                    .call());
+  }
+
+  private void pushApplicationLayers() {
+    results.applicationLayerPushResults =
+        listeningExecutorService.submit(
+            () ->
+                scheduleCallables(
+                    PushLayerStep.makeList(
+                        buildConfiguration,
+                        childProgressDispatcherSupplier.remove(),
+                        Preconditions.checkNotNull(results.pushAuthorization).get(),
+                        Preconditions.checkNotNull(results.applicationLayers))));
+  }
+
+  private BuildResult pushImage() throws InterruptedException, ExecutionException, IOException {
+    realizeFutures(Preconditions.checkNotNull(results.baseImageLayerPushResults).get());
+    realizeFutures(Preconditions.checkNotNull(results.applicationLayerPushResults).get());
+
+    return new PushImageStep(
+            listeningExecutorService,
+            buildConfiguration,
+            childProgressDispatcherSupplier.remove(),
+            Preconditions.checkNotNull(results.pushAuthorization).get(),
+            Preconditions.checkNotNull(results.containerConfigurationPushResult).get(),
+            Preconditions.checkNotNull(results.builtImage).get())
+        .call();
+  }
+
+  private BuildResult loadDocker(DockerClient dockerClient)
+      throws InterruptedException, ExecutionException, IOException {
+    realizeFutures(Preconditions.checkNotNull(results.baseImageLayers).get());
+    realizeFutures(Preconditions.checkNotNull(results.applicationLayers));
+
+    return new LoadDockerStep(
+            buildConfiguration,
+            childProgressDispatcherSupplier.remove(),
+            dockerClient,
+            Preconditions.checkNotNull(results.builtImage.get()))
+        .call();
+  }
+
+  private BuildResult writeTarFile(Path outputPath)
+      throws InterruptedException, ExecutionException, IOException {
+    realizeFutures(Preconditions.checkNotNull(results.baseImageLayers).get());
+    realizeFutures(Preconditions.checkNotNull(results.applicationLayers));
+
+    return new WriteTarFileStep(
+            buildConfiguration,
+            childProgressDispatcherSupplier.remove(),
+            outputPath,
+            Preconditions.checkNotNull(results.builtImage).get())
+        .call();
+  }
+
+  public BuildResult run(BuildConfiguration buildConfiguration)
+      throws ExecutionException, InterruptedException {
+    Preconditions.checkState(childProgressDispatcherSupplier.isEmpty());
+
+    try {
+      return Preconditions.checkNotNull(results.buildResult).get();
+    } finally {
+      rootProgressCloser.run();
     }
   }
 
-  private StepsRunner enqueueStep(Runnable stepRunnable) {
-    Runnable previousStepsRunnable = stepsRunnable;
-    stepsRunnable =
-        () -> {
-          previousStepsRunnable.run();
-          stepRunnable.run();
-        };
-    stepsCount++;
+  private void buildAndCache() {
+    pullBaseImage();
+    pullAndCacheBaseImageLayers();
+    buildAndCacheApplicationLayers();
+    buildImage();
+  }
+
+  public StepsRunner forDockerBuild(DockerClient dockerClient) {
+    buildAndCache();
+    loadDocker(dockerClient);
     return this;
+  }
+
+  public StepsRunner buildToTar(Path outputPath) {
+    //    rootProgressDescription = "building image to Docker daemon";
+    //    rootProgressDescription = "building image to tar file";
+    //    rootProgressDescription = "building image to registry";
+
+    buildAndCache();
+    writeTarFile(outputPath);
+    return this;
+  }
+
+  public StepsRunner buildToRegistry(BuildConfiguration buildConfiguration) {
+    buildAndCache();
+    retrieveTargetRegistryCredentials();
+    authenticatePush();
+    pushBaseImageLayers();
+    pushContainerConfiguration();
+    pushApplicationLayers();
+    pushImage();
+    return this;
+  }
+
+  private <E> List<Future<E>> scheduleCallables(ImmutableList<? extends Callable<E>> tasks) {
+    List<Future<E>> futures = new ArrayList<>();
+    for (Callable<E> task : tasks) {
+      futures.add(listeningExecutorService.submit(task));
+    }
+    return futures;
   }
 }

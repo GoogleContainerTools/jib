@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
@@ -31,6 +32,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
@@ -65,19 +67,7 @@ public class Containerizer {
             .setCredentialRetrievers(registryImage.getCredentialRetrievers())
             .build();
 
-    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
-        buildConfiguration ->
-            StepsRunner.begin(buildConfiguration)
-                .retrieveTargetRegistryCredentials()
-                .authenticatePush()
-                .pullBaseImage()
-                .pullAndCacheBaseImageLayers()
-                .pushBaseImageLayers()
-                .buildAndCacheApplicationLayers()
-                .buildImage()
-                .pushContainerConfiguration()
-                .pushApplicationLayers()
-                .pushImage();
+    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory = StepsRunner::forRegistryBuild;
 
     return new Containerizer(
         DESCRIPTION_FOR_DOCKER_REGISTRY, imageConfiguration, stepsRunnerFactory, true);
@@ -98,17 +88,12 @@ public class Containerizer {
     dockerClientBuilder.setDockerEnvironment(
         ImmutableMap.copyOf(dockerDaemonImage.getDockerEnvironment()));
 
-    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
+    Containerizer.Runner buildToDocker =
         buildConfiguration ->
-            StepsRunner.begin(buildConfiguration)
-                .pullBaseImage()
-                .pullAndCacheBaseImageLayers()
-                .buildAndCacheApplicationLayers()
-                .buildImage()
-                .loadDocker(dockerClientBuilder.build());
+            StepsRunner.begin(buildConfiguration).buildToDocker(dockerClientBuilder.build());
 
     return new Containerizer(
-        DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, false);
+        DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, buildToDocker, false);
   }
 
   /**
@@ -121,17 +106,11 @@ public class Containerizer {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(tarImage.getImageReference()).build();
 
-    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
+    Containerizer.Runner buildToTar =
         buildConfiguration ->
-            StepsRunner.begin(buildConfiguration)
-                .pullBaseImage()
-                .pullAndCacheBaseImageLayers()
-                .buildAndCacheApplicationLayers()
-                .buildImage()
-                .writeTarFile(tarImage.getOutputFile());
+            StepsRunner.begin(buildConfiguration).buildToTar(tarImage.getOutputFile());
 
-    return new Containerizer(
-        DESCRIPTION_FOR_TARBALL, imageConfiguration, stepsRunnerFactory, false);
+    return new Containerizer(DESCRIPTION_FOR_TARBALL, imageConfiguration, buildToTar, false);
   }
 
   private final String description;
@@ -148,15 +127,23 @@ public class Containerizer {
   private boolean offline = false;
   private String toolName = DEFAULT_TOOL_NAME;
 
+  public static interface Runner {
+
+    BuildResult build(BuildConfiguration buildConfiguration)
+        throws InterruptedException, ExecutionException;
+  }
+
+  private Runner runner;
+
   /** Instantiate with {@link #to}. */
   private Containerizer(
       String description,
       ImageConfiguration imageConfiguration,
-      Function<BuildConfiguration, StepsRunner> stepsRunnerFactory,
+      Runner runner,
       boolean mustBeOnline) {
     this.description = description;
     this.imageConfiguration = imageConfiguration;
-    this.stepsRunnerFactory = stepsRunnerFactory;
+    this.runner = runner;
     this.mustBeOnline = mustBeOnline;
   }
 
@@ -318,7 +305,8 @@ public class Containerizer {
     return imageConfiguration;
   }
 
-  StepsRunner createStepsRunner(BuildConfiguration buildConfiguration) {
-    return stepsRunnerFactory.apply(buildConfiguration);
+  BuildResult run(BuildConfiguration buildConfiguration)
+      throws InterruptedException, ExecutionException {
+    return runner.build(buildConfiguration);
   }
 }

@@ -219,7 +219,6 @@ public class ImageToJsonTranslator {
             layer.getBlobDescriptor().getSize(), layer.getBlobDescriptor().getDigest());
       }
 
-      // Serializes into JSON.
       return template;
 
     } catch (InstantiationException

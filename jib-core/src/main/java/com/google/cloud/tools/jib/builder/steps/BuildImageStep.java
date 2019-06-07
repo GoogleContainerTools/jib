@@ -17,9 +17,6 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.ProjectInfo;
-import com.google.cloud.tools.jib.async.AsyncDependencies;
-import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
@@ -28,9 +25,8 @@ import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
+import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -38,71 +34,44 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** Builds a model {@link Image}. */
-class BuildImageStep implements AsyncStep<AsyncStep<Image>>, Callable<AsyncStep<Image>> {
+class BuildImageStep implements Callable<Image> {
 
   private static final String DESCRIPTION = "Building container configuration";
 
-  private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  private final PullBaseImageStep pullBaseImageStep;
-  private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
-  private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
-
-  private final ListenableFuture<AsyncStep<Image>> listenableFuture;
+  private final Image baseImage;
+  private final List<CachedLayerAndName> baseImageLayers;
+  private final List<CachedLayerAndName> applicationLayers;
 
   BuildImageStep(
-      ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      PullBaseImageStep pullBaseImageStep,
-      PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep,
-      ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps) {
-    this.listeningExecutorService = listeningExecutorService;
+      Image baseImage,
+      List<CachedLayerAndName> baseImageLayers,
+      List<CachedLayerAndName> applicationLayers) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.pullBaseImageStep = pullBaseImageStep;
-    this.pullAndCacheBaseImageLayersStep = pullAndCacheBaseImageLayersStep;
-    this.buildAndCacheApplicationLayerSteps = buildAndCacheApplicationLayerSteps;
-
-    listenableFuture =
-        AsyncDependencies.using(listeningExecutorService)
-            .addStep(pullBaseImageStep)
-            .addStep(pullAndCacheBaseImageLayersStep)
-            .whenAllSucceed(this);
+    this.baseImage = baseImage;
+    this.baseImageLayers = baseImageLayers;
+    this.applicationLayers = applicationLayers;
   }
 
   @Override
-  public ListenableFuture<AsyncStep<Image>> getFuture() {
-    return listenableFuture;
-  }
-
-  @Override
-  public AsyncStep<Image> call() throws ExecutionException {
-    ListenableFuture<Image> future =
-        AsyncDependencies.using(listeningExecutorService)
-            .addSteps(NonBlockingSteps.get(pullAndCacheBaseImageLayersStep))
-            .addSteps(buildAndCacheApplicationLayerSteps)
-            .whenAllSucceed(this::afterCachedLayerSteps);
-    return () -> future;
-  }
-
-  private Image afterCachedLayerSteps() throws ExecutionException, LayerPropertyNotFoundException {
+  public Image call()
+      throws ExecutionException, LayerPropertyNotFoundException, InterruptedException {
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create("building image format", 1);
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       // Constructs the image.
       Image.Builder imageBuilder = Image.builder(buildConfiguration.getTargetFormat());
-      Image baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();
       ContainerConfiguration containerConfiguration =
           buildConfiguration.getContainerConfiguration();
 
       // Base image layers
-      List<PullAndCacheBaseImageLayerStep> baseImageLayers =
-          NonBlockingSteps.get(pullAndCacheBaseImageLayersStep);
-      for (PullAndCacheBaseImageLayerStep pullAndCacheBaseImageLayerStep : baseImageLayers) {
-        imageBuilder.addLayer(NonBlockingSteps.get(pullAndCacheBaseImageLayerStep));
+      for (CachedLayerAndName baseImageLayer : baseImageLayers) {
+        imageBuilder.addLayer(baseImageLayer.getCachedLayer());
       }
 
       // Passthrough config and count non-empty history entries
@@ -137,16 +106,15 @@ class BuildImageStep implements AsyncStep<AsyncStep<Image>>, Callable<AsyncStep<
       }
 
       // Add built layers/configuration
-      for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
-          buildAndCacheApplicationLayerSteps) {
+      for (CachedLayerAndName applicationLayer : applicationLayers) {
         imageBuilder
-            .addLayer(NonBlockingSteps.get(buildAndCacheApplicationLayerStep))
+            .addLayer(applicationLayer.getCachedLayer())
             .addHistory(
                 HistoryEntry.builder()
                     .setCreationTimestamp(layerCreationTime)
                     .setAuthor("Jib")
                     .setCreatedBy(buildConfiguration.getToolName() + ":" + ProjectInfo.VERSION)
-                    .setComment(buildAndCacheApplicationLayerStep.getLayerType())
+                    .setComment(Verify.verifyNotNull(applicationLayer.getName()))
                     .build());
       }
       if (containerConfiguration != null) {

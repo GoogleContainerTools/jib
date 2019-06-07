@@ -137,7 +137,7 @@ public class BuildImageStepTest {
     Mockito.when(mockPullBaseImageStep.getFuture())
         .thenReturn(
             Futures.immediateFuture(
-                new PullBaseImageStep.BaseImageWithAuthorization(baseImage, null)));
+                new PullBaseImageStep.ImageAndAuthorization(baseImage, null)));
 
     Stream.of(
             mockBuildAndCacheApplicationLayerStepClasses,
