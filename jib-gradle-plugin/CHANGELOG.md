@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fixes issue with `jibBuildTar` where `UP-TO-DATE` checks were incorrect ([#1757](https://github.com/GoogleContainerTools/jib/issues/1757))
+- Fixed an issue with `jibBuildTar` where `UP-TO-DATE` checks were incorrect. ([#1757](https://github.com/GoogleContainerTools/jib/issues/1757))
 
 ## 1.2.0
 
