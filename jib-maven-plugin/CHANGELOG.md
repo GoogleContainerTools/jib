@@ -11,7 +11,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fixed an issue where decyrpting Maven settings `settings.xml` wholesale causes the build to fail. We now decrypted only the parts that are required. ([#1709](https://github.com/GoogleContainerTools/jib/issues/1709))
+- Fixed an issue where decyrpting Maven settings `settings.xml` wholesale caused the build to fail. We now decrypt only the parts that are required. ([#1709](https://github.com/GoogleContainerTools/jib/issues/1709))
 
 ## 1.2.0
 
