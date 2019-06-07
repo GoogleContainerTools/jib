@@ -1,4 +1,4 @@
-![experimental](https://img.shields.io/badge/stability-experimental-red.svg)
+![experimental](https://img.shields.io/badge/stability-beta-orange.svg)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-core/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-core)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
