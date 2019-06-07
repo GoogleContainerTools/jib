@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
@@ -153,10 +152,6 @@ public class ContainerizerIntegrationTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private final ProgressChecker progressChecker = new ProgressChecker();
-  private final EventHandlers eventHandlers =
-      EventHandlers.builder()
-          .add(ProgressEvent.class, progressChecker.progressEventHandler)
-          .build();
 
   @Test
   public void testSteps_forBuildToDockerRegistry()
@@ -354,7 +349,7 @@ public class ContainerizerIntegrationTest {
         .setAllowInsecureRegistries(true)
         .setToolName("jib-integration-test")
         .setExecutorService(executorService)
-        .setEventHandlers(eventHandlers);
+        .addEventHandler(ProgressEvent.class, progressChecker.progressEventHandler);
     additionalTags.forEach(containerizer::withAdditionalTag);
 
     return containerBuilder.containerize(containerizer);

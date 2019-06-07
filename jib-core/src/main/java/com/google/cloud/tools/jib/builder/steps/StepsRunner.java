@@ -16,11 +16,11 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -30,7 +30,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -40,7 +39,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
@@ -54,6 +52,7 @@ public class StepsRunner {
 
   /** Holds the individual future results. */
   private static class StepResults {
+
     @Nullable private Future<ImageAndAuthorization> baseImageAndAuth;
     @Nullable private Future<List<Future<CachedLayerAndName>>> baseImageLayers;
     @Nullable private List<Future<CachedLayerAndName>> applicationLayers;
@@ -87,7 +86,7 @@ public class StepsRunner {
   }
 
   private final StepResults results = new StepResults();
-  private Function<BuildConfiguration, BuildResult> buildPlan;
+  private Callable<BuildResult> buildPlan;
 
   private final ListeningExecutorService listeningExecutorService;
   private final BuildConfiguration buildConfiguration;
@@ -204,44 +203,54 @@ public class StepsRunner {
                         Preconditions.checkNotNull(results.applicationLayers))));
   }
 
-  private BuildResult pushImage() throws InterruptedException, ExecutionException, IOException {
-    realizeFutures(Preconditions.checkNotNull(results.baseImageLayerPushResults).get());
-    realizeFutures(Preconditions.checkNotNull(results.applicationLayerPushResults).get());
+  private void pushImage() {
+    results.buildResult =
+        listeningExecutorService.submit(
+            () -> {
+              realizeFutures(Preconditions.checkNotNull(results.baseImageLayerPushResults).get());
+              realizeFutures(Preconditions.checkNotNull(results.applicationLayerPushResults).get());
 
-    return new PushImageStep(
-            listeningExecutorService,
-            buildConfiguration,
-            childProgressDispatcherSupplier.remove(),
-            Preconditions.checkNotNull(results.pushAuthorization).get(),
-            Preconditions.checkNotNull(results.containerConfigurationPushResult).get(),
-            Preconditions.checkNotNull(results.builtImage).get())
-        .call();
+              return new PushImageStep(
+                      listeningExecutorService,
+                      buildConfiguration,
+                      childProgressDispatcherSupplier.remove(),
+                      Preconditions.checkNotNull(results.pushAuthorization).get(),
+                      Preconditions.checkNotNull(results.containerConfigurationPushResult).get(),
+                      Preconditions.checkNotNull(results.builtImage).get())
+                  .call();
+            });
   }
 
-  private BuildResult loadDocker(DockerClient dockerClient)
-      throws InterruptedException, ExecutionException, IOException {
-    realizeFutures(Preconditions.checkNotNull(results.baseImageLayers).get());
-    realizeFutures(Preconditions.checkNotNull(results.applicationLayers));
+  private void loadDocker(DockerClient dockerClient) {
+    results.buildResult =
+        listeningExecutorService.submit(
+            () -> {
+              realizeFutures(Preconditions.checkNotNull(results.baseImageLayers).get());
+              realizeFutures(Preconditions.checkNotNull(results.applicationLayers));
 
-    return new LoadDockerStep(
-            buildConfiguration,
-            childProgressDispatcherSupplier.remove(),
-            dockerClient,
-            Preconditions.checkNotNull(results.builtImage.get()))
-        .call();
+              return new LoadDockerStep(
+                      buildConfiguration,
+                      childProgressDispatcherSupplier.remove(),
+                      dockerClient,
+                      Preconditions.checkNotNull(results.builtImage.get()))
+                  .call();
+            });
   }
 
-  private BuildResult writeTarFile(Path outputPath)
-      throws InterruptedException, ExecutionException, IOException {
-    realizeFutures(Preconditions.checkNotNull(results.baseImageLayers).get());
-    realizeFutures(Preconditions.checkNotNull(results.applicationLayers));
+  private void writeTarFile(Path outputPath) {
+    results.buildResult =
+        listeningExecutorService.submit(
+            () -> {
+              realizeFutures(Preconditions.checkNotNull(results.baseImageLayers).get());
+              realizeFutures(Preconditions.checkNotNull(results.applicationLayers));
 
-    return new WriteTarFileStep(
-            buildConfiguration,
-            childProgressDispatcherSupplier.remove(),
-            outputPath,
-            Preconditions.checkNotNull(results.builtImage).get())
-        .call();
+              return new WriteTarFileStep(
+                      buildConfiguration,
+                      childProgressDispatcherSupplier.remove(),
+                      outputPath,
+                      Preconditions.checkNotNull(results.builtImage).get())
+                  .call();
+            });
   }
 
   public BuildResult run(BuildConfiguration buildConfiguration)
@@ -262,19 +271,13 @@ public class StepsRunner {
     buildImage();
   }
 
-  public StepsRunner forDockerBuild(DockerClient dockerClient) {
-    buildAndCache();
-    loadDocker(dockerClient);
-    return this;
-  }
-
   public StepsRunner buildToTar(Path outputPath) {
     //    rootProgressDescription = "building image to Docker daemon";
     //    rootProgressDescription = "building image to tar file";
     //    rootProgressDescription = "building image to registry";
 
     buildAndCache();
-    writeTarFile(outputPath);
+    // writeTarFile(outputPath);
     return this;
   }
 
@@ -285,7 +288,7 @@ public class StepsRunner {
     pushBaseImageLayers();
     pushContainerConfiguration();
     pushApplicationLayers();
-    pushImage();
+    // pushImage();
     return this;
   }
 

@@ -17,9 +17,6 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
-import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -83,8 +80,7 @@ public class RegistryImage {
   /**
    * Adds {@link CredentialRetriever} to fetch push/pull credentials for the image. Credential
    * retrievers are attempted in the order in which they are specified until credentials are
-   * successfully retrieved. See {@link CredentialRetrieverFactory} for useful pre-defined
-   * CredentialRetrievers.
+   * successfully retrieved.
    *
    * <p>Example usage:
    *
@@ -105,7 +101,6 @@ public class RegistryImage {
    *
    * @param credentialRetriever the {@link CredentialRetriever} to add
    * @return this
-   * @see CredentialRetrieverFactory
    */
   public RegistryImage addCredentialRetriever(CredentialRetriever credentialRetriever) {
     credentialRetrievers.add(credentialRetriever);

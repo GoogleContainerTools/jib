@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.event;
 
+import com.google.cloud.tools.jib.api.JibEvent;
 import com.google.common.base.Preconditions;
 import java.util.function.Consumer;
 
@@ -23,9 +24,9 @@ import java.util.function.Consumer;
 class Handler<E extends JibEvent> {
 
   private final Class<E> eventClass;
-  private final Consumer<E> eventConsumer;
+  private final Consumer<? super E> eventConsumer;
 
-  Handler(Class<E> eventClass, Consumer<E> eventConsumer) {
+  Handler(Class<E> eventClass, Consumer<? super E> eventConsumer) {
     this.eventClass = eventClass;
     this.eventConsumer = eventConsumer;
   }

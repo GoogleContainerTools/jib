@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -518,7 +517,7 @@ public class JibContainerBuilder {
         .setOffline(containerizer.isOfflineMode())
         .setToolName(containerizer.getToolName())
         .setExecutorService(executorService)
-        .setEventHandlers(containerizer.getEventHandlers())
+        .setEventHandlers(containerizer.buildEventHandlers())
         .build();
   }
 
