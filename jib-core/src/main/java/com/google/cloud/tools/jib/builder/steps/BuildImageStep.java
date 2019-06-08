@@ -30,7 +30,6 @@ import com.google.common.collect.ImmutableList;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** Builds a model {@link Image}. */
@@ -58,8 +57,7 @@ class BuildImageStep implements Callable<Image> {
   }
 
   @Override
-  public Image call()
-      throws ExecutionException, LayerPropertyNotFoundException, InterruptedException {
+  public Image call() throws LayerPropertyNotFoundException {
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create("building image format", 1);
         TimerEventDispatcher ignored2 =

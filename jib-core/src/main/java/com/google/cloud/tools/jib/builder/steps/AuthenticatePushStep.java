@@ -26,7 +26,6 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import java.io.IOException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /**
@@ -37,7 +36,7 @@ import javax.annotation.Nullable;
  */
 class AuthenticatePushStep implements Callable<Authorization> {
 
-  private static final String DESCRIPTION = "Authenticating with push to %s";
+  private static final String DESCRIPTION = "Authenticating push to %s";
 
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
@@ -49,13 +48,12 @@ class AuthenticatePushStep implements Callable<Authorization> {
       Credential targetRegistryCredentials) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.registryCredentials = targetRegistryCredentials;
+    registryCredentials = targetRegistryCredentials;
   }
 
   @Override
   @Nullable
-  public Authorization call()
-      throws ExecutionException, IOException, RegistryException, InterruptedException {
+  public Authorization call() throws IOException, RegistryException {
     String registry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create("authenticating push to " + registry, 1);

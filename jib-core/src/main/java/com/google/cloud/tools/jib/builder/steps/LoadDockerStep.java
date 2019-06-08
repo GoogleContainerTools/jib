@@ -26,7 +26,6 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.Image;
 import java.io.IOException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 
 /** Adds image layers to a tarball and loads into Docker daemon. */
 class LoadDockerStep implements Callable<BuildResult> {
@@ -49,7 +48,7 @@ class LoadDockerStep implements Callable<BuildResult> {
   }
 
   @Override
-  public BuildResult call() throws ExecutionException, InterruptedException, IOException {
+  public BuildResult call() throws InterruptedException, IOException {
     EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
     eventHandlers.dispatch(LogEvent.progress("Loading to Docker daemon..."));
 

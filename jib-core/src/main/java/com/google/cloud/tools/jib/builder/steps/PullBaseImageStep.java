@@ -53,7 +53,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** Pulls the base image manifest. */
@@ -104,7 +103,7 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
   @Override
   public ImageAndAuthorization call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-          LayerCountMismatchException, ExecutionException, BadContainerConfigurationFormatException,
+          LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException, CredentialRetrievalException {
     EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
     // Skip this step if this is a scratch image

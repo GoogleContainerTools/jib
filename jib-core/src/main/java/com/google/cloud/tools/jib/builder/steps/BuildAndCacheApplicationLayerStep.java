@@ -47,7 +47,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                "preparing to application layer builders", layerCount);
+                "preparing application layer builders", layerCount);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
