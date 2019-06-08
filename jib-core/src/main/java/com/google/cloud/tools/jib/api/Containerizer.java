@@ -69,18 +69,7 @@ public class Containerizer {
             .build();
 
     Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
-        buildConfiguration ->
-            StepsRunner.begin(buildConfiguration)
-                .retrieveTargetRegistryCredentialsStep()
-                .authenticatePushStep()
-                .pullBaseImageStep()
-                .pullAndCacheBaseImageLayersStep()
-                .pushBaseImageLayersStep()
-                .buildAndCacheApplicationLayersStep()
-                .buildImageStep()
-                .pushContainerConfigurationStep()
-                .pushApplicationLayersStep()
-                .pushImageStep();
+        buildConfiguration -> StepsRunner.begin(buildConfiguration).registryPushSteps();
 
     return new Containerizer(
         DESCRIPTION_FOR_DOCKER_REGISTRY, imageConfiguration, stepsRunnerFactory, true);
@@ -103,12 +92,7 @@ public class Containerizer {
 
     Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
         buildConfiguration ->
-            StepsRunner.begin(buildConfiguration)
-                .pullBaseImageStep()
-                .pullAndCacheBaseImageLayersStep()
-                .buildAndCacheApplicationLayersStep()
-                .buildImageStep()
-                .loadDockerStep(dockerClientBuilder.build());
+            StepsRunner.begin(buildConfiguration).dockerLoadSteps(dockerClientBuilder.build());
 
     return new Containerizer(
         DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, false);
@@ -126,12 +110,7 @@ public class Containerizer {
 
     Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
         buildConfiguration ->
-            StepsRunner.begin(buildConfiguration)
-                .pullBaseImageStep()
-                .pullAndCacheBaseImageLayersStep()
-                .buildAndCacheApplicationLayersStep()
-                .buildImageStep()
-                .writeTarFileStep(tarImage.getOutputFile());
+            StepsRunner.begin(buildConfiguration).tarBuildSteps(tarImage.getOutputFile());
 
     return new Containerizer(
         DESCRIPTION_FOR_TARBALL, imageConfiguration, stepsRunnerFactory, false);

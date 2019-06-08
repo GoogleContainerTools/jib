@@ -119,7 +119,7 @@ public class StepsRunner {
                 new AuthenticatePushStep(
                         buildConfiguration,
                         childProgressDispatcherFactorySupplier.get(),
-                        Preconditions.checkNotNull(results.targetRegistryCredentials).get())
+                        results.targetRegistryCredentials.get())
                     .call());
   }
 
@@ -167,7 +167,7 @@ public class StepsRunner {
                 new BuildImageStep(
                         buildConfiguration,
                         childProgressDispatcherFactorySupplier.get(),
-                        Preconditions.checkNotNull(results.baseImageAndAuth).get().getImage(),
+                        results.baseImageAndAuth.get().getImage(),
                         realizeFutures(results.baseImageLayers.get()),
                         realizeFutures(results.applicationLayers))
                     .call());
@@ -264,65 +264,35 @@ public class StepsRunner {
     return callables.stream().map(executorService::submit).collect(Collectors.toList());
   }
 
-  public StepsRunner pullBaseImageStep() {
+  private void enqueueBuildAndCache() {
     stepsToRun.add(this::pullBaseImage);
-    return this;
-  }
-
-  public StepsRunner pullAndCacheBaseImageLayersStep() {
     stepsToRun.add(this::pullAndCacheBaseImageLayers);
-    return this;
-  }
-
-  public StepsRunner buildAndCacheApplicationLayersStep() {
     stepsToRun.add(this::buildAndCacheApplicationLayers);
-    return this;
-  }
-
-  public StepsRunner buildImageStep() {
     stepsToRun.add(this::buildImage);
-    return this;
   }
 
-  public StepsRunner loadDockerStep(DockerClient dockerClient) {
+  public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
     rootProgressDescription = "building image to Docker daemon";
+    enqueueBuildAndCache();
     stepsToRun.add(() -> loadDocker(dockerClient));
     return this;
   }
 
-  public StepsRunner writeTarFileStep(Path outputPath) {
+  public StepsRunner tarBuildSteps(Path outputPath) {
     rootProgressDescription = "building image to tar file";
+    enqueueBuildAndCache();
     stepsToRun.add(() -> writeTarFile(outputPath));
     return this;
   }
 
-  public StepsRunner retrieveTargetRegistryCredentialsStep() {
-    stepsToRun.add(this::retrieveTargetRegistryCredentials);
-    return this;
-  }
-
-  public StepsRunner authenticatePushStep() {
-    stepsToRun.add(this::authenticatePush);
-    return this;
-  }
-
-  public StepsRunner pushBaseImageLayersStep() {
-    stepsToRun.add(this::pushBaseImageLayers);
-    return this;
-  }
-
-  public StepsRunner pushApplicationLayersStep() {
-    stepsToRun.add(this::pushApplicationLayers);
-    return this;
-  }
-
-  public StepsRunner pushContainerConfigurationStep() {
-    stepsToRun.add(this::pushContainerConfiguration);
-    return this;
-  }
-
-  public StepsRunner pushImageStep() {
+  public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
+    enqueueBuildAndCache();
+    stepsToRun.add(this::retrieveTargetRegistryCredentials);
+    stepsToRun.add(this::authenticatePush);
+    stepsToRun.add(this::pushBaseImageLayers);
+    stepsToRun.add(this::pushApplicationLayers);
+    stepsToRun.add(this::pushContainerConfiguration);
     stepsToRun.add(this::pushImage);
     return this;
   }
