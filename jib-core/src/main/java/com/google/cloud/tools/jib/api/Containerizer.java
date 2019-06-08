@@ -68,7 +68,19 @@ public class Containerizer {
             .setCredentialRetrievers(registryImage.getCredentialRetrievers())
             .build();
 
-    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory = StepsRunner::forRegistryBuild;
+    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
+        buildConfiguration ->
+            StepsRunner.begin(buildConfiguration)
+                .retrieveTargetRegistryCredentialsStep()
+                .authenticatePushStep()
+                .pullBaseImageStep()
+                .pullAndCacheBaseImageLayersStep()
+                .pushBaseImageLayersStep()
+                .buildAndCacheApplicationLayersStep()
+                .buildImageStep()
+                .pushContainerConfigurationStep()
+                .pushApplicationLayersStep()
+                .pushImageStep();
 
     return new Containerizer(
         DESCRIPTION_FOR_DOCKER_REGISTRY, imageConfiguration, stepsRunnerFactory, true);
@@ -89,12 +101,17 @@ public class Containerizer {
     dockerClientBuilder.setDockerEnvironment(
         ImmutableMap.copyOf(dockerDaemonImage.getDockerEnvironment()));
 
-    Containerizer.Runner buildToDocker =
+    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
         buildConfiguration ->
-            StepsRunner.begin(buildConfiguration).buildToDocker(dockerClientBuilder.build());
+            StepsRunner.begin(buildConfiguration)
+                .pullBaseImageStep()
+                .pullAndCacheBaseImageLayersStep()
+                .buildAndCacheApplicationLayersStep()
+                .buildImageStep()
+                .loadDockerStep(dockerClientBuilder.build());
 
     return new Containerizer(
-        DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, buildToDocker, false);
+        DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, false);
   }
 
   /**
@@ -107,11 +124,17 @@ public class Containerizer {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(tarImage.getImageReference()).build();
 
-    Containerizer.Runner buildToTar =
+    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
         buildConfiguration ->
-            StepsRunner.begin(buildConfiguration).buildToTar(tarImage.getOutputFile());
+            StepsRunner.begin(buildConfiguration)
+                .pullBaseImageStep()
+                .pullAndCacheBaseImageLayersStep()
+                .buildAndCacheApplicationLayersStep()
+                .buildImageStep()
+                .writeTarFileStep(tarImage.getOutputFile());
 
-    return new Containerizer(DESCRIPTION_FOR_TARBALL, imageConfiguration, buildToTar, false);
+    return new Containerizer(
+        DESCRIPTION_FOR_TARBALL, imageConfiguration, stepsRunnerFactory, false);
   }
 
   private final String description;
@@ -128,23 +151,15 @@ public class Containerizer {
   private boolean offline = false;
   private String toolName = DEFAULT_TOOL_NAME;
 
-  public static interface Runner {
-
-    BuildResult build(BuildConfiguration buildConfiguration)
-        throws InterruptedException, ExecutionException;
-  }
-
-  private Runner runner;
-
   /** Instantiate with {@link #to}. */
   private Containerizer(
       String description,
       ImageConfiguration imageConfiguration,
-      Runner runner,
+      Function<BuildConfiguration, StepsRunner> stepsRunnerFactory,
       boolean mustBeOnline) {
     this.description = description;
     this.imageConfiguration = imageConfiguration;
-    this.runner = runner;
+    this.stepsRunnerFactory = stepsRunnerFactory;
     this.mustBeOnline = mustBeOnline;
   }
 
@@ -292,7 +307,7 @@ public class Containerizer {
       try {
         Path temporaryDirectory = Files.createTempDirectory(null);
         temporaryDirectory.toFile().deleteOnExit();
-        this.applicationLayersCacheDirectory = temporaryDirectory;
+        applicationLayersCacheDirectory = temporaryDirectory;
 
       } catch (IOException ex) {
         throw new CacheDirectoryCreationException(ex);
@@ -326,7 +341,7 @@ public class Containerizer {
   }
 
   BuildResult run(BuildConfiguration buildConfiguration)
-      throws InterruptedException, ExecutionException {
-    return runner.build(buildConfiguration);
+      throws ExecutionException, InterruptedException {
+    return stepsRunnerFactory.apply(buildConfiguration).run();
   }
 }
