@@ -16,11 +16,13 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
@@ -107,7 +109,9 @@ class PushImageStep implements Callable<BuildResult> {
                 }));
       }
 
-      BuildResult result = BuildResult.fromImage(builtImage, buildConfiguration.getTargetFormat());
+      DescriptorDigest imageDigest = Digests.computeJsonDigest(manifestTemplate);
+      DescriptorDigest imageId = containerConfigurationDigestAndSize.getDigest();
+      BuildResult result = new BuildResult(imageDigest, imageId);
 
       return Futures.whenAllSucceed(pushAllTagsFutures)
           .call(

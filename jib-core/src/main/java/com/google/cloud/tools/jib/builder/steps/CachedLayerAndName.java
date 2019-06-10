@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import javax.annotation.Nullable;
 
-/** Simple structure to hold the result pair of {#link CachedLayer} and its string name. */
+/** Simple structure to hold a pair of {#link CachedLayer} and its string name. */
 class CachedLayerAndName {
 
   private CachedLayer cachedLayer;

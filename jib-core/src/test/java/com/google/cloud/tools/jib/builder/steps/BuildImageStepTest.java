@@ -37,7 +37,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -135,7 +134,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_validateAsyncDependencies() throws ExecutionException, InterruptedException {
+  public void test_validateAsyncDependencies() {
     Image image =
         new BuildImageStep(
                 mockBuildConfiguration,
@@ -149,8 +148,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_propagateBaseImageConfiguration()
-      throws ExecutionException, InterruptedException {
+  public void test_propagateBaseImageConfiguration() {
     Mockito.when(mockContainerConfiguration.getEnvironmentMap())
         .thenReturn(ImmutableMap.of("MY_ENV", "MY_ENV_VALUE", "BASE_ENV_2", "NEW_VALUE"));
     Mockito.when(mockContainerConfiguration.getLabels())
@@ -216,7 +214,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void testOverrideWorkingDirectory() throws InterruptedException, ExecutionException {
+  public void testOverrideWorkingDirectory() {
     Mockito.when(mockContainerConfiguration.getWorkingDirectory())
         .thenReturn(AbsoluteUnixPath.get("/my/directory"));
 
@@ -233,7 +231,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_inheritedEntrypoint() throws ExecutionException, InterruptedException {
+  public void test_inheritedEntrypoint() {
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(null);
     Mockito.when(mockContainerConfiguration.getProgramArguments())
         .thenReturn(ImmutableList.of("test"));
@@ -252,8 +250,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_inheritedEntrypointAndProgramArguments()
-      throws ExecutionException, InterruptedException {
+  public void test_inheritedEntrypointAndProgramArguments() {
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(null);
     Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(null);
 
@@ -271,7 +268,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_notInheritedProgramArguments() throws ExecutionException, InterruptedException {
+  public void test_notInheritedProgramArguments() {
     Mockito.when(mockContainerConfiguration.getEntrypoint())
         .thenReturn(ImmutableList.of("myEntrypoint"));
     Mockito.when(mockContainerConfiguration.getProgramArguments()).thenReturn(null);
@@ -290,7 +287,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_generateHistoryObjects() throws ExecutionException, InterruptedException {
+  public void test_generateHistoryObjects() {
     Image image =
         new BuildImageStep(
                 mockBuildConfiguration,

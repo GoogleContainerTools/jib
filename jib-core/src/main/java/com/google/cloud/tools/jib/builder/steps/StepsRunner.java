@@ -91,6 +91,13 @@ public class StepsRunner {
   private final ListeningExecutorService executorService;
   private final BuildConfiguration buildConfiguration;
 
+  // We save steps to run by wrapping each step into a Runnable, only because of the unfortunate
+  // chicken-and-egg situation arising from using ProgressEventDispatcher. The current
+  // ProgressEventDispatcher model requires knowing in advance how many units of work (i.e., steps)
+  // we should perform. That is, to instantiate a root ProgressEventDispatcher instance, we should
+  // know ahead how many steps we will run. However, to instantiate a step, we need a root progress
+  // dispatcher. So, we wrap steps into Runnables and save them to run them later. Then we can count
+  // the number of Runnables and, create a root dispatcher, and run the saved Runnables.
   private final List<Runnable> stepsToRun = new ArrayList<>();
 
   @Nullable private String rootProgressDescription;
