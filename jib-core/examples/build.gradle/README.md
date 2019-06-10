@@ -13,15 +13,15 @@ buildscript {
     mavenCentral()
   }
   dependencies {
-    classpath 'com.google.cloud.tools:jib-core:0.9.2'
+    classpath 'com.google.cloud.tools:jib-core:0.10.0'
   }
 }
 
 import com.google.cloud.tools.jib.api.Jib
 import com.google.cloud.tools.jib.api.Containerizer
+import com.google.cloud.tools.jib.api.ImageReference
 import com.google.cloud.tools.jib.api.RegistryImage
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory
-import com.google.cloud.tools.jib.image.ImageReference
 
 // Creates a task called 'dojib'.
 task('dojib') {

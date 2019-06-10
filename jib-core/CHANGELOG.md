@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.10.0
+
+### Added
+
 - `Containerizer#addEventHandler` for adding event handlers
 
 ### Changed
@@ -13,8 +21,6 @@ All notable changes to this project will be documented in this file.
 - Event handlers are now added directly to the `Containerizer` rather than adding them to an `EventHandlers` object first
 - Removed multiple classes to simplify the event system (`JibEventType`, `BuildStepType`, `EventDispatcher`, `DefaultEventDispatcher`, `LayerCountEvent`)
 - MainClassFinder now uses a static method instead of requiring instantiation
-
-### Fixed
 
 ## 0.9.2
 
