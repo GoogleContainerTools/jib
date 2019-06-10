@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/** Builds a handler for {@link ConsoleLogger}. */
+/** Builds a {@link ConsoleLogger}. */
 public class ConsoleLoggerBuilder {
 
   /**
