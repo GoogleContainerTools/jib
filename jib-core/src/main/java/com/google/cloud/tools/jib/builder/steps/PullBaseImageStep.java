@@ -49,7 +49,6 @@ import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -84,14 +83,6 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
 
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-
-  PullBaseImageStep(
-      ListeningExecutorService listeningExecutorService,
-      BuildConfiguration buildConfiguration,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
-    this.buildConfiguration = buildConfiguration;
-    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-  }
 
   PullBaseImageStep(
       BuildConfiguration buildConfiguration,

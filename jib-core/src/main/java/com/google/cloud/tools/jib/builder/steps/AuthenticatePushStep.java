@@ -40,15 +40,15 @@ class AuthenticatePushStep implements Callable<Authorization> {
 
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  private final Credential registryCredentials;
+  private final Credential registryCredential;
 
   AuthenticatePushStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Credential targetRegistryCredentials) {
+      Credential targetRegistryCredential) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    registryCredentials = targetRegistryCredentials;
+    registryCredential = targetRegistryCredential;
   }
 
   @Override
@@ -66,15 +66,15 @@ class AuthenticatePushStep implements Callable<Authorization> {
               .newRegistryClient()
               .getRegistryAuthenticator();
       if (registryAuthenticator != null) {
-        return registryAuthenticator.authenticatePush(registryCredentials);
+        return registryAuthenticator.authenticatePush(registryCredential);
       }
     } catch (InsecureRegistryException ex) {
       // Cannot skip certificate validation or use HTTP; fall through.
     }
 
-    return (registryCredentials == null || registryCredentials.isOAuth2RefreshToken())
+    return (registryCredential == null || registryCredential.isOAuth2RefreshToken())
         ? null
         : Authorization.fromBasicCredentials(
-            registryCredentials.getUsername(), registryCredentials.getPassword());
+            registryCredential.getUsername(), registryCredential.getPassword());
   }
 }
