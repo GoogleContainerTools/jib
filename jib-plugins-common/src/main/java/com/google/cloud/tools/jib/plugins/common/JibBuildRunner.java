@@ -228,8 +228,12 @@ public class JibBuildRunner {
       throw new BuildStepsExecutionException(message, ex);
 
     } catch (ExecutionException ex) {
-      String message = Verify.verifyNotNull(ex.getCause().getMessage()); // keep null-away happy
-      throw new BuildStepsExecutionException(message, ex.getCause());
+      Throwable throwable = ex;
+      while (throwable instanceof ExecutionException && throwable.getCause() != null) {
+        throwable = throwable.getCause();
+      }
+      String message = Verify.verifyNotNull(throwable.getMessage()); // keep null-away happy
+      throw new BuildStepsExecutionException(message, throwable);
 
     } catch (InterruptedException ex) {
       // TODO: Add more suggestions for various build failures.
