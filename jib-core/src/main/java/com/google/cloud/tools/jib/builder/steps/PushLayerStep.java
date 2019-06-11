@@ -33,24 +33,17 @@ import java.util.concurrent.Future;
 
 class PushLayerStep implements Callable<BlobDescriptor> {
 
-  private static final String DESCRIPTION = "Preparing application layer pushers";
-
-  private final BuildConfiguration buildConfiguration;
-  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-
-  private final Authorization pushAuthorization;
-  private final Future<CachedLayerAndName> cachedLayerAndName;
-
   static ImmutableList<PushLayerStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Authorization pushAuthorization,
       List<Future<CachedLayerAndName>> cachedLayers) {
     try (TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION);
+            new TimerEventDispatcher(
+                buildConfiguration.getEventHandlers(), "Preparing application layer pushers");
         ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                "Preparing application layer pushers", cachedLayers.size())) {
+                "preparing application layer pushers", cachedLayers.size())) {
 
       // Constructs a PushBlobStep for each layer.
       List<PushLayerStep> blobPushers = new ArrayList<>();
@@ -64,6 +57,12 @@ class PushLayerStep implements Callable<BlobDescriptor> {
       return ImmutableList.copyOf(blobPushers);
     }
   }
+
+  private final BuildConfiguration buildConfiguration;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
+
+  private final Authorization pushAuthorization;
+  private final Future<CachedLayerAndName> cachedLayerAndName;
 
   PushLayerStep(
       BuildConfiguration buildConfiguration,

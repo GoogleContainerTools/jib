@@ -43,32 +43,6 @@ class PushImageStep implements Callable<BuildResult> {
 
   private static final String DESCRIPTION = "Pushing new image (tag)";
 
-  private final BuildConfiguration buildConfiguration;
-  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-
-  private final BuildableManifestTemplate manifestTemplate;
-  private final Authorization pushAuthorization;
-  private final String tag;
-  private final DescriptorDigest imageDigest;
-  private final DescriptorDigest imageId;
-
-  PushImageStep(
-      BuildConfiguration buildConfiguration,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Authorization pushAuthorization,
-      BuildableManifestTemplate manifestTemplate,
-      String tag,
-      DescriptorDigest imageDigest,
-      DescriptorDigest imageId) {
-    this.buildConfiguration = buildConfiguration;
-    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.pushAuthorization = pushAuthorization;
-    this.manifestTemplate = manifestTemplate;
-    this.tag = tag;
-    this.imageDigest = imageDigest;
-    this.imageId = imageId;
-  }
-
   static ImmutableList<PushImageStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
@@ -105,6 +79,32 @@ class PushImageStep implements Callable<BuildResult> {
       return imagePushers.build();
     }
   }
+
+  PushImageStep(
+      BuildConfiguration buildConfiguration,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      Authorization pushAuthorization,
+      BuildableManifestTemplate manifestTemplate,
+      String tag,
+      DescriptorDigest imageDigest,
+      DescriptorDigest imageId) {
+    this.buildConfiguration = buildConfiguration;
+    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
+    this.pushAuthorization = pushAuthorization;
+    this.manifestTemplate = manifestTemplate;
+    this.tag = tag;
+    this.imageDigest = imageDigest;
+    this.imageId = imageId;
+  }
+
+  private final BuildConfiguration buildConfiguration;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
+
+  private final BuildableManifestTemplate manifestTemplate;
+  private final Authorization pushAuthorization;
+  private final String tag;
+  private final DescriptorDigest imageDigest;
+  private final DescriptorDigest imageId;
 
   @Override
   public BuildResult call() throws IOException, RegistryException {

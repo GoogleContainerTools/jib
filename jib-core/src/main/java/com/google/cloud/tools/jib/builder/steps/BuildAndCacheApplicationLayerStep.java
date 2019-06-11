@@ -34,7 +34,7 @@ import java.util.concurrent.Callable;
 /** Builds and caches application layers. */
 class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> {
 
-  private static final String DESCRIPTION = "Preparing application layer builders";
+  private static final String DESCRIPTION = "Building %s layer";
 
   /**
    * Makes a list of {@link BuildAndCacheApplicationLayerStep} for dependencies, resources, and
@@ -49,7 +49,8 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
             progressEventDispatcherFactory.create(
                 "preparing application layer builders", layerCount);
         TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
+            new TimerEventDispatcher(
+                buildConfiguration.getEventHandlers(), "Preparing application layer builders")) {
       ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
           ImmutableList.builderWithExpectedSize(layerCount);
       for (LayerConfiguration layerConfiguration : buildConfiguration.getLayerConfigurations()) {
@@ -88,7 +89,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
 
   @Override
   public CachedLayerAndName call() throws IOException, CacheCorruptedException {
-    String description = "Building " + layerName + " layer";
+    String description = String.format(DESCRIPTION, layerName);
 
     buildConfiguration.getEventHandlers().dispatch(LogEvent.progress(description + "..."));
 
