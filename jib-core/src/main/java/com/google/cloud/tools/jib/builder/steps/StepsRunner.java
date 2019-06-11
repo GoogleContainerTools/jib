@@ -255,6 +255,13 @@ public class StepsRunner {
       childProgressDispatcherFactorySupplier = progressEventDispatcher::newChildProducer;
       stepsToRun.forEach(Runnable::run);
       return results.buildResult.get();
+
+    } catch (ExecutionException ex) {
+      ExecutionException unrolled = ex;
+      while (unrolled.getCause() instanceof ExecutionException) {
+        unrolled = (ExecutionException) unrolled.getCause();
+      }
+      throw unrolled;
     }
   }
 
@@ -273,36 +280,36 @@ public class StepsRunner {
 
   public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
     rootProgressDescription = "building image to Docker daemon";
-    // Phase 1: build and cache
+    // build and cache
     stepsToRun.add(this::pullBaseImage);
     stepsToRun.add(this::pullAndCacheBaseImageLayers);
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
-    // Phase 2: load to Docker
+    // load to Docker
     stepsToRun.add(() -> loadDocker(dockerClient));
     return this;
   }
 
   public StepsRunner tarBuildSteps(Path outputPath) {
     rootProgressDescription = "building image to tar file";
-    // Phase 1: build and cache
+    // build and cache
     stepsToRun.add(this::pullBaseImage);
     stepsToRun.add(this::pullAndCacheBaseImageLayers);
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
-    // Phase 2: create a tar
+    // create a tar
     stepsToRun.add(() -> writeTarFile(outputPath));
     return this;
   }
 
   public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
-    // Phase 1: build and cache
+    // build and cache
     stepsToRun.add(this::pullBaseImage);
     stepsToRun.add(this::pullAndCacheBaseImageLayers);
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
-    // Phase 2: push to registry
+    // push to registry
     stepsToRun.add(this::retrieveTargetRegistryCredentials);
     stepsToRun.add(this::authenticatePush);
     stepsToRun.add(this::pushBaseImageLayers);
