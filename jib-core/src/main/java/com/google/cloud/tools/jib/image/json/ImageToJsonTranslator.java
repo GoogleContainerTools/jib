@@ -36,18 +36,7 @@ import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 
-/**
- * Translates an {@link Image} into a manifest or container configuration JSON BLOB.
- *
- * <p>Example usage:
- *
- * <pre>{@code
- * ImageToJsonTranslator translator = new ImageToJsonTranslator(image);
- * Blob containerConfigurationBlob = translator.getContainerConfigurationBlob();
- * BlobDescriptor containerConfigurationBlobDescriptor = blob.writeTo(outputStream);
- * Blob manifestBlob = translator.getManifestBlob(containerConfigurationBlobDescriptor);
- * }</pre>
- */
+/** Translates an {@link Image} into a manifest or container configuration JSON BLOB. */
 public class ImageToJsonTranslator {
 
   /**

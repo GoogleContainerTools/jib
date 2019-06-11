@@ -134,7 +134,7 @@ public class BuildImageStepTest {
   }
 
   @Test
-  public void test_validateAsyncDependencies() {
+  public void test_basicCase() {
     Image image =
         new BuildImageStep(
                 mockBuildConfiguration,

@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
@@ -28,99 +29,99 @@ import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 
-/** Pushes the final image. Outputs the pushed image digest. */
+/**
+ * Pushes the final image. In fact, its manifest is pushed along with a tag. Returns the pushed
+ * image digest (digest of manifest) and image ID (digest of container configuration) as {#link
+ * BuildResult}.
+ */
 class PushImageStep implements Callable<BuildResult> {
 
-  private static final String DESCRIPTION = "Pushing new image";
+  private static final String DESCRIPTION = "Pushing new image (tag)";
 
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
+  private final BuildableManifestTemplate manifestTemplate;
   private final Authorization pushAuthorization;
-  private final BlobDescriptor containerConfigurationDigestAndSize;
-  private final Image builtImage;
+  private final String tag;
+  private final DescriptorDigest imageDigest;
+  private final DescriptorDigest imageId;
 
-  private final ListeningExecutorService listeningExecutorService;
-
-  // TODO: remove listeningExecutorService like other siblings
   PushImageStep(
-      ListeningExecutorService listeningExecutorService,
+      BuildConfiguration buildConfiguration,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      Authorization pushAuthorization,
+      BuildableManifestTemplate manifestTemplate,
+      String tag,
+      DescriptorDigest imageDigest,
+      DescriptorDigest imageId) {
+    this.buildConfiguration = buildConfiguration;
+    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
+    this.pushAuthorization = pushAuthorization;
+    this.manifestTemplate = manifestTemplate;
+    this.tag = tag;
+    this.imageDigest = imageDigest;
+    this.imageId = imageId;
+  }
+
+  static ImmutableList<PushImageStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Authorization pushAuthorization,
       BlobDescriptor containerConfigurationDigestAndSize,
-      Image builtImage) {
-    this.listeningExecutorService = listeningExecutorService;
-    this.buildConfiguration = buildConfiguration;
-    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.pushAuthorization = pushAuthorization;
-    this.containerConfigurationDigestAndSize = containerConfigurationDigestAndSize;
-    this.builtImage = builtImage;
+      Image builtImage)
+      throws IOException {
+    Set<String> tags = buildConfiguration.getAllTargetImageTags();
+
+    try (TimerEventDispatcher ignored =
+            new TimerEventDispatcher(
+                buildConfiguration.getEventHandlers(), "Preparing image (tag) pushers");
+        ProgressEventDispatcher progressEventDispatcher =
+            progressEventDispatcherFactory.create("preparing (image) tag pushers", tags.size())) {
+
+      // Gets the image manifest to push.
+      BuildableManifestTemplate manifestTemplate =
+          new ImageToJsonTranslator(builtImage)
+              .getManifestTemplate(
+                  buildConfiguration.getTargetFormat(), containerConfigurationDigestAndSize);
+
+      ImmutableList.Builder<PushImageStep> imagePushers = new ImmutableList.Builder<>();
+      for (String tag : buildConfiguration.getAllTargetImageTags()) {
+        imagePushers.add(
+            new PushImageStep(
+                buildConfiguration,
+                progressEventDispatcher.newChildProducer(),
+                pushAuthorization,
+                manifestTemplate,
+                tag,
+                Digests.computeJsonDigest(manifestTemplate),
+                containerConfigurationDigestAndSize.getDigest()));
+      }
+      return imagePushers.build();
+    }
   }
 
   @Override
-  public BuildResult call() throws IOException, InterruptedException, ExecutionException {
-    ImmutableSet<String> targetImageTags = buildConfiguration.getAllTargetImageTags();
-    ProgressEventDispatcher progressEventDispatcher =
-        progressEventDispatcherFactory.create("pushing image manifest", targetImageTags.size());
-
+  public BuildResult call() throws IOException, RegistryException {
     try (TimerEventDispatcher ignored =
-        new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
+            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION);
+        ProgressEventDispatcher ignored2 =
+            progressEventDispatcherFactory.create("tagging with " + tag, 1)) {
+      buildConfiguration.getEventHandlers().dispatch(LogEvent.info("Tagging with " + tag + "..."));
+
       RegistryClient registryClient =
           buildConfiguration
               .newTargetImageRegistryClientFactory()
               .setAuthorization(pushAuthorization)
               .newRegistryClient();
 
-      // Constructs the image.
-      ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(builtImage);
-
-      // Gets the image manifest to push.
-      BuildableManifestTemplate manifestTemplate =
-          imageToJsonTranslator.getManifestTemplate(
-              buildConfiguration.getTargetFormat(), containerConfigurationDigestAndSize);
-
-      // Pushes to all target image tags.
-      List<ListenableFuture<Void>> pushAllTagsFutures = new ArrayList<>();
-      for (String tag : targetImageTags) {
-        ProgressEventDispatcher.Factory progressEventDispatcherFactory =
-            progressEventDispatcher.newChildProducer();
-        pushAllTagsFutures.add(
-            listeningExecutorService.submit(
-                () -> {
-                  try (ProgressEventDispatcher ignored2 =
-                      progressEventDispatcherFactory.create("tagging with " + tag, 1)) {
-                    buildConfiguration
-                        .getEventHandlers()
-                        .dispatch(LogEvent.info("Tagging with " + tag + "..."));
-                    registryClient.pushManifest(manifestTemplate, tag);
-                  }
-                  return null;
-                }));
-      }
-
-      DescriptorDigest imageDigest = Digests.computeJsonDigest(manifestTemplate);
-      DescriptorDigest imageId = containerConfigurationDigestAndSize.getDigest();
-      BuildResult result = new BuildResult(imageDigest, imageId);
-
-      return Futures.whenAllSucceed(pushAllTagsFutures)
-          .call(
-              () -> {
-                progressEventDispatcher.close();
-                return result;
-              },
-              listeningExecutorService)
-          .get();
+      registryClient.pushManifest(manifestTemplate, tag);
+      return new BuildResult(imageDigest, imageId);
     }
   }
 }

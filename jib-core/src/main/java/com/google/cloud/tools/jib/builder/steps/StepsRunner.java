@@ -87,8 +87,7 @@ public class StepsRunner {
 
   private final StepResults results = new StepResults();
 
-  // TODO: use plain ExecutorService; requires refactoring PushImageStep.
-  private final ListeningExecutorService executorService;
+  private final ExecutorService executorService;
   private final BuildConfiguration buildConfiguration;
 
   // We save steps to run by wrapping each step into a Runnable, only because of the unfortunate
@@ -204,21 +203,24 @@ public class StepsRunner {
                         results.applicationLayers)));
   }
 
-  private void pushImage() {
+  private void pushImages() {
     results.buildResult =
         executorService.submit(
             () -> {
               realizeFutures(results.baseImageLayerPushResults.get());
               realizeFutures(results.applicationLayerPushResults.get());
 
-              return new PushImageStep(
-                      executorService,
-                      buildConfiguration,
-                      childProgressDispatcherFactorySupplier.get(),
-                      results.pushAuthorization.get(),
-                      results.containerConfigurationPushResult.get(),
-                      results.builtImage.get())
-                  .call();
+              List<Future<BuildResult>> tagPushResults =
+                  scheduleCallables(
+                      PushImageStep.makeList(
+                          buildConfiguration,
+                          childProgressDispatcherFactorySupplier.get(),
+                          results.pushAuthorization.get(),
+                          results.containerConfigurationPushResult.get(),
+                          results.builtImage.get()));
+              realizeFutures(tagPushResults);
+              // Image (tag, or actually manifest) pushers return the same BuildResult.
+              return tagPushResults.get(0).get();
             });
   }
 
@@ -300,7 +302,7 @@ public class StepsRunner {
     stepsToRun.add(this::pushBaseImageLayers);
     stepsToRun.add(this::pushApplicationLayers);
     stepsToRun.add(this::pushContainerConfiguration);
-    stepsToRun.add(this::pushImage);
+    stepsToRun.add(this::pushImages);
     return this;
   }
 }

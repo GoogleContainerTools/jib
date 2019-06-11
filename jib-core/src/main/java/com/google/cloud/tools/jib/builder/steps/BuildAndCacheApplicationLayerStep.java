@@ -65,9 +65,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
                 layerConfiguration.getName(),
                 layerConfiguration));
       }
-      ImmutableList<BuildAndCacheApplicationLayerStep> steps =
-          buildAndCacheApplicationLayerSteps.build();
-      return steps;
+      return buildAndCacheApplicationLayerSteps.build();
     }
   }
 
