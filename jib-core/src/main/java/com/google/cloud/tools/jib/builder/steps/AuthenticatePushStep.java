@@ -45,10 +45,10 @@ class AuthenticatePushStep implements Callable<Authorization> {
   AuthenticatePushStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Credential targetRegistryCredential) {
+      Credential registryCredential) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    registryCredential = targetRegistryCredential;
+    this.registryCredential = registryCredential;
   }
 
   @Override

@@ -284,9 +284,8 @@ public class Containerizer {
     if (applicationLayersCacheDirectory == null) {
       // Uses a temporary directory if application layers cache directory is not set.
       try {
-        Path temporaryDirectory = Files.createTempDirectory(null);
-        temporaryDirectory.toFile().deleteOnExit();
-        applicationLayersCacheDirectory = temporaryDirectory;
+        applicationLayersCacheDirectory = Files.createTempDirectory(null);
+        applicationLayersCacheDirectory.toFile().deleteOnExit();
 
       } catch (IOException ex) {
         throw new CacheDirectoryCreationException(ex);
