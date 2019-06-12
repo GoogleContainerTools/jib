@@ -85,6 +85,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class GradleProjectPropertiesTest {
 
+  private static final ContainerizingMode DEFAULT_CONTAINERIZING_MODE = ContainerizingMode.EXPLODED;
+
   /** Implementation of {@link FileCollection} that just holds a set of {@link File}s. */
   private static class TestFileCollection extends AbstractFileCollection {
 
@@ -364,7 +366,7 @@ public class GradleProjectPropertiesTest {
     gradleProjectProperties.createContainerBuilder(
         RegistryImage.named("base"),
         AbsoluteUnixPath.get("/anything"),
-        ContainerizingMode.EXPLODED);
+        DEFAULT_CONTAINERIZING_MODE);
     Mockito.verify(mockLogger).warn("No classes files were found - did you compile your project?");
   }
 
@@ -558,7 +560,7 @@ public class GradleProjectPropertiesTest {
             .createContainerBuilder(
                 RegistryImage.named("base"),
                 AbsoluteUnixPath.get(appRoot),
-                ContainerizingMode.EXPLODED);
+                DEFAULT_CONTAINERIZING_MODE);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         jibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))
