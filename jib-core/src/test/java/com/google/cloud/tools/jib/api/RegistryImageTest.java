@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import org.junit.Assert;
 import org.junit.Test;

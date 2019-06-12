@@ -7,9 +7,17 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+### Fixed
+
+## 1.3.0
+
+### Changed
+
 - Docker credentials (`~/.docker/config.json`) are now given priority over registry-based inferred credential helpers ([#1704](https://github.com/GoogleContainerTools/jib/pulls/1704))
 
 ### Fixed
+
+- Fixed an issue with `jibBuildTar` where `UP-TO-DATE` checks were incorrect. ([#1757](https://github.com/GoogleContainerTools/jib/issues/1757))
 
 ## 1.2.0
 

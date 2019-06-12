@@ -17,11 +17,11 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
@@ -99,44 +99,6 @@ public class MavenProjectProperties implements ProjectProperties {
     return null;
   }
 
-  private static EventHandlers makeEventHandlers(
-      MavenSession session, Log log, SingleThreadedExecutor singleThreadedExecutor) {
-    ConsoleLoggerBuilder logEventHandlerBuilder =
-        (isProgressFooterEnabled(session)
-                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
-                : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(log::info))
-            .lifecycle(log::info);
-    if (log.isDebugEnabled()) {
-      logEventHandlerBuilder
-          .debug(log::debug)
-          // INFO messages also go to Log#debug since Log#info is used for LIFECYCLE.
-          .info(log::debug);
-    }
-    if (log.isWarnEnabled()) {
-      logEventHandlerBuilder.warn(log::warn);
-    }
-    if (log.isErrorEnabled()) {
-      logEventHandlerBuilder.error(log::error);
-    }
-    ConsoleLogger consoleLogger = logEventHandlerBuilder.build();
-
-    return EventHandlers.builder()
-        .add(
-            LogEvent.class,
-            logEvent -> consoleLogger.log(logEvent.getLevel(), logEvent.getMessage()))
-        .add(
-            TimerEvent.class,
-            new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
-        .add(
-            ProgressEvent.class,
-            new ProgressEventHandler(
-                update ->
-                    consoleLogger.setFooter(
-                        ProgressDisplayGenerator.generateProgressDisplay(
-                            update.getProgress(), update.getUnfinishedLeafTasks()))))
-        .build();
-  }
-
   @VisibleForTesting
   static boolean isProgressFooterEnabled(MavenSession session) {
     if (!session.getRequest().isInteractiveMode()) {
@@ -188,13 +150,30 @@ public class MavenProjectProperties implements ProjectProperties {
   private final MavenProject project;
   private final MavenSession session;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
-  private final EventHandlers eventHandlers;
+  private final ConsoleLogger consoleLogger;
 
   @VisibleForTesting
   MavenProjectProperties(MavenProject project, MavenSession session, Log log) {
     this.project = project;
     this.session = session;
-    eventHandlers = makeEventHandlers(session, log, singleThreadedExecutor);
+    ConsoleLoggerBuilder consoleLoggerBuilder =
+        (isProgressFooterEnabled(session)
+                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
+                : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(log::info))
+            .lifecycle(log::info);
+    if (log.isDebugEnabled()) {
+      consoleLoggerBuilder
+          .debug(log::debug)
+          // INFO messages also go to Log#debug since Log#info is used for LIFECYCLE.
+          .info(log::debug);
+    }
+    if (log.isWarnEnabled()) {
+      consoleLoggerBuilder.warn(log::warn);
+    }
+    if (log.isErrorEnabled()) {
+      consoleLoggerBuilder.error(log::error);
+    }
+    this.consoleLogger = consoleLoggerBuilder.build();
   }
 
   @Override
@@ -263,8 +242,24 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public EventHandlers getEventHandlers() {
-    return eventHandlers;
+  public void configureEventHandlers(Containerizer containerizer) {
+    containerizer
+        .addEventHandler(LogEvent.class, this::log)
+        .addEventHandler(
+            TimerEvent.class,
+            new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
+        .addEventHandler(
+            ProgressEvent.class,
+            new ProgressEventHandler(
+                update ->
+                    consoleLogger.setFooter(
+                        ProgressDisplayGenerator.generateProgressDisplay(
+                            update.getProgress(), update.getUnfinishedLeafTasks()))));
+  }
+
+  @Override
+  public void log(LogEvent logEvent) {
+    consoleLogger.log(logEvent.getLevel(), logEvent.getMessage());
   }
 
   @Override

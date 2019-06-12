@@ -7,9 +7,17 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+### Fixed
+
+## 1.3.0
+
+### Changed
+
 - Docker credentials (`~/.docker/config.json`) are now given priority over registry-based inferred credential helpers ([#1704](https://github.com/GoogleContainerTools/jib/pulls/1704))
 
 ### Fixed
+
+- Fixed an issue where decyrpting Maven settings `settings.xml` wholesale caused the build to fail. We now decrypt only the parts that are required. ([#1709](https://github.com/GoogleContainerTools/jib/issues/1709))
 
 ## 1.2.0
 

@@ -24,11 +24,10 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.JibContainer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
@@ -40,6 +39,7 @@ import java.nio.file.Path;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import org.apache.http.conn.HttpHostConnectException;
 
@@ -162,7 +162,7 @@ public class JibBuildRunner {
    *
    * @param jibContainerBuilder the {@link JibContainerBuilder}
    * @param containerizer the {@link Containerizer}
-   * @param eventHandlers the {@link EventHandlers}
+   * @param logger consumer for handling log events
    * @param helpfulSuggestions suggestions to use in help messages for exceptions
    * @return the built {@link JibContainer}
    * @throws BuildStepsExecutionException if another exception is thrown during the build
@@ -172,17 +172,17 @@ public class JibBuildRunner {
   public JibContainer build(
       JibContainerBuilder jibContainerBuilder,
       Containerizer containerizer,
-      EventHandlers eventHandlers,
+      Consumer<LogEvent> logger,
       HelpfulSuggestions helpfulSuggestions)
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
     try {
-      eventHandlers.dispatch(LogEvent.lifecycle(""));
-      eventHandlers.dispatch(LogEvent.lifecycle(startupMessage));
+      logger.accept(LogEvent.lifecycle(""));
+      logger.accept(LogEvent.lifecycle(startupMessage));
 
       JibContainer jibContainer = jibContainerBuilder.containerize(containerizer);
 
-      eventHandlers.dispatch(LogEvent.lifecycle(""));
-      eventHandlers.dispatch(LogEvent.lifecycle(successMessage));
+      logger.accept(LogEvent.lifecycle(""));
+      logger.accept(LogEvent.lifecycle(successMessage));
 
       // when an image is built, write out the digest and id
       if (imageDigestOutputPath != null) {

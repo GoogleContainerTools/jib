@@ -66,6 +66,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MavenProjectPropertiesTest {
 
+  private static final ContainerizingMode DEFAULT_CONTAINERIZING_MODE = ContainerizingMode.EXPLODED;
+
   /** Helper for reading back layers in a {@code BuildConfiguration}. */
   private static class ContainerBuilderLayers {
 
@@ -363,7 +365,7 @@ public class MavenProjectPropertiesTest {
   public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration("/app", ContainerizingMode.EXPLODED);
+    BuildConfiguration configuration = setupBuildConfiguration("/app", DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
 
     Path dependenciesPath = getResource("maven/application/dependencies");
@@ -404,7 +406,7 @@ public class MavenProjectPropertiesTest {
   public void testCreateContainerBuilder_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildConfiguration configuration =
-        setupBuildConfiguration("/my/app", ContainerizingMode.EXPLODED);
+        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
     assertNonDefaultAppRoot(configuration);
   }
 
@@ -470,7 +472,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
     BuildConfiguration configuration =
-        setupBuildConfiguration("/my/app", ContainerizingMode.EXPLODED);
+        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertSourcePathsUnordered(
         ImmutableList.of(outputPath.resolve("final-name/WEB-INF/lib/dependency-1.0.0.jar")),
@@ -534,7 +536,7 @@ public class MavenProjectPropertiesTest {
     // Test when the default packaging is set
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
     BuildConfiguration configuration =
-        setupBuildConfiguration("/my/app", ContainerizingMode.EXPLODED);
+        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
     assertNonDefaultAppRoot(configuration);
   }
 
@@ -546,7 +548,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration("/my/app", ContainerizingMode.EXPLODED); // should pass
+    setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -557,7 +559,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration("/my/app", ContainerizingMode.EXPLODED); // should pass
+    setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -568,7 +570,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration("/my/app", ContainerizingMode.EXPLODED); // should pass
+    setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test

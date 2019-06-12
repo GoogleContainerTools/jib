@@ -14,7 +14,7 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.configuration.credentials;
+package com.google.cloud.tools.jib.api;
 
 import java.util.Objects;
 

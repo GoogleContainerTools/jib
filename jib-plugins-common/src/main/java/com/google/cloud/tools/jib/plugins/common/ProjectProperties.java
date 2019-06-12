@@ -17,9 +17,10 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -40,8 +41,15 @@ public interface ProjectProperties {
   // TODO: Move out of ProjectProperties.
   void waitForLoggingThread();
 
+  /**
+   * Adds the plugin's event handlers to a containerizer.
+   *
+   * @param containerizer the containerizer to add event handlers to
+   */
   // TODO: Move out of ProjectProperties.
-  EventHandlers getEventHandlers();
+  void configureEventHandlers(Containerizer containerizer);
+
+  void log(LogEvent logEvent);
 
   String getToolName();
 
