@@ -23,16 +23,12 @@ import java.io.IOException;
 import java.io.Reader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class HelloWorld {
 
   public static void main(String[] args) throws URISyntaxException, IOException {
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     try (Reader reader = new InputStreamReader(
-        classLoader.getResourceAsStream("world"), StandardCharsets.UTF_8)) {
+        HelloWorld.class.getResourceAsStream("/world"), StandardCharsets.UTF_8)) {
       String world = CharStreams.toString(reader);
       System.out.println("Hello " + world);
     }

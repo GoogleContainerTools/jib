@@ -39,7 +39,7 @@ public class HelloWorld {
     try (BufferedReader reader =
         new BufferedReader(
             new InputStreamReader(
-                classLoader.getResourceAsStream("world"), StandardCharsets.UTF_8))) {
+                HelloWorld.class.getResourceAsStream("/world"), StandardCharsets.UTF_8))) {
       String world = reader.readLine();
       System.out.println(greeting + ", " + world + ". " + (args.length > 0 ? args[0] : ""));
 
