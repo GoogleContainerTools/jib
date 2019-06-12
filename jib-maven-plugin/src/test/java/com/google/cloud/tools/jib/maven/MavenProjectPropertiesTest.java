@@ -419,7 +419,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
     BuildConfiguration configuration =
-        setupBuildConfiguration("/app-root", DEFAULT_CONTAINERIZING_MODE);
+        setupBuildConfiguration("/app-root", ContainerizingMode.PACKAGED);
 
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     Assert.assertEquals(1, layers.dependenciesLayers.size());
