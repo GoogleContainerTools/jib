@@ -550,11 +550,10 @@ public class JavaContainerBuilder {
     for (LayerType layerType : layerMap.keySet()) {
       for (Path file : Preconditions.checkNotNull(layerMap.get(layerType))) {
         // handle duplicates by appending filesize to the end of the file
-        String jarName =
-            duplicates.contains(file.getFileName().toString())
-                ? file.getFileName().toString().replaceFirst("\\.jar$", "-" + Files.size(file))
-                    + ".jar"
-                : file.getFileName().toString();
+        String jarName = file.getFileName().toString();
+        if (duplicates.contains(jarName)) {
+          jarName = jarName.replaceFirst("\\.jar$", "-" + Files.size(file)) + ".jar";
+        }
         // Add dependencies to layer configuration
         addFileToLayer(
             layerBuilders,
