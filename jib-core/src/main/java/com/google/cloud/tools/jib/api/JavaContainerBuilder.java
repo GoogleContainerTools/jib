@@ -273,7 +273,12 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Convenience alternative to {@link #addDependencies(List)}.
+   * Adds dependency JARs to the image. Duplicate JAR filenames across all dependencies are renamed
+   * with the filesize in order to avoid collisions.
+   *
+   * @param dependencyFiles the list of dependency JARs to add to the image
+   * @return this
+   * @throws IOException if adding the layer fails
    */
   public JavaContainerBuilder addDependencies(Path... dependencyFiles) throws IOException {
     return addDependencies(Arrays.asList(dependencyFiles));
@@ -295,19 +300,24 @@ public class JavaContainerBuilder {
       }
     }
     addedSnapshotDependencies.addAll(dependencyFiles);
-    classpathOrder.add(LayerType.DEPENDENCIES); // this is a single classpath entry will all deps
+    classpathOrder.add(LayerType.DEPENDENCIES); // this is a single classpath entry with all deps
     return this;
   }
 
   /**
-   * Convenience alternative to {@link #addSnapshotDependencies(List)}.
+   * Adds snapshot dependency JARs to the image. Duplicate JAR filenames across all dependencies are
+   * renamed with the filesize in order to avoid collisions.
+   *
+   * @param dependencyFiles the list of dependency JARs to add to the image
+   * @return this
+   * @throws IOException if adding the layer fails
    */
   public JavaContainerBuilder addSnapshotDependencies(Path... dependencyFiles) throws IOException {
     return addSnapshotDependencies(Arrays.asList(dependencyFiles));
   }
 
   /**
-   * Adds project dependency JARs to the image. Project dependency generally are jars produced from
+   * Adds project dependency JARs to the image. Generally, project dependency are jars produced from
    * source in this project as part of other modules/sub-projects. Duplicate JAR filenames across
    * all dependencies are renamed with the filesize in order to avoid collisions.
    *
@@ -323,12 +333,18 @@ public class JavaContainerBuilder {
       }
     }
     addedProjectDependencies.addAll(dependencyFiles);
-    classpathOrder.add(LayerType.DEPENDENCIES); // this is a single classpath entry will all deps
+    classpathOrder.add(LayerType.DEPENDENCIES); // this is a single classpath entry with all deps
     return this;
   }
 
   /**
-   * Convenience alternative to {@link #addProjectDependencies(List)}.
+   * Adds project dependency JARs to the image. Generally, project dependency are jars produced from
+   * source in this project as part of other modules/sub-projects. Duplicate JAR filenames across
+   * all dependencies are renamed with the filesize in order to avoid collisions.
+   *
+   * @param dependencyFiles the list of dependency JARs to add to the image
+   * @return this
+   * @throws IOException if adding the layer fails
    */
   public JavaContainerBuilder addProjectDependencies(Path... dependencyFiles) throws IOException {
     return addProjectDependencies(Arrays.asList(dependencyFiles));
