@@ -25,13 +25,13 @@ import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.filesystem.LockFile;
 import com.google.cloud.tools.jib.filesystem.TemporaryDirectory;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.base.Preconditions;
-import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -101,14 +101,9 @@ class CacheStorageWriter {
    */
   private static DescriptorDigest getDiffIdByDecompressingFile(Path compressedFile)
       throws IOException {
-    try (CountingDigestOutputStream diffIdCaptureOutputStream =
-        new CountingDigestOutputStream(ByteStreams.nullOutputStream())) {
-      try (InputStream fileInputStream =
-              new BufferedInputStream(Files.newInputStream(compressedFile));
-          GZIPInputStream decompressorStream = new GZIPInputStream(fileInputStream)) {
-        ByteStreams.copy(decompressorStream, diffIdCaptureOutputStream);
-      }
-      return diffIdCaptureOutputStream.computeDigest().getDigest();
+    try (InputStream fileInputStream =
+        new BufferedInputStream(new GZIPInputStream(Files.newInputStream(compressedFile)))) {
+      return Digests.computeDigest(fileInputStream).getDigest();
     }
   }
 

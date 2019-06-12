@@ -127,7 +127,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
             .build(
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
-                projectProperties.getEventHandlers(),
+                projectProperties::log,
                 helpfulSuggestions);
 
       } finally {

@@ -16,8 +16,9 @@
 
 package com.google.cloud.tools.jib.event.events;
 
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.events.LogEvent.Level;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import org.junit.Assert;

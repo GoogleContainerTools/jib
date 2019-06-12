@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
@@ -25,7 +26,6 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.util.concurrent.ListenableFuture;

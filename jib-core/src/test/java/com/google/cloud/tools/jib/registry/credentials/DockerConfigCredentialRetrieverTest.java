@@ -16,15 +16,15 @@
 
 package com.google.cloud.tools.jib.registry.credentials;
 
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.function.Consumer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +41,7 @@ public class DockerConfigCredentialRetrieverTest {
 
   @Mock private DockerCredentialHelper mockDockerCredentialHelper;
   @Mock private DockerConfig mockDockerConfig;
-  @Mock private EventHandlers mockEventHandlers;
+  @Mock private Consumer<LogEvent> mockLogger;
 
   private Path dockerConfigFile;
 
@@ -58,7 +58,7 @@ public class DockerConfigCredentialRetrieverTest {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("some registry", Paths.get("fake/path"));
 
-    Assert.assertFalse(dockerConfigCredentialRetriever.retrieve(mockEventHandlers).isPresent());
+    Assert.assertFalse(dockerConfigCredentialRetriever.retrieve(mockLogger).isPresent());
   }
 
   @Test
@@ -66,7 +66,7 @@ public class DockerConfigCredentialRetrieverTest {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("some registry", dockerConfigFile);
 
-    Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(mockEventHandlers);
+    Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(mockLogger);
     Assert.assertTrue(credentials.isPresent());
     Assert.assertEquals("some", credentials.get().getUsername());
     Assert.assertEquals("auth", credentials.get().getPassword());
@@ -82,7 +82,7 @@ public class DockerConfigCredentialRetrieverTest {
     Assert.assertEquals(
         FAKE_CREDENTIAL,
         dockerConfigCredentialRetriever
-            .retrieve(mockDockerConfig, mockEventHandlers)
+            .retrieve(mockDockerConfig, mockLogger)
             .orElseThrow(AssertionError::new));
   }
 
@@ -96,7 +96,7 @@ public class DockerConfigCredentialRetrieverTest {
     Assert.assertEquals(
         FAKE_CREDENTIAL,
         dockerConfigCredentialRetriever
-            .retrieve(mockDockerConfig, mockEventHandlers)
+            .retrieve(mockDockerConfig, mockLogger)
             .orElseThrow(AssertionError::new));
   }
 
@@ -110,7 +110,7 @@ public class DockerConfigCredentialRetrieverTest {
     Assert.assertEquals(
         FAKE_CREDENTIAL,
         dockerConfigCredentialRetriever
-            .retrieve(mockDockerConfig, mockEventHandlers)
+            .retrieve(mockDockerConfig, mockLogger)
             .orElseThrow(AssertionError::new));
   }
 
@@ -126,11 +126,11 @@ public class DockerConfigCredentialRetrieverTest {
                 Paths.get("docker-credential-path"), new Throwable("cause")));
 
     new DockerConfigCredentialRetriever("another registry", dockerConfigFile)
-        .retrieve(mockDockerConfig, mockEventHandlers);
+        .retrieve(mockDockerConfig, mockLogger);
 
-    Mockito.verify(mockEventHandlers)
-        .dispatch(LogEvent.warn("The system does not have docker-credential-path CLI"));
-    Mockito.verify(mockEventHandlers).dispatch(LogEvent.warn("  Caused by: cause"));
+    Mockito.verify(mockLogger)
+        .accept(LogEvent.warn("The system does not have docker-credential-path CLI"));
+    Mockito.verify(mockLogger).accept(LogEvent.warn("  Caused by: cause"));
   }
 
   @Test
@@ -138,7 +138,7 @@ public class DockerConfigCredentialRetrieverTest {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("unknown registry", dockerConfigFile);
 
-    Assert.assertFalse(dockerConfigCredentialRetriever.retrieve(mockEventHandlers).isPresent());
+    Assert.assertFalse(dockerConfigCredentialRetriever.retrieve(mockLogger).isPresent());
   }
 
   @Test
@@ -151,7 +151,7 @@ public class DockerConfigCredentialRetrieverTest {
     Assert.assertEquals(
         FAKE_CREDENTIAL,
         dockerConfigCredentialRetriever
-            .retrieve(mockDockerConfig, mockEventHandlers)
+            .retrieve(mockDockerConfig, mockLogger)
             .orElseThrow(AssertionError::new));
   }
 
@@ -163,7 +163,7 @@ public class DockerConfigCredentialRetrieverTest {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("index.docker.io", dockerConfigFile);
 
-    Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(mockEventHandlers);
+    Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(mockLogger);
     Assert.assertTrue(credentials.isPresent());
     Assert.assertEquals("token for", credentials.get().getUsername());
     Assert.assertEquals(" index.docker.io/v1/", credentials.get().getPassword());
@@ -177,7 +177,7 @@ public class DockerConfigCredentialRetrieverTest {
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         new DockerConfigCredentialRetriever("registry.hub.docker.com", dockerConfigFile);
 
-    Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(mockEventHandlers);
+    Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(mockLogger);
     Assert.assertTrue(credentials.isPresent());
     Assert.assertEquals("token for", credentials.get().getUsername());
     Assert.assertEquals(" index.docker.io/v1/", credentials.get().getPassword());

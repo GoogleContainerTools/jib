@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -61,7 +60,6 @@ public class JibBuildRunnerTest {
 
   @Mock private JibContainerBuilder mockJibContainerBuilder;
   @Mock private Containerizer mockContainerizer;
-  @Mock private EventHandlers mockEventHandlers;
   @Mock private RegistryUnauthorizedException mockRegistryUnauthorizedException;
   @Mock private RegistryCredentialsNotSentException mockRegistryCredentialsNotSentException;
   @Mock private HttpResponseException mockHttpResponseException;
@@ -77,7 +75,7 @@ public class JibBuildRunnerTest {
   public void testBuildImage_pass()
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
     testJibBuildRunner.build(
-        mockJibContainerBuilder, mockContainerizer, mockEventHandlers, TEST_HELPFUL_SUGGESTIONS);
+        mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
   }
 
   @Test
@@ -92,7 +90,7 @@ public class JibBuildRunnerTest {
 
     try {
       testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, mockEventHandlers, TEST_HELPFUL_SUGGESTIONS);
+          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
@@ -111,7 +109,7 @@ public class JibBuildRunnerTest {
 
     try {
       testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, mockEventHandlers, TEST_HELPFUL_SUGGESTIONS);
+          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
@@ -131,7 +129,7 @@ public class JibBuildRunnerTest {
 
     try {
       testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, mockEventHandlers, TEST_HELPFUL_SUGGESTIONS);
+          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
@@ -156,7 +154,7 @@ public class JibBuildRunnerTest {
 
     try {
       testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, mockEventHandlers, TEST_HELPFUL_SUGGESTIONS);
+          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
@@ -182,7 +180,7 @@ public class JibBuildRunnerTest {
 
     try {
       testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, mockEventHandlers, TEST_HELPFUL_SUGGESTIONS);
+          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
@@ -202,7 +200,7 @@ public class JibBuildRunnerTest {
 
     try {
       testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, mockEventHandlers, TEST_HELPFUL_SUGGESTIONS);
+          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
@@ -221,7 +219,7 @@ public class JibBuildRunnerTest {
 
     try {
       testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, mockEventHandlers, TEST_HELPFUL_SUGGESTIONS);
+          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
       Assert.fail("buildImage should have thrown an exception");
 
     } catch (BuildStepsExecutionException ex) {
