@@ -122,21 +122,36 @@ public class StepsRunner {
 
   public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
     rootProgressDescription = "building image to Docker daemon";
-    enqueueBuildAndCache();
+    // build and cache
+    stepsToRun.add(this::pullBaseImage);
+    stepsToRun.add(this::pullAndCacheBaseImageLayers);
+    stepsToRun.add(this::buildAndCacheApplicationLayers);
+    stepsToRun.add(this::buildImage);
+    // load to Docker
     stepsToRun.add(() -> loadDocker(dockerClient));
     return this;
   }
 
   public StepsRunner tarBuildSteps(Path outputPath) {
     rootProgressDescription = "building image to tar file";
-    enqueueBuildAndCache();
+    // build and cache
+    stepsToRun.add(this::pullBaseImage);
+    stepsToRun.add(this::pullAndCacheBaseImageLayers);
+    stepsToRun.add(this::buildAndCacheApplicationLayers);
+    stepsToRun.add(this::buildImage);
+    // create a tar
     stepsToRun.add(() -> writeTarFile(outputPath));
     return this;
   }
 
   public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
-    enqueueBuildAndCache();
+    // build and cache
+    stepsToRun.add(this::pullBaseImage);
+    stepsToRun.add(this::pullAndCacheBaseImageLayers);
+    stepsToRun.add(this::buildAndCacheApplicationLayers);
+    stepsToRun.add(this::buildImage);
+    // push to registry
     stepsToRun.add(this::retrieveTargetRegistryCredentials);
     stepsToRun.add(this::authenticatePush);
     stepsToRun.add(this::pushBaseImageLayers);
@@ -155,6 +170,13 @@ public class StepsRunner {
       childProgressDispatcherFactorySupplier = progressEventDispatcher::newChildProducer;
       stepsToRun.forEach(Runnable::run);
       return results.buildResult.get();
+
+    } catch (ExecutionException ex) {
+      ExecutionException unrolled = ex;
+      while (unrolled.getCause() instanceof ExecutionException) {
+        unrolled = (ExecutionException) unrolled.getCause();
+      }
+      throw unrolled;
     }
   }
 

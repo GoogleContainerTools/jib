@@ -145,7 +145,7 @@ public class JibIntegrationTest {
     } catch (ExecutionException ex) {
       Assert.assertEquals(
           "Cannot run Jib in offline mode; localhost:5001/busybox not found in local Jib cache",
-          ex.getCause().getCause().getCause().getMessage());
+          ex.getCause().getMessage());
     }
 
     // Run online to cache the base image

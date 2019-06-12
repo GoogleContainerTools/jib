@@ -225,24 +225,4 @@ public class JibBuildRunnerTest {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.none(), ex.getMessage());
     }
   }
-
-  @Test
-  public void testBuildImage_nestedExecutionExceptions()
-      throws InterruptedException, RegistryException, IOException, CacheDirectoryCreationException,
-          ExecutionException {
-    Mockito.doThrow(
-            new ExecutionException(
-                new ExecutionException(new ExecutionException(new IOException("awesome")))))
-        .when(mockJibContainerBuilder)
-        .containerize(mockContainerizer);
-
-    try {
-      testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail();
-
-    } catch (BuildStepsExecutionException ex) {
-      Assert.assertEquals("awesome", ex.getMessage());
-    }
-  }
 }
