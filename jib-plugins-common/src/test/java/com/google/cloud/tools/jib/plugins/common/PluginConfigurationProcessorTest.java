@@ -541,7 +541,8 @@ public class PluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         ContainerizingMode.EXPLODED,
-        PluginConfigurationProcessor.getContainerizingModeChecked(rawConfiguration));
+        PluginConfigurationProcessor.getContainerizingModeChecked(
+            rawConfiguration, projectProperties));
   }
 
   @Test
@@ -551,7 +552,8 @@ public class PluginConfigurationProcessorTest {
 
     Assert.assertEquals(
         ContainerizingMode.PACKAGED,
-        PluginConfigurationProcessor.getContainerizingModeChecked(rawConfiguration));
+        PluginConfigurationProcessor.getContainerizingModeChecked(
+            rawConfiguration, projectProperties));
   }
 
   @Test
@@ -559,11 +561,28 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("this is wrong");
 
     try {
-      PluginConfigurationProcessor.getContainerizingModeChecked(rawConfiguration);
+      PluginConfigurationProcessor.getContainerizingModeChecked(
+          rawConfiguration, projectProperties);
       Assert.fail();
     } catch (InvalidContainerizingModeException ex) {
       Assert.assertEquals("this is wrong", ex.getInvalidContainerizingMode());
       Assert.assertEquals("this is wrong", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetContainerizingModeChecked_packagedWithWar()
+      throws InvalidContainerizingModeException {
+    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
+
+    try {
+      PluginConfigurationProcessor.getContainerizingModeChecked(
+          rawConfiguration, projectProperties);
+      Assert.fail();
+    } catch (UnsupportedOperationException ex) {
+      Assert.assertEquals(
+          "packaged containerizing mode for WAR is not yet supported", ex.getMessage());
     }
   }
 

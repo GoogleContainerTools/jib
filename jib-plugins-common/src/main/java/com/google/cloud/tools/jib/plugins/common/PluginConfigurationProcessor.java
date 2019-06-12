@@ -191,7 +191,7 @@ public class PluginConfigurationProcessor {
             .createContainerBuilder(
                 baseImage,
                 getAppRootChecked(rawConfiguration, projectProperties),
-                getContainerizingModeChecked(rawConfiguration))
+                getContainerizingModeChecked(rawConfiguration, projectProperties))
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
@@ -278,7 +278,7 @@ public class PluginConfigurationProcessor {
     }
 
     List<String> classpath = new ArrayList<>(rawExtraClasspath);
-    ContainerizingMode mode = getContainerizingModeChecked(rawConfiguration);
+    ContainerizingMode mode = getContainerizingModeChecked(rawConfiguration, projectProperties);
     switch (mode) {
       case EXPLODED:
         classpath.add(appRoot.resolve("resources").toString());
@@ -401,13 +401,19 @@ public class PluginConfigurationProcessor {
   }
 
   @VisibleForTesting
-  static ContainerizingMode getContainerizingModeChecked(RawConfiguration rawConfiguration)
+  static ContainerizingMode getContainerizingModeChecked(
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InvalidContainerizingModeException {
-    String mode = rawConfiguration.getContainerizingMode();
+    String rawMode = rawConfiguration.getContainerizingMode();
     try {
-      return ContainerizingMode.valueOf(mode.toUpperCase(Locale.US));
+      ContainerizingMode mode = ContainerizingMode.valueOf(rawMode.toUpperCase(Locale.US));
+      if (mode == ContainerizingMode.PACKAGED && projectProperties.isWarProject()) {
+        throw new UnsupportedOperationException(
+            "packaged containerizing mode for WAR is not yet supported");
+      }
+      return mode;
     } catch (IllegalArgumentException ex) {
-      throw new InvalidContainerizingModeException(mode, mode);
+      throw new InvalidContainerizingModeException(rawMode, rawMode);
     }
   }
 
