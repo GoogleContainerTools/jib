@@ -19,6 +19,11 @@ package com.google.cloud.tools.jib.api;
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -33,6 +38,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /** Creates a {@link JibContainerBuilder} for containerizing Java applications. */
@@ -55,6 +61,7 @@ public class JavaContainerBuilder {
   public enum LayerType {
     DEPENDENCIES("dependencies"),
     SNAPSHOT_DEPENDENCIES("snapshot dependencies"),
+    PROJECT_DEPENDENCIES("project dependencies"),
     RESOURCES("resources"),
     CLASSES("classes"),
     EXTRA_FILES("extra files");
@@ -161,6 +168,8 @@ public class JavaContainerBuilder {
   private final List<PathPredicatePair> addedResources = new ArrayList<>();
   private final List<PathPredicatePair> addedClasses = new ArrayList<>();
   private final List<Path> addedDependencies = new ArrayList<>();
+  private final List<Path> addedSnapshotDependencies = new ArrayList<>();
+  private final List<Path> addedProjectDependencies = new ArrayList<>();
   private final List<Path> addedOthers = new ArrayList<>();
 
   private AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
@@ -244,8 +253,8 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds dependency JARs to the image. Duplicate JAR filenames are renamed with the filesize in
-   * order to avoid collisions.
+   * Adds dependency JARs to the image. Duplicate JAR filenames across all dependencies are renamed
+   * with the filesize in order to avoid collisions.
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
@@ -264,15 +273,65 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Adds dependency JARs to the image. Duplicate JAR filenames are renamed with the filesize in
-   * order to avoid collisions.
+   * Convenience alternative to {@link #addDependencies(List)}.
+   */
+  public JavaContainerBuilder addDependencies(Path... dependencyFiles) throws IOException {
+    return addDependencies(Arrays.asList(dependencyFiles));
+  }
+
+  /**
+   * Adds snapshot dependency JARs to the image. Duplicate JAR filenames across all dependencies are
+   * renamed with the filesize in order to avoid collisions.
    *
    * @param dependencyFiles the list of dependency JARs to add to the image
    * @return this
    * @throws IOException if adding the layer fails
    */
-  public JavaContainerBuilder addDependencies(Path... dependencyFiles) throws IOException {
-    return addDependencies(Arrays.asList(dependencyFiles));
+  public JavaContainerBuilder addSnapshotDependencies(List<Path> dependencyFiles) throws IOException {
+    // Make sure all files exist before adding any
+    for (Path file : dependencyFiles) {
+      if (!Files.exists(file)) {
+        throw new NoSuchFileException(file.toString());
+      }
+    }
+    addedSnapshotDependencies.addAll(dependencyFiles);
+    classpathOrder.add(LayerType.DEPENDENCIES); // this is a single classpath entry will all deps
+    return this;
+  }
+
+  /**
+   * Convenience alternative to {@link #addSnapshotDependencies(List)}.
+   */
+  public JavaContainerBuilder addSnapshotDependencies(Path... dependencyFiles) throws IOException {
+    return addSnapshotDependencies(Arrays.asList(dependencyFiles));
+  }
+
+  /**
+   * Adds project dependency JARs to the image. Project dependency generally are jars produced from
+   * source in this project as part of other modules/sub-projects. Duplicate JAR filenames across
+   * all dependencies are renamed with the filesize in order to avoid collisions.
+   *
+   * @param dependencyFiles the list of dependency JARs to add to the image
+   * @return this
+   * @throws IOException if adding the layer fails
+   */
+  public JavaContainerBuilder addProjectDependencies(List<Path> dependencyFiles) throws IOException {
+    // Make sure all files exist before adding any
+    for (Path file : dependencyFiles) {
+      if (!Files.exists(file)) {
+        throw new NoSuchFileException(file.toString());
+      }
+    }
+    addedProjectDependencies.addAll(dependencyFiles);
+    classpathOrder.add(LayerType.DEPENDENCIES); // this is a single classpath entry will all deps
+    return this;
+  }
+
+  /**
+   * Convenience alternative to {@link #addProjectDependencies(List)}.
+   */
+  public JavaContainerBuilder addProjectDependencies(Path... dependencyFiles) throws IOException {
+    return addProjectDependencies(Arrays.asList(dependencyFiles));
   }
 
   /**
@@ -453,10 +512,12 @@ public class JavaContainerBuilder {
           appRoot.resolve(resourcesDestination));
     }
 
-    // Detect duplicate filenames and rename with filesize to avoid collisions
+    // Detect duplicate filenames across all layer types
     List<String> duplicates =
-        addedDependencies
-            .stream()
+        Streams.concat(
+            addedDependencies.stream(),
+            addedSnapshotDependencies.stream(),
+            addedProjectDependencies.stream())
             .map(Path::getFileName)
             .map(Path::toString)
             .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
@@ -465,23 +526,30 @@ public class JavaContainerBuilder {
             .filter(entry -> entry.getValue() > 1)
             .map(Entry::getKey)
             .collect(Collectors.toList());
-    for (Path file : addedDependencies) {
-      // Add dependencies to layer configuration
-      addFileToLayer(
-          layerBuilders,
-          file.getFileName().toString().contains("SNAPSHOT")
-              ? LayerType.SNAPSHOT_DEPENDENCIES
-              : LayerType.DEPENDENCIES,
-          file,
-          appRoot
-              .resolve(dependenciesDestination)
-              .resolve(
-                  duplicates.contains(file.getFileName().toString())
-                      ? file.getFileName()
-                              .toString()
-                              .replaceFirst("\\.jar$", "-" + Files.size(file))
-                          + ".jar"
-                      : file.getFileName().toString()));
+
+    ImmutableMap<LayerType, List<Path>> layerMap = ImmutableMap.of(
+        LayerType.DEPENDENCIES, addedDependencies,
+        LayerType.SNAPSHOT_DEPENDENCIES, addedSnapshotDependencies,
+        LayerType.PROJECT_DEPENDENCIES, addedProjectDependencies
+    );
+    for (LayerType layerType : layerMap.keySet()) {
+      for (Path file : Preconditions.checkNotNull(layerMap.get(layerType))) {
+        // Add dependencies to layer configuration
+        addFileToLayer(
+            layerBuilders,
+            layerType,
+            file,
+            appRoot
+                .resolve(dependenciesDestination)
+                // handle duplicates by appending filesize to the end of the file
+                .resolve(
+                    duplicates.contains(file.getFileName().toString())
+                        ? file.getFileName()
+                        .toString()
+                        .replaceFirst("\\.jar$", "-" + Files.size(file))
+                        + ".jar"
+                        : file.getFileName().toString()));
+      }
     }
 
     // Add others to layer configuration

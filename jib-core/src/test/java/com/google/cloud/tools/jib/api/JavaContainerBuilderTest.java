@@ -67,10 +67,12 @@ public class JavaContainerBuilderTest {
             .addClasses(getResource("core/application/classes"))
             .addDependencies(
                 getResource("core/application/dependencies/dependency-1.0.0.jar"),
-                getResource("core/application/dependencies/more/dependency-1.0.0.jar"),
+                getResource("core/application/dependencies/more/dependency-1.0.0.jar"))
+            .addSnapshotDependencies(
+              getResource("core/application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
+            .addProjectDependencies(
                 getResource("core/application/dependencies/libraryA.jar"),
-                getResource("core/application/dependencies/libraryB.jar"),
-                getResource("core/application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
+                getResource("core/application/dependencies/libraryB.jar"))
             .addToClasspath(getResource("core/fileA"), getResource("core/fileB"))
             .setClassesDestination(RelativeUnixPath.get("different-classes"))
             .setResourcesDestination(RelativeUnixPath.get("different-resources"))
@@ -100,9 +102,7 @@ public class JavaContainerBuilderTest {
     List<AbsoluteUnixPath> expectedDependencies =
         ImmutableList.of(
             AbsoluteUnixPath.get("/hello/different-libs/dependency-1.0.0-770.jar"),
-            AbsoluteUnixPath.get("/hello/different-libs/dependency-1.0.0-200.jar"),
-            AbsoluteUnixPath.get("/hello/different-libs/libraryA.jar"),
-            AbsoluteUnixPath.get("/hello/different-libs/libraryB.jar"));
+            AbsoluteUnixPath.get("/hello/different-libs/dependency-1.0.0-200.jar"));
     Assert.assertEquals(
         expectedDependencies, getExtractionPaths(buildConfiguration, "dependencies"));
 
@@ -113,6 +113,13 @@ public class JavaContainerBuilderTest {
     Assert.assertEquals(
         expectedSnapshotDependencies,
         getExtractionPaths(buildConfiguration, "snapshot dependencies"));
+
+    List<AbsoluteUnixPath> expectedProjectDependencies =
+        ImmutableList.of(
+            AbsoluteUnixPath.get("/hello/different-libs/libraryA.jar"),
+            AbsoluteUnixPath.get("/hello/different-libs/libraryB.jar"));
+    Assert.assertEquals(
+        expectedProjectDependencies, getExtractionPaths(buildConfiguration, "project dependencies"));
 
     // Check resources
     List<AbsoluteUnixPath> expectedResources =
@@ -145,7 +152,7 @@ public class JavaContainerBuilderTest {
         JavaContainerBuilder.fromDistroless()
             .addDependencies(getResource("core/application/dependencies/libraryA.jar"))
             .addDependencies(getResource("core/application/dependencies/libraryB.jar"))
-            .addDependencies(
+            .addSnapshotDependencies(
                 getResource("core/application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
             .addClasses(getResource("core/application/classes/"))
             .addClasses(getResource("core/class-finder-tests/extension"))
