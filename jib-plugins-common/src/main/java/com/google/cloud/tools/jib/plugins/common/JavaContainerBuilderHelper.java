@@ -100,8 +100,6 @@ public class JavaContainerBuilderHelper {
               .filterRoot()
               .filter(path -> !path.getFileName().toString().contains("SNAPSHOT"))
               .walk());
-    }
-    if (Files.exists(webInfLib)) {
       javaContainerBuilder.addSnapshotDependencies(
           new DirectoryWalker(webInfLib)
               .filterRoot()

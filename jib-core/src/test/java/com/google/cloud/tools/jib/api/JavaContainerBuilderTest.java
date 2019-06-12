@@ -69,7 +69,7 @@ public class JavaContainerBuilderTest {
                 getResource("core/application/dependencies/dependency-1.0.0.jar"),
                 getResource("core/application/dependencies/more/dependency-1.0.0.jar"))
             .addSnapshotDependencies(
-              getResource("core/application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
+                getResource("core/application/snapshot-dependencies/dependency-1.0.0-SNAPSHOT.jar"))
             .addProjectDependencies(
                 getResource("core/application/dependencies/libraryA.jar"),
                 getResource("core/application/dependencies/libraryB.jar"))
@@ -119,7 +119,8 @@ public class JavaContainerBuilderTest {
             AbsoluteUnixPath.get("/hello/different-libs/libraryA.jar"),
             AbsoluteUnixPath.get("/hello/different-libs/libraryB.jar"));
     Assert.assertEquals(
-        expectedProjectDependencies, getExtractionPaths(buildConfiguration, "project dependencies"));
+        expectedProjectDependencies,
+        getExtractionPaths(buildConfiguration, "project dependencies"));
 
     // Check resources
     List<AbsoluteUnixPath> expectedResources =

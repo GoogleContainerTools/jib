@@ -20,9 +20,7 @@ import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,7 +36,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /** Creates a {@link JibContainerBuilder} for containerizing Java applications. */
@@ -292,7 +289,8 @@ public class JavaContainerBuilder {
    * @return this
    * @throws IOException if adding the layer fails
    */
-  public JavaContainerBuilder addSnapshotDependencies(List<Path> dependencyFiles) throws IOException {
+  public JavaContainerBuilder addSnapshotDependencies(List<Path> dependencyFiles)
+      throws IOException {
     // Make sure all files exist before adding any
     for (Path file : dependencyFiles) {
       if (!Files.exists(file)) {
@@ -325,7 +323,8 @@ public class JavaContainerBuilder {
    * @return this
    * @throws IOException if adding the layer fails
    */
-  public JavaContainerBuilder addProjectDependencies(List<Path> dependencyFiles) throws IOException {
+  public JavaContainerBuilder addProjectDependencies(List<Path> dependencyFiles)
+      throws IOException {
     // Make sure all files exist before adding any
     for (Path file : dependencyFiles) {
       if (!Files.exists(file)) {
@@ -531,9 +530,9 @@ public class JavaContainerBuilder {
     // Detect duplicate filenames across all layer types
     List<String> duplicates =
         Streams.concat(
-            addedDependencies.stream(),
-            addedSnapshotDependencies.stream(),
-            addedProjectDependencies.stream())
+                addedDependencies.stream(),
+                addedSnapshotDependencies.stream(),
+                addedProjectDependencies.stream())
             .map(Path::getFileName)
             .map(Path::toString)
             .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
@@ -543,28 +542,25 @@ public class JavaContainerBuilder {
             .map(Entry::getKey)
             .collect(Collectors.toList());
 
-    ImmutableMap<LayerType, List<Path>> layerMap = ImmutableMap.of(
-        LayerType.DEPENDENCIES, addedDependencies,
-        LayerType.SNAPSHOT_DEPENDENCIES, addedSnapshotDependencies,
-        LayerType.PROJECT_DEPENDENCIES, addedProjectDependencies
-    );
+    ImmutableMap<LayerType, List<Path>> layerMap =
+        ImmutableMap.of(
+            LayerType.DEPENDENCIES, addedDependencies,
+            LayerType.SNAPSHOT_DEPENDENCIES, addedSnapshotDependencies,
+            LayerType.PROJECT_DEPENDENCIES, addedProjectDependencies);
     for (LayerType layerType : layerMap.keySet()) {
       for (Path file : Preconditions.checkNotNull(layerMap.get(layerType))) {
+        // handle duplicates by appending filesize to the end of the file
+        String jarName =
+            duplicates.contains(file.getFileName().toString())
+                ? file.getFileName().toString().replaceFirst("\\.jar$", "-" + Files.size(file))
+                    + ".jar"
+                : file.getFileName().toString();
         // Add dependencies to layer configuration
         addFileToLayer(
             layerBuilders,
             layerType,
             file,
-            appRoot
-                .resolve(dependenciesDestination)
-                // handle duplicates by appending filesize to the end of the file
-                .resolve(
-                    duplicates.contains(file.getFileName().toString())
-                        ? file.getFileName()
-                        .toString()
-                        .replaceFirst("\\.jar$", "-" + Files.size(file))
-                        + ".jar"
-                        : file.getFileName().toString()));
+            appRoot.resolve(dependenciesDestination).resolve(jarName));
       }
     }
 
