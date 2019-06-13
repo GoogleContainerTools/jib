@@ -63,7 +63,7 @@ public class Connection implements Closeable {
    */
   public static Function<URL, Connection> getConnectionFactory() {
     // Do not use NetHttpTransport. It does not process response errors properly.
-    // See https://github.com/google/google-http-java-client/issues/39)
+    // See https://github.com/google/google-http-java-client/issues/39
     //
     // A new ApacheHttpTransport needs to be created for each connection because otherwise HTTP
     // connection persistence causes the connection to throw NoHttpResponseException.
