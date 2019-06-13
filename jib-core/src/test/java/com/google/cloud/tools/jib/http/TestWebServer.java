@@ -17,9 +17,11 @@
 package com.google.cloud.tools.jib.http;
 
 import com.google.common.io.Resources;
+import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
@@ -37,14 +39,15 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 
 /** Simple local web server for testing. */
-class TestWebServer implements Closeable {
+public class TestWebServer implements Closeable {
 
   private final boolean https;
   private final ServerSocket serverSocket;
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
   private final Semaphore threadStarted = new Semaphore(0);
+  private final StringBuilder inputRead = new StringBuilder();
 
-  TestWebServer(boolean https)
+  public TestWebServer(boolean https)
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     this.https = https;
     serverSocket = createServerSocket(https);
@@ -52,7 +55,7 @@ class TestWebServer implements Closeable {
     threadStarted.acquire();
   }
 
-  String getEndpoint() {
+  public String getEndpoint() {
     String host = serverSocket.getInetAddress().getHostAddress();
     return (https ? "https" : "http") + "://" + host + ":" + serverSocket.getLocalPort();
   }
@@ -88,17 +91,27 @@ class TestWebServer implements Closeable {
   private Void serve200() throws IOException {
     threadStarted.release();
     try (Socket socket = serverSocket.accept()) {
+
+      InputStream in = socket.getInputStream();
+      BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+      for (String line = reader.readLine();
+          line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
+          line = reader.readLine()) {
+        inputRead.append(line + "\n");
+      }
+
       String response = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
       socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
       socket.getOutputStream().flush();
-
-      InputStream in = socket.getInputStream();
-      for (int ch = in.read(); ch != -1; ch = in.read()) ;
     }
     return null;
   }
 
   private void ignoreReturn(Future<Void> future) {
     // do nothing; to make Error Prone happy
+  }
+
+  public String getInputRead() {
+    return inputRead.toString();
   }
 }

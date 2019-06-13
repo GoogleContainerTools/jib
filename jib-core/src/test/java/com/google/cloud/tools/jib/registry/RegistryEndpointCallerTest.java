@@ -20,25 +20,33 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.api.InsecureRegistryException;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
-import com.google.cloud.tools.jib.http.Authorizations;
+import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.MockConnection;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.common.io.CharStreams;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
+import java.net.SocketException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
-import org.apache.http.conn.HttpHostConnectException;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Assert;
@@ -81,7 +89,8 @@ public class RegistryEndpointCallerTest {
     @Nullable
     @Override
     public String handleResponse(Response response) throws IOException {
-      return Blobs.writeToString(response.getBody());
+      return CharStreams.toString(
+          new InputStreamReader(response.getBody(), StandardCharsets.UTF_8));
     }
 
     @Override
@@ -104,7 +113,7 @@ public class RegistryEndpointCallerTest {
     return mockHttpResponse(code307, new HttpHeaders().setLocation(redirectLocation));
   }
 
-  @Mock private EventDispatcher mockEventDispatcher;
+  @Mock private EventHandlers mockEventHandlers;
   @Mock private Connection mockConnection;
   @Mock private Connection mockInsecureConnection;
   @Mock private Response mockResponse;
@@ -120,7 +129,8 @@ public class RegistryEndpointCallerTest {
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
     Mockito.when(mockInsecureConnectionFactory.apply(Mockito.any()))
         .thenReturn(mockInsecureConnection);
-    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("body"));
+    Mockito.when(mockResponse.getBody())
+        .thenReturn(new ByteArrayInputStream("body".getBytes(StandardCharsets.UTF_8)));
   }
 
   @After
@@ -164,7 +174,7 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockConnectionFactory);
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.info(
                 "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification."));
@@ -192,11 +202,11 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockConnectionFactory);
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.info(
                 "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification."));
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.info(
                 "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api"));
@@ -206,7 +216,7 @@ public class RegistryEndpointCallerTest {
   public void testCall_insecureCallerOnHttpServerAndNoPortSpecified()
       throws IOException, RegistryException {
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(HttpHostConnectException.class)) // server is not listening on 443
+        .thenThrow(Mockito.mock(ConnectException.class)) // server is not listening on 443
         .thenReturn(mockResponse); // respond when connected through 80
 
     RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true, -1);
@@ -220,7 +230,7 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockConnectionFactory);
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.info(
                 "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api"));
@@ -230,12 +240,12 @@ public class RegistryEndpointCallerTest {
   public void testCall_secureCallerOnNonListeningServerAndNoPortSpecified()
       throws IOException, RegistryException {
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(HttpHostConnectException.class)); // server is not listening on 443
+        .thenThrow(Mockito.mock(ConnectException.class)); // server is not listening on 443
 
     try {
       secureEndpointCaller.call();
       Assert.fail("Should not fall back to HTTP if not allowInsecureRegistries");
-    } catch (HttpHostConnectException ex) {
+    } catch (ConnectException ex) {
       Assert.assertNull(ex.getMessage());
     }
 
@@ -251,14 +261,14 @@ public class RegistryEndpointCallerTest {
   public void testCall_insecureCallerOnNonListeningServerAndPortSpecified()
       throws IOException, RegistryException {
     Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(HttpHostConnectException.class)); // server is not listening on 5000
+        .thenThrow(Mockito.mock(ConnectException.class)); // server is not listening on 5000
 
     RegistryEndpointCaller<String> insecureEndpointCaller =
         createRegistryEndpointCaller(true, 5000);
     try {
       insecureEndpointCaller.call();
       Assert.fail("Should not fall back to HTTP if port was explicitly given and cannot connect");
-    } catch (HttpHostConnectException ex) {
+    } catch (ConnectException ex) {
       Assert.assertNull(ex.getMessage());
     }
 
@@ -343,11 +353,11 @@ public class RegistryEndpointCallerTest {
     Mockito.verifyNoMoreInteractions(mockConnectionFactory);
     Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
 
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.info(
                 "Cannot verify server at https://apiRouteBase/api. Attempting again with no TLS verification."));
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.info(
                 "Failed to connect to https://apiRouteBase/api over HTTPS. Attempting again with HTTP: http://apiRouteBase/api"));
@@ -485,6 +495,69 @@ public class RegistryEndpointCallerTest {
     Assert.assertEquals(Integer.valueOf(7593), mockConnection.getRequestedHttpTimeout());
   }
 
+  @Test
+  public void testIsBrokenPipe_notBrokenPipe() {
+    Assert.assertFalse(RegistryEndpointCaller.isBrokenPipe(new IOException()));
+    Assert.assertFalse(RegistryEndpointCaller.isBrokenPipe(new SocketException()));
+    Assert.assertFalse(RegistryEndpointCaller.isBrokenPipe(new SSLException("mock")));
+  }
+
+  @Test
+  public void testIsBrokenPipe_brokenPipe() {
+    Assert.assertTrue(RegistryEndpointCaller.isBrokenPipe(new IOException("cool broken pipe !")));
+    Assert.assertTrue(RegistryEndpointCaller.isBrokenPipe(new SocketException("BROKEN PIPE")));
+    Assert.assertTrue(RegistryEndpointCaller.isBrokenPipe(new SSLException("calm BrOkEn PiPe")));
+  }
+
+  @Test
+  public void testIsBrokenPipe_nestedBrokenPipe() {
+    IOException exception = new IOException(new SSLException(new SocketException("Broken pipe")));
+    Assert.assertTrue(RegistryEndpointCaller.isBrokenPipe(exception));
+  }
+
+  @Test
+  public void testIsBrokenPipe_terminatesWhenCauseIsOriginal() {
+    IOException exception = Mockito.mock(IOException.class);
+    Mockito.when(exception.getCause()).thenReturn(exception);
+
+    Assert.assertFalse(RegistryEndpointCaller.isBrokenPipe(exception));
+  }
+
+  @Test
+  public void testNewRegistryErrorException_jsonErrorOutput() {
+    HttpResponseException httpException = Mockito.mock(HttpResponseException.class);
+    Mockito.when(httpException.getContent())
+        .thenReturn(
+            "{\"errors\": [{\"code\": \"MANIFEST_UNKNOWN\", \"message\": \"manifest unknown\"}]}");
+
+    RegistryErrorException registryException =
+        secureEndpointCaller.newRegistryErrorException(httpException);
+    Assert.assertSame(httpException, registryException.getCause());
+    Assert.assertEquals(
+        "Tried to actionDescription but failed because: manifest unknown | If this is a bug, "
+            + "please file an issue at https://github.com/GoogleContainerTools/jib/issues/new",
+        registryException.getMessage());
+  }
+
+  @Test
+  public void testNewRegistryErrorException_nonJsonErrorOutput() {
+    HttpResponseException httpException = Mockito.mock(HttpResponseException.class);
+    // Registry returning non-structured error output
+    Mockito.when(httpException.getContent()).thenReturn(">>>>> (404) page not found <<<<<");
+    Mockito.when(httpException.getStatusCode()).thenReturn(404);
+
+    RegistryErrorException registryException =
+        secureEndpointCaller.newRegistryErrorException(httpException);
+    Assert.assertSame(httpException, registryException.getCause());
+    Assert.assertEquals(
+        "Tried to actionDescription but failed because: registry returned error code 404; "
+            + "possible causes include invalid or wrong reference. Actual error output follows:\n"
+            + ">>>>> (404) page not found <<<<<\n"
+            + " | If this is a bug, please file an issue at "
+            + "https://github.com/GoogleContainerTools/jib/issues/new",
+        registryException.getMessage());
+  }
+
   /**
    * Verifies that a response with {@code httpStatusCode} throws {@link
    * RegistryUnauthorizedException}.
@@ -566,11 +639,11 @@ public class RegistryEndpointCallerTest {
   private RegistryEndpointCaller<String> createRegistryEndpointCaller(
       boolean allowInsecure, int port) throws MalformedURLException {
     return new RegistryEndpointCaller<>(
-        mockEventDispatcher,
+        mockEventHandlers,
         "userAgent",
         (port == -1) ? "apiRouteBase" : ("apiRouteBase:" + port),
         new TestRegistryEndpointProvider(),
-        Authorizations.withBasicToken("token"),
+        Authorization.fromBasicToken("token"),
         new RegistryEndpointRequestProperties("serverUrl", "imageName"),
         allowInsecure,
         mockConnectionFactory,

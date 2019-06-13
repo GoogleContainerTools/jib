@@ -16,9 +16,14 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.RegistryImage;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /** Project property methods that require maven/gradle-specific implementations. */
@@ -36,14 +41,32 @@ public interface ProjectProperties {
   // TODO: Move out of ProjectProperties.
   void waitForLoggingThread();
 
+  /**
+   * Adds the plugin's event handlers to a containerizer.
+   *
+   * @param containerizer the containerizer to add event handlers to
+   */
   // TODO: Move out of ProjectProperties.
-  EventHandlers getEventHandlers();
+  void configureEventHandlers(Containerizer containerizer);
+
+  void log(LogEvent logEvent);
 
   String getToolName();
 
   String getPluginName();
 
-  JavaLayerConfigurations getJavaLayerConfigurations();
+  /**
+   * Starts the containerization process.
+   *
+   * @param baseImage the base image
+   * @param appRoot root directory in the image where the app will be placed
+   * @return a {@link JibContainerBuilder} with classes, resources, and dependencies added to it
+   * @throws IOException if there is a problem walking the project files
+   */
+  JibContainerBuilder createContainerBuilder(RegistryImage baseImage, AbsoluteUnixPath appRoot)
+      throws IOException;
+
+  List<Path> getClassFiles() throws IOException;
 
   Path getDefaultCacheDirectory();
 
@@ -58,4 +81,8 @@ public interface ProjectProperties {
   String getName();
 
   String getVersion();
+
+  int getMajorJavaVersion();
+
+  boolean isOffline();
 }

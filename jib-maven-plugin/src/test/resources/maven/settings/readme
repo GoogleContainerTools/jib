@@ -1,0 +1,13 @@
+Generate settings-security.xml with, if you change this, you have to change all the files in settings.xml, so just leave it as is:
+
+$ mvn --encrypt-master-password
+Master password: <enter your password here>
+{generatedValue=}
+^^^ copy this password into security-settings.xml
+
+Create settings.xml with mixed encrypted and unencrpted values, to encrypt a password value use:
+
+$ mvn --encrypt-password -Dsettings.security=<path to security-settings.xml>
+Password: <enter password here>
+{generatedValue=}
+^^^ copy this password into the right spot in settings.xml

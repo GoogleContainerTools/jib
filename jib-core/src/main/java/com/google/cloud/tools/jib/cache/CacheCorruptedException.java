@@ -16,14 +16,30 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.ProjectInfo;
+import java.nio.file.Path;
+
 /** Thrown if the the cache was found to be corrupted. */
 public class CacheCorruptedException extends Exception {
 
-  CacheCorruptedException(String message, Throwable cause) {
-    super(message, cause);
+  CacheCorruptedException(Path cacheDirectory, String message, Throwable cause) {
+    super(
+        message
+            + ". You may need to clear the cache by deleting the '"
+            + cacheDirectory
+            + "' directory (if this is a bug, please file an issue at "
+            + ProjectInfo.GITHUB_NEW_ISSUE_URL
+            + ")",
+        cause);
   }
 
-  CacheCorruptedException(String message) {
-    super(message);
+  CacheCorruptedException(Path cacheDirectory, String message) {
+    super(
+        message
+            + ". You may need to clear the cache by deleting the '"
+            + cacheDirectory
+            + "' directory (if this is a bug, please file an issue at "
+            + ProjectInfo.GITHUB_NEW_ISSUE_URL
+            + ")");
   }
 }

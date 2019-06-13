@@ -98,19 +98,22 @@ class DockerConfig {
   @Nullable
   DockerCredentialHelper getCredentialHelperFor(String registry) {
     List<Predicate<String>> registryMatchers = getRegistryMatchersFor(registry);
-    Map.Entry<String, ?> firstMatchInAuths =
+
+    Map.Entry<String, ?> firstAuthMatch =
         findFirstInMapByKey(dockerConfigTemplate.getAuths(), registryMatchers);
-    if (dockerConfigTemplate.getCredsStore() != null && firstMatchInAuths != null) {
+    if (firstAuthMatch != null && dockerConfigTemplate.getCredsStore() != null) {
       return new DockerCredentialHelper(
-          firstMatchInAuths.getKey(), dockerConfigTemplate.getCredsStore());
+          firstAuthMatch.getKey(), dockerConfigTemplate.getCredsStore());
     }
-    Map.Entry<String, String> firstMatchInCredHelpers =
+
+    Map.Entry<String, String> firstCredHelperMatch =
         findFirstInMapByKey(dockerConfigTemplate.getCredHelpers(), registryMatchers);
-    if (firstMatchInCredHelpers == null) {
-      return null;
+    if (firstCredHelperMatch != null) {
+      return new DockerCredentialHelper(
+          firstCredHelperMatch.getKey(), firstCredHelperMatch.getValue());
     }
-    return new DockerCredentialHelper(
-        firstMatchInCredHelpers.getKey(), firstMatchInCredHelpers.getValue());
+
+    return null;
   }
 
   /**

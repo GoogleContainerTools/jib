@@ -16,24 +16,22 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
-import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
+import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
+import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
@@ -73,6 +71,13 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     if (isSkipped()) {
       getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
       return;
+    } else if (!isContainerizable()) {
+      getLog()
+          .info(
+              "Skipping containerization of this module (not specified in "
+                  + PropertyNames.CONTAINERIZE
+                  + ")");
+      return;
     }
     if ("pom".equals(getProject().getPackaging())) {
       getLog().info("Skipping containerization because packaging is 'pom'...");
@@ -90,31 +95,24 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     }
 
     try {
-      AbsoluteUnixPath appRoot = MojoCommon.getAppRootChecked(this);
+      RawConfiguration mavenRawConfiguration = new MavenRawConfiguration(this);
       MavenProjectProperties projectProperties =
-          MavenProjectProperties.getForProject(
-              getProject(),
-              getLog(),
-              MojoCommon.getExtraDirectoryPath(this),
-              MojoCommon.convertPermissionsList(getExtraDirectoryPermissions()),
-              appRoot);
-      projectProperties.validateAgainstDefaultBaseImageVersion(getBaseImage());
-      EventDispatcher eventDispatcher =
-          new DefaultEventDispatcher(projectProperties.getEventHandlers());
+          MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
 
       MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
           new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
-              new MavenRawConfiguration(this),
+              mavenRawConfiguration,
               new MavenSettingsServerCredentials(
-                  getSession().getSettings(), getSettingsDecrypter(), eventDispatcher),
+                  getSession().getSettings(), getSettingsDecrypter()),
               projectProperties,
               dockerExecutable,
               getDockerClientEnvironment(),
               mavenHelpfulSuggestionsBuilder.build());
-      ProxyProvider.init(getSession().getSettings());
+      MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
+          getSession().getSettings(), getSettingsDecrypter());
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
       HelpfulSuggestions helpfulSuggestions =
@@ -128,15 +126,13 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
 
       try {
-        BuildStepsRunner.forBuildToDockerDaemon(
-                targetImageReference, getTargetImageAdditionalTags())
+        JibBuildRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
             .writeImageDigest(buildOutput.resolve("jib-image.digest"))
             .writeImageId(buildOutput.resolve("jib-image.id"))
             .build(
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
-                eventDispatcher,
-                projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+                projectProperties::log,
                 helpfulSuggestions);
 
       } finally {
@@ -160,11 +156,17 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(
           "<container><volumes> is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
 
-    } catch (InvalidImageReferenceException
-        | IOException
-        | CacheDirectoryCreationException
-        | MainClassInferenceException
-        | InferredAuthRetrievalException ex) {
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      throw new MojoExecutionException(
+          HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForMaven(
+              ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
+          ex);
+
+    } catch (InvalidImageReferenceException ex) {
+      throw new MojoExecutionException(
+          HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
+
+    } catch (IOException | CacheDirectoryCreationException | MainClassInferenceException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex);
 
     } catch (BuildStepsExecutionException ex) {

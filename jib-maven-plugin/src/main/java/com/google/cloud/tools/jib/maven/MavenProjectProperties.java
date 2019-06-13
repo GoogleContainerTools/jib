@@ -16,14 +16,17 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.configuration.FilePermissions;
-import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
-import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.JavaContainerBuilder;
+import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.RegistryImage;
+import com.google.cloud.tools.jib.event.events.ProgressEvent;
+import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
@@ -32,14 +35,17 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import org.apache.maven.artifact.Artifact;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Plugin;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.shared.utils.Os;
@@ -62,74 +68,41 @@ public class MavenProjectProperties implements ProjectProperties {
 
   /**
    * @param project the {@link MavenProject} for the plugin.
+   * @param session the {@link MavenSession} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution
-   * @param extraDirectory path to the directory for the extra files layer
-   * @param permissions map from path on container to file permissions for extra-layer files
-   * @param appRoot root directory in the image where the app will be placed
    * @return a MavenProjectProperties from the given project and logger.
-   * @throws MojoExecutionException if no class files are found in the output directory.
    */
-  static MavenProjectProperties getForProject(
-      MavenProject project,
-      Log log,
-      Path extraDirectory,
-      Map<AbsoluteUnixPath, FilePermissions> permissions,
-      AbsoluteUnixPath appRoot)
-      throws MojoExecutionException {
-    try {
-      return new MavenProjectProperties(
-          project,
-          log,
-          MavenLayerConfigurations.getForProject(project, extraDirectory, permissions, appRoot));
-
-    } catch (IOException ex) {
-      throw new MojoExecutionException(
-          "Obtaining project build output files failed; make sure you have compiled your project "
-              + "before trying to build the image. (Did you accidentally run \"mvn clean "
-              + "jib:build\" instead of \"mvn clean compile jib:build\"?)",
-          ex);
-    }
+  static MavenProjectProperties getForProject(MavenProject project, MavenSession session, Log log) {
+    return new MavenProjectProperties(project, session, log);
   }
 
-  private static EventHandlers makeEventHandlers(
-      Log log, SingleThreadedExecutor singleThreadedExecutor) {
-    ConsoleLoggerBuilder logEventHandlerBuilder =
-        (isProgressFooterEnabled()
-                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
-                : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(log::info))
-            .lifecycle(log::info);
-    if (log.isDebugEnabled()) {
-      logEventHandlerBuilder
-          .debug(log::debug)
-          // INFO messages also go to Log#debug since Log#info is used for LIFECYCLE.
-          .info(log::debug);
+  /**
+   * Gets a system property with the given name. First checks for a -D commandline argument, then
+   * checks for a property defined in the POM, then returns null if neither are defined.
+   *
+   * @param propertyName the name of the system property
+   * @param project the Maven project
+   * @param session the Maven session
+   * @return the value of the system property, or null if not defined
+   */
+  @Nullable
+  public static String getProperty(
+      String propertyName, @Nullable MavenProject project, @Nullable MavenSession session) {
+    if (session != null && session.getSystemProperties().containsKey(propertyName)) {
+      return session.getSystemProperties().getProperty(propertyName);
     }
-    if (log.isWarnEnabled()) {
-      logEventHandlerBuilder.warn(log::warn);
+    if (project != null && project.getProperties().containsKey(propertyName)) {
+      return project.getProperties().getProperty(propertyName);
     }
-    if (log.isErrorEnabled()) {
-      logEventHandlerBuilder.error(log::error);
-    }
-    ConsoleLogger consoleLogger = logEventHandlerBuilder.build();
-
-    return new EventHandlers()
-        .add(
-            JibEventType.LOGGING,
-            logEvent -> consoleLogger.log(logEvent.getLevel(), logEvent.getMessage()))
-        .add(
-            JibEventType.TIMING,
-            new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
-        .add(
-            JibEventType.PROGRESS,
-            new ProgressEventHandler(
-                update ->
-                    consoleLogger.setFooter(
-                        ProgressDisplayGenerator.generateProgressDisplay(
-                            update.getProgress(), update.getUnfinishedAllocations()))));
+    return null;
   }
 
-  private static boolean isProgressFooterEnabled() {
-    // TODO: Consolidate with GradleProjectProperties?
+  @VisibleForTesting
+  static boolean isProgressFooterEnabled(MavenSession session) {
+    if (!session.getRequest().isInteractiveMode()) {
+      return false;
+    }
+
     if ("plain".equals(System.getProperty(PropertyNames.CONSOLE))) {
       return false;
     }
@@ -173,22 +146,73 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   private final MavenProject project;
+  private final MavenSession session;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
-  private final EventHandlers eventHandlers;
-  private final JavaLayerConfigurations javaLayerConfigurations;
+  private final ConsoleLogger consoleLogger;
 
   @VisibleForTesting
-  MavenProjectProperties(
-      MavenProject project, Log log, JavaLayerConfigurations javaLayerConfigurations) {
+  MavenProjectProperties(MavenProject project, MavenSession session, Log log) {
     this.project = project;
-    this.javaLayerConfigurations = javaLayerConfigurations;
-
-    eventHandlers = makeEventHandlers(log, singleThreadedExecutor);
+    this.session = session;
+    ConsoleLoggerBuilder consoleLoggerBuilder =
+        (isProgressFooterEnabled(session)
+                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
+                : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(log::info))
+            .lifecycle(log::info);
+    if (log.isDebugEnabled()) {
+      consoleLoggerBuilder
+          .debug(log::debug)
+          // INFO messages also go to Log#debug since Log#info is used for LIFECYCLE.
+          .info(log::debug);
+    }
+    if (log.isWarnEnabled()) {
+      consoleLoggerBuilder.warn(log::warn);
+    }
+    if (log.isErrorEnabled()) {
+      consoleLoggerBuilder.error(log::error);
+    }
+    this.consoleLogger = consoleLoggerBuilder.build();
   }
 
   @Override
-  public JavaLayerConfigurations getJavaLayerConfigurations() {
-    return javaLayerConfigurations;
+  public JibContainerBuilder createContainerBuilder(
+      RegistryImage baseImage, AbsoluteUnixPath appRoot) throws IOException {
+    try {
+      if (isWarProject()) {
+        Path explodedWarPath =
+            Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
+        return JavaContainerBuilderHelper.fromExplodedWar(baseImage, explodedWarPath, appRoot);
+      }
+
+      Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
+      Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+
+      // Add dependencies, resources, and classes
+      return JavaContainerBuilder.from(baseImage)
+          .setAppRoot(appRoot)
+          .addResources(classesOutputDirectory, isClassFile.negate())
+          .addClasses(classesOutputDirectory, isClassFile)
+          .addDependencies(
+              project
+                  .getArtifacts()
+                  .stream()
+                  .map(Artifact::getFile)
+                  .map(File::toPath)
+                  .collect(Collectors.toList()))
+          .toContainerBuilder();
+
+    } catch (IOException ex) {
+      throw new IOException(
+          "Obtaining project build output files failed; make sure you have compiled your project "
+              + "before trying to build the image. (Did you accidentally run \"mvn clean "
+              + "jib:build\" instead of \"mvn clean compile jib:build\"?)",
+          ex);
+    }
+  }
+
+  @Override
+  public List<Path> getClassFiles() throws IOException {
+    return new DirectoryWalker(Paths.get(project.getBuild().getOutputDirectory())).walk().asList();
   }
 
   @Override
@@ -197,8 +221,24 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public EventHandlers getEventHandlers() {
-    return eventHandlers;
+  public void configureEventHandlers(Containerizer containerizer) {
+    containerizer
+        .addEventHandler(LogEvent.class, this::log)
+        .addEventHandler(
+            TimerEvent.class,
+            new TimerEventHandler(message -> consoleLogger.log(LogEvent.Level.DEBUG, message)))
+        .addEventHandler(
+            ProgressEvent.class,
+            new ProgressEventHandler(
+                update ->
+                    consoleLogger.setFooter(
+                        ProgressDisplayGenerator.generateProgressDisplay(
+                            update.getProgress(), update.getUnfinishedLeafTasks()))));
+  }
+
+  @Override
+  public void log(LogEvent logEvent) {
+    consoleLogger.log(logEvent.getLevel(), logEvent.getMessage());
   }
 
   @Override
@@ -247,9 +287,16 @@ public class MavenProjectProperties implements ProjectProperties {
     return JAR_PLUGIN_NAME;
   }
 
+  /**
+   * Gets whether or not the given project is a war project. This is the case for projects with
+   * packaging {@code war} and {@code gwt-app}.
+   *
+   * @return {@code true} if the project is a war project, {@code false} if not
+   */
   @Override
   public boolean isWarProject() {
-    return MojoCommon.isWarProject(project);
+    String packaging = project.getPackaging();
+    return "war".equals(packaging) || "gwt-app".equals(packaging);
   }
 
   @Override
@@ -262,47 +309,37 @@ public class MavenProjectProperties implements ProjectProperties {
     return project.getVersion();
   }
 
-  void validateAgainstDefaultBaseImageVersion(@Nullable String baseImage)
-      throws MojoFailureException {
-    if (!PluginConfigurationProcessor.usingDefaultBaseImage(baseImage)) {
-      return;
-    }
-
-    // maven-compiler-plugin default is 1.6
-    int version = 6;
-
+  @Override
+  public int getMajorJavaVersion() {
     // Check properties for version
     if (project.getProperties().getProperty("maven.compiler.target") != null) {
-      version = getVersionFromString(project.getProperties().getProperty("maven.compiler.target"));
-    } else if (project.getProperties().getProperty("maven.compiler.release") != null) {
-      version = getVersionFromString(project.getProperties().getProperty("maven.compiler.release"));
-    } else {
-      // Check maven-compiler-plugin for version
-      Plugin mavenCompilerPlugin =
-          project.getPlugin("org.apache.maven.plugins:maven-compiler-plugin");
-      if (mavenCompilerPlugin != null) {
-        Xpp3Dom pluginConfiguration = (Xpp3Dom) mavenCompilerPlugin.getConfiguration();
-        if (pluginConfiguration != null) {
-          Xpp3Dom target = pluginConfiguration.getChild("target");
-          if (target != null) {
-            version = getVersionFromString(target.getValue());
-          } else {
-            Xpp3Dom release = pluginConfiguration.getChild("release");
-            if (release != null) {
-              version = getVersionFromString(release.getValue());
-            }
-          }
+      return getVersionFromString(project.getProperties().getProperty("maven.compiler.target"));
+    }
+    if (project.getProperties().getProperty("maven.compiler.release") != null) {
+      return getVersionFromString(project.getProperties().getProperty("maven.compiler.release"));
+    }
+
+    // Check maven-compiler-plugin for version
+    Plugin mavenCompilerPlugin =
+        project.getPlugin("org.apache.maven.plugins:maven-compiler-plugin");
+    if (mavenCompilerPlugin != null) {
+      Xpp3Dom pluginConfiguration = (Xpp3Dom) mavenCompilerPlugin.getConfiguration();
+      if (pluginConfiguration != null) {
+        Xpp3Dom target = pluginConfiguration.getChild("target");
+        if (target != null) {
+          return getVersionFromString(target.getValue());
+        }
+        Xpp3Dom release = pluginConfiguration.getChild("release");
+        if (release != null) {
+          return getVersionFromString(release.getValue());
         }
       }
     }
+    return 6; // maven-compiler-plugin default is 1.6
+  }
 
-    if (version > 8) {
-      throw new MojoFailureException(
-          "Jib's default base image uses Java 8, but project is using Java "
-              + version
-              + "; perhaps you should configure a Java "
-              + version
-              + "-compatible base image using the '<from><image>' parameter, or set maven-compiler-plugin's target or release version to 1.8 in your build configuration");
-    }
+  @Override
+  public boolean isOffline() {
+    return session.isOffline();
   }
 }

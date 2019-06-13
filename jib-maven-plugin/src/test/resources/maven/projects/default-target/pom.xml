@@ -8,7 +8,6 @@
   <version>default-target-version</version>
 
   <properties>
-    <java.target.version>1.8</java.target.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <jib-maven-plugin.version>@@PluginVersion@@</jib-maven-plugin.version>

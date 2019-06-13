@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
+import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -48,8 +48,8 @@ public class DefaultCredentialRetrieversTest {
   @Mock private CredentialRetriever mockInferCredentialHelperCredentialRetriever;
   @Mock private CredentialRetriever mockDockerConfigCredentialRetriever;
 
-  private final Credential knownCredential = Credential.basic("username", "password");
-  private final Credential inferredCredential = Credential.basic("username2", "password2");
+  private final Credential knownCredential = Credential.from("username", "password");
+  private final Credential inferredCredential = Credential.from("username2", "password2");
 
   @Before
   public void setUp() {
@@ -72,7 +72,7 @@ public class DefaultCredentialRetrieversTest {
         DefaultCredentialRetrievers.init(mockCredentialRetrieverFactory).asList();
     Assert.assertEquals(
         Arrays.asList(
-            mockInferCredentialHelperCredentialRetriever, mockDockerConfigCredentialRetriever),
+            mockDockerConfigCredentialRetriever, mockInferCredentialHelperCredentialRetriever),
         credentialRetrievers);
   }
 
@@ -89,8 +89,8 @@ public class DefaultCredentialRetrieversTest {
             mockKnownCredentialRetriever,
             mockDockerCredentialHelperCredentialRetriever,
             mockInferredCredentialRetriever,
-            mockInferCredentialHelperCredentialRetriever,
-            mockDockerConfigCredentialRetriever),
+            mockDockerConfigCredentialRetriever,
+            mockInferCredentialHelperCredentialRetriever),
         credentialRetrievers);
 
     Mockito.verify(mockCredentialRetrieverFactory).known(knownCredential, "credentialSource");
@@ -111,8 +111,8 @@ public class DefaultCredentialRetrieversTest {
     Assert.assertEquals(
         Arrays.asList(
             mockDockerCredentialHelperCredentialRetriever,
-            mockInferCredentialHelperCredentialRetriever,
-            mockDockerConfigCredentialRetriever),
+            mockDockerConfigCredentialRetriever,
+            mockInferCredentialHelperCredentialRetriever),
         credentialRetrievers);
     Mockito.verify(mockCredentialRetrieverFactory)
         .dockerCredentialHelper(fakeCredentialHelperPath.toString());

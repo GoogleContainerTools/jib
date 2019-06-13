@@ -16,14 +16,13 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.configuration.FilePermissions;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
-import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,61 +32,21 @@ import org.apache.maven.project.MavenProject;
 class MojoCommon {
 
   /**
-   * Gets whether or not the given project is a war project. This is the case for projects with
-   * packaging {@code war} and {@code gwt-app}.
-   *
-   * @param project the Maven project
-   * @return {@code true} if the project is a war project, {@code false} if not
-   */
-  static boolean isWarProject(MavenProject project) {
-    String packaging = project.getPackaging();
-    return "war".equals(packaging) || "gwt-app".equals(packaging);
-  }
-
-  /**
-   * Gets the value of the {@code <container><appRoot>} parameter. If the parameter is empty,
-   * returns {@link JavaLayerConfigurations#DEFAULT_WEB_APP_ROOT} for project with WAR packaging or
-   * {@link JavaLayerConfigurations#DEFAULT_APP_ROOT} for other packaging.
-   *
-   * @param jibPluginConfiguration the Jib plugin configuration
-   * @return the app root value
-   * @throws InvalidAppRootException if the app root is not an absolute path in Unix-style
-   */
-  // TODO: find a way to use PluginConfigurationProcessor.getAppRootChecked() instead
-  static AbsoluteUnixPath getAppRootChecked(JibPluginConfiguration jibPluginConfiguration)
-      throws InvalidAppRootException {
-    String appRoot = jibPluginConfiguration.getAppRoot();
-    if (appRoot.isEmpty()) {
-      boolean isWarProject = isWarProject(jibPluginConfiguration.getProject());
-      appRoot =
-          isWarProject
-              ? JavaLayerConfigurations.DEFAULT_WEB_APP_ROOT
-              : JavaLayerConfigurations.DEFAULT_APP_ROOT;
-    }
-    try {
-      return AbsoluteUnixPath.get(appRoot);
-    } catch (IllegalArgumentException ex) {
-      throw new InvalidAppRootException(appRoot, appRoot, ex);
-    }
-  }
-
-  /**
-   * Gets the extra directory path from a {@link JibPluginConfiguration}. Returns {@code (project
-   * dir)/src/main/jib} if null.
+   * Gets the list of extra directory paths from a {@link JibPluginConfiguration}. Returns {@code
+   * (project dir)/src/main/jib} by default if not configured.
    *
    * @param jibPluginConfiguration the build configuration
-   * @return the resolved extra directory
+   * @return the list of resolved extra directories
    */
-  static Path getExtraDirectoryPath(JibPluginConfiguration jibPluginConfiguration) {
-    return jibPluginConfiguration
-        .getExtraDirectoryPath()
-        .orElse(
-            Preconditions.checkNotNull(jibPluginConfiguration.getProject())
-                .getBasedir()
-                .toPath()
-                .resolve("src")
-                .resolve("main")
-                .resolve("jib"));
+  static List<Path> getExtraDirectories(JibPluginConfiguration jibPluginConfiguration) {
+    List<Path> paths = jibPluginConfiguration.getExtraDirectories();
+    if (!paths.isEmpty()) {
+      return paths;
+    }
+
+    MavenProject project = Preconditions.checkNotNull(jibPluginConfiguration.getProject());
+    return Collections.singletonList(
+        project.getBasedir().toPath().resolve("src").resolve("main").resolve("jib"));
   }
 
   /**

@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.image.json;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import java.io.IOException;
 
 /** Serializes a {@link DescriptorDigest} into JSON element. */

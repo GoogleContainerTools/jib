@@ -17,9 +17,9 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -53,6 +53,7 @@ public class JibRunHelper {
             "clean",
             "jib",
             "-Djib.useOnlyProjectCache=true",
+            "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
@@ -70,6 +71,7 @@ public class JibRunHelper {
             "clean",
             "jib",
             "-Djib.useOnlyProjectCache=true",
+            "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
             "-D_ADDITIONAL_TAG=" + additionalTag);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
@@ -87,7 +89,7 @@ public class JibRunHelper {
     assertCreationTimeEpoch(additionalImageReference);
   }
 
-  static void buildToDockerDaemon(
+  static BuildResult buildToDockerDaemon(
       TestProject testProject, String imageReference, String gradleBuildFile)
       throws IOException, InterruptedException, DigestException {
     BuildResult buildResult =
@@ -95,6 +97,7 @@ public class JibRunHelper {
             "clean",
             "jibDockerBuild",
             "-Djib.useOnlyProjectCache=true",
+            "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
@@ -103,11 +106,14 @@ public class JibRunHelper {
 
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+
+    return buildResult;
   }
 
-  static String buildToDockerDaemonAndRun(TestProject testProject, String imageReference)
+  static String buildToDockerDaemonAndRun(
+      TestProject testProject, String imageReference, String gradleBuildFile)
       throws IOException, InterruptedException, DigestException {
-    buildToDockerDaemon(testProject, imageReference, "build.gradle");
+    buildToDockerDaemon(testProject, imageReference, gradleBuildFile);
     return new Command("docker", "run", "--rm", imageReference).run();
   }
 

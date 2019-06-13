@@ -7,9 +7,90 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Shortened progress bar display - make sure console window is at least 50 characters wide or progress bar display can be messy ([#1361](https://github.com/GoogleContainerTools/jib/issues/1361))
+### Fixed
+
+## 1.3.0
+
+### Changed
+
+- Docker credentials (`~/.docker/config.json`) are now given priority over registry-based inferred credential helpers ([#1704](https://github.com/GoogleContainerTools/jib/pulls/1704))
 
 ### Fixed
+
+- Fixed an issue where decyrpting Maven settings `settings.xml` wholesale caused the build to fail. We now decrypt only the parts that are required. ([#1709](https://github.com/GoogleContainerTools/jib/issues/1709))
+
+## 1.2.0
+
+### Added
+
+- Container configurations in the base image are now propagated when registry uses the old V2 image manifest, schema version 1 (such as Quay) ([#1641](https://github.com/GoogleContainerTools/jib/issues/1641))
+- Can now prepend paths in the container to the computed classpath with `<container><extraClasspath>` ([#1642](https://github.com/GoogleContainerTools/jib/pull/1642))
+- Can now build in offline mode using `--offline` ([#718](https://github.com/GoogleContainerTools/jib/issues/718))
+- Now supports multiple extra directories with `<extraDirectories>{<paths><path>|<permissions>}` ([#1020](https://github.com/GoogleContainerTools/jib/issues/1020))
+
+### Changed
+
+- `<extraDirectory>(<path>|<permissions>)` are deprecated in favor of the new `<extraDirectories>{<paths><path>|<permissions>}` configurations ([#1626](https://github.com/GoogleContainerTools/jib/pull/1626))
+
+### Fixed
+
+- Labels in the base image are now propagated ([#1643](https://github.com/GoogleContainerTools/jib/issues/1643))
+- Fixed an issue with using OCI base images ([#1683](https://github.com/GoogleContainerTools/jib/issues/1683))
+
+## 1.1.2
+
+### Fixed
+
+- Fixed an issue where automatically generated parent directories in a layer did not get their timestamp configured correctly to epoch + 1s ([#1648](https://github.com/GoogleContainerTools/jib/issues/1648))
+
+## 1.1.1
+
+### Fixed
+
+- Fixed an issue where the plugin creates wrong images by adding base image layers in reverse order when registry uses the old V2 image manifest, schema version 1 (such as Quay) ([#1627](https://github.com/GoogleContainerTools/jib/issues/1627))
+
+## 1.1.0
+
+### Added
+
+- Can now decrypt proxy configurations in `settings.xml`. ([#1369](https://github.com/GoogleContainerTools/jib/issues/1369))
+
+### Changed
+
+- `os` and `architecture` are taken from base image ([#1564](https://github.com/GoogleContainerTools/jib/pull/1564))
+
+### Fixed
+
+- Fixed an issue where pushing to Docker Hub fails when the host part of an image reference is `docker.io` ([#1549](https://github.com/GoogleContainerTools/jib/issues/1549))
+
+## 1.0.2
+
+### Added
+
+- Java 9+ WAR projects are now supported and run on the distroless Jetty Java 11 image (https://github.com/GoogleContainerTools/distroless) by default. Java 8 projects remain on the distroless Jetty Java 8 image. ([#1510](https://github.com/GoogleContainerTools/jib/issues/1510))
+- Now supports authentication against Azure Container Registry using `docker-credential-acr-*` credential helpers. ([#1490](https://github.com/GoogleContainerTools/jib/issues/1490))
+- Batch mode now disables build progress bar. ([#1513](https://github.com/GoogleContainerTools/jib/issues/1513))
+
+### Fixed
+
+- Fixed an issue where setting `<allowInsecureRegistries>` may fail to try HTTP. ([#1517](https://github.com/GoogleContainerTools/jib/issues/1517))
+- Crash on talking to servers that do not set the `Content-Length` HTTP header or send an incorrect value. ([#1512](https://github.com/GoogleContainerTools/jib/issues/1512))
+
+## 1.0.1
+
+### Added
+
+- Java 9+ projects are now supported and run on the distroless Java 11 image (https://github.com/GoogleContainerTools/distroless) by default. Java 8 projects remain on the distroless Java 8 image. ([#1279](https://github.com/GoogleContainerTools/jib/issues/1279))
+
+### Fixed
+
+- Failure to infer main class when main method is defined using varargs (i.e. `public static void main(String... args)`) ([#1456](https://github.com/GoogleContainerTools/jib/issues/1456))
+
+## 1.0.0
+
+### Changed
+
+- Shortened progress bar display - make sure console window is at least 50 characters wide or progress bar display can be messy ([#1361](https://github.com/GoogleContainerTools/jib/issues/1361))
 
 ## 1.0.0-rc2
 

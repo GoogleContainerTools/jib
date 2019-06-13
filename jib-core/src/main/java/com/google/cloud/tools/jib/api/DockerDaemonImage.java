@@ -17,20 +17,14 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
-import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-import com.google.common.collect.ImmutableMap;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Builds to the Docker daemon. */
-// TODO: Add tests once JibContainerBuilder#containerize() is added.
-public class DockerDaemonImage implements TargetImage {
+public class DockerDaemonImage {
 
   /**
    * Instantiate with the image reference to tag the built image with. This is the name that shows
@@ -58,7 +52,7 @@ public class DockerDaemonImage implements TargetImage {
 
   private final ImageReference imageReference;
   @Nullable private Path dockerExecutable;
-  @Nullable private Map<String, String> dockerEnvironment;
+  private Map<String, String> dockerEnvironment = Collections.emptyMap();
 
   /** Instantiate with {@link #named}. */
   private DockerDaemonImage(ImageReference imageReference) {
@@ -87,20 +81,15 @@ public class DockerDaemonImage implements TargetImage {
     return this;
   }
 
-  @Override
-  public ImageConfiguration toImageConfiguration() {
-    return ImageConfiguration.builder(imageReference).build();
+  ImageReference getImageReference() {
+    return imageReference;
   }
 
-  @Override
-  public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
-    DockerClient.Builder dockerClientBuilder = DockerClient.builder();
-    if (dockerExecutable != null) {
-      dockerClientBuilder.setDockerExecutable(dockerExecutable);
-    }
-    if (dockerEnvironment != null) {
-      dockerClientBuilder.setDockerEnvironment(ImmutableMap.copyOf(dockerEnvironment));
-    }
-    return BuildSteps.forBuildToDockerDaemon(dockerClientBuilder.build(), buildConfiguration);
+  Optional<Path> getDockerExecutable() {
+    return Optional.ofNullable(dockerExecutable);
+  }
+
+  Map<String, String> getDockerEnvironment() {
+    return dockerEnvironment;
   }
 }

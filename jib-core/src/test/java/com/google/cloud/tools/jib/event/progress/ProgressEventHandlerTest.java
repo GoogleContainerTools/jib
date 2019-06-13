@@ -17,10 +17,7 @@
 package com.google.cloud.tools.jib.event.progress;
 
 import com.google.cloud.tools.jib.MultithreadedExecutor;
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.event.EventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.event.JibEventType;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -61,24 +58,23 @@ public class ProgressEventHandlerTest {
 
       ProgressEventHandler progressEventHandler =
           new ProgressEventHandler(update -> maxProgress.accumulate(update.getProgress()));
-      EventDispatcher eventDispatcher =
-          new DefaultEventDispatcher(
-              new EventHandlers().add(JibEventType.PROGRESS, progressEventHandler));
+      EventHandlers eventHandlers =
+          EventHandlers.builder().add(ProgressEvent.class, progressEventHandler).build();
 
       // Adds root, child1, and child1Child.
       multithreadedExecutor.invoke(
           () -> {
-            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.root, 0L));
+            eventHandlers.dispatch(new ProgressEvent(AllocationTree.root, 0L));
             return null;
           });
       multithreadedExecutor.invoke(
           () -> {
-            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 0L));
+            eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1, 0L));
             return null;
           });
       multithreadedExecutor.invoke(
           () -> {
-            eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 0L));
+            eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 0L));
             return null;
           });
       Assert.assertEquals(0.0, maxProgress.get(), DOUBLE_ERROR_MARGIN);
@@ -89,18 +85,19 @@ public class ProgressEventHandlerTest {
           Collections.nCopies(
               50,
               () -> {
-                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1Child, 1L));
+                eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1Child, 1L));
                 return null;
               }));
       callables.addAll(
           Collections.nCopies(
               100,
               () -> {
-                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child2, 1L));
+                eventHandlers.dispatch(new ProgressEvent(AllocationTree.child2, 1L));
                 return null;
               }));
 
       multithreadedExecutor.invokeAll(callables);
+
       Assert.assertEquals(
           1.0 / 2 / 100 * 50 + 1.0 / 2 / 200 * 100, maxProgress.get(), DOUBLE_ERROR_MARGIN);
 
@@ -109,7 +106,7 @@ public class ProgressEventHandlerTest {
           Collections.nCopies(
               100,
               () -> {
-                eventDispatcher.dispatch(new ProgressEvent(AllocationTree.child1, 0L));
+                eventHandlers.dispatch(new ProgressEvent(AllocationTree.child1, 0L));
                 return null;
               }));
       Assert.assertEquals(

@@ -16,9 +16,8 @@
 
 package com.google.cloud.tools.jib.json;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.common.io.Resources;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -85,10 +84,7 @@ public class JsonTemplateMapperTest {
                 "sha256:d38f571aa1c11e3d516e0ef7e513e7308ccbeb869770cb8c4319d63b10a0075e"));
     testJson.list = Arrays.asList(innerObject1, innerObject2);
 
-    ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonTemplateMapper.toBlob(testJson).writeTo(jsonStream);
-
-    Assert.assertEquals(expectedJson, jsonStream.toString());
+    Assert.assertEquals(expectedJson, JsonTemplateMapper.toUtf8String(testJson));
   }
 
   @Test
@@ -155,9 +151,6 @@ public class JsonTemplateMapperTest {
     String jsonString = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
     List<TestJson> listOfJson = JsonTemplateMapper.readListOfJson(jsonString, TestJson.class);
 
-    ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonTemplateMapper.toBlob(listOfJson).writeTo(jsonStream);
-
-    Assert.assertEquals(jsonString, jsonStream.toString());
+    Assert.assertEquals(jsonString, JsonTemplateMapper.toUtf8String(listOfJson));
   }
 }

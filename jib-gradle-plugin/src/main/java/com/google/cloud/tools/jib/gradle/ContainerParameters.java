@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.image.ImageFormat;
+import com.google.cloud.tools.jib.api.ImageFormat;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
@@ -37,6 +37,7 @@ public class ContainerParameters {
   private List<String> jvmFlags = Collections.emptyList();
   private Map<String, String> environment = Collections.emptyMap();
   @Nullable private List<String> entrypoint;
+  private List<String> extraClasspath = Collections.emptyList();
   @Nullable private String mainClass;
   @Nullable private List<String> args;
   private ImageFormat format = ImageFormat.Docker;
@@ -105,6 +106,21 @@ public class ContainerParameters {
 
   public void setEnvironment(Map<String, String> environment) {
     this.environment = environment;
+  }
+
+  @Input
+  @Optional
+  public List<String> getExtraClasspath() {
+    if (System.getProperty(PropertyNames.CONTAINER_EXTRA_CLASSPATH) != null) {
+      return ConfigurationPropertyValidator.parseListProperty(
+          System.getProperty(PropertyNames.CONTAINER_EXTRA_CLASSPATH));
+    }
+
+    return extraClasspath;
+  }
+
+  public void setExtraClasspath(List<String> classpath) {
+    this.extraClasspath = classpath;
   }
 
   @Input

@@ -1,4 +1,4 @@
-![beta](https://img.shields.io/badge/stability-beta-darkorange.svg)
+![stable](https://img.shields.io/badge/stability-stable-brightgreen.svg)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
 [![Gitter version](https://img.shields.io/gitter/room/gitterHQ/gitter.svg)](https://gitter.im/google/jib)
 
@@ -29,7 +29,6 @@ For information about the project, see the [Jib project README](../README.md).
     * [Using Docker Credential Helpers](#using-docker-credential-helpers)
     * [Using Specific Credentials](#using-specific-credentials)
   * [WAR Projects](#war-projects)
-* [How Jib Works](#how-jib-works)
 * [Frequently Asked Questions (FAQ)](#frequently-asked-questions-faq)
 * [Community](#community)
 
@@ -38,7 +37,7 @@ For information about the project, see the [Jib project README](../README.md).
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:1.0.0-rc2:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:1.3.0:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -46,7 +45,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:1.0.0-rc2:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:1.3.0:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -64,7 +63,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>1.0.0-rc2</version>
+        <version>1.3.0</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -119,12 +118,24 @@ For example, to build the image `my-docker-id/my-app`, the configuration would b
 ```xml
 <configuration>
   <to>
-    <image>registry.hub.docker.com/my-docker-id/my-app</image>
+    <image>docker.io/my-docker-id/my-app</image>
   </to>
 </configuration>
 ```
 
-#### *TODO: Add more examples for common registries.*
+#### Using [Azure Container Registry (ACR)](https://azure.microsoft.com/en-us/services/container-registry/)...
+
+*Make sure you have a [`ACR Docker Credential Helper`](https://github.com/Azure/acr-docker-credential-helper) installed and set up. For example, on Windows, the credential helper would be `docker-credential-acr-windows`. See [Authentication Methods](#authentication-methods) for other ways of authenticating.*
+
+For example, to build the image `my_acr_name.azurecr.io/my-app`, the configuration would be:
+
+```xml
+<configuration>
+  <to>
+    <image>my_acr_name.azurecr.io/my-app</image>
+  </to>
+</configuration>
+```
 
 ### Build your image
 
@@ -175,7 +186,7 @@ You can also bind `jib:build` to a Maven lifecycle, such as `package`, by adding
 
 ```xml
 <plugin>
-  <groupId>com.google.com.tools</groupId>
+  <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-maven-plugin</artifactId>
   ...
   <executions>
@@ -209,7 +220,7 @@ Field | Type | Default | Description
 `to` | [`to`](#to-object) | *Required* | Configures the target image to build your application to.
 `from` | [`from`](#from-object) | See [`from`](#from-object) | Configures the base image to build your application on top of.
 `container` | [`container`](#container-object) | See [`container`](#container-object) | Configures the container that is run from your image.
-`extraDirectory` | [`extraDirectory`](#extradirectory-object) / string | `(project-dir)/src/main/jib` | Configures the directory used to add arbitrary files to the image.
+`extraDirectories` | [`extraDirectories`](#extradirectories-object) | See [`extraDirectories`](#extradirectories-object) | Configures the directories used to add arbitrary files to the image.
 `allowInsecureRegistries` | boolean | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 `skip` | boolean | `false` | If set to true, Jib execution is skipped (useful for multi-module projects). This can also be specified via the `-Djib.skip` command line option.
 
@@ -245,6 +256,7 @@ Property | Type | Default | Description
 `args` | list | *None* | Additional program arguments appended to the command to start the container (similar to Docker's [CMD](https://docs.docker.com/engine/reference/builder/#cmd) instruction in relation with [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint)). In the default case where you do not set a custom `entrypoint`, this parameter is effectively the arguments to the main method of your Java application.
 `entrypoint` | list | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored. You may also set `<entrypoint>INHERIT</entrypoint>` to indicate that the `entrypoint` and `args` should be inherited from the base image.\*
 `environment` | map | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
+`extraClasspath` | `list` | *None* | Additional paths in the container to prepend to the computed Java classpath.
 `format` | string | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `jvmFlags` | list | *None* | Additional flags to pass into the JVM when running your application.
 `labels` | map | *None* | Key-value pairs for applying image metadata (similar to Docker's [LABEL](https://docs.docker.com/engine/reference/builder/#label) instruction).
@@ -255,12 +267,12 @@ Property | Type | Default | Description
 `volumes` | list | *None* | Specifies a list of mount points on the container.
 `workingDirectory` | string | *None* | The working directory in the container.
 
-<a name="extradirectory-object"></a>`extraDirectory` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
+<a name="extradirectories-object"></a>`extraDirectories` is an object with the following properties (see [Adding Arbitrary Files to the Image](#adding-arbitrary-files-to-the-image)):
 
-Property | Type
---- | ---
-`path` | string
-`permissions` | list
+Property | Type | Default | Description
+--- | --- | --- | ---
+`paths` | list | `[(project-dir)/src/main/jib]` | List of extra directories. Can be absolute or relative to the project root.
+`permissions` | list | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
 
 <a name="dockerclient-object"></a>**(`jib:dockerBuild` only)** `dockerClient` is an object with the following properties:
 
@@ -291,7 +303,7 @@ Property | Type | Default | Description
 `jib.httpTimeout` | int | `20000` | HTTP connection/read timeout for registry interactions, in milliseconds. Use a value of `0` for an infinite timeout.
 `jib.useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Maven projects (i.e. `jib.baseImageCache` defaults to `[project dir]/target/jib-cache` instead of `[user cache home]/google-cloud-tools-java/jib`).
 `jib.baseImageCache` | string | `[user cache home]/google-cloud-tools-java/jib` | Sets the directory to use for caching base image layers. This cache can (and should) be shared between multiple images.
-`jib.applicationCache` | string | `[project dir]/target/jib-cache` | Sets the directory to use for caching application layers. This cache can be shared between multiple images. If not set, a temporary directory will be used as the application layers cache.
+`jib.applicationCache` | string | `[project dir]/target/jib-cache` | Sets the directory to use for caching application layers. This cache can be shared between multiple images.
 `jib.console` | `String` | *None* | If set to `plain`, Jib will print plaintext log messages rather than display a progress bar during the build.
 
 *\* If you configure `args` while `entrypoint` is set to `'INHERIT'`, the configured `args` value will take precedence over the CMD propagated from the base image.*
@@ -351,20 +363,25 @@ In this configuration, the image:
 
 You can add arbitrary, non-classpath files to the image by placing them in a `src/main/jib` directory. This will copy all files within the `jib` folder to the image's root directory, maintaining the same structure (e.g. if you have a text file at `src/main/jib/dir/hello.txt`, then your image will contain `/dir/hello.txt` after being built with Jib).
 
-You can configure a different directory by using the `<extraDirectory>` parameter in your `pom.xml`:
+You can configure different directories by using the `<extraDirectories>` parameter in your `pom.xml`:
 ```xml
 <configuration>
-  <!-- Copies files from 'src/main/custom-extra-dir' instead of 'src/main/jib' -->
-  <extraDirectory>${project.basedir}/src/main/custom-extra-dir</extraDirectory>
+  <!-- Copies files from 'src/main/custom-extra-dir' and '/home/user/jib-extras' instead of 'src/main/jib' -->
+  <extraDirectories>
+    <paths>
+      <path>src/main/custom-extra-dir</path>
+      <path>/home/user/jib-extras</path>
+    </paths>
+  </extraDirectories>
 </configuration>
 ```
 
-Alternatively, the `<extraDirectory>` parameter can be used as an object to set a custom extra directory, as well as the extra files' permissions on the container:
+Alternatively, the `<extraDirectories>` parameter can be used as an object to set custom extra directories, as well as the extra files' permissions on the container:
 
 ```xml
 <configuration>
-  <extraDirectory>
-    <path>${project.basedir}/src/main/custom-extra-dir</path> <!-- Copies files from 'src/main/custom-extra-dir' -->
+  <extraDirectories>
+    <paths>src/main/custom-extra-dir</paths> <!-- Copies files from 'src/main/custom-extra-dir' -->
     <permissions>
       <permission>
         <file>/path/on/container/to/fileA</file>
@@ -375,9 +392,11 @@ Alternatively, the `<extraDirectory>` parameter can be used as an object to set 
         <mode>644</mode> <!-- Read/write for owner, read-only for group/other -->
       </permission>
     </permissions>
-  </extraDirectory>
+  </extraDirectories>
 </configuration>
 ```
+
+Note that Jib does not follow symbolic links.  If a symbolic link is present, it will be removed prior to placing the files and directories.
 
 ### Authentication Methods
 
@@ -392,8 +411,7 @@ Some common credential helpers include:
 * Google Container Registry: [`docker-credential-gcr`](https://cloud.google.com/container-registry/docs/advanced-authentication#docker_credential_helper)
 * AWS Elastic Container Registry: [`docker-credential-ecr-login`](https://github.com/awslabs/amazon-ecr-credential-helper)
 * Docker Hub Registry: [`docker-credential-*`](https://github.com/docker/docker-credential-helpers)
-<!--* Azure Container Registry: [`docker-credential-acr-*`](https://github.com/Azure/acr-docker-credential-helper)
--->
+* Azure Container Registry: [`docker-credential-acr-*`](https://github.com/Azure/acr-docker-credential-helper)
 
 Configure credential helpers to use by specifying them as a `credHelper` for their respective image.
 
@@ -483,7 +501,7 @@ Note that Jib will work slightly differently for WAR projects from JAR projects:
    - `<container><mainClass>` and `<container><jvmFlags>` are ignored.
    - The WAR will be exploded into `/jetty/webapps/ROOT`, which is the expected WAR location for the distroless Jetty base image.
 
-To use a different Servlet engine base image, you can customize `<container><appRoot>`, `<container><entrypoint>`, and `<container><args>`. If you do not set `entrypoint` or `args`, Jib will inherit the `ENTRYPOINT` and `CMD` of the base image, so in many cases, you may need to configure them. However, you will most likely have to set `<container><appRoot>` to a proper location depending on the base image. Here is an example of using a Tomcat image:
+To use a different Servlet engine base image, you can customize `<container><appRoot>`, `<container><entrypoint>`, and `<container><args>`. If you do not set `entrypoint` or `args`, Jib will inherit the `ENTRYPOINT` and `CMD` of the base image, so in many cases, you may not need to configure them. However, you will most likely have to set `<container><appRoot>` to a proper location depending on the base image. Here is an example of using a Tomcat image:
 
 ```xml
 <configuration>

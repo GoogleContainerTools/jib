@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.registry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.api.client.http.HttpMethods;
-import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
@@ -28,9 +27,12 @@ import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.io.CharStreams;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -79,7 +81,9 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
   /** Parses the response body into a {@link ManifestTemplate}. */
   @Override
   public T handleResponse(Response response) throws IOException, UnknownManifestFormatException {
-    return getManifestTemplateFromJson(Blobs.writeToString(response.getBody()));
+    String jsonString =
+        CharStreams.toString(new InputStreamReader(response.getBody(), StandardCharsets.UTF_8));
+    return getManifestTemplateFromJson(jsonString);
   }
 
   @Override

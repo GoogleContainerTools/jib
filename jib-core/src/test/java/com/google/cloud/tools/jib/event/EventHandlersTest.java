@@ -16,6 +16,10 @@
 
 package com.google.cloud.tools.jib.event;
 
+import com.google.cloud.tools.jib.api.JibEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import javax.annotation.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
@@ -45,18 +49,20 @@ public class EventHandlersTest {
     }
   }
 
+  /** Test {@link JibEvent}. */
+  private static class TestJibEvent3 implements JibEvent {}
+
   @Test
   public void testAdd() {
     int[] counter = new int[1];
     EventHandlers eventHandlers =
-        new EventHandlers()
+        EventHandlers.builder()
             .add(
-                new JibEventType<>(TestJibEvent1.class),
+                TestJibEvent1.class,
                 testJibEvent1 -> Assert.assertEquals("payload", testJibEvent1.getPayload()))
-            .add(
-                new JibEventType<>(TestJibEvent2.class),
-                testJibEvent2 -> testJibEvent2.sayHello("Jib"))
-            .add(jibEvent -> counter[0]++);
+            .add(TestJibEvent2.class, testJibEvent2 -> testJibEvent2.sayHello("Jib"))
+            .add(JibEvent.class, jibEvent -> counter[0]++)
+            .build();
     Assert.assertTrue(eventHandlers.getHandlers().containsKey(JibEvent.class));
     Assert.assertTrue(eventHandlers.getHandlers().containsKey(TestJibEvent1.class));
     Assert.assertTrue(eventHandlers.getHandlers().containsKey(TestJibEvent2.class));
@@ -78,5 +84,33 @@ public class EventHandlersTest {
     Mockito.verify(mockTestJibEvent1).getPayload();
     Mockito.verifyNoMoreInteractions(mockTestJibEvent1);
     testJibEvent2.assertMessageCorrect("Jib");
+  }
+
+  @Test
+  public void testDispatch() {
+    List<String> emissions = new ArrayList<>();
+
+    EventHandlers eventHandlers =
+        EventHandlers.builder()
+            .add(TestJibEvent2.class, testJibEvent2 -> emissions.add("handled 2 first"))
+            .add(TestJibEvent2.class, testJibEvent2 -> emissions.add("handled 2 second"))
+            .add(TestJibEvent3.class, testJibEvent3 -> emissions.add("handled 3"))
+            .add(JibEvent.class, jibEvent -> emissions.add("handled generic"))
+            .build();
+
+    TestJibEvent2 testJibEvent2 = new TestJibEvent2();
+    TestJibEvent3 testJibEvent3 = new TestJibEvent3();
+
+    eventHandlers.dispatch(testJibEvent2);
+    eventHandlers.dispatch(testJibEvent3);
+
+    Assert.assertEquals(
+        Arrays.asList(
+            "handled generic",
+            "handled 2 first",
+            "handled 2 second",
+            "handled generic",
+            "handled 3"),
+        emissions);
   }
 }

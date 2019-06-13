@@ -28,13 +28,18 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.ProxySelector;
 import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import org.apache.http.client.HttpClient;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
 
 /**
  * Sends an HTTP {@link Request} and stores the {@link Response}. Clients should not send more than
@@ -57,6 +62,11 @@ public class Connection implements Closeable {
    * @return {@link Connection} factory, a function that generates a {@link Connection} to a URL
    */
   public static Function<URL, Connection> getConnectionFactory() {
+    // Do not use NetHttpTransport. It does not process response errors properly.
+    // See https://github.com/google/google-http-java-client/issues/39)
+    //
+    // A new ApacheHttpTransport needs to be created for each connection because otherwise HTTP
+    // connection persistence causes the connection to throw NoHttpResponseException.
     return url -> new Connection(url, new ApacheHttpTransport());
   }
 
@@ -68,19 +78,37 @@ public class Connection implements Closeable {
    */
   public static Function<URL, Connection> getInsecureConnectionFactory()
       throws GeneralSecurityException {
-    // TODO: need to configure more stuff to match the default HttpClient.
-    HttpClient httpClient =
-        HttpClientBuilder.create()
-            .useSystemProperties()
+    HttpClientBuilder httpClientBuilder =
+        newDefaultHttpClientBuilder()
             .setSSLContext(SslUtils.trustAllSSLContext())
-            .setSSLHostnameVerifier(new NoopHostnameVerifier())
-            .build();
+            .setSSLHostnameVerifier(new NoopHostnameVerifier());
 
-    // Do not use {@link NetHttpTransport}. It does not process response errors properly. A new
-    // {@link ApacheHttpTransport} needs to be created for each connection because otherwise HTTP
-    // connection persistence causes the connection to throw {@link NoHttpResponseException}. See
-    // https://github.com/google/google-http-java-client/issues/39
-    return url -> new Connection(url, new ApacheHttpTransport(httpClient));
+    // Do not use NetHttpTransport. See comments in getConnectionFactory for details.
+    return url -> new Connection(url, new ApacheHttpTransport(httpClientBuilder.build()));
+  }
+
+  // TODO(chanseok): remove. Use ApacheHttpTransport.newDefaultHttpClientBuilder() when it becomes
+  // available (https://github.com/googleapis/google-http-java-client/issues/578)
+  private static HttpClientBuilder newDefaultHttpClientBuilder() {
+    // Code from
+    // https://github.com/googleapis/google-http-java-client/blob/v1.30.1/google-http-client-apache-v2/src/main/java/com/google/api/client/http/apache/v2/ApacheHttpTransport.java#L125-L149
+    SocketConfig socketConfig =
+        SocketConfig.custom().setRcvBufSize(8192).setSndBufSize(8192).build();
+
+    PoolingHttpClientConnectionManager connectionManager =
+        new PoolingHttpClientConnectionManager(-1, TimeUnit.MILLISECONDS);
+    connectionManager.setValidateAfterInactivity(-1);
+
+    return HttpClientBuilder.create()
+        .useSystemProperties()
+        .setSSLSocketFactory(SSLConnectionSocketFactory.getSocketFactory())
+        .setDefaultSocketConfig(socketConfig)
+        .setMaxConnTotal(200)
+        .setMaxConnPerRoute(20)
+        .setRoutePlanner(new SystemDefaultRoutePlanner(ProxySelector.getDefault()))
+        .setConnectionManager(connectionManager)
+        .disableRedirectHandling()
+        .disableAutomaticRetries();
   }
 
   private HttpRequestFactory requestFactory;

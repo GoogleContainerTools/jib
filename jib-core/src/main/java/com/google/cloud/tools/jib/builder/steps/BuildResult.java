@@ -16,14 +16,12 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.util.Objects;
 
@@ -38,21 +36,15 @@ public class BuildResult {
    * @return a new {@link BuildResult} with the image's digest and id
    * @throws IOException if writing the digest or container configuration fails
    */
-  static BuildResult fromImage(
-      Image<Layer> image, Class<? extends BuildableManifestTemplate> targetFormat)
+  static BuildResult fromImage(Image image, Class<? extends BuildableManifestTemplate> targetFormat)
       throws IOException {
     ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(image);
     BlobDescriptor containerConfigurationBlobDescriptor =
-        imageToJsonTranslator
-            .getContainerConfigurationBlob()
-            .writeTo(ByteStreams.nullOutputStream());
+        Digests.computeDigest(imageToJsonTranslator.getContainerConfiguration());
     BuildableManifestTemplate manifestTemplate =
         imageToJsonTranslator.getManifestTemplate(
             targetFormat, containerConfigurationBlobDescriptor);
-    DescriptorDigest imageDigest =
-        JsonTemplateMapper.toBlob(manifestTemplate)
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest();
+    DescriptorDigest imageDigest = Digests.computeJsonDigest(manifestTemplate);
     DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
     return new BuildResult(imageDigest, imageId);
   }

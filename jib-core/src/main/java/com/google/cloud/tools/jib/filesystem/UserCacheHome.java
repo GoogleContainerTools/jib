@@ -66,9 +66,7 @@ public class UserCacheHome {
     }
 
     String userHome = properties.getProperty("user.home");
-
-    Path userHomeDirectory = Paths.get(userHome);
-    Path xdgPath = userHomeDirectory.resolve(".cache");
+    Path xdgPath = Paths.get(userHome, ".cache");
 
     String rawOsName = properties.getProperty("os.name");
     String osName = rawOsName.toLowerCase(Locale.ENGLISH);
@@ -92,7 +90,7 @@ public class UserCacheHome {
 
     } else if (osName.contains("mac") || osName.contains("darwin")) {
       // Use '~/Library/Application Support/' for macOS.
-      Path applicationSupport = userHomeDirectory.resolve("Library").resolve("Application Support");
+      Path applicationSupport = Paths.get(userHome, "Library", "Application Support");
       if (!Files.exists(applicationSupport)) {
         logger.warning(applicationSupport + " does not exist");
         return xdgPath;

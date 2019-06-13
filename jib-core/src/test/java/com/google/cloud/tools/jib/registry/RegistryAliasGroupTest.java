@@ -16,8 +16,10 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import java.util.Arrays;
+import com.google.common.collect.Sets;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,16 +34,24 @@ public class RegistryAliasGroupTest {
   }
 
   @Test
-  public void testGetAliasesGroup_registryHubDockerCom() {
-    Assert.assertEquals(
-        Arrays.asList("registry.hub.docker.com", "index.docker.io"),
-        RegistryAliasGroup.getAliasesGroup("registry.hub.docker.com"));
+  public void testGetAliasesGroup_dockerHub() {
+    Set<String> aliases =
+        Sets.newHashSet(
+            "registry.hub.docker.com", "index.docker.io", "registry-1.docker.io", "docker.io");
+    for (String alias : aliases) {
+      Assert.assertEquals(aliases, new HashSet<>(RegistryAliasGroup.getAliasesGroup(alias)));
+    }
   }
 
   @Test
-  public void testGetAliasesGroup_indexDockerIo() {
-    Assert.assertEquals(
-        Arrays.asList("index.docker.io", "registry.hub.docker.com"),
-        RegistryAliasGroup.getAliasesGroup("index.docker.io"));
+  public void testGetHost_noAlias() {
+    String host = RegistryAliasGroup.getHost("something.gcr.io");
+    Assert.assertEquals("something.gcr.io", host);
+  }
+
+  @Test
+  public void testGetHost_dockerIo() {
+    String host = RegistryAliasGroup.getHost("docker.io");
+    Assert.assertEquals("registry-1.docker.io", host);
   }
 }

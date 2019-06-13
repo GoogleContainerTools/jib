@@ -16,21 +16,20 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
-import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
+import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
+import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -86,9 +85,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildDocker()
-      throws InvalidImageReferenceException, IOException, BuildStepsExecutionException,
-          CacheDirectoryCreationException, MainClassInferenceException,
-          InferredAuthRetrievalException {
+      throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
+          MainClassInferenceException {
     Path dockerExecutable = dockerClientParameters.getExecutablePath();
     boolean isDockerInstalled =
         dockerExecutable == null
@@ -101,26 +99,20 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
+    TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
     TaskCommon.disableHttpLogging();
 
     try {
-      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
-
+      RawConfiguration gradleRawConfiguration = new GradleRawConfiguration(jibExtension);
       GradleProjectProperties projectProperties =
-          GradleProjectProperties.getForProject(
-              getProject(),
-              getLogger(),
-              jibExtension.getExtraDirectory().getPath(),
-              jibExtension.getExtraDirectory().getPermissions(),
-              appRoot);
-      projectProperties.validateAgainstDefaultBaseImageVersion(jibExtension.getFrom().getImage());
+          GradleProjectProperties.getForProject(getProject(), getLogger());
 
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
 
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
-              new GradleRawConfiguration(jibExtension),
+              gradleRawConfiguration,
               ignored -> java.util.Optional.empty(),
               projectProperties,
               dockerClientParameters.getExecutablePath(),
@@ -139,15 +131,13 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
       Path buildOutput = getProject().getBuildDir().toPath();
 
       try {
-        BuildStepsRunner.forBuildToDockerDaemon(
-                targetImageReference, jibExtension.getTo().getTags())
+        JibBuildRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
             .writeImageDigest(buildOutput.resolve("jib-image.digest"))
             .writeImageId(buildOutput.resolve("jib-image.id"))
             .build(
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
-                new DefaultEventDispatcher(projectProperties.getEventHandlers()),
-                projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+                projectProperties::log,
                 helpfulSuggestions);
 
       } finally {
@@ -168,6 +158,16 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     } catch (InvalidContainerVolumeException ex) {
       throw new GradleException(
           "container.volumes is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
+
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      throw new GradleException(
+          HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForGradle(
+              ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
+          ex);
+
+    } catch (InvalidImageReferenceException ex) {
+      throw new GradleException(
+          HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
     }
   }
 

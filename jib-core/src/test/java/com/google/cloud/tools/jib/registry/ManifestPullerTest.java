@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
@@ -24,10 +23,14 @@ import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.io.Resources;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -44,6 +47,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ManifestPullerTest {
 
+  private static InputStream stringToInputStreamUtf8(String string) {
+    return new ByteArrayInputStream(string.getBytes(StandardCharsets.UTF_8));
+  }
+
   @Mock private Response mockResponse;
 
   private final RegistryEndpointRequestProperties fakeRegistryEndpointRequestProperties =
@@ -56,8 +63,9 @@ public class ManifestPullerTest {
   public void testHandleResponse_v21()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
     Path v21ManifestFile = Paths.get(Resources.getResource("core/json/v21manifest.json").toURI());
+    InputStream v21Manifest = new ByteArrayInputStream(Files.readAllBytes(v21ManifestFile));
 
-    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from(v21ManifestFile));
+    Mockito.when(mockResponse.getBody()).thenReturn(v21Manifest);
     ManifestTemplate manifestTemplate =
         new ManifestPuller<>(
                 fakeRegistryEndpointRequestProperties, "test-image-tag", V21ManifestTemplate.class)
@@ -70,8 +78,9 @@ public class ManifestPullerTest {
   public void testHandleResponse_v22()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
     Path v22ManifestFile = Paths.get(Resources.getResource("core/json/v22manifest.json").toURI());
+    InputStream v22Manifest = new ByteArrayInputStream(Files.readAllBytes(v22ManifestFile));
 
-    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from(v22ManifestFile));
+    Mockito.when(mockResponse.getBody()).thenReturn(v22Manifest);
     ManifestTemplate manifestTemplate =
         new ManifestPuller<>(
                 fakeRegistryEndpointRequestProperties, "test-image-tag", V22ManifestTemplate.class)
@@ -82,7 +91,7 @@ public class ManifestPullerTest {
 
   @Test
   public void testHandleResponse_noSchemaVersion() throws IOException {
-    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("{}"));
+    Mockito.when(mockResponse.getBody()).thenReturn(stringToInputStreamUtf8("{}"));
     try {
       testManifestPuller.handleResponse(mockResponse);
       Assert.fail("An empty manifest should throw an error");
@@ -95,7 +104,7 @@ public class ManifestPullerTest {
   @Test
   public void testHandleResponse_invalidSchemaVersion() throws IOException {
     Mockito.when(mockResponse.getBody())
-        .thenReturn(Blobs.from("{\"schemaVersion\":\"not valid\"}"));
+        .thenReturn(stringToInputStreamUtf8("{\"schemaVersion\":\"not valid\"}"));
     try {
       testManifestPuller.handleResponse(mockResponse);
       Assert.fail("A non-integer schemaVersion should throw an error");
@@ -107,7 +116,8 @@ public class ManifestPullerTest {
 
   @Test
   public void testHandleResponse_unknownSchemaVersion() throws IOException {
-    Mockito.when(mockResponse.getBody()).thenReturn(Blobs.from("{\"schemaVersion\":0}"));
+    Mockito.when(mockResponse.getBody())
+        .thenReturn(stringToInputStreamUtf8("{\"schemaVersion\":0}"));
     try {
       testManifestPuller.handleResponse(mockResponse);
       Assert.fail("An unknown manifest schemaVersion should throw an error");

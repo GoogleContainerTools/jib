@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
@@ -23,14 +25,11 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -124,7 +123,7 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
         progressEventDispatcherFactory.create("pushing image manifest", targetImageTags.size());
 
     try (TimerEventDispatcher ignored =
-        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+        new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       RegistryClient registryClient =
           buildConfiguration
               .newTargetImageRegistryClientFactory()
@@ -154,7 +153,7 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
                   try (ProgressEventDispatcher ignored2 =
                       progressEventDispatcherFactory.create("tagging with " + tag, 1)) {
                     buildConfiguration
-                        .getEventDispatcher()
+                        .getEventHandlers()
                         .dispatch(LogEvent.info("Tagging with " + tag + "..."));
                     registryClient.pushManifest(manifestTemplate, tag);
                   }
@@ -162,10 +161,7 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
                 }));
       }
 
-      DescriptorDigest imageDigest =
-          JsonTemplateMapper.toBlob(manifestTemplate)
-              .writeTo(ByteStreams.nullOutputStream())
-              .getDigest();
+      DescriptorDigest imageDigest = Digests.computeJsonDigest(manifestTemplate);
       DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
       BuildResult result = new BuildResult(imageDigest, imageId);
 

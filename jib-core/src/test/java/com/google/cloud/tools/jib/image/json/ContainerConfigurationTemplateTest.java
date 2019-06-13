@@ -16,13 +16,12 @@
 
 package com.google.cloud.tools.jib.image.json;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedMap;
 import com.google.common.io.Resources;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -48,6 +47,8 @@ public class ContainerConfigurationTemplateTest {
     ContainerConfigurationTemplate containerConfigJson = new ContainerConfigurationTemplate();
 
     containerConfigJson.setCreated("1970-01-01T00:00:20Z");
+    containerConfigJson.setArchitecture("wasm");
+    containerConfigJson.setOs("js");
     containerConfigJson.setContainerEnvironment(Arrays.asList("VAR1=VAL1", "VAR2=VAL2"));
     containerConfigJson.setContainerEntrypoint(Arrays.asList("some", "entrypoint", "command"));
     containerConfigJson.setContainerCmd(Arrays.asList("arg1", "arg2"));
@@ -89,10 +90,7 @@ public class ContainerConfigurationTemplateTest {
             .build());
 
     // Serializes the JSON object.
-    ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonTemplateMapper.toBlob(containerConfigJson).writeTo(jsonStream);
-
-    Assert.assertEquals(expectedJson, jsonStream.toString());
+    Assert.assertEquals(expectedJson, JsonTemplateMapper.toUtf8String(containerConfigJson));
   }
 
   @Test
@@ -105,6 +103,8 @@ public class ContainerConfigurationTemplateTest {
         JsonTemplateMapper.readJsonFromFile(jsonFile, ContainerConfigurationTemplate.class);
 
     Assert.assertEquals("1970-01-01T00:00:20Z", containerConfigJson.getCreated());
+    Assert.assertEquals("wasm", containerConfigJson.getArchitecture());
+    Assert.assertEquals("js", containerConfigJson.getOs());
     Assert.assertEquals(
         Arrays.asList("VAR1=VAL1", "VAR2=VAL2"), containerConfigJson.getContainerEnvironment());
     Assert.assertEquals(

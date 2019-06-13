@@ -16,9 +16,8 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import java.security.DigestException;
@@ -66,9 +65,9 @@ public class BuildResultTest {
 
   @Test
   public void testFromImage() throws IOException {
-    Image<Layer> image1 = Image.builder(V22ManifestTemplate.class).setUser("user").build();
-    Image<Layer> image2 = Image.builder(V22ManifestTemplate.class).setUser("user").build();
-    Image<Layer> image3 = Image.builder(V22ManifestTemplate.class).setUser("anotherUser").build();
+    Image image1 = Image.builder(V22ManifestTemplate.class).setUser("user").build();
+    Image image2 = Image.builder(V22ManifestTemplate.class).setUser("user").build();
+    Image image3 = Image.builder(V22ManifestTemplate.class).setUser("anotherUser").build();
     Assert.assertEquals(
         BuildResult.fromImage(image1, V22ManifestTemplate.class),
         BuildResult.fromImage(image2, V22ManifestTemplate.class));

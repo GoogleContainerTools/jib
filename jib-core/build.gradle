@@ -40,8 +40,8 @@ dependencies {
   implementation 'com.google.http-client:google-http-client:1.28.0'
   implementation 'com.google.http-client:google-http-client-apache:2.0.0'
   implementation 'org.apache.commons:commons-compress:1.18'
-  implementation 'com.google.guava:guava:26.0-jre'
-  implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.8'
+  implementation 'com.google.guava:guava:27.0.1-jre'
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.9'
   implementation 'org.ow2.asm:asm:7.0'
 
   testImplementation 'junit:junit:4.12'
@@ -126,7 +126,7 @@ check.dependsOn verifyGoogleJavaFormat
 
 /* CHECKSTYLE */
 checkstyle {
-  toolVersion = '8.15'
+  toolVersion = '8.18'
 
   // get the google_checks.xml file from the checkstyle jar and take out the java checks
   def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()

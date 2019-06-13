@@ -17,17 +17,15 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.image.ImageFormat;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -41,6 +39,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import org.apache.http.conn.HttpHostConnectException;
 
 /**
  * Builds a container with Jib.
@@ -61,6 +60,13 @@ import javax.annotation.Nullable;
 // TODO: Add tests once containerize() is added.
 public class JibContainerBuilder {
 
+  private static String capitalizeFirstLetter(String string) {
+    if (string.length() == 0) {
+      return string;
+    }
+    return Character.toUpperCase(string.charAt(0)) + string.substring(1);
+  }
+
   private final ContainerConfiguration.Builder containerConfigurationBuilder =
       ContainerConfiguration.builder();
   private final BuildConfiguration.Builder buildConfigurationBuilder;
@@ -68,14 +74,20 @@ public class JibContainerBuilder {
   private List<LayerConfiguration> layerConfigurations = new ArrayList<>();
 
   /** Instantiate with {@link Jib#from}. */
-  JibContainerBuilder(SourceImage baseImage) {
+  JibContainerBuilder(RegistryImage baseImage) {
     this(baseImage, BuildConfiguration.builder());
   }
 
   @VisibleForTesting
-  JibContainerBuilder(SourceImage baseImage, BuildConfiguration.Builder buildConfigurationBuilder) {
+  JibContainerBuilder(
+      RegistryImage baseImage, BuildConfiguration.Builder buildConfigurationBuilder) {
     this.buildConfigurationBuilder = buildConfigurationBuilder;
-    buildConfigurationBuilder.setBaseImageConfiguration(baseImage.toImageConfiguration());
+
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(baseImage.getImageReference())
+            .setCredentialRetrievers(baseImage.getCredentialRetrievers())
+            .build();
+    buildConfigurationBuilder.setBaseImageConfiguration(imageConfiguration);
   }
 
   /**
@@ -373,7 +385,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setFormat(ImageFormat imageFormat) {
-    buildConfigurationBuilder.setTargetFormat(imageFormat.getManifestTemplateClass());
+    buildConfigurationBuilder.setTargetFormat(imageFormat);
     return this;
   }
 
@@ -427,34 +439,52 @@ public class JibContainerBuilder {
    *
    * @param containerizer the {@link Containerizer} that configures how to containerize
    * @return the built container
+   * @throws IOException if an I/O exception occurs
    * @throws CacheDirectoryCreationException if a directory to be used for the cache could not be
    *     created
-   * @throws ExecutionException if an exception occurred during execution
+   * @throws HttpHostConnectException if jib failed to connect to a registry
+   * @throws RegistryUnauthorizedException if a registry request is unauthorized and needs
+   *     authentication
+   * @throws RegistryAuthenticationFailedException if registry authentication failed
+   * @throws UnknownHostException if the registry does not exist
+   * @throws InsecureRegistryException if a server could not be verified due to an insecure
+   *     connection
+   * @throws RegistryException if some other error occurred while interacting with a registry
+   * @throws ExecutionException if some other exception occurred during execution
    * @throws InterruptedException if the execution was interrupted
-   * @throws IOException if an I/O exception occurs
    */
   public JibContainer containerize(Containerizer containerizer)
-      throws InterruptedException, ExecutionException, IOException,
-          CacheDirectoryCreationException {
-
+      throws InterruptedException, RegistryException, IOException, CacheDirectoryCreationException,
+          ExecutionException {
     return containerize(containerizer, Executors::newCachedThreadPool);
   }
 
   @VisibleForTesting
   JibContainer containerize(
       Containerizer containerizer, Supplier<ExecutorService> defaultExecutorServiceFactory)
-      throws InterruptedException, ExecutionException, IOException,
-          CacheDirectoryCreationException {
-
+      throws IOException, CacheDirectoryCreationException, InterruptedException, RegistryException,
+          ExecutionException {
     boolean shutdownExecutorService = !containerizer.getExecutorService().isPresent();
     ExecutorService executorService =
         containerizer.getExecutorService().orElseGet(defaultExecutorServiceFactory);
 
     BuildConfiguration buildConfiguration = toBuildConfiguration(containerizer, executorService);
 
-    try {
-      BuildResult result = containerizer.getTargetImage().toBuildSteps(buildConfiguration).run();
+    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    logSources(eventHandlers);
+
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(eventHandlers, containerizer.getDescription())) {
+      BuildResult result = containerizer.createStepsRunner(buildConfiguration).run();
       return new JibContainer(result.getImageDigest(), result.getImageId());
+
+    } catch (ExecutionException ex) {
+      // If an ExecutionException occurs, re-throw the cause to be more easily handled by the user
+      if (ex.getCause() instanceof RegistryException) {
+        throw (RegistryException) ex.getCause();
+      }
+      throw ex;
+
     } finally {
       if (shutdownExecutorService) {
         executorService.shutdown();
@@ -476,24 +506,36 @@ public class JibContainerBuilder {
   BuildConfiguration toBuildConfiguration(
       Containerizer containerizer, ExecutorService executorService)
       throws CacheDirectoryCreationException, IOException {
-    buildConfigurationBuilder
-        .setTargetImageConfiguration(containerizer.getTargetImage().toImageConfiguration())
+    return buildConfigurationBuilder
+        .setTargetImageConfiguration(containerizer.getImageConfiguration())
         .setAdditionalTargetImageTags(containerizer.getAdditionalTags())
         .setBaseImageLayersCacheDirectory(containerizer.getBaseImageLayersCacheDirectory())
         .setApplicationLayersCacheDirectory(containerizer.getApplicationLayersCacheDirectory())
         .setContainerConfiguration(containerConfigurationBuilder.build())
         .setLayerConfigurations(layerConfigurations)
         .setAllowInsecureRegistries(containerizer.getAllowInsecureRegistries())
+        .setOffline(containerizer.isOfflineMode())
         .setToolName(containerizer.getToolName())
-        .setExecutorService(executorService);
+        .setExecutorService(executorService)
+        .setEventHandlers(containerizer.buildEventHandlers())
+        .build();
+  }
 
-    containerizer
-        .getEventHandlers()
-        .ifPresent(
-            eventHandlers ->
-                buildConfigurationBuilder.setEventDispatcher(
-                    new DefaultEventDispatcher(eventHandlers)));
+  private void logSources(EventHandlers eventHandlers) {
+    // Logs the different source files used.
+    eventHandlers.dispatch(LogEvent.info("Containerizing application with the following files:"));
 
-    return buildConfigurationBuilder.build();
+    for (LayerConfiguration layerConfiguration : layerConfigurations) {
+      if (layerConfiguration.getLayerEntries().isEmpty()) {
+        continue;
+      }
+
+      eventHandlers.dispatch(
+          LogEvent.info("\t" + capitalizeFirstLetter(layerConfiguration.getName()) + ":"));
+
+      for (LayerEntry layerEntry : layerConfiguration.getLayerEntries()) {
+        eventHandlers.dispatch(LogEvent.info("\t\t" + layerEntry.getSourceFile()));
+      }
+    }
   }
 }

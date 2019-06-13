@@ -16,9 +16,14 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
+import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
+import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,9 +33,6 @@ import javax.annotation.concurrent.Immutable;
 
 /**
  * Cache for storing data to be shared between Jib executions.
- *
- * <p>Uses the default cache storage engine ({@link DefaultCacheStorage}) with layer entries as the
- * selector ({@link LayerEntriesSelector}).
  *
  * <p>This class is immutable and safe to use across threads.
  */
@@ -46,13 +48,44 @@ public class Cache {
    */
   public static Cache withDirectory(Path cacheDirectory) throws IOException {
     Files.createDirectories(cacheDirectory);
-    return new Cache(DefaultCacheStorage.withDirectory(cacheDirectory));
+    return new Cache(new CacheStorageFiles(cacheDirectory));
   }
 
-  private final CacheStorage cacheStorage;
+  private final CacheStorageWriter cacheStorageWriter;
+  private final CacheStorageReader cacheStorageReader;
 
-  private Cache(CacheStorage cacheStorage) {
-    this.cacheStorage = cacheStorage;
+  private Cache(CacheStorageFiles cacheStorageFiles) {
+    this.cacheStorageWriter = new CacheStorageWriter(cacheStorageFiles);
+    this.cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+  }
+
+  /**
+   * Saves a manifest and container configuration for a V2.2 or OCI image.
+   *
+   * @param imageReference the image reference to save the manifest and container configuration for
+   * @param manifestTemplate the V2.2 or OCI manifest
+   * @param containerConfigurationTemplate the container configuration
+   * @throws IOException if an I/O exception occurs
+   */
+  public void writeMetadata(
+      ImageReference imageReference,
+      BuildableManifestTemplate manifestTemplate,
+      ContainerConfigurationTemplate containerConfigurationTemplate)
+      throws IOException {
+    cacheStorageWriter.writeMetadata(
+        imageReference, manifestTemplate, containerConfigurationTemplate);
+  }
+
+  /**
+   * Saves a V2.1 image manifest.
+   *
+   * @param imageReference the image reference to save the manifest and container configuration for
+   * @param manifestTemplate the V2.1 manifest
+   * @throws IOException if an I/O exception occurs
+   */
+  public void writeMetadata(ImageReference imageReference, V21ManifestTemplate manifestTemplate)
+      throws IOException {
+    cacheStorageWriter.writeMetadata(imageReference, manifestTemplate);
   }
 
   /**
@@ -65,7 +98,7 @@ public class Cache {
    * @throws IOException if an I/O exception occurs
    */
   public CachedLayer writeCompressedLayer(Blob compressedLayerBlob) throws IOException {
-    return cacheStorage.write(compressedLayerBlob);
+    return cacheStorageWriter.writeCompressed(compressedLayerBlob);
   }
 
   /**
@@ -79,9 +112,21 @@ public class Cache {
    */
   public CachedLayer writeUncompressedLayer(
       Blob uncompressedLayerBlob, ImmutableList<LayerEntry> layerEntries) throws IOException {
-    return cacheStorage.write(
-        new UncompressedCacheWrite(
-            uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries)));
+    return cacheStorageWriter.writeUncompressed(
+        uncompressedLayerBlob, LayerEntriesSelector.generateSelector(layerEntries));
+  }
+
+  /**
+   * Retrieves the cached manifest and container configuration for an image reference.
+   *
+   * @param imageReference the image reference
+   * @return the manifest and container configuration for the image reference, if found
+   * @throws IOException if an I/O exception occurs
+   * @throws CacheCorruptedException if the cache is corrupted
+   */
+  public Optional<ManifestAndConfig> retrieveMetadata(ImageReference imageReference)
+      throws IOException, CacheCorruptedException {
+    return cacheStorageReader.retrieveMetadata(imageReference);
   }
 
   /**
@@ -95,12 +140,12 @@ public class Cache {
   public Optional<CachedLayer> retrieve(ImmutableList<LayerEntry> layerEntries)
       throws IOException, CacheCorruptedException {
     Optional<DescriptorDigest> optionalSelectedLayerDigest =
-        cacheStorage.select(LayerEntriesSelector.generateSelector(layerEntries));
+        cacheStorageReader.select(LayerEntriesSelector.generateSelector(layerEntries));
     if (!optionalSelectedLayerDigest.isPresent()) {
       return Optional.empty();
     }
 
-    return cacheStorage.retrieve(optionalSelectedLayerDigest.get());
+    return cacheStorageReader.retrieve(optionalSelectedLayerDigest.get());
   }
 
   /**
@@ -113,6 +158,6 @@ public class Cache {
    */
   public Optional<CachedLayer> retrieve(DescriptorDigest layerDigest)
       throws IOException, CacheCorruptedException {
-    return cacheStorage.retrieve(layerDigest);
+    return cacheStorageReader.retrieve(layerDigest);
   }
 }

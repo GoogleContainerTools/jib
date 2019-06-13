@@ -16,22 +16,22 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
-import com.google.cloud.tools.jib.plugins.common.BuildStepsRunner;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
-import com.google.cloud.tools.jib.plugins.common.InferredAuthRetrievalException;
+import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
+import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
+import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -73,14 +73,14 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   }
 
   /**
-   * @return the input files to this task are all the output files for all the dependencies of the
-   *     {@code classes} task.
+   * @return a collection of all the files that jib includes in the image. Only used to calculate
+   *     UP-TO-DATE.
    */
   @InputFiles
   public FileCollection getInputFiles() {
-    return GradleProjectProperties.getInputFiles(
-        Preconditions.checkNotNull(jibExtension).getExtraDirectory().getPath().toFile(),
-        getProject());
+    List<Path> extraDirectories =
+        Preconditions.checkNotNull(jibExtension).getExtraDirectories().getPaths();
+    return GradleProjectProperties.getInputFiles(getProject(), extraDirectories);
   }
 
   /**
@@ -95,32 +95,24 @@ public class BuildTarTask extends DefaultTask implements JibTask {
 
   @TaskAction
   public void buildTar()
-      throws InvalidImageReferenceException, BuildStepsExecutionException, IOException,
-          CacheDirectoryCreationException, MainClassInferenceException,
-          InferredAuthRetrievalException {
+      throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException,
+          MainClassInferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
+    TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
     TaskCommon.disableHttpLogging();
 
     try {
-      AbsoluteUnixPath appRoot = TaskCommon.getAppRootChecked(jibExtension, getProject());
-
+      RawConfiguration gradleRawConfiguration = new GradleRawConfiguration(jibExtension);
       GradleProjectProperties projectProperties =
-          GradleProjectProperties.getForProject(
-              getProject(),
-              getLogger(),
-              jibExtension.getExtraDirectory().getPath(),
-              jibExtension.getExtraDirectory().getPermissions(),
-              appRoot);
-      projectProperties.validateAgainstDefaultBaseImageVersion(jibExtension.getFrom().getImage());
-
+          GradleProjectProperties.getForProject(getProject(), getLogger());
       GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
           new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
 
       Path tarOutputPath = getTargetPath();
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForTarImage(
-              new GradleRawConfiguration(jibExtension),
+              gradleRawConfiguration,
               ignored -> Optional.empty(),
               projectProperties,
               tarOutputPath,
@@ -137,14 +129,13 @@ public class BuildTarTask extends DefaultTask implements JibTask {
       Path buildOutput = getProject().getBuildDir().toPath();
 
       try {
-        BuildStepsRunner.forBuildTar(tarOutputPath)
+        JibBuildRunner.forBuildTar(tarOutputPath)
             .writeImageDigest(buildOutput.resolve("jib-image.digest"))
             .writeImageId(buildOutput.resolve("jib-image.id"))
             .build(
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
-                new DefaultEventDispatcher(projectProperties.getEventHandlers()),
-                projectProperties.getJavaLayerConfigurations().getLayerConfigurations(),
+                projectProperties::log,
                 helpfulSuggestions);
 
       } finally {
@@ -165,6 +156,16 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     } catch (InvalidContainerVolumeException ex) {
       throw new GradleException(
           "container.volumes is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
+
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      throw new GradleException(
+          HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForGradle(
+              ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
+          ex);
+
+    } catch (InvalidImageReferenceException ex) {
+      throw new GradleException(
+          HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
     }
   }
 

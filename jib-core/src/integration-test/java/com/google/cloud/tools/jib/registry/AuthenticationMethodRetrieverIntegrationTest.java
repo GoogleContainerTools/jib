@@ -16,7 +16,8 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.Authorization;
 import java.io.IOException;
 import org.junit.Assert;
@@ -25,20 +26,17 @@ import org.junit.Test;
 /** Integration tests for {@link AuthenticationMethodRetriever}. */
 public class AuthenticationMethodRetrieverIntegrationTest {
 
-  private static final EventDispatcher EVENT_DISPATCHER = jibEvent -> {};
-
   @Test
-  public void testGetRegistryAuthenticator()
-      throws RegistryAuthenticationFailedException, IOException, RegistryException {
+  public void testGetRegistryAuthenticator() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_DISPATCHER, "registry.hub.docker.com", "library/busybox")
+        RegistryClient.factory(EventHandlers.NONE, "registry.hub.docker.com", "library/busybox")
             .newRegistryClient();
     RegistryAuthenticator registryAuthenticator = registryClient.getRegistryAuthenticator();
     Assert.assertNotNull(registryAuthenticator);
-    Authorization authorization = registryAuthenticator.authenticatePull();
+    Authorization authorization = registryAuthenticator.authenticatePull(null);
 
     RegistryClient authorizedRegistryClient =
-        RegistryClient.factory(EVENT_DISPATCHER, "registry.hub.docker.com", "library/busybox")
+        RegistryClient.factory(EventHandlers.NONE, "registry.hub.docker.com", "library/busybox")
             .setAuthorization(authorization)
             .newRegistryClient();
     authorizedRegistryClient.pullManifest("latest");

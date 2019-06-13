@@ -16,9 +16,8 @@
 
 package com.google.cloud.tools.jib.docker;
 
-import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
@@ -38,22 +37,32 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.AdditionalAnswers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.stubbing.VoidAnswer1;
 
 /** Tests for {@link DockerClient}. */
 @RunWith(MockitoJUnitRunner.class)
 public class DockerClientTest {
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private ProcessBuilder mockProcessBuilder;
   @Mock private Process mockProcess;
+  @Mock private ImageTarball imageTarball;
 
   @Before
   public void setUp() throws IOException {
     Mockito.when(mockProcessBuilder.start()).thenReturn(mockProcess);
+
+    Mockito.doAnswer(
+            AdditionalAnswers.answerVoid(
+                (VoidAnswer1<OutputStream>)
+                    out -> out.write("jib".getBytes(StandardCharsets.UTF_8))))
+        .when(imageTarball)
+        .writeTo(Mockito.any(OutputStream.class));
   }
 
   @Test
@@ -79,7 +88,7 @@ public class DockerClientTest {
     Mockito.when(mockProcess.getInputStream())
         .thenReturn(new ByteArrayInputStream("output".getBytes(StandardCharsets.UTF_8)));
 
-    String output = testDockerClient.load(Blobs.from("jib"));
+    String output = testDockerClient.load(imageTarball);
 
     Assert.assertEquals(
         "jib", new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
@@ -103,7 +112,7 @@ public class DockerClientTest {
         .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
 
     try {
-      testDockerClient.load(Blobs.from("jib"));
+      testDockerClient.load(imageTarball);
       Assert.fail("Write should have failed");
 
     } catch (IOException ex) {
@@ -136,7 +145,7 @@ public class DockerClientTest {
             });
 
     try {
-      testDockerClient.load(Blobs.from("jib"));
+      testDockerClient.load(imageTarball);
       Assert.fail("Write should have failed");
 
     } catch (IOException ex) {
@@ -156,7 +165,7 @@ public class DockerClientTest {
         .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
 
     try {
-      testDockerClient.load(Blobs.from("jib"));
+      testDockerClient.load(imageTarball);
       Assert.fail("Process should have failed");
 
     } catch (IOException ex) {

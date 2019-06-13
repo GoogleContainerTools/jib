@@ -17,11 +17,6 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
-import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.nio.file.Path;
 
 /**
@@ -34,8 +29,7 @@ import java.nio.file.Path;
  *                             .saveTo(Paths.get("image.tar"));
  * }</pre>
  */
-// TODO: Add tests once JibContainerBuilder#containerize() is added.
-public class TarImage implements TargetImage {
+public class TarImage {
 
   /** Finishes constructing a {@link TarImage}. */
   public static class Builder {
@@ -88,16 +82,6 @@ public class TarImage implements TargetImage {
     this.outputFile = outputFile;
   }
 
-  @Override
-  public ImageConfiguration toImageConfiguration() {
-    return ImageConfiguration.builder(imageReference).build();
-  }
-
-  @Override
-  public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
-    return BuildSteps.forBuildToTar(outputFile, buildConfiguration);
-  }
-
   /**
    * Gets the output file to save the tarball archive to.
    *
@@ -105,5 +89,9 @@ public class TarImage implements TargetImage {
    */
   Path getOutputFile() {
     return outputFile;
+  }
+
+  ImageReference getImageReference() {
+    return imageReference;
   }
 }

@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.common.collect.ImmutableMap;
+import java.nio.file.Paths;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,13 +26,22 @@ import org.junit.Test;
 public class DockerDaemonImageTest {
 
   @Test
-  public void testToImageConfiguration() throws InvalidImageReferenceException {
+  public void testGetters_default() throws InvalidImageReferenceException {
     DockerDaemonImage dockerDaemonImage = DockerDaemonImage.named("docker/daemon/image");
-    ImageConfiguration imageConfiguration = dockerDaemonImage.toImageConfiguration();
 
-    Assert.assertEquals(
-        ImageReference.parse("docker/daemon/image").toString(),
-        imageConfiguration.getImage().toString());
-    Assert.assertEquals(0, imageConfiguration.getCredentialRetrievers().size());
+    Assert.assertEquals("docker/daemon/image", dockerDaemonImage.getImageReference().toString());
+    Assert.assertEquals(Optional.empty(), dockerDaemonImage.getDockerExecutable());
+    Assert.assertEquals(0, dockerDaemonImage.getDockerEnvironment().size());
+  }
+
+  @Test
+  public void testGetters() throws InvalidImageReferenceException {
+    DockerDaemonImage dockerDaemonImage =
+        DockerDaemonImage.named("docker/daemon/image")
+            .setDockerExecutable(Paths.get("docker/binary"))
+            .setDockerEnvironment(ImmutableMap.of("key", "value"));
+
+    Assert.assertEquals(Paths.get("docker/binary"), dockerDaemonImage.getDockerExecutable().get());
+    Assert.assertEquals(ImmutableMap.of("key", "value"), dockerDaemonImage.getDockerEnvironment());
   }
 }
