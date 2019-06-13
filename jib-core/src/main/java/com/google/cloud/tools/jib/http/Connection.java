@@ -89,6 +89,10 @@ public class Connection implements Closeable {
 
   // TODO(chanseok): remove. Use ApacheHttpTransport.newDefaultHttpClientBuilder() when it becomes
   // available (https://github.com/googleapis/google-http-java-client/issues/578)
+  //
+  // BUG: the code is not working as intended.
+  // https://github.com/googleapis/google-http-java-client/issues/715
+  // setSSLContext() won't work either.
   private static HttpClientBuilder newDefaultHttpClientBuilder() {
     // Code from
     // https://github.com/googleapis/google-http-java-client/blob/v1.30.1/google-http-client-apache-v2/src/main/java/com/google/api/client/http/apache/v2/ApacheHttpTransport.java#L125-L149
