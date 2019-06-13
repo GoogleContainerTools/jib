@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import java.io.IOException;
 import java.security.DigestException;
 import org.hamcrest.CoreMatchers;
@@ -87,7 +87,8 @@ public class EmptyProjectIntegrationTest {
   @Test
   public void testDockerDaemon_empty() throws IOException, InterruptedException, DigestException {
     String targetImage = "emptyimage:gradle" + System.nanoTime();
-    Assert.assertEquals("", JibRunHelper.buildToDockerDaemonAndRun(emptyTestProject, targetImage));
+    Assert.assertEquals(
+        "", JibRunHelper.buildToDockerDaemonAndRun(emptyTestProject, targetImage, "build.gradle"));
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
         new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());

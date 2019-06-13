@@ -16,6 +16,9 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.LayerConfiguration;
+import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -24,12 +27,8 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.ImageLayers;
-import com.google.cloud.tools.jib.image.Layer;
-import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
@@ -88,7 +87,7 @@ public class BuildAndCacheApplicationLayerStepTest {
   @Mock private BuildConfiguration mockBuildConfiguration;
 
   private Cache cache;
-  @Mock private EventDispatcher mockEventDispatcher;
+  @Mock private EventHandlers mockEventHandlers;
 
   private LayerConfiguration fakeDependenciesLayerConfiguration;
   private LayerConfiguration fakeSnapshotDependenciesLayerConfiguration;
@@ -100,39 +99,41 @@ public class BuildAndCacheApplicationLayerStepTest {
   @Before
   public void setUp() throws IOException, URISyntaxException {
     fakeDependenciesLayerConfiguration =
-        makeLayerConfiguration("application/dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
+        makeLayerConfiguration(
+            "core/application/dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
     fakeSnapshotDependenciesLayerConfiguration =
         makeLayerConfiguration(
-            "application/snapshot-dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
+            "core/application/snapshot-dependencies", EXTRACTION_PATH_ROOT.resolve("libs"));
     fakeResourcesLayerConfiguration =
-        makeLayerConfiguration("application/resources", EXTRACTION_PATH_ROOT.resolve("resources"));
+        makeLayerConfiguration(
+            "core/application/resources", EXTRACTION_PATH_ROOT.resolve("resources"));
     fakeClassesLayerConfiguration =
-        makeLayerConfiguration("application/classes", EXTRACTION_PATH_ROOT.resolve("classes"));
+        makeLayerConfiguration("core/application/classes", EXTRACTION_PATH_ROOT.resolve("classes"));
     fakeExtraFilesLayerConfiguration =
         LayerConfiguration.builder()
             .addEntry(
-                Paths.get(Resources.getResource("fileA").toURI()),
+                Paths.get(Resources.getResource("core/fileA").toURI()),
                 EXTRA_FILES_LAYER_EXTRACTION_PATH.resolve("fileA"))
             .addEntry(
-                Paths.get(Resources.getResource("fileB").toURI()),
+                Paths.get(Resources.getResource("core/fileB").toURI()),
                 EXTRA_FILES_LAYER_EXTRACTION_PATH.resolve("fileB"))
             .build();
     emptyLayerConfiguration = LayerConfiguration.builder().build();
 
     cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    Mockito.when(mockBuildConfiguration.getEventDispatcher()).thenReturn(mockEventDispatcher);
+    Mockito.when(mockBuildConfiguration.getEventHandlers()).thenReturn(mockEventHandlers);
     Mockito.when(mockBuildConfiguration.getApplicationLayersCache()).thenReturn(cache);
   }
 
-  private ImageLayers<Layer> buildFakeLayersToCache() throws ExecutionException {
-    ImageLayers.Builder<Layer> applicationLayersBuilder = ImageLayers.builder();
+  private ImageLayers buildFakeLayersToCache() throws ExecutionException {
+    ImageLayers.Builder applicationLayersBuilder = ImageLayers.builder();
 
     ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
         BuildAndCacheApplicationLayerStep.makeList(
             MoreExecutors.newDirectExecutorService(),
             mockBuildConfiguration,
-            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer());
+            ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer());
 
     for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
         buildAndCacheApplicationLayerSteps) {
@@ -157,7 +158,7 @@ public class BuildAndCacheApplicationLayerStepTest {
         .thenReturn(fakeLayerConfigurations);
 
     // Populates the cache.
-    ImageLayers<Layer> applicationLayers = buildFakeLayersToCache();
+    ImageLayers applicationLayers = buildFakeLayersToCache();
     Assert.assertEquals(5, applicationLayers.size());
 
     ImmutableList<LayerEntry> dependenciesLayerEntries =
@@ -219,7 +220,7 @@ public class BuildAndCacheApplicationLayerStepTest {
         .thenReturn(fakeLayerConfigurations);
 
     // Populates the cache.
-    ImageLayers<Layer> applicationLayers = buildFakeLayersToCache();
+    ImageLayers applicationLayers = buildFakeLayersToCache();
     Assert.assertEquals(3, applicationLayers.size());
 
     ImmutableList<LayerEntry> dependenciesLayerEntries =

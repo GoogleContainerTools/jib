@@ -16,16 +16,12 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
-import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /** Builder for Maven-specific {@link HelpfulSuggestions}. */
 class MavenHelpfulSuggestionsBuilder {
-
-  private static final Function<String, String> AUTH_CONFIGURATION_SUGGESTION =
-      registry -> "set credentials for '" + registry + "' in your Maven settings";
 
   private final String messagePrefix;
   private final JibPluginConfiguration jibPluginConfiguration;
@@ -78,12 +74,8 @@ class MavenHelpfulSuggestionsBuilder {
         "mvn clean",
         baseImageReference,
         !isCredHelperDefinedForBaseImage && !baseImageHasConfiguredCredentials,
-        "<from><credHelper>",
-        AUTH_CONFIGURATION_SUGGESTION,
         targetImageReference,
         !isCredHelperDefinedForTargetImage && !targetImageHasConfiguredCredentials,
-        "<to><credHelper>",
-        AUTH_CONFIGURATION_SUGGESTION,
         "<to><image>",
         "-Dimage",
         "pom.xml");

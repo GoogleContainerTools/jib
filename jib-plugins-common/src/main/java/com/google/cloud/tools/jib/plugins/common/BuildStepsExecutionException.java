@@ -16,9 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.builder.BuildSteps;
-
-/** Wraps an exception that happens during {@link BuildSteps#run}. */
+/** Wraps an exception that happens during containerization. */
 public class BuildStepsExecutionException extends Exception {
 
   BuildStepsExecutionException(String message, Throwable cause) {

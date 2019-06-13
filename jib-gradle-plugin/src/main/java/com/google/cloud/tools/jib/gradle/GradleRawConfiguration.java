@@ -16,9 +16,12 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.image.ImageFormat;
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.api.ImageFormat;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -75,6 +78,11 @@ class GradleRawConfiguration implements RawConfiguration {
   @Override
   public Optional<List<String>> getProgramArguments() {
     return Optional.ofNullable(jibExtension.getContainer().getArgs());
+  }
+
+  @Override
+  public List<String> getExtraClasspath() {
+    return jibExtension.getContainer().getExtraClasspath();
   }
 
   @Override
@@ -140,5 +148,15 @@ class GradleRawConfiguration implements RawConfiguration {
   @Override
   public Optional<String> getProperty(String propertyName) {
     return Optional.ofNullable(System.getProperty(propertyName));
+  }
+
+  @Override
+  public List<Path> getExtraDirectories() {
+    return jibExtension.getExtraDirectories().getPaths();
+  }
+
+  @Override
+  public Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions() {
+    return TaskCommon.convertPermissionsMap(jibExtension.getExtraDirectories().getPermissions());
   }
 }

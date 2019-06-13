@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -27,11 +28,11 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /** Holds the layers for an image. */
-public class ImageLayers<T extends Layer> implements Iterable<T> {
+public class ImageLayers implements Iterable<Layer> {
 
-  public static class Builder<T extends Layer> {
+  public static class Builder {
 
-    private final List<T> layers = new ArrayList<>();
+    private final List<Layer> layers = new ArrayList<>();
     private final ImmutableSet.Builder<DescriptorDigest> layerDigestsBuilder =
         ImmutableSet.builder();
     private boolean removeDuplicates = false;
@@ -46,7 +47,7 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
      * @return this
      * @throws LayerPropertyNotFoundException if adding the layer fails
      */
-    public Builder<T> add(T layer) throws LayerPropertyNotFoundException {
+    public Builder add(Layer layer) throws LayerPropertyNotFoundException {
       layerDigestsBuilder.add(layer.getBlobDescriptor().getDigest());
       layers.add(layer);
       return this;
@@ -55,14 +56,12 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
     /**
      * Adds all layers in {@code layers}.
      *
-     * @param <U> child type of {@link Layer}
      * @param layers the layers to add
      * @return this
      * @throws LayerPropertyNotFoundException if adding a layer fails
      */
-    public <U extends T> Builder<T> addAll(ImageLayers<U> layers)
-        throws LayerPropertyNotFoundException {
-      for (U layer : layers) {
+    public Builder addAll(ImageLayers layers) throws LayerPropertyNotFoundException {
+      for (Layer layer : layers) {
         add(layer);
       }
       return this;
@@ -73,41 +72,41 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
      *
      * @return this
      */
-    public Builder<T> removeDuplicates() {
+    public Builder removeDuplicates() {
       removeDuplicates = true;
       return this;
     }
 
-    public ImageLayers<T> build() {
+    public ImageLayers build() {
       if (!removeDuplicates) {
-        return new ImageLayers<>(ImmutableList.copyOf(layers), layerDigestsBuilder.build());
+        return new ImageLayers(ImmutableList.copyOf(layers), layerDigestsBuilder.build());
       }
 
       // LinkedHashSet maintains the order but keeps the first occurrence. Keep last occurrence by
       // adding elements in reverse, and then reversing the result
-      Set<T> dedupedButReversed = new LinkedHashSet<T>(Lists.reverse(this.layers));
-      ImmutableList<T> deduped = ImmutableList.copyOf(dedupedButReversed).reverse();
-      return new ImageLayers<>(deduped, layerDigestsBuilder.build());
+      Set<Layer> dedupedButReversed = new LinkedHashSet<>(Lists.reverse(this.layers));
+      ImmutableList<Layer> deduped = ImmutableList.copyOf(dedupedButReversed).reverse();
+      return new ImageLayers(deduped, layerDigestsBuilder.build());
     }
   }
 
-  public static <U extends Layer> Builder<U> builder() {
-    return new Builder<>();
+  public static Builder builder() {
+    return new Builder();
   }
 
   /** The layers of the image, in the order in which they are applied. */
-  private final ImmutableList<T> layers;
+  private final ImmutableList<Layer> layers;
 
   /** Keeps track of the layers already added. */
   private final ImmutableSet<DescriptorDigest> layerDigests;
 
-  private ImageLayers(ImmutableList<T> layers, ImmutableSet<DescriptorDigest> layerDigests) {
+  private ImageLayers(ImmutableList<Layer> layers, ImmutableSet<DescriptorDigest> layerDigests) {
     this.layers = layers;
     this.layerDigests = layerDigests;
   }
 
   /** @return a read-only view of the image layers. */
-  public ImmutableList<T> getLayers() {
+  public ImmutableList<Layer> getLayers() {
     return layers;
   }
 
@@ -124,7 +123,7 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
    * @param index the index of the layer to get
    * @return the layer at the specified index
    */
-  public T get(int index) {
+  public Layer get(int index) {
     return layers.get(index);
   }
 
@@ -134,11 +133,11 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
    * @throws LayerPropertyNotFoundException if getting the layer's blob descriptor fails
    */
   @Nullable
-  public T get(DescriptorDigest digest) throws LayerPropertyNotFoundException {
+  public Layer get(DescriptorDigest digest) throws LayerPropertyNotFoundException {
     if (!has(digest)) {
       return null;
     }
-    for (T layer : layers) {
+    for (Layer layer : layers) {
       if (layer.getBlobDescriptor().getDigest().equals(digest)) {
         return layer;
       }
@@ -155,7 +154,7 @@ public class ImageLayers<T extends Layer> implements Iterable<T> {
   }
 
   @Override
-  public Iterator<T> iterator() {
+  public Iterator<Layer> iterator() {
     return getLayers().iterator();
   }
 }

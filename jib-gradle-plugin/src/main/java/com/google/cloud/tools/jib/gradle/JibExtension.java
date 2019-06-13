@@ -49,8 +49,8 @@ import org.gradle.api.tasks.Optional;
  *     format = OCI
  *     appRoot = '/app'
  *   }
- *   extraDirectory {
- *     path = file('path/to/extra/dir')
+ *   extraDirectories {
+ *     paths = ['/path/to/extra/dir', 'can/be/relative/to/project/root']
  *     permissions = [
  *       '/path/on/container/file1': 744,
  *       '/path/on/container/file2': 123
@@ -68,9 +68,11 @@ public class JibExtension {
   private final BaseImageParameters from;
   private final TargetImageParameters to;
   private final ContainerParameters container;
-  private final ExtraDirectoryParameters extraDirectory;
-
+  private final ExtraDirectoriesParameters extraDirectories;
   private final Property<Boolean> allowInsecureRegistries;
+
+  @Deprecated boolean extraDirectoryConfigured;
+  @Deprecated boolean extraDirectoriesConfigured;
 
   public JibExtension(Project project) {
     ObjectFactory objectFactory = project.getObjects();
@@ -78,8 +80,7 @@ public class JibExtension {
     from = objectFactory.newInstance(BaseImageParameters.class);
     to = objectFactory.newInstance(TargetImageParameters.class);
     container = objectFactory.newInstance(ContainerParameters.class);
-    extraDirectory =
-        objectFactory.newInstance(ExtraDirectoryParameters.class, project.getProjectDir().toPath());
+    extraDirectories = objectFactory.newInstance(ExtraDirectoriesParameters.class, project, this);
 
     allowInsecureRegistries = objectFactory.property(Boolean.class);
 
@@ -99,12 +100,22 @@ public class JibExtension {
     action.execute(container);
   }
 
-  public void extraDirectory(Action<? super ExtraDirectoryParameters> action) {
-    action.execute(extraDirectory);
+  @Deprecated
+  public void extraDirectory(Action<? super ExtraDirectoriesParameters> action) {
+    extraDirectoryConfigured = true;
+    action.execute(extraDirectories);
   }
 
+  public void extraDirectories(Action<? super ExtraDirectoriesParameters> action) {
+    extraDirectoriesConfigured = true;
+    action.execute(extraDirectories);
+  }
+
+  @Deprecated
+  // for the deprecated "jib.extraDirectory" config parameter
   public void setExtraDirectory(File extraDirectory) {
-    this.extraDirectory.setPath(extraDirectory);
+    extraDirectoryConfigured = true;
+    this.extraDirectories.setPath(extraDirectory);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
@@ -129,10 +140,17 @@ public class JibExtension {
     return container;
   }
 
+  @Deprecated
   @Nested
   @Optional
-  public ExtraDirectoryParameters getExtraDirectory() {
-    return extraDirectory;
+  public ExtraDirectoriesParameters getExtraDirectory() {
+    return extraDirectories;
+  }
+
+  @Nested
+  @Optional
+  public ExtraDirectoriesParameters getExtraDirectories() {
+    return extraDirectories;
   }
 
   @Input

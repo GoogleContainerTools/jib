@@ -38,7 +38,7 @@ public class DockerConfigTest {
   @Test
   public void test_fromJson() throws URISyntaxException, IOException {
     // Loads the JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
 
     // Deserializes into a docker config JSON object.
     DockerConfig dockerConfig =
@@ -71,7 +71,8 @@ public class DockerConfigTest {
 
   @Test
   public void testGetAuthFor_orderOfMatchPreference() throws URISyntaxException, IOException {
-    Path json = Paths.get(Resources.getResource("json/dockerconfig_extra_matches.json").toURI());
+    Path json =
+        Paths.get(Resources.getResource("core/json/dockerconfig_extra_matches.json").toURI());
 
     DockerConfig dockerConfig =
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
@@ -87,7 +88,8 @@ public class DockerConfigTest {
 
   @Test
   public void testGetAuthFor_correctSuffixMatching() throws URISyntaxException, IOException {
-    Path json = Paths.get(Resources.getResource("json/dockerconfig_extra_matches.json").toURI());
+    Path json =
+        Paths.get(Resources.getResource("core/json/dockerconfig_extra_matches.json").toURI());
 
     DockerConfig dockerConfig =
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
@@ -97,7 +99,7 @@ public class DockerConfigTest {
 
   @Test
   public void testGetCredentialHelperFor() throws URISyntaxException, IOException {
-    Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
+    Path json = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
 
     DockerConfig dockerConfig =
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
@@ -109,7 +111,7 @@ public class DockerConfigTest {
 
   @Test
   public void testGetCredentialHelperFor_withHttps() throws URISyntaxException, IOException {
-    Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
+    Path json = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
 
     DockerConfig dockerConfig =
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
@@ -121,7 +123,7 @@ public class DockerConfigTest {
 
   @Test
   public void testGetCredentialHelperFor_withSuffix() throws URISyntaxException, IOException {
-    Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
+    Path json = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
 
     DockerConfig dockerConfig =
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
@@ -134,7 +136,7 @@ public class DockerConfigTest {
   @Test
   public void testGetCredentialHelperFor_withProtocolAndSuffix()
       throws URISyntaxException, IOException {
-    Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
+    Path json = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
 
     DockerConfig dockerConfig =
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
@@ -147,7 +149,7 @@ public class DockerConfigTest {
   @Test
   public void testGetCredentialHelperFor_correctSuffixMatching()
       throws URISyntaxException, IOException {
-    Path json = Paths.get(Resources.getResource("json/dockerconfig.json").toURI());
+    Path json = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
 
     DockerConfig dockerConfig =
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));

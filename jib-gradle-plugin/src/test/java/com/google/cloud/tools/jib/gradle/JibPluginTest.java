@@ -62,7 +62,7 @@ public class JibPluginTest {
     // Copy build file to temp dir
     Path buildFile = testProjectRoot.getRoot().toPath().resolve("build.gradle");
     InputStream buildFileContent =
-        getClass().getClassLoader().getResourceAsStream("plugin-test/build.gradle");
+        getClass().getClassLoader().getResourceAsStream("gradle/plugin-test/build.gradle");
     Files.copy(buildFileContent, buildFile);
 
     GradleRunner.create()
@@ -80,7 +80,7 @@ public class JibPluginTest {
     // Copy build file to temp dir
     Path buildFile = testProjectRoot.getRoot().toPath().resolve("build.gradle");
     InputStream buildFileContent =
-        getClass().getClassLoader().getResourceAsStream("plugin-test/build.gradle");
+        getClass().getClassLoader().getResourceAsStream("gradle/plugin-test/build.gradle");
     Files.copy(buildFileContent, buildFile);
 
     GradleRunner gradleRunner =
@@ -222,5 +222,18 @@ public class JibPluginTest {
     } catch (UnknownTaskException ex) {
       Assert.assertNotNull(ex.getMessage());
     }
+  }
+
+  @Test
+  public void testJibTaskGroupIsSet() {
+    Project rootProject =
+        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
+    rootProject.getPluginManager().apply("java");
+    rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
+    ((ProjectInternal) rootProject).evaluate();
+    TaskContainer tasks = rootProject.getTasks();
+
+    KNOWN_JIB_TASKS.forEach(
+        taskName -> Assert.assertEquals(taskName, "Jib", tasks.getByPath(taskName).getGroup()));
   }
 }

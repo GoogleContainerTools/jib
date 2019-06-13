@@ -20,10 +20,13 @@ import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfigu
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import java.io.File;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,6 +43,7 @@ public class JibPluginConfigurationTest {
   private final MavenProject project = new MavenProject();
   private final Properties sessionProperties = new Properties();
   @Mock private MavenSession session;
+  @Mock private Log log;
   private JibPluginConfiguration testPluginConfiguration;
 
   @Before
@@ -49,15 +53,21 @@ public class JibPluginConfigurationTest {
         new JibPluginConfiguration() {
           @Override
           public void execute() {}
+
+          @Override
+          public Log getLog() {
+            return log;
+          }
         };
     testPluginConfiguration.setProject(project);
-    testPluginConfiguration.session = session;
+    testPluginConfiguration.setSession(session);
   }
 
   @Test
   public void testDefaults() {
     Assert.assertEquals("", testPluginConfiguration.getAppRoot());
     Assert.assertNull(testPluginConfiguration.getWorkingDirectory());
+    Assert.assertTrue(testPluginConfiguration.getExtraClasspath().isEmpty());
   }
 
   @Test
@@ -109,11 +119,14 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
     sessionProperties.put("jib.container.workingDirectory", "working directory");
     Assert.assertEquals("working directory", testPluginConfiguration.getWorkingDirectory());
-
-    sessionProperties.put("jib.extraDirectory.path", "custom-jib");
+    sessionProperties.put("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
-        Paths.get("custom-jib"), testPluginConfiguration.getExtraDirectoryPath().get());
-    sessionProperties.put("jib.extraDirectory.permissions", "/test/file1=123,/another/file=456");
+        ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
+
+    sessionProperties.put("jib.extraDirectories.paths", "custom-jib");
+    Assert.assertEquals(
+        Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
+    sessionProperties.put("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();
     Assert.assertEquals("/test/file1", permissions.get(0).getFile().get());
@@ -171,18 +184,194 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
     project.getProperties().setProperty("jib.container.workingDirectory", "working directory");
     Assert.assertEquals("working directory", testPluginConfiguration.getWorkingDirectory());
-
-    project.getProperties().setProperty("jib.extraDirectory.path", "custom-jib");
+    project.getProperties().setProperty("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
-        Paths.get("custom-jib"), testPluginConfiguration.getExtraDirectoryPath().get());
+        ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
+
+    project.getProperties().setProperty("jib.extraDirectories.paths", "custom-jib");
+    Assert.assertEquals(
+        Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
     project
         .getProperties()
-        .setProperty("jib.extraDirectory.permissions", "/test/file1=123,/another/file=456");
+        .setProperty("jib.extraDirectories.permissions", "/test/file1=123,/another/file=456");
     List<PermissionConfiguration> permissions =
         testPluginConfiguration.getExtraDirectoryPermissions();
     Assert.assertEquals("/test/file1", permissions.get(0).getFile().get());
     Assert.assertEquals("123", permissions.get(0).getMode().get());
     Assert.assertEquals("/another/file", permissions.get(1).getFile().get());
     Assert.assertEquals("456", permissions.get(1).getMode().get());
+  }
+
+  @Test
+  public void testEmptyOrNullTags() {
+    // https://github.com/GoogleContainerTools/jib/issues/1534
+    // Maven turns empty tags into null entries, and its possible
+    // to have empty tags in jib.to.tags
+    sessionProperties.put("jib.to.tags", "a,,b");
+    try {
+      testPluginConfiguration.getTargetImageAdditionalTags();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals("jib.to.tags has empty tag", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testDeprecatedSystemProperties() {
+    sessionProperties.put("jib.extraDirectory.path", "custom-jib");
+    Assert.assertEquals(
+        Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
+    sessionProperties.put("jib.extraDirectory.permissions", "/test/file13=650,/another/file24=777");
+    List<PermissionConfiguration> permissions =
+        testPluginConfiguration.getExtraDirectoryPermissions();
+    Assert.assertEquals("/test/file13", permissions.get(0).getFile().get());
+    Assert.assertEquals("650", permissions.get(0).getMode().get());
+    Assert.assertEquals("/another/file24", permissions.get(1).getFile().get());
+    Assert.assertEquals("777", permissions.get(1).getMode().get());
+
+    Mockito.verify(log, Mockito.times(1))
+        .warn(
+            "The property 'jib.extraDirectory.path' is deprecated; "
+                + "use 'jib.extraDirectories.paths' instead");
+  }
+
+  @Test
+  public void testDeprecatedProperties() {
+    Properties projectProperties = project.getProperties();
+
+    projectProperties.setProperty("jib.extraDirectory.path", "this-is-extra");
+    Assert.assertEquals(
+        Arrays.asList(Paths.get("this-is-extra")), testPluginConfiguration.getExtraDirectories());
+
+    projectProperties.setProperty(
+        "jib.extraDirectory.permissions", "/test/file1=654,/dir/file2=321");
+    List<PermissionConfiguration> permissions =
+        testPluginConfiguration.getExtraDirectoryPermissions();
+    Assert.assertEquals("/test/file1", permissions.get(0).getFile().get());
+    Assert.assertEquals("654", permissions.get(0).getMode().get());
+    Assert.assertEquals("/dir/file2", permissions.get(1).getFile().get());
+    Assert.assertEquals("321", permissions.get(1).getMode().get());
+
+    Mockito.verify(log, Mockito.times(1))
+        .warn(
+            "The property 'jib.extraDirectory.path' is deprecated; "
+                + "use 'jib.extraDirectories.paths' instead");
+  }
+
+  @Test
+  public void testGetExtraDirectories_bothSystemPropertiesUsed() {
+    sessionProperties.put("jib.extraDirectory.path", "deprecated-property");
+    sessionProperties.put("jib.extraDirectories.paths", "new-property");
+
+    try {
+      testPluginConfiguration.getExtraDirectories();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetExtraDirectories_bothPropertiesUsed() {
+    Properties projectProperties = project.getProperties();
+    projectProperties.setProperty("jib.extraDirectory.path", "deprecated-property");
+    projectProperties.setProperty("jib.extraDirectories.paths", "new-property");
+
+    try {
+      testPluginConfiguration.getExtraDirectories();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetExtraDirectoryPermissions_bothSystemPropertiesUsed() {
+    sessionProperties.put("jib.extraDirectory.permissions", "deprecated-property");
+    sessionProperties.put("jib.extraDirectories.permissions", "new-property");
+
+    try {
+      testPluginConfiguration.getExtraDirectoryPermissions();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "You cannot configure both 'jib.extraDirectory.permissions' and "
+              + "'jib.extraDirectories.permissions'",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetExtraDirectoryPermissions_bothPropertiesUsed() {
+    Properties projectProperties = project.getProperties();
+    projectProperties.setProperty("jib.extraDirectory.permissions", "deprecated-property");
+    projectProperties.setProperty("jib.extraDirectories.permissions", "new-property");
+
+    try {
+      testPluginConfiguration.getExtraDirectoryPermissions();
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "You cannot configure both 'jib.extraDirectory.permissions' and "
+              + "'jib.extraDirectories.permissions'",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testIsContainerizable_noProperty() {
+    Properties projectProperties = project.getProperties();
+
+    projectProperties.remove("jib.containerize");
+    Assert.assertTrue(testPluginConfiguration.isContainerizable());
+
+    projectProperties.setProperty("jib.containerize", "");
+    Assert.assertTrue(testPluginConfiguration.isContainerizable());
+  }
+
+  @Test
+  public void testIsContainerizable_artifactId() {
+    project.setGroupId("group");
+    project.setArtifactId("artifact");
+    project.setFile(new File("/repository/project/pom.xml")); // sets baseDir
+
+    Properties projectProperties = project.getProperties();
+    projectProperties.setProperty("jib.containerize", ":artifact");
+    Assert.assertTrue(testPluginConfiguration.isContainerizable());
+
+    projectProperties.setProperty("jib.containerize", ":artifact2");
+    Assert.assertFalse(testPluginConfiguration.isContainerizable());
+  }
+
+  @Test
+  public void testIsContainerizable_groupAndArtifactId() {
+    project.setGroupId("group");
+    project.setArtifactId("artifact");
+    project.setFile(new File("/repository/project/pom.xml")); // sets baseDir
+
+    Properties projectProperties = project.getProperties();
+    projectProperties.setProperty("jib.containerize", "group:artifact");
+    Assert.assertTrue(testPluginConfiguration.isContainerizable());
+
+    projectProperties.setProperty("jib.containerize", "group:artifact2");
+    Assert.assertFalse(testPluginConfiguration.isContainerizable());
+  }
+
+  @Test
+  public void testIsContainerizable_directory() {
+    project.setGroupId("group");
+    project.setArtifactId("artifact");
+    project.setFile(new File("/repository/project/pom.xml")); // sets baseDir
+
+    Properties projectProperties = project.getProperties();
+    projectProperties.setProperty("jib.containerize", "project");
+    Assert.assertTrue(testPluginConfiguration.isContainerizable());
+
+    projectProperties.setProperty("jib.containerize", "project2");
+    Assert.assertFalse(testPluginConfiguration.isContainerizable());
   }
 }

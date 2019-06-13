@@ -16,10 +16,9 @@
 
 package com.google.cloud.tools.jib.image.json;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -36,7 +35,7 @@ public class V22ManifestTemplateTest {
   @Test
   public void testToJson() throws DigestException, IOException, URISyntaxException {
     // Loads the expected JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/v22manifest.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/v22manifest.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     // Creates the JSON object to serialize.
@@ -53,16 +52,13 @@ public class V22ManifestTemplateTest {
             "4945ba5011739b0b98c4a41afe224e417f47c7c99b2ce76830999c9a0861b236"));
 
     // Serializes the JSON object.
-    ByteArrayOutputStream jsonStream = new ByteArrayOutputStream();
-    JsonTemplateMapper.toBlob(manifestJson).writeTo(jsonStream);
-
-    Assert.assertEquals(expectedJson, jsonStream.toString());
+    Assert.assertEquals(expectedJson, JsonTemplateMapper.toUtf8String(manifestJson));
   }
 
   @Test
   public void testFromJson() throws IOException, URISyntaxException, DigestException {
     // Loads the JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/v22manifest.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/v22manifest.json").toURI());
 
     // Deserializes into a manifest JSON object.
     V22ManifestTemplate manifestJson =

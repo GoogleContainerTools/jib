@@ -16,26 +16,99 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.Layer;
+import com.google.common.base.Preconditions;
+import javax.annotation.Nullable;
 
-/**
- * Represents a cache entry for a layer stored in the cache. <b>Implementations must be
- * immutable.</b>
- */
-public interface CachedLayer extends Layer {
+/** Default implementation of {@link CachedLayer}. */
+public class CachedLayer implements Layer {
+
+  /** Builds a {@link CachedLayer}. */
+  static class Builder {
+
+    @Nullable private DescriptorDigest layerDigest;
+    @Nullable private DescriptorDigest layerDiffId;
+    private long layerSize = -1;
+    @Nullable private Blob layerBlob;
+
+    private Builder() {}
+
+    Builder setLayerDigest(DescriptorDigest layerDigest) {
+      this.layerDigest = layerDigest;
+      return this;
+    }
+
+    Builder setLayerDiffId(DescriptorDigest layerDiffId) {
+      this.layerDiffId = layerDiffId;
+      return this;
+    }
+
+    Builder setLayerSize(long layerSize) {
+      this.layerSize = layerSize;
+      return this;
+    }
+
+    Builder setLayerBlob(Blob layerBlob) {
+      this.layerBlob = layerBlob;
+      return this;
+    }
+
+    boolean hasLayerBlob() {
+      return layerBlob != null;
+    }
+
+    CachedLayer build() {
+      return new CachedLayer(
+          Preconditions.checkNotNull(layerDigest, "layerDigest required"),
+          Preconditions.checkNotNull(layerDiffId, "layerDiffId required"),
+          layerSize,
+          Preconditions.checkNotNull(layerBlob, "layerBlob required"));
+    }
+  }
 
   /**
-   * Gets the digest of the layer.
+   * Creates a new {@link Builder} for a {@link CachedLayer}.
    *
-   * @return the layer digest
+   * @return the new {@link Builder}
    */
-  DescriptorDigest getDigest();
+  static Builder builder() {
+    return new Builder();
+  }
 
-  /**
-   * Gets the size of the layer, in bytes.
-   *
-   * @return the layer size
-   */
-  long getSize();
+  private final DescriptorDigest layerDiffId;
+  private final BlobDescriptor blobDescriptor;
+  private final Blob layerBlob;
+
+  private CachedLayer(
+      DescriptorDigest layerDigest, DescriptorDigest layerDiffId, long layerSize, Blob layerBlob) {
+    this.layerDiffId = layerDiffId;
+    this.layerBlob = layerBlob;
+    this.blobDescriptor = new BlobDescriptor(layerSize, layerDigest);
+  }
+
+  public DescriptorDigest getDigest() {
+    return blobDescriptor.getDigest();
+  }
+
+  public long getSize() {
+    return blobDescriptor.getSize();
+  }
+
+  @Override
+  public DescriptorDigest getDiffId() {
+    return layerDiffId;
+  }
+
+  @Override
+  public Blob getBlob() {
+    return layerBlob;
+  }
+
+  @Override
+  public BlobDescriptor getBlobDescriptor() {
+    return blobDescriptor;
+  }
 }

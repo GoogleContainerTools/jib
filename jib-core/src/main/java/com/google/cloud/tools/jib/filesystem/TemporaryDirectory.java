@@ -19,7 +19,9 @@ package com.google.cloud.tools.jib.filesystem;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.RecursiveDeleteOption;
 import java.io.Closeable;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -53,7 +55,11 @@ public class TemporaryDirectory implements Closeable {
   @Override
   public void close() throws IOException {
     if (Files.exists(temporaryDirectory)) {
-      MoreFiles.deleteRecursively(temporaryDirectory, RecursiveDeleteOption.ALLOW_INSECURE);
+      try {
+        MoreFiles.deleteRecursively(temporaryDirectory, RecursiveDeleteOption.ALLOW_INSECURE);
+      } catch (FileNotFoundException | FileSystemException ex) {
+        // TODO log error; deletion is best-effort
+      }
     }
   }
 }

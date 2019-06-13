@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import java.util.Arrays;
 import java.util.List;
@@ -61,7 +62,7 @@ public class ImageLayersTest {
   public void testAddLayer_success() throws LayerPropertyNotFoundException {
     List<Layer> expectedLayers = Arrays.asList(mockLayer, mockReferenceLayer, mockDigestOnlyLayer);
 
-    ImageLayers<Layer> imageLayers =
+    ImageLayers imageLayers =
         ImageLayers.builder()
             .add(mockLayer)
             .add(mockReferenceLayer)
@@ -77,7 +78,7 @@ public class ImageLayersTest {
     List<Layer> expectedLayers =
         Arrays.asList(mockLayer, mockReferenceLayer, mockDigestOnlyLayer, mockLayer2, mockLayer);
 
-    ImageLayers<Layer> imageLayers =
+    ImageLayers imageLayers =
         ImageLayers.builder()
             .add(mockLayer)
             .add(mockReferenceLayer)
@@ -95,7 +96,7 @@ public class ImageLayersTest {
     List<Layer> expectedLayers =
         Arrays.asList(mockReferenceLayer, mockDigestOnlyLayer, mockLayer2, mockLayer);
 
-    ImageLayers<Layer> imageLayers =
+    ImageLayers imageLayers =
         ImageLayers.builder()
             .removeDuplicates()
             .add(mockLayer)

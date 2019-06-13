@@ -16,13 +16,13 @@
 
 package com.google.cloud.tools.jib.plugins.common.logging;
 
-import com.google.cloud.tools.jib.event.events.LogEvent.Level;
+import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/** Builds a handler for {@link ConsoleLogger}. */
+/** Builds a {@link ConsoleLogger}. */
 public class ConsoleLoggerBuilder {
 
   /**

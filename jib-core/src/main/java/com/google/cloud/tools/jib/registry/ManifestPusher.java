@@ -18,14 +18,14 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpResponseException;
-import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -66,26 +66,24 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final BuildableManifestTemplate manifestTemplate;
   private final String imageTag;
-  private final EventDispatcher eventDispatcher;
+  private final EventHandlers eventHandlers;
 
   ManifestPusher(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       BuildableManifestTemplate manifestTemplate,
       String imageTag,
-      EventDispatcher eventDispatcher) {
+      EventHandlers eventHandlers) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.manifestTemplate = manifestTemplate;
     this.imageTag = imageTag;
-    this.eventDispatcher = eventDispatcher;
+    this.eventHandlers = eventHandlers;
   }
 
   @Override
   public BlobHttpContent getContent() {
+    // TODO: Consider giving progress on manifest push as well?
     return new BlobHttpContent(
-        JsonTemplateMapper.toBlob(manifestTemplate),
-        manifestTemplate.getManifestMediaType(),
-        // TODO: Consider giving progress on manifest push as well?
-        null);
+        Blobs.from(manifestTemplate), manifestTemplate.getManifestMediaType());
   }
 
   @Override
@@ -115,7 +113,9 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
     ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(httpResponseException);
     if (errorCode == ErrorCodes.MANIFEST_INVALID || errorCode == ErrorCodes.TAG_INVALID) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
-          .addReason("Registry may not support Image Manifest Version 2, Schema 2")
+          .addReason(
+              "Registry may not support pushing OCI Manifest or "
+                  + "Docker Image Manifest Version 2, Schema 2")
           .build();
     }
     // rethrow: unhandled error response code.
@@ -125,10 +125,7 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   @Override
   public DescriptorDigest handleResponse(Response response) throws IOException {
     // Checks if the image digest is as expected.
-    DescriptorDigest expectedDigest =
-        JsonTemplateMapper.toBlob(manifestTemplate)
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest();
+    DescriptorDigest expectedDigest = Digests.computeJsonDigest(manifestTemplate);
 
     List<String> receivedDigests = response.getHeader(RESPONSE_DIGEST_HEADER);
     if (receivedDigests.size() == 1) {
@@ -144,7 +141,7 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
     }
 
     // The received digest is not as expected. Warns about this.
-    eventDispatcher.dispatch(
+    eventHandlers.dispatch(
         LogEvent.warn(makeUnexpectedImageDigestWarning(expectedDigest, receivedDigests)));
     return expectedDigest;
   }

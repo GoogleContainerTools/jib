@@ -74,7 +74,7 @@ class PushLayersStep
   @Override
   public ImmutableList<AsyncStep<PushBlobStep>> call() throws ExecutionException {
     try (TimerEventDispatcher ignored =
-        new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+        new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       ImmutableList<? extends AsyncStep<? extends CachedLayer>> cachedLayers =
           NonBlockingSteps.get(cachedLayerStep);
 

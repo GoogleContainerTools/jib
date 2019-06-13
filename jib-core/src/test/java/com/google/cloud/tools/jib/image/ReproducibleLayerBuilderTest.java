@@ -16,11 +16,12 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.api.LayerConfiguration;
+import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.configuration.FilePermissions;
-import com.google.cloud.tools.jib.configuration.LayerConfiguration;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
@@ -91,12 +92,20 @@ public class ReproducibleLayerBuilderTest {
     Assert.assertEquals(TarArchiveEntry.DEFAULT_DIR_MODE, extractionPathEntry.getMode());
   }
 
+  private static LayerEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
+    return new LayerEntry(
+        source,
+        destination,
+        LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
+        LayerConfiguration.DEFAULT_MODIFIED_TIME);
+  }
+
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
   public void testBuild() throws URISyntaxException, IOException {
-    Path layerDirectory = Paths.get(Resources.getResource("layer").toURI());
-    Path blobA = Paths.get(Resources.getResource("blobA").toURI());
+    Path layerDirectory = Paths.get(Resources.getResource("core/layer").toURI());
+    Path blobA = Paths.get(Resources.getResource("core/blobA").toURI());
 
     ReproducibleLayerBuilder layerBuilder =
         new ReproducibleLayerBuilder(
@@ -129,16 +138,16 @@ public class ReproducibleLayerBuilderTest {
       verifyNextTarArchiveEntry(
           tarArchiveInputStream,
           "extract/here/apple/layer/a/b/bar",
-          Paths.get(Resources.getResource("layer/a/b/bar").toURI()));
+          Paths.get(Resources.getResource("core/layer/a/b/bar").toURI()));
       verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/apple/layer/c/");
       verifyNextTarArchiveEntry(
           tarArchiveInputStream,
           "extract/here/apple/layer/c/cat",
-          Paths.get(Resources.getResource("layer/c/cat").toURI()));
+          Paths.get(Resources.getResource("core/layer/c/cat").toURI()));
       verifyNextTarArchiveEntry(
           tarArchiveInputStream,
           "extract/here/apple/layer/foo",
-          Paths.get(Resources.getResource("layer/foo").toURI()));
+          Paths.get(Resources.getResource("core/layer/foo").toURI()));
       verifyNextTarArchiveEntryIsDirectory(tarArchiveInputStream, "extract/here/banana/");
       verifyNextTarArchiveEntry(tarArchiveInputStream, "extract/here/banana/blobA", blobA);
     }
@@ -167,14 +176,14 @@ public class ReproducibleLayerBuilderTest {
     Blob layer =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA"), null),
-                    new LayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"), null)))
+                    defaultLayerEntry(fileA1, AbsoluteUnixPath.get("/somewhere/fileA")),
+                    defaultLayerEntry(fileB1, AbsoluteUnixPath.get("/somewhere/fileB"))))
             .build();
     Blob reproduced =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB"), null),
-                    new LayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"), null)))
+                    defaultLayerEntry(fileB2, AbsoluteUnixPath.get("/somewhere/fileB")),
+                    defaultLayerEntry(fileA2, AbsoluteUnixPath.get("/somewhere/fileA"))))
             .build();
 
     byte[] layerContent = Blobs.writeToByteArray(layer);
@@ -184,12 +193,92 @@ public class ReproducibleLayerBuilderTest {
   }
 
   @Test
-  public void testBuild_timestamp() throws IOException {
+  public void testBuild_parentDirBehavior() throws IOException {
+    Path testRoot = temporaryFolder.getRoot().toPath();
+
+    // the path doesn't really matter on source files, but these are structured
+    Path parent = Files.createDirectories(testRoot.resolve("aaa"));
+    Path fileA = Files.createFile(parent.resolve("fileA"));
+    Path ignoredParent = Files.createDirectories(testRoot.resolve("bbb-ignored"));
+    Path fileB = Files.createFile(ignoredParent.resolve("fileB"));
+    Path fileC =
+        Files.createFile(Files.createDirectories(testRoot.resolve("ccc-absent")).resolve("fileC"));
+
+    Blob layer =
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(
+                    new LayerEntry(
+                        parent,
+                        AbsoluteUnixPath.get("/root/aaa"),
+                        FilePermissions.fromOctalString("111"),
+                        Instant.ofEpochSecond(10)),
+                    new LayerEntry(
+                        fileA,
+                        AbsoluteUnixPath.get("/root/aaa/fileA"),
+                        FilePermissions.fromOctalString("222"),
+                        Instant.ofEpochSecond(20)),
+                    new LayerEntry(
+                        fileB,
+                        AbsoluteUnixPath.get("/root/bbb-ignored/fileB"),
+                        FilePermissions.fromOctalString("333"),
+                        Instant.ofEpochSecond(30)),
+                    new LayerEntry(
+                        ignoredParent,
+                        AbsoluteUnixPath.get("/root/bbb-ignored"),
+                        FilePermissions.fromOctalString("444"),
+                        Instant.ofEpochSecond(40)),
+                    new LayerEntry(
+                        fileC,
+                        AbsoluteUnixPath.get("/root/ccc-absent/file3"),
+                        FilePermissions.fromOctalString("555"),
+                        Instant.ofEpochSecond(50))))
+            .build();
+
+    Path tarFile = temporaryFolder.newFile().toPath();
+    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
+      layer.writeTo(out);
+    }
+
+    try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
+      // root (default folder permissions)
+      TarArchiveEntry root = in.getNextTarEntry();
+      Assert.assertEquals(040755, root.getMode());
+      Assert.assertEquals(Instant.ofEpochSecond(1), root.getModTime().toInstant());
+
+      // parentAAA (custom permissions, custom timestamp)
+      TarArchiveEntry rootParentAAA = in.getNextTarEntry();
+      Assert.assertEquals(040111, rootParentAAA.getMode());
+      Assert.assertEquals(Instant.ofEpochSecond(10), rootParentAAA.getModTime().toInstant());
+
+      // skip over fileA
+      in.getNextTarEntry();
+
+      // parentBBB (default permissions - ignored custom permissions, since fileB added first)
+      TarArchiveEntry rootParentBBB = in.getNextTarEntry();
+      // TODO (#1650): we want 040444 here.
+      Assert.assertEquals(040755, rootParentBBB.getMode());
+      // TODO (#1650): we want Instant.ofEpochSecond(40) here.
+      Assert.assertEquals(Instant.ofEpochSecond(1), root.getModTime().toInstant());
+
+      // skip over fileB
+      in.getNextTarEntry();
+
+      // parentCCC (default permissions - no entry provided)
+      TarArchiveEntry rootParentCCC = in.getNextTarEntry();
+      Assert.assertEquals(040755, rootParentCCC.getMode());
+      Assert.assertEquals(Instant.ofEpochSecond(1), root.getModTime().toInstant());
+
+      // we don't care about fileC
+    }
+  }
+
+  @Test
+  public void testBuild_timestampDefault() throws IOException {
     Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
 
     Blob blob =
         new ReproducibleLayerBuilder(
-                ImmutableList.of(new LayerEntry(file, AbsoluteUnixPath.get("/fileA"), null)))
+                ImmutableList.of(defaultLayerEntry(file, AbsoluteUnixPath.get("/fileA"))))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -205,6 +294,32 @@ public class ReproducibleLayerBuilderTest {
   }
 
   @Test
+  public void testBuild_timestampNonDefault() throws IOException {
+    Path file = createFile(temporaryFolder.getRoot().toPath(), "fileA", "some content", 54321);
+
+    Blob blob =
+        new ReproducibleLayerBuilder(
+                ImmutableList.of(
+                    new LayerEntry(
+                        file,
+                        AbsoluteUnixPath.get("/fileA"),
+                        FilePermissions.DEFAULT_FILE_PERMISSIONS,
+                        Instant.ofEpochSecond(123))))
+            .build();
+
+    Path tarFile = temporaryFolder.newFile().toPath();
+    try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(tarFile))) {
+      blob.writeTo(out);
+    }
+
+    // Reads the file back.
+    try (TarArchiveInputStream in = new TarArchiveInputStream(Files.newInputStream(tarFile))) {
+      Assert.assertEquals(
+          Date.from(Instant.EPOCH.plusSeconds(123)), in.getNextEntry().getLastModifiedDate());
+    }
+  }
+
+  @Test
   public void testBuild_permissions() throws IOException {
     Path testRoot = temporaryFolder.getRoot().toPath();
     Path folder = Files.createDirectories(testRoot.resolve("files1"));
@@ -214,15 +329,17 @@ public class ReproducibleLayerBuilderTest {
     Blob blob =
         new ReproducibleLayerBuilder(
                 ImmutableList.of(
-                    new LayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA"), null),
+                    defaultLayerEntry(fileA, AbsoluteUnixPath.get("/somewhere/fileA")),
                     new LayerEntry(
                         fileB,
                         AbsoluteUnixPath.get("/somewhere/fileB"),
-                        FilePermissions.fromOctalString("123")),
+                        FilePermissions.fromOctalString("123"),
+                        LayerConfiguration.DEFAULT_MODIFIED_TIME),
                     new LayerEntry(
                         folder,
                         AbsoluteUnixPath.get("/somewhere/folder"),
-                        FilePermissions.fromOctalString("456"))))
+                        FilePermissions.fromOctalString("456"),
+                        LayerConfiguration.DEFAULT_MODIFIED_TIME)))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();

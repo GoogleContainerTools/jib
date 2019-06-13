@@ -29,15 +29,18 @@ import java.util.function.Consumer;
  */
 public class ProgressEventHandler implements Consumer<ProgressEvent> {
 
-  /** Contains the accumulated progress and which {@link Allocation}s are not yet complete. */
+  /**
+   * Contains the accumulated progress and which "leaf" tasks are not yet complete. Leaf tasks are
+   * those that do not have sub-tasks.
+   */
   public static class Update {
 
     private final double progress;
-    private final ImmutableList<Allocation> unfinishedAllocations;
+    private final ImmutableList<String> unfinishedLeafTasks;
 
-    private Update(double progress, ImmutableList<Allocation> unfinishedAllocations) {
+    private Update(double progress, ImmutableList<String> unfinishedLeafTasks) {
       this.progress = progress;
-      this.unfinishedAllocations = unfinishedAllocations;
+      this.unfinishedLeafTasks = unfinishedLeafTasks;
     }
 
     /**
@@ -50,13 +53,13 @@ public class ProgressEventHandler implements Consumer<ProgressEvent> {
     }
 
     /**
-     * Gets a list of the unfinished {@link Allocation}s in the order in which those {@link
-     * Allocation}s were encountered.
+     * Gets a list of the unfinished "leaf" tasks in the order in which those tasks were
+     * encountered.
      *
-     * @return a list of unfinished {@link Allocation}s
+     * @return a list of unfinished "leaf" tasks
      */
-    public ImmutableList<Allocation> getUnfinishedAllocations() {
-      return unfinishedAllocations;
+    public ImmutableList<String> getUnfinishedLeafTasks() {
+      return unfinishedLeafTasks;
     }
   }
 
@@ -89,8 +92,7 @@ public class ProgressEventHandler implements Consumer<ProgressEvent> {
 
     if (completionTracker.updateProgress(allocation, progressUnits)) {
       // Note: Could produce false positives.
-      updateNotifier.accept(
-          new Update(progress.sum(), completionTracker.getUnfinishedAllocations()));
+      updateNotifier.accept(new Update(progress.sum(), completionTracker.getUnfinishedLeafTasks()));
     }
   }
 }

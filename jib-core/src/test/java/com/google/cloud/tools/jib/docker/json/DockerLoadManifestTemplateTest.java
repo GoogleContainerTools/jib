@@ -16,8 +16,7 @@
 
 package com.google.cloud.tools.jib.docker.json;
 
-import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -37,7 +36,7 @@ public class DockerLoadManifestTemplateTest {
   @Test
   public void testToJson() throws URISyntaxException, IOException {
     // Loads the expected JSON string.
-    Path jsonFile = Paths.get(Resources.getResource("json/loadmanifest.json").toURI());
+    Path jsonFile = Paths.get(Resources.getResource("core/json/loadmanifest.json").toURI());
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     DockerLoadManifestEntryTemplate template = new DockerLoadManifestEntryTemplate();
@@ -48,6 +47,6 @@ public class DockerLoadManifestTemplateTest {
     template.addLayerFile("layer3.tar.gz");
 
     List<DockerLoadManifestEntryTemplate> loadManifest = Collections.singletonList(template);
-    Assert.assertEquals(expectedJson, Blobs.writeToString(JsonTemplateMapper.toBlob(loadManifest)));
+    Assert.assertEquals(expectedJson, JsonTemplateMapper.toUtf8String(loadManifest));
   }
 }

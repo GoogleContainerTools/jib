@@ -16,10 +16,13 @@
 
 package com.google.cloud.tools.jib.configuration;
 
+import com.google.cloud.tools.jib.api.ImageFormat;
+import com.google.cloud.tools.jib.api.LayerConfiguration;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
+import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.annotations.VisibleForTesting;
@@ -57,13 +60,11 @@ public class BuildConfiguration {
     @Nullable private Path applicationLayersCacheDirectory;
     @Nullable private Path baseImageLayersCacheDirectory;
     private boolean allowInsecureRegistries = false;
+    private boolean offline = false;
     private ImmutableList<LayerConfiguration> layerConfigurations = ImmutableList.of();
     private Class<? extends BuildableManifestTemplate> targetFormat = DEFAULT_TARGET_FORMAT;
     private String toolName = DEFAULT_TOOL_NAME;
-    private EventDispatcher eventDispatcher =
-        jibEvent -> {
-          /* No-op EventDispatcher. */
-        };
+    private EventHandlers eventHandlers = EventHandlers.NONE;
     @Nullable private ExecutorService executorService;
 
     private Builder() {}
@@ -141,8 +142,11 @@ public class BuildConfiguration {
      * @param targetFormat the target format
      * @return this
      */
-    public Builder setTargetFormat(Class<? extends BuildableManifestTemplate> targetFormat) {
-      this.targetFormat = targetFormat;
+    public Builder setTargetFormat(ImageFormat targetFormat) {
+      this.targetFormat =
+          targetFormat == ImageFormat.Docker
+              ? V22ManifestTemplate.class
+              : OCIManifestTemplate.class;
       return this;
     }
 
@@ -154,6 +158,17 @@ public class BuildConfiguration {
      */
     public Builder setAllowInsecureRegistries(boolean allowInsecureRegistries) {
       this.allowInsecureRegistries = allowInsecureRegistries;
+      return this;
+    }
+
+    /**
+     * Sets whether or not to perform the build in offline mode.
+     *
+     * @param offline if {@code true}, the build will run in offline mode
+     * @return this
+     */
+    public Builder setOffline(boolean offline) {
+      this.offline = offline;
       return this;
     }
 
@@ -180,13 +195,13 @@ public class BuildConfiguration {
     }
 
     /**
-     * Sets the {@link EventDispatcher} to dispatch events with.
+     * Sets the {@link EventHandlers} to dispatch events with.
      *
-     * @param eventDispatcher the {@link EventDispatcher}
+     * @param eventHandlers the {@link EventHandlers}
      * @return this
      */
-    public Builder setEventDispatcher(EventDispatcher eventDispatcher) {
-      this.eventDispatcher = eventDispatcher;
+    public Builder setEventHandlers(EventHandlers eventHandlers) {
+      this.eventHandlers = eventHandlers;
       return this;
     }
 
@@ -230,7 +245,7 @@ public class BuildConfiguration {
       switch (missingFields.size()) {
         case 0: // No errors
           if (Preconditions.checkNotNull(baseImageConfiguration).getImage().usesDefaultTag()) {
-            eventDispatcher.dispatch(
+            eventHandlers.dispatch(
                 LogEvent.warn(
                     "Base image '"
                         + baseImageConfiguration.getImage()
@@ -246,9 +261,10 @@ public class BuildConfiguration {
               Cache.withDirectory(Preconditions.checkNotNull(applicationLayersCacheDirectory)),
               targetFormat,
               allowInsecureRegistries,
+              offline,
               layerConfigurations,
               toolName,
-              eventDispatcher,
+              eventHandlers,
               Preconditions.checkNotNull(executorService));
 
         case 1:
@@ -298,9 +314,10 @@ public class BuildConfiguration {
   private final Cache applicationLayersCache;
   private Class<? extends BuildableManifestTemplate> targetFormat;
   private final boolean allowInsecureRegistries;
+  private final boolean offline;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
   private final String toolName;
-  private final EventDispatcher eventDispatcher;
+  private final EventHandlers eventHandlers;
   private final ExecutorService executorService;
 
   /** Instantiate with {@link #builder}. */
@@ -313,9 +330,10 @@ public class BuildConfiguration {
       Cache applicationLayersCache,
       Class<? extends BuildableManifestTemplate> targetFormat,
       boolean allowInsecureRegistries,
+      boolean offline,
       ImmutableList<LayerConfiguration> layerConfigurations,
       String toolName,
-      EventDispatcher eventDispatcher,
+      EventHandlers eventHandlers,
       ExecutorService executorService) {
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
@@ -325,9 +343,10 @@ public class BuildConfiguration {
     this.applicationLayersCache = applicationLayersCache;
     this.targetFormat = targetFormat;
     this.allowInsecureRegistries = allowInsecureRegistries;
+    this.offline = offline;
     this.layerConfigurations = layerConfigurations;
     this.toolName = toolName;
-    this.eventDispatcher = eventDispatcher;
+    this.eventHandlers = eventHandlers;
     this.executorService = executorService;
   }
 
@@ -360,8 +379,8 @@ public class BuildConfiguration {
     return toolName;
   }
 
-  public EventDispatcher getEventDispatcher() {
-    return eventDispatcher;
+  public EventHandlers getEventHandlers() {
+    return eventHandlers;
   }
 
   public ExecutorService getExecutorService() {
@@ -396,6 +415,15 @@ public class BuildConfiguration {
   }
 
   /**
+   * Gets whether or not to run the build in offline mode.
+   *
+   * @return {@code true} if the build will run in offline mode; {@code false} otherwise
+   */
+  public boolean isOffline() {
+    return offline;
+  }
+
+  /**
    * Gets the configurations for building the layers.
    *
    * @return the list of layer configurations
@@ -426,7 +454,7 @@ public class BuildConfiguration {
 
   private RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
     return RegistryClient.factory(
-            getEventDispatcher(),
+            getEventHandlers(),
             imageConfiguration.getImageRegistry(),
             imageConfiguration.getImageRepository())
         .setAllowInsecureRegistries(getAllowInsecureRegistries())

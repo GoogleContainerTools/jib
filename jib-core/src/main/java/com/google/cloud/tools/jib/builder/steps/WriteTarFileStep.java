@@ -16,16 +16,15 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
-import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.docker.ImageTarball;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -90,19 +89,18 @@ public class WriteTarFileStep implements AsyncStep<BuildResult>, Callable<BuildR
 
   private BuildResult writeTarFile() throws ExecutionException, IOException {
     buildConfiguration
-        .getEventDispatcher()
+        .getEventHandlers()
         .dispatch(LogEvent.progress("Building image to tar file..."));
 
     try (ProgressEventDispatcher ignored =
         progressEventDispatcherFactory.create("writing to tar file", 1)) {
-      Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
+      Image image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
 
       // Builds the image to a tarball.
       Files.createDirectories(outputPath.getParent());
       try (OutputStream outputStream =
           new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
-        new ImageToTarballTranslator(image)
-            .toTarballBlob(buildConfiguration.getTargetImageConfiguration().getImage())
+        new ImageTarball(image, buildConfiguration.getTargetImageConfiguration().getImage())
             .writeTo(outputStream);
       }
 

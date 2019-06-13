@@ -16,7 +16,8 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.api.RegistryException;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -30,13 +31,12 @@ import org.junit.Test;
 public class ManifestPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EventDispatcher EVENT_DISPATCHER = jibEvent -> {};
 
   @Test
   public void testPull_v21() throws IOException, RegistryException, InterruptedException {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_DISPATCHER, "localhost:5000", "busybox")
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     V21ManifestTemplate manifestTemplate =
@@ -50,7 +50,7 @@ public class ManifestPullerIntegrationTest {
   public void testPull_v22() throws IOException, RegistryException, InterruptedException {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_DISPATCHER, "gcr.io", "distroless/java").newRegistryClient();
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java").newRegistryClient();
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
@@ -64,7 +64,7 @@ public class ManifestPullerIntegrationTest {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
     try {
       RegistryClient registryClient =
-          RegistryClient.factory(EVENT_DISPATCHER, "localhost:5000", "busybox")
+          RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
               .setAllowInsecureRegistries(true)
               .newRegistryClient();
       registryClient.pullManifest("nonexistent-tag");

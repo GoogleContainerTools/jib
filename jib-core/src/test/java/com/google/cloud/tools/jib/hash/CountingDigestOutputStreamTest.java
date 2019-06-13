@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.hash;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
@@ -57,10 +57,9 @@ public class CountingDigestOutputStreamTest {
       InputStream toHashInputStream = new ByteArrayInputStream(bytesToHash);
       ByteStreams.copy(toHashInputStream, countingDigestOutputStream);
 
-      BlobDescriptor expectedBlobDescriptor =
-          new BlobDescriptor(bytesToHash.length, DescriptorDigest.fromHash(expectedHash));
-      Assert.assertEquals(expectedBlobDescriptor, countingDigestOutputStream.toBlobDescriptor());
-      Assert.assertEquals(bytesToHash.length, countingDigestOutputStream.getTotalBytes());
+      BlobDescriptor blobDescriptor = countingDigestOutputStream.computeDigest();
+      Assert.assertEquals(DescriptorDigest.fromHash(expectedHash), blobDescriptor.getDigest());
+      Assert.assertEquals(bytesToHash.length, blobDescriptor.getSize());
     }
   }
 }

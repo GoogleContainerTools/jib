@@ -16,10 +16,10 @@
 
 package com.google.cloud.tools.jib.image.json;
 
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.Port;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
@@ -47,37 +47,42 @@ public class JsonToImageTranslatorTest {
 
   @Test
   public void testToImage_v21()
-      throws IOException, LayerPropertyNotFoundException, DigestException, URISyntaxException {
+      throws IOException, LayerPropertyNotFoundException, DigestException, URISyntaxException,
+          BadContainerConfigurationFormatException {
     // Loads the JSON string.
     Path jsonFile =
-        Paths.get(getClass().getClassLoader().getResource("json/v21manifest.json").toURI());
+        Paths.get(getClass().getClassLoader().getResource("core/json/v21manifest.json").toURI());
 
     // Deserializes into a manifest JSON object.
     V21ManifestTemplate manifestTemplate =
         JsonTemplateMapper.readJsonFromFile(jsonFile, V21ManifestTemplate.class);
 
-    Image<Layer> image = JsonToImageTranslator.toImage(manifestTemplate);
+    Image image = JsonToImageTranslator.toImage(manifestTemplate);
 
     List<Layer> layers = image.getLayers();
-    Assert.assertEquals(1, layers.size());
+    Assert.assertEquals(2, layers.size());
+    Assert.assertEquals(
+        DescriptorDigest.fromDigest(
+            "sha256:5bd451067f9ab05e97cda8476c82f86d9b69c2dffb60a8ad2fe3723942544ab3"),
+        layers.get(0).getBlobDescriptor().getDigest());
     Assert.assertEquals(
         DescriptorDigest.fromDigest(
             "sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"),
-        layers.get(0).getBlobDescriptor().getDigest());
+        layers.get(1).getBlobDescriptor().getDigest());
   }
 
   @Test
   public void testToImage_v22()
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
           DigestException, URISyntaxException, BadContainerConfigurationFormatException {
-    testToImage_buildable("json/v22manifest.json", V22ManifestTemplate.class);
+    testToImage_buildable("core/json/v22manifest.json", V22ManifestTemplate.class);
   }
 
   @Test
   public void testToImage_oci()
       throws IOException, LayerPropertyNotFoundException, LayerCountMismatchException,
           DigestException, URISyntaxException, BadContainerConfigurationFormatException {
-    testToImage_buildable("json/ocimanifest.json", OCIManifestTemplate.class);
+    testToImage_buildable("core/json/ocimanifest.json", OCIManifestTemplate.class);
   }
 
   @Test
@@ -109,7 +114,7 @@ public class JsonToImageTranslatorTest {
   }
 
   @Test
-  public void testvolumeMapToList() throws BadContainerConfigurationFormatException {
+  public void testVolumeMapToList() throws BadContainerConfigurationFormatException {
     ImmutableSortedMap<String, Map<?, ?>> input =
         ImmutableSortedMap.of(
             "/var/job-result-data", ImmutableMap.of(), "/var/log/my-app-logs", ImmutableMap.of());
@@ -164,7 +169,8 @@ public class JsonToImageTranslatorTest {
           DigestException, URISyntaxException, BadContainerConfigurationFormatException {
     // Loads the container configuration JSON.
     Path containerConfigurationJsonFile =
-        Paths.get(getClass().getClassLoader().getResource("json/containerconfig.json").toURI());
+        Paths.get(
+            getClass().getClassLoader().getResource("core/json/containerconfig.json").toURI());
     ContainerConfigurationTemplate containerConfigurationTemplate =
         JsonTemplateMapper.readJsonFromFile(
             containerConfigurationJsonFile, ContainerConfigurationTemplate.class);
@@ -175,8 +181,7 @@ public class JsonToImageTranslatorTest {
     T manifestTemplate =
         JsonTemplateMapper.readJsonFromFile(manifestJsonFile, manifestTemplateClass);
 
-    Image<Layer> image =
-        JsonToImageTranslator.toImage(manifestTemplate, containerConfigurationTemplate);
+    Image image = JsonToImageTranslator.toImage(manifestTemplate, containerConfigurationTemplate);
 
     List<Layer> layers = image.getLayers();
     Assert.assertEquals(1, layers.size());
@@ -216,5 +221,8 @@ public class JsonToImageTranslatorTest {
             AbsoluteUnixPath.get("/var/log/my-app-logs")),
         image.getVolumes());
     Assert.assertEquals("tomcat", image.getUser());
+    Assert.assertEquals("value1", image.getLabels().get("key1"));
+    Assert.assertEquals("value2", image.getLabels().get("key2"));
+    Assert.assertEquals(2, image.getLabels().size());
   }
 }

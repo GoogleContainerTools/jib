@@ -16,20 +16,18 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -38,13 +36,13 @@ import javax.annotation.Nullable;
 public class ConfigurationPropertyValidator {
 
   /** Matches key-value pairs in the form of "key=value" */
-  private static final Pattern ENVIRONMENT_PATTERN = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
+  private static final Pattern KEY_VALUE_PATTERN = Pattern.compile("(?<name>[^=]+)=(?<value>.*)");
 
   /**
    * Gets a {@link Credential} from a username and password. First tries system properties, then
    * tries build configuration, otherwise returns null.
    *
-   * @param eventDispatcher the {@link EventDispatcher} used to dispatch log events
+   * @param logger a consumer for handling log events
    * @param usernameProperty the name of the username system property
    * @param passwordProperty the name of the password system property
    * @param auth the configured credentials
@@ -53,7 +51,7 @@ public class ConfigurationPropertyValidator {
    *     {@link Optional#empty} if neither is configured.
    */
   public static Optional<Credential> getImageCredential(
-      EventDispatcher eventDispatcher,
+      Consumer<LogEvent> logger,
       String usernameProperty,
       String passwordProperty,
       AuthProperty auth,
@@ -63,12 +61,12 @@ public class ConfigurationPropertyValidator {
     String commandlinePassword = rawConfiguration.getProperty(passwordProperty).orElse(null);
     if (!Strings.isNullOrEmpty(commandlineUsername)
         && !Strings.isNullOrEmpty(commandlinePassword)) {
-      return Optional.of(Credential.basic(commandlineUsername, commandlinePassword));
+      return Optional.of(Credential.from(commandlineUsername, commandlinePassword));
     }
 
     // Warn if a system property is missing
     if (!Strings.isNullOrEmpty(commandlinePassword) && Strings.isNullOrEmpty(commandlineUsername)) {
-      eventDispatcher.dispatch(
+      logger.accept(
           LogEvent.warn(
               passwordProperty
                   + " system property is set, but "
@@ -76,7 +74,7 @@ public class ConfigurationPropertyValidator {
                   + " is not; attempting other authentication methods."));
     }
     if (!Strings.isNullOrEmpty(commandlineUsername) && Strings.isNullOrEmpty(commandlinePassword)) {
-      eventDispatcher.dispatch(
+      logger.accept(
           LogEvent.warn(
               usernameProperty
                   + " system property is set, but "
@@ -89,21 +87,21 @@ public class ConfigurationPropertyValidator {
       return Optional.empty();
     }
     if (Strings.isNullOrEmpty(auth.getUsername())) {
-      eventDispatcher.dispatch(
+      logger.accept(
           LogEvent.warn(
               auth.getUsernameDescriptor()
                   + " is missing from build configuration; ignoring auth section."));
       return Optional.empty();
     }
     if (Strings.isNullOrEmpty(auth.getPassword())) {
-      eventDispatcher.dispatch(
+      logger.accept(
           LogEvent.warn(
               auth.getPasswordDescriptor()
                   + " is missing from build configuration; ignoring auth section."));
       return Optional.empty();
     }
 
-    return Optional.of(Credential.basic(auth.getUsername(), auth.getPassword()));
+    return Optional.of(Credential.from(auth.getUsername(), auth.getPassword()));
   }
 
   /**
@@ -111,9 +109,8 @@ public class ConfigurationPropertyValidator {
    * {@code project-name:project-version} if target image is not configured
    *
    * @param targetImage the configured target image reference
-   * @param eventDispatcher the {@link EventDispatcher} used to dispatch log events
-   * @param generatedName the image name to use if {@code targetImage} is {@code null}
-   * @param generatedTag the tag to use if {@code targetImage} is {@code null}
+   * @param projectProperties the {@link ProjectProperties} providing the project name, version, and
+   *     log event handler
    * @param helpfulSuggestions used for generating the message notifying the user of the generated
    *     tag
    * @return an {@link ImageReference} parsed from the configured target image, or one of the form
@@ -123,13 +120,16 @@ public class ConfigurationPropertyValidator {
    */
   public static ImageReference getGeneratedTargetDockerTag(
       @Nullable String targetImage,
-      EventDispatcher eventDispatcher,
-      String generatedName,
-      String generatedTag,
+      ProjectProperties projectProperties,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException {
+    String generatedName = projectProperties.getName();
+    String generatedTag =
+        projectProperties.getVersion().equals("unspecified")
+            ? "latest"
+            : projectProperties.getVersion();
     if (Strings.isNullOrEmpty(targetImage)) {
-      eventDispatcher.dispatch(
+      projectProperties.log(
           LogEvent.lifecycle(helpfulSuggestions.forGeneratedTag(generatedName, generatedTag)));
 
       // Try to parse generated tag to verify that project name and version are valid (throws an
@@ -149,18 +149,18 @@ public class ConfigurationPropertyValidator {
    * @return the map of parsed values
    */
   public static Map<String, String> parseMapProperty(String property) {
-    Map<String, String> result = new HashMap<>();
+    Map<String, String> result = new LinkedHashMap<>(); // LinkedHashMap to keep insertion order
 
     // Split on non-escaped commas
     List<String> entries = parseListProperty(property);
     for (String entry : entries) {
-      Matcher matcher = ENVIRONMENT_PATTERN.matcher(entry);
+      Matcher matcher = KEY_VALUE_PATTERN.matcher(entry);
       if (!matcher.matches()) {
         throw new IllegalArgumentException("'" + entry + "' is not a valid key-value pair");
       }
       result.put(matcher.group("name"), matcher.group("value"));
     }
-    return ImmutableMap.copyOf(result);
+    return result;
   }
 
   /**
@@ -183,7 +183,7 @@ public class ConfigurationPropertyValidator {
       }
     }
     items.add(property.substring(startIndex));
-    return ImmutableList.copyOf(items);
+    return items;
   }
 
   private ConfigurationPropertyValidator() {}

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.blob;
 
+import com.google.cloud.tools.jib.hash.Digests;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,8 +35,8 @@ class FileBlob implements Blob {
 
   @Override
   public BlobDescriptor writeTo(OutputStream outputStream) throws IOException {
-    try (InputStream fileStream = new BufferedInputStream(Files.newInputStream(file))) {
-      return BlobDescriptor.fromPipe(fileStream, outputStream);
+    try (InputStream fileIn = new BufferedInputStream(Files.newInputStream(file))) {
+      return Digests.computeDigest(fileIn, outputStream);
     }
   }
 }

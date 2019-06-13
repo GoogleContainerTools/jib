@@ -19,15 +19,15 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
-import com.google.common.io.ByteStreams;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import java.io.IOException;
@@ -87,12 +87,11 @@ class PushContainerConfigurationStep
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("pushing container configuration", 1);
         TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
-      Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
-      Blob containerConfigurationBlob =
-          new ImageToJsonTranslator(image).getContainerConfigurationBlob();
-      BlobDescriptor blobDescriptor =
-          containerConfigurationBlob.writeTo(ByteStreams.nullOutputStream());
+            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
+      Image image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
+      JsonTemplate containerConfiguration =
+          new ImageToJsonTranslator(image).getContainerConfiguration();
+      BlobDescriptor blobDescriptor = Digests.computeDigest(containerConfiguration);
 
       return new PushBlobStep(
           listeningExecutorService,
@@ -100,7 +99,7 @@ class PushContainerConfigurationStep
           progressEventDispatcher.newChildProducer(),
           authenticatePushStep,
           blobDescriptor,
-          containerConfigurationBlob);
+          Blobs.from(containerConfiguration));
     }
   }
 }

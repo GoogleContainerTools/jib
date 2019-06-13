@@ -16,12 +16,7 @@
 
 package com.google.cloud.tools.jib.blob;
 
-import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.common.io.ByteStreams;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 
 /** Contains properties describing a BLOB, including its digest and possibly its size (in bytes). */
 public class BlobDescriptor {
@@ -30,24 +25,6 @@ public class BlobDescriptor {
 
   /** The size of the BLOB (in bytes). Negative if unknown. */
   private final long size;
-
-  /**
-   * Creates a new {@link BlobDescriptor} from the contents of an {@link InputStream} while piping
-   * to an {@link OutputStream}. Does not close either streams.
-   *
-   * @param inputStream the stream to read the contents from
-   * @param outputStream the {@link OutputStream} to pipe to
-   * @return a {@link BlobDescriptor} of the piped contents
-   * @throws IOException if reading from or writing to the streams fails
-   */
-  static BlobDescriptor fromPipe(InputStream inputStream, OutputStream outputStream)
-      throws IOException {
-    CountingDigestOutputStream countingDigestOutputStream =
-        new CountingDigestOutputStream(outputStream);
-    ByteStreams.copy(inputStream, countingDigestOutputStream);
-    countingDigestOutputStream.flush();
-    return countingDigestOutputStream.toBlobDescriptor();
-  }
 
   public BlobDescriptor(long size, DescriptorDigest digest) {
     this.size = size;

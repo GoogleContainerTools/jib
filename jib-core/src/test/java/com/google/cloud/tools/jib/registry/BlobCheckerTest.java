@@ -18,10 +18,9 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.Response;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
@@ -92,7 +91,7 @@ public class BlobCheckerTest {
         new ErrorResponseTemplate()
             .addError(new ErrorEntryTemplate(ErrorCodes.BLOB_UNKNOWN.name(), "some message"));
     Mockito.when(mockHttpResponseException.getContent())
-        .thenReturn(Blobs.writeToString(JsonTemplateMapper.toBlob(emptyErrorResponseTemplate)));
+        .thenReturn(JsonTemplateMapper.toUtf8String(emptyErrorResponseTemplate));
 
     BlobDescriptor blobDescriptor =
         testBlobChecker.handleHttpResponseException(mockHttpResponseException);
@@ -112,7 +111,7 @@ public class BlobCheckerTest {
             .addError(new ErrorEntryTemplate(ErrorCodes.BLOB_UNKNOWN.name(), "some message"))
             .addError(new ErrorEntryTemplate(ErrorCodes.MANIFEST_UNKNOWN.name(), "some message"));
     Mockito.when(mockHttpResponseException.getContent())
-        .thenReturn(Blobs.writeToString(JsonTemplateMapper.toBlob(emptyErrorResponseTemplate)));
+        .thenReturn(JsonTemplateMapper.toUtf8String(emptyErrorResponseTemplate));
 
     try {
       testBlobChecker.handleHttpResponseException(mockHttpResponseException);
@@ -132,7 +131,7 @@ public class BlobCheckerTest {
 
     ErrorResponseTemplate emptyErrorResponseTemplate = new ErrorResponseTemplate();
     Mockito.when(mockHttpResponseException.getContent())
-        .thenReturn(Blobs.writeToString(JsonTemplateMapper.toBlob(emptyErrorResponseTemplate)));
+        .thenReturn(JsonTemplateMapper.toUtf8String(emptyErrorResponseTemplate));
 
     try {
       testBlobChecker.handleHttpResponseException(mockHttpResponseException);

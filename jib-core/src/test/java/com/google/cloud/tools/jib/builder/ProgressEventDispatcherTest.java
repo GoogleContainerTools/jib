@@ -16,9 +16,8 @@
 
 package com.google.cloud.tools.jib.builder;
 
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
-import com.google.common.base.VerifyException;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,12 +31,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ProgressEventDispatcherTest {
 
-  @Mock private EventDispatcher mockEventDispatcher;
+  @Mock private EventHandlers mockEventHandlers;
 
   @Test
   public void testDispatch() {
     try (ProgressEventDispatcher progressEventDispatcher =
-            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 10);
+            ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 10);
         ProgressEventDispatcher ignored =
             progressEventDispatcher.newChildProducer().create("ignored", 20)) {
       // empty
@@ -45,7 +44,7 @@ public class ProgressEventDispatcherTest {
 
     ArgumentCaptor<ProgressEvent> progressEventArgumentCaptor =
         ArgumentCaptor.forClass(ProgressEvent.class);
-    Mockito.verify(mockEventDispatcher, Mockito.times(4))
+    Mockito.verify(mockEventHandlers, Mockito.times(4))
         .dispatch(progressEventArgumentCaptor.capture());
     List<ProgressEvent> progressEvents = progressEventArgumentCaptor.getAllValues();
 
@@ -59,37 +58,58 @@ public class ProgressEventDispatcherTest {
   }
 
   @Test
-  public void testDispatch_tooMuchProgress() {
+  public void testDispatch_safeWithtooMuchProgress() {
     try (ProgressEventDispatcher progressEventDispatcher =
-        ProgressEventDispatcher.newRoot(mockEventDispatcher, "allocation description", 10)) {
-      progressEventDispatcher.dispatchProgress(10);
-      try {
-        progressEventDispatcher.dispatchProgress(10);
-        Assert.fail();
-
-      } catch (VerifyException ex) {
-        Assert.assertEquals(
-            "Remaining allocation units less than 0 for 'allocation description': -10",
-            ex.getMessage());
-      }
+        ProgressEventDispatcher.newRoot(mockEventHandlers, "allocation description", 10)) {
+      progressEventDispatcher.dispatchProgress(6);
+      progressEventDispatcher.dispatchProgress(8);
+      progressEventDispatcher.dispatchProgress(1);
     }
+
+    ArgumentCaptor<ProgressEvent> eventsCaptor = ArgumentCaptor.forClass(ProgressEvent.class);
+    Mockito.verify(mockEventHandlers, Mockito.times(4)).dispatch(eventsCaptor.capture());
+    List<ProgressEvent> progressEvents = eventsCaptor.getAllValues();
+
+    Assert.assertSame(progressEvents.get(0).getAllocation(), progressEvents.get(1).getAllocation());
+    Assert.assertSame(progressEvents.get(1).getAllocation(), progressEvents.get(2).getAllocation());
+    Assert.assertSame(progressEvents.get(2).getAllocation(), progressEvents.get(3).getAllocation());
+
+    Assert.assertEquals(10, progressEvents.get(0).getAllocation().getAllocationUnits());
+
+    Assert.assertEquals(0, progressEvents.get(0).getUnits());
+    Assert.assertEquals(6, progressEvents.get(1).getUnits());
+    Assert.assertEquals(4, progressEvents.get(2).getUnits());
+    Assert.assertEquals(0, progressEvents.get(3).getUnits());
   }
 
   @Test
-  public void testDispatch_tooManyChildren() {
+  public void testDispatch_safeWithTooManyChildren() {
     try (ProgressEventDispatcher progressEventDispatcher =
-        ProgressEventDispatcher.newRoot(mockEventDispatcher, "allocation description", 1)) {
-      progressEventDispatcher.newChildProducer();
-
-      try {
-        progressEventDispatcher.newChildProducer();
-        Assert.fail();
-
-      } catch (VerifyException ex) {
-        Assert.assertEquals(
-            "Remaining allocation units less than 0 for 'allocation description': -1",
-            ex.getMessage());
-      }
+            ProgressEventDispatcher.newRoot(mockEventHandlers, "allocation description", 1);
+        ProgressEventDispatcher ignored1 =
+            progressEventDispatcher.newChildProducer().create("ignored", 5);
+        ProgressEventDispatcher ignored2 =
+            progressEventDispatcher.newChildProducer().create("ignored", 4)) {
+      // empty
     }
+
+    ArgumentCaptor<ProgressEvent> eventsCaptor = ArgumentCaptor.forClass(ProgressEvent.class);
+    Mockito.verify(mockEventHandlers, Mockito.times(5)).dispatch(eventsCaptor.capture());
+    List<ProgressEvent> progressEvents = eventsCaptor.getAllValues();
+
+    Assert.assertEquals(1, progressEvents.get(0).getAllocation().getAllocationUnits());
+    Assert.assertEquals(5, progressEvents.get(1).getAllocation().getAllocationUnits());
+    Assert.assertEquals(4, progressEvents.get(2).getAllocation().getAllocationUnits());
+
+    // child1 (of allocation 5) opening and closing
+    Assert.assertSame(progressEvents.get(1).getAllocation(), progressEvents.get(4).getAllocation());
+    // child1 (of allocation 4) opening and closing
+    Assert.assertSame(progressEvents.get(2).getAllocation(), progressEvents.get(3).getAllocation());
+
+    Assert.assertEquals(0, progressEvents.get(0).getUnits()); // 0-progress sent when root creation
+    Assert.assertEquals(0, progressEvents.get(1).getUnits()); // when child1 creation
+    Assert.assertEquals(0, progressEvents.get(2).getUnits()); // when child2 creation
+    Assert.assertEquals(4, progressEvents.get(3).getUnits()); // when child2 closes
+    Assert.assertEquals(5, progressEvents.get(4).getUnits()); // when child1 closes
   }
 }

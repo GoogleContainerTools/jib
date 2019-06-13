@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.http;
 
-import java.io.ByteArrayOutputStream;
+import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -38,10 +38,9 @@ public class WithServerConnectionTest {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
-
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      response.getBody().writeTo(out);
-      Assert.assertEquals("Hello World!", new String(out.toByteArray(), StandardCharsets.UTF_8));
+      Assert.assertArrayEquals(
+          "Hello World!".getBytes(StandardCharsets.UTF_8),
+          ByteStreams.toByteArray(response.getBody()));
     }
   }
 
@@ -85,10 +84,9 @@ public class WithServerConnectionTest {
       Response response = connection.send("GET", new Request.Builder().build());
 
       Assert.assertEquals(200, response.getStatusCode());
-
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
-      response.getBody().writeTo(out);
-      Assert.assertEquals("Hello World!", new String(out.toByteArray(), StandardCharsets.UTF_8));
+      Assert.assertArrayEquals(
+          "Hello World!".getBytes(StandardCharsets.UTF_8),
+          ByteStreams.toByteArray(response.getBody()));
     }
   }
 }

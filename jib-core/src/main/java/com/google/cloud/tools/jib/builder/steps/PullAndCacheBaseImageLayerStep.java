@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
@@ -24,7 +25,6 @@ import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -71,13 +71,18 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
             progressEventDispatcherFactory.create("checking base image layer " + layerDigest, 1);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventDispatcher(), String.format(DESCRIPTION, layerDigest))) {
+                buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, layerDigest))) {
       Cache cache = buildConfiguration.getBaseImageLayersCache();
 
       // Checks if the layer already exists in the cache.
       Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerDigest);
       if (optionalCachedLayer.isPresent()) {
         return optionalCachedLayer.get();
+      } else if (buildConfiguration.isOffline()) {
+        throw new IOException(
+            "Cannot run Jib in offline mode; local Jib cache for base image is missing image layer "
+                + layerDigest
+                + ". You may need to rerun Jib in online mode to re-download the base image layers.");
       }
 
       RegistryClient registryClient =
@@ -86,15 +91,15 @@ class PullAndCacheBaseImageLayerStep implements AsyncStep<CachedLayer>, Callable
               .setAuthorization(pullAuthorization)
               .newRegistryClient();
 
-      try (ProgressEventDispatcherContainer progressEventDispatcherContainer =
-          new ProgressEventDispatcherContainer(
+      try (ThrottledProgressEventDispatcherWrapper progressEventDispatcherWrapper =
+          new ThrottledProgressEventDispatcherWrapper(
               progressEventDispatcher.newChildProducer(),
               "pulling base image layer " + layerDigest)) {
         return cache.writeCompressedLayer(
             registryClient.pullBlob(
                 layerDigest,
-                progressEventDispatcherContainer::initializeWithBlobSize,
-                progressEventDispatcherContainer));
+                progressEventDispatcherWrapper::setProgressTarget,
+                progressEventDispatcherWrapper::dispatchProgress));
       }
     }
   }

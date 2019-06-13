@@ -16,9 +16,6 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,13 +24,9 @@ import org.junit.Test;
 public class TarImageTest {
 
   @Test
-  public void testToImageConfiguration() throws InvalidImageReferenceException {
+  public void testGetters() throws InvalidImageReferenceException {
     TarImage tarImage = TarImage.named("tar/image").saveTo(Paths.get("output/file"));
-    ImageConfiguration imageConfiguration = tarImage.toImageConfiguration();
-
-    Assert.assertEquals(
-        ImageReference.parse("tar/image").toString(), imageConfiguration.getImage().toString());
-    Assert.assertEquals(0, imageConfiguration.getCredentialRetrievers().size());
+    Assert.assertEquals("tar/image", tarImage.getImageReference().toString());
     Assert.assertEquals(Paths.get("output/file"), tarImage.getOutputFile());
   }
 }

@@ -17,15 +17,15 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.ProjectInfo;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.BlobProgressListener;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
@@ -44,7 +44,7 @@ public class RegistryClient {
   /** Factory for creating {@link RegistryClient}s. */
   public static class Factory {
 
-    private final EventDispatcher eventDispatcher;
+    private final EventHandlers eventHandlers;
     private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
 
     private boolean allowInsecureRegistries = false;
@@ -52,9 +52,9 @@ public class RegistryClient {
     @Nullable private Authorization authorization;
 
     private Factory(
-        EventDispatcher eventDispatcher,
+        EventHandlers eventHandlers,
         RegistryEndpointRequestProperties registryEndpointRequestProperties) {
-      this.eventDispatcher = eventDispatcher;
+      this.eventHandlers = eventHandlers;
       this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     }
 
@@ -99,7 +99,7 @@ public class RegistryClient {
      */
     public RegistryClient newRegistryClient() {
       return new RegistryClient(
-          eventDispatcher,
+          eventHandlers,
           authorization,
           registryEndpointRequestProperties,
           allowInsecureRegistries,
@@ -132,18 +132,16 @@ public class RegistryClient {
   /**
    * Creates a new {@link Factory} for building a {@link RegistryClient}.
    *
-   * @param eventDispatcher the event dispatcher used for dispatching log events
+   * @param eventHandlers the event handlers used for dispatching log events
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param imageName the image/repository name (also known as, namespace)
    * @return the new {@link Factory}
    */
-  public static Factory factory(
-      EventDispatcher eventDispatcher, String serverUrl, String imageName) {
-    return new Factory(
-        eventDispatcher, new RegistryEndpointRequestProperties(serverUrl, imageName));
+  public static Factory factory(EventHandlers eventHandlers, String serverUrl, String imageName) {
+    return new Factory(eventHandlers, new RegistryEndpointRequestProperties(serverUrl, imageName));
   }
 
-  private final EventDispatcher eventDispatcher;
+  private final EventHandlers eventHandlers;
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final boolean allowInsecureRegistries;
@@ -152,18 +150,18 @@ public class RegistryClient {
   /**
    * Instantiate with {@link #factory}.
    *
-   * @param eventDispatcher the event dispatcher used for dispatching log events
+   * @param eventHandlers the event handlers used for dispatching log events
    * @param authorization the {@link Authorization} to access the registry/repository
    * @param registryEndpointRequestProperties properties of registry endpoint requests
    * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
    */
   private RegistryClient(
-      EventDispatcher eventDispatcher,
+      EventHandlers eventHandlers,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowInsecureRegistries,
       String userAgent) {
-    this.eventDispatcher = eventDispatcher;
+    this.eventHandlers = eventHandlers;
     this.authorization = authorization;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.allowInsecureRegistries = allowInsecureRegistries;
@@ -181,7 +179,7 @@ public class RegistryClient {
     // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer
     // realm="https://gcr.io/v2/token",service="gcr.io"')
     return callRegistryEndpoint(
-        new AuthenticationMethodRetriever(registryEndpointRequestProperties));
+        new AuthenticationMethodRetriever(registryEndpointRequestProperties, getUserAgent()));
   }
 
   /**
@@ -224,7 +222,7 @@ public class RegistryClient {
     return Verify.verifyNotNull(
         callRegistryEndpoint(
             new ManifestPusher(
-                registryEndpointRequestProperties, manifestTemplate, imageTag, eventDispatcher)));
+                registryEndpointRequestProperties, manifestTemplate, imageTag, eventHandlers)));
   }
 
   /**
@@ -246,14 +244,15 @@ public class RegistryClient {
    * written out.
    *
    * @param blobDigest the digest of the BLOB to download
-   * @param blobSizeConsumer callback to receive the total size of the BLOb to pull
-   * @param blobProgressListener listener for progress of the pull
+   * @param blobSizeListener callback to receive the total size of the BLOb to pull
+   * @param writtenByteCountListener listens on byte count written to an output stream during the
+   *     pull
    * @return a {@link Blob}
    */
   public Blob pullBlob(
       DescriptorDigest blobDigest,
-      Consumer<Long> blobSizeConsumer,
-      BlobProgressListener blobProgressListener) {
+      Consumer<Long> blobSizeListener,
+      Consumer<Long> writtenByteCountListener) {
     return Blobs.from(
         outputStream -> {
           try {
@@ -262,8 +261,8 @@ public class RegistryClient {
                     registryEndpointRequestProperties,
                     blobDigest,
                     outputStream,
-                    blobSizeConsumer,
-                    blobProgressListener));
+                    blobSizeListener,
+                    writtenByteCountListener));
 
           } catch (RegistryException ex) {
             throw new IOException(ex);
@@ -279,7 +278,7 @@ public class RegistryClient {
    * @param blob the BLOB to push
    * @param sourceRepository if pushing to the same registry then the source image, or {@code null}
    *     otherwise; used to optimize the BLOB push
-   * @param blobProgressListener listener for BLOb push progress
+   * @param writtenByteCountListener listens on byte count written to the registry during the push
    * @return {@code true} if the BLOB already exists on the registry and pushing was skipped; false
    *     if the BLOB was pushed
    * @throws IOException if communicating with the endpoint fails
@@ -289,13 +288,13 @@ public class RegistryClient {
       DescriptorDigest blobDigest,
       Blob blob,
       @Nullable String sourceRepository,
-      BlobProgressListener blobProgressListener)
+      Consumer<Long> writtenByteCountListener)
       throws IOException, RegistryException {
     BlobPusher blobPusher =
         new BlobPusher(registryEndpointRequestProperties, blobDigest, blob, sourceRepository);
 
     try (TimerEventDispatcher timerEventDispatcher =
-        new TimerEventDispatcher(eventDispatcher, "pushBlob")) {
+        new TimerEventDispatcher(eventHandlers, "pushBlob")) {
       try (TimerEventDispatcher timerEventDispatcher2 =
           timerEventDispatcher.subTimer("pushBlob POST " + blobDigest)) {
 
@@ -311,7 +310,7 @@ public class RegistryClient {
 
         // PATCH <Location> with BLOB
         URL putLocation =
-            callRegistryEndpoint(blobPusher.writer(patchLocation, blobProgressListener));
+            callRegistryEndpoint(blobPusher.writer(patchLocation, writtenByteCountListener));
         Preconditions.checkNotNull(putLocation);
 
         timerEventDispatcher2.lap("pushBlob PUT " + blobDigest);
@@ -346,7 +345,7 @@ public class RegistryClient {
   private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
     return new RegistryEndpointCaller<>(
-            eventDispatcher,
+            eventHandlers,
             userAgent,
             getApiRouteBase(),
             registryEndpointProvider,

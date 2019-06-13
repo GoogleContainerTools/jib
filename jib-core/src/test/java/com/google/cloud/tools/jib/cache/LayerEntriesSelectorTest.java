@@ -16,14 +16,14 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.api.LayerConfiguration;
+import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.cache.LayerEntriesSelector.LayerEntryTemplate;
-import com.google.cloud.tools.jib.configuration.FilePermissions;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.LayerEntry;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -38,6 +38,14 @@ import org.junit.rules.TemporaryFolder;
 
 /** Tests for {@link LayerEntriesSelector}. */
 public class LayerEntriesSelectorTest {
+
+  private static LayerEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
+    return new LayerEntry(
+        source,
+        destination,
+        LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
+        LayerConfiguration.DEFAULT_MODIFIED_TIME);
+  }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private ImmutableList<LayerEntry> outOfOrderLayerEntries;
@@ -59,24 +67,23 @@ public class LayerEntriesSelectorTest {
     Path file2 = Files.createFile(folder.resolve("files").resolve("two"));
     Path file3 = Files.createFile(folder.resolve("gile"));
 
-    LayerEntry testLayerEntry1 =
-        new LayerEntry(file1, AbsoluteUnixPath.get("/extraction/path"), null);
-    LayerEntry testLayerEntry2 =
-        new LayerEntry(file2, AbsoluteUnixPath.get("/extraction/path"), null);
-    LayerEntry testLayerEntry3 =
-        new LayerEntry(file3, AbsoluteUnixPath.get("/extraction/path"), null);
+    LayerEntry testLayerEntry1 = defaultLayerEntry(file1, AbsoluteUnixPath.get("/extraction/path"));
+    LayerEntry testLayerEntry2 = defaultLayerEntry(file2, AbsoluteUnixPath.get("/extraction/path"));
+    LayerEntry testLayerEntry3 = defaultLayerEntry(file3, AbsoluteUnixPath.get("/extraction/path"));
     LayerEntry testLayerEntry4 =
         new LayerEntry(
             file3,
             AbsoluteUnixPath.get("/extraction/path"),
-            FilePermissions.fromOctalString("755"));
+            FilePermissions.fromOctalString("755"),
+            LayerConfiguration.DEFAULT_MODIFIED_TIME);
     LayerEntry testLayerEntry5 =
-        new LayerEntry(file3, AbsoluteUnixPath.get("/extraction/patha"), null);
+        defaultLayerEntry(file3, AbsoluteUnixPath.get("/extraction/patha"));
     LayerEntry testLayerEntry6 =
         new LayerEntry(
             file3,
             AbsoluteUnixPath.get("/extraction/patha"),
-            FilePermissions.fromOctalString("755"));
+            FilePermissions.fromOctalString("755"),
+            LayerConfiguration.DEFAULT_MODIFIED_TIME);
 
     outOfOrderLayerEntries =
         ImmutableList.of(
@@ -112,10 +119,7 @@ public class LayerEntriesSelectorTest {
 
   @Test
   public void testGenerateSelector_empty() throws IOException {
-    DescriptorDigest expectedSelector =
-        JsonTemplateMapper.toBlob(ImmutableList.of())
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest();
+    DescriptorDigest expectedSelector = Digests.computeJsonDigest(ImmutableList.of());
     Assert.assertEquals(
         expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of()));
   }
@@ -123,9 +127,7 @@ public class LayerEntriesSelectorTest {
   @Test
   public void testGenerateSelector() throws IOException {
     DescriptorDigest expectedSelector =
-        JsonTemplateMapper.toBlob(toLayerEntryTemplates(inOrderLayerEntries))
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest();
+        Digests.computeJsonDigest(toLayerEntryTemplates(inOrderLayerEntries));
     Assert.assertEquals(
         expectedSelector, LayerEntriesSelector.generateSelector(outOfOrderLayerEntries));
   }
@@ -135,8 +137,7 @@ public class LayerEntriesSelectorTest {
     Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
     Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
-    LayerEntry layerEntry =
-        new LayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"), null);
+    LayerEntry layerEntry = defaultLayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
     DescriptorDigest expectedSelector =
         LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry));
 
@@ -159,12 +160,14 @@ public class LayerEntriesSelectorTest {
         new LayerEntry(
             layerFile,
             AbsoluteUnixPath.get("/extraction/path"),
-            FilePermissions.fromOctalString("111"));
+            FilePermissions.fromOctalString("111"),
+            LayerConfiguration.DEFAULT_MODIFIED_TIME);
     LayerEntry layerEntry222 =
         new LayerEntry(
             layerFile,
             AbsoluteUnixPath.get("/extraction/path"),
-            FilePermissions.fromOctalString("222"));
+            FilePermissions.fromOctalString("222"),
+            LayerConfiguration.DEFAULT_MODIFIED_TIME);
 
     // Verify that changing permissions generates a different selector
     Assert.assertNotEquals(

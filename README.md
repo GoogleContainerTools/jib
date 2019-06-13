@@ -1,4 +1,4 @@
-![beta](https://img.shields.io/badge/stability-beta-darkorange.svg)
+![stable](https://img.shields.io/badge/stability-stable-brightgreen.svg)
 [![Maven Central](https://img.shields.io/maven-metadata/v/http/central.maven.org/maven2/com/google/cloud/tools/jib-maven-plugin/maven-metadata.xml.svg?colorB=007ec6)](https://maven-badges.herokuapp.com/maven-central/com.google.cloud.tools/jib-maven-plugin)
 [![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/com/google/cloud/tools/jib/com.google.cloud.tools.jib.gradle.plugin/maven-metadata.xml.svg?colorB=007ec6&label=gradle)](https://plugins.gradle.org/plugin/com.google.cloud.tools.jib)
 ![Build Status](https://storage.googleapis.com/cloud-tools-for-java-kokoro-build-badges/jib-ubuntu-master-orb.svg)
@@ -30,17 +30,20 @@ For more information, check out the [official blog post](https://cloudplatform.g
 
 ## Quickstart
 
-### Maven
+* **Maven** - See the jib-maven-plugin [Quickstart](jib-maven-plugin#quickstart).
 
-See documentation for using [jib-maven-plugin](jib-maven-plugin#quickstart).
+* **Gradle** - See the jib-gradle-plugin [Quickstart](jib-gradle-plugin#quickstart).
 
-### Gradle
+* **Jib Core** - See the Jib Core [Quickstart](jib-core#adding-jib-core-to-your-build).
 
-See documentation for using [jib-gradle-plugin](jib-gradle-plugin#quickstart).
+## Examples
 
-### Jib Core
-
-See documentation for using [Jib Core](jib-core#adding-jib-core-to-your-build)
+The [examples](examples) directory includes the following examples (and more).
+   * [helloworld](examples/helloworld)
+   * [Spring Boot](examples/spring-boot)
+   * [Micronaut](examples/micronaut)
+   * [Multi-module project](examples/multi-module)
+   * [Spark Java using Java Agent](examples/java-agent)
 
 ## How Jib Works
 

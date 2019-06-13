@@ -16,13 +16,9 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.frontend.JavaEntrypointConstructor;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations;
-import com.google.cloud.tools.jib.frontend.JavaLayerConfigurations.LayerType;
-import com.google.cloud.tools.jib.frontend.MainClassFinder;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.ProjectInfo;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -30,8 +26,10 @@ import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -40,26 +38,42 @@ import javax.annotation.Nullable;
 /** Creates a {@link JibContainerBuilder} for containerizing Java applications. */
 public class JavaContainerBuilder {
 
-  /** The default root directory of the application on the container. */
-  private static final AbsoluteUnixPath APP_ROOT = AbsoluteUnixPath.get("/app");
+  /** Holds a directory and a filter. */
+  private static class PathPredicatePair {
 
-  /** Absolute path of directory containing application resources on container. */
-  private static final AbsoluteUnixPath RESOURCES_PATH =
-      APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_RESOURCES_PATH_ON_IMAGE);
+    private final Path path;
+    private final Predicate<Path> predicate;
 
-  /** Absolute path of directory containing classes on container. */
-  private static final AbsoluteUnixPath CLASSES_PATH =
-      APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_CLASSES_PATH_ON_IMAGE);
+    private PathPredicatePair(Path path, Predicate<Path> predicate) {
+      this.path = path;
+      this.predicate = predicate;
+    }
+  }
 
-  /** Absolute path of directory containing dependencies on container. */
-  private static final AbsoluteUnixPath DEPENDENCIES_PATH =
-      APP_ROOT.resolve(JavaEntrypointConstructor.DEFAULT_RELATIVE_DEPENDENCIES_PATH_ON_IMAGE);
+  /** Represents the different types of layers for a Java application. */
+  @VisibleForTesting
+  public enum LayerType {
+    DEPENDENCIES("dependencies"),
+    SNAPSHOT_DEPENDENCIES("snapshot dependencies"),
+    RESOURCES("resources"),
+    CLASSES("classes"),
+    EXTRA_FILES("extra files");
 
-  /** The entrypoint classpath element corresponding to dependencies. */
-  private static final AbsoluteUnixPath DEPENDENCIES_CLASSPATH = DEPENDENCIES_PATH.resolve("*");
+    private final String name;
 
-  /** Absolute path of directory containing additional classpath files on container. */
-  private static final AbsoluteUnixPath OTHERS_PATH = APP_ROOT.resolve("classpath");
+    /**
+     * Initializes with a name for the layer.
+     *
+     * @param name name to set for the layer; does not affect the contents of the layer
+     */
+    LayerType(String name) {
+      this.name = name;
+    }
+
+    public String getName() {
+      return name;
+    }
+  }
 
   /**
    * Creates a new {@link JavaContainerBuilder} that uses distroless java as the base image. For
@@ -67,11 +81,43 @@ public class JavaContainerBuilder {
    * href="https://github.com/GoogleContainerTools/distroless">the distroless repository</a>.
    *
    * @return a new {@link JavaContainerBuilder}
-   * @throws InvalidImageReferenceException if creating the base image reference fails
    * @see <a href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
    */
-  public static JavaContainerBuilder fromDistroless() throws InvalidImageReferenceException {
-    return from(RegistryImage.named("gcr.io/distroless/java"));
+  public static JavaContainerBuilder fromDistroless() {
+    try {
+      return from(RegistryImage.named("gcr.io/distroless/java"));
+    } catch (InvalidImageReferenceException ignored) {
+      throw new IllegalStateException("Unreachable");
+    }
+  }
+
+  /**
+   * The default app root in the image. For example, if this is set to {@code "/app"}, dependency
+   * JARs will be in {@code "/app/libs"}.
+   */
+  public static final String DEFAULT_APP_ROOT = "/app";
+
+  /**
+   * The default webapp root in the image. For example, if this is set to {@code
+   * "/jetty/webapps/ROOT"}, dependency JARs will be in {@code "/jetty/webapps/ROOT/WEB-INF/lib"}.
+   */
+  public static final String DEFAULT_WEB_APP_ROOT = "/jetty/webapps/ROOT";
+
+  /**
+   * Creates a new {@link JavaContainerBuilder} that uses distroless jetty as the base image. For
+   * more information on {@code gcr.io/distroless/java}, see <a
+   * href="https://github.com/GoogleContainerTools/distroless">the distroless repository</a>.
+   *
+   * @return a new {@link JavaContainerBuilder}
+   * @see <a href="https://github.com/GoogleContainerTools/distroless">The distroless repository</a>
+   */
+  public static JavaContainerBuilder fromDistrolessJetty() {
+    try {
+      return from(RegistryImage.named("gcr.io/distroless/java/jetty"))
+          .setAppRoot(AbsoluteUnixPath.get(DEFAULT_WEB_APP_ROOT));
+    } catch (InvalidImageReferenceException ignored) {
+      throw new IllegalStateException("Unreachable");
+    }
   }
 
   /**
@@ -108,15 +154,93 @@ public class JavaContainerBuilder {
   }
 
   private final JibContainerBuilder jibContainerBuilder;
-  private final JavaLayerConfigurations.Builder layerConfigurationsBuilder =
-      JavaLayerConfigurations.builder();
   private final List<String> jvmFlags = new ArrayList<>();
-  private final LinkedHashSet<String> classpath = new LinkedHashSet<>(4);
+  private final LinkedHashSet<LayerType> classpathOrder = new LinkedHashSet<>(4);
 
+  // Keeps track of files to add to the image, by system path
+  private final List<PathPredicatePair> addedResources = new ArrayList<>();
+  private final List<PathPredicatePair> addedClasses = new ArrayList<>();
+  private final List<Path> addedDependencies = new ArrayList<>();
+  private final List<Path> addedOthers = new ArrayList<>();
+
+  private AbsoluteUnixPath appRoot = AbsoluteUnixPath.get("/app");
+  private RelativeUnixPath classesDestination = RelativeUnixPath.get("classes");
+  private RelativeUnixPath resourcesDestination = RelativeUnixPath.get("resources");
+  private RelativeUnixPath dependenciesDestination = RelativeUnixPath.get("libs");
+  private RelativeUnixPath othersDestination = RelativeUnixPath.get("classpath");
   @Nullable private String mainClass;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
     this.jibContainerBuilder = jibContainerBuilder;
+  }
+
+  /**
+   * Sets the app root of the container image (useful for building WAR containers).
+   *
+   * @param appRoot the absolute path of the app on the container ({@code /app} by default)
+   * @return this
+   */
+  public JavaContainerBuilder setAppRoot(String appRoot) {
+    return setAppRoot(AbsoluteUnixPath.get(appRoot));
+  }
+
+  /**
+   * Sets the app root of the container image (useful for building WAR containers).
+   *
+   * @param appRoot the absolute path of the app on the container ({@code /app} by default)
+   * @return this
+   */
+  public JavaContainerBuilder setAppRoot(AbsoluteUnixPath appRoot) {
+    this.appRoot = appRoot;
+    return this;
+  }
+
+  /**
+   * Sets the destination directory of the classes added to the container (relative to the app
+   * root).
+   *
+   * @param classesDestination the path to the classes directory, relative to the app root
+   * @return this
+   */
+  public JavaContainerBuilder setClassesDestination(RelativeUnixPath classesDestination) {
+    this.classesDestination = classesDestination;
+    return this;
+  }
+
+  /**
+   * Sets the destination directory of the resources added to the container (relative to the app
+   * root).
+   *
+   * @param resourcesDestination the path to the resources directory, relative to the app root
+   * @return this
+   */
+  public JavaContainerBuilder setResourcesDestination(RelativeUnixPath resourcesDestination) {
+    this.resourcesDestination = resourcesDestination;
+    return this;
+  }
+
+  /**
+   * Sets the destination directory of the dependencies added to the container (relative to the app
+   * root).
+   *
+   * @param dependenciesDestination the path to the dependencies directory, relative to the app root
+   * @return this
+   */
+  public JavaContainerBuilder setDependenciesDestination(RelativeUnixPath dependenciesDestination) {
+    this.dependenciesDestination = dependenciesDestination;
+    return this;
+  }
+
+  /**
+   * Sets the destination directory of additional classpath files added to the container (relative
+   * to the app root).
+   *
+   * @param othersDestination the additional classpath directory, relative to the app root
+   * @return this
+   */
+  public JavaContainerBuilder setOthersDestination(RelativeUnixPath othersDestination) {
+    this.othersDestination = othersDestination;
+    return this;
   }
 
   /**
@@ -134,32 +258,8 @@ public class JavaContainerBuilder {
         throw new NoSuchFileException(file.toString());
       }
     }
-
-    // Detect duplicate filenames and rename with filesize to avoid collisions
-    List<String> duplicates =
-        dependencyFiles
-            .stream()
-            .map(Path::getFileName)
-            .map(Path::toString)
-            .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
-            .entrySet()
-            .stream()
-            .filter(entry -> entry.getValue() > 1)
-            .map(Entry::getKey)
-            .collect(Collectors.toList());
-    for (Path file : dependencyFiles) {
-      layerConfigurationsBuilder.addFile(
-          file.getFileName().toString().contains("SNAPSHOT")
-              ? LayerType.SNAPSHOT_DEPENDENCIES
-              : LayerType.DEPENDENCIES,
-          file,
-          DEPENDENCIES_PATH.resolve(
-              duplicates.contains(file.getFileName().toString())
-                  ? file.getFileName().toString().replaceFirst("\\.jar$", "-" + Files.size(file))
-                      + ".jar"
-                  : file.getFileName().toString()));
-    }
-    classpath.add(DEPENDENCIES_CLASSPATH.toString());
+    addedDependencies.addAll(dependencyFiles);
+    classpathOrder.add(LayerType.DEPENDENCIES);
     return this;
   }
 
@@ -196,7 +296,8 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addResources(Path resourceFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
-    return addDirectory(resourceFilesDirectory, RESOURCES_PATH, LayerType.RESOURCES, pathFilter);
+    classpathOrder.add(LayerType.RESOURCES);
+    return addDirectory(addedResources, resourceFilesDirectory, pathFilter);
   }
 
   /**
@@ -220,7 +321,8 @@ public class JavaContainerBuilder {
    */
   public JavaContainerBuilder addClasses(Path classFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
-    return addDirectory(classFilesDirectory, CLASSES_PATH, LayerType.CLASSES, pathFilter);
+    classpathOrder.add(LayerType.CLASSES);
+    return addDirectory(addedClasses, classFilesDirectory, pathFilter);
   }
 
   /**
@@ -241,17 +343,8 @@ public class JavaContainerBuilder {
         throw new NoSuchFileException(file.toString());
       }
     }
-
-    for (Path file : otherFiles) {
-      if (Files.isDirectory(file)) {
-        layerConfigurationsBuilder.addDirectoryContents(
-            LayerType.EXTRA_FILES, file, path -> true, OTHERS_PATH);
-      } else {
-        layerConfigurationsBuilder.addFile(
-            LayerType.EXTRA_FILES, file, OTHERS_PATH.resolve(file.getFileName()));
-      }
-    }
-    classpath.add(OTHERS_PATH.toString());
+    classpathOrder.add(LayerType.EXTRA_FILES);
+    addedOthers.addAll(otherFiles);
     return this;
   }
 
@@ -304,8 +397,9 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Sets the main class used to start the application on the image. To find the main class from
-   * {@code .class} files, use {@link MainClassFinder}.
+   * Sets the container entrypoint with the specified main class. The entrypoint will be left
+   * unconfigured if this method is not called. To find the main class from {@code .class} files,
+   * use {@link MainClassFinder}.
    *
    * @param mainClass the main class used to start the application
    * @return this
@@ -322,36 +416,177 @@ public class JavaContainerBuilder {
    *
    * @return a new {@link JibContainerBuilder} using the parameters specified on the {@link
    *     JavaContainerBuilder}
+   * @throws IOException if building the {@link JibContainerBuilder} fails.
    */
-  public JibContainerBuilder toContainerBuilder() {
-    if (mainClass == null) {
+  public JibContainerBuilder toContainerBuilder() throws IOException {
+    if (mainClass == null && !jvmFlags.isEmpty()) {
       throw new IllegalStateException(
-          "mainClass is null on JavaContainerBuilder; specify the main class using "
+          "Failed to construct entrypoint on JavaContainerBuilder; "
+              + "jvmFlags were set, but mainClass is null. Specify the main class using "
               + "JavaContainerBuilder#setMainClass(String), or consider using a "
-              + "jib.frontend.MainClassFinder to infer the main class");
+              + "jib.frontend.MainClassFinder to infer the main class.");
     }
-    if (classpath.isEmpty()) {
+    if (classpathOrder.isEmpty()) {
       throw new IllegalStateException(
           "Failed to construct entrypoint because no files were added to the JavaContainerBuilder");
     }
 
-    jibContainerBuilder.setEntrypoint(
-        JavaEntrypointConstructor.makeEntrypoint(new ArrayList<>(classpath), jvmFlags, mainClass));
-    jibContainerBuilder.setLayers(layerConfigurationsBuilder.build().getLayerConfigurations());
+    Map<LayerType, LayerConfiguration.Builder> layerBuilders = new EnumMap<>(LayerType.class);
+
+    // Add classes to layer configuration
+    for (PathPredicatePair directory : addedClasses) {
+      addDirectoryContentsToLayer(
+          layerBuilders,
+          LayerType.CLASSES,
+          directory.path,
+          directory.predicate,
+          appRoot.resolve(classesDestination));
+    }
+
+    // Add resources to layer configuration
+    for (PathPredicatePair directory : addedResources) {
+      addDirectoryContentsToLayer(
+          layerBuilders,
+          LayerType.RESOURCES,
+          directory.path,
+          directory.predicate,
+          appRoot.resolve(resourcesDestination));
+    }
+
+    // Detect duplicate filenames and rename with filesize to avoid collisions
+    List<String> duplicates =
+        addedDependencies
+            .stream()
+            .map(Path::getFileName)
+            .map(Path::toString)
+            .collect(Collectors.groupingBy(filename -> filename, Collectors.counting()))
+            .entrySet()
+            .stream()
+            .filter(entry -> entry.getValue() > 1)
+            .map(Entry::getKey)
+            .collect(Collectors.toList());
+    for (Path file : addedDependencies) {
+      // Add dependencies to layer configuration
+      addFileToLayer(
+          layerBuilders,
+          file.getFileName().toString().contains("SNAPSHOT")
+              ? LayerType.SNAPSHOT_DEPENDENCIES
+              : LayerType.DEPENDENCIES,
+          file,
+          appRoot
+              .resolve(dependenciesDestination)
+              .resolve(
+                  duplicates.contains(file.getFileName().toString())
+                      ? file.getFileName()
+                              .toString()
+                              .replaceFirst("\\.jar$", "-" + Files.size(file))
+                          + ".jar"
+                      : file.getFileName().toString()));
+    }
+
+    // Add others to layer configuration
+    for (Path path : addedOthers) {
+      if (Files.isDirectory(path)) {
+        addDirectoryContentsToLayer(
+            layerBuilders,
+            LayerType.EXTRA_FILES,
+            path,
+            ignored -> true,
+            appRoot.resolve(othersDestination));
+      } else {
+        addFileToLayer(
+            layerBuilders,
+            LayerType.EXTRA_FILES,
+            path,
+            appRoot.resolve(othersDestination).resolve(path.getFileName()));
+      }
+    }
+
+    // Add layer configurations to container builder
+    List<LayerConfiguration> layers = new ArrayList<>();
+    layerBuilders.forEach((type, builder) -> layers.add(builder.setName(type.getName()).build()));
+    jibContainerBuilder.setLayers(layers);
+
+    if (mainClass != null) {
+      // Construct entrypoint. Ensure classpath elements are in the same order as the files were
+      // added to the JavaContainerBuilder.
+      List<String> classpathElements = new ArrayList<>();
+      for (LayerType path : classpathOrder) {
+        switch (path) {
+          case CLASSES:
+            classpathElements.add(appRoot.resolve(classesDestination).toString());
+            break;
+          case RESOURCES:
+            classpathElements.add(appRoot.resolve(resourcesDestination).toString());
+            break;
+          case DEPENDENCIES:
+            classpathElements.add(appRoot.resolve(dependenciesDestination).resolve("*").toString());
+            break;
+          case EXTRA_FILES:
+            classpathElements.add(appRoot.resolve(othersDestination).toString());
+            break;
+          default:
+            throw new RuntimeException(
+                "Bug in jib-core; please report the bug at " + ProjectInfo.GITHUB_NEW_ISSUE_URL);
+        }
+      }
+      String classpathString = String.join(":", classpathElements);
+      List<String> entrypoint = new ArrayList<>(4 + jvmFlags.size());
+      entrypoint.add("java");
+      entrypoint.addAll(jvmFlags);
+      entrypoint.add("-cp");
+      entrypoint.add(classpathString);
+      entrypoint.add(mainClass);
+      jibContainerBuilder.setEntrypoint(entrypoint);
+    }
+
     return jibContainerBuilder;
   }
 
   private JavaContainerBuilder addDirectory(
-      Path directory, AbsoluteUnixPath destination, LayerType layerType, Predicate<Path> pathFilter)
-      throws IOException {
+      List<PathPredicatePair> addedPaths, Path directory, Predicate<Path> filter)
+      throws NoSuchFileException, NotDirectoryException {
     if (!Files.exists(directory)) {
       throw new NoSuchFileException(directory.toString());
     }
     if (!Files.isDirectory(directory)) {
       throw new NotDirectoryException(directory.toString());
     }
-    layerConfigurationsBuilder.addDirectoryContents(layerType, directory, pathFilter, destination);
-    classpath.add(destination.toString());
+    addedPaths.add(new PathPredicatePair(directory, filter));
     return this;
+  }
+
+  private void addFileToLayer(
+      Map<LayerType, LayerConfiguration.Builder> layerBuilders,
+      LayerType layerType,
+      Path sourceFile,
+      AbsoluteUnixPath pathInContainer) {
+    if (!layerBuilders.containsKey(layerType)) {
+      layerBuilders.put(layerType, LayerConfiguration.builder());
+    }
+    layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer);
+  }
+
+  private void addDirectoryContentsToLayer(
+      Map<LayerType, LayerConfiguration.Builder> layerBuilders,
+      LayerType layerType,
+      Path sourceRoot,
+      Predicate<Path> pathFilter,
+      AbsoluteUnixPath basePathInContainer)
+      throws IOException {
+    if (!layerBuilders.containsKey(layerType)) {
+      layerBuilders.put(layerType, LayerConfiguration.builder());
+    }
+    LayerConfiguration.Builder builder = layerBuilders.get(layerType);
+
+    new DirectoryWalker(sourceRoot)
+        .filterRoot()
+        .filter(path -> Files.isDirectory(path) || pathFilter.test(path))
+        .walk(
+            path -> {
+              AbsoluteUnixPath pathOnContainer =
+                  basePathInContainer.resolve(sourceRoot.relativize(path));
+              builder.addEntry(path, pathOnContainer);
+            });
   }
 }

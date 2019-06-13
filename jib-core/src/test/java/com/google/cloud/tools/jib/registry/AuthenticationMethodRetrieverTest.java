@@ -41,7 +41,7 @@ public class AuthenticationMethodRetrieverTest {
   private final RegistryEndpointRequestProperties fakeRegistryEndpointRequestProperties =
       new RegistryEndpointRequestProperties("someServerUrl", "someImageName");
   private final AuthenticationMethodRetriever testAuthenticationMethodRetriever =
-      new AuthenticationMethodRetriever(fakeRegistryEndpointRequestProperties);
+      new AuthenticationMethodRetriever(fakeRegistryEndpointRequestProperties, "user-agent");
 
   @Test
   public void testGetContent() {
@@ -149,6 +149,6 @@ public class AuthenticationMethodRetrieverTest {
 
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someImageName:someScope"),
-        registryAuthenticator.getAuthenticationUrl("someScope"));
+        registryAuthenticator.getAuthenticationUrl(null, "someScope"));
   }
 }

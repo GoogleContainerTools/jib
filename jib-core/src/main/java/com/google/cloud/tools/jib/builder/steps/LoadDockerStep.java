@@ -16,17 +16,16 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.cloud.tools.jib.docker.ImageToTarballTranslator;
-import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.docker.ImageTarball;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -90,22 +89,20 @@ class LoadDockerStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
   private BuildResult afterPushBaseImageLayerFuturesFuture()
       throws ExecutionException, InterruptedException, IOException {
     buildConfiguration
-        .getEventDispatcher()
+        .getEventHandlers()
         .dispatch(LogEvent.progress("Loading to Docker daemon..."));
 
     try (ProgressEventDispatcher ignored =
         progressEventDispatcherFactory.create("loading to Docker daemon", 1)) {
-      Image<Layer> image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
+      Image image = NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep));
       ImageReference targetImageReference =
           buildConfiguration.getTargetImageConfiguration().getImage();
 
       // Load the image to docker daemon.
       buildConfiguration
-          .getEventDispatcher()
+          .getEventHandlers()
           .dispatch(
-              LogEvent.debug(
-                  dockerClient.load(
-                      new ImageToTarballTranslator(image).toTarballBlob(targetImageReference))));
+              LogEvent.debug(dockerClient.load(new ImageTarball(image, targetImageReference))));
 
       // Tags the image with all the additional tags, skipping the one 'docker load' already loaded.
       for (String tag : buildConfiguration.getAllTargetImageTags()) {

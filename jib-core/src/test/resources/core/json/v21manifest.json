@@ -1,0 +1,11 @@
+{
+  "schemaVersion":1,
+  "fsLayers": [
+    {"blobSum":"sha256:8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad"},
+    {"blobSum":"sha256:5bd451067f9ab05e97cda8476c82f86d9b69c2dffb60a8ad2fe3723942544ab3"}
+  ],
+  "history": [
+    {"v1Compatibility": "{\"architecture\":\"amd64\",\"config\":{\"Env\":[\"JAVA_HOME=/opt/openjdk\",\"PATH=/opt/openjdk/bin\"],\"Entrypoint\":[\"/opt/openjdk/bin/java\"],\"Cmd\":[\"-version\"]},\"created\":\"2019-04-17T14:02:34.79404123Z\"}"},
+    {"v1Compatibility":"another v1-compatible object"}
+  ]
+}

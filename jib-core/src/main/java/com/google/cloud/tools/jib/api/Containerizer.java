@@ -17,11 +17,14 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
-import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.builder.steps.StepsRunner;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.UserCacheHome;
-import com.google.cloud.tools.jib.image.ImageReference;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,21 +33,25 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /** Configures how to containerize. */
-// TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class Containerizer {
 
   /**
    * The default directory for caching the base image layers, in {@code [user cache
    * home]/google-cloud-tools-java/jib}.
    */
-  // TODO: Reduce scope once plugins are migrated to use the new Jib Core API.
   public static final Path DEFAULT_BASE_CACHE_DIRECTORY =
       UserCacheHome.getCacheHome().resolve("google-cloud-tools-java").resolve("jib");
 
   private static final String DEFAULT_TOOL_NAME = "jib-core";
+
+  private static final String DESCRIPTION_FOR_DOCKER_REGISTRY = "Building and pushing image";
+  private static final String DESCRIPTION_FOR_DOCKER_DAEMON = "Building image to Docker daemon";
+  private static final String DESCRIPTION_FOR_TARBALL = "Building image tarball";
 
   /**
    * Gets a new {@link Containerizer} that containerizes to a container registry.
@@ -54,7 +61,27 @@ public class Containerizer {
    * @return a new {@link Containerizer}
    */
   public static Containerizer to(RegistryImage registryImage) {
-    return new Containerizer(registryImage);
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(registryImage.getImageReference())
+            .setCredentialRetrievers(registryImage.getCredentialRetrievers())
+            .build();
+
+    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
+        buildConfiguration ->
+            StepsRunner.begin(buildConfiguration)
+                .retrieveTargetRegistryCredentials()
+                .authenticatePush()
+                .pullBaseImage()
+                .pullAndCacheBaseImageLayers()
+                .pushBaseImageLayers()
+                .buildAndCacheApplicationLayers()
+                .buildImage()
+                .pushContainerConfiguration()
+                .pushApplicationLayers()
+                .pushImage();
+
+    return new Containerizer(
+        DESCRIPTION_FOR_DOCKER_REGISTRY, imageConfiguration, stepsRunnerFactory, true);
   }
 
   /**
@@ -64,7 +91,25 @@ public class Containerizer {
    * @return a new {@link Containerizer}
    */
   public static Containerizer to(DockerDaemonImage dockerDaemonImage) {
-    return new Containerizer(dockerDaemonImage);
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(dockerDaemonImage.getImageReference()).build();
+
+    DockerClient.Builder dockerClientBuilder = DockerClient.builder();
+    dockerDaemonImage.getDockerExecutable().ifPresent(dockerClientBuilder::setDockerExecutable);
+    dockerClientBuilder.setDockerEnvironment(
+        ImmutableMap.copyOf(dockerDaemonImage.getDockerEnvironment()));
+
+    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
+        buildConfiguration ->
+            StepsRunner.begin(buildConfiguration)
+                .pullBaseImage()
+                .pullAndCacheBaseImageLayers()
+                .buildAndCacheApplicationLayers()
+                .buildImage()
+                .loadDocker(dockerClientBuilder.build());
+
+    return new Containerizer(
+        DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, false);
   }
 
   /**
@@ -74,21 +119,46 @@ public class Containerizer {
    * @return a new {@link Containerizer}
    */
   public static Containerizer to(TarImage tarImage) {
-    return new Containerizer(tarImage);
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(tarImage.getImageReference()).build();
+
+    Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
+        buildConfiguration ->
+            StepsRunner.begin(buildConfiguration)
+                .pullBaseImage()
+                .pullAndCacheBaseImageLayers()
+                .buildAndCacheApplicationLayers()
+                .buildImage()
+                .writeTarFile(tarImage.getOutputFile());
+
+    return new Containerizer(
+        DESCRIPTION_FOR_TARBALL, imageConfiguration, stepsRunnerFactory, false);
   }
 
-  private final TargetImage targetImage;
+  private final String description;
+  private final ImageConfiguration imageConfiguration;
+  private final Function<BuildConfiguration, StepsRunner> stepsRunnerFactory;
+  private final boolean mustBeOnline;
   private final Set<String> additionalTags = new HashSet<>();
+  private final EventHandlers.Builder eventHandlersBuilder = EventHandlers.builder();
+
   @Nullable private ExecutorService executorService;
   private Path baseImageLayersCacheDirectory = DEFAULT_BASE_CACHE_DIRECTORY;
   @Nullable private Path applicationLayersCacheDirectory;
-  @Nullable private EventHandlers eventHandlers;
   private boolean allowInsecureRegistries = false;
+  private boolean offline = false;
   private String toolName = DEFAULT_TOOL_NAME;
 
   /** Instantiate with {@link #to}. */
-  private Containerizer(TargetImage targetImage) {
-    this.targetImage = targetImage;
+  private Containerizer(
+      String description,
+      ImageConfiguration imageConfiguration,
+      Function<BuildConfiguration, StepsRunner> stepsRunnerFactory,
+      boolean mustBeOnline) {
+    this.description = description;
+    this.imageConfiguration = imageConfiguration;
+    this.stepsRunnerFactory = stepsRunnerFactory;
+    this.mustBeOnline = mustBeOnline;
   }
 
   /**
@@ -104,7 +174,7 @@ public class Containerizer {
    * @return this
    */
   public Containerizer withAdditionalTag(String tag) {
-    Preconditions.checkArgument(ImageReference.isValidTag(tag));
+    Preconditions.checkArgument(ImageReference.isValidTag(tag), "invalid tag '%s'", tag);
     additionalTags.add(tag);
     return this;
   }
@@ -148,13 +218,32 @@ public class Containerizer {
   }
 
   /**
-   * Sets the {@link EventHandlers} to handle events dispatched during Jib's execution.
+   * Adds the {@code eventConsumer} to handle the {@link JibEvent} with class {@code eventType}. The
+   * order in which handlers are added is the order in which they are called when the event is
+   * dispatched.
    *
-   * @param eventHandlers the {@link EventHandlers}
+   * <p><b>Note: Implementations of {@code eventConsumer} must be thread-safe.</b>
+   *
+   * @param eventType the event type that {@code eventConsumer} should handle
+   * @param eventConsumer the event handler
+   * @param <E> the type of {@code eventType}
    * @return this
    */
-  public Containerizer setEventHandlers(EventHandlers eventHandlers) {
-    this.eventHandlers = eventHandlers;
+  public <E extends JibEvent> Containerizer addEventHandler(
+      Class<E> eventType, Consumer<? super E> eventConsumer) {
+    eventHandlersBuilder.add(eventType, eventConsumer);
+    return this;
+  }
+
+  /**
+   * Adds the {@code eventConsumer} to handle all {@link JibEvent} types. See {@link
+   * #addEventHandler(Class, Consumer)} for more details.
+   *
+   * @param eventConsumer the event handler
+   * @return this
+   */
+  public Containerizer addEventHandler(Consumer<JibEvent> eventConsumer) {
+    eventHandlersBuilder.add(JibEvent.class, eventConsumer);
     return this;
   }
 
@@ -170,6 +259,22 @@ public class Containerizer {
   }
 
   /**
+   * Sets whether or not to run the build in offline mode. In offline mode, the base image is
+   * retrieved from the cache instead of pulled from a registry, and the build will fail if the base
+   * image is not in the cache or if the target is an image registry.
+   *
+   * @param offline if {@code true}, the build will run in offline mode
+   * @return this
+   */
+  public Containerizer setOfflineMode(boolean offline) {
+    if (mustBeOnline && offline) {
+      throw new IllegalStateException("Cannot build to a container registry in offline mode");
+    }
+    this.offline = offline;
+    return this;
+  }
+
+  /**
    * Sets the name of the tool that is using Jib Core. The tool name is sent as part of the {@code
    * User-Agent} in registry requests and set as the {@code created_by} in the container layer
    * history. Defaults to {@code jib-core}.
@@ -180,10 +285,6 @@ public class Containerizer {
   public Containerizer setToolName(String toolName) {
     this.toolName = toolName;
     return this;
-  }
-
-  TargetImage getTargetImage() {
-    return targetImage;
   }
 
   Set<String> getAdditionalTags() {
@@ -213,15 +314,31 @@ public class Containerizer {
     return applicationLayersCacheDirectory;
   }
 
-  Optional<EventHandlers> getEventHandlers() {
-    return Optional.ofNullable(eventHandlers);
+  EventHandlers buildEventHandlers() {
+    return eventHandlersBuilder.build();
   }
 
   boolean getAllowInsecureRegistries() {
     return allowInsecureRegistries;
   }
 
+  boolean isOfflineMode() {
+    return offline;
+  }
+
   String getToolName() {
     return toolName;
+  }
+
+  String getDescription() {
+    return description;
+  }
+
+  ImageConfiguration getImageConfiguration() {
+    return imageConfiguration;
+  }
+
+  StepsRunner createStepsRunner(BuildConfiguration buildConfiguration) {
+    return stepsRunnerFactory.apply(buildConfiguration);
   }
 }

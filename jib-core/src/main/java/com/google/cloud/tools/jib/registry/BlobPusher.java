@@ -18,17 +18,18 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpMethods;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
-import com.google.cloud.tools.jib.http.BlobProgressListener;
 import com.google.cloud.tools.jib.http.Response;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.common.net.MediaType;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 /**
@@ -112,12 +113,12 @@ class BlobPusher {
   private class Writer implements RegistryEndpointProvider<URL> {
 
     private final URL location;
-    private final BlobProgressListener blobProgressListener;
+    private final Consumer<Long> writtenByteCountListener;
 
     @Nullable
     @Override
     public BlobHttpContent getContent() {
-      return new BlobHttpContent(blob, MediaType.OCTET_STREAM.toString(), blobProgressListener);
+      return new BlobHttpContent(blob, MediaType.OCTET_STREAM.toString(), writtenByteCountListener);
     }
 
     @Override
@@ -147,9 +148,9 @@ class BlobPusher {
       return BlobPusher.this.getActionDescription();
     }
 
-    private Writer(URL location, BlobProgressListener blobProgressListener) {
+    private Writer(URL location, Consumer<Long> writtenByteCountListener) {
       this.location = location;
-      this.blobProgressListener = blobProgressListener;
+      this.writtenByteCountListener = writtenByteCountListener;
     }
   }
 
@@ -219,8 +220,8 @@ class BlobPusher {
    * @param blobProgressListener the listener for {@link Blob} push progress
    * @return a {@link RegistryEndpointProvider} for writing the BLOB to an upload location
    */
-  RegistryEndpointProvider<URL> writer(URL location, BlobProgressListener blobProgressListener) {
-    return new Writer(location, blobProgressListener);
+  RegistryEndpointProvider<URL> writer(URL location, Consumer<Long> writtenByteCountListener) {
+    return new Writer(location, writtenByteCountListener);
   }
 
   /**
