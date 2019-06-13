@@ -23,13 +23,19 @@ import java.util.function.Consumer;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link Connection} with setting proxy credentials. */
+@RunWith(MockitoJUnitRunner.class)
 public class ConnectionWithProxyCredentialsTest {
 
   private static final ImmutableList<String> proxyProperties =
@@ -46,12 +52,19 @@ public class ConnectionWithProxyCredentialsTest {
   // HashMap to allow saving null values.
   private final HashMap<String, String> savedProperties = new HashMap<>();
 
-  private final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+  private final ArgumentCaptor<CredentialsProvider> credentialsProviderCaptor =
+      ArgumentCaptor.forClass(CredentialsProvider.class);
+
+  @Mock private HttpClientBuilder httpClientBuilder;
 
   @Before
   public void setUp() {
     proxyProperties.stream().forEach(key -> savedProperties.put(key, System.getProperty(key)));
     proxyProperties.stream().forEach(key -> System.clearProperty(key));
+
+    Mockito.when(
+            httpClientBuilder.setDefaultCredentialsProvider(credentialsProviderCaptor.capture()))
+        .thenReturn(httpClientBuilder);
   }
 
   @After
@@ -69,8 +82,8 @@ public class ConnectionWithProxyCredentialsTest {
 
   @Test
   public void testAddProxyCredentials_undefined() {
-    Connection.addProxyCredentials(credentialsProvider);
-    Credentials credentials = credentialsProvider.getCredentials(AuthScope.ANY);
+    Connection.addProxyCredentials(httpClientBuilder);
+    Credentials credentials = credentialsProviderCaptor.getValue().getCredentials(AuthScope.ANY);
     Assert.assertNull(credentials);
   }
 
@@ -86,7 +99,9 @@ public class ConnectionWithProxyCredentialsTest {
     System.setProperty("https.proxyUser", "s-user");
     System.setProperty("https.proxyPassword", "s-pass");
 
-    Connection.addProxyCredentials(credentialsProvider);
+    Connection.addProxyCredentials(httpClientBuilder);
+    CredentialsProvider credentialsProvider = credentialsProviderCaptor.getValue();
+
     Credentials httpCredentials =
         credentialsProvider.getCredentials(new AuthScope("http://localhost", 1080));
     Assert.assertEquals("user", httpCredentials.getUserPrincipal().getName());
@@ -108,7 +123,9 @@ public class ConnectionWithProxyCredentialsTest {
     System.setProperty("https.proxyUser", "s-user");
     System.setProperty("https.proxyPassword", "s-pass");
 
-    Connection.addProxyCredentials(credentialsProvider);
+    Connection.addProxyCredentials(httpClientBuilder);
+    CredentialsProvider credentialsProvider = credentialsProviderCaptor.getValue();
+
     Credentials httpCredentials =
         credentialsProvider.getCredentials(new AuthScope("http://localhost", 80));
     Assert.assertEquals("user", httpCredentials.getUserPrincipal().getName());
@@ -128,8 +145,8 @@ public class ConnectionWithProxyCredentialsTest {
     System.setProperty("https.proxyUser", "s-user");
     System.setProperty("https.proxyPassword", "s-pass");
 
-    Connection.addProxyCredentials(credentialsProvider);
-    Credentials credentials = credentialsProvider.getCredentials(AuthScope.ANY);
+    Connection.addProxyCredentials(httpClientBuilder);
+    Credentials credentials = credentialsProviderCaptor.getValue().getCredentials(AuthScope.ANY);
     Assert.assertNull(credentials);
   }
 
@@ -141,8 +158,8 @@ public class ConnectionWithProxyCredentialsTest {
     System.setProperty("https.proxyHost", "https://host.com");
     System.setProperty("https.proxyPassword", "s-pass");
 
-    Connection.addProxyCredentials(credentialsProvider);
-    Credentials credentials = credentialsProvider.getCredentials(AuthScope.ANY);
+    Connection.addProxyCredentials(httpClientBuilder);
+    Credentials credentials = credentialsProviderCaptor.getValue().getCredentials(AuthScope.ANY);
     Assert.assertNull(credentials);
   }
 
@@ -154,8 +171,8 @@ public class ConnectionWithProxyCredentialsTest {
     System.setProperty("https.proxyHost", "https://host.com");
     System.setProperty("https.proxyUser", "s-user");
 
-    Connection.addProxyCredentials(credentialsProvider);
-    Credentials credentials = credentialsProvider.getCredentials(AuthScope.ANY);
+    Connection.addProxyCredentials(httpClientBuilder);
+    Credentials credentials = credentialsProviderCaptor.getValue().getCredentials(AuthScope.ANY);
     Assert.assertNull(credentials);
   }
 }

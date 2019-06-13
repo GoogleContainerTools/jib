@@ -35,7 +35,6 @@ import javax.annotation.Nullable;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -61,8 +60,17 @@ public class Connection implements Closeable {
    * @return {@link Connection} factory, a function that generates a {@link Connection} to a URL
    */
   public static Function<URL, Connection> getConnectionFactory() {
-    HttpClient httpClient = initializeHttpClientBuilder().build();
-    return url -> new Connection(url, new ApacheHttpTransport(httpClient));
+    // Do not use NetHttpTransport. It does not process response errors properly.
+    // See https://github.com/google/google-http-java-client/issues/39)
+    //
+    // A new ApacheHttpTransport needs to be created for each connection because otherwise HTTP
+    // connection persistence causes the connection to throw NoHttpResponseException.
+    //
+    // TODO(chanseok): use ApacheHttpTransport.newDefaultHttpClientBuilder() in newer
+    // google-http-client-apache (https://github.com/googleapis/google-http-java-client/issues/578)
+    HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
+    addProxyCredentials(httpClientBuilder);
+    return url -> new Connection(url, new ApacheHttpTransport(httpClientBuilder.build()));
   }
 
   /**
@@ -73,26 +81,13 @@ public class Connection implements Closeable {
    */
   public static Function<URL, Connection> getInsecureConnectionFactory()
       throws GeneralSecurityException {
-    HttpClient httpClient =
-        initializeHttpClientBuilder()
+    // Do not use NetHttpTransport. See comments in getConnectionFactory for details.
+    HttpClientBuilder httpClientBuilder =
+        HttpClientBuilder.create() // TODO: ApacheHttpTransport.newDefaultHttpClientBuilder()
             .setSSLContext(SslUtils.trustAllSSLContext())
-            .setSSLHostnameVerifier(new NoopHostnameVerifier())
-            .build();
-
-    // Do not use {@link NetHttpTransport}. It does not process response errors properly. A new
-    // {@link ApacheHttpTransport} needs to be created for each connection because otherwise HTTP
-    // connection persistence causes the connection to throw {@link NoHttpResponseException}. See
-    // https://github.com/google/google-http-java-client/issues/39
-    return url -> new Connection(url, new ApacheHttpTransport(httpClient));
-  }
-
-  private static HttpClientBuilder initializeHttpClientBuilder() {
-    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-    addProxyCredentials(credentialsProvider);
-    // TODO(chanseok): use ApacheHttpTransport.newDefaultHttpClientBuilder() in newer
-    // google-http-client-apache
-    // https://github.com/googleapis/google-http-java-client/issues/578
-    return HttpClientBuilder.create().setDefaultCredentialsProvider(credentialsProvider);
+            .setSSLHostnameVerifier(new NoopHostnameVerifier());
+    addProxyCredentials(httpClientBuilder);
+    return url -> new Connection(url, new ApacheHttpTransport(httpClientBuilder.build()));
   }
 
   /**
@@ -102,9 +97,11 @@ public class Connection implements Closeable {
    * @param transport Apache HTTP transport
    */
   @VisibleForTesting
-  static void addProxyCredentials(CredentialsProvider credentialsProvider) {
+  static void addProxyCredentials(HttpClientBuilder httpClientBuilder) {
+    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
     addProxyCredentials(credentialsProvider, "https");
     addProxyCredentials(credentialsProvider, "http");
+    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
   }
 
   private static void addProxyCredentials(
