@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.ProjectInfo;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.async.AsyncDependencies;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.async.NonBlockingSteps;
@@ -24,9 +25,7 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.common.collect.ImmutableList;
@@ -39,8 +38,7 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** Builds a model {@link Image}. */
-class BuildImageStep
-    implements AsyncStep<AsyncStep<Image<Layer>>>, Callable<AsyncStep<Image<Layer>>> {
+class BuildImageStep implements AsyncStep<AsyncStep<Image>>, Callable<AsyncStep<Image>> {
 
   private static final String DESCRIPTION = "Building container configuration";
 
@@ -51,7 +49,7 @@ class BuildImageStep
   private final PullAndCacheBaseImageLayersStep pullAndCacheBaseImageLayersStep;
   private final ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps;
 
-  private final ListenableFuture<AsyncStep<Image<Layer>>> listenableFuture;
+  private final ListenableFuture<AsyncStep<Image>> listenableFuture;
 
   BuildImageStep(
       ListeningExecutorService listeningExecutorService,
@@ -75,13 +73,13 @@ class BuildImageStep
   }
 
   @Override
-  public ListenableFuture<AsyncStep<Image<Layer>>> getFuture() {
+  public ListenableFuture<AsyncStep<Image>> getFuture() {
     return listenableFuture;
   }
 
   @Override
-  public AsyncStep<Image<Layer>> call() throws ExecutionException {
-    ListenableFuture<Image<Layer>> future =
+  public AsyncStep<Image> call() throws ExecutionException {
+    ListenableFuture<Image> future =
         AsyncDependencies.using(listeningExecutorService)
             .addSteps(NonBlockingSteps.get(pullAndCacheBaseImageLayersStep))
             .addSteps(buildAndCacheApplicationLayerSteps)
@@ -89,15 +87,14 @@ class BuildImageStep
     return () -> future;
   }
 
-  private Image<Layer> afterCachedLayerSteps()
-      throws ExecutionException, LayerPropertyNotFoundException {
+  private Image afterCachedLayerSteps() throws ExecutionException, LayerPropertyNotFoundException {
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create("building image format", 1);
         TimerEventDispatcher ignored2 =
-            new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), DESCRIPTION)) {
+            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       // Constructs the image.
-      Image.Builder<Layer> imageBuilder = Image.builder(buildConfiguration.getTargetFormat());
-      Image<Layer> baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();
+      Image.Builder imageBuilder = Image.builder(buildConfiguration.getTargetFormat());
+      Image baseImage = NonBlockingSteps.get(pullBaseImageStep).getBaseImage();
       ContainerConfiguration containerConfiguration =
           buildConfiguration.getContainerConfiguration();
 
@@ -117,6 +114,8 @@ class BuildImageStep
         }
       }
       imageBuilder
+          .setArchitecture(baseImage.getArchitecture())
+          .setOs(baseImage.getOs())
           .addEnvironment(baseImage.getEnvironment())
           .addLabels(baseImage.getLabels())
           .setHealthCheck(baseImage.getHealthCheck())
@@ -181,7 +180,7 @@ class BuildImageStep
    */
   @Nullable
   private ImmutableList<String> computeEntrypoint(
-      Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
+      Image baseImage, ContainerConfiguration containerConfiguration) {
     boolean shouldInherit =
         baseImage.getEntrypoint() != null && containerConfiguration.getEntrypoint() == null;
 
@@ -191,8 +190,8 @@ class BuildImageStep
     if (entrypointToUse != null) {
       String logSuffix = shouldInherit ? " (inherited from base image)" : "";
       String message = "Container entrypoint set to " + entrypointToUse + logSuffix;
-      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(""));
-      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(message));
+      buildConfiguration.getEventHandlers().dispatch(LogEvent.lifecycle(""));
+      buildConfiguration.getEventHandlers().dispatch(LogEvent.lifecycle(message));
     }
 
     return entrypointToUse;
@@ -210,7 +209,7 @@ class BuildImageStep
    */
   @Nullable
   private ImmutableList<String> computeProgramArguments(
-      Image<Layer> baseImage, ContainerConfiguration containerConfiguration) {
+      Image baseImage, ContainerConfiguration containerConfiguration) {
     boolean shouldInherit =
         baseImage.getProgramArguments() != null
             // Inherit CMD only when inheriting ENTRYPOINT.
@@ -225,7 +224,7 @@ class BuildImageStep
     if (programArgumentsToUse != null) {
       String logSuffix = shouldInherit ? " (inherited from base image)" : "";
       String message = "Container program arguments set to " + programArgumentsToUse + logSuffix;
-      buildConfiguration.getEventDispatcher().dispatch(LogEvent.lifecycle(message));
+      buildConfiguration.getEventHandlers().dispatch(LogEvent.lifecycle(message));
     }
 
     return programArgumentsToUse;

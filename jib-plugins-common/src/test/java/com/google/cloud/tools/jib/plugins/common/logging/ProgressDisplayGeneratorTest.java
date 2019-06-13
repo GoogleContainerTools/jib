@@ -16,50 +16,49 @@
 
 package com.google.cloud.tools.jib.plugins.common.logging;
 
-import com.google.cloud.tools.jib.event.progress.Allocation;
 import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 
-/** Tests for {@link com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator}. */
+/** Tests for {@link ProgressDisplayGenerator}. */
 public class ProgressDisplayGeneratorTest {
+
+  private static String getBar(String bar, double value) {
+    return String.format("%s %.1f%% complete", bar, value);
+  }
 
   @Test
   public void testGenerateProgressDisplay_progressBar_0() {
     Assert.assertEquals(
-        Arrays.asList("Executing tasks:", "[                              ] 0.0% complete"),
+        Arrays.asList("Executing tasks:", getBar("[                              ]", 0.0)),
         ProgressDisplayGenerator.generateProgressDisplay(0, Collections.emptyList()));
   }
 
   @Test
   public void testGenerateProgressDisplay_progressBar_50() {
     Assert.assertEquals(
-        Arrays.asList("Executing tasks:", "[===============               ] 50.0% complete"),
+        Arrays.asList("Executing tasks:", getBar("[===============               ]", 50.0)),
         ProgressDisplayGenerator.generateProgressDisplay(0.5, Collections.emptyList()));
   }
 
   @Test
   public void testGenerateProgressDisplay_progressBar_100() {
     Assert.assertEquals(
-        Arrays.asList("Executing tasks:", "[==============================] 100.0% complete"),
+        Arrays.asList("Executing tasks:", getBar("[==============================]", 100.0)),
         ProgressDisplayGenerator.generateProgressDisplay(1, Collections.emptyList()));
   }
 
   @Test
   public void testGenerateProgressDisplay_unfinishedTasks() {
-    Allocation root = Allocation.newRoot("does not display", 2);
-    Allocation childLeft = root.newChild("does not display", 2);
-    Allocation childLeftDown = childLeft.newChild("childLeftDown", 2);
-    Allocation childRight = root.newChild("childRight", 2);
-
     Assert.assertEquals(
         Arrays.asList(
             "Executing tasks:",
-            "[===============               ] 50.0% complete",
-            "> childLeftDown",
-            "> childRight"),
+            getBar("[===============               ]", 50.0),
+            "> unfinished task",
+            "> another task in progress",
+            "> stalled"),
         ProgressDisplayGenerator.generateProgressDisplay(
-            0.5, Arrays.asList(root, childLeft, childLeftDown, childRight)));
+            0.5, Arrays.asList("unfinished task", "another task in progress", "stalled")));
   }
 }

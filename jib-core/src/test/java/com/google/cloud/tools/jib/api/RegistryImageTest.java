@@ -16,11 +16,6 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,25 +30,25 @@ public class RegistryImageTest {
   @Mock private CredentialRetriever mockCredentialRetriever;
 
   @Test
-  public void testToImageConfiguration()
-      throws InvalidImageReferenceException, CredentialRetrievalException {
-    ImageConfiguration imageConfiguration =
+  public void testGetters_default() throws InvalidImageReferenceException {
+    RegistryImage image = RegistryImage.named("registry/image");
+
+    Assert.assertEquals("registry/image", image.getImageReference().toString());
+    Assert.assertEquals(0, image.getCredentialRetrievers().size());
+  }
+
+  @Test
+  public void testGetters()
+      throws InvalidImageReferenceException, AssertionError, CredentialRetrievalException {
+    RegistryImage image =
         RegistryImage.named("registry/image")
             .addCredentialRetriever(mockCredentialRetriever)
-            .addCredential("username", "password")
-            .toImageConfiguration();
+            .addCredential("username", "password");
 
+    Assert.assertEquals(2, image.getCredentialRetrievers().size());
+    Assert.assertSame(mockCredentialRetriever, image.getCredentialRetrievers().get(0));
     Assert.assertEquals(
-        ImageReference.parse("registry/image").toString(),
-        imageConfiguration.getImage().toString());
-    Assert.assertEquals(2, imageConfiguration.getCredentialRetrievers().size());
-    Assert.assertSame(mockCredentialRetriever, imageConfiguration.getCredentialRetrievers().get(0));
-    Assert.assertEquals(
-        Credential.basic("username", "password"),
-        imageConfiguration
-            .getCredentialRetrievers()
-            .get(1)
-            .retrieve()
-            .orElseThrow(AssertionError::new));
+        Credential.from("username", "password"),
+        image.getCredentialRetrievers().get(1).retrieve().get());
   }
 }

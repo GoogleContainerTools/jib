@@ -16,10 +16,13 @@
 
 package com.google.cloud.tools.jib.configuration;
 
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.CredentialRetriever;
+import com.google.cloud.tools.jib.api.ImageFormat;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.LayerConfiguration;
+import com.google.cloud.tools.jib.api.Port;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -54,7 +57,7 @@ public class BuildConfigurationTest {
     Set<String> additionalTargetImageTags = ImmutableSet.of("tag1", "tag2", "tag3");
     Set<String> expectedTargetImageTags = ImmutableSet.of("targettag", "tag1", "tag2", "tag3");
     List<CredentialRetriever> credentialRetrievers =
-        Collections.singletonList(() -> Optional.of(Credential.basic("username", "password")));
+        Collections.singletonList(() -> Optional.of(Credential.from("username", "password")));
     Instant expectedCreationTime = Instant.ofEpochSecond(10000);
     List<String> expectedEntrypoint = Arrays.asList("some", "entrypoint");
     List<String> expectedProgramArguments = Arrays.asList("arg1", "arg2");
@@ -99,7 +102,7 @@ public class BuildConfigurationTest {
             .setContainerConfiguration(containerConfiguration)
             .setApplicationLayersCacheDirectory(expectedApplicationLayersCacheDirectory)
             .setBaseImageLayersCacheDirectory(expectedBaseImageLayersCacheDirectory)
-            .setTargetFormat(OCIManifestTemplate.class)
+            .setTargetFormat(ImageFormat.OCI)
             .setAllowInsecureRegistries(true)
             .setLayerConfigurations(expectedLayerConfigurations)
             .setToolName(expectedCreatedBy)
@@ -126,7 +129,7 @@ public class BuildConfigurationTest {
         expectedTargetTag, buildConfiguration.getTargetImageConfiguration().getImageTag());
     Assert.assertEquals(expectedTargetImageTags, buildConfiguration.getAllTargetImageTags());
     Assert.assertEquals(
-        Credential.basic("username", "password"),
+        Credential.from("username", "password"),
         buildConfiguration
             .getTargetImageConfiguration()
             .getCredentialRetrievers()

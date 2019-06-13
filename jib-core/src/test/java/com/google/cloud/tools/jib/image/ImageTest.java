@@ -16,14 +16,16 @@
 
 package com.google.cloud.tools.jib.image;
 
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.Port;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,7 +49,7 @@ public class ImageTest {
 
   @Test
   public void test_smokeTest() throws LayerPropertyNotFoundException {
-    Image<Layer> image =
+    Image image =
         Image.builder(V22ManifestTemplate.class)
             .setCreated(Instant.ofEpochSecond(10000))
             .addEnvironmentVariable("crepecake", "is great")
@@ -75,5 +77,22 @@ public class ImageTest {
         ImmutableSet.of(AbsoluteUnixPath.get("/a/path"), AbsoluteUnixPath.get("/another/path")),
         image.getVolumes());
     Assert.assertEquals("john", image.getUser());
+  }
+
+  @Test
+  public void testDefaults() {
+    Image image = Image.builder(V22ManifestTemplate.class).build();
+    Assert.assertEquals("amd64", image.getArchitecture());
+    Assert.assertEquals("linux", image.getOs());
+    Assert.assertEquals(Collections.emptyList(), image.getLayers());
+    Assert.assertEquals(Collections.emptyList(), image.getHistory());
+  }
+
+  @Test
+  public void testOsArch() {
+    Image image =
+        Image.builder(V22ManifestTemplate.class).setArchitecture("wasm").setOs("js").build();
+    Assert.assertEquals("wasm", image.getArchitecture());
+    Assert.assertEquals("js", image.getOs());
   }
 }

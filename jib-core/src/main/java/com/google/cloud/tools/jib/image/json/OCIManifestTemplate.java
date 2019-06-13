@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.image.json;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

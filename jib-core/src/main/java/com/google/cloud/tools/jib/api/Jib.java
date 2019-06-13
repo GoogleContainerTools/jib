@@ -17,9 +17,6 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
-
 /** Build containers with Jib. */
 // TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class Jib {
@@ -46,7 +43,7 @@ public class Jib {
    * @return a new {@link JibContainerBuilder} to continue building the container
    */
   public static JibContainerBuilder from(ImageReference baseImageReference) {
-    return new JibContainerBuilder(RegistryImage.named(baseImageReference));
+    return from(RegistryImage.named(baseImageReference));
   }
 
   /**
@@ -58,6 +55,15 @@ public class Jib {
    */
   public static JibContainerBuilder from(RegistryImage registryImage) {
     return new JibContainerBuilder(registryImage);
+  }
+
+  /**
+   * Starts building the container from an empty base image.
+   *
+   * @return a new {@link JibContainerBuilder} to continue building the container
+   */
+  public static JibContainerBuilder fromScratch() {
+    return from(ImageReference.scratch());
   }
 
   private Jib() {}

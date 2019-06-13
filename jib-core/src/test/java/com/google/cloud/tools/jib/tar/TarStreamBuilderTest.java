@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.tar;
 
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
@@ -101,12 +100,11 @@ public class TarStreamBuilderTest {
     testTarStreamBuilder.addByteEntry("asdf".getBytes(StandardCharsets.UTF_8), "crepecake");
     testTarStreamBuilder.addBlobEntry(
         Blobs.from("jib"), "jib".getBytes(StandardCharsets.UTF_8).length, "jib");
-    Blob blob = testTarStreamBuilder.toBlob();
 
     // Writes the BLOB and captures the output.
     ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
     OutputStream compressorStream = new GZIPOutputStream(tarByteOutputStream);
-    blob.writeTo(compressorStream);
+    testTarStreamBuilder.writeAsTarArchiveTo(compressorStream);
 
     // Rearrange the output into input for verification.
     ByteArrayInputStream byteArrayInputStream =
@@ -173,12 +171,10 @@ public class TarStreamBuilderTest {
 
   /** Creates a compressed blob from the TarStreamBuilder and verifies it. */
   private void verifyBlobWithCompression() throws IOException {
-    Blob blob = testTarStreamBuilder.toBlob();
-
     // Writes the BLOB and captures the output.
     ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
     OutputStream compressorStream = new GZIPOutputStream(tarByteOutputStream);
-    blob.writeTo(compressorStream);
+    testTarStreamBuilder.writeAsTarArchiveTo(compressorStream);
 
     // Rearrange the output into input for verification.
     ByteArrayInputStream byteArrayInputStream =
@@ -190,11 +186,9 @@ public class TarStreamBuilderTest {
 
   /** Creates an uncompressed blob from the TarStreamBuilder and verifies it. */
   private void verifyBlobWithoutCompression() throws IOException {
-    Blob blob = testTarStreamBuilder.toBlob();
-
     // Writes the BLOB and captures the output.
     ByteArrayOutputStream tarByteOutputStream = new ByteArrayOutputStream();
-    blob.writeTo(tarByteOutputStream);
+    testTarStreamBuilder.writeAsTarArchiveTo(tarByteOutputStream);
 
     // Rearrange the output into input for verification.
     ByteArrayInputStream byteArrayInputStream =

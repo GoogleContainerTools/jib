@@ -18,10 +18,9 @@ package com.google.cloud.tools.jib.http;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponse;
-import com.google.cloud.tools.jib.blob.Blob;
-import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.net.HttpHeaders;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 /** Holds an HTTP response. */
@@ -65,11 +64,11 @@ public class Response {
   }
 
   /**
-   * @return the HTTP response body as a {@link Blob}.
+   * @return the HTTP response body as an {@link InputStream}.
    * @throws IOException if getting the HTTP response content fails.
    */
-  public Blob getBody() throws IOException {
-    return Blobs.from(httpResponse.getContent());
+  public InputStream getBody() throws IOException {
+    return httpResponse.getContent();
   }
 
   /** @return the original request URL */

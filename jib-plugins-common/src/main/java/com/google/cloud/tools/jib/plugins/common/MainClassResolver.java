@@ -16,15 +16,12 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.event.DefaultEventDispatcher;
-import com.google.cloud.tools.jib.event.events.LogEvent;
-import com.google.cloud.tools.jib.frontend.MainClassFinder;
-import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.MainClassFinder;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import java.nio.file.Path;
+import java.io.IOException;
 import javax.annotation.Nullable;
 import javax.lang.model.SourceVersion;
 
@@ -47,10 +44,11 @@ public class MainClassResolver {
    * @param projectProperties properties containing plugin information and help messages
    * @return the name of the main class to be used for the container entrypoint
    * @throws MainClassInferenceException if no valid main class is configured or discovered
+   * @throws IOException if getting the class files from {@code projectProperties} fails
    */
   public static String resolveMainClass(
       @Nullable String mainClass, ProjectProperties projectProperties)
-      throws MainClassInferenceException {
+      throws MainClassInferenceException, IOException {
     // If mainClass is null, try to find via projectProperties.
     if (mainClass == null) {
       mainClass = getMainClassFromJar(projectProperties);
@@ -73,8 +71,7 @@ public class MainClassResolver {
 
     Preconditions.checkNotNull(mainClass);
     if (!isValidJavaClass(mainClass)) {
-      new DefaultEventDispatcher(projectProperties.getEventHandlers())
-          .dispatch(LogEvent.warn("'mainClass' is not a valid Java class : " + mainClass));
+      projectProperties.log(LogEvent.warn("'mainClass' is not a valid Java class : " + mainClass));
     }
 
     return mainClass;
@@ -96,37 +93,24 @@ public class MainClassResolver {
 
   @Nullable
   private static String getMainClassFromJar(ProjectProperties projectProperties) {
-    new DefaultEventDispatcher(projectProperties.getEventHandlers())
-        .dispatch(
-            LogEvent.info(
-                "Searching for main class... Add a 'mainClass' configuration to '"
-                    + projectProperties.getPluginName()
-                    + "' to improve build speed."));
+    projectProperties.log(
+        LogEvent.info(
+            "Searching for main class... Add a 'mainClass' configuration to '"
+                + projectProperties.getPluginName()
+                + "' to improve build speed."));
     return projectProperties.getMainClassFromJar();
   }
 
   private static String findMainClassInClassFiles(ProjectProperties projectProperties)
-      throws MainClassInferenceException {
-    new DefaultEventDispatcher(projectProperties.getEventHandlers())
-        .dispatch(
-            LogEvent.debug(
-                "Could not find a valid main class specified in "
-                    + projectProperties.getJarPluginName()
-                    + "; attempting to infer main class."));
-
-    ImmutableList<Path> classesSourceFiles =
-        projectProperties
-            .getJavaLayerConfigurations()
-            .getClassLayerEntries()
-            .stream()
-            .map(LayerEntry::getSourceFile)
-            .collect(ImmutableList.toImmutableList());
+      throws MainClassInferenceException, IOException {
+    projectProperties.log(
+        LogEvent.debug(
+            "Could not find a valid main class specified in "
+                + projectProperties.getJarPluginName()
+                + "; attempting to infer main class."));
 
     MainClassFinder.Result mainClassFinderResult =
-        new MainClassFinder(
-                classesSourceFiles,
-                new DefaultEventDispatcher(projectProperties.getEventHandlers()))
-            .find();
+        MainClassFinder.find(projectProperties.getClassFiles(), projectProperties::log);
 
     switch (mainClassFinderResult.getType()) {
       case MAIN_CLASS_FOUND:

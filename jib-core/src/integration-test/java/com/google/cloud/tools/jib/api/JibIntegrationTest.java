@@ -17,12 +17,9 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
-import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -31,13 +28,17 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /** Integration tests for {@link Jib}. */
 public class JibIntegrationTest {
 
   @ClassRule
   public static final LocalRegistry localRegistry = new LocalRegistry(5000, "username", "password");
+
+  @Rule public final TemporaryFolder cacheFolder = new TemporaryFolder();
 
   /**
    * Pulls a built image and attempts to run it.
@@ -65,8 +66,8 @@ public class JibIntegrationTest {
 
   @Test
   public void testBasic_helloWorld()
-      throws InvalidImageReferenceException, InterruptedException, ExecutionException,
-          CacheDirectoryCreationException, IOException {
+      throws InvalidImageReferenceException, InterruptedException, CacheDirectoryCreationException,
+          IOException, RegistryException, ExecutionException {
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-helloworld");
     JibContainer jibContainer =
@@ -76,7 +77,7 @@ public class JibIntegrationTest {
                 Containerizer.to(
                         RegistryImage.named(targetImageReference)
                             .addCredentialRetriever(
-                                () -> Optional.of(Credential.basic("username", "password"))))
+                                () -> Optional.of(Credential.from("username", "password"))))
                     .setAllowInsecureRegistries(true));
 
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
@@ -86,18 +87,98 @@ public class JibIntegrationTest {
             targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
   }
 
+  @Test
+  public void testScratch()
+      throws IOException, InterruptedException, ExecutionException, RegistryException,
+          CacheDirectoryCreationException {
+    ImageReference targetImageReference =
+        ImageReference.of("localhost:5000", "jib-core", "basic-scratch");
+    Jib.fromScratch()
+        .containerize(
+            Containerizer.to(
+                    RegistryImage.named(targetImageReference)
+                        .addCredentialRetriever(
+                            () -> Optional.of(Credential.from("username", "password"))))
+                .setAllowInsecureRegistries(true));
+
+    // Check that resulting image has no layers
+    localRegistry.pull(targetImageReference.toString());
+    String inspectOutput = new Command("docker", "inspect", targetImageReference.toString()).run();
+    Assert.assertFalse(
+        "docker inspect output contained layers: " + inspectOutput,
+        inspectOutput.contains("\"Layers\": ["));
+  }
+
+  @Test
+  public void testOffline()
+      throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
+          RegistryException, CacheDirectoryCreationException {
+    LocalRegistry tempRegistry = new LocalRegistry(5001);
+    tempRegistry.start();
+    tempRegistry.pullAndPushToLocal("busybox", "busybox");
+    Path cacheDirectory = cacheFolder.getRoot().toPath();
+
+    ImageReference targetImageReferenceOnline =
+        ImageReference.of("localhost:5001", "jib-core", "basic-online");
+    ImageReference targetImageReferenceOffline =
+        ImageReference.of("localhost:5001", "jib-core", "basic-offline");
+
+    JibContainerBuilder jibContainerBuilder =
+        Jib.from("localhost:5001/busybox").setEntrypoint("echo", "Hello World");
+
+    // Should fail since Jib can't build to registry offline
+    try {
+      jibContainerBuilder.containerize(
+          Containerizer.to(RegistryImage.named(targetImageReferenceOffline)).setOfflineMode(true));
+      Assert.fail();
+    } catch (IllegalStateException ex) {
+      Assert.assertEquals("Cannot build to a container registry in offline mode", ex.getMessage());
+    }
+
+    // Should fail since Jib hasn't cached the base image yet
+    try {
+      jibContainerBuilder.containerize(
+          Containerizer.to(DockerDaemonImage.named(targetImageReferenceOffline))
+              .setBaseImageLayersCache(cacheDirectory)
+              .setOfflineMode(true));
+      Assert.fail();
+    } catch (ExecutionException ex) {
+      Assert.assertEquals(
+          "Cannot run Jib in offline mode; localhost:5001/busybox not found in local Jib cache",
+          ex.getCause().getMessage());
+    }
+
+    // Run online to cache the base image
+    jibContainerBuilder.containerize(
+        Containerizer.to(DockerDaemonImage.named(targetImageReferenceOnline))
+            .setBaseImageLayersCache(cacheDirectory)
+            .setAllowInsecureRegistries(true));
+
+    // Run again in offline mode, should succeed this time
+    tempRegistry.stop();
+    jibContainerBuilder.containerize(
+        Containerizer.to(DockerDaemonImage.named(targetImageReferenceOffline))
+            .setBaseImageLayersCache(cacheDirectory)
+            .setOfflineMode(true));
+
+    // Verify output
+    Assert.assertEquals(
+        "Hello World\n",
+        new Command("docker", "run", "--rm", targetImageReferenceOffline.toString()).run());
+  }
+
   /** Ensure that a provided executor is not disposed. */
   @Test
   public void testProvidedExecutorNotDisposed()
-      throws InvalidImageReferenceException, InterruptedException, ExecutionException,
-          CacheDirectoryCreationException, IOException {
+      throws InvalidImageReferenceException, InterruptedException, CacheDirectoryCreationException,
+          IOException, RegistryException, ExecutionException {
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-helloworld");
     Containerizer containerizer =
         Containerizer.to(
                 RegistryImage.named(targetImageReference)
                     .addCredentialRetriever(
-                        () -> Optional.of(Credential.basic("username", "password"))))
+                        () -> Optional.of(Credential.from("username", "password"))))
             .setAllowInsecureRegistries(true);
 
     ExecutorService executorService = Executors.newCachedThreadPool();

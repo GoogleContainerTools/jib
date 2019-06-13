@@ -16,13 +16,13 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.Credential;
+import com.google.cloud.tools.jib.api.CredentialRetriever;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.async.AsyncStep;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
-import com.google.cloud.tools.jib.event.events.LogEvent;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -98,12 +98,12 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
   public Credential call() throws CredentialRetrievalException {
     String description = makeDescription(registry);
 
-    buildConfiguration.getEventDispatcher().dispatch(LogEvent.progress(description + "..."));
+    buildConfiguration.getEventHandlers().dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create("retrieving credentials for " + registry, 1);
         TimerEventDispatcher ignored2 =
-            new TimerEventDispatcher(buildConfiguration.getEventDispatcher(), description)) {
+            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), description)) {
       for (CredentialRetriever credentialRetriever : credentialRetrievers) {
         Optional<Credential> optionalCredential = credentialRetriever.retrieve();
         if (optionalCredential.isPresent()) {
@@ -111,11 +111,10 @@ class RetrieveRegistryCredentialsStep implements AsyncStep<Credential>, Callable
         }
       }
 
-      // If no credentials found, give an info (not warning because in most cases, the base image
-      // is
+      // If no credentials found, give an info (not warning because in most cases, the base image is
       // public and does not need extra credentials) and return null.
       buildConfiguration
-          .getEventDispatcher()
+          .getEventHandlers()
           .dispatch(LogEvent.info("No credentials could be retrieved for registry " + registry));
       return null;
     }

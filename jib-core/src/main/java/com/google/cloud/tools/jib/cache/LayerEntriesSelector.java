@@ -16,13 +16,12 @@
 
 package com.google.cloud.tools.jib.cache;
 
-import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.LayerEntry;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.LayerEntry;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.json.JsonTemplate;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Instant;
@@ -142,9 +141,7 @@ class LayerEntriesSelector {
    */
   static DescriptorDigest generateSelector(ImmutableList<LayerEntry> layerEntries)
       throws IOException {
-    return JsonTemplateMapper.toBlob(toSortedJsonTemplates(layerEntries))
-        .writeTo(ByteStreams.nullOutputStream())
-        .getDigest();
+    return Digests.computeJsonDigest(toSortedJsonTemplates(layerEntries));
   }
 
   private LayerEntriesSelector() {}

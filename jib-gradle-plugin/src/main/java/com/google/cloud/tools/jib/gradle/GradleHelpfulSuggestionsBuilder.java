@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import javax.annotation.Nullable;
 
@@ -66,12 +66,8 @@ class GradleHelpfulSuggestionsBuilder {
         "gradle clean",
         baseImageReference,
         !isCredHelperDefinedForBaseImage && !baseImageHasConfiguredCredentials,
-        "from.credHelper",
-        ignored -> "from.auth",
         targetImageReference,
         !isCredHelperDefinedForTargetImage && !targetImageHasConfiguredCredentials,
-        "to.credHelper",
-        ignored -> "to.auth",
         "jib.to.image",
         "--image",
         "build.gradle");

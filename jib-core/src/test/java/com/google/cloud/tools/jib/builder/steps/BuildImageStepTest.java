@@ -16,20 +16,17 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.Port;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
-import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.Image;
-import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.collect.ImmutableList;
@@ -55,7 +52,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class BuildImageStepTest {
 
-  @Mock private EventDispatcher mockEventDispatcher;
+  @Mock private EventHandlers mockEventHandlers;
   @Mock private BuildConfiguration mockBuildConfiguration;
   @Mock private ContainerConfiguration mockContainerConfiguration;
   @Mock private PullBaseImageStep mockPullBaseImageStep;
@@ -65,7 +62,7 @@ public class BuildImageStepTest {
   @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStepResources;
   @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStepClasses;
   @Mock private BuildAndCacheApplicationLayerStep mockBuildAndCacheApplicationLayerStepExtraFiles;
-
+  @Mock private CachedLayer mockCachedLayer;
   private DescriptorDigest testDescriptorDigest;
   private HistoryEntry nonEmptyLayerHistory;
   private HistoryEntry emptyLayerHistory;
@@ -75,35 +72,8 @@ public class BuildImageStepTest {
     testDescriptorDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    CachedLayer testCachedLayer =
-        new CachedLayer() {
-          @Override
-          public DescriptorDigest getDigest() {
-            return testDescriptorDigest;
-          }
 
-          @Override
-          public DescriptorDigest getDiffId() {
-            return testDescriptorDigest;
-          }
-
-          @Override
-          public long getSize() {
-            return 0;
-          }
-
-          @Override
-          public Blob getBlob() {
-            return Blobs.from("ignored");
-          }
-
-          @Override
-          public BlobDescriptor getBlobDescriptor() {
-            return new BlobDescriptor(0, testDescriptorDigest);
-          }
-        };
-
-    Mockito.when(mockBuildConfiguration.getEventDispatcher()).thenReturn(mockEventDispatcher);
+    Mockito.when(mockBuildConfiguration.getEventHandlers()).thenReturn(mockEventHandlers);
     Mockito.when(mockBuildConfiguration.getContainerConfiguration())
         .thenReturn(mockContainerConfiguration);
     Mockito.when(mockBuildConfiguration.getToolName()).thenReturn("jib");
@@ -113,6 +83,8 @@ public class BuildImageStepTest {
     Mockito.when(mockContainerConfiguration.getExposedPorts()).thenReturn(ImmutableSet.of());
     Mockito.when(mockContainerConfiguration.getEntrypoint()).thenReturn(ImmutableList.of());
     Mockito.when(mockContainerConfiguration.getUser()).thenReturn("root");
+    Mockito.when(mockCachedLayer.getBlobDescriptor())
+        .thenReturn(new BlobDescriptor(0, testDescriptorDigest));
 
     nonEmptyLayerHistory =
         HistoryEntry.builder()
@@ -128,8 +100,10 @@ public class BuildImageStepTest {
             .setEmptyLayer(true)
             .build();
 
-    Image<Layer> baseImage =
+    Image baseImage =
         Image.builder(V22ManifestTemplate.class)
+            .setArchitecture("wasm")
+            .setOs("js")
             .addEnvironment(ImmutableMap.of("BASE_ENV", "BASE_ENV_VALUE", "BASE_ENV_2", "DEFAULT"))
             .addLabel("base.label", "base.label.value")
             .addLabel("base.label.2", "default")
@@ -152,7 +126,7 @@ public class BuildImageStepTest {
             .addHistory(emptyLayerHistory)
             .build();
     Mockito.when(mockPullAndCacheBaseImageLayerStep.getFuture())
-        .thenReturn(Futures.immediateFuture(testCachedLayer));
+        .thenReturn(Futures.immediateFuture(mockCachedLayer));
     Mockito.when(mockPullAndCacheBaseImageLayersStep.getFuture())
         .thenReturn(
             Futures.immediateFuture(
@@ -173,7 +147,7 @@ public class BuildImageStepTest {
         .forEach(
             layerStep ->
                 Mockito.when(layerStep.getFuture())
-                    .thenReturn(Futures.immediateFuture(testCachedLayer)));
+                    .thenReturn(Futures.immediateFuture(mockCachedLayer)));
 
     Mockito.when(mockBuildAndCacheApplicationLayerStepClasses.getLayerType()).thenReturn("classes");
     Mockito.when(mockBuildAndCacheApplicationLayerStepDependencies.getLayerType())
@@ -190,14 +164,14 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
+            ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
                 mockBuildAndCacheApplicationLayerStepDependencies,
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
     Assert.assertEquals(
         testDescriptorDigest, image.getLayers().asList().get(0).getBlobDescriptor().getDigest());
   }
@@ -219,14 +193,16 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
+            ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
                 mockBuildAndCacheApplicationLayerStepDependencies,
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
+    Assert.assertEquals("wasm", image.getArchitecture());
+    Assert.assertEquals("js", image.getOs());
     Assert.assertEquals(
         ImmutableMap.of(
             "BASE_ENV", "BASE_ENV_VALUE", "MY_ENV", "MY_ENV_VALUE", "BASE_ENV_2", "NEW_VALUE"),
@@ -280,14 +256,14 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
+            ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
                 mockBuildAndCacheApplicationLayerStepDependencies,
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals("/my/directory", image.getWorkingDirectory());
   }
@@ -302,14 +278,14 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
+            ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
                 mockBuildAndCacheApplicationLayerStepDependencies,
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
     Assert.assertEquals(ImmutableList.of("test"), image.getProgramArguments());
@@ -325,14 +301,14 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
+            ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
                 mockBuildAndCacheApplicationLayerStepDependencies,
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals(ImmutableList.of("baseImageEntrypoint"), image.getEntrypoint());
     Assert.assertEquals(ImmutableList.of("catalina.sh", "run"), image.getProgramArguments());
@@ -348,14 +324,14 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
+            ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
                 mockBuildAndCacheApplicationLayerStepDependencies,
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
 
     Assert.assertEquals(ImmutableList.of("myEntrypoint"), image.getEntrypoint());
     Assert.assertNull(image.getProgramArguments());
@@ -367,7 +343,7 @@ public class BuildImageStepTest {
         new BuildImageStep(
             MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor()),
             mockBuildConfiguration,
-            ProgressEventDispatcher.newRoot(mockEventDispatcher, "ignored", 1).newChildProducer(),
+            ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer(),
             mockPullBaseImageStep,
             mockPullAndCacheBaseImageLayersStep,
             ImmutableList.of(
@@ -375,7 +351,7 @@ public class BuildImageStepTest {
                 mockBuildAndCacheApplicationLayerStepResources,
                 mockBuildAndCacheApplicationLayerStepClasses,
                 mockBuildAndCacheApplicationLayerStepExtraFiles));
-    Image<Layer> image = buildImageStep.getFuture().get().getFuture().get();
+    Image image = buildImageStep.getFuture().get().getFuture().get();
 
     // Make sure history is as expected
     HistoryEntry expectedAddedBaseLayerHistory =

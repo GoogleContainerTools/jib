@@ -17,12 +17,12 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
-import com.google.cloud.tools.jib.http.BlobProgressListener;
-import com.google.cloud.tools.jib.http.ListenableCountingOutputStream;
+import com.google.cloud.tools.jib.http.NotifyingOutputStream;
 import com.google.cloud.tools.jib.http.Response;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
@@ -45,32 +45,30 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
    */
   private final OutputStream destinationOutputStream;
 
-  private final Consumer<Long> blobSizeConsumer;
-  private final BlobProgressListener blobProgressListener;
+  private final Consumer<Long> blobSizeListener;
+  private final Consumer<Long> writtenByteCountListener;
 
   BlobPuller(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       DescriptorDigest blobDigest,
       OutputStream destinationOutputStream,
-      Consumer<Long> blobSizeConsumer,
-      BlobProgressListener blobProgressListener) {
+      Consumer<Long> blobSizeListener,
+      Consumer<Long> writtenByteCountListener) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.blobDigest = blobDigest;
     this.destinationOutputStream = destinationOutputStream;
-    this.blobSizeConsumer = blobSizeConsumer;
-    this.blobProgressListener = blobProgressListener;
+    this.blobSizeListener = blobSizeListener;
+    this.writtenByteCountListener = writtenByteCountListener;
   }
 
   @Override
   public Void handleResponse(Response response) throws IOException, UnexpectedBlobDigestException {
-    blobSizeConsumer.accept(response.getContentLength());
+    blobSizeListener.accept(response.getContentLength());
 
     try (OutputStream outputStream =
-        new ListenableCountingOutputStream(
-            destinationOutputStream,
-            blobProgressListener::handleByteCount,
-            blobProgressListener.getDelayBetweenCallbacks())) {
-      BlobDescriptor receivedBlobDescriptor = response.getBody().writeTo(outputStream);
+        new NotifyingOutputStream(destinationOutputStream, writtenByteCountListener)) {
+      BlobDescriptor receivedBlobDescriptor =
+          Digests.computeDigest(response.getBody(), outputStream);
 
       if (!blobDigest.equals(receivedBlobDescriptor.getDigest())) {
         throw new UnexpectedBlobDigestException(

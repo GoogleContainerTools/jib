@@ -1,0 +1,19 @@
+<settings>
+  <servers>
+    <server>
+      <id>encryptedServer</id>
+      <username>encryptedUser</username>
+      <password>{AmwLphSL7qQHMPGxPn6NHQFNkU+ME6BU550hxoQrKHk=}</password> <!-- password1 -->
+    </server>
+    <server>
+      <id>simpleServer</id>
+      <username>simpleUser</username>
+      <password>password2</password>
+    </server>
+    <server>
+      <id>badServer</id>
+      <username>badUser</username>
+      <password>{i-made-this-up=}</password>
+    </server>
+  </servers>
+</settings>

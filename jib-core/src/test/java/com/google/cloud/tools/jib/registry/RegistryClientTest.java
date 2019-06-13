@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.cloud.tools.jib.event.EventDispatcher;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.Authorization;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,7 +31,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class RegistryClientTest {
 
-  @Mock private EventDispatcher eventDispatcher;
+  @Mock private EventHandlers eventHandlers;
   @Mock private Authorization mockAuthorization;
 
   private RegistryClient.Factory testRegistryClientFactory;
@@ -39,7 +39,7 @@ public class RegistryClientTest {
   @Before
   public void setUp() {
     testRegistryClientFactory =
-        RegistryClient.factory(eventDispatcher, "some.server.url", "some image name");
+        RegistryClient.factory(eventHandlers, "some.server.url", "some image name");
   }
 
   @Test

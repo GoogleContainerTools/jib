@@ -16,15 +16,15 @@
 
 package com.google.cloud.tools.jib.image.json;
 
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.Port;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
-import com.google.cloud.tools.jib.configuration.Port;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
-import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -129,14 +129,14 @@ public class ImageToJsonTranslator {
                 String::compareTo, keyMapper, ignored -> Collections.emptyMap()));
   }
 
-  private final Image<Layer> image;
+  private final Image image;
 
   /**
    * Instantiate with an {@link Image}.
    *
    * @param image the image to translate
    */
-  public ImageToJsonTranslator(Image<Layer> image) {
+  public ImageToJsonTranslator(Image image) {
     this.image = image;
   }
 
@@ -145,7 +145,7 @@ public class ImageToJsonTranslator {
    *
    * @return the container configuration {@link Blob}
    */
-  public Blob getContainerConfigurationBlob() {
+  public JsonTemplate getContainerConfiguration() {
     // Set up the JSON template.
     ContainerConfigurationTemplate template = new ContainerConfigurationTemplate();
 
@@ -160,6 +160,8 @@ public class ImageToJsonTranslator {
     }
 
     template.setCreated(image.getCreated() == null ? null : image.getCreated().toString());
+    template.setArchitecture(image.getArchitecture());
+    template.setOs(image.getOs());
     template.setContainerEnvironment(environmentMapToList(image.getEnvironment()));
     template.setContainerEntrypoint(image.getEntrypoint());
     template.setContainerCmd(image.getProgramArguments());
@@ -186,14 +188,13 @@ public class ImageToJsonTranslator {
       template.setContainerHealthCheckRetries(healthCheck.getRetries().orElse(null));
     }
 
-    // Serializes into JSON.
-    return JsonTemplateMapper.toBlob(template);
+    return template;
   }
 
   /**
    * Gets the manifest as a JSON template. The {@code containerConfigurationBlobDescriptor} must be
-   * the [@link BlobDescriptor} obtained by writing out the container configuration {@link Blob}
-   * returned from {@link #getContainerConfigurationBlob()}.
+   * the {@link BlobDescriptor} obtained by writing out the container configuration JSON returned
+   * from {@link #getContainerConfiguration()}.
    *
    * @param <T> child type of {@link BuildableManifestTemplate}.
    * @param manifestTemplateClass the JSON template to translate the image to.

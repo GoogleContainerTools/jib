@@ -16,10 +16,9 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.common.base.Preconditions;
 import java.nio.file.Path;
-import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /** Builds messages that provides suggestions on how to fix the error. */
@@ -54,10 +53,33 @@ public class HelpfulSuggestions {
     return suggest(messagePrefix, "add a `mainClass` configuration to " + pluginName);
   }
 
-  public static String forDockerContextInsecureRecursiveDelete(
-      String messagePrefix, String directory) {
+  public static String forIncompatibleBaseImageJavaVesionForGradle(
+      int baseImageMajorJavaVersion, int projectMajorJavaVersion) {
+    return forIncompatibleBaseImageJavaVesion(
+        baseImageMajorJavaVersion,
+        projectMajorJavaVersion,
+        "using the 'jib.from.image' parameter, or set targetCompatibility = "
+            + baseImageMajorJavaVersion
+            + " or below");
+  }
+
+  public static String forIncompatibleBaseImageJavaVesionForMaven(
+      int baseImageMajorJavaVersion, int projectMajorJavaVersion) {
+    return forIncompatibleBaseImageJavaVesion(
+        baseImageMajorJavaVersion,
+        projectMajorJavaVersion,
+        "using the '<from><image>' parameter, or set maven-compiler-plugin's '<target>' or "
+            + "'<release>' version to "
+            + baseImageMajorJavaVersion
+            + " or below");
+  }
+
+  public static String forInvalidImageReference(String reference) {
     return suggest(
-        messagePrefix, "clear " + directory + " manually before creating the Docker context");
+        "Invalid image reference " + reference,
+        "check that the reference is formatted correctly according to "
+            + "https://docs.docker.com/engine/reference/commandline/tag/#extended-description\n"
+            + "For example, slash-separated name components cannot have uppercase letters");
   }
 
   /**
@@ -69,16 +91,26 @@ public class HelpfulSuggestions {
     return messagePrefix + ", perhaps you should " + suggestion;
   }
 
+  private static String forIncompatibleBaseImageJavaVesion(
+      int baseImageMajorJavaVersion, int projectMajorJavaVersion, String parameterInstructions) {
+    return suggest(
+        "Your project is using Java "
+            + projectMajorJavaVersion
+            + " but the base image is for Java "
+            + baseImageMajorJavaVersion,
+        "configure a Java "
+            + projectMajorJavaVersion
+            + "-compatible base image "
+            + parameterInstructions
+            + " in your build configuration");
+  }
+
   private final String messagePrefix;
   private final String clearCacheCommand;
   @Nullable private final ImageReference baseImageReference;
   private final boolean noCredentialsDefinedForBaseImage;
-  private final String baseImageCredHelperConfiguration;
-  private final Function<String, String> baseImageAuthConfiguration;
   @Nullable private final ImageReference targetImageReference;
   private final boolean noCredentialsDefinedForTargetImage;
-  private final String targetImageCredHelperConfiguration;
-  private final Function<String, String> targetImageAuthConfiguration;
   private final String toImageConfiguration;
   private final String buildConfigurationFilename;
   private final String toImageFlag;
@@ -91,17 +123,9 @@ public class HelpfulSuggestions {
    * @param baseImageReference the base image reference
    * @param noCredentialsDefinedForBaseImage {@code true} if no credentials were defined for the
    *     base image; {@code false} otherwise
-   * @param baseImageCredHelperConfiguration the configuration defining the credential helper name
-   *     for the base image
-   * @param baseImageAuthConfiguration the way to define raw credentials for the base image - takes
-   *     the base image registry as an argument
    * @param targetImageReference the target image reference
    * @param noCredentialsDefinedForTargetImage {@code true} if no credentials were defined for the
-   *     base image; {@code false} otherwise
-   * @param targetImageCredHelperConfiguration the configuration defining the credential helper name
-   *     for the target image
-   * @param targetImageAuthConfiguration the way to define raw credentials for the target image -
-   *     takes the target image registry as an argument
+   *     target image; {@code false} otherwise
    * @param toImageConfiguration the configuration defining the target image
    * @param toImageFlag the commandline flag used to set the target image
    * @param buildConfigurationFilename the filename of the build configuration
@@ -111,12 +135,8 @@ public class HelpfulSuggestions {
       String clearCacheCommand,
       @Nullable ImageReference baseImageReference,
       boolean noCredentialsDefinedForBaseImage,
-      String baseImageCredHelperConfiguration,
-      Function<String, String> baseImageAuthConfiguration,
       @Nullable ImageReference targetImageReference,
       boolean noCredentialsDefinedForTargetImage,
-      String targetImageCredHelperConfiguration,
-      Function<String, String> targetImageAuthConfiguration,
       String toImageConfiguration,
       String toImageFlag,
       String buildConfigurationFilename) {
@@ -124,12 +144,8 @@ public class HelpfulSuggestions {
     this.clearCacheCommand = clearCacheCommand;
     this.baseImageReference = baseImageReference;
     this.noCredentialsDefinedForBaseImage = noCredentialsDefinedForBaseImage;
-    this.baseImageCredHelperConfiguration = baseImageCredHelperConfiguration;
-    this.baseImageAuthConfiguration = baseImageAuthConfiguration;
     this.targetImageReference = targetImageReference;
     this.noCredentialsDefinedForTargetImage = noCredentialsDefinedForTargetImage;
-    this.targetImageCredHelperConfiguration = targetImageCredHelperConfiguration;
-    this.targetImageAuthConfiguration = targetImageAuthConfiguration;
     this.toImageConfiguration = toImageConfiguration;
     this.buildConfigurationFilename = buildConfigurationFilename;
     this.toImageFlag = toImageFlag;
@@ -156,27 +172,33 @@ public class HelpfulSuggestions {
   }
 
   public String forHttpStatusCodeForbidden(String imageReference) {
-    return suggest("make sure you have permissions for " + imageReference);
+    return suggest(
+        "make sure you have permissions for "
+            + imageReference
+            + " and set correct credentials. See "
+            + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied for help");
   }
 
   public String forNoCredentialsDefined(String registry, String repository) {
     Preconditions.checkNotNull(baseImageReference);
     Preconditions.checkNotNull(targetImageReference);
-    if (noCredentialsDefinedForBaseImage
-        && registry.equals(baseImageReference.getRegistry())
-        && repository.equals(baseImageReference.getRepository())) {
-      return forNoCredentialHelpersDefined(
-          baseImageCredHelperConfiguration, baseImageAuthConfiguration.apply(registry));
+
+    String unauthorizedEntity = registry;
+    if (registry.equals(baseImageReference.getRegistry())
+        && repository.equals(baseImageReference.getRepository())
+        && noCredentialsDefinedForBaseImage) {
+      unauthorizedEntity = baseImageReference.toString();
+    } else if (registry.equals(targetImageReference.getRegistry())
+        && repository.equals(targetImageReference.getRepository())
+        && noCredentialsDefinedForTargetImage) {
+      unauthorizedEntity = targetImageReference.toString();
     }
-    if (noCredentialsDefinedForTargetImage
-        && registry.equals(targetImageReference.getRegistry())
-        && repository.equals(targetImageReference.getRepository())) {
-      return forNoCredentialHelpersDefined(
-          targetImageCredHelperConfiguration, targetImageAuthConfiguration.apply(registry));
-    }
-    // Credential helper probably was not configured correctly or did not have the necessary
-    // credentials.
-    return forCredentialsNotCorrect(registry);
+
+    return suggest(
+        "make sure your credentials for '"
+            + unauthorizedEntity
+            + "' are set up correctly. See "
+            + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-unauthorized for help");
   }
 
   public String forCredentialsNotSent() {
@@ -213,18 +235,5 @@ public class HelpfulSuggestions {
    */
   public String suggest(String suggestion) {
     return suggest(messagePrefix, suggestion);
-  }
-
-  private String forNoCredentialHelpersDefined(
-      String credHelperConfiguration, String authConfiguration) {
-    return suggest(
-        "set a credential helper name with the configuration '"
-            + credHelperConfiguration
-            + "' or "
-            + authConfiguration);
-  }
-
-  private String forCredentialsNotCorrect(String registry) {
-    return suggest("make sure your credentials for '" + registry + "' are set up correctly");
   }
 }

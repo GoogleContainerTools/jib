@@ -17,12 +17,12 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.GenericUrl;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
-import com.google.cloud.tools.jib.http.TestBlobProgressListener;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -164,8 +164,7 @@ public class BlobPusherTest {
   @Test
   public void testWriter_getContent() throws IOException {
     LongAdder byteCount = new LongAdder();
-    BlobHttpContent body =
-        testBlobPusher.writer(mockURL, new TestBlobProgressListener(byteCount::add)).getContent();
+    BlobHttpContent body = testBlobPusher.writer(mockURL, byteCount::add).getContent();
 
     Assert.assertNotNull(body);
     Assert.assertEquals("application/octet-stream", body.getType());
@@ -180,12 +179,7 @@ public class BlobPusherTest {
 
   @Test
   public void testWriter_GetAccept() {
-    Assert.assertEquals(
-        0,
-        testBlobPusher
-            .writer(mockURL, new TestBlobProgressListener(ignored -> {}))
-            .getAccept()
-            .size());
+    Assert.assertEquals(0, testBlobPusher.writer(mockURL, ignored -> {}).getAccept().size());
   }
 
   @Test
@@ -196,37 +190,25 @@ public class BlobPusherTest {
     Mockito.when(mockResponse.getRequestUrl()).thenReturn(requestUrl);
     Assert.assertEquals(
         new URL("https://somenewurl/location"),
-        testBlobPusher
-            .writer(mockURL, new TestBlobProgressListener(ignored -> {}))
-            .handleResponse(mockResponse));
+        testBlobPusher.writer(mockURL, ignored -> {}).handleResponse(mockResponse));
   }
 
   @Test
   public void testWriter_getApiRoute() throws MalformedURLException {
     URL fakeUrl = new URL("http://someurl");
-    Assert.assertEquals(
-        fakeUrl,
-        testBlobPusher
-            .writer(fakeUrl, new TestBlobProgressListener(ignored -> {}))
-            .getApiRoute(""));
+    Assert.assertEquals(fakeUrl, testBlobPusher.writer(fakeUrl, ignored -> {}).getApiRoute(""));
   }
 
   @Test
   public void testWriter_getHttpMethod() {
-    Assert.assertEquals(
-        "PATCH",
-        testBlobPusher
-            .writer(mockURL, new TestBlobProgressListener(ignored -> {}))
-            .getHttpMethod());
+    Assert.assertEquals("PATCH", testBlobPusher.writer(mockURL, ignored -> {}).getHttpMethod());
   }
 
   @Test
   public void testWriter_getActionDescription() {
     Assert.assertEquals(
         "push BLOB for someServerUrl/someImageName with digest " + fakeDescriptorDigest,
-        testBlobPusher
-            .writer(mockURL, new TestBlobProgressListener(ignored -> {}))
-            .getActionDescription());
+        testBlobPusher.writer(mockURL, ignored -> {}).getActionDescription());
   }
 
   @Test

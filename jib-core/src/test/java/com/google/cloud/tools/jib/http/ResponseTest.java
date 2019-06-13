@@ -17,9 +17,8 @@
 package com.google.cloud.tools.jib.http;
 
 import com.google.api.client.http.HttpResponse;
-import com.google.cloud.tools.jib.blob.Blob;
+import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.junit.Assert;
@@ -37,19 +36,13 @@ public class ResponseTest {
 
   @Test
   public void testGetContent() throws IOException {
-    String expectedResponse = "crepecake\nis\ngood!";
-    ByteArrayInputStream responseInputStream =
-        new ByteArrayInputStream(expectedResponse.getBytes(StandardCharsets.UTF_8));
+    byte[] expectedResponse = "crepecake\nis\ngood!".getBytes(StandardCharsets.UTF_8);
+    ByteArrayInputStream responseInputStream = new ByteArrayInputStream(expectedResponse);
 
     Mockito.when(httpResponseMock.getContent()).thenReturn(responseInputStream);
 
     Response response = new Response(httpResponseMock);
-    Blob responseStream = response.getBody();
 
-    ByteArrayOutputStream responseOutputStream = new ByteArrayOutputStream();
-    responseStream.writeTo(responseOutputStream);
-
-    Assert.assertEquals(
-        expectedResponse, new String(responseOutputStream.toByteArray(), StandardCharsets.UTF_8));
+    Assert.assertArrayEquals(expectedResponse, ByteStreams.toByteArray(response.getBody()));
   }
 }

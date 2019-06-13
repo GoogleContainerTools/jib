@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.hash;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.DigestException;
@@ -30,8 +30,7 @@ public class CountingDigestOutputStream extends DigestOutputStream {
 
   private static final String SHA_256_ALGORITHM = "SHA-256";
 
-  /** Keeps track of the total number of bytes appended. */
-  private long totalBytes = 0;
+  private long bytesSoFar = 0;
 
   /**
    * Wraps the {@code outputStream}.
@@ -49,12 +48,13 @@ public class CountingDigestOutputStream extends DigestOutputStream {
   }
 
   /**
-   * Builds a {@link BlobDescriptor} with the hash and size of the bytes written. The buffer resets
-   * after this method is called, so this method should only be called once per BlobDescriptor.
+   * Computes the hash and returns it along with the size of the bytes written to compute the hash.
+   * The buffer resets after this method is called, so this method should only be called once per
+   * computation.
    *
-   * @return the built {@link BlobDescriptor}.
+   * @return the computed hash and the size of the bytes consumed
    */
-  public BlobDescriptor toBlobDescriptor() {
+  public BlobDescriptor computeDigest() {
     try {
       byte[] hashedBytes = digest.digest();
 
@@ -65,28 +65,25 @@ public class CountingDigestOutputStream extends DigestOutputStream {
       }
       String hash = stringBuilder.toString();
 
-      DescriptorDigest digest = DescriptorDigest.fromHash(hash);
-      return new BlobDescriptor(totalBytes, digest);
+      BlobDescriptor blobDescriptor =
+          new BlobDescriptor(bytesSoFar, DescriptorDigest.fromHash(hash));
+      bytesSoFar = 0;
+      return blobDescriptor;
 
     } catch (DigestException ex) {
       throw new RuntimeException("SHA-256 algorithm produced invalid hash: " + ex.getMessage(), ex);
     }
   }
 
-  /** @return the total number of bytes that were hashed */
-  public long getTotalBytes() {
-    return totalBytes;
-  }
-
   @Override
   public void write(byte[] data, int offset, int length) throws IOException {
     super.write(data, offset, length);
-    totalBytes += length;
+    bytesSoFar += length;
   }
 
   @Override
   public void write(int singleByte) throws IOException {
     super.write(singleByte);
-    totalBytes++;
+    bytesSoFar++;
   }
 }

@@ -16,12 +16,18 @@
 
 package com.google.cloud.tools.jib.maven.skaffold;
 
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoriesParameters;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryParameters;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
+import java.io.File;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,6 +47,7 @@ import org.apache.maven.project.DependencyResolutionException;
 import org.apache.maven.project.DependencyResolutionResult;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.ProjectDependenciesResolver;
+import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyFilter;
 
 /**
@@ -75,7 +82,11 @@ public class FilesMojo extends AbstractMojo {
   @Nullable @Component private ProjectDependenciesResolver projectDependenciesResolver;
 
   // This parameter is cloned from JibPluginConfiguration
-  @Parameter private ExtraDirectoryParameters extraDirectory = new ExtraDirectoryParameters();
+  @Deprecated @Parameter
+  private ExtraDirectoryParameters extraDirectory = new ExtraDirectoryParameters();
+
+  // This parameter is cloned from JibPluginConfiguration
+  @Parameter private ExtraDirectoriesParameters extraDirectories = new ExtraDirectoriesParameters();
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
@@ -105,7 +116,7 @@ public class FilesMojo extends AbstractMojo {
     // and is expected to run on all projects irrespective of their configuring of the jib plugin).
     if (project.getPlugin(MavenProjectProperties.PLUGIN_KEY) != null) {
       // print out extra directory
-      System.out.println(resolveExtraDirectory());
+      resolveExtraDirectories().stream().forEach(System.out::println);
     }
 
     // Grab non-project SNAPSHOT dependencies for this project
@@ -140,7 +151,7 @@ public class FilesMojo extends AbstractMojo {
       resolutionResult
           .getDependencies()
           .stream()
-          .map(org.eclipse.aether.graph.Dependency::getArtifact)
+          .map(Dependency::getArtifact)
           .filter(org.eclipse.aether.artifact.Artifact::isSnapshot)
           .map(org.eclipse.aether.artifact.Artifact::getFile)
           .forEach(System.out::println);
@@ -150,16 +161,38 @@ public class FilesMojo extends AbstractMojo {
     }
   }
 
-  private Path resolveExtraDirectory() {
-    if (extraDirectory.getPath() == null) {
-      return Preconditions.checkNotNull(project)
-          .getBasedir()
-          .getAbsoluteFile()
-          .toPath()
-          .resolve("src")
-          .resolve("main")
-          .resolve("jib");
+  private List<Path> resolveExtraDirectories() throws MojoExecutionException {
+    // TODO: Should inform user about nonexistent directory if using custom directory.
+    String deprecatedProperty =
+        MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH, project, session);
+    String newProperty =
+        MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS, project, session);
+
+    List<File> deprecatedPaths = extraDirectory.getPaths();
+    List<File> newPaths = extraDirectories.getPaths();
+
+    if (deprecatedProperty != null && newProperty != null) {
+      throw new MojoExecutionException(
+          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'");
     }
-    return extraDirectory.getPath().getAbsoluteFile().toPath();
+    if (!deprecatedPaths.isEmpty() && !newPaths.isEmpty()) {
+      throw new MojoExecutionException(
+          "You cannot configure both <extraDirectory> and <extraDirectories>");
+    }
+
+    String property = newProperty != null ? newProperty : deprecatedProperty;
+    if (property != null) {
+      List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
+      return paths.stream().map(Paths::get).map(Path::toAbsolutePath).collect(Collectors.toList());
+    }
+
+    List<File> paths = !newPaths.isEmpty() ? newPaths : deprecatedPaths;
+    if (paths.isEmpty()) {
+      Path projectBase =
+          Preconditions.checkNotNull(project).getBasedir().getAbsoluteFile().toPath();
+      Path srcMainJib = Paths.get("src", "main", "jib");
+      return Collections.singletonList(projectBase.resolve(srcMainJib));
+    }
+    return paths.stream().map(File::getAbsoluteFile).map(File::toPath).collect(Collectors.toList());
   }
 }

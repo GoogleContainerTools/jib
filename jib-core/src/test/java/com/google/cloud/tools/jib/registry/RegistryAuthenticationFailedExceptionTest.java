@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -16,8 +16,9 @@
 
 package com.google.cloud.tools.jib.blob;
 
-import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.hash.Digests;
+import com.google.cloud.tools.jib.hash.WritableContents;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,10 +30,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 /** Tests for {@link Blob}. */
 public class BlobTest {
@@ -58,42 +57,13 @@ public class BlobTest {
   }
 
   @Test
-  public void testFromBlobWriter() throws IOException {
+  public void testFromWritableContents() throws IOException {
     String expected = "crepecake";
 
-    BlobWriter writer =
+    WritableContents writableContents =
         outputStream -> outputStream.write(expected.getBytes(StandardCharsets.UTF_8));
 
-    verifyBlobWriteTo(expected, Blobs.from(writer));
-  }
-
-  @Test
-  public void testWriteToFileWithLock_newFile() throws IOException {
-    String expected = "crepecake";
-    Path blobFile = Files.createTempFile("blob", "bin");
-    Assert.assertTrue(Files.deleteIfExists(blobFile)); // ensure it doesn't exist
-
-    Blobs.writeToFileWithLock(Blobs.from(expected), blobFile);
-
-    Assert.assertTrue(Files.exists(blobFile));
-    verifyBlobWriteTo(expected, Blobs.from(blobFile));
-  }
-
-  @Test
-  public void testWriteToFileWithLock_existingFile() throws IOException {
-    Path blobFile = Files.createTempFile("blob", "bin");
-    // write out more bytes to ensure properly truncated
-    byte[] dataBytes = new byte[] {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    Files.write(blobFile, dataBytes, StandardOpenOption.WRITE);
-    Assert.assertTrue(Files.exists(blobFile));
-    Assert.assertEquals(10, Files.size(blobFile));
-
-    String expected = "crepecake";
-    Blobs.writeToFileWithLock(Blobs.from(expected), blobFile);
-
-    Assert.assertTrue(Files.exists(blobFile));
-    Assert.assertEquals(9, Files.size(blobFile));
-    verifyBlobWriteTo(expected, Blobs.from(blobFile));
+    verifyBlobWriteTo(expected, Blobs.from(writableContents));
   }
 
   /** Checks that the {@link Blob} streams the expected string. */
@@ -107,10 +77,8 @@ public class BlobTest {
     byte[] expectedBytes = expected.getBytes(StandardCharsets.UTF_8);
     Assert.assertEquals(expectedBytes.length, blobDescriptor.getSize());
 
-    CountingDigestOutputStream countingDigestOutputStream =
-        new CountingDigestOutputStream(Mockito.mock(OutputStream.class));
-    countingDigestOutputStream.write(expectedBytes);
-    DescriptorDigest expectedDigest = countingDigestOutputStream.toBlobDescriptor().getDigest();
+    DescriptorDigest expectedDigest =
+        Digests.computeDigest(new ByteArrayInputStream(expectedBytes)).getDigest();
     Assert.assertEquals(expectedDigest, blobDescriptor.getDigest());
   }
 }

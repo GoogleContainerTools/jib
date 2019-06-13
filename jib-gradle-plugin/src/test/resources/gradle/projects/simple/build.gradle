@@ -18,7 +18,7 @@ jib {
   to {
     image = System.getProperty("_TARGET_IMAGE")
   }
-  extraDirectory {
-    path = file('src/main/custom-extra-dir')
+  extraDirectories {
+    paths = file('src/main/custom-extra-dir')
   }
 }

@@ -89,6 +89,9 @@ public class Connection implements Closeable {
   private static HttpClientBuilder initializeHttpClientBuilder() {
     CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
     addProxyCredentials(credentialsProvider);
+    // TODO(chanseok): use ApacheHttpTransport.newDefaultHttpClientBuilder() in newer
+    // google-http-client-apache
+    // https://github.com/googleapis/google-http-java-client/issues/578
     return HttpClientBuilder.create().setDefaultCredentialsProvider(credentialsProvider);
   }
 

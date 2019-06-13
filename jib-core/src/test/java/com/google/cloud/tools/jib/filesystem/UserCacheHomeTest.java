@@ -59,7 +59,7 @@ public class UserCacheHomeTest {
     fakeProperties.setProperty("os.name", "os is LiNuX");
 
     Assert.assertEquals(
-        Paths.get(fakeCacheHome).resolve(".cache"),
+        Paths.get(fakeCacheHome, ".cache"),
         UserCacheHome.getCacheHome(fakeProperties, Collections.emptyMap()));
   }
 
@@ -77,8 +77,7 @@ public class UserCacheHomeTest {
 
   @Test
   public void testGetCacheHome_mac() throws IOException {
-    Path libraryApplicationSupport =
-        Paths.get(fakeCacheHome).resolve("Library").resolve("Application Support");
+    Path libraryApplicationSupport = Paths.get(fakeCacheHome, "Library", "Application Support");
     Files.createDirectories(libraryApplicationSupport);
 
     Properties fakeProperties = new Properties();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC.
+ * Copyright 2019 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,8 +18,15 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import java.util.Optional;
 
-/** Provides inferred auth information. */
+/** An auth provider specific to the client's architecture. */
 public interface InferredAuthProvider {
 
-  Optional<AuthProperty> getAuth(String registry) throws InferredAuthRetrievalException;
+  /**
+   * Find auth credentials for a specific registry.
+   *
+   * @param registry we want credential for
+   * @return auth information for the registry (can be empty)
+   * @throws InferredAuthException if the auth discovery process resulted in a fatal error
+   */
+  Optional<AuthProperty> inferAuth(String registry) throws InferredAuthException;
 }

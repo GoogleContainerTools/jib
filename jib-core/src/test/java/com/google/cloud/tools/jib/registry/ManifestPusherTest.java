@@ -18,14 +18,14 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponseException;
-import com.google.cloud.tools.jib.event.EventDispatcher;
-import com.google.cloud.tools.jib.event.events.LogEvent;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -53,7 +53,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ManifestPusherTest {
 
   @Mock private Response mockResponse;
-  @Mock private EventDispatcher mockEventDispatcher;
+  @Mock private EventHandlers mockEventHandlers;
 
   private Path v22manifestJsonFile;
   private V22ManifestTemplate fakeManifestTemplate;
@@ -70,7 +70,7 @@ public class ManifestPusherTest {
             new RegistryEndpointRequestProperties("someServerUrl", "someImageName"),
             fakeManifestTemplate,
             "test-image-tag",
-            mockEventDispatcher);
+            mockEventHandlers);
   }
 
   @Test
@@ -90,10 +90,7 @@ public class ManifestPusherTest {
 
   @Test
   public void testHandleResponse_valid() throws IOException {
-    DescriptorDigest expectedDigest =
-        JsonTemplateMapper.toBlob(fakeManifestTemplate)
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest();
+    DescriptorDigest expectedDigest = Digests.computeJsonDigest(fakeManifestTemplate);
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Collections.singletonList(expectedDigest.toString()));
     Assert.assertEquals(expectedDigest, testManifestPusher.handleResponse(mockResponse));
@@ -101,44 +98,35 @@ public class ManifestPusherTest {
 
   @Test
   public void testHandleResponse_noDigest() throws IOException {
-    DescriptorDigest expectedDigest =
-        JsonTemplateMapper.toBlob(fakeManifestTemplate)
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest();
+    DescriptorDigest expectedDigest = Digests.computeJsonDigest(fakeManifestTemplate);
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Collections.emptyList());
 
     Assert.assertEquals(expectedDigest, testManifestPusher.handleResponse(mockResponse));
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(LogEvent.warn("Expected image digest " + expectedDigest + ", but received none"));
   }
 
   @Test
   public void testHandleResponse_multipleDigests() throws IOException {
-    DescriptorDigest expectedDigest =
-        JsonTemplateMapper.toBlob(fakeManifestTemplate)
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest();
+    DescriptorDigest expectedDigest = Digests.computeJsonDigest(fakeManifestTemplate);
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Arrays.asList("too", "many"));
 
     Assert.assertEquals(expectedDigest, testManifestPusher.handleResponse(mockResponse));
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.warn("Expected image digest " + expectedDigest + ", but received: too, many"));
   }
 
   @Test
   public void testHandleResponse_invalidDigest() throws IOException {
-    DescriptorDigest expectedDigest =
-        JsonTemplateMapper.toBlob(fakeManifestTemplate)
-            .writeTo(ByteStreams.nullOutputStream())
-            .getDigest();
+    DescriptorDigest expectedDigest = Digests.computeJsonDigest(fakeManifestTemplate);
     Mockito.when(mockResponse.getHeader("Docker-Content-Digest"))
         .thenReturn(Collections.singletonList("not valid"));
 
     Assert.assertEquals(expectedDigest, testManifestPusher.handleResponse(mockResponse));
-    Mockito.verify(mockEventDispatcher)
+    Mockito.verify(mockEventHandlers)
         .dispatch(
             LogEvent.warn("Expected image digest " + expectedDigest + ", but received: not valid"));
   }
@@ -175,7 +163,8 @@ public class ManifestPusherTest {
         new HttpResponseException.Builder(
                 HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
             .setContent(
-                "{\"errors\":[{\"code\":\"TAG_INVALID\",\"message\":\"manifest tag did not match URI\"}]}")
+                "{\"errors\":[{\"code\":\"TAG_INVALID\","
+                    + "\"message\":\"manifest tag did not match URI\"}]}")
             .build();
     try {
       testManifestPusher.handleHttpResponseException(exception);
@@ -185,7 +174,8 @@ public class ManifestPusherTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "Registry may not support Image Manifest Version 2, Schema 2"));
+              "Registry may not support pushing OCI Manifest or "
+                  + "Docker Image Manifest Version 2, Schema 2"));
     }
   }
 
@@ -197,7 +187,8 @@ public class ManifestPusherTest {
         new HttpResponseException.Builder(
                 HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
             .setContent(
-                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\",\"message\":\"manifest invalid\",\"detail\":{}}]}")
+                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\","
+                    + "\"message\":\"manifest invalid\",\"detail\":{}}]}")
             .build();
     try {
       testManifestPusher.handleHttpResponseException(exception);
@@ -207,7 +198,8 @@ public class ManifestPusherTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "Registry may not support Image Manifest Version 2, Schema 2"));
+              "Registry may not support pushing OCI Manifest or "
+                  + "Docker Image Manifest Version 2, Schema 2"));
     }
   }
 
@@ -218,8 +210,9 @@ public class ManifestPusherTest {
         new HttpResponseException.Builder(
                 HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE, "UNSUPPORTED MEDIA TYPE", new HttpHeaders())
             .setContent(
-                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\",\"detail\":"
-                    + "{\"message\":\"manifest schema version not supported\"},\"message\":\"manifest invalid\"}]}")
+                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\","
+                    + "\"detail\":{\"message\":\"manifest schema version not supported\"},"
+                    + "\"message\":\"manifest invalid\"}]}")
             .build();
     try {
       testManifestPusher.handleHttpResponseException(exception);
@@ -229,7 +222,8 @@ public class ManifestPusherTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.containsString(
-              "Registry may not support Image Manifest Version 2, Schema 2"));
+              "Registry may not support pushing OCI Manifest or "
+                  + "Docker Image Manifest Version 2, Schema 2"));
     }
   }
 

@@ -17,14 +17,6 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
-import com.google.cloud.tools.jib.builder.BuildSteps;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.configuration.credentials.Credential;
-import com.google.cloud.tools.jib.configuration.credentials.CredentialRetriever;
-import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
-import com.google.cloud.tools.jib.image.ImageReference;
-import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -41,8 +33,7 @@ import java.util.Optional;
  * credentials are valid push (for using this as a target image) or pull (for using this as a source
  * image) credentials for the repository specified via the image reference.
  */
-// TODO: Add tests once JibContainerBuilder#containerize() is added.
-public class RegistryImage implements SourceImage, TargetImage {
+public class RegistryImage {
 
   /**
    * Instantiate with the image reference to use.
@@ -82,15 +73,14 @@ public class RegistryImage implements SourceImage, TargetImage {
    * @return this
    */
   public RegistryImage addCredential(String username, String password) {
-    addCredentialRetriever(() -> Optional.of(Credential.basic(username, password)));
+    addCredentialRetriever(() -> Optional.of(Credential.from(username, password)));
     return this;
   }
 
   /**
    * Adds {@link CredentialRetriever} to fetch push/pull credentials for the image. Credential
    * retrievers are attempted in the order in which they are specified until credentials are
-   * successfully retrieved. See {@link CredentialRetrieverFactory} for useful pre-defined
-   * CredentialRetrievers.
+   * successfully retrieved.
    *
    * <p>Example usage:
    *
@@ -111,22 +101,17 @@ public class RegistryImage implements SourceImage, TargetImage {
    *
    * @param credentialRetriever the {@link CredentialRetriever} to add
    * @return this
-   * @see CredentialRetrieverFactory
    */
   public RegistryImage addCredentialRetriever(CredentialRetriever credentialRetriever) {
     credentialRetrievers.add(credentialRetriever);
     return this;
   }
 
-  @Override
-  public ImageConfiguration toImageConfiguration() {
-    return ImageConfiguration.builder(imageReference)
-        .setCredentialRetrievers(credentialRetrievers)
-        .build();
+  ImageReference getImageReference() {
+    return imageReference;
   }
 
-  @Override
-  public BuildSteps toBuildSteps(BuildConfiguration buildConfiguration) {
-    return BuildSteps.forBuildToDockerRegistry(buildConfiguration);
+  List<CredentialRetriever> getCredentialRetrievers() {
+    return credentialRetrievers;
   }
 }

@@ -16,11 +16,12 @@
 
 package com.google.cloud.tools.jib.cache;
 
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.LayerConfiguration;
+import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.image.DescriptorDigest;
-import com.google.cloud.tools.jib.image.LayerEntry;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CountingOutputStream;
@@ -62,16 +63,10 @@ public class CacheTest {
    *
    * @param blob the {@link Blob} to decompress
    * @return the decompressed {@link Blob}
+   * @throws IOException if an I/O exception occurs
    */
-  private static Blob decompress(Blob blob) {
-    return Blobs.from(
-        outputStream -> {
-          ByteArrayInputStream compressedInputStream =
-              new ByteArrayInputStream(Blobs.writeToByteArray(blob));
-          try (GZIPInputStream decompressorStream = new GZIPInputStream(compressedInputStream)) {
-            ByteStreams.copy(decompressorStream, outputStream);
-          }
-        });
+  private static Blob decompress(Blob blob) throws IOException {
+    return Blobs.from(new GZIPInputStream(new ByteArrayInputStream(Blobs.writeToByteArray(blob))));
   }
 
   /**
@@ -97,6 +92,14 @@ public class CacheTest {
         new CountingOutputStream(ByteStreams.nullOutputStream());
     blob.writeTo(countingOutputStream);
     return countingOutputStream.getCount();
+  }
+
+  private static LayerEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
+    return new LayerEntry(
+        source,
+        destination,
+        LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
+        LayerConfiguration.DEFAULT_MODIFIED_TIME);
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -127,12 +130,11 @@ public class CacheTest {
     layerSize1 = sizeOf(compress(layerBlob1));
     layerEntries1 =
         ImmutableList.of(
-            new LayerEntry(
-                directory.resolve("source/file"), AbsoluteUnixPath.get("/extraction/path"), null),
-            new LayerEntry(
+            defaultLayerEntry(
+                directory.resolve("source/file"), AbsoluteUnixPath.get("/extraction/path")),
+            defaultLayerEntry(
                 directory.resolve("another/source/file"),
-                AbsoluteUnixPath.get("/another/extraction/path"),
-                null));
+                AbsoluteUnixPath.get("/another/extraction/path")));
 
     layerBlob2 = Blobs.from("layerBlob2");
     layerDigest2 = digestOf(compress(layerBlob2));

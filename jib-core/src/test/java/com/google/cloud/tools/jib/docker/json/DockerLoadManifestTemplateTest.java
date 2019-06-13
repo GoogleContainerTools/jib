@@ -16,8 +16,7 @@
 
 package com.google.cloud.tools.jib.docker.json;
 
-import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -48,6 +47,6 @@ public class DockerLoadManifestTemplateTest {
     template.addLayerFile("layer3.tar.gz");
 
     List<DockerLoadManifestEntryTemplate> loadManifest = Collections.singletonList(template);
-    Assert.assertEquals(expectedJson, Blobs.writeToString(JsonTemplateMapper.toBlob(loadManifest)));
+    Assert.assertEquals(expectedJson, JsonTemplateMapper.toUtf8String(loadManifest));
   }
 }

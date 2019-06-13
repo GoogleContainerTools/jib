@@ -9,7 +9,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [Where is bash?](#where-is-bash)\
 [How do I set parameters for my image at runtime?](#how-do-i-set-parameters-for-my-image-at-runtime)\
 [What image format does Jib use?](#what-image-format-does-jib-use)\
-[Can I define a custom entrypoint?](#can-i-define-a-custom-entrypoint)\
+[Can I define a custom entrypoint?](#can-i-define-a-custom-entrypoint-at-runtime)\
 [I want to containerize an executable JAR.](#i-want-to-containerize-an-executable-jar)\
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
 [I need to RUN commands like `apt-get`.](#i-need-to-run-commands-like-apt-get)\
@@ -20,13 +20,16 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How can I inspect the image Jib built?](#how-can-i-inspect-the-image-jib-built)\
 [I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
 [How do I configure a proxy?](#how-do-i-configure-a-proxy)\
+[What should I do when the registry responds with Forbidden or DENIED?](#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied)\
+[What should I do when the registry responds with UNAUTHORIZED?](#what-should-i-do-when-the-registry-responds-with-unauthorized)\
 [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries)\
 [How can I examine network traffic?](#how-can-i-examine-network-traffic)\
 [How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)\
 [How do I enable debugging?](#how-do-i-enable-debugging)\
-[Why is my image created 48 years ago?](#why-is-my-image-created-48-years-ago)\
+[Why is my image created 48+ years ago?](#why-is-my-image-created-48-years-ago)\
 [I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
-[How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)
+[How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)\
+[Can I learn more about container images?](#can-i-learn-more-about-container-images)
 
 ### But, I'm not a Java developer.
 
@@ -342,6 +345,30 @@ See more at [Using Google Container Registry (GCR) with Minikube](https://ryanes
 
 Jib currently requires configuring your build tool to use the appropriate [Java networking properties](https://docs.oracle.com/javase/8/docs/api/java/net/doc-files/net-properties.html) (`https.proxyHost`, `https.proxyPort`, `https.proxyUser`, `https.proxyPassword`).
 
+### What should I do when the registry responds with Forbidden or DENIED?
+
+If the registry returns `403 Forbidden` or `"code":"DENIED"`, it often means Jib successfully authenticated using your credentials but the credentials do not have permissions to pull or push images. Make sure your account/role has the permissions to do the operation.
+
+Depending on registry implementations, it is also possible that the registry actually meant you are not authenticated. See [What should I do when the registry responds with UNAUTHORIZED?](#what-should-i-do-when-the-registry-responds-with-unauthorized) to ensure you have set up credentials correctly.
+
+### What should I do when the registry responds with UNAUTHORIZED?
+
+If the registry returns `401 Unauthorized` or `"code":"UNAUTHORIZED"`, it is often due to credential misconfiguration. Examples:
+
+* You did not configure auth information in the default places where Jib searches.
+   - `$HOME/.docker/config.json`, [one of the configuration files](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files) for the `docker` command line tool. See [configuration files document](https://docs.docker.com/engine/reference/commandline/cli/#configuration-files), [credential store](https://docs.docker.com/engine/reference/commandline/login/#credentials-store) and [credential helper](https://docs.docker.com/engine/reference/commandline/login/#credential-helpers) sections, and [this](https://github.com/GoogleContainerTools/jib/issues/101) for how to configure auth. For example, you can do `docker login` to save auth in `config.json`, but it is often recommended to configure a credential helper (also configurable in `config.json`).
+   - Some common credential helpers on `$PATH` (for example, `docker-credential-osxkeychain`, `docker-credential-ecr-login`, etc.) for well-known registries.
+   - Jib configurations
+      - Configuring credential helpers: [`<from/to><credHelper>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#using-docker-credential-helpers) for Maven / [`from/to.credHelper`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-docker-credential-helpers) for Gradle
+      - Specific credentials (not recommend): [`<from/to><auth><username>/<password>`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#using-specific-credentials) or in [`settings.xml`](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#using-maven-settings) for Maven / [`from/to.auth.username/password`](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#using-specific-credentials) for Gradle
+      - These parameters can also be set through properties: [Maven](https://github.com/GoogleContainerTools/jib/tree/master/jib-maven-plugin#system-properties) / [Gradle](https://github.com/GoogleContainerTools/jib/tree/master/jib-gradle-plugin#system-properties)
+* Different auth configurations exist in multiple places, and Jib is not picking up the auth information you are working on.
+* You configured a credential helper, but the helper is not on `$PATH`. This is especially common when running Jib inside IDE where the IDE binary is launched directly from an OS menu and does not have access to your shell's environment.
+* Typos in username, password, image names, or registry names.
+* You are using a private registry without HTTPS. See [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries).
+
+If you encounter issues interacting with a registry other than `UNAUTHORIZED`, check ["How can I diagnose problems pulling or pushing from remote registries?"](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries).
+
 ### How can I diagnose problems pulling or pushing from remote registries?
 
 There are a few reasons why Jib may be unable to connect to a remote registry, including:
@@ -382,18 +409,20 @@ Gradle: use `grade --debug -DjibSerialize=true` to enable more detailed logging 
 
 ### How do I enable debugging?
 
-If using the `distroless/java` base image, then use the [`JAVA_TOOL_OPTIONS`](#how-do-i-set-parameters-for-my-image-at-runtime) to pass along debugging configuration arguments.  For example, to have the remote VM accept debug connections on port 5005, but not suspend:
+If using the `distroless/java` base image, then use the [`JAVA_TOOL_OPTIONS`](#how-do-i-set-parameters-for-my-image-at-runtime) to pass along debugging configuration arguments.  For example, to have the remote VM accept local debug connections on port 5005, but not suspend:
 ```
--agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=localhost:5005
 ```
 
-Then connect your debugger to port 5005 on the given host.  You can port-forward the container port to a localhost port for easy access.
+Then connect your debugger to port 5005 on your local host.  You can port-forward the container port to a localhost port for easy access.
 
 Using Docker: `docker run -p 5005:5005 <image>`
 
 Using Kubernetes: `kubectl port-forward <pod name> 5005:5005`
 
-### Why is my image created 48 years ago?
+Beware: in Java 8 and earlier, specifying only a port meant that the JDWP socket was open to all incoming connections which is insecure.  It is recommended to limit the debug port to localhost.
+
+### Why is my image created 48+ years ago?
 
 For reproducibility purposes, Jib sets the creation time of the container images to 0 (January 1st, 1970). If you would like to forgo reproducibility and use the real creation time, set the `useCurrentTimestamp` parameter to `true` in your build configuration.
 
@@ -413,11 +442,38 @@ For reproducibility purposes, Jib sets the creation time of the container images
 jib.container.useCurrentTimestamp = true
 ```
 
+#### Please tell me more about reproducibility!
+
+_Reproducible_ means that given the same inputs, a build should produce the same outputs.  Container images are uniquely identified by a digest (or a hash) of the image contents and image metadata.  Tools and infrastructure such the Docker daemon, Docker Hub, registries, Kubernetes, etc) treat images with different digests as being different.
+
+To ensure that a Jib build is reproducible — that the rebuilt container image has the same digest — Jib adds files and directories in a consistent order, and sets consistent creation- and modification-times and permissions for all files and directories.  Jib also ensures that the image metadata is recorded in a consistent order, and that the container image has a consistent creation time.  To ensure consistent times, files and directories are recorded as having a creation and modification time of 1 second past the Unix Epoch (1970-01-01 00:00:01.000 UTC), and the container image is recorded as being created on the Unix Epoch.  Setting `container.useCurrentTimestamp=true` and then rebuilding an image will produce a different timestamp for the image creation time, and so the container images will have different digests and appear to be different.
+
+For more details see [reproducible-builds.org](https://reproducible-builds.org).
+
+
 ### I would like to run my application with a javaagent.
 
-See [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image).
+You can run your container with a javaagent by placing it somewhere in the `src/main/jib` directory to add it to the container's filesystem, then pointing to it using Jib's `container.jvmFlags` configuration.
 
-*TODO: Provide more comprehensive solution.*
+#### Maven
+
+```xml
+<configuration>
+  <container>
+    <jvmFlags>
+      <jvmFlag>-javaagent:/myfolder/agent.jar</jvmFlag>
+    </jvmFlags>    
+  </container>
+</configuration>
+```
+
+#### Gradle
+
+```groovy
+jib.container.jvmFlags = ['-javaagent:/myfolder/agent.jar']
+```
+
+See also [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)
 
 ### How can I tag my image with a timestamp?
 
@@ -450,3 +506,7 @@ To tag the image with a timestamp, simply set the timestamp as the tag for `to.i
 ```groovy
 jib.to.image = 'gcr.io/my-gcp-project/my-app:' + System.nanoTime()
 ```
+
+### Can I learn more about container images?
+
+If you'd like to learn more about container images, [@coollog](https://github.com/coollog) has a guide: [Build Containers the Hard Way](https://containers.gitbook.io/build-containers-the-hard-way/), which takes a deep dive into everything involved in getting your code into a container and onto a container registry.

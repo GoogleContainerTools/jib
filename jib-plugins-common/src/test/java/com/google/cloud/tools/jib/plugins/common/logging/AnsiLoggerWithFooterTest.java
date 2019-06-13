@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common.logging;
 
-import com.google.cloud.tools.jib.event.events.LogEvent.Level;
+import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +28,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-/** Tests for {@link com.google.cloud.tools.jib.plugins.common.logging.AnsiLoggerWithFooter}. */
+/** Tests for {@link AnsiLoggerWithFooter}. */
 public class AnsiLoggerWithFooterTest {
 
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
