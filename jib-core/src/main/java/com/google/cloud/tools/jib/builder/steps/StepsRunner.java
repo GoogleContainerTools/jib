@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -60,7 +61,7 @@ public class StepsRunner {
 
     private Future<ImageAndAuthorization> baseImageAndAuth = failedFuture();
     private Future<List<Future<CachedLayerAndName>>> baseImageLayers = failedFuture();
-    private List<Future<CachedLayerAndName>> applicationLayers = new ArrayList<>();
+    @Nullable private List<Future<CachedLayerAndName>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
     private Future<Credential> targetRegistryCredentials = failedFuture();
     private Future<Authorization> pushAuthorization = failedFuture();
@@ -176,7 +177,7 @@ public class StepsRunner {
                         childProgressDispatcherFactorySupplier.get(),
                         results.baseImageAndAuth.get().getImage(),
                         realizeFutures(results.baseImageLayers.get()),
-                        realizeFutures(results.applicationLayers))
+                        realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
                     .call());
   }
 
@@ -201,7 +202,7 @@ public class StepsRunner {
                         buildConfiguration,
                         childProgressDispatcherFactorySupplier.get(),
                         results.pushAuthorization.get(),
-                        results.applicationLayers)));
+                        Verify.verifyNotNull(results.applicationLayers))));
   }
 
   private void pushImage() {
