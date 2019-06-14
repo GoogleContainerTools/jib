@@ -79,6 +79,7 @@ public class Connection implements Closeable {
       throws GeneralSecurityException {
     HttpClientBuilder httpClientBuilder =
         newDefaultHttpClientBuilder()
+            .setSSLSocketFactory(null) // A new factory should be created with the SSLContext below.
             .setSSLContext(SslUtils.trustAllSSLContext())
             .setSSLHostnameVerifier(new NoopHostnameVerifier());
 
@@ -89,7 +90,7 @@ public class Connection implements Closeable {
   // TODO(chanseok): remove. Use ApacheHttpTransport.newDefaultHttpClientBuilder() when it becomes
   // available in newer releases (https://github.com/googleapis/google-http-java-client/issues/578)
   private static HttpClientBuilder newDefaultHttpClientBuilder() {
-    // Code from https://github.com/googleapis/google-http-java-client/pull/717
+    // code from https://github.com/googleapis/google-http-java-client/pull/717
     SocketConfig socketConfig =
         SocketConfig.custom().setRcvBufSize(8192).setSndBufSize(8192).build();
 
