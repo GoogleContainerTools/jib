@@ -147,11 +147,16 @@ class GradleProjectProperties implements ProjectProperties {
       FileCollection classesOutputDirectories =
           mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-      FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
-      FileCollection dependencyFiles =
+      FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
+
+      FileCollection allDependencyFiles =
           allFiles
               .minus(classesOutputDirectories)
               .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
+
+      FileCollection snapshotDependencyFiles =
+          allDependencyFiles.filter(file -> file.getName().contains("SNAPSHOT"));
+      FileCollection dependencyFiles = allDependencyFiles.minus(snapshotDependencyFiles);
 
       // Adds resource files
       if (Files.exists(resourcesOutputDirectory)) {
@@ -167,15 +172,16 @@ class GradleProjectProperties implements ProjectProperties {
       }
 
       // Adds dependency files
-      javaContainerBuilder.addDependencies(
-          dependencyFiles
-              .getFiles()
-              .stream()
-              .filter(File::exists)
-              .map(File::toPath)
-              .collect(Collectors.toList()));
-
-      return javaContainerBuilder.toContainerBuilder();
+      return javaContainerBuilder
+          .addDependencies(
+              dependencyFiles.getFiles().stream().map(File::toPath).collect(Collectors.toList()))
+          .addSnapshotDependencies(
+              snapshotDependencyFiles
+                  .getFiles()
+                  .stream()
+                  .map(File::toPath)
+                  .collect(Collectors.toList()))
+          .toContainerBuilder();
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
