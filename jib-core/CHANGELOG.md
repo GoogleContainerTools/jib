@@ -6,8 +6,8 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 ### Changed
-- `JibContainerBuilder#addDependencies` is now split into three methods: `addDependencies`, `addSnapshotDependencies`, `addProjectDependneices` ([#1773](https://github.com/GoogleContainerTools/jib/pull/1773))
 
+- `JibContainerBuilder#addDependencies` is now split into three methods: `addDependencies`, `addSnapshotDependencies`, `addProjectDependencies` ([#1773](https://github.com/GoogleContainerTools/jib/pull/1773))
 
 ### Fixed
 
