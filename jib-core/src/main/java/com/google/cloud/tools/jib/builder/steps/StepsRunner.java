@@ -181,13 +181,6 @@ public class StepsRunner {
     }
   }
 
-  private void enqueueBuildAndCache() {
-    stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(this::pullAndCacheBaseImageLayers);
-    stepsToRun.add(this::buildAndCacheApplicationLayers);
-    stepsToRun.add(this::buildImage);
-  }
-
   private void retrieveTargetRegistryCredentials() {
     results.targetRegistryCredentials =
         executorService.submit(
