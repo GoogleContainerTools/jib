@@ -79,7 +79,7 @@ public class Connection implements Closeable {
       throws GeneralSecurityException {
     HttpClientBuilder httpClientBuilder =
         newDefaultHttpClientBuilder()
-            .setSSLSocketFactory(null) // A new factory should be created with the SSLContext below.
+            .setSSLSocketFactory(null) // creates new factory with the SSLContext given below
             .setSSLContext(SslUtils.trustAllSSLContext())
             .setSSLHostnameVerifier(new NoopHostnameVerifier());
 
