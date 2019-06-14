@@ -38,7 +38,6 @@ import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
 
 /**
@@ -88,20 +87,11 @@ public class Connection implements Closeable {
   }
 
   // TODO(chanseok): remove. Use ApacheHttpTransport.newDefaultHttpClientBuilder() when it becomes
-  // available (https://github.com/googleapis/google-http-java-client/issues/578)
-  //
-  // BUG: the code is not working as intended.
-  // https://github.com/googleapis/google-http-java-client/issues/715
-  // setSSLContext() won't work either.
+  // available in newer releases (https://github.com/googleapis/google-http-java-client/issues/578)
   private static HttpClientBuilder newDefaultHttpClientBuilder() {
-    // Code from
-    // https://github.com/googleapis/google-http-java-client/blob/v1.30.1/google-http-client-apache-v2/src/main/java/com/google/api/client/http/apache/v2/ApacheHttpTransport.java#L125-L149
+    // Code from https://github.com/googleapis/google-http-java-client/pull/717
     SocketConfig socketConfig =
         SocketConfig.custom().setRcvBufSize(8192).setSndBufSize(8192).build();
-
-    PoolingHttpClientConnectionManager connectionManager =
-        new PoolingHttpClientConnectionManager(-1, TimeUnit.MILLISECONDS);
-    connectionManager.setValidateAfterInactivity(-1);
 
     return HttpClientBuilder.create()
         .useSystemProperties()
@@ -109,8 +99,8 @@ public class Connection implements Closeable {
         .setDefaultSocketConfig(socketConfig)
         .setMaxConnTotal(200)
         .setMaxConnPerRoute(20)
+        .setConnectionTimeToLive(-1, TimeUnit.MILLISECONDS)
         .setRoutePlanner(new SystemDefaultRoutePlanner(ProxySelector.getDefault()))
-        .setConnectionManager(connectionManager)
         .disableRedirectHandling()
         .disableAutomaticRetries();
   }
