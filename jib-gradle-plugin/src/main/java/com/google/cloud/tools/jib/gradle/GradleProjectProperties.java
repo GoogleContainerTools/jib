@@ -144,10 +144,15 @@ class GradleProjectProperties implements ProjectProperties {
           mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
       FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
-      FileCollection dependencyFiles =
+
+      FileCollection allDependencyFiles =
           allFiles
               .minus(classesOutputDirectories)
               .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
+
+      FileCollection snapshotDependencyFiles =
+          allDependencyFiles.filter(file -> file.getName().contains("SNAPSHOT"));
+      FileCollection dependencyFiles = allDependencyFiles.minus(snapshotDependencyFiles);
 
       JavaContainerBuilder javaContainerBuilder =
           JavaContainerBuilder.from(baseImage).setAppRoot(appRoot);
@@ -168,6 +173,14 @@ class GradleProjectProperties implements ProjectProperties {
       // Adds dependency files
       javaContainerBuilder.addDependencies(
           dependencyFiles
+              .getFiles()
+              .stream()
+              .filter(File::exists)
+              .map(File::toPath)
+              .collect(Collectors.toList()));
+
+      javaContainerBuilder.addSnapshotDependencies(
+          snapshotDependencyFiles
               .getFiles()
               .stream()
               .filter(File::exists)

@@ -95,7 +95,16 @@ public class JavaContainerBuilderHelper {
       javaContainerBuilder.addClasses(webInfClasses, isClassFile);
     }
     if (Files.exists(webInfLib)) {
-      javaContainerBuilder.addDependencies(new DirectoryWalker(webInfLib).filterRoot().walk());
+      javaContainerBuilder.addDependencies(
+          new DirectoryWalker(webInfLib)
+              .filterRoot()
+              .filter(path -> !path.getFileName().toString().contains("SNAPSHOT"))
+              .walk());
+      javaContainerBuilder.addSnapshotDependencies(
+          new DirectoryWalker(webInfLib)
+              .filterRoot()
+              .filter(path -> path.getFileName().toString().contains("SNAPSHOT"))
+              .walk());
     }
     return javaContainerBuilder.toContainerBuilder();
   }

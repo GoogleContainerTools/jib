@@ -196,6 +196,15 @@ public class MavenProjectProperties implements ProjectProperties {
               project
                   .getArtifacts()
                   .stream()
+                  .filter(artifact -> !artifact.isSnapshot())
+                  .map(Artifact::getFile)
+                  .map(File::toPath)
+                  .collect(Collectors.toList()))
+          .addSnapshotDependencies(
+              project
+                  .getArtifacts()
+                  .stream()
+                  .filter(Artifact::isSnapshot)
                   .map(Artifact::getFile)
                   .map(File::toPath)
                   .collect(Collectors.toList()))
