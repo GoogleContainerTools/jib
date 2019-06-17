@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
@@ -146,6 +147,10 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     } catch (InvalidAppRootException ex) {
       throw new GradleException(
           "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidPathValue(), ex);
+
+    } catch (InvalidContainerizingModeException ex) {
+      throw new GradleException(
+          "invalid value for containerizingMode: " + ex.getInvalidContainerizingMode(), ex);
 
     } catch (InvalidWorkingDirectoryException ex) {
       throw new GradleException(

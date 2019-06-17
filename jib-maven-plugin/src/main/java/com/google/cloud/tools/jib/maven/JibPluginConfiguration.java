@@ -171,9 +171,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private List<String> args;
 
-    @Nullable
-    @Parameter(required = true)
-    private String format = "Docker";
+    @Parameter private String format = "Docker";
 
     @Parameter private List<String> ports = Collections.emptyList();
 
@@ -244,13 +242,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   // this parameter is cloned in FilesMojo
   @Parameter private ExtraDirectoriesParameters extraDirectories = new ExtraDirectoriesParameters();
 
-  @Parameter(
-      defaultValue = "false",
-      required = true,
-      property = PropertyNames.ALLOW_INSECURE_REGISTRIES)
+  @Parameter(property = PropertyNames.ALLOW_INSECURE_REGISTRIES)
   private boolean allowInsecureRegistries;
 
-  @Parameter(defaultValue = "false", property = PropertyNames.SKIP)
+  @Parameter(property = PropertyNames.CONTAINERIZING_MODE)
+  private String containerizingMode = "exploded";
+
+  @Parameter(property = PropertyNames.SKIP)
   private boolean skip;
 
   @Component protected SettingsDecrypter settingsDecrypter;
@@ -533,7 +531,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (property != null) {
       return property;
     }
-    return Preconditions.checkNotNull(container.format);
+    return container.format;
   }
 
   /**
@@ -621,6 +619,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   boolean getAllowInsecureRegistries() {
     return allowInsecureRegistries;
+  }
+
+  public String getContainerizingMode() {
+    String property = getProperty(PropertyNames.CONTAINERIZING_MODE);
+    return property != null ? property : containerizingMode;
   }
 
   boolean isSkipped() {

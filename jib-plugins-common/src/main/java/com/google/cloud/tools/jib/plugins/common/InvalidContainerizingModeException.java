@@ -14,23 +14,19 @@
  * the License.
  */
 
-package example;
+package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.common.io.CharStreams;
+/** Indicates that the {@code containerizingMode} config value is invalid. */
+public class InvalidContainerizingModeException extends Exception {
 
-import java.io.InputStreamReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
+  private final String invalidContainerizingMode;
 
-public class HelloWorld {
+  public InvalidContainerizingModeException(String message, String invalidContainerizingMode) {
+    super(message);
+    this.invalidContainerizingMode = invalidContainerizingMode;
+  }
 
-  public static void main(String[] args) throws URISyntaxException, IOException {
-    try (Reader reader = new InputStreamReader(
-        HelloWorld.class.getResourceAsStream("/world"), StandardCharsets.UTF_8)) {
-      String world = CharStreams.toString(reader);
-      System.out.println("Hello " + world);
-    }
+  public String getInvalidContainerizingMode() {
+    return invalidContainerizingMode;
   }
 }

@@ -64,12 +64,14 @@ public class JibExtension {
 
   // Defines default configuration values.
   private static final boolean DEFAULT_ALLOW_INSECURE_REGISTIRIES = false;
+  private static final String DEFAULT_CONTAINERIZING_MODE = "exploded";
 
   private final BaseImageParameters from;
   private final TargetImageParameters to;
   private final ContainerParameters container;
   private final ExtraDirectoriesParameters extraDirectories;
   private final Property<Boolean> allowInsecureRegistries;
+  private final Property<String> containerizingMode;
 
   @Deprecated boolean extraDirectoryConfigured;
   @Deprecated boolean extraDirectoriesConfigured;
@@ -83,9 +85,11 @@ public class JibExtension {
     extraDirectories = objectFactory.newInstance(ExtraDirectoriesParameters.class, project, this);
 
     allowInsecureRegistries = objectFactory.property(Boolean.class);
+    containerizingMode = objectFactory.property(String.class);
 
     // Sets defaults.
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
+    containerizingMode.set(DEFAULT_CONTAINERIZING_MODE);
   }
 
   public void from(Action<? super BaseImageParameters> action) {
@@ -115,7 +119,7 @@ public class JibExtension {
   // for the deprecated "jib.extraDirectory" config parameter
   public void setExtraDirectory(File extraDirectory) {
     extraDirectoryConfigured = true;
-    this.extraDirectories.setPath(extraDirectory);
+    extraDirectories.setPath(extraDirectory);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
@@ -160,5 +164,12 @@ public class JibExtension {
       return Boolean.getBoolean(PropertyNames.ALLOW_INSECURE_REGISTRIES);
     }
     return allowInsecureRegistries.get();
+  }
+
+  @Input
+  @Optional
+  public String getContainerizingMode() {
+    String property = System.getProperty(PropertyNames.CONTAINERIZING_MODE);
+    return property != null ? property : containerizingMode.get();
   }
 }

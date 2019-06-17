@@ -42,6 +42,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -62,7 +63,8 @@ public class PluginConfigurationProcessor {
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -91,7 +93,8 @@ public class PluginConfigurationProcessor {
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
@@ -112,7 +115,8 @@ public class PluginConfigurationProcessor {
       ProjectProperties projectProperties)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -152,7 +156,8 @@ public class PluginConfigurationProcessor {
       boolean isTargetImageCredentialPresent)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException {
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException {
     JibSystemProperties.checkHttpTimeoutProperty();
     JibSystemProperties.checkProxyPortProperty();
 
@@ -182,7 +187,9 @@ public class PluginConfigurationProcessor {
     JibContainerBuilder jibContainerBuilder =
         projectProperties
             .createContainerBuilder(
-                baseImage, getAppRootChecked(rawConfiguration, projectProperties))
+                baseImage,
+                getAppRootChecked(rawConfiguration, projectProperties),
+                getContainerizingModeChecked(rawConfiguration, projectProperties))
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
@@ -235,12 +242,14 @@ public class PluginConfigurationProcessor {
    * @return the entrypoint
    * @throws MainClassInferenceException if no valid main class is configured or discovered
    * @throws InvalidAppRootException if {@code appRoot} value is not an absolute Unix path
+   * @throws InvalidContainerizingModeException if {@code containerizingMode} value is invalid
    */
   @Nullable
   @VisibleForTesting
   static List<String> computeEntrypoint(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
-      throws MainClassInferenceException, InvalidAppRootException, IOException {
+      throws MainClassInferenceException, InvalidAppRootException, IOException,
+          InvalidContainerizingModeException {
     AbsoluteUnixPath appRoot = getAppRootChecked(rawConfiguration, projectProperties);
 
     Optional<List<String>> rawEntrypoint = rawConfiguration.getEntrypoint();
@@ -264,15 +273,26 @@ public class PluginConfigurationProcessor {
       return null;
     }
 
+    List<String> classpath = new ArrayList<>(rawExtraClasspath);
+    ContainerizingMode mode = getContainerizingModeChecked(rawConfiguration, projectProperties);
+    switch (mode) {
+      case EXPLODED:
+        classpath.add(appRoot.resolve("resources").toString());
+        classpath.add(appRoot.resolve("classes").toString());
+        classpath.add(appRoot.resolve("libs/*").toString());
+        break;
+      case PACKAGED:
+        classpath.add(appRoot.resolve("classpath/*").toString());
+        classpath.add(appRoot.resolve("libs/*").toString());
+        break;
+      default:
+        throw new IllegalStateException("unknown containerizing mode: " + mode);
+    }
+
+    String classpathString = String.join(":", classpath);
     String mainClass =
         MainClassResolver.resolveMainClass(
             rawConfiguration.getMainClass().orElse(null), projectProperties);
-
-    List<String> classpath = new ArrayList<>(rawExtraClasspath);
-    classpath.add(appRoot.resolve("resources").toString());
-    classpath.add(appRoot.resolve("classes").toString());
-    classpath.add(appRoot.resolve("libs/*").toString());
-    String classpathString = String.join(":", classpath);
 
     List<String> entrypoint = new ArrayList<>(4 + rawConfiguration.getJvmFlags().size());
     entrypoint.add("java");
@@ -373,6 +393,23 @@ public class PluginConfigurationProcessor {
       return AbsoluteUnixPath.get(appRoot);
     } catch (IllegalArgumentException ex) {
       throw new InvalidAppRootException(appRoot, appRoot, ex);
+    }
+  }
+
+  @VisibleForTesting
+  static ContainerizingMode getContainerizingModeChecked(
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+      throws InvalidContainerizingModeException {
+    String rawMode = rawConfiguration.getContainerizingMode();
+    try {
+      ContainerizingMode mode = ContainerizingMode.valueOf(rawMode.toUpperCase(Locale.US));
+      if (mode == ContainerizingMode.PACKAGED && projectProperties.isWarProject()) {
+        throw new UnsupportedOperationException(
+            "packaged containerizing mode for WAR is not yet supported");
+      }
+      return mode;
+    } catch (IllegalArgumentException ex) {
+      throw new InvalidContainerizingModeException(rawMode, rawMode);
     }
   }
 

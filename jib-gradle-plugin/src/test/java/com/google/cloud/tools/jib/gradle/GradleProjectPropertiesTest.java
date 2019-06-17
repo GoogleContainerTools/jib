@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -83,6 +84,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 /** Test for {@link GradleProjectProperties}. */
 @RunWith(MockitoJUnitRunner.class)
 public class GradleProjectPropertiesTest {
+
+  private static final ContainerizingMode DEFAULT_CONTAINERIZING_MODE = ContainerizingMode.EXPLODED;
 
   /** Implementation of {@link FileCollection} that just holds a set of {@link File}s. */
   private static class TestFileCollection extends AbstractFileCollection {
@@ -361,7 +364,9 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
     gradleProjectProperties.createContainerBuilder(
-        RegistryImage.named("base"), AbsoluteUnixPath.get("/anything"));
+        RegistryImage.named("base"),
+        AbsoluteUnixPath.get("/anything"),
+        DEFAULT_CONTAINERIZING_MODE);
     Mockito.verify(mockLogger).warn("No classes files were found - did you compile your project?");
   }
 
@@ -552,7 +557,10 @@ public class GradleProjectPropertiesTest {
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JibContainerBuilder jibContainerBuilder =
         new GradleProjectProperties(mockProject, mockLogger)
-            .createContainerBuilder(RegistryImage.named("base"), AbsoluteUnixPath.get(appRoot));
+            .createContainerBuilder(
+                RegistryImage.named("base"),
+                AbsoluteUnixPath.get(appRoot),
+                DEFAULT_CONTAINERIZING_MODE);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         jibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))

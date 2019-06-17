@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
@@ -65,23 +66,26 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MavenProjectPropertiesTest {
 
+  private static final ContainerizingMode DEFAULT_CONTAINERIZING_MODE = ContainerizingMode.EXPLODED;
+
   /** Helper for reading back layers in a {@code BuildConfiguration}. */
   private static class ContainerBuilderLayers {
 
-    private final List<LayerConfiguration> resourcesLayerEntries;
-    private final List<LayerConfiguration> classesLayerEntries;
-    private final List<LayerConfiguration> dependenciesLayerEntries;
-    private final List<LayerConfiguration> snapshotsLayerEntries;
+    private final List<LayerConfiguration> resourcesLayers;
+    private final List<LayerConfiguration> classesLayers;
+    private final List<LayerConfiguration> dependenciesLayers;
+    private final List<LayerConfiguration> snapshotsLayers;
+    private final List<LayerConfiguration> extraFilesLayers;
 
     private ContainerBuilderLayers(BuildConfiguration configuration) {
-      resourcesLayerEntries =
-          getLayerConfigurationsByName(configuration, LayerType.RESOURCES.getName());
-      classesLayerEntries =
-          getLayerConfigurationsByName(configuration, LayerType.CLASSES.getName());
-      dependenciesLayerEntries =
+      resourcesLayers = getLayerConfigurationsByName(configuration, LayerType.RESOURCES.getName());
+      classesLayers = getLayerConfigurationsByName(configuration, LayerType.CLASSES.getName());
+      dependenciesLayers =
           getLayerConfigurationsByName(configuration, LayerType.DEPENDENCIES.getName());
-      snapshotsLayerEntries =
+      snapshotsLayers =
           getLayerConfigurationsByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+      extraFilesLayers =
+          getLayerConfigurationsByName(configuration, LayerType.EXTRA_FILES.getName());
     }
   }
 
@@ -122,10 +126,10 @@ public class MavenProjectPropertiesTest {
             "/my/app/libs/libraryA.jar",
             "/my/app/libs/libraryB.jar",
             "/my/app/libs/library.jarC.jar"),
-        layers.dependenciesLayerEntries.get(0).getLayerEntries());
+        layers.dependenciesLayers.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayerEntries.get(0).getLayerEntries());
+        layers.snapshotsLayers.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/resources/directory",
@@ -134,7 +138,7 @@ public class MavenProjectPropertiesTest {
             "/my/app/resources/resourceA",
             "/my/app/resources/resourceB",
             "/my/app/resources/world"),
-        layers.resourcesLayerEntries.get(0).getLayerEntries());
+        layers.resourcesLayers.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/classes/HelloWorld.class",
@@ -142,7 +146,7 @@ public class MavenProjectPropertiesTest {
             "/my/app/classes/package",
             "/my/app/classes/package/some.class",
             "/my/app/classes/some.class"),
-        layers.classesLayerEntries.get(0).getLayerEntries());
+        layers.classesLayers.get(0).getLayerEntries());
   }
 
   private static Path getResource(String path) throws URISyntaxException {
@@ -173,7 +177,7 @@ public class MavenProjectPropertiesTest {
   private MavenProjectProperties mavenProjectProperties;
 
   @Before
-  public void setup() throws IOException, URISyntaxException {
+  public void setUp() throws IOException, URISyntaxException {
     Mockito.when(mockMavenSession.getRequest()).thenReturn(mockMavenRequest);
     mavenProjectProperties =
         new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog);
@@ -193,9 +197,8 @@ public class MavenProjectPropertiesTest {
             makeArtifact(dependenciesPath.resolve("library.jarC.jar")),
             makeArtifact(dependenciesPath.resolve("libraryB.jar")),
             makeArtifact(dependenciesPath.resolve("libraryA.jar")),
-            makeArtifact(dependenciesPath.resolve("more").resolve("dependency-1.0.0.jar")),
-            makeArtifact(
-                dependenciesPath.resolve("another").resolve("one").resolve("dependency-1.0.0.jar")),
+            makeArtifact(dependenciesPath.resolve("more/dependency-1.0.0.jar")),
+            makeArtifact(dependenciesPath.resolve("another/one/dependency-1.0.0.jar")),
             // Maven reads and populates "Artifacts" with its own processing, so read some from a
             // repository
             testRepository.findArtifact("com.test", "dependency", "1.0.0"),
@@ -362,7 +365,7 @@ public class MavenProjectPropertiesTest {
   public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration("/app");
+    BuildConfiguration configuration = setupBuildConfiguration("/app", DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
 
     Path dependenciesPath = getResource("maven/application/dependencies");
@@ -370,16 +373,16 @@ public class MavenProjectPropertiesTest {
     assertSourcePathsUnordered(
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
-            dependenciesPath.resolve("more").resolve("dependency-1.0.0.jar"),
-            dependenciesPath.resolve("another").resolve("one").resolve("dependency-1.0.0.jar"),
+            dependenciesPath.resolve("more/dependency-1.0.0.jar"),
+            dependenciesPath.resolve("another/one/dependency-1.0.0.jar"),
             dependenciesPath.resolve("libraryA.jar"),
             dependenciesPath.resolve("libraryB.jar"),
             dependenciesPath.resolve("library.jarC.jar")),
-        layers.dependenciesLayerEntries.get(0).getLayerEntries());
+        layers.dependenciesLayers.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT")),
-        layers.snapshotsLayerEntries.get(0).getLayerEntries());
+        layers.snapshotsLayers.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             applicationDirectory.resolve("output/directory"),
@@ -388,7 +391,7 @@ public class MavenProjectPropertiesTest {
             applicationDirectory.resolve("output/resourceA"),
             applicationDirectory.resolve("output/resourceB"),
             applicationDirectory.resolve("output/world")),
-        layers.resourcesLayerEntries.get(0).getLayerEntries());
+        layers.resourcesLayers.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             applicationDirectory.resolve("output/HelloWorld.class"),
@@ -396,14 +399,67 @@ public class MavenProjectPropertiesTest {
             applicationDirectory.resolve("output/package"),
             applicationDirectory.resolve("output/package/some.class"),
             applicationDirectory.resolve("output/some.class")),
-        layers.classesLayerEntries.get(0).getLayerEntries());
+        layers.classesLayers.get(0).getLayerEntries());
   }
 
   @Test
   public void testCreateContainerBuilder_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
+    BuildConfiguration configuration =
+        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
     assertNonDefaultAppRoot(configuration);
+  }
+
+  @Test
+  public void testCreateContainerBuilder_packagedMode()
+      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
+          URISyntaxException {
+    Path jar = temporaryFolder.newFile("final-name.jar").toPath();
+    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
+
+    BuildConfiguration configuration =
+        setupBuildConfiguration("/app-root", ContainerizingMode.PACKAGED);
+
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
+    Assert.assertEquals(1, layers.dependenciesLayers.size());
+    Assert.assertEquals(1, layers.snapshotsLayers.size());
+    Assert.assertEquals(0, layers.resourcesLayers.size());
+    Assert.assertEquals(0, layers.classesLayers.size());
+    Assert.assertEquals(1, layers.extraFilesLayers.size());
+
+    Path dependenciesPath = getResource("maven/application/dependencies");
+    assertSourcePathsUnordered(
+        Arrays.asList(
+            testRepository.artifactPathOnDisk("com.test", "dependency", "1.0.0"),
+            dependenciesPath.resolve("more/dependency-1.0.0.jar"),
+            dependenciesPath.resolve("another/one/dependency-1.0.0.jar"),
+            dependenciesPath.resolve("libraryA.jar"),
+            dependenciesPath.resolve("libraryB.jar"),
+            dependenciesPath.resolve("library.jarC.jar")),
+        layers.dependenciesLayers.get(0).getLayerEntries());
+    assertSourcePathsUnordered(
+        Arrays.asList(
+            testRepository.artifactPathOnDisk("com.test", "dependencyX", "1.0.0-SNAPSHOT")),
+        layers.snapshotsLayers.get(0).getLayerEntries());
+    assertSourcePathsUnordered(
+        Arrays.asList(jar), layers.extraFilesLayers.get(0).getLayerEntries());
+
+    assertExtractionPathsUnordered(
+        Arrays.asList(
+            "/app-root/libs/dependency-1.0.0-200.jar",
+            "/app-root/libs/dependency-1.0.0-480.jar",
+            "/app-root/libs/dependency-1.0.0-770.jar",
+            "/app-root/libs/library.jarC.jar",
+            "/app-root/libs/libraryA.jar",
+            "/app-root/libs/libraryB.jar"),
+        layers.dependenciesLayers.get(0).getLayerEntries());
+    assertExtractionPathsUnordered(
+        Arrays.asList("/app-root/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
+        layers.snapshotsLayers.get(0).getLayerEntries());
+    assertExtractionPathsUnordered(
+        Arrays.asList("/app-root/classpath/final-name.jar"),
+        layers.extraFilesLayers.get(0).getLayerEntries());
   }
 
   @Test
@@ -415,15 +471,16 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(outputPath.toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
+    BuildConfiguration configuration =
+        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertSourcePathsUnordered(
         ImmutableList.of(outputPath.resolve("final-name/WEB-INF/lib/dependency-1.0.0.jar")),
-        layers.dependenciesLayerEntries.get(0).getLayerEntries());
+        layers.dependenciesLayers.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             outputPath.resolve("final-name/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
-        layers.snapshotsLayerEntries.get(0).getLayerEntries());
+        layers.snapshotsLayers.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             outputPath.resolve("final-name/META-INF"),
@@ -436,21 +493,21 @@ public class MavenProjectPropertiesTest {
             outputPath.resolve("final-name/WEB-INF/classes/package/test.properties"),
             outputPath.resolve("final-name/WEB-INF/lib"),
             outputPath.resolve("final-name/WEB-INF/web.xml")),
-        layers.resourcesLayerEntries.get(0).getLayerEntries());
+        layers.resourcesLayers.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
             outputPath.resolve("final-name/WEB-INF/classes/HelloWorld.class"),
             outputPath.resolve("final-name/WEB-INF/classes/empty_dir"),
             outputPath.resolve("final-name/WEB-INF/classes/package"),
             outputPath.resolve("final-name/WEB-INF/classes/package/Other.class")),
-        layers.classesLayerEntries.get(0).getLayerEntries());
+        layers.classesLayers.get(0).getLayerEntries());
 
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependency-1.0.0.jar"),
-        layers.dependenciesLayerEntries.get(0).getLayerEntries());
+        layers.dependenciesLayers.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Collections.singletonList("/my/app/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
-        layers.snapshotsLayerEntries.get(0).getLayerEntries());
+        layers.snapshotsLayers.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/META-INF",
@@ -463,14 +520,14 @@ public class MavenProjectPropertiesTest {
             "/my/app/WEB-INF/classes/package/test.properties",
             "/my/app/WEB-INF/lib",
             "/my/app/WEB-INF/web.xml"),
-        layers.resourcesLayerEntries.get(0).getLayerEntries());
+        layers.resourcesLayers.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/my/app/WEB-INF/classes/HelloWorld.class",
             "/my/app/WEB-INF/classes/empty_dir",
             "/my/app/WEB-INF/classes/package",
             "/my/app/WEB-INF/classes/package/Other.class"),
-        layers.classesLayerEntries.get(0).getLayerEntries());
+        layers.classesLayers.get(0).getLayerEntries());
   }
 
   @Test
@@ -478,7 +535,8 @@ public class MavenProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     // Test when the default packaging is set
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
-    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
+    BuildConfiguration configuration =
+        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
     assertNonDefaultAppRoot(configuration);
   }
 
@@ -487,11 +545,10 @@ public class MavenProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("final-name");
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
-    Mockito.when(mockBuild.getDirectory())
-        .thenReturn(temporaryFolder.getRoot().toPath().toString());
+    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration("/my/app"); // should pass
+    setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -499,11 +556,10 @@ public class MavenProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("final-name", "WEB-INF", "classes");
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
-    Mockito.when(mockBuild.getDirectory())
-        .thenReturn(temporaryFolder.getRoot().toPath().toString());
+    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration("/my/app"); // should pass
+    setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -511,11 +567,20 @@ public class MavenProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("final-name", "WEB-INF", "lib");
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
-    Mockito.when(mockBuild.getDirectory())
-        .thenReturn(temporaryFolder.getRoot().toPath().toString());
+    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration("/my/app"); // should pass
+    setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE); // should pass
+  }
+
+  @Test
+  public void testGetJarArtifact() {
+    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("helloworld-1");
+
+    Assert.assertEquals(
+        temporaryFolder.getRoot().toPath().resolve("helloworld-1.jar"),
+        mavenProjectProperties.getJarArtifact());
   }
 
   @Test
@@ -542,11 +607,13 @@ public class MavenProjectPropertiesTest {
     Assert.assertFalse(mavenProjectProperties.isWarProject());
   }
 
-  private BuildConfiguration setupBuildConfiguration(String appRoot)
+  private BuildConfiguration setupBuildConfiguration(
+      String appRoot, ContainerizingMode containerizingMode)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JibContainerBuilder JibContainerBuilder =
         new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
-            .createContainerBuilder(RegistryImage.named("base"), AbsoluteUnixPath.get(appRoot));
+            .createContainerBuilder(
+                RegistryImage.named("base"), AbsoluteUnixPath.get(appRoot), containerizingMode);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         JibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))
