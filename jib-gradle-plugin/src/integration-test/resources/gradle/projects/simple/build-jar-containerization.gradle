@@ -22,7 +22,7 @@ jar {
     )
   }
 }
-  
+
 jib {
   to {
     image = System.getProperty("_TARGET_IMAGE")

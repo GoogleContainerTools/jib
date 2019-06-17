@@ -122,7 +122,7 @@ class GradleProjectProperties implements ProjectProperties {
     if (logger.isErrorEnabled()) {
       consoleLoggerBuilder.error(logger::error);
     }
-    this.consoleLogger = consoleLoggerBuilder.build();
+    consoleLogger = consoleLoggerBuilder.build();
   }
 
   @Override
@@ -146,13 +146,12 @@ class GradleProjectProperties implements ProjectProperties {
       FileCollection classesOutputDirectories =
           mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-      FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
+      FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
 
       FileCollection allDependencyFiles =
           allFiles
               .minus(classesOutputDirectories)
-              .filter(file -> !file.toPath().equals(resourcesOutputDirectory))
-              .filter(File::exists);
+              .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
 
       FileCollection snapshotDependencyFiles =
           allDependencyFiles.filter(file -> file.getName().contains("SNAPSHOT"));

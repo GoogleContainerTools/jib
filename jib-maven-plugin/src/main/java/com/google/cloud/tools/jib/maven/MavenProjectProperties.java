@@ -173,7 +173,7 @@ public class MavenProjectProperties implements ProjectProperties {
     if (log.isErrorEnabled()) {
       consoleLoggerBuilder.error(log::error);
     }
-    this.consoleLogger = consoleLoggerBuilder.build();
+    consoleLogger = consoleLoggerBuilder.build();
   }
 
   @Override
