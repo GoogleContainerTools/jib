@@ -11,6 +11,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [What image format does Jib use?](#what-image-format-does-jib-use)\
 [Can I define a custom entrypoint?](#can-i-define-a-custom-entrypoint-at-runtime)\
 [I want to containerize an executable JAR.](#i-want-to-containerize-an-executable-jar)\
+[I want to containerize a JAR.](#i-want-to-containerize-a-jar)\
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
 [I need to RUN commands like `apt-get`.](#i-need-to-run-commands-like-apt-get)\
 [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)\
@@ -161,7 +162,17 @@ Normally, the plugin sets a default entrypoint for java applications, or lets yo
 
 ### I want to containerize an executable JAR.
 
-Although it is possible to configure Jib to add a JAR to the container and run it using a custom `java -jar ...` or `java -cp ...` entrypoint command, the intention of Jib is to add individual class files and dependency JARs into the container instead of putting a runnable JAR into the container. This lets Jib choose an opinionated, optimal layout for the application on the container image, which also allows it to skip the extra JAR-packaging step.
+Currently Jib does not natively support creating an image that runs a runnable JAR (or WAR) through `java -jar runnable.jar` (although it is not impossible to configure Jib to do so at the expense of more complex project setup.) The intention of Jib is to add individual class files, resources, and dependency JARs into the container instead of putting a runnable JAR. This lets Jib choose an opinionated, optimal layout for the application on the container image, which also allows it to skip the extra JAR-packaging step.
+
+However, you can set `<containerizingMode>packaged` (Maven) or `containerizingMode = 'packaged'` to containerize a JAR, but note that your application will always be run via `java -cp your.MainClass` (even if it is an executable JAR). Some disadvnatags:
+
+- You need to run the JAR-packaging step (`mvn package` in Maven or the `jar` task in Gradle).
+- Reduced granularity in building and caching: if any of your Java source files or resource files are updated, not only the JAR has to be rebuilt but the layer in the image for the JAR has to be rebuilt and pushed to a registry or a Docker daemon as a whole as a new layer.
+- If it is a fat or sharded JAR embedding all dependency JARs, you are duplicating the dependency JARs in the image. Worse, it results in far more reduced granularity in building and caching, as dependency JARs can be huge and all of them need to be pushed repeatedly even if they do not change.
+
+### I want to containerize a JAR.
+
+See ["I want to containerize an executable JAR"](#i-want-to-containerize-an-executable-jar).
 
 ### Where is the application in the container filesystem?
 
