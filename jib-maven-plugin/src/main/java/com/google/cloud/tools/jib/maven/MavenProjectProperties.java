@@ -173,7 +173,7 @@ public class MavenProjectProperties implements ProjectProperties {
     if (log.isErrorEnabled()) {
       consoleLoggerBuilder.error(log::error);
     }
-    this.consoleLogger = consoleLoggerBuilder.build();
+    consoleLogger = consoleLoggerBuilder.build();
   }
 
   @Override
@@ -191,10 +191,22 @@ public class MavenProjectProperties implements ProjectProperties {
       }
 
       // Add dependencies
-      Set<Artifact> artifacts = project.getArtifacts();
-      List<Path> dependencies =
-          artifacts.stream().map(Artifact::getFile).map(File::toPath).collect(Collectors.toList());
-      javaContainerBuilder.addDependencies(dependencies);
+      Set<Artifact> allDependencies = project.getArtifacts();
+      javaContainerBuilder
+          .addDependencies(
+              allDependencies
+                  .stream()
+                  .filter(artifact -> !artifact.isSnapshot())
+                  .map(Artifact::getFile)
+                  .map(File::toPath)
+                  .collect(Collectors.toList()))
+          .addSnapshotDependencies(
+              allDependencies
+                  .stream()
+                  .filter(Artifact::isSnapshot)
+                  .map(Artifact::getFile)
+                  .map(File::toPath)
+                  .collect(Collectors.toList()));
 
       switch (containerizingMode) {
         case EXPLODED:

@@ -122,7 +122,7 @@ class GradleProjectProperties implements ProjectProperties {
     if (logger.isErrorEnabled()) {
       consoleLoggerBuilder.error(logger::error);
     }
-    this.consoleLogger = consoleLoggerBuilder.build();
+    consoleLogger = consoleLoggerBuilder.build();
   }
 
   @Override
@@ -146,20 +146,27 @@ class GradleProjectProperties implements ProjectProperties {
       FileCollection classesOutputDirectories =
           mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-      FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
-      FileCollection dependencyFiles =
+      FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
+
+      FileCollection allDependencyFiles =
           allFiles
               .minus(classesOutputDirectories)
               .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
 
+      FileCollection snapshotDependencyFiles =
+          allDependencyFiles.filter(file -> file.getName().contains("SNAPSHOT"));
+      FileCollection dependencyFiles = allDependencyFiles.minus(snapshotDependencyFiles);
+
       // Adds dependency files
-      javaContainerBuilder.addDependencies(
-          dependencyFiles
-              .getFiles()
-              .stream()
-              .filter(File::exists)
-              .map(File::toPath)
-              .collect(Collectors.toList()));
+      javaContainerBuilder
+          .addDependencies(
+              dependencyFiles.getFiles().stream().map(File::toPath).collect(Collectors.toList()))
+          .addSnapshotDependencies(
+              snapshotDependencyFiles
+                  .getFiles()
+                  .stream()
+                  .map(File::toPath)
+                  .collect(Collectors.toList()));
 
       switch (containerizingMode) {
         case EXPLODED:
