@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
@@ -35,15 +36,14 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 
 /**
- * Pushes the final image. In fact, its manifest is pushed along with a tag. Returns the pushed
- * image digest (digest of manifest) and image ID (digest of container configuration) as {#link
- * BuildResult}.
+ * Pushes a manifest for a tag. Returns the manifest digest ("image digest") and the container
+ * configuration digest ("image id") as {#link BuildResult}.
  */
-class PushImageStep implements Callable<BuildResult> {
+class PushManifestStep implements Callable<BuildResult> {
 
-  private static final String DESCRIPTION = "Pushing new image (tag)";
+  private static final String DESCRIPTION = "Pushing manifest";
 
-  static ImmutableList<PushImageStep> makeList(
+  static ImmutableList<PushManifestStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Authorization pushAuthorization,
@@ -54,9 +54,9 @@ class PushImageStep implements Callable<BuildResult> {
 
     try (TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), "Preparing image (tag) pushers");
+                buildConfiguration.getEventHandlers(), "Preparing manifest pushers");
         ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("preparing (image) tag pushers", tags.size())) {
+            progressEventDispatcherFactory.create("preparing manifest pushers", tags.size())) {
 
       // Gets the image manifest to push.
       BuildableManifestTemplate manifestTemplate =
@@ -64,23 +64,24 @@ class PushImageStep implements Callable<BuildResult> {
               .getManifestTemplate(
                   buildConfiguration.getTargetFormat(), containerConfigurationDigestAndSize);
 
-      ImmutableList.Builder<PushImageStep> imagePushers = new ImmutableList.Builder<>();
-      for (String tag : buildConfiguration.getAllTargetImageTags()) {
-        imagePushers.add(
-            new PushImageStep(
-                buildConfiguration,
-                progressEventDispatcher.newChildProducer(),
-                pushAuthorization,
-                manifestTemplate,
-                tag,
-                Digests.computeJsonDigest(manifestTemplate),
-                containerConfigurationDigestAndSize.getDigest()));
-      }
-      return imagePushers.build();
+      DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
+
+      return tags.stream()
+          .map(
+              tag ->
+                  new PushManifestStep(
+                      buildConfiguration,
+                      progressEventDispatcher.newChildProducer(),
+                      pushAuthorization,
+                      manifestTemplate,
+                      tag,
+                      manifestDigest,
+                      containerConfigurationDigestAndSize.getDigest()))
+          .collect(ImmutableList.toImmutableList());
     }
   }
 
-  PushImageStep(
+  PushManifestStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Authorization pushAuthorization,
@@ -108,11 +109,11 @@ class PushImageStep implements Callable<BuildResult> {
 
   @Override
   public BuildResult call() throws IOException, RegistryException {
-    try (TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION);
+    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    try (TimerEventDispatcher ignored = new TimerEventDispatcher(eventHandlers, DESCRIPTION);
         ProgressEventDispatcher ignored2 =
-            progressEventDispatcherFactory.create("tagging with " + tag, 1)) {
-      buildConfiguration.getEventHandlers().dispatch(LogEvent.info("Tagging with " + tag + "..."));
+            progressEventDispatcherFactory.create("pushing manifest for " + tag, 1)) {
+      eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + tag + "..."));
 
       RegistryClient registryClient =
           buildConfiguration
