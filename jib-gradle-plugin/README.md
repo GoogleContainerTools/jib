@@ -176,7 +176,7 @@ Field | Type | Default | Description
 `from` | [`from`](#from-closure) | See [`from`](#from-closure) | Configures the base image to build your application on top of.
 `container` | [`container`](#container-closure) | See [`container`](#container-closure) | Configures the container that is run from your built image.
 `extraDirectories` | [`extraDirectories`](#extradirectories-closure) | See [`extraDirectories`](#extradirectories-closure) | Configures the directories used to add arbitrary files to the image.
-`containerizingMode` | `String` | `exploded` | If set to `packaged`, puts the JAR artifact built by the Gradle Java plugin in the final image. If set to `exploded` (default), containerizers individual `.class` files and resources files.
+`containerizingMode` | `String` | `exploded` | If set to `packaged`, puts the JAR artifact built by the Gradle Java plugin into the final image. If set to `exploded` (default), containerizers individual `.class` files and resources files.
 `allowInsecureRegistries` | `boolean` | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 
 <a name="from-closure"></a>`from` is a closure with the following properties:
