@@ -24,8 +24,8 @@ import javax.annotation.Nullable;
 
 /**
  * Contains a {@link ProgressEventDispatcher} and throttles dispatching progress events with the
- * default delay used by {@link ThrottledConsumer}. This class is mutable and should only be used
- * within a local context.
+ * default delay used by {@link ThrottledAccumulatingConsumer}. This class is mutable and should
+ * only be used within a local context.
  *
  * <p>This class is necessary because the total BLOb size (allocation units) is not known until the
  * response headers are received, only after which can the {@link ProgressEventDispatcher} be
