@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -60,7 +59,6 @@ class RetrieveRegistryCredentialsStep implements Callable<Credential> {
   private final String registry;
   private final ImmutableList<CredentialRetriever> credentialRetrievers;
 
-  @VisibleForTesting
   RetrieveRegistryCredentialsStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
