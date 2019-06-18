@@ -295,7 +295,7 @@ public class ContainerizerIntegrationTest {
     new Command("docker", "load", "--input", outputPath.toString()).run();
     assertLayerSizer(7, "testtar");
     Assert.assertEquals(
-        "Hello, world. An argument.\n", new Command("docker", "run", "--rm", "testtar").run());
+        "Hello, world. An argument.\nc", new Command("docker", "run", "--rm", "testtar").run());
   }
 
   private JibContainer buildRegistryImage(

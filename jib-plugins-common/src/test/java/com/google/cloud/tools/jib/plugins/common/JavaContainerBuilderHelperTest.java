@@ -84,7 +84,7 @@ public class JavaContainerBuilderHelperTest {
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     LayerConfiguration layerConfiguration =
         JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-            extraFilesDirectory, Collections.emptyMap());
+            extraFilesDirectory, Collections.emptyMap(), Collections.emptyMap());
     assertSourcePathsUnordered(
         Arrays.asList(
             extraFilesDirectory.resolve("a"),

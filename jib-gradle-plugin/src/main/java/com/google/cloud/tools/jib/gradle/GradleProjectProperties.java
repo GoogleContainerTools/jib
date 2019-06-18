@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
@@ -128,9 +129,14 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public JibContainerBuilder createContainerBuilder(
-      RegistryImage baseImage, AbsoluteUnixPath appRoot, ContainerizingMode containerizingMode) {
+      RegistryImage baseImage,
+      AbsoluteUnixPath appRoot,
+      ContainerizingMode containerizingMode,
+      ModificationTimeProvider modificationTimeProvider) {
     JavaContainerBuilder javaContainerBuilder =
-        JavaContainerBuilder.from(baseImage).setAppRoot(appRoot);
+        JavaContainerBuilder.from(baseImage)
+            .setAppRoot(appRoot)
+            .setModificationTimeProvider(modificationTimeProvider);
 
     try {
       if (isWarProject()) {

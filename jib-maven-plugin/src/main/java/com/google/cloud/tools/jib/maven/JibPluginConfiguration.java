@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven;
 
+import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
@@ -124,6 +125,30 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
+  /** Used to configure {@code extraDirectories.modificationTimes} parameter. */
+  public static class ModificationTimeConfiguration {
+
+    @Nullable @Parameter private String file;
+    @Nullable @Parameter private String value;
+
+    // Need default constructor for Maven
+    public ModificationTimeConfiguration() {}
+
+    @VisibleForTesting
+    ModificationTimeConfiguration(String file, String value) {
+      this.file = file;
+      this.value = value;
+    }
+
+    Optional<String> getFile() {
+      return Optional.ofNullable(file);
+    }
+
+    Optional<String> getValue() {
+      return Optional.ofNullable(value);
+    }
+  }
+
   /** Configuration for {@code from} parameter, */
   public static class FromConfiguration {
 
@@ -184,6 +209,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String user;
 
     @Nullable @Parameter private String workingDirectory;
+
+    @Nullable private String filesModificationTime = ModificationTimeProvider.EPOCH_PLUS_SECOND;
   }
 
   /** Configuration for the {@code extraDirectories} parameter. */
@@ -193,8 +220,15 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
 
+    @Parameter
+    private List<ModificationTimeConfiguration> modificationTimes = Collections.emptyList();
+
     public List<File> getPaths() {
       return paths;
+    }
+
+    public List<ModificationTimeConfiguration> getModificationTimes() {
+      return modificationTimes;
     }
   }
 
@@ -535,6 +569,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /**
+   * Gets the configured container files modification time value
+   *
+   * @return the configured container files modification time value
+   */
+  String getFilesModificationTime() {
+    String property = getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
+    if (property != null) {
+      return property;
+    }
+    return Preconditions.checkNotNull(container.filesModificationTime);
+  }
+
+  /**
    * Gets the list of configured extra directory paths.
    *
    * @return the list of configured extra directory paths
@@ -615,6 +662,27 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     return !extraDirectories.getPaths().isEmpty()
         ? extraDirectories.permissions
         : extraDirectory.permissions;
+  }
+
+  /**
+   * Gets the configured extra layer files modification times.
+   *
+   * @return the configured extra layer files modification times
+   */
+  List<ModificationTimeConfiguration> getExtraDirectoryModificationTimes() {
+    String property = getProperty(PropertyNames.EXTRA_DIRECTORIES_MODIFICATION_TIMES);
+
+    if (property != null) {
+      return ConfigurationPropertyValidator.parseMapProperty(property)
+          .entrySet()
+          .stream()
+          .map(entry -> new ModificationTimeConfiguration(entry.getKey(), entry.getValue()))
+          .collect(Collectors.toList());
+    }
+
+    return !extraDirectories.getPaths().isEmpty()
+        ? extraDirectories.modificationTimes
+        : Collections.emptyList();
   }
 
   boolean getAllowInsecureRegistries() {

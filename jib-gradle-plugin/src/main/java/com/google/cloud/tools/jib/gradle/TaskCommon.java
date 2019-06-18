@@ -101,5 +101,22 @@ class TaskCommon {
     return permissionsMap;
   }
 
+  /**
+   * Validates and converts a {@code String->String}
+   * file-path-to-file-modification-time-provider-type map to an equivalent {@code
+   * AbsoluteUnixPath->String} map.
+   *
+   * @param stringMap the map to convert (example entry: {@code "/path/on/container" -> "755"})
+   * @return the converted map
+   */
+  static Map<AbsoluteUnixPath, String> convertModificationTimesMap(Map<String, String> stringMap) {
+    Map<AbsoluteUnixPath, String> modificationTimesMap = new HashMap<>();
+    for (Map.Entry<String, String> entry : stringMap.entrySet()) {
+      AbsoluteUnixPath key = AbsoluteUnixPath.get(entry.getKey());
+      modificationTimesMap.put(key, entry.getValue());
+    }
+    return modificationTimesMap;
+  }
+
   private TaskCommon() {}
 }

@@ -42,6 +42,7 @@ public class HelloWorld {
                 HelloWorld.class.getResourceAsStream("/world"), StandardCharsets.UTF_8))) {
       String world = reader.readLine();
       System.out.println(greeting + ", " + world + ". " + (args.length > 0 ? args[0] : ""));
+      System.out.println(Files.getLastModifiedTime(Paths.get(classLoader.getResource("world").toURI())).toString());
 
       // Prints the contents of the extra files.
       if (Files.exists(Paths.get("/foo"))) {
@@ -53,11 +54,14 @@ public class HelloWorld {
             new String(Files.readAllBytes(Paths.get("/foo")), StandardCharsets.UTF_8));
         System.out.println(
             new String(Files.readAllBytes(Paths.get("/bar/cat")), StandardCharsets.UTF_8));
+        System.out.println(Files.getLastModifiedTime(Paths.get("/foo")).toString());
+        System.out.println(Files.getLastModifiedTime(Paths.get("/bar/cat")).toString());
       }
       // Prints the contents of the files in the second extra directory.
       if (Files.exists(Paths.get("/baz"))) {
         System.out.println(
             new String(Files.readAllBytes(Paths.get("/baz")), StandardCharsets.UTF_8));
+        System.out.println(Files.getLastModifiedTime(Paths.get("/baz")).toString());
       }
 
       // Prints jvm flags

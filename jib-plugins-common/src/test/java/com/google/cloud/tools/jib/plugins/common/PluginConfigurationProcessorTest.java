@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.common.collect.ImmutableMap;
@@ -34,8 +35,12 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -92,6 +97,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
+    Mockito.when(rawConfiguration.getFilesModificationTime()).thenReturn("epoch_plus_second");
     Mockito.when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(Paths.get("nonexistent/path")));
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
@@ -103,7 +109,8 @@ public class PluginConfigurationProcessorTest {
             projectProperties.createContainerBuilder(
                 Mockito.any(RegistryImage.class),
                 Mockito.any(AbsoluteUnixPath.class),
-                Mockito.any(ContainerizingMode.class)))
+                Mockito.any(ContainerizingMode.class),
+                Mockito.any(ModificationTimeProvider.class)))
         .thenReturn(Jib.from("base"));
     Mockito.when(projectProperties.isOffline()).thenReturn(false);
 
@@ -185,6 +192,72 @@ public class PluginConfigurationProcessorTest {
             .findFirst();
     Assert.assertTrue(fooEntry.isPresent());
     Assert.assertEquals("123", fooEntry.get().getPermissions().toOctalString());
+  }
+
+  @Test
+  public void
+      testPluginConfigurationProcessor_extraDirectoryWithDifferentModificationTimeProviders()
+          throws URISyntaxException, InvalidContainerVolumeException, MainClassInferenceException,
+              InvalidAppRootException, IOException, IncompatibleBaseImageJavaVersionException,
+              InvalidWorkingDirectoryException, InvalidImageReferenceException,
+              CacheDirectoryCreationException, InvalidContainerizingModeException {
+    Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI());
+    Path fooFile = Paths.get(Resources.getResource("core/layer/foo").toURI());
+    Mockito.when(rawConfiguration.getExtraDirectories()).thenReturn(Arrays.asList(extraDirectory));
+    Mockito.when(rawConfiguration.getExtraDirectoryPermissions())
+        .thenReturn(
+            ImmutableMap.of(AbsoluteUnixPath.get("/foo"), FilePermissions.fromOctalString("123")));
+    Instant now = Instant.now();
+    Mockito.when(rawConfiguration.getExtraDirectoryModificationTimes())
+        .thenReturn(
+            ImmutableMap.of(
+                AbsoluteUnixPath.get("/foo"),
+                "keep_original",
+                AbsoluteUnixPath.get("/c/cat"),
+                DateTimeFormatter.ISO_DATE_TIME.withZone(ZoneId.systemDefault()).format(now)));
+
+    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
+    BuildConfiguration buildConfiguration =
+        getBuildConfiguration(processor.getJibContainerBuilder());
+    List<LayerEntry> extraFiles =
+        buildConfiguration
+            .getLayerConfigurations()
+            .stream()
+            .filter(layer -> layer.getName().equals("extra files"))
+            .collect(Collectors.toList())
+            .get(0)
+            .getLayerEntries();
+
+    assertSourcePathsUnordered(
+        Arrays.asList(
+            extraDirectory.resolve("a"),
+            extraDirectory.resolve("a/b"),
+            extraDirectory.resolve("a/b/bar"),
+            extraDirectory.resolve("c"),
+            extraDirectory.resolve("c/cat"),
+            extraDirectory.resolve("foo")),
+        extraFiles);
+    assertExtractionPathsUnordered(
+        Arrays.asList("/a", "/a/b", "/a/b/bar", "/c", "/c/cat", "/foo"), extraFiles);
+
+    Optional<LayerEntry> fooEntry =
+        extraFiles
+            .stream()
+            .filter(
+                layerEntry -> layerEntry.getExtractionPath().equals(AbsoluteUnixPath.get("/foo")))
+            .findFirst();
+    Assert.assertTrue(fooEntry.isPresent());
+    Assert.assertEquals(
+        Files.getLastModifiedTime(fooFile).toInstant(), fooEntry.get().getLastModifiedTime());
+
+    Optional<LayerEntry> catEntry =
+        extraFiles
+            .stream()
+            .filter(
+                layerEntry -> layerEntry.getExtractionPath().equals(AbsoluteUnixPath.get("/c/cat")))
+            .findFirst();
+    Assert.assertTrue(catEntry.isPresent());
+    Assert.assertEquals(now, catEntry.get().getLastModifiedTime());
   }
 
   @Test

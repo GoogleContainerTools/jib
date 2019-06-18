@@ -43,6 +43,8 @@ public class PropertyNames {
   public static final String CONTAINER_VOLUMES = "jib.container.volumes";
   public static final String CONTAINER_PORTS = "jib.container.ports";
   public static final String CONTAINER_USE_CURRENT_TIMESTAMP = "jib.container.useCurrentTimestamp";
+  public static final String CONTAINER_FILES_MODIFICATION_TIME =
+      "jib.container.filesModificationTime";
   public static final String USE_ONLY_PROJECT_CACHE = "jib.useOnlyProjectCache";
   public static final String BASE_IMAGE_CACHE = "jib.baseImageCache";
   public static final String APPLICATION_CACHE = "jib.applicationCache";
@@ -54,6 +56,8 @@ public class PropertyNames {
   public static final String EXTRA_DIRECTORY_PERMISSIONS = "jib.extraDirectory.permissions";
 
   public static final String EXTRA_DIRECTORIES_PERMISSIONS = "jib.extraDirectories.permissions";
+  public static final String EXTRA_DIRECTORIES_MODIFICATION_TIMES =
+      "jib.extraDirectories.modificationTimes";
   public static final String DOCKER_CLIENT_EXECUTABLE = "jib.dockerClient.executable";
   public static final String DOCKER_CLIENT_ENVIRONMENT = "jib.dockerClient.environment";
   public static final String CONTAINERIZING_MODE = "jib.containerizingMode";

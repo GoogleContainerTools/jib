@@ -175,6 +175,8 @@ public class JavaContainerBuilder {
   private RelativeUnixPath dependenciesDestination = RelativeUnixPath.get("libs");
   private RelativeUnixPath othersDestination = RelativeUnixPath.get("classpath");
   @Nullable private String mainClass;
+  private ModificationTimeProvider modificationTimeProvider =
+      new FixedModificationTimeProvider(FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND);
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
     this.jibContainerBuilder = jibContainerBuilder;
@@ -485,6 +487,18 @@ public class JavaContainerBuilder {
   }
 
   /**
+   * Sets the container files modification time provider.
+   *
+   * @param modificationTimeProvider container files modification time provider.
+   * @return this
+   */
+  public JavaContainerBuilder setModificationTimeProvider(
+      ModificationTimeProvider modificationTimeProvider) {
+    this.modificationTimeProvider = modificationTimeProvider;
+    return this;
+  }
+
+  /**
    * Returns a new {@link JibContainerBuilder} using the parameters specified on the {@link
    * JavaContainerBuilder}.
    *
@@ -514,7 +528,8 @@ public class JavaContainerBuilder {
           LayerType.CLASSES,
           directory.path,
           directory.predicate,
-          appRoot.resolve(classesDestination));
+          appRoot.resolve(classesDestination),
+          modificationTimeProvider);
     }
 
     // Add resources to layer configuration
@@ -524,7 +539,8 @@ public class JavaContainerBuilder {
           LayerType.RESOURCES,
           directory.path,
           directory.predicate,
-          appRoot.resolve(resourcesDestination));
+          appRoot.resolve(resourcesDestination),
+          modificationTimeProvider);
     }
 
     // Detect duplicate filenames across all layer types
@@ -559,7 +575,8 @@ public class JavaContainerBuilder {
             layerBuilders,
             layerType,
             file,
-            appRoot.resolve(dependenciesDestination).resolve(jarName));
+            appRoot.resolve(dependenciesDestination).resolve(jarName),
+            modificationTimeProvider);
       }
     }
 
@@ -571,13 +588,15 @@ public class JavaContainerBuilder {
             LayerType.EXTRA_FILES,
             path,
             ignored -> true,
-            appRoot.resolve(othersDestination));
+            appRoot.resolve(othersDestination),
+            modificationTimeProvider);
       } else {
         addFileToLayer(
             layerBuilders,
             LayerType.EXTRA_FILES,
             path,
-            appRoot.resolve(othersDestination).resolve(path.getFileName()));
+            appRoot.resolve(othersDestination).resolve(path.getFileName()),
+            modificationTimeProvider);
       }
     }
 
@@ -639,11 +658,14 @@ public class JavaContainerBuilder {
       Map<LayerType, LayerConfiguration.Builder> layerBuilders,
       LayerType layerType,
       Path sourceFile,
-      AbsoluteUnixPath pathInContainer) {
+      AbsoluteUnixPath pathInContainer,
+      ModificationTimeProvider modificationTimeProvider) {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, LayerConfiguration.builder());
     }
-    layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer);
+    layerBuilders
+        .get(layerType)
+        .addEntry(sourceFile, pathInContainer, null, modificationTimeProvider);
   }
 
   private void addDirectoryContentsToLayer(
@@ -651,7 +673,8 @@ public class JavaContainerBuilder {
       LayerType layerType,
       Path sourceRoot,
       Predicate<Path> pathFilter,
-      AbsoluteUnixPath basePathInContainer)
+      AbsoluteUnixPath basePathInContainer,
+      ModificationTimeProvider modificationTimeProvider)
       throws IOException {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, LayerConfiguration.builder());
@@ -665,7 +688,7 @@ public class JavaContainerBuilder {
             path -> {
               AbsoluteUnixPath pathOnContainer =
                   basePathInContainer.resolve(sourceRoot.relativize(path));
-              builder.addEntry(path, pathOnContainer);
+              builder.addEntry(path, pathOnContainer, null, modificationTimeProvider);
             });
   }
 }

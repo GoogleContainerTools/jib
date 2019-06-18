@@ -151,6 +151,11 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public String getFilesModificationTime() {
+    return jibExtension.getContainer().getFilesModificationTimeProvider();
+  }
+
+  @Override
   public List<Path> getExtraDirectories() {
     return jibExtension.getExtraDirectories().getPaths();
   }
@@ -158,6 +163,12 @@ class GradleRawConfiguration implements RawConfiguration {
   @Override
   public Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions() {
     return TaskCommon.convertPermissionsMap(jibExtension.getExtraDirectories().getPermissions());
+  }
+
+  @Override
+  public Map<AbsoluteUnixPath, String> getExtraDirectoryModificationTimes() {
+    return TaskCommon.convertModificationTimesMap(
+        jibExtension.getExtraDirectories().getModificationTimes());
   }
 
   @Override

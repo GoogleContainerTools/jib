@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.api.FixedModificationTimeProvider;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
@@ -366,7 +367,8 @@ public class GradleProjectPropertiesTest {
     gradleProjectProperties.createContainerBuilder(
         RegistryImage.named("base"),
         AbsoluteUnixPath.get("/anything"),
-        DEFAULT_CONTAINERIZING_MODE);
+        DEFAULT_CONTAINERIZING_MODE,
+        new FixedModificationTimeProvider(FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND));
     Mockito.verify(mockLogger).warn("No classes files were found - did you compile your project?");
   }
 
@@ -560,7 +562,9 @@ public class GradleProjectPropertiesTest {
             .createContainerBuilder(
                 RegistryImage.named("base"),
                 AbsoluteUnixPath.get(appRoot),
-                DEFAULT_CONTAINERIZING_MODE);
+                DEFAULT_CONTAINERIZING_MODE,
+                new FixedModificationTimeProvider(
+                    FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND));
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         jibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))
