@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ModificationTimeConfiguration;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -70,6 +71,28 @@ class MojoCommon {
       permissionsMap.put(key, value);
     }
     return permissionsMap;
+  }
+
+  /**
+   * Validates and converts a list of {@link ModificationTimeConfiguration} to an equivalent {@code
+   * AbsoluteUnixPath->String} map.
+   *
+   * @param modificationTimesList the list to convert
+   * @return the resulting map
+   */
+  @VisibleForTesting
+  static Map<AbsoluteUnixPath, String> convertModificationTimesList(
+      List<ModificationTimeConfiguration> modificationTimesList) {
+    Map<AbsoluteUnixPath, String> providersMap = new HashMap<>();
+    for (ModificationTimeConfiguration modificationTime : modificationTimesList) {
+      if (!modificationTime.getFile().isPresent() || !modificationTime.getValue().isPresent()) {
+        throw new IllegalArgumentException(
+            "Incomplete <modificationTime> configuration; requires <file> and <value> fields to be set");
+      }
+      AbsoluteUnixPath key = AbsoluteUnixPath.get(modificationTime.getFile().get());
+      providersMap.put(key, modificationTime.getValue().get());
+    }
+    return providersMap;
   }
 
   private MojoCommon() {}

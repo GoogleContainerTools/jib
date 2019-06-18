@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -61,11 +62,15 @@ public interface ProjectProperties {
    * @param baseImage the base image
    * @param appRoot root directory in the image where the app will be placed
    * @param containerizingMode mode to containerize the app
+   * @param modificationTimeProvider image files modification time prvoider
    * @return a {@link JibContainerBuilder} with classes, resources, and dependencies added to it
    * @throws IOException if there is a problem walking the project files
    */
   JibContainerBuilder createContainerBuilder(
-      RegistryImage baseImage, AbsoluteUnixPath appRoot, ContainerizingMode containerizingMode)
+      RegistryImage baseImage,
+      AbsoluteUnixPath appRoot,
+      ContainerizingMode containerizingMode,
+      ModificationTimeProvider modificationTimeProvider)
       throws IOException;
 
   List<Path> getClassFiles() throws IOException;

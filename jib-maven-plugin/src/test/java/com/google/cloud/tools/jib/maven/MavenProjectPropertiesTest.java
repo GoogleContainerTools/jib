@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.FixedModificationTimeProvider;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
@@ -613,7 +614,11 @@ public class MavenProjectPropertiesTest {
     JibContainerBuilder JibContainerBuilder =
         new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
             .createContainerBuilder(
-                RegistryImage.named("base"), AbsoluteUnixPath.get(appRoot), containerizingMode);
+                RegistryImage.named("base"),
+                AbsoluteUnixPath.get(appRoot),
+                containerizingMode,
+                new FixedModificationTimeProvider(
+                    FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND));
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         JibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))

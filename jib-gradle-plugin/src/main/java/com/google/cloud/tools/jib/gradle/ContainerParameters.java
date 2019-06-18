@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.ImageFormat;
+import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.base.Preconditions;
@@ -47,6 +48,7 @@ public class ContainerParameters {
   private String appRoot = "";
   @Nullable private String user;
   @Nullable private String workingDirectory;
+  private String filesModificationTimeProvider = ModificationTimeProvider.EPOCH_PLUS_SECOND;
 
   @Input
   @Optional
@@ -246,5 +248,18 @@ public class ContainerParameters {
 
   public void setWorkingDirectory(String workingDirectory) {
     this.workingDirectory = workingDirectory;
+  }
+
+  @Input
+  @Optional
+  public String getFilesModificationTimeProvider() {
+    if (System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
+    }
+    return filesModificationTimeProvider;
+  }
+
+  public void setFilesModificationTimeProvider(String filesModificationTimeProvider) {
+    this.filesModificationTimeProvider = filesModificationTimeProvider;
   }
 }

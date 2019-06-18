@@ -156,6 +156,11 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public String getFilesModificationTime() {
+    return jibPluginConfiguration.getFilesModificationTime();
+  }
+
+  @Override
   public List<Path> getExtraDirectories() {
     return MojoCommon.getExtraDirectories(jibPluginConfiguration);
   }
@@ -163,6 +168,12 @@ class MavenRawConfiguration implements RawConfiguration {
   @Override
   public Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions() {
     return MojoCommon.convertPermissionsList(jibPluginConfiguration.getExtraDirectoryPermissions());
+  }
+
+  @Override
+  public Map<AbsoluteUnixPath, String> getExtraDirectoryModificationTimes() {
+    return MojoCommon.convertModificationTimesList(
+        jibPluginConfiguration.getExtraDirectoryModificationTimes());
   }
 
   @Override

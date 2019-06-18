@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
+import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import java.io.IOException;
@@ -38,11 +39,15 @@ public class JavaContainerBuilderHelper {
    *
    * @param extraDirectory the source extra directory path
    * @param extraDirectoryPermissions map from path on container to file permissions
+   * @param extraDirectoryModificationTimeProviders map from path on container to modification time
+   *     provider
    * @return a {@link LayerConfiguration} for adding the extra directory to the container
    * @throws IOException if walking the extra directory fails
    */
   public static LayerConfiguration extraDirectoryLayerConfiguration(
-      Path extraDirectory, Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions)
+      Path extraDirectory,
+      Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
+      Map<AbsoluteUnixPath, ModificationTimeProvider> extraDirectoryModificationTimeProviders)
       throws IOException {
     LayerConfiguration.Builder builder =
         LayerConfiguration.builder().setName(LayerType.EXTRA_FILES.getName());
@@ -53,11 +58,9 @@ public class JavaContainerBuilderHelper {
               AbsoluteUnixPath pathOnContainer =
                   AbsoluteUnixPath.get("/").resolve(extraDirectory.relativize(localPath));
               FilePermissions permissions = extraDirectoryPermissions.get(pathOnContainer);
-              if (permissions == null) {
-                builder.addEntry(localPath, pathOnContainer);
-              } else {
-                builder.addEntry(localPath, pathOnContainer, permissions);
-              }
+              ModificationTimeProvider modificationTimeProvider =
+                  extraDirectoryModificationTimeProviders.get(pathOnContainer);
+              builder.addEntry(localPath, pathOnContainer, permissions, modificationTimeProvider);
             });
     return builder.build();
   }
