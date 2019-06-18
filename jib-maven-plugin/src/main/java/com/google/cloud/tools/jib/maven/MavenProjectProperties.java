@@ -256,13 +256,15 @@ public class MavenProjectProperties implements ProjectProperties {
     classifiedDependencies.put(LayerType.SNAPSHOT_DEPENDENCIES, new ArrayList<>());
     classifiedDependencies.put(LayerType.PROJECT_DEPENDENCIES, new ArrayList<>());
 
-    for (Artifact art : dependencies) {
-      if (projectArtifacts.contains(art)) {
-        classifiedDependencies.get(LayerType.PROJECT_DEPENDENCIES).add(art.getFile().toPath());
-      } else if (art.isSnapshot()) {
-        classifiedDependencies.get(LayerType.SNAPSHOT_DEPENDENCIES).add(art.getFile().toPath());
+    for (Artifact artifact : dependencies) {
+      if (projectArtifacts.contains(artifact)) {
+        classifiedDependencies.get(LayerType.PROJECT_DEPENDENCIES).add(artifact.getFile().toPath());
+      } else if (artifact.isSnapshot()) {
+        classifiedDependencies
+            .get(LayerType.SNAPSHOT_DEPENDENCIES)
+            .add(artifact.getFile().toPath());
       } else {
-        classifiedDependencies.get(LayerType.DEPENDENCIES).add(art.getFile().toPath());
+        classifiedDependencies.get(LayerType.DEPENDENCIES).add(artifact.getFile().toPath());
       }
     }
     return classifiedDependencies;
