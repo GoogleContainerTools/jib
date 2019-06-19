@@ -1,0 +1,35 @@
+plugins {
+  id 'java'
+  id 'com.google.cloud.tools.jib'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+}
+
+// this code is for GradleProjectPropertiesTest (we execute this task to inspect the deep layer configuration)
+import com.google.cloud.tools.jib.gradle.*
+import com.google.cloud.tools.jib.plugins.common.*
+import com.google.cloud.tools.jib.api.*
+
+subprojects {
+  task inspectLayers {
+    dependsOn "classes"
+    doLast {
+      def projectProps = new GradleProjectProperties(project, project.logger)
+      def jibContainerBuilder = projectProps.createContainerBuilder(
+              RegistryImage.named(ImageReference.scratch()),
+              AbsoluteUnixPath.get(project.appRoot), //injected on commandline with -PappRoot
+              ContainerizingMode.EXPLODED);
+
+      jibContainerBuilder.layerConfigurations.each { layerConfiguration ->
+        layerConfiguration.layerEntries.each { layerEntry ->
+          println layerConfiguration.name + "," + layerEntry.sourceFile + "," + layerEntry.extractionPath
+        }
+      }
+    }
+  }
+}
