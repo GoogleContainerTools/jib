@@ -35,11 +35,10 @@ public class HelloWorld {
     String greeting = Greeting.getGreeting();
 
     // Gets the contents of the resource file 'world'.
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     try (BufferedReader reader =
         new BufferedReader(
             new InputStreamReader(
-                classLoader.getResourceAsStream("world"), StandardCharsets.UTF_8))) {
+                HelloWorld.class.getResourceAsStream("/world"), StandardCharsets.UTF_8))) {
       String world = reader.readLine();
       System.out.println(greeting + ", " + world + ". " + (args.length > 0 ? args[0] : ""));
 
