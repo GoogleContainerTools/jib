@@ -28,5 +28,3 @@ Learn [more about Jib](https://github.com/GoogleContainerTools/jib).
 Learn [Ktor].
 
   [Ktor]: https://ktor.io
-
-[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/examples/ktor)](https://github.com/igrigorik/ga-beacon)

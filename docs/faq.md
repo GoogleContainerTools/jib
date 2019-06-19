@@ -1,5 +1,3 @@
-[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/wiki/faq)](https://github.com/igrigorik/ga-beacon)
-
 ## Frequently Asked Questions (FAQ)
 
 If a question you have is not answered below, please [submit an issue](/../../issues/new).

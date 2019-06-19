@@ -36,5 +36,3 @@ The remainder of the archetype code was filled-in following the above guide.
 Learn [more about Jib](https://github.com/GoogleContainerTools/jib).
 
 Learn [more about Dropwizard](https://dropwizard.io).
-
-[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/examples/dropwizard)](https://github.com/igrigorik/ga-beacon)
