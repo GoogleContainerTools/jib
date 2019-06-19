@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Can now containerize a JAR artifact instead of putting individual `.class` and resources files with `<containerizingMode>packaged` ([#1746](https://github.com/GoogleContainerTools/jib/pull/1746/files))
+- Can now containerize a JAR artifact instead of putting individual `.class` and resource files with `<containerizingMode>packaged` ([#1746](https://github.com/GoogleContainerTools/jib/pull/1746/files))
 
 ### Changed
 
