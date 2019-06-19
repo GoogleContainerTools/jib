@@ -206,8 +206,7 @@ public class BuildDockerMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_jarContainerizationOnMissingJar()
-      throws VerificationException, IOException, InterruptedException, DigestException {
+  public void testExecute_jarContainerizationOnMissingJar() throws IOException {
     try {
       Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
       verifier.setSystemProperty("_TARGET_IMAGE", "erroronmissingjar");

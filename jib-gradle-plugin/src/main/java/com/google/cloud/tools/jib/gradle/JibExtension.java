@@ -57,6 +57,7 @@ import org.gradle.api.tasks.Optional;
  *     ]
  *   }
  *   allowInsecureRegistries = false
+ *   containerizingMode = 'exploded'
  * }
  * }</pre>
  */
@@ -124,6 +125,10 @@ public class JibExtension {
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
     this.allowInsecureRegistries.set(allowInsecureRegistries);
+  }
+
+  public void setContainerizingMode(String containerizingMode) {
+    this.containerizingMode.set(containerizingMode);
   }
 
   @Nested

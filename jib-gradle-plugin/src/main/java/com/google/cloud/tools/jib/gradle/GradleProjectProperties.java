@@ -48,7 +48,6 @@ import org.apache.tools.ant.taskdefs.condition.Os;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -123,7 +122,7 @@ class GradleProjectProperties implements ProjectProperties {
     if (logger.isErrorEnabled()) {
       consoleLoggerBuilder.error(logger::error);
     }
-    this.consoleLogger = consoleLoggerBuilder.build();
+    consoleLogger = consoleLoggerBuilder.build();
   }
 
   @Override
@@ -158,21 +157,8 @@ class GradleProjectProperties implements ProjectProperties {
           allDependencyFiles.filter(file -> file.getName().contains("SNAPSHOT"));
       FileCollection dependencyFiles = allDependencyFiles.minus(snapshotDependencyFiles);
 
-      // Adds resource files
-      if (Files.exists(resourcesOutputDirectory)) {
-        javaContainerBuilder.addResources(resourcesOutputDirectory);
-      }
-
-      // Adds class files
-      for (File classesOutputDirectory : classesOutputDirectories) {
-        javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
-      }
-      if (classesOutputDirectories.isEmpty()) {
-        logger.warn("No classes files were found - did you compile your project?");
-      }
-
       // Adds dependency files
-      return javaContainerBuilder
+      javaContainerBuilder
           .addDependencies(
               dependencyFiles.getFiles().stream().map(File::toPath).collect(Collectors.toList()))
           .addSnapshotDependencies(
@@ -180,8 +166,36 @@ class GradleProjectProperties implements ProjectProperties {
                   .getFiles()
                   .stream()
                   .map(File::toPath)
-                  .collect(Collectors.toList()))
-          .toContainerBuilder();
+                  .collect(Collectors.toList()));
+
+      switch (containerizingMode) {
+        case EXPLODED:
+          // Adds resource files
+          if (Files.exists(resourcesOutputDirectory)) {
+            javaContainerBuilder.addResources(resourcesOutputDirectory);
+          }
+
+          // Adds class files
+          for (File classesOutputDirectory : classesOutputDirectories) {
+            javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
+          }
+          if (classesOutputDirectories.isEmpty()) {
+            logger.warn("No classes files were found - did you compile your project?");
+          }
+          break;
+
+        case PACKAGED:
+          // Add a JAR
+          Jar jarTask = (Jar) project.getTasks().findByName("jar");
+          javaContainerBuilder.addToClasspath(
+              jarTask.getDestinationDir().toPath().resolve(jarTask.getArchiveName()));
+          break;
+
+        default:
+          throw new IllegalStateException("unknown containerizing mode: " + containerizingMode);
+      }
+
+      return javaContainerBuilder.toContainerBuilder();
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
@@ -245,11 +259,11 @@ class GradleProjectProperties implements ProjectProperties {
   @Nullable
   @Override
   public String getMainClassFromJar() {
-    List<Task> jarTasks = new ArrayList<>(project.getTasksByName("jar", false));
-    if (jarTasks.size() != 1) {
+    Jar jarTask = (Jar) project.getTasks().findByName("jar");
+    if (jarTask == null) {
       return null;
     }
-    return (String) ((Jar) jarTasks.get(0)).getManifest().getAttributes().get("Main-Class");
+    return (String) jarTask.getManifest().getAttributes().get("Main-Class");
   }
 
   @Override

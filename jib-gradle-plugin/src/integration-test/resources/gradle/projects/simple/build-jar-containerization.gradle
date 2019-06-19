@@ -1,0 +1,31 @@
+plugins {
+  id 'java'
+  id 'com.google.cloud.tools.jib'
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile files('libs/dependency-1.0.0.jar')
+}
+
+jar {
+  manifest {
+    attributes(
+      'Implementation-Title': 'helloworld',
+      'Implementation-Version': '1'
+    )
+  }
+}
+
+jib {
+  to {
+    image = System.getProperty("_TARGET_IMAGE")
+  }
+  containerizingMode = 'packaged'
+}
