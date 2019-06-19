@@ -78,7 +78,7 @@ public interface RawConfiguration {
 
   List<Path> getExtraDirectories();
 
-  Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions();
+  Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoriesPermissions();
 
   String getContainerizingMode();
 }

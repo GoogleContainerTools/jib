@@ -77,7 +77,6 @@ public class BuildImageTask extends DefaultTask implements JibTask {
           MainClassInferenceException {
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
     TaskCommon.disableHttpLogging();
 
     try {

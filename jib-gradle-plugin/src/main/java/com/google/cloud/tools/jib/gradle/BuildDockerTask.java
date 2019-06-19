@@ -100,7 +100,6 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     // Asserts required @Input parameters are not null.
     Preconditions.checkNotNull(jibExtension);
-    TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
     TaskCommon.disableHttpLogging();
 
     try {

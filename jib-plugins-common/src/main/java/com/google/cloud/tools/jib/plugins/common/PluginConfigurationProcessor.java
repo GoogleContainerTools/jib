@@ -211,7 +211,7 @@ public class PluginConfigurationProcessor {
       if (Files.exists(directory)) {
         jibContainerBuilder.addLayer(
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-                directory, rawConfiguration.getExtraDirectoryPermissions()));
+                directory, rawConfiguration.getExtraDirectoriesPermissions()));
       }
     }
 

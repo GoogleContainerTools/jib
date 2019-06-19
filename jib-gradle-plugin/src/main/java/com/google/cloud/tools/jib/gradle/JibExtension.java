@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
-import java.io.File;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.model.ObjectFactory;
@@ -73,16 +72,13 @@ public class JibExtension {
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<String> containerizingMode;
 
-  @Deprecated boolean extraDirectoryConfigured;
-  @Deprecated boolean extraDirectoriesConfigured;
-
   public JibExtension(Project project) {
     ObjectFactory objectFactory = project.getObjects();
 
     from = objectFactory.newInstance(BaseImageParameters.class);
     to = objectFactory.newInstance(TargetImageParameters.class);
     container = objectFactory.newInstance(ContainerParameters.class);
-    extraDirectories = objectFactory.newInstance(ExtraDirectoriesParameters.class, project, this);
+    extraDirectories = objectFactory.newInstance(ExtraDirectoriesParameters.class, project);
 
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
@@ -104,22 +100,8 @@ public class JibExtension {
     action.execute(container);
   }
 
-  @Deprecated
-  public void extraDirectory(Action<? super ExtraDirectoriesParameters> action) {
-    extraDirectoryConfigured = true;
-    action.execute(extraDirectories);
-  }
-
   public void extraDirectories(Action<? super ExtraDirectoriesParameters> action) {
-    extraDirectoriesConfigured = true;
     action.execute(extraDirectories);
-  }
-
-  @Deprecated
-  // for the deprecated "jib.extraDirectory" config parameter
-  public void setExtraDirectory(File extraDirectory) {
-    extraDirectoryConfigured = true;
-    extraDirectories.setPath(extraDirectory);
   }
 
   public void setAllowInsecureRegistries(boolean allowInsecureRegistries) {
@@ -142,13 +124,6 @@ public class JibExtension {
   @Optional
   public ContainerParameters getContainer() {
     return container;
-  }
-
-  @Deprecated
-  @Nested
-  @Optional
-  public ExtraDirectoriesParameters getExtraDirectory() {
-    return extraDirectories;
   }
 
   @Nested

@@ -453,29 +453,6 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_bothDeprecatedAndNewExtraDirectoryConfigUsed() throws IOException {
-    try {
-      build(
-          simpleTestProject.getProjectRoot(), "foo", "pom-deprecated-and-new-extra-dir.xml", false);
-      Assert.fail();
-    } catch (VerificationException ex) {
-      Assert.assertThat(
-          ex.getMessage(),
-          CoreMatchers.containsString(
-              "You cannot configure both <extraDirectory> and <extraDirectories>"));
-    }
-  }
-
-  @Test
-  public void testExecute_deprecatedExtraDirectoryConfigUsed()
-      throws IOException, VerificationException {
-    String targetImage = getGcrImageReference("simpleimage:maven");
-    build(simpleTestProject.getProjectRoot(), targetImage, "pom-deprecated-extra-dir.xml", false)
-        .verifyTextInLog(
-            "<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>");
-  }
-
-  @Test
   public void testExecute_defaultTarget() throws IOException {
     // Test error when 'to' is missing
     try {

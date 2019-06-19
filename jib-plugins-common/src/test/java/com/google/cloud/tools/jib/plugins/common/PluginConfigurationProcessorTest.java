@@ -149,7 +149,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerizingModeException {
     Path extraDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     Mockito.when(rawConfiguration.getExtraDirectories()).thenReturn(Arrays.asList(extraDirectory));
-    Mockito.when(rawConfiguration.getExtraDirectoryPermissions())
+    Mockito.when(rawConfiguration.getExtraDirectoriesPermissions())
         .thenReturn(
             ImmutableMap.of(AbsoluteUnixPath.get("/foo"), FilePermissions.fromOctalString("123")));
 

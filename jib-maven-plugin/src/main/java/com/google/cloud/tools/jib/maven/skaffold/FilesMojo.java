@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.maven.skaffold;
 
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoriesParameters;
-import com.google.cloud.tools.jib.maven.JibPluginConfiguration.ExtraDirectoryParameters;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
@@ -80,10 +79,6 @@ public class FilesMojo extends AbstractMojo {
 
   // TODO: This is internal maven, we should find a better way to do this
   @Nullable @Component private ProjectDependenciesResolver projectDependenciesResolver;
-
-  // This parameter is cloned from JibPluginConfiguration
-  @Deprecated @Parameter
-  private ExtraDirectoryParameters extraDirectory = new ExtraDirectoryParameters();
 
   // This parameter is cloned from JibPluginConfiguration
   @Parameter private ExtraDirectoriesParameters extraDirectories = new ExtraDirectoriesParameters();
@@ -163,30 +158,15 @@ public class FilesMojo extends AbstractMojo {
 
   private List<Path> resolveExtraDirectories() throws MojoExecutionException {
     // TODO: Should inform user about nonexistent directory if using custom directory.
-    String deprecatedProperty =
-        MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH, project, session);
-    String newProperty =
+    String property =
         MavenProjectProperties.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS, project, session);
 
-    List<File> deprecatedPaths = extraDirectory.getPaths();
-    List<File> newPaths = extraDirectories.getPaths();
-
-    if (deprecatedProperty != null && newProperty != null) {
-      throw new MojoExecutionException(
-          "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'");
-    }
-    if (!deprecatedPaths.isEmpty() && !newPaths.isEmpty()) {
-      throw new MojoExecutionException(
-          "You cannot configure both <extraDirectory> and <extraDirectories>");
-    }
-
-    String property = newProperty != null ? newProperty : deprecatedProperty;
     if (property != null) {
       List<String> paths = ConfigurationPropertyValidator.parseListProperty(property);
       return paths.stream().map(Paths::get).map(Path::toAbsolutePath).collect(Collectors.toList());
     }
 
-    List<File> paths = !newPaths.isEmpty() ? newPaths : deprecatedPaths;
+    List<File> paths = extraDirectories.getPaths();
     if (paths.isEmpty()) {
       Path projectBase =
           Preconditions.checkNotNull(project).getBasedir().getAbsoluteFile().toPath();

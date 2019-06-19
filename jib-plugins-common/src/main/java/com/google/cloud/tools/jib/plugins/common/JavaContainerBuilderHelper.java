@@ -37,12 +37,12 @@ public class JavaContainerBuilderHelper {
    * Returns a {@link LayerConfiguration} for adding the extra directory to the container.
    *
    * @param extraDirectory the source extra directory path
-   * @param extraDirectoryPermissions map from path on container to file permissions
+   * @param extraDirectoriesPermissions map from path on container to file permissions
    * @return a {@link LayerConfiguration} for adding the extra directory to the container
    * @throws IOException if walking the extra directory fails
    */
   public static LayerConfiguration extraDirectoryLayerConfiguration(
-      Path extraDirectory, Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions)
+      Path extraDirectory, Map<AbsoluteUnixPath, FilePermissions> extraDirectoriesPermissions)
       throws IOException {
     LayerConfiguration.Builder builder =
         LayerConfiguration.builder().setName(LayerType.EXTRA_FILES.getName());
@@ -52,7 +52,7 @@ public class JavaContainerBuilderHelper {
             localPath -> {
               AbsoluteUnixPath pathOnContainer =
                   AbsoluteUnixPath.get("/").resolve(extraDirectory.relativize(localPath));
-              FilePermissions permissions = extraDirectoryPermissions.get(pathOnContainer);
+              FilePermissions permissions = extraDirectoriesPermissions.get(pathOnContainer);
               if (permissions == null) {
                 builder.addEntry(localPath, pathOnContainer);
               } else {
