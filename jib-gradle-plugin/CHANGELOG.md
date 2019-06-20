@@ -10,6 +10,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Dependencies are now split into three layers: dependencies, snapshots dependencies, project dependencies ([#1724](https://github.com/GoogleContainerTools/jib/pull/1724))
+
 ### Fixed
 
 ## 1.3.0
