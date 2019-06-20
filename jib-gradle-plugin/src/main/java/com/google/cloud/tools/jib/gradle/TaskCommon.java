@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.WarPluginConvention;
 import org.gradle.api.tasks.bundling.War;
@@ -43,6 +44,14 @@ class TaskCommon {
     if (warPluginConvention == null) {
       return null;
     }
+
+    if (project.getPlugins().hasPlugin("org.springframework.boot")) {
+      Task bootWar = project.getTasks().findByName("bootWar");
+      if (bootWar != null) { // Spring Boot > 2.0
+        return (War) bootWar;
+      }
+    }
+
     return (War) warPluginConvention.getProject().getTasks().findByName("war");
   }
 
