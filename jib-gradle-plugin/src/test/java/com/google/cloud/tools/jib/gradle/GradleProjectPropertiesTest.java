@@ -62,7 +62,7 @@ import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.PluginContainer;
-import org.gradle.api.plugins.WarPluginConvention;
+import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
@@ -255,7 +255,7 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testGetWar_noWarPlugin() throws URISyntaxException {
     setUpWarProject(getResource("gradle/webapp"));
-    Mockito.when(mockConvention.findPlugin(WarPluginConvention.class)).thenReturn(null);
+    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(false);
 
     Assert.assertNull(TaskCommon.getWarTask(mockProject));
   }
@@ -562,10 +562,6 @@ public class GradleProjectPropertiesTest {
   private void setUpWarProject(Path webAppDirectory) {
     Mockito.when(mockProject.getBuildDir()).thenReturn(webAppDirectory.toFile());
     Mockito.when(mockTaskContainer.findByName("war")).thenReturn(war);
-
-    WarPluginConvention warPluginConvention = Mockito.mock(WarPluginConvention.class);
-    Mockito.when(warPluginConvention.getProject()).thenReturn(mockProject);
-    Mockito.when(mockConvention.findPlugin(WarPluginConvention.class))
-        .thenReturn(warPluginConvention);
+    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
   }
 }
