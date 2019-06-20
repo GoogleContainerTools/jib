@@ -58,6 +58,7 @@ public class Authorization {
    *     the token is not a Docker Registry Bearer Token
    */
   @VisibleForTesting
+  @Nullable
   static Multimap<String, String> decodeTokenRepositoryGrants(String token) {
     // Docker Registry Bearer Tokens are based on JWT.  The payload looks like:
     // {
@@ -128,7 +129,8 @@ public class Authorization {
   private final String token;
   @Nullable private final Multimap<String, String> repositoryGrants;
 
-  private Authorization(String scheme, String token, Multimap<String, String> repositoryGrants) {
+  private Authorization(
+      String scheme, String token, @Nullable Multimap<String, String> repositoryGrants) {
     this.scheme = scheme;
     this.token = token;
     this.repositoryGrants = repositoryGrants;

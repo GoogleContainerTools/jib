@@ -301,7 +301,9 @@ public class RegistryClient {
       Consumer<Long> writtenByteCountListener)
       throws IOException, RegistryException {
 
-    if (authorization != null && !authorization.canAccess(sourceRepository, "pull")) {
+    if (sourceRepository != null
+        && authorization != null
+        && !authorization.canAccess(sourceRepository, "pull")) {
       // don't bother requesting a cross-repository blob-mount if we don't have access
       sourceRepository = null;
     }

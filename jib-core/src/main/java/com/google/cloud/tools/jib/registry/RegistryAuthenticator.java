@@ -204,7 +204,8 @@ public class RegistryAuthenticator {
   }
 
   @VisibleForTesting
-  String getAuthRequestParameters(@Nullable Credential credential, Map<String, String> repositoryScopes) {
+  String getAuthRequestParameters(
+      @Nullable Credential credential, Map<String, String> repositoryScopes) {
     String serviceScope = getServiceScopeRequestParameters(repositoryScopes);
     return isOAuth2Auth(credential)
         ? serviceScope
