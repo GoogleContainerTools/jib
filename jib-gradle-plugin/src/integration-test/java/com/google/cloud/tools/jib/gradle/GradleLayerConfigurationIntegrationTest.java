@@ -129,7 +129,6 @@ public class GradleLayerConfigurationIntegrationTest {
     try (TarArchiveInputStream image = new TarArchiveInputStream(Files.newInputStream(tar))) {
       TarArchiveEntry entry;
       while ((entry = image.getNextTarEntry()) != null) {
-        System.out.println(entry.getName());
         if (entry.getName().endsWith(".tar.gz")) {
           @SuppressWarnings("resource") // must not close sub-streams
           TarArchiveInputStream layer = new TarArchiveInputStream(new GZIPInputStream(image));
