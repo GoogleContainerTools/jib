@@ -18,14 +18,13 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.async.AsyncDependencies;
-import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.hash.Digests;
+import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -40,84 +39,37 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 
 /** Pushes the final image. Outputs the pushed image digest. */
-class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
+class PushImageStep implements Callable<BuildResult> {
 
   private static final String DESCRIPTION = "Pushing new image";
 
   private final BuildConfiguration buildConfiguration;
-  private final ListeningExecutorService listeningExecutorService;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final AuthenticatePushStep authenticatePushStep;
+  private final Authorization pushAuthorization;
+  private final BlobDescriptor containerConfigurationDigestAndSize;
+  private final Image builtImage;
 
-  private final PushLayersStep pushBaseImageLayersStep;
-  private final PushLayersStep pushApplicationLayersStep;
-  private final PushContainerConfigurationStep pushContainerConfigurationStep;
-  private final BuildImageStep buildImageStep;
+  private final ListeningExecutorService listeningExecutorService;
 
-  private final ListenableFuture<BuildResult> listenableFuture;
-
+  // TODO: remove listeningExecutorService like other siblings
   PushImageStep(
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      AuthenticatePushStep authenticatePushStep,
-      PushLayersStep pushBaseImageLayersStep,
-      PushLayersStep pushApplicationLayersStep,
-      PushContainerConfigurationStep pushContainerConfigurationStep,
-      BuildImageStep buildImageStep) {
+      Authorization pushAuthorization,
+      BlobDescriptor containerConfigurationDigestAndSize,
+      Image builtImage) {
     this.listeningExecutorService = listeningExecutorService;
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.authenticatePushStep = authenticatePushStep;
-    this.pushBaseImageLayersStep = pushBaseImageLayersStep;
-    this.pushApplicationLayersStep = pushApplicationLayersStep;
-    this.pushContainerConfigurationStep = pushContainerConfigurationStep;
-    this.buildImageStep = buildImageStep;
-
-    listenableFuture =
-        AsyncDependencies.using(listeningExecutorService)
-            .addStep(pushBaseImageLayersStep)
-            .addStep(pushApplicationLayersStep)
-            .addStep(pushContainerConfigurationStep)
-            .whenAllSucceed(this);
+    this.pushAuthorization = pushAuthorization;
+    this.containerConfigurationDigestAndSize = containerConfigurationDigestAndSize;
+    this.builtImage = builtImage;
   }
 
   @Override
-  public ListenableFuture<BuildResult> getFuture() {
-    return listenableFuture;
-  }
-
-  @Override
-  public BuildResult call() throws ExecutionException, InterruptedException {
-    return AsyncDependencies.using(listeningExecutorService)
-        .addStep(authenticatePushStep)
-        .addSteps(NonBlockingSteps.get(pushBaseImageLayersStep))
-        .addSteps(NonBlockingSteps.get(pushApplicationLayersStep))
-        .addStep(NonBlockingSteps.get(pushContainerConfigurationStep))
-        .addStep(NonBlockingSteps.get(buildImageStep))
-        .whenAllSucceed(this::afterPushSteps)
-        .get();
-  }
-
-  private BuildResult afterPushSteps() throws ExecutionException, InterruptedException {
-    AsyncDependencies dependencies = AsyncDependencies.using(listeningExecutorService);
-    for (AsyncStep<PushBlobStep> pushBaseImageLayerStep :
-        NonBlockingSteps.get(pushBaseImageLayersStep)) {
-      dependencies.addStep(NonBlockingSteps.get(pushBaseImageLayerStep));
-    }
-    for (AsyncStep<PushBlobStep> pushApplicationLayerStep :
-        NonBlockingSteps.get(pushApplicationLayersStep)) {
-      dependencies.addStep(NonBlockingSteps.get(pushApplicationLayerStep));
-    }
-    return dependencies
-        .addStep(NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep)))
-        .whenAllSucceed(this::afterAllPushed)
-        .get();
-  }
-
-  private BuildResult afterAllPushed()
-      throws ExecutionException, IOException, InterruptedException {
+  public BuildResult call() throws IOException, InterruptedException, ExecutionException {
     ImmutableSet<String> targetImageTags = buildConfiguration.getAllTargetImageTags();
     ProgressEventDispatcher progressEventDispatcher =
         progressEventDispatcherFactory.create("pushing image manifest", targetImageTags.size());
@@ -127,20 +79,16 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
       RegistryClient registryClient =
           buildConfiguration
               .newTargetImageRegistryClientFactory()
-              .setAuthorization(NonBlockingSteps.get(authenticatePushStep))
+              .setAuthorization(pushAuthorization)
               .newRegistryClient();
 
       // Constructs the image.
-      ImageToJsonTranslator imageToJsonTranslator =
-          new ImageToJsonTranslator(NonBlockingSteps.get(NonBlockingSteps.get(buildImageStep)));
+      ImageToJsonTranslator imageToJsonTranslator = new ImageToJsonTranslator(builtImage);
 
       // Gets the image manifest to push.
-      BlobDescriptor containerConfigurationBlobDescriptor =
-          NonBlockingSteps.get(
-              NonBlockingSteps.get(NonBlockingSteps.get(pushContainerConfigurationStep)));
       BuildableManifestTemplate manifestTemplate =
           imageToJsonTranslator.getManifestTemplate(
-              buildConfiguration.getTargetFormat(), containerConfigurationBlobDescriptor);
+              buildConfiguration.getTargetFormat(), containerConfigurationDigestAndSize);
 
       // Pushes to all target image tags.
       List<ListenableFuture<Void>> pushAllTagsFutures = new ArrayList<>();
@@ -162,7 +110,7 @@ class PushImageStep implements AsyncStep<BuildResult>, Callable<BuildResult> {
       }
 
       DescriptorDigest imageDigest = Digests.computeJsonDigest(manifestTemplate);
-      DescriptorDigest imageId = containerConfigurationBlobDescriptor.getDigest();
+      DescriptorDigest imageId = containerConfigurationDigestAndSize.getDigest();
       BuildResult result = new BuildResult(imageDigest, imageId);
 
       return Futures.whenAllSucceed(pushAllTagsFutures)

@@ -23,12 +23,10 @@ import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
-import com.google.cloud.tools.jib.async.AsyncStep;
-import com.google.cloud.tools.jib.async.NonBlockingSteps;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.BaseImageWithAuthorization;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
@@ -49,75 +47,61 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
 
 /** Pulls the base image manifest. */
-class PullBaseImageStep
-    implements AsyncStep<BaseImageWithAuthorization>, Callable<BaseImageWithAuthorization> {
+class PullBaseImageStep implements Callable<ImageAndAuthorization> {
 
   private static final String DESCRIPTION = "Pulling base image manifest";
 
   /** Structure for the result returned by this step. */
-  static class BaseImageWithAuthorization {
+  static class ImageAndAuthorization {
 
-    private final Image baseImage;
-    private final @Nullable Authorization baseImageAuthorization;
+    private final Image image;
+    private final @Nullable Authorization authorization;
 
     @VisibleForTesting
-    BaseImageWithAuthorization(Image baseImage, @Nullable Authorization baseImageAuthorization) {
-      this.baseImage = baseImage;
-      this.baseImageAuthorization = baseImageAuthorization;
+    ImageAndAuthorization(Image image, @Nullable Authorization authorization) {
+      this.image = image;
+      this.authorization = authorization;
     }
 
-    Image getBaseImage() {
-      return baseImage;
+    Image getImage() {
+      return image;
     }
 
     @Nullable
-    Authorization getBaseImageAuthorization() {
-      return baseImageAuthorization;
+    Authorization getAuthorization() {
+      return authorization;
     }
   }
 
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final ListenableFuture<BaseImageWithAuthorization> listenableFuture;
-
   PullBaseImageStep(
-      ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-
-    listenableFuture = listeningExecutorService.submit(this);
   }
 
   @Override
-  public ListenableFuture<BaseImageWithAuthorization> getFuture() {
-    return listenableFuture;
-  }
-
-  @Override
-  public BaseImageWithAuthorization call()
+  public ImageAndAuthorization call()
       throws IOException, RegistryException, LayerPropertyNotFoundException,
-          LayerCountMismatchException, ExecutionException, BadContainerConfigurationFormatException,
-          CacheCorruptedException {
+          LayerCountMismatchException, BadContainerConfigurationFormatException,
+          CacheCorruptedException, CredentialRetrievalException {
     EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
     // Skip this step if this is a scratch image
     ImageConfiguration baseImageConfiguration = buildConfiguration.getBaseImageConfiguration();
     if (baseImageConfiguration.getImage().isScratch()) {
       eventHandlers.dispatch(LogEvent.progress("Getting scratch base image..."));
-      return new BaseImageWithAuthorization(
+      return new ImageAndAuthorization(
           Image.builder(buildConfiguration.getTargetFormat()).build(), null);
     }
 
@@ -128,7 +112,7 @@ class PullBaseImageStep
                 + "..."));
 
     if (buildConfiguration.isOffline()) {
-      return new BaseImageWithAuthorization(pullBaseImageOffline(), null);
+      return new ImageAndAuthorization(pullBaseImageOffline(), null);
     }
 
     try (ProgressEventDispatcher progressEventDispatcher =
@@ -137,7 +121,7 @@ class PullBaseImageStep
             new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
       // First, try with no credentials.
       try {
-        return new BaseImageWithAuthorization(pullBaseImage(null, progressEventDispatcher), null);
+        return new ImageAndAuthorization(pullBaseImage(null, progressEventDispatcher), null);
 
       } catch (RegistryUnauthorizedException ex) {
         eventHandlers.dispatch(
@@ -148,15 +132,12 @@ class PullBaseImageStep
 
         // If failed, then, retrieve base registry credentials and try with retrieved credentials.
         // TODO: Refactor the logic in RetrieveRegistryCredentialsStep out to
-        // registry.credentials.RegistryCredentialsRetriever to avoid this direct executor hack.
-        ListeningExecutorService directExecutorService = MoreExecutors.newDirectExecutorService();
-        RetrieveRegistryCredentialsStep retrieveBaseRegistryCredentialsStep =
+        // registry.credentials.RegistryCredentialsRetriever.
+        Credential registryCredential =
             RetrieveRegistryCredentialsStep.forBaseImage(
-                directExecutorService,
-                buildConfiguration,
-                progressEventDispatcher.newChildProducer());
+                    buildConfiguration, progressEventDispatcher.newChildProducer())
+                .call();
 
-        Credential registryCredential = NonBlockingSteps.get(retrieveBaseRegistryCredentialsStep);
         Authorization registryAuthorization =
             registryCredential == null || registryCredential.isOAuth2RefreshToken()
                 ? null
@@ -164,7 +145,7 @@ class PullBaseImageStep
                     registryCredential.getUsername(), registryCredential.getPassword());
 
         try {
-          return new BaseImageWithAuthorization(
+          return new ImageAndAuthorization(
               pullBaseImage(registryAuthorization, progressEventDispatcher), registryAuthorization);
 
         } catch (RegistryUnauthorizedException registryUnauthorizedException) {
@@ -180,7 +161,7 @@ class PullBaseImageStep
               Authorization pullAuthorization =
                   registryAuthenticator.authenticatePull(registryCredential);
 
-              return new BaseImageWithAuthorization(
+              return new ImageAndAuthorization(
                   pullBaseImage(pullAuthorization, progressEventDispatcher), pullAuthorization);
             }
 
