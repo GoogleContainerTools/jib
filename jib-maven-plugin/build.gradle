@@ -1,0 +1,36 @@
+plugins {
+    id "io.freefair.maven-plugin" version "2.9.5"
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    test {
+        java.srcDir file('../jib-core/src/test/java')
+        resources.srcDir file('../jib-core/src/test/resources')
+        java.srcDir file('../jib-core/src/integration-test/java')
+        resources.srcDir file('../jib-core/src/integration-test/resources')
+        java.srcDir file('../jib-plugins-common/src/test/java')
+        resources.srcDir file('../jib-plugins-common/src/test/resources')
+    }
+}
+
+dependencies {
+    compile project(":jib-core")
+    compile project(":jib-plugins-common")
+
+    compile 'org.apache.maven:maven-plugin-api:3.5.2'
+
+    compileOnly 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
+    compile 'org.apache.maven:maven-core:3.5.2'
+    compile 'org.apache.maven.shared:maven-verifier:1.6'
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.23.4'
+    testCompile 'org.slf4j:slf4j-api:1.7.25'
+
+    testCompile 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0'
+    testCompile 'org.apache.maven:maven-compat:3.5.4'
+}

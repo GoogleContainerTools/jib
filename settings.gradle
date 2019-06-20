@@ -1,0 +1,6 @@
+rootProject.name = 'jib'
+
+include "jib-core"
+include "jib-plugins-common"
+include "jib-gradle-plugin"
+include "jib-maven-plugin"

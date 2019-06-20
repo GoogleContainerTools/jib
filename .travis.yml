@@ -14,12 +14,7 @@ env:
   - TERM=dumb         # for gradle
 
 install: true
-script:
-- (cd jib-core; ./gradlew --stacktrace build)
-- (cd jib-plugins-common; ./gradlew --stacktrace build)
-- (cd jib-gradle-plugin; ./gradlew --stacktrace build)
-# unset _JAVA_OPTIONS to avoid spurious test failures
-- (cd jib-maven-plugin; unset _JAVA_OPTIONS; ./mvnw -B verify -U)
+script: ./gradlew build -s
 
 # cobbled together from
 #   https://docs.travis-ci.com/user/languages/java/#projects-using-gradle
