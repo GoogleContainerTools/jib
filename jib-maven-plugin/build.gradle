@@ -15,7 +15,6 @@ sourceSets {
 }
 
 dependencies {
-    compile project(":jib-core")
     compile project(":jib-plugins-common")
 
     compile 'org.apache.maven:maven-plugin-api:3.5.2'

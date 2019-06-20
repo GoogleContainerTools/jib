@@ -7,10 +7,6 @@ plugins {
 }
 
 sourceSets {
-  main {
-    java.srcDir file('../jib-core/src/main/java')
-    resources.srcDir file('../jib-core/src/main/resources')
-  }
   test {
     java.srcDir file('../jib-core/src/test/java')
     resources.srcDir file('../jib-core/src/test/resources')
@@ -18,7 +14,7 @@ sourceSets {
 }
 
 dependencies {
-  // Make sure these are consistent with jib-maven-plugin.
+  compile project(":jib-core")
   compile 'com.google.http-client:google-http-client:1.27.0'
   compile 'org.apache.commons:commons-compress:1.18'
   compile 'com.google.guava:guava:27.0.1-jre'

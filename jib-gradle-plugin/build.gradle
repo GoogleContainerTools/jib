@@ -23,12 +23,6 @@ repositories {
 }
 
 sourceSets {
-  main {
-    java.srcDir file('../jib-core/src/main/java')
-    resources.srcDir file('../jib-core/src/main/resources')
-    java.srcDir file('../jib-plugins-common/src/main/java')
-    resources.srcDir file('../jib-plugins-common/src/main/resources')
-  }
   test {
     java.srcDir file('../jib-core/src/test/java')
     resources.srcDir file('../jib-core/src/test/resources')
@@ -55,12 +49,7 @@ configurations {
 }
 
 dependencies {
-  // These are copied over from jib-core and are necessary for the jib-core sourcesets.
-  compile 'com.google.http-client:google-http-client:1.27.0'
-  compile 'org.apache.commons:commons-compress:1.18'
-  compile 'com.google.guava:guava:27.0.1-jre'
-  compile 'com.fasterxml.jackson.core:jackson-databind:2.9.9'
-  compile 'org.ow2.asm:asm:7.0'
+  compile project(":jib-plugins-common")
 
   testCompile 'junit:junit:4.12'
   testCompile 'org.mockito:mockito-core:2.23.4'
