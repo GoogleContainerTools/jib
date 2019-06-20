@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Can now containerize a JAR artifact instead of putting individual `.class` and resource files with `jib.containerizingMode = 'packaged'` ([#1760](https://github.com/GoogleContainerTools/jib/pull/1760/files))
-- Can now use `jib.image.from = "scratch"` to use the scratch (empty) base image for builds. ([#1794](https://github.com/GoogleContainerTools/jib/pull/1794/files))
+- Can now use `jib.from.image = "scratch"` to use the scratch (empty) base image for builds. ([#1794](https://github.com/GoogleContainerTools/jib/pull/1794/files))
 
 ### Changed
 
