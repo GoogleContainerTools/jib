@@ -16,12 +16,6 @@ plugins {
   id 'com.gradle.plugin-publish' version '0.9.10'
 }
 
-group 'com.google.cloud.tools'
-
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
-compileJava.options.encoding = 'UTF-8'
-
 repositories {
   // Use jcenter for gradle plugin portal releases.
   jcenter()

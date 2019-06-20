@@ -2,10 +2,6 @@ plugins {
     id "io.freefair.maven-plugin" version "2.9.5"
 }
 
-repositories {
-    mavenCentral()
-}
-
 sourceSets {
     test {
         java.srcDir file('../jib-core/src/test/java')

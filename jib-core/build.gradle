@@ -11,16 +11,6 @@ plugins {
   id 'net.researchgate.release' version '2.7.0'
 }
 
-group 'com.google.cloud.tools'
-
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
-compileJava.options.encoding = 'UTF-8'
-
-repositories {
-  mavenCentral()
-}
-
 sourceSets {
   integrationTest {
     java.srcDir file('src/integration-test/java')

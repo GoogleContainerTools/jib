@@ -6,16 +6,6 @@ plugins {
   id 'net.ltgt.errorprone' version '0.6'
 }
 
-group 'com.google.cloud.tools'
-
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
-compileJava.options.encoding = 'UTF-8'
-
-repositories {
-  mavenCentral()
-}
-
 sourceSets {
   main {
     java.srcDir file('../jib-core/src/main/java')
