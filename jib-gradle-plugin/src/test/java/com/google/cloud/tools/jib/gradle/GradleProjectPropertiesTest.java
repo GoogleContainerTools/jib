@@ -559,8 +559,8 @@ public class GradleProjectPropertiesTest {
   private void setUpWarProject(Path webAppDirectory) {
     Mockito.when(mockProject.getBuildDir()).thenReturn(webAppDirectory.toFile());
     Mockito.when(mockTaskContainer.findByName("war")).thenReturn(war);
-    Mockito.when(mockPluginContainer.hasPlugin("war")).thenReturn(true);
-    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
+    Mockito.lenient().when(mockPluginContainer.hasPlugin("war")).thenReturn(true);
+    Mockito.lenient().when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
 
     WarPluginConvention warPluginConvention = Mockito.mock(WarPluginConvention.class);
     Mockito.when(warPluginConvention.getProject()).thenReturn(mockProject);
