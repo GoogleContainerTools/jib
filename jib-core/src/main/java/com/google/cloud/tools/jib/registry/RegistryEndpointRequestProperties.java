@@ -36,7 +36,7 @@ class RegistryEndpointRequestProperties {
   /**
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param imageName the image/repository name (also known as, namespace)
-   * @param sourceImageName additional source image on the registry
+   * @param sourceImageName additional source image to request pull permission from the registry
    */
   RegistryEndpointRequestProperties(
       String serverUrl, String imageName, @Nullable String sourceImageName) {

@@ -27,7 +27,6 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
-import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -83,11 +82,10 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
                 buildConfiguration.getEventHandlers(), DESCRIPTION + blobDescriptor);
         ThrottledAccumulatingConsumer throttledProgressReporter =
             new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
-      Authorization authorization = NonBlockingSteps.get(authenticatePushStep);
       RegistryClient registryClient =
           buildConfiguration
               .newTargetImageRegistryClientFactory()
-              .setAuthorization(authorization)
+              .setAuthorization(NonBlockingSteps.get(authenticatePushStep))
               .newRegistryClient();
 
       // check if the BLOB is available
@@ -105,10 +103,7 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
       String baseRegistry = buildConfiguration.getBaseImageConfiguration().getImageRegistry();
       String baseRepository = buildConfiguration.getBaseImageConfiguration().getImageRepository();
       String targetRegistry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
-      String sourceRepository =
-          targetRegistry.equals(baseRegistry) && authorization.canAccess(baseRepository, "pull")
-              ? baseRepository
-              : null;
+      String sourceRepository = targetRegistry.equals(baseRegistry) ? baseRepository : null;
       registryClient.pushBlob(
           blobDescriptor.getDigest(), blob, sourceRepository, throttledProgressReporter);
 

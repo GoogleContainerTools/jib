@@ -300,6 +300,11 @@ public class RegistryClient {
       @Nullable String sourceRepository,
       Consumer<Long> writtenByteCountListener)
       throws IOException, RegistryException {
+
+    if (authorization != null && !authorization.canAccess(sourceRepository, "pull")) {
+      // don't bother requesting a cross-repository blob-mount if we don't have access
+      sourceRepository = null;
+    }
     BlobPusher blobPusher =
         new BlobPusher(registryEndpointRequestProperties, blobDigest, blob, sourceRepository);
 
