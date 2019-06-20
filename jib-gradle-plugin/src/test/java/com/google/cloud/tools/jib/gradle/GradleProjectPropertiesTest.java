@@ -59,9 +59,7 @@ import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.java.archives.internal.DefaultManifest;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.ConsoleOutput;
-import org.gradle.api.plugins.Convention;
-import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.plugins.WarPluginConvention;
+import org.gradle.api.plugins.*;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
@@ -170,6 +168,7 @@ public class GradleProjectPropertiesTest {
   @Mock private Project mockProject;
   @Mock private Convention mockConvention;
   @Mock private TaskContainer mockTaskContainer;
+  @Mock private PluginContainer mockPluginContainer;
   @Mock private Logger mockLogger;
   @Mock private Gradle mockGradle;
   @Mock private StartParameter mockStartParameter;
@@ -190,6 +189,7 @@ public class GradleProjectPropertiesTest {
         .thenReturn(mockJavaPluginConvention);
     Mockito.when(mockJavaPluginConvention.getSourceSets()).thenReturn(mockSourceSetContainer);
     Mockito.when(mockProject.getTasks()).thenReturn(mockTaskContainer);
+    Mockito.when(mockProject.getPlugins()).thenReturn(mockPluginContainer);
     Mockito.when(mockJar.getManifest()).thenReturn(manifest);
     Mockito.when(mockProject.getGradle()).thenReturn(mockGradle);
     Mockito.when(mockGradle.getStartParameter()).thenReturn(mockStartParameter);
@@ -559,6 +559,8 @@ public class GradleProjectPropertiesTest {
   private void setUpWarProject(Path webAppDirectory) {
     Mockito.when(mockProject.getBuildDir()).thenReturn(webAppDirectory.toFile());
     Mockito.when(mockTaskContainer.findByName("war")).thenReturn(war);
+    Mockito.when(mockPluginContainer.hasPlugin("war")).thenReturn(true);
+    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
 
     WarPluginConvention warPluginConvention = Mockito.mock(WarPluginConvention.class);
     Mockito.when(warPluginConvention.getProject()).thenReturn(mockProject);

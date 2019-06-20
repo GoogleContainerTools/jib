@@ -51,6 +51,7 @@ import org.gradle.api.Project;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.jvm.tasks.Jar;
 
@@ -278,7 +279,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public boolean isWarProject() {
-    return TaskCommon.getWarTask(project) != null;
+    return project.getPlugins().hasPlugin(WarPlugin.class);
   }
 
   /**
