@@ -415,6 +415,8 @@ jib {
 }
 ```
 
+If you are using Spring Boot in your war project, make sure to [create a deployable war file](https://docs.spring.io/spring-boot/docs/2.1.x/reference/html/howto-traditional-deployment.html#howto-create-a-deployable-war-file). (Extending from `SpringBootServletInitializer` and declaring the embedded container as provided)
+
 ## Frequently Asked Questions (FAQ)
 
 See the [Jib project FAQ](../docs/faq.md).
