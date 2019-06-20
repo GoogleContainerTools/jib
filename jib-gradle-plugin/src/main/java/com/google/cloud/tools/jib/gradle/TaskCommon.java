@@ -25,8 +25,9 @@ import java.util.Map;
 import java.util.logging.Level;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
-import org.gradle.api.plugins.WarPluginConvention;
+import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.internal.logging.events.LogEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
@@ -38,12 +39,19 @@ class TaskCommon {
 
   @Nullable
   static War getWarTask(Project project) {
-    WarPluginConvention warPluginConvention =
-        project.getConvention().findPlugin(WarPluginConvention.class);
-    if (warPluginConvention == null) {
+
+    if (!project.getPlugins().hasPlugin(WarPlugin.class)) {
       return null;
     }
-    return (War) warPluginConvention.getProject().getTasks().findByName("war");
+
+    if (project.getPlugins().hasPlugin("org.springframework.boot")) {
+      Task bootWar = project.getTasks().findByName("bootWar");
+      if (bootWar != null) { // Spring Boot > 2.0
+        return (War) bootWar;
+      }
+    }
+
+    return (War) project.getTasks().findByName(WarPlugin.WAR_TASK_NAME);
   }
 
   /** Disables annoying Apache HTTP client logging. */
