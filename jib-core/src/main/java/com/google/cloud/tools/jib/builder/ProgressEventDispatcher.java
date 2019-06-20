@@ -147,7 +147,7 @@ public class ProgressEventDispatcher implements Closeable {
   private long decrementRemainingAllocationUnits(long units) {
     Preconditions.checkState(!closed);
 
-    if (remainingAllocationUnits > units) {
+    if (remainingAllocationUnits >= units) {
       remainingAllocationUnits -= units;
       return units;
     }

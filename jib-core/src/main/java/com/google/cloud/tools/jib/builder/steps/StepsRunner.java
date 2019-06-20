@@ -32,13 +32,14 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -102,10 +103,8 @@ public class StepsRunner {
   private final List<Runnable> stepsToRun = new ArrayList<>();
 
   @Nullable private String rootProgressDescription;
-  private Supplier<ProgressEventDispatcher.Factory> childProgressDispatcherFactorySupplier =
-      () -> {
-        throw new IllegalStateException("root progress dispatcher uninstantiated");
-      };
+  private Deque<ProgressEventDispatcher.Factory> childProgressDispatcherFactories =
+      new ArrayDeque<>();
 
   private StepsRunner(
       ListeningExecutorService executorService, BuildConfiguration buildConfiguration) {
@@ -117,7 +116,7 @@ public class StepsRunner {
     results.targetRegistryCredentials =
         executorService.submit(
             RetrieveRegistryCredentialsStep.forTargetImage(
-                buildConfiguration, childProgressDispatcherFactorySupplier.get()));
+                buildConfiguration, childProgressDispatcherFactories.pop()));
   }
 
   private void authenticatePush() {
@@ -126,7 +125,7 @@ public class StepsRunner {
             () ->
                 new AuthenticatePushStep(
                         buildConfiguration,
-                        childProgressDispatcherFactorySupplier.get(),
+                        childProgressDispatcherFactories.pop(),
                         results.targetRegistryCredentials.get())
                     .call());
   }
@@ -134,8 +133,7 @@ public class StepsRunner {
   private void pullBaseImage() {
     results.baseImageAndAuth =
         executorService.submit(
-            new PullBaseImageStep(
-                buildConfiguration, childProgressDispatcherFactorySupplier.get()));
+            new PullBaseImageStep(buildConfiguration, childProgressDispatcherFactories.pop()));
   }
 
   private void pullAndCacheBaseImageLayers() {
@@ -145,7 +143,7 @@ public class StepsRunner {
                 scheduleCallables(
                     PullAndCacheBaseImageLayersStep.makeList(
                         buildConfiguration,
-                        childProgressDispatcherFactorySupplier.get(),
+                        childProgressDispatcherFactories.pop(),
                         results.baseImageAndAuth.get())));
   }
 
@@ -156,7 +154,7 @@ public class StepsRunner {
                 scheduleCallables(
                     PushLayerStep.makeList(
                         buildConfiguration,
-                        childProgressDispatcherFactorySupplier.get(),
+                        childProgressDispatcherFactories.pop(),
                         results.pushAuthorization.get(),
                         results.baseImageLayers.get())));
   }
@@ -165,7 +163,7 @@ public class StepsRunner {
     results.applicationLayers =
         scheduleCallables(
             BuildAndCacheApplicationLayerStep.makeList(
-                buildConfiguration, childProgressDispatcherFactorySupplier.get()));
+                buildConfiguration, childProgressDispatcherFactories.pop()));
   }
 
   private void buildImage() {
@@ -174,7 +172,7 @@ public class StepsRunner {
             () ->
                 new BuildImageStep(
                         buildConfiguration,
-                        childProgressDispatcherFactorySupplier.get(),
+                        childProgressDispatcherFactories.pop(),
                         results.baseImageAndAuth.get().getImage(),
                         realizeFutures(results.baseImageLayers.get()),
                         realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
@@ -187,7 +185,7 @@ public class StepsRunner {
             () ->
                 new PushContainerConfigurationStep(
                         buildConfiguration,
-                        childProgressDispatcherFactorySupplier.get(),
+                        childProgressDispatcherFactories.pop(),
                         results.pushAuthorization.get(),
                         results.builtImage.get())
                     .call());
@@ -200,7 +198,7 @@ public class StepsRunner {
                 scheduleCallables(
                     PushLayerStep.makeList(
                         buildConfiguration,
-                        childProgressDispatcherFactorySupplier.get(),
+                        childProgressDispatcherFactories.pop(),
                         results.pushAuthorization.get(),
                         Verify.verifyNotNull(results.applicationLayers))));
   }
@@ -215,7 +213,7 @@ public class StepsRunner {
               return new PushImageStep(
                       executorService,
                       buildConfiguration,
-                      childProgressDispatcherFactorySupplier.get(),
+                      childProgressDispatcherFactories.pop(),
                       results.pushAuthorization.get(),
                       results.containerConfigurationPushResult.get(),
                       results.builtImage.get())
@@ -229,7 +227,7 @@ public class StepsRunner {
             () ->
                 new LoadDockerStep(
                         buildConfiguration,
-                        childProgressDispatcherFactorySupplier.get(),
+                        childProgressDispatcherFactories.pop(),
                         dockerClient,
                         results.builtImage.get())
                     .call());
@@ -241,7 +239,7 @@ public class StepsRunner {
             () ->
                 new WriteTarFileStep(
                         buildConfiguration,
-                        childProgressDispatcherFactorySupplier.get(),
+                        childProgressDispatcherFactories.pop(),
                         outputPath,
                         results.builtImage.get())
                     .call());
@@ -253,7 +251,10 @@ public class StepsRunner {
     try (ProgressEventDispatcher progressEventDispatcher =
         ProgressEventDispatcher.newRoot(
             buildConfiguration.getEventHandlers(), rootProgressDescription, stepsToRun.size())) {
-      childProgressDispatcherFactorySupplier = progressEventDispatcher::newChildProducer;
+      for (int i = 0; i < stepsToRun.size(); i++) {
+        childProgressDispatcherFactories.push(progressEventDispatcher.newChildProducer());
+      }
+
       stepsToRun.forEach(Runnable::run);
       return results.buildResult.get();
 
