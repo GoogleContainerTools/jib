@@ -23,6 +23,7 @@ import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.http.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -149,6 +150,7 @@ public class AuthenticationMethodRetrieverTest {
 
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someImageName:someScope"),
-        registryAuthenticator.getAuthenticationUrl(null, "someScope"));
+        registryAuthenticator.getAuthenticationUrl(
+            null, Collections.singletonMap("someImageName", "someScope")));
   }
 }

@@ -16,9 +16,21 @@
 
 package com.google.cloud.tools.jib.http;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.exceptions.JWTDecodeException;
+import com.auth0.jwt.interfaces.DecodedJWT;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.api.client.util.Base64;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Streams;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 /**
  * Holds the credentials for an HTTP {@code Authorization} header.
@@ -34,9 +46,65 @@ public class Authorization {
    * @return an {@link Authorization} with a {@code Bearer} token
    */
   public static Authorization fromBearerToken(String token) {
-    return new Authorization("Bearer", token);
+    return new Authorization("Bearer", token, decodeTokenRepositoryGrants(token));
   }
 
+  /**
+   * Decode the <a href="https://docs.docker.com/registry/spec/auth/jwt/">Docker Registry v2 Bearer
+   * Token</a> to list the granted repositories with their levels of access.
+   *
+   * @param token a Docker Registry Bearer Token
+   * @return a mapping of repository to granted access scopes, or {@code null} if there is no JWT
+   *     the token is not a Docker Registry Bearer Token
+   */
+  @VisibleForTesting
+  static Multimap<String, String> decodeTokenRepositoryGrants(String token) {
+    // Docker Registry Bearer Tokens are based on JWT.  The payload looks like:
+    // {
+    //   "access":[{"type":"repository","name":"repository/name","actions":["pull"]}],
+    //   "aud":"registry.docker.io",
+    //   "iss":"auth.docker.io",
+    //   "exp":999,
+    //   "iat":999,
+    //   "jti":"zzzz",
+    //   "nbf":999,
+    //   "sub":"e3ae001d-xxx"
+    // }
+    try {
+      DecodedJWT jwt = JWT.decode(token);
+      // Make sure they look like valid access claims.
+      JsonNode[] accessClaims = jwt.getClaim("access").asArray(JsonNode.class);
+      if (accessClaims == null
+          || !Stream.of(accessClaims).allMatch(Authorization::isValidAccessClaim)) {
+        return null;
+      }
+      return Stream.of(accessClaims)
+          .filter(n -> "repository".equals(n.get("type").asText()))
+          .collect(
+              ImmutableSetMultimap.<JsonNode, String, String>flatteningToImmutableSetMultimap(
+                  n -> n.get("name").asText(),
+                  n -> Streams.stream(n.get("actions").iterator()).map(JsonNode::asText)));
+    } catch (JWTDecodeException exception) {
+      return null;
+    }
+  }
+
+  /**
+   * Check that the provided access object looks genuine: should be a JSON object with a non-empty
+   * string "type" field.
+   */
+  private static boolean isValidAccessClaim(JsonNode n) {
+    if (!n.isObject() || Strings.isNullOrEmpty(n.get("type").asText())) {
+      return false;
+    }
+    if ("repository".equals(n.get("type").asText())) {
+      // repository should have a name and array of permitted actions
+      return !Strings.isNullOrEmpty(n.get("name").asText())
+          && n.get("actions").isArray()
+          && Iterators.all(n.get("actions").iterator(), JsonNode::isTextual);
+    }
+    return true;
+  }
   /**
    * @param username the username
    * @param secret the secret
@@ -45,7 +113,7 @@ public class Authorization {
   public static Authorization fromBasicCredentials(String username, String secret) {
     String credentials = username + ":" + secret;
     String token = Base64.encodeBase64String(credentials.getBytes(StandardCharsets.UTF_8));
-    return new Authorization("Basic", token);
+    return new Authorization("Basic", token, null);
   }
 
   /**
@@ -53,15 +121,17 @@ public class Authorization {
    * @return an {@link Authorization} with a base64-encoded {@code username:password} string
    */
   public static Authorization fromBasicToken(String token) {
-    return new Authorization("Basic", token);
+    return new Authorization("Basic", token, null);
   }
 
   private final String scheme;
   private final String token;
+  @Nullable private final Multimap<String, String> repositoryGrants;
 
-  private Authorization(String scheme, String token) {
+  private Authorization(String scheme, String token, Multimap<String, String> repositoryGrants) {
     this.scheme = scheme;
     this.token = token;
+    this.repositoryGrants = repositoryGrants;
   }
 
   public String getScheme() {
@@ -93,5 +163,17 @@ public class Authorization {
   @Override
   public int hashCode() {
     return Objects.hash(scheme, token);
+  }
+
+  /**
+   * Check if this authorization allows accessing the specified repository.
+   *
+   * @param repository repository in question
+   * @param access the access scope ("push" or "pull")
+   * @return true if the repository was covered
+   */
+  public boolean canAccess(String repository, String access) {
+    // if null then we assume that all repositories are granted
+    return repositoryGrants == null || repositoryGrants.containsEntry(repository, access);
   }
 }

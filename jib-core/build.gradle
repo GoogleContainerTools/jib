@@ -40,6 +40,7 @@ dependencies {
   implementation 'com.google.guava:guava:27.0.1-jre'
   implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.9'
   implementation 'org.ow2.asm:asm:7.0'
+  implementation 'com.auth0:java-jwt:3.8.1'
 
   testImplementation 'junit:junit:4.12'
   testImplementation 'org.mockito:mockito-core:2.23.4'

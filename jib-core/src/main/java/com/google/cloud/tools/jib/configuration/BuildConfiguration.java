@@ -449,6 +449,18 @@ public class BuildConfiguration {
    * @return a new {@link RegistryClient.Factory}
    */
   public RegistryClient.Factory newTargetImageRegistryClientFactory() {
+    // if base and target are on the same registry, try enabling cross-repository mounts
+    if (baseImageConfiguration
+        .getImageRegistry()
+        .equals(targetImageConfiguration.getImageRegistry())) {
+      return RegistryClient.factory(
+              getEventHandlers(),
+              targetImageConfiguration.getImageRegistry(),
+              targetImageConfiguration.getImageRepository(),
+              baseImageConfiguration.getImageRepository())
+          .setAllowInsecureRegistries(getAllowInsecureRegistries())
+          .setUserAgentSuffix(getToolName());
+    }
     return newRegistryClientFactory(targetImageConfiguration);
   }
 

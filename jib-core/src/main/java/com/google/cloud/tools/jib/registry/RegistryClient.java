@@ -138,7 +138,17 @@ public class RegistryClient {
    * @return the new {@link Factory}
    */
   public static Factory factory(EventHandlers eventHandlers, String serverUrl, String imageName) {
-    return new Factory(eventHandlers, new RegistryEndpointRequestProperties(serverUrl, imageName));
+    return factory(eventHandlers, serverUrl, imageName, null);
+  }
+
+  public static Factory factory(
+      EventHandlers eventHandlers,
+      String serverUrl,
+      String imageName,
+      @Nullable String sourceImageName) {
+    return new Factory(
+        eventHandlers,
+        new RegistryEndpointRequestProperties(serverUrl, imageName, sourceImageName));
   }
 
   private final EventHandlers eventHandlers;
@@ -298,8 +308,8 @@ public class RegistryClient {
       try (TimerEventDispatcher timerEventDispatcher2 =
           timerEventDispatcher.subTimer("pushBlob POST " + blobDigest)) {
 
-        // POST /v2/<name>/blobs/uploads/ OR
         // POST /v2/<name>/blobs/uploads/?mount={blob.digest}&from={sourceRepository}
+        // POST /v2/<name>/blobs/uploads/
         URL patchLocation = callRegistryEndpoint(blobPusher.initializer());
         if (patchLocation == null) {
           // The BLOB exists already.

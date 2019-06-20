@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
+import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -82,10 +83,11 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
                 buildConfiguration.getEventHandlers(), DESCRIPTION + blobDescriptor);
         ThrottledAccumulatingConsumer throttledProgressReporter =
             new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
+      Authorization authorization = NonBlockingSteps.get(authenticatePushStep);
       RegistryClient registryClient =
           buildConfiguration
               .newTargetImageRegistryClientFactory()
-              .setAuthorization(NonBlockingSteps.get(authenticatePushStep))
+              .setAuthorization(authorization)
               .newRegistryClient();
 
       // check if the BLOB is available
@@ -96,8 +98,19 @@ class PushBlobStep implements AsyncStep<BlobDescriptor>, Callable<BlobDescriptor
         return blobDescriptor;
       }
 
-      // todo: leverage cross-repository mounts
-      registryClient.pushBlob(blobDescriptor.getDigest(), blob, null, throttledProgressReporter);
+      // If base and target images are in the same registry, then use mount/from to try mounting the
+      // BLOB from the base image repository to the target image repository and possibly avoid
+      // having to push the BLOB. See
+      // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount for details.
+      String baseRegistry = buildConfiguration.getBaseImageConfiguration().getImageRegistry();
+      String baseRepository = buildConfiguration.getBaseImageConfiguration().getImageRepository();
+      String targetRegistry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
+      String sourceRepository =
+          targetRegistry.equals(baseRegistry) && authorization.canAccess(baseRepository, "pull")
+              ? baseRepository
+              : null;
+      registryClient.pushBlob(
+          blobDescriptor.getDigest(), blob, sourceRepository, throttledProgressReporter);
 
       return blobDescriptor;
     }
