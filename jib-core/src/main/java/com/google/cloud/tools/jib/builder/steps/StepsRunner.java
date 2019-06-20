@@ -103,7 +103,7 @@ public class StepsRunner {
   private final List<Runnable> stepsToRun = new ArrayList<>();
 
   @Nullable private String rootProgressDescription;
-  private Deque<ProgressEventDispatcher.Factory> childProgressDispatcherFactories =
+  private final Deque<ProgressEventDispatcher.Factory> childProgressDispatcherFactories =
       new ArrayDeque<>();
 
   private StepsRunner(
