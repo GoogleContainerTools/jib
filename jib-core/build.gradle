@@ -55,7 +55,6 @@ dependencies {
 
 jar {
   manifest {
-    attributes 'Implementation-Version': version
     attributes 'Automatic-Module-Name': 'com.google.cloud.tools.jib'
 
     // OSGi metadata
