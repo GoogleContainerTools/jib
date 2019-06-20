@@ -92,6 +92,10 @@ public class ImageReference {
    * @throws InvalidImageReferenceException if {@code reference} is formatted incorrectly
    */
   public static ImageReference parse(String reference) throws InvalidImageReferenceException {
+    if (reference.equals("scratch")) {
+      return ImageReference.scratch();
+    }
+
     Matcher matcher = REFERENCE_PATTERN.matcher(reference);
 
     if (!matcher.find() || matcher.groupCount() < 4) {
