@@ -32,9 +32,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -103,8 +101,7 @@ public class StepsRunner {
   private final List<Runnable> stepsToRun = new ArrayList<>();
 
   @Nullable private String rootProgressDescription;
-  private final Deque<ProgressEventDispatcher.Factory> childProgressDispatcherFactories =
-      new ArrayDeque<>();
+  @Nullable private ProgressEventDispatcher rootProgressDispatcher;
 
   private StepsRunner(
       ListeningExecutorService executorService, BuildConfiguration buildConfiguration) {
@@ -113,66 +110,87 @@ public class StepsRunner {
   }
 
   private void retrieveTargetRegistryCredentials() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     results.targetRegistryCredentials =
         executorService.submit(
             RetrieveRegistryCredentialsStep.forTargetImage(
-                buildConfiguration, childProgressDispatcherFactories.pop()));
+                buildConfiguration, childProgressDispatcherFactory));
   }
 
   private void authenticatePush() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     results.pushAuthorization =
         executorService.submit(
             () ->
                 new AuthenticatePushStep(
                         buildConfiguration,
-                        childProgressDispatcherFactories.pop(),
+                        childProgressDispatcherFactory,
                         results.targetRegistryCredentials.get())
                     .call());
   }
 
   private void pullBaseImage() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     results.baseImageAndAuth =
         executorService.submit(
-            new PullBaseImageStep(buildConfiguration, childProgressDispatcherFactories.pop()));
+            new PullBaseImageStep(buildConfiguration, childProgressDispatcherFactory));
   }
 
   private void pullAndCacheBaseImageLayers() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     results.baseImageLayers =
         executorService.submit(
             () ->
                 scheduleCallables(
                     PullAndCacheBaseImageLayersStep.makeList(
                         buildConfiguration,
-                        childProgressDispatcherFactories.pop(),
+                        childProgressDispatcherFactory,
                         results.baseImageAndAuth.get())));
   }
 
   private void pushBaseImageLayers() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     results.baseImageLayerPushResults =
         executorService.submit(
             () ->
                 scheduleCallables(
                     PushLayerStep.makeList(
                         buildConfiguration,
-                        childProgressDispatcherFactories.pop(),
+                        childProgressDispatcherFactory,
                         results.pushAuthorization.get(),
                         results.baseImageLayers.get())));
   }
 
   private void buildAndCacheApplicationLayers() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     results.applicationLayers =
         scheduleCallables(
             BuildAndCacheApplicationLayerStep.makeList(
-                buildConfiguration, childProgressDispatcherFactories.pop()));
+                buildConfiguration, childProgressDispatcherFactory));
   }
 
   private void buildImage() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     results.builtImage =
         executorService.submit(
             () ->
                 new BuildImageStep(
                         buildConfiguration,
-                        childProgressDispatcherFactories.pop(),
+                        childProgressDispatcherFactory,
                         results.baseImageAndAuth.get().getImage(),
                         realizeFutures(results.baseImageLayers.get()),
                         realizeFutures(Verify.verifyNotNull(results.applicationLayers)))
@@ -180,30 +198,39 @@ public class StepsRunner {
   }
 
   private void pushContainerConfiguration() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     results.containerConfigurationPushResult =
         executorService.submit(
             () ->
                 new PushContainerConfigurationStep(
                         buildConfiguration,
-                        childProgressDispatcherFactories.pop(),
+                        childProgressDispatcherFactory,
                         results.pushAuthorization.get(),
                         results.builtImage.get())
                     .call());
   }
 
   private void pushApplicationLayers() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     results.applicationLayerPushResults =
         executorService.submit(
             () ->
                 scheduleCallables(
                     PushLayerStep.makeList(
                         buildConfiguration,
-                        childProgressDispatcherFactories.pop(),
+                        childProgressDispatcherFactory,
                         results.pushAuthorization.get(),
                         Verify.verifyNotNull(results.applicationLayers))));
   }
 
   private void pushImage() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     results.buildResult =
         executorService.submit(
             () -> {
@@ -213,7 +240,7 @@ public class StepsRunner {
               return new PushImageStep(
                       executorService,
                       buildConfiguration,
-                      childProgressDispatcherFactories.pop(),
+                      childProgressDispatcherFactory,
                       results.pushAuthorization.get(),
                       results.containerConfigurationPushResult.get(),
                       results.builtImage.get())
@@ -222,24 +249,30 @@ public class StepsRunner {
   }
 
   private void loadDocker(DockerClient dockerClient) {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     results.buildResult =
         executorService.submit(
             () ->
                 new LoadDockerStep(
                         buildConfiguration,
-                        childProgressDispatcherFactories.pop(),
+                        childProgressDispatcherFactory,
                         dockerClient,
                         results.builtImage.get())
                     .call());
   }
 
   private void writeTarFile(Path outputPath) {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     results.buildResult =
         executorService.submit(
             () ->
                 new WriteTarFileStep(
                         buildConfiguration,
-                        childProgressDispatcherFactories.pop(),
+                        childProgressDispatcherFactory,
                         outputPath,
                         results.builtImage.get())
                     .call());
@@ -251,9 +284,7 @@ public class StepsRunner {
     try (ProgressEventDispatcher progressEventDispatcher =
         ProgressEventDispatcher.newRoot(
             buildConfiguration.getEventHandlers(), rootProgressDescription, stepsToRun.size())) {
-      for (int i = 0; i < stepsToRun.size(); i++) {
-        childProgressDispatcherFactories.push(progressEventDispatcher.newChildProducer());
-      }
+      rootProgressDispatcher = progressEventDispatcher;
 
       stepsToRun.forEach(Runnable::run);
       return results.buildResult.get();
