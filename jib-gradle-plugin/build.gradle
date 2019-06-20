@@ -12,6 +12,7 @@ plugins {
 
   // Prepare release
   id 'net.researchgate.release' version '2.6.0'
+  id "io.freefair.maven-jars" version "2.9.5"
   // Gradle Plugin Portal publish
   id 'com.gradle.plugin-publish' version '0.9.10'
 }

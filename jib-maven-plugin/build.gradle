@@ -1,5 +1,6 @@
 plugins {
     id "io.freefair.maven-plugin" version "2.9.5"
+    id "io.freefair.maven-jars" version "2.9.5"
 }
 
 sourceSets {

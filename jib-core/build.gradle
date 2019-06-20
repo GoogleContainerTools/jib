@@ -9,6 +9,7 @@ plugins {
   // For release.
   id 'maven'
   id 'net.researchgate.release' version '2.7.0'
+  id "io.freefair.maven-jars" version "2.9.5"
 }
 
 sourceSets {
@@ -130,15 +131,6 @@ checkstyle {
 /* CHECKSTYLE */
 
 /* RELEASE */
-task sourceJar(type: Jar) {
-  from sourceSets.main.allJava
-  classifier 'sources'
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-  from javadoc.destinationDir
-  classifier 'javadoc'
-}
 
 task writePom {
   project.afterEvaluate {
@@ -203,7 +195,7 @@ task writePom {
 // For Kokoro sign and releases
 task prepareRelease(type: Copy) {
   from jar
-  from sourceJar
+  from sourcesJar
   from javadocJar
   from writePom
   into "${project.buildDir}/release-artifacts"
