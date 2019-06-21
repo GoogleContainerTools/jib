@@ -138,14 +138,11 @@ public class RegistryClient {
    * @return the new {@link Factory}
    */
   public static Factory factory(EventHandlers eventHandlers, String serverUrl, String imageName) {
-    return factory(eventHandlers, serverUrl, imageName, null);
+    return new Factory(eventHandlers, new RegistryEndpointRequestProperties(serverUrl, imageName));
   }
 
   public static Factory factory(
-      EventHandlers eventHandlers,
-      String serverUrl,
-      String imageName,
-      @Nullable String sourceImageName) {
+      EventHandlers eventHandlers, String serverUrl, String imageName, String sourceImageName) {
     return new Factory(
         eventHandlers,
         new RegistryEndpointRequestProperties(serverUrl, imageName, sourceImageName));

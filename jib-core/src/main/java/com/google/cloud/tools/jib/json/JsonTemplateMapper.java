@@ -105,6 +105,20 @@ public class JsonTemplateMapper {
   }
 
   /**
+   * Deserializes a JSON object from a JSON byte array.
+   *
+   * @param <T> child type of {@link JsonTemplate}
+   * @param jsonBytes a JSON byte array
+   * @param templateClass the template to deserialize the string to
+   * @return the template filled with the values parsed from {@code jsonBytes}
+   * @throws IOException if an error occurred during parsing the JSON
+   */
+  public static <T extends JsonTemplate> T readJson(byte[] jsonBytes, Class<T> templateClass)
+      throws IOException {
+    return objectMapper.readValue(jsonBytes, templateClass);
+  }
+
+  /**
    * Deserializes a JSON object list from a JSON string.
    *
    * @param <T> child type of {@link JsonTemplate}

@@ -16,20 +16,18 @@
 
 package com.google.cloud.tools.jib.http;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.exceptions.JWTDecodeException;
-import com.auth0.jwt.interfaces.DecodedJWT;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.api.client.util.Base64;
+import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Streams;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -60,7 +58,16 @@ public class Authorization {
   @VisibleForTesting
   @Nullable
   static Multimap<String, String> decodeTokenRepositoryGrants(String token) {
-    // Docker Registry Bearer Tokens are based on JWT.  The payload looks like:
+    // Docker Registry Bearer Tokens are based on JWT.  A valid JWT is a set of 3 base64-encoded
+    // parts (header, payload, signature), collated with a ".".  The header and payload are
+    // JSON objects.
+    String[] jwtParts = token.split("\\.", -1);
+    byte[] payloadData;
+    if (jwtParts.length != 3 || (payloadData = Base64.decodeBase64(jwtParts[1])) == null) {
+      return null;
+    }
+
+    // The payload looks like:
     // {
     //   "access":[{"type":"repository","name":"repository/name","actions":["pull"]}],
     //   "aud":"registry.docker.io",
@@ -71,41 +78,25 @@ public class Authorization {
     //   "nbf":999,
     //   "sub":"e3ae001d-xxx"
     // }
+    //
+    TokenPayloadTemplate payload;
     try {
-      DecodedJWT jwt = JWT.decode(token);
-      // Make sure they look like valid access claims.
-      JsonNode[] accessClaims = jwt.getClaim("access").asArray(JsonNode.class);
-      if (accessClaims == null
-          || !Stream.of(accessClaims).allMatch(Authorization::isValidAccessClaim)) {
-        return null;
-      }
-      return Stream.of(accessClaims)
-          .filter(n -> "repository".equals(n.get("type").asText()))
-          .collect(
-              ImmutableSetMultimap.<JsonNode, String, String>flatteningToImmutableSetMultimap(
-                  n -> n.get("name").asText(),
-                  n -> Streams.stream(n.get("actions").iterator()).map(JsonNode::asText)));
-    } catch (JWTDecodeException exception) {
+      payload = JsonTemplateMapper.readJson(payloadData, TokenPayloadTemplate.class);
+    } catch (IOException ex) {
       return null;
     }
+    if (payload.access == null) {
+      return null;
+    }
+    return payload
+        .access
+        .stream()
+        .filter(claim -> "repository".equals(claim.type))
+        .collect(
+            ImmutableSetMultimap.<AccessClaim, String, String>flatteningToImmutableSetMultimap(
+                claim -> claim.name, claim -> claim.actions.stream()));
   }
 
-  /**
-   * Check that the provided access object looks genuine: should be a JSON object with a non-empty
-   * string "type" field.
-   */
-  private static boolean isValidAccessClaim(JsonNode n) {
-    if (!n.isObject() || Strings.isNullOrEmpty(n.get("type").asText())) {
-      return false;
-    }
-    if ("repository".equals(n.get("type").asText())) {
-      // repository should have a name and array of permitted actions
-      return !Strings.isNullOrEmpty(n.get("name").asText())
-          && n.get("actions").isArray()
-          && Iterators.all(n.get("actions").iterator(), JsonNode::isTextual);
-    }
-    return true;
-  }
   /**
    * @param username the username
    * @param secret the secret
@@ -177,5 +168,29 @@ public class Authorization {
   public boolean canAccess(String repository, String access) {
     // if null then we assume that all repositories are granted
     return repositoryGrants == null || repositoryGrants.containsEntry(repository, access);
+  }
+
+  /**
+   * A simple class to represent a Docker Registry Bearer Token payload.
+   *
+   * <pre>
+   * {"access":[{"type": "repository","name": "library/openjdk","actions":["push","pull"]}]}
+   * </pre>
+   */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private static class TokenPayloadTemplate implements JsonTemplate {
+    @Nullable private List<AccessClaim> access;
+  }
+
+  /**
+   * Represents an access claim for a repository in a Docker Registry Bearer Token payload.
+   *
+   * <pre>{"type": "repository","name": "library/openjdk","actions":["push","pull"]}</pre>
+   */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private static class AccessClaim implements JsonTemplate {
+    @Nullable private String type;
+    @Nullable private String name;
+    private List<String> actions = new ArrayList<>();
   }
 }
