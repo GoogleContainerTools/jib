@@ -34,6 +34,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -62,8 +63,8 @@ public class StepsRunner {
     private Future<List<Future<CachedLayerAndName>>> baseImageLayers = failedFuture();
     @Nullable private List<Future<CachedLayerAndName>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
-    private Future<Credential> targetRegistryCredentials = failedFuture();
-    private Future<Authorization> pushAuthorization = failedFuture();
+    private Future<Optional<Credential>> targetRegistryCredentials = failedFuture();
+    private Future<Optional<Authorization>> pushAuthorization = failedFuture();
     private Future<List<Future<BlobDescriptor>>> baseImageLayerPushResults = failedFuture();
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<BlobDescriptor> containerConfigurationPushResult = failedFuture();
@@ -129,7 +130,7 @@ public class StepsRunner {
                 new AuthenticatePushStep(
                         buildConfiguration,
                         childProgressDispatcherFactory,
-                        results.targetRegistryCredentials.get())
+                        results.targetRegistryCredentials.get().orElse(null))
                     .call());
   }
 
@@ -167,7 +168,7 @@ public class StepsRunner {
                     PushLayerStep.makeList(
                         buildConfiguration,
                         childProgressDispatcherFactory,
-                        results.pushAuthorization.get(),
+                        results.pushAuthorization.get().orElse(null),
                         results.baseImageLayers.get())));
   }
 
@@ -207,7 +208,7 @@ public class StepsRunner {
                 new PushContainerConfigurationStep(
                         buildConfiguration,
                         childProgressDispatcherFactory,
-                        results.pushAuthorization.get(),
+                        results.pushAuthorization.get().orElse(null),
                         results.builtImage.get())
                     .call());
   }
@@ -223,7 +224,7 @@ public class StepsRunner {
                     PushLayerStep.makeList(
                         buildConfiguration,
                         childProgressDispatcherFactory,
-                        results.pushAuthorization.get(),
+                        results.pushAuthorization.get().orElse(null),
                         Verify.verifyNotNull(results.applicationLayers))));
   }
 
@@ -241,7 +242,7 @@ public class StepsRunner {
                       executorService,
                       buildConfiguration,
                       childProgressDispatcherFactory,
-                      results.pushAuthorization.get(),
+                      results.pushAuthorization.get().orElse(null),
                       results.containerConfigurationPushResult.get(),
                       results.builtImage.get())
                   .call();
