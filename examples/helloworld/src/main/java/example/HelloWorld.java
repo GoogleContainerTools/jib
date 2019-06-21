@@ -16,21 +16,21 @@
 
 package example;
 
-import com.google.common.io.Resources;
+import com.google.common.io.CharStreams;
 
+import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class HelloWorld {
 
   public static void main(String[] args) throws URISyntaxException, IOException {
-    Path worldFile = Paths.get(Resources.getResource("world").toURI());
-    String world = new String(Files.readAllBytes(worldFile), StandardCharsets.UTF_8);
-
-    System.out.println("Hello " + world);
+    try (Reader reader = new InputStreamReader(
+        HelloWorld.class.getResourceAsStream("/world"), StandardCharsets.UTF_8)) {
+      String world = CharStreams.toString(reader);
+      System.out.println("Hello " + world);
+    }
   }
 }

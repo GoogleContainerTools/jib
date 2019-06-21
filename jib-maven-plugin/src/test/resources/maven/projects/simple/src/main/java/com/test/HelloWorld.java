@@ -17,12 +17,13 @@
 package com.test;
 
 import dependency.Greeting;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermissions;
 
@@ -34,37 +35,47 @@ public class HelloWorld {
     String greeting = Greeting.getGreeting();
 
     // Gets the contents of the resource file 'world'.
-    ClassLoader classLoader = HelloWorld.class.getClassLoader();
-    Path worldFile = Paths.get(classLoader.getResource("world").toURI());
-    String world = new String(Files.readAllBytes(worldFile), StandardCharsets.UTF_8);
+    try (BufferedReader reader =
+        new BufferedReader(
+            new InputStreamReader(
+                HelloWorld.class.getResourceAsStream("/world"), StandardCharsets.UTF_8))) {
+      String world = reader.readLine();
+      System.out.println(greeting + ", " + world + ". " + (args.length > 0 ? args[0] : ""));
 
-    System.out.println(greeting + ", " + world + ". " + (args.length > 0 ? args[0] : ""));
+      // Prints the contents of the extra files.
+      if (Files.exists(Paths.get("/foo"))) {
+        System.out.println(
+            PosixFilePermissions.toString(Files.getPosixFilePermissions(Paths.get("/foo"))));
+        System.out.println(
+            PosixFilePermissions.toString(Files.getPosixFilePermissions(Paths.get("/bar/cat"))));
+        System.out.println(
+            new String(Files.readAllBytes(Paths.get("/foo")), StandardCharsets.UTF_8));
+        System.out.println(
+            new String(Files.readAllBytes(Paths.get("/bar/cat")), StandardCharsets.UTF_8));
+      }
+      // Prints the contents of the files in the second extra directory.
+      if (Files.exists(Paths.get("/baz"))) {
+        System.out.println(
+            new String(Files.readAllBytes(Paths.get("/baz")), StandardCharsets.UTF_8));
+      }
 
-    // Prints the contents of the extra files.
-    if (Files.exists(Paths.get("/foo"))) {
-      System.out.println(
-          PosixFilePermissions.toString(Files.getPosixFilePermissions(Paths.get("/foo"))));
-      System.out.println(
-          PosixFilePermissions.toString(Files.getPosixFilePermissions(Paths.get("/bar/cat"))));
-      System.out.println(new String(Files.readAllBytes(Paths.get("/foo")), StandardCharsets.UTF_8));
-      System.out.println(
-          new String(Files.readAllBytes(Paths.get("/bar/cat")), StandardCharsets.UTF_8));
-    }
-    // Prints the contents of the files in the second extra directory.
-    if (Files.exists(Paths.get("/baz"))) {
-      System.out.println(new String(Files.readAllBytes(Paths.get("/baz")), StandardCharsets.UTF_8));
-    }
+      // Prints jvm flags
+      for (String jvmFlag : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+        System.out.println(jvmFlag);
+      }
 
-    // Prints jvm flags
-    for (String jvmFlag : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
-      System.out.println(jvmFlag);
-    }
+      if (System.getenv("env1") != null) {
+        System.out.println(System.getenv("env1"));
+      }
+      if (System.getenv("env2") != null) {
+        System.out.println(System.getenv("env2"));
+      }
 
-    if (System.getenv("env1") != null) {
-      System.out.println(System.getenv("env1"));
-    }
-    if (System.getenv("env2") != null) {
-      System.out.println(System.getenv("env2"));
+      Package pack = HelloWorld.class.getPackage();
+      if (pack.getImplementationTitle() != null) {
+        System.out.println("Implementation-Title: " + pack.getImplementationTitle());
+        System.out.println("Implementation-Version: " + pack.getImplementationVersion());
+      }
     }
   }
 }

@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- Can now containerize a JAR artifact instead of putting individual `.class` and resource files with `jib.containerizingMode = 'packaged'` ([#1760](https://github.com/GoogleContainerTools/jib/pull/1760/files))
+- Now automatically supports WAR created by the Spring Boot Gradle Plugin via the `bootWar` task ([#1786](https://github.com/GoogleContainerTools/jib/issues/1786))
+- Can now use `jib.from.image = 'scratch'` to use the scratch (empty) base image for builds. ([#1794](https://github.com/GoogleContainerTools/jib/pull/1794/files))
+
 ### Changed
+
+- Dependencies are now split into three layers: dependencies, snapshots dependencies, project dependencies ([#1724](https://github.com/GoogleContainerTools/jib/pull/1724))
 
 ### Fixed
 

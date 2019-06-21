@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
+import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryImage;
@@ -26,6 +27,7 @@ import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
@@ -35,11 +37,15 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
-import java.io.File;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -171,43 +177,97 @@ public class MavenProjectProperties implements ProjectProperties {
     if (log.isErrorEnabled()) {
       consoleLoggerBuilder.error(log::error);
     }
-    this.consoleLogger = consoleLoggerBuilder.build();
+    consoleLogger = consoleLoggerBuilder.build();
   }
 
   @Override
   public JibContainerBuilder createContainerBuilder(
-      RegistryImage baseImage, AbsoluteUnixPath appRoot) throws IOException {
+      RegistryImage baseImage, AbsoluteUnixPath appRoot, ContainerizingMode containerizingMode)
+      throws IOException {
+    JavaContainerBuilder javaContainerBuilder =
+        JavaContainerBuilder.from(baseImage).setAppRoot(appRoot);
+
     try {
       if (isWarProject()) {
         Path explodedWarPath =
-            Paths.get(project.getBuild().getDirectory()).resolve(project.getBuild().getFinalName());
-        return JavaContainerBuilderHelper.fromExplodedWar(baseImage, explodedWarPath, appRoot);
+            Paths.get(project.getBuild().getDirectory(), project.getBuild().getFinalName());
+        return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
       }
 
-      Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
-      Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+      switch (containerizingMode) {
+        case EXPLODED:
+          // Add resources, and classes
+          Path classesOutputDirectory = Paths.get(project.getBuild().getOutputDirectory());
+          // Don't use Path.endsWith(), since Path works on path elements.
+          Predicate<Path> isClassFile = path -> path.getFileName().toString().endsWith(".class");
+          javaContainerBuilder
+              .addResources(classesOutputDirectory, isClassFile.negate())
+              .addClasses(classesOutputDirectory, isClassFile);
+          break;
 
-      // Add dependencies, resources, and classes
-      return JavaContainerBuilder.from(baseImage)
-          .setAppRoot(appRoot)
-          .addResources(classesOutputDirectory, isClassFile.negate())
-          .addClasses(classesOutputDirectory, isClassFile)
-          .addDependencies(
-              project
-                  .getArtifacts()
+        case PACKAGED:
+          // Add a JAR
+          javaContainerBuilder.addToClasspath(getJarArtifact());
+          break;
+
+        default:
+          throw new IllegalStateException("unknown containerizing mode: " + containerizingMode);
+      }
+
+      // Classify and add dependencies
+      Map<LayerType, List<Path>> classifiedDependencies =
+          classifyDependencies(
+              project.getArtifacts(),
+              session
+                  .getProjects()
                   .stream()
-                  .map(Artifact::getFile)
-                  .map(File::toPath)
-                  .collect(Collectors.toList()))
+                  .map(MavenProject::getArtifact)
+                  .collect(Collectors.toSet()));
+
+      return javaContainerBuilder
+          .addDependencies(
+              Preconditions.checkNotNull(classifiedDependencies.get(LayerType.DEPENDENCIES)))
+          .addSnapshotDependencies(
+              Preconditions.checkNotNull(
+                  classifiedDependencies.get(LayerType.SNAPSHOT_DEPENDENCIES)))
+          .addProjectDependencies(
+              Preconditions.checkNotNull(
+                  classifiedDependencies.get(LayerType.PROJECT_DEPENDENCIES)))
           .toContainerBuilder();
 
     } catch (IOException ex) {
       throw new IOException(
-          "Obtaining project build output files failed; make sure you have compiled your project "
+          "Obtaining project build output files failed; make sure you have "
+              + (containerizingMode == ContainerizingMode.PACKAGED ? "packaged" : "compiled")
+              + " your project "
               + "before trying to build the image. (Did you accidentally run \"mvn clean "
-              + "jib:build\" instead of \"mvn clean compile jib:build\"?)",
+              + "jib:build\" instead of \"mvn clean "
+              + (containerizingMode == ContainerizingMode.PACKAGED ? "package" : "compile")
+              + " jib:build\"?)",
           ex);
     }
+  }
+
+  @VisibleForTesting
+  Map<LayerType, List<Path>> classifyDependencies(
+      Set<Artifact> dependencies, Set<Artifact> projectArtifacts) {
+    Map<LayerType, List<Path>> classifiedDependencies = new HashMap<>();
+    classifiedDependencies.put(LayerType.DEPENDENCIES, new ArrayList<>());
+    classifiedDependencies.put(LayerType.SNAPSHOT_DEPENDENCIES, new ArrayList<>());
+    classifiedDependencies.put(LayerType.PROJECT_DEPENDENCIES, new ArrayList<>());
+
+    for (Artifact artifact : dependencies) {
+      if (projectArtifacts.contains(artifact)) {
+        classifiedDependencies.get(LayerType.PROJECT_DEPENDENCIES).add(artifact.getFile().toPath());
+      } else if (artifact.isSnapshot()) {
+        classifiedDependencies
+            .get(LayerType.SNAPSHOT_DEPENDENCIES)
+            .add(artifact.getFile().toPath());
+      } else {
+        classifiedDependencies.get(LayerType.DEPENDENCIES).add(artifact.getFile().toPath());
+      }
+    }
+    return classifiedDependencies;
   }
 
   @Override
@@ -341,5 +401,21 @@ public class MavenProjectProperties implements ProjectProperties {
   @Override
   public boolean isOffline() {
     return session.isOffline();
+  }
+
+  /**
+   * Gets the path of the JAR that the Maven JAR Plugin would generate.
+   *
+   * <p>https://maven.apache.org/plugins/maven-jar-plugin/jar-mojo.html
+   * https://github.com/apache/maven-jar-plugin/blob/80f58a84aacff6e671f5a601d62a3a3800b507dc/src/main/java/org/apache/maven/plugins/jar/AbstractJarMojo.java#L177
+   *
+   * @return the path of the JAR
+   */
+  @VisibleForTesting
+  Path getJarArtifact() {
+    // TODO: use maven-jar-plugin's <outputDirectory> and <classifier> (i.e.,
+    // "<outputDirectory>/<finalName>-<classifier>.jar").
+    String jarName = project.getBuild().getFinalName() + ".jar";
+    return Paths.get(project.getBuild().getDirectory(), jarName);
   }
 }

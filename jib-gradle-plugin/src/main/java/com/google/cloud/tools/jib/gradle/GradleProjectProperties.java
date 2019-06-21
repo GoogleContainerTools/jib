@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
@@ -47,10 +48,13 @@ import org.apache.tools.ant.taskdefs.condition.Os;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
+import org.gradle.api.artifacts.ResolvedArtifact;
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.jvm.tasks.Jar;
 
@@ -122,17 +126,20 @@ class GradleProjectProperties implements ProjectProperties {
     if (logger.isErrorEnabled()) {
       consoleLoggerBuilder.error(logger::error);
     }
-    this.consoleLogger = consoleLoggerBuilder.build();
+    consoleLogger = consoleLoggerBuilder.build();
   }
 
   @Override
   public JibContainerBuilder createContainerBuilder(
-      RegistryImage baseImage, AbsoluteUnixPath appRoot) {
+      RegistryImage baseImage, AbsoluteUnixPath appRoot, ContainerizingMode containerizingMode) {
+    JavaContainerBuilder javaContainerBuilder =
+        JavaContainerBuilder.from(baseImage).setAppRoot(appRoot);
+
     try {
       if (isWarProject()) {
         logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
         Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
-        return JavaContainerBuilderHelper.fromExplodedWar(baseImage, explodedWarPath, appRoot);
+        return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
       }
 
       JavaPluginConvention javaPluginConvention =
@@ -143,36 +150,76 @@ class GradleProjectProperties implements ProjectProperties {
       FileCollection classesOutputDirectories =
           mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-      FileCollection allFiles = mainSourceSet.getRuntimeClasspath();
-      FileCollection dependencyFiles =
+      FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
+
+      FileCollection projectDependencies =
+          project.files(
+              project
+                  .getConfigurations()
+                  .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+                  .getResolvedConfiguration()
+                  .getResolvedArtifacts()
+                  .stream()
+                  .filter(
+                      artifact ->
+                          artifact.getId().getComponentIdentifier()
+                              instanceof ProjectComponentIdentifier)
+                  .map(ResolvedArtifact::getFile)
+                  .collect(Collectors.toList()));
+
+      FileCollection nonProjectDependencies =
           allFiles
               .minus(classesOutputDirectories)
+              .minus(projectDependencies)
               .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
 
-      JavaContainerBuilder javaContainerBuilder =
-          JavaContainerBuilder.from(baseImage).setAppRoot(appRoot);
-
-      // Adds resource files
-      if (Files.exists(resourcesOutputDirectory)) {
-        javaContainerBuilder.addResources(resourcesOutputDirectory);
-      }
-
-      // Adds class files
-      for (File classesOutputDirectory : classesOutputDirectories) {
-        javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
-      }
-      if (classesOutputDirectories.isEmpty()) {
-        logger.warn("No classes files were found - did you compile your project?");
-      }
+      FileCollection snapshotDependencies =
+          nonProjectDependencies.filter(file -> file.getName().contains("SNAPSHOT"));
+      FileCollection dependencies = nonProjectDependencies.minus(snapshotDependencies);
 
       // Adds dependency files
-      javaContainerBuilder.addDependencies(
-          dependencyFiles
-              .getFiles()
-              .stream()
-              .filter(File::exists)
-              .map(File::toPath)
-              .collect(Collectors.toList()));
+      javaContainerBuilder
+          .addDependencies(
+              dependencies.getFiles().stream().map(File::toPath).collect(Collectors.toList()))
+          .addSnapshotDependencies(
+              snapshotDependencies
+                  .getFiles()
+                  .stream()
+                  .map(File::toPath)
+                  .collect(Collectors.toList()))
+          .addProjectDependencies(
+              projectDependencies
+                  .getFiles()
+                  .stream()
+                  .map(File::toPath)
+                  .collect(Collectors.toList()));
+
+      switch (containerizingMode) {
+        case EXPLODED:
+          // Adds resource files
+          if (Files.exists(resourcesOutputDirectory)) {
+            javaContainerBuilder.addResources(resourcesOutputDirectory);
+          }
+
+          // Adds class files
+          for (File classesOutputDirectory : classesOutputDirectories) {
+            javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
+          }
+          if (classesOutputDirectories.isEmpty()) {
+            logger.warn("No classes files were found - did you compile your project?");
+          }
+          break;
+
+        case PACKAGED:
+          // Add a JAR
+          Jar jarTask = (Jar) project.getTasks().findByName("jar");
+          javaContainerBuilder.addToClasspath(
+              jarTask.getDestinationDir().toPath().resolve(jarTask.getArchiveName()));
+          break;
+
+        default:
+          throw new IllegalStateException("unknown containerizing mode: " + containerizingMode);
+      }
 
       return javaContainerBuilder.toContainerBuilder();
 
@@ -238,11 +285,11 @@ class GradleProjectProperties implements ProjectProperties {
   @Nullable
   @Override
   public String getMainClassFromJar() {
-    List<Task> jarTasks = new ArrayList<>(project.getTasksByName("jar", false));
-    if (jarTasks.size() != 1) {
+    Jar jarTask = (Jar) project.getTasks().findByName("jar");
+    if (jarTask == null) {
       return null;
     }
-    return (String) ((Jar) jarTasks.get(0)).getManifest().getAttributes().get("Main-Class");
+    return (String) jarTask.getManifest().getAttributes().get("Main-Class");
   }
 
   @Override
@@ -257,7 +304,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public boolean isWarProject() {
-    return TaskCommon.getWarTask(project) != null;
+    return project.getPlugins().hasPlugin(WarPlugin.class);
   }
 
   /**

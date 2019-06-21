@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -91,12 +92,12 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
   public CachedLayerAndName call() throws IOException, CacheCorruptedException {
     String description = String.format(DESCRIPTION, layerName);
 
-    buildConfiguration.getEventHandlers().dispatch(LogEvent.progress(description + "..."));
+    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    eventHandlers.dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create("building " + layerName + " layer", 1);
-        TimerEventDispatcher ignored2 =
-            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), description)) {
+        TimerEventDispatcher ignored2 = new TimerEventDispatcher(eventHandlers, description)) {
       Cache cache = buildConfiguration.getApplicationLayersCache();
 
       // Don't build the layer if it exists already.
@@ -110,9 +111,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
       CachedLayer cachedLayer =
           cache.writeUncompressedLayer(layerBlob, layerConfiguration.getLayerEntries());
 
-      buildConfiguration
-          .getEventHandlers()
-          .dispatch(LogEvent.debug(description + " built " + cachedLayer.getDigest()));
+      eventHandlers.dispatch(LogEvent.debug(description + " built " + cachedLayer.getDigest()));
 
       return new CachedLayerAndName(cachedLayer, layerName);
     }

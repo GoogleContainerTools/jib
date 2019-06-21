@@ -68,6 +68,7 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("", testPluginConfiguration.getAppRoot());
     Assert.assertNull(testPluginConfiguration.getWorkingDirectory());
     Assert.assertTrue(testPluginConfiguration.getExtraClasspath().isEmpty());
+    Assert.assertEquals("exploded", testPluginConfiguration.getContainerizingMode());
   }
 
   @Test
@@ -122,6 +123,8 @@ public class JibPluginConfigurationTest {
     sessionProperties.put("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
         ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
+    sessionProperties.put("jib.containerizingMode", "packaged");
+    Assert.assertEquals("packaged", testPluginConfiguration.getContainerizingMode());
 
     sessionProperties.put("jib.extraDirectories.paths", "custom-jib");
     Assert.assertEquals(
@@ -187,6 +190,8 @@ public class JibPluginConfigurationTest {
     project.getProperties().setProperty("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
         ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
+    project.getProperties().setProperty("jib.containerizingMode", "packaged");
+    Assert.assertEquals("packaged", testPluginConfiguration.getContainerizingMode());
 
     project.getProperties().setProperty("jib.extraDirectories.paths", "custom-jib");
     Assert.assertEquals(

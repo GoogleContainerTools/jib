@@ -16,7 +16,12 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.plugins.WarPlugin;
+import org.gradle.api.tasks.bundling.War;
+import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -25,6 +30,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.boot.gradle.plugin.SpringBootPlugin;
+import org.springframework.boot.gradle.tasks.bundling.BootWar;
 
 /** Tests for {@link TaskCommon}. */
 @RunWith(MockitoJUnitRunner.class)
@@ -122,5 +129,48 @@ public class TaskCommonTest {
           "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
           ex.getMessage());
     }
+  }
+
+  @Test
+  public void testGetWarTask_normalJavaProject() {
+    Project project = ProjectBuilder.builder().build();
+    project.getPlugins().apply(JavaPlugin.class);
+
+    War warTask = TaskCommon.getWarTask(project);
+
+    Assert.assertNull(warTask);
+  }
+
+  @Test
+  public void testGetWarTask_bootJavaProject() {
+    Project project = ProjectBuilder.builder().build();
+    project.getPlugins().apply(JavaPlugin.class);
+    project.getPlugins().apply(SpringBootPlugin.class);
+
+    War warTask = TaskCommon.getWarTask(project);
+
+    Assert.assertNull(warTask);
+  }
+
+  @Test
+  public void testGetWarTask_normalWarProject() {
+    Project project = ProjectBuilder.builder().build();
+    project.getPlugins().apply(WarPlugin.class);
+
+    War warTask = TaskCommon.getWarTask(project);
+
+    Assert.assertNotNull(warTask);
+  }
+
+  @Test
+  public void testGetWarTask_bootWarProject() {
+    Project project = ProjectBuilder.builder().build();
+    project.getPlugins().apply(WarPlugin.class);
+    project.getPlugins().apply(SpringBootPlugin.class);
+
+    War warTask = TaskCommon.getWarTask(project);
+
+    Assert.assertNotNull(warTask);
+    Assert.assertTrue(warTask instanceof BootWar);
   }
 }

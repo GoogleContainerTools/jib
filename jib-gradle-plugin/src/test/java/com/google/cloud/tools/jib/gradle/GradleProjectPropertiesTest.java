@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -50,6 +51,8 @@ import java.util.stream.Collectors;
 import org.gradle.StartParameter;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.AbstractFileCollection;
 import org.gradle.api.internal.file.FileResolver;
@@ -59,8 +62,10 @@ import org.gradle.api.java.archives.internal.DefaultManifest;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.api.plugins.Convention;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.plugins.WarPluginConvention;
+import org.gradle.api.plugins.PluginContainer;
+import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
@@ -83,6 +88,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 /** Test for {@link GradleProjectProperties}. */
 @RunWith(MockitoJUnitRunner.class)
 public class GradleProjectPropertiesTest {
+
+  private static final ContainerizingMode DEFAULT_CONTAINERIZING_MODE = ContainerizingMode.EXPLODED;
 
   /** Implementation of {@link FileCollection} that just holds a set of {@link File}s. */
   private static class TestFileCollection extends AbstractFileCollection {
@@ -164,11 +171,10 @@ public class GradleProjectPropertiesTest {
 
   @Mock private FileResolver mockFileResolver;
   @Mock private Jar mockJar;
-  @Mock private Jar mockJar2;
   @Mock private Project mockProject;
   @Mock private Convention mockConvention;
-  @Mock private WarPluginConvention mockWarPluginConvention;
   @Mock private TaskContainer mockTaskContainer;
+  @Mock private PluginContainer mockPluginContainer;
   @Mock private Logger mockLogger;
   @Mock private Gradle mockGradle;
   @Mock private StartParameter mockStartParameter;
@@ -176,7 +182,6 @@ public class GradleProjectPropertiesTest {
   @Mock private SourceSetContainer mockSourceSetContainer;
   @Mock private SourceSet mockMainSourceSet;
   @Mock private SourceSetOutput mockMainSourceSetOutput;
-  @Mock private TaskContainer taskContainer;
   @Mock private War war;
 
   private Manifest manifest;
@@ -190,10 +195,26 @@ public class GradleProjectPropertiesTest {
         .thenReturn(mockJavaPluginConvention);
     Mockito.when(mockJavaPluginConvention.getSourceSets()).thenReturn(mockSourceSetContainer);
     Mockito.when(mockProject.getTasks()).thenReturn(mockTaskContainer);
+    Mockito.when(mockProject.getPlugins()).thenReturn(mockPluginContainer);
     Mockito.when(mockJar.getManifest()).thenReturn(manifest);
     Mockito.when(mockProject.getGradle()).thenReturn(mockGradle);
     Mockito.when(mockGradle.getStartParameter()).thenReturn(mockStartParameter);
     Mockito.when(mockStartParameter.getConsoleOutput()).thenReturn(ConsoleOutput.Auto);
+
+    // mocking to complete ignore project dependency resolution
+    Mockito.when(mockProject.getConfigurations())
+        .thenReturn(Mockito.mock(ConfigurationContainer.class, Mockito.RETURNS_DEEP_STUBS));
+    Mockito.when(
+            mockProject
+                .getConfigurations()
+                .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+                .getResolvedConfiguration()
+                .getResolvedArtifacts())
+        .thenReturn(ImmutableSet.of());
+    ConfigurableFileCollection emptyFileCollection = Mockito.mock(ConfigurableFileCollection.class);
+    Mockito.when(emptyFileCollection.getFiles()).thenReturn(ImmutableSet.of());
+    Mockito.when(mockProject.files(ImmutableList.of())).thenReturn(emptyFileCollection);
+    // done mocking project dependency resolution
 
     Set<Path> classesFiles = ImmutableSet.of(getResource("gradle/application/classes"));
     FileCollection classesFileCollection = new TestFileCollection(classesFiles);
@@ -227,21 +248,13 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testGetMainClassFromJar_success() {
     manifest.attributes(ImmutableMap.of("Main-Class", "some.main.class"));
-    Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(ImmutableSet.of(mockJar));
+    Mockito.when(mockTaskContainer.findByName("jar")).thenReturn(mockJar);
     Assert.assertEquals("some.main.class", gradleProjectProperties.getMainClassFromJar());
   }
 
   @Test
   public void testGetMainClassFromJar_missing() {
-    Mockito.when(mockProject.getTasksByName("jar", false)).thenReturn(Collections.emptySet());
-    Assert.assertNull(gradleProjectProperties.getMainClassFromJar());
-  }
-
-  @Test
-  public void testGetMainClassFromJar_multiple() {
-    manifest.attributes(ImmutableMap.of("Main-Class", "some.main.class"));
-    Mockito.when(mockProject.getTasksByName("jar", false))
-        .thenReturn(ImmutableSet.of(mockJar, mockJar2));
+    Mockito.when(mockTaskContainer.findByName("jar")).thenReturn(null);
     Assert.assertNull(gradleProjectProperties.getMainClassFromJar());
   }
 
@@ -260,7 +273,7 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testGetWar_noWarPlugin() throws URISyntaxException {
     setUpWarProject(getResource("gradle/webapp"));
-    Mockito.when(mockConvention.findPlugin(WarPluginConvention.class)).thenReturn(null);
+    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(false);
 
     Assert.assertNull(TaskCommon.getWarTask(mockProject));
   }
@@ -361,7 +374,9 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
     gradleProjectProperties.createContainerBuilder(
-        RegistryImage.named("base"), AbsoluteUnixPath.get("/anything"));
+        RegistryImage.named("base"),
+        AbsoluteUnixPath.get("/anything"),
+        DEFAULT_CONTAINERIZING_MODE);
     Mockito.verify(mockLogger).warn("No classes files were found - did you compile your project?");
   }
 
@@ -552,7 +567,10 @@ public class GradleProjectPropertiesTest {
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JibContainerBuilder jibContainerBuilder =
         new GradleProjectProperties(mockProject, mockLogger)
-            .createContainerBuilder(RegistryImage.named("base"), AbsoluteUnixPath.get(appRoot));
+            .createContainerBuilder(
+                RegistryImage.named("base"),
+                AbsoluteUnixPath.get(appRoot),
+                DEFAULT_CONTAINERIZING_MODE);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         jibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))
@@ -561,11 +579,7 @@ public class GradleProjectPropertiesTest {
 
   private void setUpWarProject(Path webAppDirectory) {
     Mockito.when(mockProject.getBuildDir()).thenReturn(webAppDirectory.toFile());
-    Mockito.when(mockProject.getConvention()).thenReturn(mockConvention);
-    Mockito.when(mockConvention.findPlugin(WarPluginConvention.class))
-        .thenReturn(mockWarPluginConvention);
-    Mockito.when(mockWarPluginConvention.getProject()).thenReturn(mockProject);
-    Mockito.when(mockProject.getTasks()).thenReturn(taskContainer);
-    Mockito.when(taskContainer.findByName("war")).thenReturn(war);
+    Mockito.when(mockTaskContainer.findByName("war")).thenReturn(war);
+    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
   }
 }

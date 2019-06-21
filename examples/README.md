@@ -1,5 +1,3 @@
-[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/examples)](https://github.com/igrigorik/ga-beacon)
-
 # Example projects containerizing with Jib
 
 Please [file an issue](/../../issues/new) if you find any problems with the examples or would like to request other examples.
