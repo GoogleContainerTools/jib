@@ -48,8 +48,11 @@ import org.apache.tools.ant.taskdefs.condition.Os;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.ResolvedArtifact;
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.SourceSet;
@@ -149,21 +152,43 @@ class GradleProjectProperties implements ProjectProperties {
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
       FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
 
-      FileCollection allDependencyFiles =
+      FileCollection projectDependencies =
+          project.files(
+              project
+                  .getConfigurations()
+                  .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+                  .getResolvedConfiguration()
+                  .getResolvedArtifacts()
+                  .stream()
+                  .filter(
+                      artifact ->
+                          artifact.getId().getComponentIdentifier()
+                              instanceof ProjectComponentIdentifier)
+                  .map(ResolvedArtifact::getFile)
+                  .collect(Collectors.toList()));
+
+      FileCollection nonProjectDependencies =
           allFiles
               .minus(classesOutputDirectories)
+              .minus(projectDependencies)
               .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
 
-      FileCollection snapshotDependencyFiles =
-          allDependencyFiles.filter(file -> file.getName().contains("SNAPSHOT"));
-      FileCollection dependencyFiles = allDependencyFiles.minus(snapshotDependencyFiles);
+      FileCollection snapshotDependencies =
+          nonProjectDependencies.filter(file -> file.getName().contains("SNAPSHOT"));
+      FileCollection dependencies = nonProjectDependencies.minus(snapshotDependencies);
 
       // Adds dependency files
       javaContainerBuilder
           .addDependencies(
-              dependencyFiles.getFiles().stream().map(File::toPath).collect(Collectors.toList()))
+              dependencies.getFiles().stream().map(File::toPath).collect(Collectors.toList()))
           .addSnapshotDependencies(
-              snapshotDependencyFiles
+              snapshotDependencies
+                  .getFiles()
+                  .stream()
+                  .map(File::toPath)
+                  .collect(Collectors.toList()))
+          .addProjectDependencies(
+              projectDependencies
                   .getFiles()
                   .stream()
                   .map(File::toPath)

@@ -51,6 +51,8 @@ import java.util.stream.Collectors;
 import org.gradle.StartParameter;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.AbstractFileCollection;
 import org.gradle.api.internal.file.FileResolver;
@@ -60,6 +62,7 @@ import org.gradle.api.java.archives.internal.DefaultManifest;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.api.plugins.Convention;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.plugins.WarPlugin;
@@ -197,6 +200,21 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockProject.getGradle()).thenReturn(mockGradle);
     Mockito.when(mockGradle.getStartParameter()).thenReturn(mockStartParameter);
     Mockito.when(mockStartParameter.getConsoleOutput()).thenReturn(ConsoleOutput.Auto);
+
+    // mocking to complete ignore project dependency resolution
+    Mockito.when(mockProject.getConfigurations())
+        .thenReturn(Mockito.mock(ConfigurationContainer.class, Mockito.RETURNS_DEEP_STUBS));
+    Mockito.when(
+            mockProject
+                .getConfigurations()
+                .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+                .getResolvedConfiguration()
+                .getResolvedArtifacts())
+        .thenReturn(ImmutableSet.of());
+    ConfigurableFileCollection emptyFileCollection = Mockito.mock(ConfigurableFileCollection.class);
+    Mockito.when(emptyFileCollection.getFiles()).thenReturn(ImmutableSet.of());
+    Mockito.when(mockProject.files(ImmutableList.of())).thenReturn(emptyFileCollection);
+    // done mocking project dependency resolution
 
     Set<Path> classesFiles = ImmutableSet.of(getResource("gradle/application/classes"));
     FileCollection classesFileCollection = new TestFileCollection(classesFiles);
