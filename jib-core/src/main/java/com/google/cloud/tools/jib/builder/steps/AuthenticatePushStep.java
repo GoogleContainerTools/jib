@@ -66,7 +66,7 @@ class AuthenticatePushStep implements Callable<Optional<Authorization>> {
               .newRegistryClient()
               .getRegistryAuthenticator();
       if (registryAuthenticator != null) {
-        return Optional.ofNullable(registryAuthenticator.authenticatePush(registryCredential));
+        return Optional.of(registryAuthenticator.authenticatePush(registryCredential));
       }
     } catch (InsecureRegistryException ex) {
       // Cannot skip certificate validation or use HTTP; fall through.
@@ -74,7 +74,7 @@ class AuthenticatePushStep implements Callable<Optional<Authorization>> {
 
     return (registryCredential == null || registryCredential.isOAuth2RefreshToken())
         ? Optional.empty()
-        : Optional.ofNullable(
+        : Optional.of(
             Authorization.fromBasicCredentials(
                 registryCredential.getUsername(), registryCredential.getPassword()));
   }
