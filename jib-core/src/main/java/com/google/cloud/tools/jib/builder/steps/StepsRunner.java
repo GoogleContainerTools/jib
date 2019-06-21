@@ -308,7 +308,7 @@ public class StepsRunner {
 
               List<Future<BuildResult>> manifestPushResults =
                   scheduleCallables(
-                      PushManifestStep.makeList(
+                      PushImageStep.makeList(
                           buildConfiguration,
                           childProgressDispatcherFactory,
                           results.pushAuthorization.get(),

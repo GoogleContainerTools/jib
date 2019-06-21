@@ -39,11 +39,11 @@ import java.util.concurrent.Callable;
  * Pushes a manifest for a tag. Returns the manifest digest ("image digest") and the container
  * configuration digest ("image id") as {#link BuildResult}.
  */
-class PushManifestStep implements Callable<BuildResult> {
+class PushImageStep implements Callable<BuildResult> {
 
   private static final String DESCRIPTION = "Pushing manifest";
 
-  static ImmutableList<PushManifestStep> makeList(
+  static ImmutableList<PushImageStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Authorization pushAuthorization,
@@ -69,7 +69,7 @@ class PushManifestStep implements Callable<BuildResult> {
       return tags.stream()
           .map(
               tag ->
-                  new PushManifestStep(
+                  new PushImageStep(
                       buildConfiguration,
                       progressEventDispatcher.newChildProducer(),
                       pushAuthorization,
@@ -81,7 +81,7 @@ class PushManifestStep implements Callable<BuildResult> {
     }
   }
 
-  PushManifestStep(
+  PushImageStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Authorization pushAuthorization,
