@@ -25,9 +25,9 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -38,6 +38,25 @@ import javax.annotation.Nullable;
  * <pre>{@code Authorization: <scheme> <token>}</pre>
  */
 public class Authorization {
+
+  /**
+   * @param username the username
+   * @param secret the secret
+   * @return an {@link Authorization} with a {@code Basic} credentials
+   */
+  public static Authorization fromBasicCredentials(String username, String secret) {
+    String credentials = username + ":" + secret;
+    String token = Base64.encodeBase64String(credentials.getBytes(StandardCharsets.UTF_8));
+    return new Authorization("Basic", token, null);
+  }
+
+  /**
+   * @param token the token
+   * @return an {@link Authorization} with a base64-encoded {@code username:password} string
+   */
+  public static Authorization fromBasicToken(String token) {
+    return new Authorization("Basic", token, null);
+  }
 
   /**
    * @param token the token
@@ -52,8 +71,8 @@ public class Authorization {
    * Token</a> to list the granted repositories with their levels of access.
    *
    * @param token a Docker Registry Bearer Token
-   * @return a mapping of repository to granted access scopes, or {@code null} if there is no JWT
-   *     the token is not a Docker Registry Bearer Token
+   * @return a mapping of repository to granted access scopes, or {@code null} if the token is not a
+   *     Docker Registry Bearer Token
    */
   @VisibleForTesting
   @Nullable
@@ -79,45 +98,33 @@ public class Authorization {
     //   "sub":"e3ae001d-xxx"
     // }
     //
-    TokenPayloadTemplate payload;
     try {
-      payload = JsonTemplateMapper.readJson(payloadData, TokenPayloadTemplate.class);
+      TokenPayloadTemplate payload =
+          JsonTemplateMapper.readJson(payloadData, TokenPayloadTemplate.class);
+      if (payload.access == null) {
+        return null;
+      }
+      return payload
+          .access
+          .stream()
+          .filter(claim -> "repository".equals(claim.type))
+          .collect(
+              ImmutableSetMultimap.<AccessClaim, String, String>flatteningToImmutableSetMultimap(
+                  claim -> claim.name,
+                  claim -> claim.actions == null ? Stream.empty() : claim.actions.stream()));
     } catch (IOException ex) {
       return null;
     }
-    if (payload.access == null) {
-      return null;
-    }
-    return payload
-        .access
-        .stream()
-        .filter(claim -> "repository".equals(claim.type))
-        .collect(
-            ImmutableSetMultimap.<AccessClaim, String, String>flatteningToImmutableSetMultimap(
-                claim -> claim.name, claim -> claim.actions.stream()));
-  }
-
-  /**
-   * @param username the username
-   * @param secret the secret
-   * @return an {@link Authorization} with a {@code Basic} credentials
-   */
-  public static Authorization fromBasicCredentials(String username, String secret) {
-    String credentials = username + ":" + secret;
-    String token = Base64.encodeBase64String(credentials.getBytes(StandardCharsets.UTF_8));
-    return new Authorization("Basic", token, null);
-  }
-
-  /**
-   * @param token the token
-   * @return an {@link Authorization} with a base64-encoded {@code username:password} string
-   */
-  public static Authorization fromBasicToken(String token) {
-    return new Authorization("Basic", token, null);
   }
 
   private final String scheme;
   private final String token;
+
+  /**
+   * If token is a Docker Registry Bearer Token, then {@link #repositoryGrants} will contain a map
+   * of repository to the access grant information extracted from the token. Otherwise, it must be
+   * {@code null}, indicating that access to all repositories are permitted.
+   */
   @Nullable private final Multimap<String, String> repositoryGrants;
 
   private Authorization(
@@ -191,6 +198,6 @@ public class Authorization {
   private static class AccessClaim implements JsonTemplate {
     @Nullable private String type;
     @Nullable private String name;
-    private List<String> actions = new ArrayList<>();
+    @Nullable private List<String> actions;
   }
 }

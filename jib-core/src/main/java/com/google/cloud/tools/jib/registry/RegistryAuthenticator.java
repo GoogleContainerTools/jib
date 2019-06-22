@@ -234,7 +234,7 @@ public class RegistryAuthenticator {
    */
   private Authorization authenticate(@Nullable Credential credential, String scope)
       throws RegistryAuthenticationFailedException {
-    // try authorizing againat both the main repository and the source repository too
+    // try authorizing against both the main repository and the source repository too
     // to enable cross-repository mounts on pushes
     if (registryEndpointRequestProperties.getSourceImageName() != null) {
       try {
