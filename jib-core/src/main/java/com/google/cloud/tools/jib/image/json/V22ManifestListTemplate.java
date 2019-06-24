@@ -73,7 +73,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     return SCHEMA_VERSION;
   }
 
-  private List<ManifestDescriptorTemplate> manifests;
+  @Nullable private List<ManifestDescriptorTemplate> manifests;
 
   @VisibleForTesting
   List<ManifestDescriptorTemplate> getManifests() {
@@ -82,7 +82,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
   }
 
   public List<String> getDigestsForPlatform(String architecture, String os) {
-    return manifests
+    return getManifests()
         .stream()
         .filter(
             manifest ->
