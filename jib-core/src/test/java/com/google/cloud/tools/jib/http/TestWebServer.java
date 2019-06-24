@@ -105,11 +105,10 @@ public class TestWebServer implements Closeable {
   private Void serveResponses() throws IOException {
     threadStarted.release();
     try (Socket socket = serverSocket.accept()) {
+      InputStream in = socket.getInputStream();
+      BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 
       for (String response : responses) {
-        InputStream in = socket.getInputStream();
-        BufferedReader reader =
-            new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
         for (String line = reader.readLine();
             line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
             line = reader.readLine()) {
