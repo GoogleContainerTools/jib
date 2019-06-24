@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.image.json;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -73,10 +74,11 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     return SCHEMA_VERSION;
   }
 
-  private List<ManifestDescriptorTemplate> manifests = new ArrayList<>();
+  private List<ManifestDescriptorTemplate> manifests;
 
   @VisibleForTesting
   List<ManifestDescriptorTemplate> getManifests() {
+    Preconditions.checkNotNull(manifests);
     return manifests;
   }
 
@@ -84,18 +86,10 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     return manifests
         .stream()
         .filter(
-            manifest -> {
-              if (manifest.platform == null) {
-                return false;
-              }
-              if (!os.equals(manifest.platform.os)) {
-                return false;
-              }
-              if (!architecture.equals(manifest.platform.architecture)) {
-                return false;
-              }
-              return true;
-            })
+            manifest ->
+                manifest.platform != null
+                    && os.equals(manifest.platform.os)
+                    && architecture.equals(manifest.platform.architecture))
         .map(ManifestDescriptorTemplate::getDigest)
         .collect(Collectors.toList());
   }
@@ -112,6 +106,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     static class Platform implements JsonTemplate {
       @Nullable private String architecture;
       @Nullable private String os;
+
       // ignored properties
       @Nullable
       @JsonProperty("os.version")
@@ -123,9 +118,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
 
       @Nullable private String variant;
       @Nullable private List<String> features;
-
-      /** Required by Jackson-JSON */
-      private Platform() {}
+      // end ignored
 
       @Nullable
       String getArchitecture() {
@@ -143,17 +136,8 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     private long size;
     @Nullable private Platform platform;
 
-    /** Required by Jackson-JSON */
-    public ManifestDescriptorTemplate() {}
-
-    @VisibleForTesting
-    long getSize() {
-      return size;
-    }
-
-    @VisibleForTesting
     @Nullable
-    String getDigest() {
+    private String getDigest() {
       return digest;
     }
 
