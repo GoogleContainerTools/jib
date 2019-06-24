@@ -35,7 +35,6 @@ public class HelloWorld {
     String greeting = Greeting.getGreeting();
 
     // Gets the contents of the resource file 'world'.
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     try (BufferedReader reader =
         new BufferedReader(
             new InputStreamReader(

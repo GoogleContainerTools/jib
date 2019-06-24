@@ -91,7 +91,7 @@ public class JibBuildRunnerTest {
     try {
       testJibBuildRunner.build(
           mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
+      Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forHttpHostConnect(), ex.getMessage());
@@ -110,7 +110,7 @@ public class JibBuildRunnerTest {
     try {
       testJibBuildRunner.build(
           mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
+      Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forUnknownHost(), ex.getMessage());
@@ -130,7 +130,7 @@ public class JibBuildRunnerTest {
     try {
       testJibBuildRunner.build(
           mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
+      Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forInsecureRegistry(), ex.getMessage());
@@ -155,7 +155,7 @@ public class JibBuildRunnerTest {
     try {
       testJibBuildRunner.build(
           mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
+      Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(
@@ -181,7 +181,7 @@ public class JibBuildRunnerTest {
     try {
       testJibBuildRunner.build(
           mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
+      Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(
@@ -201,7 +201,7 @@ public class JibBuildRunnerTest {
     try {
       testJibBuildRunner.build(
           mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
+      Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.forCredentialsNotSent(), ex.getMessage());
@@ -212,15 +212,14 @@ public class JibBuildRunnerTest {
   public void testBuildImage_other()
       throws InterruptedException, IOException, CacheDirectoryCreationException, RegistryException,
           ExecutionException {
-    RegistryException registryException = new RegistryException("messagePrefix");
-    Mockito.doThrow(registryException)
+    Mockito.doThrow(new RegistryException("messagePrefix"))
         .when(mockJibContainerBuilder)
         .containerize(mockContainerizer);
 
     try {
       testJibBuildRunner.build(
           mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
-      Assert.fail("buildImage should have thrown an exception");
+      Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(TEST_HELPFUL_SUGGESTIONS.none(), ex.getMessage());

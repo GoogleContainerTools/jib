@@ -300,7 +300,7 @@ public class BuildImageMojoIntegrationTest {
             .trim());
   }
 
-  private static void assertLayerSizer(int expected, String imageReference)
+  private static void assertLayerSize(int expected, String imageReference)
       throws IOException, InterruptedException {
     Command command =
         new Command("docker", "inspect", "-f", "{{join .RootFS.Layers \",\"}}", imageReference);
@@ -369,7 +369,7 @@ public class BuildImageMojoIntegrationTest {
             new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
     Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
     assertWorkingDirectory("/home", targetImage);
-    assertLayerSizer(8, targetImage);
+    assertLayerSize(8, targetImage);
   }
 
   @Test
@@ -451,7 +451,7 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\nbaz\n1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-extra-dirs.xml", false));
-    assertLayerSizer(9, targetImage); // one more than usual
+    assertLayerSize(9, targetImage); // one more than usual
   }
 
   @Test

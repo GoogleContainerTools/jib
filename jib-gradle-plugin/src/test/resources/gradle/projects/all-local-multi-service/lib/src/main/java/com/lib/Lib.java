@@ -14,18 +14,12 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.async;
+package com.lib;
 
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
+/** Shared Code! */
+public class Lib {
 
-/** Static methods for {@link AsyncStep}. */
-public class AsyncSteps {
-
-  public static <T> AsyncStep<T> immediate(T returnValue) {
-    ListenableFuture<T> future = Futures.immediateFuture(returnValue);
-    return () -> future;
+  public String getThing() {
+    return "thing";
   }
-
-  private AsyncSteps() {}
 }

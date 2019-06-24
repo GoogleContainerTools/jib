@@ -234,8 +234,7 @@ public class PluginConfigurationProcessor {
       }
     }
 
-    PluginConfigurationProcessor.configureContainerizer(
-        containerizer, rawConfiguration, projectProperties);
+    configureContainerizer(containerizer, rawConfiguration, projectProperties);
 
     return new PluginConfigurationProcessor(
         jibContainerBuilder,
@@ -421,6 +420,10 @@ public class PluginConfigurationProcessor {
       throws InvalidContainerizingModeException {
     String rawMode = rawConfiguration.getContainerizingMode();
     try {
+      if (!rawMode.toLowerCase(Locale.US).equals(rawMode)) {
+        throw new InvalidContainerizingModeException(rawMode, rawMode);
+      }
+
       ContainerizingMode mode = ContainerizingMode.valueOf(rawMode.toUpperCase(Locale.US));
       if (mode == ContainerizingMode.PACKAGED && projectProperties.isWarProject()) {
         throw new UnsupportedOperationException(

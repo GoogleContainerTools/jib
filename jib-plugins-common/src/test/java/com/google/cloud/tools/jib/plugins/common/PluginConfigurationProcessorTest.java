@@ -625,6 +625,20 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testGetContainerizingModeChecked_caseSensitive() {
+    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("PACKAGED");
+
+    try {
+      PluginConfigurationProcessor.getContainerizingModeChecked(
+          rawConfiguration, projectProperties);
+      Assert.fail();
+    } catch (InvalidContainerizingModeException ex) {
+      Assert.assertEquals("PACKAGED", ex.getInvalidContainerizingMode());
+      Assert.assertEquals("PACKAGED", ex.getMessage());
+    }
+  }
+
+  @Test
   public void testGetContainerizingModeChecked_invalidValue() {
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("this is wrong");
 

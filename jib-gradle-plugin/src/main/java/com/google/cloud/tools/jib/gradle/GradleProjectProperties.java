@@ -49,10 +49,13 @@ import org.apache.tools.ant.taskdefs.condition.Os;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
+import org.gradle.api.artifacts.ResolvedArtifact;
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.Logger;
+import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.jvm.tasks.Jar;
 
@@ -124,7 +127,7 @@ class GradleProjectProperties implements ProjectProperties {
     if (logger.isErrorEnabled()) {
       consoleLoggerBuilder.error(logger::error);
     }
-    this.consoleLogger = consoleLoggerBuilder.build();
+    consoleLogger = consoleLoggerBuilder.build();
   }
 
   @Override
@@ -155,39 +158,76 @@ class GradleProjectProperties implements ProjectProperties {
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
       FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
 
-      FileCollection allDependencyFiles =
+      FileCollection projectDependencies =
+          project.files(
+              project
+                  .getConfigurations()
+                  .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+                  .getResolvedConfiguration()
+                  .getResolvedArtifacts()
+                  .stream()
+                  .filter(
+                      artifact ->
+                          artifact.getId().getComponentIdentifier()
+                              instanceof ProjectComponentIdentifier)
+                  .map(ResolvedArtifact::getFile)
+                  .collect(Collectors.toList()));
+
+      FileCollection nonProjectDependencies =
           allFiles
               .minus(classesOutputDirectories)
+              .minus(projectDependencies)
               .filter(file -> !file.toPath().equals(resourcesOutputDirectory));
 
-      FileCollection snapshotDependencyFiles =
-          allDependencyFiles.filter(file -> file.getName().contains("SNAPSHOT"));
-      FileCollection dependencyFiles = allDependencyFiles.minus(snapshotDependencyFiles);
-
-      // Adds resource files
-      if (Files.exists(resourcesOutputDirectory)) {
-        javaContainerBuilder.addResources(resourcesOutputDirectory);
-      }
-
-      // Adds class files
-      for (File classesOutputDirectory : classesOutputDirectories) {
-        javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
-      }
-      if (classesOutputDirectories.isEmpty()) {
-        logger.warn("No classes files were found - did you compile your project?");
-      }
+      FileCollection snapshotDependencies =
+          nonProjectDependencies.filter(file -> file.getName().contains("SNAPSHOT"));
+      FileCollection dependencies = nonProjectDependencies.minus(snapshotDependencies);
 
       // Adds dependency files
-      return javaContainerBuilder
+      javaContainerBuilder
           .addDependencies(
-              dependencyFiles.getFiles().stream().map(File::toPath).collect(Collectors.toList()))
+              dependencies.getFiles().stream().map(File::toPath).collect(Collectors.toList()))
           .addSnapshotDependencies(
-              snapshotDependencyFiles
+              snapshotDependencies
                   .getFiles()
                   .stream()
                   .map(File::toPath)
                   .collect(Collectors.toList()))
-          .toContainerBuilder();
+          .addProjectDependencies(
+              projectDependencies
+                  .getFiles()
+                  .stream()
+                  .map(File::toPath)
+                  .collect(Collectors.toList()));
+
+      switch (containerizingMode) {
+        case EXPLODED:
+          // Adds resource files
+          if (Files.exists(resourcesOutputDirectory)) {
+            javaContainerBuilder.addResources(resourcesOutputDirectory);
+          }
+
+          // Adds class files
+          for (File classesOutputDirectory : classesOutputDirectories) {
+            javaContainerBuilder.addClasses(classesOutputDirectory.toPath());
+          }
+          if (classesOutputDirectories.isEmpty()) {
+            logger.warn("No classes files were found - did you compile your project?");
+          }
+          break;
+
+        case PACKAGED:
+          // Add a JAR
+          Jar jarTask = (Jar) project.getTasks().findByName("jar");
+          javaContainerBuilder.addToClasspath(
+              jarTask.getDestinationDir().toPath().resolve(jarTask.getArchiveName()));
+          break;
+
+        default:
+          throw new IllegalStateException("unknown containerizing mode: " + containerizingMode);
+      }
+
+      return javaContainerBuilder.toContainerBuilder();
 
     } catch (IOException ex) {
       throw new GradleException("Obtaining project build output files failed", ex);
@@ -251,11 +291,11 @@ class GradleProjectProperties implements ProjectProperties {
   @Nullable
   @Override
   public String getMainClassFromJar() {
-    List<Task> jarTasks = new ArrayList<>(project.getTasksByName("jar", false));
-    if (jarTasks.size() != 1) {
+    Jar jarTask = (Jar) project.getTasks().findByName("jar");
+    if (jarTask == null) {
       return null;
     }
-    return (String) ((Jar) jarTasks.get(0)).getManifest().getAttributes().get("Main-Class");
+    return (String) jarTask.getManifest().getAttributes().get("Main-Class");
   }
 
   @Override
@@ -270,7 +310,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public boolean isWarProject() {
-    return TaskCommon.getWarTask(project) != null;
+    return project.getPlugins().hasPlugin(WarPlugin.class);
   }
 
   /**

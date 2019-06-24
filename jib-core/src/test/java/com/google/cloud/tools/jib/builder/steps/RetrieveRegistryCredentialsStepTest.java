@@ -26,7 +26,6 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -46,7 +45,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class RetrieveRegistryCredentialsStepTest {
 
   @Mock private EventHandlers mockEventHandlers;
-  @Mock private ListeningExecutorService mockListeningExecutorService;
 
   @Test
   public void testCall_retrieved() throws CredentialRetrievalException, IOException {
@@ -62,14 +60,12 @@ public class RetrieveRegistryCredentialsStepTest {
     Assert.assertEquals(
         Credential.from("baseusername", "basepassword"),
         RetrieveRegistryCredentialsStep.forBaseImage(
-                mockListeningExecutorService,
                 buildConfiguration,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
             .call());
     Assert.assertEquals(
         Credential.from("targetusername", "targetpassword"),
         RetrieveRegistryCredentialsStep.forTargetImage(
-                mockListeningExecutorService,
                 buildConfiguration,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
             .call());
@@ -82,7 +78,6 @@ public class RetrieveRegistryCredentialsStepTest {
             Arrays.asList(Optional::empty, Optional::empty), Collections.emptyList());
     Assert.assertNull(
         RetrieveRegistryCredentialsStep.forBaseImage(
-                mockListeningExecutorService,
                 buildConfiguration,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
             .call());
@@ -94,7 +89,6 @@ public class RetrieveRegistryCredentialsStepTest {
 
     Assert.assertNull(
         RetrieveRegistryCredentialsStep.forTargetImage(
-                mockListeningExecutorService,
                 buildConfiguration,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
             .call());
@@ -116,7 +110,6 @@ public class RetrieveRegistryCredentialsStepTest {
             Collections.emptyList());
     try {
       RetrieveRegistryCredentialsStep.forBaseImage(
-              mockListeningExecutorService,
               buildConfiguration,
               ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
           .call();

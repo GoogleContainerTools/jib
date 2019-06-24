@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.api;
 // TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
@@ -31,6 +32,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -67,18 +69,7 @@ public class Containerizer {
             .build();
 
     Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
-        buildConfiguration ->
-            StepsRunner.begin(buildConfiguration)
-                .retrieveTargetRegistryCredentials()
-                .authenticatePush()
-                .pullBaseImage()
-                .pullAndCacheBaseImageLayers()
-                .pushBaseImageLayers()
-                .buildAndCacheApplicationLayers()
-                .buildImage()
-                .pushContainerConfiguration()
-                .pushApplicationLayers()
-                .pushImage();
+        buildConfiguration -> StepsRunner.begin(buildConfiguration).registryPushSteps();
 
     return new Containerizer(
         DESCRIPTION_FOR_DOCKER_REGISTRY, imageConfiguration, stepsRunnerFactory, true);
@@ -101,12 +92,7 @@ public class Containerizer {
 
     Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
         buildConfiguration ->
-            StepsRunner.begin(buildConfiguration)
-                .pullBaseImage()
-                .pullAndCacheBaseImageLayers()
-                .buildAndCacheApplicationLayers()
-                .buildImage()
-                .loadDocker(dockerClientBuilder.build());
+            StepsRunner.begin(buildConfiguration).dockerLoadSteps(dockerClientBuilder.build());
 
     return new Containerizer(
         DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, false);
@@ -124,12 +110,7 @@ public class Containerizer {
 
     Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
         buildConfiguration ->
-            StepsRunner.begin(buildConfiguration)
-                .pullBaseImage()
-                .pullAndCacheBaseImageLayers()
-                .buildAndCacheApplicationLayers()
-                .buildImage()
-                .writeTarFile(tarImage.getOutputFile());
+            StepsRunner.begin(buildConfiguration).tarBuildSteps(tarImage.getOutputFile());
 
     return new Containerizer(
         DESCRIPTION_FOR_TARBALL, imageConfiguration, stepsRunnerFactory, false);
@@ -303,9 +284,8 @@ public class Containerizer {
     if (applicationLayersCacheDirectory == null) {
       // Uses a temporary directory if application layers cache directory is not set.
       try {
-        Path temporaryDirectory = Files.createTempDirectory(null);
-        temporaryDirectory.toFile().deleteOnExit();
-        this.applicationLayersCacheDirectory = temporaryDirectory;
+        applicationLayersCacheDirectory = Files.createTempDirectory(null);
+        applicationLayersCacheDirectory.toFile().deleteOnExit();
 
       } catch (IOException ex) {
         throw new CacheDirectoryCreationException(ex);
@@ -338,7 +318,8 @@ public class Containerizer {
     return imageConfiguration;
   }
 
-  StepsRunner createStepsRunner(BuildConfiguration buildConfiguration) {
-    return stepsRunnerFactory.apply(buildConfiguration);
+  BuildResult run(BuildConfiguration buildConfiguration)
+      throws ExecutionException, InterruptedException {
+    return stepsRunnerFactory.apply(buildConfiguration).run();
   }
 }

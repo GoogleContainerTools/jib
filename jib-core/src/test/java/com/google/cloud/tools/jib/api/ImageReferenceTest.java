@@ -181,7 +181,8 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testIsScratch() {
+  public void testIsScratch() throws InvalidImageReferenceException {
+    Assert.assertTrue(ImageReference.parse("scratch").isScratch());
     Assert.assertTrue(ImageReference.scratch().isScratch());
     Assert.assertFalse(ImageReference.of("", "scratch", "").isScratch());
     Assert.assertFalse(ImageReference.of(null, "scratch", null).isScratch());

@@ -33,6 +33,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -41,11 +42,13 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Build;
@@ -623,5 +626,53 @@ public class MavenProjectPropertiesTest {
         JibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))
             .setExecutorService(MoreExecutors.newDirectExecutorService()));
+  }
+
+  @Test
+  public void testClassifyDependencies() {
+    Set<Artifact> artifacts =
+        ImmutableSet.of(
+            newArtifact("com.test", "dependencyA", "1.0"),
+            newArtifact("com.test", "dependencyB", "4.0-SNAPSHOT"),
+            newArtifact("com.test", "projectA", "1.0"),
+            newArtifact("com.test", "dependencyC", "1.0-SNAPSHOT"),
+            newArtifact("com.test", "dependencyD", "4.0"),
+            newArtifact("com.test", "projectB", "1.0-SNAPSHOT"),
+            newArtifact("com.test", "projectC", "3.0"));
+
+    Set<Artifact> projectArtifacts =
+        ImmutableSet.of(
+            newArtifact("com.test", "projectA", "1.0"),
+            newArtifact("com.test", "projectB", "1.0-SNAPSHOT"),
+            newArtifact("com.test", "projectC", "3.0"));
+
+    Map<LayerType, List<Path>> classifyDependencies =
+        new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
+            .classifyDependencies(artifacts, projectArtifacts);
+
+    Assert.assertEquals(
+        classifyDependencies.get(LayerType.DEPENDENCIES),
+        ImmutableList.of(
+            newArtifact("com.test", "dependencyA", "1.0").getFile().toPath(),
+            newArtifact("com.test", "dependencyD", "4.0").getFile().toPath()));
+
+    Assert.assertEquals(
+        classifyDependencies.get(LayerType.SNAPSHOT_DEPENDENCIES),
+        ImmutableList.of(
+            newArtifact("com.test", "dependencyB", "4.0-SNAPSHOT").getFile().toPath(),
+            newArtifact("com.test", "dependencyC", "1.0-SNAPSHOT").getFile().toPath()));
+
+    Assert.assertEquals(
+        classifyDependencies.get(LayerType.PROJECT_DEPENDENCIES),
+        ImmutableList.of(
+            newArtifact("com.test", "projectA", "1.0").getFile().toPath(),
+            newArtifact("com.test", "projectB", "1.0-SNAPSHOT").getFile().toPath(),
+            newArtifact("com.test", "projectC", "3.0").getFile().toPath()));
+  }
+
+  private Artifact newArtifact(String group, String artifactId, String version) {
+    Artifact artifact = new DefaultArtifact(group, artifactId, version, null, "jar", "", null);
+    artifact.setFile(new File("/tmp/" + group + artifactId + version));
+    return artifact;
   }
 }

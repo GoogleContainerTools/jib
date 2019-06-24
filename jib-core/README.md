@@ -131,5 +131,3 @@ See [Milestones](https://github.com/GoogleContainerTools/jib/milestones) for pla
 ## Community
 
 See the [Jib project README](/../../#community).
-
-[![Analytics](https://cloud-tools-for-java-metrics.appspot.com/UA-121724379-2/jib-core)](https://github.com/igrigorik/ga-beacon)

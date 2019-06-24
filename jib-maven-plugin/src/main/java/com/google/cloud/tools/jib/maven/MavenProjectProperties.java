@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
+import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.ModificationTimeProvider;
@@ -37,11 +38,14 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
-import java.io.File;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -174,7 +178,7 @@ public class MavenProjectProperties implements ProjectProperties {
     if (log.isErrorEnabled()) {
       consoleLoggerBuilder.error(log::error);
     }
-    this.consoleLogger = consoleLoggerBuilder.build();
+    consoleLogger = consoleLoggerBuilder.build();
   }
 
   @Override
@@ -196,24 +200,6 @@ public class MavenProjectProperties implements ProjectProperties {
         return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
       }
 
-      // Add dependencies
-      Set<Artifact> allDependencies = project.getArtifacts();
-      javaContainerBuilder
-          .addDependencies(
-              allDependencies
-                  .stream()
-                  .filter(artifact -> !artifact.isSnapshot())
-                  .map(Artifact::getFile)
-                  .map(File::toPath)
-                  .collect(Collectors.toList()))
-          .addSnapshotDependencies(
-              allDependencies
-                  .stream()
-                  .filter(Artifact::isSnapshot)
-                  .map(Artifact::getFile)
-                  .map(File::toPath)
-                  .collect(Collectors.toList()));
-
       switch (containerizingMode) {
         case EXPLODED:
           // Add resources, and classes
@@ -234,7 +220,26 @@ public class MavenProjectProperties implements ProjectProperties {
           throw new IllegalStateException("unknown containerizing mode: " + containerizingMode);
       }
 
-      return javaContainerBuilder.toContainerBuilder();
+      // Classify and add dependencies
+      Map<LayerType, List<Path>> classifiedDependencies =
+          classifyDependencies(
+              project.getArtifacts(),
+              session
+                  .getProjects()
+                  .stream()
+                  .map(MavenProject::getArtifact)
+                  .collect(Collectors.toSet()));
+
+      return javaContainerBuilder
+          .addDependencies(
+              Preconditions.checkNotNull(classifiedDependencies.get(LayerType.DEPENDENCIES)))
+          .addSnapshotDependencies(
+              Preconditions.checkNotNull(
+                  classifiedDependencies.get(LayerType.SNAPSHOT_DEPENDENCIES)))
+          .addProjectDependencies(
+              Preconditions.checkNotNull(
+                  classifiedDependencies.get(LayerType.PROJECT_DEPENDENCIES)))
+          .toContainerBuilder();
 
     } catch (IOException ex) {
       throw new IOException(
@@ -247,6 +252,28 @@ public class MavenProjectProperties implements ProjectProperties {
               + " jib:build\"?)",
           ex);
     }
+  }
+
+  @VisibleForTesting
+  Map<LayerType, List<Path>> classifyDependencies(
+      Set<Artifact> dependencies, Set<Artifact> projectArtifacts) {
+    Map<LayerType, List<Path>> classifiedDependencies = new HashMap<>();
+    classifiedDependencies.put(LayerType.DEPENDENCIES, new ArrayList<>());
+    classifiedDependencies.put(LayerType.SNAPSHOT_DEPENDENCIES, new ArrayList<>());
+    classifiedDependencies.put(LayerType.PROJECT_DEPENDENCIES, new ArrayList<>());
+
+    for (Artifact artifact : dependencies) {
+      if (projectArtifacts.contains(artifact)) {
+        classifiedDependencies.get(LayerType.PROJECT_DEPENDENCIES).add(artifact.getFile().toPath());
+      } else if (artifact.isSnapshot()) {
+        classifiedDependencies
+            .get(LayerType.SNAPSHOT_DEPENDENCIES)
+            .add(artifact.getFile().toPath());
+      } else {
+        classifiedDependencies.get(LayerType.DEPENDENCIES).add(artifact.getFile().toPath());
+      }
+    }
+    return classifiedDependencies;
   }
 
   @Override
