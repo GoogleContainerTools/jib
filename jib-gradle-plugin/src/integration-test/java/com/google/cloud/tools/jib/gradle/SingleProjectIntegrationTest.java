@@ -86,7 +86,7 @@ public class SingleProjectIntegrationTest {
             .trim());
   }
 
-  private static void assertLayerSizer(int expected, String imageReference)
+  private static void assertLayerSize(int expected, String imageReference)
       throws IOException, InterruptedException {
     Command command =
         new Command("docker", "inspect", "-f", "{{join .RootFS.Layers \",\"}}", imageReference);
@@ -212,7 +212,7 @@ public class SingleProjectIntegrationTest {
     assertEntrypoint(
         "[java -cp /d1:/d2:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
         targetImage);
-    assertLayerSizer(8, targetImage);
+    assertLayerSize(8, targetImage);
   }
 
   @Test
@@ -298,7 +298,7 @@ public class SingleProjectIntegrationTest {
         "Hello, world. \nrw-r--r--\nrw-r--r--\nfoo\ncat\nbaz\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs.gradle"));
-    assertLayerSizer(9, targetImage); // one more than usual
+    assertLayerSize(9, targetImage); // one more than usual
   }
 
   @Test
@@ -309,7 +309,7 @@ public class SingleProjectIntegrationTest {
         "Hello, world. \nrw-r--r--\nrw-r--r--\nfoo\ncat\nbaz\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-extra-dirs2.gradle"));
-    assertLayerSizer(9, targetImage); // one more than usual
+    assertLayerSize(9, targetImage); // one more than usual
   }
 
   @Test
@@ -347,7 +347,17 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testExecute_dockerClient() throws IOException, InterruptedException, DigestException {
+  public void testDockerDaemon_jarContainerization()
+      throws DigestException, IOException, InterruptedException {
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. \nImplementation-Title: helloworld\nImplementation-Version: 1\n",
+        JibRunHelper.buildToDockerDaemonAndRun(
+            simpleTestProject, targetImage, "build-jar-containerization.gradle"));
+  }
+
+  @Test
+  public void testBuild_dockerClient() throws IOException, InterruptedException, DigestException {
     Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
     new Command(
             "chmod", "+x", simpleTestProject.getProjectRoot().resolve("mock-docker.sh").toString())

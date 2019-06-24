@@ -26,7 +26,6 @@ import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -46,7 +45,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class RetrieveRegistryCredentialsStepTest {
 
   @Mock private EventHandlers mockEventHandlers;
-  @Mock private ListeningExecutorService mockListeningExecutorService;
 
   @Test
   public void testCall_retrieved() throws CredentialRetrievalException, IOException {
@@ -60,16 +58,14 @@ public class RetrieveRegistryCredentialsStepTest {
                 () -> Optional.of(Credential.from("ignored", "ignored"))));
 
     Assert.assertEquals(
-        Credential.from("baseusername", "basepassword"),
+        Optional.of(Credential.from("baseusername", "basepassword")),
         RetrieveRegistryCredentialsStep.forBaseImage(
-                mockListeningExecutorService,
                 buildConfiguration,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
             .call());
     Assert.assertEquals(
-        Credential.from("targetusername", "targetpassword"),
+        Optional.of(Credential.from("targetusername", "targetpassword")),
         RetrieveRegistryCredentialsStep.forTargetImage(
-                mockListeningExecutorService,
                 buildConfiguration,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
             .call());
@@ -80,24 +76,24 @@ public class RetrieveRegistryCredentialsStepTest {
     BuildConfiguration buildConfiguration =
         makeFakeBuildConfiguration(
             Arrays.asList(Optional::empty, Optional::empty), Collections.emptyList());
-    Assert.assertNull(
+    Assert.assertFalse(
         RetrieveRegistryCredentialsStep.forBaseImage(
-                mockListeningExecutorService,
                 buildConfiguration,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
-            .call());
+            .call()
+            .isPresent());
 
     Mockito.verify(mockEventHandlers, Mockito.atLeastOnce())
         .dispatch(Mockito.any(ProgressEvent.class));
     Mockito.verify(mockEventHandlers)
         .dispatch(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
 
-    Assert.assertNull(
+    Assert.assertFalse(
         RetrieveRegistryCredentialsStep.forTargetImage(
-                mockListeningExecutorService,
                 buildConfiguration,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
-            .call());
+            .call()
+            .isPresent());
 
     Mockito.verify(mockEventHandlers)
         .dispatch(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
@@ -116,7 +112,6 @@ public class RetrieveRegistryCredentialsStepTest {
             Collections.emptyList());
     try {
       RetrieveRegistryCredentialsStep.forBaseImage(
-              mockListeningExecutorService,
               buildConfiguration,
               ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
           .call();

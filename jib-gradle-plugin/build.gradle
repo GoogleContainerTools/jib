@@ -72,6 +72,9 @@ dependencies {
   testCompile 'org.mockito:mockito-core:2.23.4'
   testCompile 'org.slf4j:slf4j-api:1.7.25'
 
+  // only for testing a concrete Spring Boot example in a test (not for test infrastructure)
+  testCompile 'org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE'
+
   compile gradleApi()
 
   // NullAway errorprone plugin

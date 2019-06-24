@@ -60,10 +60,12 @@ public interface ProjectProperties {
    *
    * @param baseImage the base image
    * @param appRoot root directory in the image where the app will be placed
+   * @param containerizingMode mode to containerize the app
    * @return a {@link JibContainerBuilder} with classes, resources, and dependencies added to it
    * @throws IOException if there is a problem walking the project files
    */
-  JibContainerBuilder createContainerBuilder(RegistryImage baseImage, AbsoluteUnixPath appRoot)
+  JibContainerBuilder createContainerBuilder(
+      RegistryImage baseImage, AbsoluteUnixPath appRoot, ContainerizingMode containerizingMode)
       throws IOException;
 
   List<Path> getClassFiles() throws IOException;

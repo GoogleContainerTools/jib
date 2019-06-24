@@ -475,7 +475,7 @@ public class JibContainerBuilder {
 
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(eventHandlers, containerizer.getDescription())) {
-      BuildResult result = containerizer.createStepsRunner(buildConfiguration).run();
+      BuildResult result = containerizer.run(buildConfiguration);
       return new JibContainer(result.getImageDigest(), result.getImageId());
 
     } catch (ExecutionException ex) {

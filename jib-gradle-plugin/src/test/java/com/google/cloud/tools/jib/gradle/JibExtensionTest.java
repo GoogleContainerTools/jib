@@ -54,6 +54,7 @@ public class JibExtensionTest {
     System.clearProperty("jib.container.ports");
     System.clearProperty("jib.container.useCurrentTimestamp");
     System.clearProperty("jib.container.user");
+    System.clearProperty("jib.containerizingMode");
     System.clearProperty("jib.extraDirectory.path");
     System.clearProperty("jib.extraDirectory.permissions");
     System.clearProperty("jib.extraDirectories.paths");
@@ -150,6 +151,11 @@ public class JibExtensionTest {
         ImmutableMap.of("label1", "value1", "label2", "value2"), container.getLabels());
     Assert.assertSame(ImageFormat.OCI, container.getFormat());
     Assert.assertEquals("some invalid appRoot value", container.getAppRoot());
+  }
+
+  @Test
+  public void testContainerizingMode() {
+    Assert.assertEquals("exploded", testJibExtension.getContainerizingMode());
   }
 
   @Test
@@ -288,6 +294,8 @@ public class JibExtensionTest {
     Assert.assertTrue(testJibExtension.getContainer().getUseCurrentTimestamp());
     System.setProperty("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testJibExtension.getContainer().getUser());
+    System.setProperty("jib.containerizingMode", "packaged");
+    Assert.assertEquals("packaged", testJibExtension.getContainerizingMode());
     System.setProperty("jib.extraDirectories.paths", "/foo,/bar/baz");
     Assert.assertEquals(
         Arrays.asList(Paths.get("/foo"), Paths.get("/bar/baz")),

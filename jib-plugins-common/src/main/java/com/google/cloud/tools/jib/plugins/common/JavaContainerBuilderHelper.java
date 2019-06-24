@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
-import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import java.io.IOException;
@@ -66,27 +65,25 @@ public class JavaContainerBuilderHelper {
   /**
    * Constructs a new {@link JibContainerBuilder} for a WAR project.
    *
-   * @param baseImage the base image of the container
+   * @param javaContainerBuilder Java container builder to start with
    * @param explodedWar the exploded WAR directory
-   * @param appRoot root directory in the image where the app will be placed
    * @return {@link JibContainerBuilder} containing the layers for the exploded WAR
    * @throws IOException if adding layer contents fails
    */
   public static JibContainerBuilder fromExplodedWar(
-      RegistryImage baseImage, Path explodedWar, AbsoluteUnixPath appRoot) throws IOException {
+      JavaContainerBuilder javaContainerBuilder, Path explodedWar) throws IOException {
     Path webInfLib = explodedWar.resolve("WEB-INF/lib");
     Path webInfClasses = explodedWar.resolve("WEB-INF/classes");
     Predicate<Path> isDependency = path -> path.startsWith(webInfLib);
     Predicate<Path> isClassFile =
+        // Don't use Path.endsWith(), since Path works on path elements.
         path -> path.startsWith(webInfClasses) && path.getFileName().toString().endsWith(".class");
     Predicate<Path> isResource = isDependency.or(isClassFile).negate();
 
-    JavaContainerBuilder javaContainerBuilder =
-        JavaContainerBuilder.from(baseImage)
-            .setAppRoot(appRoot)
-            .setResourcesDestination(RelativeUnixPath.get(""))
-            .setClassesDestination(RelativeUnixPath.get("WEB-INF/classes"))
-            .setDependenciesDestination(RelativeUnixPath.get("WEB-INF/lib"));
+    javaContainerBuilder
+        .setResourcesDestination(RelativeUnixPath.get(""))
+        .setClassesDestination(RelativeUnixPath.get("WEB-INF/classes"))
+        .setDependenciesDestination(RelativeUnixPath.get("WEB-INF/lib"));
 
     if (Files.exists(explodedWar)) {
       javaContainerBuilder.addResources(explodedWar, isResource);
@@ -95,7 +92,16 @@ public class JavaContainerBuilderHelper {
       javaContainerBuilder.addClasses(webInfClasses, isClassFile);
     }
     if (Files.exists(webInfLib)) {
-      javaContainerBuilder.addDependencies(new DirectoryWalker(webInfLib).filterRoot().walk());
+      javaContainerBuilder.addDependencies(
+          new DirectoryWalker(webInfLib)
+              .filterRoot()
+              .filter(path -> !path.getFileName().toString().contains("SNAPSHOT"))
+              .walk());
+      javaContainerBuilder.addSnapshotDependencies(
+          new DirectoryWalker(webInfLib)
+              .filterRoot()
+              .filter(path -> path.getFileName().toString().contains("SNAPSHOT"))
+              .walk());
     }
     return javaContainerBuilder.toContainerBuilder();
   }

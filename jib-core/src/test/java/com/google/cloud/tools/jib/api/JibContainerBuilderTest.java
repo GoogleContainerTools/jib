@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
-import com.google.cloud.tools.jib.builder.steps.StepsRunner;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
@@ -263,14 +262,12 @@ public class JibContainerBuilderTest {
 
     ImageReference targetImage = ImageReference.parse("target-image");
     Containerizer mockContainerizer = Mockito.mock(Containerizer.class);
-    StepsRunner stepsRunner = Mockito.mock(StepsRunner.class);
     BuildResult mockBuildResult = Mockito.mock(BuildResult.class);
 
     Mockito.when(mockContainerizer.getImageConfiguration())
         .thenReturn(ImageConfiguration.builder(targetImage).build());
-    Mockito.when(mockContainerizer.createStepsRunner(Mockito.any(BuildConfiguration.class)))
-        .thenReturn(stepsRunner);
-    Mockito.when(stepsRunner.run()).thenReturn(mockBuildResult);
+    Mockito.when(mockContainerizer.run(Mockito.any(BuildConfiguration.class)))
+        .thenReturn(mockBuildResult);
     Mockito.when(mockBuildResult.getImageDigest())
         .thenReturn(
             DescriptorDigest.fromHash(

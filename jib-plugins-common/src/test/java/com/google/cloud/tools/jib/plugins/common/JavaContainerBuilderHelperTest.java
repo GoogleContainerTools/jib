@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
@@ -108,9 +109,11 @@ public class JavaContainerBuilderHelperTest {
     Files.createDirectories(temporaryExplodedWar.resolve("WEB-INF/classes/empty_dir"));
     Paths.get(Resources.getResource("core/layer").toURI());
 
+    JavaContainerBuilder javaContainerBuilder =
+        JavaContainerBuilder.from(RegistryImage.named("base"))
+            .setAppRoot(AbsoluteUnixPath.get("/my/app"));
     JibContainerBuilder jibContainerBuilder =
-        JavaContainerBuilderHelper.fromExplodedWar(
-            RegistryImage.named("base"), temporaryExplodedWar, AbsoluteUnixPath.get("/my/app"));
+        JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, temporaryExplodedWar);
     BuildConfiguration configuration =
         JibContainerBuilderTestHelper.toBuildConfiguration(
             jibContainerBuilder,
