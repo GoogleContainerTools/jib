@@ -99,41 +99,41 @@ public class DockerRegistryBearerTokenTest {
 
   /** Basic credential should allow access to all. */
   @Test
-  public void testCanMountBlobs_basicCredential() {
+  public void testCanAttemptBlobMount_basicCredential() {
     Authorization fixture = Authorization.fromBasicCredentials("foo", "bar");
-    Assert.assertTrue(RegistryClient.canMountBlobs(fixture, "random"));
+    Assert.assertTrue(RegistryClient.canAttemptBlobMount(fixture, "random"));
   }
 
   /** Basic token should allow access to all. */
   @Test
-  public void testCanMountBlobs_basicToken() {
+  public void testCanAttemptBlobMount_basicToken() {
     // basic tokens are assumed to allow all repositories to be mounted
     Authorization fixture = Authorization.fromBasicToken("gobbledygook");
-    Assert.assertTrue(RegistryClient.canMountBlobs(fixture, "library/openjdk"));
-    Assert.assertTrue(RegistryClient.canMountBlobs(fixture, "randomrepo"));
+    Assert.assertTrue(RegistryClient.canAttemptBlobMount(fixture, "library/openjdk"));
+    Assert.assertTrue(RegistryClient.canAttemptBlobMount(fixture, "randomrepo"));
   }
 
   @Test
-  public void testCanMountBlobs_bearer_withToken() {
+  public void testCanAttemptBlobMount_bearer_withToken() {
     // a synthetic token for accessing docker.io's openjdk with push and pull
     // {"access":[{"type":"repository","name":"library/openjdk","actions":["pull","push"]}]}
     String token =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOlt7InR5cGUiOiJyZXBvc2l0b3J5IiwibmFtZSI6ImxpYnJhcnkvb3BlbmpkayIsImFjdGlvbnMiOlsicHVsbCIsInB1c2giXX1dfQ.VEn96Ug4eseKHX3WwP3PlgR9P7Y6VuYmMm-YRUjngFg";
     Authorization authorization = Authorization.fromBearerToken(token);
     Assert.assertNotNull(authorization);
-    Assert.assertTrue(RegistryClient.canMountBlobs(authorization, "library/openjdk"));
-    Assert.assertFalse(RegistryClient.canMountBlobs(authorization, "randomrepo"));
+    Assert.assertTrue(RegistryClient.canAttemptBlobMount(authorization, "library/openjdk"));
+    Assert.assertFalse(RegistryClient.canAttemptBlobMount(authorization, "randomrepo"));
   }
 
   @Test
-  public void testCanMountBlobs_bearer_withNonToken() {
+  public void testCanAttemptBlobMount_bearer_withNonToken() {
     // non-Docker Registry Bearer Tokens are assumed to allow access to all
     // the JWT example token from jwt.io
     String jwt =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c";
     Authorization authorization = Authorization.fromBearerToken(jwt);
     Assert.assertNotNull(authorization);
-    Assert.assertTrue(RegistryClient.canMountBlobs(authorization, "library/openjdk"));
-    Assert.assertTrue(RegistryClient.canMountBlobs(authorization, "randomrepo"));
+    Assert.assertTrue(RegistryClient.canAttemptBlobMount(authorization, "library/openjdk"));
+    Assert.assertTrue(RegistryClient.canAttemptBlobMount(authorization, "randomrepo"));
   }
 }

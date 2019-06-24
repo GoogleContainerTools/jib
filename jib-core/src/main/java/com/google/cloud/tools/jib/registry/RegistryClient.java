@@ -385,7 +385,7 @@ public class RegistryClient {
       Consumer<Long> writtenByteCountListener)
       throws IOException, RegistryException {
 
-    if (sourceRepository != null && canMountBlobs(authorization, sourceRepository)) {
+    if (sourceRepository != null && !canAttemptBlobMount(authorization, sourceRepository)) {
       // don't bother requesting a cross-repository blob-mount if we don't have access
       sourceRepository = null;
     }
@@ -431,7 +431,7 @@ public class RegistryClient {
    * @return {@code true} if the repository appears to be mountable
    */
   @VisibleForTesting
-  static boolean canMountBlobs(@Nullable Authorization authorization, String repository) {
+  static boolean canAttemptBlobMount(@Nullable Authorization authorization, String repository) {
     if (authorization == null || !"bearer".equalsIgnoreCase(authorization.getScheme())) {
       // Authorization methods other than the Docker Container Registry Token don't provide
       // information as to which repositories are accessible.  The caller should attempt the mount
