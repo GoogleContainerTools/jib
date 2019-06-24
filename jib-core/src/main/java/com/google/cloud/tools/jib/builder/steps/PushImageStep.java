@@ -82,6 +82,15 @@ class PushImageStep implements Callable<BuildResult> {
     }
   }
 
+  private final BuildConfiguration buildConfiguration;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
+
+  private final BuildableManifestTemplate manifestTemplate;
+  @Nullable private final Authorization pushAuthorization;
+  private final String tag;
+  private final DescriptorDigest imageDigest;
+  private final DescriptorDigest imageId;
+
   PushImageStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
@@ -98,15 +107,6 @@ class PushImageStep implements Callable<BuildResult> {
     this.imageDigest = imageDigest;
     this.imageId = imageId;
   }
-
-  private final BuildConfiguration buildConfiguration;
-  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-
-  private final BuildableManifestTemplate manifestTemplate;
-  private final Authorization pushAuthorization;
-  private final String tag;
-  private final DescriptorDigest imageDigest;
-  private final DescriptorDigest imageId;
 
   @Override
   public BuildResult call() throws IOException, RegistryException {
