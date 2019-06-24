@@ -31,6 +31,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -47,12 +49,24 @@ public class TestWebServer implements Closeable {
   private final Semaphore threadStarted = new Semaphore(0);
   private final StringBuilder inputRead = new StringBuilder();
 
+  private final List<String> responses;
+
   public TestWebServer(boolean https)
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    this(https, Arrays.asList("HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!"));
+  }
+
+  public TestWebServer(boolean https, List<String> responses)
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     this.https = https;
+    this.responses = responses;
     serverSocket = createServerSocket(https);
-    ignoreReturn(executorService.submit(this::serve200));
+    ignoreReturn(executorService.submit(this::serveResponses));
     threadStarted.acquire();
+  }
+
+  public int getLocalPort() {
+    return serverSocket.getLocalPort();
   }
 
   public String getEndpoint() {
@@ -88,21 +102,23 @@ public class TestWebServer implements Closeable {
     }
   }
 
-  private Void serve200() throws IOException {
+  private Void serveResponses() throws IOException {
     threadStarted.release();
     try (Socket socket = serverSocket.accept()) {
 
-      InputStream in = socket.getInputStream();
-      BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-      for (String line = reader.readLine();
-          line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
-          line = reader.readLine()) {
-        inputRead.append(line + "\n");
-      }
+      for (String response : responses) {
+        InputStream in = socket.getInputStream();
+        BufferedReader reader =
+            new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+        for (String line = reader.readLine();
+            line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
+            line = reader.readLine()) {
+          inputRead.append(line + "\n");
+        }
 
-      String response = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
-      socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
-      socket.getOutputStream().flush();
+        socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
+        socket.getOutputStream().flush();
+      }
     }
     return null;
   }
