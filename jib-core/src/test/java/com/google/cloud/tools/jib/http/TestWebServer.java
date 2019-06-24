@@ -60,7 +60,7 @@ public class TestWebServer implements Closeable {
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     this.https = https;
     this.responses = responses;
-    serverSocket = createServerSocket(https);
+    serverSocket = https ? createHttpsServerSocket() : new ServerSocket(0);
     ignoreReturn(executorService.submit(this::serveResponses));
     threadStarted.acquire();
   }
@@ -80,42 +80,36 @@ public class TestWebServer implements Closeable {
     executorService.shutdown();
   }
 
-  private ServerSocket createServerSocket(boolean https)
+  private ServerSocket createHttpsServerSocket()
       throws IOException, GeneralSecurityException, URISyntaxException {
-    if (https) {
-      KeyStore keyStore = KeyStore.getInstance("JKS");
-      // generated with: keytool -genkey -keyalg RSA -keystore ./TestWebServer-keystore
-      Path keyStoreFile = Paths.get(Resources.getResource("core/TestWebServer-keystore").toURI());
-      try (InputStream in = Files.newInputStream(keyStoreFile)) {
-        keyStore.load(in, "password".toCharArray());
-      }
-
-      KeyManagerFactory keyManagerFactory =
-          KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-      keyManagerFactory.init(keyStore, "password".toCharArray());
-
-      SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
-      return sslContext.getServerSocketFactory().createServerSocket(0);
-    } else {
-      return new ServerSocket(0);
+    KeyStore keyStore = KeyStore.getInstance("JKS");
+    // generated with: keytool -genkey -keyalg RSA -keystore ./TestWebServer-keystore
+    Path keyStoreFile = Paths.get(Resources.getResource("core/TestWebServer-keystore").toURI());
+    try (InputStream in = Files.newInputStream(keyStoreFile)) {
+      keyStore.load(in, "password".toCharArray());
     }
+
+    KeyManagerFactory keyManagerFactory =
+        KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+    keyManagerFactory.init(keyStore, "password".toCharArray());
+
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+    sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
+    return sslContext.getServerSocketFactory().createServerSocket(0);
   }
 
   private Void serveResponses() throws IOException {
     threadStarted.release();
     try (Socket socket = serverSocket.accept()) {
+      InputStream in = socket.getInputStream();
+      BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 
       for (String response : responses) {
-        InputStream in = socket.getInputStream();
-        BufferedReader reader =
-            new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
         for (String line = reader.readLine();
             line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
             line = reader.readLine()) {
           inputRead.append(line + "\n");
         }
-
         socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
         socket.getOutputStream().flush();
       }
