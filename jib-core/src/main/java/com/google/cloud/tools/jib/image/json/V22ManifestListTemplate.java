@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 /**
  * JSON Template for Docker Manifest List Schema V2.2
  *
- * <p>Example manifest JSON:
+ * <p>Example manifest list JSON:
  *
  * <pre>{@code
  * {
@@ -82,7 +82,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
     return manifests;
   }
 
-  public List<String> getDigestForPlatform(String architecture, String os) {
+  public List<String> getDigestsForPlatform(String architecture, String os) {
     return manifests
         .stream()
         .filter(

@@ -41,13 +41,13 @@ public class V22ManifestListTemplateTest {
     List<ManifestDescriptorTemplate> manifests = manifestListJson.getManifests();
     Assert.assertEquals(3, manifests.size());
 
-    List<String> validPlatformPPC = manifestListJson.getDigestForPlatform("ppc64le", "linux");
+    List<String> validPlatformPPC = manifestListJson.getDigestsForPlatform("ppc64le", "linux");
     Assert.assertEquals(1, validPlatformPPC.size());
     Assert.assertEquals(
         "sha256:e692418e4cbaf90ca69d05a66403747baa33ee08806650b51fab815ad7fc331f",
         validPlatformPPC.get(0));
 
-    List<String> validPlatformAMD = manifestListJson.getDigestForPlatform("amd64", "linux");
+    List<String> validPlatformAMD = manifestListJson.getDigestsForPlatform("amd64", "linux");
     Assert.assertEquals(2, validPlatformAMD.size());
     Assert.assertEquals(
         "sha256:5b0bcabd1ed22e9fb1310cf6c2dec7cdef19f0ad69efa1f392e94a4333501270",
@@ -56,10 +56,10 @@ public class V22ManifestListTemplateTest {
         "sha256:cccbcabd1ed22e9fb1310cf6c2dec7cdef19f0ad69efa1f392e94a4333501999",
         validPlatformAMD.get(1));
 
-    List<String> invalidArch = manifestListJson.getDigestForPlatform("amd72", "linux");
+    List<String> invalidArch = manifestListJson.getDigestsForPlatform("amd72", "linux");
     Assert.assertEquals(0, invalidArch.size());
 
-    List<String> invalidOs = manifestListJson.getDigestForPlatform("amd64", "minix");
+    List<String> invalidOs = manifestListJson.getDigestsForPlatform("amd64", "minix");
     Assert.assertEquals(0, invalidOs.size());
   }
 }
