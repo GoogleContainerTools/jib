@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.image.json;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
@@ -77,8 +77,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
 
   @VisibleForTesting
   List<ManifestDescriptorTemplate> getManifests() {
-    Preconditions.checkNotNull(manifests);
-    return manifests;
+    return Preconditions.checkNotNull(manifests);
   }
 
   public List<String> getDigestsForPlatform(String architecture, String os) {
@@ -102,32 +101,10 @@ public class V22ManifestListTemplate implements ManifestTemplate {
    */
   static class ManifestDescriptorTemplate implements JsonTemplate {
 
+    @JsonIgnoreProperties(ignoreUnknown = true)
     static class Platform implements JsonTemplate {
       @Nullable private String architecture;
       @Nullable private String os;
-
-      // ignored properties
-      @Nullable
-      @JsonProperty("os.version")
-      private String osVersion;
-
-      @Nullable
-      @JsonProperty("os.features")
-      private List<String> osFeatures;
-
-      @Nullable private String variant;
-      @Nullable private List<String> features;
-      // end ignored
-
-      @Nullable
-      String getArchitecture() {
-        return architecture;
-      }
-
-      @Nullable
-      public String getOs() {
-        return os;
-      }
     }
 
     @Nullable private String mediaType;
