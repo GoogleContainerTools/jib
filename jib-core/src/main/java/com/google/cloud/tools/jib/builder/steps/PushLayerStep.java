@@ -30,13 +30,14 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import javax.annotation.Nullable;
 
 class PushLayerStep implements Callable<BlobDescriptor> {
 
   static ImmutableList<PushLayerStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Authorization pushAuthorization,
+      @Nullable Authorization pushAuthorization,
       List<Future<CachedLayerAndName>> cachedLayers) {
     try (TimerEventDispatcher ignored =
             new TimerEventDispatcher(
@@ -61,13 +62,13 @@ class PushLayerStep implements Callable<BlobDescriptor> {
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final Authorization pushAuthorization;
+  @Nullable private final Authorization pushAuthorization;
   private final Future<CachedLayerAndName> cachedLayerAndName;
 
   PushLayerStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Authorization pushAuthorization,
+      @Nullable Authorization pushAuthorization,
       Future<CachedLayerAndName> cachedLayerAndName) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;

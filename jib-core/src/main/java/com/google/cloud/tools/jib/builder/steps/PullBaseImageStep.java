@@ -136,7 +136,8 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
         Credential registryCredential =
             RetrieveRegistryCredentialsStep.forBaseImage(
                     buildConfiguration, progressEventDispatcher.newChildProducer())
-                .call();
+                .call()
+                .orElse(null);
 
         Authorization registryAuthorization =
             registryCredential == null || registryCredential.isOAuth2RefreshToken()

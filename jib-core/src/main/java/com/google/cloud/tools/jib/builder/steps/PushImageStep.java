@@ -34,6 +34,7 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /**
  * Pushes a manifest for a tag. Returns the manifest digest ("image digest") and the container
@@ -84,7 +85,7 @@ class PushImageStep implements Callable<BuildResult> {
   PushImageStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Authorization pushAuthorization,
+      @Nullable Authorization pushAuthorization,
       BuildableManifestTemplate manifestTemplate,
       String tag,
       DescriptorDigest imageDigest,

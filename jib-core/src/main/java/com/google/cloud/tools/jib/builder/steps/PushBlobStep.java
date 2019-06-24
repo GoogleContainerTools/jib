@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /** Pushes a BLOB to the target registry. */
 class PushBlobStep implements Callable<BlobDescriptor> {
@@ -37,14 +38,14 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDipatcherFactory;
 
-  private final Authorization authorization;
+  @Nullable private final Authorization authorization;
   private final BlobDescriptor blobDescriptor;
   private final Blob blob;
 
   PushBlobStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDipatcherFactory,
-      Authorization authorization,
+      @Nullable Authorization authorization,
       BlobDescriptor blobDescriptor,
       Blob blob) {
     this.buildConfiguration = buildConfiguration;
