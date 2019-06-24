@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 
 /** Pushes the container configuration. */
 class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
@@ -38,13 +39,13 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final Authorization pushAuthorization;
+  @Nullable private final Authorization pushAuthorization;
   private final Image builtImage;
 
   PushContainerConfigurationStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Authorization authenticatePushStep,
+      @Nullable Authorization authenticatePushStep,
       Image builtImage) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;

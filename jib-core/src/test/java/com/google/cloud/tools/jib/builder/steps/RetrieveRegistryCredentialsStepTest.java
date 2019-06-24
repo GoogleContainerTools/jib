@@ -58,13 +58,13 @@ public class RetrieveRegistryCredentialsStepTest {
                 () -> Optional.of(Credential.from("ignored", "ignored"))));
 
     Assert.assertEquals(
-        Credential.from("baseusername", "basepassword"),
+        Optional.of(Credential.from("baseusername", "basepassword")),
         RetrieveRegistryCredentialsStep.forBaseImage(
                 buildConfiguration,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
             .call());
     Assert.assertEquals(
-        Credential.from("targetusername", "targetpassword"),
+        Optional.of(Credential.from("targetusername", "targetpassword")),
         RetrieveRegistryCredentialsStep.forTargetImage(
                 buildConfiguration,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
@@ -76,22 +76,24 @@ public class RetrieveRegistryCredentialsStepTest {
     BuildConfiguration buildConfiguration =
         makeFakeBuildConfiguration(
             Arrays.asList(Optional::empty, Optional::empty), Collections.emptyList());
-    Assert.assertNull(
+    Assert.assertFalse(
         RetrieveRegistryCredentialsStep.forBaseImage(
                 buildConfiguration,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
-            .call());
+            .call()
+            .isPresent());
 
     Mockito.verify(mockEventHandlers, Mockito.atLeastOnce())
         .dispatch(Mockito.any(ProgressEvent.class));
     Mockito.verify(mockEventHandlers)
         .dispatch(LogEvent.info("No credentials could be retrieved for registry baseregistry"));
 
-    Assert.assertNull(
+    Assert.assertFalse(
         RetrieveRegistryCredentialsStep.forTargetImage(
                 buildConfiguration,
                 ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer())
-            .call());
+            .call()
+            .isPresent());
 
     Mockito.verify(mockEventHandlers)
         .dispatch(LogEvent.info("No credentials could be retrieved for registry baseregistry"));

@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import javax.annotation.Nullable;
 
 /** Pushes the final image. Outputs the pushed image digest. */
 class PushImageStep implements Callable<BuildResult> {
@@ -46,7 +47,7 @@ class PushImageStep implements Callable<BuildResult> {
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final Authorization pushAuthorization;
+  @Nullable private final Authorization pushAuthorization;
   private final BlobDescriptor containerConfigurationDigestAndSize;
   private final Image builtImage;
 
@@ -57,7 +58,7 @@ class PushImageStep implements Callable<BuildResult> {
       ListeningExecutorService listeningExecutorService,
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Authorization pushAuthorization,
+      @Nullable Authorization pushAuthorization,
       BlobDescriptor containerConfigurationDigestAndSize,
       Image builtImage) {
     this.listeningExecutorService = listeningExecutorService;
