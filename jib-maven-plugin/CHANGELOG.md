@@ -14,6 +14,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Re-enabled cross-repository blob mounts ([#1793](https://github.com/GoogleContainerTools/jib/pull/1793))
+
 ## 1.3.0
 
 ### Changed

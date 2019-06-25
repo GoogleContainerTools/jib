@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
 import com.google.common.net.MediaType;
 import java.io.IOException;
@@ -37,6 +38,8 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -180,26 +183,30 @@ public class RegistryAuthenticator {
   }
 
   @VisibleForTesting
-  String getServiceScopeRequestParameters(String scope) {
-    return "service="
-        + service
-        + "&scope=repository:"
-        + registryEndpointRequestProperties.getImageName()
-        + ":"
-        + scope;
+  String getServiceScopeRequestParameters(Map<String, String> repositoryScopes) {
+    StringBuilder parameters = new StringBuilder("service=").append(service);
+    for (Entry<String, String> pair : repositoryScopes.entrySet()) {
+      parameters
+          .append("&scope=repository:")
+          .append(pair.getKey())
+          .append(":")
+          .append(pair.getValue());
+    }
+    return parameters.toString();
   }
 
   @VisibleForTesting
-  URL getAuthenticationUrl(@Nullable Credential credential, String scope)
+  URL getAuthenticationUrl(@Nullable Credential credential, Map<String, String> repositoryScopes)
       throws MalformedURLException {
     return isOAuth2Auth(credential)
         ? new URL(realm) // Required parameters will be sent via POST .
-        : new URL(realm + "?" + getServiceScopeRequestParameters(scope));
+        : new URL(realm + "?" + getServiceScopeRequestParameters(repositoryScopes));
   }
 
   @VisibleForTesting
-  String getAuthRequestParameters(@Nullable Credential credential, String scope) {
-    String serviceScope = getServiceScopeRequestParameters(scope);
+  String getAuthRequestParameters(
+      @Nullable Credential credential, Map<String, String> repositoryScopes) {
+    String serviceScope = getServiceScopeRequestParameters(repositoryScopes);
     return isOAuth2Auth(credential)
         ? serviceScope
             // https://github.com/GoogleContainerTools/jib/pull/1545
@@ -227,15 +234,43 @@ public class RegistryAuthenticator {
    */
   private Authorization authenticate(@Nullable Credential credential, String scope)
       throws RegistryAuthenticationFailedException {
+    // try authorizing against both the main repository and the source repository too
+    // to enable cross-repository mounts on pushes
+    if (registryEndpointRequestProperties.getSourceImageName() != null) {
+      try {
+        Map<String, String> scopes =
+            ImmutableMap.of(
+                registryEndpointRequestProperties.getImageName(),
+                scope,
+                registryEndpointRequestProperties.getSourceImageName(),
+                "pull");
+        Authorization auth = authenticate(credential, scopes);
+        if (auth != null) {
+          return auth;
+        }
+      } catch (RegistryAuthenticationFailedException ex) {
+        // Unable to obtain authorization with source image: fallthrough and try without
+      }
+    }
+    Map<String, String> repositoryScopes =
+        ImmutableMap.of(registryEndpointRequestProperties.getImageName(), scope);
+    Authorization auth = authenticate(credential, repositoryScopes);
+    return auth;
+  }
+
+  private Authorization authenticate(
+      @Nullable Credential credential, Map<String, String> repositoryScopes)
+      throws RegistryAuthenticationFailedException {
     try (Connection connection =
-        Connection.getConnectionFactory().apply(getAuthenticationUrl(credential, scope))) {
+        Connection.getConnectionFactory()
+            .apply(getAuthenticationUrl(credential, repositoryScopes))) {
       Request.Builder requestBuilder =
           Request.builder()
               .setHttpTimeout(JibSystemProperties.getHttpTimeout())
               .setUserAgent(userAgent);
 
       if (isOAuth2Auth(credential)) {
-        String parameters = getAuthRequestParameters(credential, scope);
+        String parameters = getAuthRequestParameters(credential, repositoryScopes);
         requestBuilder.setBody(
             new BlobHttpContent(Blobs.from(parameters), MediaType.FORM_DATA.toString()));
       } else if (credential != null) {
@@ -257,9 +292,9 @@ public class RegistryAuthenticator {
             registryEndpointRequestProperties.getServerUrl(),
             registryEndpointRequestProperties.getImageName(),
             "Did not get token in authentication response from "
-                + getAuthenticationUrl(credential, scope)
+                + getAuthenticationUrl(credential, repositoryScopes)
                 + "; parameters: "
-                + getAuthRequestParameters(credential, scope));
+                + getAuthRequestParameters(credential, repositoryScopes));
       }
       return Authorization.fromBearerToken(responseJson.getToken());
 

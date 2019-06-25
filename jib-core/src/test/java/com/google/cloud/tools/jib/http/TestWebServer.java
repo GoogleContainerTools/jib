@@ -117,6 +117,8 @@ public class TestWebServer implements Closeable {
     return null;
   }
 
+  // For use to ignore (i.e., accept and do nothing) a return value from ExecutionService.submit().
+  // Without "consuming" the return value this way, Error Prone will complain to use it.
   private void ignoreReturn(Future<Void> future) {
     // do nothing; to make Error Prone happy
   }
