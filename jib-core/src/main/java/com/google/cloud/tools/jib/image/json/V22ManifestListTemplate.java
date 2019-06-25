@@ -92,13 +92,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
         .collect(Collectors.toList());
   }
 
-  /**
-   * Template for inner JSON object representing content descriptor for a layer or container
-   * configuration.
-   *
-   * @see <a href="https://github.com/opencontainers/image-spec/blob/master/descriptor.md">OCI
-   *     Content Descriptors</a>
-   */
+  /** Template for inner JSON object a single platform specific manifest. */
   static class ManifestDescriptorTemplate implements JsonTemplate {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
