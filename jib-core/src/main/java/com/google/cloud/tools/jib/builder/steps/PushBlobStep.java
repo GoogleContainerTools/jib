@@ -79,8 +79,16 @@ class PushBlobStep implements Callable<BlobDescriptor> {
         return blobDescriptor;
       }
 
-      // todo: leverage cross-repository mounts
-      registryClient.pushBlob(blobDescriptor.getDigest(), blob, null, throttledProgressReporter);
+      // If base and target images are in the same registry, then use mount/from to try mounting the
+      // BLOB from the base image repository to the target image repository and possibly avoid
+      // having to push the BLOB. See
+      // https://docs.docker.com/registry/spec/api/#cross-repository-blob-mount for details.
+      String baseRegistry = buildConfiguration.getBaseImageConfiguration().getImageRegistry();
+      String baseRepository = buildConfiguration.getBaseImageConfiguration().getImageRepository();
+      String targetRegistry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
+      String sourceRepository = targetRegistry.equals(baseRegistry) ? baseRepository : null;
+      registryClient.pushBlob(
+          blobDescriptor.getDigest(), blob, sourceRepository, throttledProgressReporter);
 
       return blobDescriptor;
     }

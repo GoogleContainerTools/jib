@@ -45,6 +45,7 @@ public class JibSystemPropertiesTest {
     if (httpsProxyPortSaved != null) {
       System.setProperty("https.proxyPort", httpsProxyPortSaved);
     }
+    System.clearProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS);
   }
 
   @Test
@@ -151,5 +152,34 @@ public class JibSystemPropertiesTest {
     } catch (NumberFormatException ex) {
       Assert.assertEquals("https.proxyPort must be an integer: some string", ex.getMessage());
     }
+  }
+
+  @Test
+  public void testUseBlobMountsPropertyName() {
+    Assert.assertEquals("jib.blobMounts", JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS);
+  }
+
+  @Test
+  public void testUseBlobMounts_undefined() {
+    System.clearProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS);
+    Assert.assertTrue(JibSystemProperties.useCrossRepositoryBlobMounts());
+  }
+
+  @Test
+  public void testUseBlobMounts_true() {
+    System.setProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS, "true");
+    Assert.assertTrue(JibSystemProperties.useCrossRepositoryBlobMounts());
+  }
+
+  @Test
+  public void testUseBlobMounts_false() {
+    System.setProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS, "false");
+    Assert.assertFalse(JibSystemProperties.useCrossRepositoryBlobMounts());
+  }
+
+  @Test
+  public void testUseBlobMounts_other() {
+    System.setProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS, "nonbool");
+    Assert.assertFalse(JibSystemProperties.useCrossRepositoryBlobMounts());
   }
 }
