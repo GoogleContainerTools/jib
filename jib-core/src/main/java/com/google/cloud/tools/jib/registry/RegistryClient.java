@@ -385,7 +385,9 @@ public class RegistryClient {
       Consumer<Long> writtenByteCountListener)
       throws IOException, RegistryException {
 
-    if (sourceRepository != null && !canAttemptBlobMount(authorization, sourceRepository)) {
+    if (sourceRepository != null
+        && !(JibSystemProperties.useCrossRepositoryBlobMounts()
+            && canAttemptBlobMount(authorization, sourceRepository))) {
       // don't bother requesting a cross-repository blob-mount if we don't have access
       sourceRepository = null;
     }

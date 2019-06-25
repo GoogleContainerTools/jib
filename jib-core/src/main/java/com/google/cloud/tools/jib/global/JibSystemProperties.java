@@ -25,11 +25,13 @@ public class JibSystemProperties {
 
   @VisibleForTesting public static final String HTTP_TIMEOUT = "jib.httpTimeout";
 
+  @VisibleForTesting static final String CROSS_REPOSITORY_BLOB_MOUNTS = "jib.blobMounts";
+
   @VisibleForTesting
   public static final String SEND_CREDENTIALS_OVER_HTTP = "sendCredentialsOverHttp";
 
   private static final String SERIALIZE = "jibSerialize";
-
+  
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
   /**
@@ -44,6 +46,18 @@ public class JibSystemProperties {
       return 20000;
     }
     return Integer.getInteger(HTTP_TIMEOUT);
+  }
+
+  /**
+   * Gets whether or not to use <em>cross-repository blob mounts</em> when uploading image layers
+   * ({@code mount/from}). This is defined by the {@code jib.blobMounts} system property.
+   *
+   * @return {@code true} if {@code mount/from} should be used, {@code false} if not, defaulting to
+   *     {@code true}
+   */
+  public static boolean useCrossRepositoryBlobMounts() {
+    return System.getProperty(CROSS_REPOSITORY_BLOB_MOUNTS) == null
+        || Boolean.getBoolean(CROSS_REPOSITORY_BLOB_MOUNTS);
   }
 
   /**
