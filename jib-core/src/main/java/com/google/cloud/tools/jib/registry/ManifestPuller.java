@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.CharStreams;
@@ -71,7 +72,12 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
     if (manifestTemplateClass.equals(OCIManifestTemplate.class)) {
       return Collections.singletonList(OCIManifestTemplate.MANIFEST_MEDIA_TYPE);
     }
+    if (manifestTemplateClass.equals(V22ManifestListTemplate.class)) {
+      return Collections.singletonList(V22ManifestListTemplate.MANIFEST_MEDIA_TYPE);
+    }
 
+    // why is V22ManifestListTemplate missing in the default behavior? We don't explicitly accept
+    // it, we only handle it if referenced by sha256 (see getManifestTemplateFromJson)
     return Arrays.asList(
         OCIManifestTemplate.MANIFEST_MEDIA_TYPE,
         V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
@@ -141,6 +147,10 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
       if (OCIManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
         return manifestTemplateClass.cast(
             JsonTemplateMapper.readJson(jsonString, OCIManifestTemplate.class));
+      }
+      if (V22ManifestListTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+        return manifestTemplateClass.cast(
+            JsonTemplateMapper.readJson(jsonString, V22ManifestListTemplate.class));
       }
       throw new UnknownManifestFormatException("Unknown mediaType: " + mediaType);
     }
