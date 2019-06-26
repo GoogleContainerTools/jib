@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.api.client.util.Base64;
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
@@ -30,12 +32,18 @@ import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.Multimap;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /** Interfaces with a registry. */
@@ -139,6 +147,92 @@ public class RegistryClient {
    */
   public static Factory factory(EventHandlers eventHandlers, String serverUrl, String imageName) {
     return new Factory(eventHandlers, new RegistryEndpointRequestProperties(serverUrl, imageName));
+  }
+
+  public static Factory factory(
+      EventHandlers eventHandlers, String serverUrl, String imageName, String sourceImageName) {
+    return new Factory(
+        eventHandlers,
+        new RegistryEndpointRequestProperties(serverUrl, imageName, sourceImageName));
+  }
+
+  /**
+   * A simple class representing the payload of a <a
+   * href="https://docs.docker.com/registry/spec/auth/jwt/">Docker Registry v2 Bearer Token</a>
+   * which lists the set of access claims granted.
+   *
+   * <pre>
+   * {"access":[{"type": "repository","name": "library/openjdk","actions":["push","pull"]}]}
+   * </pre>
+   *
+   * @see AccessClaim
+   */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private static class TokenPayloadTemplate implements JsonTemplate {
+    @Nullable private List<AccessClaim> access;
+  }
+
+  /**
+   * Represents an access claim for a repository in a Docker Registry Bearer Token payload.
+   *
+   * <pre>{"type": "repository","name": "library/openjdk","actions":["push","pull"]}</pre>
+   */
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private static class AccessClaim implements JsonTemplate {
+    @Nullable private String type;
+    @Nullable private String name;
+    @Nullable private List<String> actions;
+  }
+
+  /**
+   * Decode the <a href="https://docs.docker.com/registry/spec/auth/jwt/">Docker Registry v2 Bearer
+   * Token</a> to list the granted repositories with their levels of access.
+   *
+   * @param token a Docker Registry Bearer Token
+   * @return a mapping of repository to granted access scopes, or {@code null} if the token is not a
+   *     Docker Registry Bearer Token
+   */
+  @VisibleForTesting
+  @Nullable
+  static Multimap<String, String> decodeTokenRepositoryGrants(String token) {
+    // Docker Registry Bearer Tokens are based on JWT.  A valid JWT is a set of 3 base64-encoded
+    // parts (header, payload, signature), collated with a ".".  The header and payload are
+    // JSON objects.
+    String[] jwtParts = token.split("\\.", -1);
+    byte[] payloadData;
+    if (jwtParts.length != 3 || (payloadData = Base64.decodeBase64(jwtParts[1])) == null) {
+      return null;
+    }
+
+    // The payload looks like:
+    // {
+    //   "access":[{"type":"repository","name":"repository/name","actions":["pull"]}],
+    //   "aud":"registry.docker.io",
+    //   "iss":"auth.docker.io",
+    //   "exp":999,
+    //   "iat":999,
+    //   "jti":"zzzz",
+    //   "nbf":999,
+    //   "sub":"e3ae001d-xxx"
+    // }
+    //
+    try {
+      TokenPayloadTemplate payload =
+          JsonTemplateMapper.readJson(payloadData, TokenPayloadTemplate.class);
+      if (payload.access == null) {
+        return null;
+      }
+      return payload
+          .access
+          .stream()
+          .filter(claim -> "repository".equals(claim.type))
+          .collect(
+              ImmutableSetMultimap.<AccessClaim, String, String>flatteningToImmutableSetMultimap(
+                  claim -> claim.name,
+                  claim -> claim.actions == null ? Stream.empty() : claim.actions.stream()));
+    } catch (IOException ex) {
+      return null;
+    }
   }
 
   private final EventHandlers eventHandlers;
@@ -290,6 +384,13 @@ public class RegistryClient {
       @Nullable String sourceRepository,
       Consumer<Long> writtenByteCountListener)
       throws IOException, RegistryException {
+
+    if (sourceRepository != null
+        && !(JibSystemProperties.useCrossRepositoryBlobMounts()
+            && canAttemptBlobMount(authorization, sourceRepository))) {
+      // don't bother requesting a cross-repository blob-mount if we don't have access
+      sourceRepository = null;
+    }
     BlobPusher blobPusher =
         new BlobPusher(registryEndpointRequestProperties, blobDigest, blob, sourceRepository);
 
@@ -298,8 +399,8 @@ public class RegistryClient {
       try (TimerEventDispatcher timerEventDispatcher2 =
           timerEventDispatcher.subTimer("pushBlob POST " + blobDigest)) {
 
-        // POST /v2/<name>/blobs/uploads/ OR
         // POST /v2/<name>/blobs/uploads/?mount={blob.digest}&from={sourceRepository}
+        // POST /v2/<name>/blobs/uploads/
         URL patchLocation = callRegistryEndpoint(blobPusher.initializer());
         if (patchLocation == null) {
           // The BLOB exists already.
@@ -321,6 +422,29 @@ public class RegistryClient {
         return false;
       }
     }
+  }
+
+  /**
+   * Check if the authorization allows using the specified repository can be mounted by the remote
+   * registry as a source for blobs. More specifically, we can only check if the repository is not
+   * disallowed.
+   *
+   * @param repository repository in question
+   * @return {@code true} if the repository appears to be mountable
+   */
+  @VisibleForTesting
+  static boolean canAttemptBlobMount(@Nullable Authorization authorization, String repository) {
+    if (authorization == null || !"bearer".equalsIgnoreCase(authorization.getScheme())) {
+      // Authorization methods other than the Docker Container Registry Token don't provide
+      // information as to which repositories are accessible.  The caller should attempt the mount
+      // and rely on the registry fallback as required by the spec.
+      // https://docs.docker.com/registry/spec/api/#pushing-an-image
+      return true;
+    }
+    // if null then does not appear to be a DCRT
+    Multimap<String, String> repositoryGrants =
+        decodeTokenRepositoryGrants(authorization.getToken());
+    return repositoryGrants == null || repositoryGrants.containsEntry(repository, "pull");
   }
 
   /** @return the registry endpoint's API root, without the protocol */

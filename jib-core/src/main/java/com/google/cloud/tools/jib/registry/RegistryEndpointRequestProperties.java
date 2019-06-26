@@ -16,19 +16,33 @@
 
 package com.google.cloud.tools.jib.registry;
 
+import javax.annotation.Nullable;
+
 /** Properties of registry endpoint requests. */
 class RegistryEndpointRequestProperties {
 
   private final String serverUrl;
   private final String imageName;
+  @Nullable private final String sourceImageName;
 
   /**
    * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
    * @param imageName the image/repository name (also known as, namespace)
    */
   RegistryEndpointRequestProperties(String serverUrl, String imageName) {
+    this(serverUrl, imageName, null);
+  }
+
+  /**
+   * @param serverUrl the server URL for the registry (for example, {@code gcr.io})
+   * @param imageName the image/repository name (also known as, namespace)
+   * @param sourceImageName additional source image to request pull permission from the registry
+   */
+  RegistryEndpointRequestProperties(
+      String serverUrl, String imageName, @Nullable String sourceImageName) {
     this.serverUrl = serverUrl;
     this.imageName = imageName;
+    this.sourceImageName = sourceImageName;
   }
 
   String getServerUrl() {
@@ -37,5 +51,10 @@ class RegistryEndpointRequestProperties {
 
   String getImageName() {
     return imageName;
+  }
+
+  @Nullable
+  String getSourceImageName() {
+    return sourceImageName;
   }
 }

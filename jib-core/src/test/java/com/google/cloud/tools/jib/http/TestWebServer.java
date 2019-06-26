@@ -31,6 +31,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -47,12 +49,24 @@ public class TestWebServer implements Closeable {
   private final Semaphore threadStarted = new Semaphore(0);
   private final StringBuilder inputRead = new StringBuilder();
 
+  private final List<String> responses;
+
   public TestWebServer(boolean https)
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    this(https, Arrays.asList("HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!"));
+  }
+
+  public TestWebServer(boolean https, List<String> responses)
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     this.https = https;
-    serverSocket = createServerSocket(https);
-    ignoreReturn(executorService.submit(this::serve200));
+    this.responses = responses;
+    serverSocket = https ? createHttpsServerSocket() : new ServerSocket(0);
+    ignoreReturn(executorService.submit(this::serveResponses));
     threadStarted.acquire();
+  }
+
+  public int getLocalPort() {
+    return serverSocket.getLocalPort();
   }
 
   public String getEndpoint() {
@@ -66,47 +80,45 @@ public class TestWebServer implements Closeable {
     executorService.shutdown();
   }
 
-  private ServerSocket createServerSocket(boolean https)
+  private ServerSocket createHttpsServerSocket()
       throws IOException, GeneralSecurityException, URISyntaxException {
-    if (https) {
-      KeyStore keyStore = KeyStore.getInstance("JKS");
-      // generated with: keytool -genkey -keyalg RSA -keystore ./TestWebServer-keystore
-      Path keyStoreFile = Paths.get(Resources.getResource("core/TestWebServer-keystore").toURI());
-      try (InputStream in = Files.newInputStream(keyStoreFile)) {
-        keyStore.load(in, "password".toCharArray());
-      }
-
-      KeyManagerFactory keyManagerFactory =
-          KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-      keyManagerFactory.init(keyStore, "password".toCharArray());
-
-      SSLContext sslContext = SSLContext.getInstance("TLS");
-      sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
-      return sslContext.getServerSocketFactory().createServerSocket(0);
-    } else {
-      return new ServerSocket(0);
+    KeyStore keyStore = KeyStore.getInstance("JKS");
+    // generated with: keytool -genkey -keyalg RSA -keystore ./TestWebServer-keystore
+    Path keyStoreFile = Paths.get(Resources.getResource("core/TestWebServer-keystore").toURI());
+    try (InputStream in = Files.newInputStream(keyStoreFile)) {
+      keyStore.load(in, "password".toCharArray());
     }
+
+    KeyManagerFactory keyManagerFactory =
+        KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+    keyManagerFactory.init(keyStore, "password".toCharArray());
+
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+    sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
+    return sslContext.getServerSocketFactory().createServerSocket(0);
   }
 
-  private Void serve200() throws IOException {
+  private Void serveResponses() throws IOException {
     threadStarted.release();
     try (Socket socket = serverSocket.accept()) {
-
       InputStream in = socket.getInputStream();
       BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-      for (String line = reader.readLine();
-          line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
-          line = reader.readLine()) {
-        inputRead.append(line + "\n");
-      }
 
-      String response = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
-      socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
-      socket.getOutputStream().flush();
+      for (String response : responses) {
+        for (String line = reader.readLine();
+            line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
+            line = reader.readLine()) {
+          inputRead.append(line + "\n");
+        }
+        socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
+        socket.getOutputStream().flush();
+      }
     }
     return null;
   }
 
+  // For use to ignore (i.e., accept and do nothing) a return value from ExecutionService.submit().
+  // Without "consuming" the return value this way, Error Prone will complain to use it.
   private void ignoreReturn(Future<Void> future) {
     // do nothing; to make Error Prone happy
   }
