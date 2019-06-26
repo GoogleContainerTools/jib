@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.image.json;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.Port;
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.image.Image;
@@ -130,9 +129,9 @@ public class ImageToJsonTranslator {
   }
 
   /**
-   * Gets the container configuration as a {@link Blob}.
+   * Gets the container configuration.
    *
-   * @return the container configuration {@link Blob}
+   * @return the container configuration
    */
   public JsonTemplate getContainerConfiguration() {
     // Set up the JSON template.

@@ -69,6 +69,8 @@ public class StepsRunner {
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<BlobDescriptor> containerConfigurationPushResult = failedFuture();
     private Future<BuildResult> buildResult = failedFuture();
+
+    private Future<Boolean> canSkipCachingBaseImageLayers = Futures.immediateFuture(false);
   }
 
   /**
@@ -146,6 +148,8 @@ public class StepsRunner {
     rootProgressDescription = "building image to registry";
     // build and cache
     stepsToRun.add(this::pullBaseImage);
+    stepsToRun.add(this::authenticatePush);
+    stepsToRun.add(this::checkCanSkipCachingBaseImageLayers);
     stepsToRun.add(this::pullAndCacheBaseImageLayers);
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
@@ -212,18 +216,40 @@ public class StepsRunner {
             new PullBaseImageStep(buildConfiguration, childProgressDispatcherFactory));
   }
 
+  private void checkCanSkipCachingBaseImageLayers() {
+    Verify.verifyNotNull(rootProgressDispatcher).dispatchProgress(1);
+
+    results.canSkipCachingBaseImageLayers =
+        executorService.submit(
+            () ->
+                PullAndCacheBaseImageLayerStep.canSkipCachingBaseImageLayers(
+                    buildConfiguration,
+                    results.baseImageAndAuth.get(),
+                    results.pushAuthorization.get().orElse(null)));
+  }
+
   private void pullAndCacheBaseImageLayers() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
     results.baseImageLayers =
         executorService.submit(
-            () ->
-                scheduleCallables(
+            () -> {
+              if (results.canSkipCachingBaseImageLayers.get()) {
+                // optimization: skip downloading and caching base image layers
+                return PullAndCacheBaseImageLayerStep.pretendLayersCached(
+                        results.baseImageAndAuth.get())
+                    .stream()
+                    .map(Futures::immediateFuture)
+                    .collect(Collectors.toList());
+              } else {
+                return scheduleCallables(
                     PullAndCacheBaseImageLayerStep.makeList(
                         buildConfiguration,
                         childProgressDispatcherFactory,
-                        results.baseImageAndAuth.get())));
+                        results.baseImageAndAuth.get()));
+              }
+            });
   }
 
   private void pushBaseImageLayers() {
@@ -232,13 +258,23 @@ public class StepsRunner {
 
     results.baseImageLayerPushResults =
         executorService.submit(
-            () ->
-                scheduleCallables(
+            () -> {
+              if (results.canSkipCachingBaseImageLayers.get()) {
+                // In this case, baseImageLayers are immediate futures (no blocking).
+                return realizeFutures(results.baseImageLayers.get())
+                    .stream()
+                    .map(layer -> layer.getCachedLayer().getBlobDescriptor())
+                    .map(Futures::immediateFuture)
+                    .collect(Collectors.toList());
+              } else {
+                return scheduleCallables(
                     PushLayerStep.makeList(
                         buildConfiguration,
                         childProgressDispatcherFactory,
                         results.pushAuthorization.get().orElse(null),
-                        results.baseImageLayers.get())));
+                        results.baseImageLayers.get()));
+              }
+            });
   }
 
   private void buildAndCacheApplicationLayers() {

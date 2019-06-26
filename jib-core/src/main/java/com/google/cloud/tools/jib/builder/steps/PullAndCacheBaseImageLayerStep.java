@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
@@ -33,12 +34,65 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /** Pulls and caches a single base image layer. */
 class PullAndCacheBaseImageLayerStep implements Callable<CachedLayerAndName> {
 
   private static final String DESCRIPTION = "Pulling base image layer %s";
+
+  static boolean canSkipCachingBaseImageLayers(
+      BuildConfiguration buildConfiguration,
+      ImageAndAuthorization baseImageAndAuth,
+      @Nullable Authorization pushAuthorization) {
+    RegistryClient targetRegistryClient =
+        buildConfiguration
+            .newTargetImageRegistryClientFactory()
+            .setAuthorization(pushAuthorization)
+            .newRegistryClient();
+
+    try {
+      // TODO: parallelize
+      for (Layer layer : baseImageAndAuth.getImage().getLayers()) {
+        System.out.println(">>> Checking BLOb existence.");
+        System.out.println(">>>     Size=" + layer.getBlobDescriptor().getSize());
+        System.out.println(">>>     Digest=" + layer.getBlobDescriptor().getDigest());
+        System.out.println(">>>     DiffId=" + layer.getDiffId());
+        if (targetRegistryClient.checkBlob(layer.getBlobDescriptor().getDigest()) == null) {
+          System.out.println(">>> BLOb does not exist. Halt.");
+          return false;
+        }
+      }
+      System.out.println(">>> All BLObs exist. Can skip downloading base image layers.");
+      return true;
+    } catch (IOException | RegistryException ex) {
+      ex.printStackTrace();
+      // fall through
+    }
+    System.out.println(">>> Exception occured.");
+    return false;
+  }
+
+  static List<CachedLayerAndName> pretendLayersCached(ImageAndAuthorization baseImageAndAuth) {
+    return baseImageAndAuth
+        .getImage()
+        .getLayers()
+        .stream()
+        .map(
+            layer ->
+                CachedLayer.builder()
+                    .setLayerDigest(layer.getBlobDescriptor().getDigest())
+                    .setLayerSize(layer.getBlobDescriptor().getSize())
+                    .setLayerDiffId(layer.getDiffId())
+                    .setLayerBlob(
+                        ignored -> {
+                          throw new IllegalStateException("No actual BLOb attached");
+                        })
+                    .build())
+        .map(cachedLayer -> new CachedLayerAndName(cachedLayer, null))
+        .collect(Collectors.toList());
+  }
 
   static ImmutableList<PullAndCacheBaseImageLayerStep> makeList(
       BuildConfiguration buildConfiguration,
