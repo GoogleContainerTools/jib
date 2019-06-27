@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.gradle;
 
+import com.google.cloud.tools.jib.ProjectInfo;
+import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -42,7 +44,12 @@ public class JibPlugin implements Plugin<Project> {
   @VisibleForTesting static final String FILES_TASK_NAME = "_jibSkaffoldFiles";
   @VisibleForTesting static final String FILES_TASK_V2_NAME = "_jibSkaffoldFilesV2";
   @VisibleForTesting static final String INIT_TASK_NAME = "_jibSkaffoldInit";
+
   @VisibleForTesting static final String EXPLODED_WAR_TASK_NAME = "jibExplodedWar";
+
+  static final String CHECK_REQUIRED_VERSION_TASK_NAME = "_skaffoldEnsureJibUpToDate";
+
+  static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
 
   /**
    * Collects all project dependencies of the style "compile project(':mylib')" for any kind of
@@ -79,9 +86,30 @@ public class JibPlugin implements Plugin<Project> {
     }
   }
 
+  /** Check the Jib version matches the required version (if specified). */
+  private static void checkJibVersion(Project project) {
+    // todo: should retrieve from project properties?
+    String requiredVersion = System.getProperty(REQUIRED_VERSION_PROPERTY_NAME);
+    if (requiredVersion == null) {
+      return;
+    }
+    String actualVersion = ProjectInfo.VERSION;
+    if (actualVersion == null) {
+      throw new GradleException("Could not determine Jib plugin version");
+    }
+    VersionChecker<GradleVersion> checker = new VersionChecker<>(GradleVersion::version);
+    if (!checker.compatibleVersion(requiredVersion, actualVersion)) {
+      String failure =
+          String.format(
+              "Jib plugin version is %s but is required to be %s", actualVersion, requiredVersion);
+      throw new GradleException(failure);
+    }
+  }
+
   @Override
   public void apply(Project project) {
     checkGradleVersion();
+    checkJibVersion(project);
 
     JibExtension jibExtension =
         project.getExtensions().create(JIB_EXTENSION_NAME, JibExtension.class, project);
@@ -122,6 +150,10 @@ public class JibPlugin implements Plugin<Project> {
     project.getTasks().create(FILES_TASK_NAME, FilesTask.class).setJibExtension(jibExtension);
     project.getTasks().create(FILES_TASK_V2_NAME, FilesTaskV2.class).setJibExtension(jibExtension);
     project.getTasks().create(INIT_TASK_NAME, SkaffoldInitTask.class).setJibExtension(jibExtension);
+
+    // A no-op check to catch older versions of Jib.  This can be removed when we are certain people
+    // are using Jib 1.3.1 or later.
+    project.getTasks().create(CHECK_REQUIRED_VERSION_TASK_NAME, CheckJibVersionTask.class);
 
     project.afterEvaluate(
         projectAfterEvaluation -> {

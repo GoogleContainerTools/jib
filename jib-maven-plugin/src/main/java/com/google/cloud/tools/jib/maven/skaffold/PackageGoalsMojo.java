@@ -23,7 +23,6 @@ import javax.annotation.Nullable;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.lifecycle.LifecycleExecutor;
 import org.apache.maven.lifecycle.MavenExecutionPlan;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -44,7 +43,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
     name = PackageGoalsMojo.GOAL_NAME,
     requiresDirectInvocation = true,
     requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME)
-public class PackageGoalsMojo extends AbstractMojo {
+public class PackageGoalsMojo extends SkaffoldBindingMojo {
 
   @VisibleForTesting static final String GOAL_NAME = "_skaffold-package-goals";
 
@@ -58,6 +57,7 @@ public class PackageGoalsMojo extends AbstractMojo {
   public void execute() throws MojoExecutionException, MojoFailureException {
     Preconditions.checkNotNull(lifecycleExecutor);
     Preconditions.checkNotNull(session);
+    checkJibVersion();
 
     MavenExecutionPlan mavenExecutionPlan;
     try {

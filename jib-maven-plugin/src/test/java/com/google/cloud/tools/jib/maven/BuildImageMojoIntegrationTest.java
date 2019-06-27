@@ -545,6 +545,32 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
+  public void testExecute_jibRequireVersion_ok() throws VerificationException, IOException {
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+
+    Instant before = Instant.now();
+    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+    // this plugin should match 1.0
+    verifier.setSystemProperty("jib.requiredVersion", "1.0");
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    verifier.executeGoals(Arrays.asList("package", "jib:build"));
+    verifier.verifyErrorFreeLog();
+  }
+
+  @Test
+  public void testExecute_jibRequireVersion_fail() throws VerificationException, IOException {
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+
+    Instant before = Instant.now();
+    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty("jib.requiredVersion", "[,1.0]");
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    verifier.executeGoals(Arrays.asList("package", "jib:build"));
+    verifier.verifyTextInLog("BUILD FAILURE");
+    verifier.verifyTextInLog("but is required to be");
+  }
+
+  @Test
   public void testExecute_jettyServlet25()
       throws VerificationException, IOException, InterruptedException {
     buildAndRunWar("jetty-servlet25:maven", "pom.xml");

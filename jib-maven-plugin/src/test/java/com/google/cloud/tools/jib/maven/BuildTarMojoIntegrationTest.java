@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
 import java.security.DigestException;
 import java.time.Instant;
+import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
 import org.junit.Assert;
@@ -87,5 +88,31 @@ public class BuildTarMojoIntegrationTest {
   @Test
   public void testExecute_jibContainerizeSkips() throws VerificationException, IOException {
     SkippedGoalVerifier.verifyJibContainerizeSkips(simpleTestProject, BuildDockerMojo.GOAL_NAME);
+  }
+
+  @Test
+  public void testExecute_jibRequireVersion_ok() throws VerificationException, IOException {
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+
+    Instant before = Instant.now();
+    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+    // this plugin should match 1.0
+    verifier.setSystemProperty("jib.requiredVersion", "1.0");
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    verifier.executeGoals(Arrays.asList("package", "jib:buildTar"));
+    verifier.verifyErrorFreeLog();
+  }
+
+  @Test
+  public void testExecute_jibRequireVersion_fail() throws VerificationException, IOException {
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+
+    Instant before = Instant.now();
+    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty("jib.requiredVersion", "[,1.0]");
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    verifier.executeGoals(Arrays.asList("package", "jib:buildTar"));
+    verifier.verifyTextInLog("BUILD FAILURE");
+    verifier.verifyTextInLog("but is required to be");
   }
 }

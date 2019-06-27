@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
+import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.nio.file.Path;
@@ -26,10 +27,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.project.MavenProject;
 
 /** Collection of common methods to share between Maven goals. */
-class MojoCommon {
+public class MojoCommon {
+  /** Describes a minimum required version or version range for Jib. */
+  @VisibleForTesting
+  public static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
 
   /**
    * Gets the list of extra directory paths from a {@link JibPluginConfiguration}. Returns {@code
@@ -70,6 +77,34 @@ class MojoCommon {
       permissionsMap.put(key, value);
     }
     return permissionsMap;
+  }
+
+  /**
+   * Check that the actual version satisfies required Jib version range when specified. No check is
+   * performed if the provided Jib version is {@code null}, which should only occur during debug.
+   *
+   * @param acceptableVersionSpec a version range or minimum version; see {@link VersionChecker}
+   * @param descriptor the plugin version
+   * @throws MojoExecutionException if the version is not acceptable
+   */
+  public static void checkJibVersion(PluginDescriptor descriptor) throws MojoExecutionException {
+    String acceptableVersionSpec = System.getProperty(MojoCommon.REQUIRED_VERSION_PROPERTY_NAME);
+    if (acceptableVersionSpec == null) {
+      return;
+    }
+    String actualVersion = descriptor.getVersion();
+    if (actualVersion == null) {
+      throw new MojoExecutionException("Could not determine Jib plugin version");
+    }
+    VersionChecker<DefaultArtifactVersion> checker =
+        new VersionChecker<>(DefaultArtifactVersion::new);
+    if (!checker.compatibleVersion(acceptableVersionSpec, actualVersion)) {
+      String failure =
+          String.format(
+              "Jib plugin version is %s but is required to be %s",
+              actualVersion, acceptableVersionSpec);
+      throw new MojoExecutionException(failure);
+    }
   }
 
   private MojoCommon() {}
