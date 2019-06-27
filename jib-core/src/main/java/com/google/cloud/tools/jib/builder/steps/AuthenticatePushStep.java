@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
@@ -34,26 +35,25 @@ import javax.annotation.Nullable;
  * @see <a
  *     href="https://docs.docker.com/registry/spec/auth/token/">https://docs.docker.com/registry/spec/auth/token/</a>
  */
-class AuthenticatePushStep implements Callable<Authorization> {
+class AuthenticatePushStep implements Callable<Optional<Authorization>> {
 
   private static final String DESCRIPTION = "Authenticating push to %s";
 
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  private final Credential registryCredential;
+  @Nullable private final Credential registryCredential;
 
   AuthenticatePushStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Credential registryCredential) {
+      @Nullable Credential registryCredential) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.registryCredential = registryCredential;
   }
 
   @Override
-  @Nullable
-  public Authorization call() throws IOException, RegistryException {
+  public Optional<Authorization> call() throws IOException, RegistryException {
     String registry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create("authenticating push to " + registry, 1);
@@ -66,15 +66,16 @@ class AuthenticatePushStep implements Callable<Authorization> {
               .newRegistryClient()
               .getRegistryAuthenticator();
       if (registryAuthenticator != null) {
-        return registryAuthenticator.authenticatePush(registryCredential);
+        return Optional.of(registryAuthenticator.authenticatePush(registryCredential));
       }
     } catch (InsecureRegistryException ex) {
       // Cannot skip certificate validation or use HTTP; fall through.
     }
 
     return (registryCredential == null || registryCredential.isOAuth2RefreshToken())
-        ? null
-        : Authorization.fromBasicCredentials(
-            registryCredential.getUsername(), registryCredential.getPassword());
+        ? Optional.empty()
+        : Optional.of(
+            Authorization.fromBasicCredentials(
+                registryCredential.getUsername(), registryCredential.getPassword()));
   }
 }
