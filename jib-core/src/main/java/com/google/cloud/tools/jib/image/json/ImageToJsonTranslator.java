@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.image.json;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.Port;
-import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.configuration.DockerHealthCheck;
 import com.google.cloud.tools.jib.image.Image;
@@ -36,18 +35,7 @@ import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 
-/**
- * Translates an {@link Image} into a manifest or container configuration JSON BLOB.
- *
- * <p>Example usage:
- *
- * <pre>{@code
- * ImageToJsonTranslator translator = new ImageToJsonTranslator(image);
- * Blob containerConfigurationBlob = translator.getContainerConfigurationBlob();
- * BlobDescriptor containerConfigurationBlobDescriptor = blob.writeTo(outputStream);
- * Blob manifestBlob = translator.getManifestBlob(containerConfigurationBlobDescriptor);
- * }</pre>
- */
+/** Translates an {@link Image} into a manifest or container configuration JSON. */
 public class ImageToJsonTranslator {
 
   /**
@@ -141,9 +129,9 @@ public class ImageToJsonTranslator {
   }
 
   /**
-   * Gets the container configuration as a {@link Blob}.
+   * Gets the container configuration.
    *
-   * @return the container configuration {@link Blob}
+   * @return the container configuration
    */
   public JsonTemplate getContainerConfiguration() {
     // Set up the JSON template.

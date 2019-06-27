@@ -27,6 +27,7 @@ import java.security.DigestException;
 import java.util.concurrent.atomic.LongAdder;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,12 +38,15 @@ public class BlobPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
+  @BeforeClass
+  public static void setUp() throws IOException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
+  }
+
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testPull() throws IOException, RegistryException, InterruptedException {
-    // Pulls the busybox image.
-    localRegistry.pullAndPushToLocal("busybox", "busybox");
+  public void testPull() throws IOException, RegistryException {
     RegistryClient registryClient =
         RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
@@ -69,8 +73,7 @@ public class BlobPullerIntegrationTest {
   }
 
   @Test
-  public void testPull_unknownBlob() throws IOException, DigestException, InterruptedException {
-    localRegistry.pullAndPushToLocal("busybox", "busybox");
+  public void testPull_unknownBlob() throws IOException, DigestException {
     DescriptorDigest nonexistentDigest =
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
