@@ -39,7 +39,7 @@ public class Image {
   public static class Builder {
 
     private final Class<? extends ManifestTemplate> imageFormat;
-    private final ImageLayers.Builder imageLayersBuilder = ImageLayers.builder();
+    private final ImmutableList.Builder<Layer> imageLayersBuilder = ImmutableList.builder();
     private final ImmutableList.Builder<HistoryEntry> historyBuilder = ImmutableList.builder();
 
     // Don't use ImmutableMap.Builder because it does not allow for replacing existing keys with new
@@ -287,7 +287,7 @@ public class Image {
   private final String os;
 
   /** The layers of the image, in the order in which they are applied. */
-  private final ImageLayers layers;
+  private final ImmutableList<Layer> layers;
 
   /** The commands used to build each layer of the image */
   private final ImmutableList<HistoryEntry> history;
@@ -324,7 +324,7 @@ public class Image {
       @Nullable Instant created,
       String architecture,
       String os,
-      ImageLayers layers,
+      ImmutableList<Layer> layers,
       ImmutableList<HistoryEntry> history,
       @Nullable ImmutableMap<String, String> environment,
       @Nullable ImmutableList<String> entrypoint,
@@ -415,7 +415,7 @@ public class Image {
   }
 
   public ImmutableList<Layer> getLayers() {
-    return layers.getLayers();
+    return layers;
   }
 
   public ImmutableList<HistoryEntry> getHistory() {
