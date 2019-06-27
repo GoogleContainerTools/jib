@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -38,7 +37,8 @@ class PushLayerStep implements Callable<BlobDescriptor> {
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization pushAuthorization,
-      List<Future<CachedLayerAndName>> cachedLayers) {
+      List<Future<CachedLayerAndName>> cachedLayers,
+      boolean doBlobCheck) {
     try (TimerEventDispatcher ignored =
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), "Preparing application layer pushers");
@@ -47,15 +47,17 @@ class PushLayerStep implements Callable<BlobDescriptor> {
                 "preparing application layer pushers", cachedLayers.size())) {
 
       // Constructs a PushBlobStep for each layer.
-      List<PushLayerStep> blobPushers = new ArrayList<>();
-      for (Future<CachedLayerAndName> layer : cachedLayers) {
-        ProgressEventDispatcher.Factory childProgressProducer =
-            progressEventDispatcher.newChildProducer();
-        blobPushers.add(
-            new PushLayerStep(buildConfiguration, childProgressProducer, pushAuthorization, layer));
-      }
-
-      return ImmutableList.copyOf(blobPushers);
+      return cachedLayers
+          .stream()
+          .map(
+              layer ->
+                  new PushLayerStep(
+                      buildConfiguration,
+                      progressEventDispatcher.newChildProducer(),
+                      pushAuthorization,
+                      layer,
+                      doBlobCheck))
+          .collect(ImmutableList.toImmutableList());
     }
   }
 
@@ -64,16 +66,19 @@ class PushLayerStep implements Callable<BlobDescriptor> {
 
   @Nullable private final Authorization pushAuthorization;
   private final Future<CachedLayerAndName> cachedLayerAndName;
+  private final boolean doBlobCheck;
 
   PushLayerStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization pushAuthorization,
-      Future<CachedLayerAndName> cachedLayerAndName) {
+      Future<CachedLayerAndName> cachedLayerAndName,
+      boolean doBlobCheck) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.pushAuthorization = pushAuthorization;
     this.cachedLayerAndName = cachedLayerAndName;
+    this.doBlobCheck = doBlobCheck;
   }
 
   @Override
@@ -85,7 +90,8 @@ class PushLayerStep implements Callable<BlobDescriptor> {
             progressEventDispatcherFactory,
             pushAuthorization,
             new BlobDescriptor(layer.getSize(), layer.getDigest()),
-            layer.getBlob())
+            layer.getBlob(),
+            doBlobCheck)
         .call();
   }
 }

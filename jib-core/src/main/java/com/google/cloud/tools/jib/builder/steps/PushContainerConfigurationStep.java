@@ -67,7 +67,8 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
               progressEventDispatcher.newChildProducer(),
               pushAuthorization,
               Digests.computeDigest(containerConfiguration),
-              Blobs.from(containerConfiguration))
+              Blobs.from(containerConfiguration),
+              true)
           .call();
     }
   }

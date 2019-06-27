@@ -33,7 +33,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -104,6 +103,8 @@ public class StepsRunner {
   private final ExecutorService executorService;
   private final BuildConfiguration buildConfiguration;
 
+  private boolean registryPush;
+
   // We save steps to run by wrapping each step into a Runnable, only because of the unfortunate
   // chicken-and-egg situation arising from using ProgressEventDispatcher. The current
   // ProgressEventDispatcher model requires knowing in advance how many units of work (i.e., steps)
@@ -124,6 +125,8 @@ public class StepsRunner {
 
   public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
     rootProgressDescription = "building image to Docker daemon";
+    registryPush = false;
+
     // build and cache
     stepsToRun.add(this::pullBaseImage);
     stepsToRun.add(this::pullAndCacheBaseImageLayers);
@@ -136,6 +139,8 @@ public class StepsRunner {
 
   public StepsRunner tarBuildSteps(Path outputPath) {
     rootProgressDescription = "building image to tar file";
+    registryPush = false;
+
     // build and cache
     stepsToRun.add(this::pullBaseImage);
     stepsToRun.add(this::pullAndCacheBaseImageLayers);
@@ -148,6 +153,7 @@ public class StepsRunner {
 
   public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
+    registryPush = true;
 
     stepsToRun.add(this::retrieveTargetRegistryCredentials);
     stepsToRun.add(this::authenticatePush);
@@ -258,6 +264,9 @@ public class StepsRunner {
     results.baseImageLayers =
         executorService.submit(
             () -> {
+              Authorization pushAuthorization =
+                  registryPush ? results.pushAuthorization.get().orElse(null) : null;
+
               if (canSkipPushingBaseImageLayers()) {
                 System.out.println(">>> Can skip pushing base image layers");
                 // optimization: skip downloading/caching base image layers
@@ -271,7 +280,9 @@ public class StepsRunner {
                     PullAndCacheBaseImageLayerStep.makeList(
                         buildConfiguration,
                         childProgressDispatcherFactory,
-                        results.baseImageAndAuth.get()));
+                        results.baseImageAndAuth.get(),
+                        registryPush,
+                        pushAuthorization));
               }
             });
   }
@@ -283,14 +294,13 @@ public class StepsRunner {
     results.baseImageLayerPushResults =
         executorService.submit(
             () ->
-                canSkipPushingBaseImageLayers()
-                    ? Collections.emptyList()
-                    : scheduleCallables(
-                        PushLayerStep.makeList(
-                            buildConfiguration,
-                            childProgressDispatcherFactory,
-                            results.pushAuthorization.get().orElse(null),
-                            results.baseImageLayers.get())));
+                scheduleCallables(
+                    PushLayerStep.makeList(
+                        buildConfiguration,
+                        childProgressDispatcherFactory,
+                        results.pushAuthorization.get().orElse(null),
+                        results.baseImageLayers.get(),
+                        registryPush)));
   }
 
   private void buildAndCacheApplicationLayers() {

@@ -109,7 +109,9 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayerAndName> {
   static ImmutableList<PullAndCacheBaseImageLayerStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      ImageAndAuthorization baseImageAndAuth) {
+      ImageAndAuthorization baseImageAndAuth,
+      boolean registryPush,
+      Authorization pushAuthorization) {
     ImmutableList<Layer> baseImageLayers = baseImageAndAuth.getImage().getLayers();
 
     try (ProgressEventDispatcher progressEventDispatcher =
@@ -125,8 +127,10 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayerAndName> {
             new PullAndCacheBaseImageLayerStep(
                 buildConfiguration,
                 progressEventDispatcher.newChildProducer(),
-                layer.getBlobDescriptor().getDigest(),
-                baseImageAndAuth.getAuthorization()));
+                layer,
+                baseImageAndAuth.getAuthorization(),
+                pushAuthorization,
+                registryPush));
       }
       return ImmutableList.copyOf(layerPullers);
     }
@@ -135,22 +139,29 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayerAndName> {
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final DescriptorDigest layerDigest;
+  private final Layer layer;
   private final @Nullable Authorization pullAuthorization;
+  private final @Nullable Authorization pushAuthorization;
+  private final boolean registryPush;
 
   PullAndCacheBaseImageLayerStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      DescriptorDigest layerDigest,
-      @Nullable Authorization pullAuthorization) {
+      Layer layer,
+      @Nullable Authorization pullAuthorization,
+      @Nullable Authorization pushAuthorization,
+      boolean registryPush) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.layerDigest = layerDigest;
+    this.layer = layer;
     this.pullAuthorization = pullAuthorization;
+    this.pushAuthorization = pushAuthorization;
+    this.registryPush = registryPush;
   }
 
   @Override
-  public CachedLayerAndName call() throws IOException, CacheCorruptedException {
+  public CachedLayerAndName call() throws IOException, CacheCorruptedException, RegistryException {
+    DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("checking base image layer " + layerDigest, 1);
         TimerEventDispatcher ignored =
@@ -167,6 +178,17 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayerAndName> {
             "Cannot run Jib in offline mode; local Jib cache for base image is missing image layer "
                 + layerDigest
                 + ". Rerun Jib in online mode to re-download the base image layers.");
+      }
+
+      if (registryPush) {
+        RegistryClient targetRegistryClient =
+            buildConfiguration
+                .newTargetImageRegistryClientFactory()
+                .setAuthorization(pullAuthorization)
+                .newRegistryClient();
+        if (targetRegistryClient.checkBlob(layerDigest) != null) {
+          return new CachedLayerAndName(layer, null);
+        }
       }
 
       RegistryClient registryClient =

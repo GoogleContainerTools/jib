@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -41,28 +42,31 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   @Nullable private final Authorization authorization;
   private final BlobDescriptor blobDescriptor;
   private final Blob blob;
+  private final boolean doBlobCheck;
 
   PushBlobStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization authorization,
       BlobDescriptor blobDescriptor,
-      Blob blob) {
+      Blob blob,
+      boolean doBlobCheck) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.authorization = authorization;
     this.blobDescriptor = blobDescriptor;
     this.blob = blob;
+    this.doBlobCheck = doBlobCheck;
   }
 
   @Override
   public BlobDescriptor call() throws IOException, RegistryException {
+    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
                 "pushing blob " + blobDescriptor.getDigest(), blobDescriptor.getSize());
         TimerEventDispatcher ignored =
-            new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), DESCRIPTION + blobDescriptor);
+            new TimerEventDispatcher(eventHandlers, DESCRIPTION + blobDescriptor);
         ThrottledAccumulatingConsumer throttledProgressReporter =
             new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
       RegistryClient registryClient =
@@ -71,13 +75,10 @@ class PushBlobStep implements Callable<BlobDescriptor> {
               .setAuthorization(authorization)
               .newRegistryClient();
 
-      // TODO: for base image layers, we may skip the check, since we did the check from
-      // CheckBlobStep.makeList().
       // check if the BLOB is available
-      if (registryClient.checkBlob(blobDescriptor.getDigest()) != null) {
-        buildConfiguration
-            .getEventHandlers()
-            .dispatch(LogEvent.info("BLOB : " + blobDescriptor + " already exists on registry"));
+      if (doBlobCheck && registryClient.checkBlob(blobDescriptor.getDigest()) != null) {
+        eventHandlers.dispatch(
+            LogEvent.info("BLOB : " + blobDescriptor + " already exists on registry"));
         return blobDescriptor;
       }
 
