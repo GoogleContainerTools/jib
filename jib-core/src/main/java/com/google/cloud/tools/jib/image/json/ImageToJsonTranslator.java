@@ -35,7 +35,7 @@ import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 
-/** Translates an {@link Image} into a manifest or container configuration JSON BLOB. */
+/** Translates an {@link Image} into a manifest or container configuration JSON. */
 public class ImageToJsonTranslator {
 
   /**
