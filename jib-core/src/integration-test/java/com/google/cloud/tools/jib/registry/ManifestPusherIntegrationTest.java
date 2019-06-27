@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import java.security.DigestException;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -36,18 +37,20 @@ import org.junit.Test;
 public class ManifestPusherIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
-  private static final EventHandlers EVENT_HANDLERS = EventHandlers.NONE;
+
+  @BeforeClass
+  public static void setUp() throws IOException, InterruptedException {
+    localRegistry.pullAndPushToLocal("busybox", "busybox");
+  }
 
   @Test
-  public void testPush_missingBlobs() throws IOException, RegistryException, InterruptedException {
-    localRegistry.pullAndPushToLocal("busybox", "busybox");
-
+  public void testPush_missingBlobs() throws IOException, RegistryException {
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_HANDLERS, "gcr.io", "distroless/java").newRegistryClient();
+        RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java").newRegistryClient();
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
 
     registryClient =
-        RegistryClient.factory(EVENT_HANDLERS, "localhost:5000", "busybox")
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     try {
@@ -63,9 +66,7 @@ public class ManifestPusherIntegrationTest {
 
   /** Tests manifest pushing. This test is a comprehensive test of push and pull. */
   @Test
-  public void testPush()
-      throws DigestException, IOException, RegistryException, InterruptedException {
-    localRegistry.pullAndPushToLocal("busybox", "busybox");
+  public void testPush() throws DigestException, IOException, RegistryException {
     Blob testLayerBlob = Blobs.from("crepecake");
     // Known digest for 'crepecake'
     DescriptorDigest testLayerBlobDigest =
@@ -83,7 +84,7 @@ public class ManifestPusherIntegrationTest {
 
     // Pushes the BLOBs.
     RegistryClient registryClient =
-        RegistryClient.factory(EVENT_HANDLERS, "localhost:5000", "testimage")
+        RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "testimage")
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     Assert.assertFalse(
