@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import java.io.IOException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -32,9 +33,13 @@ public class ManifestPullerIntegrationTest {
 
   @ClassRule public static LocalRegistry localRegistry = new LocalRegistry(5000);
 
-  @Test
-  public void testPull_v21() throws IOException, RegistryException, InterruptedException {
+  @BeforeClass
+  public static void setUp() throws IOException, InterruptedException {
     localRegistry.pullAndPushToLocal("busybox", "busybox");
+  }
+
+  @Test
+  public void testPull_v21() throws IOException, RegistryException {
     RegistryClient registryClient =
         RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
             .setAllowInsecureRegistries(true)
@@ -47,8 +52,7 @@ public class ManifestPullerIntegrationTest {
   }
 
   @Test
-  public void testPull_v22() throws IOException, RegistryException, InterruptedException {
-    localRegistry.pullAndPushToLocal("busybox", "busybox");
+  public void testPull_v22() throws IOException, RegistryException {
     RegistryClient registryClient =
         RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java").newRegistryClient();
     ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
@@ -59,9 +63,7 @@ public class ManifestPullerIntegrationTest {
   }
 
   @Test
-  public void testPull_unknownManifest()
-      throws RegistryException, IOException, InterruptedException {
-    localRegistry.pullAndPushToLocal("busybox", "busybox");
+  public void testPull_unknownManifest() throws RegistryException, IOException {
     try {
       RegistryClient registryClient =
           RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
