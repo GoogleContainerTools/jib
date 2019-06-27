@@ -38,7 +38,6 @@ public class ExtraDirectoriesParameters {
 
   private List<Path> paths;
   private Map<String, String> permissions = Collections.emptyMap();
-  private Map<String, String> modificationTimes = Collections.emptyMap();
 
   @Inject
   public ExtraDirectoriesParameters(Project project, JibExtension jibExtension) {
@@ -108,25 +107,5 @@ public class ExtraDirectoriesParameters {
 
   public void setPermissions(Map<String, String> permissions) {
     this.permissions = permissions;
-  }
-
-  /**
-   * Gets the modification times for files in the extra layer on the container. Maps from absolute
-   * path on the container to a modification time provider type (e.g. {@code "/path/on/container" ->
-   * "keep_original"}).
-   *
-   * @return the permissions map from path on container to file permissions
-   */
-  @Input
-  public Map<String, String> getModificationTimes() {
-    String property = System.getProperty(PropertyNames.EXTRA_DIRECTORIES_MODIFICATION_TIMES);
-    if (property != null) {
-      return ConfigurationPropertyValidator.parseMapProperty(property);
-    }
-    return modificationTimes;
-  }
-
-  public void setModificationTimes(Map<String, String> modificationTimes) {
-    this.modificationTimes = modificationTimes;
   }
 }

@@ -51,7 +51,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -216,21 +215,13 @@ public class PluginConfigurationProcessor {
     }
 
     // Adds all the extra files.
-    Map<AbsoluteUnixPath, ModificationTimeProvider> extraDirectoryModificationTimeProviders =
-        rawConfiguration
-            .getExtraDirectoryModificationTimes()
-            .entrySet()
-            .stream()
-            .collect(
-                Collectors.toMap(
-                    Map.Entry::getKey, e -> createModificationTimeProvider(e.getValue())));
     for (Path directory : rawConfiguration.getExtraDirectories()) {
       if (Files.exists(directory)) {
         jibContainerBuilder.addLayer(
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
                 directory,
                 rawConfiguration.getExtraDirectoryPermissions(),
-                extraDirectoryModificationTimeProviders));
+                filesModificationTimeProvider));
       }
     }
 

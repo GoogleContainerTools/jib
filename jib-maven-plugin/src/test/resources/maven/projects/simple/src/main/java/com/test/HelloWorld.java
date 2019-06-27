@@ -24,6 +24,7 @@ import java.lang.management.ManagementFactory;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermissions;
 
@@ -41,7 +42,10 @@ public class HelloWorld {
                 HelloWorld.class.getResourceAsStream("/world"), StandardCharsets.UTF_8))) {
       String world = reader.readLine();
       System.out.println(greeting + ", " + world + ". " + (args.length > 0 ? args[0] : ""));
-      System.out.println(Files.getLastModifiedTime(Paths.get(classLoader.getResource("world").toURI())).toString());
+      Path worldFilePath = Paths.get("/world");
+      if (worldFilePath.toFile().exists()) {
+        System.out.println(Files.getLastModifiedTime(Paths.get("/world")).toString());
+      }
 
       // Prints the contents of the extra files.
       if (Files.exists(Paths.get("/foo"))) {

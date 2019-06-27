@@ -59,7 +59,6 @@ public class JibExtensionTest {
     System.clearProperty("jib.extraDirectory.permissions");
     System.clearProperty("jib.extraDirectories.paths");
     System.clearProperty("jib.extraDirectories.permissions");
-    System.clearProperty("jib.extraDirectories.modificationTimes");
   }
 
   @Before
@@ -192,8 +191,6 @@ public class JibExtensionTest {
         extraDirectories -> {
           extraDirectories.setPaths("test/path");
           extraDirectories.setPermissions(ImmutableMap.of("file1", "123", "file2", "456"));
-          extraDirectories.setModificationTimes(
-              ImmutableMap.of("file1", "epoch_plus_second", "file2", "keep_original"));
         });
     Assert.assertFalse(testJibExtension.extraDirectoryConfigured);
     Assert.assertTrue(testJibExtension.extraDirectoriesConfigured);
@@ -204,9 +201,6 @@ public class JibExtensionTest {
     Assert.assertEquals(
         ImmutableMap.of("file1", "123", "file2", "456"),
         testJibExtension.getExtraDirectories().getPermissions());
-    Assert.assertEquals(
-        ImmutableMap.of("file1", "epoch_plus_second", "file2", "keep_original"),
-        testJibExtension.getExtraDirectories().getModificationTimes());
   }
 
   @Test
@@ -310,11 +304,6 @@ public class JibExtensionTest {
     Assert.assertEquals(
         ImmutableMap.of("/foo/bar", "707", "/baz", "456"),
         testJibExtension.getExtraDirectories().getPermissions());
-    System.setProperty(
-        "jib.extraDirectories.modificationTimes", "/foo/bar=epoch_plus_second,/baz=keep_original");
-    Assert.assertEquals(
-        ImmutableMap.of("/foo/bar", "epoch_plus_second", "/baz", "keep_original"),
-        testJibExtension.getExtraDirectories().getModificationTimes());
   }
 
   @Test

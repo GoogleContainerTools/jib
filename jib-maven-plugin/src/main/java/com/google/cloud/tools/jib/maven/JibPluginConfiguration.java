@@ -125,30 +125,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
-  /** Used to configure {@code extraDirectories.modificationTimes} parameter. */
-  public static class ModificationTimeConfiguration {
-
-    @Nullable @Parameter private String file;
-    @Nullable @Parameter private String value;
-
-    // Need default constructor for Maven
-    public ModificationTimeConfiguration() {}
-
-    @VisibleForTesting
-    ModificationTimeConfiguration(String file, String value) {
-      this.file = file;
-      this.value = value;
-    }
-
-    Optional<String> getFile() {
-      return Optional.ofNullable(file);
-    }
-
-    Optional<String> getValue() {
-      return Optional.ofNullable(value);
-    }
-  }
-
   /** Configuration for {@code from} parameter, */
   public static class FromConfiguration {
 
@@ -220,15 +196,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private List<PermissionConfiguration> permissions = Collections.emptyList();
 
-    @Parameter
-    private List<ModificationTimeConfiguration> modificationTimes = Collections.emptyList();
-
     public List<File> getPaths() {
       return paths;
-    }
-
-    public List<ModificationTimeConfiguration> getModificationTimes() {
-      return modificationTimes;
     }
   }
 
@@ -662,27 +631,6 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     return !extraDirectories.getPaths().isEmpty()
         ? extraDirectories.permissions
         : extraDirectory.permissions;
-  }
-
-  /**
-   * Gets the configured extra layer files modification times.
-   *
-   * @return the configured extra layer files modification times
-   */
-  List<ModificationTimeConfiguration> getExtraDirectoryModificationTimes() {
-    String property = getProperty(PropertyNames.EXTRA_DIRECTORIES_MODIFICATION_TIMES);
-
-    if (property != null) {
-      return ConfigurationPropertyValidator.parseMapProperty(property)
-          .entrySet()
-          .stream()
-          .map(entry -> new ModificationTimeConfiguration(entry.getKey(), entry.getValue()))
-          .collect(Collectors.toList());
-    }
-
-    return !extraDirectories.getPaths().isEmpty()
-        ? extraDirectories.modificationTimes
-        : Collections.emptyList();
   }
 
   boolean getAllowInsecureRegistries() {

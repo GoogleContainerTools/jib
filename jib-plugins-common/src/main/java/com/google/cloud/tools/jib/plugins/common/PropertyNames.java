@@ -56,8 +56,6 @@ public class PropertyNames {
   public static final String EXTRA_DIRECTORY_PERMISSIONS = "jib.extraDirectory.permissions";
 
   public static final String EXTRA_DIRECTORIES_PERMISSIONS = "jib.extraDirectories.permissions";
-  public static final String EXTRA_DIRECTORIES_MODIFICATION_TIMES =
-      "jib.extraDirectories.modificationTimes";
   public static final String DOCKER_CLIENT_EXECUTABLE = "jib.dockerClient.executable";
   public static final String DOCKER_CLIENT_ENVIRONMENT = "jib.dockerClient.environment";
   public static final String CONTAINERIZING_MODE = "jib.containerizingMode";

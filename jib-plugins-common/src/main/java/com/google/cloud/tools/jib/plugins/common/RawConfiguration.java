@@ -82,7 +82,5 @@ public interface RawConfiguration {
 
   Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions();
 
-  Map<AbsoluteUnixPath, String> getExtraDirectoryModificationTimes();
-
   String getContainerizingMode();
 }

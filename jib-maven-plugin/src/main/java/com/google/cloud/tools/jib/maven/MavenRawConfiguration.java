@@ -171,12 +171,6 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public Map<AbsoluteUnixPath, String> getExtraDirectoryModificationTimes() {
-    return MojoCommon.convertModificationTimesList(
-        jibPluginConfiguration.getExtraDirectoryModificationTimes());
-  }
-
-  @Override
   public String getContainerizingMode() {
     return jibPluginConfiguration.getContainerizingMode();
   }

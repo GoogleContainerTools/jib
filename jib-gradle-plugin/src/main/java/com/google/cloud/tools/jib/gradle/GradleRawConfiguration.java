@@ -166,12 +166,6 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public Map<AbsoluteUnixPath, String> getExtraDirectoryModificationTimes() {
-    return TaskCommon.convertModificationTimesMap(
-        jibExtension.getExtraDirectories().getModificationTimes());
-  }
-
-  @Override
   public String getContainerizingMode() {
     return jibExtension.getContainerizingMode();
   }

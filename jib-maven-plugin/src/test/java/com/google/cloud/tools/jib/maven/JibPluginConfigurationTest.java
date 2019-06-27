@@ -138,15 +138,6 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("123", permissions.get(0).getMode().get());
     Assert.assertEquals("/another/file", permissions.get(1).getFile().get());
     Assert.assertEquals("456", permissions.get(1).getMode().get());
-    sessionProperties.put(
-        "jib.extraDirectories.modificationTimes",
-        "/test/file1=epoch_plus_second,/another/file=keep_original");
-    List<JibPluginConfiguration.ModificationTimeConfiguration> modificationTimes =
-        testPluginConfiguration.getExtraDirectoryModificationTimes();
-    Assert.assertEquals("/test/file1", modificationTimes.get(0).getFile().get());
-    Assert.assertEquals("epoch_plus_second", modificationTimes.get(0).getValue().get());
-    Assert.assertEquals("/another/file", modificationTimes.get(1).getFile().get());
-    Assert.assertEquals("keep_original", modificationTimes.get(1).getValue().get());
   }
 
   @Test
@@ -218,17 +209,6 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("123", permissions.get(0).getMode().get());
     Assert.assertEquals("/another/file", permissions.get(1).getFile().get());
     Assert.assertEquals("456", permissions.get(1).getMode().get());
-    project
-        .getProperties()
-        .setProperty(
-            "jib.extraDirectories.modificationTimes",
-            "/test/file1=epoch_plus_second,/another/file=keep_original");
-    List<JibPluginConfiguration.ModificationTimeConfiguration> modificationTimes =
-        testPluginConfiguration.getExtraDirectoryModificationTimes();
-    Assert.assertEquals("/test/file1", modificationTimes.get(0).getFile().get());
-    Assert.assertEquals("epoch_plus_second", modificationTimes.get(0).getValue().get());
-    Assert.assertEquals("/another/file", modificationTimes.get(1).getFile().get());
-    Assert.assertEquals("keep_original", modificationTimes.get(1).getValue().get());
   }
 
   @Test

@@ -149,7 +149,7 @@ public class BuildDockerMojoIntegrationTest {
   public void testExecute_defaultTarget()
       throws VerificationException, IOException, InterruptedException, DigestException {
     Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\n",
+        "Hello, world. An argument.\n",
         buildToDockerDaemonAndRun(
             defaultTargetTestProject.getProjectRoot(),
             "default-target-name:default-target-version"));

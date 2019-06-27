@@ -455,35 +455,6 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_multipleExtraDirectoriesWithModificationTimes()
-      throws DigestException, VerificationException, IOException, InterruptedException {
-    String targetImage = getGcrImageReference("simpleimage:maven");
-    Path bazFile =
-        simpleTestProject
-            .getProjectRoot()
-            .resolve("src")
-            .resolve("main")
-            .resolve("jib-custom-2")
-            .resolve("baz");
-    Assert.assertTrue(bazFile.toFile().exists());
-    String bazLastModified =
-        Files.getLastModifiedTime(bazFile)
-            .toInstant()
-            .atZone(ZoneId.of("Z"))
-            .format(DateTimeFormatter.ISO_DATE_TIME);
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\nbaz\n1970-01-01T00:00:01Z\n2019-06-14T14:15:00Z\n"
-            + bazLastModified
-            + "\n",
-        buildAndRun(
-            simpleTestProject.getProjectRoot(),
-            targetImage,
-            "pom-extra-dirs-modification-times.xml",
-            false));
-    assertLayerSizer(9, targetImage); // one more than usual
-  }
-
-  @Test
   public void testExecute_bothDeprecatedAndNewExtraDirectoryConfigUsed() throws IOException {
     try {
       build(
