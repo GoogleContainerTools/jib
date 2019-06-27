@@ -30,14 +30,6 @@ import java.util.Objects;
 public class Authorization {
 
   /**
-   * @param token the token
-   * @return an {@link Authorization} with a {@code Bearer} token
-   */
-  public static Authorization fromBearerToken(String token) {
-    return new Authorization("Bearer", token);
-  }
-
-  /**
    * @param username the username
    * @param secret the secret
    * @return an {@link Authorization} with a {@code Basic} credentials
@@ -54,6 +46,14 @@ public class Authorization {
    */
   public static Authorization fromBasicToken(String token) {
     return new Authorization("Basic", token);
+  }
+
+  /**
+   * @param token the token
+   * @return an {@link Authorization} with a {@code Bearer} token
+   */
+  public static Authorization fromBearerToken(String token) {
+    return new Authorization("Bearer", token);
   }
 
   private final String scheme;

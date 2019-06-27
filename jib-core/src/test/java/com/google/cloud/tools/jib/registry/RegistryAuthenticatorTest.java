@@ -24,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.util.Collections;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
@@ -55,7 +56,8 @@ public class RegistryAuthenticatorTest {
             "user-agent");
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
-        registryAuthenticator.getAuthenticationUrl(null, "scope"));
+        registryAuthenticator.getAuthenticationUrl(
+            null, Collections.singletonMap("someimage", "scope")));
 
     registryAuthenticator =
         RegistryAuthenticator.fromAuthenticationMethod(
@@ -64,14 +66,16 @@ public class RegistryAuthenticatorTest {
             "user-agent");
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
-        registryAuthenticator.getAuthenticationUrl(null, "scope"));
+        registryAuthenticator.getAuthenticationUrl(
+            null, Collections.singletonMap("someimage", "scope")));
   }
 
   @Test
   public void testAuthRequestParameters_basicAuth() {
     Assert.assertEquals(
         "service=someservice&scope=repository:someimage:scope",
-        registryAuthenticator.getAuthRequestParameters(null, "scope"));
+        registryAuthenticator.getAuthRequestParameters(
+            null, Collections.singletonMap("someimage", "scope")));
   }
 
   @Test
@@ -81,7 +85,8 @@ public class RegistryAuthenticatorTest {
         "service=someservice&scope=repository:someimage:scope"
             + "&client_id=jib.da031fe481a93ac107a95a96462358f9"
             + "&grant_type=refresh_token&refresh_token=oauth2_access_token",
-        registryAuthenticator.getAuthRequestParameters(credential, "scope"));
+        registryAuthenticator.getAuthRequestParameters(
+            credential, Collections.singletonMap("someimage", "scope")));
   }
 
   @Test
@@ -105,7 +110,8 @@ public class RegistryAuthenticatorTest {
   public void getAuthenticationUrl_basicAuth() throws MalformedURLException {
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
-        registryAuthenticator.getAuthenticationUrl(null, "scope"));
+        registryAuthenticator.getAuthenticationUrl(
+            null, Collections.singletonMap("someimage", "scope")));
   }
 
   @Test
@@ -113,7 +119,7 @@ public class RegistryAuthenticatorTest {
     Credential credential = Credential.from("<token>", "oauth2_token");
     Assert.assertEquals(
         new URL("https://somerealm"),
-        registryAuthenticator.getAuthenticationUrl(credential, "scope"));
+        registryAuthenticator.getAuthenticationUrl(credential, Collections.emptyMap()));
   }
 
   @Test
@@ -176,7 +182,8 @@ public class RegistryAuthenticatorTest {
 
     Assert.assertEquals(
         new URL("https://somerealm?service=someserver&scope=repository:someimage:scope"),
-        registryAuthenticator.getAuthenticationUrl(null, "scope"));
+        registryAuthenticator.getAuthenticationUrl(
+            null, Collections.singletonMap("someimage", "scope")));
   }
 
   @Test
