@@ -65,9 +65,7 @@ public class ManifestPullerIntegrationTest {
   }
 
   @Test
-  public void testPull_v22ManifestList()
-      throws IOException, RegistryException, InterruptedException {
-    localRegistry.pullAndPushToLocal("busybox", "busybox");
+  public void testPull_v22ManifestList() throws IOException, RegistryException {
     RegistryClient.Factory factory =
         RegistryClient.factory(EventHandlers.NONE, "registry-1.docker.io", "library/openjdk");
     Authorization authorization =
@@ -78,22 +76,26 @@ public class ManifestPullerIntegrationTest {
     V22ManifestListTemplate manifestListTemplate =
         registryClient.pullManifest("11-jre-slim", V22ManifestListTemplate.class);
     Assert.assertEquals(2, manifestListTemplate.getSchemaVersion());
-    Assert.assertTrue(manifestListTemplate.getDigestsForPlatform("amd64", "linux").size() > 0);
+    Assert.assertTrue(manifestListTemplate.getManifests().size() > 0);
 
     // Generic call to 11-jre-slim should NOT pull a manifest list (delegate to registry default)
     ManifestTemplate manifestTemplate = registryClient.pullManifest("11-jre-slim");
     Assert.assertEquals(2, manifestTemplate.getSchemaVersion());
     Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestTemplate.class));
 
+    // Make sure we can't cast a v22ManifestTemplate to v22ManifestListTemplate in ManifestPuller
+    try {
+      registryClient.pullManifest(KNOWN_MANIFEST_LIST_SHA, V22ManifestTemplate.class);
+      Assert.fail();
+    } catch (ClassCastException ex) {
+      // pass
+    }
+
     // Referencing a manifest list by sha256, should return a manifest list
     ManifestTemplate sha256ManifestList = registryClient.pullManifest(KNOWN_MANIFEST_LIST_SHA);
     Assert.assertEquals(2, sha256ManifestList.getSchemaVersion());
     Assert.assertThat(sha256ManifestList, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
-    Assert.assertTrue(
-        ((V22ManifestListTemplate) sha256ManifestList)
-                .getDigestsForPlatform("amd64", "linux")
-                .size()
-            > 0);
+    Assert.assertTrue(((V22ManifestListTemplate) sha256ManifestList).getManifests().size() > 0);
   }
 
   @Test

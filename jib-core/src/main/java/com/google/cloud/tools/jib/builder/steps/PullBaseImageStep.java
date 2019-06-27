@@ -209,7 +209,8 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
     ManifestTemplate manifestTemplate =
         registryClient.pullManifest(buildConfiguration.getBaseImageConfiguration().getImageTag());
 
-    // special handling if we happen upon a manifest list
+    // special handling if we happen upon a manifest list, redirect to a manifest and continue
+    // handling it normally
     if (manifestTemplate instanceof V22ManifestListTemplate) {
       buildConfiguration
           .getEventHandlers()

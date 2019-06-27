@@ -91,6 +91,24 @@ public class ManifestPullerTest {
   }
 
   @Test
+  public void testHandleResponse_v22ManifestListFailsWhenParsedAsV22Manifest()
+      throws URISyntaxException, IOException, UnknownManifestFormatException {
+    Path v22ManifestListFile =
+        Paths.get(Resources.getResource("core/json/v22manifest_list.json").toURI());
+    InputStream v22ManifestList = new ByteArrayInputStream(Files.readAllBytes(v22ManifestListFile));
+
+    Mockito.when(mockResponse.getBody()).thenReturn(v22ManifestList);
+    try {
+      new ManifestPuller<>(
+              fakeRegistryEndpointRequestProperties, "test-image-tag", V22ManifestTemplate.class)
+          .handleResponse(mockResponse);
+      Assert.fail();
+    } catch (ClassCastException ex) {
+      // pass
+    }
+  }
+
+  @Test
   public void testHandleResponse_v22ManifestList()
       throws URISyntaxException, IOException, UnknownManifestFormatException {
     Path v22ManifestListFile =

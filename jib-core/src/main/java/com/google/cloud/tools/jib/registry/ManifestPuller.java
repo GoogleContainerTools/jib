@@ -76,8 +76,9 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
       return Collections.singletonList(V22ManifestListTemplate.MANIFEST_MEDIA_TYPE);
     }
 
-    // why is V22ManifestListTemplate missing in the default behavior? We don't explicitly accept
-    // it, we only handle it if referenced by sha256 (see getManifestTemplateFromJson)
+    // V22ManifestListTemplate is not included by default, we don't explicitly accept
+    // it, we only handle it if referenced by sha256 (see getManifestTemplateFromJson) in which
+    // case registries ignore the "accept" directive and just return a manifest list anyway.
     return Arrays.asList(
         OCIManifestTemplate.MANIFEST_MEDIA_TYPE,
         V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
@@ -122,10 +123,6 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
     ObjectNode node = new ObjectMapper().readValue(jsonString, ObjectNode.class);
     if (!node.has("schemaVersion")) {
       throw new UnknownManifestFormatException("Cannot find field 'schemaVersion' in manifest");
-    }
-
-    if (!manifestTemplateClass.equals(ManifestTemplate.class)) {
-      return JsonTemplateMapper.readJson(jsonString, manifestTemplateClass);
     }
 
     int schemaVersion = node.get("schemaVersion").asInt(-1);
