@@ -36,7 +36,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   private static final String DESCRIPTION = "Pushing BLOB ";
 
   private final BuildConfiguration buildConfiguration;
-  private final ProgressEventDispatcher.Factory progressEventDipatcherFactory;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   @Nullable private final Authorization authorization;
   private final BlobDescriptor blobDescriptor;
@@ -44,12 +44,12 @@ class PushBlobStep implements Callable<BlobDescriptor> {
 
   PushBlobStep(
       BuildConfiguration buildConfiguration,
-      ProgressEventDispatcher.Factory progressEventDipatcherFactory,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization authorization,
       BlobDescriptor blobDescriptor,
       Blob blob) {
     this.buildConfiguration = buildConfiguration;
-    this.progressEventDipatcherFactory = progressEventDipatcherFactory;
+    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.authorization = authorization;
     this.blobDescriptor = blobDescriptor;
     this.blob = blob;
@@ -58,7 +58,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   @Override
   public BlobDescriptor call() throws IOException, RegistryException {
     try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDipatcherFactory.create(
+            progressEventDispatcherFactory.create(
                 "pushing blob " + blobDescriptor.getDigest(), blobDescriptor.getSize());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
@@ -71,6 +71,8 @@ class PushBlobStep implements Callable<BlobDescriptor> {
               .setAuthorization(authorization)
               .newRegistryClient();
 
+      // TODO: for base image layers, we may skip the check, since we did the check from
+      // CheckBlobStep.makeList().
       // check if the BLOB is available
       if (registryClient.checkBlob(blobDescriptor.getDigest()) != null) {
         buildConfiguration

@@ -26,7 +26,9 @@ import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
+import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -74,9 +76,19 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayerAndName> {
     return false;
   }
 
-  static List<CachedLayerAndName> pretendLayersCached(ImageAndAuthorization baseImageAndAuth) {
-    return baseImageAndAuth
-        .getImage()
+  static List<CachedLayerAndName> createNoBlobCachedLayers(
+      BuildConfiguration buildConfiguration, Image baseImage)
+      throws IOException, CacheCorruptedException {
+    // The image manifest is already saved, so we should delete it if not all of the layers are
+    // actually cached. (--offline shouldn't see an incomplete caching state.)
+    Cache cache = buildConfiguration.getBaseImageLayersCache();
+    for (Layer layer : baseImage.getLayers()) {
+      if (!cache.retrieve(layer.getBlobDescriptor().getDigest()).isPresent()) {
+        // TODO: delete the manifest.
+      }
+    }
+
+    return baseImage
         .getLayers()
         .stream()
         .map(
@@ -87,7 +99,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayerAndName> {
                     .setLayerDiffId(layer.getDiffId())
                     .setLayerBlob(
                         ignored -> {
-                          throw new IllegalStateException("No actual BLOb attached");
+                          throw new LayerPropertyNotFoundException("No actual BLOb attached");
                         })
                     .build())
         .map(cachedLayer -> new CachedLayerAndName(cachedLayer, null))
@@ -154,7 +166,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayerAndName> {
         throw new IOException(
             "Cannot run Jib in offline mode; local Jib cache for base image is missing image layer "
                 + layerDigest
-                + ". You may need to rerun Jib in online mode to re-download the base image layers.");
+                + ". Rerun Jib in online mode to re-download the base image layers.");
       }
 
       RegistryClient registryClient =

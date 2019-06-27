@@ -33,6 +33,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -70,6 +71,7 @@ public class StepsRunner {
     private Future<BlobDescriptor> containerConfigurationPushResult = failedFuture();
     private Future<BuildResult> buildResult = failedFuture();
 
+    private Future<List<Future<Boolean>>> baseImageLayersExistInTargetRegistry = failedFuture();
     private Future<Boolean> canSkipCachingBaseImageLayers = Futures.immediateFuture(false);
   }
 
@@ -146,16 +148,16 @@ public class StepsRunner {
 
   public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
+
+    stepsToRun.add(this::retrieveTargetRegistryCredentials);
+    stepsToRun.add(this::authenticatePush);
     // build and cache
     stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(this::authenticatePush);
-    stepsToRun.add(this::checkCanSkipCachingBaseImageLayers);
+    stepsToRun.add(this::checkBaseImageLayersInTargetRegistry);
     stepsToRun.add(this::pullAndCacheBaseImageLayers);
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
     // push to registry
-    stepsToRun.add(this::retrieveTargetRegistryCredentials);
-    stepsToRun.add(this::authenticatePush);
     stepsToRun.add(this::pushBaseImageLayers);
     stepsToRun.add(this::pushApplicationLayers);
     stepsToRun.add(this::pushContainerConfiguration);
@@ -216,6 +218,21 @@ public class StepsRunner {
             new PullBaseImageStep(buildConfiguration, childProgressDispatcherFactory));
   }
 
+  private void checkBaseImageLayersInTargetRegistry() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
+    results.baseImageLayersExistInTargetRegistry =
+        executorService.submit(
+            () ->
+                scheduleCallables(
+                    CheckBlobStep.makeList(
+                        buildConfiguration,
+                        childProgressDispatcherFactory,
+                        results.baseImageAndAuth.get().getImage(),
+                        results.pushAuthorization.get().orElse(null))));
+  }
+
   private void checkCanSkipCachingBaseImageLayers() {
     Verify.verifyNotNull(rootProgressDispatcher).dispatchProgress(1);
 
@@ -228,6 +245,12 @@ public class StepsRunner {
                     results.pushAuthorization.get().orElse(null)));
   }
 
+  private boolean canSkipPushingBaseImageLayers() throws InterruptedException, ExecutionException {
+    // TODO: we can optimize to short-curcuit as soon as any future evaluates to false.
+    List<Boolean> layersExist = realizeFutures(results.baseImageLayersExistInTargetRegistry.get());
+    return layersExist.stream().allMatch(Boolean.TRUE::equals);
+  }
+
   private void pullAndCacheBaseImageLayers() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
@@ -235,10 +258,11 @@ public class StepsRunner {
     results.baseImageLayers =
         executorService.submit(
             () -> {
-              if (results.canSkipCachingBaseImageLayers.get()) {
-                // optimization: skip downloading and caching base image layers
-                return PullAndCacheBaseImageLayerStep.pretendLayersCached(
-                        results.baseImageAndAuth.get())
+              if (canSkipPushingBaseImageLayers()) {
+                System.out.println(">>> Can skip pushing base image layers");
+                // optimization: skip downloading/caching base image layers
+                return PullAndCacheBaseImageLayerStep.createNoBlobCachedLayers(
+                        buildConfiguration, results.baseImageAndAuth.get().getImage())
                     .stream()
                     .map(Futures::immediateFuture)
                     .collect(Collectors.toList());
@@ -258,23 +282,15 @@ public class StepsRunner {
 
     results.baseImageLayerPushResults =
         executorService.submit(
-            () -> {
-              if (results.canSkipCachingBaseImageLayers.get()) {
-                // In this case, baseImageLayers are immediate futures (no blocking).
-                return realizeFutures(results.baseImageLayers.get())
-                    .stream()
-                    .map(layer -> layer.getCachedLayer().getBlobDescriptor())
-                    .map(Futures::immediateFuture)
-                    .collect(Collectors.toList());
-              } else {
-                return scheduleCallables(
-                    PushLayerStep.makeList(
-                        buildConfiguration,
-                        childProgressDispatcherFactory,
-                        results.pushAuthorization.get().orElse(null),
-                        results.baseImageLayers.get()));
-              }
-            });
+            () ->
+                canSkipPushingBaseImageLayers()
+                    ? Collections.emptyList()
+                    : scheduleCallables(
+                        PushLayerStep.makeList(
+                            buildConfiguration,
+                            childProgressDispatcherFactory,
+                            results.pushAuthorization.get().orElse(null),
+                            results.baseImageLayers.get())));
   }
 
   private void buildAndCacheApplicationLayers() {
