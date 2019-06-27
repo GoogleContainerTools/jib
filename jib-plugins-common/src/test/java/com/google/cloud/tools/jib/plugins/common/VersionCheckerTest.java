@@ -87,7 +87,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_lowOpen() {
+  public void testRange_leftClosed() {
     Assert.assertFalse(checker.compatibleVersion("[2.3,4.3]", "1.0"));
     Assert.assertFalse(checker.compatibleVersion("[2.3,4.3)", "1.0"));
     Assert.assertFalse(checker.compatibleVersion("[2.3,)", "1.0"));
@@ -95,7 +95,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_lowOpen_exact() {
+  public void testRange_leftClosed_exact() {
     Assert.assertTrue(checker.compatibleVersion("[2.3,4.3]", "2.3"));
     Assert.assertTrue(checker.compatibleVersion("[2.3,4.3)", "2.3"));
     Assert.assertTrue(checker.compatibleVersion("[2.3,)", "2.3"));
@@ -103,7 +103,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_lowClosed() {
+  public void testRange_leftOpen() {
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3]", "1.0"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3)", "1.0"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,)", "1.0"));
@@ -111,7 +111,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_lowClosed_exact() {
+  public void testRange_leftOpen_exact() {
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3]", "2.3"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3)", "2.3"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,)", "2.3"));
@@ -119,7 +119,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_highOpen() {
+  public void testRange_rightClosed() {
     Assert.assertFalse(checker.compatibleVersion("[2.3,4.3]", "5.0"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3]", "5.0"));
     Assert.assertFalse(checker.compatibleVersion("[,4.3]", "5.0"));
@@ -127,7 +127,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_highOpen_exact() {
+  public void testRange_rightClosed_exact() {
     Assert.assertTrue(checker.compatibleVersion("[2.3,4.3]", "4.3"));
     Assert.assertTrue(checker.compatibleVersion("(2.3,4.3]", "4.3"));
     Assert.assertTrue(checker.compatibleVersion("[,4.3]", "4.3"));
@@ -143,7 +143,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_highClosed() {
+  public void testRange_rightOpen() {
     Assert.assertFalse(checker.compatibleVersion("[2.3,4.3)", "5.0"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3)", "5.0"));
     Assert.assertFalse(checker.compatibleVersion("[,4.3)", "5.0"));
@@ -151,7 +151,7 @@ public class VersionCheckerTest {
   }
 
   @Test
-  public void testRange_highClosed_exact() {
+  public void testRange_rightOpen_exact() {
     Assert.assertFalse(checker.compatibleVersion("[2.3,4.3)", "4.3"));
     Assert.assertFalse(checker.compatibleVersion("(2.3,4.3)", "4.3"));
     Assert.assertFalse(checker.compatibleVersion("[,4.3)", "4.3"));

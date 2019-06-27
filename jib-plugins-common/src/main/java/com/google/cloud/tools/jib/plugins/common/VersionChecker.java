@@ -26,17 +26,18 @@ import java.util.function.Function;
  * range. A version range can be in one of two forms:
  *
  * <ol>
- *   <li>A <em>bounded range</em> such as {@code [1.0,3.5)}, where square brackets indicate an open
- *       boundary (includes the value) and parentheses indicates a closed boundary (excludes the
- *       actual value). Either of the lower or upper bounds can be dropped (but not both!), such as
- *       to indicate an exclusive upper- or lower-bound. For example, {@code [,4)} indicates up to
- *       but not including version 4.0.
- *   <li>a single version such a {@code 1.0} which acts as an open lower bound and akin to {@code
- *       [1.0,)}
+ *   <li>An <em>interval</em> such as {@code [1.0,3.5)}, where square brackets indicate an closed
+ *       boundary (includes the value) and parentheses indicates an open boundary (excludes the
+ *       actual value). Either of the left or right bounds can be dropped (but not both!) to to
+ *       indicate an half-bound. For example, {@code [,4)} will include any version up to but not
+ *       including version 4.0.
+ *   <li>a single version such a {@code 1.0} which acts as an interval with an open left bound and
+ *       akin to {@code [1.0,)}
  * </ol>
  *
  * To support custom version representations, the actual version object type ({@code <V>}) is
- * pluggable. It must implement {@link Comparable}.
+ * pluggable. It must implement {@link Comparable}. The versions in the range must have at most 3
+ * components (e.g., {@code major.minor.micro}).
  *
  * <p>This class exists as Gradle has no version-range-type class and Maven's {@code
  * org.apache.maven.artifact.versioning.VersionRange} treats a single version as an exact bound.
@@ -93,7 +94,7 @@ public class VersionChecker<V extends Comparable<? super V>> {
   public boolean compatibleVersion(String acceptableVersionRange, String actualVersion) {
     V pluginVersion = parseVersion(actualVersion);
 
-    // Treat a single version "1.4" as a lower bound (equivalent to "[1.4,)")
+    // Treat a single version "1.4" as a left bound, equivalent to "[1.4,)"
     if (acceptableVersionRange.matches(VERSION_PATTERN)) {
       return GE(pluginVersion, parseVersion(acceptableVersionRange));
     }
@@ -103,22 +104,22 @@ public class VersionChecker<V extends Comparable<? super V>> {
         acceptableVersionRange.matches(
             "[\\[(](" + VERSION_PATTERN + ")?,(" + VERSION_PATTERN + ")?[\\])]"),
         "invalid version range");
-    BiPredicate<V, V> bottomComparator =
+    BiPredicate<V, V> leftComparator =
         acceptableVersionRange.startsWith("[") ? VersionChecker::GE : VersionChecker::GT;
-    BiPredicate<V, V> topComparator =
+    BiPredicate<V, V> rightComparator =
         acceptableVersionRange.endsWith("]") ? VersionChecker::LE : VersionChecker::LT;
     // extract the two version specs
     String[] range =
         acceptableVersionRange.substring(1, acceptableVersionRange.length() - 1).split(",", -1);
-    Preconditions.checkArgument(range.length == 2, "version range must have upper and lower bound");
+    Preconditions.checkArgument(range.length == 2, "version range must have left and right bounds");
     Preconditions.checkArgument(
         range[0].length() != 0 || range[1].length() != 0,
-        "upper and lower bounds cannot both be empty");
+        "left and right bounds cannot both be empty");
 
-    if (!range[0].isEmpty() && !bottomComparator.test(pluginVersion, parseVersion(range[0]))) {
+    if (!range[0].isEmpty() && !leftComparator.test(pluginVersion, parseVersion(range[0]))) {
       return false;
     }
-    if (!range[1].isEmpty() && !topComparator.test(pluginVersion, parseVersion(range[1]))) {
+    if (!range[1].isEmpty() && !rightComparator.test(pluginVersion, parseVersion(range[1]))) {
       return false;
     }
     return true;
