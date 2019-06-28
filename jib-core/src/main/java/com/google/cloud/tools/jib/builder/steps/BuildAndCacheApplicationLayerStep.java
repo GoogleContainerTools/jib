@@ -51,7 +51,8 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
             progressEventDispatcherFactory.create(
                 "preparing application layer builders", layerConfigurations.size());
         TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
+            new TimerEventDispatcher(
+                buildConfiguration.getEventHandlers(), "Preparing application layer builders")) {
       return layerConfigurations
           .stream()
           // Skips the layer if empty.
