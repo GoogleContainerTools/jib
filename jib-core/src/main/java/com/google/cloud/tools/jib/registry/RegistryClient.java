@@ -28,10 +28,9 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
-import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -282,7 +281,8 @@ public class RegistryClient {
    * @param <T> child type of ManifestTemplate
    * @param imageTag the tag to pull on
    * @param manifestTemplateClass the specific version of manifest template to pull, or {@link
-   *     ManifestTemplate} to pull either {@link V22ManifestTemplate} or {@link V21ManifestTemplate}
+   *     ManifestTemplate} to pull predefined subclasses; see: {@link
+   *     ManifestPuller#handleResponse(Response)}
    * @return the manifest template
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
