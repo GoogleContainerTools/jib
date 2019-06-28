@@ -29,6 +29,7 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
@@ -44,30 +45,26 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
-    int layerCount = buildConfiguration.getLayerConfigurations().size();
+    List<LayerConfiguration> layerConfigurations = buildConfiguration.getLayerConfigurations();
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                "preparing application layer builders", layerCount);
+                "preparing application layer builders", layerConfigurations.size());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), "Preparing application layer builders")) {
-      ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
-          ImmutableList.builderWithExpectedSize(layerCount);
-      for (LayerConfiguration layerConfiguration : buildConfiguration.getLayerConfigurations()) {
-        // Skips the layer if empty.
-        if (layerConfiguration.getLayerEntries().isEmpty()) {
-          continue;
-        }
-
-        buildAndCacheApplicationLayerSteps.add(
-            new BuildAndCacheApplicationLayerStep(
-                buildConfiguration,
-                progressEventDispatcher.newChildProducer(),
-                layerConfiguration.getName(),
-                layerConfiguration));
-      }
-      return buildAndCacheApplicationLayerSteps.build();
+      return layerConfigurations
+          .stream()
+          // Skips the layer if empty.
+          .filter(layerConfiguration -> !layerConfiguration.getLayerEntries().isEmpty())
+          .map(
+              layerConfiguration ->
+                  new BuildAndCacheApplicationLayerStep(
+                      buildConfiguration,
+                      progressEventDispatcher.newChildProducer(),
+                      layerConfiguration.getName(),
+                      layerConfiguration))
+          .collect(ImmutableList.toImmutableList());
     }
   }
 
