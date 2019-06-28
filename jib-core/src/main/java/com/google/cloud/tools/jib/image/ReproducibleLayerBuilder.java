@@ -16,7 +16,7 @@
 
 package com.google.cloud.tools.jib.image;
 
-import com.google.cloud.tools.jib.api.FixedModificationTimeProvider;
+import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -59,7 +59,7 @@ public class ReproducibleLayerBuilder {
     /**
      * Adds a {@link TarArchiveEntry} if its extraction path does not exist yet. Also adds all of
      * the parent directories on the extraction path, if the parent does not exist. Parent will have
-     * modified time to set to {@link FixedModificationTimeProvider#EPOCH_PLUS_ONE_SECOND}.
+     * modified time to set to {@link LayerConfiguration#DEFAULT_MODIFIED_TIME}.
      *
      * @param tarArchiveEntry the {@link TarArchiveEntry}
      */
@@ -73,7 +73,7 @@ public class ReproducibleLayerBuilder {
       Path namePath = Paths.get(tarArchiveEntry.getName());
       if (namePath.getParent() != namePath.getRoot()) {
         TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, namePath.getParent().toString());
-        dir.setModTime(FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND.toEpochMilli());
+        dir.setModTime(LayerConfiguration.DEFAULT_MODIFIED_TIME.toEpochMilli());
         add(dir);
       }
 

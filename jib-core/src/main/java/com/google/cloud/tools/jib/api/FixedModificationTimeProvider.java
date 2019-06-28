@@ -19,17 +19,13 @@ package com.google.cloud.tools.jib.api;
 import java.nio.file.Path;
 import java.time.Instant;
 
-/** Modification time provider which returns fixed instant */
+/** Modification time provider which returns a fixed instant. */
 public class FixedModificationTimeProvider implements ModificationTimeProvider {
 
-  /** EPOCH + 1 second */
-  public static final Instant EPOCH_PLUS_ONE_SECOND = Instant.ofEpochSecond(1);
-
-  /** Fixed modification time * */
   private final Instant modificationTime;
 
   /**
-   * Initializes with a fixed modification time
+   * Initializes with a fixed modification time.
    *
    * @param modificationTime fixed modification time
    */
@@ -38,7 +34,7 @@ public class FixedModificationTimeProvider implements ModificationTimeProvider {
   }
 
   /**
-   * Returns preconfigured fixed modification time
+   * Returns the preconfigured fixed modification time.
    *
    * @param file path to file
    * @param pathInContainer path to file in container

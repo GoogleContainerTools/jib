@@ -35,7 +35,7 @@ public class LayerConfigurationTest {
         source,
         destination,
         LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
-        FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND);
+        LayerConfiguration.DEFAULT_MODIFIED_TIME);
   }
 
   @Test

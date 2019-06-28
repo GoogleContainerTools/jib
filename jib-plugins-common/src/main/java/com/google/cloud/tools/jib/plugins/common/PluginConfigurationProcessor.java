@@ -529,7 +529,7 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Creates modification type provider based on the type, the value can be:
+   * Creates a modification time provider based on the config value. The value can be:
    *
    * <ol>
    *   <li>{@code KEEP_ORIGINAL} to create a provider which keeps original file modification time
@@ -538,16 +538,15 @@ public class PluginConfigurationProcessor {
    *   <li>date in ISO 8601 format
    * </ol>
    *
-   * @param modificationTime modification time value
-   * @return requested modification time provider
+   * @param modificationTime modification time config value
+   * @return corresponding modification time provider
    */
   private static ModificationTimeProvider createModificationTimeProvider(String modificationTime) {
     switch (modificationTime) {
       case "KEEP_ORIGINAL":
         return new KeepOriginalModificationTimeProvider();
       case "EPOCH_PLUS_SECOND":
-        return new FixedModificationTimeProvider(
-            FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND);
+        return new FixedModificationTimeProvider(Instant.ofEpochSecond(1));
       default:
         try {
           return new FixedModificationTimeProvider(

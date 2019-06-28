@@ -103,7 +103,8 @@ public class BuildDockerMojoIntegrationTest {
 
     Instant before = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         buildToDockerDaemonAndRun(simpleTestProject.getProjectRoot(), targetImage));
     Instant buildTime =
         Instant.parse(

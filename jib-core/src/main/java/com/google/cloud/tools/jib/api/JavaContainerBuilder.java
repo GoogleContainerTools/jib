@@ -177,7 +177,7 @@ public class JavaContainerBuilder {
   private RelativeUnixPath othersDestination = RelativeUnixPath.get("classpath");
   @Nullable private String mainClass;
   private ModificationTimeProvider modificationTimeProvider =
-      new FixedModificationTimeProvider(FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND);
+      LayerConfiguration.DEFAULT_MODIFIED_TIME_PROVIDER;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
     this.jibContainerBuilder = jibContainerBuilder;
@@ -656,7 +656,7 @@ public class JavaContainerBuilder {
     addedPaths.add(new PathPredicatePair(directory, filter));
   }
 
-  private void addFileToLayer(
+  private static void addFileToLayer(
       Map<LayerType, LayerConfiguration.Builder> layerBuilders,
       LayerType layerType,
       Path sourceFile,
@@ -665,9 +665,9 @@ public class JavaContainerBuilder {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, LayerConfiguration.builder());
     }
-    Instant lastModifiedDate =
+    Instant modificationTime =
         modificationTimeProvider.getModificationTime(sourceFile, pathInContainer);
-    layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer, lastModifiedDate);
+    layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer, modificationTime);
   }
 
   private static void addDirectoryContentsToLayer(

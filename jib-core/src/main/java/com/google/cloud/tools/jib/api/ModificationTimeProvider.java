@@ -19,15 +19,15 @@ package com.google.cloud.tools.jib.api;
 import java.nio.file.Path;
 import java.time.Instant;
 
-/** Files modification time provider * */
+/** File modification time provider. */
 public interface ModificationTimeProvider {
 
   /**
-   * Returns modification time for a specific file
+   * Returns modification time for a specific file.
    *
-   * @param file path to file
+   * @param sourceFile path to source file
    * @param pathInContainer path to file in container
    * @return file modification time
    */
-  Instant getModificationTime(Path file, AbsoluteUnixPath pathInContainer);
+  Instant getModificationTime(Path sourceFile, AbsoluteUnixPath pathInContainer);
 }

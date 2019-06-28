@@ -40,7 +40,7 @@ public class JavaContainerBuilderHelper {
    *
    * @param extraDirectory the source extra directory path
    * @param extraDirectoryPermissions map from path on container to file permissions
-   * @param modificationTimeProvider files modification time provider
+   * @param modificationTimeProvider file modification time provider
    * @return a {@link LayerConfiguration} for adding the extra directory to the container
    * @throws IOException if walking the extra directory fails
    */
@@ -57,13 +57,13 @@ public class JavaContainerBuilderHelper {
             localPath -> {
               AbsoluteUnixPath pathOnContainer =
                   AbsoluteUnixPath.get("/").resolve(extraDirectory.relativize(localPath));
-              FilePermissions permissions = extraDirectoryPermissions.get(pathOnContainer);
-              Instant lastModifiedDate =
+              Instant modificationTime =
                   modificationTimeProvider.getModificationTime(localPath, pathOnContainer);
-              if (permissions != null) {
-                builder.addEntry(localPath, pathOnContainer, permissions, lastModifiedDate);
+              FilePermissions permissions = extraDirectoryPermissions.get(pathOnContainer);
+              if (permissions == null) {
+                builder.addEntry(localPath, pathOnContainer, modificationTime);
               } else {
-                builder.addEntry(localPath, pathOnContainer, lastModifiedDate);
+                builder.addEntry(localPath, pathOnContainer, permissions, modificationTime);
               }
             });
     return builder.build();

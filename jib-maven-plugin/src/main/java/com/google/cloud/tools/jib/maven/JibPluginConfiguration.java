@@ -127,9 +127,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for {@code from} parameter, */
   public static class FromConfiguration {
 
-    @Nullable
-    @Parameter(required = true)
-    private String image;
+    @Nullable @Parameter private String image;
 
     @Nullable @Parameter private String credHelper;
 
@@ -274,7 +272,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (property != null) {
       return property;
     }
-    return Preconditions.checkNotNull(from).image;
+    return from.image;
   }
 
   /**
@@ -288,7 +286,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (property != null) {
       return property;
     }
-    return Preconditions.checkNotNull(from).credHelper;
+    return from.credHelper;
   }
 
   AuthConfiguration getBaseImageAuth() {
@@ -341,7 +339,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (property != null) {
       return property;
     }
-    return Preconditions.checkNotNull(to).credHelper;
+    return to.credHelper;
   }
 
   AuthConfiguration getTargetImageAuth() {
@@ -546,7 +544,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (property != null) {
       return property;
     }
-    return Preconditions.checkNotNull(container.filesModificationTime);
+    return container.filesModificationTime;
   }
 
   /**
