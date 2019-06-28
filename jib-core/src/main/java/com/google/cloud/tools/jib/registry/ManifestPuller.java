@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.CharStreams;
@@ -71,7 +72,13 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
     if (manifestTemplateClass.equals(OCIManifestTemplate.class)) {
       return Collections.singletonList(OCIManifestTemplate.MANIFEST_MEDIA_TYPE);
     }
+    if (manifestTemplateClass.equals(V22ManifestListTemplate.class)) {
+      return Collections.singletonList(V22ManifestListTemplate.MANIFEST_MEDIA_TYPE);
+    }
 
+    // V22ManifestListTemplate is not included by default, we don't explicitly accept
+    // it, we only handle it if referenced by sha256 (see getManifestTemplateFromJson) in which
+    // case registries ignore the "accept" directive and just return a manifest list anyway.
     return Arrays.asList(
         OCIManifestTemplate.MANIFEST_MEDIA_TYPE,
         V22ManifestTemplate.MANIFEST_MEDIA_TYPE,
@@ -118,10 +125,6 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
       throw new UnknownManifestFormatException("Cannot find field 'schemaVersion' in manifest");
     }
 
-    if (!manifestTemplateClass.equals(ManifestTemplate.class)) {
-      return JsonTemplateMapper.readJson(jsonString, manifestTemplateClass);
-    }
-
     int schemaVersion = node.get("schemaVersion").asInt(-1);
     if (schemaVersion == -1) {
       throw new UnknownManifestFormatException("`schemaVersion` field is not an integer");
@@ -141,6 +144,10 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
       if (OCIManifestTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
         return manifestTemplateClass.cast(
             JsonTemplateMapper.readJson(jsonString, OCIManifestTemplate.class));
+      }
+      if (V22ManifestListTemplate.MANIFEST_MEDIA_TYPE.equals(mediaType)) {
+        return manifestTemplateClass.cast(
+            JsonTemplateMapper.readJson(jsonString, V22ManifestListTemplate.class));
       }
       throw new UnknownManifestFormatException("Unknown mediaType: " + mediaType);
     }

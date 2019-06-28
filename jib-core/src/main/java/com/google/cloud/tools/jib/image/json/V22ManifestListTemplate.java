@@ -76,7 +76,7 @@ public class V22ManifestListTemplate implements ManifestTemplate {
   @Nullable private List<ManifestDescriptorTemplate> manifests;
 
   @VisibleForTesting
-  List<ManifestDescriptorTemplate> getManifests() {
+  public List<ManifestDescriptorTemplate> getManifests() {
     return Preconditions.checkNotNull(manifests);
   }
 
@@ -93,10 +93,10 @@ public class V22ManifestListTemplate implements ManifestTemplate {
   }
 
   /** Template for inner JSON object representing a single platform specific manifest. */
-  static class ManifestDescriptorTemplate implements JsonTemplate {
+  public static class ManifestDescriptorTemplate implements JsonTemplate {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    static class Platform implements JsonTemplate {
+    public static class Platform implements JsonTemplate {
       @Nullable private String architecture;
       @Nullable private String os;
     }

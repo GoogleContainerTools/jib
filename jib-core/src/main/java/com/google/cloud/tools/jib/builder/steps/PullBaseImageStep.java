@@ -44,12 +44,14 @@ import com.google.cloud.tools.jib.image.json.ManifestAndConfig;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -207,6 +209,19 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
     ManifestTemplate manifestTemplate =
         registryClient.pullManifest(buildConfiguration.getBaseImageConfiguration().getImageTag());
 
+    // special handling if we happen upon a manifest list, redirect to a manifest and continue
+    // handling it normally
+    if (manifestTemplate instanceof V22ManifestListTemplate) {
+      buildConfiguration
+          .getEventHandlers()
+          .dispatch(
+              LogEvent.lifecycle(
+                  "The base image reference is manifest list, searching for linux/amd64"));
+      manifestTemplate =
+          obtainPlatformSpecificImageManifest(
+              registryClient, (V22ManifestListTemplate) manifestTemplate);
+    }
+
     // TODO: Make schema version be enum.
     switch (manifestTemplate.getSchemaVersion()) {
       case 1:
@@ -256,6 +271,25 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
     }
 
     throw new IllegalStateException("Unknown manifest schema version");
+  }
+
+  /**
+   * Looks through a manifest list for any amd64/linux manifest and downloads and returns the first
+   * manifest it finds.
+   */
+  private ManifestTemplate obtainPlatformSpecificImageManifest(
+      RegistryClient registryClient, V22ManifestListTemplate manifestListTemplate)
+      throws RegistryException, IOException {
+
+    List<String> digests = manifestListTemplate.getDigestsForPlatform("amd64", "linux");
+    if (digests.size() == 0) {
+      String errorMessage =
+          "Unable to find amd64/linux manifest in manifest list at: "
+              + buildConfiguration.getBaseImageConfiguration().getImage();
+      buildConfiguration.getEventHandlers().dispatch(LogEvent.error(errorMessage));
+      throw new RegistryException(errorMessage);
+    }
+    return registryClient.pullManifest(digests.get(0));
   }
 
   /**
