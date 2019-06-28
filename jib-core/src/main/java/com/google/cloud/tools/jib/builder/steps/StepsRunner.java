@@ -86,10 +86,18 @@ public class StepsRunner {
     return new StepsRunner(MoreExecutors.listeningDecorator(executorService), buildConfiguration);
   }
 
+  private static <E> List<E> realizeFutures(List<Future<E>> futures)
+      throws InterruptedException, ExecutionException {
+    List<E> values = new ArrayList<>();
+    for (Future<E> future : futures) {
+      values.add(future.get());
+    }
+    return values;
+  }
+
   private final StepResults results = new StepResults();
 
-  // TODO: use plain ExecutorService; requires refactoring PushImageStep.
-  private final ListeningExecutorService executorService;
+  private final ExecutorService executorService;
   private final BuildConfiguration buildConfiguration;
 
   // We save steps to run by wrapping each step into a Runnable, only because of the unfortunate
@@ -108,6 +116,67 @@ public class StepsRunner {
       ListeningExecutorService executorService, BuildConfiguration buildConfiguration) {
     this.executorService = executorService;
     this.buildConfiguration = buildConfiguration;
+  }
+
+  public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
+    rootProgressDescription = "building image to Docker daemon";
+    // build and cache
+    stepsToRun.add(this::pullBaseImage);
+    stepsToRun.add(this::pullAndCacheBaseImageLayers);
+    stepsToRun.add(this::buildAndCacheApplicationLayers);
+    stepsToRun.add(this::buildImage);
+    // load to Docker
+    stepsToRun.add(() -> loadDocker(dockerClient));
+    return this;
+  }
+
+  public StepsRunner tarBuildSteps(Path outputPath) {
+    rootProgressDescription = "building image to tar file";
+    // build and cache
+    stepsToRun.add(this::pullBaseImage);
+    stepsToRun.add(this::pullAndCacheBaseImageLayers);
+    stepsToRun.add(this::buildAndCacheApplicationLayers);
+    stepsToRun.add(this::buildImage);
+    // create a tar
+    stepsToRun.add(() -> writeTarFile(outputPath));
+    return this;
+  }
+
+  public StepsRunner registryPushSteps() {
+    rootProgressDescription = "building image to registry";
+    // build and cache
+    stepsToRun.add(this::pullBaseImage);
+    stepsToRun.add(this::pullAndCacheBaseImageLayers);
+    stepsToRun.add(this::buildAndCacheApplicationLayers);
+    stepsToRun.add(this::buildImage);
+    // push to registry
+    stepsToRun.add(this::retrieveTargetRegistryCredentials);
+    stepsToRun.add(this::authenticatePush);
+    stepsToRun.add(this::pushBaseImageLayers);
+    stepsToRun.add(this::pushApplicationLayers);
+    stepsToRun.add(this::pushContainerConfiguration);
+    stepsToRun.add(this::pushImages);
+    return this;
+  }
+
+  public BuildResult run() throws ExecutionException, InterruptedException {
+    Preconditions.checkNotNull(rootProgressDescription);
+
+    try (ProgressEventDispatcher progressEventDispatcher =
+        ProgressEventDispatcher.newRoot(
+            buildConfiguration.getEventHandlers(), rootProgressDescription, stepsToRun.size())) {
+      rootProgressDispatcher = progressEventDispatcher;
+
+      stepsToRun.forEach(Runnable::run);
+      return results.buildResult.get();
+
+    } catch (ExecutionException ex) {
+      ExecutionException unrolled = ex;
+      while (unrolled.getCause() instanceof ExecutionException) {
+        unrolled = (ExecutionException) unrolled.getCause();
+      }
+      throw unrolled;
+    }
   }
 
   private void retrieveTargetRegistryCredentials() {
@@ -151,7 +220,7 @@ public class StepsRunner {
         executorService.submit(
             () ->
                 scheduleCallables(
-                    PullAndCacheBaseImageLayersStep.makeList(
+                    PullAndCacheBaseImageLayerStep.makeList(
                         buildConfiguration,
                         childProgressDispatcherFactory,
                         results.baseImageAndAuth.get())));
@@ -228,7 +297,7 @@ public class StepsRunner {
                         Verify.verifyNotNull(results.applicationLayers))));
   }
 
-  private void pushImage() {
+  private void pushImages() {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
@@ -238,14 +307,17 @@ public class StepsRunner {
               realizeFutures(results.baseImageLayerPushResults.get());
               realizeFutures(results.applicationLayerPushResults.get());
 
-              return new PushImageStep(
-                      executorService,
-                      buildConfiguration,
-                      childProgressDispatcherFactory,
-                      results.pushAuthorization.get().orElse(null),
-                      results.containerConfigurationPushResult.get(),
-                      results.builtImage.get())
-                  .call();
+              List<Future<BuildResult>> manifestPushResults =
+                  scheduleCallables(
+                      PushImageStep.makeList(
+                          buildConfiguration,
+                          childProgressDispatcherFactory,
+                          results.pushAuthorization.get().orElse(null),
+                          results.containerConfigurationPushResult.get(),
+                          results.builtImage.get()));
+              realizeFutures(manifestPushResults);
+              // Manifest pushers return the same BuildResult.
+              return manifestPushResults.get(0).get();
             });
   }
 
@@ -279,77 +351,7 @@ public class StepsRunner {
                     .call());
   }
 
-  public BuildResult run() throws ExecutionException, InterruptedException {
-    Preconditions.checkNotNull(rootProgressDescription);
-
-    try (ProgressEventDispatcher progressEventDispatcher =
-        ProgressEventDispatcher.newRoot(
-            buildConfiguration.getEventHandlers(), rootProgressDescription, stepsToRun.size())) {
-      rootProgressDispatcher = progressEventDispatcher;
-
-      stepsToRun.forEach(Runnable::run);
-      return results.buildResult.get();
-
-    } catch (ExecutionException ex) {
-      ExecutionException unrolled = ex;
-      while (unrolled.getCause() instanceof ExecutionException) {
-        unrolled = (ExecutionException) unrolled.getCause();
-      }
-      throw unrolled;
-    }
-  }
-
-  private static <E> List<E> realizeFutures(List<Future<E>> futures)
-      throws InterruptedException, ExecutionException {
-    List<E> values = new ArrayList<>();
-    for (Future<E> future : futures) {
-      values.add(future.get());
-    }
-    return values;
-  }
-
   private <E> List<Future<E>> scheduleCallables(ImmutableList<? extends Callable<E>> callables) {
     return callables.stream().map(executorService::submit).collect(Collectors.toList());
-  }
-
-  public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
-    rootProgressDescription = "building image to Docker daemon";
-    // build and cache
-    stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(this::pullAndCacheBaseImageLayers);
-    stepsToRun.add(this::buildAndCacheApplicationLayers);
-    stepsToRun.add(this::buildImage);
-    // load to Docker
-    stepsToRun.add(() -> loadDocker(dockerClient));
-    return this;
-  }
-
-  public StepsRunner tarBuildSteps(Path outputPath) {
-    rootProgressDescription = "building image to tar file";
-    // build and cache
-    stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(this::pullAndCacheBaseImageLayers);
-    stepsToRun.add(this::buildAndCacheApplicationLayers);
-    stepsToRun.add(this::buildImage);
-    // create a tar
-    stepsToRun.add(() -> writeTarFile(outputPath));
-    return this;
-  }
-
-  public StepsRunner registryPushSteps() {
-    rootProgressDescription = "building image to registry";
-    // build and cache
-    stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(this::pullAndCacheBaseImageLayers);
-    stepsToRun.add(this::buildAndCacheApplicationLayers);
-    stepsToRun.add(this::buildImage);
-    // push to registry
-    stepsToRun.add(this::retrieveTargetRegistryCredentials);
-    stepsToRun.add(this::authenticatePush);
-    stepsToRun.add(this::pushBaseImageLayers);
-    stepsToRun.add(this::pushApplicationLayers);
-    stepsToRun.add(this::pushContainerConfiguration);
-    stepsToRun.add(this::pushImage);
-    return this;
   }
 }
