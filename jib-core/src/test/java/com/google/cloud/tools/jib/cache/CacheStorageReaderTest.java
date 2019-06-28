@@ -198,7 +198,7 @@ public class CacheStorageReaderTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.startsWith(
-              "Multiple layer files found for layer with digest "
+              "No or multiple layer files found for layer with digest "
                   + layerDigest.getHash()
                   + " in directory: "
                   + cacheStorageFiles.getLayerDirectory(layerDigest)));
