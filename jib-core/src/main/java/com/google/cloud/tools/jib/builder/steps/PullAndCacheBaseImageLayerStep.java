@@ -19,13 +19,18 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -34,6 +39,32 @@ import javax.annotation.Nullable;
 class PullAndCacheBaseImageLayerStep implements Callable<CachedLayerAndName> {
 
   private static final String DESCRIPTION = "Pulling base image layer %s";
+
+  static ImmutableList<PullAndCacheBaseImageLayerStep> makeList(
+      BuildConfiguration buildConfiguration,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      ImageAndAuthorization baseImageAndAuth) {
+    ImmutableList<Layer> baseImageLayers = baseImageAndAuth.getImage().getLayers();
+
+    try (ProgressEventDispatcher progressEventDispatcher =
+            progressEventDispatcherFactory.create(
+                "preparing base image layer pullers", baseImageLayers.size());
+        TimerEventDispatcher ignored =
+            new TimerEventDispatcher(
+                buildConfiguration.getEventHandlers(), "Preparing base image layer pullers")) {
+
+      List<PullAndCacheBaseImageLayerStep> layerPullers = new ArrayList<>();
+      for (Layer layer : baseImageLayers) {
+        layerPullers.add(
+            new PullAndCacheBaseImageLayerStep(
+                buildConfiguration,
+                progressEventDispatcher.newChildProducer(),
+                layer.getBlobDescriptor().getDigest(),
+                baseImageAndAuth.getAuthorization()));
+      }
+      return ImmutableList.copyOf(layerPullers);
+    }
+  }
 
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
