@@ -529,23 +529,30 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Creates modification type provider based on the type
+   * Creates modification type provider based on the type, the value can be:
+   *
+   * <ol>
+   *   <li>{@code KEEP_ORIGINAL} to create a provider which keeps original file modification time
+   *   <li>{@code EPOCH_PLUS_SECOND} to create a provider which trims file modification time to
+   *       EPOCH + 1 second
+   *   <li>date in ISO 8601 format
+   * </ol>
    *
    * @param modificationTime modification time value
    * @return requested modification time provider
    */
   private static ModificationTimeProvider createModificationTimeProvider(String modificationTime) {
     switch (modificationTime) {
-      case ModificationTimeProvider.KEEP_ORIGINAL:
+      case "KEEP_ORIGINAL":
         return new KeepOriginalModificationTimeProvider();
-      case ModificationTimeProvider.EPOCH_PLUS_SECOND:
+      case "EPOCH_PLUS_SECOND":
         return new FixedModificationTimeProvider(
             FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND);
       default:
         try {
           return new FixedModificationTimeProvider(
               DateTimeFormatter.ISO_DATE_TIME.parse(modificationTime, Instant::from));
-        } catch (DateTimeParseException e) {
+        } catch (DateTimeParseException ex) {
           throw new IllegalArgumentException(
               "Unknown value for modification time: " + modificationTime);
         }

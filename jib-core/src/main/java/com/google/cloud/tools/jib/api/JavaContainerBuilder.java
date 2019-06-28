@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -373,7 +374,8 @@ public class JavaContainerBuilder {
   public JavaContainerBuilder addResources(Path resourceFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
     classpathOrder.add(LayerType.RESOURCES);
-    return addDirectory(addedResources, resourceFilesDirectory, pathFilter);
+    addDirectory(addedResources, resourceFilesDirectory, pathFilter);
+    return this;
   }
 
   /**
@@ -398,7 +400,8 @@ public class JavaContainerBuilder {
   public JavaContainerBuilder addClasses(Path classFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
     classpathOrder.add(LayerType.CLASSES);
-    return addDirectory(addedClasses, classFilesDirectory, pathFilter);
+    addDirectory(addedClasses, classFilesDirectory, pathFilter);
+    return this;
   }
 
   /**
@@ -641,7 +644,7 @@ public class JavaContainerBuilder {
     return jibContainerBuilder;
   }
 
-  private JavaContainerBuilder addDirectory(
+  private static void addDirectory(
       List<PathPredicatePair> addedPaths, Path directory, Predicate<Path> filter)
       throws NoSuchFileException, NotDirectoryException {
     if (!Files.exists(directory)) {
@@ -651,7 +654,6 @@ public class JavaContainerBuilder {
       throw new NotDirectoryException(directory.toString());
     }
     addedPaths.add(new PathPredicatePair(directory, filter));
-    return this;
   }
 
   private void addFileToLayer(
@@ -663,12 +665,12 @@ public class JavaContainerBuilder {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, LayerConfiguration.builder());
     }
-    layerBuilders
-        .get(layerType)
-        .addEntry(sourceFile, pathInContainer, null, modificationTimeProvider);
+    Instant lastModifiedDate =
+        modificationTimeProvider.getModificationTime(sourceFile, pathInContainer);
+    layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer, lastModifiedDate);
   }
 
-  private void addDirectoryContentsToLayer(
+  private static void addDirectoryContentsToLayer(
       Map<LayerType, LayerConfiguration.Builder> layerBuilders,
       LayerType layerType,
       Path sourceRoot,
@@ -688,7 +690,9 @@ public class JavaContainerBuilder {
             path -> {
               AbsoluteUnixPath pathOnContainer =
                   basePathInContainer.resolve(sourceRoot.relativize(path));
-              builder.addEntry(path, pathOnContainer, null, modificationTimeProvider);
+              Instant lastModifiedDate =
+                  modificationTimeProvider.getModificationTime(path, pathOnContainer);
+              builder.addEntry(path, pathOnContainer, lastModifiedDate);
             });
   }
 }

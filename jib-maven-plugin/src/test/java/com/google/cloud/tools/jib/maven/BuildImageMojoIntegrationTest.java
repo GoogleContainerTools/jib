@@ -535,10 +535,6 @@ public class BuildImageMojoIntegrationTest {
             "testpassword2",
             localRegistry2,
             "pom-complex-files-modification-time-keep-original.xml"));
-    assertWorkingDirectory("", targetImage);
-    assertEntrypoint(
-        "[java -cp /other:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
-        targetImage);
   }
 
   @Test
@@ -553,10 +549,6 @@ public class BuildImageMojoIntegrationTest {
             "testpassword2",
             localRegistry2,
             "pom-complex-files-modification-time-custom.xml"));
-    assertWorkingDirectory("", targetImage);
-    assertEntrypoint(
-        "[java -cp /other:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
-        targetImage);
   }
 
   @Test

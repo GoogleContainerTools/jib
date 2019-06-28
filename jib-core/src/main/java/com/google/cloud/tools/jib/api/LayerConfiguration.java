@@ -20,10 +20,10 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 
 /** Configures how to build a layer in the container image. Instantiate with {@link #builder}. */
 public class LayerConfiguration {
@@ -77,7 +77,34 @@ public class LayerConfiguration {
      * @return this
      */
     public Builder addEntry(Path sourceFile, AbsoluteUnixPath pathInContainer) {
-      return addEntry(sourceFile, pathInContainer, null, null);
+      return addEntry(
+          sourceFile,
+          pathInContainer,
+          DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, pathInContainer),
+          DEFAULT_FILE_MODIFICATION_TIME_PROVIDER.getModificationTime(sourceFile, pathInContainer));
+    }
+
+    /**
+     * Adds an entry to the layer with the given permissions. Only adds the single source file to
+     * the exact path in the container file system. See {@link Builder#addEntry(Path,
+     * AbsoluteUnixPath)} for more information.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
+     * @param lastModifiedTime the file modification timestamp
+     * @return this
+     * @see Builder#addEntry(Path, AbsoluteUnixPath)
+     * @see FilePermissions#DEFAULT_FILE_PERMISSIONS
+     * @see FilePermissions#DEFAULT_FOLDER_PERMISSIONS
+     */
+    public Builder addEntry(
+        Path sourceFile, AbsoluteUnixPath pathInContainer, Instant lastModifiedTime) {
+      return addEntry(
+          sourceFile,
+          pathInContainer,
+          DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, pathInContainer),
+          lastModifiedTime);
     }
 
     /**
@@ -89,7 +116,7 @@ public class LayerConfiguration {
      * @param pathInContainer the path in the container file system corresponding to the {@code
      *     sourceFile}
      * @param permissions the file permissions on the container
-     * @param modificationTimeProvider modification time provider
+     * @param lastModifiedTime the file modification timestamp
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
      * @see FilePermissions#DEFAULT_FILE_PERMISSIONS
@@ -98,19 +125,9 @@ public class LayerConfiguration {
     public Builder addEntry(
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
-        @Nullable FilePermissions permissions,
-        @Nullable ModificationTimeProvider modificationTimeProvider) {
-      return addEntry(
-          new LayerEntry(
-              sourceFile,
-              pathInContainer,
-              permissions == null
-                  ? DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, pathInContainer)
-                  : permissions,
-              modificationTimeProvider == null
-                  ? DEFAULT_FILE_MODIFICATION_TIME_PROVIDER.getModificationTime(
-                      sourceFile, pathInContainer)
-                  : modificationTimeProvider.getModificationTime(sourceFile, pathInContainer)));
+        FilePermissions permissions,
+        Instant lastModifiedTime) {
+      return addEntry(new LayerEntry(sourceFile, pathInContainer, permissions, lastModifiedTime));
     }
 
     /**
@@ -157,7 +174,9 @@ public class LayerConfiguration {
         ModificationTimeProvider modificationTimeProvider)
         throws IOException {
       FilePermissions permissions = filePermissionProvider.apply(sourceFile, pathInContainer);
-      addEntry(sourceFile, pathInContainer, permissions, modificationTimeProvider);
+      Instant lastModifiedDate =
+          modificationTimeProvider.getModificationTime(sourceFile, pathInContainer);
+      addEntry(sourceFile, pathInContainer, permissions, lastModifiedDate);
       if (!Files.isDirectory(sourceFile)) {
         return this;
       }

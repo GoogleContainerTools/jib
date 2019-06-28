@@ -93,7 +93,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
-    Mockito.when(rawConfiguration.getFilesModificationTime()).thenReturn("epoch_plus_second");
+    Mockito.when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
     Mockito.when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(Paths.get("nonexistent/path")));
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");

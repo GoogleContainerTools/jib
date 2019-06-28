@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Map;
 import java.util.function.Predicate;
 
@@ -57,7 +58,13 @@ public class JavaContainerBuilderHelper {
               AbsoluteUnixPath pathOnContainer =
                   AbsoluteUnixPath.get("/").resolve(extraDirectory.relativize(localPath));
               FilePermissions permissions = extraDirectoryPermissions.get(pathOnContainer);
-              builder.addEntry(localPath, pathOnContainer, permissions, modificationTimeProvider);
+              Instant lastModifiedDate =
+                  modificationTimeProvider.getModificationTime(localPath, pathOnContainer);
+              if (permissions != null) {
+                builder.addEntry(localPath, pathOnContainer, permissions, lastModifiedDate);
+              } else {
+                builder.addEntry(localPath, pathOnContainer, lastModifiedDate);
+              }
             });
     return builder.build();
   }

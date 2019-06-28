@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
@@ -186,7 +185,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Nullable @Parameter private String workingDirectory;
 
-    @Nullable private String filesModificationTime = ModificationTimeProvider.EPOCH_PLUS_SECOND;
+    private String filesModificationTime = "EPOCH_PLUS_SECOND";
   }
 
   /** Configuration for the {@code extraDirectories} parameter. */

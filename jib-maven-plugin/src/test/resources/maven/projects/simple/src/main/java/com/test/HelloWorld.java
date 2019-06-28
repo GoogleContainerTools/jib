@@ -42,9 +42,9 @@ public class HelloWorld {
                 HelloWorld.class.getResourceAsStream("/world"), StandardCharsets.UTF_8))) {
       String world = reader.readLine();
       System.out.println(greeting + ", " + world + ". " + (args.length > 0 ? args[0] : ""));
-      Path worldFilePath = Paths.get("/world");
+      Path worldFilePath = Paths.get("/app/resources/world");
       if (worldFilePath.toFile().exists()) {
-        System.out.println(Files.getLastModifiedTime(Paths.get("/world")).toString());
+        System.out.println(Files.getLastModifiedTime(worldFilePath).toString());
       }
 
       // Prints the contents of the extra files.
