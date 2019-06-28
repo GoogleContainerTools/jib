@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -175,6 +176,8 @@ public class JavaContainerBuilder {
   private RelativeUnixPath dependenciesDestination = RelativeUnixPath.get("libs");
   private RelativeUnixPath othersDestination = RelativeUnixPath.get("classpath");
   @Nullable private String mainClass;
+  private ModificationTimeProvider modificationTimeProvider =
+      new FixedModificationTimeProvider(FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND);
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
     this.jibContainerBuilder = jibContainerBuilder;
@@ -371,7 +374,8 @@ public class JavaContainerBuilder {
   public JavaContainerBuilder addResources(Path resourceFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
     classpathOrder.add(LayerType.RESOURCES);
-    return addDirectory(addedResources, resourceFilesDirectory, pathFilter);
+    addDirectory(addedResources, resourceFilesDirectory, pathFilter);
+    return this;
   }
 
   /**
@@ -396,7 +400,8 @@ public class JavaContainerBuilder {
   public JavaContainerBuilder addClasses(Path classFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
     classpathOrder.add(LayerType.CLASSES);
-    return addDirectory(addedClasses, classFilesDirectory, pathFilter);
+    addDirectory(addedClasses, classFilesDirectory, pathFilter);
+    return this;
   }
 
   /**
@@ -485,6 +490,18 @@ public class JavaContainerBuilder {
   }
 
   /**
+   * Sets the container files modification time provider.
+   *
+   * @param modificationTimeProvider container files modification time provider.
+   * @return this
+   */
+  public JavaContainerBuilder setModificationTimeProvider(
+      ModificationTimeProvider modificationTimeProvider) {
+    this.modificationTimeProvider = modificationTimeProvider;
+    return this;
+  }
+
+  /**
    * Returns a new {@link JibContainerBuilder} using the parameters specified on the {@link
    * JavaContainerBuilder}.
    *
@@ -514,7 +531,8 @@ public class JavaContainerBuilder {
           LayerType.CLASSES,
           directory.path,
           directory.predicate,
-          appRoot.resolve(classesDestination));
+          appRoot.resolve(classesDestination),
+          modificationTimeProvider);
     }
 
     // Add resources to layer configuration
@@ -524,7 +542,8 @@ public class JavaContainerBuilder {
           LayerType.RESOURCES,
           directory.path,
           directory.predicate,
-          appRoot.resolve(resourcesDestination));
+          appRoot.resolve(resourcesDestination),
+          modificationTimeProvider);
     }
 
     // Detect duplicate filenames across all layer types
@@ -559,7 +578,8 @@ public class JavaContainerBuilder {
             layerBuilders,
             layerType,
             file,
-            appRoot.resolve(dependenciesDestination).resolve(jarName));
+            appRoot.resolve(dependenciesDestination).resolve(jarName),
+            modificationTimeProvider);
       }
     }
 
@@ -571,13 +591,15 @@ public class JavaContainerBuilder {
             LayerType.EXTRA_FILES,
             path,
             ignored -> true,
-            appRoot.resolve(othersDestination));
+            appRoot.resolve(othersDestination),
+            modificationTimeProvider);
       } else {
         addFileToLayer(
             layerBuilders,
             LayerType.EXTRA_FILES,
             path,
-            appRoot.resolve(othersDestination).resolve(path.getFileName()));
+            appRoot.resolve(othersDestination).resolve(path.getFileName()),
+            modificationTimeProvider);
       }
     }
 
@@ -622,7 +644,7 @@ public class JavaContainerBuilder {
     return jibContainerBuilder;
   }
 
-  private JavaContainerBuilder addDirectory(
+  private static void addDirectory(
       List<PathPredicatePair> addedPaths, Path directory, Predicate<Path> filter)
       throws NoSuchFileException, NotDirectoryException {
     if (!Files.exists(directory)) {
@@ -632,26 +654,29 @@ public class JavaContainerBuilder {
       throw new NotDirectoryException(directory.toString());
     }
     addedPaths.add(new PathPredicatePair(directory, filter));
-    return this;
   }
 
   private void addFileToLayer(
       Map<LayerType, LayerConfiguration.Builder> layerBuilders,
       LayerType layerType,
       Path sourceFile,
-      AbsoluteUnixPath pathInContainer) {
+      AbsoluteUnixPath pathInContainer,
+      ModificationTimeProvider modificationTimeProvider) {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, LayerConfiguration.builder());
     }
-    layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer);
+    Instant lastModifiedDate =
+        modificationTimeProvider.getModificationTime(sourceFile, pathInContainer);
+    layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer, lastModifiedDate);
   }
 
-  private void addDirectoryContentsToLayer(
+  private static void addDirectoryContentsToLayer(
       Map<LayerType, LayerConfiguration.Builder> layerBuilders,
       LayerType layerType,
       Path sourceRoot,
       Predicate<Path> pathFilter,
-      AbsoluteUnixPath basePathInContainer)
+      AbsoluteUnixPath basePathInContainer,
+      ModificationTimeProvider modificationTimeProvider)
       throws IOException {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, LayerConfiguration.builder());
@@ -665,7 +690,9 @@ public class JavaContainerBuilder {
             path -> {
               AbsoluteUnixPath pathOnContainer =
                   basePathInContainer.resolve(sourceRoot.relativize(path));
-              builder.addEntry(path, pathOnContainer);
+              Instant lastModifiedDate =
+                  modificationTimeProvider.getModificationTime(path, pathOnContainer);
+              builder.addEntry(path, pathOnContainer, lastModifiedDate);
             });
   }
 }

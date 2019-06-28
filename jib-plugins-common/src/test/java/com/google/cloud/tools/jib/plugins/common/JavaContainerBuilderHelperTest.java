@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.FixedModificationTimeProvider;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
@@ -84,7 +85,9 @@ public class JavaContainerBuilderHelperTest {
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     LayerConfiguration layerConfiguration =
         JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-            extraFilesDirectory, Collections.emptyMap());
+            extraFilesDirectory,
+            Collections.emptyMap(),
+            new FixedModificationTimeProvider(FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND));
     assertSourcePathsUnordered(
         Arrays.asList(
             extraFilesDirectory.resolve("a"),

@@ -31,6 +31,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -397,7 +399,7 @@ public class BuildImageMojoIntegrationTest {
 
     String targetImage = getGcrImageReference("simpleimage:maven");
     Assert.assertEquals(
-        "Hello, world. An argument.\n",
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-java11.xml", false));
   }
 
@@ -447,7 +449,7 @@ public class BuildImageMojoIntegrationTest {
       throws DigestException, VerificationException, IOException, InterruptedException {
     String targetImage = getGcrImageReference("simpleimage:maven");
     Assert.assertEquals(
-        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\nbaz\n",
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\nbaz\n1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-extra-dirs.xml", false));
     assertLayerSize(9, targetImage); // one more than usual
   }
@@ -499,7 +501,7 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
-        "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(
             targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml"));
     assertWorkingDirectory("", targetImage);
@@ -509,11 +511,52 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
+  public void testExecute_complex_containerFilesModificationTimeKeepOriginal()
+      throws IOException, InterruptedException, VerificationException, DigestException {
+    String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
+    Path worldFile =
+        simpleTestProject
+            .getProjectRoot()
+            .resolve("src")
+            .resolve("main")
+            .resolve("resources")
+            .resolve("world");
+    Assert.assertTrue(worldFile.toFile().exists());
+    String worldLastModified =
+        Files.getLastModifiedTime(worldFile)
+            .toInstant()
+            .atZone(ZoneId.of("Z"))
+            .format(DateTimeFormatter.ISO_DATE_TIME);
+    Assert.assertEquals(
+        "Hello, world. An argument.\n" + worldLastModified + "\n",
+        buildAndRunComplex(
+            targetImage,
+            "testuser2",
+            "testpassword2",
+            localRegistry2,
+            "pom-complex-files-modification-time-keep-original.xml"));
+  }
+
+  @Test
+  public void testExecute_complex_containerFilesModificationTimeCustom()
+      throws IOException, InterruptedException, VerificationException, DigestException {
+    String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. An argument.\n2019-06-17T16:30:00Z\n",
+        buildAndRunComplex(
+            targetImage,
+            "testuser2",
+            "testpassword2",
+            localRegistry2,
+            "pom-complex-files-modification-time-custom.xml"));
+  }
+
+  @Test
   public void testExecute_complex_sameFromAndToRegistry()
       throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
-        "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(
             targetImage, "testuser", "testpassword", localRegistry1, "pom-complex.xml"));
     assertWorkingDirectory("", targetImage);
@@ -524,7 +567,7 @@ public class BuildImageMojoIntegrationTest {
       throws InterruptedException, DigestException, VerificationException, IOException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
-        "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(
             targetImage,
             "testuser2",

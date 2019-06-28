@@ -103,7 +103,7 @@ public class BuildDockerMojoIntegrationTest {
 
     Instant before = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         buildToDockerDaemonAndRun(simpleTestProject.getProjectRoot(), targetImage));
     Instant buildTime =
         Instant.parse(
@@ -191,7 +191,8 @@ public class BuildDockerMojoIntegrationTest {
     buildToDockerDaemon(
         simpleTestProject.getProjectRoot(), "image reference ignored", "pom-no-to-image.xml");
     Assert.assertEquals(
-        "Hello, world. \n", new Command("docker", "run", "--rm", "my-artifact-id:1").run());
+        "Hello, world. \n1970-01-01T00:00:01Z\n",
+        new Command("docker", "run", "--rm", "my-artifact-id:1").run());
   }
 
   @Test

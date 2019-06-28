@@ -35,7 +35,7 @@ public class LayerConfigurationTest {
         source,
         destination,
         LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
-        LayerConfiguration.DEFAULT_MODIFIED_TIME);
+        FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND);
   }
 
   @Test
@@ -81,7 +81,7 @@ public class LayerConfigurationTest {
     BiFunction<Path, AbsoluteUnixPath, FilePermissions> permissionsProvider =
         (source, destination) ->
             destination.toString().startsWith("/app/layer/a") ? permissions1 : permissions2;
-    BiFunction<Path, AbsoluteUnixPath, Instant> timestampProvider =
+    ModificationTimeProvider timestampProvider =
         (source, destination) ->
             destination.toString().startsWith("/app/layer/a") ? timestamp1 : timestamp2;
 

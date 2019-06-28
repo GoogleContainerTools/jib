@@ -184,6 +184,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String user;
 
     @Nullable @Parameter private String workingDirectory;
+
+    private String filesModificationTime = "EPOCH_PLUS_SECOND";
   }
 
   /** Configuration for the {@code extraDirectories} parameter. */
@@ -532,6 +534,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return property;
     }
     return container.format;
+  }
+
+  /**
+   * Gets the configured container files modification time value
+   *
+   * @return the configured container files modification time value
+   */
+  String getFilesModificationTime() {
+    String property = getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
+    if (property != null) {
+      return property;
+    }
+    return Preconditions.checkNotNull(container.filesModificationTime);
   }
 
   /**

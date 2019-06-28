@@ -47,6 +47,7 @@ public class ContainerParameters {
   private String appRoot = "";
   @Nullable private String user;
   @Nullable private String workingDirectory;
+  private String filesModificationTime = "EPOCH_PLUS_SECOND";
 
   @Input
   @Optional
@@ -246,5 +247,18 @@ public class ContainerParameters {
 
   public void setWorkingDirectory(String workingDirectory) {
     this.workingDirectory = workingDirectory;
+  }
+
+  @Input
+  @Optional
+  public String getFilesModificationTime() {
+    if (System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
+    }
+    return filesModificationTime;
+  }
+
+  public void setFilesModificationTime(String filesModificationTime) {
+    this.filesModificationTime = filesModificationTime;
   }
 }

@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.common.collect.ImmutableMap;
@@ -92,6 +93,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
+    Mockito.when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
     Mockito.when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(Paths.get("nonexistent/path")));
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
@@ -103,7 +105,8 @@ public class PluginConfigurationProcessorTest {
             projectProperties.createContainerBuilder(
                 Mockito.any(RegistryImage.class),
                 Mockito.any(AbsoluteUnixPath.class),
-                Mockito.any(ContainerizingMode.class)))
+                Mockito.any(ContainerizingMode.class),
+                Mockito.any(ModificationTimeProvider.class)))
         .thenReturn(Jib.from("base"));
     Mockito.when(projectProperties.isOffline()).thenReturn(false);
 

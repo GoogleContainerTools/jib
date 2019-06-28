@@ -120,6 +120,8 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
     sessionProperties.put("jib.container.workingDirectory", "working directory");
     Assert.assertEquals("working directory", testPluginConfiguration.getWorkingDirectory());
+    sessionProperties.put("jib.container.filesModificationTime", "keep_original");
+    Assert.assertEquals("keep_original", testPluginConfiguration.getFilesModificationTime());
     sessionProperties.put("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
         ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
@@ -187,6 +189,8 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
     project.getProperties().setProperty("jib.container.workingDirectory", "working directory");
     Assert.assertEquals("working directory", testPluginConfiguration.getWorkingDirectory());
+    project.getProperties().setProperty("jib.container.filesModificationTime", "keep_original");
+    Assert.assertEquals("keep_original", testPluginConfiguration.getFilesModificationTime());
     project.getProperties().setProperty("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
         ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());

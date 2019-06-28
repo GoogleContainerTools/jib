@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.image;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.api.FixedModificationTimeProvider;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.blob.Blob;
@@ -97,7 +98,7 @@ public class ReproducibleLayerBuilderTest {
         source,
         destination,
         LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
-        LayerConfiguration.DEFAULT_MODIFIED_TIME);
+        FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND);
   }
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -334,12 +335,12 @@ public class ReproducibleLayerBuilderTest {
                         fileB,
                         AbsoluteUnixPath.get("/somewhere/fileB"),
                         FilePermissions.fromOctalString("123"),
-                        LayerConfiguration.DEFAULT_MODIFIED_TIME),
+                        Instant.ofEpochSecond(1)),
                     new LayerEntry(
                         folder,
                         AbsoluteUnixPath.get("/somewhere/folder"),
                         FilePermissions.fromOctalString("456"),
-                        LayerConfiguration.DEFAULT_MODIFIED_TIME)))
+                        Instant.ofEpochSecond(1))))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();

@@ -38,6 +38,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -616,7 +617,10 @@ public class MavenProjectPropertiesTest {
     JibContainerBuilder JibContainerBuilder =
         new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
             .createContainerBuilder(
-                RegistryImage.named("base"), AbsoluteUnixPath.get(appRoot), containerizingMode);
+                RegistryImage.named("base"),
+                AbsoluteUnixPath.get(appRoot),
+                containerizingMode,
+                (ignored1, ignored2) -> Instant.ofEpochSecond(1));
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         JibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))

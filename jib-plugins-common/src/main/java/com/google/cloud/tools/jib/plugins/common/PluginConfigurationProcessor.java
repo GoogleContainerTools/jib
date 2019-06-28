@@ -20,11 +20,14 @@ import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DockerDaemonImage;
+import com.google.cloud.tools.jib.api.FixedModificationTimeProvider;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
+import com.google.cloud.tools.jib.api.KeepOriginalModificationTimeProvider;
 import com.google.cloud.tools.jib.api.LogEvent;
+import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
@@ -39,6 +42,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -184,12 +189,15 @@ public class PluginConfigurationProcessor {
             inferredAuthProvider,
             rawConfiguration.getFromCredHelper().orElse(null));
 
+    ModificationTimeProvider filesModificationTimeProvider =
+        createModificationTimeProvider(rawConfiguration.getFilesModificationTime());
     JibContainerBuilder jibContainerBuilder =
         projectProperties
             .createContainerBuilder(
                 baseImage,
                 getAppRootChecked(rawConfiguration, projectProperties),
-                getContainerizingModeChecked(rawConfiguration, projectProperties))
+                getContainerizingModeChecked(rawConfiguration, projectProperties),
+                filesModificationTimeProvider)
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
@@ -211,7 +219,9 @@ public class PluginConfigurationProcessor {
       if (Files.exists(directory)) {
         jibContainerBuilder.addLayer(
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-                directory, rawConfiguration.getExtraDirectoryPermissions()));
+                directory,
+                rawConfiguration.getExtraDirectoryPermissions(),
+                filesModificationTimeProvider));
       }
     }
 
@@ -518,6 +528,36 @@ public class PluginConfigurationProcessor {
     rawConfiguration.getToTags().forEach(containerizer::withAdditionalTag);
   }
 
+  /**
+   * Creates modification type provider based on the type, the value can be:
+   *
+   * <ol>
+   *   <li>{@code KEEP_ORIGINAL} to create a provider which keeps original file modification time
+   *   <li>{@code EPOCH_PLUS_SECOND} to create a provider which trims file modification time to
+   *       EPOCH + 1 second
+   *   <li>date in ISO 8601 format
+   * </ol>
+   *
+   * @param modificationTime modification time value
+   * @return requested modification time provider
+   */
+  private static ModificationTimeProvider createModificationTimeProvider(String modificationTime) {
+    switch (modificationTime) {
+      case "KEEP_ORIGINAL":
+        return new KeepOriginalModificationTimeProvider();
+      case "EPOCH_PLUS_SECOND":
+        return new FixedModificationTimeProvider(
+            FixedModificationTimeProvider.EPOCH_PLUS_ONE_SECOND);
+      default:
+        try {
+          return new FixedModificationTimeProvider(
+              DateTimeFormatter.ISO_DATE_TIME.parse(modificationTime, Instant::from));
+        } catch (DateTimeParseException ex) {
+          throw new IllegalArgumentException(
+              "Unknown value for modification time: " + modificationTime);
+        }
+    }
+  }
   /**
    * Returns the value of a cache directory system property if it is set, otherwise returns {@code
    * defaultPath}.
