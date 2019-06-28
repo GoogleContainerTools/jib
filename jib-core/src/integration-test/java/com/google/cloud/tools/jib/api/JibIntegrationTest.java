@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
+import com.google.cloud.tools.jib.registry.ManifestPullerIntegrationTest;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -187,5 +188,23 @@ public class JibIntegrationTest {
     Assert.assertFalse(executorService.isShutdown());
 
     executorService.shutdown();
+  }
+
+  @Test
+  public void testManifestListReferenceByShaDoesNotFail()
+      throws InvalidImageReferenceException, IOException, InterruptedException, ExecutionException,
+          RegistryException, CacheDirectoryCreationException {
+    ImageReference sourceImageReferenceAsManifestList =
+        ImageReference.of(
+            "registry-1.docker.io",
+            "library/openjdk",
+            ManifestPullerIntegrationTest.KNOWN_MANIFEST_LIST_SHA);
+    Containerizer containerizer =
+        Containerizer.to(
+            TarImage.named("whatever")
+                .saveTo(cacheFolder.newFolder("goose").toPath().resolve("moose")));
+
+    Jib.from(sourceImageReferenceAsManifestList).containerize(containerizer);
+    // pass, no exceptions thrown
   }
 }
