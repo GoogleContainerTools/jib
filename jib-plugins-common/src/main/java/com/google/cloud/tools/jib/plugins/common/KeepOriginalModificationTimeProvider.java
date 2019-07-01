@@ -14,15 +14,17 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.api;
+package com.google.cloud.tools.jib.plugins.common;
 
+import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 
 /** Modification time provider which returns original file modification time. */
-public class KeepOriginalModificationTimeProvider implements ModificationTimeProvider {
+class KeepOriginalModificationTimeProvider implements ModificationTimeProvider {
 
   /**
    * Returns the original file modification time.
