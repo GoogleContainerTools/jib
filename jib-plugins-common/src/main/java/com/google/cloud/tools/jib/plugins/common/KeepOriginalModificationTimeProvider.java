@@ -38,7 +38,7 @@ class KeepOriginalModificationTimeProvider implements BiFunction<Path, AbsoluteU
     try {
       return Files.getLastModifiedTime(file).toInstant();
     } catch (IOException ex) {
-      throw new IllegalStateException("Unable to define the modification time of " + file, ex);
+      throw new IllegalStateException("Cannot read " + file, ex);
     }
   }
 }

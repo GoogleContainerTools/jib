@@ -439,6 +439,43 @@ public class PluginConfigurationProcessor {
     }
   }
 
+  /**
+   * Creates a modification time provider based on the config value. The value can be:
+   *
+   * <ol>
+   *   <li>{@code KEEP_ORIGINAL} to create a provider which keeps original file modification time
+   *   <li>{@code EPOCH_PLUS_SECOND} to create a provider which trims file modification time to
+   *       EPOCH + 1 second
+   *   <li>date in ISO 8601 format
+   * </ol>
+   *
+   * @param modificationTime modification time config value
+   * @return corresponding modification time provider
+   * @throws InvalidFilesModificationTimeException if the config value is not in ISO 8601 format
+   */
+  @VisibleForTesting
+  static BiFunction<Path, AbsoluteUnixPath, Instant> createLastModifiedTimeProvider(
+      String modificationTime) throws InvalidFilesModificationTimeException {
+    try {
+      switch (modificationTime) {
+        case "KEEP_ORIGINAL":
+          return new KeepOriginalModificationTimeProvider();
+
+        case "EPOCH_PLUS_SECOND":
+          Instant epochPlusSecond = Instant.ofEpochSecond(1);
+          return (ignored1, ignored2) -> epochPlusSecond;
+
+        default:
+          Instant timestamp =
+              DateTimeFormatter.ISO_DATE_TIME.parse(modificationTime, Instant::from);
+          return (ignored1, ignored2) -> timestamp;
+      }
+
+    } catch (DateTimeParseException ex) {
+      throw new InvalidFilesModificationTimeException(modificationTime, modificationTime, ex);
+    }
+  }
+
   // TODO: find a way to reduce the number of arguments.
   private static boolean configureCredentialRetrievers(
       RawConfiguration rawConfiguration,
@@ -526,41 +563,6 @@ public class PluginConfigurationProcessor {
     rawConfiguration.getToTags().forEach(containerizer::withAdditionalTag);
   }
 
-  /**
-   * Creates a modification time provider based on the config value. The value can be:
-   *
-   * <ol>
-   *   <li>{@code KEEP_ORIGINAL} to create a provider which keeps original file modification time
-   *   <li>{@code EPOCH_PLUS_SECOND} to create a provider which trims file modification time to
-   *       EPOCH + 1 second
-   *   <li>date in ISO 8601 format
-   * </ol>
-   *
-   * @param modificationTime modification time config value
-   * @return corresponding modification time provider
-   * @throws InvalidFilesModificationTimeException if the config value is not in ISO 8601 format
-   */
-  private static BiFunction<Path, AbsoluteUnixPath, Instant> createLastModifiedTimeProvider(
-      String modificationTime) throws InvalidFilesModificationTimeException {
-    try {
-      switch (modificationTime) {
-        case "KEEP_ORIGINAL":
-          return new KeepOriginalModificationTimeProvider();
-
-        case "EPOCH_PLUS_SECOND":
-          Instant epochPlusSecond = Instant.ofEpochSecond(1);
-          return (ignored1, ignored2) -> epochPlusSecond;
-
-        default:
-          Instant timestamp =
-              DateTimeFormatter.ISO_DATE_TIME.parse(modificationTime, Instant::from);
-          return (ignored1, ignored2) -> timestamp;
-      }
-
-    } catch (DateTimeParseException ex) {
-      throw new InvalidFilesModificationTimeException(modificationTime, modificationTime, ex);
-    }
-  }
   /**
    * Returns the value of a cache directory system property if it is set, otherwise returns {@code
    * defaultPath}.

@@ -54,6 +54,7 @@ public class JibExtensionTest {
     System.clearProperty("jib.container.ports");
     System.clearProperty("jib.container.useCurrentTimestamp");
     System.clearProperty("jib.container.user");
+    System.clearProperty("jib.container.filesModificationTime");
     System.clearProperty("jib.containerizingMode");
     System.clearProperty("jib.extraDirectory.path");
     System.clearProperty("jib.extraDirectory.permissions");
@@ -124,6 +125,8 @@ public class JibExtensionTest {
     Assert.assertEquals(Collections.emptyList(), testJibExtension.getContainer().getPorts());
     Assert.assertEquals(Collections.emptyMap(), testJibExtension.getContainer().getLabels());
     Assert.assertEquals("", testJibExtension.getContainer().getAppRoot());
+    Assert.assertEquals(
+        "EPOCH_PLUS_SECOND", testJibExtension.getContainer().getFilesModificationTime());
 
     testJibExtension.container(
         container -> {
@@ -137,6 +140,7 @@ public class JibExtensionTest {
           container.setLabels(ImmutableMap.of("label1", "value1", "label2", "value2"));
           container.setFormat(ImageFormat.OCI);
           container.setAppRoot("some invalid appRoot value");
+          container.setFilesModificationTime("some invalid time value");
         });
     ContainerParameters container = testJibExtension.getContainer();
     Assert.assertEquals(Arrays.asList("foo", "bar", "baz"), container.getEntrypoint());
@@ -151,6 +155,7 @@ public class JibExtensionTest {
         ImmutableMap.of("label1", "value1", "label2", "value2"), container.getLabels());
     Assert.assertSame(ImageFormat.OCI, container.getFormat());
     Assert.assertEquals("some invalid appRoot value", container.getAppRoot());
+    Assert.assertEquals("some invalid time value", container.getFilesModificationTime());
   }
 
   @Test
@@ -294,6 +299,9 @@ public class JibExtensionTest {
     Assert.assertTrue(testJibExtension.getContainer().getUseCurrentTimestamp());
     System.setProperty("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testJibExtension.getContainer().getUser());
+    System.setProperty("jib.container.filesModificationTime", "modification time");
+    Assert.assertEquals(
+        "modification time", testJibExtension.getContainer().getFilesModificationTime());
     System.setProperty("jib.containerizingMode", "packaged");
     Assert.assertEquals("packaged", testJibExtension.getContainerizingMode());
     System.setProperty("jib.extraDirectories.paths", "/foo,/bar/baz");
