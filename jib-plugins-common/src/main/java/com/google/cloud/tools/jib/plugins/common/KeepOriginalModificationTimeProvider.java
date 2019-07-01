@@ -29,16 +29,16 @@ class KeepOriginalModificationTimeProvider implements BiFunction<Path, AbsoluteU
   /**
    * Returns the original file modification time.
    *
-   * @param file path to file
+   * @param sourcePath path to source file
    * @param pathInContainer path to file in container
    * @return the original file modification time
    */
   @Override
-  public Instant apply(Path file, AbsoluteUnixPath pathInContainer) {
+  public Instant apply(Path sourcePath, AbsoluteUnixPath pathInContainer) {
     try {
-      return Files.getLastModifiedTime(file).toInstant();
+      return Files.getLastModifiedTime(sourcePath).toInstant();
     } catch (IOException ex) {
-      throw new IllegalStateException("Cannot read " + file, ex);
+      throw new IllegalStateException("Cannot read " + sourcePath, ex);
     }
   }
 }

@@ -16,13 +16,11 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
@@ -41,13 +39,11 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -184,16 +180,8 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @Override
   public JibContainerBuilder createContainerBuilder(
-      RegistryImage baseImage,
-      AbsoluteUnixPath appRoot,
-      ContainerizingMode containerizingMode,
-      BiFunction<Path, AbsoluteUnixPath, Instant> lastModifiedTimeProvider)
+      JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode)
       throws IOException {
-    JavaContainerBuilder javaContainerBuilder =
-        JavaContainerBuilder.from(baseImage)
-            .setAppRoot(appRoot)
-            .setLastModifiedTimeProvider(lastModifiedTimeProvider);
-
     try {
       if (isWarProject()) {
         Path explodedWarPath =

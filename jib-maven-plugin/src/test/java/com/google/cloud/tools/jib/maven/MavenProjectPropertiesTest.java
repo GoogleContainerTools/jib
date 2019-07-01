@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
@@ -118,6 +119,17 @@ public class MavenProjectPropertiesTest {
       List<String> expectedPaths, List<LayerEntry> entries) {
     assertLayerEntriesUnordered(
         expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
+  }
+
+  private static void assertModificationTime(Instant instant, List<LayerConfiguration> layers) {
+    for (LayerConfiguration layer : layers) {
+      for (LayerEntry entry : layer.getLayerEntries()) {
+        Assert.assertEquals(
+            "Wrong modified time: " + entry.getSourceFile() + " --> " + entry.getExtractionPath(),
+            instant,
+            entry.getLastModifiedTime());
+      }
+    }
   }
 
   private static void assertNonDefaultAppRoot(BuildConfiguration configuration) {
@@ -369,7 +381,7 @@ public class MavenProjectPropertiesTest {
   public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration("/app", DEFAULT_CONTAINERIZING_MODE);
+    BuildConfiguration configuration = setupBuildConfiguration("/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
 
     Path dependenciesPath = getResource("maven/application/dependencies");
@@ -404,13 +416,17 @@ public class MavenProjectPropertiesTest {
             applicationDirectory.resolve("output/package/some.class"),
             applicationDirectory.resolve("output/some.class")),
         layers.classesLayers.get(0).getLayerEntries());
+
+    assertModificationTime(Instant.ofEpochSecond(32), layers.dependenciesLayers);
+    assertModificationTime(Instant.ofEpochSecond(32), layers.snapshotsLayers);
+    assertModificationTime(Instant.ofEpochSecond(32), layers.resourcesLayers);
+    assertModificationTime(Instant.ofEpochSecond(32), layers.classesLayers);
   }
 
   @Test
   public void testCreateContainerBuilder_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildConfiguration configuration =
-        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
+    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
     assertNonDefaultAppRoot(configuration);
   }
 
@@ -475,8 +491,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(outputPath.toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    BuildConfiguration configuration =
-        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
+    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertSourcePathsUnordered(
         ImmutableList.of(outputPath.resolve("final-name/WEB-INF/lib/dependency-1.0.0.jar")),
@@ -539,8 +554,7 @@ public class MavenProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     // Test when the default packaging is set
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
-    BuildConfiguration configuration =
-        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
+    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
     assertNonDefaultAppRoot(configuration);
   }
 
@@ -552,7 +566,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setupBuildConfiguration("/anything"); // should pass
   }
 
   @Test
@@ -563,7 +577,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setupBuildConfiguration("/anything"); // should pass
   }
 
   @Test
@@ -574,7 +588,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setupBuildConfiguration("/anything"); // should pass
   }
 
   @Test
@@ -609,22 +623,6 @@ public class MavenProjectPropertiesTest {
   public void testIsWarProject_GwtLibPackagingIsNotWar() {
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("gwt-lib");
     Assert.assertFalse(mavenProjectProperties.isWarProject());
-  }
-
-  private BuildConfiguration setupBuildConfiguration(
-      String appRoot, ContainerizingMode containerizingMode)
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-    JibContainerBuilder JibContainerBuilder =
-        new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
-            .createContainerBuilder(
-                RegistryImage.named("base"),
-                AbsoluteUnixPath.get(appRoot),
-                containerizingMode,
-                (ignored1, ignored2) -> Instant.ofEpochSecond(1));
-    return JibContainerBuilderTestHelper.toBuildConfiguration(
-        JibContainerBuilder,
-        Containerizer.to(RegistryImage.named("to"))
-            .setExecutorService(MoreExecutors.newDirectExecutorService()));
   }
 
   @Test
@@ -667,6 +665,27 @@ public class MavenProjectPropertiesTest {
             newArtifact("com.test", "projectA", "1.0").getFile().toPath(),
             newArtifact("com.test", "projectB", "1.0-SNAPSHOT").getFile().toPath(),
             newArtifact("com.test", "projectC", "3.0").getFile().toPath()));
+  }
+
+  private BuildConfiguration setupBuildConfiguration(String appRoot)
+      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
+    return setupBuildConfiguration(appRoot, DEFAULT_CONTAINERIZING_MODE);
+  }
+
+  private BuildConfiguration setupBuildConfiguration(
+      String appRoot, ContainerizingMode containerizingMode)
+      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
+    JibContainerBuilder JibContainerBuilder =
+        new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
+            .createContainerBuilder(
+                JavaContainerBuilder.from(RegistryImage.named("base"))
+                    .setAppRoot(AbsoluteUnixPath.get(appRoot))
+                    .setLastModifiedTimeProvider((ignored1, ignored2) -> Instant.ofEpochSecond(32)),
+                containerizingMode);
+    return JibContainerBuilderTestHelper.toBuildConfiguration(
+        JibContainerBuilder,
+        Containerizer.to(RegistryImage.named("to"))
+            .setExecutorService(MoreExecutors.newDirectExecutorService()));
   }
 
   private Artifact newArtifact(String group, String artifactId, String version) {

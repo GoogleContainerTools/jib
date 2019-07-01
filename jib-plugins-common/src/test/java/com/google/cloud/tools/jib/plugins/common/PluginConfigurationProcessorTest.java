@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
@@ -52,7 +53,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -107,10 +107,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
     Mockito.when(
             projectProperties.createContainerBuilder(
-                Mockito.any(RegistryImage.class),
-                Mockito.any(AbsoluteUnixPath.class),
-                Mockito.any(ContainerizingMode.class),
-                ArgumentMatchers.<BiFunction<Path, AbsoluteUnixPath, Instant>>any()))
+                Mockito.any(JavaContainerBuilder.class), Mockito.any(ContainerizingMode.class)))
         .thenReturn(Jib.from("base"));
     Mockito.when(projectProperties.isOffline()).thenReturn(false);
 

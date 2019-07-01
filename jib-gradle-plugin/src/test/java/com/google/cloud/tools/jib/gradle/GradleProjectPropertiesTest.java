@@ -164,6 +164,17 @@ public class GradleProjectPropertiesTest {
         expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
 
+  private static void assertModificationTime(Instant instant, List<LayerConfiguration> layers) {
+    for (LayerConfiguration layer : layers) {
+      for (LayerEntry entry : layer.getLayerEntries()) {
+        Assert.assertEquals(
+            "Wrong modified time: " + entry.getSourceFile() + " --> " + entry.getExtractionPath(),
+            instant,
+            entry.getLastModifiedTime());
+      }
+    }
+  }
+
   private static Path getResource(String path) throws URISyntaxException {
     return Paths.get(Resources.getResource(path).toURI());
   }
@@ -367,6 +378,11 @@ public class GradleProjectPropertiesTest {
             applicationDirectory.resolve("classes/HelloWorld.class"),
             applicationDirectory.resolve("classes/some.class")),
         layers.classesLayerEntries.get(0).getLayerEntries());
+
+    assertModificationTime(Instant.ofEpochSecond(32), layers.snapshotsLayerEntries);
+    assertModificationTime(Instant.ofEpochSecond(32), layers.dependenciesLayerEntries);
+    assertModificationTime(Instant.ofEpochSecond(32), layers.resourcesLayerEntries);
+    assertModificationTime(Instant.ofEpochSecond(32), layers.classesLayerEntries);
   }
 
   @Test
@@ -375,10 +391,7 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
     gradleProjectProperties.createContainerBuilder(
-        RegistryImage.named("base"),
-        AbsoluteUnixPath.get("/anything"),
-        DEFAULT_CONTAINERIZING_MODE,
-        (ignored1, ignored2) -> Instant.ofEpochSecond(1));
+        JavaContainerBuilder.from(RegistryImage.named("base")), DEFAULT_CONTAINERIZING_MODE);
     Mockito.verify(mockLogger).warn("No classes files were found - did you compile your project?");
   }
 
@@ -546,7 +559,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT); // should pass
+    setupBuildConfiguration("/anything"); // should pass
   }
 
   @Test
@@ -554,7 +567,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT); // should pass
+    setupBuildConfiguration("/anything"); // should pass
   }
 
   @Test
@@ -562,18 +575,24 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT); // should pass
+    setupBuildConfiguration("/anything"); // should pass
   }
 
   private BuildConfiguration setupBuildConfiguration(String appRoot)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
+    return setupBuildConfiguration(appRoot, DEFAULT_CONTAINERIZING_MODE);
+  }
+
+  private BuildConfiguration setupBuildConfiguration(
+      String appRoot, ContainerizingMode containerizingMode)
+      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JibContainerBuilder jibContainerBuilder =
         new GradleProjectProperties(mockProject, mockLogger)
             .createContainerBuilder(
-                RegistryImage.named("base"),
-                AbsoluteUnixPath.get(appRoot),
-                DEFAULT_CONTAINERIZING_MODE,
-                (ignored1, ignored2) -> Instant.ofEpochSecond(1));
+                JavaContainerBuilder.from(RegistryImage.named("base"))
+                    .setAppRoot(AbsoluteUnixPath.get(appRoot))
+                    .setLastModifiedTimeProvider((ignored1, ignored2) -> Instant.ofEpochSecond(32)),
+                containerizingMode);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         jibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))

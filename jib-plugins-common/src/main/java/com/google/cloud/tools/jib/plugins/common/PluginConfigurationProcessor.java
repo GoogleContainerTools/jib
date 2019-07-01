@@ -187,15 +187,17 @@ public class PluginConfigurationProcessor {
             inferredAuthProvider,
             rawConfiguration.getFromCredHelper().orElse(null));
 
-    BiFunction<Path, AbsoluteUnixPath, Instant> lastModifiedTimeProvider =
+    BiFunction<Path, AbsoluteUnixPath, Instant> modifiedTimeProvider =
         createLastModifiedTimeProvider(rawConfiguration.getFilesModificationTime());
+    JavaContainerBuilder javaContainerBuilder =
+        JavaContainerBuilder.from(baseImage)
+            .setAppRoot(getAppRootChecked(rawConfiguration, projectProperties))
+            .setLastModifiedTimeProvider(modifiedTimeProvider);
     JibContainerBuilder jibContainerBuilder =
         projectProperties
             .createContainerBuilder(
-                baseImage,
-                getAppRootChecked(rawConfiguration, projectProperties),
-                getContainerizingModeChecked(rawConfiguration, projectProperties),
-                lastModifiedTimeProvider)
+                javaContainerBuilder,
+                getContainerizingModeChecked(rawConfiguration, projectProperties))
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
@@ -217,9 +219,7 @@ public class PluginConfigurationProcessor {
       if (Files.exists(directory)) {
         jibContainerBuilder.addLayer(
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-                directory,
-                rawConfiguration.getExtraDirectoryPermissions(),
-                lastModifiedTimeProvider));
+                directory, rawConfiguration.getExtraDirectoryPermissions(), modifiedTimeProvider));
       }
     }
 
