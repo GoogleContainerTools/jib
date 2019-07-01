@@ -40,7 +40,7 @@ public class JavaContainerBuilderHelper {
    *
    * @param extraDirectory the source extra directory path
    * @param extraDirectoryPermissions map from path on container to file permissions
-   * @param modificationTimeProvider file modification time provider
+   * @param lastModifiedTimeProvider file modification time provider
    * @return a {@link LayerConfiguration} for adding the extra directory to the container
    * @throws IOException if walking the extra directory fails
    */

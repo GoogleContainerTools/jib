@@ -59,7 +59,6 @@ public interface ProjectProperties {
    *
    * @param javaContainerBuilder Java container builder to start with
    * @param containerizingMode mode to containerize the app
-   * @param modificationTimeProvider image files modification time prvoider
    * @return a {@link JibContainerBuilder} with classes, resources, and dependencies added to it
    * @throws IOException if there is a problem walking the project files
    */
