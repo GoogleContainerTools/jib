@@ -29,9 +29,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.FileTime;
 import java.security.DigestException;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -527,8 +530,8 @@ public class BuildImageMojoIntegrationTest {
 
     Path extraDirectory =
         Paths.get(simpleTestProject.getProjectRoot().toString(), "src", "main", "jib-custom");
-    FileTime fooTime = Files.getLastModifiedTime(extraDirectory.resolve("foo"));
-    FileTime catTime = Files.getLastModifiedTime(extraDirectory.resolve("bar").resolve("cat"));
+    String fooTime = getIsoFileTime(extraDirectory.resolve("foo"));
+    String catTime = getIsoFileTime(extraDirectory.resolve("bar").resolve("cat"));
     Assert.assertThat(
         output, CoreMatchers.containsString("\nfoo\ncat\n" + fooTime + "\n" + catTime));
   }
@@ -615,5 +618,10 @@ public class BuildImageMojoIntegrationTest {
 
     detachedContainerName =
         new Command("docker", "run", "--rm", "--detach", "-p8080:8080", targetImage).run().trim();
+  }
+
+  private String getIsoFileTime(Path path) throws IOException {
+    ZonedDateTime zonedTime = Files.getLastModifiedTime(path).toInstant().atZone(ZoneId.of("Z"));
+    return zonedTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME);
   }
 }

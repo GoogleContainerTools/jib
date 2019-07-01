@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DockerDaemonImage;
-import com.google.cloud.tools.jib.api.FixedModificationTimeProvider;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
@@ -69,7 +68,7 @@ public class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException {
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -99,7 +98,7 @@ public class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException {
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
@@ -121,7 +120,7 @@ public class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException {
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -162,7 +161,7 @@ public class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException {
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException {
     JibSystemProperties.checkHttpTimeoutProperty();
     JibSystemProperties.checkProxyPortProperty();
 
@@ -540,21 +539,27 @@ public class PluginConfigurationProcessor {
    *
    * @param modificationTime modification time config value
    * @return corresponding modification time provider
+   * @throws InvalidFilesModificationTimeException if the config value is not in ISO 8601 format
    */
-  private static ModificationTimeProvider createModificationTimeProvider(String modificationTime) {
-    switch (modificationTime) {
-      case "KEEP_ORIGINAL":
-        return new KeepOriginalModificationTimeProvider();
-      case "EPOCH_PLUS_SECOND":
-        return new FixedModificationTimeProvider(Instant.ofEpochSecond(1));
-      default:
-        try {
-          return new FixedModificationTimeProvider(
-              DateTimeFormatter.ISO_DATE_TIME.parse(modificationTime, Instant::from));
-        } catch (DateTimeParseException ex) {
-          throw new IllegalArgumentException(
-              "Unknown value for modification time: " + modificationTime);
-        }
+  private static ModificationTimeProvider createModificationTimeProvider(String modificationTime)
+      throws InvalidFilesModificationTimeException {
+    try {
+      switch (modificationTime) {
+        case "KEEP_ORIGINAL":
+          return new KeepOriginalModificationTimeProvider();
+
+        case "EPOCH_PLUS_SECOND":
+          Instant epochPlusSecond = Instant.ofEpochSecond(1);
+          return (ignored1, ignored2) -> epochPlusSecond;
+
+        default:
+          Instant timestamp =
+              DateTimeFormatter.ISO_DATE_TIME.parse(modificationTime, Instant::from);
+          return (ignored1, ignored2) -> timestamp;
+      }
+
+    } catch (DateTimeParseException ex) {
+      throw new InvalidFilesModificationTimeException(modificationTime, modificationTime, ex);
     }
   }
   /**

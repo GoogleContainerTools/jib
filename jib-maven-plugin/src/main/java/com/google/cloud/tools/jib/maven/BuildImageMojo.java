@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersio
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
@@ -154,6 +155,14 @@ public class BuildImageMojo extends JibPluginConfiguration {
     } catch (InvalidContainerVolumeException ex) {
       throw new MojoExecutionException(
           "<container><volumes> is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
+
+    } catch (InvalidFilesModificationTimeException ex) {
+      throw new MojoExecutionException(
+          "<container><filesModificationTime> should be in ISO 8601 date time format (parsable "
+              + "with DateTimeFormatter.ISO_DATE_TIME), or special keywords \"KEEP_ORIGINAL\" or "
+              + "\"EPOCH_PLUS_SECOND\" (default): "
+              + ex.getInvalidFilesModificationTime(),
+          ex);
 
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       throw new MojoExecutionException(
