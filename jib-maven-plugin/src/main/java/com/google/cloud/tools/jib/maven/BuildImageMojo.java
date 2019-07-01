@@ -159,8 +159,8 @@ public class BuildImageMojo extends JibPluginConfiguration {
     } catch (InvalidFilesModificationTimeException ex) {
       throw new MojoExecutionException(
           "<container><filesModificationTime> should be in ISO 8601 date time format (parsable "
-              + "with DateTimeFormatter.ISO_DATE_TIME), or special keywords \"KEEP_ORIGINAL\" or "
-              + "\"EPOCH_PLUS_SECOND\" (default): "
+              + "with DateTimeFormatter.ISO_DATE_TIME), or special keywords \"EPOCH_PLUS_SECOND\" "
+              + "(default) or \"KEEP_ORIGINAL\": "
               + ex.getInvalidFilesModificationTime(),
           ex);
 
