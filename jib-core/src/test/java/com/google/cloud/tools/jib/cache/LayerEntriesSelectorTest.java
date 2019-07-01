@@ -133,7 +133,7 @@ public class LayerEntriesSelectorTest {
   }
 
   @Test
-  public void testGenerateSelector_fileModified() throws IOException {
+  public void testGenerateSelector_sourceFileModified() throws IOException {
     Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
     Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
@@ -153,7 +153,30 @@ public class LayerEntriesSelectorTest {
   }
 
   @Test
-  public void testGenerateSelector_permissionsModified() throws IOException {
+  public void testGenerateSelector_targetLastModifedTimeChanged() throws IOException {
+    Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
+    Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
+    LayerEntry layerEntry1 =
+        new LayerEntry(
+            layerFile,
+            AbsoluteUnixPath.get("/bar"),
+            FilePermissions.fromOctalString("111"),
+            Instant.now());
+    LayerEntry layerEntry2 =
+        new LayerEntry(
+            layerFile,
+            AbsoluteUnixPath.get("/bar"),
+            FilePermissions.fromOctalString("111"),
+            Instant.EPOCH);
+
+    // Verify that changing the last modified time generates a different selector
+    Assert.assertNotEquals(
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry1)),
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry2)));
+  }
+
+  @Test
+  public void testGenerateSelector_differentPermissions() throws IOException {
     Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
     Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
     LayerEntry layerEntry111 =
