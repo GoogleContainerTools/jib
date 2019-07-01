@@ -35,6 +35,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -176,7 +177,7 @@ public class JavaContainerBuilder {
   private RelativeUnixPath dependenciesDestination = RelativeUnixPath.get("libs");
   private RelativeUnixPath othersDestination = RelativeUnixPath.get("classpath");
   @Nullable private String mainClass;
-  private ModificationTimeProvider modificationTimeProvider =
+  private BiFunction<Path, AbsoluteUnixPath, Instant> lastModifiedTimeProvider =
       LayerConfiguration.DEFAULT_MODIFIED_TIME_PROVIDER;
 
   private JavaContainerBuilder(JibContainerBuilder jibContainerBuilder) {
@@ -374,8 +375,7 @@ public class JavaContainerBuilder {
   public JavaContainerBuilder addResources(Path resourceFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
     classpathOrder.add(LayerType.RESOURCES);
-    addDirectory(addedResources, resourceFilesDirectory, pathFilter);
-    return this;
+    return addDirectory(addedResources, resourceFilesDirectory, pathFilter);
   }
 
   /**
@@ -400,8 +400,7 @@ public class JavaContainerBuilder {
   public JavaContainerBuilder addClasses(Path classFilesDirectory, Predicate<Path> pathFilter)
       throws IOException {
     classpathOrder.add(LayerType.CLASSES);
-    addDirectory(addedClasses, classFilesDirectory, pathFilter);
-    return this;
+    return addDirectory(addedClasses, classFilesDirectory, pathFilter);
   }
 
   /**
@@ -490,14 +489,15 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Sets the container files modification time provider.
+   * Sets the last modified time provider for container files.
    *
-   * @param modificationTimeProvider container files modification time provider.
+   * @param lastModifiedTimeProvider a provider that takes a source path and destination path on the
+   *     container and returns the file modification time that should be set for that path
    * @return this
    */
-  public JavaContainerBuilder setModificationTimeProvider(
-      ModificationTimeProvider modificationTimeProvider) {
-    this.modificationTimeProvider = modificationTimeProvider;
+  public JavaContainerBuilder setLastModifiedTimeProvider(
+      BiFunction<Path, AbsoluteUnixPath, Instant> lastModifiedTimeProvider) {
+    this.lastModifiedTimeProvider = lastModifiedTimeProvider;
     return this;
   }
 
@@ -531,8 +531,7 @@ public class JavaContainerBuilder {
           LayerType.CLASSES,
           directory.path,
           directory.predicate,
-          appRoot.resolve(classesDestination),
-          modificationTimeProvider);
+          appRoot.resolve(classesDestination));
     }
 
     // Add resources to layer configuration
@@ -542,8 +541,7 @@ public class JavaContainerBuilder {
           LayerType.RESOURCES,
           directory.path,
           directory.predicate,
-          appRoot.resolve(resourcesDestination),
-          modificationTimeProvider);
+          appRoot.resolve(resourcesDestination));
     }
 
     // Detect duplicate filenames across all layer types
@@ -578,8 +576,7 @@ public class JavaContainerBuilder {
             layerBuilders,
             layerType,
             file,
-            appRoot.resolve(dependenciesDestination).resolve(jarName),
-            modificationTimeProvider);
+            appRoot.resolve(dependenciesDestination).resolve(jarName));
       }
     }
 
@@ -591,15 +588,13 @@ public class JavaContainerBuilder {
             LayerType.EXTRA_FILES,
             path,
             ignored -> true,
-            appRoot.resolve(othersDestination),
-            modificationTimeProvider);
+            appRoot.resolve(othersDestination));
       } else {
         addFileToLayer(
             layerBuilders,
             LayerType.EXTRA_FILES,
             path,
-            appRoot.resolve(othersDestination).resolve(path.getFileName()),
-            modificationTimeProvider);
+            appRoot.resolve(othersDestination).resolve(path.getFileName()));
       }
     }
 
@@ -644,7 +639,7 @@ public class JavaContainerBuilder {
     return jibContainerBuilder;
   }
 
-  private static void addDirectory(
+  private JavaContainerBuilder addDirectory(
       List<PathPredicatePair> addedPaths, Path directory, Predicate<Path> filter)
       throws NoSuchFileException, NotDirectoryException {
     if (!Files.exists(directory)) {
@@ -654,29 +649,27 @@ public class JavaContainerBuilder {
       throw new NotDirectoryException(directory.toString());
     }
     addedPaths.add(new PathPredicatePair(directory, filter));
+    return this;
   }
 
-  private static void addFileToLayer(
+  private void addFileToLayer(
       Map<LayerType, LayerConfiguration.Builder> layerBuilders,
       LayerType layerType,
       Path sourceFile,
-      AbsoluteUnixPath pathInContainer,
-      ModificationTimeProvider modificationTimeProvider) {
+      AbsoluteUnixPath pathInContainer) {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, LayerConfiguration.builder());
     }
-    Instant modificationTime =
-        modificationTimeProvider.getModificationTime(sourceFile, pathInContainer);
-    layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer, modificationTime);
+    Instant modifiedTime = lastModifiedTimeProvider.apply(sourceFile, pathInContainer);
+    layerBuilders.get(layerType).addEntry(sourceFile, pathInContainer, modifiedTime);
   }
 
-  private static void addDirectoryContentsToLayer(
+  private void addDirectoryContentsToLayer(
       Map<LayerType, LayerConfiguration.Builder> layerBuilders,
       LayerType layerType,
       Path sourceRoot,
       Predicate<Path> pathFilter,
-      AbsoluteUnixPath basePathInContainer,
-      ModificationTimeProvider modificationTimeProvider)
+      AbsoluteUnixPath basePathInContainer)
       throws IOException {
     if (!layerBuilders.containsKey(layerType)) {
       layerBuilders.put(layerType, LayerConfiguration.builder());
@@ -690,9 +683,8 @@ public class JavaContainerBuilder {
             path -> {
               AbsoluteUnixPath pathOnContainer =
                   basePathInContainer.resolve(sourceRoot.relativize(path));
-              Instant lastModifiedDate =
-                  modificationTimeProvider.getModificationTime(path, pathOnContainer);
-              builder.addEntry(path, pathOnContainer, lastModifiedDate);
+              Instant modifiedTime = lastModifiedTimeProvider.apply(path, pathOnContainer);
+              builder.addEntry(path, pathOnContainer, modifiedTime);
             });
   }
 }

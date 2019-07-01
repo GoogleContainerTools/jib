@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
@@ -41,8 +40,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.tools.ant.taskdefs.condition.Os;
@@ -135,11 +136,11 @@ class GradleProjectProperties implements ProjectProperties {
       RegistryImage baseImage,
       AbsoluteUnixPath appRoot,
       ContainerizingMode containerizingMode,
-      ModificationTimeProvider modificationTimeProvider) {
+      BiFunction<Path, AbsoluteUnixPath, Instant> lastModifiedTimeProvider) {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(baseImage)
             .setAppRoot(appRoot)
-            .setModificationTimeProvider(modificationTimeProvider);
+            .setLastModifiedTimeProvider(lastModifiedTimeProvider);
 
     try {
       if (isWarProject()) {

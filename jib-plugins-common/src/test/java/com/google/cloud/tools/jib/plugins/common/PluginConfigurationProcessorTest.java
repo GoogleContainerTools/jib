@@ -27,7 +27,6 @@ import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.common.collect.ImmutableMap;
@@ -37,10 +36,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -49,6 +50,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -106,7 +108,7 @@ public class PluginConfigurationProcessorTest {
                 Mockito.any(RegistryImage.class),
                 Mockito.any(AbsoluteUnixPath.class),
                 Mockito.any(ContainerizingMode.class),
-                Mockito.any(ModificationTimeProvider.class)))
+                ArgumentMatchers.<BiFunction<Path, AbsoluteUnixPath, Instant>>any()))
         .thenReturn(Jib.from("base"));
     Mockito.when(projectProperties.isOffline()).thenReturn(false);
 

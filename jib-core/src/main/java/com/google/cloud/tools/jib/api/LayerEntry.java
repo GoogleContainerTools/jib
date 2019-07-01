@@ -55,8 +55,7 @@ public class LayerEntry {
    * @param extractionPath the path in the container file system corresponding to the {@code
    *     sourceFile}
    * @param permissions the file permissions on the container
-   * @param lastModifiedTime the file modification time, default to 1 second since the epoch
-   *     (https://github.com/GoogleContainerTools/jib/issues/1079)
+   * @param lastModifiedTime the file modification time
    */
   public LayerEntry(
       Path sourceFile,

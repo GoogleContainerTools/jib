@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.Ports;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.api.TarImage;
@@ -49,6 +48,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 
 /**
@@ -187,15 +187,15 @@ public class PluginConfigurationProcessor {
             inferredAuthProvider,
             rawConfiguration.getFromCredHelper().orElse(null));
 
-    ModificationTimeProvider filesModificationTimeProvider =
-        createModificationTimeProvider(rawConfiguration.getFilesModificationTime());
+    BiFunction<Path, AbsoluteUnixPath, Instant> lastModifiedTimeProvider =
+        createLastModifiedTimeProvider(rawConfiguration.getFilesModificationTime());
     JibContainerBuilder jibContainerBuilder =
         projectProperties
             .createContainerBuilder(
                 baseImage,
                 getAppRootChecked(rawConfiguration, projectProperties),
                 getContainerizingModeChecked(rawConfiguration, projectProperties),
-                filesModificationTimeProvider)
+                lastModifiedTimeProvider)
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
             .setEnvironment(rawConfiguration.getEnvironment())
@@ -219,7 +219,7 @@ public class PluginConfigurationProcessor {
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
                 directory,
                 rawConfiguration.getExtraDirectoryPermissions(),
-                filesModificationTimeProvider));
+                lastModifiedTimeProvider));
       }
     }
 
@@ -540,8 +540,8 @@ public class PluginConfigurationProcessor {
    * @return corresponding modification time provider
    * @throws InvalidFilesModificationTimeException if the config value is not in ISO 8601 format
    */
-  private static ModificationTimeProvider createModificationTimeProvider(String modificationTime)
-      throws InvalidFilesModificationTimeException {
+  private static BiFunction<Path, AbsoluteUnixPath, Instant> createLastModifiedTimeProvider(
+      String modificationTime) throws InvalidFilesModificationTimeException {
     try {
       switch (modificationTime) {
         case "KEEP_ORIGINAL":

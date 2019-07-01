@@ -81,7 +81,7 @@ public class LayerConfigurationTest {
     BiFunction<Path, AbsoluteUnixPath, FilePermissions> permissionsProvider =
         (source, destination) ->
             destination.toString().startsWith("/app/layer/a") ? permissions1 : permissions2;
-    ModificationTimeProvider timestampProvider =
+    BiFunction<Path, AbsoluteUnixPath, Instant> timestampProvider =
         (source, destination) ->
             destination.toString().startsWith("/app/layer/a") ? timestamp1 : timestamp2;
 

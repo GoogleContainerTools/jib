@@ -20,11 +20,12 @@ import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
+import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 
 /** Project property methods that require maven/gradle-specific implementations. */
@@ -70,7 +71,7 @@ public interface ProjectProperties {
       RegistryImage baseImage,
       AbsoluteUnixPath appRoot,
       ContainerizingMode containerizingMode,
-      ModificationTimeProvider modificationTimeProvider)
+      BiFunction<Path, AbsoluteUnixPath, Instant> lastModifiedTimeProvider)
       throws IOException;
 
   List<Path> getClassFiles() throws IOException;

@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
@@ -42,11 +41,13 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -186,12 +187,12 @@ public class MavenProjectProperties implements ProjectProperties {
       RegistryImage baseImage,
       AbsoluteUnixPath appRoot,
       ContainerizingMode containerizingMode,
-      ModificationTimeProvider modificationTimeProvider)
+      BiFunction<Path, AbsoluteUnixPath, Instant> lastModifiedTimeProvider)
       throws IOException {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(baseImage)
             .setAppRoot(appRoot)
-            .setModificationTimeProvider(modificationTimeProvider);
+            .setLastModifiedTimeProvider(lastModifiedTimeProvider);
 
     try {
       if (isWarProject()) {

@@ -17,14 +17,14 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.function.BiFunction;
 
 /** Modification time provider which returns original file modification time. */
-class KeepOriginalModificationTimeProvider implements ModificationTimeProvider {
+class KeepOriginalModificationTimeProvider implements BiFunction<Path, AbsoluteUnixPath, Instant> {
 
   /**
    * Returns the original file modification time.
@@ -34,7 +34,7 @@ class KeepOriginalModificationTimeProvider implements ModificationTimeProvider {
    * @return the original file modification time
    */
   @Override
-  public Instant getModificationTime(Path file, AbsoluteUnixPath pathInContainer) {
+  public Instant apply(Path file, AbsoluteUnixPath pathInContainer) {
     try {
       return Files.getLastModifiedTime(file).toInstant();
     } catch (IOException ex) {

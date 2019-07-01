@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
-import com.google.cloud.tools.jib.api.ModificationTimeProvider;
 import com.google.cloud.tools.jib.api.RelativeUnixPath;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import java.io.IOException;
@@ -30,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 /** Helper for constructing {@link JavaContainerBuilder}-based {@link JibContainerBuilder}s. */
@@ -47,7 +47,7 @@ public class JavaContainerBuilderHelper {
   public static LayerConfiguration extraDirectoryLayerConfiguration(
       Path extraDirectory,
       Map<AbsoluteUnixPath, FilePermissions> extraDirectoryPermissions,
-      ModificationTimeProvider modificationTimeProvider)
+      BiFunction<Path, AbsoluteUnixPath, Instant> lastModifiedTimeProvider)
       throws IOException {
     LayerConfiguration.Builder builder =
         LayerConfiguration.builder().setName(LayerType.EXTRA_FILES.getName());
@@ -57,13 +57,12 @@ public class JavaContainerBuilderHelper {
             localPath -> {
               AbsoluteUnixPath pathOnContainer =
                   AbsoluteUnixPath.get("/").resolve(extraDirectory.relativize(localPath));
-              Instant modificationTime =
-                  modificationTimeProvider.getModificationTime(localPath, pathOnContainer);
+              Instant modifiedTime = lastModifiedTimeProvider.apply(localPath, pathOnContainer);
               FilePermissions permissions = extraDirectoryPermissions.get(pathOnContainer);
               if (permissions == null) {
-                builder.addEntry(localPath, pathOnContainer, modificationTime);
+                builder.addEntry(localPath, pathOnContainer, modifiedTime);
               } else {
-                builder.addEntry(localPath, pathOnContainer, permissions, modificationTime);
+                builder.addEntry(localPath, pathOnContainer, permissions, modifiedTime);
               }
             });
     return builder.build();

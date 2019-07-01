@@ -199,7 +199,8 @@ public class LayerConfiguration {
      *     sourceFile}
      * @param filePermissionProvider a provider that takes a source path and destination path on the
      *     container and returns the file permissions that should be set for that path
-     * @param lastModifiedTimeProvider file modification time provider
+     * @param lastModifiedTimeProvider a provider that takes a source path and destination path on
+     *     the container and returns the file modification time that should be set for that path
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
      */
@@ -207,12 +208,11 @@ public class LayerConfiguration {
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
         BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider,
-        ModificationTimeProvider lastModifiedTimeProvider)
+        BiFunction<Path, AbsoluteUnixPath, Instant> lastModifiedTimeProvider)
         throws IOException {
       FilePermissions permissions = filePermissionProvider.apply(sourceFile, pathInContainer);
-      Instant lastModifiedDate =
-          lastModifiedTimeProvider.getModificationTime(sourceFile, pathInContainer);
-      addEntry(sourceFile, pathInContainer, permissions, lastModifiedDate);
+      Instant modifiedTime = lastModifiedTimeProvider.apply(sourceFile, pathInContainer);
+      addEntry(sourceFile, pathInContainer, permissions, modifiedTime);
       if (!Files.isDirectory(sourceFile)) {
         return this;
       }
@@ -250,7 +250,7 @@ public class LayerConfiguration {
   public static final Instant DEFAULT_MODIFIED_TIME = Instant.ofEpochSecond(1);
 
   /** Provider that returns default file modification time (EPOCH + 1 second). */
-  public static final ModificationTimeProvider DEFAULT_MODIFIED_TIME_PROVIDER =
+  public static final BiFunction<Path, AbsoluteUnixPath, Instant> DEFAULT_MODIFIED_TIME_PROVIDER =
       (sourcePath, destinationPath) -> DEFAULT_MODIFIED_TIME;
 
   /**
