@@ -310,6 +310,11 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(expected, Splitter.on(",").splitToList(layers).size());
   }
 
+  private static String getIsoFileTime(Path path) throws IOException {
+    ZonedDateTime zonedTime = Files.getLastModifiedTime(path).toInstant().atZone(ZoneId.of("Z"));
+    return zonedTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME);
+  }
+
   @Nullable private String detachedContainerName;
 
   @Before
@@ -365,7 +370,8 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, "
             + before
-            + ". An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
+            + ". An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom.xml", true));
 
     Instant buildTime =
@@ -507,17 +513,19 @@ public class BuildImageMojoIntegrationTest {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
+            + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(
             targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml"));
     assertWorkingDirectory("", targetImage);
     assertEntrypoint(
-        "[java -Xms512m -Xdebug -cp /other:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
+        "[java -Xms512m -Xdebug -cp /other:/app/resources:/app/classes:/app/libs/* "
+            + "com.test.HelloWorld]",
         targetImage);
   }
 
   @Test
-  public void testExecute_containerFilesModificationTimeKeepOriginal()
+  public void testExecute_filesModificationTimeKeepOriginal()
       throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
     String output =
@@ -537,7 +545,7 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_containerFilesModificationTimeCustom()
+  public void testExecute_filesModificationTimeCustom()
       throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
     Assert.assertEquals(
@@ -557,7 +565,8 @@ public class BuildImageMojoIntegrationTest {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
+            + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(
             targetImage, "testuser", "testpassword", localRegistry1, "pom-complex.xml"));
     assertWorkingDirectory("", targetImage);
@@ -569,7 +578,8 @@ public class BuildImageMojoIntegrationTest {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
+            + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(
             targetImage,
             "testuser2",
@@ -618,10 +628,5 @@ public class BuildImageMojoIntegrationTest {
 
     detachedContainerName =
         new Command("docker", "run", "--rm", "--detach", "-p8080:8080", targetImage).run().trim();
-  }
-
-  private String getIsoFileTime(Path path) throws IOException {
-    ZonedDateTime zonedTime = Files.getLastModifiedTime(path).toInstant().atZone(ZoneId.of("Z"));
-    return zonedTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME);
   }
 }
