@@ -103,8 +103,8 @@ public class LayerConfiguration {
     }
 
     /**
-     * Adds an entry to the layer with the given permissions. Only adds the single source file to
-     * the exact path in the container file system. See {@link Builder#addEntry(Path,
+     * Adds an entry to the layer with the given file modification time. Only adds the single source
+     * file to the exact path in the container file system. See {@link Builder#addEntry(Path,
      * AbsoluteUnixPath)} for more information.
      *
      * @param sourceFile the source file to add to the layer
@@ -124,9 +124,9 @@ public class LayerConfiguration {
     }
 
     /**
-     * Adds an entry to the layer with the given permissions. Only adds the single source file to
-     * the exact path in the container file system. See {@link Builder#addEntry(Path,
-     * AbsoluteUnixPath)} for more information.
+     * Adds an entry to the layer with the given permissions and file modification time. Only adds
+     * the single source file to the exact path in the container file system. See {@link
+     * Builder#addEntry(Path, AbsoluteUnixPath)} for more information.
      *
      * @param sourceFile the source file to add to the layer
      * @param pathInContainer the path in the container file system corresponding to the {@code

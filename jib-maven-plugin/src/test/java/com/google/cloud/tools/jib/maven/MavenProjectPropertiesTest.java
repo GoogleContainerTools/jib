@@ -124,10 +124,8 @@ public class MavenProjectPropertiesTest {
   private static void assertModificationTime(Instant instant, List<LayerConfiguration> layers) {
     for (LayerConfiguration layer : layers) {
       for (LayerEntry entry : layer.getLayerEntries()) {
-        Assert.assertEquals(
-            "Wrong modified time: " + entry.getSourceFile() + " --> " + entry.getExtractionPath(),
-            instant,
-            entry.getLastModifiedTime());
+        String message = "wrong time: " + entry.getSourceFile() + "-->" + entry.getExtractionPath();
+        Assert.assertEquals(message, instant, entry.getLastModifiedTime());
       }
     }
   }
@@ -675,13 +673,13 @@ public class MavenProjectPropertiesTest {
   private BuildConfiguration setupBuildConfiguration(
       String appRoot, ContainerizingMode containerizingMode)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
+    JavaContainerBuilder javaContainerBuilder =
+        JavaContainerBuilder.from(RegistryImage.named("base"))
+            .setAppRoot(AbsoluteUnixPath.get(appRoot))
+            .setLastModifiedTimeProvider((ignored1, ignored2) -> Instant.ofEpochSecond(32));
     JibContainerBuilder JibContainerBuilder =
         new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
-            .createContainerBuilder(
-                JavaContainerBuilder.from(RegistryImage.named("base"))
-                    .setAppRoot(AbsoluteUnixPath.get(appRoot))
-                    .setLastModifiedTimeProvider((ignored1, ignored2) -> Instant.ofEpochSecond(32)),
-                containerizingMode);
+            .createContainerBuilder(javaContainerBuilder, containerizingMode);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         JibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))

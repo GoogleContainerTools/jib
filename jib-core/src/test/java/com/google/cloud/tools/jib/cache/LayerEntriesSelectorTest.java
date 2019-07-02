@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.cache.LayerEntriesSelector.LayerEntryTemplate;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -133,9 +132,8 @@ public class LayerEntriesSelectorTest {
   }
 
   @Test
-  public void testGenerateSelector_sourceFileModified() throws IOException {
-    Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
-    Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
+  public void testGenerateSelector_sourceLastModifiedTimeChanged() throws IOException {
+    Path layerFile = temporaryFolder.newFile().toPath();
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
     LayerEntry layerEntry = defaultLayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
     DescriptorDigest expectedSelector =
@@ -154,22 +152,14 @@ public class LayerEntriesSelectorTest {
 
   @Test
   public void testGenerateSelector_targetLastModifedTimeChanged() throws IOException {
-    Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
-    Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
-    LayerEntry layerEntry1 =
-        new LayerEntry(
-            layerFile,
-            AbsoluteUnixPath.get("/bar"),
-            FilePermissions.fromOctalString("111"),
-            Instant.now());
-    LayerEntry layerEntry2 =
-        new LayerEntry(
-            layerFile,
-            AbsoluteUnixPath.get("/bar"),
-            FilePermissions.fromOctalString("111"),
-            Instant.EPOCH);
+    Path layerFile = temporaryFolder.newFile().toPath();
+    AbsoluteUnixPath pathInContainer = AbsoluteUnixPath.get("/bar");
+    FilePermissions permissions = FilePermissions.fromOctalString("111");
 
-    // Verify that changing the last modified time generates a different selector
+    LayerEntry layerEntry1 = new LayerEntry(layerFile, pathInContainer, permissions, Instant.now());
+    LayerEntry layerEntry2 = new LayerEntry(layerFile, pathInContainer, permissions, Instant.EPOCH);
+
+    // Verify that different last modified times generate different selectors
     Assert.assertNotEquals(
         LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry1)),
         LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry2)));
@@ -177,8 +167,7 @@ public class LayerEntriesSelectorTest {
 
   @Test
   public void testGenerateSelector_differentPermissions() throws IOException {
-    Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
-    Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
+    Path layerFile = temporaryFolder.newFile().toPath();
     LayerEntry layerEntry111 =
         new LayerEntry(
             layerFile,

@@ -101,6 +101,11 @@ public class SingleProjectIntegrationTest {
     Assert.assertEquals(expected, Splitter.on(",").splitToList(layers).size());
   }
 
+  private static String getIsoFileTime(Path path) throws IOException {
+    ZonedDateTime zonedTime = Files.getLastModifiedTime(path).toInstant().atZone(ZoneId.of("Z"));
+    return zonedTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME);
+  }
+
   /**
    * Asserts that the test project has the required exposed ports, labels and volumes.
    *
@@ -176,11 +181,6 @@ public class SingleProjectIntegrationTest {
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
     return new Command("docker", "run", "--rm", imageReference).run();
-  }
-
-  private static String getIsoFileTime(Path path) throws IOException {
-    ZonedDateTime zonedTime = Files.getLastModifiedTime(path).toInstant().atZone(ZoneId.of("Z"));
-    return zonedTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME);
   }
 
   @Before

@@ -535,9 +535,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   /**
-   * Gets the configured container files modification time value
+   * Gets the configured files modification time value.
    *
-   * @return the configured container files modification time value
+   * @return the configured files modification time value
    */
   String getFilesModificationTime() {
     String property = getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);

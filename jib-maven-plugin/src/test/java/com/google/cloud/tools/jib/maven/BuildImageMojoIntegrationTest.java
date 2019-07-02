@@ -528,13 +528,9 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_filesModificationTimeKeepOriginal()
       throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
+    String pom = "pom-complex-files-modification-time-keep-original.xml";
     String output =
-        buildAndRunComplex(
-            targetImage,
-            "testuser2",
-            "testpassword2",
-            localRegistry2,
-            "pom-complex-files-modification-time-keep-original.xml");
+        buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2, pom);
 
     Path extraDirectory =
         Paths.get(simpleTestProject.getProjectRoot().toString(), "src", "main", "jib-custom");
@@ -548,15 +544,11 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_filesModificationTimeCustom()
       throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
+    String pom = "pom-complex-files-modification-time-custom.xml";
     Assert.assertEquals(
         "Hello, world. \n2019-06-17T16:30:00Z\nrw-r--r--\nrw-r--r--\n"
             + "foo\ncat\n2019-06-17T16:30:00Z\n2019-06-17T16:30:00Z\n",
-        buildAndRunComplex(
-            targetImage,
-            "testuser2",
-            "testpassword2",
-            localRegistry2,
-            "pom-complex-files-modification-time-custom.xml"));
+        buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2, pom));
   }
 
   @Test
