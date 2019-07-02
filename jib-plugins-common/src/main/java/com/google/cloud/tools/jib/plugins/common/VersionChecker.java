@@ -20,6 +20,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A simple version-range checker, intended to check whether a Jib plugin version falls in some
@@ -45,8 +47,13 @@ import java.util.function.Function;
  * major-version-only versions.
  */
 public class VersionChecker<V extends Comparable<? super V>> {
-  /** The expected version representation. */
-  private static final String VERSION_PATTERN = "\\d+(\\.\\d+(\\.\\d+)?)?";
+  /** Regular expression to match a single version. */
+  private static final String VERSION_REGEX = "\\d+(\\.\\d+(\\.\\d+)?)?";
+  
+  /** Regular expression to match an interval version range. */
+  private static final String INTERVAL_REGEX = "[\\[(](?<left>" + VERSION_REGEX + ")?,(?<right>" + VERSION_REGEX + ")?[])]";
+  
+  private static final Pattern INTERVAL_PATTERN = Pattern.compile(INTERVAL_REGEX);
 
   // Helper functions to avoid the cognitive burden of {@link Comparable#compareTo()}
 
@@ -95,31 +102,26 @@ public class VersionChecker<V extends Comparable<? super V>> {
     V pluginVersion = parseVersion(actualVersion);
 
     // Treat a single version "1.4" as a left bound, equivalent to "[1.4,)"
-    if (acceptableVersionRange.matches(VERSION_PATTERN)) {
+    if (acceptableVersionRange.matches(VERSION_REGEX)) {
       return GE(pluginVersion, parseVersion(acceptableVersionRange));
     }
 
     // Otherwise ensure it is a version range with bounds
+    Matcher matcher = INTERVAL_PATTERN.matcher(acceptableVersionRange);
+    Preconditions.checkArgument(matcher.matches(), "invalid version range");
+    String leftBound = matcher.group("left");
+    String rightBound = matcher.group("right");
     Preconditions.checkArgument(
-        acceptableVersionRange.matches(
-            "[\\[(](" + VERSION_PATTERN + ")?,(" + VERSION_PATTERN + ")?[\\])]"),
-        "invalid version range");
+        leftBound != null || rightBound != null, "left and right bounds cannot both be empty");
     BiPredicate<V, V> leftComparator =
         acceptableVersionRange.startsWith("[") ? VersionChecker::GE : VersionChecker::GT;
     BiPredicate<V, V> rightComparator =
         acceptableVersionRange.endsWith("]") ? VersionChecker::LE : VersionChecker::LT;
-    // extract the two version specs
-    String[] range =
-        acceptableVersionRange.substring(1, acceptableVersionRange.length() - 1).split(",", -1);
-    Preconditions.checkArgument(range.length == 2, "version range must have left and right bounds");
-    Preconditions.checkArgument(
-        range[0].length() != 0 || range[1].length() != 0,
-        "left and right bounds cannot both be empty");
 
-    if (!range[0].isEmpty() && !leftComparator.test(pluginVersion, parseVersion(range[0]))) {
+    if (leftBound != null && !leftComparator.test(pluginVersion, parseVersion(leftBound))) {
       return false;
     }
-    if (!range[1].isEmpty() && !rightComparator.test(pluginVersion, parseVersion(range[1]))) {
+    if (rightBound != null && !rightComparator.test(pluginVersion, parseVersion(rightBound))) {
       return false;
     }
     return true;
