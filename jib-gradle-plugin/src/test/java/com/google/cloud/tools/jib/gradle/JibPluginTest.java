@@ -59,7 +59,7 @@ public class JibPluginTest {
 
   @After
   public void tearDown() {
-    System.clearProperty("jib.requiredVersion");
+    System.clearProperty(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME);
   }
 
   @Test
@@ -111,10 +111,17 @@ public class JibPluginTest {
   }
 
   @Test
+  public void testCheckJibVersionNames() {
+    // These identifiers will be baked into Skaffold and should not be changed
+    Assert.assertEquals(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME, "jib.requiredVersion");
+    Assert.assertEquals(JibPlugin.CHECK_REQUIRED_VERSION_TASK_NAME, "_skaffoldEnsureJibUpToDate");
+  }
+
+  @Test
   public void testCheckJibVersionInvoked() {
     Project rootProject =
         ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
-    System.setProperty("jib.requiredVersion", "10000.0"); // not here yet
+    System.setProperty(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME, "10000.0"); // not here yet
     try {
       rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
       Assert.fail("should have failed");

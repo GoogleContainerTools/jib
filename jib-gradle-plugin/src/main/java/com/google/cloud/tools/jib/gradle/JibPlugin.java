@@ -151,7 +151,7 @@ public class JibPlugin implements Plugin<Project> {
     project.getTasks().create(FILES_TASK_V2_NAME, FilesTaskV2.class).setJibExtension(jibExtension);
     project.getTasks().create(INIT_TASK_NAME, SkaffoldInitTask.class).setJibExtension(jibExtension);
 
-    // A no-op check to catch older versions of Jib.  This can be removed when we are certain people
+    // A check to catch older versions of Jib.  This can be removed once we are certain people
     // are using Jib 1.3.1 or later.
     project.getTasks().create(CHECK_REQUIRED_VERSION_TASK_NAME, CheckJibVersionTask.class);
 
