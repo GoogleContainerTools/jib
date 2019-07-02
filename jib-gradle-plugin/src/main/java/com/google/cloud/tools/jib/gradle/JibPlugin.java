@@ -47,7 +47,7 @@ public class JibPlugin implements Plugin<Project> {
 
   @VisibleForTesting static final String EXPLODED_WAR_TASK_NAME = "jibExplodedWar";
 
-  static final String CHECK_REQUIRED_VERSION_TASK_NAME = "_skaffoldEnsureJibUpToDate";
+  static final String CHECK_REQUIRED_VERSION_TASK_NAME = "_skaffoldFailIfJibOutOfDate";
 
   static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
 

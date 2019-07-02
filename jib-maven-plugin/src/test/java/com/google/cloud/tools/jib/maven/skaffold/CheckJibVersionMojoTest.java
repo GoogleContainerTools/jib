@@ -36,7 +36,7 @@ public class CheckJibVersionMojoTest {
   @Test
   public void testIdentifiers() {
     // These identifiers will be baked into Skaffold and should not be changed
-    Assert.assertEquals("_skaffold-ensure-jib-up-to-date", CheckJibVersionMojo.GOAL_NAME);
+    Assert.assertEquals("_skaffold-fail-if-jib-out-of-date", CheckJibVersionMojo.GOAL_NAME);
     Assert.assertEquals("jib.requiredVersion", MojoCommon.REQUIRED_VERSION_PROPERTY_NAME);
   }
 

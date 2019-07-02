@@ -31,7 +31,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
  * jib.requiredVersion} property) will error in such a way that it indicates the jib version is out
  * of date. This goal can be removed once there are no users of Jib prior to 1.4.0.
  *
- * <p>Expected use: {@code mvn jib:_skaffold-ensure-jib-up-to-date -Djib.requiredVersion='[1.4,2)'
+ * <p>Expected use: {@code mvn jib:_skaffold-fail-if-jib-out-of-date -Djib.requiredVersion='[1.4,2)'
  * jib:build -Dimage=xxx}
  */
 @Mojo(
@@ -41,7 +41,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
     defaultPhase = LifecyclePhase.INITIALIZE)
 public class CheckJibVersionMojo extends SkaffoldBindingMojo {
 
-  @VisibleForTesting static final String GOAL_NAME = "_skaffold-ensure-jib-up-to-date";
+  @VisibleForTesting static final String GOAL_NAME = "_skaffold-fail-if-jib-out-of-date";
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {

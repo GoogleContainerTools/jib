@@ -114,7 +114,7 @@ public class JibPluginTest {
   public void testCheckJibVersionNames() {
     // These identifiers will be baked into Skaffold and should not be changed
     Assert.assertEquals(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME, "jib.requiredVersion");
-    Assert.assertEquals(JibPlugin.CHECK_REQUIRED_VERSION_TASK_NAME, "_skaffoldEnsureJibUpToDate");
+    Assert.assertEquals(JibPlugin.CHECK_REQUIRED_VERSION_TASK_NAME, "_skaffoldFailIfJibOutOfDate");
   }
 
   @Test

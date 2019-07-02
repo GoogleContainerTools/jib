@@ -27,7 +27,7 @@ import org.gradle.api.tasks.TaskAction;
  * jib.requiredVersion} property) will error in such a way that it indicates the jib version is out
  * of date. This goal can be removed once there are no users of Jib prior to 1.4.0.
  *
- * <p>Expected use: {@code ./gradlew _skaffoldEnsureJibUpToDate -Djib.requiredVersion='[1.4,2)'
+ * <p>Expected use: {@code ./gradlew _skaffoldFailIfJibOutOfDate -Djib.requiredVersion='[1.4,2)'
  * jibDockerBuild --image=xxx}
  */
 public class CheckJibVersionTask extends DefaultTask {
