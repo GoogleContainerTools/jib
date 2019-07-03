@@ -1,87 +1,29 @@
 plugins {
-  id 'java-library'
-  id 'checkstyle'
-  id 'com.github.sherter.google-java-format' version '0.8'
-  id 'net.ltgt.apt' version '0.19'
-  id 'net.ltgt.errorprone' version '0.6'
-  id 'biz.aQute.bnd.builder' version '4.0.0'
-
-  // For release.
-  id 'maven'
-  id 'net.researchgate.release' version '2.7.0'
-}
-
-group 'com.google.cloud.tools'
-
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
-compileJava.options.encoding = 'UTF-8'
-compileJava.options.compilerArgs += [ '-Xlint:deprecation' ]
-compileTestJava.options.compilerArgs += [ '-Xlint:deprecation' ]
-
-repositories {
-  mavenCentral()
-}
-
-sourceSets {
-  integrationTest {
-    java.srcDir file('src/integration-test/java')
-    resources.srcDir file('src/integration-test/resources')
-  }
-}
-
-configurations {
-  integrationTestImplementation.extendsFrom testImplementation
-  integrationTestRuntime.extendsFrom testRuntime
+  id 'net.researchgate.release'
+  id 'maven-publish'
 }
 
 dependencies {
-  // Make sure these are consistent with jib-maven-plugin.
-
-  // For Google libraries, check <http-client-bom.version>, <google.auth.version>, <guava.version>,
-  // ... in https://github.com/googleapis/google-cloud-java/blob/master/google-cloud-clients/pom.xml
-  // for best compatibility.
-  //
-  // TODO: remove once https://github.com/googleapis/google-http-java-client/issues/795 is fixed and released.
-  // Forcing to downgrade this to 4.5.6 fixes https://github.com/GoogleContainerTools/jib/issues/1914
-  // However, #795 and upgrading httpclient alone may not fix #1914. We may need to explicitly disable URI
-  // normalization as discussed in #795.
-  implementation('com.google.http-client:google-http-client:1.31.0') {
+  implementation("com.google.http-client:google-http-client:${dependencyVersions.GOOGLE_HTTP_CLIENT}") {
     exclude group: "org.apache.httpcomponents", module: "httpclient"
   }
-  implementation('com.google.http-client:google-http-client-apache-v2:1.31.0') {
+  implementation("com.google.http-client:google-http-client-apache-v2:${dependencyVersions.GOOGLE_HTTP_CLIENT_APACHE_V2}") {
     exclude group: "org.apache.httpcomponents", module: "httpclient"
   }
-  implementation('com.google.auth:google-auth-library-oauth2-http:0.16.2') {
+  implementation("com.google.auth:google-auth-library-oauth2-http:${dependencyVersions.GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP}") {
     exclude group: "org.apache.httpcomponents", module: "httpclient"
   }
-  implementation 'org.apache.httpcomponents:httpclient:4.5.6'
-  implementation 'com.google.guava:guava:28.0-jre'
+  implementation "org.apache.httpcomponents:httpclient:${dependencyVersions.APACHE_HTTP_CLIENT_OVERRIDE}"
 
-  implementation 'org.apache.commons:commons-compress:1.18'
-  implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.9.2'
-  implementation 'org.ow2.asm:asm:7.0'
+  implementation "org.apache.commons:commons-compress:${dependencyVersions.COMMONS_COMPRESS}"
+  implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
+  implementation "com.fasterxml.jackson.core:jackson-databind:${dependencyVersions.JACKSON_DATABIND}"
+  implementation "org.ow2.asm:asm:${dependencyVersions.ASM}"
 
-  testImplementation 'junit:junit:4.12'
-  testImplementation 'org.mockito:mockito-core:2.23.4'
-  testImplementation 'org.slf4j:slf4j-api:1.7.25'
-  testImplementation 'com.github.stefanbirkner:system-rules:1.19.0'
-
-  // NullAway errorprone plugin
-  annotationProcessor 'com.uber.nullaway:nullaway:0.6.4'
-  errorprone 'com.google.errorprone:error_prone_core:2.3.2'
-  // Using github.com/google/error-prone-javac is required when running on
-  // JDK 8. Remove when migrating to JDK 11.
-  if (System.getProperty("java.version").startsWith("1.8.")) {
-    errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
-  }
-
-  integrationTestCompile sourceSets.main.output
-  integrationTestCompile sourceSets.test.output
-  integrationTestCompile configurations.compile
-  integrationTestCompile configurations.testCompile
-  integrationTestCompile configurations.runtime
-  integrationTestCompile configurations.testRuntime
+  testImplementation "junit:junit:${dependencyVersions.JUNIT}"
+  testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
+  testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
+  testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
 }
 
 jar {
@@ -99,149 +41,21 @@ jar {
   }
 }
 
-// Integration tests must be run explicitly
-task integrationTest(type: Test) {
-  testClassesDirs = sourceSets.integrationTest.output.classesDirs
-  classpath = sourceSets.integrationTest.runtimeClasspath
-  systemProperty '_JIB_DISABLE_USER_AGENT', true
-}
-integrationTest.dependsOn test
-
-test {
-  testLogging {
-    showStandardStreams = true
-    exceptionFormat = 'full'
-  }
-}
-
-import net.ltgt.gradle.errorprone.CheckSeverity
-
-// Adds NullAway errorprone checks.
-tasks.withType(JavaCompile) {
-  if (!name.toLowerCase().contains("test")) {
-    options.errorprone {
-      check('NullAway', CheckSeverity.ERROR)
-      option('NullAway:AnnotatedPackages', 'com.google.cloud.tools')
-    }
-  }
-}
-
-// Fail build on javadoc warnings
-tasks.withType(Javadoc) {
-  options.addBooleanOption('Xwerror', true)
-}
-assemble.dependsOn javadoc
-
-tasks.withType(Test) {
-  reports.html.setDestination file("${reporting.baseDir}/${name}")
-}
-
-/* GOOGLE JAVA FORMAT */
-googleJavaFormat {
-  toolVersion = '1.6'
-}
-check.dependsOn verifyGoogleJavaFormat
-/* GOOGLE JAVA FORMAT */
-
-/* CHECKSTYLE */
-checkstyle {
-  toolVersion = '8.18'
-
-  // get the google_checks.xml file from the checkstyle jar and take out the java checks
-  def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()
-  def fileExtensionsBefore = '<property name="fileExtensions" value="java, properties, xml"/>'
-  def fileExtensionsAfter = '<property name="fileExtensions" value="properties, xml"/>'
-  def googleChecksNoJava = googleChecks.replace(fileExtensionsBefore, fileExtensionsAfter)
-  assert !googleChecks.equals(googleChecksNoJava)
-
-  config = resources.text.fromString(googleChecksNoJava)
-
-  maxErrors = 0
-  maxWarnings = 0
-}
-/* CHECKSTYLE */
+configureMavenRelease()
 
 /* RELEASE */
-task sourceJar(type: Jar) {
-  from sourceSets.main.allJava
-  classifier 'sources'
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-  from javadoc.destinationDir
-  classifier 'javadoc'
-}
-
-task writePom {
-  project.afterEvaluate {
-    def outputFile = file("${project.buildDir}/pom/${project.name}-${project.version}.pom")
-    outputs.file outputFile
-
-    doLast {
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
       pom {
-        project {
-          name 'Jib Core'
-          description 'Build container images.'
-          url 'https://github.com/GoogleContainerTools/jib'
-          inceptionYear '2018'
-
-          scm {
-            url 'https://github.com/GoogleContainerTools/jib'
-            connection 'scm:https://github.com/GoogleContainerTools/jib.git'
-            developerConnection 'scm:git://github.com/GoogleContainerTools/jib.git'
-          }
-
-          licenses {
-            license {
-              name 'The Apache Software License, Version 2.0'
-              url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-              distribution 'repo'
-            }
-          }
-
-          developers {
-            developer {
-              id 'coollog'
-              name 'Qingyang Chen'
-              email 'qingyangc@google.com'
-            }
-            developer {
-              id 'loosebazooka'
-              name 'Appu Goundan'
-              email 'appu@google.com'
-            }
-            developer {
-              id 'TadCordle'
-              name 'Tad Cordle'
-              email 'tcordle@google.com'
-            }
-            developer {
-              id 'chanseokoh'
-              name 'Chanseok Oh'
-              email 'chanseok@google.com'
-            }
-            developer {
-              id 'briandealwis'
-              name 'Brian de Alwis'
-              email 'bdealwis@google.com'
-            }
-          }
-        }
-      }.writeTo(outputFile)
+        name = "Jib Core"
+        description = 'Build container images.'
+      }
+      from components.java
     }
   }
 }
 
-// For Kokoro sign and releases
-task prepareRelease(type: Copy) {
-  from jar
-  from sourceJar
-  from javadocJar
-  from writePom
-  into "${project.buildDir}/release-artifacts"
-  dependsOn build
-  dependsOn cleanPrepareRelease
-}
 // Release plugin (git release commits and version updates)
 release {
   tagTemplate = 'v$version-core'

@@ -108,7 +108,6 @@ public class JavaContainerBuilderHelperTest {
     Path temporaryExplodedWar = temporaryFolder.getRoot().toPath().resolve("exploded-war");
 
     Files.createDirectories(temporaryExplodedWar.resolve("WEB-INF/classes/empty_dir"));
-    Paths.get(Resources.getResource("core/layer").toURI());
 
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))

@@ -1,0 +1,74 @@
+plugins {
+ id 'io.freefair.maven-plugin'
+ id 'net.researchgate.release'
+ id 'maven-publish'
+ id 'eclipse'
+}
+
+// only maven specific dependencies should be versioned, everything else should be defined by constrains in
+// parent build.gradle
+dependencies {
+  sourceProject project(':jib-plugins-common')
+  sourceProject project(':jib-core')
+
+  implementation 'org.apache.maven:maven-plugin-api:3.5.2'
+  implementation 'org.apache.maven:maven-core:3.5.2'
+
+  // equivalent to "provided"
+  compileOnly 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
+  testImplementation 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5'
+
+  // maven-plugin-testing-harness pulls in conflicting implementations of DefaultPlexusContainer
+  // (sisu (correct) vs default-plexus-container (wrong)) so ensure this is first in the test classpath
+  testImplementation 'org.eclipse.sisu:org.eclipse.sisu.plexus:0.3.3'
+  testImplementation 'org.apache.maven.plugin-testing:maven-plugin-testing-harness:3.3.0'
+
+  testImplementation "junit:junit:${dependencyVersions.JUNIT}"
+  testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
+  testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"
+  testImplementation "com.github.stefanbirkner:system-rules:${dependencyVersions.SYSTEM_RULES}"
+
+  testImplementation 'org.apache.maven.shared:maven-verifier:1.6'
+  testImplementation 'org.apache.maven:maven-compat:3.5.4'
+
+  testImplementation project(path:':jib-plugins-common', configuration:'tests')
+  integrationTestImplementation project(path:':jib-core', configuration:'integrationTests')
+}
+
+/* TESTING */
+test.dependsOn publishToMavenLocal
+integrationTest.dependsOn publishToMavenLocal
+/* TESTING */
+
+/* RELEASE */
+configureMavenRelease()
+
+publishing {
+  publications {
+    mavenJava(MavenPublication) {
+      pom {
+        name = 'Jib'
+        description = 'A Maven plugin for building container images for your Java applications.'
+      }
+    }
+  }
+}
+
+
+release {
+  tagTemplate = 'v$version-gradle'
+  git {
+    requireBranch = /^maven_release_v\d+.*$/  //regex
+  }
+}
+/* RELEASE */
+
+/* ECLIPSE */
+eclipse.classpath.file.whenMerged { cp ->
+  cp.entries.each {
+    if (it.path == "src/test/resources") {
+      it.excludes += "maven/projects/"
+    }
+  }
+}
+/* ECLIPSE */

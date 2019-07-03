@@ -21,6 +21,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.maven.it.util.ResourceExtractor;
@@ -36,14 +38,12 @@ public class TestProject extends TemporaryFolder implements Closeable {
     return filename.startsWith("pom") && filename.endsWith(".xml");
   }
 
-  private final TestPlugin testPlugin;
   private final String projectDir;
 
   private Path projectRoot;
 
   /** Initialize to a specific project directory. */
-  public TestProject(TestPlugin testPlugin, String projectDir) {
-    this.testPlugin = testPlugin;
+  public TestProject(String projectDir) {
     this.projectDir = projectDir;
   }
 
@@ -71,12 +71,17 @@ public class TestProject extends TemporaryFolder implements Closeable {
             .toPath();
 
     // Puts the correct plugin version into the test project pom.xml.
+    Path gradleProperties = Paths.get("gradle.properties");
+    Properties properties = new Properties();
+    properties.load(Files.newInputStream(gradleProperties));
+    String pluginVersion = properties.getProperty("version");
+
     try (Stream<Path> files = Files.list(projectRoot)) {
       for (Path pomXml : files.filter(TestProject::isPomXml).collect(Collectors.toList())) {
         Files.write(
             pomXml,
             new String(Files.readAllBytes(pomXml), StandardCharsets.UTF_8)
-                .replace("@@PluginVersion@@", testPlugin.getVersion())
+                .replace("@@PluginVersion@@", pluginVersion)
                 .getBytes(StandardCharsets.UTF_8));
       }
     }
