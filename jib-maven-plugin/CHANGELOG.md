@@ -15,6 +15,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Re-enabled cross-repository blob mounts ([#1793](https://github.com/GoogleContainerTools/jib/pull/1793))
+- Manifest lists referenced directly by sha256 are automatically parsed and the first `linux/amd64` manifest is used ([#1811](https://github.com/GoogleContainerTools/jib/issues/1811))
 
 ## 1.3.0
 
