@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -55,6 +56,7 @@ public class JibRunHelper {
             "-Djib.useOnlyProjectCache=true",
             "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
+            configureInsecureRegistryProperty(imageReference),
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
     assertImageDigestAndId(testProject.getProjectRoot());
@@ -73,6 +75,7 @@ public class JibRunHelper {
             "-Djib.useOnlyProjectCache=true",
             "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
+            configureInsecureRegistryProperty(imageReference),
             "-D_ADDITIONAL_TAG=" + additionalTag);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
     assertImageDigestAndId(testProject.getProjectRoot());
@@ -99,6 +102,7 @@ public class JibRunHelper {
             "-Djib.useOnlyProjectCache=true",
             "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
+            configureInsecureRegistryProperty(imageReference),
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
     assertImageDigestAndId(testProject.getProjectRoot());
@@ -115,6 +119,13 @@ public class JibRunHelper {
       throws IOException, InterruptedException, DigestException {
     buildToDockerDaemon(testProject, imageReference, gradleBuildFile);
     return new Command("docker", "run", "--rm", imageReference).run();
+  }
+
+  private static String configureInsecureRegistryProperty(String imageReference) {
+    return "-D"
+        + PropertyNames.ALLOW_INSECURE_REGISTRIES
+        + "="
+        + (imageReference.startsWith("localhost") ? "true" : "false");
   }
 
   /**

@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.common.base.Splitter;
 import java.io.IOException;
@@ -74,8 +75,8 @@ public class BuildImageMojoIntegrationTest {
   @ClassRule
   public static final TestProject servlet25Project = new TestProject(testPlugin, "war_servlet25");
 
-  private static String getGcrImageReference(String label) {
-    String nameBase = "gcr.io/" + IntegrationTestingConfiguration.getGCPProject() + '/';
+  private static String getTestImageReference(String label) {
+    String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
     return nameBase + label + System.nanoTime();
   }
 
@@ -104,6 +105,9 @@ public class BuildImageMojoIntegrationTest {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
+    if (imageReference.startsWith("localhost")) {
+      verifier.setSystemProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES, "true");
+    }
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
     verifier.addCliOption("--file=" + pomXml);
@@ -163,6 +167,9 @@ public class BuildImageMojoIntegrationTest {
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setSystemProperty("_ADDITIONAL_TAG", additionalTag);
+    if (imageReference.startsWith("localhost")) {
+      verifier.setSystemProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES, "true");
+    }
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
     verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
@@ -324,7 +331,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_simple()
       throws VerificationException, IOException, InterruptedException, DigestException {
-    String targetImage = getGcrImageReference("simpleimage:maven");
+    String targetImage = getTestImageReference("simpleimage:maven");
 
     // Test empty output error
     try {
@@ -372,7 +379,7 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_failOffline() throws IOException {
-    String targetImage = getGcrImageReference("simpleimageoffline:maven");
+    String targetImage = getTestImageReference("simpleimageoffline:maven");
 
     // Test empty output error
     try {
@@ -395,7 +402,7 @@ public class BuildImageMojoIntegrationTest {
       throws DigestException, VerificationException, IOException, InterruptedException {
     Assume.assumeTrue(isJava11RuntimeOrHigher());
 
-    String targetImage = getGcrImageReference("simpleimage:maven");
+    String targetImage = getTestImageReference("simpleimage:maven");
     Assert.assertEquals(
         "Hello, world. An argument.\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-java11.xml", false));
@@ -424,7 +431,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_empty()
       throws InterruptedException, IOException, VerificationException, DigestException {
-    String targetImage = getGcrImageReference("emptyimage:maven");
+    String targetImage = getTestImageReference("emptyimage:maven");
     Assert.assertEquals(
         "", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, "pom.xml", false));
     assertCreationTimeEpoch(targetImage);
@@ -435,7 +442,7 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_multipleTags()
       throws IOException, InterruptedException, InvalidImageReferenceException,
           VerificationException, DigestException {
-    String targetImage = getGcrImageReference("multitag-image:maven");
+    String targetImage = getTestImageReference("multitag-image:maven");
     Assert.assertEquals(
         "",
         buildAndRunAdditionalTag(
@@ -445,7 +452,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_multipleExtraDirectories()
       throws DigestException, VerificationException, IOException, InterruptedException {
-    String targetImage = getGcrImageReference("simpleimage:maven");
+    String targetImage = getTestImageReference("simpleimage:maven");
     Assert.assertEquals(
         "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\nbaz\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-extra-dirs.xml", false));
@@ -469,7 +476,7 @@ public class BuildImageMojoIntegrationTest {
   @Test
   public void testExecute_deprecatedExtraDirectoryConfigUsed()
       throws IOException, VerificationException {
-    String targetImage = getGcrImageReference("simpleimage:maven");
+    String targetImage = getTestImageReference("simpleimage:maven");
     build(simpleTestProject.getProjectRoot(), targetImage, "pom-deprecated-extra-dir.xml", false)
         .verifyTextInLog(
             "<extraDirectory> is deprecated; use <extraDirectories> with <paths><path>");
@@ -546,24 +553,29 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_jibRequireVersion_ok() throws VerificationException, IOException {
-    String targetImage = "simpleimage:maven" + System.nanoTime();
+    String targetImage = getTestImageReference("simpleimage:maven");
 
-    Instant before = Instant.now();
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     // this plugin should match 1.0
     verifier.setSystemProperty("jib.requiredVersion", "1.0");
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    if (targetImage.startsWith("localhost")) {
+      verifier.setSystemProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES, "true");
+    }
     verifier.executeGoals(Arrays.asList("package", "jib:build"));
     verifier.verifyErrorFreeLog();
   }
 
   @Test
   public void testExecute_jibRequireVersion_fail() throws IOException {
-    String targetImage = "simpleimage:maven" + System.nanoTime();
+    String targetImage = getTestImageReference("simpleimage:maven");
     try {
       Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
       verifier.setSystemProperty("jib.requiredVersion", "[,1.0]");
       verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+      if (targetImage.startsWith("localhost")) {
+        verifier.setSystemProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES, "true");
+      }
       verifier.executeGoals(Arrays.asList("package", "jib:build"));
       Assert.fail();
     } catch (VerificationException ex) {
@@ -588,11 +600,14 @@ public class BuildImageMojoIntegrationTest {
 
   private void buildAndRunWar(String label, String pomXml)
       throws VerificationException, IOException, InterruptedException {
-    String targetImage = getGcrImageReference(label);
+    String targetImage = getTestImageReference(label);
 
     Verifier verifier = new Verifier(servlet25Project.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    if (targetImage.startsWith("localhost")) {
+      verifier.setSystemProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES, "true");
+    }
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
     verifier.addCliOption("--file=" + pomXml);
