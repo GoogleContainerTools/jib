@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
+import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
@@ -87,6 +88,60 @@ public class ManifestPullerTest {
             .handleResponse(mockResponse);
 
     Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestTemplate.class));
+  }
+
+  @Test
+  public void testHandleResponse_v22ManifestListFailsWhenParsedAsV22Manifest()
+      throws URISyntaxException, IOException, UnknownManifestFormatException {
+    Path v22ManifestListFile =
+        Paths.get(Resources.getResource("core/json/v22manifest_list.json").toURI());
+    InputStream v22ManifestList = new ByteArrayInputStream(Files.readAllBytes(v22ManifestListFile));
+
+    Mockito.when(mockResponse.getBody()).thenReturn(v22ManifestList);
+    try {
+      new ManifestPuller<>(
+              fakeRegistryEndpointRequestProperties, "test-image-tag", V22ManifestTemplate.class)
+          .handleResponse(mockResponse);
+      Assert.fail();
+    } catch (ClassCastException ex) {
+      // pass
+    }
+  }
+
+  @Test
+  public void testHandleResponse_v22ManifestListFromParentType()
+      throws URISyntaxException, IOException, UnknownManifestFormatException {
+    Path v22ManifestListFile =
+        Paths.get(Resources.getResource("core/json/v22manifest_list.json").toURI());
+    InputStream v22ManifestList = new ByteArrayInputStream(Files.readAllBytes(v22ManifestListFile));
+
+    Mockito.when(mockResponse.getBody()).thenReturn(v22ManifestList);
+    ManifestTemplate manifestTemplate =
+        new ManifestPuller<>(
+                fakeRegistryEndpointRequestProperties, "test-image-tag", ManifestTemplate.class)
+            .handleResponse(mockResponse);
+
+    Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    Assert.assertTrue(((V22ManifestListTemplate) manifestTemplate).getManifests().size() > 0);
+  }
+
+  @Test
+  public void testHandleResponse_v22ManifestList()
+      throws URISyntaxException, IOException, UnknownManifestFormatException {
+    Path v22ManifestListFile =
+        Paths.get(Resources.getResource("core/json/v22manifest_list.json").toURI());
+    InputStream v22ManifestList = new ByteArrayInputStream(Files.readAllBytes(v22ManifestListFile));
+
+    Mockito.when(mockResponse.getBody()).thenReturn(v22ManifestList);
+    V22ManifestListTemplate manifestTemplate =
+        new ManifestPuller<>(
+                fakeRegistryEndpointRequestProperties,
+                "test-image-tag",
+                V22ManifestListTemplate.class)
+            .handleResponse(mockResponse);
+
+    Assert.assertThat(manifestTemplate, CoreMatchers.instanceOf(V22ManifestListTemplate.class));
+    Assert.assertTrue(manifestTemplate.getManifests().size() > 0);
   }
 
   @Test
@@ -174,6 +229,13 @@ public class ManifestPullerTest {
         Collections.singletonList(V21ManifestTemplate.MEDIA_TYPE),
         new ManifestPuller<>(
                 fakeRegistryEndpointRequestProperties, "test-image-tag", V21ManifestTemplate.class)
+            .getAccept());
+    Assert.assertEquals(
+        Collections.singletonList(V22ManifestListTemplate.MANIFEST_MEDIA_TYPE),
+        new ManifestPuller<>(
+                fakeRegistryEndpointRequestProperties,
+                "test-image-tag",
+                V22ManifestListTemplate.class)
             .getAccept());
   }
 }

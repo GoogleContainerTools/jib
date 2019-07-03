@@ -25,16 +25,18 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.ReproducibleLayerBuilder;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
 class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> {
 
-  private static final String DESCRIPTION = "Preparing application layer builders";
+  private static final String DESCRIPTION = "Building %s layer";
 
   /**
    * Makes a list of {@link BuildAndCacheApplicationLayerStep} for dependencies, resources, and
@@ -43,31 +45,26 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
   static ImmutableList<BuildAndCacheApplicationLayerStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
-    int layerCount = buildConfiguration.getLayerConfigurations().size();
+    List<LayerConfiguration> layerConfigurations = buildConfiguration.getLayerConfigurations();
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                "preparing application layer builders", layerCount);
+                "preparing application layer builders", layerConfigurations.size());
         TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
-      ImmutableList.Builder<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
-          ImmutableList.builderWithExpectedSize(layerCount);
-      for (LayerConfiguration layerConfiguration : buildConfiguration.getLayerConfigurations()) {
-        // Skips the layer if empty.
-        if (layerConfiguration.getLayerEntries().isEmpty()) {
-          continue;
-        }
-
-        buildAndCacheApplicationLayerSteps.add(
-            new BuildAndCacheApplicationLayerStep(
-                buildConfiguration,
-                progressEventDispatcher.newChildProducer(),
-                layerConfiguration.getName(),
-                layerConfiguration));
-      }
-      ImmutableList<BuildAndCacheApplicationLayerStep> steps =
-          buildAndCacheApplicationLayerSteps.build();
-      return steps;
+            new TimerEventDispatcher(
+                buildConfiguration.getEventHandlers(), "Preparing application layer builders")) {
+      return layerConfigurations
+          .stream()
+          // Skips the layer if empty.
+          .filter(layerConfiguration -> !layerConfiguration.getLayerEntries().isEmpty())
+          .map(
+              layerConfiguration ->
+                  new BuildAndCacheApplicationLayerStep(
+                      buildConfiguration,
+                      progressEventDispatcher.newChildProducer(),
+                      layerConfiguration.getName(),
+                      layerConfiguration))
+          .collect(ImmutableList.toImmutableList());
     }
   }
 
@@ -90,14 +87,14 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
 
   @Override
   public CachedLayerAndName call() throws IOException, CacheCorruptedException {
-    String description = "Building " + layerName + " layer";
+    String description = String.format(DESCRIPTION, layerName);
 
-    buildConfiguration.getEventHandlers().dispatch(LogEvent.progress(description + "..."));
+    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    eventHandlers.dispatch(LogEvent.progress(description + "..."));
 
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create("building " + layerName + " layer", 1);
-        TimerEventDispatcher ignored2 =
-            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), description)) {
+        TimerEventDispatcher ignored2 = new TimerEventDispatcher(eventHandlers, description)) {
       Cache cache = buildConfiguration.getApplicationLayersCache();
 
       // Don't build the layer if it exists already.
@@ -111,9 +108,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
       CachedLayer cachedLayer =
           cache.writeUncompressedLayer(layerBlob, layerConfiguration.getLayerEntries());
 
-      buildConfiguration
-          .getEventHandlers()
-          .dispatch(LogEvent.debug(description + " built " + cachedLayer.getDigest()));
+      eventHandlers.dispatch(LogEvent.debug(description + " built " + cachedLayer.getDigest()));
 
       return new CachedLayerAndName(cachedLayer, layerName);
     }
