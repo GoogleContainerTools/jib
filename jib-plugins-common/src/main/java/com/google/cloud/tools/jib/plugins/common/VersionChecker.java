@@ -49,10 +49,11 @@ import java.util.regex.Pattern;
 public class VersionChecker<V extends Comparable<? super V>> {
   /** Regular expression to match a single version. */
   private static final String VERSION_REGEX = "\\d+(\\.\\d+(\\.\\d+)?)?";
-  
+
   /** Regular expression to match an interval version range. */
-  private static final String INTERVAL_REGEX = "[\\[(](?<left>" + VERSION_REGEX + ")?,(?<right>" + VERSION_REGEX + ")?[])]";
-  
+  private static final String INTERVAL_REGEX =
+      "[\\[(](?<left>" + VERSION_REGEX + ")?,(?<right>" + VERSION_REGEX + ")?[])]";
+
   private static final Pattern INTERVAL_PATTERN = Pattern.compile(INTERVAL_REGEX);
 
   // Helper functions to avoid the cognitive burden of {@link Comparable#compareTo()}
