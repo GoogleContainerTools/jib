@@ -52,8 +52,8 @@ public class WithServerConnectionTest {
     try (TestWebServer server = new TestWebServer(false);
         Connection connection =
             Connection.getConnectionFactory().apply(new URL(server.getEndpoint()));
-        Response response1 = connection.send("GET", new Request.Builder().build())) {
-      try (Response response2 = connection.send("GET", new Request.Builder().build())) {
+        Response ignored1 = connection.send("GET", new Request.Builder().build())) {
+      try (Response ignored2 = connection.send("GET", new Request.Builder().build())) {
         Assert.fail("Should fail on the second send");
       } catch (IllegalStateException ex) {
         Assert.assertEquals("Connection can send only one request", ex.getMessage());
@@ -67,7 +67,7 @@ public class WithServerConnectionTest {
     try (TestWebServer server = new TestWebServer(true);
         Connection connection =
             Connection.getConnectionFactory().apply(new URL(server.getEndpoint()))) {
-      try (Response response = connection.send("GET", new Request.Builder().build())) {
+      try (Response ignored = connection.send("GET", new Request.Builder().build())) {
         Assert.fail("Should fail if cannot verify peer");
       } catch (SSLException ex) {
         Assert.assertNotNull(ex.getMessage());
