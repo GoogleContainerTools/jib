@@ -36,8 +36,8 @@ public class WithServerConnectionTest {
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     try (TestWebServer server = new TestWebServer(false);
         Connection connection =
-            Connection.getConnectionFactory().apply(new URL(server.getEndpoint()))) {
-      Response response = connection.send("GET", new Request.Builder().build());
+            Connection.getConnectionFactory().apply(new URL(server.getEndpoint()));
+        Response response = connection.send("GET", new Request.Builder().build())) {
 
       Assert.assertEquals(200, response.getStatusCode());
       Assert.assertArrayEquals(
@@ -51,10 +51,9 @@ public class WithServerConnectionTest {
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     try (TestWebServer server = new TestWebServer(false);
         Connection connection =
-            Connection.getConnectionFactory().apply(new URL(server.getEndpoint()))) {
-      connection.send("GET", new Request.Builder().build());
-      try {
-        connection.send("GET", new Request.Builder().build());
+            Connection.getConnectionFactory().apply(new URL(server.getEndpoint()));
+        Response response1 = connection.send("GET", new Request.Builder().build())) {
+      try (Response response2 = connection.send("GET", new Request.Builder().build())) {
         Assert.fail("Should fail on the second send");
       } catch (IllegalStateException ex) {
         Assert.assertEquals("Connection can send only one request", ex.getMessage());
@@ -68,8 +67,7 @@ public class WithServerConnectionTest {
     try (TestWebServer server = new TestWebServer(true);
         Connection connection =
             Connection.getConnectionFactory().apply(new URL(server.getEndpoint()))) {
-      try {
-        connection.send("GET", new Request.Builder().build());
+      try (Response response = connection.send("GET", new Request.Builder().build())) {
         Assert.fail("Should fail if cannot verify peer");
       } catch (SSLException ex) {
         Assert.assertNotNull(ex.getMessage());
@@ -82,8 +80,8 @@ public class WithServerConnectionTest {
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     try (TestWebServer server = new TestWebServer(true);
         Connection connection =
-            Connection.getInsecureConnectionFactory().apply(new URL(server.getEndpoint()))) {
-      Response response = connection.send("GET", new Request.Builder().build());
+            Connection.getInsecureConnectionFactory().apply(new URL(server.getEndpoint()));
+        Response response = connection.send("GET", new Request.Builder().build())) {
 
       Assert.assertEquals(200, response.getStatusCode());
       Assert.assertArrayEquals(
@@ -111,8 +109,8 @@ public class WithServerConnectionTest {
       System.setProperty("http.proxyPassword", "pass_sys_prop");
 
       try (Connection connection =
-          Connection.getConnectionFactory().apply(new URL("http://does.not.matter"))) {
-        Response response = connection.send("GET", new Request.Builder().build());
+              Connection.getConnectionFactory().apply(new URL("http://does.not.matter"));
+          Response response = connection.send("GET", new Request.Builder().build())) {
         Assert.assertThat(
             server.getInputRead(),
             CoreMatchers.containsString(

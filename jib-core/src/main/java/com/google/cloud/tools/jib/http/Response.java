@@ -19,12 +19,13 @@ package com.google.cloud.tools.jib.http;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpResponse;
 import com.google.common.net.HttpHeaders;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
 /** Holds an HTTP response. */
-public class Response {
+public class Response implements Closeable {
 
   private final HttpResponse httpResponse;
 
@@ -74,5 +75,10 @@ public class Response {
   /** @return the original request URL */
   public GenericUrl getRequestUrl() {
     return httpResponse.getRequest().getUrl();
+  }
+
+  @Override
+  public void close() throws IOException {
+    httpResponse.disconnect();
   }
 }

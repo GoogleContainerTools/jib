@@ -250,10 +250,11 @@ class RegistryEndpointCaller<T> {
       if (sendCredentials) {
         requestBuilder.setAuthorization(authorization);
       }
-      Response response =
-          connection.send(registryEndpointProvider.getHttpMethod(), requestBuilder.build());
 
-      return registryEndpointProvider.handleResponse(response);
+      try (Response response =
+          connection.send(registryEndpointProvider.getHttpMethod(), requestBuilder.build())) {
+        return registryEndpointProvider.handleResponse(response);
+      }
 
     } catch (HttpResponseException ex) {
       // First, see if the endpoint provider handles an exception as an expected response.

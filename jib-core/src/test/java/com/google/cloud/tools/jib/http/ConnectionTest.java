@@ -86,23 +86,21 @@ public class ConnectionTest {
   @Test
   public void testHttpTimeout_doNotSetByDefault() throws IOException {
     setUpMocksAndFakes(null);
-    try (Connection connection = testConnection) {
-      connection.send(HttpMethods.GET, fakeRequest);
+    try (Connection connection = testConnection;
+        Response response = connection.send(HttpMethods.GET, fakeRequest)) {
+      Mockito.verify(mockHttpRequest, Mockito.never()).setConnectTimeout(Mockito.anyInt());
+      Mockito.verify(mockHttpRequest, Mockito.never()).setReadTimeout(Mockito.anyInt());
     }
-
-    Mockito.verify(mockHttpRequest, Mockito.never()).setConnectTimeout(Mockito.anyInt());
-    Mockito.verify(mockHttpRequest, Mockito.never()).setReadTimeout(Mockito.anyInt());
   }
 
   @Test
   public void testHttpTimeout() throws IOException {
     setUpMocksAndFakes(5982);
-    try (Connection connection = testConnection) {
-      connection.send(HttpMethods.GET, fakeRequest);
+    try (Connection connection = testConnection;
+        Response response = connection.send(HttpMethods.GET, fakeRequest)) {
+      Mockito.verify(mockHttpRequest).setConnectTimeout(5982);
+      Mockito.verify(mockHttpRequest).setReadTimeout(5982);
     }
-
-    Mockito.verify(mockHttpRequest).setConnectTimeout(5982);
-    Mockito.verify(mockHttpRequest).setReadTimeout(5982);
   }
 
   private void setUpMocksAndFakes(Integer httpTimeout) throws IOException {

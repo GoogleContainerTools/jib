@@ -279,24 +279,25 @@ public class RegistryAuthenticator {
       }
 
       Request request = requestBuilder.build();
-      Response response =
-          isOAuth2Auth(credential) ? connection.post(request) : connection.get(request);
-      String responseString =
-          CharStreams.toString(new InputStreamReader(response.getBody(), StandardCharsets.UTF_8));
+      try (Response response =
+          isOAuth2Auth(credential) ? connection.post(request) : connection.get(request)) {
+        String responseString =
+            CharStreams.toString(new InputStreamReader(response.getBody(), StandardCharsets.UTF_8));
 
-      AuthenticationResponseTemplate responseJson =
-          JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
+        AuthenticationResponseTemplate responseJson =
+            JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
 
-      if (responseJson.getToken() == null) {
-        throw new RegistryAuthenticationFailedException(
-            registryEndpointRequestProperties.getServerUrl(),
-            registryEndpointRequestProperties.getImageName(),
-            "Did not get token in authentication response from "
-                + getAuthenticationUrl(credential, repositoryScopes)
-                + "; parameters: "
-                + getAuthRequestParameters(credential, repositoryScopes));
+        if (responseJson.getToken() == null) {
+          throw new RegistryAuthenticationFailedException(
+              registryEndpointRequestProperties.getServerUrl(),
+              registryEndpointRequestProperties.getImageName(),
+              "Did not get token in authentication response from "
+                  + getAuthenticationUrl(credential, repositoryScopes)
+                  + "; parameters: "
+                  + getAuthRequestParameters(credential, repositoryScopes));
+        }
+        return Authorization.fromBearerToken(responseJson.getToken());
       }
-      return Authorization.fromBearerToken(responseJson.getToken());
 
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(
