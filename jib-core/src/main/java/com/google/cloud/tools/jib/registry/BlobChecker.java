@@ -27,13 +27,14 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
  * Checks if an image's BLOB exists on a registry, and retrieves its {@link BlobDescriptor} if it
  * exists.
  */
-class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
+class BlobChecker implements RegistryEndpointProvider<Optional<BlobDescriptor>> {
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final DescriptorDigest blobDigest;
@@ -47,7 +48,7 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
 
   /** @return the BLOB's content descriptor */
   @Override
-  public BlobDescriptor handleResponse(Response response) throws RegistryErrorException {
+  public Optional<BlobDescriptor> handleResponse(Response response) throws RegistryErrorException {
     long contentLength = response.getContentLength();
     if (contentLength < 0) {
       throw new RegistryErrorExceptionBuilder(getActionDescription())
@@ -55,12 +56,12 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
           .build();
     }
 
-    return new BlobDescriptor(contentLength, blobDigest);
+    return Optional.of(new BlobDescriptor(contentLength, blobDigest));
   }
 
   @Override
-  @Nullable
-  public BlobDescriptor handleHttpResponseException(HttpResponseException httpResponseException)
+  public Optional<BlobDescriptor> handleHttpResponseException(
+      HttpResponseException httpResponseException)
       throws RegistryErrorException, HttpResponseException {
     if (httpResponseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
       throw httpResponseException;
@@ -70,12 +71,12 @@ class BlobChecker implements RegistryEndpointProvider<BlobDescriptor> {
     if (httpResponseException.getContent() == null) {
       // TODO: The Google HTTP client gives null content for HEAD requests. Make the content never
       // be null, even for HEAD requests.
-      return null;
+      return Optional.empty();
     }
 
     ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(httpResponseException);
     if (errorCode == ErrorCodes.BLOB_UNKNOWN) {
-      return null;
+      return Optional.empty();
     }
 
     // BLOB_UNKNOWN was not found as a error response code.
