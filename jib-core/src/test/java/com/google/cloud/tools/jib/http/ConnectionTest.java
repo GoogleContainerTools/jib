@@ -119,15 +119,13 @@ public class ConnectionTest {
 
     Mockito.when(
             mockHttpRequestFactory.buildRequest(
-                Mockito.any(String.class), Mockito.eq(fakeUrl), Mockito.any(BlobHttpContent.class)))
+                Mockito.anyString(), Mockito.eq(fakeUrl), Mockito.any(BlobHttpContent.class)))
         .thenReturn(mockHttpRequest);
 
     Mockito.when(mockHttpRequest.setHeaders(Mockito.any(HttpHeaders.class)))
         .thenReturn(mockHttpRequest);
-    if (httpTimeout != null) {
-      Mockito.when(mockHttpRequest.setConnectTimeout(Mockito.anyInt())).thenReturn(mockHttpRequest);
-      Mockito.when(mockHttpRequest.setReadTimeout(Mockito.anyInt())).thenReturn(mockHttpRequest);
-    }
+    Mockito.when(mockHttpRequest.setConnectTimeout(Mockito.anyInt())).thenReturn(mockHttpRequest);
+    Mockito.when(mockHttpRequest.setReadTimeout(Mockito.anyInt())).thenReturn(mockHttpRequest);
     mockHttpResponse = Mockito.mock(HttpResponse.class);
     Mockito.when(mockHttpRequest.execute()).thenReturn(mockHttpResponse);
   }
