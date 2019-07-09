@@ -27,7 +27,7 @@ import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.image.ImageLayers;
+import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
@@ -36,6 +36,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 import org.junit.Assert;
 import org.junit.Before;
@@ -79,12 +81,11 @@ public class BuildAndCacheApplicationLayerStepTest {
     Assert.assertArrayEquals(Blobs.writeToByteArray(expectedBlob), Blobs.writeToByteArray(blob));
   }
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private BuildConfiguration mockBuildConfiguration;
 
   private Cache cache;
-  @Mock private EventHandlers mockEventHandlers;
 
   private LayerConfiguration fakeDependenciesLayerConfiguration;
   private LayerConfiguration fakeSnapshotDependenciesLayerConfiguration;
@@ -119,25 +120,25 @@ public class BuildAndCacheApplicationLayerStepTest {
 
     cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    Mockito.when(mockBuildConfiguration.getEventHandlers()).thenReturn(mockEventHandlers);
+    Mockito.when(mockBuildConfiguration.getEventHandlers()).thenReturn(EventHandlers.NONE);
     Mockito.when(mockBuildConfiguration.getApplicationLayersCache()).thenReturn(cache);
   }
 
-  private ImageLayers buildFakeLayersToCache()
+  private List<Layer> buildFakeLayersToCache()
       throws LayerPropertyNotFoundException, IOException, CacheCorruptedException {
-    ImageLayers.Builder applicationLayersBuilder = ImageLayers.builder();
+    List<Layer> applicationLayers = new ArrayList<>();
 
     ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
         BuildAndCacheApplicationLayerStep.makeList(
             mockBuildConfiguration,
-            ProgressEventDispatcher.newRoot(mockEventHandlers, "ignored", 1).newChildProducer());
+            ProgressEventDispatcher.newRoot(EventHandlers.NONE, "ignored", 1).newChildProducer());
 
     for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
         buildAndCacheApplicationLayerSteps) {
-      applicationLayersBuilder.add(buildAndCacheApplicationLayerStep.call().getCachedLayer());
+      applicationLayers.add(buildAndCacheApplicationLayerStep.call().getCachedLayer());
     }
 
-    return applicationLayersBuilder.build();
+    return applicationLayers;
   }
 
   @Test
@@ -154,7 +155,7 @@ public class BuildAndCacheApplicationLayerStepTest {
         .thenReturn(fakeLayerConfigurations);
 
     // Populates the cache.
-    ImageLayers applicationLayers = buildFakeLayersToCache();
+    List<Layer> applicationLayers = buildFakeLayersToCache();
     Assert.assertEquals(5, applicationLayers.size());
 
     ImmutableList<LayerEntry> dependenciesLayerEntries =
@@ -215,7 +216,7 @@ public class BuildAndCacheApplicationLayerStepTest {
         .thenReturn(fakeLayerConfigurations);
 
     // Populates the cache.
-    ImageLayers applicationLayers = buildFakeLayersToCache();
+    List<Layer> applicationLayers = buildFakeLayersToCache();
     Assert.assertEquals(3, applicationLayers.size());
 
     ImmutableList<LayerEntry> dependenciesLayerEntries =

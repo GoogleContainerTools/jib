@@ -356,7 +356,8 @@ public class StepsRunner {
                         buildConfiguration,
                         childProgressDispatcherFactory,
                         results.pushAuthorization.get().orElse(null),
-                        Verify.verifyNotNull(results.applicationLayers))));
+                        Verify.verifyNotNull(results.applicationLayers),
+                        true)));
   }
 
   private void pushImages() {

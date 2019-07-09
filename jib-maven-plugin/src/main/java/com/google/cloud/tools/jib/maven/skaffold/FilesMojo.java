@@ -35,7 +35,6 @@ import javax.annotation.Nullable;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
@@ -62,7 +61,7 @@ import org.eclipse.aether.graph.DependencyFilter;
 @Mojo(
     name = FilesMojo.GOAL_NAME,
     requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME)
-public class FilesMojo extends AbstractMojo {
+public class FilesMojo extends SkaffoldBindingMojo {
 
   @VisibleForTesting static final String GOAL_NAME = "_skaffold-files";
 
@@ -94,6 +93,7 @@ public class FilesMojo extends AbstractMojo {
     Preconditions.checkNotNull(projects);
     Preconditions.checkNotNull(session);
     Preconditions.checkNotNull(projectDependenciesResolver);
+    checkJibVersion();
 
     // print out pom configuration files
     System.out.println(project.getFile());

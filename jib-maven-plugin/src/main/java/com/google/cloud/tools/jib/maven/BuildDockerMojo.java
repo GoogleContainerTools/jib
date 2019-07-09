@@ -69,6 +69,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
+    checkJibVersion();
     if (isSkipped()) {
       getLog().info("Skipping containerization because jib-maven-plugin: skip = true");
       return;
