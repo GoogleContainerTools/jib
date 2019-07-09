@@ -86,7 +86,7 @@ public class Containerizer {
 
     DockerClient dockerClient =
         new DockerClient(
-            dockerDaemonImage.getDockerEnvironment(), dockerDaemonImage.getDockerExecutable());
+            dockerDaemonImage.getDockerExecutable(), dockerDaemonImage.getDockerEnvironment());
     Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
         buildConfiguration -> StepsRunner.begin(buildConfiguration).dockerLoadSteps(dockerClient);
 

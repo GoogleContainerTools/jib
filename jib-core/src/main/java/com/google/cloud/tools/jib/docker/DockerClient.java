@@ -35,6 +35,9 @@ import java.util.function.Function;
 /** Calls out to the {@code docker} CLI. */
 public class DockerClient {
 
+  /** Default path to the docker executable. */
+  public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
+
   /**
    * Checks if Docker is installed on the user's system and accessible by running the default {@code
    * docker} command.
@@ -85,18 +88,16 @@ public class DockerClient {
     };
   }
 
-  public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
-
   /** Factory for generating the {@link ProcessBuilder} for running {@code docker} commands. */
   private final Function<List<String>, ProcessBuilder> processBuilderFactory;
 
   /**
    * Instantiates with a {@code docker} executable and environment variables.
    *
-   * @param dockerEnvironment environment variables for {@code docker}
    * @param dockerExecutable path to {@code docker}
+   * @param dockerEnvironment environment variables for {@code docker}
    */
-  public DockerClient(Map<String, String> dockerEnvironment, Path dockerExecutable) {
+  public DockerClient(Path dockerExecutable, Map<String, String> dockerEnvironment) {
     this(
         defaultProcessBuilderFactory(
             dockerExecutable.toString(), ImmutableMap.copyOf(dockerEnvironment)));
