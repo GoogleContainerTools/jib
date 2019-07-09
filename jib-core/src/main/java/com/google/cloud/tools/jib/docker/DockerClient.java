@@ -35,102 +35,6 @@ import java.util.function.Function;
 /** Calls out to the {@code docker} CLI. */
 public class DockerClient {
 
-  /** Builds a {@link DockerClient}. */
-  public static class Builder {
-
-    private Path dockerExecutable = DEFAULT_DOCKER_CLIENT;
-    private ImmutableMap<String, String> dockerEnvironment = ImmutableMap.of();
-
-    private Builder() {}
-
-    /**
-     * Sets a path for a {@code docker} executable.
-     *
-     * @param dockerExecutable path to {@code docker}
-     * @return this
-     */
-    public Builder setDockerExecutable(Path dockerExecutable) {
-      this.dockerExecutable = dockerExecutable;
-      return this;
-    }
-
-    /**
-     * Sets environment variables to use when executing the {@code docker} executable.
-     *
-     * @param dockerEnvironment environment variables for {@code docker}
-     * @return this
-     */
-    public Builder setDockerEnvironment(ImmutableMap<String, String> dockerEnvironment) {
-      this.dockerEnvironment = dockerEnvironment;
-      return this;
-    }
-
-    public DockerClient build() {
-      return new DockerClient(dockerExecutable, dockerEnvironment);
-    }
-  }
-
-  /**
-   * Gets a new {@link Builder} for {@link DockerClient} with defaults.
-   *
-   * @return a new {@link Builder}
-   */
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  /**
-   * Instantiates with the default {@code docker} executable.
-   *
-   * @return a new {@link DockerClient}
-   */
-  public static DockerClient newDefaultClient() {
-    return builder().build();
-  }
-
-  /**
-   * Gets a function that takes a {@code docker} subcommand and gives back a {@link ProcessBuilder}
-   * for that {@code docker} command.
-   *
-   * @param dockerExecutable path to {@code docker}
-   * @return the default {@link ProcessBuilder} factory for running a {@code docker} subcommand
-   */
-  @VisibleForTesting
-  static Function<List<String>, ProcessBuilder> defaultProcessBuilderFactory(
-      String dockerExecutable, ImmutableMap<String, String> dockerEnvironment) {
-    return dockerSubCommand -> {
-      List<String> dockerCommand = new ArrayList<>(1 + dockerSubCommand.size());
-      dockerCommand.add(dockerExecutable);
-      dockerCommand.addAll(dockerSubCommand);
-
-      ProcessBuilder processBuilder = new ProcessBuilder(dockerCommand);
-      Map<String, String> environment = processBuilder.environment();
-      environment.putAll(dockerEnvironment);
-
-      return processBuilder;
-    };
-  }
-
-  private static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
-
-  /** Factory for generating the {@link ProcessBuilder} for running {@code docker} commands. */
-  private final Function<List<String>, ProcessBuilder> processBuilderFactory;
-
-  @VisibleForTesting
-  DockerClient(Function<List<String>, ProcessBuilder> processBuilderFactory) {
-    this.processBuilderFactory = processBuilderFactory;
-  }
-
-  /**
-   * Instantiates with a {@code docker} executable and environment variables.
-   *
-   * @param dockerExecutable path to {@code docker}
-   * @param dockerEnvironment environment variables for {@code docker}
-   */
-  private DockerClient(Path dockerExecutable, ImmutableMap<String, String> dockerEnvironment) {
-    this(defaultProcessBuilderFactory(dockerExecutable.toString(), dockerEnvironment));
-  }
-
   /**
    * Checks if Docker is installed on the user's system and accessible by running the default {@code
    * docker} command.
@@ -156,6 +60,51 @@ public class DockerClient {
     } catch (IOException ex) {
       return false;
     }
+  }
+
+  /**
+   * Gets a function that takes a {@code docker} subcommand and gives back a {@link ProcessBuilder}
+   * for that {@code docker} command.
+   *
+   * @param dockerExecutable path to {@code docker}
+   * @return the default {@link ProcessBuilder} factory for running a {@code docker} subcommand
+   */
+  @VisibleForTesting
+  static Function<List<String>, ProcessBuilder> defaultProcessBuilderFactory(
+      String dockerExecutable, ImmutableMap<String, String> dockerEnvironment) {
+    return dockerSubCommand -> {
+      List<String> dockerCommand = new ArrayList<>(1 + dockerSubCommand.size());
+      dockerCommand.add(dockerExecutable);
+      dockerCommand.addAll(dockerSubCommand);
+
+      ProcessBuilder processBuilder = new ProcessBuilder(dockerCommand);
+      Map<String, String> environment = processBuilder.environment();
+      environment.putAll(dockerEnvironment);
+
+      return processBuilder;
+    };
+  }
+
+  public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
+
+  /** Factory for generating the {@link ProcessBuilder} for running {@code docker} commands. */
+  private final Function<List<String>, ProcessBuilder> processBuilderFactory;
+
+  /**
+   * Instantiates with a {@code docker} executable and environment variables.
+   *
+   * @param dockerEnvironment environment variables for {@code docker}
+   * @param dockerExecutable path to {@code docker}
+   */
+  public DockerClient(Map<String, String> dockerEnvironment, Path dockerExecutable) {
+    this(
+        defaultProcessBuilderFactory(
+            dockerExecutable.toString(), ImmutableMap.copyOf(dockerEnvironment)));
+  }
+
+  @VisibleForTesting
+  DockerClient(Function<List<String>, ProcessBuilder> processBuilderFactory) {
+    this.processBuilderFactory = processBuilderFactory;
   }
 
   /**
