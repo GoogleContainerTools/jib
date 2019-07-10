@@ -155,14 +155,14 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
           // The registry requires us to authenticate using the Docker Token Authentication.
           // See https://docs.docker.com/registry/spec/auth/token
           try {
-            RegistryAuthenticator registryAuthenticator =
+            Optional<RegistryAuthenticator> registryAuthenticator =
                 buildConfiguration
                     .newBaseImageRegistryClientFactory()
                     .newRegistryClient()
                     .getRegistryAuthenticator();
-            if (registryAuthenticator != null) {
+            if (registryAuthenticator.isPresent()) {
               Authorization pullAuthorization =
-                  registryAuthenticator.authenticatePull(registryCredential);
+                  registryAuthenticator.get().authenticatePull(registryCredential);
 
               return new ImageAndAuthorization(
                   pullBaseImage(pullAuthorization, progressEventDispatcher), pullAuthorization);

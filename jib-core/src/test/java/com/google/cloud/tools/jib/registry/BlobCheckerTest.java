@@ -62,7 +62,7 @@ public class BlobCheckerTest {
     Mockito.when(mockResponse.getContentLength()).thenReturn(0L);
     BlobDescriptor expectedBlobDescriptor = new BlobDescriptor(0, fakeDigest);
 
-    BlobDescriptor blobDescriptor = testBlobChecker.handleResponse(mockResponse);
+    BlobDescriptor blobDescriptor = testBlobChecker.handleResponse(mockResponse).get();
 
     Assert.assertEquals(expectedBlobDescriptor, blobDescriptor);
   }
@@ -93,10 +93,8 @@ public class BlobCheckerTest {
     Mockito.when(mockHttpResponseException.getContent())
         .thenReturn(JsonTemplateMapper.toUtf8String(emptyErrorResponseTemplate));
 
-    BlobDescriptor blobDescriptor =
-        testBlobChecker.handleHttpResponseException(mockHttpResponseException);
-
-    Assert.assertNull(blobDescriptor);
+    Assert.assertFalse(
+        testBlobChecker.handleHttpResponseException(mockHttpResponseException).isPresent());
   }
 
   @Test
