@@ -60,13 +60,13 @@ class AuthenticatePushStep implements Callable<Optional<Authorization>> {
         TimerEventDispatcher ignored2 =
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, registry))) {
-      RegistryAuthenticator registryAuthenticator =
+      Optional<RegistryAuthenticator> registryAuthenticator =
           buildConfiguration
               .newTargetImageRegistryClientFactory()
               .newRegistryClient()
               .getRegistryAuthenticator();
-      if (registryAuthenticator != null) {
-        return Optional.of(registryAuthenticator.authenticatePush(registryCredential));
+      if (registryAuthenticator.isPresent()) {
+        return Optional.of(registryAuthenticator.get().authenticatePush(registryCredential));
       }
     } catch (InsecureRegistryException ex) {
       // Cannot skip certificate validation or use HTTP; fall through.

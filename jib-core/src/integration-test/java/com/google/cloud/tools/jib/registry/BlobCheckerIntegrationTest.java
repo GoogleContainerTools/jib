@@ -47,7 +47,7 @@ public class BlobCheckerIntegrationTest {
         registryClient.pullManifest("latest", V22ManifestTemplate.class);
     DescriptorDigest blobDigest = manifestTemplate.getLayers().get(0).getDigest();
 
-    Assert.assertEquals(blobDigest, registryClient.checkBlob(blobDigest).getDigest());
+    Assert.assertEquals(blobDigest, registryClient.checkBlob(blobDigest).get().getDigest());
   }
 
   @Test
@@ -60,6 +60,6 @@ public class BlobCheckerIntegrationTest {
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
-    Assert.assertNull(registryClient.checkBlob(fakeBlobDigest));
+    Assert.assertFalse(registryClient.checkBlob(fakeBlobDigest).isPresent());
   }
 }

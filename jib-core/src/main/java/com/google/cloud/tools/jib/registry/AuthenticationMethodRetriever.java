@@ -26,10 +26,12 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /** Retrieves the {@code WWW-Authenticate} header from the registry API. */
-class AuthenticationMethodRetriever implements RegistryEndpointProvider<RegistryAuthenticator> {
+class AuthenticationMethodRetriever
+    implements RegistryEndpointProvider<Optional<RegistryAuthenticator>> {
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final String userAgent;
@@ -55,12 +57,11 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
    * The request did not error, meaning that the registry does not require authentication.
    *
    * @param response ignored
-   * @return {@code null}
+   * @return {@link Optional#empty()}
    */
   @Override
-  @Nullable
-  public RegistryAuthenticator handleResponse(Response response) {
-    return null;
+  public Optional<RegistryAuthenticator> handleResponse(Response response) {
+    return Optional.empty();
   }
 
   @Override
@@ -79,8 +80,7 @@ class AuthenticationMethodRetriever implements RegistryEndpointProvider<Registry
   }
 
   @Override
-  @Nullable
-  public RegistryAuthenticator handleHttpResponseException(
+  public Optional<RegistryAuthenticator> handleHttpResponseException(
       HttpResponseException httpResponseException)
       throws HttpResponseException, RegistryErrorException {
     // Only valid for status code of '401 Unauthorized'.

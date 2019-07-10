@@ -80,7 +80,7 @@ public class BlobPusherTest {
   @Test
   public void testInitializer_handleResponse_created() throws IOException, RegistryException {
     Mockito.when(mockResponse.getStatusCode()).thenReturn(201); // Created
-    Assert.assertNull(testBlobPusher.initializer().handleResponse(mockResponse));
+    Assert.assertFalse(testBlobPusher.initializer().handleResponse(mockResponse).isPresent());
   }
 
   @Test
@@ -92,7 +92,7 @@ public class BlobPusherTest {
     Mockito.when(mockResponse.getRequestUrl()).thenReturn(requestUrl);
     Assert.assertEquals(
         new URL("https://someurl/location"),
-        testBlobPusher.initializer().handleResponse(mockResponse));
+        testBlobPusher.initializer().handleResponse(mockResponse).get());
   }
 
   @Test
