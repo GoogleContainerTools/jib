@@ -222,7 +222,6 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
               registryClient, (V22ManifestListTemplate) manifestTemplate);
     }
 
-    // TODO: Make schema version be enum.
     switch (manifestTemplate.getSchemaVersion()) {
       case 1:
         V21ManifestTemplate v21ManifestTemplate = (V21ManifestTemplate) manifestTemplate;

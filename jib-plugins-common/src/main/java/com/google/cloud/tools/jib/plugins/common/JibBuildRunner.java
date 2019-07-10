@@ -232,7 +232,6 @@ public class JibBuildRunner {
       throw new BuildStepsExecutionException(message, ex.getCause());
 
     } catch (InterruptedException ex) {
-      // TODO: Add more suggestions for various build failures.
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
     }
 
