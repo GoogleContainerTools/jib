@@ -15,7 +15,6 @@
  */
 
 package com.google.cloud.tools.jib.api;
-// TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
@@ -57,7 +56,6 @@ import org.apache.http.conn.HttpHostConnectException;
  *    .containerize(...);
  * }</pre>
  */
-// TODO: Add tests once containerize() is added.
 public class JibContainerBuilder {
 
   private static String capitalizeFirstLetter(String string) {

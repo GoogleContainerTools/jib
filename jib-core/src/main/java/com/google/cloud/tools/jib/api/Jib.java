@@ -15,10 +15,8 @@
  */
 
 package com.google.cloud.tools.jib.api;
-// TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
 /** Build containers with Jib. */
-// TODO: Add tests once JibContainerBuilder#containerize() is added.
 public class Jib {
 
   /**
