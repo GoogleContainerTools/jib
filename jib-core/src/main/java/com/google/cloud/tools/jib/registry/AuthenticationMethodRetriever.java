@@ -57,7 +57,7 @@ class AuthenticationMethodRetriever
    * The request did not error, meaning that the registry does not require authentication.
    *
    * @param response ignored
-   * @return the authenticator
+   * @return {@link Optional#empty()}
    */
   @Override
   public Optional<RegistryAuthenticator> handleResponse(Response response) {
