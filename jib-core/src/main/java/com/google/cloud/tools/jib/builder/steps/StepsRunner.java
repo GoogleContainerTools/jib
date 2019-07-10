@@ -60,8 +60,8 @@ public class StepsRunner {
     }
 
     private Future<ImageAndAuthorization> baseImageAndAuth = failedFuture();
-    private Future<List<Future<CachedLayerAndName>>> baseImageLayers = failedFuture();
-    @Nullable private List<Future<CachedLayerAndName>> applicationLayers;
+    private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
+    @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
     private Future<Optional<Credential>> targetRegistryCredentials = failedFuture();
     private Future<Optional<Authorization>> pushAuthorization = failedFuture();
@@ -69,9 +69,10 @@ public class StepsRunner {
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<BlobDescriptor> containerConfigurationPushResult = failedFuture();
     private Future<BuildResult> buildResult = failedFuture();
-
-    private Future<List<Future<Boolean>>> baseImageLayersExistInTargetRegistry = failedFuture();
-    private Future<Boolean> canSkipCachingBaseImageLayers = Futures.immediateFuture(false);
+    //
+    //    private Future<List<Future<Boolean>>> baseImageLayersExistInTargetRegistry =
+    // failedFuture();
+    //    private Future<Boolean> canSkipCachingBaseImageLayers = Futures.immediateFuture(false);
   }
 
   /**
@@ -103,8 +104,6 @@ public class StepsRunner {
   private final ExecutorService executorService;
   private final BuildConfiguration buildConfiguration;
 
-  private boolean registryPush;
-
   // We save steps to run by wrapping each step into a Runnable, only because of the unfortunate
   // chicken-and-egg situation arising from using ProgressEventDispatcher. The current
   // ProgressEventDispatcher model requires knowing in advance how many units of work (i.e., steps)
@@ -125,11 +124,10 @@ public class StepsRunner {
 
   public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
     rootProgressDescription = "building image to Docker daemon";
-    registryPush = false;
 
     // build and cache
     stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(this::pullAndCacheBaseImageLayers);
+    stepsToRun.add(() -> pullAndCacheBaseImageLayers(true));
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
     // load to Docker
@@ -139,11 +137,10 @@ public class StepsRunner {
 
   public StepsRunner tarBuildSteps(Path outputPath) {
     rootProgressDescription = "building image to tar file";
-    registryPush = false;
 
     // build and cache
     stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(this::pullAndCacheBaseImageLayers);
+    stepsToRun.add(() -> pullAndCacheBaseImageLayers(true));
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
     // create a tar
@@ -153,17 +150,16 @@ public class StepsRunner {
 
   public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
-    registryPush = true;
 
     stepsToRun.add(this::retrieveTargetRegistryCredentials);
     stepsToRun.add(this::authenticatePush);
-    // build and cache
+
     stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(this::checkBaseImageLayersInTargetRegistry);
-    stepsToRun.add(this::pullAndCacheBaseImageLayers);
+    stepsToRun.add(() -> pullAndCacheBaseImageLayers(Boolean.getBoolean("jib.forceDownload")));
     stepsToRun.add(this::buildAndCacheApplicationLayers);
+    // stepsToRun.add(this::checkBaseImageLayersInTargetRegistry);
     stepsToRun.add(this::buildImage);
-    // push to registry
+
     stepsToRun.add(this::pushBaseImageLayers);
     stepsToRun.add(this::pushApplicationLayers);
     stepsToRun.add(this::pushContainerConfiguration);
@@ -224,67 +220,75 @@ public class StepsRunner {
             new PullBaseImageStep(buildConfiguration, childProgressDispatcherFactory));
   }
 
-  private void checkBaseImageLayersInTargetRegistry() {
+  //  private void checkBaseImageLayersInTargetRegistry() {
+  //    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+  //        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+  //
+  //    results.baseImageLayersExistInTargetRegistry =
+  //        executorService.submit(
+  //            () ->
+  //                scheduleCallables(
+  //                    CheckBlobStep.makeList(
+  //                        buildConfiguration,
+  //                        childProgressDispatcherFactory,
+  //                        results.baseImageAndAuth.get().getImage(),
+  //                        results.pushAuthorization.get().orElse(null))));
+  //  }
+
+  //  private void checkCanSkipCachingBaseImageLayers() {
+  //    Verify.verifyNotNull(rootProgressDispatcher).dispatchProgress(1);
+  //
+  //    results.canSkipCachingBaseImageLayers =
+  //        executorService.submit(
+  //            () ->
+  //                PullAndCacheBaseImageLayerStep.canSkipCachingBaseImageLayers(
+  //                    buildConfiguration,
+  //                    results.baseImageAndAuth.get(),
+  //                    results.pushAuthorization.get().orElse(null)));
+  //  }
+
+  //  private boolean canSkipPushingBaseImageLayers() throws InterruptedException,
+  // ExecutionException {
+  //    // TODO: we can optimize to short-curcuit as soon as any future evaluates to false.
+  //    List<Boolean> layersExist =
+  // realizeFutures(results.baseImageLayersExistInTargetRegistry.get());
+  //    return layersExist.stream().allMatch(Boolean.TRUE::equals);
+  //  }
+
+  private void pullAndCacheBaseImageLayers(boolean forcePull) {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    results.baseImageLayersExistInTargetRegistry =
-        executorService.submit(
-            () ->
-                scheduleCallables(
-                    CheckBlobStep.makeList(
-                        buildConfiguration,
-                        childProgressDispatcherFactory,
-                        results.baseImageAndAuth.get().getImage(),
-                        results.pushAuthorization.get().orElse(null))));
-  }
-
-  private void checkCanSkipCachingBaseImageLayers() {
-    Verify.verifyNotNull(rootProgressDispatcher).dispatchProgress(1);
-
-    results.canSkipCachingBaseImageLayers =
-        executorService.submit(
-            () ->
-                PullAndCacheBaseImageLayerStep.canSkipCachingBaseImageLayers(
-                    buildConfiguration,
-                    results.baseImageAndAuth.get(),
-                    results.pushAuthorization.get().orElse(null)));
-  }
-
-  private boolean canSkipPushingBaseImageLayers() throws InterruptedException, ExecutionException {
-    // TODO: we can optimize to short-curcuit as soon as any future evaluates to false.
-    List<Boolean> layersExist = realizeFutures(results.baseImageLayersExistInTargetRegistry.get());
-    return layersExist.stream().allMatch(Boolean.TRUE::equals);
-  }
-
-  private void pullAndCacheBaseImageLayers() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
-    results.baseImageLayers =
-        executorService.submit(
-            () -> {
-              Authorization pushAuthorization =
-                  registryPush ? results.pushAuthorization.get().orElse(null) : null;
-
-              if (canSkipPushingBaseImageLayers()) {
-                System.out.println(">>> Can skip pushing base image layers");
-                // optimization: skip downloading/caching base image layers
-                return PullAndCacheBaseImageLayerStep.createNoBlobCachedLayers(
-                        buildConfiguration, results.baseImageAndAuth.get().getImage())
-                    .stream()
-                    .map(Futures::immediateFuture)
-                    .collect(Collectors.toList());
-              } else {
-                return scheduleCallables(
-                    PullAndCacheBaseImageLayerStep.makeList(
-                        buildConfiguration,
-                        childProgressDispatcherFactory,
-                        results.baseImageAndAuth.get(),
-                        registryPush,
-                        pushAuthorization));
-              }
-            });
+    if (forcePull) {
+      results.baseImageLayers =
+          executorService.submit(
+              () ->
+                  scheduleCallables(
+                      PullAndCacheBaseImageLayerStep.makeListForcedDownload(
+                          buildConfiguration,
+                          childProgressDispatcherFactory,
+                          results.baseImageAndAuth.get())));
+    } else {
+      results.baseImageLayers =
+          executorService.submit(
+              () ->
+                  //              if (canSkipPushingBaseImageLayers()) {
+                  //                System.out.println(">>> Can skip pushing base image layers");
+                  //                // optimization: skip downloading/caching base image layers
+                  //                return PullAndCacheBaseImageLayerStep.createNoBlobCachedLayers(
+                  //                        buildConfiguration,
+                  // results.baseImageAndAuth.get().getImage())
+                  //                    .stream()
+                  //                    .map(Futures::immediateFuture)
+                  //                    .collect(Collectors.toList());
+                  //              } else {
+                  scheduleCallables(
+                      PullAndCacheBaseImageLayerStep.makeListOptimized(
+                          buildConfiguration,
+                          childProgressDispatcherFactory,
+                          results.baseImageAndAuth.get(),
+                          results.pushAuthorization.get().orElse(null))));
+    }
   }
 
   private void pushBaseImageLayers() {
@@ -299,8 +303,7 @@ public class StepsRunner {
                         buildConfiguration,
                         childProgressDispatcherFactory,
                         results.pushAuthorization.get().orElse(null),
-                        results.baseImageLayers.get(),
-                        registryPush)));
+                        results.baseImageLayers.get())));
   }
 
   private void buildAndCacheApplicationLayers() {
@@ -356,8 +359,7 @@ public class StepsRunner {
                         buildConfiguration,
                         childProgressDispatcherFactory,
                         results.pushAuthorization.get().orElse(null),
-                        Verify.verifyNotNull(results.applicationLayers),
-                        true)));
+                        Verify.verifyNotNull(results.applicationLayers))));
   }
 
   private void pushImages() {

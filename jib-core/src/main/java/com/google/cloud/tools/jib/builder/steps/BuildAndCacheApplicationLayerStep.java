@@ -34,7 +34,7 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 
 /** Builds and caches application layers. */
-class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> {
+class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
 
   private static final String DESCRIPTION = "Building %s layer";
 
@@ -86,7 +86,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
   }
 
   @Override
-  public CachedLayerAndName call() throws IOException, CacheCorruptedException {
+  public PreparedLayer call() throws IOException, CacheCorruptedException {
     String description = String.format(DESCRIPTION, layerName);
 
     EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
@@ -95,13 +95,15 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create("building " + layerName + " layer", 1);
         TimerEventDispatcher ignored2 = new TimerEventDispatcher(eventHandlers, description)) {
+      // TODO: for registry push, check blob (layer) in the target registry to skip building layer.
+
       Cache cache = buildConfiguration.getApplicationLayersCache();
 
       // Don't build the layer if it exists already.
       Optional<CachedLayer> optionalCachedLayer =
           cache.retrieve(layerConfiguration.getLayerEntries());
       if (optionalCachedLayer.isPresent()) {
-        return new CachedLayerAndName(optionalCachedLayer.get(), layerName);
+        return new PreparedLayer.Builder(optionalCachedLayer.get()).setName(layerName).build();
       }
 
       Blob layerBlob = new ReproducibleLayerBuilder(layerConfiguration.getLayerEntries()).build();
@@ -110,7 +112,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<CachedLayerAndName> 
 
       eventHandlers.dispatch(LogEvent.debug(description + " built " + cachedLayer.getDigest()));
 
-      return new CachedLayerAndName(cachedLayer, layerName);
+      return new PreparedLayer.Builder(cachedLayer).setName(layerName).build();
     }
   }
 }
