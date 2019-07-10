@@ -160,6 +160,7 @@ public class StepsRunner {
     // stepsToRun.add(this::checkBaseImageLayersInTargetRegistry);
     stepsToRun.add(this::buildImage);
 
+    // push to registry
     stepsToRun.add(this::pushBaseImageLayers);
     stepsToRun.add(this::pushApplicationLayers);
     stepsToRun.add(this::pushContainerConfiguration);
@@ -259,36 +260,20 @@ public class StepsRunner {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
-    if (forcePull) {
-      results.baseImageLayers =
-          executorService.submit(
-              () ->
-                  scheduleCallables(
-                      PullAndCacheBaseImageLayerStep.makeListForcedDownload(
-                          buildConfiguration,
-                          childProgressDispatcherFactory,
-                          results.baseImageAndAuth.get())));
-    } else {
-      results.baseImageLayers =
-          executorService.submit(
-              () ->
-                  //              if (canSkipPushingBaseImageLayers()) {
-                  //                System.out.println(">>> Can skip pushing base image layers");
-                  //                // optimization: skip downloading/caching base image layers
-                  //                return PullAndCacheBaseImageLayerStep.createNoBlobCachedLayers(
-                  //                        buildConfiguration,
-                  // results.baseImageAndAuth.get().getImage())
-                  //                    .stream()
-                  //                    .map(Futures::immediateFuture)
-                  //                    .collect(Collectors.toList());
-                  //              } else {
-                  scheduleCallables(
-                      PullAndCacheBaseImageLayerStep.makeListOptimized(
-                          buildConfiguration,
-                          childProgressDispatcherFactory,
-                          results.baseImageAndAuth.get(),
-                          results.pushAuthorization.get().orElse(null))));
-    }
+    results.baseImageLayers =
+        executorService.submit(
+            () ->
+                scheduleCallables(
+                    forcePull
+                        ? PullAndCacheBaseImageLayerStep.makeListForcedDownload(
+                            buildConfiguration,
+                            childProgressDispatcherFactory,
+                            results.baseImageAndAuth.get())
+                        : PullAndCacheBaseImageLayerStep.makeListOptimized(
+                            buildConfiguration,
+                            childProgressDispatcherFactory,
+                            results.baseImageAndAuth.get(),
+                            results.pushAuthorization.get().orElse(null))));
   }
 
   private void pushBaseImageLayers() {

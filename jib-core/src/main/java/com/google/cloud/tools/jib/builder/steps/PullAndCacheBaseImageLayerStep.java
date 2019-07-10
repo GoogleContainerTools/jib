@@ -27,7 +27,6 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Layer;
-import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
@@ -36,11 +35,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /** Pulls and caches a single base image layer. */
 class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
+
+  private interface LayerChecker {
+
+    Optional<Boolean> exists(Layer layer) throws IOException, RegistryException;
+  }
 
   private static final String DESCRIPTION = "Pulling base image layer %s";
 
@@ -111,7 +114,10 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth) {
     return makeList(
-        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, false, null);
+        buildConfiguration,
+        progressEventDispatcherFactory,
+        baseImageAndAuth,
+        ignored -> Optional.empty());
   }
 
   static ImmutableList<PullAndCacheBaseImageLayerStep> makeListOptimized(
@@ -119,40 +125,28 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth,
       Authorization pushAuthorization) {
-    Predicate<Layer> blobChecker =
-        layer -> {
-          buildConfiguration
-              .newTargetImageRegistryClientFactory()
-              .setAuthorization(pushAuthorization)
-              .newRegistryClient();
-          return true;
-        };
-    blobChecker.test(null);
-    return makeList(
-        buildConfiguration,
-        progressEventDispatcherFactory,
-        baseImageAndAuth,
-        true,
-        pushAuthorization);
-  }
+    Verify.verify(!buildConfiguration.isOffline());
 
-  private static boolean layerExistsInTargetRegistry(
-      BuildConfiguration buildConfiguration, Authorization authorization, Layer layer)
-      throws LayerPropertyNotFoundException, IOException, RegistryException {
-    RegistryClient registryClient =
+    RegistryClient targetRegistryClient =
         buildConfiguration
             .newTargetImageRegistryClientFactory()
-            .setAuthorization(authorization)
+            .setAuthorization(pushAuthorization)
             .newRegistryClient();
-    return registryClient.checkBlob(layer.getBlobDescriptor().getDigest()) != null;
+
+    LayerChecker layerChecker =
+        layer ->
+            Optional.of(
+                targetRegistryClient.checkBlob(layer.getBlobDescriptor().getDigest()).isPresent());
+
+    return makeList(
+        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, layerChecker);
   }
 
   private static ImmutableList<PullAndCacheBaseImageLayerStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth,
-      boolean registryPush,
-      Authorization pushAuthorization) {
+      LayerChecker layerChecker) {
     ImmutableList<Layer> baseImageLayers = baseImageAndAuth.getImage().getLayers();
 
     try (ProgressEventDispatcher progressEventDispatcher =
@@ -162,16 +156,6 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), "Preparing base image layer pullers")) {
 
-      boolean checkBlob = registryPush && !Boolean.getBoolean("jib.forceDownload");
-      if (checkBlob) {
-        Verify.verify(!buildConfiguration.isOffline());
-
-        buildConfiguration
-            .newTargetImageRegistryClientFactory()
-            .setAuthorization(pushAuthorization)
-            .newRegistryClient();
-      }
-
       List<PullAndCacheBaseImageLayerStep> layerPullers = new ArrayList<>();
       for (Layer layer : baseImageLayers) {
         layerPullers.add(
@@ -180,8 +164,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
                 progressEventDispatcher.newChildProducer(),
                 layer,
                 baseImageAndAuth.getAuthorization(),
-                pushAuthorization,
-                registryPush));
+                layerChecker));
       }
       return ImmutableList.copyOf(layerPullers);
     }
@@ -192,22 +175,19 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
 
   private final Layer layer;
   private final @Nullable Authorization pullAuthorization;
-  private final @Nullable Authorization pushAuthorization;
-  private final boolean registryPush;
+  private final LayerChecker layerChecker;
 
   PullAndCacheBaseImageLayerStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Layer layer,
       @Nullable Authorization pullAuthorization,
-      @Nullable Authorization pushAuthorization,
-      boolean registryPush) {
+      LayerChecker layerChecker) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.layer = layer;
     this.pullAuthorization = pullAuthorization;
-    this.pushAuthorization = pushAuthorization;
-    this.registryPush = registryPush;
+    this.layerChecker = layerChecker;
   }
 
   @Override
@@ -218,26 +198,19 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, layerDigest))) {
+
+      Optional<Boolean> layerExists = layerChecker.exists(layer);
+      if (layerExists.orElse(false)) {
+        return new PreparedLayer.Builder(layer).setStateInTarget(layerExists).build();
+      }
+
       Cache cache = buildConfiguration.getBaseImageLayersCache();
       Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerDigest);
 
-      boolean checkBlob = registryPush && !Boolean.getBoolean("jib.forceDownload");
-      if (checkBlob) {
-        Verify.verify(!buildConfiguration.isOffline());
-
-        RegistryClient targetRegistryClient =
-            buildConfiguration
-                .newTargetImageRegistryClientFactory()
-                .setAuthorization(pushAuthorization)
-                .newRegistryClient();
-        if (targetRegistryClient.checkBlob(layerDigest) != null) {
-          return new PreparedLayer.Builder(layer).existsInTarget().build();
-        }
-      }
-
       // Checks if the layer already exists in the cache.
       if (optionalCachedLayer.isPresent()) {
-        return new PreparedLayer.Builder(optionalCachedLayer.get()).doesNotExistInTarget().build();
+        CachedLayer cachedLayer = optionalCachedLayer.get();
+        return new PreparedLayer.Builder(cachedLayer).setStateInTarget(layerExists).build();
       } else if (buildConfiguration.isOffline()) {
         throw new IOException(
             "Cannot run Jib in offline mode; local Jib cache for base image is missing image layer "
@@ -262,7 +235,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
                     layerDigest,
                     progressEventDispatcherWrapper::setProgressTarget,
                     progressEventDispatcherWrapper::dispatchProgress));
-        return new PreparedLayer.Builder(cachedLayer).build();
+        return new PreparedLayer.Builder(cachedLayer).setStateInTarget(layerExists).build();
       }
     }
   }

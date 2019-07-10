@@ -27,7 +27,7 @@ import javax.annotation.Nullable;
 public class CachedLayer implements Layer {
 
   /** Builds a {@link CachedLayer}. */
-  public static class Builder {
+  static class Builder {
 
     @Nullable private DescriptorDigest layerDigest;
     @Nullable private DescriptorDigest layerDiffId;
@@ -36,31 +36,31 @@ public class CachedLayer implements Layer {
 
     private Builder() {}
 
-    public Builder setLayerDigest(DescriptorDigest layerDigest) {
+    Builder setLayerDigest(DescriptorDigest layerDigest) {
       this.layerDigest = layerDigest;
       return this;
     }
 
-    public Builder setLayerDiffId(DescriptorDigest layerDiffId) {
+    Builder setLayerDiffId(DescriptorDigest layerDiffId) {
       this.layerDiffId = layerDiffId;
       return this;
     }
 
-    public Builder setLayerSize(long layerSize) {
+    Builder setLayerSize(long layerSize) {
       this.layerSize = layerSize;
       return this;
     }
 
-    public Builder setLayerBlob(Blob layerBlob) {
+    Builder setLayerBlob(Blob layerBlob) {
       this.layerBlob = layerBlob;
       return this;
     }
 
-    public boolean hasLayerBlob() {
+    boolean hasLayerBlob() {
       return layerBlob != null;
     }
 
-    public CachedLayer build() {
+    CachedLayer build() {
       return new CachedLayer(
           Preconditions.checkNotNull(layerDigest, "layerDigest required"),
           Preconditions.checkNotNull(layerDiffId, "layerDiffId required"),
@@ -74,7 +74,7 @@ public class CachedLayer implements Layer {
    *
    * @return the new {@link Builder}
    */
-  public static Builder builder() {
+  static Builder builder() {
     return new Builder();
   }
 

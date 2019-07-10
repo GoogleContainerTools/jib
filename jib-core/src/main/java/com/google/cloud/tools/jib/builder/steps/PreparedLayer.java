@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.image.Layer;
+import java.util.Optional;
 
 /**
  * Layer prepared from {@link BuildAndCacheApplicationLayerStep} and {@link
@@ -28,21 +29,11 @@ import com.google.cloud.tools.jib.image.Layer;
  */
 class PreparedLayer implements Layer {
 
-  /**
-   * Represents if this layer is known to exist or not in the target destination (for example,
-   * registry, local Docker daemon).
-   */
-  static enum StateInTarget {
-    UNKNOWN,
-    EXISTS,
-    DOES_NOT_EXIST
-  };
-
   static class Builder {
 
     private Layer layer;
     private String name = "unnamed layer";
-    private StateInTarget stateInTarget = StateInTarget.UNKNOWN;
+    private Optional<Boolean> stateInTarget = Optional.empty();
 
     Builder(Layer layer) {
       this.layer = layer;
@@ -53,26 +44,22 @@ class PreparedLayer implements Layer {
       return this;
     }
 
-    Builder existsInTarget() {
-      this.stateInTarget = StateInTarget.EXISTS;
-      return this;
-    }
-
-    public Builder doesNotExistInTarget() {
-      this.stateInTarget = StateInTarget.DOES_NOT_EXIST;
+    /** Sets whether the layer exists in a target destination. Empty means unknown. */
+    Builder setStateInTarget(Optional<Boolean> stateInTarget) {
+      this.stateInTarget = stateInTarget;
       return this;
     }
 
     PreparedLayer build() {
-      return new PreparedLayer(layer, stateInTarget, name);
+      return new PreparedLayer(layer, name, stateInTarget);
     }
   }
 
   private final Layer layer;
-  private final StateInTarget stateInTarget;
   private final String name;
+  private final Optional<Boolean> stateInTarget;
 
-  private PreparedLayer(Layer layer, StateInTarget stateInTarget, String name) {
+  private PreparedLayer(Layer layer, String name, Optional<Boolean> stateInTarget) {
     this.layer = layer;
     this.stateInTarget = stateInTarget;
     this.name = name;
@@ -82,7 +69,7 @@ class PreparedLayer implements Layer {
     return name;
   }
 
-  StateInTarget getStateInTarget() {
+  Optional<Boolean> existsInTarget() {
     return stateInTarget;
   }
 
