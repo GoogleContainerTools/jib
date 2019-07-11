@@ -69,10 +69,6 @@ public class StepsRunner {
     private Future<List<Future<BlobDescriptor>>> applicationLayerPushResults = failedFuture();
     private Future<BlobDescriptor> containerConfigurationPushResult = failedFuture();
     private Future<BuildResult> buildResult = failedFuture();
-    //
-    //    private Future<List<Future<Boolean>>> baseImageLayersExistInTargetRegistry =
-    // failedFuture();
-    //    private Future<Boolean> canSkipCachingBaseImageLayers = Futures.immediateFuture(false);
   }
 
   /**
@@ -220,41 +216,6 @@ public class StepsRunner {
         executorService.submit(
             new PullBaseImageStep(buildConfiguration, childProgressDispatcherFactory));
   }
-
-  //  private void checkBaseImageLayersInTargetRegistry() {
-  //    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-  //        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-  //
-  //    results.baseImageLayersExistInTargetRegistry =
-  //        executorService.submit(
-  //            () ->
-  //                scheduleCallables(
-  //                    CheckBlobStep.makeList(
-  //                        buildConfiguration,
-  //                        childProgressDispatcherFactory,
-  //                        results.baseImageAndAuth.get().getImage(),
-  //                        results.pushAuthorization.get().orElse(null))));
-  //  }
-
-  //  private void checkCanSkipCachingBaseImageLayers() {
-  //    Verify.verifyNotNull(rootProgressDispatcher).dispatchProgress(1);
-  //
-  //    results.canSkipCachingBaseImageLayers =
-  //        executorService.submit(
-  //            () ->
-  //                PullAndCacheBaseImageLayerStep.canSkipCachingBaseImageLayers(
-  //                    buildConfiguration,
-  //                    results.baseImageAndAuth.get(),
-  //                    results.pushAuthorization.get().orElse(null)));
-  //  }
-
-  //  private boolean canSkipPushingBaseImageLayers() throws InterruptedException,
-  // ExecutionException {
-  //    // TODO: we can optimize to short-curcuit as soon as any future evaluates to false.
-  //    List<Boolean> layersExist =
-  // realizeFutures(results.baseImageLayersExistInTargetRegistry.get());
-  //    return layersExist.stream().allMatch(Boolean.TRUE::equals);
-  //  }
 
   private void pullAndCacheBaseImageLayers(boolean forcePull) {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =

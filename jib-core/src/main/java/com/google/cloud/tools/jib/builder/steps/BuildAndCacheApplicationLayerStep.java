@@ -95,8 +95,6 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
     try (ProgressEventDispatcher ignored =
             progressEventDispatcherFactory.create("building " + layerName + " layer", 1);
         TimerEventDispatcher ignored2 = new TimerEventDispatcher(eventHandlers, description)) {
-      // TODO: for registry push, check blob (layer) in the target registry to skip building layer.
-
       Cache cache = buildConfiguration.getApplicationLayersCache();
 
       // Don't build the layer if it exists already.

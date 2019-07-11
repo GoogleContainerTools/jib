@@ -40,74 +40,12 @@ import javax.annotation.Nullable;
 /** Pulls and caches a single base image layer. */
 class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
 
+  private static final String DESCRIPTION = "Pulling base image layer %s";
+
   private interface BlobChecker {
 
     Optional<Boolean> exists(DescriptorDigest digest) throws IOException, RegistryException;
   }
-
-  private static final String DESCRIPTION = "Pulling base image layer %s";
-
-  private static boolean canSkipCachingBaseImageLayers(
-      BuildConfiguration buildConfiguration,
-      ImageAndAuthorization baseImageAndAuth,
-      @Nullable Authorization pushAuthorization) {
-    RegistryClient targetRegistryClient =
-        buildConfiguration
-            .newTargetImageRegistryClientFactory()
-            .setAuthorization(pushAuthorization)
-            .newRegistryClient();
-
-    try {
-      // TODO: parallelize
-      for (Layer layer : baseImageAndAuth.getImage().getLayers()) {
-        System.out.println(">>> Checking BLOb existence.");
-        System.out.println(">>>     Size=" + layer.getBlobDescriptor().getSize());
-        System.out.println(">>>     Digest=" + layer.getBlobDescriptor().getDigest());
-        System.out.println(">>>     DiffId=" + layer.getDiffId());
-        if (targetRegistryClient.checkBlob(layer.getBlobDescriptor().getDigest()) == null) {
-          System.out.println(">>> BLOb does not exist. Halt.");
-          return false;
-        }
-      }
-      System.out.println(">>> All BLObs exist. Can skip downloading base image layers.");
-      return true;
-    } catch (IOException | RegistryException ex) {
-      ex.printStackTrace();
-      // fall through
-    }
-    System.out.println(">>> Exception occured.");
-    return false;
-  }
-
-  //  private static List<PreparedLayer> createNoBlobCachedLayers(
-  //      BuildConfiguration buildConfiguration, Image baseImage)
-  //      throws IOException, CacheCorruptedException {
-  //    // The image manifest is already saved, so we should delete it if not all of the layers are
-  //    // actually cached. (--offline shouldn't see an incomplete caching state.)
-  //    Cache cache = buildConfiguration.getBaseImageLayersCache();
-  //    for (Layer layer : baseImage.getLayers()) {
-  //      if (!cache.retrieve(layer.getBlobDescriptor().getDigest()).isPresent()) {
-  //        // TODO: delete the manifest.
-  //      }
-  //    }
-  //
-  //    return baseImage
-  //        .getLayers()
-  //        .stream()
-  //        .map(
-  //            layer ->
-  //                CachedLayer.builder()
-  //                    .setLayerDigest(layer.getBlobDescriptor().getDigest())
-  //                    .setLayerSize(layer.getBlobDescriptor().getSize())
-  //                    .setLayerDiffId(layer.getDiffId())
-  //                    .setLayerBlob(
-  //                        ignored -> {
-  //                          throw new LayerPropertyNotFoundException("No actual BLOb attached");
-  //                        })
-  //                    .build())
-  //        .map(cachedLayer -> new PreparedLayer(cachedLayer, true, null))
-  //        .collect(Collectors.toList());
-  //  }
 
   static ImmutableList<PullAndCacheBaseImageLayerStep> makeListForForcedDownload(
       BuildConfiguration buildConfiguration,
