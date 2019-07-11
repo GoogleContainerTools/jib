@@ -44,7 +44,7 @@ class PreparedLayer implements Layer {
       return this;
     }
 
-    /** Sets whether the layer exists in a target destination. Empty means unknown. */
+    /** Sets whether the layer exists in a target destination. Empty (absence) means unknown. */
     Builder setStateInTarget(Optional<Boolean> stateInTarget) {
       this.stateInTarget = stateInTarget;
       return this;
