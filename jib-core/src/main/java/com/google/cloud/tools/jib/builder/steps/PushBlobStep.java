@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
@@ -62,9 +63,10 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   @Override
   public BlobDescriptor call() throws IOException, RegistryException {
     EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    DescriptorDigest blobDigest = blobDescriptor.getDigest();
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                "pushing blob " + blobDescriptor.getDigest(), blobDescriptor.getSize());
+                "pushing blob " + blobDigest, blobDescriptor.getSize());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(eventHandlers, DESCRIPTION + blobDescriptor);
         ThrottledAccumulatingConsumer throttledProgressReporter =
@@ -76,7 +78,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
               .newRegistryClient();
 
       // check if the BLOB is available
-      if (doBlobCheck && registryClient.checkBlob(blobDescriptor.getDigest()).isPresent()) {
+      if (doBlobCheck && registryClient.checkBlob(blobDigest).isPresent()) {
         eventHandlers.dispatch(
             LogEvent.info("BLOB : " + blobDescriptor + " already exists on registry"));
         return blobDescriptor;
@@ -90,8 +92,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
       String baseRepository = buildConfiguration.getBaseImageConfiguration().getImageRepository();
       String targetRegistry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
       String sourceRepository = targetRegistry.equals(baseRegistry) ? baseRepository : null;
-      registryClient.pushBlob(
-          blobDescriptor.getDigest(), blob, sourceRepository, throttledProgressReporter);
+      registryClient.pushBlob(blobDigest, blob, sourceRepository, throttledProgressReporter);
 
       return blobDescriptor;
     }

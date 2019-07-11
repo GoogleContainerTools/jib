@@ -61,8 +61,8 @@ class PreparedLayer implements Layer {
 
   private PreparedLayer(Layer layer, String name, Optional<Boolean> stateInTarget) {
     this.layer = layer;
-    this.stateInTarget = stateInTarget;
     this.name = name;
+    this.stateInTarget = stateInTarget;
   }
 
   String getName() {

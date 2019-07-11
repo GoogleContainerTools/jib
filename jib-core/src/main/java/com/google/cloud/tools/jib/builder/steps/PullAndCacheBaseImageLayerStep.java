@@ -40,9 +40,9 @@ import javax.annotation.Nullable;
 /** Pulls and caches a single base image layer. */
 class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
 
-  private interface LayerChecker {
+  private interface BlobChecker {
 
-    Optional<Boolean> exists(Layer layer) throws IOException, RegistryException;
+    Optional<Boolean> exists(DescriptorDigest digest) throws IOException, RegistryException;
   }
 
   private static final String DESCRIPTION = "Pulling base image layer %s";
@@ -109,18 +109,16 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
   //        .collect(Collectors.toList());
   //  }
 
-  static ImmutableList<PullAndCacheBaseImageLayerStep> makeListForcedDownload(
+  static ImmutableList<PullAndCacheBaseImageLayerStep> makeListForForcedDownload(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth) {
+    BlobChecker noOpBlobChecker = ignored -> Optional.empty();
     return makeList(
-        buildConfiguration,
-        progressEventDispatcherFactory,
-        baseImageAndAuth,
-        ignored -> Optional.empty());
+        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, noOpBlobChecker);
   }
 
-  static ImmutableList<PullAndCacheBaseImageLayerStep> makeListOptimized(
+  static ImmutableList<PullAndCacheBaseImageLayerStep> makeListForSelectiveDownload(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth,
@@ -132,21 +130,18 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
             .newTargetImageRegistryClientFactory()
             .setAuthorization(pushAuthorization)
             .newRegistryClient();
-
-    LayerChecker layerChecker =
-        layer ->
-            Optional.of(
-                targetRegistryClient.checkBlob(layer.getBlobDescriptor().getDigest()).isPresent());
+    BlobChecker blobChecker =
+        digest -> Optional.of(targetRegistryClient.checkBlob(digest).isPresent());
 
     return makeList(
-        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, layerChecker);
+        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, blobChecker);
   }
 
   private static ImmutableList<PullAndCacheBaseImageLayerStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth,
-      LayerChecker layerChecker) {
+      BlobChecker blobChecker) {
     ImmutableList<Layer> baseImageLayers = baseImageAndAuth.getImage().getLayers();
 
     try (ProgressEventDispatcher progressEventDispatcher =
@@ -164,7 +159,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
                 progressEventDispatcher.newChildProducer(),
                 layer,
                 baseImageAndAuth.getAuthorization(),
-                layerChecker));
+                blobChecker));
       }
       return ImmutableList.copyOf(layerPullers);
     }
@@ -175,19 +170,19 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
 
   private final Layer layer;
   private final @Nullable Authorization pullAuthorization;
-  private final LayerChecker layerChecker;
+  private final BlobChecker blobChecker;
 
   PullAndCacheBaseImageLayerStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Layer layer,
       @Nullable Authorization pullAuthorization,
-      LayerChecker layerChecker) {
+      BlobChecker blobChecker) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.layer = layer;
     this.pullAuthorization = pullAuthorization;
-    this.layerChecker = layerChecker;
+    this.blobChecker = blobChecker;
   }
 
   @Override
@@ -199,15 +194,15 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, layerDigest))) {
 
-      Optional<Boolean> layerExists = layerChecker.exists(layer);
+      Optional<Boolean> layerExists = blobChecker.exists(layerDigest);
       if (layerExists.orElse(false)) {
         return new PreparedLayer.Builder(layer).setStateInTarget(layerExists).build();
       }
 
       Cache cache = buildConfiguration.getBaseImageLayersCache();
-      Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerDigest);
 
       // Checks if the layer already exists in the cache.
+      Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerDigest);
       if (optionalCachedLayer.isPresent()) {
         CachedLayer cachedLayer = optionalCachedLayer.get();
         return new PreparedLayer.Builder(cachedLayer).setStateInTarget(layerExists).build();
