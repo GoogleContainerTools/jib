@@ -79,7 +79,7 @@ public class StepsRunner {
    */
   public static StepsRunner begin(BuildConfiguration buildConfiguration) {
     ExecutorService executorService =
-        JibSystemProperties.isSerializedExecutionEnabled()
+        JibSystemProperties.serializeExecution()
             ? MoreExecutors.newDirectExecutorService()
             : buildConfiguration.getExecutorService();
 
