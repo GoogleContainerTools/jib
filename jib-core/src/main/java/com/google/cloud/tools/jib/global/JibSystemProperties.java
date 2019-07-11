@@ -32,6 +32,8 @@ public class JibSystemProperties {
 
   private static final String SERIALIZE = "jibSerialize";
 
+  private static final String FORCE_LAYER_DOWNLOAD = "jib.forceDownload";
+
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
   /**
@@ -89,6 +91,10 @@ public class JibSystemProperties {
    */
   public static boolean isUserAgentEnabled() {
     return Strings.isNullOrEmpty(System.getProperty(DISABLE_USER_AGENT));
+  }
+
+  public static boolean forceLayerDownload() {
+    return Boolean.getBoolean(FORCE_LAYER_DOWNLOAD);
   }
 
   /**
