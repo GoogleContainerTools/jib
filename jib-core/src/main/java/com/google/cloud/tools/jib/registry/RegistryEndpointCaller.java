@@ -232,8 +232,7 @@ class RegistryEndpointCaller<T> {
   private T call(URL url, Function<URL, Connection> connectionFactory)
       throws IOException, RegistryException {
     // Only sends authorization if using HTTPS or explicitly forcing over HTTP.
-    boolean sendCredentials =
-        isHttpsProtocol(url) || JibSystemProperties.isSendCredentialsOverHttpEnabled();
+    boolean sendCredentials = isHttpsProtocol(url) || JibSystemProperties.sendCredentialsOverHttp();
 
     try (Connection connection = connectionFactory.apply(url)) {
       Request.Builder requestBuilder =

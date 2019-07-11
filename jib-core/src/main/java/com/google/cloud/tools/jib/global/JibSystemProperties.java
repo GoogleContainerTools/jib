@@ -18,17 +18,16 @@ package com.google.cloud.tools.jib.global;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.common.collect.Range;
 
 /** Names of system properties defined/used by Jib. */
 public class JibSystemProperties {
 
+  @VisibleForTesting
+  public static final String SEND_CREDENTIALS_OVER_HTTP = "sendCredentialsOverHttp";
+
   @VisibleForTesting public static final String HTTP_TIMEOUT = "jib.httpTimeout";
 
   @VisibleForTesting static final String CROSS_REPOSITORY_BLOB_MOUNTS = "jib.blobMounts";
-
-  @VisibleForTesting
-  public static final String SEND_CREDENTIALS_OVER_HTTP = "sendCredentialsOverHttp";
 
   private static final String SERIALIZE = "jibSerialize";
 
@@ -66,7 +65,7 @@ public class JibSystemProperties {
    *
    * @return {@code true} if Jib's execution should be serialized, {@code false} if not
    */
-  public static boolean isSerializedExecutionEnabled() {
+  public static boolean serializedExecution() {
     return Boolean.getBoolean(SERIALIZE);
   }
 
@@ -77,7 +76,7 @@ public class JibSystemProperties {
    * @return {@code true} if authentication information is allowed to be sent over insecure
    *     connections, {@code false} if not
    */
-  public static boolean isSendCredentialsOverHttpEnabled() {
+  public static boolean sendCredentialsOverHttp() {
     return Boolean.getBoolean(SEND_CREDENTIALS_OVER_HTTP);
   }
 
@@ -89,48 +88,6 @@ public class JibSystemProperties {
    */
   public static boolean isUserAgentEnabled() {
     return Strings.isNullOrEmpty(System.getProperty(DISABLE_USER_AGENT));
-  }
-
-  /**
-   * Checks the {@code jib.httpTimeout} system property for invalid (non-integer or negative)
-   * values.
-   *
-   * @throws NumberFormatException if invalid values
-   */
-  public static void checkHttpTimeoutProperty() throws NumberFormatException {
-    checkNumericSystemProperty(HTTP_TIMEOUT, Range.atLeast(0));
-  }
-
-  /**
-   * Checks if {@code http.proxyPort} and {@code https.proxyPort} system properties are in the
-   * [0..65535] range when set.
-   *
-   * @throws NumberFormatException if invalid values
-   */
-  public static void checkProxyPortProperty() throws NumberFormatException {
-    checkNumericSystemProperty("http.proxyPort", Range.closed(0, 65535));
-    checkNumericSystemProperty("https.proxyPort", Range.closed(0, 65535));
-  }
-
-  private static void checkNumericSystemProperty(String property, Range<Integer> validRange) {
-    String value = System.getProperty(property);
-    if (value == null) {
-      return;
-    }
-
-    int parsed;
-    try {
-      parsed = Integer.parseInt(value);
-    } catch (NumberFormatException ex) {
-      throw new NumberFormatException(property + " must be an integer: " + value);
-    }
-    if (validRange.hasLowerBound() && validRange.lowerEndpoint() > parsed) {
-      throw new NumberFormatException(
-          property + " cannot be less than " + validRange.lowerEndpoint() + ": " + value);
-    } else if (validRange.hasUpperBound() && validRange.upperEndpoint() < parsed) {
-      throw new NumberFormatException(
-          property + " cannot be greater than " + validRange.upperEndpoint() + ": " + value);
-    }
   }
 
   private JibSystemProperties() {}
