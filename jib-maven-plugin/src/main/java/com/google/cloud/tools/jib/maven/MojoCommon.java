@@ -83,7 +83,6 @@ public class MojoCommon {
    * Check that the actual version satisfies required Jib version range when specified. No check is
    * performed if the provided Jib version is {@code null}, which should only occur during debug.
    *
-   * @param acceptableVersionSpec a version range or minimum version; see {@link VersionChecker}
    * @param descriptor the plugin version
    * @throws MojoExecutionException if the version is not acceptable
    */
