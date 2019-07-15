@@ -167,7 +167,7 @@ Currently Jib does not natively support creating an image that runs a runnable J
 However, you can set `<containerizingMode>packaged` (Maven) or `containerizingMode = 'packaged'` (Gradle) to containerize a JAR, but note that your application will always be run via `java -cp your.MainClass` (even if it is an executable JAR). Some disadvantages:
 
 - You need to run the JAR-packaging step (`mvn package` in Maven or the `jar` task in Gradle).
-- Reduced granularity in building and caching: if any of your Java source files or resource files are updated, not only the JAR has to be rebuilt but the layer containing the JAR in the image has to be recreated and pushed to a registry or a Docker daemon as a whole as a new layer.
+- Reduced granularity in building and caching: if any of your Java source files or resource files are updated, not only the JAR has to be rebuilt, but the entire layer containing the JAR in the image has to be recreated and pushed to the destination.
 - If it is a fat or shaded JAR embedding all dependency JARs, you are duplicating the dependency JARs in the image. Worse, it results in far more reduced granularity in building and caching, as dependency JARs can be huge and all of them need to be pushed repeatedly even if they do not change.
 
 ### I want to containerize a JAR.
