@@ -33,7 +33,7 @@ import org.junit.Assert;
 /** Testing infrastructure for running code across multiple threads. */
 public class MultithreadedExecutor implements Closeable {
 
-  private static final Duration MULTITHREADED_TEST_TIMEOUT = Duration.ofSeconds(1);
+  private static final Duration MULTITHREADED_TEST_TIMEOUT = Duration.ofSeconds(3);
   private static final int THREAD_COUNT = 20;
 
   private final ExecutorService executorService = Executors.newFixedThreadPool(THREAD_COUNT);
