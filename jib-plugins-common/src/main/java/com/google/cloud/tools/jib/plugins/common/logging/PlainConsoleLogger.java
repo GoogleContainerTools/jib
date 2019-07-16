@@ -43,7 +43,7 @@ class PlainConsoleLogger implements ConsoleLogger {
 
   @Override
   public void log(Level logLevel, String message) {
-    if (messageConsumers.containsKey(logLevel)) {
+    if (!messageConsumers.containsKey(logLevel)) {
       return;
     }
     Consumer<String> messageConsumer = messageConsumers.get(logLevel);
