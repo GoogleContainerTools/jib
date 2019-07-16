@@ -31,7 +31,12 @@ public class SingleThreadedExecutor {
 
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-  /** Shuts down the {@link #executorService} and waits for it to terminate. */
+  /**
+   * Shuts down the {@link #executorService} and waits for it to terminate.
+   *
+   * @param timeout timeout to wait. The method may call {@link ExecutorService#awaitTermination}
+   *     times with the given timeout, so the overall wait time can go up to 2 times the timeout
+   */
   public void shutDownAndAwaitTermination(Duration timeout) {
     executorService.shutdown();
 

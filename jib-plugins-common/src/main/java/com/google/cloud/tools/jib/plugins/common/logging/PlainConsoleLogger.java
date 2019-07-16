@@ -43,12 +43,9 @@ class PlainConsoleLogger implements ConsoleLogger {
 
   @Override
   public void log(Level logLevel, String message) {
-    if (!messageConsumers.containsKey(logLevel)) {
-      return;
+    if (messageConsumers.containsKey(logLevel)) {
+      singleThreadedExecutor.execute(() -> messageConsumers.get(logLevel).accept(message));
     }
-    Consumer<String> messageConsumer = messageConsumers.get(logLevel);
-
-    singleThreadedExecutor.execute(() -> messageConsumer.accept(message));
   }
 
   @Override
