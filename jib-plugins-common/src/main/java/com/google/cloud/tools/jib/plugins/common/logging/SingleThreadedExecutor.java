@@ -29,20 +29,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class SingleThreadedExecutor {
 
-  private static final Duration EXECUTOR_SHUTDOWN_WAIT = Duration.ofSeconds(1);
-
   private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
   /** Shuts down the {@link #executorService} and waits for it to terminate. */
-  public void shutDownAndAwaitTermination() {
+  public void shutDownAndAwaitTermination(Duration timeout) {
     executorService.shutdown();
 
     try {
-      if (!executorService.awaitTermination(
-          EXECUTOR_SHUTDOWN_WAIT.getSeconds(), TimeUnit.SECONDS)) {
+      if (!executorService.awaitTermination(timeout.getSeconds(), TimeUnit.SECONDS)) {
         executorService.shutdownNow();
-        if (!executorService.awaitTermination(
-            EXECUTOR_SHUTDOWN_WAIT.getSeconds(), TimeUnit.SECONDS)) {
+        if (!executorService.awaitTermination(timeout.getSeconds(), TimeUnit.SECONDS)) {
           System.err.println("Could not shut down SingleThreadedExecutor");
         }
       }
