@@ -10,8 +10,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How do I set parameters for my image at runtime?](#how-do-i-set-parameters-for-my-image-at-runtime)\
 [What image format does Jib use?](#what-image-format-does-jib-use)\
 [Can I define a custom entrypoint?](#can-i-define-a-custom-entrypoint-at-runtime)\
-[I want to containerize an executable JAR.](#i-want-to-containerize-an-executable-jar)\
-[I want to containerize a JAR.](#i-want-to-containerize-a-jar)\
+[I want to containerize a JAR.](#i-want-to-containerize-an-executable-jar)\
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
 [I need to RUN commands like `apt-get`.](#i-need-to-run-commands-like-apt-get)\
 [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)\
@@ -160,19 +159,17 @@ See [Extended Usage](../jib-gradle-plugin#extended-usage) for the `container.for
 
 Normally, the plugin sets a default entrypoint for java applications, or lets you configure a custom entrypoint using the `container.entrypoint` configuration parameter. You can also override the default/configured entrypoint by defining a custom entrypoint when running the container. See [`docker run --entrypoint` reference](https://docs.docker.com/engine/reference/run/#entrypoint-default-command-to-execute-at-runtime) for running the image with Docker and overriding the entrypoint command, or see [Define a Command and Arguments for a Container](https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/) for running the image in a [Kubernetes](https://kubernetes.io/) Pod and overriding the entrypoint command.
 
-### I want to containerize an executable JAR.
+### <a name="i-want-to-containerize-an-executable-jar"></a>I want to containerize a JAR.
 
-Currently Jib does not natively support creating an image that runs a runnable JAR (or WAR) through `java -jar runnable.jar` (although it is not impossible to configure Jib to do so at the expense of more complex project setup.) The intention of Jib is to add individual class files, resources, and dependency JARs into the container instead of putting a runnable JAR. This lets Jib choose an opinionated, optimal layout for the application on the container image, which also allows it to skip the extra JAR-packaging step.
+The intention of Jib is to add individual class files, resources, and dependency JARs into the container instead of putting a JAR. This lets Jib choose an opinionated, optimal layout for the application on the container image, which also allows it to skip the extra JAR-packaging step.
 
-However, you can set `<containerizingMode>packaged` (Maven) or `containerizingMode = 'packaged'` (Gradle) to containerize a JAR, but note that your application will always be run via `java -cp your.MainClass` (even if it is an executable JAR). Some disadvantages:
+However, you can set `<containerizingMode>packaged` (Maven) or `containerizingMode = 'packaged'` (Gradle) to containerize a JAR, but note that your application will always be run via `java -cp ... your.MainClass` (even if it is an executable JAR). Some disadvantages:
 
 - You need to run the JAR-packaging step (`mvn package` in Maven or the `jar` task in Gradle).
 - Reduced granularity in building and caching: if any of your Java source files or resource files are updated, not only the JAR has to be rebuilt, but the entire layer containing the JAR in the image has to be recreated and pushed to the destination.
 - If it is a fat or shaded JAR embedding all dependency JARs, you are duplicating the dependency JARs in the image. Worse, it results in far more reduced granularity in building and caching, as dependency JARs can be huge and all of them need to be pushed repeatedly even if they do not change.
 
-### I want to containerize a JAR.
-
-See ["I want to containerize an executable JAR"](#i-want-to-containerize-an-executable-jar).
+Note that for runnable JARs/WARs, currently Jib does not natively support creating an image that runs a JAR (or WAR) through `java -jar runnable.jar` (although it is not impossible to configure Jib to do so at the expense of more complex project setup.)
 
 ### Where is the application in the container filesystem?
 
