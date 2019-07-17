@@ -82,14 +82,6 @@ public class PullAndCacheBaseImageLayerStepTest {
         .thenReturn(Optional.of(Mockito.mock(BlobDescriptor.class)));
     Mockito.when(registryClient.checkBlob(freshLayerDigest)).thenReturn(Optional.empty());
 
-    Answer3<Blob, DescriptorDigest, Consumer<Long>, Consumer<Long>> blobSizeListenerCaller =
-        (ignored1, blobSizeListener, ignored2) -> {
-          blobSizeListener.accept(Long.valueOf(12345));
-          return null;
-        };
-    Mockito.when(registryClient.pullBlob(Mockito.any(), Mockito.any(), Mockito.any()))
-        .thenAnswer(AdditionalAnswers.answer(blobSizeListenerCaller));
-
     RegistryClient.Factory registryClientFactory =
         Mockito.mock(RegistryClient.Factory.class, Answers.RETURNS_SELF);
     Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(registryClient);
@@ -99,6 +91,15 @@ public class PullAndCacheBaseImageLayerStepTest {
         .thenReturn(registryClientFactory);
     Mockito.when(buildConfiguration.newTargetImageRegistryClientFactory())
         .thenReturn(registryClientFactory);
+
+    // necessary to prevent error from classes dealing with progress report
+    Answer3<Blob, DescriptorDigest, Consumer<Long>, Consumer<Long>> progressSizeSetter =
+        (ignored1, progressSizeConsumer, ignored2) -> {
+          progressSizeConsumer.accept(Long.valueOf(12345));
+          return null;
+        };
+    Mockito.when(registryClient.pullBlob(Mockito.any(), Mockito.any(), Mockito.any()))
+        .thenAnswer(AdditionalAnswers.answer(progressSizeSetter));
   }
 
   @Test
@@ -150,5 +151,26 @@ public class PullAndCacheBaseImageLayerStepTest {
         .pullBlob(Mockito.eq(existingLayerDigest), Mockito.any(), Mockito.any());
     Mockito.verify(registryClient)
         .pullBlob(Mockito.eq(freshLayerDigest), Mockito.any(), Mockito.any());
+  }
+
+  @Test
+  public void testLayerMissingInCacheInOfflineMode()
+      throws CacheCorruptedException, RegistryException {
+    Mockito.when(buildConfiguration.isOffline()).thenReturn(true);
+
+    ImmutableList<PullAndCacheBaseImageLayerStep> pullers =
+        PullAndCacheBaseImageLayerStep.makeListForForcedDownload(
+            buildConfiguration, progressDispatcherFactory, baseImageAndAuth);
+    try {
+      pullers.get(1).call();
+      Assert.fail();
+    } catch (IOException ex) {
+      Assert.assertEquals(
+          "Cannot run Jib in offline mode; local Jib cache for base image is missing image layer "
+              + "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb. Rerun "
+              + "Jib in online mode with \"-Djib.forceDownload=true\" to re-download the base "
+              + "image layers.",
+          ex.getMessage());
+    }
   }
 }

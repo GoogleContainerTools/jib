@@ -83,8 +83,8 @@ class PushLayerStep implements Callable<BlobDescriptor> {
       return layer.getBlobDescriptor();
     }
 
-    // Boolean object not present --> unknown whether or not the layer exists in registry
-    boolean doBlobCheck = !layer.existsInTarget().isPresent();
+    boolean doneBlobCheck = layer.existsInTarget().isPresent();
+    boolean doBlobCheck = !doneBlobCheck;
     return new PushBlobStep(
             buildConfiguration,
             progressEventDispatcherFactory,
