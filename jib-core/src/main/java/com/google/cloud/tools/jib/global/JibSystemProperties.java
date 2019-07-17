@@ -68,7 +68,7 @@ public class JibSystemProperties {
    *
    * @return {@code true} if Jib's execution should be serialized, {@code false} if not
    */
-  public static boolean isSerializedExecutionEnabled() {
+  public static boolean serializeExecution() {
     return Boolean.getBoolean(SERIALIZE);
   }
 
@@ -79,7 +79,7 @@ public class JibSystemProperties {
    * @return {@code true} if authentication information is allowed to be sent over insecure
    *     connections, {@code false} if not
    */
-  public static boolean isSendCredentialsOverHttpEnabled() {
+  public static boolean sendCredentialsOverHttp() {
     return Boolean.getBoolean(SEND_CREDENTIALS_OVER_HTTP);
   }
 

@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.plugins.common.logging;
 
 import com.google.cloud.tools.jib.MultithreadedExecutor;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
@@ -27,6 +28,8 @@ import org.junit.Test;
 
 /** Tests for {@link SingleThreadedExecutor}. */
 public class SingleThreadedExecutorTest {
+
+  private static final Duration SHUTDOWN_TIMEOUT = Duration.ofSeconds(3);
 
   @SuppressWarnings("ThreadPriorityCheck") // use of Thread.yield()
   @Test
@@ -50,6 +53,6 @@ public class SingleThreadedExecutorTest {
               }));
     }
 
-    singleThreadedExecutor.shutDownAndAwaitTermination();
+    singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
   }
 }

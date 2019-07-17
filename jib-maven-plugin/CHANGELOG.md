@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.4.0
+
+### Added
+
 - Can now containerize a JAR artifact instead of putting individual `.class` and resource files with `<containerizingMode>packaged` ([#1746](https://github.com/GoogleContainerTools/jib/pull/1746/files))
 - Can now use `<from><image>scratch` to use the scratch (empty) base image for builds. ([#1794](https://github.com/GoogleContainerTools/jib/pull/1794/files))
 
@@ -16,7 +24,6 @@ All notable changes to this project will be documented in this file.
 
 - Re-enabled cross-repository blob mounts ([#1793](https://github.com/GoogleContainerTools/jib/pull/1793))
 - Manifest lists referenced directly by sha256 are automatically parsed and the first `linux/amd64` manifest is used ([#1811](https://github.com/GoogleContainerTools/jib/issues/1811))
-
 
 ## 1.3.0
 
