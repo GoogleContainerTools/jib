@@ -16,19 +16,15 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.io.IOException;
-import java.security.DigestException;
 import java.util.Optional;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,22 +37,17 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class PushBlobStepTest {
 
-  private final ProgressEventDispatcher progressDispatcher =
-      ProgressEventDispatcher.newRoot(EventHandlers.NONE, "", 1);
-  private final ProgressEventDispatcher.Factory progressDispatcherFactory =
-      (ignored1, ignored2) -> progressDispatcher;
-  private BlobDescriptor blobDescriptor;
-
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  private BuildConfiguration buildConfiguration;
-
+  @Mock private BlobDescriptor blobDescriptor;
   @Mock private RegistryClient registryClient;
 
-  @Before
-  public void setUp() throws DigestException {
-    String sha256Hash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    blobDescriptor = new BlobDescriptor(154, DescriptorDigest.fromHash(sha256Hash));
+  @Mock(answer = Answers.RETURNS_MOCKS)
+  private ProgressEventDispatcher.Factory progressDispatcherFactory;
 
+  @Mock(answer = Answers.RETURNS_MOCKS)
+  private BuildConfiguration buildConfiguration;
+
+  @Before
+  public void setUp() {
     RegistryClient.Factory registryClientFactory =
         Mockito.mock(RegistryClient.Factory.class, Answers.RETURNS_SELF);
     Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(registryClient);
@@ -65,11 +56,6 @@ public class PushBlobStepTest {
         .thenReturn(registryClientFactory);
     Mockito.when(buildConfiguration.getTargetImageConfiguration())
         .thenReturn(ImageConfiguration.builder(ImageReference.scratch()).build());
-  }
-
-  @After
-  public void tearDown() {
-    progressDispatcher.close();
   }
 
   @Test
