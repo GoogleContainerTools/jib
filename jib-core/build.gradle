@@ -13,8 +13,8 @@ plugins {
 
 group 'com.google.cloud.tools'
 
-sourceCompatibility = JavaVersion.VERSION_1_8
-targetCompatibility = JavaVersion.VERSION_1_8
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 compileJava.options.encoding = 'UTF-8'
 
 repositories {
@@ -42,17 +42,12 @@ dependencies {
   implementation 'org.ow2.asm:asm:7.0'
 
   testImplementation 'junit:junit:4.12'
-  testImplementation 'org.mockito:mockito-core:2.23.4'
+  testImplementation 'org.mockito:mockito-core:2.24.0'
   testImplementation 'org.slf4j:slf4j-api:1.7.25'
 
   // NullAway errorprone plugin
   annotationProcessor 'com.uber.nullaway:nullaway:0.6.4'
   errorprone 'com.google.errorprone:error_prone_core:2.3.2'
-  // Using github.com/google/error-prone-javac is required when running on
-  // JDK 8. Remove when migrating to JDK 11.
-  if (System.getProperty("java.version").startsWith("1.8.")) {
-    errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
-  }
 
   integrationTestCompile sourceSets.main.output
   integrationTestCompile sourceSets.test.output

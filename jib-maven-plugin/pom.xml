@@ -43,9 +43,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <!-- Use <maven.compiler.release> instead when migrating to JDK 11. -->
-    <maven.compiler.source>8</maven.compiler.source>
-    <maven.compiler.target>8</maven.compiler.target>
+    <maven.compiler.release>11</maven.compiler.release>
   </properties>
 
   <dependencies>
@@ -116,7 +114,7 @@
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
-      <version>2.23.4</version>
+      <version>2.24.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -209,35 +207,6 @@
         </plugins>
       </build>
     </profile>
-
-    <!--
-      Using github.com/google/error-prone-javac is required when running on
-      JDK 8. Remove when migrating to JDK 11.
-    -->
-    <profile>
-      <id>jdk8</id>
-      <activation>
-        <jdk>1.8</jdk>
-      </activation>
-      <properties>
-        <javac.version>9+181-r4173-1</javac.version>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <configuration>
-              <fork>true</fork>
-              <compilerArgs combine.children="append">
-                <arg>-J-Xbootclasspath/p:${settings.localRepository}/com/google/errorprone/javac/${javac.version}/javac-${javac.version}.jar</arg>
-              </compilerArgs>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 
   <build>
     <plugins>
@@ -349,9 +318,7 @@
               <goal>compile</goal>
             </goals>
             <configuration>
-              <!-- Use <release> instead when migrating to JDK 11. -->
-              <source>${maven.compiler.source}</source>
-              <target>${maven.compiler.target}</target>
+              <release>${maven.compiler.release}</release>
               <showDeprecation>true</showDeprecation>
               <showWarnings>true</showWarnings>
               <annotationProcessorPaths>
