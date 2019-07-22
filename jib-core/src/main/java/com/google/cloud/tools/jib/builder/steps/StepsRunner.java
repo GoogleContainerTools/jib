@@ -123,7 +123,7 @@ public class StepsRunner {
 
     // build and cache
     stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(() -> pullAndCacheBaseImageLayers(true));
+    stepsToRun.add(() -> pullAndCacheBaseImageLayers(true)); // always pull layers for docker builds
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
     // load to Docker
@@ -136,7 +136,7 @@ public class StepsRunner {
 
     // build and cache
     stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(() -> pullAndCacheBaseImageLayers(true));
+    stepsToRun.add(() -> pullAndCacheBaseImageLayers(true)); // always pull layers for tar builds
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
     // create a tar

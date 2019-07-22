@@ -42,7 +42,8 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
 
   private static final String DESCRIPTION = "Pulling base image layer %s";
 
-  private interface BlobChecker {
+  @FunctionalInterface
+  private interface BlobExistenceChecker {
 
     Optional<Boolean> exists(DescriptorDigest digest) throws IOException, RegistryException;
   }
@@ -51,7 +52,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth) {
-    BlobChecker noOpBlobChecker = ignored -> Optional.empty();
+    BlobExistenceChecker noOpBlobChecker = ignored -> Optional.empty();
     return makeList(
         buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, noOpBlobChecker);
   }
@@ -68,18 +69,18 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
             .newTargetImageRegistryClientFactory()
             .setAuthorization(pushAuthorization)
             .newRegistryClient();
-    BlobChecker blobChecker =
+    BlobExistenceChecker blobExistenceChecker =
         digest -> Optional.of(targetRegistryClient.checkBlob(digest).isPresent());
 
     return makeList(
-        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, blobChecker);
+        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, blobExistenceChecker);
   }
 
   private static ImmutableList<PullAndCacheBaseImageLayerStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth,
-      BlobChecker blobChecker) {
+      BlobExistenceChecker blobExistenceChecker) {
     ImmutableList<Layer> baseImageLayers = baseImageAndAuth.getImage().getLayers();
 
     try (ProgressEventDispatcher progressEventDispatcher =
@@ -97,7 +98,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
                 progressEventDispatcher.newChildProducer(),
                 layer,
                 baseImageAndAuth.getAuthorization(),
-                blobChecker));
+                blobExistenceChecker));
       }
       return ImmutableList.copyOf(layerPullers);
     }
@@ -108,19 +109,19 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
 
   private final Layer layer;
   private final @Nullable Authorization pullAuthorization;
-  private final BlobChecker blobChecker;
+  private final BlobExistenceChecker blobChecker;
 
   PullAndCacheBaseImageLayerStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Layer layer,
       @Nullable Authorization pullAuthorization,
-      BlobChecker blobChecker) {
+      BlobExistenceChecker blobExistenceChecker) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.layer = layer;
     this.pullAuthorization = pullAuthorization;
-    this.blobChecker = blobChecker;
+    this.blobChecker = blobExistenceChecker;
   }
 
   @Override
