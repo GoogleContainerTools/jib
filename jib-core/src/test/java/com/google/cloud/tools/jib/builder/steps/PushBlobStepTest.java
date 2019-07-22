@@ -62,7 +62,7 @@ public class PushBlobStepTest {
   public void testCall_doBlobCheckAndBlobExists() throws IOException, RegistryException {
     Mockito.when(registryClient.checkBlob(Mockito.any())).thenReturn(Optional.of(blobDescriptor));
 
-    call(true);
+    call(false);
 
     Mockito.verify(registryClient).checkBlob(Mockito.any());
     Mockito.verify(registryClient, Mockito.never())
@@ -73,7 +73,7 @@ public class PushBlobStepTest {
   public void testCall_doBlobCheckAndBlobDoesNotExist() throws IOException, RegistryException {
     Mockito.when(registryClient.checkBlob(Mockito.any())).thenReturn(Optional.empty());
 
-    call(true);
+    call(false);
 
     Mockito.verify(registryClient).checkBlob(Mockito.any());
     Mockito.verify(registryClient)
@@ -81,17 +81,17 @@ public class PushBlobStepTest {
   }
 
   @Test
-  public void testCall_noBlobCheck() throws IOException, RegistryException {
-    call(false);
+  public void testCall_forcePushWithNoBlobCheck() throws IOException, RegistryException {
+    call(true);
 
     Mockito.verify(registryClient, Mockito.never()).checkBlob(Mockito.any());
     Mockito.verify(registryClient)
         .pushBlob(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
   }
 
-  private void call(boolean doBlobCheck) throws IOException, RegistryException {
+  private void call(boolean forcePush) throws IOException, RegistryException {
     new PushBlobStep(
-            buildConfiguration, progressDispatcherFactory, null, blobDescriptor, null, doBlobCheck)
+            buildConfiguration, progressDispatcherFactory, null, blobDescriptor, null, forcePush)
         .call();
   }
 }

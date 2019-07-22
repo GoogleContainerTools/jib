@@ -68,7 +68,7 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
               pushAuthorization,
               Digests.computeDigest(containerConfiguration),
               Blobs.from(containerConfiguration),
-              true)
+              false)
           .call();
     }
   }

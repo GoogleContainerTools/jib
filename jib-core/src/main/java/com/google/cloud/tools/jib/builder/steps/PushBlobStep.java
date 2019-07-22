@@ -43,7 +43,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   @Nullable private final Authorization authorization;
   private final BlobDescriptor blobDescriptor;
   private final Blob blob;
-  private final boolean doBlobCheck;
+  private final boolean forcePush;
 
   PushBlobStep(
       BuildConfiguration buildConfiguration,
@@ -51,13 +51,13 @@ class PushBlobStep implements Callable<BlobDescriptor> {
       @Nullable Authorization authorization,
       BlobDescriptor blobDescriptor,
       Blob blob,
-      boolean doBlobCheck) {
+      boolean forcePush) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.authorization = authorization;
     this.blobDescriptor = blobDescriptor;
     this.blob = blob;
-    this.doBlobCheck = doBlobCheck;
+    this.forcePush = forcePush;
   }
 
   @Override
@@ -78,7 +78,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
               .newRegistryClient();
 
       // check if the BLOB is available
-      if (doBlobCheck && registryClient.checkBlob(blobDigest).isPresent()) {
+      if (!forcePush && registryClient.checkBlob(blobDigest).isPresent()) {
         eventHandlers.dispatch(
             LogEvent.info("BLOB : " + blobDescriptor + " already exists on registry"));
         return blobDescriptor;
