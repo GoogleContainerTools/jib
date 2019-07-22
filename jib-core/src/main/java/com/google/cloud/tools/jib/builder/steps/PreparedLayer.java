@@ -24,8 +24,8 @@ import java.util.Optional;
 
 /**
  * Layer prepared from {@link BuildAndCacheApplicationLayerStep} and {@link
- * PullAndCacheBaseImageLayerStep} to hold information about either a base image layer or an
- * application layer.
+ * ObtainBaseImageLayerStep} to hold information about either a base image layer or an application
+ * layer.
  */
 class PreparedLayer implements Layer {
 

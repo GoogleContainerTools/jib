@@ -38,7 +38,7 @@ import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /** Pulls and caches a single base image layer. */
-class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
+class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
 
   private static final String DESCRIPTION = "Pulling base image layer %s";
 
@@ -48,7 +48,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
     Optional<Boolean> exists(DescriptorDigest digest) throws IOException, RegistryException;
   }
 
-  static ImmutableList<PullAndCacheBaseImageLayerStep> makeListForForcedDownload(
+  static ImmutableList<ObtainBaseImageLayerStep> makeListForForcedDownload(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth) {
@@ -57,7 +57,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
         buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, noOpBlobChecker);
   }
 
-  static ImmutableList<PullAndCacheBaseImageLayerStep> makeListForSelectiveDownload(
+  static ImmutableList<ObtainBaseImageLayerStep> makeListForSelectiveDownload(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth,
@@ -76,7 +76,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
         buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, blobExistenceChecker);
   }
 
-  private static ImmutableList<PullAndCacheBaseImageLayerStep> makeList(
+  private static ImmutableList<ObtainBaseImageLayerStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth,
@@ -90,10 +90,10 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), "Preparing base image layer pullers")) {
 
-      List<PullAndCacheBaseImageLayerStep> layerPullers = new ArrayList<>();
+      List<ObtainBaseImageLayerStep> layerPullers = new ArrayList<>();
       for (Layer layer : baseImageLayers) {
         layerPullers.add(
-            new PullAndCacheBaseImageLayerStep(
+            new ObtainBaseImageLayerStep(
                 buildConfiguration,
                 progressEventDispatcher.newChildProducer(),
                 layer,
@@ -111,7 +111,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<PreparedLayer> {
   private final @Nullable Authorization pullAuthorization;
   private final BlobExistenceChecker blobChecker;
 
-  PullAndCacheBaseImageLayerStep(
+  ObtainBaseImageLayerStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Layer layer,

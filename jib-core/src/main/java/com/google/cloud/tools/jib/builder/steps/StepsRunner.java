@@ -227,11 +227,11 @@ public class StepsRunner {
             () ->
                 scheduleCallables(
                     forcePull
-                        ? PullAndCacheBaseImageLayerStep.makeListForForcedDownload(
+                        ? ObtainBaseImageLayerStep.makeListForForcedDownload(
                             buildConfiguration,
                             childProgressDispatcherFactory,
                             results.baseImageAndAuth.get())
-                        : PullAndCacheBaseImageLayerStep.makeListForSelectiveDownload(
+                        : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
                             buildConfiguration,
                             childProgressDispatcherFactory,
                             results.baseImageAndAuth.get(),

@@ -44,9 +44,9 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer3;
 
-/** Tests for {@link PullAndCacheBaseImageLayerStep}. */
+/** Tests for {@link ObtainBaseImageLayerStep}. */
 @RunWith(MockitoJUnitRunner.class)
-public class PullAndCacheBaseImageLayerStepTest {
+public class ObtainBaseImageLayerStepTest {
 
   private ImageAndAuthorization baseImageAndAuth;
 
@@ -105,8 +105,8 @@ public class PullAndCacheBaseImageLayerStepTest {
   @Test
   public void testMakeListForSelectiveDownload()
       throws IOException, CacheCorruptedException, RegistryException {
-    ImmutableList<PullAndCacheBaseImageLayerStep> pullers =
-        PullAndCacheBaseImageLayerStep.makeListForSelectiveDownload(
+    ImmutableList<ObtainBaseImageLayerStep> pullers =
+        ObtainBaseImageLayerStep.makeListForSelectiveDownload(
             buildConfiguration, progressDispatcherFactory, baseImageAndAuth, null);
 
     Assert.assertEquals(2, pullers.size());
@@ -130,8 +130,8 @@ public class PullAndCacheBaseImageLayerStepTest {
   @Test
   public void testMakeListForForcedDownload()
       throws IOException, CacheCorruptedException, RegistryException {
-    ImmutableList<PullAndCacheBaseImageLayerStep> pullers =
-        PullAndCacheBaseImageLayerStep.makeListForForcedDownload(
+    ImmutableList<ObtainBaseImageLayerStep> pullers =
+        ObtainBaseImageLayerStep.makeListForForcedDownload(
             buildConfiguration, progressDispatcherFactory, baseImageAndAuth);
 
     Assert.assertEquals(2, pullers.size());
@@ -158,8 +158,8 @@ public class PullAndCacheBaseImageLayerStepTest {
       throws CacheCorruptedException, RegistryException {
     Mockito.when(buildConfiguration.isOffline()).thenReturn(true);
 
-    ImmutableList<PullAndCacheBaseImageLayerStep> pullers =
-        PullAndCacheBaseImageLayerStep.makeListForForcedDownload(
+    ImmutableList<ObtainBaseImageLayerStep> pullers =
+        ObtainBaseImageLayerStep.makeListForForcedDownload(
             buildConfiguration, progressDispatcherFactory, baseImageAndAuth);
     try {
       pullers.get(1).call();
