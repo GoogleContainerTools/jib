@@ -10,7 +10,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
 [Can I learn more about container images?](#can-i-learn-more-about-container-images)
 
-**How-Tos**
+**How-Tos**\
 [How do I set parameters for my image at runtime?](#how-do-i-set-parameters-for-my-image-at-runtime)\
 [Can I define a custom entrypoint?](#can-i-define-a-custom-entrypoint-at-runtime)\
 [I want to containerize a JAR.](#i-want-to-containerize-an-executable-jar)\
@@ -21,17 +21,19 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [How do I enable debugging?](#how-do-i-enable-debugging)\
 [What would a Dockerfile for a Jib-built image look like?](#what-would-a-dockerfile-for-a-jib-built-image-look-like)\
 [How can I inspect the image Jib built?](#how-can-i-inspect-the-image-jib-built)\
+[I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
+[How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)
 
 **Common Problems**\
-[I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)\
 [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries)\
-- [What should I do when the registry responds with Forbidden or DENIED?](#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied)\
-- [What should I do when the registry responds with UNAUTHORIZED?](#what-should-i-do-when-the-registry-responds-with-unauthorized)\
+[What should I do when the registry responds with Forbidden or DENIED?](#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied)\
+[What should I do when the registry responds with UNAUTHORIZED?](#what-should-i-do-when-the-registry-responds-with-unauthorized)\
 [How do I configure a proxy?](#how-do-i-configure-a-proxy)\
 [How can I examine network traffic?](#how-can-i-examine-network-traffic)\
 [How do I view debug logs for Jib?](#how-do-i-view-debug-logs-for-jib)\
-[I would like to run my application with a javaagent.](#i-would-like-to-run-my-application-with-a-javaagent)\
-[How can I tag my image with a timestamp?](#how-can-i-tag-my-image-with-a-timestamp)\
+[I am seeing `ImagePullBackoff` on my pods.](#i-am-seeing-imagepullbackoff-on-my-pods-in-minikube)
+
+---
 
 ### But, I'm not a Java developer.
 
@@ -51,7 +53,7 @@ kubectl run jib-deployment --image=<image name>
 
 For more information, see [steps 4-6 of the Kubernetes Engine deployment tutorial](https://cloud.google.com/kubernetes-engine/docs/tutorials/hello-app#step_4_create_a_container_cluster).
 
-#### Where is bash?
+### Where is bash?
 
 By default, Jib uses [`distroless/java`](https://github.com/GoogleContainerTools/distroless/tree/master/java) as the base image. Distroless images contain only runtime dependencies. They do not contain package managers, shells or any other programs you would expect to find in a standard Linux distribution. Check out the [distroless project](https://github.com/GoogleContainerTools/distroless#distroless-docker-images) for more information about distroless images.
 
@@ -433,42 +435,12 @@ To inspect the image that is produced from the build using Docker, you can use c
 
 ## Common Problems
 
-### I am seeing `ImagePullBackoff` on my pods (in [minikube](https://github.com/kubernetes/minikube)).
-
-When you use your private image built with Jib in a [Kubernetes cluster](kubernetes.io), the cluster needs to be configured with credentials to pull the image. This involves 1) creating a [Secret](https://kubernetes.io/docs/concepts/configuration/secret/), and 2) using the Secret as [`imagePullSecrets`](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account).
-
-```shell
-kubectl create secret docker-registry registry-json-key \
-  --docker-server=<registry> \
-  --docker-username=<username> \
-  --docker-password=<password> \
-  --docker-email=<any valid email address>
-
-kubectl patch serviceaccount default \
-  -p '{"imagePullSecrets":[{"name":"registry-json-key"}]}'
-```
-
-For example, if you are using GCR, the commands would look like (see [Advanced Authentication Methods](https://cloud.google.com/container-registry/docs/advanced-authentication)):
-
-```shell
-kubectl create secret docker-registry gcr-json-key \
-  --docker-server=https://gcr.io \
-  --docker-username=_json_key \
-  --docker-password="$(cat keyfile.json)" \
-  --docker-email=any@valid.com
-
-kubectl patch serviceaccount default \
-  -p '{"imagePullSecrets":[{"name":"gcr-json-key"}]}'
-```
-
-See more at [Using Google Container Registry (GCR) with Minikube](https://ryaneschinger.com/blog/using-google-container-registry-gcr-with-minikube/).
-
 ### <a name="registry-errors"></a>How can I diagnose problems pulling or pushing from remote registries?
 
 There are a few reasons why Jib may be unable to connect to a remote registry, including:
 
-- **Registry reports FORBIDDEN.** See [_What should I do when the registry responds with Forbidden or DENIED?_](#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied)\
-- **Registry reports UNAUTHORIZED.** See [_What should I do when the registry responds with UNAUTHORIZED?_](#what-should-i-do-when-the-registry-responds-with-unauthorized)\
+- **Registry reports FORBIDDEN.** See [_What should I do when the registry responds with Forbidden or DENIED?_](#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied)
+- **Registry reports UNAUTHORIZED.** See [_What should I do when the registry responds with UNAUTHORIZED?_](#what-should-i-do-when-the-registry-responds-with-unauthorized)
 - **Access requires a proxy.** See [_How do I configure a proxy?_](#how-do-i-configure-a-proxy) for details.
 - **The registry does not support HTTPS.** We do not pass authentication details on non-HTTPS connections, though this can be overridden with the `sendCredentialsOverHttp` system property, but it is not recommend  (_version 0.9.9_).
 - **The registry's SSL certificates have expired or are not trusted.**  We have a separate document on [handling registries that use self-signed certificates](self_sign_cert.md), which may also apply if the SSL certificate is signed by an untrusted Certificate Authority.  Jib supports an  `allowInsecureRegistries` flag to ignore SSL certificate validation, but it is not recommend (_version 0.9.9_).
@@ -502,6 +474,37 @@ If you encounter issues interacting with a registry other than `UNAUTHORIZED`, c
 ### How do I configure a proxy?
 
 Jib currently requires configuring your build tool to use the appropriate [Java networking properties](https://docs.oracle.com/javase/8/docs/api/java/net/doc-files/net-properties.html) (`https.proxyHost`, `https.proxyPort`, `https.proxyUser`, `https.proxyPassword`).
+
+### I am seeing `ImagePullBackoff` on my pods (in [minikube](https://github.com/kubernetes/minikube)).
+
+When you use your private image built with Jib in a [Kubernetes cluster](kubernetes.io), the cluster needs to be configured with credentials to pull the image. This involves 1) creating a [Secret](https://kubernetes.io/docs/concepts/configuration/secret/), and 2) using the Secret as [`imagePullSecrets`](https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#add-imagepullsecrets-to-a-service-account).
+
+```shell
+kubectl create secret docker-registry registry-json-key \
+  --docker-server=<registry> \
+  --docker-username=<username> \
+  --docker-password=<password> \
+  --docker-email=<any valid email address>
+
+kubectl patch serviceaccount default \
+  -p '{"imagePullSecrets":[{"name":"registry-json-key"}]}'
+```
+
+For example, if you are using GCR, the commands would look like (see [Advanced Authentication Methods](https://cloud.google.com/container-registry/docs/advanced-authentication)):
+
+```shell
+kubectl create secret docker-registry gcr-json-key \
+  --docker-server=https://gcr.io \
+  --docker-username=_json_key \
+  --docker-password="$(cat keyfile.json)" \
+  --docker-email=any@valid.com
+
+kubectl patch serviceaccount default \
+  -p '{"imagePullSecrets":[{"name":"gcr-json-key"}]}'
+```
+
+See more at [Using Google Container Registry (GCR) with Minikube](https://ryaneschinger.com/blog/using-google-container-registry-gcr-with-minikube/).
+
 
 ### How can I examine network traffic?
 
