@@ -4,7 +4,7 @@ Before filing an issue, please verify the issue still occurs with the latest ver
 If you are encountering errors pulling or pushing to remote registries,
 please check our Frequently Asked Questions before filing an issue:
 
-    https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md
+    https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#registry-errors
 
 Please use this template to provide more context for your issue.
 -->
