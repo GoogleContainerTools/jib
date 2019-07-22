@@ -103,7 +103,11 @@ See [Extended Usage](../jib-gradle-plugin#extended-usage) for the `container.for
 
 ### Why is my image created 48+ years ago?
 
-For reproducibility purposes, Jib sets the creation time of the container images to 0 (January 1st, 1970). If you would like to forgo reproducibility and use the real creation time, set the `useCurrentTimestamp` parameter to `true` in your build configuration.
+For reproducibility purposes, Jib sets the creation time of the container images to 1 second past the Unix epoch (00:00:01, January 1st, 1970 in UTC). If you would like to forgo reproducibility and use the real creation time, set the `useCurrentTimestamp` parameter to `true` in your build configuration.
+
+<details>
+<summary>Setting `useCurrentTimestamp` parameter</summary>
+<p>
 
 #### Maven
 
@@ -120,6 +124,9 @@ For reproducibility purposes, Jib sets the creation time of the container images
 ```groovy
 jib.container.useCurrentTimestamp = true
 ```
+
+</p>
+</details>
 
 #### Please tell me more about reproducibility!
 

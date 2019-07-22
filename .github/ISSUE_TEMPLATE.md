@@ -1,18 +1,16 @@
 <!--
-Before filing an issue, please verify the issue still occurs with the latest version of Jib.
+Before filing an issue, please reproduce with the latest version of Jib.
 
 If you are encountering errors pulling or pushing to remote registries,
 please check our Frequently Asked Questions before filing an issue:
 
     https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#registry-errors
-
-Please use this template to provide more context for your issue.
 -->
 
 **Environment**:
 
 - *Jib version:*
-- *Build tool:* <!-- please include the version -->
+- *Build tool:* <!-- Maven/Gradle, including version -->
 - *OS:*
 
 **Description of the issue**:
