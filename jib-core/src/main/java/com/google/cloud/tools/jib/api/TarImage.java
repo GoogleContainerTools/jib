@@ -15,7 +15,6 @@
  */
 
 package com.google.cloud.tools.jib.api;
-// TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
 import java.nio.file.Path;
 

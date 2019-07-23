@@ -41,6 +41,7 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -71,6 +72,8 @@ public class MavenProjectProperties implements ProjectProperties {
 
   /** Used for logging during main class inference. */
   private static final String JAR_PLUGIN_NAME = "'maven-jar-plugin'";
+
+  private static final Duration LOGGING_THREAD_SHUTDOWN_TIMEOUT = Duration.ofSeconds(1);
 
   /**
    * @param project the {@link MavenProject} for the plugin.
@@ -277,7 +280,7 @@ public class MavenProjectProperties implements ProjectProperties {
 
   @Override
   public void waitForLoggingThread() {
-    singleThreadedExecutor.shutDownAndAwaitTermination();
+    singleThreadedExecutor.shutDownAndAwaitTermination(LOGGING_THREAD_SHUTDOWN_TIMEOUT);
   }
 
   @Override

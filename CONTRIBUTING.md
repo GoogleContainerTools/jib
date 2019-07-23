@@ -24,7 +24,9 @@ Jib comes as 3 components:
   - `jib-maven-plugin`: a Maven plugin that uses `jib-core` and `jib-plugins-common`
   - `jib-gradle-plugin`: a Gradle plugin that uses `jib-core` and `jib-plugins-common`
 
-To build, use the provided `build.sh` which builds and tests each of the components into your local `~/.m2/repository`.  Note that this script does not run integration tests.
+To build, use the provided `build.sh` which builds and tests each of the
+components into your local `~/.m2/repository`.  Note that this script does
+not run integration tests.
 
 ## Code Reviews
 
@@ -45,7 +47,17 @@ To build, use the provided `build.sh` which builds and tests each of the compone
 5. Associate the change with an existing issue or file a [new issue](../../issues).
 6. Create a pull request!
 
-**Note** that in order to run integration tests, you will need to set the environment variable `JIB_INTEGRATION_TESTING_PROJECT` to the GCP project you would like to use for testing. You will also need Docker installed with the daemon running. Otherwise, feel free to skip integration tests.
+**Note** that in order to run integration tests, you will need to set one of the
+following environment variables:
+
+  - `JIB_INTEGRATION_TESTING_PROJECT`: the GCP project to use for testing;
+    the registry tested will be `gcr.io/<JIB_INTEGRATION_TESTING_PROJECT>`.
+  - `JIB_INTEGRATION_TESTING_LOCATION`: a specific registry for testing.
+    To run the integration tests locally, you can run
+    `docker run -d -p 9990:5000 registry:2` and use `localhost:9990`.
+
+You will also need Docker installed with the daemon running. Note that the
+integration tests will create local registries on ports 5000 and 9000.
 
 # Development Tips
 
@@ -134,12 +146,12 @@ To use a local build of the `jib-gradle-plugin`:
                 mavenCentral()
             }
             dependencies {
-                classpath 'com.google.cloud.tools:jib-gradle-plugin:1.3.1-SNAPSHOT'
+                classpath 'com.google.cloud.tools:jib-gradle-plugin:1.4.1-SNAPSHOT'
             }
         }
 
         plugins {
-            // id 'com.google.cloud.tools.jib' version '1.3.0'
+            // id 'com.google.cloud.tools.jib' version '1.4.0'
         }
 
         // Applies the java plugin after Jib to make sure it works in this order.

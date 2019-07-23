@@ -16,9 +16,9 @@
 
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.common.collect.ImmutableMap;
 import java.nio.file.Paths;
-import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,7 +30,8 @@ public class DockerDaemonImageTest {
     DockerDaemonImage dockerDaemonImage = DockerDaemonImage.named("docker/daemon/image");
 
     Assert.assertEquals("docker/daemon/image", dockerDaemonImage.getImageReference().toString());
-    Assert.assertEquals(Optional.empty(), dockerDaemonImage.getDockerExecutable());
+    Assert.assertEquals(
+        DockerClient.DEFAULT_DOCKER_CLIENT, dockerDaemonImage.getDockerExecutable());
     Assert.assertEquals(0, dockerDaemonImage.getDockerEnvironment().size());
   }
 
@@ -41,7 +42,7 @@ public class DockerDaemonImageTest {
             .setDockerExecutable(Paths.get("docker/binary"))
             .setDockerEnvironment(ImmutableMap.of("key", "value"));
 
-    Assert.assertEquals(Paths.get("docker/binary"), dockerDaemonImage.getDockerExecutable().get());
+    Assert.assertEquals(Paths.get("docker/binary"), dockerDaemonImage.getDockerExecutable());
     Assert.assertEquals(ImmutableMap.of("key", "value"), dockerDaemonImage.getDockerEnvironment());
   }
 }

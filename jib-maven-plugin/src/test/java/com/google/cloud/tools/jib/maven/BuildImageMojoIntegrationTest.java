@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.common.base.Splitter;
 import java.io.IOException;
@@ -106,7 +105,7 @@ public class BuildImageMojoIntegrationTest {
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     if (imageReference.startsWith("localhost")) {
-      verifier.setSystemProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES, "true");
+      verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
     }
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
@@ -168,7 +167,7 @@ public class BuildImageMojoIntegrationTest {
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
     verifier.setSystemProperty("_ADDITIONAL_TAG", additionalTag);
     if (imageReference.startsWith("localhost")) {
-      verifier.setSystemProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES, "true");
+      verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
     }
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");
@@ -553,29 +552,30 @@ public class BuildImageMojoIntegrationTest {
 
   @Test
   public void testExecute_jibRequireVersion_ok() throws VerificationException, IOException {
-    String targetImage = getTestImageReference("simpleimage:maven");
+    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
 
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
-    // this plugin should match 1.0
-    verifier.setSystemProperty("jib.requiredVersion", "1.0");
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
-    if (targetImage.startsWith("localhost")) {
-      verifier.setSystemProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES, "true");
-    }
+    // properties required to push to :6000 for plain pom.xml
+    verifier.setSystemProperty("jib.to.auth.username", "testuser2");
+    verifier.setSystemProperty("jib.to.auth.password", "testpassword2");
+    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
+    verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
+    // this test plugin should match 1.0
+    verifier.setSystemProperty("jib.requiredVersion", "1.0");
     verifier.executeGoals(Arrays.asList("package", "jib:build"));
     verifier.verifyErrorFreeLog();
   }
 
   @Test
   public void testExecute_jibRequireVersion_fail() throws IOException {
-    String targetImage = getTestImageReference("simpleimage:maven");
+    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
     try {
       Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
-      verifier.setSystemProperty("jib.requiredVersion", "[,1.0]");
+      // other properties aren't required as this should fail due to jib.requiredVersion
       verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
-      if (targetImage.startsWith("localhost")) {
-        verifier.setSystemProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES, "true");
-      }
+      // this plugin should be > 1.0 and so jib:build should fail
+      verifier.setSystemProperty("jib.requiredVersion", "[,1.0]");
       verifier.executeGoals(Arrays.asList("package", "jib:build"));
       Assert.fail();
     } catch (VerificationException ex) {
@@ -606,7 +606,7 @@ public class BuildImageMojoIntegrationTest {
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
     if (targetImage.startsWith("localhost")) {
-      verifier.setSystemProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES, "true");
+      verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
     }
     verifier.setAutoclean(false);
     verifier.addCliOption("-X");

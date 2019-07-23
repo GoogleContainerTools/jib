@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.plugins.common.logging;
 
 import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.common.collect.ImmutableMap;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,6 +30,8 @@ import org.junit.Test;
 
 /** Tests for {@link PlainConsoleLogger}. */
 public class PlainConsoleLoggerTest {
+
+  private static final Duration SHUTDOWN_TIMEOUT = Duration.ofSeconds(3);
 
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
 
@@ -60,7 +63,7 @@ public class PlainConsoleLoggerTest {
     testPlainConsoleLogger.log(Level.WARN, "warn");
     testPlainConsoleLogger.log(Level.ERROR, "error");
 
-    singleThreadedExecutor.shutDownAndAwaitTermination();
+    singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
 
     Assert.assertEquals(
         Arrays.asList(
@@ -84,7 +87,7 @@ public class PlainConsoleLoggerTest {
     testPlainConsoleLogger.log(Level.WARN, "warn");
     testPlainConsoleLogger.log(Level.ERROR, "error");
 
-    singleThreadedExecutor.shutDownAndAwaitTermination();
+    singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
 
     Assert.assertEquals(Collections.singletonList(Level.WARN), levels);
     Assert.assertEquals(Collections.singletonList("warn"), messages);

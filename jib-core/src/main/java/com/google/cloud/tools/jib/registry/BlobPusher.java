@@ -29,6 +29,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
@@ -51,7 +52,7 @@ class BlobPusher {
   @Nullable private final String sourceRepository;
 
   /** Initializes the BLOB upload. */
-  private class Initializer implements RegistryEndpointProvider<URL> {
+  private class Initializer implements RegistryEndpointProvider<Optional<URL>> {
 
     @Nullable
     @Override
@@ -65,19 +66,18 @@ class BlobPusher {
     }
 
     /**
-     * @return a URL to continue pushing the BLOB to, or {@code null} if the BLOB already exists on
-     *     the registry
+     * @return a URL to continue pushing the BLOB to, or {@link Optional#empty()} if the BLOB
+     *     already exists on the registry
      */
-    @Nullable
     @Override
-    public URL handleResponse(Response response) throws RegistryErrorException {
+    public Optional<URL> handleResponse(Response response) throws RegistryErrorException {
       switch (response.getStatusCode()) {
         case HttpURLConnection.HTTP_CREATED:
           // The BLOB exists in the registry.
-          return null;
+          return Optional.empty();
 
         case HttpURLConnection.HTTP_ACCEPTED:
-          return getRedirectLocation(response);
+          return Optional.of(getRedirectLocation(response));
 
         default:
           throw buildRegistryErrorException(
@@ -211,7 +211,7 @@ class BlobPusher {
    * @return a {@link RegistryEndpointProvider} for initializing the BLOB upload with an existence
    *     check
    */
-  RegistryEndpointProvider<URL> initializer() {
+  RegistryEndpointProvider<Optional<URL>> initializer() {
     return new Initializer();
   }
 
