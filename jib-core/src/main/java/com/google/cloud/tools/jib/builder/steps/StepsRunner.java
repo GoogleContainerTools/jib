@@ -123,7 +123,7 @@ public class StepsRunner {
 
     // build and cache
     stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(() -> pullAndCacheBaseImageLayers(true)); // always pull layers for docker builds
+    stepsToRun.add(() -> obtainBaseImageLayers(true)); // always pull layers for docker builds
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
     // load to Docker
@@ -136,7 +136,7 @@ public class StepsRunner {
 
     // build and cache
     stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(() -> pullAndCacheBaseImageLayers(true)); // always pull layers for tar builds
+    stepsToRun.add(() -> obtainBaseImageLayers(true)); // always pull layers for tar builds
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
     // create a tar
@@ -146,13 +146,13 @@ public class StepsRunner {
 
   public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
-    boolean forcePull = JibSystemProperties.alwaysCacheBaseImage();
+    boolean layersRequiredLocally = JibSystemProperties.alwaysCacheBaseImage();
 
     stepsToRun.add(this::retrieveTargetRegistryCredentials);
     stepsToRun.add(this::authenticatePush);
 
     stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(() -> pullAndCacheBaseImageLayers(forcePull));
+    stepsToRun.add(() -> obtainBaseImageLayers(layersRequiredLocally));
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
 
@@ -217,7 +217,7 @@ public class StepsRunner {
             new PullBaseImageStep(buildConfiguration, childProgressDispatcherFactory));
   }
 
-  private void pullAndCacheBaseImageLayers(boolean forcePull) {
+  private void obtainBaseImageLayers(boolean layersRequiredLocally) {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
@@ -225,7 +225,7 @@ public class StepsRunner {
         executorService.submit(
             () ->
                 scheduleCallables(
-                    forcePull
+                    layersRequiredLocally
                         ? ObtainBaseImageLayerStep.makeListForForcedDownload(
                             buildConfiguration,
                             childProgressDispatcherFactory,
