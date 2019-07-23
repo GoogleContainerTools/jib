@@ -41,15 +41,13 @@ import java.util.Objects;
  *   {
  *     "sourceFile": "source/file/for/layer/entry/1",
  *     "extractionPath": "/extraction/path/for/layer/entry/1"
- *     "sourceLastModifiedTime": "2018-10-03T15:48:32.416152Z"
- *     "targetLastModifiedTime": "1970-01-01T00:00:01Z"
+ *     "lastModifiedTime": "2018-10-03T15:48:32.416152Z"
  *     "permissions": "777"
  *   },
  *   {
  *     "sourceFile": "source/file/for/layer/entry/2",
  *     "extractionPath": "/extraction/path/for/layer/entry/2"
- *     "sourceLastModifiedTime": "2018-10-03T15:48:32.416152Z"
- *     "targetLastModifiedTime": "1970-01-01T00:00:01Z"
+ *     "lastModifiedTime": "2018-10-03T15:48:32.416152Z"
  *     "permissions": "777"
  *   }
  * ]
@@ -63,16 +61,14 @@ class LayerEntriesSelector {
 
     private final String sourceFile;
     private final String extractionPath;
-    private final Instant sourceLastModifiedTime;
-    private final Instant targetLastModifiedTime;
+    private final Instant lastModifiedTime;
     private final String permissions;
 
     @VisibleForTesting
     LayerEntryTemplate(LayerEntry layerEntry) throws IOException {
       sourceFile = layerEntry.getSourceFile().toAbsolutePath().toString();
       extractionPath = layerEntry.getExtractionPath().toString();
-      sourceLastModifiedTime = Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant();
-      targetLastModifiedTime = layerEntry.getLastModifiedTime();
+      lastModifiedTime = Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant();
       permissions = layerEntry.getPermissions().toOctalString();
     }
 
@@ -87,15 +83,10 @@ class LayerEntriesSelector {
       if (extractionPathComparison != 0) {
         return extractionPathComparison;
       }
-      int sourceLastModifiedTimeComparison =
-          sourceLastModifiedTime.compareTo(otherLayerEntryTemplate.sourceLastModifiedTime);
-      if (sourceLastModifiedTimeComparison != 0) {
-        return sourceLastModifiedTimeComparison;
-      }
-      int targetLastModifiedTimeComparison =
-          targetLastModifiedTime.compareTo(otherLayerEntryTemplate.targetLastModifiedTime);
-      if (targetLastModifiedTimeComparison != 0) {
-        return targetLastModifiedTimeComparison;
+      int lastModifiedTimeComparison =
+          lastModifiedTime.compareTo(otherLayerEntryTemplate.lastModifiedTime);
+      if (lastModifiedTimeComparison != 0) {
+        return lastModifiedTimeComparison;
       }
       return permissions.compareTo(otherLayerEntryTemplate.permissions);
     }
@@ -111,15 +102,13 @@ class LayerEntriesSelector {
       LayerEntryTemplate otherLayerEntryTemplate = (LayerEntryTemplate) other;
       return sourceFile.equals(otherLayerEntryTemplate.sourceFile)
           && extractionPath.equals(otherLayerEntryTemplate.extractionPath)
-          && sourceLastModifiedTime.equals(otherLayerEntryTemplate.sourceLastModifiedTime)
-          && targetLastModifiedTime.equals(otherLayerEntryTemplate.targetLastModifiedTime)
+          && lastModifiedTime.equals(otherLayerEntryTemplate.lastModifiedTime)
           && permissions.equals(otherLayerEntryTemplate.permissions);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(
-          sourceFile, extractionPath, sourceLastModifiedTime, targetLastModifiedTime, permissions);
+      return Objects.hash(sourceFile, extractionPath, lastModifiedTime, permissions);
     }
   }
 

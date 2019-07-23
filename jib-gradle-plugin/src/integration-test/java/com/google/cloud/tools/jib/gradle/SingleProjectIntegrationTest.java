@@ -21,15 +21,8 @@ import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.common.base.Splitter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.DigestException;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.hamcrest.CoreMatchers;
@@ -99,11 +92,6 @@ public class SingleProjectIntegrationTest {
         new Command("docker", "inspect", "-f", "{{join .RootFS.Layers \",\"}}", imageReference);
     String layers = command.run().trim();
     Assert.assertEquals(expected, Splitter.on(",").splitToList(layers).size());
-  }
-
-  private static String getIsoFileTime(Path path) throws IOException {
-    ZonedDateTime zonedTime = Files.getLastModifiedTime(path).toInstant().atZone(ZoneId.of("Z"));
-    return zonedTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME);
   }
 
   /**
@@ -385,22 +373,6 @@ public class SingleProjectIntegrationTest {
         "Hello, world. \n2011-12-03T01:15:30Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-files-modification-time-custom.gradle"));
-  }
-
-  @Test
-  public void testDockerDaemon_filesModificationTimeKeepOriginal()
-      throws DigestException, IOException, InterruptedException {
-    String targetImage = "simpleimage:gradle" + System.nanoTime();
-    String output =
-        JibRunHelper.buildToDockerDaemonAndRun(
-            simpleTestProject, targetImage, "build-files-modification-time-keep-original.gradle");
-
-    Path extraDirectory =
-        Paths.get(simpleTestProject.getProjectRoot().toString(), "src", "main", "custom-extra-dir");
-    String fooTime = getIsoFileTime(extraDirectory.resolve("foo"));
-    String catTime = getIsoFileTime(extraDirectory.resolve("bar").resolve("cat"));
-    Assert.assertThat(
-        output, CoreMatchers.containsString("\nfoo\ncat\n" + fooTime + "\n" + catTime));
   }
 
   @Test

@@ -31,10 +31,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -310,11 +306,6 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(expected, Splitter.on(",").splitToList(layers).size());
   }
 
-  private static String getIsoFileTime(Path path) throws IOException {
-    ZonedDateTime zonedTime = Files.getLastModifiedTime(path).toInstant().atZone(ZoneId.of("Z"));
-    return zonedTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME);
-  }
-
   @Nullable private String detachedContainerName;
 
   @Before
@@ -522,22 +513,6 @@ public class BuildImageMojoIntegrationTest {
         "[java -Xms512m -Xdebug -cp /other:/app/resources:/app/classes:/app/libs/* "
             + "com.test.HelloWorld]",
         targetImage);
-  }
-
-  @Test
-  public void testExecute_filesModificationTimeKeepOriginal()
-      throws IOException, InterruptedException, VerificationException, DigestException {
-    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
-    String pom = "pom-complex-files-modification-time-keep-original.xml";
-    String output =
-        buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2, pom);
-
-    Path extraDirectory =
-        Paths.get(simpleTestProject.getProjectRoot().toString(), "src", "main", "jib-custom");
-    String fooTime = getIsoFileTime(extraDirectory.resolve("foo"));
-    String catTime = getIsoFileTime(extraDirectory.resolve("bar").resolve("cat"));
-    Assert.assertThat(
-        output, CoreMatchers.containsString("\nfoo\ncat\n" + fooTime + "\n" + catTime));
   }
 
   @Test

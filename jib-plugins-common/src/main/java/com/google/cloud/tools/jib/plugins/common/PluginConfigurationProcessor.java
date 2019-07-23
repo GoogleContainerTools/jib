@@ -443,7 +443,6 @@ public class PluginConfigurationProcessor {
    * Creates a modification time provider based on the config value. The value can be:
    *
    * <ol>
-   *   <li>{@code KEEP_ORIGINAL} to create a provider which keeps original file modification time
    *   <li>{@code EPOCH_PLUS_SECOND} to create a provider which trims file modification time to
    *       EPOCH + 1 second
    *   <li>date in ISO 8601 format
@@ -458,9 +457,6 @@ public class PluginConfigurationProcessor {
       String modificationTime) throws InvalidFilesModificationTimeException {
     try {
       switch (modificationTime) {
-        case "KEEP_ORIGINAL":
-          return new KeepOriginalModificationTimeProvider();
-
         case "EPOCH_PLUS_SECOND":
           Instant epochPlusSecond = Instant.ofEpochSecond(1);
           return (ignored1, ignored2) -> epochPlusSecond;

@@ -35,7 +35,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
@@ -860,16 +859,6 @@ public class PluginConfigurationProcessorTest {
     Assert.assertEquals(
         Instant.ofEpochSecond(1),
         timeProvider.apply(Paths.get("foo"), AbsoluteUnixPath.get("/bar")));
-  }
-
-  @Test
-  public void createLastModifiedTimeProvider_keepOriginal()
-      throws InvalidFilesModificationTimeException, IOException {
-    BiFunction<Path, AbsoluteUnixPath, Instant> timeProvider =
-        PluginConfigurationProcessor.createLastModifiedTimeProvider("KEEP_ORIGINAL");
-    Path file = Files.createTempFile(null, null);
-    Instant expected = Files.getLastModifiedTime(file).toInstant();
-    Assert.assertEquals(expected, timeProvider.apply(file, AbsoluteUnixPath.get("/bar")));
   }
 
   @Test
