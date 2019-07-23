@@ -146,7 +146,7 @@ public class StepsRunner {
 
   public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
-    boolean forcePull = JibSystemProperties.forceLayerDownload();
+    boolean forcePull = JibSystemProperties.alwaysCacheBaseImage();
 
     stepsToRun.add(this::retrieveTargetRegistryCredentials);
     stepsToRun.add(this::authenticatePush);

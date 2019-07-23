@@ -27,12 +27,12 @@ public class JibSystemProperties {
 
   @VisibleForTesting static final String CROSS_REPOSITORY_BLOB_MOUNTS = "jib.blobMounts";
 
+  @VisibleForTesting static final String CACHE_BASE_IMAGE = "jib.cacheBaseImage";
+
   @VisibleForTesting
   public static final String SEND_CREDENTIALS_OVER_HTTP = "sendCredentialsOverHttp";
 
   private static final String SERIALIZE = "jibSerialize";
-
-  private static final String FORCE_LAYER_DOWNLOAD = "jib.forceDownload";
 
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
@@ -93,8 +93,22 @@ public class JibSystemProperties {
     return Strings.isNullOrEmpty(System.getProperty(DISABLE_USER_AGENT));
   }
 
-  public static boolean forceLayerDownload() {
-    return Boolean.getBoolean(FORCE_LAYER_DOWNLOAD);
+  /**
+   * Gets whether to always cache base image layers. Determined from the {@code jib.cacheBaseImage}
+   * system property.
+   *
+   * @return true if the property is set to {@code always}; false otherwise
+   */
+  public static boolean alwaysCacheBaseImage() {
+    String property = System.getProperty(CACHE_BASE_IMAGE, "as-needed");
+    if ("always".equals(property)) {
+      return true;
+    }
+    if ("as-needed".equals(property)) {
+      return false;
+    }
+    throw new IllegalArgumentException(
+        CACHE_BASE_IMAGE + " should be either \"as-needed\" or \"always\" but was: " + property);
   }
 
   /**
