@@ -109,7 +109,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
 
   private final Layer layer;
   private final @Nullable Authorization pullAuthorization;
-  private final BlobExistenceChecker blobChecker;
+  private final BlobExistenceChecker blobExistenceChecker;
 
   ObtainBaseImageLayerStep(
       BuildConfiguration buildConfiguration,
@@ -121,7 +121,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.layer = layer;
     this.pullAuthorization = pullAuthorization;
-    this.blobChecker = blobExistenceChecker;
+    this.blobExistenceChecker = blobExistenceChecker;
   }
 
   @Override
@@ -133,7 +133,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, layerDigest))) {
 
-      Optional<Boolean> layerExists = blobChecker.exists(layerDigest);
+      Optional<Boolean> layerExists = blobExistenceChecker.exists(layerDigest);
       if (layerExists.orElse(false)) {
         return new PreparedLayer.Builder(layer).setStateInTarget(layerExists).build();
       }
