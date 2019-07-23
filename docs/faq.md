@@ -125,6 +125,8 @@ For reproducibility purposes, Jib sets the creation time of the container images
 jib.container.useCurrentTimestamp = true
 ```
 
+*Note that the timestamps of the files in the built image put by Jib will still be 1 second past the epoch.* The file timestamps can be configured using [`<container><filesModificationTime>`](../jib-maven-plugin#container-object) (Maven) or [`container.filesModificationTime`](../jib-gradle-plugin#container-closure) (Gradle).
+
 </p>
 </details>
 

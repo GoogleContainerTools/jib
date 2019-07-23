@@ -258,12 +258,13 @@ Property | Type | Default | Description
 `entrypoint` | list | *None* | The command to start the container with (similar to Docker's [ENTRYPOINT](https://docs.docker.com/engine/reference/builder/#entrypoint) instruction). If set, then `jvmFlags` and `mainClass` are ignored. You may also set `<entrypoint>INHERIT</entrypoint>` to indicate that the `entrypoint` and `args` should be inherited from the base image.\*
 `environment` | map | *None* | Key-value pairs for setting environment variables on the container (similar to Docker's [ENV](https://docs.docker.com/engine/reference/builder/#env) instruction).
 `extraClasspath` | `list` | *None* | Additional paths in the container to prepend to the computed Java classpath.
+`filesModificationTime` | string | `EPOCH_PLUS_SECOND` | Sets the timestamps (last modified time) of files in the image put by Jib. (Note that this does not set the image creation time.) The value should be in ISO 8601 date time format parsable with [`DateTimeFormatter.ISO_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html). Examples are `2019-07-15T10:15:30+09:00`, `2011-12-03T22:42:05Z`, etc. You can also use the keyword `EPOCH_PLUS_SECOND` for the default behavior to set the timestamps to Epoch + 1 second.
 `format` | string | `Docker` | Use `OCI` to build an [OCI container image](https://www.opencontainers.org/).
 `jvmFlags` | list | *None* | Additional flags to pass into the JVM when running your application.
 `labels` | map | *None* | Key-value pairs for applying image metadata (similar to Docker's [LABEL](https://docs.docker.com/engine/reference/builder/#label) instruction).
 `mainClass` | string | *Inferred*\*\* | The main class to launch the application from.
 `ports` | list | *None* | Ports that the container exposes at runtime (similar to Docker's [EXPOSE](https://docs.docker.com/engine/reference/builder/#expose) instruction).
-`useCurrentTimestamp` | boolean | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created.
+`useCurrentTimestamp` | boolean | `false` | By default, Jib wipes all timestamps to guarantee reproducibility. If this parameter is set to `true`, Jib will set the image's creation timestamp to the time of the build, which sacrifices reproducibility for easily being able to tell when your image was created. (Note that this does not affect the file timestamps, which can be set using `filesModificationTime`.)
 `user` | string | *None* | The user and group to run the container as. The value can be a username or UID along with an optional groupname or GID. The following are all valid: `user`, `uid`, `user:group`, `uid:gid`, `uid:group`, `user:gid`.
 `volumes` | list | *None* | Specifies a list of mount points on the container.
 `workingDirectory` | string | *None* | The working directory in the container.
@@ -305,7 +306,8 @@ Property | Type | Default | Description
 `jib.useOnlyProjectCache` | boolean | `false` | If set to true, Jib does not share a cache between different Maven projects (i.e. `jib.baseImageCache` defaults to `[project dir]/target/jib-cache` instead of `[user cache home]/google-cloud-tools-java/jib`).
 `jib.baseImageCache` | string | `[user cache home]/google-cloud-tools-java/jib` | Sets the directory to use for caching base image layers. This cache can (and should) be shared between multiple images.
 `jib.applicationCache` | string | `[project dir]/target/jib-cache` | Sets the directory to use for caching application layers. This cache can be shared between multiple images.
-`jib.console` | `String` | *None* | If set to `plain`, Jib will print plaintext log messages rather than display a progress bar during the build.
+`jib.console` | string | *None* | If set to `plain`, Jib will print plaintext log messages rather than display a progress bar during the build.
+`jib.cacheBaseImage` | string | `as-needed` | Controls downloading and caching base image layers. For building and pushing to a registry, Jib by default (`as-needed`) skips downloading base image layers if the layers already exist in the target registry. `always` makes Jib force downloading layers for caching.
 
 *\* If you configure `args` while `entrypoint` is set to `'INHERIT'`, the configured `args` value will take precedence over the CMD propagated from the base image.*
 
