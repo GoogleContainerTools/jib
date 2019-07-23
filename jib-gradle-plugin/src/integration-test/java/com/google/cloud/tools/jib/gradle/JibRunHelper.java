@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -122,10 +121,7 @@ public class JibRunHelper {
   }
 
   private static String configureInsecureRegistryProperty(String imageReference) {
-    return "-D"
-        + PropertyNames.ALLOW_INSECURE_REGISTRIES
-        + "="
-        + Boolean.toString(imageReference.startsWith("localhost"));
+    return "-Djib.allowInsecureRegistries=" + imageReference.startsWith("localhost");
   }
 
   /**

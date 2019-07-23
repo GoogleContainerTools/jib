@@ -57,7 +57,7 @@ following environment variables:
     `docker run -d -p 9990:5000 registry:2` and use `localhost:9990`.
 
 You will also need Docker installed with the daemon running. Note that the
-integration tests will create local registries on ports 5000 and 9000.
+integration tests will create local registries on ports 5000 and 6000.
 
 # Development Tips
 
