@@ -125,7 +125,7 @@ public class JibRunHelper {
     return "-D"
         + PropertyNames.ALLOW_INSECURE_REGISTRIES
         + "="
-        + (imageReference.startsWith("localhost") ? "true" : "false");
+        + Boolean.toString(imageReference.startsWith("localhost"));
   }
 
   /**
