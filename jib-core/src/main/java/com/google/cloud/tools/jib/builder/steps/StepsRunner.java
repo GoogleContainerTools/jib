@@ -154,7 +154,6 @@ public class StepsRunner {
     stepsToRun.add(this::pullBaseImage);
     stepsToRun.add(() -> pullAndCacheBaseImageLayers(forcePull));
     stepsToRun.add(this::buildAndCacheApplicationLayers);
-    // stepsToRun.add(this::checkBaseImageLayersInTargetRegistry);
     stepsToRun.add(this::buildImage);
 
     // push to registry
