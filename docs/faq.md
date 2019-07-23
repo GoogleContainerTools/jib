@@ -13,7 +13,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 **How-Tos**\
 [How do I set parameters for my image at runtime?](#how-do-i-set-parameters-for-my-image-at-runtime)\
 [Can I define a custom entrypoint?](#can-i-define-a-custom-entrypoint-at-runtime)\
-[I want to containerize a JAR.](#i-want-to-containerize-an-executable-jar)\
+[I want to containerize a JAR.](#i-want-to-containerize-a-jar)\
 [I need to RUN commands like `apt-get`.](#i-need-to-run-commands-like-apt-get)\
 [Can I ADD a custom directory to the image?](#can-i-add-a-custom-directory-to-the-image)\
 [I need to add files generated during the build process to a custom directory on the image.](#i-need-to-add-files-generated-during-the-build-process-to-a-custom-directory-on-the-image)\
