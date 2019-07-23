@@ -15,13 +15,11 @@
  */
 
 package com.google.cloud.tools.jib.api;
-// TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
+import com.google.cloud.tools.jib.docker.DockerClient;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
-import javax.annotation.Nullable;
 
 /** Builds to the Docker daemon. */
 public class DockerDaemonImage {
@@ -51,7 +49,7 @@ public class DockerDaemonImage {
   }
 
   private final ImageReference imageReference;
-  @Nullable private Path dockerExecutable;
+  private Path dockerExecutable = DockerClient.DEFAULT_DOCKER_CLIENT;
   private Map<String, String> dockerEnvironment = Collections.emptyMap();
 
   /** Instantiate with {@link #named}. */
@@ -85,8 +83,8 @@ public class DockerDaemonImage {
     return imageReference;
   }
 
-  Optional<Path> getDockerExecutable() {
-    return Optional.ofNullable(dockerExecutable);
+  Path getDockerExecutable() {
+    return dockerExecutable;
   }
 
   Map<String, String> getDockerEnvironment() {

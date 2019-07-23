@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -26,7 +25,6 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nullable;
 
 /**
  * Builds a JSON string containing files and directories that <a
@@ -64,8 +62,6 @@ public class SkaffoldFilesOutput {
 
   @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
   private static class SkaffoldFilesTemplate {
-
-    @Nullable private final String version = ProjectInfo.VERSION;
 
     private final List<String> build = new ArrayList<>();
 

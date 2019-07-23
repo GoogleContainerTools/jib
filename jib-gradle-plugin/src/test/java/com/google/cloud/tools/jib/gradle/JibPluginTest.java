@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.stream.Collectors;
+import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
@@ -34,6 +35,7 @@ import org.gradle.api.tasks.TaskContainer;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.gradle.testkit.runner.GradleRunner;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Rule;
@@ -54,6 +56,11 @@ public class JibPluginTest {
   }
 
   @Rule public final TemporaryFolder testProjectRoot = new TemporaryFolder();
+
+  @After
+  public void tearDown() {
+    System.clearProperty(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME);
+  }
 
   @Test
   public void testCheckGradleVersion_pass() throws IOException {
@@ -100,6 +107,29 @@ public class JibPluginTest {
                       + " or higher. You can upgrade by running 'gradle wrapper --gradle-version="
                       + JibPlugin.GRADLE_MIN_VERSION.getVersion()
                       + "'."));
+    }
+  }
+
+  @Test
+  public void testCheckJibVersionNames() {
+    // These identifiers will be baked into Skaffold and should not be changed
+    Assert.assertEquals(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME, "jib.requiredVersion");
+    Assert.assertEquals(JibPlugin.CHECK_REQUIRED_VERSION_TASK_NAME, "_skaffoldFailIfJibOutOfDate");
+  }
+
+  @Test
+  public void testCheckJibVersionInvoked() {
+    Project rootProject =
+        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
+    System.setProperty(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME, "10000.0"); // not here yet
+    try {
+      rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
+      Assert.fail("should have failed");
+    } catch (GradleException ex) {
+      // Gradle tests aren't run from a jar and so don't have an identifiable plugin version
+      Assert.assertEquals(
+          "Failed to apply plugin [id 'com.google.cloud.tools.jib']", ex.getMessage());
+      Assert.assertEquals("Could not determine Jib plugin version", ex.getCause().getMessage());
     }
   }
 

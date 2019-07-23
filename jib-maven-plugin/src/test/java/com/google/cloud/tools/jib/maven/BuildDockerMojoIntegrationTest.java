@@ -226,4 +226,33 @@ public class BuildDockerMojoIntegrationTest {
                   + "clean jib:build\" instead of \"mvn clean package jib:build\"?)"));
     }
   }
+
+  @Test
+  public void testExecute_jibRequireVersion_ok() throws VerificationException, IOException {
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+
+    Instant before = Instant.now();
+    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+    // this plugin should match 1.0
+    verifier.setSystemProperty("jib.requiredVersion", "1.0");
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    verifier.executeGoals(Arrays.asList("package", "jib:dockerBuild"));
+    verifier.verifyErrorFreeLog();
+  }
+
+  @Test
+  public void testExecute_jibRequireVersion_fail() throws IOException {
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+
+    try {
+      Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+      verifier.setSystemProperty("jib.requiredVersion", "[,1.0]");
+      verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+      verifier.executeGoals(Arrays.asList("package", "jib:dockerBuild"));
+      Assert.fail();
+    } catch (VerificationException ex) {
+      Assert.assertThat(
+          ex.getMessage(), CoreMatchers.containsString("but is required to be [,1.0]"));
+    }
+  }
 }

@@ -37,7 +37,7 @@ For information about the project, see the [Jib project README](../README.md).
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:1.3.0:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:1.4.0:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -45,7 +45,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:1.3.0:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:1.4.0:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -63,7 +63,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>1.3.0</version>
+        <version>1.4.0</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -221,6 +221,7 @@ Field | Type | Default | Description
 `from` | [`from`](#from-object) | See [`from`](#from-object) | Configures the base image to build your application on top of.
 `container` | [`container`](#container-object) | See [`container`](#container-object) | Configures the container that is run from your image.
 `extraDirectories` | [`extraDirectories`](#extradirectories-object) | See [`extraDirectories`](#extradirectories-object) | Configures the directories used to add arbitrary files to the image.
+`containerizingMode` | string | `exploded` | If set to `packaged`, puts the JAR artifact built at `${project.build.directory}/${project.build.finalName}.jar` (the default location where many JAR-buidiling plugins put a JAR registered as a main artifact, such as the Maven JAR Plugin) into the final image. If set to `exploded` (default), containerizes individual `.class` files and resources files.
 `allowInsecureRegistries` | boolean | `false` | If set to true, Jib ignores HTTPS certificate errors and may fall back to HTTP as a last resort. Leaving this parameter set to `false` is strongly recommended, since HTTP communication is unencrypted and visible to others on the network, and insecure HTTPS is no better than plain HTTP. [If accessing a registry with a self-signed certificate, adding the certificate to your Java runtime's trusted keys](https://github.com/GoogleContainerTools/jib/tree/master/docs/self_sign_cert.md) may be an alternative to enabling this option.
 `skip` | boolean | `false` | If set to true, Jib execution is skipped (useful for multi-module projects). This can also be specified via the `-Djib.skip` command line option.
 

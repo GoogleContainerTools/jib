@@ -38,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -70,6 +71,8 @@ class GradleProjectProperties implements ProjectProperties {
 
   /** Name of the `main` {@link SourceSet} to use as source files. */
   private static final String MAIN_SOURCE_SET_NAME = "main";
+
+  private static final Duration LOGGING_THREAD_SHUTDOWN_TIMEOUT = Duration.ofSeconds(1);
 
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(Project project, Logger logger) {
@@ -240,7 +243,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public void waitForLoggingThread() {
-    singleThreadedExecutor.shutDownAndAwaitTermination();
+    singleThreadedExecutor.shutDownAndAwaitTermination(LOGGING_THREAD_SHUTDOWN_TIMEOUT);
   }
 
   @Override

@@ -36,6 +36,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -229,6 +231,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
 
+  @Component protected PluginDescriptor descriptor;
+
   @Parameter private FromConfiguration from = new FromConfiguration();
 
   @Parameter private ToConfiguration to = new ToConfiguration();
@@ -259,6 +263,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   protected MavenProject getProject() {
     return Preconditions.checkNotNull(project);
+  }
+
+  protected void checkJibVersion() throws MojoExecutionException {
+    Preconditions.checkNotNull(descriptor);
+    MojoCommon.checkJibVersion(descriptor);
   }
 
   /**

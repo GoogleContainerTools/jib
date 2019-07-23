@@ -34,13 +34,12 @@ import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -126,9 +125,7 @@ public class RegistryClient {
         return "";
       }
 
-      StringBuilder userAgentBuilder = new StringBuilder();
-      userAgentBuilder.append("jib");
-      userAgentBuilder.append(" ").append(ProjectInfo.VERSION);
+      StringBuilder userAgentBuilder = new StringBuilder("jib ").append(ProjectInfo.VERSION);
       if (userAgentSuffix != null) {
         userAgentBuilder.append(" ").append(userAgentSuffix);
       }
@@ -263,12 +260,12 @@ public class RegistryClient {
 
   /**
    * @return the {@link RegistryAuthenticator} to authenticate pulls/pushes with the registry, or
-   *     {@code null} if no token authentication is necessary
+   *     {@link Optional#empty()} if no token authentication is necessary
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  @Nullable
-  public RegistryAuthenticator getRegistryAuthenticator() throws IOException, RegistryException {
+  public Optional<RegistryAuthenticator> getRegistryAuthenticator()
+      throws IOException, RegistryException {
     // Gets the WWW-Authenticate header (eg. 'WWW-Authenticate: Bearer
     // realm="https://gcr.io/v2/token",service="gcr.io"')
     return callRegistryEndpoint(
@@ -291,11 +288,7 @@ public class RegistryClient {
       String imageTag, Class<T> manifestTemplateClass) throws IOException, RegistryException {
     ManifestPuller<T> manifestPuller =
         new ManifestPuller<>(registryEndpointRequestProperties, imageTag, manifestTemplateClass);
-    T manifestTemplate = callRegistryEndpoint(manifestPuller);
-    if (manifestTemplate == null) {
-      throw new IllegalStateException("ManifestPuller#handleResponse does not return null");
-    }
-    return manifestTemplate;
+    return callRegistryEndpoint(manifestPuller);
   }
 
   public ManifestTemplate pullManifest(String imageTag) throws IOException, RegistryException {
@@ -313,21 +306,19 @@ public class RegistryClient {
    */
   public DescriptorDigest pushManifest(BuildableManifestTemplate manifestTemplate, String imageTag)
       throws IOException, RegistryException {
-    return Verify.verifyNotNull(
-        callRegistryEndpoint(
-            new ManifestPusher(
-                registryEndpointRequestProperties, manifestTemplate, imageTag, eventHandlers)));
+    return callRegistryEndpoint(
+        new ManifestPusher(
+            registryEndpointRequestProperties, manifestTemplate, imageTag, eventHandlers));
   }
 
   /**
    * @param blobDigest the blob digest to check for
-   * @return the BLOB's {@link BlobDescriptor} if the BLOB exists on the registry, or {@code null}
-   *     if it doesn't
+   * @return the BLOB's {@link BlobDescriptor} if the BLOB exists on the registry, or {@link
+   *     Optional#empty()} if it doesn't
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  @Nullable
-  public BlobDescriptor checkBlob(DescriptorDigest blobDigest)
+  public Optional<BlobDescriptor> checkBlob(DescriptorDigest blobDigest)
       throws IOException, RegistryException {
     BlobChecker blobChecker = new BlobChecker(registryEndpointRequestProperties, blobDigest);
     return callRegistryEndpoint(blobChecker);
@@ -401,8 +392,8 @@ public class RegistryClient {
 
         // POST /v2/<name>/blobs/uploads/?mount={blob.digest}&from={sourceRepository}
         // POST /v2/<name>/blobs/uploads/
-        URL patchLocation = callRegistryEndpoint(blobPusher.initializer());
-        if (patchLocation == null) {
+        Optional<URL> patchLocation = callRegistryEndpoint(blobPusher.initializer());
+        if (!patchLocation.isPresent()) {
           // The BLOB exists already.
           return true;
         }
@@ -411,8 +402,7 @@ public class RegistryClient {
 
         // PATCH <Location> with BLOB
         URL putLocation =
-            callRegistryEndpoint(blobPusher.writer(patchLocation, writtenByteCountListener));
-        Preconditions.checkNotNull(putLocation);
+            callRegistryEndpoint(blobPusher.writer(patchLocation.get(), writtenByteCountListener));
 
         timerEventDispatcher2.lap("pushBlob PUT " + blobDigest);
 
@@ -465,7 +455,6 @@ public class RegistryClient {
    * @throws IOException if communicating with the endpoint fails
    * @throws RegistryException if communicating with the endpoint fails
    */
-  @Nullable
   private <T> T callRegistryEndpoint(RegistryEndpointProvider<T> registryEndpointProvider)
       throws IOException, RegistryException {
     return new RegistryEndpointCaller<>(

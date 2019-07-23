@@ -36,7 +36,6 @@ import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.model.Plugin;
-import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
@@ -64,7 +63,7 @@ import org.eclipse.aether.graph.DependencyFilter;
     name = FilesMojoV2.GOAL_NAME,
     requiresDependencyCollection = ResolutionScope.COMPILE_PLUS_RUNTIME,
     aggregator = true)
-public class FilesMojoV2 extends AbstractMojo {
+public class FilesMojoV2 extends SkaffoldBindingMojo {
 
   @VisibleForTesting static final String GOAL_NAME = "_skaffold-files-v2";
 
@@ -86,6 +85,7 @@ public class FilesMojoV2 extends AbstractMojo {
     Preconditions.checkNotNull(projects);
     Preconditions.checkNotNull(session);
     Preconditions.checkNotNull(projectDependenciesResolver);
+    checkJibVersion();
 
     for (MavenProject project : projects) {
       // Add pom configuration files

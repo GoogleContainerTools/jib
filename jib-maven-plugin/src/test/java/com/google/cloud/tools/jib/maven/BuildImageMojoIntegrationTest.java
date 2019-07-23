@@ -567,6 +567,40 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
+  public void testExecute_jibRequireVersion_ok() throws VerificationException, IOException {
+    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
+
+    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    // properties required to push to :6000 for plain pom.xml
+    verifier.setSystemProperty("jib.to.auth.username", "testuser2");
+    verifier.setSystemProperty("jib.to.auth.password", "testpassword2");
+    verifier.setSystemProperty("sendCredentialsOverHttp", "true");
+    verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
+    // this test plugin should match 1.0
+    verifier.setSystemProperty("jib.requiredVersion", "1.0");
+    verifier.executeGoals(Arrays.asList("package", "jib:build"));
+    verifier.verifyErrorFreeLog();
+  }
+
+  @Test
+  public void testExecute_jibRequireVersion_fail() throws IOException {
+    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
+    try {
+      Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+      // other properties aren't required as this should fail due to jib.requiredVersion
+      verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+      // this plugin should be > 1.0 and so jib:build should fail
+      verifier.setSystemProperty("jib.requiredVersion", "[,1.0]");
+      verifier.executeGoals(Arrays.asList("package", "jib:build"));
+      Assert.fail();
+    } catch (VerificationException ex) {
+      Assert.assertThat(
+          ex.getMessage(), CoreMatchers.containsString("but is required to be [,1.0]"));
+    }
+  }
+
+  @Test
   public void testExecute_jettyServlet25()
       throws VerificationException, IOException, InterruptedException {
     buildAndRunWar("jetty-servlet25:maven", "pom.xml");

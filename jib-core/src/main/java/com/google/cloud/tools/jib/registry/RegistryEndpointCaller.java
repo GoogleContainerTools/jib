@@ -159,12 +159,10 @@ class RegistryEndpointCaller<T> {
    * @throws IOException for most I/O exceptions when making the request
    * @throws RegistryException for known exceptions when interacting with the registry
    */
-  @Nullable
   T call() throws IOException, RegistryException {
     return callWithAllowInsecureRegistryHandling(initialRequestUrl);
   }
 
-  @Nullable
   private T callWithAllowInsecureRegistryHandling(URL url) throws IOException, RegistryException {
     if (!isHttpsProtocol(url) && !allowInsecureRegistries) {
       throw new InsecureRegistryException(url);
@@ -186,7 +184,6 @@ class RegistryEndpointCaller<T> {
     }
   }
 
-  @Nullable
   private T handleUnverifiableServerException(URL url) throws IOException, RegistryException {
     if (!allowInsecureRegistries) {
       throw new InsecureRegistryException(url);
@@ -203,7 +200,6 @@ class RegistryEndpointCaller<T> {
     }
   }
 
-  @Nullable
   private T fallBackToHttp(URL url) throws IOException, RegistryException {
     GenericUrl httpUrl = new GenericUrl(url);
     httpUrl.setScheme("http");
@@ -229,16 +225,14 @@ class RegistryEndpointCaller<T> {
    * Calls the registry endpoint with a certain {@link URL}.
    *
    * @param url the endpoint URL to call
-   * @return an object representing the response, or {@code null}
+   * @return an object representing the response
    * @throws IOException for most I/O exceptions when making the request
    * @throws RegistryException for known exceptions when interacting with the registry
    */
-  @Nullable
   private T call(URL url, Function<URL, Connection> connectionFactory)
       throws IOException, RegistryException {
     // Only sends authorization if using HTTPS or explicitly forcing over HTTP.
-    boolean sendCredentials =
-        isHttpsProtocol(url) || JibSystemProperties.isSendCredentialsOverHttpEnabled();
+    boolean sendCredentials = isHttpsProtocol(url) || JibSystemProperties.sendCredentialsOverHttp();
 
     try (Connection connection = connectionFactory.apply(url)) {
       Request.Builder requestBuilder =

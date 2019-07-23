@@ -167,7 +167,7 @@ public class PluginConfigurationProcessor {
     ImageReference baseImageReference =
         ImageReference.parse(getBaseImage(rawConfiguration, projectProperties));
 
-    if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
+    if (JibSystemProperties.sendCredentialsOverHttp()) {
       projectProperties.log(
           LogEvent.warn(
               "Authentication over HTTP is enabled. It is strongly recommended that you do not "

@@ -1,33 +1,30 @@
 <!--
-Before filing an issue, please check our Frequently Asked Questions:
+Before filing an issue, please reproduce with the latest version of Jib.
 
-    https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md
+If you are encountering errors pulling or pushing to remote registries,
+please check our Frequently Asked Questions before filing an issue:
 
-Please use this template to provide more context for your issue.
+    https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#registry-errors
 -->
+
+**Environment**:
+
+- *Jib version:*
+- *Build tool:* <!-- Maven/Gradle, including version -->
+- *OS:*
 
 **Description of the issue**:
 
-<!--
-If you are encountering errors pulling or pushing to remote registries,
-please check our FAQ before filing an issue.  Specifically:
-
-  - FORBIDDEN or DENIED errors
-    https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied
-
-  - UNAUTHORIZED errors:
-    https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-unauthorized
-
-  - Other errors accessing remote registries
-    https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries
--->
 
 **Expected behavior**:
+
 
 **Steps to reproduce**:
 <!-- Please provide a minimal and precise series of steps -->
 
-**Environment**: <!-- OS, Maven, and other relevant environment information -->
+  1. 
+  2. 
+  3. 
 
 **`jib-maven-plugin` Configuration**: <!-- Delete this section if not used -->
 ```xml
