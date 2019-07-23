@@ -115,7 +115,7 @@ public class BuildImageMojoIntegrationTest {
     }
 
     // Builds twice, and checks if the second build took less time.
-    verifier.addCliOption("-Djib.forceDownload=true");
+    verifier.addCliOption("-Djib.cacheBaseImage=always");
     verifier.executeGoal("jib:build");
     float timeOne = getBuildTimeFromVerifierLog(verifier);
 

@@ -149,8 +149,8 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
         throw new IOException(
             "Cannot run Jib in offline mode; local Jib cache for base image is missing image layer "
                 + layerDigest
-                + ". Rerun Jib in online mode with \"-Djib.forceDownload=true\" to re-download the "
-                + "base image layers.");
+                + ". Rerun Jib in online mode with \"-Djib.cacheBaseImage=always\" to re-download "
+                + "the base image layers.");
       }
 
       RegistryClient registryClient =

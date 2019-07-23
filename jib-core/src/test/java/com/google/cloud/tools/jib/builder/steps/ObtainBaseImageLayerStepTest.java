@@ -168,7 +168,7 @@ public class ObtainBaseImageLayerStepTest {
       Assert.assertEquals(
           "Cannot run Jib in offline mode; local Jib cache for base image is missing image layer "
               + "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb. Rerun "
-              + "Jib in online mode with \"-Djib.forceDownload=true\" to re-download the base "
+              + "Jib in online mode with \"-Djib.cacheBaseImage=always\" to re-download the base "
               + "image layers.",
           ex.getMessage());
     }
