@@ -187,12 +187,12 @@ public class PluginConfigurationProcessor {
             inferredAuthProvider,
             rawConfiguration.getFromCredHelper().orElse(null));
 
-    BiFunction<Path, AbsoluteUnixPath, Instant> modifiedTimeProvider =
-        createLastModifiedTimeProvider(rawConfiguration.getFilesModificationTime());
+    BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
+        createModificationTimeProvider(rawConfiguration.getFilesModificationTime());
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(baseImage)
             .setAppRoot(getAppRootChecked(rawConfiguration, projectProperties))
-            .setLastModifiedTimeProvider(modifiedTimeProvider);
+            .setModificationTimeProvider(modificationTimeProvider);
     JibContainerBuilder jibContainerBuilder =
         projectProperties
             .createContainerBuilder(
@@ -219,7 +219,9 @@ public class PluginConfigurationProcessor {
       if (Files.exists(directory)) {
         jibContainerBuilder.addLayer(
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-                directory, rawConfiguration.getExtraDirectoryPermissions(), modifiedTimeProvider));
+                directory,
+                rawConfiguration.getExtraDirectoryPermissions(),
+                modificationTimeProvider));
       }
     }
 
@@ -453,7 +455,7 @@ public class PluginConfigurationProcessor {
    * @throws InvalidFilesModificationTimeException if the config value is not in ISO 8601 format
    */
   @VisibleForTesting
-  static BiFunction<Path, AbsoluteUnixPath, Instant> createLastModifiedTimeProvider(
+  static BiFunction<Path, AbsoluteUnixPath, Instant> createModificationTimeProvider(
       String modificationTime) throws InvalidFilesModificationTimeException {
     try {
       switch (modificationTime) {

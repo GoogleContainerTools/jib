@@ -29,7 +29,7 @@ public class LayerEntry {
   private final Path sourceFile;
   private final AbsoluteUnixPath extractionPath;
   private final FilePermissions permissions;
-  private final Instant lastModifiedTime;
+  private final Instant modificationTime;
 
   /**
    * Instantiates with a source file and the path to place the source file in the container file
@@ -55,17 +55,17 @@ public class LayerEntry {
    * @param extractionPath the path in the container file system corresponding to the {@code
    *     sourceFile}
    * @param permissions the file permissions on the container
-   * @param lastModifiedTime the file modification time
+   * @param modificationTime the file modification time
    */
   public LayerEntry(
       Path sourceFile,
       AbsoluteUnixPath extractionPath,
       FilePermissions permissions,
-      Instant lastModifiedTime) {
+      Instant modificationTime) {
     this.sourceFile = sourceFile;
     this.extractionPath = extractionPath;
     this.permissions = permissions;
-    this.lastModifiedTime = lastModifiedTime;
+    this.modificationTime = modificationTime;
   }
 
   /**
@@ -73,8 +73,8 @@ public class LayerEntry {
    *
    * @return the modification time
    */
-  public Instant getLastModifiedTime() {
-    return lastModifiedTime;
+  public Instant getModificationTime() {
+    return modificationTime;
   }
 
   /**
@@ -118,11 +118,11 @@ public class LayerEntry {
     return sourceFile.equals(otherLayerEntry.sourceFile)
         && extractionPath.equals(otherLayerEntry.extractionPath)
         && Objects.equals(permissions, otherLayerEntry.permissions)
-        && Objects.equals(lastModifiedTime, otherLayerEntry.lastModifiedTime);
+        && Objects.equals(modificationTime, otherLayerEntry.modificationTime);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceFile, extractionPath, permissions, lastModifiedTime);
+    return Objects.hash(sourceFile, extractionPath, permissions, modificationTime);
   }
 }

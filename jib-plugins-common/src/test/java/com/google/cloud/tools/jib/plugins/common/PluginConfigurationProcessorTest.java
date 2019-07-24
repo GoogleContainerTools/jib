@@ -852,30 +852,30 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void createLastModifiedTimeProvider_epochPlusSecond()
+  public void createModificationTimeProvider_epochPlusSecond()
       throws InvalidFilesModificationTimeException {
     BiFunction<Path, AbsoluteUnixPath, Instant> timeProvider =
-        PluginConfigurationProcessor.createLastModifiedTimeProvider("EPOCH_PLUS_SECOND");
+        PluginConfigurationProcessor.createModificationTimeProvider("EPOCH_PLUS_SECOND");
     Assert.assertEquals(
         Instant.ofEpochSecond(1),
         timeProvider.apply(Paths.get("foo"), AbsoluteUnixPath.get("/bar")));
   }
 
   @Test
-  public void createLastModifiedTimeProvider_timestamp()
+  public void createModificationTimeProvider_isoDateTimeValue()
       throws InvalidFilesModificationTimeException {
     BiFunction<Path, AbsoluteUnixPath, Instant> timeProvider =
-        PluginConfigurationProcessor.createLastModifiedTimeProvider("2011-12-03T10:15:30+09:00");
+        PluginConfigurationProcessor.createModificationTimeProvider("2011-12-03T10:15:30+09:00");
     Instant expected = DateTimeFormatter.ISO_DATE_TIME.parse("2011-12-03T01:15:30Z", Instant::from);
     Assert.assertEquals(
         expected, timeProvider.apply(Paths.get("foo"), AbsoluteUnixPath.get("/bar")));
   }
 
   @Test
-  public void createLastModifiedTimeProvider_invalidTimestamp() {
+  public void createModificationTimeProvider_invalidValue() {
     try {
       BiFunction<Path, AbsoluteUnixPath, Instant> timeProvider =
-          PluginConfigurationProcessor.createLastModifiedTimeProvider("invalid format");
+          PluginConfigurationProcessor.createModificationTimeProvider("invalid format");
       timeProvider.apply(Paths.get("foo"), AbsoluteUnixPath.get("/bar"));
       Assert.fail();
     } catch (InvalidFilesModificationTimeException ex) {

@@ -75,7 +75,8 @@ public class MavenRawConfigurationTest {
         .thenReturn(new HashSet<>(Arrays.asList("additional", "tags")));
     Mockito.when(jibPluginConfiguration.getUseCurrentTimestamp()).thenReturn(true);
     Mockito.when(jibPluginConfiguration.getUser()).thenReturn("admin:wheel");
-    Mockito.when(jibPluginConfiguration.getFilesModificationTime()).thenReturn("modification time");
+    Mockito.when(jibPluginConfiguration.getFilesModificationTime())
+        .thenReturn("2011-12-03T22:42:05Z");
 
     MavenRawConfiguration rawConfiguration = new MavenRawConfiguration(jibPluginConfiguration);
 
@@ -103,7 +104,7 @@ public class MavenRawConfigurationTest {
         new HashSet<>(Arrays.asList("additional", "tags")), rawConfiguration.getToTags());
     Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
-    Assert.assertEquals("modification time", rawConfiguration.getFilesModificationTime());
+    Assert.assertEquals("2011-12-03T22:42:05Z", rawConfiguration.getFilesModificationTime());
 
     Mockito.verifyNoMoreInteractions(eventHandlers);
   }

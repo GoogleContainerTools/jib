@@ -72,6 +72,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class MavenProjectPropertiesTest {
 
   private static final ContainerizingMode DEFAULT_CONTAINERIZING_MODE = ContainerizingMode.EXPLODED;
+  private static final Instant SAMPLE_FILE_MODIFICATION_TIME = Instant.ofEpochSecond(32);
 
   /** Helper for reading back layers in a {@code BuildConfiguration}. */
   private static class ContainerBuilderLayers {
@@ -125,7 +126,7 @@ public class MavenProjectPropertiesTest {
     for (LayerConfiguration layer : layers) {
       for (LayerEntry entry : layer.getLayerEntries()) {
         String message = "wrong time: " + entry.getSourceFile() + "-->" + entry.getExtractionPath();
-        Assert.assertEquals(message, instant, entry.getLastModifiedTime());
+        Assert.assertEquals(message, instant, entry.getModificationTime());
       }
     }
   }
@@ -379,7 +380,7 @@ public class MavenProjectPropertiesTest {
   public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration("/app");
+    BuildConfiguration configuration = setupBuildConfiguration("/app", DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
 
     Path dependenciesPath = getResource("maven/application/dependencies");
@@ -415,16 +416,17 @@ public class MavenProjectPropertiesTest {
             applicationDirectory.resolve("output/some.class")),
         layers.classesLayers.get(0).getLayerEntries());
 
-    assertModificationTime(Instant.ofEpochSecond(32), layers.dependenciesLayers);
-    assertModificationTime(Instant.ofEpochSecond(32), layers.snapshotsLayers);
-    assertModificationTime(Instant.ofEpochSecond(32), layers.resourcesLayers);
-    assertModificationTime(Instant.ofEpochSecond(32), layers.classesLayers);
+    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.dependenciesLayers);
+    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.snapshotsLayers);
+    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.resourcesLayers);
+    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.classesLayers);
   }
 
   @Test
   public void testCreateContainerBuilder_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
+    BuildConfiguration configuration =
+        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
     assertNonDefaultAppRoot(configuration);
   }
 
@@ -489,7 +491,8 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(outputPath.toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
+    BuildConfiguration configuration =
+        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertSourcePathsUnordered(
         ImmutableList.of(outputPath.resolve("final-name/WEB-INF/lib/dependency-1.0.0.jar")),
@@ -552,7 +555,8 @@ public class MavenProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     // Test when the default packaging is set
     Mockito.when(mockMavenProject.getPackaging()).thenReturn("jar");
-    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
+    BuildConfiguration configuration =
+        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
     assertNonDefaultAppRoot(configuration);
   }
 
@@ -564,7 +568,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration("/anything"); // should pass
+    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -575,7 +579,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration("/anything"); // should pass
+    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -586,7 +590,7 @@ public class MavenProjectPropertiesTest {
     Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
     Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
 
-    setupBuildConfiguration("/anything"); // should pass
+    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -665,18 +669,13 @@ public class MavenProjectPropertiesTest {
             newArtifact("com.test", "projectC", "3.0").getFile().toPath()));
   }
 
-  private BuildConfiguration setupBuildConfiguration(String appRoot)
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-    return setupBuildConfiguration(appRoot, DEFAULT_CONTAINERIZING_MODE);
-  }
-
   private BuildConfiguration setupBuildConfiguration(
       String appRoot, ContainerizingMode containerizingMode)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
             .setAppRoot(AbsoluteUnixPath.get(appRoot))
-            .setLastModifiedTimeProvider((ignored1, ignored2) -> Instant.ofEpochSecond(32));
+            .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
     JibContainerBuilder JibContainerBuilder =
         new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
             .createContainerBuilder(javaContainerBuilder, containerizingMode);

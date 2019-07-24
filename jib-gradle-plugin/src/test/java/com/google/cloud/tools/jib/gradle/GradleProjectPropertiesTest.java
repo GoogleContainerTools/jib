@@ -91,6 +91,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class GradleProjectPropertiesTest {
 
   private static final ContainerizingMode DEFAULT_CONTAINERIZING_MODE = ContainerizingMode.EXPLODED;
+  private static final Instant SAMPLE_FILE_MODIFICATION_TIME = Instant.ofEpochSecond(32);
 
   /** Implementation of {@link FileCollection} that just holds a set of {@link File}s. */
   private static class TestFileCollection extends AbstractFileCollection {
@@ -168,7 +169,7 @@ public class GradleProjectPropertiesTest {
     for (LayerConfiguration layer : layers) {
       for (LayerEntry entry : layer.getLayerEntries()) {
         String message = "wrong time: " + entry.getSourceFile() + "-->" + entry.getExtractionPath();
-        Assert.assertEquals(message, instant, entry.getLastModifiedTime());
+        Assert.assertEquals(message, instant, entry.getModificationTime());
       }
     }
   }
@@ -348,7 +349,7 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration("/app");
+    BuildConfiguration configuration = setupBuildConfiguration("/app", DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
 
     Path applicationDirectory = getResource("gradle/application");
@@ -377,10 +378,10 @@ public class GradleProjectPropertiesTest {
             applicationDirectory.resolve("classes/some.class")),
         layers.classesLayerEntries.get(0).getLayerEntries());
 
-    assertModificationTime(Instant.ofEpochSecond(32), layers.snapshotsLayerEntries);
-    assertModificationTime(Instant.ofEpochSecond(32), layers.dependenciesLayerEntries);
-    assertModificationTime(Instant.ofEpochSecond(32), layers.resourcesLayerEntries);
-    assertModificationTime(Instant.ofEpochSecond(32), layers.classesLayerEntries);
+    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.snapshotsLayerEntries);
+    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.dependenciesLayerEntries);
+    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.resourcesLayerEntries);
+    assertModificationTime(SAMPLE_FILE_MODIFICATION_TIME, layers.classesLayerEntries);
   }
 
   @Test
@@ -396,7 +397,8 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
+    BuildConfiguration configuration =
+        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
 
     assertExtractionPathsUnordered(
@@ -426,7 +428,7 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_defaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     BuildConfiguration configuration =
-        setupBuildConfiguration(JavaContainerBuilder.DEFAULT_APP_ROOT);
+        setupBuildConfiguration(JavaContainerBuilder.DEFAULT_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -456,7 +458,8 @@ public class GradleProjectPropertiesTest {
     Path webAppDirectory = getResource("gradle/webapp");
     setUpWarProject(webAppDirectory);
 
-    BuildConfiguration configuration = setupBuildConfiguration("/my/app");
+    BuildConfiguration configuration =
+        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertSourcePathsUnordered(
         ImmutableList.of(
@@ -522,7 +525,8 @@ public class GradleProjectPropertiesTest {
     setUpWarProject(getResource("gradle/webapp"));
 
     BuildConfiguration configuration =
-        setupBuildConfiguration(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT);
+        setupBuildConfiguration(
+            JavaContainerBuilder.DEFAULT_WEB_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertExtractionPathsUnordered(
         Collections.singletonList("/jetty/webapps/ROOT/WEB-INF/lib/dependency-1.0.0.jar"),
@@ -557,7 +561,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration("/anything"); // should pass
+    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -565,7 +569,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration("/anything"); // should pass
+    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -573,12 +577,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration("/anything"); // should pass
-  }
-
-  private BuildConfiguration setupBuildConfiguration(String appRoot)
-      throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
-    return setupBuildConfiguration(appRoot, DEFAULT_CONTAINERIZING_MODE);
+    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   private BuildConfiguration setupBuildConfiguration(
@@ -587,7 +586,7 @@ public class GradleProjectPropertiesTest {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
             .setAppRoot(AbsoluteUnixPath.get(appRoot))
-            .setLastModifiedTimeProvider((ignored1, ignored2) -> Instant.ofEpochSecond(32));
+            .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
     JibContainerBuilder jibContainerBuilder =
         new GradleProjectProperties(mockProject, mockLogger)
             .createContainerBuilder(javaContainerBuilder, containerizingMode);

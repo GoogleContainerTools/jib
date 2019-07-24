@@ -167,9 +167,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
     } catch (InvalidFilesModificationTimeException ex) {
       throw new GradleException(
-          "container.filesModificationTime should be in ISO 8601 date time format (parsable "
-              + "with DateTimeFormatter.ISO_DATE_TIME), or special keyword \"EPOCH_PLUS_SECOND\" "
-              + "(default): "
+          "container.filesModificationTime should be an ISO 8601 date-time (see "
+              + "DateTimeFormatter.ISO_DATE_TIME) or special keyword \"EPOCH_PLUS_SECOND\": "
               + ex.getInvalidFilesModificationTime(),
           ex);
 

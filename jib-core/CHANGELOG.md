@@ -42,7 +42,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Overloads for `LayerConfiguration#addEntryRecursive` that take providers allowing for setting file permissions/file modification timestamps on a per-file basis ([#1607](https://github.com/GoogleContainerTools/jib/issues/1607))
+- Overloads for `LayerConfiguration#addEntryRecursive` that take providers allowing for setting file permissions/file modification time on a per-file basis ([#1607](https://github.com/GoogleContainerTools/jib/issues/1607))
 
 ### Changed
 

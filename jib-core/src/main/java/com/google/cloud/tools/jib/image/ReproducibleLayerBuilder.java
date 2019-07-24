@@ -59,7 +59,7 @@ public class ReproducibleLayerBuilder {
     /**
      * Adds a {@link TarArchiveEntry} if its extraction path does not exist yet. Also adds all of
      * the parent directories on the extraction path, if the parent does not exist. Parent will have
-     * modified time to set to {@link LayerConfiguration#DEFAULT_MODIFIED_TIME}.
+     * modification time to set to {@link LayerConfiguration#DEFAULT_MODIFICATION_TIME}.
      *
      * @param tarArchiveEntry the {@link TarArchiveEntry}
      */
@@ -73,7 +73,7 @@ public class ReproducibleLayerBuilder {
       Path namePath = Paths.get(tarArchiveEntry.getName());
       if (namePath.getParent() != namePath.getRoot()) {
         TarArchiveEntry dir = new TarArchiveEntry(DIRECTORY_FILE, namePath.getParent().toString());
-        dir.setModTime(LayerConfiguration.DEFAULT_MODIFIED_TIME.toEpochMilli());
+        dir.setModTime(LayerConfiguration.DEFAULT_MODIFICATION_TIME.toEpochMilli());
         add(dir);
       }
 
@@ -113,7 +113,7 @@ public class ReproducibleLayerBuilder {
       // Sets the entry's permissions by masking out the permission bits from the entry's mode (the
       // lowest 9 bits) then using a bitwise OR to set them to the layerEntry's permissions.
       entry.setMode((entry.getMode() & ~0777) | layerEntry.getPermissions().getPermissionBits());
-      entry.setModTime(layerEntry.getLastModifiedTime().toEpochMilli());
+      entry.setModTime(layerEntry.getModificationTime().toEpochMilli());
 
       uniqueTarArchiveEntries.add(entry);
     }
@@ -127,7 +127,7 @@ public class ReproducibleLayerBuilder {
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
     for (TarArchiveEntry entry : sortedFilesystemEntries) {
       // Strips out all non-reproducible elements from tar archive entries.
-      // Modified time is configured per entry
+      // Modification time is configured per entry
       entry.setGroupId(0);
       entry.setUserId(0);
       entry.setUserName("");
