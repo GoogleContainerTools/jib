@@ -678,7 +678,7 @@ public class MavenProjectPropertiesTest {
             .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
     JibContainerBuilder JibContainerBuilder =
         new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
-            .createContainerBuilder(javaContainerBuilder, containerizingMode);
+            .createJibContainerBuilder(javaContainerBuilder, containerizingMode);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         JibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))

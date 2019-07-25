@@ -195,7 +195,7 @@ public class PluginConfigurationProcessor {
             .setModificationTimeProvider(modificationTimeProvider);
     JibContainerBuilder jibContainerBuilder =
         projectProperties
-            .createContainerBuilder(
+            .createJibContainerBuilder(
                 javaContainerBuilder,
                 getContainerizingModeChecked(rawConfiguration, projectProperties))
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))

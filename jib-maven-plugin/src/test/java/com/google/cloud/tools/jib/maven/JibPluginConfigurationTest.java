@@ -119,10 +119,10 @@ public class JibPluginConfigurationTest {
     Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
     sessionProperties.put("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
-    sessionProperties.put("jib.container.workingDirectory", "working directory");
-    Assert.assertEquals("working directory", testPluginConfiguration.getWorkingDirectory());
-    sessionProperties.put("jib.container.filesModificationTime", "modification time");
-    Assert.assertEquals("modification time", testPluginConfiguration.getFilesModificationTime());
+    sessionProperties.put("jib.container.workingDirectory", "/working/directory");
+    Assert.assertEquals("/working/directory", testPluginConfiguration.getWorkingDirectory());
+    sessionProperties.put("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
+    Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getFilesModificationTime());
     sessionProperties.put("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
         ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
@@ -188,10 +188,12 @@ public class JibPluginConfigurationTest {
     Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
     project.getProperties().setProperty("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
-    project.getProperties().setProperty("jib.container.workingDirectory", "working directory");
-    Assert.assertEquals("working directory", testPluginConfiguration.getWorkingDirectory());
-    project.getProperties().setProperty("jib.container.filesModificationTime", "modification time");
-    Assert.assertEquals("modification time", testPluginConfiguration.getFilesModificationTime());
+    project.getProperties().setProperty("jib.container.workingDirectory", "/working/directory");
+    Assert.assertEquals("/working/directory", testPluginConfiguration.getWorkingDirectory());
+    project
+        .getProperties()
+        .setProperty("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
+    Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getFilesModificationTime());
     project.getProperties().setProperty("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
         ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());

@@ -62,7 +62,7 @@ public interface ProjectProperties {
    * @return a {@link JibContainerBuilder} with classes, resources, and dependencies added to it
    * @throws IOException if there is a problem walking the project files
    */
-  JibContainerBuilder createContainerBuilder(
+  JibContainerBuilder createJibContainerBuilder(
       JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode)
       throws IOException;
 

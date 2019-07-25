@@ -389,7 +389,7 @@ public class GradleProjectPropertiesTest {
     Path nonexistentFile = Paths.get("/nonexistent/file");
     Mockito.when(mockMainSourceSetOutput.getClassesDirs())
         .thenReturn(new TestFileCollection(ImmutableSet.of(nonexistentFile)));
-    gradleProjectProperties.createContainerBuilder(
+    gradleProjectProperties.createJibContainerBuilder(
         JavaContainerBuilder.from(RegistryImage.named("base")), DEFAULT_CONTAINERIZING_MODE);
     Mockito.verify(mockLogger).warn("No classes files were found - did you compile your project?");
   }
@@ -589,7 +589,7 @@ public class GradleProjectPropertiesTest {
             .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
     JibContainerBuilder jibContainerBuilder =
         new GradleProjectProperties(mockProject, mockLogger)
-            .createContainerBuilder(javaContainerBuilder, containerizingMode);
+            .createJibContainerBuilder(javaContainerBuilder, containerizingMode);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         jibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))

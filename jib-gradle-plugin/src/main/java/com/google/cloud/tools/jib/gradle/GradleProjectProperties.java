@@ -131,7 +131,7 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public JibContainerBuilder createContainerBuilder(
+  public JibContainerBuilder createJibContainerBuilder(
       JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode) {
     try {
       if (isWarProject()) {
@@ -228,7 +228,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public List<Path> getClassFiles() throws IOException {
-    // TODO: Consolidate with createContainerBuilder
+    // TODO: Consolidate with createJibContainerBuilder
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);

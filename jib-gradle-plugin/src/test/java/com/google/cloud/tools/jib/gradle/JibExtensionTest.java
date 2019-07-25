@@ -299,9 +299,9 @@ public class JibExtensionTest {
     Assert.assertTrue(testJibExtension.getContainer().getUseCurrentTimestamp());
     System.setProperty("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testJibExtension.getContainer().getUser());
-    System.setProperty("jib.container.filesModificationTime", "modification time");
+    System.setProperty("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
     Assert.assertEquals(
-        "modification time", testJibExtension.getContainer().getFilesModificationTime());
+        "2011-12-03T22:42:05Z", testJibExtension.getContainer().getFilesModificationTime());
     System.setProperty("jib.containerizingMode", "packaged");
     Assert.assertEquals("packaged", testJibExtension.getContainerizingMode());
     System.setProperty("jib.extraDirectories.paths", "/foo,/bar/baz");

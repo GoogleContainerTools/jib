@@ -105,7 +105,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");
     Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
     Mockito.when(
-            projectProperties.createContainerBuilder(
+            projectProperties.createJibContainerBuilder(
                 Mockito.any(JavaContainerBuilder.class), Mockito.any(ContainerizingMode.class)))
         .thenReturn(Jib.from("base"));
     Mockito.when(projectProperties.isOffline()).thenReturn(false);

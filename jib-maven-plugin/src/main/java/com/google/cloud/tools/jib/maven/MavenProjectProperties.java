@@ -182,7 +182,7 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public JibContainerBuilder createContainerBuilder(
+  public JibContainerBuilder createJibContainerBuilder(
       JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode)
       throws IOException {
     try {
