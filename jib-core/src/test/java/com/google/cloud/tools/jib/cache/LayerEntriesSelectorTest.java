@@ -133,23 +133,37 @@ public class LayerEntriesSelectorTest {
   }
 
   @Test
-  public void testGenerateSelector_fileModified() throws IOException {
+  public void testGenerateSelector_sourceModificationTimeChanged() throws IOException {
     Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
-    Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
     LayerEntry layerEntry = defaultLayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
     DescriptorDigest expectedSelector =
         LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry));
 
-    // Verify that changing modified time generates a different selector
+    // Verify that changing source modification time generates a different selector
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.ofEpochSecond(1)));
     Assert.assertNotEquals(
         expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry)));
 
-    // Verify that changing modified time back generates same selector
+    // Verify that changing source modification time back generates same selector
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
     Assert.assertEquals(
         expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry)));
+  }
+
+  @Test
+  public void testGenerateSelector_targetModificationTimeChanged() throws IOException {
+    Path layerFile = temporaryFolder.newFile().toPath();
+    AbsoluteUnixPath pathInContainer = AbsoluteUnixPath.get("/bar");
+    FilePermissions permissions = FilePermissions.fromOctalString("111");
+
+    LayerEntry layerEntry1 = new LayerEntry(layerFile, pathInContainer, permissions, Instant.now());
+    LayerEntry layerEntry2 = new LayerEntry(layerFile, pathInContainer, permissions, Instant.EPOCH);
+
+    // Verify that different target modification times generate different selectors
+    Assert.assertNotEquals(
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry1)),
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry2)));
   }
 
   @Test
