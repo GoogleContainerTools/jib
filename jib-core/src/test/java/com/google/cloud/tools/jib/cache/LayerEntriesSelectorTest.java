@@ -134,7 +134,7 @@ public class LayerEntriesSelectorTest {
 
   @Test
   public void testGenerateSelector_sourceModificationTimeChanged() throws IOException {
-    Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
+    Path layerFile = temporaryFolder.newFile().toPath();
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
     LayerEntry layerEntry = defaultLayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
     DescriptorDigest expectedSelector =
