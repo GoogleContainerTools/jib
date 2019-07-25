@@ -69,6 +69,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
             .newTargetImageRegistryClientFactory()
             .setAuthorization(pushAuthorization)
             .newRegistryClient();
+    // TODO: also check if cross-repo blob mount is possible.
     BlobExistenceChecker blobExistenceChecker =
         digest -> Optional.of(targetRegistryClient.checkBlob(digest).isPresent());
 
