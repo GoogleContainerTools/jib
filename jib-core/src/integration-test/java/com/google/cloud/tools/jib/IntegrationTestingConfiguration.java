@@ -22,13 +22,19 @@ import org.junit.Assert;
 /** Configuration for integration tests. */
 public class IntegrationTestingConfiguration {
 
-  public static String getGCPProject() {
+  public static String getTestRepositoryLocation() {
     String projectId = System.getenv("JIB_INTEGRATION_TESTING_PROJECT");
-    if (Strings.isNullOrEmpty(projectId)) {
-      Assert.fail(
-          "Must set environment variable JIB_INTEGRATION_TESTING_PROJECT to the GCP project to use for integration testing.");
+    if (!Strings.isNullOrEmpty(projectId)) {
+      return "gcr.io/" + projectId;
     }
-    return projectId;
+    String location = System.getenv("JIB_INTEGRATION_TESTING_LOCATION");
+    if (Strings.isNullOrEmpty(location)) {
+      Assert.fail(
+          "Must set environment variable JIB_INTEGRATION_TESTING_PROJECT to the "
+              + "GCP project to use for integration testing or "
+              + "JIB_INTEGRATION_TESTING_LOCATION to a suitable registry/repository location.");
+    }
+    return location;
   }
 
   private IntegrationTestingConfiguration() {}
