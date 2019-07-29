@@ -59,7 +59,7 @@ public class ReproducibleLayerBuilder {
     /**
      * Adds a {@link TarArchiveEntry} if its extraction path does not exist yet. Also adds all of
      * the parent directories on the extraction path, if the parent does not exist. Parent will have
-     * modification time to set to {@link LayerConfiguration#DEFAULT_MODIFICATION_TIME}.
+     * modification time set to {@link LayerConfiguration#DEFAULT_MODIFICATION_TIME}.
      *
      * @param tarArchiveEntry the {@link TarArchiveEntry}
      */
