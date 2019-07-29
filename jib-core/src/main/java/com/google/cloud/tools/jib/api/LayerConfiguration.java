@@ -186,7 +186,7 @@ public class LayerConfiguration {
       return addEntryRecursive(
           sourceFile,
           pathInContainer,
-          DEFAULT_FILE_PERMISSIONS_PROVIDER,
+          filePermissionProvider,
           DEFAULT_MODIFICATION_TIME_PROVIDER);
     }
 
