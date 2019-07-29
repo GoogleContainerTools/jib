@@ -184,10 +184,7 @@ public class LayerConfiguration {
         BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider)
         throws IOException {
       return addEntryRecursive(
-          sourceFile,
-          pathInContainer,
-          filePermissionProvider,
-          DEFAULT_MODIFICATION_TIME_PROVIDER);
+          sourceFile, pathInContainer, filePermissionProvider, DEFAULT_MODIFICATION_TIME_PROVIDER);
     }
 
     /**
