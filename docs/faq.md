@@ -128,7 +128,7 @@ jib.container.useCurrentTimestamp = true
 </p>
 </details>
 
-Note that the modification time of the files in the built image put by Jib will still be 1 second past the epoch. The file modification time can be configured using [`<container><filesModificationTime>`](../jib-maven-plugin#container-object) (Maven) or [`container.filesModificationTime`](../jib-gradle-plugin#container-closure) (Gradle).
+Note that the modification time of the files in the built image put by Jib will still be 1 second past the epoch. The file modification time can be configured using [`<container><filesModificationTime>`](../jib-maven-plugin#container-object) (Maven) or [`jib.container.filesModificationTime`](../jib-gradle-plugin#container-closure) (Gradle).
 
 #### Please tell me more about reproducibility!
 
