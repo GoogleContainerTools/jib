@@ -187,6 +187,28 @@ public class DockerClientTest {
   }
 
   @Test
+  public void testSave_fail() throws InterruptedException {
+    DockerClient testDockerClient =
+        new DockerClient(
+            subcommand -> {
+              Assert.assertEquals(Arrays.asList("save", "testimage", "-o", "out.tar"), subcommand);
+              return mockProcessBuilder;
+            });
+    Mockito.when(mockProcess.waitFor()).thenReturn(1);
+
+    Mockito.when(mockProcess.getErrorStream())
+        .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
+
+    try {
+      testDockerClient.save(ImageReference.of(null, "testimage", null), Paths.get("out.tar"));
+      Assert.fail("docker save should have failed");
+
+    } catch (IOException ex) {
+      Assert.assertEquals("'docker save' command failed with output: error", ex.getMessage());
+    }
+  }
+
+  @Test
   public void testTag() throws InterruptedException, IOException, InvalidImageReferenceException {
     DockerClient testDockerClient =
         new DockerClient(
