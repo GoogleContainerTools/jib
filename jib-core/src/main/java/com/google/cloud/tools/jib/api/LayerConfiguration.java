@@ -99,23 +99,40 @@ public class LayerConfiguration {
      */
     public Builder addEntry(
         Path sourceFile, AbsoluteUnixPath pathInContainer, FilePermissions permissions) {
-      return addEntry(
-          sourceFile,
-          pathInContainer,
-          permissions,
-          DEFAULT_MODIFIED_TIME_PROVIDER.apply(sourceFile, pathInContainer));
+      return addEntry(sourceFile, pathInContainer, permissions, DEFAULT_MODIFICATION_TIME);
     }
 
     /**
-     * Adds an entry to the layer with the given permissions. Only adds the single source file to
-     * the exact path in the container file system. See {@link Builder#addEntry(Path,
+     * Adds an entry to the layer with the given file modification time. Only adds the single source
+     * file to the exact path in the container file system. See {@link Builder#addEntry(Path,
      * AbsoluteUnixPath)} for more information.
      *
      * @param sourceFile the source file to add to the layer
      * @param pathInContainer the path in the container file system corresponding to the {@code
      *     sourceFile}
+     * @param modificationTime the file modification time
+     * @return this
+     * @see Builder#addEntry(Path, AbsoluteUnixPath)
+     */
+    public Builder addEntry(
+        Path sourceFile, AbsoluteUnixPath pathInContainer, Instant modificationTime) {
+      return addEntry(
+          sourceFile,
+          pathInContainer,
+          DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(sourceFile, pathInContainer),
+          modificationTime);
+    }
+
+    /**
+     * Adds an entry to the layer with the given permissions and file modification time. Only adds
+     * the single source file to the exact path in the container file system. See {@link
+     * Builder#addEntry(Path, AbsoluteUnixPath)} for more information.
+     *
+     * @param sourceFile the source file to add to the layer
+     * @param pathInContainer the path in the container file system corresponding to the {@code
+     *     sourceFile}
      * @param permissions the file permissions on the container
-     * @param lastModifiedTime the file modification timestamp
+     * @param modificationTime the file modification time
      * @return this
      * @see Builder#addEntry(Path, AbsoluteUnixPath)
      * @see FilePermissions#DEFAULT_FILE_PERMISSIONS
@@ -125,8 +142,8 @@ public class LayerConfiguration {
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
         FilePermissions permissions,
-        Instant lastModifiedTime) {
-      return addEntry(new LayerEntry(sourceFile, pathInContainer, permissions, lastModifiedTime));
+        Instant modificationTime) {
+      return addEntry(new LayerEntry(sourceFile, pathInContainer, permissions, modificationTime));
     }
 
     /**
@@ -167,7 +184,7 @@ public class LayerConfiguration {
         BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider)
         throws IOException {
       return addEntryRecursive(
-          sourceFile, pathInContainer, filePermissionProvider, DEFAULT_MODIFIED_TIME_PROVIDER);
+          sourceFile, pathInContainer, filePermissionProvider, DEFAULT_MODIFICATION_TIME_PROVIDER);
     }
 
     /**
@@ -179,7 +196,7 @@ public class LayerConfiguration {
      *     sourceFile}
      * @param filePermissionProvider a provider that takes a source path and destination path on the
      *     container and returns the file permissions that should be set for that path
-     * @param lastModifiedTimeProvider a provider that takes a source path and destination path on
+     * @param modificationTimeProvider a provider that takes a source path and destination path on
      *     the container and returns the file modification time that should be set for that path
      * @return this
      * @throws IOException if an exception occurred when recursively listing the directory
@@ -188,11 +205,11 @@ public class LayerConfiguration {
         Path sourceFile,
         AbsoluteUnixPath pathInContainer,
         BiFunction<Path, AbsoluteUnixPath, FilePermissions> filePermissionProvider,
-        BiFunction<Path, AbsoluteUnixPath, Instant> lastModifiedTimeProvider)
+        BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider)
         throws IOException {
       FilePermissions permissions = filePermissionProvider.apply(sourceFile, pathInContainer);
-      Instant modifiedTime = lastModifiedTimeProvider.apply(sourceFile, pathInContainer);
-      addEntry(sourceFile, pathInContainer, permissions, modifiedTime);
+      Instant modificationTime = modificationTimeProvider.apply(sourceFile, pathInContainer);
+      addEntry(sourceFile, pathInContainer, permissions, modificationTime);
       if (!Files.isDirectory(sourceFile)) {
         return this;
       }
@@ -202,7 +219,7 @@ public class LayerConfiguration {
               file,
               pathInContainer.resolve(file.getFileName()),
               filePermissionProvider,
-              lastModifiedTimeProvider);
+              modificationTimeProvider);
         }
       }
       return this;
@@ -227,11 +244,12 @@ public class LayerConfiguration {
                   : FilePermissions.DEFAULT_FILE_PERMISSIONS;
 
   /** Default file modification time (EPOCH + 1 second). */
-  public static final Instant DEFAULT_MODIFIED_TIME = Instant.ofEpochSecond(1);
+  public static final Instant DEFAULT_MODIFICATION_TIME = Instant.ofEpochSecond(1);
 
   /** Provider that returns default file modification time (EPOCH + 1 second). */
-  public static final BiFunction<Path, AbsoluteUnixPath, Instant> DEFAULT_MODIFIED_TIME_PROVIDER =
-      (sourcePath, destinationPath) -> DEFAULT_MODIFIED_TIME;
+  public static final BiFunction<Path, AbsoluteUnixPath, Instant>
+      DEFAULT_MODIFICATION_TIME_PROVIDER =
+          (sourcePath, destinationPath) -> DEFAULT_MODIFICATION_TIME;
 
   /**
    * Gets a new {@link Builder} for {@link LayerConfiguration}.

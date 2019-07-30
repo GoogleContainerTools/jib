@@ -62,8 +62,7 @@ public class EmptyProjectIntegrationTest {
   @Test
   public void testBuild_empty() throws IOException, InterruptedException, DigestException {
     String targetImage =
-        "gcr.io/"
-            + IntegrationTestingConfiguration.getGCPProject()
+        IntegrationTestingConfiguration.getTestRepositoryLocation()
             + "/emptyimage:gradle"
             + System.nanoTime();
     Assert.assertEquals("", JibRunHelper.buildAndRun(emptyTestProject, targetImage));
@@ -75,8 +74,7 @@ public class EmptyProjectIntegrationTest {
   public void testBuild_multipleTags()
       throws IOException, InterruptedException, InvalidImageReferenceException, DigestException {
     String targetImage =
-        "gcr.io/"
-            + IntegrationTestingConfiguration.getGCPProject()
+        IntegrationTestingConfiguration.getTestRepositoryLocation()
             + "/multitag-image:gradle"
             + System.nanoTime();
     JibRunHelper.buildAndRunAdditionalTag(

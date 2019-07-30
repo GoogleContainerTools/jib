@@ -76,6 +76,8 @@ public interface RawConfiguration {
 
   Optional<String> getProperty(String propertyName);
 
+  String getFilesModificationTime();
+
   List<Path> getExtraDirectories();
 
   Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions();

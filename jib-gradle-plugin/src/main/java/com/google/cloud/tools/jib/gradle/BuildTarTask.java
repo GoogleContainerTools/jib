@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersio
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
@@ -161,6 +162,13 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     } catch (InvalidContainerVolumeException ex) {
       throw new GradleException(
           "container.volumes is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
+
+    } catch (InvalidFilesModificationTimeException ex) {
+      throw new GradleException(
+          "container.filesModificationTime should be an ISO 8601 date-time (see "
+              + "DateTimeFormatter.ISO_DATE_TIME) or special keyword \"EPOCH_PLUS_SECOND\": "
+              + ex.getInvalidFilesModificationTime(),
+          ex);
 
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       throw new GradleException(

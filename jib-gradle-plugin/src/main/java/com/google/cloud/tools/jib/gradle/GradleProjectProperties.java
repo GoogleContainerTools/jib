@@ -16,12 +16,10 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
@@ -133,11 +131,8 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public JibContainerBuilder createContainerBuilder(
-      RegistryImage baseImage, AbsoluteUnixPath appRoot, ContainerizingMode containerizingMode) {
-    JavaContainerBuilder javaContainerBuilder =
-        JavaContainerBuilder.from(baseImage).setAppRoot(appRoot);
-
+  public JibContainerBuilder createJibContainerBuilder(
+      JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode) {
     try {
       if (isWarProject()) {
         logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
@@ -233,7 +228,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public List<Path> getClassFiles() throws IOException {
-    // TODO: Consolidate with createContainerBuilder
+    // TODO: Consolidate with createJibContainerBuilder
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);

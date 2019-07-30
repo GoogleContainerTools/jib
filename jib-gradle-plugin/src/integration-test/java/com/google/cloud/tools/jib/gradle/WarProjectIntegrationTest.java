@@ -74,7 +74,7 @@ public class WarProjectIntegrationTest {
 
   private void verifyBuildAndRun(TestProject project, String label, String gradleBuildFile)
       throws IOException, InterruptedException, DigestException {
-    String nameBase = "gcr.io/" + IntegrationTestingConfiguration.getGCPProject() + '/';
+    String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
     String targetImage = nameBase + label + System.nanoTime();
     String output =
         JibRunHelper.buildAndRun(project, targetImage, gradleBuildFile, "--detach", "-p8080:8080");
