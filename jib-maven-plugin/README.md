@@ -307,7 +307,6 @@ Property | Type | Default | Description
 `jib.baseImageCache` | string | `[user cache home]/google-cloud-tools-java/jib` | Sets the directory to use for caching base image layers. This cache can (and should) be shared between multiple images.
 `jib.applicationCache` | string | `[project dir]/target/jib-cache` | Sets the directory to use for caching application layers. This cache can be shared between multiple images.
 `jib.console` | string | *None* | If set to `plain`, Jib will print plaintext log messages rather than display a progress bar during the build.
-`jib.alwaysCacheBaseImage` | boolean | `false` | When building to a registry, by default Jib will skip downloading and caching base image layers that already exist in the target registry. Setting to false causes Jib to always cache layers locally.
 
 *\* If you configure `args` while `entrypoint` is set to `'INHERIT'`, the configured `args` value will take precedence over the CMD propagated from the base image.*
 
