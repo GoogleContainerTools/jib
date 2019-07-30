@@ -4,10 +4,10 @@ git:
 language: java
 matrix:
   include:
-     # using `openjdk8` leads to javadoc errors.
-    - name: Oracle DK 8 on Trusty
+    - name: Oracle JDK 8 on Trusty
+      # using `openjdk8` leads to javadoc errors
       jdk: oraclejdk8
-      dist: trusty # oraclejdk8 is absent in Xenial, so go back to trusty
+      dist: trusty # oraclejdk8 absent in Xenial
     - name: OpenJDK 11
       jdk: openjdk11
 env:
