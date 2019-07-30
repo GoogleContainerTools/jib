@@ -37,6 +37,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -84,7 +85,7 @@ public class JavaContainerBuilderHelperTest {
     Path extraFilesDirectory = Paths.get(Resources.getResource("core/layer").toURI());
     LayerConfiguration layerConfiguration =
         JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-            extraFilesDirectory, Collections.emptyMap());
+            extraFilesDirectory, Collections.emptyMap(), (ignored1, ignored2) -> Instant.EPOCH);
     assertSourcePathsUnordered(
         Arrays.asList(
             extraFilesDirectory.resolve("a"),

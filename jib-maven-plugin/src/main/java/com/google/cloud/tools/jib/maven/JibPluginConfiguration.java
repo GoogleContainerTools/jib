@@ -129,9 +129,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for {@code from} parameter, */
   public static class FromConfiguration {
 
-    @Nullable
-    @Parameter(required = true)
-    private String image;
+    @Nullable @Parameter private String image;
 
     @Nullable @Parameter private String credHelper;
 
@@ -186,6 +184,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String user;
 
     @Nullable @Parameter private String workingDirectory;
+
+    @Parameter private String filesModificationTime = "EPOCH_PLUS_SECOND";
   }
 
   /** Configuration for the {@code extraDirectories} parameter. */
@@ -281,7 +281,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (property != null) {
       return property;
     }
-    return Preconditions.checkNotNull(from).image;
+    return from.image;
   }
 
   /**
@@ -295,7 +295,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (property != null) {
       return property;
     }
-    return Preconditions.checkNotNull(from).credHelper;
+    return from.credHelper;
   }
 
   AuthConfiguration getBaseImageAuth() {
@@ -348,7 +348,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (property != null) {
       return property;
     }
-    return Preconditions.checkNotNull(to).credHelper;
+    return to.credHelper;
   }
 
   AuthConfiguration getTargetImageAuth() {
@@ -541,6 +541,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return property;
     }
     return container.format;
+  }
+
+  /**
+   * Gets the configured files modification time value.
+   *
+   * @return the configured files modification time value
+   */
+  String getFilesModificationTime() {
+    String property = getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
+    if (property != null) {
+      return property;
+    }
+    return container.filesModificationTime;
   }
 
   /**
