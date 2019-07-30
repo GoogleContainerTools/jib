@@ -174,6 +174,25 @@ public class DockerClientTest {
   }
 
   @Test
+  public void testSave() throws InterruptedException, IOException {
+    DockerClient testDockerClient =
+        new DockerClient(
+            subcommand -> {
+              Assert.assertEquals(Arrays.asList("save", "testimage", "-o", "out.tar"), subcommand);
+              return mockProcessBuilder;
+            });
+    Mockito.when(mockProcess.waitFor()).thenReturn(0);
+
+    // Simulates stdout.
+    Mockito.when(mockProcess.getInputStream())
+        .thenReturn(new ByteArrayInputStream("output".getBytes(StandardCharsets.UTF_8)));
+
+    String output =
+        testDockerClient.save(ImageReference.of(null, "testimage", null), Paths.get("out.tar"));
+    Assert.assertEquals("output", output);
+  }
+
+  @Test
   public void testTag() throws InterruptedException, IOException, InvalidImageReferenceException {
     DockerClient testDockerClient =
         new DockerClient(

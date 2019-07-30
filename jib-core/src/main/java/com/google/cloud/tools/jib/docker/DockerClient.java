@@ -159,6 +159,38 @@ public class DockerClient {
   }
 
   /**
+   * Saves an image tarball from the Docker daemon.
+   *
+   * @see <a
+   *     href="https://docs.docker.com/engine/reference/commandline/save/">https://docs.docker.com/engine/reference/commandline/save</a>
+   * @param imageReference the image to save
+   * @param outputPath the destination path to save the output tarball
+   * @return stdout from {@code docker}
+   * @throws InterruptedException if the 'docker save' process is interrupted
+   * @throws IOException if saving the blob from 'docker save' fails
+   */
+  public String save(ImageReference imageReference, Path outputPath)
+      throws InterruptedException, IOException {
+    // Runs 'docker load'.
+    Process dockerProcess = docker("save", imageReference.toString(), "-o", outputPath.toString());
+
+    try (InputStreamReader stdout =
+        new InputStreamReader(dockerProcess.getInputStream(), StandardCharsets.UTF_8)) {
+      String output = CharStreams.toString(stdout);
+
+      if (dockerProcess.waitFor() != 0) {
+        try (InputStreamReader stderr =
+            new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
+          throw new IOException(
+              "'docker save' command failed with output: " + CharStreams.toString(stderr));
+        }
+      }
+
+      return output;
+    }
+  }
+
+  /**
    * Tags the image referenced by {@code originalImageReference} with a new image reference {@code
    * newImageReference}.
    *
