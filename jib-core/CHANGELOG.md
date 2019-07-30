@@ -10,7 +10,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - `JibContainerBuilder#addDependencies` is now split into three methods: `addDependencies`, `addSnapshotDependencies`, `addProjectDependencies` ([#1773](https://github.com/GoogleContainerTools/jib/pull/1773))
-- For building and pushing to a registry, Jib now skips downloading and caching base image layers if the layers already exist in the target registry. This feature will be particularly useful in CI/CD environments. However, if you want to force caching base image layers locally, set the system property `-Djib.cacheBaseImage=always` ([#1840](https://github.com/GoogleContainerTools/jib/pull/1840))
+- For building and pushing to a registry, Jib now skips downloading and caching base image layers if the layers already exist in the target registry. This feature will be particularly useful in CI/CD environments. However, if you want to force caching base image layers locally, set the system property `-Djib.alwaysCacheBaseImage=true` ([#1840](https://github.com/GoogleContainerTools/jib/pull/1840))
 
 ### Fixed
 
