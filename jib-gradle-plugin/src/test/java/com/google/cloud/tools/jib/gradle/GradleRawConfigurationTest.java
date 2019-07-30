@@ -68,6 +68,7 @@ public class GradleRawConfigurationTest {
     Mockito.when(containerParameters.getPorts()).thenReturn(Arrays.asList("80/tcp", "0"));
     Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
     Mockito.when(containerParameters.getUser()).thenReturn("admin:wheel");
+    Mockito.when(containerParameters.getFilesModificationTime()).thenReturn("2011-12-03T22:42:05Z");
 
     GradleRawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
 
@@ -96,5 +97,6 @@ public class GradleRawConfigurationTest {
         Sets.newHashSet(rawConfiguration.getToTags()));
     Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
+    Assert.assertEquals("2011-12-03T22:42:05Z", rawConfiguration.getFilesModificationTime());
   }
 }

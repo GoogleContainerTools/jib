@@ -368,7 +368,10 @@ public class BuildImageMojoIntegrationTest {
         before.toString().getBytes(StandardCharsets.UTF_8));
 
     Assert.assertEquals(
-        "Hello, " + before + ". An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
+        "Hello, "
+            + before
+            + ". An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom.xml", true));
 
     Instant buildTime =
@@ -406,7 +409,7 @@ public class BuildImageMojoIntegrationTest {
 
     String targetImage = getTestImageReference("simpleimage:maven");
     Assert.assertEquals(
-        "Hello, world. An argument.\n",
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-java11.xml", false));
   }
 
@@ -456,7 +459,8 @@ public class BuildImageMojoIntegrationTest {
       throws DigestException, VerificationException, IOException, InterruptedException {
     String targetImage = getTestImageReference("simpleimage:maven");
     Assert.assertEquals(
-        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\nbaz\n",
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\nbaz\n1970-01-01T00:00:01Z\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom-extra-dirs.xml", false));
     assertLayerSize(9, targetImage); // one more than usual
   }
@@ -508,13 +512,27 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
-        "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
+            + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(
             targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml"));
     assertWorkingDirectory("", targetImage);
     assertEntrypoint(
-        "[java -Xms512m -Xdebug -cp /other:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
+        "[java -Xms512m -Xdebug -cp /other:/app/resources:/app/classes:/app/libs/* "
+            + "com.test.HelloWorld]",
         targetImage);
+  }
+
+  @Test
+  public void testExecute_filesModificationTimeCustom()
+      throws IOException, InterruptedException, VerificationException, DigestException {
+    String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
+    String pom = "pom-complex-files-modification-time-custom.xml";
+    Assert.assertEquals(
+        "Hello, world. \n2019-06-17T16:30:00Z\nrw-r--r--\nrw-r--r--\n"
+            + "foo\ncat\n2019-06-17T16:30:00Z\n2019-06-17T16:30:00Z\n",
+        buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2, pom));
   }
 
   @Test
@@ -522,7 +540,9 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:5000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
-        "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
+            + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(
             targetImage, "testuser", "testpassword", localRegistry1, "pom-complex.xml"));
     assertWorkingDirectory("", targetImage);
@@ -533,7 +553,9 @@ public class BuildImageMojoIntegrationTest {
       throws InterruptedException, DigestException, VerificationException, IOException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Assert.assertEquals(
-        "Hello, world. An argument.\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
+            + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(
             targetImage,
             "testuser2",

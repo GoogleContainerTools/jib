@@ -41,13 +41,15 @@ import java.util.Objects;
  *   {
  *     "sourceFile": "source/file/for/layer/entry/1",
  *     "extractionPath": "/extraction/path/for/layer/entry/1"
- *     "lastModifiedTime": "2018-10-03T15:48:32.416152Z"
+ *     "sourceModificationTime": "2018-10-03T15:48:32.416152Z"
+ *     "targetModificationTime": "1970-01-01T00:00:01Z",
  *     "permissions": "777"
  *   },
  *   {
  *     "sourceFile": "source/file/for/layer/entry/2",
  *     "extractionPath": "/extraction/path/for/layer/entry/2"
- *     "lastModifiedTime": "2018-10-03T15:48:32.416152Z"
+ *     "sourceModificationTime": "2018-10-03T15:48:32.416152Z"
+ *     "targetModificationTime": "1970-01-01T00:00:01Z",
  *     "permissions": "777"
  *   }
  * ]
@@ -61,14 +63,16 @@ class LayerEntriesSelector {
 
     private final String sourceFile;
     private final String extractionPath;
-    private final Instant lastModifiedTime;
+    private final Instant sourceModificationTime;
+    private final Instant targetModificationTime;
     private final String permissions;
 
     @VisibleForTesting
     LayerEntryTemplate(LayerEntry layerEntry) throws IOException {
       sourceFile = layerEntry.getSourceFile().toAbsolutePath().toString();
       extractionPath = layerEntry.getExtractionPath().toString();
-      lastModifiedTime = Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant();
+      sourceModificationTime = Files.getLastModifiedTime(layerEntry.getSourceFile()).toInstant();
+      targetModificationTime = layerEntry.getModificationTime();
       permissions = layerEntry.getPermissions().toOctalString();
     }
 
@@ -83,10 +87,15 @@ class LayerEntriesSelector {
       if (extractionPathComparison != 0) {
         return extractionPathComparison;
       }
-      int lastModifiedTimeComparison =
-          lastModifiedTime.compareTo(otherLayerEntryTemplate.lastModifiedTime);
-      if (lastModifiedTimeComparison != 0) {
-        return lastModifiedTimeComparison;
+      int sourceModificationTimeComparison =
+          sourceModificationTime.compareTo(otherLayerEntryTemplate.sourceModificationTime);
+      if (sourceModificationTimeComparison != 0) {
+        return sourceModificationTimeComparison;
+      }
+      int targetModificationTimeComparison =
+          targetModificationTime.compareTo(otherLayerEntryTemplate.targetModificationTime);
+      if (targetModificationTimeComparison != 0) {
+        return targetModificationTimeComparison;
       }
       return permissions.compareTo(otherLayerEntryTemplate.permissions);
     }
@@ -102,13 +111,15 @@ class LayerEntriesSelector {
       LayerEntryTemplate otherLayerEntryTemplate = (LayerEntryTemplate) other;
       return sourceFile.equals(otherLayerEntryTemplate.sourceFile)
           && extractionPath.equals(otherLayerEntryTemplate.extractionPath)
-          && lastModifiedTime.equals(otherLayerEntryTemplate.lastModifiedTime)
+          && sourceModificationTime.equals(otherLayerEntryTemplate.sourceModificationTime)
+          && targetModificationTime.equals(otherLayerEntryTemplate.targetModificationTime)
           && permissions.equals(otherLayerEntryTemplate.permissions);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(sourceFile, extractionPath, lastModifiedTime, permissions);
+      return Objects.hash(
+          sourceFile, extractionPath, sourceModificationTime, targetModificationTime, permissions);
     }
   }
 

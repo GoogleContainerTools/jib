@@ -99,7 +99,7 @@ public class CacheTest {
         source,
         destination,
         LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
-        LayerConfiguration.DEFAULT_MODIFIED_TIME);
+        LayerConfiguration.DEFAULT_MODIFICATION_TIME);
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();

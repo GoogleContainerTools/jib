@@ -16,13 +16,11 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder.LayerType;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
@@ -184,12 +182,9 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public JibContainerBuilder createContainerBuilder(
-      RegistryImage baseImage, AbsoluteUnixPath appRoot, ContainerizingMode containerizingMode)
+  public JibContainerBuilder createJibContainerBuilder(
+      JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode)
       throws IOException {
-    JavaContainerBuilder javaContainerBuilder =
-        JavaContainerBuilder.from(baseImage).setAppRoot(appRoot);
-
     try {
       if (isWarProject()) {
         Path explodedWarPath =

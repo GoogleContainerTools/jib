@@ -45,11 +45,15 @@ import java.util.List;
  * @see <a href="https://github.com/moby/moby/blob/master/image/tarexport/load.go">Docker load
  *     source</a>
  */
-public class DockerLoadManifestEntryTemplate implements JsonTemplate {
+public class DockerManifestEntryTemplate implements JsonTemplate {
 
-  private final String config = "config.json";
+  private String config = "config.json";
   private List<String> repoTags = Collections.singletonList(null);
   private final List<String> layers = new ArrayList<>();
+
+  public void setConfig(String config) {
+    this.config = config;
+  }
 
   public void setRepoTags(String repoTags) {
     this.repoTags = Collections.singletonList(repoTags);
@@ -57,5 +61,13 @@ public class DockerLoadManifestEntryTemplate implements JsonTemplate {
 
   public void addLayerFile(String layer) {
     layers.add(layer);
+  }
+
+  public String getConfig() {
+    return config;
+  }
+
+  public List<String> getLayerFiles() {
+    return layers;
   }
 }
