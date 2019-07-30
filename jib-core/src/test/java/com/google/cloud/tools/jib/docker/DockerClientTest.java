@@ -187,9 +187,7 @@ public class DockerClientTest {
     Mockito.when(mockProcess.getInputStream())
         .thenReturn(new ByteArrayInputStream("output".getBytes(StandardCharsets.UTF_8)));
 
-    String output =
-        testDockerClient.save(ImageReference.of(null, "testimage", null), Paths.get("out.tar"));
-    Assert.assertEquals("output", output);
+    testDockerClient.save(ImageReference.of(null, "testimage", null), Paths.get("out.tar"));
   }
 
   @Test

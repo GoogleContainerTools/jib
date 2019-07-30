@@ -165,13 +165,12 @@ public class DockerClient {
    *     href="https://docs.docker.com/engine/reference/commandline/save/">https://docs.docker.com/engine/reference/commandline/save</a>
    * @param imageReference the image to save
    * @param outputPath the destination path to save the output tarball
-   * @return stdout from {@code docker}
    * @throws InterruptedException if the 'docker save' process is interrupted
-   * @throws IOException if saving the blob from 'docker save' fails
+   * @throws IOException if creating the tarball fails
    */
-  public String save(ImageReference imageReference, Path outputPath)
+  public void save(ImageReference imageReference, Path outputPath)
       throws InterruptedException, IOException {
-    // Runs 'docker load'.
+    // Runs 'docker save'.
     Process dockerProcess = docker("save", imageReference.toString(), "-o", outputPath.toString());
 
     try (InputStreamReader stdout =
@@ -185,8 +184,6 @@ public class DockerClient {
               "'docker save' command failed with output: " + CharStreams.toString(stderr));
         }
       }
-
-      return output;
     }
   }
 
