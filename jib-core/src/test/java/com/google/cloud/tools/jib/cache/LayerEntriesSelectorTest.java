@@ -44,7 +44,7 @@ public class LayerEntriesSelectorTest {
         source,
         destination,
         LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
-        LayerConfiguration.DEFAULT_MODIFIED_TIME);
+        LayerConfiguration.DEFAULT_MODIFICATION_TIME);
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -75,7 +75,7 @@ public class LayerEntriesSelectorTest {
             file3,
             AbsoluteUnixPath.get("/extraction/path"),
             FilePermissions.fromOctalString("755"),
-            LayerConfiguration.DEFAULT_MODIFIED_TIME);
+            LayerConfiguration.DEFAULT_MODIFICATION_TIME);
     LayerEntry testLayerEntry5 =
         defaultLayerEntry(file3, AbsoluteUnixPath.get("/extraction/patha"));
     LayerEntry testLayerEntry6 =
@@ -83,7 +83,7 @@ public class LayerEntriesSelectorTest {
             file3,
             AbsoluteUnixPath.get("/extraction/patha"),
             FilePermissions.fromOctalString("755"),
-            LayerConfiguration.DEFAULT_MODIFIED_TIME);
+            LayerConfiguration.DEFAULT_MODIFICATION_TIME);
 
     outOfOrderLayerEntries =
         ImmutableList.of(
@@ -133,23 +133,37 @@ public class LayerEntriesSelectorTest {
   }
 
   @Test
-  public void testGenerateSelector_fileModified() throws IOException {
-    Path layerFile = temporaryFolder.newFolder("testFolder").toPath().resolve("file");
-    Files.write(layerFile, "hello".getBytes(StandardCharsets.UTF_8));
+  public void testGenerateSelector_sourceModificationTimeChanged() throws IOException {
+    Path layerFile = temporaryFolder.newFile().toPath();
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
     LayerEntry layerEntry = defaultLayerEntry(layerFile, AbsoluteUnixPath.get("/extraction/path"));
     DescriptorDigest expectedSelector =
         LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry));
 
-    // Verify that changing modified time generates a different selector
+    // Verify that changing source modification time generates a different selector
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.ofEpochSecond(1)));
     Assert.assertNotEquals(
         expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry)));
 
-    // Verify that changing modified time back generates same selector
+    // Verify that changing source modification time back generates same selector
     Files.setLastModifiedTime(layerFile, FileTime.from(Instant.EPOCH));
     Assert.assertEquals(
         expectedSelector, LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry)));
+  }
+
+  @Test
+  public void testGenerateSelector_targetModificationTimeChanged() throws IOException {
+    Path layerFile = temporaryFolder.newFile().toPath();
+    AbsoluteUnixPath pathInContainer = AbsoluteUnixPath.get("/bar");
+    FilePermissions permissions = FilePermissions.fromOctalString("111");
+
+    LayerEntry layerEntry1 = new LayerEntry(layerFile, pathInContainer, permissions, Instant.now());
+    LayerEntry layerEntry2 = new LayerEntry(layerFile, pathInContainer, permissions, Instant.EPOCH);
+
+    // Verify that different target modification times generate different selectors
+    Assert.assertNotEquals(
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry1)),
+        LayerEntriesSelector.generateSelector(ImmutableList.of(layerEntry2)));
   }
 
   @Test
@@ -161,13 +175,13 @@ public class LayerEntriesSelectorTest {
             layerFile,
             AbsoluteUnixPath.get("/extraction/path"),
             FilePermissions.fromOctalString("111"),
-            LayerConfiguration.DEFAULT_MODIFIED_TIME);
+            LayerConfiguration.DEFAULT_MODIFICATION_TIME);
     LayerEntry layerEntry222 =
         new LayerEntry(
             layerFile,
             AbsoluteUnixPath.get("/extraction/path"),
             FilePermissions.fromOctalString("222"),
-            LayerConfiguration.DEFAULT_MODIFIED_TIME);
+            LayerConfiguration.DEFAULT_MODIFICATION_TIME);
 
     // Verify that changing permissions generates a different selector
     Assert.assertNotEquals(

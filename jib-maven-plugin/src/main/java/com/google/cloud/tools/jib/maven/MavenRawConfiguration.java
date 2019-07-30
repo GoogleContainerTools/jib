@@ -156,6 +156,11 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public String getFilesModificationTime() {
+    return jibPluginConfiguration.getFilesModificationTime();
+  }
+
+  @Override
   public List<Path> getExtraDirectories() {
     return MojoCommon.getExtraDirectories(jibPluginConfiguration);
   }

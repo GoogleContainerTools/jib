@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.docker.json.DockerLoadManifestEntryTemplate;
+import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
@@ -57,7 +57,7 @@ public class ImageTarball {
 
   public void writeTo(OutputStream out) throws IOException {
     TarStreamBuilder tarStreamBuilder = new TarStreamBuilder();
-    DockerLoadManifestEntryTemplate manifestTemplate = new DockerLoadManifestEntryTemplate();
+    DockerManifestEntryTemplate manifestTemplate = new DockerManifestEntryTemplate();
 
     // Adds all the layers to the tarball and manifest.
     for (Layer layer : image.getLayers()) {

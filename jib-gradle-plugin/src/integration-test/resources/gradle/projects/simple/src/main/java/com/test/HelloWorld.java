@@ -24,6 +24,7 @@ import java.lang.management.ManagementFactory;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermissions;
 
@@ -41,6 +42,10 @@ public class HelloWorld {
                 HelloWorld.class.getResourceAsStream("/world"), StandardCharsets.UTF_8))) {
       String world = reader.readLine();
       System.out.println(greeting + ", " + world + ". " + (args.length > 0 ? args[0] : ""));
+      Path worldFilePath = Paths.get("/app/resources/world");
+      if (worldFilePath.toFile().exists()) {
+        System.out.println(Files.getLastModifiedTime(worldFilePath).toString());
+      }
 
       // Prints the contents of the extra files.
       if (Files.exists(Paths.get("/foo"))) {
@@ -52,11 +57,14 @@ public class HelloWorld {
             new String(Files.readAllBytes(Paths.get("/foo")), StandardCharsets.UTF_8));
         System.out.println(
             new String(Files.readAllBytes(Paths.get("/bar/cat")), StandardCharsets.UTF_8));
+        System.out.println(Files.getLastModifiedTime(Paths.get("/foo")).toString());
+        System.out.println(Files.getLastModifiedTime(Paths.get("/bar/cat")).toString());
       }
       // Prints the contents of the files in the second extra directory.
       if (Files.exists(Paths.get("/baz"))) {
         System.out.println(
             new String(Files.readAllBytes(Paths.get("/baz")), StandardCharsets.UTF_8));
+        System.out.println(Files.getLastModifiedTime(Paths.get("/baz")).toString());
       }
 
       // Prints jvm flags
