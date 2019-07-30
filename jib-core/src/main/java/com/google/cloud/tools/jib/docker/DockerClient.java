@@ -173,16 +173,11 @@ public class DockerClient {
     // Runs 'docker save'.
     Process dockerProcess = docker("save", imageReference.toString(), "-o", outputPath.toString());
 
-    try (InputStreamReader stdout =
-        new InputStreamReader(dockerProcess.getInputStream(), StandardCharsets.UTF_8)) {
-      String output = CharStreams.toString(stdout);
-
-      if (dockerProcess.waitFor() != 0) {
-        try (InputStreamReader stderr =
-            new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
-          throw new IOException(
-              "'docker save' command failed with output: " + CharStreams.toString(stderr));
-        }
+    if (dockerProcess.waitFor() != 0) {
+      try (InputStreamReader stderr =
+          new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
+        throw new IOException(
+            "'docker save' command failed with output: " + CharStreams.toString(stderr));
       }
     }
   }

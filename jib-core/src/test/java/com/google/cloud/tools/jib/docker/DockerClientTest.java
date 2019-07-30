@@ -183,10 +183,6 @@ public class DockerClientTest {
             });
     Mockito.when(mockProcess.waitFor()).thenReturn(0);
 
-    // Simulates stdout.
-    Mockito.when(mockProcess.getInputStream())
-        .thenReturn(new ByteArrayInputStream("output".getBytes(StandardCharsets.UTF_8)));
-
     testDockerClient.save(ImageReference.of(null, "testimage", null), Paths.get("out.tar"));
   }
 
