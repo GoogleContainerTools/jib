@@ -38,7 +38,7 @@ public class JibSystemPropertiesTest {
   public void tearDown() {
     System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
     System.clearProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS);
-    System.clearProperty(JibSystemProperties.CACHE_BASE_IMAGE);
+    System.clearProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE);
     System.clearProperty("http.proxyPort");
     System.clearProperty("https.proxyPort");
     if (httpProxyPortSaved != null) {
@@ -185,33 +185,26 @@ public class JibSystemPropertiesTest {
   }
 
   @Test
-  public void testAlwaysCacheBaseImage_always() {
-    System.setProperty(JibSystemProperties.CACHE_BASE_IMAGE, "always");
+  public void testAlwaysCacheBaseImage_undefined() {
+    System.clearProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE);
+    Assert.assertFalse(JibSystemProperties.alwaysCacheBaseImage());
+  }
+
+  @Test
+  public void testAlwaysCacheBaseImage_true() {
+    System.setProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE, "true");
     Assert.assertTrue(JibSystemProperties.alwaysCacheBaseImage());
   }
 
   @Test
-  public void testAlwaysCacheBaseImage_asNeeded() {
-    System.setProperty(JibSystemProperties.CACHE_BASE_IMAGE, "as-needed");
+  public void testAlwaysCacheBaseImage_false() {
+    System.setProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE, "false");
     Assert.assertFalse(JibSystemProperties.alwaysCacheBaseImage());
   }
 
   @Test
-  public void testAlwaysCacheBaseImage_propertyUnset() {
-    System.clearProperty(JibSystemProperties.CACHE_BASE_IMAGE);
+  public void testAlwaysCacheBaseImage_other() {
+    System.setProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE, "nonbool");
     Assert.assertFalse(JibSystemProperties.alwaysCacheBaseImage());
-  }
-
-  @Test
-  public void testAlwaysCacheBaseImage_invalidValue() {
-    System.setProperty(JibSystemProperties.CACHE_BASE_IMAGE, "invalid value");
-    try {
-      JibSystemProperties.alwaysCacheBaseImage();
-      Assert.fail();
-    } catch (IllegalArgumentException ex) {
-      Assert.assertEquals(
-          "jib.cacheBaseImage should be either \"as-needed\" or \"always\" but was: invalid value",
-          ex.getMessage());
-    }
   }
 }
