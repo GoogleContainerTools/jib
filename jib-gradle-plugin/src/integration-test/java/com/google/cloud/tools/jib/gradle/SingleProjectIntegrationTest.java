@@ -179,8 +179,7 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testBuild_simple() throws IOException, InterruptedException, DigestException {
     String targetImage =
-        "gcr.io/"
-            + IntegrationTestingConfiguration.getGCPProject()
+        IntegrationTestingConfiguration.getTestRepositoryLocation()
             + "/simpleimage:gradle"
             + System.nanoTime();
 
@@ -218,8 +217,7 @@ public class SingleProjectIntegrationTest {
   @Test
   public void testBuild_failOffline() {
     String targetImage =
-        "gcr.io/"
-            + IntegrationTestingConfiguration.getGCPProject()
+        IntegrationTestingConfiguration.getTestRepositoryLocation()
             + "/simpleimageoffline:gradle"
             + System.nanoTime();
 
