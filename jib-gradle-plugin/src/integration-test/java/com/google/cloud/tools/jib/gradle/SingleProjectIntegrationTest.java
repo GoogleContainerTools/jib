@@ -364,18 +364,18 @@ public class SingleProjectIntegrationTest {
 
   @Test
   public void testBuild_skipDownloadingBaseImageLayers() throws IOException, InterruptedException {
-    Path baseCacheLayersDirectory =
+    Path baseLayersCacheDirectory =
         simpleTestProject.getProjectRoot().resolve("build/jib-base-cache/layers");
     String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
 
     buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
     // Base image layer tarballs exist.
-    Assert.assertTrue(Files.exists(baseCacheLayersDirectory));
-    Assert.assertTrue(baseCacheLayersDirectory.toFile().list().length >= 2);
+    Assert.assertTrue(Files.exists(baseLayersCacheDirectory));
+    Assert.assertTrue(baseLayersCacheDirectory.toFile().list().length >= 2);
 
     buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
     // no base layers downloaded after "gradle clean jib ..."
-    Assert.assertFalse(Files.exists(baseCacheLayersDirectory));
+    Assert.assertFalse(Files.exists(baseLayersCacheDirectory));
   }
 
   @Test
