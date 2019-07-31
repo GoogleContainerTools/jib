@@ -30,7 +30,7 @@ class PreparedLayer implements Layer {
 
   enum StateInTarget {
     UNKNOWN,
-    EXISTS,
+    EXISTING,
     MISSING
   }
 

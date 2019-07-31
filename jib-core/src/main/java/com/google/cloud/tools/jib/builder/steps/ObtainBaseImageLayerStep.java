@@ -74,7 +74,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
     BlobExistenceChecker blobExistenceChecker =
         digest ->
             targetRegistryClient.checkBlob(digest).isPresent()
-                ? StateInTarget.EXISTS
+                ? StateInTarget.EXISTING
                 : StateInTarget.MISSING;
 
     return makeList(
@@ -139,7 +139,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
                 buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, layerDigest))) {
 
       StateInTarget stateInTarget = blobExistenceChecker.check(layerDigest);
-      if (stateInTarget == StateInTarget.EXISTS) {
+      if (stateInTarget == StateInTarget.EXISTING) {
         return new PreparedLayer.Builder(layer).setStateInTarget(stateInTarget).build();
       }
 

@@ -114,7 +114,7 @@ public class ObtainBaseImageLayerStepTest {
     PreparedLayer preparedExistingLayer = pullers.get(0).call();
     PreparedLayer preparedFreshLayer = pullers.get(1).call();
 
-    Assert.assertEquals(StateInTarget.EXISTS, preparedExistingLayer.existsInTarget());
+    Assert.assertEquals(StateInTarget.EXISTING, preparedExistingLayer.existsInTarget());
     Assert.assertEquals(StateInTarget.MISSING, preparedFreshLayer.existsInTarget());
 
     // Should have queried all blobs.

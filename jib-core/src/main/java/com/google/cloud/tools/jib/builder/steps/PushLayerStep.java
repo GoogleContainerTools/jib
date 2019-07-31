@@ -81,7 +81,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
       throws IOException, RegistryException, ExecutionException, InterruptedException {
     PreparedLayer layer = preparedLayer.get();
 
-    if (layer.existsInTarget() == StateInTarget.EXISTS) {
+    if (layer.existsInTarget() == StateInTarget.EXISTING) {
       return layer.getBlobDescriptor(); // skip pushing if known to exist in registry
     }
 
