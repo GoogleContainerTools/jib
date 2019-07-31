@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
+import com.google.cloud.tools.jib.builder.steps.PreparedLayer.StateInTarget;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.common.collect.ImmutableList;
@@ -80,18 +81,18 @@ class PushLayerStep implements Callable<BlobDescriptor> {
       throws IOException, RegistryException, ExecutionException, InterruptedException {
     PreparedLayer layer = preparedLayer.get();
 
-    boolean queriedExistence = layer.existsInTarget().isPresent();
-    if (queriedExistence && layer.existsInTarget().get()) {
+    if (layer.existsInTarget() == StateInTarget.EXISTS) {
       return layer.getBlobDescriptor(); // skip pushing if known to exist in registry
     }
 
+    boolean forcePush = layer.existsInTarget() == StateInTarget.MISSING;
     return new PushBlobStep(
             buildConfiguration,
             progressEventDispatcherFactory,
             pushAuthorization,
             layer.getBlobDescriptor(),
             layer.getBlob(),
-            queriedExistence)
+            forcePush)
         .call();
   }
 }

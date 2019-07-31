@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
+import com.google.cloud.tools.jib.builder.steps.PreparedLayer.StateInTarget;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
@@ -113,8 +114,8 @@ public class ObtainBaseImageLayerStepTest {
     PreparedLayer preparedExistingLayer = pullers.get(0).call();
     PreparedLayer preparedFreshLayer = pullers.get(1).call();
 
-    Assert.assertTrue(preparedExistingLayer.existsInTarget().get());
-    Assert.assertFalse(preparedFreshLayer.existsInTarget().get());
+    Assert.assertEquals(StateInTarget.EXISTS, preparedExistingLayer.existsInTarget());
+    Assert.assertEquals(StateInTarget.MISSING, preparedFreshLayer.existsInTarget());
 
     // Should have queried all blobs.
     Mockito.verify(registryClient).checkBlob(existingLayerDigest);
@@ -139,8 +140,8 @@ public class ObtainBaseImageLayerStepTest {
     PreparedLayer preparedFreshLayer = pullers.get(1).call();
 
     // Unknown if layers exist in target registry.
-    Assert.assertEquals(Optional.empty(), preparedExistingLayer.existsInTarget());
-    Assert.assertEquals(Optional.empty(), preparedFreshLayer.existsInTarget());
+    Assert.assertEquals(StateInTarget.UNKNOWN, preparedExistingLayer.existsInTarget());
+    Assert.assertEquals(StateInTarget.UNKNOWN, preparedFreshLayer.existsInTarget());
 
     // No blob checking should happen.
     Mockito.verify(registryClient, Mockito.never()).checkBlob(existingLayerDigest);
