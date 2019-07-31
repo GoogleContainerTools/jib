@@ -74,7 +74,7 @@ class PreparedLayer implements Layer {
     return name;
   }
 
-  StateInTarget existsInTarget() {
+  StateInTarget stateInTarget() {
     return stateInTarget;
   }
 
