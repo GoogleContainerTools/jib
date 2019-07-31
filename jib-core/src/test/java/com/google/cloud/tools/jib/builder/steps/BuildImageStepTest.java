@@ -55,8 +55,8 @@ public class BuildImageStepTest {
   @Mock private CachedLayer mockCachedLayer;
 
   private Image baseImage;
-  private List<CachedLayerAndName> baseImageLayers;
-  private List<CachedLayerAndName> applicationLayers;
+  private List<PreparedLayer> baseImageLayers;
+  private List<PreparedLayer> applicationLayers;
 
   private DescriptorDigest testDescriptorDigest;
   private HistoryEntry nonEmptyLayerHistory;
@@ -122,15 +122,15 @@ public class BuildImageStepTest {
             .build();
     baseImageLayers =
         Arrays.asList(
-            new CachedLayerAndName(mockCachedLayer, null),
-            new CachedLayerAndName(mockCachedLayer, null),
-            new CachedLayerAndName(mockCachedLayer, null));
+            new PreparedLayer.Builder(mockCachedLayer).build(),
+            new PreparedLayer.Builder(mockCachedLayer).build(),
+            new PreparedLayer.Builder(mockCachedLayer).build());
     applicationLayers =
         Arrays.asList(
-            new CachedLayerAndName(mockCachedLayer, "dependencies"),
-            new CachedLayerAndName(mockCachedLayer, "resources"),
-            new CachedLayerAndName(mockCachedLayer, "classes"),
-            new CachedLayerAndName(mockCachedLayer, "extra files"));
+            new PreparedLayer.Builder(mockCachedLayer).setName("dependencies").build(),
+            new PreparedLayer.Builder(mockCachedLayer).setName("resources").build(),
+            new PreparedLayer.Builder(mockCachedLayer).setName("classes").build(),
+            new PreparedLayer.Builder(mockCachedLayer).setName("extra files").build());
   }
 
   @Test

@@ -112,19 +112,22 @@ public class BuildImageMojoIntegrationTest {
     verifier.addCliOption("--file=" + pomXml);
     verifier.executeGoals(Arrays.asList("clean", "compile"));
 
+    if (!buildTwice) {
+      verifier.executeGoal("jib:build");
+      return verifier;
+    }
+
     // Builds twice, and checks if the second build took less time.
+    verifier.addCliOption("-Djib.alwaysCacheBaseImage=true");
     verifier.executeGoal("jib:build");
     float timeOne = getBuildTimeFromVerifierLog(verifier);
 
-    if (buildTwice) {
-      verifier.resetStreams();
-      verifier.executeGoal("jib:build");
-      float timeTwo = getBuildTimeFromVerifierLog(verifier);
+    verifier.resetStreams();
+    verifier.executeGoal("jib:build");
+    float timeTwo = getBuildTimeFromVerifierLog(verifier);
 
-      String failMessage = "First build time (%s) is not greater than second build time (%s)";
-      Assert.assertTrue(String.format(failMessage, timeOne, timeTwo), timeOne > timeTwo);
-    }
-
+    String failMessage = "First build time (%s) is not greater than second build time (%s)";
+    Assert.assertTrue(String.format(failMessage, timeOne, timeTwo), timeOne > timeTwo);
     return verifier;
   }
 

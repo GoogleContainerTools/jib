@@ -135,7 +135,7 @@ public class BuildAndCacheApplicationLayerStepTest {
 
     for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
         buildAndCacheApplicationLayerSteps) {
-      applicationLayers.add(buildAndCacheApplicationLayerStep.call().getCachedLayer());
+      applicationLayers.add(buildAndCacheApplicationLayerStep.call());
     }
 
     return applicationLayers;

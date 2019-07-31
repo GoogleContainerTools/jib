@@ -21,6 +21,8 @@ import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.common.base.Splitter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.DigestException;
 import java.time.Instant;
 import org.gradle.testkit.runner.BuildResult;
@@ -146,14 +148,15 @@ public class SingleProjectIntegrationTest {
                 + "'jib.extraDirectories.permissions'"));
   }
 
-  private static String buildAndRunComplex(
+  private static void buildAndRunComplex(
       String imageReference, String username, String password, LocalRegistry targetRegistry)
       throws IOException, InterruptedException {
+    Path baseCache = simpleTestProject.getProjectRoot().resolve("build/jib-base-cache");
     BuildResult buildResult =
         simpleTestProject.build(
             "clean",
             "jib",
-            "-Djib.useOnlyProjectCache=true",
+            "-Djib.baseImageCache=" + baseCache,
             "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
             "-D_TARGET_USERNAME=" + username,
@@ -168,7 +171,11 @@ public class SingleProjectIntegrationTest {
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
-    return new Command("docker", "run", "--rm", imageReference).run();
+    Assert.assertEquals(
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
+            + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
+        new Command("docker", "run", "--rm", imageReference).run());
   }
 
   @Before
@@ -318,11 +325,7 @@ public class SingleProjectIntegrationTest {
   public void testBuild_complex() throws IOException, InterruptedException {
     String targetImage = "localhost:6000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
-            + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2));
+    buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     assertWorkingDirectory("", targetImage);
   }
@@ -331,11 +334,7 @@ public class SingleProjectIntegrationTest {
   public void testBuild_complex_sameFromAndToRegistry() throws IOException, InterruptedException {
     String targetImage = "localhost:5000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
-    Assert.assertEquals(
-        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
-            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
-            + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1));
+    buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1);
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     assertWorkingDirectory("", targetImage);
   }
@@ -361,6 +360,22 @@ public class SingleProjectIntegrationTest {
         "Hello, world. \nImplementation-Title: helloworld\nImplementation-Version: 1\n",
         JibRunHelper.buildToDockerDaemonAndRun(
             simpleTestProject, targetImage, "build-jar-containerization.gradle"));
+  }
+
+  @Test
+  public void testBuild_skipDownloadingBaseImageLayers() throws IOException, InterruptedException {
+    Path baseLayersCacheDirectory =
+        simpleTestProject.getProjectRoot().resolve("build/jib-base-cache/layers");
+    String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
+
+    buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
+    // Base image layer tarballs exist.
+    Assert.assertTrue(Files.exists(baseLayersCacheDirectory));
+    Assert.assertTrue(baseLayersCacheDirectory.toFile().list().length >= 2);
+
+    buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
+    // no base layers downloaded after "gradle clean jib ..."
+    Assert.assertFalse(Files.exists(baseLayersCacheDirectory));
   }
 
   @Test

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.Blob;
@@ -23,6 +24,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -36,33 +38,37 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   private static final String DESCRIPTION = "Pushing BLOB ";
 
   private final BuildConfiguration buildConfiguration;
-  private final ProgressEventDispatcher.Factory progressEventDipatcherFactory;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   @Nullable private final Authorization authorization;
   private final BlobDescriptor blobDescriptor;
   private final Blob blob;
+  private final boolean forcePush;
 
   PushBlobStep(
       BuildConfiguration buildConfiguration,
-      ProgressEventDispatcher.Factory progressEventDipatcherFactory,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization authorization,
       BlobDescriptor blobDescriptor,
-      Blob blob) {
+      Blob blob,
+      boolean forcePush) {
     this.buildConfiguration = buildConfiguration;
-    this.progressEventDipatcherFactory = progressEventDipatcherFactory;
+    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.authorization = authorization;
     this.blobDescriptor = blobDescriptor;
     this.blob = blob;
+    this.forcePush = forcePush;
   }
 
   @Override
   public BlobDescriptor call() throws IOException, RegistryException {
+    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    DescriptorDigest blobDigest = blobDescriptor.getDigest();
     try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDipatcherFactory.create(
-                "pushing blob " + blobDescriptor.getDigest(), blobDescriptor.getSize());
+            progressEventDispatcherFactory.create(
+                "pushing blob " + blobDigest, blobDescriptor.getSize());
         TimerEventDispatcher ignored =
-            new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), DESCRIPTION + blobDescriptor);
+            new TimerEventDispatcher(eventHandlers, DESCRIPTION + blobDescriptor);
         ThrottledAccumulatingConsumer throttledProgressReporter =
             new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
       RegistryClient registryClient =
@@ -72,10 +78,9 @@ class PushBlobStep implements Callable<BlobDescriptor> {
               .newRegistryClient();
 
       // check if the BLOB is available
-      if (registryClient.checkBlob(blobDescriptor.getDigest()).isPresent()) {
-        buildConfiguration
-            .getEventHandlers()
-            .dispatch(LogEvent.info("BLOB : " + blobDescriptor + " already exists on registry"));
+      if (!forcePush && registryClient.checkBlob(blobDigest).isPresent()) {
+        eventHandlers.dispatch(
+            LogEvent.info("BLOB : " + blobDescriptor + " already exists on registry"));
         return blobDescriptor;
       }
 
@@ -87,8 +92,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
       String baseRepository = buildConfiguration.getBaseImageConfiguration().getImageRepository();
       String targetRegistry = buildConfiguration.getTargetImageConfiguration().getImageRegistry();
       String sourceRepository = targetRegistry.equals(baseRegistry) ? baseRepository : null;
-      registryClient.pushBlob(
-          blobDescriptor.getDigest(), blob, sourceRepository, throttledProgressReporter);
+      registryClient.pushBlob(blobDigest, blob, sourceRepository, throttledProgressReporter);
 
       return blobDescriptor;
     }
