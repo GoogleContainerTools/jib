@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.maven.skaffold;
 
 import com.google.cloud.tools.jib.maven.MojoCommon;
 import com.google.common.base.Preconditions;
+import javax.annotation.Nullable;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
@@ -25,6 +26,8 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 /** Base class for Skaffold-related goals. */
 abstract class SkaffoldBindingMojo extends AbstractMojo {
+
+  @Nullable
   @Parameter(defaultValue = "${plugin}", readonly = true)
   protected PluginDescriptor descriptor;
 

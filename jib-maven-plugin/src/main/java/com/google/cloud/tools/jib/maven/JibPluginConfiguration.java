@@ -231,6 +231,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
 
+  @Nullable
   @Parameter(defaultValue = "${plugin}", readonly = true)
   protected PluginDescriptor descriptor;
 
