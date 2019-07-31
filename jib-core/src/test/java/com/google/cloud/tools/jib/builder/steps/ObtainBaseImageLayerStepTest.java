@@ -139,7 +139,7 @@ public class ObtainBaseImageLayerStepTest {
     PreparedLayer preparedExistingLayer = pullers.get(0).call();
     PreparedLayer preparedFreshLayer = pullers.get(1).call();
 
-    // Unknown if layers exist in target registry.
+    // existence unknown
     Assert.assertEquals(StateInTarget.UNKNOWN, preparedExistingLayer.getStateInTarget());
     Assert.assertEquals(StateInTarget.UNKNOWN, preparedFreshLayer.getStateInTarget());
 
