@@ -21,11 +21,12 @@ import com.google.common.base.Preconditions;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
-import org.apache.maven.plugins.annotations.Component;
+import org.apache.maven.plugins.annotations.Parameter;
 
 /** Base class for Skaffold-related goals. */
 abstract class SkaffoldBindingMojo extends AbstractMojo {
-  @Component protected PluginDescriptor descriptor;
+  @Parameter(defaultValue = "${plugin}", readonly = true)
+  protected PluginDescriptor descriptor;
 
   protected void checkJibVersion() throws MojoExecutionException {
     Preconditions.checkNotNull(descriptor);
