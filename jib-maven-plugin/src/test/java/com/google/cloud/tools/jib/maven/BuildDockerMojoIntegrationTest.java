@@ -103,7 +103,8 @@ public class BuildDockerMojoIntegrationTest {
 
     Instant before = Instant.now();
     Assert.assertEquals(
-        "Hello, world. An argument.\nrw-r--r--\nrw-r--r--\nfoo\ncat\n",
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         buildToDockerDaemonAndRun(simpleTestProject.getProjectRoot(), targetImage));
     Instant buildTime =
         Instant.parse(
@@ -191,7 +192,8 @@ public class BuildDockerMojoIntegrationTest {
     buildToDockerDaemon(
         simpleTestProject.getProjectRoot(), "image reference ignored", "pom-no-to-image.xml");
     Assert.assertEquals(
-        "Hello, world. \n", new Command("docker", "run", "--rm", "my-artifact-id:1").run());
+        "Hello, world. \n1970-01-01T00:00:01Z\n",
+        new Command("docker", "run", "--rm", "my-artifact-id:1").run());
   }
 
   @Test
@@ -222,6 +224,35 @@ public class BuildDockerMojoIntegrationTest {
               "Obtaining project build output files failed; make sure you have packaged your "
                   + "project before trying to build the image. (Did you accidentally run \"mvn "
                   + "clean jib:build\" instead of \"mvn clean package jib:build\"?)"));
+    }
+  }
+
+  @Test
+  public void testExecute_jibRequireVersion_ok() throws VerificationException, IOException {
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+
+    Instant before = Instant.now();
+    Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+    // this plugin should match 1.0
+    verifier.setSystemProperty("jib.requiredVersion", "1.0");
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    verifier.executeGoals(Arrays.asList("package", "jib:dockerBuild"));
+    verifier.verifyErrorFreeLog();
+  }
+
+  @Test
+  public void testExecute_jibRequireVersion_fail() throws IOException {
+    String targetImage = "simpleimage:maven" + System.nanoTime();
+
+    try {
+      Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
+      verifier.setSystemProperty("jib.requiredVersion", "[,1.0]");
+      verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+      verifier.executeGoals(Arrays.asList("package", "jib:dockerBuild"));
+      Assert.fail();
+    } catch (VerificationException ex) {
+      Assert.assertThat(
+          ex.getMessage(), CoreMatchers.containsString("but is required to be [,1.0]"));
     }
   }
 }

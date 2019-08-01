@@ -15,7 +15,6 @@
  */
 
 package com.google.cloud.tools.jib.api;
-// TODO: Move to com.google.cloud.tools.jib once that package is cleaned up.
 
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.builder.steps.StepsRunner;
@@ -25,7 +24,6 @@ import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.UserCacheHome;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -85,14 +83,11 @@ public class Containerizer {
     ImageConfiguration imageConfiguration =
         ImageConfiguration.builder(dockerDaemonImage.getImageReference()).build();
 
-    DockerClient.Builder dockerClientBuilder = DockerClient.builder();
-    dockerDaemonImage.getDockerExecutable().ifPresent(dockerClientBuilder::setDockerExecutable);
-    dockerClientBuilder.setDockerEnvironment(
-        ImmutableMap.copyOf(dockerDaemonImage.getDockerEnvironment()));
-
+    DockerClient dockerClient =
+        new DockerClient(
+            dockerDaemonImage.getDockerExecutable(), dockerDaemonImage.getDockerEnvironment());
     Function<BuildConfiguration, StepsRunner> stepsRunnerFactory =
-        buildConfiguration ->
-            StepsRunner.begin(buildConfiguration).dockerLoadSteps(dockerClientBuilder.build());
+        buildConfiguration -> StepsRunner.begin(buildConfiguration).dockerLoadSteps(dockerClient);
 
     return new Containerizer(
         DESCRIPTION_FOR_DOCKER_DAEMON, imageConfiguration, stepsRunnerFactory, false);

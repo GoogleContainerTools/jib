@@ -16,12 +16,10 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
-import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
@@ -40,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -72,6 +71,8 @@ class GradleProjectProperties implements ProjectProperties {
 
   /** Name of the `main` {@link SourceSet} to use as source files. */
   private static final String MAIN_SOURCE_SET_NAME = "main";
+
+  private static final Duration LOGGING_THREAD_SHUTDOWN_TIMEOUT = Duration.ofSeconds(1);
 
   /** @return a GradleProjectProperties from the given project and logger. */
   static GradleProjectProperties getForProject(Project project, Logger logger) {
@@ -130,11 +131,8 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public JibContainerBuilder createContainerBuilder(
-      RegistryImage baseImage, AbsoluteUnixPath appRoot, ContainerizingMode containerizingMode) {
-    JavaContainerBuilder javaContainerBuilder =
-        JavaContainerBuilder.from(baseImage).setAppRoot(appRoot);
-
+  public JibContainerBuilder createJibContainerBuilder(
+      JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode) {
     try {
       if (isWarProject()) {
         logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
@@ -230,7 +228,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public List<Path> getClassFiles() throws IOException {
-    // TODO: Consolidate with createContainerBuilder
+    // TODO: Consolidate with createJibContainerBuilder
     JavaPluginConvention javaPluginConvention =
         project.getConvention().getPlugin(JavaPluginConvention.class);
     SourceSet mainSourceSet = javaPluginConvention.getSourceSets().getByName(MAIN_SOURCE_SET_NAME);
@@ -245,7 +243,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   @Override
   public void waitForLoggingThread() {
-    singleThreadedExecutor.shutDownAndAwaitTermination();
+    singleThreadedExecutor.shutDownAndAwaitTermination(LOGGING_THREAD_SHUTDOWN_TIMEOUT);
   }
 
   @Override

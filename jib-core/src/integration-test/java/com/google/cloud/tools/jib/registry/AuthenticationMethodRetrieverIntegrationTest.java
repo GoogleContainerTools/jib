@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.Authorization;
 import java.io.IOException;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,9 +32,10 @@ public class AuthenticationMethodRetrieverIntegrationTest {
     RegistryClient registryClient =
         RegistryClient.factory(EventHandlers.NONE, "registry.hub.docker.com", "library/busybox")
             .newRegistryClient();
-    RegistryAuthenticator registryAuthenticator = registryClient.getRegistryAuthenticator();
-    Assert.assertNotNull(registryAuthenticator);
-    Authorization authorization = registryAuthenticator.authenticatePull(null);
+    Optional<RegistryAuthenticator> registryAuthenticator =
+        registryClient.getRegistryAuthenticator();
+    Assert.assertTrue(registryAuthenticator.isPresent());
+    Authorization authorization = registryAuthenticator.get().authenticatePull(null);
 
     RegistryClient authorizedRegistryClient =
         RegistryClient.factory(EventHandlers.NONE, "registry.hub.docker.com", "library/busybox")

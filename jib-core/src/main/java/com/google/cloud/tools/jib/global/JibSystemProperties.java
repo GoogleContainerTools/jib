@@ -27,6 +27,8 @@ public class JibSystemProperties {
 
   @VisibleForTesting static final String CROSS_REPOSITORY_BLOB_MOUNTS = "jib.blobMounts";
 
+  @VisibleForTesting static final String ALWAYS_CACHE_BASE_IMAGE = "jib.alwaysCacheBaseImage";
+
   @VisibleForTesting
   public static final String SEND_CREDENTIALS_OVER_HTTP = "sendCredentialsOverHttp";
 
@@ -66,7 +68,7 @@ public class JibSystemProperties {
    *
    * @return {@code true} if Jib's execution should be serialized, {@code false} if not
    */
-  public static boolean isSerializedExecutionEnabled() {
+  public static boolean serializeExecution() {
     return Boolean.getBoolean(SERIALIZE);
   }
 
@@ -77,7 +79,7 @@ public class JibSystemProperties {
    * @return {@code true} if authentication information is allowed to be sent over insecure
    *     connections, {@code false} if not
    */
-  public static boolean isSendCredentialsOverHttpEnabled() {
+  public static boolean sendCredentialsOverHttp() {
     return Boolean.getBoolean(SEND_CREDENTIALS_OVER_HTTP);
   }
 
@@ -89,6 +91,16 @@ public class JibSystemProperties {
    */
   public static boolean isUserAgentEnabled() {
     return Strings.isNullOrEmpty(System.getProperty(DISABLE_USER_AGENT));
+  }
+
+  /**
+   * Gets whether to always cache base image layers. Determined from the {@code
+   * jib.alwaysCacheBaseImage} system property.
+   *
+   * @return true if the property is set to {@code always}; false otherwise
+   */
+  public static boolean alwaysCacheBaseImage() {
+    return Boolean.getBoolean(ALWAYS_CACHE_BASE_IMAGE);
   }
 
   /**

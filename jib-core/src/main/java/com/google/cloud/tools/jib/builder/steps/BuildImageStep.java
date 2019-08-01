@@ -25,7 +25,6 @@ import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.HistoryEntry;
-import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.time.Instant;
 import java.util.List;
@@ -40,15 +39,15 @@ class BuildImageStep implements Callable<Image> {
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   private final Image baseImage;
-  private final List<CachedLayerAndName> baseImageLayers;
-  private final List<CachedLayerAndName> applicationLayers;
+  private final List<PreparedLayer> baseImageLayers;
+  private final List<PreparedLayer> applicationLayers;
 
   BuildImageStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Image baseImage,
-      List<CachedLayerAndName> baseImageLayers,
-      List<CachedLayerAndName> applicationLayers) {
+      List<PreparedLayer> baseImageLayers,
+      List<PreparedLayer> applicationLayers) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.baseImage = baseImage;
@@ -68,9 +67,7 @@ class BuildImageStep implements Callable<Image> {
           buildConfiguration.getContainerConfiguration();
 
       // Base image layers
-      for (CachedLayerAndName baseImageLayer : baseImageLayers) {
-        imageBuilder.addLayer(baseImageLayer.getCachedLayer());
-      }
+      baseImageLayers.stream().forEach(imageBuilder::addLayer);
 
       // Passthrough config and count non-empty history entries
       int nonEmptyLayerCount = 0;
@@ -104,15 +101,15 @@ class BuildImageStep implements Callable<Image> {
       }
 
       // Add built layers/configuration
-      for (CachedLayerAndName applicationLayer : applicationLayers) {
+      for (PreparedLayer applicationLayer : applicationLayers) {
         imageBuilder
-            .addLayer(applicationLayer.getCachedLayer())
+            .addLayer(applicationLayer)
             .addHistory(
                 HistoryEntry.builder()
                     .setCreationTimestamp(layerCreationTime)
                     .setAuthor("Jib")
                     .setCreatedBy(buildConfiguration.getToolName() + ":" + ProjectInfo.VERSION)
-                    .setComment(Verify.verifyNotNull(applicationLayer.getName()))
+                    .setComment(applicationLayer.getName())
                     .build());
       }
       if (containerConfiguration != null) {

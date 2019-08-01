@@ -55,6 +55,7 @@ public class JibRunHelper {
             "-Djib.useOnlyProjectCache=true",
             "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
+            "-Djib.allowInsecureRegistries=" + imageReference.startsWith("localhost"),
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
     assertImageDigestAndId(testProject.getProjectRoot());
@@ -73,6 +74,7 @@ public class JibRunHelper {
             "-Djib.useOnlyProjectCache=true",
             "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
+            "-Djib.allowInsecureRegistries=" + imageReference.startsWith("localhost"),
             "-D_ADDITIONAL_TAG=" + additionalTag);
     assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
     assertImageDigestAndId(testProject.getProjectRoot());
@@ -99,6 +101,7 @@ public class JibRunHelper {
             "-Djib.useOnlyProjectCache=true",
             "-Djib.console=plain",
             "-D_TARGET_IMAGE=" + imageReference,
+            "-Djib.allowInsecureRegistries=" + imageReference.startsWith("localhost"),
             "-b=" + gradleBuildFile);
     assertBuildSuccess(buildResult, "jibDockerBuild", "Built image to Docker daemon as ");
     assertImageDigestAndId(testProject.getProjectRoot());

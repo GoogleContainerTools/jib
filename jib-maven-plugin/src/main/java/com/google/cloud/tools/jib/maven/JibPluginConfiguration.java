@@ -36,6 +36,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -127,9 +129,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   /** Configuration for {@code from} parameter, */
   public static class FromConfiguration {
 
-    @Nullable
-    @Parameter(required = true)
-    private String image;
+    @Nullable @Parameter private String image;
 
     @Nullable @Parameter private String credHelper;
 
@@ -184,6 +184,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String user;
 
     @Nullable @Parameter private String workingDirectory;
+
+    @Parameter private String filesModificationTime = "EPOCH_PLUS_SECOND";
   }
 
   /** Configuration for the {@code extraDirectories} parameter. */
@@ -229,6 +231,10 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(defaultValue = "${project}", readonly = true)
   private MavenProject project;
 
+  @Nullable
+  @Parameter(defaultValue = "${plugin}", readonly = true)
+  protected PluginDescriptor descriptor;
+
   @Parameter private FromConfiguration from = new FromConfiguration();
 
   @Parameter private ToConfiguration to = new ToConfiguration();
@@ -261,6 +267,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     return Preconditions.checkNotNull(project);
   }
 
+  protected void checkJibVersion() throws MojoExecutionException {
+    Preconditions.checkNotNull(descriptor);
+    MojoCommon.checkJibVersion(descriptor);
+  }
+
   /**
    * Gets the base image reference.
    *
@@ -272,7 +283,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (property != null) {
       return property;
     }
-    return Preconditions.checkNotNull(from).image;
+    return from.image;
   }
 
   /**
@@ -286,7 +297,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (property != null) {
       return property;
     }
-    return Preconditions.checkNotNull(from).credHelper;
+    return from.credHelper;
   }
 
   AuthConfiguration getBaseImageAuth() {
@@ -339,7 +350,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     if (property != null) {
       return property;
     }
-    return Preconditions.checkNotNull(to).credHelper;
+    return to.credHelper;
   }
 
   AuthConfiguration getTargetImageAuth() {
@@ -532,6 +543,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return property;
     }
     return container.format;
+  }
+
+  /**
+   * Gets the configured files modification time value.
+   *
+   * @return the configured files modification time value
+   */
+  String getFilesModificationTime() {
+    String property = getProperty(PropertyNames.CONTAINER_FILES_MODIFICATION_TIME);
+    if (property != null) {
+      return property;
+    }
+    return container.filesModificationTime;
   }
 
   /**

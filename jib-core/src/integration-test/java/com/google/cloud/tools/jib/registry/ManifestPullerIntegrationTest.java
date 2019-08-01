@@ -73,7 +73,7 @@ public class ManifestPullerIntegrationTest {
     RegistryClient.Factory factory =
         RegistryClient.factory(EventHandlers.NONE, "registry-1.docker.io", "library/openjdk");
     Authorization authorization =
-        factory.newRegistryClient().getRegistryAuthenticator().authenticatePull(null);
+        factory.newRegistryClient().getRegistryAuthenticator().get().authenticatePull(null);
     RegistryClient registryClient = factory.setAuthorization(authorization).newRegistryClient();
 
     // Ensure 11-jre-slim is a manifest list

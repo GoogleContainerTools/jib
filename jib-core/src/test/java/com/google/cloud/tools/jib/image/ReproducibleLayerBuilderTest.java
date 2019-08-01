@@ -97,7 +97,7 @@ public class ReproducibleLayerBuilderTest {
         source,
         destination,
         LayerConfiguration.DEFAULT_FILE_PERMISSIONS_PROVIDER.apply(source, destination),
-        LayerConfiguration.DEFAULT_MODIFIED_TIME);
+        LayerConfiguration.DEFAULT_MODIFICATION_TIME);
   }
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -159,7 +159,7 @@ public class ReproducibleLayerBuilderTest {
     Path root1 = Files.createDirectories(testRoot.resolve("files1"));
     Path root2 = Files.createDirectories(testRoot.resolve("files2"));
 
-    // TODO: Currently this test only covers variation in order and modified time, even though
+    // TODO: Currently this test only covers variation in order and modification time, even though
     // TODO: the code is designed to clean up userid/groupid, this test does not check that yet.
     String contentA = "abcabc";
     Path fileA1 = createFile(root1, "fileA", contentA, 10000);
@@ -168,7 +168,7 @@ public class ReproducibleLayerBuilderTest {
     Path fileB1 = createFile(root1, "fileB", contentB, 10000);
     Path fileB2 = createFile(root2, "fileB", contentB, 20000);
 
-    // check if modified times are off
+    // check if modification times are off
     Assert.assertNotEquals(Files.getLastModifiedTime(fileA1), Files.getLastModifiedTime(fileA2));
     Assert.assertNotEquals(Files.getLastModifiedTime(fileB1), Files.getLastModifiedTime(fileB2));
 
@@ -334,12 +334,12 @@ public class ReproducibleLayerBuilderTest {
                         fileB,
                         AbsoluteUnixPath.get("/somewhere/fileB"),
                         FilePermissions.fromOctalString("123"),
-                        LayerConfiguration.DEFAULT_MODIFIED_TIME),
+                        LayerConfiguration.DEFAULT_MODIFICATION_TIME),
                     new LayerEntry(
                         folder,
                         AbsoluteUnixPath.get("/somewhere/folder"),
                         FilePermissions.fromOctalString("456"),
-                        LayerConfiguration.DEFAULT_MODIFIED_TIME)))
+                        LayerConfiguration.DEFAULT_MODIFICATION_TIME)))
             .build();
 
     Path tarFile = temporaryFolder.newFile().toPath();
@@ -359,7 +359,7 @@ public class ReproducibleLayerBuilderTest {
     }
   }
 
-  private Path createFile(Path root, String filename, String content, long lastModifiedTime)
+  private Path createFile(Path root, String filename, String content, long modificationTime)
       throws IOException {
 
     Path newFile =
@@ -367,7 +367,7 @@ public class ReproducibleLayerBuilderTest {
             root.resolve(filename),
             content.getBytes(StandardCharsets.UTF_8),
             StandardOpenOption.CREATE_NEW);
-    Files.setLastModifiedTime(newFile, FileTime.fromMillis(lastModifiedTime));
+    Files.setLastModifiedTime(newFile, FileTime.fromMillis(modificationTime));
     return newFile;
   }
 }

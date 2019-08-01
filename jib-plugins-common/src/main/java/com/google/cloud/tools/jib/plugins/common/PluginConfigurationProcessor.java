@@ -39,6 +39,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -46,6 +48,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 
 /**
@@ -64,7 +67,7 @@ public class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException {
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -94,7 +97,7 @@ public class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException {
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
@@ -116,7 +119,7 @@ public class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException {
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -157,14 +160,14 @@ public class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException {
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException {
     JibSystemProperties.checkHttpTimeoutProperty();
     JibSystemProperties.checkProxyPortProperty();
 
     ImageReference baseImageReference =
         ImageReference.parse(getBaseImage(rawConfiguration, projectProperties));
 
-    if (JibSystemProperties.isSendCredentialsOverHttpEnabled()) {
+    if (JibSystemProperties.sendCredentialsOverHttp()) {
       projectProperties.log(
           LogEvent.warn(
               "Authentication over HTTP is enabled. It is strongly recommended that you do not "
@@ -184,11 +187,16 @@ public class PluginConfigurationProcessor {
             inferredAuthProvider,
             rawConfiguration.getFromCredHelper().orElse(null));
 
+    BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
+        createModificationTimeProvider(rawConfiguration.getFilesModificationTime());
+    JavaContainerBuilder javaContainerBuilder =
+        JavaContainerBuilder.from(baseImage)
+            .setAppRoot(getAppRootChecked(rawConfiguration, projectProperties))
+            .setModificationTimeProvider(modificationTimeProvider);
     JibContainerBuilder jibContainerBuilder =
         projectProperties
-            .createContainerBuilder(
-                baseImage,
-                getAppRootChecked(rawConfiguration, projectProperties),
+            .createJibContainerBuilder(
+                javaContainerBuilder,
                 getContainerizingModeChecked(rawConfiguration, projectProperties))
             .setEntrypoint(computeEntrypoint(rawConfiguration, projectProperties))
             .setProgramArguments(rawConfiguration.getProgramArguments().orElse(null))
@@ -211,7 +219,9 @@ public class PluginConfigurationProcessor {
       if (Files.exists(directory)) {
         jibContainerBuilder.addLayer(
             JavaContainerBuilderHelper.extraDirectoryLayerConfiguration(
-                directory, rawConfiguration.getExtraDirectoryPermissions()));
+                directory,
+                rawConfiguration.getExtraDirectoryPermissions(),
+                modificationTimeProvider));
       }
     }
 
@@ -428,6 +438,39 @@ public class PluginConfigurationProcessor {
       return Optional.of(AbsoluteUnixPath.get(path));
     } catch (IllegalArgumentException ex) {
       throw new InvalidWorkingDirectoryException(path, path, ex);
+    }
+  }
+
+  /**
+   * Creates a modification time provider based on the config value. The value can be:
+   *
+   * <ol>
+   *   <li>{@code EPOCH_PLUS_SECOND} to create a provider which trims file modification time to
+   *       EPOCH + 1 second
+   *   <li>date in ISO 8601 format
+   * </ol>
+   *
+   * @param modificationTime modification time config value
+   * @return corresponding modification time provider
+   * @throws InvalidFilesModificationTimeException if the config value is not in ISO 8601 format
+   */
+  @VisibleForTesting
+  static BiFunction<Path, AbsoluteUnixPath, Instant> createModificationTimeProvider(
+      String modificationTime) throws InvalidFilesModificationTimeException {
+    try {
+      switch (modificationTime) {
+        case "EPOCH_PLUS_SECOND":
+          Instant epochPlusSecond = Instant.ofEpochSecond(1);
+          return (ignored1, ignored2) -> epochPlusSecond;
+
+        default:
+          Instant timestamp =
+              DateTimeFormatter.ISO_DATE_TIME.parse(modificationTime, Instant::from);
+          return (ignored1, ignored2) -> timestamp;
+      }
+
+    } catch (DateTimeParseException ex) {
+      throw new InvalidFilesModificationTimeException(modificationTime, modificationTime, ex);
     }
   }
 

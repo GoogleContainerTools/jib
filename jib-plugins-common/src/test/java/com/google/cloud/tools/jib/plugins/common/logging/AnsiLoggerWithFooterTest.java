@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.plugins.common.logging;
 
 import com.google.cloud.tools.jib.api.LogEvent.Level;
 import com.google.common.collect.ImmutableMap;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +31,8 @@ import org.junit.Test;
 
 /** Tests for {@link AnsiLoggerWithFooter}. */
 public class AnsiLoggerWithFooterTest {
+
+  private static final Duration SHUTDOWN_TIMEOUT = Duration.ofSeconds(3);
 
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
 
@@ -89,7 +92,7 @@ public class AnsiLoggerWithFooterTest {
     testAnsiLoggerWithFooter.log(Level.WARN, "warn");
     testAnsiLoggerWithFooter.log(Level.ERROR, "error");
 
-    singleThreadedExecutor.shutDownAndAwaitTermination();
+    singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
 
     Assert.assertEquals(
         Arrays.asList("lifecycle", "progress", "info", "debug", "warn", "error"), messages);
@@ -113,7 +116,7 @@ public class AnsiLoggerWithFooterTest {
     testAnsiLoggerWithFooter.log(Level.WARN, "warn");
     testAnsiLoggerWithFooter.log(Level.ERROR, "error");
 
-    singleThreadedExecutor.shutDownAndAwaitTermination();
+    singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
 
     Assert.assertEquals(Collections.singletonList("lifecycle"), messages);
     Assert.assertEquals(Collections.singletonList(Level.LIFECYCLE), levels);
@@ -125,7 +128,7 @@ public class AnsiLoggerWithFooterTest {
     testAnsiLoggerWithFooter.log(Level.INFO, "message");
     testAnsiLoggerWithFooter.log(Level.INFO, "another message");
 
-    singleThreadedExecutor.shutDownAndAwaitTermination();
+    singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
 
     Assert.assertEquals(
         Arrays.asList(
@@ -156,7 +159,7 @@ public class AnsiLoggerWithFooterTest {
     testAnsiLoggerWithFooter.setFooter(Arrays.asList("two line", "footer"));
     testAnsiLoggerWithFooter.log(Level.WARN, "another message");
 
-    singleThreadedExecutor.shutDownAndAwaitTermination();
+    singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
 
     Assert.assertEquals(
         Arrays.asList(

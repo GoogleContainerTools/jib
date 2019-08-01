@@ -14,28 +14,21 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.builder.steps;
+package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.cache.CachedLayer;
-import javax.annotation.Nullable;
+import java.time.format.DateTimeParseException;
 
-/** Simple structure to hold a pair of {#link CachedLayer} and its string name. */
-class CachedLayerAndName {
+public class InvalidFilesModificationTimeException extends Exception {
 
-  private CachedLayer cachedLayer;
-  @Nullable private String name;
+  private final String invalidValue;
 
-  CachedLayerAndName(CachedLayer cachedLayer, @Nullable String name) {
-    this.cachedLayer = cachedLayer;
-    this.name = name;
+  public InvalidFilesModificationTimeException(
+      String message, String invalidValue, DateTimeParseException ex) {
+    super(message, ex);
+    this.invalidValue = invalidValue;
   }
 
-  CachedLayer getCachedLayer() {
-    return cachedLayer;
-  }
-
-  @Nullable
-  String getName() {
-    return name;
+  public String getInvalidFilesModificationTime() {
+    return invalidValue;
   }
 }

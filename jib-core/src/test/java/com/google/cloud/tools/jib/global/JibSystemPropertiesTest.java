@@ -37,6 +37,8 @@ public class JibSystemPropertiesTest {
   @After
   public void tearDown() {
     System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
+    System.clearProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS);
+    System.clearProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE);
     System.clearProperty("http.proxyPort");
     System.clearProperty("https.proxyPort");
     if (httpProxyPortSaved != null) {
@@ -45,7 +47,6 @@ public class JibSystemPropertiesTest {
     if (httpsProxyPortSaved != null) {
       System.setProperty("https.proxyPort", httpsProxyPortSaved);
     }
-    System.clearProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS);
   }
 
   @Test
@@ -181,5 +182,29 @@ public class JibSystemPropertiesTest {
   public void testUseBlobMounts_other() {
     System.setProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS, "nonbool");
     Assert.assertFalse(JibSystemProperties.useCrossRepositoryBlobMounts());
+  }
+
+  @Test
+  public void testAlwaysCacheBaseImage_undefined() {
+    System.clearProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE);
+    Assert.assertFalse(JibSystemProperties.alwaysCacheBaseImage());
+  }
+
+  @Test
+  public void testAlwaysCacheBaseImage_true() {
+    System.setProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE, "true");
+    Assert.assertTrue(JibSystemProperties.alwaysCacheBaseImage());
+  }
+
+  @Test
+  public void testAlwaysCacheBaseImage_false() {
+    System.setProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE, "false");
+    Assert.assertFalse(JibSystemProperties.alwaysCacheBaseImage());
+  }
+
+  @Test
+  public void testAlwaysCacheBaseImage_other() {
+    System.setProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE, "nonbool");
+    Assert.assertFalse(JibSystemProperties.alwaysCacheBaseImage());
   }
 }

@@ -43,6 +43,8 @@ public class PropertyNames {
   public static final String CONTAINER_VOLUMES = "jib.container.volumes";
   public static final String CONTAINER_PORTS = "jib.container.ports";
   public static final String CONTAINER_USE_CURRENT_TIMESTAMP = "jib.container.useCurrentTimestamp";
+  public static final String CONTAINER_FILES_MODIFICATION_TIME =
+      "jib.container.filesModificationTime";
   public static final String USE_ONLY_PROJECT_CACHE = "jib.useOnlyProjectCache";
   public static final String BASE_IMAGE_CACHE = "jib.baseImageCache";
   public static final String APPLICATION_CACHE = "jib.applicationCache";

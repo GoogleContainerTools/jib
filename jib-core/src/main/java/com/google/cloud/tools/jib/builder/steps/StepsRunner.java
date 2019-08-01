@@ -60,8 +60,8 @@ public class StepsRunner {
     }
 
     private Future<ImageAndAuthorization> baseImageAndAuth = failedFuture();
-    private Future<List<Future<CachedLayerAndName>>> baseImageLayers = failedFuture();
-    @Nullable private List<Future<CachedLayerAndName>> applicationLayers;
+    private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
+    @Nullable private List<Future<PreparedLayer>> applicationLayers;
     private Future<Image> builtImage = failedFuture();
     private Future<Optional<Credential>> targetRegistryCredentials = failedFuture();
     private Future<Optional<Authorization>> pushAuthorization = failedFuture();
@@ -79,7 +79,7 @@ public class StepsRunner {
    */
   public static StepsRunner begin(BuildConfiguration buildConfiguration) {
     ExecutorService executorService =
-        JibSystemProperties.isSerializedExecutionEnabled()
+        JibSystemProperties.serializeExecution()
             ? MoreExecutors.newDirectExecutorService()
             : buildConfiguration.getExecutorService();
 
@@ -120,9 +120,10 @@ public class StepsRunner {
 
   public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
     rootProgressDescription = "building image to Docker daemon";
+
     // build and cache
     stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(this::pullAndCacheBaseImageLayers);
+    stepsToRun.add(() -> obtainBaseImageLayers(true)); // always pull layers for docker builds
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
     // load to Docker
@@ -132,9 +133,10 @@ public class StepsRunner {
 
   public StepsRunner tarBuildSteps(Path outputPath) {
     rootProgressDescription = "building image to tar file";
+
     // build and cache
     stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(this::pullAndCacheBaseImageLayers);
+    stepsToRun.add(() -> obtainBaseImageLayers(true)); // always pull layers for tar builds
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
     // create a tar
@@ -144,14 +146,17 @@ public class StepsRunner {
 
   public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
-    // build and cache
-    stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(this::pullAndCacheBaseImageLayers);
-    stepsToRun.add(this::buildAndCacheApplicationLayers);
-    stepsToRun.add(this::buildImage);
-    // push to registry
+    boolean layersRequiredLocally = JibSystemProperties.alwaysCacheBaseImage();
+
     stepsToRun.add(this::retrieveTargetRegistryCredentials);
     stepsToRun.add(this::authenticatePush);
+
+    stepsToRun.add(this::pullBaseImage);
+    stepsToRun.add(() -> obtainBaseImageLayers(layersRequiredLocally));
+    stepsToRun.add(this::buildAndCacheApplicationLayers);
+    stepsToRun.add(this::buildImage);
+
+    // push to registry
     stepsToRun.add(this::pushBaseImageLayers);
     stepsToRun.add(this::pushApplicationLayers);
     stepsToRun.add(this::pushContainerConfiguration);
@@ -212,7 +217,7 @@ public class StepsRunner {
             new PullBaseImageStep(buildConfiguration, childProgressDispatcherFactory));
   }
 
-  private void pullAndCacheBaseImageLayers() {
+  private void obtainBaseImageLayers(boolean layersRequiredLocally) {
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
 
@@ -220,10 +225,16 @@ public class StepsRunner {
         executorService.submit(
             () ->
                 scheduleCallables(
-                    PullAndCacheBaseImageLayerStep.makeList(
-                        buildConfiguration,
-                        childProgressDispatcherFactory,
-                        results.baseImageAndAuth.get())));
+                    layersRequiredLocally
+                        ? ObtainBaseImageLayerStep.makeListForForcedDownload(
+                            buildConfiguration,
+                            childProgressDispatcherFactory,
+                            results.baseImageAndAuth.get())
+                        : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
+                            buildConfiguration,
+                            childProgressDispatcherFactory,
+                            results.baseImageAndAuth.get(),
+                            results.pushAuthorization.get().orElse(null))));
   }
 
   private void pushBaseImageLayers() {

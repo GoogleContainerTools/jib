@@ -40,6 +40,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -64,8 +65,7 @@ public class RegistryAuthenticator {
    * @see <a
    *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
    */
-  @Nullable
-  static RegistryAuthenticator fromAuthenticationMethod(
+  static Optional<RegistryAuthenticator> fromAuthenticationMethod(
       String authenticationMethod,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       String userAgent)
@@ -73,7 +73,7 @@ public class RegistryAuthenticator {
     // If the authentication method starts with 'basic ' (case insensitive), no registry
     // authentication is needed.
     if (authenticationMethod.matches("^(?i)(basic) .*")) {
-      return null;
+      return Optional.empty();
     }
 
     // Checks that the authentication method starts with 'bearer ' (case insensitive).
@@ -104,7 +104,8 @@ public class RegistryAuthenticator {
             ? serviceMatcher.group(1)
             : registryEndpointRequestProperties.getServerUrl();
 
-    return new RegistryAuthenticator(realm, service, registryEndpointRequestProperties, userAgent);
+    return Optional.of(
+        new RegistryAuthenticator(realm, service, registryEndpointRequestProperties, userAgent));
   }
 
   private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(

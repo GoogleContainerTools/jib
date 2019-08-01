@@ -56,8 +56,8 @@ public class AuthenticationMethodRetrieverTest {
 
   @Test
   public void testHandleResponse() {
-    Assert.assertNull(
-        testAuthenticationMethodRetriever.handleResponse(Mockito.mock(Response.class)));
+    Assert.assertFalse(
+        testAuthenticationMethodRetriever.handleResponse(Mockito.mock(Response.class)).isPresent());
   }
 
   @Test
@@ -146,7 +146,9 @@ public class AuthenticationMethodRetrieverTest {
     Mockito.when(mockHeaders.getAuthenticate()).thenReturn(authenticationMethod);
 
     RegistryAuthenticator registryAuthenticator =
-        testAuthenticationMethodRetriever.handleHttpResponseException(mockHttpResponseException);
+        testAuthenticationMethodRetriever
+            .handleHttpResponseException(mockHttpResponseException)
+            .get();
 
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someImageName:someScope"),

@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
@@ -27,6 +28,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.registry.RegistryClient;
+import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,14 +38,50 @@ import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 
 /** Pulls and caches a single base image layer. */
-class PullAndCacheBaseImageLayerStep implements Callable<CachedLayerAndName> {
+class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
 
   private static final String DESCRIPTION = "Pulling base image layer %s";
 
-  static ImmutableList<PullAndCacheBaseImageLayerStep> makeList(
+  @FunctionalInterface
+  private interface BlobExistenceChecker {
+
+    Optional<Boolean> exists(DescriptorDigest digest) throws IOException, RegistryException;
+  }
+
+  static ImmutableList<ObtainBaseImageLayerStep> makeListForForcedDownload(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth) {
+    BlobExistenceChecker noOpBlobChecker = ignored -> Optional.empty();
+    return makeList(
+        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, noOpBlobChecker);
+  }
+
+  static ImmutableList<ObtainBaseImageLayerStep> makeListForSelectiveDownload(
+      BuildConfiguration buildConfiguration,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      ImageAndAuthorization baseImageAndAuth,
+      Authorization pushAuthorization) {
+    Verify.verify(!buildConfiguration.isOffline());
+
+    RegistryClient targetRegistryClient =
+        buildConfiguration
+            .newTargetImageRegistryClientFactory()
+            .setAuthorization(pushAuthorization)
+            .newRegistryClient();
+    // TODO: also check if cross-repo blob mount is possible.
+    BlobExistenceChecker blobExistenceChecker =
+        digest -> Optional.of(targetRegistryClient.checkBlob(digest).isPresent());
+
+    return makeList(
+        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, blobExistenceChecker);
+  }
+
+  private static ImmutableList<ObtainBaseImageLayerStep> makeList(
+      BuildConfiguration buildConfiguration,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      ImageAndAuthorization baseImageAndAuth,
+      BlobExistenceChecker blobExistenceChecker) {
     ImmutableList<Layer> baseImageLayers = baseImageAndAuth.getImage().getLayers();
 
     try (ProgressEventDispatcher progressEventDispatcher =
@@ -53,14 +91,15 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayerAndName> {
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), "Preparing base image layer pullers")) {
 
-      List<PullAndCacheBaseImageLayerStep> layerPullers = new ArrayList<>();
+      List<ObtainBaseImageLayerStep> layerPullers = new ArrayList<>();
       for (Layer layer : baseImageLayers) {
         layerPullers.add(
-            new PullAndCacheBaseImageLayerStep(
+            new ObtainBaseImageLayerStep(
                 buildConfiguration,
                 progressEventDispatcher.newChildProducer(),
-                layer.getBlobDescriptor().getDigest(),
-                baseImageAndAuth.getAuthorization()));
+                layer,
+                baseImageAndAuth.getAuthorization(),
+                blobExistenceChecker));
       }
       return ImmutableList.copyOf(layerPullers);
     }
@@ -69,38 +108,50 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayerAndName> {
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  private final DescriptorDigest layerDigest;
+  private final Layer layer;
   private final @Nullable Authorization pullAuthorization;
+  private final BlobExistenceChecker blobExistenceChecker;
 
-  PullAndCacheBaseImageLayerStep(
+  ObtainBaseImageLayerStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      DescriptorDigest layerDigest,
-      @Nullable Authorization pullAuthorization) {
+      Layer layer,
+      @Nullable Authorization pullAuthorization,
+      BlobExistenceChecker blobExistenceChecker) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.layerDigest = layerDigest;
+    this.layer = layer;
     this.pullAuthorization = pullAuthorization;
+    this.blobExistenceChecker = blobExistenceChecker;
   }
 
   @Override
-  public CachedLayerAndName call() throws IOException, CacheCorruptedException {
+  public PreparedLayer call() throws IOException, CacheCorruptedException, RegistryException {
+    DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("checking base image layer " + layerDigest, 1);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, layerDigest))) {
+
+      Optional<Boolean> layerExists = blobExistenceChecker.exists(layerDigest);
+      if (layerExists.orElse(false)) {
+        return new PreparedLayer.Builder(layer).setStateInTarget(layerExists).build();
+      }
+
       Cache cache = buildConfiguration.getBaseImageLayersCache();
 
       // Checks if the layer already exists in the cache.
       Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerDigest);
       if (optionalCachedLayer.isPresent()) {
-        return new CachedLayerAndName(optionalCachedLayer.get(), null);
+        CachedLayer cachedLayer = optionalCachedLayer.get();
+        return new PreparedLayer.Builder(cachedLayer).setStateInTarget(layerExists).build();
       } else if (buildConfiguration.isOffline()) {
         throw new IOException(
             "Cannot run Jib in offline mode; local Jib cache for base image is missing image layer "
                 + layerDigest
-                + ". You may need to rerun Jib in online mode to re-download the base image layers.");
+                + ". Rerun Jib in online mode with \"-Djib.alwaysCacheBaseImage=true\" to "
+                + "re-download the base image layers.");
       }
 
       RegistryClient registryClient =
@@ -119,7 +170,7 @@ class PullAndCacheBaseImageLayerStep implements Callable<CachedLayerAndName> {
                     layerDigest,
                     progressEventDispatcherWrapper::setProgressTarget,
                     progressEventDispatcherWrapper::dispatchProgress));
-        return new CachedLayerAndName(cachedLayer, null);
+        return new PreparedLayer.Builder(cachedLayer).setStateInTarget(layerExists).build();
       }
     }
   }
