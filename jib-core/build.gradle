@@ -16,6 +16,8 @@ group 'com.google.cloud.tools'
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 compileJava.options.encoding = 'UTF-8'
+compileJava.options.compilerArgs += [ '-Xlint:deprecation' ]
+compileTestJava.options.compilerArgs += [ '-Xlint:deprecation' ]
 
 repositories {
   mavenCentral()
@@ -35,7 +37,8 @@ configurations {
 
 dependencies {
   // Make sure these are consistent with jib-maven-plugin.
-  implementation 'com.google.http-client:google-http-client:1.27.0'
+  implementation 'com.google.http-client:google-http-client:1.31.0'
+  implementation 'com.google.http-client:google-http-client-apache-v2:1.31.0'
   implementation 'org.apache.commons:commons-compress:1.18'
   implementation 'com.google.guava:guava:27.0.1-jre'
   implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.9.2'
