@@ -25,7 +25,6 @@ import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import javax.net.ssl.SSLException;
 import org.hamcrest.CoreMatchers;
 import org.junit.After;
@@ -35,15 +34,16 @@ import org.junit.Test;
 /** Tests for {@link Connection} using an actual local server. */
 public class WithServerConnectionTest {
 
-  private final Map<String, Optional<String>> savedProperties = new HashMap<>();
+  // HashMap allows null values.
+  private final HashMap<String, String> savedProperties = new HashMap<>();
 
   @After
   public void tearDown() {
-    for (Map.Entry<String, Optional<String>> entry : savedProperties.entrySet()) {
-      if (entry.getValue().isPresent()) {
-        System.setProperty(entry.getKey(), entry.getValue().get());
-      } else {
+    for (Map.Entry<String, String> entry : savedProperties.entrySet()) {
+      if (entry.getValue() == null) {
         System.clearProperty(entry.getKey());
+      } else {
+        System.setProperty(entry.getKey(), entry.getValue());
       }
     }
   }
@@ -142,7 +142,7 @@ public class WithServerConnectionTest {
   }
 
   private void setSystemProperty(String key, String value) {
-    savedProperties.put(key, Optional.ofNullable(System.getProperty(key)));
+    savedProperties.put(key, System.getProperty(key));
     System.setProperty(key, value);
   }
 }
