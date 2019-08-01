@@ -28,17 +28,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.ProxySelector;
 import java.net.URL;
 import java.security.GeneralSecurityException;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import org.apache.http.config.SocketConfig;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.SystemDefaultRoutePlanner;
 
 /**
  * Sends an HTTP {@link Request} and stores the {@link Response}. Clients should not send more than
@@ -78,32 +73,13 @@ public class Connection implements Closeable {
   public static Function<URL, Connection> getInsecureConnectionFactory()
       throws GeneralSecurityException {
     HttpClientBuilder httpClientBuilder =
-        newDefaultHttpClientBuilder()
+        ApacheHttpTransport.newDefaultHttpClientBuilder()
             .setSSLSocketFactory(null) // creates new factory with the SSLContext given below
             .setSSLContext(SslUtils.trustAllSSLContext())
             .setSSLHostnameVerifier(new NoopHostnameVerifier());
 
     // Do not use NetHttpTransport. See comments in getConnectionFactory for details.
     return url -> new Connection(url, new ApacheHttpTransport(httpClientBuilder.build()));
-  }
-
-  // TODO(chanseok): remove. Use ApacheHttpTransport.newDefaultHttpClientBuilder() when it becomes
-  // available in newer releases (https://github.com/googleapis/google-http-java-client/issues/578)
-  private static HttpClientBuilder newDefaultHttpClientBuilder() {
-    // code from https://github.com/googleapis/google-http-java-client/pull/717
-    SocketConfig socketConfig =
-        SocketConfig.custom().setRcvBufSize(8192).setSndBufSize(8192).build();
-
-    return HttpClientBuilder.create()
-        .useSystemProperties()
-        .setSSLSocketFactory(SSLConnectionSocketFactory.getSocketFactory())
-        .setDefaultSocketConfig(socketConfig)
-        .setMaxConnTotal(200)
-        .setMaxConnPerRoute(20)
-        .setConnectionTimeToLive(-1, TimeUnit.MILLISECONDS)
-        .setRoutePlanner(new SystemDefaultRoutePlanner(ProxySelector.getDefault()))
-        .disableRedirectHandling()
-        .disableAutomaticRetries();
   }
 
   private HttpRequestFactory requestFactory;
