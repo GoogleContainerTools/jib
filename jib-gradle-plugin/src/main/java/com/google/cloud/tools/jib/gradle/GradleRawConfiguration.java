@@ -156,6 +156,11 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public String getCreationTime() {
+    return jibExtension.getContainer().getCreationTime();
+  }
+
+  @Override
   public List<Path> getExtraDirectories() {
     return jibExtension.getExtraDirectories().getPaths();
   }

@@ -42,19 +42,14 @@ public class PropertyNames {
   public static final String CONTAINER_WORKING_DIRECTORY = "jib.container.workingDirectory";
   public static final String CONTAINER_VOLUMES = "jib.container.volumes";
   public static final String CONTAINER_PORTS = "jib.container.ports";
-  public static final String CONTAINER_USE_CURRENT_TIMESTAMP = "jib.container.useCurrentTimestamp";
   public static final String CONTAINER_FILES_MODIFICATION_TIME =
       "jib.container.filesModificationTime";
+  public static final String CONTAINER_CREATION_TIME = "jib.container.creationTime";
   public static final String USE_ONLY_PROJECT_CACHE = "jib.useOnlyProjectCache";
   public static final String BASE_IMAGE_CACHE = "jib.baseImageCache";
   public static final String APPLICATION_CACHE = "jib.applicationCache";
   public static final String ALLOW_INSECURE_REGISTRIES = "jib.allowInsecureRegistries";
-  @Deprecated public static final String EXTRA_DIRECTORY_PATH = "jib.extraDirectory.path";
   public static final String EXTRA_DIRECTORIES_PATHS = "jib.extraDirectories.paths";
-
-  @Deprecated
-  public static final String EXTRA_DIRECTORY_PERMISSIONS = "jib.extraDirectory.permissions";
-
   public static final String EXTRA_DIRECTORIES_PERMISSIONS = "jib.extraDirectories.permissions";
   public static final String DOCKER_CLIENT_EXECUTABLE = "jib.dockerClient.executable";
   public static final String DOCKER_CLIENT_ENVIRONMENT = "jib.dockerClient.environment";
@@ -62,6 +57,14 @@ public class PropertyNames {
   public static final String SKIP = "jib.skip";
   public static final String CONSOLE = "jib.console";
   public static final String CONTAINERIZE = "jib.containerize";
+
+  @Deprecated
+  public static final String CONTAINER_USE_CURRENT_TIMESTAMP = "jib.container.useCurrentTimestamp";
+
+  @Deprecated public static final String EXTRA_DIRECTORY_PATH = "jib.extraDirectory.path";
+
+  @Deprecated
+  public static final String EXTRA_DIRECTORY_PERMISSIONS = "jib.extraDirectory.permissions";
 
   private PropertyNames() {}
 }

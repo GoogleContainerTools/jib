@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import java.time.format.DateTimeParseException;
 
+/** Exception when an invalid file timestamp configuration is encountered. */
 public class InvalidFilesModificationTimeException extends Exception {
 
   private final String invalidValue;

@@ -186,6 +186,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String workingDirectory;
 
     @Parameter private String filesModificationTime = "EPOCH_PLUS_SECOND";
+
+    @Parameter private String creationTime = "EPOCH_PLUS_SECOND";
   }
 
   /** Configuration for the {@code extraDirectories} parameter. */
@@ -366,7 +368,17 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   boolean getUseCurrentTimestamp() {
     String property = getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
     if (property != null) {
+      getLog()
+          .warn(
+              "jib.container.useCurrentTimestamp is deprecated; use jib.container.creationTime to "
+                  + "specify an ISO 8601 timestamp instead");
       return Boolean.parseBoolean(property);
+    }
+    if (container.useCurrentTimestamp) {
+      getLog()
+          .warn(
+              "<container><useCurrentTimestamp> is deprecated; use <container><creationTime> to "
+                  + "specify an ISO 8601 timestamp instead");
     }
     return container.useCurrentTimestamp;
   }
@@ -556,6 +568,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return property;
     }
     return container.filesModificationTime;
+  }
+
+  /**
+   * Gets the configured container creation time value.
+   *
+   * @return the configured container creation time value
+   */
+  String getCreationTime() {
+    String property = getProperty(PropertyNames.CONTAINER_CREATION_TIME);
+    if (property != null) {
+      return property;
+    }
+    return container.creationTime;
   }
 
   /**

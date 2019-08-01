@@ -89,6 +89,12 @@ class TaskCommon {
             "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'");
       }
     }
+
+    if (jibExtension.getContainer().getUseCurrentTimestamp()) {
+      logger.warn(
+          "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' to "
+              + "specify an ISO 8601 timestamp instead");
+    }
   }
 
   /**

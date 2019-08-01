@@ -48,6 +48,7 @@ public class ContainerParameters {
   @Nullable private String user;
   @Nullable private String workingDirectory;
   private String filesModificationTime = "EPOCH_PLUS_SECOND";
+  private String creationTime = "EPOCH_PLUS_SECOND";
 
   @Input
   @Optional
@@ -260,5 +261,18 @@ public class ContainerParameters {
 
   public void setFilesModificationTime(String filesModificationTime) {
     this.filesModificationTime = filesModificationTime;
+  }
+
+  @Input
+  @Optional
+  public String getCreationTime() {
+    if (System.getProperty(PropertyNames.CONTAINER_CREATION_TIME) != null) {
+      return System.getProperty(PropertyNames.CONTAINER_CREATION_TIME);
+    }
+    return creationTime;
+  }
+
+  public void setCreationTime(String creationTime) {
+    this.creationTime = creationTime;
   }
 }

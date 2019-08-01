@@ -78,6 +78,8 @@ public interface RawConfiguration {
 
   String getFilesModificationTime();
 
+  String getCreationTime();
+
   List<Path> getExtraDirectories();
 
   Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions();

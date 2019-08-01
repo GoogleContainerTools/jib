@@ -212,6 +212,8 @@ public class PluginConfigurationProcessor {
           LogEvent.warn(
               "Setting image creation time to current time; your image may not be reproducible."));
       jibContainerBuilder.setCreationTime(Instant.now());
+    } else {
+      jibContainerBuilder.setCreationTime(getConfiguredTime(rawConfiguration.getCreationTime()));
     }
 
     // Adds all the extra files.
@@ -442,13 +444,7 @@ public class PluginConfigurationProcessor {
   }
 
   /**
-   * Creates a modification time provider based on the config value. The value can be:
-   *
-   * <ol>
-   *   <li>{@code EPOCH_PLUS_SECOND} to create a provider which trims file modification time to
-   *       EPOCH + 1 second
-   *   <li>date in ISO 8601 format
-   * </ol>
+   * Creates a modification time provider based on the config value.
    *
    * @param modificationTime modification time config value
    * @return corresponding modification time provider
@@ -458,19 +454,33 @@ public class PluginConfigurationProcessor {
   static BiFunction<Path, AbsoluteUnixPath, Instant> createModificationTimeProvider(
       String modificationTime) throws InvalidFilesModificationTimeException {
     try {
-      switch (modificationTime) {
-        case "EPOCH_PLUS_SECOND":
-          Instant epochPlusSecond = Instant.ofEpochSecond(1);
-          return (ignored1, ignored2) -> epochPlusSecond;
-
-        default:
-          Instant timestamp =
-              DateTimeFormatter.ISO_DATE_TIME.parse(modificationTime, Instant::from);
-          return (ignored1, ignored2) -> timestamp;
-      }
+      return (ignored1, ignored2) -> getConfiguredTime(modificationTime);
 
     } catch (DateTimeParseException ex) {
       throw new InvalidFilesModificationTimeException(modificationTime, modificationTime, ex);
+    }
+  }
+
+  /**
+   * Creates an {@link Instant} based on the config value. The value can be:
+   *
+   * <ol>
+   *   <li>{@code EPOCH_PLUS_SECOND} to create a provider which trims file modification time to
+   *       EPOCH + 1 second
+   *   <li>date in ISO 8601 format
+   * </ol>
+   *
+   * @param configuredCreationTime the config value
+   * @return corresponding {@link Instant}
+   */
+  private static Instant getConfiguredTime(String configuredCreationTime)
+      throws DateTimeParseException {
+    switch (configuredCreationTime) {
+      case "EPOCH_PLUS_SECOND":
+        return Instant.ofEpochSecond(1);
+
+      default:
+        return DateTimeFormatter.ISO_DATE_TIME.parse(configuredCreationTime, Instant::from);
     }
   }
 
