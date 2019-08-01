@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.tar;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,24 +36,23 @@ public class TarExtractor {
    * @throws IOException if extraction fails
    */
   public static void extract(Path source, Path destination) throws IOException {
-    try (InputStream in = Files.newInputStream(source)) {
-      try (TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
-        byte[] buffer = new byte[1024];
-        TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry();
-        while (entry != null) {
-          if (entry.isDirectory()) {
-            Files.createDirectories(destination.resolve(entry.getName()));
-          } else {
-            try (OutputStream out = Files.newOutputStream(destination.resolve(entry.getName()))) {
-              int read = tarArchiveInputStream.read(buffer);
-              while (read != -1) {
-                out.write(buffer, 0, read);
-                read = tarArchiveInputStream.read(buffer);
-              }
+    try (InputStream in = new BufferedInputStream(Files.newInputStream(source));
+        TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
+      byte[] buffer = new byte[1024];
+      TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry();
+      while (entry != null) {
+        if (entry.isDirectory()) {
+          Files.createDirectories(destination.resolve(entry.getName()));
+        } else {
+          try (OutputStream out = Files.newOutputStream(destination.resolve(entry.getName()))) {
+            int read = tarArchiveInputStream.read(buffer);
+            while (read != -1) {
+              out.write(buffer, 0, read);
+              read = tarArchiveInputStream.read(buffer);
             }
           }
-          entry = tarArchiveInputStream.getNextTarEntry();
         }
+        entry = tarArchiveInputStream.getNextTarEntry();
       }
     }
   }
