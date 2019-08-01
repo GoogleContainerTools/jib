@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.tar;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -36,15 +37,25 @@ public class TarExtractor {
    * @throws IOException if extraction fails
    */
   public static void extract(Path source, Path destination) throws IOException {
+    String canonicalDestination = destination.toFile().getCanonicalPath();
+
     try (InputStream in = new BufferedInputStream(Files.newInputStream(source));
         TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
       byte[] buffer = new byte[1024];
       TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry();
       while (entry != null) {
+        Path entryPath = destination.resolve(entry.getName());
+
+        String canonicalTarget = entryPath.toFile().getCanonicalPath();
+        if (!canonicalTarget.startsWith(canonicalDestination + File.separator)) {
+          String offender = entry.getName() + " from " + source;
+          throw new IOException("Blocked unzipping files outside destination: " + offender);
+        }
+
         if (entry.isDirectory()) {
-          Files.createDirectories(destination.resolve(entry.getName()));
+          Files.createDirectories(entryPath);
         } else {
-          try (OutputStream out = Files.newOutputStream(destination.resolve(entry.getName()))) {
+          try (OutputStream out = Files.newOutputStream(entryPath)) {
             int read = tarArchiveInputStream.read(buffer);
             while (read != -1) {
               out.write(buffer, 0, read);
