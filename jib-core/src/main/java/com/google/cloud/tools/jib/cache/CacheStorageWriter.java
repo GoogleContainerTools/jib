@@ -43,6 +43,7 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nullable;
@@ -81,15 +82,27 @@ class CacheStorageWriter {
       return;
     }
 
+    // Some Windows users report java.nio.file.AccessDeniedException that we suspect is caused
+    // by anti-virus programs, like Windows Defender, that open new files for scanning.
+    // Retry the rename up to 5 times.
+    IOException exception = null;
     try {
-      Files.move(source, destination);
-
-    } catch (FileSystemException ex) {
-      if (!Files.exists(destination)) {
-        // TODO to log that the destination exists
-        throw ex;
+      boolean success =
+          Retry.action(() -> Files.move(source, destination))
+              .until(() -> Files.exists(destination))
+              .maximumRetries(5)
+              .retryOnException(ex -> ex instanceof FileSystemException)
+              .sleep(15, TimeUnit.MILLISECONDS)
+              .run();
+      if (success) {
+        return;
       }
+    } catch (IOException ex) {
+      exception = ex;
     }
+
+    String message = String.format("unable to move: %s to %s", source, destination);
+    throw new IOException(message, exception);
   }
 
   /**
