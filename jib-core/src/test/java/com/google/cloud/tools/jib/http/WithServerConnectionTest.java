@@ -23,30 +23,17 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import javax.net.ssl.SSLException;
 import org.hamcrest.CoreMatchers;
-import org.junit.After;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 
 /** Tests for {@link Connection} using an actual local server. */
 public class WithServerConnectionTest {
 
-  // HashMap allows null values.
-  private final HashMap<String, String> savedProperties = new HashMap<>();
-
-  @After
-  public void tearDown() {
-    for (Map.Entry<String, String> entry : savedProperties.entrySet()) {
-      if (entry.getValue() == null) {
-        System.clearProperty(entry.getKey());
-      } else {
-        System.setProperty(entry.getKey(), entry.getValue());
-      }
-    }
-  }
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   @Test
   public void testGet()
@@ -122,10 +109,10 @@ public class WithServerConnectionTest {
 
     try (TestWebServer server =
         new TestWebServer(false, Arrays.asList(proxyResponse, targetServerResponse))) {
-      setSystemProperty("http.proxyHost", "localhost");
-      setSystemProperty("http.proxyPort", String.valueOf(server.getLocalPort()));
-      setSystemProperty("http.proxyUser", "user_sys_prop");
-      setSystemProperty("http.proxyPassword", "pass_sys_prop");
+      System.setProperty("http.proxyHost", "localhost");
+      System.setProperty("http.proxyPort", String.valueOf(server.getLocalPort()));
+      System.setProperty("http.proxyUser", "user_sys_prop");
+      System.setProperty("http.proxyPassword", "pass_sys_prop");
 
       try (Connection connection =
           Connection.getConnectionFactory().apply(new URL("http://does.not.matter"))) {
@@ -139,10 +126,5 @@ public class WithServerConnectionTest {
             ByteStreams.toByteArray(response.getBody()));
       }
     }
-  }
-
-  private void setSystemProperty(String key, String value) {
-    savedProperties.put(key, System.getProperty(key));
-    System.setProperty(key, value);
   }
 }

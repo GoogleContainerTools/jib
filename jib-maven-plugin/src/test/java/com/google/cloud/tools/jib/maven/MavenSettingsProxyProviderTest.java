@@ -16,21 +16,17 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.common.collect.ImmutableList;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.settings.Proxy;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.hamcrest.CoreMatchers;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
@@ -38,28 +34,15 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class MavenSettingsProxyProviderTest {
 
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+
   private static Settings noActiveProxiesSettings;
   private static Settings httpOnlyProxySettings;
   private static Settings httpsOnlyProxySettings;
   private static Settings mixedProxyEncryptedSettings;
   private static Settings badProxyEncryptedSettings;
   private static SettingsDecrypter settingsDecrypter;
-  private static SettingsDecrypter emptySettingsDescypter;
-
-  private static final ImmutableList<String> proxyProperties =
-      ImmutableList.of(
-          "http.proxyHost",
-          "http.proxyPort",
-          "http.proxyUser",
-          "http.proxyPassword",
-          "https.proxyHost",
-          "https.proxyPort",
-          "https.proxyUser",
-          "https.proxyPassword",
-          "http.nonProxyHosts");
-
-  // HashMap to allow saving null values.
-  private final HashMap<String, String> savedProperties = new HashMap<>();
+  private static SettingsDecrypter emptySettingsDecrypter;
 
   @BeforeClass
   public static void setUpTestFixtures() {
@@ -81,28 +64,9 @@ public class MavenSettingsProxyProviderTest {
     settingsDecrypter =
         SettingsFixture.newSettingsDecrypter(
             Paths.get("src/test/resources/maven/settings/settings-security.xml"));
-    emptySettingsDescypter =
+    emptySettingsDecrypter =
         SettingsFixture.newSettingsDecrypter(
             Paths.get("src/test/resources/maven/settings/settings-security.empty.xml"));
-  }
-
-  @Before
-  public void setUp() {
-    proxyProperties.stream().forEach(key -> savedProperties.put(key, System.getProperty(key)));
-    proxyProperties.stream().forEach(key -> System.clearProperty(key));
-  }
-
-  @After
-  public void tearDown() {
-    Consumer<Map.Entry<String, String>> restoreProperty =
-        entry -> {
-          if (entry.getValue() == null) {
-            System.clearProperty(entry.getKey());
-          } else {
-            System.setProperty(entry.getKey(), entry.getValue());
-          }
-        };
-    savedProperties.entrySet().stream().forEach(restoreProperty);
   }
 
   @Test
@@ -291,6 +255,19 @@ public class MavenSettingsProxyProviderTest {
     try {
       MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
           badProxyEncryptedSettings, settingsDecrypter);
+      Assert.fail();
+    } catch (MojoExecutionException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.startsWith("Unable to decrypt proxy info from settings.xml:"));
+    }
+  }
+
+  @Test
+  public void testActivateHttpAndHttpsProxies_emptySettingsDecrypter() {
+    try {
+      MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
+          mixedProxyEncryptedSettings, emptySettingsDecrypter);
       Assert.fail();
     } catch (MojoExecutionException ex) {
       Assert.assertThat(

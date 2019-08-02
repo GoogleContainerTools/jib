@@ -25,56 +25,51 @@ import java.util.Arrays;
 import java.util.Collections;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 
 /** Tests for {@link JibExtension}. */
 public class JibExtensionTest {
 
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+
   private JibExtension testJibExtension;
   private Project fakeProject;
 
-  private static void clearProperties() {
-    System.clearProperty("jib.from.image");
-    System.clearProperty("jib.from.credHelper");
-    System.clearProperty("jib.to.image");
-    System.clearProperty("jib.to.tags");
-    System.clearProperty("jib.to.credHelper");
-    System.clearProperty("jib.container.appRoot");
-    System.clearProperty("jib.container.args");
-    System.clearProperty("jib.container.entrypoint");
-    System.clearProperty("jib.container.environment");
-    System.clearProperty("jib.container.extraClasspath");
-    System.clearProperty("jib.container.format");
-    System.clearProperty("jib.container.jvmFlags");
-    System.clearProperty("jib.container.labels");
-    System.clearProperty("jib.container.mainClass");
-    System.clearProperty("jib.container.ports");
-    System.clearProperty("jib.container.useCurrentTimestamp");
-    System.clearProperty("jib.container.user");
-    System.clearProperty("jib.container.filesModificationTime");
-    System.clearProperty("jib.containerizingMode");
-    System.clearProperty("jib.extraDirectory.path");
-    System.clearProperty("jib.extraDirectory.permissions");
-    System.clearProperty("jib.extraDirectories.paths");
-    System.clearProperty("jib.extraDirectories.permissions");
-  }
-
   @Before
   public void setUp() {
-    clearProperties();
+    Assert.assertNull(System.getProperty("jib.from.image"));
+    Assert.assertNull(System.getProperty("jib.from.credHelper"));
+    Assert.assertNull(System.getProperty("jib.to.image"));
+    Assert.assertNull(System.getProperty("jib.to.tags"));
+    Assert.assertNull(System.getProperty("jib.to.credHelper"));
+    Assert.assertNull(System.getProperty("jib.container.appRoot"));
+    Assert.assertNull(System.getProperty("jib.container.args"));
+    Assert.assertNull(System.getProperty("jib.container.entrypoint"));
+    Assert.assertNull(System.getProperty("jib.container.environment"));
+    Assert.assertNull(System.getProperty("jib.container.extraClasspath"));
+    Assert.assertNull(System.getProperty("jib.container.format"));
+    Assert.assertNull(System.getProperty("jib.container.jvmFlags"));
+    Assert.assertNull(System.getProperty("jib.container.labels"));
+    Assert.assertNull(System.getProperty("jib.container.mainClass"));
+    Assert.assertNull(System.getProperty("jib.container.ports"));
+    Assert.assertNull(System.getProperty("jib.container.useCurrentTimestamp"));
+    Assert.assertNull(System.getProperty("jib.container.user"));
+    Assert.assertNull(System.getProperty("jib.container.filesModificationTime"));
+    Assert.assertNull(System.getProperty("jib.containerizingMode"));
+    Assert.assertNull(System.getProperty("jib.extraDirectory.path"));
+    Assert.assertNull(System.getProperty("jib.extraDirectory.permissions"));
+    Assert.assertNull(System.getProperty("jib.extraDirectories.paths"));
+    Assert.assertNull(System.getProperty("jib.extraDirectories.permissions"));
+
     fakeProject = ProjectBuilder.builder().build();
     testJibExtension =
         fakeProject
             .getExtensions()
             .create(JibPlugin.JIB_EXTENSION_NAME, JibExtension.class, fakeProject);
-  }
-
-  @After
-  public void teardown() {
-    clearProperties();
   }
 
   @Test

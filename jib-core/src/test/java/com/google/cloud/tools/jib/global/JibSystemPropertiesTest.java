@@ -16,41 +16,18 @@
 
 package com.google.cloud.tools.jib.global;
 
-import javax.annotation.Nullable;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 
 /** Tests for {@link JibSystemProperties}. */
 public class JibSystemPropertiesTest {
 
-  @Nullable private String httpProxyPortSaved;
-  @Nullable private String httpsProxyPortSaved;
-
-  @Before
-  public void setUp() {
-    httpProxyPortSaved = System.getProperty("http.proxyPort");
-    httpsProxyPortSaved = System.getProperty("https.proxyPort");
-  }
-
-  @After
-  public void tearDown() {
-    System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
-    System.clearProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS);
-    System.clearProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE);
-    System.clearProperty("http.proxyPort");
-    System.clearProperty("https.proxyPort");
-    if (httpProxyPortSaved != null) {
-      System.setProperty("http.proxyPort", httpProxyPortSaved);
-    }
-    if (httpsProxyPortSaved != null) {
-      System.setProperty("https.proxyPort", httpsProxyPortSaved);
-    }
-  }
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   @Test
-  public void testCheckHttpTimeoutProperty_ok() throws NumberFormatException {
+  public void testCheckHttpTimeoutProperty_okWhenUndefined() throws NumberFormatException {
     Assert.assertNull(System.getProperty(JibSystemProperties.HTTP_TIMEOUT));
     JibSystemProperties.checkHttpTimeoutProperty();
   }
@@ -162,7 +139,7 @@ public class JibSystemPropertiesTest {
 
   @Test
   public void testUseBlobMounts_undefined() {
-    System.clearProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS);
+    Assert.assertNull(System.getProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS));
     Assert.assertTrue(JibSystemProperties.useCrossRepositoryBlobMounts());
   }
 
@@ -186,7 +163,7 @@ public class JibSystemPropertiesTest {
 
   @Test
   public void testAlwaysCacheBaseImage_undefined() {
-    System.clearProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE);
+    Assert.assertNull(System.getProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE));
     Assert.assertFalse(JibSystemProperties.alwaysCacheBaseImage());
   }
 

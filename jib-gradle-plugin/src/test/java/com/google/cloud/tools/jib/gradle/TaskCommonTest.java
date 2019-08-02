@@ -22,10 +22,11 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.testfixtures.ProjectBuilder;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -37,6 +38,8 @@ import org.springframework.boot.gradle.tasks.bundling.BootWar;
 @RunWith(MockitoJUnitRunner.class)
 public class TaskCommonTest {
 
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+
   @Mock private JibExtension jibExtension;
   @Mock private Logger logger;
 
@@ -46,14 +49,6 @@ public class TaskCommonTest {
     Assert.assertNull(System.getProperty("jib.extraDirectory.permissions"));
     Assert.assertNull(System.getProperty("jib.extraDirectories.paths"));
     Assert.assertNull(System.getProperty("jib.extraDirectories.permissions"));
-  }
-
-  @After
-  public void tearDown() {
-    System.clearProperty("jib.extraDirectory.path");
-    System.clearProperty("jib.extraDirectory.permissions");
-    System.clearProperty("jib.extraDirectories.paths");
-    System.clearProperty("jib.extraDirectories.permissions");
   }
 
   @Test
