@@ -56,7 +56,6 @@ public class TaskCommonTest {
     System.clearProperty("jib.extraDirectory.permissions");
     System.clearProperty("jib.extraDirectories.paths");
     System.clearProperty("jib.extraDirectories.permissions");
-    System.clearProperty("jib.container.useCurrentTimestamp");
   }
 
   @Test
