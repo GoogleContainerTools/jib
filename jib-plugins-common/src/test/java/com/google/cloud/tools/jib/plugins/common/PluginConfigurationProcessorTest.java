@@ -39,6 +39,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -97,6 +98,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
     Mockito.when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
+    Mockito.when(rawConfiguration.getCreationTime()).thenReturn("EPOCH_PLUS_SECOND");
     Mockito.when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(Paths.get("nonexistent/path")));
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
@@ -852,7 +854,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void createModificationTimeProvider_epochPlusSecond()
+  public void testCreateModificationTimeProvider_epochPlusSecond()
       throws InvalidFilesModificationTimeException {
     BiFunction<Path, AbsoluteUnixPath, Instant> timeProvider =
         PluginConfigurationProcessor.createModificationTimeProvider("EPOCH_PLUS_SECOND");
@@ -862,7 +864,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void createModificationTimeProvider_isoDateTimeValue()
+  public void testCreateModificationTimeProvider_isoDateTimeValue()
       throws InvalidFilesModificationTimeException {
     BiFunction<Path, AbsoluteUnixPath, Instant> timeProvider =
         PluginConfigurationProcessor.createModificationTimeProvider("2011-12-03T10:15:30+09:00");
@@ -872,7 +874,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void createModificationTimeProvider_invalidValue() {
+  public void testCreateModificationTimeProvider_invalidValue() {
     try {
       BiFunction<Path, AbsoluteUnixPath, Instant> timeProvider =
           PluginConfigurationProcessor.createModificationTimeProvider("invalid format");
@@ -881,6 +883,29 @@ public class PluginConfigurationProcessorTest {
     } catch (InvalidFilesModificationTimeException ex) {
       Assert.assertEquals("invalid format", ex.getMessage());
       Assert.assertEquals("invalid format", ex.getInvalidFilesModificationTime());
+    }
+  }
+
+  @Test
+  public void testGetConfiguredTime_epochPlusSecond() {
+    Instant time = PluginConfigurationProcessor.getConfiguredTime("EPOCH_PLUS_SECOND");
+    Assert.assertEquals(Instant.ofEpochSecond(1), time);
+  }
+
+  @Test
+  public void testGetConfiguredTime_isoDateTimeValue() {
+    Instant time = PluginConfigurationProcessor.getConfiguredTime("2011-12-03T10:15:30+09:00");
+    Instant expected = DateTimeFormatter.ISO_DATE_TIME.parse("2011-12-03T01:15:30Z", Instant::from);
+    Assert.assertEquals(expected, time);
+  }
+
+  @Test
+  public void testGetConfiguredTime_invalidValue() {
+    try {
+      PluginConfigurationProcessor.getConfiguredTime("invalid format");
+      Assert.fail();
+    } catch (DateTimeParseException ignored) {
+      // pass
     }
   }
 

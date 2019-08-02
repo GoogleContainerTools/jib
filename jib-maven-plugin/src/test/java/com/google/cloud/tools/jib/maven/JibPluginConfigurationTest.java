@@ -70,6 +70,7 @@ public class JibPluginConfigurationTest {
     Assert.assertTrue(testPluginConfiguration.getExtraClasspath().isEmpty());
     Assert.assertEquals("exploded", testPluginConfiguration.getContainerizingMode());
     Assert.assertEquals("EPOCH_PLUS_SECOND", testPluginConfiguration.getFilesModificationTime());
+    Assert.assertEquals("EPOCH_PLUS_SECOND", testPluginConfiguration.getCreationTime());
   }
 
   @Test
@@ -123,6 +124,8 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("/working/directory", testPluginConfiguration.getWorkingDirectory());
     sessionProperties.put("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
     Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getFilesModificationTime());
+    sessionProperties.put("jib.container.creationTime", "2011-12-03T22:42:05Z");
+    Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getCreationTime());
     sessionProperties.put("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
         ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
@@ -194,6 +197,8 @@ public class JibPluginConfigurationTest {
         .getProperties()
         .setProperty("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
     Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getFilesModificationTime());
+    project.getProperties().setProperty("jib.container.creationTime", "2011-12-03T22:42:05Z");
+    Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getCreationTime());
     project.getProperties().setProperty("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
         ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
@@ -228,7 +233,7 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testDeprecatedSystemProperties() {
+  public void testDeprecatedSystemProperties_extraDirectories() {
     sessionProperties.put("jib.extraDirectory.path", "custom-jib");
     Assert.assertEquals(
         Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
@@ -247,7 +252,17 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testDeprecatedProperties() {
+  public void testDeprecatedSystemProperties_useCurrentTimestamp() {
+    sessionProperties.put("jib.container.useCurrentTimestamp", "true");
+    Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
+    Mockito.verify(log, Mockito.times(1))
+        .warn(
+            "jib.container.useCurrentTimestamp is deprecated; use jib.container.creationTime to "
+                + "specify an ISO 8601 timestamp instead");
+  }
+
+  @Test
+  public void testDeprecatedProperties_extraDirectories() {
     Properties projectProperties = project.getProperties();
 
     projectProperties.setProperty("jib.extraDirectory.path", "this-is-extra");
@@ -267,6 +282,17 @@ public class JibPluginConfigurationTest {
         .warn(
             "The property 'jib.extraDirectory.path' is deprecated; "
                 + "use 'jib.extraDirectories.paths' instead");
+  }
+
+  @Test
+  public void testDeprecatedProperties_useCurrentTimestamp() {
+    Properties projectProperties = project.getProperties();
+    projectProperties.setProperty("jib.container.useCurrentTimestamp", "true");
+    Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
+    Mockito.verify(log, Mockito.times(1))
+        .warn(
+            "jib.container.useCurrentTimestamp is deprecated; use jib.container.creationTime to "
+                + "specify an ISO 8601 timestamp instead");
   }
 
   @Test

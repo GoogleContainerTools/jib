@@ -38,6 +38,7 @@ import org.springframework.boot.gradle.tasks.bundling.BootWar;
 public class TaskCommonTest {
 
   @Mock private JibExtension jibExtension;
+  @Mock private ContainerParameters containerParameters;
   @Mock private Logger logger;
 
   @Before
@@ -46,6 +47,7 @@ public class TaskCommonTest {
     Assert.assertNull(System.getProperty("jib.extraDirectory.permissions"));
     Assert.assertNull(System.getProperty("jib.extraDirectories.paths"));
     Assert.assertNull(System.getProperty("jib.extraDirectories.permissions"));
+    Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
   }
 
   @After
@@ -54,6 +56,7 @@ public class TaskCommonTest {
     System.clearProperty("jib.extraDirectory.permissions");
     System.clearProperty("jib.extraDirectories.paths");
     System.clearProperty("jib.extraDirectories.permissions");
+    System.clearProperty("jib.container.useCurrentTimestamp");
   }
 
   @Test
@@ -129,6 +132,16 @@ public class TaskCommonTest {
           "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
           ex.getMessage());
     }
+  }
+
+  @Test
+  public void testCheckDeprecatedUsage_useCurrentTimestampConfigured() {
+    Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
+    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
+    Mockito.verify(logger, Mockito.times(1))
+        .warn(
+            "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
+                + "to specify an ISO 8601 timestamp instead");
   }
 
   @Test

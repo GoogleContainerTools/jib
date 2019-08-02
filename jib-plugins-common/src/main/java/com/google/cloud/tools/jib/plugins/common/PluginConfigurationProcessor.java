@@ -454,7 +454,8 @@ public class PluginConfigurationProcessor {
   static BiFunction<Path, AbsoluteUnixPath, Instant> createModificationTimeProvider(
       String modificationTime) throws InvalidFilesModificationTimeException {
     try {
-      return (ignored1, ignored2) -> getConfiguredTime(modificationTime);
+      Instant instant = getConfiguredTime(modificationTime);
+      return (ignored1, ignored2) -> instant;
 
     } catch (DateTimeParseException ex) {
       throw new InvalidFilesModificationTimeException(modificationTime, modificationTime, ex);
@@ -473,8 +474,8 @@ public class PluginConfigurationProcessor {
    * @param configuredCreationTime the config value
    * @return corresponding {@link Instant}
    */
-  private static Instant getConfiguredTime(String configuredCreationTime)
-      throws DateTimeParseException {
+  @VisibleForTesting
+  static Instant getConfiguredTime(String configuredCreationTime) throws DateTimeParseException {
     switch (configuredCreationTime) {
       case "EPOCH_PLUS_SECOND":
         return Instant.ofEpochSecond(1);
