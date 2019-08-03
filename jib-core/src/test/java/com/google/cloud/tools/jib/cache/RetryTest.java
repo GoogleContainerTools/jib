@@ -22,37 +22,33 @@ import org.junit.Test;
 
 /** Tests for {@link Retry}. */
 public class RetryTest {
-  private volatile int actionCount = 0;
-  private final Retry.Action<Exception> countingAction =
+  private int actionCount = 0;
+  private final Retry.Action<Exception> successfulAction =
       () -> {
-        synchronized (this) {
-          ++actionCount;
-        }
+        ++actionCount;
+        return true;
       };
-  private final Retry.Action<Exception> countingExceptionAction =
+  private final Retry.Action<Exception> unsuccessfulAction =
       () -> {
-        countingAction.run();
+        ++actionCount;
+        return false;
+      };
+  private final Retry.Action<Exception> exceptionAction =
+      () -> {
+        ++actionCount;
         throw new Exception("whee");
       };
 
   @Test
-  public void testBase() throws Exception {
-    boolean result = Retry.action(countingAction).run();
+  public void testSuccessfulAction() throws Exception {
+    boolean result = Retry.action(successfulAction).run();
     Assert.assertTrue(result);
     Assert.assertEquals(1, actionCount);
   }
 
   @Test
-  public void testImmediateStop() throws Exception {
-    // if the stop condition is true then the action is never invoked
-    boolean result = Retry.action(countingAction).until(() -> true).run();
-    Assert.assertTrue(result);
-    Assert.assertEquals(0, actionCount);
-  }
-
-  @Test
   public void testMaximumRetries_default() throws Exception {
-    boolean result = Retry.action(countingAction).until(() -> false).run();
+    boolean result = Retry.action(unsuccessfulAction).run();
     Assert.assertFalse(result);
     Assert.assertEquals(5, actionCount);
   }
@@ -60,7 +56,7 @@ public class RetryTest {
   @Test
   public void testMaximumRetries_specified() throws Exception {
     // if the stop condition is true then the action is never invoked
-    boolean result = Retry.action(countingAction).maximumRetries(2).until(() -> false).run();
+    boolean result = Retry.action(unsuccessfulAction).maximumRetries(2).run();
     Assert.assertFalse(result);
     Assert.assertEquals(2, actionCount);
   }
@@ -69,7 +65,7 @@ public class RetryTest {
   public void testRetryableException() {
     // all exceptions are retryable by default, so retry 5 times
     try {
-      Retry.<Exception>action(countingExceptionAction).until(() -> false).run();
+      Retry.action(exceptionAction).run();
       Assert.fail("should have thrown exception");
     } catch (Exception ex) {
       Assert.assertEquals("whee", ex.getMessage());
@@ -81,10 +77,7 @@ public class RetryTest {
   public void testNonRetryableException() {
     // the exception is not ok and so should only try 1 time
     try {
-      Retry.<Exception>action(countingExceptionAction)
-          .retryOnException(ex -> false)
-          .until(() -> false)
-          .run();
+      Retry.action(exceptionAction).retryOnException(ex -> false).run();
       Assert.fail("should have thrown exception");
     } catch (Exception ex) {
       Assert.assertEquals("whee", ex.getMessage());
@@ -97,8 +90,7 @@ public class RetryTest {
     // interrupt the current thread so as to cause the retry's sleep() to throw
     // an InterruptedException
     Thread.currentThread().interrupt();
-    boolean result =
-        Retry.action(countingAction).until(() -> false).sleep(10, TimeUnit.SECONDS).run();
+    boolean result = Retry.action(unsuccessfulAction).sleep(10, TimeUnit.SECONDS).run();
     Assert.assertFalse(result);
     Assert.assertEquals(1, actionCount);
     // This thread should be marked as interrupted (plus clear the flag for the test)
@@ -108,7 +100,7 @@ public class RetryTest {
   @Test
   public void testInvalid_maximumRetries() {
     try {
-      Retry.action(() -> {}).maximumRetries(0);
+      Retry.action(successfulAction).maximumRetries(0);
       Assert.fail();
     } catch (IllegalArgumentException ex) {
       /* expected */
@@ -118,7 +110,7 @@ public class RetryTest {
   @Test
   public void testInvalid_sleep() {
     try {
-      Retry.action(() -> {}).sleep(-1, TimeUnit.DAYS);
+      Retry.action(successfulAction).sleep(-1, TimeUnit.DAYS);
       Assert.fail();
     } catch (IllegalArgumentException ex) {
       /* expected */

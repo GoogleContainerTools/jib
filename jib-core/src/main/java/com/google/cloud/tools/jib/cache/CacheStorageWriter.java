@@ -44,12 +44,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nullable;
 
 /** Writes to the default cache storage engine. */
 class CacheStorageWriter {
+  private static final Logger logger = Logger.getLogger(CacheStorageWriter.class.getName());
 
   /** Holds information about a layer that was written. */
   private static class WrittenLayer {
@@ -76,33 +78,35 @@ class CacheStorageWriter {
    * @throws IOException if an I/O exception occurs
    */
   private static void moveIfDoesNotExist(Path source, Path destination) throws IOException {
-    // If the file already exists, we skip renaming and use the existing file. This happens if a
-    // new layer happens to have the same content as a previously-cached layer.
-    if (Files.exists(destination)) {
+    // Some Windows users report java.nio.file.AccessDeniedException that we suspect is caused
+    // by anti-virus programs, like Windows Defender, that open new files for scanning.
+    // Retry the rename up to 5 times, with 15ms pause between each retry.
+    boolean success =
+        Retry.action(
+                () -> {
+                  if (Files.exists(destination)) {
+                    // If the file already exists, we skip renaming and use the existing file.
+                    // This happens if a new layer happens to have the same content as a
+                    // previously-cached layer.
+                    return true;
+                  }
+                  Files.move(source, destination);
+                  return Files.exists(destination);
+                })
+            .maximumRetries(5)
+            .retryOnException(ex -> ex instanceof FileSystemException)
+            .sleep(15, TimeUnit.MILLISECONDS)
+            .run();
+    if (success) {
       return;
     }
 
-    // Some Windows users report java.nio.file.AccessDeniedException that we suspect is caused
-    // by anti-virus programs, like Windows Defender, that open new files for scanning.
-    // Retry the rename up to 5 times.
-    IOException exception = null;
-    try {
-      boolean success =
-          Retry.action(() -> Files.move(source, destination))
-              .until(() -> Files.exists(destination))
-              .maximumRetries(5)
-              .retryOnException(ex -> ex instanceof FileSystemException)
-              .sleep(15, TimeUnit.MILLISECONDS)
-              .run();
-      if (success) {
-        return;
-      }
-    } catch (IOException ex) {
-      exception = ex;
-    }
-
-    String message = String.format("unable to move: %s to %s", source, destination);
-    throw new IOException(message, exception);
+    String message =
+        String.format(
+            "unable to move: %s to %s; this is often caused by interference from antivirus",
+            source, destination);
+    logger.warning(message);
+    throw new IOException(message);
   }
 
   /**
