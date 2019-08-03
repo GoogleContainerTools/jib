@@ -51,7 +51,6 @@ import javax.annotation.Nullable;
 
 /** Writes to the default cache storage engine. */
 class CacheStorageWriter {
-  private static final Logger logger = Logger.getLogger(CacheStorageWriter.class.getName());
 
   /** Holds information about a layer that was written. */
   private static class WrittenLayer {
@@ -105,7 +104,8 @@ class CacheStorageWriter {
         String.format(
             "unable to move: %s to %s; this is often caused by interference from antivirus",
             source, destination);
-    logger.warning(message);
+    // TODO figure out a better logging scheme
+    Logger.getLogger(CacheStorageWriter.class.getName()).warning(message);
     throw new IOException(message);
   }
 
