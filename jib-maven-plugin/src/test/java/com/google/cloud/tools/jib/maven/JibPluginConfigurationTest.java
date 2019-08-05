@@ -233,7 +233,7 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testDeprecatedSystemProperties_extraDirectories() {
+  public void testDeprecatedSystemProperties_extraDirectory() {
     sessionProperties.put("jib.extraDirectory.path", "custom-jib");
     Assert.assertEquals(
         Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
@@ -262,7 +262,7 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testDeprecatedProperties_extraDirectories() {
+  public void testDeprecatedProperties_extraDirectory() {
     Properties projectProperties = project.getProperties();
 
     projectProperties.setProperty("jib.extraDirectory.path", "this-is-extra");

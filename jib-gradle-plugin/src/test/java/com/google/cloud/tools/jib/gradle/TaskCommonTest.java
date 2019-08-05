@@ -137,7 +137,7 @@ public class TaskCommonTest {
   public void testCheckDeprecatedUsage_useCurrentTimestampConfigured() {
     Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
     TaskCommon.checkDeprecatedUsage(jibExtension, logger);
-    Mockito.verify(logger, Mockito.times(1))
+    Mockito.verify(logger)
         .warn(
             "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
                 + "to specify an ISO 8601 timestamp instead");

@@ -365,6 +365,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return {@code true} if the build should use the current timestamp, {@code false} if not
    */
+  @Deprecated
   boolean getUseCurrentTimestamp() {
     String property = getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
     if (property != null) {
