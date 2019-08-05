@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.FromAuthConfiguration;
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -101,7 +102,8 @@ public class MavenRawConfigurationTest {
     Assert.assertEquals(
         Arrays.asList("--log", "info"), rawConfiguration.getProgramArguments().get());
     Assert.assertEquals(
-        new HashSet<>(Arrays.asList("additional", "tags")), rawConfiguration.getToTags());
+        new HashSet<>(Arrays.asList("additional", "tags")),
+        Sets.newHashSet(rawConfiguration.getToTags()));
     Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
     Assert.assertEquals("2011-12-03T22:42:05Z", rawConfiguration.getFilesModificationTime());

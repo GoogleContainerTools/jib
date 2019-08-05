@@ -23,13 +23,29 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
+import java.util.Properties;
 import javax.net.ssl.SSLException;
 import org.hamcrest.CoreMatchers;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /** Tests for {@link Connection} using an actual local server. */
 public class WithServerConnectionTest {
+
+  private static Properties savedProperties;
+
+  @BeforeClass
+  public static void saveSystemProperties() {
+    savedProperties = new Properties();
+    savedProperties.putAll(System.getProperties());
+  }
+
+  @AfterClass
+  public static void restoreProperties() {
+    System.setProperties(savedProperties);
+  }
 
   @Test
   public void testGet()
