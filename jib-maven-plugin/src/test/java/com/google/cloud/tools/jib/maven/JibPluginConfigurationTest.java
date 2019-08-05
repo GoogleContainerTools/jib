@@ -252,16 +252,6 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testDeprecatedSystemProperties_useCurrentTimestamp() {
-    sessionProperties.put("jib.container.useCurrentTimestamp", "true");
-    Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
-    Mockito.verify(log, Mockito.times(1))
-        .warn(
-            "jib.container.useCurrentTimestamp is deprecated; use jib.container.creationTime to "
-                + "specify an ISO 8601 timestamp instead");
-  }
-
-  @Test
   public void testDeprecatedProperties_extraDirectory() {
     Properties projectProperties = project.getProperties();
 
@@ -282,17 +272,6 @@ public class JibPluginConfigurationTest {
         .warn(
             "The property 'jib.extraDirectory.path' is deprecated; "
                 + "use 'jib.extraDirectories.paths' instead");
-  }
-
-  @Test
-  public void testDeprecatedProperties_useCurrentTimestamp() {
-    Properties projectProperties = project.getProperties();
-    projectProperties.setProperty("jib.container.useCurrentTimestamp", "true");
-    Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
-    Mockito.verify(log, Mockito.times(1))
-        .warn(
-            "jib.container.useCurrentTimestamp is deprecated; use jib.container.creationTime to "
-                + "specify an ISO 8601 timestamp instead");
   }
 
   @Test

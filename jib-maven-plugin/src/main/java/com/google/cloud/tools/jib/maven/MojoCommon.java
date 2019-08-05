@@ -50,7 +50,7 @@ public class MojoCommon {
           .getLog()
           .warn(
               "<container><useCurrentTimestamp> is deprecated; use <container><creationTime> with "
-                  + "the value CURRENT_TIME instead");
+                  + "the value USE_CURRENT_TIMESTAMP instead");
     }
   }
 
