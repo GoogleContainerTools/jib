@@ -87,8 +87,8 @@ public class JibRunHelper {
 
     Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(imageReference));
     Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(additionalImageReference));
-    assertCreationTimeEpoch(imageReference);
-    assertCreationTimeEpoch(additionalImageReference);
+    assertCreationTimeEpochPlusOne(imageReference);
+    assertCreationTimeEpochPlusOne(additionalImageReference);
   }
 
   static BuildResult buildToDockerDaemon(
@@ -138,10 +138,10 @@ public class JibRunHelper {
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(successMessage));
   }
 
-  static void assertCreationTimeEpoch(String imageReference)
+  static void assertCreationTimeEpochPlusOne(String imageReference)
       throws IOException, InterruptedException {
     Assert.assertEquals(
-        "1970-01-01T00:00:00Z",
+        "1970-01-01T00:00:01Z",
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
   }
 

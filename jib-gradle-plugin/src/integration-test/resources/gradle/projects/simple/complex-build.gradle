@@ -30,7 +30,7 @@ jib {
     }
   }
   container {
-    useCurrentTimestamp = true
+    creationTime = 'USE_CURRENT_TIMESTAMP'
     args = ['An argument.']
     mainClass = 'com.test.HelloWorld'
     jvmFlags = ['-Xms512m', '-Xdebug']
