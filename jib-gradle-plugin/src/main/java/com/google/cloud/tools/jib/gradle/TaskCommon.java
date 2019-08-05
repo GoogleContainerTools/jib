@@ -97,8 +97,8 @@ class TaskCommon {
                 + "'jib.container.creationTime'");
       }
       logger.warn(
-          "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' to "
-              + "specify an ISO 8601 timestamp instead");
+          "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
+              + "with the value 'USE_CURRENT_TIMESTAMP' instead");
     }
   }
 

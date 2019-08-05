@@ -49,8 +49,8 @@ public class MojoCommon {
       jibPluginConfiguration
           .getLog()
           .warn(
-              "<container><useCurrentTimestamp> is deprecated; use <container><creationTime> with the"
-                  + "value CURRENT_TIME instead");
+              "<container><useCurrentTimestamp> is deprecated; use <container><creationTime> with "
+                  + "the value CURRENT_TIME instead");
     }
   }
 
