@@ -54,7 +54,7 @@
             </auth>
           </to>
           <container>
-            <useCurrentTimestamp>true</useCurrentTimestamp>
+            <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
             <args>
               <arg>An argument.</arg>
             </args>

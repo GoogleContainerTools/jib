@@ -403,9 +403,6 @@ public class SingleProjectIntegrationTest {
     BuildResult buildResult =
         JibRunHelper.buildToDockerDaemon(
             simpleTestProject, targetImage, "build-usecurrent-deprecated.gradle");
-    Assert.assertEquals(
-        "Hello, world. \n1970-01-01T00:00:01Z\n",
-        new Command("docker", "run", "--rm", targetImage).run());
     assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     Assert.assertThat(
         buildResult.getOutput(),

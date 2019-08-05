@@ -39,12 +39,21 @@
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
+          <from>
+            <image>localhost:5000/distroless/java</image>
+            <auth>
+              <username>testuser</username>
+              <password>testpassword</password>
+            </auth>
+          </from>
           <to>
             <image>${_TARGET_IMAGE}</image>
+            <auth>
+              <username>${_TARGET_USERNAME}</username>
+              <password>${_TARGET_PASSWORD}</password>
+            </auth>
           </to>
           <container>
-            <creationTime>EPOCH_PLUS_SECOND</creationTime>
-            <args>An argument.</args>
             <ports>
               <port>1000/tcp</port>
               <port>2000-2003/udp</port>
@@ -53,13 +62,13 @@
               <key1>value1</key1>
               <key2>value2</key2>
             </labels>
-            <volumes>
-              <volume>/var/log</volume>
-              <volume>/var/log2</volume>
-            </volumes>
-            <workingDirectory>/home</workingDirectory>
+            <filesModificationTime>2019-06-17T16:30:00Z</filesModificationTime>
+            <creationTime>2013-11-05T06:29:30Z</creationTime>
           </container>
-          <extraDirectory>${project.basedir}/src/main/jib-custom</extraDirectory>
+          <extraDirectory>
+            <path>src/main/jib-custom</path>
+          </extraDirectory>
+          <allowInsecureRegistries>true</allowInsecureRegistries>
         </configuration>
       </plugin>
     </plugins>

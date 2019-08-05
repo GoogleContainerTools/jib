@@ -43,23 +43,8 @@
             <image>${_TARGET_IMAGE}</image>
           </to>
           <container>
-            <creationTime>EPOCH_PLUS_SECOND</creationTime>
-            <args>An argument.</args>
-            <ports>
-              <port>1000/tcp</port>
-              <port>2000-2003/udp</port>
-            </ports>
-            <labels>
-              <key1>value1</key1>
-              <key2>value2</key2>
-            </labels>
-            <volumes>
-              <volume>/var/log</volume>
-              <volume>/var/log2</volume>
-            </volumes>
-            <workingDirectory>/home</workingDirectory>
+            <useCurrentTimestamp>true</useCurrentTimestamp>
           </container>
-          <extraDirectory>${project.basedir}/src/main/jib-custom</extraDirectory>
         </configuration>
       </plugin>
     </plugins>
