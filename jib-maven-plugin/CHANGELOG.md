@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 
 - When building to a registry, Jib now skips downloading and caching base image layers that already exist in the target registry. This feature will be particularly useful in CI/CD environments. However, if you want to force caching base image layers locally, set the system property `-Djib.alwaysCacheBaseImage=true` ([#1840](https://github.com/GoogleContainerTools/jib/pull/1840))
 - `<container><useCurrentTimestamp>` has been deprecated in favor of `<container><creationTime>` with `USE_CURRENT_TIMESTAMP`
+- Default container creation time is changed from epoch to epoch + 1 second
 
 ### Fixed
 
