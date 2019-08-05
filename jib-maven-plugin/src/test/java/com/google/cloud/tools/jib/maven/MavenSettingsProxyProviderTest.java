@@ -17,12 +17,14 @@
 package com.google.cloud.tools.jib.maven;
 
 import java.nio.file.Paths;
+import java.util.Arrays;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.settings.Proxy;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -67,6 +69,21 @@ public class MavenSettingsProxyProviderTest {
     emptySettingsDecrypter =
         SettingsFixture.newSettingsDecrypter(
             Paths.get("src/test/resources/maven/settings/settings-security.empty.xml"));
+  }
+
+  @Before
+  public void setUp() {
+    Arrays.asList(
+            "http.proxyHost",
+            "http.proxyPort",
+            "http.proxyUser",
+            "http.proxyPassword",
+            "https.proxyHost",
+            "https.proxyPort",
+            "https.proxyUser",
+            "https.proxyPassword",
+            "http.nonProxyHosts")
+        .forEach(System::clearProperty);
   }
 
   @Test
