@@ -136,11 +136,27 @@ public class TaskCommonTest {
   @Test
   public void testCheckDeprecatedUsage_useCurrentTimestampConfigured() {
     Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
+    Mockito.when(containerParameters.getCreationTime()).thenReturn("EPOCH_PLUS_SECOND");
     TaskCommon.checkDeprecatedUsage(jibExtension, logger);
     Mockito.verify(logger)
         .warn(
             "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
                 + "to specify an ISO 8601 timestamp instead");
+  }
+
+  @Test
+  public void testCheckDeprecatedUsage_useCurrentTimestampAndCreationTimeConfigured() {
+    Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
+    Mockito.when(containerParameters.getCreationTime()).thenReturn("USE_CURRENT_TIMESTAMP");
+    try {
+      TaskCommon.checkDeprecatedUsage(jibExtension, logger);
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "You cannot configure both 'jib.container.useCurrentTimestamp' and "
+              + "'jib.container.creationTime'",
+          ex.getMessage());
+    }
   }
 
   @Test

@@ -91,6 +91,11 @@ class TaskCommon {
     }
 
     if (jibExtension.getContainer().getUseCurrentTimestamp()) {
+      if (!jibExtension.getContainer().getCreationTime().equals("EPOCH_PLUS_SECOND")) {
+        throw new IllegalArgumentException(
+            "You cannot configure both 'jib.container.useCurrentTimestamp' and "
+                + "'jib.container.creationTime'");
+      }
       logger.warn(
           "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' to "
               + "specify an ISO 8601 timestamp instead");
