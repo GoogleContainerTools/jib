@@ -68,6 +68,7 @@ public interface RawConfiguration {
 
   Optional<String> getWorkingDirectory();
 
+  @Deprecated
   boolean getUseCurrentTimestamp();
 
   boolean getAllowInsecureRegistries();

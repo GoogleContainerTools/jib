@@ -369,17 +369,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   boolean getUseCurrentTimestamp() {
     String property = getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
     if (property != null) {
-      getLog()
-          .warn(
-              "jib.container.useCurrentTimestamp is deprecated; use jib.container.creationTime to "
-                  + "specify an ISO 8601 timestamp instead");
       return Boolean.parseBoolean(property);
-    }
-    if (container.useCurrentTimestamp) {
-      getLog()
-          .warn(
-              "<container><useCurrentTimestamp> is deprecated; use <container><creationTime> to "
-                  + "specify an ISO 8601 timestamp instead");
     }
     return container.useCurrentTimestamp;
   }

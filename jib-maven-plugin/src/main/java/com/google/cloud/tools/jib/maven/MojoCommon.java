@@ -38,6 +38,22 @@ public class MojoCommon {
   @VisibleForTesting
   public static final String REQUIRED_VERSION_PROPERTY_NAME = "jib.requiredVersion";
 
+  @Deprecated
+  static void checkUseCurrentTimestampDeprecation(JibPluginConfiguration jibPluginConfiguration) {
+    if (jibPluginConfiguration.getUseCurrentTimestamp()) {
+      if (!jibPluginConfiguration.getCreationTime().equals("EPOCH_PLUS_SECOND")) {
+        throw new IllegalArgumentException(
+            "You cannot configure both <container><useCurrentTimestamp> and "
+                + "<container><creationTime>");
+      }
+      jibPluginConfiguration
+          .getLog()
+          .warn(
+              "<container><useCurrentTimestamp> is deprecated; use <container><creationTime> with the"
+                  + "value CURRENT_TIME instead");
+    }
+  }
+
   /**
    * Gets the list of extra directory paths from a {@link JibPluginConfiguration}. Returns {@code
    * (project dir)/src/main/jib} by default if not configured.

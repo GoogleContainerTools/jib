@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersio
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
@@ -70,6 +71,8 @@ public class BuildTarMojo extends JibPluginConfiguration {
       getLog().info("Skipping containerization because packaging is 'pom'...");
       return;
     }
+
+    MojoCommon.checkUseCurrentTimestampDeprecation(this);
 
     try {
       RawConfiguration mavenRawConfiguration = new MavenRawConfiguration(this);
@@ -140,6 +143,14 @@ public class BuildTarMojo extends JibPluginConfiguration {
           "<container><filesModificationTime> should be an ISO 8601 date-time (see "
               + "DateTimeFormatter.ISO_DATE_TIME) or special keyword \"EPOCH_PLUS_SECOND\": "
               + ex.getInvalidFilesModificationTime(),
+          ex);
+
+    } catch (InvalidCreationTimeException ex) {
+      throw new MojoExecutionException(
+          "<container><creationTime> should be an ISO 8601 date-time (see "
+              + "DateTimeFormatter.ISO_DATE_TIME) or a special keyword (\"EPOCH_PLUS_SECOND\", "
+              + "\"USE_CURRENT_TIMESTAMP\"): "
+              + ex.getInvalidCreationTime(),
           ex);
 
     } catch (IncompatibleBaseImageJavaVersionException ex) {
