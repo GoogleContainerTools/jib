@@ -6,10 +6,12 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - Can now set timestamps (last modified time) of the files in the built image with `jib.container.filesModificationTime`. The value should either be `EPOCH_PLUS_SECOND` to set the timestamps to Epoch + 1 second (default behavior), or an ISO 8601 date time parsable with [`DateTimeFormatter.ISO_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html) such as `2019-07-15T10:15:30+09:00` or `2011-12-03T22:42:05Z` ([#1818](https://github.com/GoogleContainerTools/jib/pull/1818))
+- Can now set container creation timestamp with `jib.container.creationTime`. The value should be `EPOCH_PLUS_SECOND`, `USE_CURRENT_TIMESTAMP`, or an ISO 8601 date time ([#1609](https://github.com/GoogleContainerTools/jib/issues/1609))
 
 ### Changed
 
 - When building to a registry, Jib now skips downloading and caching base image layers that already exist in the target registry. This feature will be particularly useful in CI/CD environments. However, if you want to force caching base image layers locally, set the system property `-Djib.alwaysCacheBaseImage=true` ([#1840](https://github.com/GoogleContainerTools/jib/pull/1840))
+- `jib.container.useCurrentTimestamp` has been deprecated in favor of `jib.container.creationTime` with `USE_CURRENT_TIMESTAMP`
 
 ### Fixed
 
