@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.http;
 
 import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.apache.ApacheHttpTransport;
+import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import java.io.IOException;
 import java.util.function.BiFunction;
 

@@ -29,15 +29,17 @@ sourceSets {
 
 dependencies {
   // Make sure these are consistent with jib-maven-plugin.
-  compile 'com.google.http-client:google-http-client:1.27.0'
+  compile 'com.google.http-client:google-http-client:1.31.0'
+  compile 'com.google.http-client:google-http-client-apache-v2:1.31.0'
   compile 'org.apache.commons:commons-compress:1.18'
   compile 'com.google.guava:guava:27.0.1-jre'
-  compile 'com.fasterxml.jackson.core:jackson-databind:2.9.9.1'
+  compile 'com.fasterxml.jackson.core:jackson-databind:2.9.9.2'
   compile 'org.ow2.asm:asm:7.0'
 
   testCompile 'junit:junit:4.12'
   testCompile 'org.mockito:mockito-core:2.23.4'
   testCompile 'org.slf4j:slf4j-api:1.7.25'
+  testCompile 'com.github.stefanbirkner:system-rules:1.19.0'
 
   // NullAway errorprone plugin
   annotationProcessor 'com.uber.nullaway:nullaway:0.6.4'

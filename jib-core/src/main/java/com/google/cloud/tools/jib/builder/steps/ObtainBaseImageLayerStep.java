@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
+import com.google.cloud.tools.jib.builder.steps.PreparedLayer.StateInTarget;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
@@ -45,16 +46,16 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
   @FunctionalInterface
   private interface BlobExistenceChecker {
 
-    Optional<Boolean> exists(DescriptorDigest digest) throws IOException, RegistryException;
+    StateInTarget check(DescriptorDigest digest) throws IOException, RegistryException;
   }
 
   static ImmutableList<ObtainBaseImageLayerStep> makeListForForcedDownload(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth) {
-    BlobExistenceChecker noOpBlobChecker = ignored -> Optional.empty();
+    BlobExistenceChecker noOpChecker = ignored -> StateInTarget.UNKNOWN;
     return makeList(
-        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, noOpBlobChecker);
+        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, noOpChecker);
   }
 
   static ImmutableList<ObtainBaseImageLayerStep> makeListForSelectiveDownload(
@@ -71,7 +72,10 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
             .newRegistryClient();
     // TODO: also check if cross-repo blob mount is possible.
     BlobExistenceChecker blobExistenceChecker =
-        digest -> Optional.of(targetRegistryClient.checkBlob(digest).isPresent());
+        digest ->
+            targetRegistryClient.checkBlob(digest).isPresent()
+                ? StateInTarget.EXISTING
+                : StateInTarget.MISSING;
 
     return makeList(
         buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, blobExistenceChecker);
@@ -134,9 +138,9 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, layerDigest))) {
 
-      Optional<Boolean> layerExists = blobExistenceChecker.exists(layerDigest);
-      if (layerExists.orElse(false)) {
-        return new PreparedLayer.Builder(layer).setStateInTarget(layerExists).build();
+      StateInTarget stateInTarget = blobExistenceChecker.check(layerDigest);
+      if (stateInTarget == StateInTarget.EXISTING) {
+        return new PreparedLayer.Builder(layer).setStateInTarget(stateInTarget).build();
       }
 
       Cache cache = buildConfiguration.getBaseImageLayersCache();
@@ -145,7 +149,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
       Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerDigest);
       if (optionalCachedLayer.isPresent()) {
         CachedLayer cachedLayer = optionalCachedLayer.get();
-        return new PreparedLayer.Builder(cachedLayer).setStateInTarget(layerExists).build();
+        return new PreparedLayer.Builder(cachedLayer).setStateInTarget(stateInTarget).build();
       } else if (buildConfiguration.isOffline()) {
         throw new IOException(
             "Cannot run Jib in offline mode; local Jib cache for base image is missing image layer "
@@ -170,7 +174,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
                     layerDigest,
                     progressEventDispatcherWrapper::setProgressTarget,
                     progressEventDispatcherWrapper::dispatchProgress));
-        return new PreparedLayer.Builder(cachedLayer).setStateInTarget(layerExists).build();
+        return new PreparedLayer.Builder(cachedLayer).setStateInTarget(stateInTarget).build();
       }
     }
   }
