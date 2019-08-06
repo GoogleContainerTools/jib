@@ -26,10 +26,14 @@ import java.util.Arrays;
 import javax.net.ssl.SSLException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 
 /** Tests for {@link Connection} using an actual local server. */
 public class WithServerConnectionTest {
+
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   @Test
   public void testGet()

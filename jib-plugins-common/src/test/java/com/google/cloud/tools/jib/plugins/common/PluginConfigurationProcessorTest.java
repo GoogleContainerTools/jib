@@ -49,7 +49,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
@@ -83,6 +85,8 @@ public class PluginConfigurationProcessorTest {
     assertLayerEntriesUnordered(
         expectedPaths, entries, layerEntry -> layerEntry.getExtractionPath().toString());
   }
+
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   @Mock private RawConfiguration rawConfiguration;
   @Mock private ProjectProperties projectProperties;
@@ -204,9 +208,6 @@ public class PluginConfigurationProcessorTest {
 
     Mockito.verify(containerizer).setBaseImageLayersCache(Paths.get("new/base/cache"));
     Mockito.verify(containerizer).setApplicationLayersCache(Paths.get("/new/application/cache"));
-
-    System.clearProperty(PropertyNames.BASE_IMAGE_CACHE);
-    System.clearProperty(PropertyNames.APPLICATION_CACHE);
   }
 
   @Test
