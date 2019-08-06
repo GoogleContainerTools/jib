@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Holds raw plugin configuration parameter values. Acts as a common adapter for heterogeneous
@@ -42,7 +43,7 @@ public interface RawConfiguration {
 
   Optional<String> getToCredHelper();
 
-  Iterable<String> getToTags();
+  Set<String> getToTags();
 
   Optional<List<String>> getEntrypoint();
 
