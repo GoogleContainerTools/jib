@@ -676,11 +676,11 @@ public class MavenProjectPropertiesTest {
         JavaContainerBuilder.from(RegistryImage.named("base"))
             .setAppRoot(AbsoluteUnixPath.get(appRoot))
             .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
-    JibContainerBuilder JibContainerBuilder =
+    JibContainerBuilder jibContainerBuilder =
         new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
             .createJibContainerBuilder(javaContainerBuilder, containerizingMode);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
-        JibContainerBuilder,
+        jibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))
             .setExecutorService(MoreExecutors.newDirectExecutorService()));
   }
