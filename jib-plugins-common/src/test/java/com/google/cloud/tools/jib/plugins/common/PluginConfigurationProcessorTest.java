@@ -897,10 +897,10 @@ public class PluginConfigurationProcessorTest {
 
   @Test
   public void testGetCreationTime_useCurrentTimestamp() throws InvalidCreationTimeException {
-    Instant now = Instant.now();
+    Instant now = Instant.now().minusSeconds(2);
     Instant time =
         PluginConfigurationProcessor.getCreationTime("USE_CURRENT_TIMESTAMP", projectProperties);
-    Assert.assertTrue(time.equals(now) || time.isAfter(now));
+    Assert.assertTrue(time.isAfter(now));
   }
 
   @Test

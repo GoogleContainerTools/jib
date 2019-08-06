@@ -289,7 +289,7 @@ public class BuildImageMojoIntegrationTest {
     String inspect =
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
     Instant after = Instant.parse(inspect);
-    Assert.assertTrue(after.isAfter(before) || after.equals(before));
+    Assert.assertTrue(after.isAfter(before));
   }
 
   private static void assertWorkingDirectory(String expected, String imageReference)
