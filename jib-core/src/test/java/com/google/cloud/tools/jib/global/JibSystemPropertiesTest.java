@@ -28,7 +28,7 @@ public class JibSystemPropertiesTest {
 
   @Test
   public void testCheckHttpTimeoutProperty_okWhenUndefined() throws NumberFormatException {
-    Assert.assertNull(System.getProperty(JibSystemProperties.HTTP_TIMEOUT));
+    System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
     JibSystemProperties.checkHttpTimeoutProperty();
   }
 
@@ -139,7 +139,7 @@ public class JibSystemPropertiesTest {
 
   @Test
   public void testUseBlobMounts_undefined() {
-    Assert.assertNull(System.getProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS));
+    System.clearProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS);
     Assert.assertTrue(JibSystemProperties.useCrossRepositoryBlobMounts());
   }
 
@@ -163,7 +163,7 @@ public class JibSystemPropertiesTest {
 
   @Test
   public void testAlwaysCacheBaseImage_undefined() {
-    Assert.assertNull(System.getProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE));
+    System.clearProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE);
     Assert.assertFalse(JibSystemProperties.alwaysCacheBaseImage());
   }
 

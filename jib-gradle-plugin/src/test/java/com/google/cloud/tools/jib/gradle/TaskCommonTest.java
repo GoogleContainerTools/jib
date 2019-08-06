@@ -45,10 +45,10 @@ public class TaskCommonTest {
 
   @Before
   public void setUp() {
-    Assert.assertNull(System.getProperty("jib.extraDirectory.path"));
-    Assert.assertNull(System.getProperty("jib.extraDirectory.permissions"));
-    Assert.assertNull(System.getProperty("jib.extraDirectories.paths"));
-    Assert.assertNull(System.getProperty("jib.extraDirectories.permissions"));
+    System.clearProperty("jib.extraDirectory.path");
+    System.clearProperty("jib.extraDirectory.permissions");
+    System.clearProperty("jib.extraDirectories.paths");
+    System.clearProperty("jib.extraDirectories.permissions");
   }
 
   @Test

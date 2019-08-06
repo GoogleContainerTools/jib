@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Properties;
 import org.gradle.api.Project;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Assert;
@@ -41,35 +42,13 @@ public class JibExtensionTest {
 
   @Before
   public void setUp() {
-    Assert.assertNull(System.getProperty("jib.from.image"));
-    Assert.assertNull(System.getProperty("jib.from.credHelper"));
-    Assert.assertNull(System.getProperty("jib.to.image"));
-    Assert.assertNull(System.getProperty("jib.to.tags"));
-    Assert.assertNull(System.getProperty("jib.to.credHelper"));
-    Assert.assertNull(System.getProperty("jib.container.appRoot"));
-    Assert.assertNull(System.getProperty("jib.container.args"));
-    Assert.assertNull(System.getProperty("jib.container.entrypoint"));
-    Assert.assertNull(System.getProperty("jib.container.environment"));
-    Assert.assertNull(System.getProperty("jib.container.extraClasspath"));
-    Assert.assertNull(System.getProperty("jib.container.format"));
-    Assert.assertNull(System.getProperty("jib.container.jvmFlags"));
-    Assert.assertNull(System.getProperty("jib.container.labels"));
-    Assert.assertNull(System.getProperty("jib.container.mainClass"));
-    Assert.assertNull(System.getProperty("jib.container.ports"));
-    Assert.assertNull(System.getProperty("jib.container.useCurrentTimestamp"));
-    Assert.assertNull(System.getProperty("jib.container.user"));
-    Assert.assertNull(System.getProperty("jib.container.filesModificationTime"));
-    Assert.assertNull(System.getProperty("jib.containerizingMode"));
-    Assert.assertNull(System.getProperty("jib.extraDirectory.path"));
-    Assert.assertNull(System.getProperty("jib.extraDirectory.permissions"));
-    Assert.assertNull(System.getProperty("jib.extraDirectories.paths"));
-    Assert.assertNull(System.getProperty("jib.extraDirectories.permissions"));
-
     fakeProject = ProjectBuilder.builder().build();
     testJibExtension =
         fakeProject
             .getExtensions()
             .create(JibPlugin.JIB_EXTENSION_NAME, JibExtension.class, fakeProject);
+
+    System.setProperties(new Properties());
   }
 
   @Test

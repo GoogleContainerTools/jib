@@ -436,7 +436,7 @@ public class RegistryEndpointCallerTest {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
 
-    Assert.assertNull(System.getProperty(JibSystemProperties.HTTP_TIMEOUT));
+    System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
     secureEndpointCaller.call();
 
     // We fall back to the default timeout:
