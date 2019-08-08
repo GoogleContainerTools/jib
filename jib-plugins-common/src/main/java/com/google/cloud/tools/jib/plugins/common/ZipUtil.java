@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,8 +41,8 @@ public class ZipUtil {
   public static void unzip(Path archive, Path destination) throws IOException {
     String canonicalDestination = destination.toFile().getCanonicalPath();
 
-    try (InputStream fileIn = Files.newInputStream(archive);
-        ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(fileIn))) {
+    try (InputStream fileIn = new BufferedInputStream(Files.newInputStream(archive));
+        ZipInputStream zipIn = new ZipInputStream(fileIn)) {
 
       for (ZipEntry entry = zipIn.getNextEntry(); entry != null; entry = zipIn.getNextEntry()) {
         Path entryPath = destination.resolve(entry.getName());
@@ -55,7 +56,7 @@ public class ZipUtil {
         if (entry.isDirectory()) {
           Files.createDirectories(entryPath);
         } else {
-          try (OutputStream out = Files.newOutputStream(entryPath)) {
+          try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(entryPath))) {
             ByteStreams.copy(zipIn, out);
           }
         }
