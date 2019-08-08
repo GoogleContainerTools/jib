@@ -88,8 +88,8 @@ public class JibRunHelper {
 
     Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(imageReference));
     Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(additionalImageReference));
-    assertSimpleCreationTimeIsEqual(Instant.ofEpochSecond(1), imageReference);
-    assertSimpleCreationTimeIsEqual(Instant.ofEpochSecond(1), additionalImageReference);
+    assertSimpleCreationTimeIsEqual(Instant.EPOCH, imageReference);
+    assertSimpleCreationTimeIsEqual(Instant.EPOCH, additionalImageReference);
   }
 
   static BuildResult buildToDockerDaemon(
