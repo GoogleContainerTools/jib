@@ -176,7 +176,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     } catch (InvalidCreationTimeException ex) {
       throw new GradleException(
           "container.creationTime should be an ISO 8601 date-time (see "
-              + "DateTimeFormatter.ISO_DATE_TIME) or a special keyword (\"EPOCH_PLUS_SECOND\", "
+              + "DateTimeFormatter.ISO_DATE_TIME) or a special keyword (\"EPOCH\", "
               + "\"USE_CURRENT_TIMESTAMP\"): "
               + ex.getInvalidCreationTime(),
           ex);

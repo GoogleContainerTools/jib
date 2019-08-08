@@ -187,7 +187,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
     @Parameter private String filesModificationTime = "EPOCH_PLUS_SECOND";
 
-    @Parameter private String creationTime = "EPOCH_PLUS_SECOND";
+    @Parameter private String creationTime = "EPOCH";
   }
 
   /** Configuration for the {@code extraDirectories} parameter. */

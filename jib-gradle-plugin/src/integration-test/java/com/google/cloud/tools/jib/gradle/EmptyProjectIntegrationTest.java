@@ -68,7 +68,7 @@ public class EmptyProjectIntegrationTest {
             + System.nanoTime();
     Assert.assertEquals("", JibRunHelper.buildAndRun(emptyTestProject, targetImage));
     assertDockerInspect(targetImage);
-    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.ofEpochSecond(1), targetImage);
+    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
   }
 
   @Test
@@ -88,7 +88,7 @@ public class EmptyProjectIntegrationTest {
     String targetImage = "emptyimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "", JibRunHelper.buildToDockerDaemonAndRun(emptyTestProject, targetImage, "build.gradle"));
-    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.ofEpochSecond(1), targetImage);
+    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
     assertDockerInspect(targetImage);
   }
 

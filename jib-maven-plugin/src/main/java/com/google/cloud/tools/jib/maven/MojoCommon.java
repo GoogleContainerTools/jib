@@ -41,7 +41,7 @@ public class MojoCommon {
   @Deprecated
   static void checkUseCurrentTimestampDeprecation(JibPluginConfiguration jibPluginConfiguration) {
     if (jibPluginConfiguration.getUseCurrentTimestamp()) {
-      if (!jibPluginConfiguration.getCreationTime().equals("EPOCH_PLUS_SECOND")) {
+      if (!jibPluginConfiguration.getCreationTime().equals("EPOCH")) {
         throw new IllegalArgumentException(
             "You cannot configure both <container><useCurrentTimestamp> and "
                 + "<container><creationTime>");

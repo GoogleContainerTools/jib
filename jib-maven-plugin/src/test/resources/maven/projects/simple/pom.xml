@@ -43,7 +43,7 @@
             <image>${_TARGET_IMAGE}</image>
           </to>
           <container>
-            <creationTime>EPOCH_PLUS_SECOND</creationTime>
+            <creationTime>EPOCH</creationTime>
             <args>An argument.</args>
             <ports>
               <port>1000/tcp</port>

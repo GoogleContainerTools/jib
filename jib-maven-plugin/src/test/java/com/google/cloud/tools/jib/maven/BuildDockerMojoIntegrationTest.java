@@ -105,7 +105,7 @@ public class BuildDockerMojoIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         buildToDockerDaemonAndRun(simpleTestProject.getProjectRoot(), targetImage));
     Assert.assertEquals(
-        "1970-01-01T00:00:01Z",
+        "1970-01-01T00:00:00Z",
         new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
   }
 
@@ -139,7 +139,7 @@ public class BuildDockerMojoIntegrationTest {
     Assert.assertEquals(
         "", buildToDockerDaemonAndRun(emptyTestProject.getProjectRoot(), targetImage));
     Assert.assertEquals(
-        "1970-01-01T00:00:01Z",
+        "1970-01-01T00:00:00Z",
         new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
   }
 

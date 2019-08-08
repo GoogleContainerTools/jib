@@ -131,7 +131,7 @@ public class TaskCommonTest {
   @Test
   public void testCheckDeprecatedUsage_useCurrentTimestampConfigured() {
     Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
-    Mockito.when(containerParameters.getCreationTime()).thenReturn("EPOCH_PLUS_SECOND");
+    Mockito.when(containerParameters.getCreationTime()).thenReturn("EPOCH");
     TaskCommon.checkDeprecatedUsage(jibExtension, logger);
     Mockito.verify(logger)
         .warn(

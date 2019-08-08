@@ -91,7 +91,7 @@ class TaskCommon {
     }
 
     if (jibExtension.getContainer().getUseCurrentTimestamp()) {
-      if (!jibExtension.getContainer().getCreationTime().equals("EPOCH_PLUS_SECOND")) {
+      if (!jibExtension.getContainer().getCreationTime().equals("EPOCH")) {
         throw new IllegalArgumentException(
             "You cannot configure both 'jib.container.useCurrentTimestamp' and "
                 + "'jib.container.creationTime'");

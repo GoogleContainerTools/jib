@@ -485,7 +485,7 @@ public class PluginConfigurationProcessor {
    * Creates an {@link Instant} based on the config value. The value can be:
    *
    * <ol>
-   *   <li>{@code EPOCH_PLUS_SECOND} to return EPOCH + 1 second
+   *   <li>{@code EPOCH} to return epoch
    *   <li>{@code USE_CURRENT_TIMESTAMP} to return the current time
    *   <li>date in ISO 8601 format
    * </ol>
@@ -500,8 +500,8 @@ public class PluginConfigurationProcessor {
       throws DateTimeParseException, InvalidCreationTimeException {
     try {
       switch (configuredCreationTime) {
-        case "EPOCH_PLUS_SECOND":
-          return Instant.ofEpochSecond(1);
+        case "EPOCH":
+          return Instant.EPOCH;
 
         case "USE_CURRENT_TIMESTAMP":
           projectProperties.log(

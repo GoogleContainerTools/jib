@@ -101,7 +101,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
     Mockito.when(rawConfiguration.getFilesModificationTime()).thenReturn("EPOCH_PLUS_SECOND");
-    Mockito.when(rawConfiguration.getCreationTime()).thenReturn("EPOCH_PLUS_SECOND");
+    Mockito.when(rawConfiguration.getCreationTime()).thenReturn("EPOCH");
     Mockito.when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(Paths.get("nonexistent/path")));
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
@@ -890,10 +890,9 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetCreationTime_epochPlusSecond() throws InvalidCreationTimeException {
-    Instant time =
-        PluginConfigurationProcessor.getCreationTime("EPOCH_PLUS_SECOND", projectProperties);
-    Assert.assertEquals(Instant.ofEpochSecond(1), time);
+  public void testGetCreationTime_epoch() throws InvalidCreationTimeException {
+    Instant time = PluginConfigurationProcessor.getCreationTime("EPOCH", projectProperties);
+    Assert.assertEquals(Instant.EPOCH, time);
   }
 
   @Test

@@ -67,7 +67,7 @@ public class BuildTarMojoIntegrationTest {
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         new Command("docker", "run", "--rm", targetImage).run());
     Assert.assertEquals(
-        "1970-01-01T00:00:01Z",
+        "1970-01-01T00:00:00Z",
         new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
   }
 

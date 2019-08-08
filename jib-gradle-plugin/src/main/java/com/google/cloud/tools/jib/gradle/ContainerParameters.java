@@ -48,7 +48,7 @@ public class ContainerParameters {
   @Nullable private String user;
   @Nullable private String workingDirectory;
   private String filesModificationTime = "EPOCH_PLUS_SECOND";
-  private String creationTime = "EPOCH_PLUS_SECOND";
+  private String creationTime = "EPOCH";
 
   @Input
   @Optional

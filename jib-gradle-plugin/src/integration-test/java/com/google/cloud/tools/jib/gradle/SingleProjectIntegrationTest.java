@@ -196,7 +196,7 @@ public class SingleProjectIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildAndRun(simpleTestProject, targetImage));
     assertDockerInspect(targetImage);
-    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.ofEpochSecond(1), targetImage);
+    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
     assertWorkingDirectory("/home", targetImage);
     assertEntrypoint(
         "[java -cp /d1:/d2:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
@@ -327,7 +327,7 @@ public class SingleProjectIntegrationTest {
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage, "build.gradle"));
-    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.ofEpochSecond(1), targetImage);
+    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
     assertDockerInspect(targetImage);
     assertWorkingDirectory("/home", targetImage);
   }
@@ -450,7 +450,7 @@ public class SingleProjectIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         new Command("docker", "run", "--rm", targetImage).run());
     assertDockerInspect(targetImage);
-    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.ofEpochSecond(1), targetImage);
+    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
     assertWorkingDirectory("/home", targetImage);
   }
 }

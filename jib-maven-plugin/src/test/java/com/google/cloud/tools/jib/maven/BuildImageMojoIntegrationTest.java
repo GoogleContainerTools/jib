@@ -189,8 +189,8 @@ public class BuildImageMojoIntegrationTest {
     String digestOutput = pullAndRunBuiltImage(digestImageReference);
     Assert.assertEquals(output, digestOutput);
 
-    assertCreationTimeEpochPlusOne(imageReference);
-    assertCreationTimeEpochPlusOne(additionalImageReference);
+    assertCreationTimeEpoch(imageReference);
+    assertCreationTimeEpoch(additionalImageReference);
 
     return output;
   }
@@ -277,10 +277,10 @@ public class BuildImageMojoIntegrationTest {
     return -1;
   }
 
-  private static void assertCreationTimeEpochPlusOne(String imageReference)
+  private static void assertCreationTimeEpoch(String imageReference)
       throws IOException, InterruptedException {
     Assert.assertEquals(
-        "1970-01-01T00:00:01Z",
+        "1970-01-01T00:00:00Z",
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
   }
 
@@ -377,7 +377,7 @@ public class BuildImageMojoIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom.xml", true));
 
-    assertCreationTimeEpochPlusOne(targetImage);
+    assertCreationTimeEpoch(targetImage);
     assertWorkingDirectory("/home", targetImage);
     assertLayerSize(8, targetImage);
   }
@@ -439,7 +439,7 @@ public class BuildImageMojoIntegrationTest {
     String targetImage = getTestImageReference("emptyimage:maven");
     Assert.assertEquals(
         "", buildAndRun(emptyTestProject.getProjectRoot(), targetImage, "pom.xml", false));
-    assertCreationTimeEpochPlusOne(targetImage);
+    assertCreationTimeEpoch(targetImage);
     assertWorkingDirectory("", targetImage);
   }
 
