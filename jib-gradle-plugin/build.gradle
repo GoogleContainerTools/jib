@@ -61,17 +61,19 @@ configurations {
 
 dependencies {
   // These are copied over from jib-core and are necessary for the jib-core sourcesets.
-  compile 'com.google.http-client:google-http-client:1.31.0'
-  compile 'com.google.http-client:google-http-client-apache-v2:1.31.0'
-  compile 'org.apache.commons:commons-compress:1.18'
-  compile 'com.google.guava:guava:27.0.1-jre'
-  compile 'com.fasterxml.jackson.core:jackson-databind:2.9.9.2'
-  compile 'org.ow2.asm:asm:7.0'
+  implementation 'com.google.http-client:google-http-client:1.31.0'
+  implementation 'com.google.http-client:google-http-client-apache-v2:1.31.0'
+  implementation 'com.google.auth:google-auth-library-oauth2-http:0.16.2'
+  implementation 'com.google.guava:guava:28.0-jre'
 
-  testCompile 'junit:junit:4.12'
-  testCompile 'org.mockito:mockito-core:2.23.4'
-  testCompile 'org.slf4j:slf4j-api:1.7.25'
-  testCompile 'com.github.stefanbirkner:system-rules:1.19.0'
+  implementation 'org.apache.commons:commons-compress:1.18'
+  implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.9.2'
+  implementation 'org.ow2.asm:asm:7.0'
+
+  testImplementation 'junit:junit:4.12'
+  testImplementation 'org.mockito:mockito-core:2.23.4'
+  testImplementation 'org.slf4j:slf4j-api:1.7.25'
+  testImplementation 'com.github.stefanbirkner:system-rules:1.19.0'
 
   // only for testing a concrete Spring Boot example in a test (not for test infrastructure)
   testCompile 'org.springframework.boot:spring-boot-gradle-plugin:2.1.6.RELEASE'

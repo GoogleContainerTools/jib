@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.frontend;
 
+import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.api.ImageReference;
@@ -31,6 +33,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -44,6 +47,10 @@ public class CredentialRetrieverFactory {
   interface DockerCredentialHelperFactory {
     DockerCredentialHelper create(String registry, Path credentialHelper);
   }
+
+  // com.google.api.services.storage.StorageScopes.DEVSTORAGE_READ_WRITE
+  private static final String OAUTH_SCOPE_STORAGE_READ_WRITE =
+      "https://www.googleapis.com/auth/devstorage.read_write";
 
   /**
    * Defines common credential helpers to use as defaults. Maps from registry suffix to credential
@@ -211,6 +218,44 @@ public class CredentialRetrieverFactory {
   public CredentialRetriever dockerConfig(Path dockerConfigFile) {
     return dockerConfig(
         new DockerConfigCredentialRetriever(imageReference.getRegistry(), dockerConfigFile));
+  }
+
+  /**
+   * Creates a new {@link CredentialRetriever} that tries to retrieve credentials from <a
+   * href="https://cloud.google.com/docs/authentication/production">Google Application Default
+   * Credentials.</a>
+   *
+   * @return a new {@link CredentialRetriever}
+   * @see <a
+   *     href="https://cloud.google.com/docs/authentication/production">https://cloud.google.com/docs/authentication/production</a>
+   */
+  public CredentialRetriever googleApplicationDefaultCredentials() {
+    return () -> {
+      try {
+        GoogleCredentials googleCredentials = GoogleCredentials.getApplicationDefault();
+        logger.accept(LogEvent.debug("Google ADC found"));
+        if (googleCredentials.createScopedRequired()) {
+          // Not scoped if service account. The short-lived access token generated from the service
+          // account will have one-hour expiry as of Aug 2019. It is technically possible to use
+          // the service account private key to auth with GCR, but it does not worth writing complex
+          // code to achieve that.
+          logger.accept(
+              LogEvent.debug("Google ADC is a service account. Set GCS read-write scope."));
+          googleCredentials =
+              googleCredentials.createScoped(
+                  Collections.singletonList(OAUTH_SCOPE_STORAGE_READ_WRITE));
+        }
+        googleCredentials.refresh();
+
+        AccessToken accessToken = googleCredentials.getAccessToken();
+        logger.accept(LogEvent.debug("access token expiry: " + accessToken.getExpirationTime()));
+        logger.accept(LogEvent.info("Using Google Application Default Credentials."));
+        return Optional.of(Credential.from("oauth2accesstoken", accessToken.getTokenValue()));
+
+      } catch (IOException ex) {
+        return Optional.empty();
+      }
+    };
   }
 
   @VisibleForTesting

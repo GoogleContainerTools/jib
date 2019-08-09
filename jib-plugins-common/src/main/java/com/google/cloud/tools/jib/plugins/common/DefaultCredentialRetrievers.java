@@ -34,11 +34,12 @@ import javax.annotation.Nullable;
  * <p>The retrievers are, in order of first-checked to last-checked:
  *
  * <ol>
+ *   <li>{@link CredentialRetrieverFactory#known} for known credential, if set
  *   <li>{@link CredentialRetrieverFactory#dockerCredentialHelper} for a known credential helper, if
  *       set
- *   <li>{@link CredentialRetrieverFactory#known} for known credential, if set
- *   <li>{@link CredentialRetrieverFactory#inferCredentialHelper}
+ *   <li>{@link CredentialRetrieverFactory#inferCredentialHelper}, if set
  *   <li>{@link CredentialRetrieverFactory#dockerConfig}
+ *   <li>{@link CredentialRetrieverFactory#googleApplicationDefaultCredentials}, if GCR registry
  * </ol>
  */
 public class DefaultCredentialRetrievers {
@@ -139,6 +140,7 @@ public class DefaultCredentialRetrievers {
     }
     credentialRetrievers.add(credentialRetrieverFactory.dockerConfig());
     credentialRetrievers.add(credentialRetrieverFactory.inferCredentialHelper());
+    credentialRetrievers.add(credentialRetrieverFactory.googleApplicationDefaultCredentials());
     return credentialRetrievers;
   }
 }

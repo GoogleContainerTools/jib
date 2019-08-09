@@ -24,7 +24,6 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -225,7 +224,7 @@ public class JibContainerBuilderTest {
 
     Containerizer mockContainerizer = createMockContainerizer();
 
-    jibContainerBuilder.containerize(mockContainerizer, Suppliers.ofInstance(mockExecutorService));
+    jibContainerBuilder.containerize(mockContainerizer, () -> mockExecutorService);
 
     Mockito.verify(mockExecutorService).shutdown();
   }
