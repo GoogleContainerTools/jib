@@ -54,20 +54,6 @@
             </auth>
           </to>
           <container>
-            <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
-            <args>
-              <arg>An argument.</arg>
-            </args>
-            <mainClass>com.test.HelloWorld</mainClass>
-            <extraClasspath><path>/other</path></extraClasspath>
-            <jvmFlags>
-              <jvmFlag>-Xms512m</jvmFlag>
-              <jvmFlag>-Xdebug</jvmFlag>
-            </jvmFlags>
-            <environment>
-              <env1>envvalue1</env1>
-              <env2>envvalue2</env2>
-            </environment>
             <ports>
               <port>1000/tcp</port>
               <port>2000-2003/udp</port>
@@ -76,24 +62,11 @@
               <key1>value1</key1>
               <key2>value2</key2>
             </labels>
-            <volumes>
-              <volume>/var/log</volume>
-              <volume>/var/log2</volume>
-            </volumes>
-            <format>Docker</format>
+            <filesModificationTime>2019-06-17T16:30:00Z</filesModificationTime>
+            <creationTime>2013-11-05T06:29:30Z</creationTime>
           </container>
           <extraDirectory>
-            <path>${project.basedir}/src/main/jib-custom</path>
-            <permissions>
-              <permission>
-                <file>/foo</file>
-                <mode>755</mode>
-              </permission>
-              <permission>
-                <file>/bar/cat</file>
-                <mode>777</mode>
-              </permission>
-            </permissions>
+            <path>src/main/jib-custom</path>
           </extraDirectory>
           <allowInsecureRegistries>true</allowInsecureRegistries>
         </configuration>

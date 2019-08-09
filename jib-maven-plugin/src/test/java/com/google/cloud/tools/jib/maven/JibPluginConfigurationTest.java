@@ -70,6 +70,7 @@ public class JibPluginConfigurationTest {
     Assert.assertTrue(testPluginConfiguration.getExtraClasspath().isEmpty());
     Assert.assertEquals("exploded", testPluginConfiguration.getContainerizingMode());
     Assert.assertEquals("EPOCH_PLUS_SECOND", testPluginConfiguration.getFilesModificationTime());
+    Assert.assertEquals("EPOCH", testPluginConfiguration.getCreationTime());
   }
 
   @Test
@@ -123,6 +124,8 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("/working/directory", testPluginConfiguration.getWorkingDirectory());
     sessionProperties.put("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
     Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getFilesModificationTime());
+    sessionProperties.put("jib.container.creationTime", "2011-12-03T22:42:05Z");
+    Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getCreationTime());
     sessionProperties.put("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
         ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
@@ -194,6 +197,8 @@ public class JibPluginConfigurationTest {
         .getProperties()
         .setProperty("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");
     Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getFilesModificationTime());
+    project.getProperties().setProperty("jib.container.creationTime", "2011-12-03T22:42:05Z");
+    Assert.assertEquals("2011-12-03T22:42:05Z", testPluginConfiguration.getCreationTime());
     project.getProperties().setProperty("jib.container.extraClasspath", "/foo,/bar");
     Assert.assertEquals(
         ImmutableList.of("/foo", "/bar"), testPluginConfiguration.getExtraClasspath());
@@ -228,7 +233,7 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testDeprecatedSystemProperties() {
+  public void testDeprecatedSystemProperties_extraDirectory() {
     sessionProperties.put("jib.extraDirectory.path", "custom-jib");
     Assert.assertEquals(
         Arrays.asList(Paths.get("custom-jib")), testPluginConfiguration.getExtraDirectories());
@@ -247,7 +252,7 @@ public class JibPluginConfigurationTest {
   }
 
   @Test
-  public void testDeprecatedProperties() {
+  public void testDeprecatedProperties_extraDirectory() {
     Properties projectProperties = project.getProperties();
 
     projectProperties.setProperty("jib.extraDirectory.path", "this-is-extra");

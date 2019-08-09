@@ -18,18 +18,18 @@ package com.google.cloud.tools.jib.plugins.common;
 
 import java.time.format.DateTimeParseException;
 
-/** Exception when an invalid file timestamp configuration is encountered. */
-public class InvalidFilesModificationTimeException extends Exception {
+/** Exception when an invalid container creation timestamp configuration is encountered. */
+public class InvalidCreationTimeException extends Exception {
 
   private final String invalidValue;
 
-  public InvalidFilesModificationTimeException(
+  public InvalidCreationTimeException(
       String message, String invalidValue, DateTimeParseException ex) {
     super(message, ex);
     this.invalidValue = invalidValue;
   }
 
-  public String getInvalidFilesModificationTime() {
+  public String getInvalidCreationTime() {
     return invalidValue;
   }
 }

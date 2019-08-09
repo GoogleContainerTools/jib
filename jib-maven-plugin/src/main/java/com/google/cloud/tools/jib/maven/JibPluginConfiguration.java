@@ -186,6 +186,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Nullable @Parameter private String workingDirectory;
 
     @Parameter private String filesModificationTime = "EPOCH_PLUS_SECOND";
+
+    @Parameter private String creationTime = "EPOCH";
   }
 
   /** Configuration for the {@code extraDirectories} parameter. */
@@ -363,6 +365,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    *
    * @return {@code true} if the build should use the current timestamp, {@code false} if not
    */
+  @Deprecated
   boolean getUseCurrentTimestamp() {
     String property = getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
     if (property != null) {
@@ -556,6 +559,19 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return property;
     }
     return container.filesModificationTime;
+  }
+
+  /**
+   * Gets the configured container creation time value.
+   *
+   * @return the configured container creation time value
+   */
+  String getCreationTime() {
+    String property = getProperty(PropertyNames.CONTAINER_CREATION_TIME);
+    if (property != null) {
+      return property;
+    }
+    return container.creationTime;
   }
 
   /**

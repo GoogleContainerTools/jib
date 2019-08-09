@@ -39,36 +39,13 @@
         <artifactId>jib-maven-plugin</artifactId>
         <version>${jib-maven-plugin.version}</version>
         <configuration>
-          <from>
-            <image>localhost:5000/distroless/java</image>
-            <auth>
-              <username>testuser</username>
-              <password>testpassword</password>
-            </auth>
-          </from>
           <to>
             <image>${_TARGET_IMAGE}</image>
-            <auth>
-              <username>${_TARGET_USERNAME}</username>
-              <password>${_TARGET_PASSWORD}</password>
-            </auth>
           </to>
           <container>
             <useCurrentTimestamp>true</useCurrentTimestamp>
-            <ports>
-              <port>1000/tcp</port>
-              <port>2000-2003/udp</port>
-            </ports>
-            <labels>
-              <key1>value1</key1>
-              <key2>value2</key2>
-            </labels>
-            <filesModificationTime>2019-06-17T16:30:00Z</filesModificationTime>
+            <creationTime>USE_CURRENT_TIMESTAMP</creationTime>
           </container>
-          <extraDirectory>
-            <path>src/main/jib-custom</path>
-          </extraDirectory>
-          <allowInsecureRegistries>true</allowInsecureRegistries>
         </configuration>
       </plugin>
     </plugins>

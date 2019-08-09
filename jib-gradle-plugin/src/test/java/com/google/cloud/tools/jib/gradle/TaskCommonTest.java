@@ -41,6 +41,7 @@ public class TaskCommonTest {
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   @Mock private JibExtension jibExtension;
+  @Mock private ContainerParameters containerParameters;
   @Mock private Logger logger;
 
   @Before
@@ -49,6 +50,7 @@ public class TaskCommonTest {
     System.clearProperty("jib.extraDirectory.permissions");
     System.clearProperty("jib.extraDirectories.paths");
     System.clearProperty("jib.extraDirectories.permissions");
+    Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
   }
 
   @Test
@@ -122,6 +124,32 @@ public class TaskCommonTest {
     } catch (IllegalArgumentException ex) {
       Assert.assertEquals(
           "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'",
+          ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testCheckDeprecatedUsage_useCurrentTimestampConfigured() {
+    Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
+    Mockito.when(containerParameters.getCreationTime()).thenReturn("EPOCH");
+    TaskCommon.checkDeprecatedUsage(jibExtension, logger);
+    Mockito.verify(logger)
+        .warn(
+            "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
+                + "with the value 'USE_CURRENT_TIMESTAMP' instead");
+  }
+
+  @Test
+  public void testCheckDeprecatedUsage_useCurrentTimestampAndCreationTimeConfigured() {
+    Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
+    Mockito.when(containerParameters.getCreationTime()).thenReturn("USE_CURRENT_TIMESTAMP");
+    try {
+      TaskCommon.checkDeprecatedUsage(jibExtension, logger);
+      Assert.fail();
+    } catch (IllegalArgumentException ex) {
+      Assert.assertEquals(
+          "You cannot configure both 'jib.container.useCurrentTimestamp' and "
+              + "'jib.container.creationTime'",
           ex.getMessage());
     }
   }

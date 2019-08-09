@@ -67,7 +67,8 @@ public class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException {
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -97,7 +98,8 @@ public class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException {
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
@@ -119,7 +121,8 @@ public class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException {
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -160,7 +163,8 @@ public class PluginConfigurationProcessor {
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException {
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
     JibSystemProperties.checkHttpTimeoutProperty();
     JibSystemProperties.checkProxyPortProperty();
 
@@ -212,6 +216,9 @@ public class PluginConfigurationProcessor {
           LogEvent.warn(
               "Setting image creation time to current time; your image may not be reproducible."));
       jibContainerBuilder.setCreationTime(Instant.now());
+    } else {
+      jibContainerBuilder.setCreationTime(
+          getCreationTime(rawConfiguration.getCreationTime(), projectProperties));
     }
 
     // Adds all the extra files.
@@ -471,6 +478,43 @@ public class PluginConfigurationProcessor {
 
     } catch (DateTimeParseException ex) {
       throw new InvalidFilesModificationTimeException(modificationTime, modificationTime, ex);
+    }
+  }
+
+  /**
+   * Creates an {@link Instant} based on the config value. The value can be:
+   *
+   * <ol>
+   *   <li>{@code EPOCH} to return epoch
+   *   <li>{@code USE_CURRENT_TIMESTAMP} to return the current time
+   *   <li>date in ISO 8601 format
+   * </ol>
+   *
+   * @param configuredCreationTime the config value
+   * @param projectProperties used for logging warnings
+   * @return corresponding {@link Instant}
+   * @throws InvalidCreationTimeException if the config value is invalid
+   */
+  @VisibleForTesting
+  static Instant getCreationTime(String configuredCreationTime, ProjectProperties projectProperties)
+      throws DateTimeParseException, InvalidCreationTimeException {
+    try {
+      switch (configuredCreationTime) {
+        case "EPOCH":
+          return Instant.EPOCH;
+
+        case "USE_CURRENT_TIMESTAMP":
+          projectProperties.log(
+              LogEvent.warn(
+                  "Setting image creation time to current time; your image may not be reproducible."));
+          return Instant.now();
+
+        default:
+          return DateTimeFormatter.ISO_DATE_TIME.parse(configuredCreationTime, Instant::from);
+      }
+
+    } catch (DateTimeParseException ex) {
+      throw new InvalidCreationTimeException(configuredCreationTime, configuredCreationTime, ex);
     }
   }
 

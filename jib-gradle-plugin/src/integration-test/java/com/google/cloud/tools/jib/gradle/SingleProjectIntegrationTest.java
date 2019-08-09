@@ -52,24 +52,6 @@ public class SingleProjectIntegrationTest {
     return Integer.valueOf(split.iterator().next()) >= 11;
   }
 
-  /**
-   * Asserts that the creation time of the simple test project is set. If the time parsed from the
-   * {@code docker inspect} command occurs before the specified time (i.e. if it is 1970), then the
-   * assertion will fail.
-   *
-   * @param before the specified time to compare the resulting image's creation time to
-   * @param imageReference the image to test
-   * @throws IOException if the {@code docker inspect} command fails to run
-   * @throws InterruptedException if the {@code docker inspect} command is interrupted
-   */
-  private static void assertSimpleCreationTimeIsAfter(Instant before, String imageReference)
-      throws IOException, InterruptedException {
-    String inspect =
-        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
-    Instant parsed = Instant.parse(inspect);
-    Assert.assertTrue(parsed.isAfter(before) || parsed.equals(before));
-  }
-
   private static void assertWorkingDirectory(String expected, String imageReference)
       throws IOException, InterruptedException {
     Assert.assertEquals(
@@ -131,11 +113,11 @@ public class SingleProjectIntegrationTest {
                 + "            }"));
   }
 
-  private static void assertExtraDirectoryDeprecationWarning(String pomXml)
+  private static void assertExtraDirectoryDeprecationWarning(String buildFile)
       throws DigestException, IOException, InterruptedException {
     String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
     BuildResult buildResult =
-        JibRunHelper.buildToDockerDaemon(simpleTestProject, targetImage, pomXml);
+        JibRunHelper.buildToDockerDaemon(simpleTestProject, targetImage, buildFile);
     Assert.assertEquals(
         "Hello, world. \n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
@@ -209,13 +191,12 @@ public class SingleProjectIntegrationTest {
               "No classes files were found - did you compile your project?"));
     }
 
-    Instant beforeBuild = Instant.now();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildAndRun(simpleTestProject, targetImage));
     assertDockerInspect(targetImage);
-    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
     assertWorkingDirectory("/home", targetImage);
     assertEntrypoint(
         "[java -cp /d1:/d2:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
@@ -326,7 +307,7 @@ public class SingleProjectIntegrationTest {
     String targetImage = "localhost:6000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
-    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    JibRunHelper.assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     assertWorkingDirectory("", targetImage);
   }
 
@@ -335,19 +316,18 @@ public class SingleProjectIntegrationTest {
     String targetImage = "localhost:5000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
     buildAndRunComplex(targetImage, "testuser", "testpassword", localRegistry1);
-    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    JibRunHelper.assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     assertWorkingDirectory("", targetImage);
   }
 
   @Test
   public void testDockerDaemon_simple() throws IOException, InterruptedException, DigestException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
-    Instant beforeBuild = Instant.now();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(simpleTestProject, targetImage, "build.gradle"));
-    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
     assertDockerInspect(targetImage);
     assertWorkingDirectory("/home", targetImage);
   }
@@ -379,13 +359,46 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testDockerDaemon_filesModificationTimeCustom()
+  public void testDockerDaemon_timestampCustom()
       throws DigestException, IOException, InterruptedException {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "Hello, world. \n2011-12-03T01:15:30Z\n",
         JibRunHelper.buildToDockerDaemonAndRun(
-            simpleTestProject, targetImage, "build-files-modification-time-custom.gradle"));
+            simpleTestProject, targetImage, "build-timestamps-custom.gradle"));
+    JibRunHelper.assertSimpleCreationTimeIsEqual(
+        Instant.parse("2013-11-04T21:29:30Z"), targetImage);
+  }
+
+  @Test
+  public void testDockerDaemon_timestampDeprecated()
+      throws DigestException, IOException, InterruptedException {
+    Instant beforeBuild = Instant.now();
+    String targetImage = "simpleimage:gradle" + System.nanoTime();
+    BuildResult buildResult =
+        JibRunHelper.buildToDockerDaemon(
+            simpleTestProject, targetImage, "build-usecurrent-deprecated.gradle");
+    JibRunHelper.assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    Assert.assertThat(
+        buildResult.getOutput(),
+        CoreMatchers.containsString(
+            "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' with the value 'USE_CURRENT_TIMESTAMP' instead"));
+  }
+
+  @Test
+  public void testDockerDaemon_timestampFail()
+      throws InterruptedException, IOException, DigestException {
+    try {
+      String targetImage = "simpleimage:gradle" + System.nanoTime();
+      JibRunHelper.buildToDockerDaemonAndRun(
+          simpleTestProject, targetImage, "build-usecurrent-deprecated2.gradle");
+      Assert.fail();
+    } catch (UnexpectedBuildFailure ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "You cannot configure both 'jib.container.useCurrentTimestamp' and 'jib.container.creationTime'"));
+    }
   }
 
   @Test
@@ -420,7 +433,6 @@ public class SingleProjectIntegrationTest {
 
     String outputPath =
         simpleTestProject.getProjectRoot().resolve("build").resolve("jib-image.tar").toString();
-    Instant beforeBuild = Instant.now();
     BuildResult buildResult =
         simpleTestProject.build(
             "clean",
@@ -438,7 +450,7 @@ public class SingleProjectIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         new Command("docker", "run", "--rm", targetImage).run());
     assertDockerInspect(targetImage);
-    assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
+    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
     assertWorkingDirectory("/home", targetImage);
   }
 }

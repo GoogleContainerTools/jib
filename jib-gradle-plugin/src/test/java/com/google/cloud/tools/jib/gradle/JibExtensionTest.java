@@ -101,6 +101,7 @@ public class JibExtensionTest {
     Assert.assertEquals("", testJibExtension.getContainer().getAppRoot());
     Assert.assertEquals(
         "EPOCH_PLUS_SECOND", testJibExtension.getContainer().getFilesModificationTime());
+    Assert.assertEquals("EPOCH", testJibExtension.getContainer().getCreationTime());
 
     testJibExtension.container(
         container -> {
