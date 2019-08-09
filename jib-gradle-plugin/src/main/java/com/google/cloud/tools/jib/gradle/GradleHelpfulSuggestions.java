@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 
-/** Builder for Gradle-specific {@link HelpfulSuggestions}. */
+/** Gradle-specific {@link HelpfulSuggestions}. */
 class GradleHelpfulSuggestions extends HelpfulSuggestions {
 
   GradleHelpfulSuggestions(String messagePrefix) {

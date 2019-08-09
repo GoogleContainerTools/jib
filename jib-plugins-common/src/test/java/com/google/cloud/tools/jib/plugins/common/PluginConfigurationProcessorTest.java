@@ -214,6 +214,16 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testGetBaseImage_warProject()
+      throws IncompatibleBaseImageJavaVersionException, NumberFormatException {
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
+
+    Assert.assertEquals(
+        "gcr.io/distroless/java/jetty:java8",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+  }
+
+  @Test
   public void testEntrypoint()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
