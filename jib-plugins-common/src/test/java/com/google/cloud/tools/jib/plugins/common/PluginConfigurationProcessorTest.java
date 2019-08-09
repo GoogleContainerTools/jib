@@ -208,7 +208,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testPluginConfigurationProcessor_warProjectBaseImage()
+  public void testGetBaseImage_warProject()
       throws IncompatibleBaseImageJavaVersionException, NumberFormatException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
