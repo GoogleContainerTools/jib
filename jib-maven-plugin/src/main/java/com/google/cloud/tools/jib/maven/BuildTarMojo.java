@@ -27,15 +27,11 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeExcept
 import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
-import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
-import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -74,39 +70,17 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
     MojoCommon.checkUseCurrentTimestampDeprecation(this);
 
+    MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
+        getSession().getSettings(), getSettingsDecrypter());
+
+    MavenProjectProperties projectProperties =
+        MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
     try {
-      RawConfiguration mavenRawConfiguration = new MavenRawConfiguration(this);
-      MavenProjectProperties projectProperties =
-          MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
-
-      Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
-      Path tarOutputPath = buildOutput.resolve("jib-image.tar");
-      PluginConfigurationProcessor pluginConfigurationProcessor =
-          PluginConfigurationProcessor.processCommonConfigurationForTarImage(
-              mavenRawConfiguration,
-              new MavenSettingsServerCredentials(
-                  getSession().getSettings(), getSettingsDecrypter()),
-              projectProperties,
-              tarOutputPath,
-              new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
-      MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
-          getSession().getSettings(), getSettingsDecrypter());
-
-      try {
-        JibBuildRunner.forBuildTar(tarOutputPath)
-            .writeImageDigest(buildOutput.resolve("jib-image.digest"))
-            .writeImageId(buildOutput.resolve("jib-image.id"))
-            .build(
-                pluginConfigurationProcessor.getJibContainerBuilder(),
-                pluginConfigurationProcessor.getContainerizer(),
-                projectProperties::log,
-                new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
-
-      } finally {
-        // TODO: This should not be called on projectProperties.
-        projectProperties.waitForLoggingThread();
-        getLog().info("");
-      }
+      PluginConfigurationProcessor.runJibForTarImage(
+          new MavenRawConfiguration(this),
+          new MavenSettingsServerCredentials(getSession().getSettings(), getSettingsDecrypter()),
+          projectProperties,
+          new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
 
     } catch (InvalidAppRootException ex) {
       throw new MojoExecutionException(
@@ -157,6 +131,11 @@ public class BuildTarMojo extends JibPluginConfiguration {
 
     } catch (BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
+
+    } finally {
+      // TODO: This should not be called on projectProperties.
+      projectProperties.waitForLoggingThread();
+      getLog().info("");
     }
   }
 }

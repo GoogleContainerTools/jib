@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 
-/** Builder for Maven-specific {@link HelpfulSuggestions}. */
+/** Maven-specific {@link HelpfulSuggestions}. */
 class MavenHelpfulSuggestions extends HelpfulSuggestions {
 
   MavenHelpfulSuggestions(String messagePrefix) {

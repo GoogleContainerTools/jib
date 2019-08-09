@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.FilePermissions;
-import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
 import com.google.cloud.tools.jib.api.Jib;
@@ -91,7 +90,6 @@ public class PluginConfigurationProcessorTest {
   @Mock private RawConfiguration rawConfiguration;
   @Mock private ProjectProperties projectProperties;
   @Mock private Containerizer containerizer;
-  @Mock private ImageReference targetImageReference;
   @Mock private AuthProperty authProperty;
   @Mock private Consumer<LogEvent> logger;
 
@@ -132,9 +130,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException {
-    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
-    BuildConfiguration buildConfiguration =
-        getBuildConfiguration(processor.getJibContainerBuilder());
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
@@ -163,9 +159,7 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(
             ImmutableMap.of(AbsoluteUnixPath.get("/foo"), FilePermissions.fromOctalString("123")));
 
-    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
-    BuildConfiguration buildConfiguration =
-        getBuildConfiguration(processor.getJibContainerBuilder());
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
     List<LayerEntry> extraFiles =
         buildConfiguration
             .getLayerConfigurations()
@@ -207,10 +201,20 @@ public class PluginConfigurationProcessorTest {
     System.setProperty(PropertyNames.BASE_IMAGE_CACHE, "new/base/cache");
     System.setProperty(PropertyNames.APPLICATION_CACHE, "/new/application/cache");
 
-    createPluginConfigurationProcessor();
+    processCommonConfiguration();
 
     Mockito.verify(containerizer).setBaseImageLayersCache(Paths.get("new/base/cache"));
     Mockito.verify(containerizer).setApplicationLayersCache(Paths.get("/new/application/cache"));
+  }
+
+  @Test
+  public void testPluginConfigurationProcessor_warProjectBaseImage()
+      throws IncompatibleBaseImageJavaVersionException, NumberFormatException {
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
+
+    Assert.assertEquals(
+        "gcr.io/distroless/java/jetty:java8",
+        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
   }
 
   @Test
@@ -223,9 +227,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint())
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
 
-    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
-    BuildConfiguration buildConfiguration =
-        getBuildConfiguration(processor.getJibContainerBuilder());
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
@@ -285,9 +287,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
-    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
-    JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
-    BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
@@ -304,9 +304,7 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
-    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
-    JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
-    BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
@@ -329,9 +327,7 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(Collections.singletonList("/foo"));
     Mockito.when(projectProperties.isWarProject()).thenReturn(false);
 
-    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
-    JibContainerBuilder jibContainerBuilder = processor.getJibContainerBuilder();
-    BuildConfiguration buildConfiguration = getBuildConfiguration(jibContainerBuilder);
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
@@ -352,9 +348,7 @@ public class PluginConfigurationProcessorTest {
           InvalidFilesModificationTimeException, InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getUser()).thenReturn(Optional.of("customUser"));
 
-    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
-    BuildConfiguration buildConfiguration =
-        getBuildConfiguration(processor.getJibContainerBuilder());
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals("customUser", buildConfiguration.getContainerConfiguration().getUser());
@@ -367,9 +361,7 @@ public class PluginConfigurationProcessorTest {
           InvalidContainerVolumeException, IncompatibleBaseImageJavaVersionException,
           NumberFormatException, InvalidContainerizingModeException,
           InvalidFilesModificationTimeException, InvalidCreationTimeException {
-    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
-    BuildConfiguration buildConfiguration =
-        getBuildConfiguration(processor.getJibContainerBuilder());
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration().getUser());
@@ -386,9 +378,7 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getJvmFlags()).thenReturn(Collections.singletonList("jvmFlag"));
 
-    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
-    BuildConfiguration buildConfiguration =
-        getBuildConfiguration(processor.getJibContainerBuilder());
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
@@ -411,9 +401,7 @@ public class PluginConfigurationProcessorTest {
         .thenReturn(Optional.of(Arrays.asList("custom", "entrypoint")));
     Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
 
-    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
-    BuildConfiguration buildConfiguration =
-        getBuildConfiguration(processor.getJibContainerBuilder());
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertEquals(
@@ -434,9 +422,7 @@ public class PluginConfigurationProcessorTest {
           InvalidFilesModificationTimeException, InvalidCreationTimeException {
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/my/app");
 
-    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
-    BuildConfiguration buildConfiguration =
-        getBuildConfiguration(processor.getJibContainerBuilder());
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
@@ -458,9 +444,7 @@ public class PluginConfigurationProcessorTest {
           InvalidFilesModificationTimeException, InvalidCreationTimeException {
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
 
-    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
-    BuildConfiguration buildConfiguration =
-        getBuildConfiguration(processor.getJibContainerBuilder());
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
@@ -906,17 +890,13 @@ public class PluginConfigurationProcessorTest {
     }
   }
 
-  private PluginConfigurationProcessor createPluginConfigurationProcessor()
+  private JibContainerBuilder processCommonConfiguration()
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
     return PluginConfigurationProcessor.processCommonConfiguration(
-        rawConfiguration,
-        ignored -> Optional.empty(),
-        projectProperties,
-        containerizer,
-        targetImageReference);
+        rawConfiguration, ignored -> Optional.empty(), projectProperties, containerizer);
   }
 }
