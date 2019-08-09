@@ -214,23 +214,6 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testPluginConfigurationProcessor_warProjectBaseImage()
-      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
-    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
-
-    PluginConfigurationProcessor processor = createPluginConfigurationProcessor();
-
-    Assert.assertEquals(
-        ImageReference.parse("gcr.io/distroless/java/jetty:java8").toString(),
-        processor.getBaseImageReference().toString());
-    Mockito.verifyNoMoreInteractions(logger);
-  }
-
-  @Test
   public void testEntrypoint()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
@@ -934,7 +917,6 @@ public class PluginConfigurationProcessorTest {
         ignored -> Optional.empty(),
         projectProperties,
         containerizer,
-        targetImageReference,
-        false);
+        targetImageReference);
   }
 }

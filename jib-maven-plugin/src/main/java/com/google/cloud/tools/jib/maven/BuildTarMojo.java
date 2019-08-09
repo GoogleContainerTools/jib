@@ -79,9 +79,6 @@ public class BuildTarMojo extends JibPluginConfiguration {
       MavenProjectProperties projectProperties =
           MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
 
-      MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
-          new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
-
       Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
       Path tarOutputPath = buildOutput.resolve("jib-image.tar");
       PluginConfigurationProcessor pluginConfigurationProcessor =
@@ -91,17 +88,9 @@ public class BuildTarMojo extends JibPluginConfiguration {
                   getSession().getSettings(), getSettingsDecrypter()),
               projectProperties,
               tarOutputPath,
-              mavenHelpfulSuggestionsBuilder.build());
+              new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
       MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
           getSession().getSettings(), getSettingsDecrypter());
-
-      HelpfulSuggestions helpfulSuggestions =
-          mavenHelpfulSuggestionsBuilder
-              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-              .setBaseImageHasConfiguredCredentials(
-                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
-              .setTargetImageReference(pluginConfigurationProcessor.getTargetImageReference())
-              .build();
 
       try {
         JibBuildRunner.forBuildTar(tarOutputPath)
@@ -111,7 +100,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
                 projectProperties::log,
-                helpfulSuggestions);
+                new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
 
       } finally {
         // TODO: This should not be called on projectProperties.

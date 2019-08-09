@@ -113,15 +113,6 @@ public class BuildImageMojo extends JibPluginConfiguration {
           getSession().getSettings(), getSettingsDecrypter());
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
-      HelpfulSuggestions helpfulSuggestions =
-          new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this)
-              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-              .setBaseImageHasConfiguredCredentials(
-                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
-              .setTargetImageReference(targetImageReference)
-              .setTargetImageHasConfiguredCredentials(
-                  pluginConfigurationProcessor.isTargetImageCredentialPresent())
-              .build();
 
       Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
 
@@ -133,7 +124,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
                 projectProperties::log,
-                helpfulSuggestions);
+                new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
 
       } finally {
         // TODO: This should not be called on projectProperties.

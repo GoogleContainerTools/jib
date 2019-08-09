@@ -140,8 +140,7 @@ public class JibBuildRunner {
     } else {
       throw new BuildStepsExecutionException(
           helpfulSuggestions.forNoCredentialsDefined(
-              registryUnauthorizedException.getRegistry(),
-              registryUnauthorizedException.getRepository()),
+              registryUnauthorizedException.getImageReference()),
           registryUnauthorizedException);
     }
   }

@@ -105,9 +105,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       MavenProjectProperties projectProperties =
           MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
 
-      MavenHelpfulSuggestionsBuilder mavenHelpfulSuggestionsBuilder =
-          new MavenHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, this);
-
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
               mavenRawConfiguration,
@@ -116,18 +113,11 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               projectProperties,
               dockerExecutable,
               getDockerClientEnvironment(),
-              mavenHelpfulSuggestionsBuilder.build());
+              new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
       MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
           getSession().getSettings(), getSettingsDecrypter());
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
-      HelpfulSuggestions helpfulSuggestions =
-          mavenHelpfulSuggestionsBuilder
-              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-              .setBaseImageHasConfiguredCredentials(
-                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
-              .setTargetImageReference(targetImageReference)
-              .build();
 
       Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
 
@@ -139,7 +129,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
                 projectProperties::log,
-                helpfulSuggestions);
+                new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
 
       } finally {
         // TODO: This should not be called on projectProperties.
