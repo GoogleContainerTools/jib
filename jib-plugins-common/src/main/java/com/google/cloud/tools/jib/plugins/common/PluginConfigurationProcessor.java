@@ -80,8 +80,8 @@ public class PluginConfigurationProcessor {
     if (dockerEnvironment != null) {
       targetImage.setDockerEnvironment(dockerEnvironment);
     }
-    Containerizer containerizer = Containerizer.to(targetImage);
 
+    Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
@@ -107,8 +107,8 @@ public class PluginConfigurationProcessor {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
-    Containerizer containerizer = Containerizer.to(targetImage);
 
+    Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
@@ -134,7 +134,6 @@ public class PluginConfigurationProcessor {
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
     RegistryImage targetImage = RegistryImage.named(targetImageReference);
-    Containerizer containerizer = Containerizer.to(targetImage);
 
     configureCredentialRetrievers(
         rawConfiguration,
@@ -147,6 +146,7 @@ public class PluginConfigurationProcessor {
         inferredAuthProvider,
         rawConfiguration.getToCredHelper().orElse(null));
 
+    Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
