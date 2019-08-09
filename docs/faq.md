@@ -474,7 +474,7 @@ If the registry returns `401 Unauthorized` or `"code":"UNAUTHORIZED"`, it is oft
 * `$HOME/.docker/config.json` may also contain short-lived authorizations in the `auths` block that may have expired. In the case of Google Container Registry, if you had previously used `gcloud docker` to configure these authorizations, you should remove these stale authorizations by editing your `config.json` and deleting lines from `auths` associated with `gcr.io` (for example: `"https://asia.gcr.io"`). You can then run `gcloud auth configure-docker` to correctly configure the `credHelpers` block for more robust interactions with gcr.
 * Different auth configurations exist in multiple places, and Jib is not picking up the auth information you are working on.
 * You configured a credential helper, but the helper is not on `$PATH`. This is especially common when running Jib inside IDE where the IDE binary is launched directly from an OS menu and does not have access to your shell's environment.
-* Credentials are configured and work for the base image repository not for the target image repository.
+* Configured credentials have access to the base image repository but not to the target image repository (or vice versa).
 * Typos in username, password, image names, or registry names.
 * You are using a private registry without HTTPS. See [How can I diagnose problems pulling or pushing from remote registries?](#how-can-i-diagnose-problems-pulling-or-pushing-from-remote-registries).
 
