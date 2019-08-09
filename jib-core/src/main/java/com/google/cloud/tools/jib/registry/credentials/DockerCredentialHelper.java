@@ -40,8 +40,6 @@ import javax.annotation.Nullable;
  */
 public class DockerCredentialHelper {
 
-  public static final String CREDENTIAL_HELPER_PREFIX = "docker-credential-";
-
   private final String serverUrl;
   private final Path credentialHelper;
 
@@ -65,7 +63,7 @@ public class DockerCredentialHelper {
   }
 
   DockerCredentialHelper(String registry, String credentialHelperSuffix) {
-    this(registry, Paths.get(CREDENTIAL_HELPER_PREFIX + credentialHelperSuffix));
+    this(registry, Paths.get("docker-credential-" + credentialHelperSuffix));
   }
 
   /**

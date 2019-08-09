@@ -114,7 +114,7 @@ public class CredentialRetrieverFactoryTest {
     Assert.assertEquals(
         FAKE_CREDENTIALS,
         credentialRetrieverFactory
-            .inferCredentialHelper()
+            .wellKnownCredentialHelper()
             .retrieve()
             .orElseThrow(AssertionError::new));
     Mockito.verify(mockLogger)
@@ -135,7 +135,8 @@ public class CredentialRetrieverFactoryTest {
     Mockito.when(mockCredentialHelperNotFoundException.getMessage()).thenReturn("warning");
     Mockito.when(mockCredentialHelperNotFoundException.getCause())
         .thenReturn(new IOException("the root cause"));
-    Assert.assertFalse(credentialRetrieverFactory.inferCredentialHelper().retrieve().isPresent());
+    Assert.assertFalse(
+        credentialRetrieverFactory.wellKnownCredentialHelper().retrieve().isPresent());
     Mockito.verify(mockLogger).accept(LogEvent.info("warning"));
     Mockito.verify(mockLogger).accept(LogEvent.info("  Caused by: the root cause"));
   }

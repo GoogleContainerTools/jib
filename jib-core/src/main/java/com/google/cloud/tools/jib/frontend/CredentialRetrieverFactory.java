@@ -28,15 +28,16 @@ import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalExcept
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /** Static factories for various {@link CredentialRetriever}s. */
 public class CredentialRetrieverFactory {
@@ -56,8 +57,9 @@ public class CredentialRetrieverFactory {
    * Defines common credential helpers to use as defaults. Maps from registry suffix to credential
    * helper suffix.
    */
-  private static final ImmutableMap<String, String> COMMON_CREDENTIAL_HELPERS =
-      ImmutableMap.of("gcr.io", "gcr", "amazonaws.com", "ecr-login");
+  private static final ImmutableMap<String, String> WELL_KNOWN_CREDENTIAL_HELPERS =
+      ImmutableMap.of(
+          "gcr.io", "docker-credential-gcr", "amazonaws.com", "docker-credential-ecr-login");
 
   /**
    * Creates a new {@link CredentialRetrieverFactory} for an image.
@@ -156,27 +158,19 @@ public class CredentialRetrieverFactory {
    *
    * @return a new {@link CredentialRetriever}
    */
-  public CredentialRetriever inferCredentialHelper() {
-    List<String> inferredCredentialHelperSuffixes = new ArrayList<>();
-    for (String registrySuffix : COMMON_CREDENTIAL_HELPERS.keySet()) {
-      if (!imageReference.getRegistry().endsWith(registrySuffix)) {
-        continue;
-      }
-      String inferredCredentialHelperSuffix = COMMON_CREDENTIAL_HELPERS.get(registrySuffix);
-      if (inferredCredentialHelperSuffix == null) {
-        throw new IllegalStateException("No COMMON_CREDENTIAL_HELPERS should be null");
-      }
-      inferredCredentialHelperSuffixes.add(inferredCredentialHelperSuffix);
-    }
+  public CredentialRetriever wellKnownCredentialHelper() {
+    List<String> wellKnownCredentialHelpers =
+        WELL_KNOWN_CREDENTIAL_HELPERS
+            .keySet()
+            .stream()
+            .filter(imageReference.getRegistry()::endsWith)
+            .map(key -> Verify.verifyNotNull(WELL_KNOWN_CREDENTIAL_HELPERS.get(key)))
+            .collect(Collectors.toList());
 
     return () -> {
-      for (String inferredCredentialHelperSuffix : inferredCredentialHelperSuffixes) {
+      for (String credentialHelper : wellKnownCredentialHelpers) {
         try {
-          return Optional.of(
-              retrieveFromDockerCredentialHelper(
-                  Paths.get(
-                      DockerCredentialHelper.CREDENTIAL_HELPER_PREFIX
-                          + inferredCredentialHelperSuffix)));
+          return Optional.of(retrieveFromDockerCredentialHelper(Paths.get(credentialHelper)));
 
         } catch (CredentialHelperNotFoundException
             | CredentialHelperUnhandledServerUrlException ex) {
@@ -232,29 +226,29 @@ public class CredentialRetrieverFactory {
   public CredentialRetriever googleApplicationDefaultCredentials() {
     return () -> {
       try {
-        GoogleCredentials googleCredentials = GoogleCredentials.getApplicationDefault();
-        logger.accept(LogEvent.debug("Google ADC found"));
-        if (googleCredentials.createScopedRequired()) {
-          // Not scoped if service account. The short-lived access token generated from the service
-          // account will have one-hour expiry as of Aug 2019. It is technically possible to use
-          // the service account private key to auth with GCR, but it does not worth writing complex
-          // code to achieve that.
-          logger.accept(
-              LogEvent.debug("Google ADC is a service account. Set GCS read-write scope."));
-          googleCredentials =
-              googleCredentials.createScoped(
-                  Collections.singletonList(OAUTH_SCOPE_STORAGE_READ_WRITE));
+        if (imageReference.getRegistry().endsWith("gcr.io")) {
+          GoogleCredentials googleCredentials = GoogleCredentials.getApplicationDefault();
+          logger.accept(LogEvent.info("Google ADC found"));
+          if (googleCredentials.createScopedRequired()) { // Not scoped if service account.
+            // The short-lived access token generated from the service account will have one-hour
+            // expiry as of Aug 2019. It is technically possible to use the service account private
+            // key to auth with GCR, but it does not worth writing complex code to achieve that.
+            logger.accept(LogEvent.debug("ADC is a service account. Set GCS read-write scope."));
+            List<String> scope = Collections.singletonList(OAUTH_SCOPE_STORAGE_READ_WRITE);
+            googleCredentials = googleCredentials.createScoped(scope);
+          }
+          googleCredentials.refresh();
+
+          logGotCredentialsFrom("Google Application Default Credentials");
+          AccessToken accessToken = googleCredentials.getAccessToken();
+          return Optional.of(Credential.from("oauth2accesstoken", accessToken.getTokenValue()));
         }
-        googleCredentials.refresh();
 
-        AccessToken accessToken = googleCredentials.getAccessToken();
-        logger.accept(LogEvent.debug("access token expiry: " + accessToken.getExpirationTime()));
-        logger.accept(LogEvent.info("Using Google Application Default Credentials."));
-        return Optional.of(Credential.from("oauth2accesstoken", accessToken.getTokenValue()));
-
-      } catch (IOException ex) {
-        return Optional.empty();
+      } catch (IOException ex) { // Includes the case where ADC is simply not available.
+        logger.accept(
+            LogEvent.info("ADC not available or error fetching access token: " + ex.getMessage()));
       }
+      return Optional.empty();
     };
   }
 

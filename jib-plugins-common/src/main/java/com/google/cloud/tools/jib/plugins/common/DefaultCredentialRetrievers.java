@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
-import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
 import java.io.FileNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -122,24 +121,23 @@ public class DefaultCredentialRetrievers {
     if (credentialHelper != null) {
       // If credential helper contains file separator, treat as path; otherwise treat as suffix
       if (credentialHelper.contains(FileSystems.getDefault().getSeparator())) {
-        if (Files.exists(Paths.get(credentialHelper))) {
-          credentialRetrievers.add(
-              credentialRetrieverFactory.dockerCredentialHelper(credentialHelper));
-        } else {
+        if (!Files.exists(Paths.get(credentialHelper))) {
           throw new FileNotFoundException(
               "Specified credential helper was not found: " + credentialHelper);
         }
-      } else {
         credentialRetrievers.add(
-            credentialRetrieverFactory.dockerCredentialHelper(
-                DockerCredentialHelper.CREDENTIAL_HELPER_PREFIX + credentialHelper));
+            credentialRetrieverFactory.dockerCredentialHelper(credentialHelper));
+      } else {
+        String suffix = credentialHelper; // not path; treat as suffix
+        credentialRetrievers.add(
+            credentialRetrieverFactory.dockerCredentialHelper("docker-credential-" + suffix));
       }
     }
     if (inferredCredentialRetriever != null) {
       credentialRetrievers.add(inferredCredentialRetriever);
     }
     credentialRetrievers.add(credentialRetrieverFactory.dockerConfig());
-    credentialRetrievers.add(credentialRetrieverFactory.inferCredentialHelper());
+    credentialRetrievers.add(credentialRetrieverFactory.wellKnownCredentialHelper());
     credentialRetrievers.add(credentialRetrieverFactory.googleApplicationDefaultCredentials());
     return credentialRetrievers;
   }
