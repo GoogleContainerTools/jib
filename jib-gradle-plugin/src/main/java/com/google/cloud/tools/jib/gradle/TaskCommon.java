@@ -89,6 +89,17 @@ class TaskCommon {
             "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'");
       }
     }
+
+    if (jibExtension.getContainer().getUseCurrentTimestamp()) {
+      if (!jibExtension.getContainer().getCreationTime().equals("EPOCH")) {
+        throw new IllegalArgumentException(
+            "You cannot configure both 'jib.container.useCurrentTimestamp' and "
+                + "'jib.container.creationTime'");
+      }
+      logger.warn(
+          "'jib.container.useCurrentTimestamp' is deprecated; use 'jib.container.creationTime' "
+              + "with the value 'USE_CURRENT_TIMESTAMP' instead");
+    }
   }
 
   /**

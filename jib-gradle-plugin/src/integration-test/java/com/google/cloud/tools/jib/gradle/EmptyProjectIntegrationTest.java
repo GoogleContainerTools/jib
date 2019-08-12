@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import java.io.IOException;
 import java.security.DigestException;
+import java.time.Instant;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -67,7 +68,7 @@ public class EmptyProjectIntegrationTest {
             + System.nanoTime();
     Assert.assertEquals("", JibRunHelper.buildAndRun(emptyTestProject, targetImage));
     assertDockerInspect(targetImage);
-    JibRunHelper.assertCreationTimeEpoch(targetImage);
+    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
   }
 
   @Test
@@ -87,9 +88,7 @@ public class EmptyProjectIntegrationTest {
     String targetImage = "emptyimage:gradle" + System.nanoTime();
     Assert.assertEquals(
         "", JibRunHelper.buildToDockerDaemonAndRun(emptyTestProject, targetImage, "build.gradle"));
-    Assert.assertEquals(
-        "1970-01-01T00:00:00Z",
-        new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
+    JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
     assertDockerInspect(targetImage);
   }
 

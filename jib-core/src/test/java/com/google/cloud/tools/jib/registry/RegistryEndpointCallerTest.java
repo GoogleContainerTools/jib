@@ -572,8 +572,7 @@ public class RegistryEndpointCallerTest {
       Assert.fail("Call should have failed");
 
     } catch (RegistryUnauthorizedException ex) {
-      Assert.assertEquals("serverUrl", ex.getRegistry());
-      Assert.assertEquals("imageName", ex.getRepository());
+      Assert.assertEquals("serverUrl/imageName", ex.getImageReference());
       Assert.assertSame(httpResponseException, ex.getHttpResponseException());
     }
   }

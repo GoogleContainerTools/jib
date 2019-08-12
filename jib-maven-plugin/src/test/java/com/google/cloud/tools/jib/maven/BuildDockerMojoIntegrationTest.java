@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.Command;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.DigestException;
-import java.time.Instant;
 import java.util.Arrays;
 import org.apache.maven.it.VerificationException;
 import org.apache.maven.it.Verifier;
@@ -101,15 +100,13 @@ public class BuildDockerMojoIntegrationTest {
       throws VerificationException, IOException, InterruptedException, DigestException {
     String targetImage = "simpleimage:maven" + System.nanoTime();
 
-    Instant before = Instant.now();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         buildToDockerDaemonAndRun(simpleTestProject.getProjectRoot(), targetImage));
-    Instant buildTime =
-        Instant.parse(
-            new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
-    Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
+    Assert.assertEquals(
+        "1970-01-01T00:00:00Z",
+        new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
   }
 
   @Test
@@ -231,7 +228,6 @@ public class BuildDockerMojoIntegrationTest {
   public void testExecute_jibRequireVersion_ok() throws VerificationException, IOException {
     String targetImage = "simpleimage:maven" + System.nanoTime();
 
-    Instant before = Instant.now();
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     // this plugin should match 1.0
     verifier.setSystemProperty("jib.requiredVersion", "1.0");

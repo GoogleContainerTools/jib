@@ -69,6 +69,7 @@ public interface RawConfiguration {
 
   Optional<String> getWorkingDirectory();
 
+  @Deprecated
   boolean getUseCurrentTimestamp();
 
   boolean getAllowInsecureRegistries();
@@ -78,6 +79,8 @@ public interface RawConfiguration {
   Optional<String> getProperty(String propertyName);
 
   String getFilesModificationTime();
+
+  String getCreationTime();
 
   List<Path> getExtraDirectories();
 
