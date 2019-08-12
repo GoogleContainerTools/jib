@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 
 - Can now set file timestamps (last modified time) in the image with `<container><filesModificationTime>`. The value should either be `EPOCH_PLUS_SECOND` to set the timestamps to Epoch + 1 second (default behavior), or an ISO 8601 date time parsable with [`DateTimeFormatter.ISO_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html) such as `2019-07-15T10:15:30+09:00` or `2011-12-03T22:42:05Z` ([#1818](https://github.com/GoogleContainerTools/jib/pull/1818))
 - Can now set container creation timestamp with `<container><creationTime>`. The value should be `EPOCH`, `USE_CURRENT_TIMESTAMP`, or an ISO 8601 date time ([#1609](https://github.com/GoogleContainerTools/jib/issues/1609))
+- For Google Container Registry (gcr.io), Jib now tries [Google Application Default Credentials](https://developers.google.com/identity/protocols/application-default-credentials) (ADC) last when no credentials can be retrieved. ADC are available on many Google Cloud Platform (GCP) environment (such as Google Cloud Build, Google Compute Engine, Google Kubernetes Engine, and Google App Engine). Application Default Credentials can also be configured with `gcloud auth application-default login` locally or through the `GOOGLE_APPLICATION_CREDENTIALS` environment variable. ([]())
 
 ### Changed
 
