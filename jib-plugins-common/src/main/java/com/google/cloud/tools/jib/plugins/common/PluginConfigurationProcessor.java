@@ -85,8 +85,7 @@ public class PluginConfigurationProcessor {
         inferredAuthProvider,
         projectProperties,
         containerizer,
-        targetImageReference,
-        false);
+        targetImageReference);
   }
 
   public static PluginConfigurationProcessor processCommonConfigurationForTarImage(
@@ -110,8 +109,7 @@ public class PluginConfigurationProcessor {
         inferredAuthProvider,
         projectProperties,
         containerizer,
-        targetImageReference,
-        false);
+        targetImageReference);
   }
 
   public static PluginConfigurationProcessor processCommonConfigurationForRegistryImage(
@@ -128,17 +126,16 @@ public class PluginConfigurationProcessor {
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
     RegistryImage targetImage = RegistryImage.named(targetImageReference);
 
-    boolean isTargetImageCredentialPresent =
-        configureCredentialRetrievers(
-            rawConfiguration,
-            projectProperties,
-            targetImage,
-            targetImageReference,
-            PropertyNames.TO_AUTH_USERNAME,
-            PropertyNames.TO_AUTH_PASSWORD,
-            rawConfiguration.getToAuth(),
-            inferredAuthProvider,
-            rawConfiguration.getToCredHelper().orElse(null));
+    configureCredentialRetrievers(
+        rawConfiguration,
+        projectProperties,
+        targetImage,
+        targetImageReference,
+        PropertyNames.TO_AUTH_USERNAME,
+        PropertyNames.TO_AUTH_PASSWORD,
+        rawConfiguration.getToAuth(),
+        inferredAuthProvider,
+        rawConfiguration.getToCredHelper().orElse(null));
 
     PluginConfigurationProcessor processor =
         processCommonConfiguration(
@@ -146,8 +143,7 @@ public class PluginConfigurationProcessor {
             inferredAuthProvider,
             projectProperties,
             Containerizer.to(targetImage),
-            targetImageReference,
-            isTargetImageCredentialPresent);
+            targetImageReference);
     processor.getJibContainerBuilder().setFormat(rawConfiguration.getImageFormat());
     return processor;
   }
@@ -158,8 +154,7 @@ public class PluginConfigurationProcessor {
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
       Containerizer containerizer,
-      ImageReference targetImageReference,
-      boolean isTargetImageCredentialPresent)
+      ImageReference targetImageReference)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
@@ -179,17 +174,16 @@ public class PluginConfigurationProcessor {
     }
 
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
-    boolean isBaseImageCredentialPresent =
-        configureCredentialRetrievers(
-            rawConfiguration,
-            projectProperties,
-            baseImage,
-            baseImageReference,
-            PropertyNames.FROM_AUTH_USERNAME,
-            PropertyNames.FROM_AUTH_PASSWORD,
-            rawConfiguration.getFromAuth(),
-            inferredAuthProvider,
-            rawConfiguration.getFromCredHelper().orElse(null));
+    configureCredentialRetrievers(
+        rawConfiguration,
+        projectProperties,
+        baseImage,
+        baseImageReference,
+        PropertyNames.FROM_AUTH_USERNAME,
+        PropertyNames.FROM_AUTH_PASSWORD,
+        rawConfiguration.getFromAuth(),
+        inferredAuthProvider,
+        rawConfiguration.getFromCredHelper().orElse(null));
 
     BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
         createModificationTimeProvider(rawConfiguration.getFilesModificationTime());
@@ -235,12 +229,7 @@ public class PluginConfigurationProcessor {
     configureContainerizer(containerizer, rawConfiguration, projectProperties);
 
     return new PluginConfigurationProcessor(
-        jibContainerBuilder,
-        containerizer,
-        baseImageReference,
-        targetImageReference,
-        isBaseImageCredentialPresent,
-        isTargetImageCredentialPresent);
+        jibContainerBuilder, containerizer, targetImageReference);
   }
 
   /**
@@ -519,14 +508,14 @@ public class PluginConfigurationProcessor {
   }
 
   // TODO: find a way to reduce the number of arguments.
-  private static boolean configureCredentialRetrievers(
+  private static void configureCredentialRetrievers(
       RawConfiguration rawConfiguration,
       ProjectProperties projectProperties,
       RegistryImage registryImage,
       ImageReference imageReference,
       String usernamePropertyName,
       String passwordPropertyName,
-      AuthProperty knownAuth,
+      AuthProperty rawAuthConfiguration,
       InferredAuthProvider inferredAuthProvider,
       @Nullable String credHelper)
       throws FileNotFoundException {
@@ -538,17 +527,15 @@ public class PluginConfigurationProcessor {
             projectProperties::log,
             usernamePropertyName,
             passwordPropertyName,
-            knownAuth,
+            rawAuthConfiguration,
             rawConfiguration);
-    boolean credentialPresent = optionalCredential.isPresent();
     if (optionalCredential.isPresent()) {
       defaultCredentialRetrievers.setKnownCredential(
-          optionalCredential.get(), knownAuth.getAuthDescriptor());
+          optionalCredential.get(), rawAuthConfiguration.getAuthDescriptor());
     } else {
       try {
         Optional<AuthProperty> optionalInferredAuth =
             inferredAuthProvider.inferAuth(imageReference.getRegistry());
-        credentialPresent = optionalInferredAuth.isPresent();
         if (optionalInferredAuth.isPresent()) {
           AuthProperty auth = optionalInferredAuth.get();
           String username = Verify.verifyNotNull(auth.getUsername());
@@ -560,10 +547,9 @@ public class PluginConfigurationProcessor {
         projectProperties.log(LogEvent.warn("InferredAuthException: " + ex.getMessage()));
       }
     }
+
     defaultCredentialRetrievers.setCredentialHelper(credHelper);
     defaultCredentialRetrievers.asList().forEach(registryImage::addCredentialRetriever);
-
-    return credentialPresent;
   }
 
   private static ImageReference getGeneratedTargetDockerTag(
@@ -660,25 +646,16 @@ public class PluginConfigurationProcessor {
   }
 
   private final JibContainerBuilder jibContainerBuilder;
-  private final ImageReference baseImageReference;
   private final ImageReference targetImageReference;
-  private final boolean isBaseImageCredentialPresent;
-  private final boolean isTargetImageCredentialPresent;
   private final Containerizer containerizer;
 
   private PluginConfigurationProcessor(
       JibContainerBuilder jibContainerBuilder,
       Containerizer containerizer,
-      ImageReference baseImageReference,
-      ImageReference targetImageReference,
-      boolean isBaseImageCredentialPresent,
-      boolean isTargetImageCredentialPresent) {
+      ImageReference targetImageReference) {
     this.jibContainerBuilder = jibContainerBuilder;
     this.containerizer = containerizer;
-    this.baseImageReference = baseImageReference;
     this.targetImageReference = targetImageReference;
-    this.isBaseImageCredentialPresent = isBaseImageCredentialPresent;
-    this.isTargetImageCredentialPresent = isTargetImageCredentialPresent;
   }
 
   public JibContainerBuilder getJibContainerBuilder() {
@@ -689,19 +666,7 @@ public class PluginConfigurationProcessor {
     return containerizer;
   }
 
-  public ImageReference getBaseImageReference() {
-    return baseImageReference;
-  }
-
   public ImageReference getTargetImageReference() {
     return targetImageReference;
-  }
-
-  public boolean isBaseImageCredentialPresent() {
-    return isBaseImageCredentialPresent;
-  }
-
-  public boolean isTargetImageCredentialPresent() {
-    return isTargetImageCredentialPresent;
   }
 }

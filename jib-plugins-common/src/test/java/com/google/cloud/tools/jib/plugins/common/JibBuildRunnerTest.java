@@ -20,7 +20,6 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
-import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.RegistryException;
@@ -46,15 +45,7 @@ public class JibBuildRunnerTest {
 
   private static final HelpfulSuggestions TEST_HELPFUL_SUGGESTIONS =
       new HelpfulSuggestions(
-          "messagePrefix",
-          "clearCacheCommand",
-          ImageReference.of("someregistry", "somerepository", null),
-          false,
-          ImageReference.of("toRegistry", "torepository", null),
-          false,
-          "toConfig",
-          "toFlag",
-          "buildFile");
+          "messagePrefix", "clearCacheCommand", "toConfig", "toFlag", "buildFile");
 
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -170,8 +161,8 @@ public class JibBuildRunnerTest {
           ExecutionException {
     Mockito.when(mockRegistryUnauthorizedException.getHttpResponseException())
         .thenReturn(mockHttpResponseException);
-    Mockito.when(mockRegistryUnauthorizedException.getRegistry()).thenReturn("someregistry");
-    Mockito.when(mockRegistryUnauthorizedException.getRepository()).thenReturn("somerepository");
+    Mockito.when(mockRegistryUnauthorizedException.getImageReference())
+        .thenReturn("someregistry/somerepository");
     Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1); // Unknown
 
     Mockito.doThrow(mockRegistryUnauthorizedException)
@@ -185,7 +176,7 @@ public class JibBuildRunnerTest {
 
     } catch (BuildStepsExecutionException ex) {
       Assert.assertEquals(
-          TEST_HELPFUL_SUGGESTIONS.forNoCredentialsDefined("someregistry", "somerepository"),
+          TEST_HELPFUL_SUGGESTIONS.forNoCredentialsDefined("someregistry/somerepository"),
           ex.getMessage());
     }
   }

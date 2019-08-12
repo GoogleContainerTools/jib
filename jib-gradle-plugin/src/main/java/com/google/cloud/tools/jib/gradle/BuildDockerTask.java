@@ -110,9 +110,6 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
       GradleProjectProperties projectProperties =
           GradleProjectProperties.getForProject(getProject(), getLogger());
 
-      GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
-          new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
-
       PluginConfigurationProcessor pluginConfigurationProcessor =
           PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
               gradleRawConfiguration,
@@ -120,17 +117,9 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               projectProperties,
               dockerClientParameters.getExecutablePath(),
               dockerClientParameters.getEnvironment(),
-              gradleHelpfulSuggestionsBuilder.build());
+              new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
-      HelpfulSuggestions helpfulSuggestions =
-          gradleHelpfulSuggestionsBuilder
-              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-              .setBaseImageHasConfiguredCredentials(
-                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
-              .setTargetImageReference(targetImageReference)
-              .build();
-
       Path buildOutput = getProject().getBuildDir().toPath();
 
       try {
@@ -141,7 +130,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
                 projectProperties::log,
-                helpfulSuggestions);
+                new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
 
       } finally {
         // TODO: This should not be called on projectProperties.

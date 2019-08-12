@@ -38,14 +38,6 @@ public class RegistryUnauthorizedException extends RegistryException {
     this.repository = repository;
   }
 
-  public String getRegistry() {
-    return registry;
-  }
-
-  public String getRepository() {
-    return repository;
-  }
-
   public String getImageReference() {
     return registry + "/" + repository;
   }

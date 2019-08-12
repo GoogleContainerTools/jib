@@ -101,15 +101,6 @@ public class BuildImageTask extends DefaultTask implements JibTask {
               gradleRawConfiguration, ignored -> Optional.empty(), projectProperties);
 
       ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
-      HelpfulSuggestions helpfulSuggestions =
-          new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension)
-              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-              .setBaseImageHasConfiguredCredentials(
-                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
-              .setTargetImageReference(targetImageReference)
-              .setTargetImageHasConfiguredCredentials(
-                  pluginConfigurationProcessor.isTargetImageCredentialPresent())
-              .build();
 
       Path buildOutput = getProject().getBuildDir().toPath();
 
@@ -121,7 +112,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
                 projectProperties::log,
-                helpfulSuggestions);
+                new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
 
       } finally {
         // TODO: This should not be called on projectProperties.
