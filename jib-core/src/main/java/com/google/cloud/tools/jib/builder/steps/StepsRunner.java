@@ -60,7 +60,6 @@ public class StepsRunner {
           new IllegalStateException("invalid usage; required step not configured"));
     }
 
-    private Future<Path> dockerSaveTar = failedFuture();
     private Future<ImageAndAuthorization> baseImageAndAuth = failedFuture();
     private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
@@ -184,18 +183,6 @@ public class StepsRunner {
       }
       throw unrolled;
     }
-  }
-
-  private void saveDocker() {
-    DockerClient dockerClient = new DockerClient();
-    results.dockerSaveTar =
-        executorService.submit(() -> new SaveDockerStep(buildConfiguration, dockerClient).call());
-  }
-
-  private void extractTar(Future<Path> extractionPath) {
-    Future<LocalImage> localImage =
-        executorService.submit(() -> new ExtractTarStep(extractionPath.get(), buildConfiguration).call());
-
   }
 
   private void retrieveTargetRegistryCredentials() {
