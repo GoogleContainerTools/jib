@@ -56,10 +56,12 @@ public class ExtractTarStep implements Callable<LocalImage> {
   }
 
   private final Path tarPath;
+  private final Path destination;
   private final BuildConfiguration buildConfiguration;
 
-  ExtractTarStep(Path tarPath, BuildConfiguration buildConfiguration) {
+  ExtractTarStep(Path tarPath, Path destination, BuildConfiguration buildConfiguration) {
     this.tarPath = tarPath;
+    this.destination = destination;
     this.buildConfiguration = buildConfiguration;
   }
 
@@ -67,8 +69,6 @@ public class ExtractTarStep implements Callable<LocalImage> {
   @Override
   public LocalImage call()
       throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException {
-    // TODO: Use a non-overlapping temp directory for better concurrency
-    Path destination = buildConfiguration.getBaseImageLayersCache().getTemporaryDirectory();
     TarExtractor.extract(tarPath, destination);
     DockerManifestEntryTemplate loadManifest =
         JsonTemplateMapper.readJsonFromFile(
