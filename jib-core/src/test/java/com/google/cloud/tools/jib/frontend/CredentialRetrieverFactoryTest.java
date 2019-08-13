@@ -86,7 +86,7 @@ public class CredentialRetrieverFactoryTest {
 
     Assert.assertEquals(
         Optional.of(FAKE_CREDENTIALS),
-        credentialRetrieverFactory.wellKnownCredentialHelper().retrieve());
+        credentialRetrieverFactory.wellKnownCredentialHelpers().retrieve());
 
     Mockito.verify(dockerCredentialHelperFactory)
         .create("something.gcr.io", Paths.get("docker-credential-gcr"));
@@ -106,7 +106,7 @@ public class CredentialRetrieverFactoryTest {
         createCredentialRetrieverFactory("something.amazonaws.com", "repository");
 
     Assert.assertFalse(
-        credentialRetrieverFactory.wellKnownCredentialHelper().retrieve().isPresent());
+        credentialRetrieverFactory.wellKnownCredentialHelpers().retrieve().isPresent());
 
     Mockito.verify(dockerCredentialHelperFactory)
         .create("something.amazonaws.com", Paths.get("docker-credential-ecr-login"));

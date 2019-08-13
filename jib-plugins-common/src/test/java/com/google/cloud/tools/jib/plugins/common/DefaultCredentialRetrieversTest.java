@@ -60,7 +60,7 @@ public class DefaultCredentialRetrieversTest {
         .thenReturn(knownCredentialRetriever);
     Mockito.when(credentialRetrieverFactory.known(inferredCredential, "inferredCredentialSource"))
         .thenReturn(inferredCredentialRetriever);
-    Mockito.when(credentialRetrieverFactory.wellKnownCredentialHelper())
+    Mockito.when(credentialRetrieverFactory.wellKnownCredentialHelpers())
         .thenReturn(inferCredentialHelperCredentialRetriever);
     Mockito.when(credentialRetrieverFactory.dockerConfig())
         .thenReturn(dockerConfigCredentialRetriever);

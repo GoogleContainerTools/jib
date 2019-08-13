@@ -139,7 +139,7 @@ public class DefaultCredentialRetrievers {
       credentialRetrievers.add(inferredCredentialRetriever);
     }
     credentialRetrievers.add(credentialRetrieverFactory.dockerConfig());
-    credentialRetrievers.add(credentialRetrieverFactory.wellKnownCredentialHelper());
+    credentialRetrievers.add(credentialRetrieverFactory.wellKnownCredentialHelpers());
     credentialRetrievers.add(credentialRetrieverFactory.googleApplicationDefaultCredentials());
     return credentialRetrievers;
   }

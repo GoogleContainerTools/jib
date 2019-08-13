@@ -28,7 +28,6 @@ import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalExcept
 import com.google.cloud.tools.jib.registry.credentials.DockerConfigCredentialRetriever;
 import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -156,13 +155,13 @@ public class CredentialRetrieverFactory {
    *
    * @return a new {@link CredentialRetriever}
    */
-  public CredentialRetriever wellKnownCredentialHelper() {
+  public CredentialRetriever wellKnownCredentialHelpers() {
     List<String> wellKnownCredentialHelpers =
         WELL_KNOWN_CREDENTIAL_HELPERS
             .keySet()
             .stream()
             .filter(imageReference.getRegistry()::endsWith)
-            .map(key -> Verify.verifyNotNull(WELL_KNOWN_CREDENTIAL_HELPERS.get(key)))
+            .map(key -> WELL_KNOWN_CREDENTIAL_HELPERS.get(key))
             .collect(Collectors.toList());
 
     return () -> {
@@ -236,7 +235,7 @@ public class CredentialRetrieverFactory {
             List<String> scope = Collections.singletonList(OAUTH_SCOPE_STORAGE_READ_WRITE);
             googleCredentials = googleCredentials.createScoped(scope);
           }
-          googleCredentials.refresh();
+          googleCredentials.refreshIfExpired();
 
           logGotCredentialsFrom("Google Application Default Credentials");
           AccessToken accessToken = googleCredentials.getAccessToken();
