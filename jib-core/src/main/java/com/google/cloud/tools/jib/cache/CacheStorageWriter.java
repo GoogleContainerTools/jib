@@ -44,7 +44,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nullable;
@@ -102,10 +101,8 @@ class CacheStorageWriter {
 
     String message =
         String.format(
-            "unable to move: %s to %s; this is often caused by interference from antivirus",
+            "unable to move: %s to %s; such failures are often caused by interference from antivirus",
             source, destination);
-    // TODO figure out a better logging scheme
-    Logger.getLogger(CacheStorageWriter.class.getName()).warning(message);
     throw new IOException(message);
   }
 

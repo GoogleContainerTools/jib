@@ -55,7 +55,6 @@ public class RetryTest {
 
   @Test
   public void testMaximumRetries_specified() throws Exception {
-    // if the stop condition is true then the action is never invoked
     boolean result = Retry.action(unsuccessfulAction).maximumRetries(2).run();
     Assert.assertFalse(result);
     Assert.assertEquals(2, actionCount);
@@ -63,7 +62,7 @@ public class RetryTest {
 
   @Test
   public void testRetryableException() {
-    // all exceptions are retryable by default, so retry 5 times
+    // all exceptions are retryable by default, so should retry 5 times
     try {
       Retry.action(exceptionAction).run();
       Assert.fail("should have thrown exception");
@@ -90,11 +89,14 @@ public class RetryTest {
     // interrupt the current thread so as to cause the retry's sleep() to throw
     // an InterruptedException
     Thread.currentThread().interrupt();
-    boolean result = Retry.action(unsuccessfulAction).sleep(10, TimeUnit.SECONDS).run();
-    Assert.assertFalse(result);
-    Assert.assertEquals(1, actionCount);
-    // This thread should be marked as interrupted (plus clear the flag for the test)
-    Assert.assertTrue(Thread.interrupted());
+    try {
+      boolean result = Retry.action(unsuccessfulAction).sleep(10, TimeUnit.SECONDS).run();
+      Assert.assertFalse(result);
+      Assert.assertEquals(1, actionCount);
+    } finally {
+      // This thread should be marked as interrupted (plus clear the flag for the test)
+      Assert.assertTrue(Thread.interrupted());
+    }
   }
 
   @Test
@@ -103,7 +105,7 @@ public class RetryTest {
       Retry.action(successfulAction).maximumRetries(0);
       Assert.fail();
     } catch (IllegalArgumentException ex) {
-      /* expected */
+      /* maximumRetries() ensures the retry value is at least 1. */
     }
   }
 
@@ -113,7 +115,7 @@ public class RetryTest {
       Retry.action(successfulAction).sleep(-1, TimeUnit.DAYS);
       Assert.fail();
     } catch (IllegalArgumentException ex) {
-      /* expected */
+      /* sleep() ensures the sleep value is non-negative. */
     }
   }
 }

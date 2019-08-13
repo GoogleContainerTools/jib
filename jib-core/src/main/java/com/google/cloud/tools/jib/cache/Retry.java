@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 /**
- * A simple class for retrying an action until it succeeds, or has retried too often and failed. By
- * default the action will be run up to 5 times. The action is deemed successful if it runs to
- * completion without throwing an exception, and returns true.
+ * Retries an action until it succeeds, or has retried too often and failed. By default the action
+ * will be run up to 5 times. The action is deemed successful if it runs to completion without
+ * throwing an exception, and returns true.
  *
  * <ul>
  *   <li>Exceptions are caught and, if deemed {@link #retryOnException(Predicate) retryable} then
@@ -37,7 +37,7 @@ import java.util.function.Predicate;
  */
 public class Retry<E extends Exception> {
 
-  /** An Action may throw an exception of type {@code E}. */
+  /** A runnable action that may throw an exception of type {@code E}. */
   @FunctionalInterface
   public interface Action<E extends Exception> {
     /**
@@ -62,7 +62,7 @@ public class Retry<E extends Exception> {
 
   private final Action<E> action;
   private int maximumRetries = 5;
-  private Predicate<? super E> retryOnException = ignored -> true; // continue to retry
+  private Predicate<Exception> retryOnException = ignored -> true; // continue to retry
   private long sleepMilliseconds = -1; // no sleep
 
   private Retry(Action<E> action) {
@@ -110,29 +110,26 @@ public class Retry<E extends Exception> {
    */
   public boolean run() throws E {
     for (int i = 0; i < maximumRetries; i++) {
-      // sleep between attempts, but not on the first attempt
-      if (i > 0 && sleepMilliseconds >= 0) {
-        try {
-          Thread.sleep(sleepMilliseconds);
-        } catch (InterruptedException ex) {
-          // Restore the interrupted status
-          Thread.currentThread().interrupt();
-          return false;
-        }
-      }
-
       try {
+        // sleep between attempts, but not on the first attempt
+        if (i > 0 && sleepMilliseconds >= 0) {
+          Thread.sleep(sleepMilliseconds);
+        }
+
         // Do we need to continue?
         if (action.run()) {
           return true;
         }
 
+      } catch (InterruptedException ex) {
+        // Restore the interrupted status
+        Thread.currentThread().interrupt();
+        return false;
+
       } catch (Exception caughtException) {
-        @SuppressWarnings("unchecked")
-        E ex = (E) caughtException;
         // if this is the last iteration, no more retries
-        if (i + 1 == maximumRetries || !retryOnException.test(ex)) {
-          throw ex;
+        if (i + 1 == maximumRetries || !retryOnException.test(caughtException)) {
+          throw caughtException;
         }
       }
     }
