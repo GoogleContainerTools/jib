@@ -42,7 +42,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 /** Extracts a tar file base image. */
 public class ExtractTarStep implements Callable<LocalImage> {
@@ -79,10 +78,11 @@ public class ExtractTarStep implements Callable<LocalImage> {
         JsonTemplateMapper.readJsonFromFile(
             destination.resolve(loadManifest.getConfig()), ContainerConfigurationTemplate.class);
 
-    if (configuration.getLayerCount() != loadManifest.getLayerFiles().size()) {
+    List<String> layerFiles = loadManifest.getLayerFiles();
+    if (configuration.getLayerCount() != layerFiles.size()) {
       throw new LayerCountMismatchException(
           "Invalid base image format: manifest contains "
-              + loadManifest.getLayerFiles().size()
+              + layerFiles.size()
               + " layers, but container configuration contains "
               + configuration.getLayerCount()
               + " layers");
@@ -90,19 +90,16 @@ public class ExtractTarStep implements Callable<LocalImage> {
 
     // Check the first layer to see if the layers are compressed already. 'docker save' output is
     // uncompressed, but a jib-built tar has compressed layers.
-    // TODO: Skip this check for OCI? Apparently layers don't have any compression requirement.
-    //
-    // https://containers.gitbook.io/build-containers-the-hard-way/#registry-format-oci-image-manifest
     boolean layersAreCompressed = false;
-    if (loadManifest.getLayerFiles().size() > 0) {
-      layersAreCompressed = isGzipped(destination.resolve(loadManifest.getLayerFiles().get(0)));
+    if (layerFiles.size() > 0) {
+      layersAreCompressed = isGzipped(destination.resolve(layerFiles.get(0)));
     }
 
     // Convert v1.2 manifest to v2.2 manifest
     List<PreparedLayer> layers = new ArrayList<>();
     V22ManifestTemplate newManifest = new V22ManifestTemplate();
-    for (int index = 0; index < loadManifest.getLayerFiles().size(); index++) {
-      Path file = destination.resolve(loadManifest.getLayerFiles().get(index));
+    for (int index = 0; index < layerFiles.size(); index++) {
+      Path file = destination.resolve(layerFiles.get(index));
 
       Blob blob;
       BlobDescriptor blobDescriptor;
@@ -112,14 +109,7 @@ public class ExtractTarStep implements Callable<LocalImage> {
         blobDescriptor = blob.writeTo(ByteStreams.nullOutputStream());
       } else {
         // Compress uncompressed layers
-        // TODO: Consolidate with 'compress' method in CacheTest
-        blob =
-            Blobs.from(
-                outputStream -> {
-                  try (GZIPOutputStream compressorStream = new GZIPOutputStream(outputStream)) {
-                    Blobs.from(file).writeTo(compressorStream);
-                  }
-                });
+        blob = Blobs.compress(Blobs.from(file));
         blobDescriptor = blob.writeTo(ByteStreams.nullOutputStream());
       }
 
