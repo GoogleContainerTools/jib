@@ -49,14 +49,18 @@ public class CredentialRetrieverFactory {
     DockerCredentialHelper create(String registry, Path credentialHelper);
   }
 
+  /** Used for passing in mock {@link GoogleCredentials} for testing. */
+  @VisibleForTesting
+  @FunctionalInterface
+  interface GoogleCredentialsProvider {
+    GoogleCredentials get() throws IOException;
+  }
+
   // com.google.api.services.storage.StorageScopes.DEVSTORAGE_READ_WRITE
   private static final String OAUTH_SCOPE_STORAGE_READ_WRITE =
       "https://www.googleapis.com/auth/devstorage.read_write";
 
-  /**
-   * Defines common credential helpers to use as defaults. Maps from registry suffix to credential
-   * helper suffix.
-   */
+  /** Mapping between well-known credential helpers and registries (suffixes). */
   private static final ImmutableMap<String, String> WELL_KNOWN_CREDENTIAL_HELPERS =
       ImmutableMap.of(
           "gcr.io", "docker-credential-gcr", "amazonaws.com", "docker-credential-ecr-login");
@@ -70,32 +74,28 @@ public class CredentialRetrieverFactory {
    */
   public static CredentialRetrieverFactory forImage(
       ImageReference imageReference, Consumer<LogEvent> logger) {
-    return new CredentialRetrieverFactory(imageReference, logger, DockerCredentialHelper::new);
-  }
-
-  /**
-   * Creates a new {@link CredentialRetrieverFactory} for an image.
-   *
-   * @param imageReference the image the credential are for
-   * @return a new {@link CredentialRetrieverFactory}
-   */
-  public static CredentialRetrieverFactory forImage(ImageReference imageReference) {
     return new CredentialRetrieverFactory(
-        imageReference, logEvent -> {}, DockerCredentialHelper::new);
+        imageReference,
+        logger,
+        DockerCredentialHelper::new,
+        GoogleCredentials::getApplicationDefault);
   }
 
   private final ImageReference imageReference;
   private final Consumer<LogEvent> logger;
   private final DockerCredentialHelperFactory dockerCredentialHelperFactory;
+  private final GoogleCredentialsProvider googleCredentialsProvider;
 
   @VisibleForTesting
   CredentialRetrieverFactory(
       ImageReference imageReference,
       Consumer<LogEvent> logger,
-      DockerCredentialHelperFactory dockerCredentialHelperFactory) {
+      DockerCredentialHelperFactory dockerCredentialHelperFactory,
+      GoogleCredentialsProvider googleCredentialsProvider) {
     this.imageReference = imageReference;
     this.logger = logger;
     this.dockerCredentialHelperFactory = dockerCredentialHelperFactory;
+    this.googleCredentialsProvider = googleCredentialsProvider;
   }
 
   /**
@@ -134,8 +134,6 @@ public class CredentialRetrieverFactory {
    */
   public CredentialRetriever dockerCredentialHelper(Path credentialHelper) {
     return () -> {
-      logger.accept(LogEvent.info("Checking credentials from " + credentialHelper));
-
       try {
         return Optional.of(retrieveFromDockerCredentialHelper(credentialHelper));
 
@@ -152,9 +150,9 @@ public class CredentialRetrieverFactory {
   }
 
   /**
-   * Creates a new {@link CredentialRetriever} that tries common Docker credential helpers to
+   * Creates a new {@link CredentialRetriever} that tries well-known Docker credential helpers to
    * retrieve credentials based on the registry of the image, such as {@code docker-credential-gcr}
-   * for images with the registry as {@code gcr.io}.
+   * for images with the registry ending with {@code gcr.io}.
    *
    * @return a new {@link CredentialRetriever}
    */
@@ -227,13 +225,14 @@ public class CredentialRetrieverFactory {
     return () -> {
       try {
         if (imageReference.getRegistry().endsWith("gcr.io")) {
-          GoogleCredentials googleCredentials = GoogleCredentials.getApplicationDefault();
+          GoogleCredentials googleCredentials = googleCredentialsProvider.get();
           logger.accept(LogEvent.info("Google ADC found"));
           if (googleCredentials.createScopedRequired()) { // Not scoped if service account.
-            // The short-lived access token generated from the service account will have one-hour
-            // expiry as of Aug 2019. It is technically possible to use the service account private
-            // key to auth with GCR, but it does not worth writing complex code to achieve that.
-            logger.accept(LogEvent.debug("ADC is a service account. Set GCS read-write scope"));
+            // The short-lived OAuth2 access token generated from the service account will have
+            // one-hour expiry (as of Aug 2019). Instead of using an access token, It is technically
+            // possible to use the service account private key to auth with GCR, but it does not
+            // worth writing complex code to achieve that.
+            logger.accept(LogEvent.info("ADC is a service account. Set GCS read-write scope"));
             List<String> scope = Collections.singletonList(OAUTH_SCOPE_STORAGE_READ_WRITE);
             googleCredentials = googleCredentials.createScoped(scope);
           }
@@ -241,12 +240,13 @@ public class CredentialRetrieverFactory {
 
           logGotCredentialsFrom("Google Application Default Credentials");
           AccessToken accessToken = googleCredentials.getAccessToken();
+          // https://cloud.google.com/container-registry/docs/advanced-authentication#access_token
           return Optional.of(Credential.from("oauth2accesstoken", accessToken.getTokenValue()));
         }
 
       } catch (IOException ex) { // Includes the case where ADC is simply not available.
         logger.accept(
-            LogEvent.info("ADC not available or error fetching access token: " + ex.getMessage()));
+            LogEvent.info("ADC not present or error fetching access token: " + ex.getMessage()));
       }
       return Optional.empty();
     };
@@ -257,13 +257,10 @@ public class CredentialRetrieverFactory {
       DockerConfigCredentialRetriever dockerConfigCredentialRetriever) {
     return () -> {
       try {
-        Optional<Credential> dockerConfigCredentials =
-            dockerConfigCredentialRetriever.retrieve(logger);
-        if (dockerConfigCredentials.isPresent()) {
-          logger.accept(
-              LogEvent.info(
-                  "Using credentials from Docker config for " + imageReference.getRegistry()));
-          return dockerConfigCredentials;
+        Optional<Credential> credentials = dockerConfigCredentialRetriever.retrieve(logger);
+        if (credentials.isPresent()) {
+          logGotCredentialsFrom("credentials from Docker config");
+          return credentials;
         }
 
       } catch (IOException ex) {
@@ -280,7 +277,7 @@ public class CredentialRetrieverFactory {
         dockerCredentialHelperFactory
             .create(imageReference.getRegistry(), credentialHelper)
             .retrieve();
-    logGotCredentialsFrom(credentialHelper.getFileName().toString());
+    logGotCredentialsFrom("credentials from " + credentialHelper.getFileName().toString());
     return credentials;
   }
 
