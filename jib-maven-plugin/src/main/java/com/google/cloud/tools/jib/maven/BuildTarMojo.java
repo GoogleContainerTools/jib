@@ -76,11 +76,13 @@ public class BuildTarMojo extends JibPluginConfiguration {
     MavenProjectProperties projectProperties =
         MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
     try {
-      PluginConfigurationProcessor.runJibForTarImage(
-          new MavenRawConfiguration(this),
-          new MavenSettingsServerCredentials(getSession().getSettings(), getSettingsDecrypter()),
-          projectProperties,
-          new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
+      PluginConfigurationProcessor.processCommonConfigurationForTarImage(
+              new MavenRawConfiguration(this),
+              new MavenSettingsServerCredentials(
+                  getSession().getSettings(), getSettingsDecrypter()),
+              projectProperties,
+              new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
+          .runBuild();
 
     } catch (InvalidAppRootException ex) {
       throw new MojoExecutionException(

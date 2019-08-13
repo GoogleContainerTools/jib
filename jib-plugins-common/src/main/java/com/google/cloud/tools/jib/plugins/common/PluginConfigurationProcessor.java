@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.plugins.common;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
-import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DockerDaemonImage;
@@ -58,7 +57,7 @@ import javax.annotation.Nullable;
  */
 public class PluginConfigurationProcessor {
 
-  public static void runJibForDockerDaemonImage(
+  public static JibBuildRunner processCommonConfigurationForDockerDaemonImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
@@ -69,8 +68,7 @@ public class PluginConfigurationProcessor {
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException, BuildStepsExecutionException,
-          CacheDirectoryCreationException {
+          InvalidCreationTimeException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -86,13 +84,18 @@ public class PluginConfigurationProcessor {
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
 
-    JibBuildRunner.forBuildToDockerDaemon(targetImageReference, rawConfiguration.getToTags())
+    return JibBuildRunner.forBuildToDockerDaemon(
+            jibContainerBuilder,
+            containerizer,
+            projectProperties::log,
+            helpfulSuggestions,
+            targetImageReference,
+            rawConfiguration.getToTags())
         .writeImageDigest(projectProperties.getOutputDirectory().resolve("jib-image.digest"))
-        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"))
-        .build(jibContainerBuilder, containerizer, projectProperties::log, helpfulSuggestions);
+        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
   }
 
-  public static void runJibForTarImage(
+  public static JibBuildRunner processCommonConfigurationForTarImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
@@ -101,8 +104,7 @@ public class PluginConfigurationProcessor {
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException, BuildStepsExecutionException,
-          CacheDirectoryCreationException {
+          InvalidCreationTimeException {
     Path tarImagePath = projectProperties.getOutputDirectory().resolve("jib-image.tar");
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
@@ -113,13 +115,17 @@ public class PluginConfigurationProcessor {
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);
 
-    JibBuildRunner.forBuildTar(tarImagePath)
+    return JibBuildRunner.forBuildTar(
+            jibContainerBuilder,
+            containerizer,
+            projectProperties::log,
+            helpfulSuggestions,
+            tarImagePath)
         .writeImageDigest(projectProperties.getOutputDirectory().resolve("jib-image.digest"))
-        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"))
-        .build(jibContainerBuilder, containerizer, projectProperties::log, helpfulSuggestions);
+        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
   }
 
-  public static void runJibForRegistryImage(
+  public static JibBuildRunner processCommonConfigurationForRegistryImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
@@ -128,8 +134,7 @@ public class PluginConfigurationProcessor {
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException, BuildStepsExecutionException,
-          CacheDirectoryCreationException {
+          InvalidCreationTimeException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -154,10 +159,15 @@ public class PluginConfigurationProcessor {
     // Note Docker and tar builds don't set the configured format.
     jibContainerBuilder.setFormat(rawConfiguration.getImageFormat());
 
-    JibBuildRunner.forBuildImage(targetImageReference, rawConfiguration.getToTags())
+    return JibBuildRunner.forBuildImage(
+            jibContainerBuilder,
+            containerizer,
+            projectProperties::log,
+            helpfulSuggestions,
+            targetImageReference,
+            rawConfiguration.getToTags())
         .writeImageDigest(projectProperties.getOutputDirectory().resolve("jib-image.digest"))
-        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"))
-        .build(jibContainerBuilder, containerizer, projectProperties::log, helpfulSuggestions);
+        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
   }
 
   @VisibleForTesting

@@ -99,11 +99,13 @@ public class BuildImageMojo extends JibPluginConfiguration {
     MavenProjectProperties projectProperties =
         MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
     try {
-      PluginConfigurationProcessor.runJibForRegistryImage(
-          new MavenRawConfiguration(this),
-          new MavenSettingsServerCredentials(getSession().getSettings(), getSettingsDecrypter()),
-          projectProperties,
-          new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
+      PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
+              new MavenRawConfiguration(this),
+              new MavenSettingsServerCredentials(
+                  getSession().getSettings(), getSettingsDecrypter()),
+              projectProperties,
+              new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
+          .runBuild();
 
     } catch (InvalidAppRootException ex) {
       throw new MojoExecutionException(

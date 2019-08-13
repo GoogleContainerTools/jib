@@ -106,11 +106,12 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger());
     try {
-      PluginConfigurationProcessor.runJibForTarImage(
-          new GradleRawConfiguration(jibExtension),
-          ignored -> Optional.empty(),
-          projectProperties,
-          new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
+      PluginConfigurationProcessor.processCommonConfigurationForTarImage(
+              new GradleRawConfiguration(jibExtension),
+              ignored -> Optional.empty(),
+              projectProperties,
+              new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
+          .runBuild();
 
     } catch (InvalidAppRootException ex) {
       throw new GradleException(

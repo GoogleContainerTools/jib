@@ -105,13 +105,14 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger());
     try {
-      PluginConfigurationProcessor.runJibForDockerDaemonImage(
-          new GradleRawConfiguration(jibExtension),
-          ignored -> java.util.Optional.empty(),
-          projectProperties,
-          dockerClientParameters.getExecutablePath(),
-          dockerClientParameters.getEnvironment(),
-          new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
+      PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
+              new GradleRawConfiguration(jibExtension),
+              ignored -> java.util.Optional.empty(),
+              projectProperties,
+              dockerClientParameters.getExecutablePath(),
+              dockerClientParameters.getEnvironment(),
+              new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
+          .runBuild();
 
     } catch (InvalidAppRootException ex) {
       throw new GradleException(

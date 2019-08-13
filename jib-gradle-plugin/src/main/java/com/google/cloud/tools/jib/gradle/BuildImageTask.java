@@ -90,11 +90,12 @@ public class BuildImageTask extends DefaultTask implements JibTask {
                 "gradle jib --image <your image name>"));
       }
 
-      PluginConfigurationProcessor.runJibForRegistryImage(
-          new GradleRawConfiguration(jibExtension),
-          ignored -> Optional.empty(),
-          projectProperties,
-          new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
+      PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
+              new GradleRawConfiguration(jibExtension),
+              ignored -> Optional.empty(),
+              projectProperties,
+              new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
+          .runBuild();
 
     } catch (InvalidAppRootException ex) {
       throw new GradleException(
