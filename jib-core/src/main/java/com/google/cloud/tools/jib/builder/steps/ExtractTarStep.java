@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -101,30 +100,21 @@ public class ExtractTarStep implements Callable<LocalImage> {
     for (int index = 0; index < layerFiles.size(); index++) {
       Path file = destination.resolve(layerFiles.get(index));
 
-      Blob blob;
-      BlobDescriptor blobDescriptor;
-      if (layersAreCompressed) {
-        // If layers are compressed already, calculate digest/size as is
-        blob = Blobs.from(file);
-        blobDescriptor = blob.writeTo(ByteStreams.nullOutputStream());
-      } else {
-        // Compress uncompressed layers
-        blob = Blobs.compress(Blobs.from(file));
-        blobDescriptor = blob.writeTo(ByteStreams.nullOutputStream());
-      }
+      Blob blob = layersAreCompressed ? Blobs.from(file) : Blobs.compress(Blobs.from(file));
+      BlobDescriptor blobDescriptor = blob.writeTo(ByteStreams.nullOutputStream());
 
       // 'manifest' contains the layer files in the same order as the diff ids in 'configuration'
       // https://containers.gitbook.io/build-containers-the-hard-way/#docker-load-format
-      DescriptorDigest diffId = configuration.getLayerDiffId(index);
-
       CachedLayer layer =
           CachedLayer.builder()
               .setLayerBlob(blob)
-              .setLayerDiffId(diffId)
               .setLayerDigest(blobDescriptor.getDigest())
               .setLayerSize(blobDescriptor.getSize())
+              .setLayerDiffId(configuration.getLayerDiffId(index))
               .build();
-      // TODO: Check blob existence on target registry
+
+      // TODO: Check blob existence on target registry (online mode only)
+
       layers.add(new PreparedLayer.Builder(layer).build());
       newManifest.addLayer(blobDescriptor.getSize(), blobDescriptor.getDigest());
     }
