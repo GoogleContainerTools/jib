@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
  *       set
  *   <li>{@link CredentialRetrieverFactory#known} for known inferred credential, if set
  *   <li>{@link CredentialRetrieverFactory#dockerConfig}
- *   <li>{@link CredentialRetrieverFactory#wellKnownCredentialHelper} for well-known credential
+ *   <li>{@link CredentialRetrieverFactory#wellKnownCredentialHelpers} for well-known credential
  *       helper-registry pairs
  *   <li>{@link CredentialRetrieverFactory#googleApplicationDefaultCredentials} for GCR registry
  * </ol>
