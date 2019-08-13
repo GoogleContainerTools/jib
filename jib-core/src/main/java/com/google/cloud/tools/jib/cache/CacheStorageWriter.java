@@ -95,15 +95,13 @@ class CacheStorageWriter {
             .retryOnException(ex -> ex instanceof FileSystemException)
             .sleep(15, TimeUnit.MILLISECONDS)
             .run();
-    if (success) {
-      return;
+    if (!success) {
+      String message =
+          String.format(
+              "unable to move: %s to %s; such failures are often caused by interference from antivirus",
+              source, destination);
+      throw new IOException(message);
     }
-
-    String message =
-        String.format(
-            "unable to move: %s to %s; such failures are often caused by interference from antivirus",
-            source, destination);
-    throw new IOException(message);
   }
 
   /**

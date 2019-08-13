@@ -126,10 +126,10 @@ public class Retry<E extends Exception> {
         Thread.currentThread().interrupt();
         return false;
 
-      } catch (Exception caughtException) {
+      } catch (Exception ex) {
         // if this is the last iteration, no more retries
-        if (i + 1 == maximumRetries || !retryOnException.test(caughtException)) {
-          throw caughtException;
+        if (i + 1 == maximumRetries || !retryOnException.test(ex)) {
+          throw ex;
         }
       }
     }
