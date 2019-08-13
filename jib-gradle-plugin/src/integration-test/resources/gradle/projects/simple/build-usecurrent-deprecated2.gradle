@@ -16,5 +16,6 @@ dependencies {
 
 jib {
   to.image = System.getProperty("_TARGET_IMAGE")
-  container.filesModificationTime = '2011-12-03T10:15:30+09:00'
+  container.useCurrentTimestamp = true
+  container.creationTime = 'USE_CURRENT_TIMESTAMP'
 }

@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersio
 import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
@@ -108,8 +109,6 @@ public class BuildTarTask extends DefaultTask implements JibTask {
       RawConfiguration gradleRawConfiguration = new GradleRawConfiguration(jibExtension);
       GradleProjectProperties projectProperties =
           GradleProjectProperties.getForProject(getProject(), getLogger());
-      GradleHelpfulSuggestionsBuilder gradleHelpfulSuggestionsBuilder =
-          new GradleHelpfulSuggestionsBuilder(HELPFUL_SUGGESTIONS_PREFIX, jibExtension);
 
       Path tarOutputPath = getTargetPath();
       PluginConfigurationProcessor pluginConfigurationProcessor =
@@ -118,15 +117,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
               ignored -> Optional.empty(),
               projectProperties,
               tarOutputPath,
-              gradleHelpfulSuggestionsBuilder.build());
-
-      HelpfulSuggestions helpfulSuggestions =
-          gradleHelpfulSuggestionsBuilder
-              .setBaseImageReference(pluginConfigurationProcessor.getBaseImageReference())
-              .setBaseImageHasConfiguredCredentials(
-                  pluginConfigurationProcessor.isBaseImageCredentialPresent())
-              .setTargetImageReference(pluginConfigurationProcessor.getTargetImageReference())
-              .build();
+              new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
 
       Path buildOutput = getProject().getBuildDir().toPath();
 
@@ -138,7 +129,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
                 pluginConfigurationProcessor.getJibContainerBuilder(),
                 pluginConfigurationProcessor.getContainerizer(),
                 projectProperties::log,
-                helpfulSuggestions);
+                new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
 
       } finally {
         // TODO: This should not be called on projectProperties.
@@ -168,6 +159,14 @@ public class BuildTarTask extends DefaultTask implements JibTask {
           "container.filesModificationTime should be an ISO 8601 date-time (see "
               + "DateTimeFormatter.ISO_DATE_TIME) or special keyword \"EPOCH_PLUS_SECOND\": "
               + ex.getInvalidFilesModificationTime(),
+          ex);
+
+    } catch (InvalidCreationTimeException ex) {
+      throw new GradleException(
+          "container.creationTime should be an ISO 8601 date-time (see "
+              + "DateTimeFormatter.ISO_DATE_TIME) or a special keyword (\"EPOCH\", "
+              + "\"USE_CURRENT_TIMESTAMP\"): "
+              + ex.getInvalidCreationTime(),
           ex);
 
     } catch (IncompatibleBaseImageJavaVersionException ex) {

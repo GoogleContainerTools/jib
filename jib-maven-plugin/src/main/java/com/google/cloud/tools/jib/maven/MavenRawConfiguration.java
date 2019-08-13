@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /** Maven-specific adapter for providing raw configuration parameter values. */
 class MavenRawConfiguration implements RawConfiguration {
@@ -71,7 +72,7 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public Iterable<String> getToTags() {
+  public Set<String> getToTags() {
     return jibPluginConfiguration.getTargetImageAdditionalTags();
   }
 
@@ -158,6 +159,11 @@ class MavenRawConfiguration implements RawConfiguration {
   @Override
   public String getFilesModificationTime() {
     return jibPluginConfiguration.getFilesModificationTime();
+  }
+
+  @Override
+  public String getCreationTime() {
+    return jibPluginConfiguration.getCreationTime();
   }
 
   @Override

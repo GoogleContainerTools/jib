@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -87,8 +88,8 @@ public class JibRunHelper {
 
     Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(imageReference));
     Assert.assertEquals(expectedOutput, pullAndRunBuiltImage(additionalImageReference));
-    assertCreationTimeEpoch(imageReference);
-    assertCreationTimeEpoch(additionalImageReference);
+    assertSimpleCreationTimeIsEqual(Instant.EPOCH, imageReference);
+    assertSimpleCreationTimeIsEqual(Instant.EPOCH, additionalImageReference);
   }
 
   static BuildResult buildToDockerDaemon(
@@ -138,11 +139,20 @@ public class JibRunHelper {
     Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(successMessage));
   }
 
-  static void assertCreationTimeEpoch(String imageReference)
+  static void assertSimpleCreationTimeIsEqual(Instant match, String imageReference)
       throws IOException, InterruptedException {
-    Assert.assertEquals(
-        "1970-01-01T00:00:00Z",
-        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
+    String inspect =
+        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
+    Instant parsed = Instant.parse(inspect);
+    Assert.assertEquals(match, parsed);
+  }
+
+  static void assertSimpleCreationTimeIsAfter(Instant before, String imageReference)
+      throws IOException, InterruptedException {
+    String inspect =
+        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
+    Instant parsed = Instant.parse(inspect);
+    Assert.assertTrue(parsed.isAfter(before));
   }
 
   static void assertImageDigestAndId(Path projectRoot) throws IOException, DigestException {

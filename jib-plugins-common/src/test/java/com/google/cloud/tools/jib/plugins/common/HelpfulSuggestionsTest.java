@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.api.ImageReference;
 import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
@@ -26,15 +25,7 @@ public class HelpfulSuggestionsTest {
 
   private static final HelpfulSuggestions TEST_HELPFUL_SUGGESTIONS =
       new HelpfulSuggestions(
-          "messagePrefix",
-          "clearCacheCommand",
-          ImageReference.of("baseregistry", "baserepository", null),
-          true,
-          ImageReference.of("targetregistry", "targetrepository", null),
-          false,
-          "toProperty",
-          "toFlag",
-          "buildFile");
+          "messagePrefix", "clearCacheCommand", "toProperty", "toFlag", "buildFile");
 
   @Test
   public void testSuggestions_smoke() {
@@ -54,11 +45,8 @@ public class HelpfulSuggestionsTest {
         "messagePrefix, perhaps you should make sure you have permissions for imageReference and set correct credentials. See https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied for help",
         TEST_HELPFUL_SUGGESTIONS.forHttpStatusCodeForbidden("imageReference"));
     Assert.assertEquals(
-        "messagePrefix, perhaps you should make sure your credentials for 'baseregistry/baserepository' are set up correctly. See https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-unauthorized for help",
-        TEST_HELPFUL_SUGGESTIONS.forNoCredentialsDefined("baseregistry", "baserepository"));
-    Assert.assertEquals(
-        "messagePrefix, perhaps you should make sure your credentials for 'targetregistry' are set up correctly. See https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-unauthorized for help",
-        TEST_HELPFUL_SUGGESTIONS.forNoCredentialsDefined("targetregistry", "targetrepository"));
+        "messagePrefix, perhaps you should make sure your credentials for 'registry/repository' are set up correctly. See https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-unauthorized for help",
+        TEST_HELPFUL_SUGGESTIONS.forNoCredentialsDefined("registry/repository"));
     Assert.assertEquals(
         "messagePrefix, perhaps you should add a `mainClass` configuration to plugin",
         HelpfulSuggestions.forMainClassNotFound("messagePrefix", "plugin"));

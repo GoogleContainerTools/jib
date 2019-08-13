@@ -102,16 +102,7 @@ public class ConfigurationPropertyValidatorTest {
   @Test
   public void testGetGeneratedTargetDockerTag() throws InvalidImageReferenceException {
     HelpfulSuggestions helpfulSuggestions =
-        new HelpfulSuggestions(
-            "",
-            "",
-            mockImageReference,
-            false,
-            mockImageReference,
-            false,
-            "to",
-            "--to",
-            "build.txt");
+        new HelpfulSuggestions("", "", "to", "--to", "build.txt");
 
     // Target configured
     ProjectProperties mockProjectProperties = Mockito.mock(ProjectProperties.class);

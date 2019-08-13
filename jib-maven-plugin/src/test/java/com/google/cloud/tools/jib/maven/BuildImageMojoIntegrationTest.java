@@ -202,7 +202,6 @@ public class BuildImageMojoIntegrationTest {
       LocalRegistry targetRegistry,
       String pomFile)
       throws VerificationException, IOException, InterruptedException, DigestException {
-    Instant before = Instant.now();
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
@@ -220,10 +219,6 @@ public class BuildImageMojoIntegrationTest {
     // Verify output
     targetRegistry.pull(imageReference);
     assertDockerInspectParameters(imageReference);
-    Instant buildTime =
-        Instant.parse(
-            new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
-    Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
     return new Command("docker", "run", "--rm", imageReference).run();
   }
 
@@ -287,6 +282,14 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "1970-01-01T00:00:00Z",
         new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim());
+  }
+
+  private static void assertCreationTimeIsAfter(Instant before, String imageReference)
+      throws IOException, InterruptedException {
+    String inspect =
+        new Command("docker", "inspect", "-f", "{{.Created}}", imageReference).run().trim();
+    Instant after = Instant.parse(inspect);
+    Assert.assertTrue(after.isAfter(before));
   }
 
   private static void assertWorkingDirectory(String expected, String imageReference)
@@ -374,10 +377,7 @@ public class BuildImageMojoIntegrationTest {
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
         buildAndRun(simpleTestProject.getProjectRoot(), targetImage, "pom.xml", true));
 
-    Instant buildTime =
-        Instant.parse(
-            new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim());
-    Assert.assertTrue(buildTime.isAfter(before) || buildTime.equals(before));
+    assertCreationTimeEpoch(targetImage);
     assertWorkingDirectory("/home", targetImage);
     assertLayerSize(8, targetImage);
   }
@@ -511,12 +511,14 @@ public class BuildImageMojoIntegrationTest {
   public void testExecute_complex()
       throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
+    Instant before = Instant.now();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
         buildAndRunComplex(
             targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml"));
+    assertCreationTimeIsAfter(before, targetImage);
     assertWorkingDirectory("", targetImage);
     assertEntrypoint(
         "[java -Xms512m -Xdebug -cp /other:/app/resources:/app/classes:/app/libs/* "
@@ -525,14 +527,46 @@ public class BuildImageMojoIntegrationTest {
   }
 
   @Test
-  public void testExecute_filesModificationTimeCustom()
+  public void testExecute_timestampCustom()
       throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:6000/simpleimage:maven" + System.nanoTime();
-    String pom = "pom-complex-files-modification-time-custom.xml";
+    String pom = "pom-timestamps-custom.xml";
     Assert.assertEquals(
         "Hello, world. \n2019-06-17T16:30:00Z\nrw-r--r--\nrw-r--r--\n"
             + "foo\ncat\n2019-06-17T16:30:00Z\n2019-06-17T16:30:00Z\n",
         buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2, pom));
+
+    String inspect =
+        new Command("docker", "inspect", "-f", "{{.Created}}", targetImage).run().trim();
+    Instant parsed = Instant.parse(inspect);
+    Assert.assertEquals(Instant.parse("2013-11-05T06:29:30Z"), parsed);
+  }
+
+  @Test
+  public void testDockerDaemon_timestampDeprecated()
+      throws IOException, VerificationException, InterruptedException {
+    Instant before = Instant.now();
+    String targetImage = getTestImageReference("simpleimage:gradle" + System.nanoTime());
+    build(simpleTestProject.getProjectRoot(), targetImage, "pom-usecurrent-deprecated.xml", false)
+        .verifyTextInLog(
+            "<container><useCurrentTimestamp> is deprecated; use <container><creationTime> with the value USE_CURRENT_TIMESTAMP instead");
+    new Command("docker", "pull", targetImage).run();
+    assertCreationTimeIsAfter(before, targetImage);
+  }
+
+  @Test
+  public void testDockerDaemon_timestampFail() throws IOException {
+    try {
+      String targetImage = getTestImageReference("simpleimage:gradle" + System.nanoTime());
+      build(
+          simpleTestProject.getProjectRoot(), targetImage, "pom-usecurrent-deprecated2.xml", false);
+      Assert.fail();
+    } catch (VerificationException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.containsString(
+              "You cannot configure both <container><useCurrentTimestamp> and <container><creationTime>"));
+    }
   }
 
   @Test

@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.tar;
 
+import com.google.common.io.ByteStreams;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -42,9 +43,10 @@ public class TarExtractor {
 
     try (InputStream in = new BufferedInputStream(Files.newInputStream(source));
         TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(in)) {
-      byte[] buffer = new byte[1024];
-      TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry();
-      while (entry != null) {
+
+      for (TarArchiveEntry entry = tarArchiveInputStream.getNextTarEntry();
+          entry != null;
+          entry = tarArchiveInputStream.getNextTarEntry()) {
         Path entryPath = destination.resolve(entry.getName());
 
         String canonicalTarget = entryPath.toFile().getCanonicalPath();
@@ -57,14 +59,9 @@ public class TarExtractor {
           Files.createDirectories(entryPath);
         } else {
           try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(entryPath))) {
-            int read = tarArchiveInputStream.read(buffer);
-            while (read != -1) {
-              out.write(buffer, 0, read);
-              read = tarArchiveInputStream.read(buffer);
-            }
+            ByteStreams.copy(tarArchiveInputStream, out);
           }
         }
-        entry = tarArchiveInputStream.getNextTarEntry();
       }
     }
   }

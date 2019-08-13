@@ -48,10 +48,11 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
 import org.hamcrest.CoreMatchers;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -113,6 +114,8 @@ public class RegistryEndpointCallerTest {
     return mockHttpResponse(code307, new HttpHeaders().setLocation(redirectLocation));
   }
 
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+
   @Mock private EventHandlers mockEventHandlers;
   @Mock private Connection mockConnection;
   @Mock private Connection mockInsecureConnection;
@@ -131,12 +134,6 @@ public class RegistryEndpointCallerTest {
         .thenReturn(mockInsecureConnection);
     Mockito.when(mockResponse.getBody())
         .thenReturn(new ByteArrayInputStream("body".getBytes(StandardCharsets.UTF_8)));
-  }
-
-  @After
-  public void tearDown() {
-    System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
-    System.clearProperty(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP);
   }
 
   @Test
@@ -439,7 +436,7 @@ public class RegistryEndpointCallerTest {
     MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
     Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
 
-    Assert.assertNull(System.getProperty(JibSystemProperties.HTTP_TIMEOUT));
+    System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
     secureEndpointCaller.call();
 
     // We fall back to the default timeout:
@@ -575,8 +572,7 @@ public class RegistryEndpointCallerTest {
       Assert.fail("Call should have failed");
 
     } catch (RegistryUnauthorizedException ex) {
-      Assert.assertEquals("serverUrl", ex.getRegistry());
-      Assert.assertEquals("imageName", ex.getRepository());
+      Assert.assertEquals("serverUrl/imageName", ex.getImageReference());
       Assert.assertSame(httpResponseException, ex.getHttpResponseException());
     }
   }

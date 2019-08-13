@@ -16,10 +16,7 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.common.base.Preconditions;
 import java.nio.file.Path;
-import javax.annotation.Nullable;
 
 /** Builds messages that provides suggestions on how to fix the error. */
 public class HelpfulSuggestions {
@@ -107,10 +104,6 @@ public class HelpfulSuggestions {
 
   private final String messagePrefix;
   private final String clearCacheCommand;
-  @Nullable private final ImageReference baseImageReference;
-  private final boolean noCredentialsDefinedForBaseImage;
-  @Nullable private final ImageReference targetImageReference;
-  private final boolean noCredentialsDefinedForTargetImage;
   private final String toImageConfiguration;
   private final String buildConfigurationFilename;
   private final String toImageFlag;
@@ -120,12 +113,6 @@ public class HelpfulSuggestions {
    *
    * @param messagePrefix the initial message text
    * @param clearCacheCommand the command for clearing the cache
-   * @param baseImageReference the base image reference
-   * @param noCredentialsDefinedForBaseImage {@code true} if no credentials were defined for the
-   *     base image; {@code false} otherwise
-   * @param targetImageReference the target image reference
-   * @param noCredentialsDefinedForTargetImage {@code true} if no credentials were defined for the
-   *     target image; {@code false} otherwise
    * @param toImageConfiguration the configuration defining the target image
    * @param toImageFlag the commandline flag used to set the target image
    * @param buildConfigurationFilename the filename of the build configuration
@@ -133,19 +120,11 @@ public class HelpfulSuggestions {
   public HelpfulSuggestions(
       String messagePrefix,
       String clearCacheCommand,
-      @Nullable ImageReference baseImageReference,
-      boolean noCredentialsDefinedForBaseImage,
-      @Nullable ImageReference targetImageReference,
-      boolean noCredentialsDefinedForTargetImage,
       String toImageConfiguration,
       String toImageFlag,
       String buildConfigurationFilename) {
     this.messagePrefix = messagePrefix;
     this.clearCacheCommand = clearCacheCommand;
-    this.baseImageReference = baseImageReference;
-    this.noCredentialsDefinedForBaseImage = noCredentialsDefinedForBaseImage;
-    this.targetImageReference = targetImageReference;
-    this.noCredentialsDefinedForTargetImage = noCredentialsDefinedForTargetImage;
     this.toImageConfiguration = toImageConfiguration;
     this.buildConfigurationFilename = buildConfigurationFilename;
     this.toImageFlag = toImageFlag;
@@ -179,24 +158,10 @@ public class HelpfulSuggestions {
             + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-forbidden-or-denied for help");
   }
 
-  public String forNoCredentialsDefined(String registry, String repository) {
-    Preconditions.checkNotNull(baseImageReference);
-    Preconditions.checkNotNull(targetImageReference);
-
-    String unauthorizedEntity = registry;
-    if (registry.equals(baseImageReference.getRegistry())
-        && repository.equals(baseImageReference.getRepository())
-        && noCredentialsDefinedForBaseImage) {
-      unauthorizedEntity = baseImageReference.toString();
-    } else if (registry.equals(targetImageReference.getRegistry())
-        && repository.equals(targetImageReference.getRepository())
-        && noCredentialsDefinedForTargetImage) {
-      unauthorizedEntity = targetImageReference.toString();
-    }
-
+  public String forNoCredentialsDefined(String imageReference) {
     return suggest(
         "make sure your credentials for '"
-            + unauthorizedEntity
+            + imageReference
             + "' are set up correctly. See "
             + "https://github.com/GoogleContainerTools/jib/blob/master/docs/faq.md#what-should-i-do-when-the-registry-responds-with-unauthorized for help");
   }

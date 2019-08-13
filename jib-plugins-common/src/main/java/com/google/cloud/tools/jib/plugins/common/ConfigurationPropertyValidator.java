@@ -57,51 +57,38 @@ public class ConfigurationPropertyValidator {
       AuthProperty auth,
       RawConfiguration rawConfiguration) {
     // System property takes priority over build configuration
-    String commandlineUsername = rawConfiguration.getProperty(usernameProperty).orElse(null);
-    String commandlinePassword = rawConfiguration.getProperty(passwordProperty).orElse(null);
-    if (!Strings.isNullOrEmpty(commandlineUsername)
-        && !Strings.isNullOrEmpty(commandlinePassword)) {
+    String commandlineUsername = rawConfiguration.getProperty(usernameProperty).orElse("");
+    String commandlinePassword = rawConfiguration.getProperty(passwordProperty).orElse("");
+    if (!commandlineUsername.isEmpty() && !commandlinePassword.isEmpty()) {
       return Optional.of(Credential.from(commandlineUsername, commandlinePassword));
     }
 
     // Warn if a system property is missing
-    if (!Strings.isNullOrEmpty(commandlinePassword) && Strings.isNullOrEmpty(commandlineUsername)) {
+    String missingProperty =
+        "%s system property is set, but %s is not; attempting other authentication methods.";
+    if (!commandlinePassword.isEmpty() && commandlineUsername.isEmpty()) {
       logger.accept(
-          LogEvent.warn(
-              passwordProperty
-                  + " system property is set, but "
-                  + usernameProperty
-                  + " is not; attempting other authentication methods."));
+          LogEvent.warn(String.format(missingProperty, passwordProperty, usernameProperty)));
     }
-    if (!Strings.isNullOrEmpty(commandlineUsername) && Strings.isNullOrEmpty(commandlinePassword)) {
+    if (!commandlineUsername.isEmpty() && commandlinePassword.isEmpty()) {
       logger.accept(
-          LogEvent.warn(
-              usernameProperty
-                  + " system property is set, but "
-                  + passwordProperty
-                  + " is not; attempting other authentication methods."));
+          LogEvent.warn(String.format(missingProperty, usernameProperty, passwordProperty)));
     }
 
     // Check auth configuration next; warn if they aren't both set
-    if (Strings.isNullOrEmpty(auth.getUsername()) && Strings.isNullOrEmpty(auth.getPassword())) {
-      return Optional.empty();
-    }
-    if (Strings.isNullOrEmpty(auth.getUsername())) {
-      logger.accept(
-          LogEvent.warn(
-              auth.getUsernameDescriptor()
-                  + " is missing from build configuration; ignoring auth section."));
-      return Optional.empty();
-    }
-    if (Strings.isNullOrEmpty(auth.getPassword())) {
-      logger.accept(
-          LogEvent.warn(
-              auth.getPasswordDescriptor()
-                  + " is missing from build configuration; ignoring auth section."));
-      return Optional.empty();
+    if (!Strings.isNullOrEmpty(auth.getUsername()) && !Strings.isNullOrEmpty(auth.getPassword())) {
+      return Optional.of(Credential.from(auth.getUsername(), auth.getPassword()));
     }
 
-    return Optional.of(Credential.from(auth.getUsername(), auth.getPassword()));
+    String missingConfig = "%s is missing from build configuration; ignoring auth section.";
+    if (!Strings.isNullOrEmpty(auth.getPassword()) && Strings.isNullOrEmpty(auth.getUsername())) {
+      logger.accept(LogEvent.warn(String.format(missingConfig, auth.getUsernameDescriptor())));
+    }
+    if (!Strings.isNullOrEmpty(auth.getUsername()) && Strings.isNullOrEmpty(auth.getPassword())) {
+      logger.accept(LogEvent.warn(String.format(missingConfig, auth.getPasswordDescriptor())));
+    }
+
+    return Optional.empty();
   }
 
   /**

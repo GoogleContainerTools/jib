@@ -53,7 +53,6 @@ public class GradleLayerConfigurationIntegrationTest {
     // snapshot dependencies (4)
     // dependencies (5)
 
-    Path complexServiceRoot = multiTestProject.getProjectRoot().resolve("complex-service");
     // verify dependencies
     List<String> dependencies = layers.get(5);
     List<String> expectedDependencies =
