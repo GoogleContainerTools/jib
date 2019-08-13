@@ -162,7 +162,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
 
     } finally {
-      // TODO: This should not be called on projectProperties.
       projectProperties.waitForLoggingThread();
       getLog().info("");
     }

@@ -156,7 +156,6 @@ public class BuildTarTask extends DefaultTask implements JibTask {
           HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
 
     } finally {
-      // TODO: This should not be called on projectProperties.
       projectProperties.waitForLoggingThread();
     }
   }
