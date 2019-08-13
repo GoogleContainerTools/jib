@@ -166,7 +166,7 @@ public class CredentialRetrieverFactoryTest {
   @Test
   public void testGoogleApplicationDefaultCredentials_refreshFailure()
       throws CredentialRetrievalException, IOException {
-    Mockito.doThrow(new IOException("refresh failed")).when(googleCredentials).refresh();
+    Mockito.doThrow(new IOException("refresh failed")).when(googleCredentials).refreshIfExpired();
 
     CredentialRetrieverFactory credentialRetrieverFactory =
         createCredentialRetrieverFactory("awesome.gcr.io", "repository");
