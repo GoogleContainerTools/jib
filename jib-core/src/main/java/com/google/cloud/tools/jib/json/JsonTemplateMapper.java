@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.jib.json;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import java.io.ByteArrayOutputStream;
@@ -134,50 +132,42 @@ public class JsonTemplateMapper {
     return objectMapper.readValue(jsonString, listType);
   }
 
-  public static String toUtf8String(JsonTemplate template)
-      throws JsonGenerationException, JsonMappingException, IOException {
+  public static String toUtf8String(JsonTemplate template) throws IOException {
     return toUtf8String((Object) template);
   }
 
-  public static String toUtf8String(List<? extends JsonTemplate> templates)
-      throws JsonGenerationException, JsonMappingException, IOException {
+  public static String toUtf8String(List<? extends JsonTemplate> templates) throws IOException {
     return toUtf8String((Object) templates);
   }
 
-  public static byte[] toByteArray(JsonTemplate template)
-      throws JsonGenerationException, JsonMappingException, IOException {
+  public static byte[] toByteArray(JsonTemplate template) throws IOException {
     return toByteArray((Object) template);
   }
 
-  public static byte[] toByteArray(List<? extends JsonTemplate> templates)
-      throws JsonGenerationException, JsonMappingException, IOException {
+  public static byte[] toByteArray(List<? extends JsonTemplate> templates) throws IOException {
     return toByteArray((Object) templates);
   }
 
-  public static void writeTo(JsonTemplate template, OutputStream out)
-      throws JsonGenerationException, JsonMappingException, IOException {
+  public static void writeTo(JsonTemplate template, OutputStream out) throws IOException {
     writeTo((Object) template, out);
   }
 
   public static void writeTo(List<? extends JsonTemplate> templates, OutputStream out)
-      throws JsonGenerationException, JsonMappingException, IOException {
+      throws IOException {
     writeTo((Object) templates, out);
   }
 
-  private static String toUtf8String(Object template)
-      throws JsonGenerationException, JsonMappingException, IOException {
+  private static String toUtf8String(Object template) throws IOException {
     return new String(toByteArray(template), StandardCharsets.UTF_8);
   }
 
-  private static byte[] toByteArray(Object template)
-      throws JsonGenerationException, JsonMappingException, IOException {
+  private static byte[] toByteArray(Object template) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     writeTo(template, out);
     return out.toByteArray();
   }
 
-  private static void writeTo(Object template, OutputStream out)
-      throws JsonGenerationException, JsonMappingException, IOException {
+  private static void writeTo(Object template, OutputStream out) throws IOException {
     objectMapper.writeValue(out, template);
   }
 

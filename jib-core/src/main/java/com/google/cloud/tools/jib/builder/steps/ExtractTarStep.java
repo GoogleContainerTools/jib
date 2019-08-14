@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -77,8 +79,11 @@ public class ExtractTarStep implements Callable<LocalImage> {
       throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException {
     TarExtractor.extract(tarPath, destination);
     DockerManifestEntryTemplate loadManifest =
-        JsonTemplateMapper.readJsonFromFile(
-            destination.resolve("manifest.json"), DockerManifestEntryTemplate.class);
+        new ObjectMapper()
+            .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+            .readValue(
+                Files.newInputStream(destination.resolve("manifest.json")),
+                DockerManifestEntryTemplate[].class)[0];
     ContainerConfigurationTemplate configuration =
         JsonTemplateMapper.readJsonFromFile(
             destination.resolve(loadManifest.getConfig()), ContainerConfigurationTemplate.class);
@@ -101,15 +106,18 @@ public class ExtractTarStep implements Callable<LocalImage> {
     }
 
     // Convert v1.2 manifest to v2.2 manifest
+    // TODO: Optimize; calculating layer digests is slow for large layers
     List<PreparedLayer> layers = new ArrayList<>();
     V22ManifestTemplate newManifest = new V22ManifestTemplate();
     for (int index = 0; index < layerFiles.size(); index++) {
       Path file = destination.resolve(layerFiles.get(index));
 
+      // Compress if necessary and calculate the digest/size
       Blob blob = layersAreCompressed ? Blobs.from(file) : Blobs.compress(Blobs.from(file));
       BlobDescriptor blobDescriptor = blob.writeTo(ByteStreams.nullOutputStream());
 
-      // 'manifest' contains the layer files in the same order as the diff ids in 'configuration'
+      // 'manifest' contains the layer files in the same order as the diff ids in 'configuration',
+      // so we don't need to recalculate those.
       // https://containers.gitbook.io/build-containers-the-hard-way/#docker-load-format
       CachedLayer layer =
           CachedLayer.builder()

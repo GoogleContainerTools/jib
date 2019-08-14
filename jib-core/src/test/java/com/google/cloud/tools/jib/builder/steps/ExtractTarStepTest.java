@@ -16,22 +16,52 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
+import com.google.cloud.tools.jib.image.LayerCountMismatchException;
+import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class ExtractTarStepTest {
+
+  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static Path getResource(String resource) throws URISyntaxException {
     return Paths.get(Resources.getResource(resource).toURI());
   }
 
   @Test
-  public void testCall_valid() {}
+  public void testCall_validDocker()
+      throws URISyntaxException, LayerCountMismatchException,
+          BadContainerConfigurationFormatException, IOException {
+    Path dockerBuild = getResource("core/extraction/docker-save.tar");
+    LocalImage result = new ExtractTarStep(dockerBuild, temporaryFolder.getRoot().toPath()).call();
+
+    Assert.assertEquals(2, result.layers.size());
+    // TODO: Assert layers are correct
+
+    Assert.assertEquals("value1", result.baseImage.getLabels().get("label1"));
+  }
+
+  @Test
+  public void testCall_validTar()
+      throws URISyntaxException, LayerCountMismatchException,
+          BadContainerConfigurationFormatException, IOException {
+    Path tarBuild = getResource("core/extraction/jib-image.tar");
+    LocalImage result = new ExtractTarStep(tarBuild, temporaryFolder.getRoot().toPath()).call();
+
+    Assert.assertEquals(2, result.layers.size());
+    // TODO: Assert layers are correct
+
+    Assert.assertEquals("value1", result.baseImage.getLabels().get("label1"));
+  }
 
   @Test
   public void testCall_noLayers() {}
