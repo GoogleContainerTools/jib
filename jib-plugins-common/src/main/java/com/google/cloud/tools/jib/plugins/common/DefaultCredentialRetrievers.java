@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.plugins.common;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
-import com.google.cloud.tools.jib.registry.credentials.DockerCredentialHelper;
 import java.io.FileNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -34,11 +33,14 @@ import javax.annotation.Nullable;
  * <p>The retrievers are, in order of first-checked to last-checked:
  *
  * <ol>
+ *   <li>{@link CredentialRetrieverFactory#known} for known credential, if set
  *   <li>{@link CredentialRetrieverFactory#dockerCredentialHelper} for a known credential helper, if
  *       set
- *   <li>{@link CredentialRetrieverFactory#known} for known credential, if set
- *   <li>{@link CredentialRetrieverFactory#inferCredentialHelper}
+ *   <li>{@link CredentialRetrieverFactory#known} for known inferred credential, if set
  *   <li>{@link CredentialRetrieverFactory#dockerConfig}
+ *   <li>{@link CredentialRetrieverFactory#wellKnownCredentialHelpers} for well-known credential
+ *       helper-registry pairs
+ *   <li>{@link CredentialRetrieverFactory#googleApplicationDefaultCredentials} for GCR registry
  * </ol>
  */
 public class DefaultCredentialRetrievers {
@@ -121,24 +123,24 @@ public class DefaultCredentialRetrievers {
     if (credentialHelper != null) {
       // If credential helper contains file separator, treat as path; otherwise treat as suffix
       if (credentialHelper.contains(FileSystems.getDefault().getSeparator())) {
-        if (Files.exists(Paths.get(credentialHelper))) {
-          credentialRetrievers.add(
-              credentialRetrieverFactory.dockerCredentialHelper(credentialHelper));
-        } else {
+        if (!Files.exists(Paths.get(credentialHelper))) {
           throw new FileNotFoundException(
               "Specified credential helper was not found: " + credentialHelper);
         }
-      } else {
         credentialRetrievers.add(
-            credentialRetrieverFactory.dockerCredentialHelper(
-                DockerCredentialHelper.CREDENTIAL_HELPER_PREFIX + credentialHelper));
+            credentialRetrieverFactory.dockerCredentialHelper(credentialHelper));
+      } else {
+        String suffix = credentialHelper; // not path; treat as suffix
+        credentialRetrievers.add(
+            credentialRetrieverFactory.dockerCredentialHelper("docker-credential-" + suffix));
       }
     }
     if (inferredCredentialRetriever != null) {
       credentialRetrievers.add(inferredCredentialRetriever);
     }
     credentialRetrievers.add(credentialRetrieverFactory.dockerConfig());
-    credentialRetrievers.add(credentialRetrieverFactory.inferCredentialHelper());
+    credentialRetrievers.add(credentialRetrieverFactory.wellKnownCredentialHelpers());
+    credentialRetrievers.add(credentialRetrieverFactory.googleApplicationDefaultCredentials());
     return credentialRetrievers;
   }
 }

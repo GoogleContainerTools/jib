@@ -61,7 +61,6 @@ public class DockerConfigCredentialRetriever {
     this(registry, DOCKER_CONFIG_FILE);
   }
 
-  @VisibleForTesting
   public DockerConfigCredentialRetriever(String registry, Path dockerConfigFile) {
     this.registry = registry;
     this.dockerConfigFile = dockerConfigFile;
