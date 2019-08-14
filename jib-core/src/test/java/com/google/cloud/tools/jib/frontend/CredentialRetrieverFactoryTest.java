@@ -47,19 +47,21 @@ public class CredentialRetrieverFactoryTest {
 
   private static final Credential FAKE_CREDENTIALS = Credential.from("username", "password");
 
-  @Mock private Consumer<LogEvent> logger;
-  @Mock private DockerCredentialHelper dockerCredentialHelper;
-  @Mock private DockerCredentialHelperFactory dockerCredentialHelperFactory;
-  @Mock private GoogleCredentials googleCredentials;
+  @Mock private Consumer<LogEvent> mockLogger;
+  @Mock private DockerCredentialHelper mockDockerCredentialHelper;
+  @Mock private DockerCredentialHelperFactory mockDockerCredentialHelperFactory;
+  @Mock private GoogleCredentials mockGoogleCredentials;
 
   @Before
   public void setUp()
       throws CredentialHelperUnhandledServerUrlException, CredentialHelperNotFoundException,
           IOException {
-    Mockito.when(dockerCredentialHelperFactory.create(Mockito.anyString(), Mockito.any(Path.class)))
-        .thenReturn(dockerCredentialHelper);
-    Mockito.when(dockerCredentialHelper.retrieve()).thenReturn(FAKE_CREDENTIALS);
-    Mockito.when(googleCredentials.getAccessToken()).thenReturn(new AccessToken("my-token", null));
+    Mockito.when(
+            mockDockerCredentialHelperFactory.create(Mockito.anyString(), Mockito.any(Path.class)))
+        .thenReturn(mockDockerCredentialHelper);
+    Mockito.when(mockDockerCredentialHelper.retrieve()).thenReturn(FAKE_CREDENTIALS);
+    Mockito.when(mockGoogleCredentials.getAccessToken())
+        .thenReturn(new AccessToken("my-token", null));
   }
 
   @Test
@@ -73,9 +75,9 @@ public class CredentialRetrieverFactoryTest {
             .dockerCredentialHelper(Paths.get("docker-credential-helper"))
             .retrieve());
 
-    Mockito.verify(dockerCredentialHelperFactory)
+    Mockito.verify(mockDockerCredentialHelperFactory)
         .create("registry", Paths.get("docker-credential-helper"));
-    Mockito.verify(logger)
+    Mockito.verify(mockLogger)
         .accept(LogEvent.info("Using credentials from docker-credential-helper for registry"));
   }
 
@@ -88,9 +90,9 @@ public class CredentialRetrieverFactoryTest {
         Optional.of(FAKE_CREDENTIALS),
         credentialRetrieverFactory.wellKnownCredentialHelpers().retrieve());
 
-    Mockito.verify(dockerCredentialHelperFactory)
+    Mockito.verify(mockDockerCredentialHelperFactory)
         .create("something.gcr.io", Paths.get("docker-credential-gcr"));
-    Mockito.verify(logger)
+    Mockito.verify(mockLogger)
         .accept(LogEvent.info("Using credentials from docker-credential-gcr for something.gcr.io"));
   }
 
@@ -100,7 +102,7 @@ public class CredentialRetrieverFactoryTest {
         Mockito.mock(CredentialHelperNotFoundException.class);
     Mockito.when(notFoundException.getMessage()).thenReturn("warning");
     Mockito.when(notFoundException.getCause()).thenReturn(new IOException("the root cause"));
-    Mockito.when(dockerCredentialHelper.retrieve()).thenThrow(notFoundException);
+    Mockito.when(mockDockerCredentialHelper.retrieve()).thenThrow(notFoundException);
 
     CredentialRetrieverFactory credentialRetrieverFactory =
         createCredentialRetrieverFactory("something.amazonaws.com", "repository");
@@ -108,10 +110,10 @@ public class CredentialRetrieverFactoryTest {
     Assert.assertFalse(
         credentialRetrieverFactory.wellKnownCredentialHelpers().retrieve().isPresent());
 
-    Mockito.verify(dockerCredentialHelperFactory)
+    Mockito.verify(mockDockerCredentialHelperFactory)
         .create("something.amazonaws.com", Paths.get("docker-credential-ecr-login"));
-    Mockito.verify(logger).accept(LogEvent.info("warning"));
-    Mockito.verify(logger).accept(LogEvent.info("  Caused by: the root cause"));
+    Mockito.verify(mockLogger).accept(LogEvent.info("warning"));
+    Mockito.verify(mockLogger).accept(LogEvent.info("  Caused by: the root cause"));
   }
 
   @Test
@@ -121,14 +123,14 @@ public class CredentialRetrieverFactoryTest {
 
     DockerConfigCredentialRetriever dockerConfigCredentialRetriever =
         Mockito.mock(DockerConfigCredentialRetriever.class);
-    Mockito.when(dockerConfigCredentialRetriever.retrieve(logger))
+    Mockito.when(dockerConfigCredentialRetriever.retrieve(mockLogger))
         .thenReturn(Optional.of(FAKE_CREDENTIALS));
 
     Assert.assertEquals(
         Optional.of(FAKE_CREDENTIALS),
         credentialRetrieverFactory.dockerConfig(dockerConfigCredentialRetriever).retrieve());
 
-    Mockito.verify(logger)
+    Mockito.verify(mockLogger)
         .accept(LogEvent.info("Using credentials from Docker config for registry"));
   }
 
@@ -141,7 +143,7 @@ public class CredentialRetrieverFactoryTest {
     Assert.assertFalse(
         credentialRetrieverFactory.googleApplicationDefaultCredentials().retrieve().isPresent());
 
-    Mockito.verifyZeroInteractions(logger);
+    Mockito.verifyZeroInteractions(mockLogger);
   }
 
   @Test
@@ -150,8 +152,8 @@ public class CredentialRetrieverFactoryTest {
     CredentialRetrieverFactory credentialRetrieverFactory =
         new CredentialRetrieverFactory(
             ImageReference.of("awesome.gcr.io", "repository", null),
-            logger,
-            dockerCredentialHelperFactory,
+            mockLogger,
+            mockDockerCredentialHelperFactory,
             () -> {
               throw new IOException("ADC not present");
             });
@@ -159,14 +161,16 @@ public class CredentialRetrieverFactoryTest {
     Assert.assertFalse(
         credentialRetrieverFactory.googleApplicationDefaultCredentials().retrieve().isPresent());
 
-    Mockito.verify(logger)
+    Mockito.verify(mockLogger)
         .accept(LogEvent.info("ADC not present or error fetching access token: ADC not present"));
   }
 
   @Test
   public void testGoogleApplicationDefaultCredentials_refreshFailure()
       throws CredentialRetrievalException, IOException {
-    Mockito.doThrow(new IOException("refresh failed")).when(googleCredentials).refreshIfExpired();
+    Mockito.doThrow(new IOException("refresh failed"))
+        .when(mockGoogleCredentials)
+        .refreshIfExpired();
 
     CredentialRetrieverFactory credentialRetrieverFactory =
         createCredentialRetrieverFactory("awesome.gcr.io", "repository");
@@ -174,10 +178,10 @@ public class CredentialRetrieverFactoryTest {
     Assert.assertFalse(
         credentialRetrieverFactory.googleApplicationDefaultCredentials().retrieve().isPresent());
 
-    Mockito.verify(logger).accept(LogEvent.info("Google ADC found"));
-    Mockito.verify(logger)
+    Mockito.verify(mockLogger).accept(LogEvent.info("Google ADC found"));
+    Mockito.verify(mockLogger)
         .accept(LogEvent.info("ADC not present or error fetching access token: refresh failed"));
-    Mockito.verifyNoMoreInteractions(logger);
+    Mockito.verifyNoMoreInteractions(mockLogger);
   }
 
   @Test
@@ -191,20 +195,20 @@ public class CredentialRetrieverFactoryTest {
     Assert.assertEquals("oauth2accesstoken", credential.getUsername());
     Assert.assertEquals("my-token", credential.getPassword());
 
-    Mockito.verify(googleCredentials, Mockito.never()).createScoped(Mockito.anyString());
+    Mockito.verify(mockGoogleCredentials, Mockito.never()).createScoped(Mockito.anyString());
 
-    Mockito.verify(logger).accept(LogEvent.info("Google ADC found"));
-    Mockito.verify(logger)
+    Mockito.verify(mockLogger).accept(LogEvent.info("Google ADC found"));
+    Mockito.verify(mockLogger)
         .accept(LogEvent.info("Using Google Application Default Credentials for awesome.gcr.io"));
-    Mockito.verifyNoMoreInteractions(logger);
+    Mockito.verifyNoMoreInteractions(mockLogger);
   }
 
   @Test
   public void testGoogleApplicationDefaultCredentials_serviceAccount()
       throws CredentialRetrievalException {
-    Mockito.when(googleCredentials.createScopedRequired()).thenReturn(true);
-    Mockito.when(googleCredentials.createScoped(Mockito.anyCollection()))
-        .thenReturn(googleCredentials);
+    Mockito.when(mockGoogleCredentials.createScopedRequired()).thenReturn(true);
+    Mockito.when(mockGoogleCredentials.createScoped(Mockito.anyCollection()))
+        .thenReturn(mockGoogleCredentials);
 
     CredentialRetrieverFactory credentialRetrieverFactory =
         createCredentialRetrieverFactory("gcr.io", "repository");
@@ -214,22 +218,22 @@ public class CredentialRetrieverFactoryTest {
     Assert.assertEquals("oauth2accesstoken", credential.getUsername());
     Assert.assertEquals("my-token", credential.getPassword());
 
-    Mockito.verify(googleCredentials)
+    Mockito.verify(mockGoogleCredentials)
         .createScoped(
             Collections.singletonList("https://www.googleapis.com/auth/devstorage.read_write"));
 
-    Mockito.verify(logger).accept(LogEvent.info("Google ADC found"));
-    Mockito.verify(logger)
+    Mockito.verify(mockLogger).accept(LogEvent.info("Google ADC found"));
+    Mockito.verify(mockLogger)
         .accept(LogEvent.info("ADC is a service account. Set GCS read-write scope"));
-    Mockito.verify(logger)
+    Mockito.verify(mockLogger)
         .accept(LogEvent.info("Using Google Application Default Credentials for gcr.io"));
-    Mockito.verifyNoMoreInteractions(logger);
+    Mockito.verifyNoMoreInteractions(mockLogger);
   }
 
   private CredentialRetrieverFactory createCredentialRetrieverFactory(
       String registry, String repository) {
     ImageReference imageReference = ImageReference.of(registry, repository, null);
     return new CredentialRetrieverFactory(
-        imageReference, logger, dockerCredentialHelperFactory, () -> googleCredentials);
+        imageReference, mockLogger, mockDockerCredentialHelperFactory, () -> mockGoogleCredentials);
   }
 }
