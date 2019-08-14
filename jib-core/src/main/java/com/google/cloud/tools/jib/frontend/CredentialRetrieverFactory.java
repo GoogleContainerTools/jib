@@ -57,7 +57,7 @@ public class CredentialRetrieverFactory {
 
   // com.google.api.services.storage.StorageScopes.DEVSTORAGE_READ_WRITE
   // OAuth2 credentials require at least the GCS write scope for GCR push. We need to manually set
-  // this scope for "OAuth2 credentials" instantiated from a service account, which is not scoped
+  // this scope for "OAuth2 credentials" instantiated from a service account, which are not scoped
   // (i.e., createScopedRequired() returns true). Note that for a service account, the IAM roles of
   // the service account determine the IAM permissions.
   private static final String OAUTH_SCOPE_STORAGE_READ_WRITE =
@@ -226,9 +226,9 @@ public class CredentialRetrieverFactory {
         if (imageReference.getRegistry().endsWith("gcr.io")) {
           GoogleCredentials googleCredentials = googleCredentialsProvider.get();
           logger.accept(LogEvent.info("Google ADC found"));
-          if (googleCredentials.createScopedRequired()) { // Not scoped if service account.
+          if (googleCredentials.createScopedRequired()) { // not scoped if service account
             // The short-lived OAuth2 access token generated from the service account will have
-            // one-hour expiry (as of Aug 2019). Instead of using an access token, It is technically
+            // one-hour expiry (as of Aug 2019). Instead of using an access token, it is technically
             // possible to use the service account private key to auth with GCR, but it does not
             // worth writing complex code to achieve that.
             logger.accept(LogEvent.info("ADC is a service account. Set GCS read-write scope"));
