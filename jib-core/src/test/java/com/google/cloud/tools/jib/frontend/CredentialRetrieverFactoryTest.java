@@ -82,7 +82,7 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testInferCredentialHelper() throws CredentialRetrievalException {
+  public void testWellKnownCredentialHelpers() throws CredentialRetrievalException {
     CredentialRetrieverFactory credentialRetrieverFactory =
         createCredentialRetrieverFactory("something.gcr.io", "repository");
 
@@ -97,7 +97,8 @@ public class CredentialRetrieverFactoryTest {
   }
 
   @Test
-  public void testInferCredentialHelper_info() throws CredentialRetrievalException, IOException {
+  public void testWellKnownCredentialHelpers_info()
+      throws CredentialRetrievalException, IOException {
     CredentialHelperNotFoundException notFoundException =
         Mockito.mock(CredentialHelperNotFoundException.class);
     Mockito.when(notFoundException.getMessage()).thenReturn("warning");
