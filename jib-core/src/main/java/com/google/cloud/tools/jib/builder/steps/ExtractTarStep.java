@@ -21,7 +21,6 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
@@ -33,9 +32,10 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarExtractor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
+import java.io.BufferedInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,17 +55,23 @@ public class ExtractTarStep implements Callable<LocalImage> {
     }
   }
 
-  private final Path tarPath;
-  private final Path destination;
-  private final BuildConfiguration buildConfiguration;
-
-  ExtractTarStep(Path tarPath, Path destination, BuildConfiguration buildConfiguration) {
-    this.tarPath = tarPath;
-    this.destination = destination;
-    this.buildConfiguration = buildConfiguration;
+  @VisibleForTesting
+  static boolean isGzipped(Path path) throws IOException {
+    try (InputStream inputStream = new BufferedInputStream(Files.newInputStream(path))) {
+      inputStream.mark(2);
+      int magic = (inputStream.read() & 0xff) | ((inputStream.read() << 8) & 0xff00);
+      return magic == GZIPInputStream.GZIP_MAGIC;
+    }
   }
 
-  // TODO: Future<> stuff
+  private final Path tarPath;
+  private final Path destination;
+
+  ExtractTarStep(Path tarPath, Path destination) {
+    this.tarPath = tarPath;
+    this.destination = destination;
+  }
+
   @Override
   public LocalImage call()
       throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException {
@@ -124,16 +130,5 @@ public class ExtractTarStep implements Callable<LocalImage> {
     newManifest.setContainerConfiguration(configDescriptor.getSize(), configDescriptor.getDigest());
     Image image = JsonToImageTranslator.toImage(newManifest, configuration);
     return new LocalImage(image, layers);
-  }
-
-  @VisibleForTesting
-  boolean isGzipped(Path path) throws IOException {
-    ByteBuffer buffer = ByteBuffer.allocate(2);
-    try (FileChannel channel = FileChannel.open(path)) {
-      for (int bytesRead = 0; bytesRead != -1 && buffer.hasRemaining(); ) {
-        bytesRead = channel.read(buffer);
-      }
-    }
-    return buffer.getInt() == GZIPInputStream.GZIP_MAGIC;
   }
 }
