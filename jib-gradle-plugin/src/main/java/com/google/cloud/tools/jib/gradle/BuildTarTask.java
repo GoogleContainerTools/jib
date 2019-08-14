@@ -106,7 +106,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger());
     try {
-      PluginConfigurationProcessor.processCommonConfigurationForTarImage(
+      PluginConfigurationProcessor.createJibBuildRunnerForTarImage(
               new GradleRawConfiguration(jibExtension),
               ignored -> Optional.empty(),
               projectProperties,

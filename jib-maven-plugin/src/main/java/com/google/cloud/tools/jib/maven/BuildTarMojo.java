@@ -76,7 +76,7 @@ public class BuildTarMojo extends JibPluginConfiguration {
     MavenProjectProperties projectProperties =
         MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
     try {
-      PluginConfigurationProcessor.processCommonConfigurationForTarImage(
+      PluginConfigurationProcessor.createJibBuildRunnerForTarImage(
               new MavenRawConfiguration(this),
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter()),

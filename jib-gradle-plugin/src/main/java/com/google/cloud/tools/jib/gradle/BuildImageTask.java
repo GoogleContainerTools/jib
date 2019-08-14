@@ -90,7 +90,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
                 "gradle jib --image <your image name>"));
       }
 
-      PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
+      PluginConfigurationProcessor.createJibBuildRunnerForRegistryImage(
               new GradleRawConfiguration(jibExtension),
               ignored -> Optional.empty(),
               projectProperties,

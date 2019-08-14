@@ -103,7 +103,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     MavenProjectProperties projectProperties =
         MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
     try {
-      PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
+      PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
               new MavenRawConfiguration(this),
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter()),

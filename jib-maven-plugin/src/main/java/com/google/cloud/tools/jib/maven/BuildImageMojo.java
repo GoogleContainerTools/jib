@@ -99,7 +99,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
     MavenProjectProperties projectProperties =
         MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
     try {
-      PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
+      PluginConfigurationProcessor.createJibBuildRunnerForRegistryImage(
               new MavenRawConfiguration(this),
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter()),

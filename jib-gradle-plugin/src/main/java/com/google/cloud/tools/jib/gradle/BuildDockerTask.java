@@ -105,7 +105,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     GradleProjectProperties projectProperties =
         GradleProjectProperties.getForProject(getProject(), getLogger());
     try {
-      PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
+      PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
               new GradleRawConfiguration(jibExtension),
               ignored -> java.util.Optional.empty(),
               projectProperties,

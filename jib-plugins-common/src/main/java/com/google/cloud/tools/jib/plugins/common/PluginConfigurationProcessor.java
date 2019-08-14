@@ -52,12 +52,12 @@ import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 
 /**
- * Configures and provides {@code JibContainerBuilder} for the image building tasks based on raw
- * plugin configuration values and project properties.
+ * Configures and provides {@code JibBuildRunner} for the image building tasks based on raw plugin
+ * configuration values and project properties.
  */
 public class PluginConfigurationProcessor {
 
-  public static JibBuildRunner processCommonConfigurationForDockerDaemonImage(
+  public static JibBuildRunner createJibBuildRunnerForDockerDaemonImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
@@ -95,7 +95,7 @@ public class PluginConfigurationProcessor {
         .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
   }
 
-  public static JibBuildRunner processCommonConfigurationForTarImage(
+  public static JibBuildRunner createJibBuildRunnerForTarImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
@@ -125,7 +125,7 @@ public class PluginConfigurationProcessor {
         .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
   }
 
-  public static JibBuildRunner processCommonConfigurationForRegistryImage(
+  public static JibBuildRunner createJibBuildRunnerForRegistryImage(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
