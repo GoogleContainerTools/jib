@@ -34,9 +34,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /** Static factories for various {@link CredentialRetriever}s. */
 public class CredentialRetrieverFactory {
@@ -56,6 +56,10 @@ public class CredentialRetrieverFactory {
   }
 
   // com.google.api.services.storage.StorageScopes.DEVSTORAGE_READ_WRITE
+  // OAuth2 credentials require at least the GCS write scope for GCR push. We need to manually set
+  // this scope for "OAuth2 credentials" instantiated from a service account, which is not scoped
+  // (i.e., createScopedRequired() returns true). Note that for a service account, the IAM roles of
+  // the service account determine the IAM permissions.
   private static final String OAUTH_SCOPE_STORAGE_READ_WRITE =
       "https://www.googleapis.com/auth/devstorage.read_write";
 
@@ -156,18 +160,14 @@ public class CredentialRetrieverFactory {
    * @return a new {@link CredentialRetriever}
    */
   public CredentialRetriever wellKnownCredentialHelpers() {
-    List<String> wellKnownCredentialHelpers =
-        WELL_KNOWN_CREDENTIAL_HELPERS
-            .keySet()
-            .stream()
-            .filter(imageReference.getRegistry()::endsWith)
-            .map(key -> WELL_KNOWN_CREDENTIAL_HELPERS.get(key))
-            .collect(Collectors.toList());
-
     return () -> {
-      for (String credentialHelper : wellKnownCredentialHelpers) {
+      for (Map.Entry<String, String> entry : WELL_KNOWN_CREDENTIAL_HELPERS.entrySet()) {
         try {
-          return Optional.of(retrieveFromDockerCredentialHelper(Paths.get(credentialHelper)));
+          String registrySuffix = entry.getKey();
+          if (imageReference.getRegistry().endsWith(registrySuffix)) {
+            String credentialHelper = entry.getValue();
+            return Optional.of(retrieveFromDockerCredentialHelper(Paths.get(credentialHelper)));
+          }
 
         } catch (CredentialHelperNotFoundException
             | CredentialHelperUnhandledServerUrlException ex) {

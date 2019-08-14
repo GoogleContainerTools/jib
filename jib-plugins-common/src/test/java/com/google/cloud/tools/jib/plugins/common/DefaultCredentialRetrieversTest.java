@@ -41,67 +41,68 @@ public class DefaultCredentialRetrieversTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Mock private CredentialRetrieverFactory credentialRetrieverFactory;
-  @Mock private CredentialRetriever dockerCredentialHelperCredentialRetriever;
-  @Mock private CredentialRetriever knownCredentialRetriever;
-  @Mock private CredentialRetriever inferredCredentialRetriever;
-  @Mock private CredentialRetriever inferCredentialHelperCredentialRetriever;
-  @Mock private CredentialRetriever dockerConfigCredentialRetriever;
-  @Mock private CredentialRetriever applicationDefaultCredentialRetriever;
+  @Mock private CredentialRetrieverFactory mockCredentialRetrieverFactory;
+  @Mock private CredentialRetriever mockDockerCredentialHelperCredentialRetriever;
+  @Mock private CredentialRetriever mockKnownCredentialRetriever;
+  @Mock private CredentialRetriever mockInferredCredentialRetriever;
+  @Mock private CredentialRetriever mockWellKnownCredentialHelpersCredentialRetriever;
+  @Mock private CredentialRetriever mockDockerConfigCredentialRetriever;
+  @Mock private CredentialRetriever mockApplicationDefaultCredentialRetriever;
 
   private final Credential knownCredential = Credential.from("username", "password");
   private final Credential inferredCredential = Credential.from("username2", "password2");
 
   @Before
   public void setUp() {
-    Mockito.when(credentialRetrieverFactory.dockerCredentialHelper(Mockito.anyString()))
-        .thenReturn(dockerCredentialHelperCredentialRetriever);
-    Mockito.when(credentialRetrieverFactory.known(knownCredential, "credentialSource"))
-        .thenReturn(knownCredentialRetriever);
-    Mockito.when(credentialRetrieverFactory.known(inferredCredential, "inferredCredentialSource"))
-        .thenReturn(inferredCredentialRetriever);
-    Mockito.when(credentialRetrieverFactory.wellKnownCredentialHelpers())
-        .thenReturn(inferCredentialHelperCredentialRetriever);
-    Mockito.when(credentialRetrieverFactory.dockerConfig())
-        .thenReturn(dockerConfigCredentialRetriever);
-    Mockito.when(credentialRetrieverFactory.googleApplicationDefaultCredentials())
-        .thenReturn(applicationDefaultCredentialRetriever);
+    Mockito.when(mockCredentialRetrieverFactory.dockerCredentialHelper(Mockito.anyString()))
+        .thenReturn(mockDockerCredentialHelperCredentialRetriever);
+    Mockito.when(mockCredentialRetrieverFactory.known(knownCredential, "credentialSource"))
+        .thenReturn(mockKnownCredentialRetriever);
+    Mockito.when(
+            mockCredentialRetrieverFactory.known(inferredCredential, "inferredCredentialSource"))
+        .thenReturn(mockInferredCredentialRetriever);
+    Mockito.when(mockCredentialRetrieverFactory.wellKnownCredentialHelpers())
+        .thenReturn(mockWellKnownCredentialHelpersCredentialRetriever);
+    Mockito.when(mockCredentialRetrieverFactory.dockerConfig())
+        .thenReturn(mockDockerConfigCredentialRetriever);
+    Mockito.when(mockCredentialRetrieverFactory.googleApplicationDefaultCredentials())
+        .thenReturn(mockApplicationDefaultCredentialRetriever);
   }
 
   @Test
   public void testInitAsList() throws FileNotFoundException {
     List<CredentialRetriever> credentialRetrievers =
-        DefaultCredentialRetrievers.init(credentialRetrieverFactory).asList();
+        DefaultCredentialRetrievers.init(mockCredentialRetrieverFactory).asList();
     Assert.assertEquals(
         Arrays.asList(
-            dockerConfigCredentialRetriever,
-            inferCredentialHelperCredentialRetriever,
-            applicationDefaultCredentialRetriever),
+            mockDockerConfigCredentialRetriever,
+            mockWellKnownCredentialHelpersCredentialRetriever,
+            mockApplicationDefaultCredentialRetriever),
         credentialRetrievers);
   }
 
   @Test
   public void testInitAsList_all() throws FileNotFoundException {
     List<CredentialRetriever> credentialRetrievers =
-        DefaultCredentialRetrievers.init(credentialRetrieverFactory)
+        DefaultCredentialRetrievers.init(mockCredentialRetrieverFactory)
             .setKnownCredential(knownCredential, "credentialSource")
             .setInferredCredential(inferredCredential, "inferredCredentialSource")
             .setCredentialHelper("credentialHelperSuffix")
             .asList();
     Assert.assertEquals(
         Arrays.asList(
-            knownCredentialRetriever,
-            dockerCredentialHelperCredentialRetriever,
-            inferredCredentialRetriever,
-            dockerConfigCredentialRetriever,
-            inferCredentialHelperCredentialRetriever,
-            applicationDefaultCredentialRetriever),
+            mockKnownCredentialRetriever,
+            mockDockerCredentialHelperCredentialRetriever,
+            mockInferredCredentialRetriever,
+            mockDockerConfigCredentialRetriever,
+            mockWellKnownCredentialHelpersCredentialRetriever,
+            mockApplicationDefaultCredentialRetriever),
         credentialRetrievers);
 
-    Mockito.verify(credentialRetrieverFactory).known(knownCredential, "credentialSource");
-    Mockito.verify(credentialRetrieverFactory)
+    Mockito.verify(mockCredentialRetrieverFactory).known(knownCredential, "credentialSource");
+    Mockito.verify(mockCredentialRetrieverFactory)
         .known(inferredCredential, "inferredCredentialSource");
-    Mockito.verify(credentialRetrieverFactory)
+    Mockito.verify(mockCredentialRetrieverFactory)
         .dockerCredentialHelper("docker-credential-credentialHelperSuffix");
   }
 
@@ -109,18 +110,18 @@ public class DefaultCredentialRetrieversTest {
   public void testInitAsList_credentialHelperPath() throws IOException {
     Path fakeCredentialHelperPath = temporaryFolder.newFile("fake-credHelper").toPath();
     DefaultCredentialRetrievers defaultCredentialRetrievers =
-        DefaultCredentialRetrievers.init(credentialRetrieverFactory)
+        DefaultCredentialRetrievers.init(mockCredentialRetrieverFactory)
             .setCredentialHelper(fakeCredentialHelperPath.toString());
 
     List<CredentialRetriever> credentialRetrievers = defaultCredentialRetrievers.asList();
     Assert.assertEquals(
         Arrays.asList(
-            dockerCredentialHelperCredentialRetriever,
-            dockerConfigCredentialRetriever,
-            inferCredentialHelperCredentialRetriever,
-            applicationDefaultCredentialRetriever),
+            mockDockerCredentialHelperCredentialRetriever,
+            mockDockerConfigCredentialRetriever,
+            mockWellKnownCredentialHelpersCredentialRetriever,
+            mockApplicationDefaultCredentialRetriever),
         credentialRetrievers);
-    Mockito.verify(credentialRetrieverFactory)
+    Mockito.verify(mockCredentialRetrieverFactory)
         .dockerCredentialHelper(fakeCredentialHelperPath.toString());
 
     Files.delete(fakeCredentialHelperPath);
