@@ -225,7 +225,7 @@ public class CredentialRetrieverFactoryTest {
 
     Mockito.verify(mockLogger).accept(LogEvent.info("Google ADC found"));
     Mockito.verify(mockLogger)
-        .accept(LogEvent.info("ADC is a service account. Set GCS read-write scope"));
+        .accept(LogEvent.info("ADC is a service account. Setting GCS read-write scope"));
     Mockito.verify(mockLogger)
         .accept(LogEvent.info("Using Google Application Default Credentials for gcr.io"));
     Mockito.verifyNoMoreInteractions(mockLogger);

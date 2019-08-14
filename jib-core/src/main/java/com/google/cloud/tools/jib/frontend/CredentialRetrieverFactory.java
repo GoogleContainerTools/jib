@@ -231,7 +231,7 @@ public class CredentialRetrieverFactory {
             // refreshIfExpired() below will have one-hour expiry (as of Aug 2019). Instead of using
             // an access token, it is technically possible to use the service account private key to
             // auth with GCR, but it does not worth writing complex code to achieve that.
-            logger.accept(LogEvent.info("ADC is a service account. Set GCS read-write scope"));
+            logger.accept(LogEvent.info("ADC is a service account. Setting GCS read-write scope"));
             List<String> scope = Collections.singletonList(OAUTH_SCOPE_STORAGE_READ_WRITE);
             googleCredentials = googleCredentials.createScoped(scope);
           }
