@@ -104,7 +104,7 @@ public class ExtractTarStep implements Callable<LocalImage> {
         layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
 
     // Process layer blobs
-    // TODO: Parallelize/other optimizations; calculating layer digests is slow for large layers
+    // TODO: Optimize; compressing/calculating layer digests is slow
     List<PreparedLayer> layers = new ArrayList<>();
     V22ManifestTemplate newManifest = new V22ManifestTemplate();
     for (int index = 0; index < layerFiles.size(); index++) {
