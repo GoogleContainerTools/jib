@@ -53,12 +53,10 @@ public class Cache {
 
   private final CacheStorageWriter cacheStorageWriter;
   private final CacheStorageReader cacheStorageReader;
-  private final Path temporaryDirectory;
 
   private Cache(CacheStorageFiles cacheStorageFiles) {
     this.cacheStorageWriter = new CacheStorageWriter(cacheStorageFiles);
     this.cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
-    this.temporaryDirectory = cacheStorageFiles.getTemporaryDirectory();
   }
 
   /**
@@ -161,14 +159,5 @@ public class Cache {
   public Optional<CachedLayer> retrieve(DescriptorDigest layerDigest)
       throws IOException, CacheCorruptedException {
     return cacheStorageReader.retrieve(layerDigest);
-  }
-
-  /**
-   * Returns the cache's temporary directory.
-   *
-   * @return the cache's temporary directory
-   */
-  public Path getTemporaryDirectory() {
-    return temporaryDirectory;
   }
 }
