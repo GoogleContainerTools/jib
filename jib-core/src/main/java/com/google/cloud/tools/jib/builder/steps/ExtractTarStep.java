@@ -100,19 +100,17 @@ public class ExtractTarStep implements Callable<LocalImage> {
 
     // Check the first layer to see if the layers are compressed already. 'docker save' output is
     // uncompressed, but a jib-built tar has compressed layers.
-    boolean layersAreCompressed = false;
-    if (layerFiles.size() > 0) {
-      layersAreCompressed = isGzipped(destination.resolve(layerFiles.get(0)));
-    }
+    boolean layersAreCompressed =
+        layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
 
-    // Convert v1.2 manifest to v2.2 manifest
+    // Process layer blobs
     // TODO: Parallelize/other optimizations; calculating layer digests is slow for large layers
     List<PreparedLayer> layers = new ArrayList<>();
     V22ManifestTemplate newManifest = new V22ManifestTemplate();
     for (int index = 0; index < layerFiles.size(); index++) {
       Path file = destination.resolve(layerFiles.get(index));
 
-      // Compress if necessary and calculate the digest/size
+      // Compress layers if necessary and calculate the digest/size
       Blob blob = layersAreCompressed ? Blobs.from(file) : Blobs.compress(Blobs.from(file));
       BlobDescriptor blobDescriptor = blob.writeTo(ByteStreams.nullOutputStream());
 
