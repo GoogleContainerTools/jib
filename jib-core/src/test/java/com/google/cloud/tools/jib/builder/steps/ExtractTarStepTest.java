@@ -45,8 +45,18 @@ public class ExtractTarStepTest {
     LocalImage result = new ExtractTarStep(dockerBuild, temporaryFolder.getRoot().toPath()).call();
 
     Assert.assertEquals(2, result.layers.size());
-    // TODO: Assert layers are correct
-
+    Assert.assertEquals(
+        "5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd",
+        result.layers.get(0).getDiffId().getHash());
+    Assert.assertEquals(
+        "0011328ac5dfe3dde40c7c5e0e00c98d1833a3aeae2bfb668cf9eb965c229c7f",
+        result.layers.get(0).getBlobDescriptor().getDigest().getHash());
+    Assert.assertEquals(
+        "f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e",
+        result.layers.get(1).getDiffId().getHash());
+    Assert.assertEquals(
+        "c10ef24a5cef5092bbcb5a5666721cff7b86ce978c203a958d1fc86ee6c19f94",
+        result.layers.get(1).getBlobDescriptor().getDigest().getHash());
     Assert.assertEquals("value1", result.baseImage.getLabels().get("label1"));
   }
 
@@ -58,16 +68,20 @@ public class ExtractTarStepTest {
     LocalImage result = new ExtractTarStep(tarBuild, temporaryFolder.getRoot().toPath()).call();
 
     Assert.assertEquals(2, result.layers.size());
-    // TODO: Assert layers are correct
-
+    Assert.assertEquals(
+        "5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd",
+        result.layers.get(0).getDiffId().getHash());
+    Assert.assertEquals(
+        "0011328ac5dfe3dde40c7c5e0e00c98d1833a3aeae2bfb668cf9eb965c229c7f",
+        result.layers.get(0).getBlobDescriptor().getDigest().getHash());
+    Assert.assertEquals(
+        "f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e",
+        result.layers.get(1).getDiffId().getHash());
+    Assert.assertEquals(
+        "c10ef24a5cef5092bbcb5a5666721cff7b86ce978c203a958d1fc86ee6c19f94",
+        result.layers.get(1).getBlobDescriptor().getDigest().getHash());
     Assert.assertEquals("value1", result.baseImage.getLabels().get("label1"));
   }
-
-  @Test
-  public void testCall_noLayers() {}
-
-  @Test
-  public void testCall_layerCountMismatch() {}
 
   @Test
   public void testIsGzipped() throws URISyntaxException, IOException {

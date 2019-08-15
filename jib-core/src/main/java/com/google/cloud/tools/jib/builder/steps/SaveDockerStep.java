@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
@@ -36,8 +37,7 @@ public class SaveDockerStep implements Callable<Path> {
 
   @Override
   public Path call() throws IOException, InterruptedException {
-    Path outputPath =
-        buildConfiguration.getBaseImageLayersCache().getTemporaryDirectory().resolve("out.tar");
+    Path outputPath = Files.createTempDirectory("jib-docker-save").resolve("out.tar");
     ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
     dockerClient.save(imageReference, outputPath);
     return outputPath;

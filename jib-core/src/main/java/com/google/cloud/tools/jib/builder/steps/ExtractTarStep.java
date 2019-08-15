@@ -106,7 +106,7 @@ public class ExtractTarStep implements Callable<LocalImage> {
     }
 
     // Convert v1.2 manifest to v2.2 manifest
-    // TODO: Optimize; calculating layer digests is slow for large layers
+    // TODO: Parallelize/other optimizations; calculating layer digests is slow for large layers
     List<PreparedLayer> layers = new ArrayList<>();
     V22ManifestTemplate newManifest = new V22ManifestTemplate();
     for (int index = 0; index < layerFiles.size(); index++) {
