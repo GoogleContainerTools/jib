@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
+import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
@@ -85,6 +86,8 @@ public class ExtractTarStep implements Callable<LocalImage> {
   @Override
   public LocalImage call()
       throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException {
+    Files.createDirectories(destination);
+    FileOperations.deleteDirectoryRecursiveOnExit(destination);
     TarExtractor.extract(tarPath, destination);
 
     InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));

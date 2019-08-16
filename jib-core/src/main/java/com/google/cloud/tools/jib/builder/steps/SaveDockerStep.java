@@ -19,8 +19,7 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.common.io.MoreFiles;
-import com.google.common.io.RecursiveDeleteOption;
+import com.google.cloud.tools.jib.filesystem.FileOperations;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,18 +39,8 @@ public class SaveDockerStep implements Callable<Path> {
   @Override
   public Path call() throws IOException, InterruptedException {
     Path outputDir = Files.createTempDirectory("jib-docker-save");
+    FileOperations.deleteDirectoryRecursiveOnExit(outputDir);
     Path outputPath = outputDir.resolve("out.tar");
-    Runtime.getRuntime()
-        .addShutdownHook(
-            new Thread(
-                () -> {
-                  if (Files.exists(outputDir)) {
-                    try {
-                      MoreFiles.deleteRecursively(outputDir, RecursiveDeleteOption.ALLOW_INSECURE);
-                    } catch (IOException ignored) {
-                    }
-                  }
-                }));
     ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
     dockerClient.save(imageReference, outputPath);
     return outputPath;

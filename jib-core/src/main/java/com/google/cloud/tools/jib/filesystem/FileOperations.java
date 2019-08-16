@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.filesystem;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.MoreFiles;
+import com.google.common.io.RecursiveDeleteOption;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.channels.Channels;
@@ -83,6 +85,25 @@ public class FileOperations {
     // Lock is released when channel is closed.
     channel.lock();
     return Channels.newOutputStream(channel);
+  }
+
+  /**
+   * Sets up a shutdown hook that tries to delete a directory.
+   *
+   * @param path the directory
+   */
+  public static void deleteDirectoryRecursiveOnExit(Path path) {
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  if (Files.exists(path)) {
+                    try {
+                      MoreFiles.deleteRecursively(path, RecursiveDeleteOption.ALLOW_INSECURE);
+                    } catch (IOException ignored) {
+                    }
+                  }
+                }));
   }
 
   private FileOperations() {}
