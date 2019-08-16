@@ -93,17 +93,17 @@ public class ExtractTarStep implements Callable<LocalImage> {
             .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
             .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
     manifestStream.close();
-    ContainerConfigurationTemplate configuration =
+    ContainerConfigurationTemplate configurationTemplate =
         JsonTemplateMapper.readJsonFromFile(
             destination.resolve(loadManifest.getConfig()), ContainerConfigurationTemplate.class);
 
     List<String> layerFiles = loadManifest.getLayerFiles();
-    if (configuration.getLayerCount() != layerFiles.size()) {
+    if (configurationTemplate.getLayerCount() != layerFiles.size()) {
       throw new LayerCountMismatchException(
           "Invalid base image format: manifest contains "
               + layerFiles.size()
               + " layers, but container configuration contains "
-              + configuration.getLayerCount()
+              + configurationTemplate.getLayerCount()
               + " layers");
     }
 
@@ -131,7 +131,7 @@ public class ExtractTarStep implements Callable<LocalImage> {
               .setLayerBlob(blob)
               .setLayerDigest(blobDescriptor.getDigest())
               .setLayerSize(blobDescriptor.getSize())
-              .setLayerDiffId(configuration.getLayerDiffId(index))
+              .setLayerDiffId(configurationTemplate.getLayerDiffId(index))
               .build();
 
       layers.add(new PreparedLayer.Builder(layer).build());
@@ -139,9 +139,9 @@ public class ExtractTarStep implements Callable<LocalImage> {
     }
 
     BlobDescriptor configDescriptor =
-        Blobs.from(configuration).writeTo(ByteStreams.nullOutputStream());
+        Blobs.from(configurationTemplate).writeTo(ByteStreams.nullOutputStream());
     v22Manifest.setContainerConfiguration(configDescriptor.getSize(), configDescriptor.getDigest());
-    Image image = JsonToImageTranslator.toImage(v22Manifest, configuration);
+    Image image = JsonToImageTranslator.toImage(v22Manifest, configurationTemplate);
     return new LocalImage(image, layers);
   }
 }
