@@ -88,11 +88,11 @@ public class FileOperations {
   }
 
   /**
-   * Sets up a shutdown hook that tries to delete a directory.
+   * Sets up a shutdown hook that tries to delete a file or directory.
    *
-   * @param path the directory
+   * @param path the path to the file or directory
    */
-  public static void deleteDirectoryRecursiveOnExit(Path path) {
+  public static void deleteRecursiveOnExit(Path path) {
     Runtime.getRuntime()
         .addShutdownHook(
             new Thread(

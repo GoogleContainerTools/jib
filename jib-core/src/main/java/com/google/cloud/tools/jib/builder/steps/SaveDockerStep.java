@@ -39,7 +39,7 @@ public class SaveDockerStep implements Callable<Path> {
   @Override
   public Path call() throws IOException, InterruptedException {
     Path outputDir = Files.createTempDirectory("jib-docker-save");
-    FileOperations.deleteDirectoryRecursiveOnExit(outputDir);
+    FileOperations.deleteRecursiveOnExit(outputDir);
     Path outputPath = outputDir.resolve("out.tar");
     ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
     dockerClient.save(imageReference, outputPath);

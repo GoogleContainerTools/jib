@@ -87,7 +87,7 @@ public class ExtractTarStep implements Callable<LocalImage> {
   public LocalImage call()
       throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException {
     Files.createDirectories(destination);
-    FileOperations.deleteDirectoryRecursiveOnExit(destination);
+    FileOperations.deleteRecursiveOnExit(destination);
     TarExtractor.extract(tarPath, destination);
 
     InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));

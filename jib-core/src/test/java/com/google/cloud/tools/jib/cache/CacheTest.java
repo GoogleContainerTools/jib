@@ -48,7 +48,7 @@ public class CacheTest {
    * @return the decompressed {@link Blob}
    * @throws IOException if an I/O exception occurs
    */
-  public static Blob decompress(Blob blob) throws IOException {
+  private static Blob decompress(Blob blob) throws IOException {
     return Blobs.from(new GZIPInputStream(new ByteArrayInputStream(Blobs.writeToByteArray(blob))));
   }
 

@@ -31,7 +31,7 @@ import org.junit.rules.TemporaryFolder;
 
 public class ExtractTarStepTest {
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static Path getResource(String resource) throws URISyntaxException {
     return Paths.get(Resources.getResource(resource).toURI());
