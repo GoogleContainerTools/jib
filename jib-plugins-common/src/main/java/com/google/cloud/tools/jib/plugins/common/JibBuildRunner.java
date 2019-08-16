@@ -81,13 +81,26 @@ public class JibBuildRunner {
   /**
    * Creates a runner to build an image. Creates a directory for the cache, if needed.
    *
+   * @param jibContainerBuilder the {@link JibContainerBuilder}
+   * @param containerizer the {@link Containerizer}
+   * @param logger consumer for handling log events
+   * @param helpfulSuggestions suggestions to use in help messages for exceptions
    * @param targetImageReference the target image reference
    * @param additionalTags additional tags to push to
    * @return a {@link JibBuildRunner} for building to a registry
    */
   public static JibBuildRunner forBuildImage(
-      ImageReference targetImageReference, Set<String> additionalTags) {
+      JibContainerBuilder jibContainerBuilder,
+      Containerizer containerizer,
+      Consumer<LogEvent> logger,
+      HelpfulSuggestions helpfulSuggestions,
+      ImageReference targetImageReference,
+      Set<String> additionalTags) {
     return new JibBuildRunner(
+        jibContainerBuilder,
+        containerizer,
+        logger,
+        helpfulSuggestions,
         buildMessageWithTargetImageReferences(
             targetImageReference,
             additionalTags,
@@ -100,13 +113,26 @@ public class JibBuildRunner {
   /**
    * Creates a runner to build to the Docker daemon. Creates a directory for the cache, if needed.
    *
+   * @param jibContainerBuilder the {@link JibContainerBuilder}
+   * @param containerizer the {@link Containerizer}
+   * @param logger consumer for handling log events
+   * @param helpfulSuggestions suggestions to use in help messages for exceptions
    * @param targetImageReference the target image reference
    * @param additionalTags additional tags to push to
    * @return a {@link JibBuildRunner} for building to a Docker daemon
    */
   public static JibBuildRunner forBuildToDockerDaemon(
-      ImageReference targetImageReference, Set<String> additionalTags) {
+      JibContainerBuilder jibContainerBuilder,
+      Containerizer containerizer,
+      Consumer<LogEvent> logger,
+      HelpfulSuggestions helpfulSuggestions,
+      ImageReference targetImageReference,
+      Set<String> additionalTags) {
     return new JibBuildRunner(
+        jibContainerBuilder,
+        containerizer,
+        logger,
+        helpfulSuggestions,
         buildMessageWithTargetImageReferences(
             targetImageReference, additionalTags, STARTUP_MESSAGE_PREFIX_FOR_DOCKER_DAEMON, "..."),
         buildMessageWithTargetImageReferences(
@@ -116,11 +142,24 @@ public class JibBuildRunner {
   /**
    * Creates a runner to build an image tarball. Creates a directory for the cache, if needed.
    *
+   * @param jibContainerBuilder the {@link JibContainerBuilder}
+   * @param containerizer the {@link Containerizer}
+   * @param logger consumer for handling log events
+   * @param helpfulSuggestions suggestions to use in help messages for exceptions
    * @param outputPath the path to output the tarball to
    * @return a {@link JibBuildRunner} for building a tarball
    */
-  public static JibBuildRunner forBuildTar(Path outputPath) {
+  public static JibBuildRunner forBuildTar(
+      JibContainerBuilder jibContainerBuilder,
+      Containerizer containerizer,
+      Consumer<LogEvent> logger,
+      HelpfulSuggestions helpfulSuggestions,
+      Path outputPath) {
     return new JibBuildRunner(
+        jibContainerBuilder,
+        containerizer,
+        logger,
+        helpfulSuggestions,
         String.format(STARTUP_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()),
         String.format(SUCCESS_MESSAGE_FORMAT_FOR_TARBALL, outputPath.toString()));
   }
@@ -147,32 +186,38 @@ public class JibBuildRunner {
 
   private final String startupMessage;
   private final String successMessage;
+  private final JibContainerBuilder jibContainerBuilder;
+  private final Containerizer containerizer;
+  private final Consumer<LogEvent> logger;
+  private final HelpfulSuggestions helpfulSuggestions;
   @Nullable private Path imageDigestOutputPath;
   @Nullable private Path imageIdOutputPath;
 
   @VisibleForTesting
-  JibBuildRunner(String startupMessage, String successMessage) {
+  JibBuildRunner(
+      JibContainerBuilder jibContainerBuilder,
+      Containerizer containerizer,
+      Consumer<LogEvent> logger,
+      HelpfulSuggestions helpfulSuggestions,
+      String startupMessage,
+      String successMessage) {
+    this.jibContainerBuilder = jibContainerBuilder;
+    this.containerizer = containerizer;
+    this.logger = logger;
+    this.helpfulSuggestions = helpfulSuggestions;
     this.startupMessage = startupMessage;
     this.successMessage = successMessage;
   }
 
   /**
-   * Runs the build steps.
+   * Runs the Jib build.
    *
-   * @param jibContainerBuilder the {@link JibContainerBuilder}
-   * @param containerizer the {@link Containerizer}
-   * @param logger consumer for handling log events
-   * @param helpfulSuggestions suggestions to use in help messages for exceptions
    * @return the built {@link JibContainer}
    * @throws BuildStepsExecutionException if another exception is thrown during the build
    * @throws IOException if an I/O exception occurs
    * @throws CacheDirectoryCreationException if the cache directory could not be created
    */
-  public JibContainer build(
-      JibContainerBuilder jibContainerBuilder,
-      Containerizer containerizer,
-      Consumer<LogEvent> logger,
-      HelpfulSuggestions helpfulSuggestions)
+  public JibContainer runBuild()
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
     try {
       logger.accept(LogEvent.lifecycle(""));

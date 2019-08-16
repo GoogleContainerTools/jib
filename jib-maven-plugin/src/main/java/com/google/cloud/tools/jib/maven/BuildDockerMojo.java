@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
@@ -30,11 +29,9 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeExcept
 import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
-import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
-import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.IOException;
@@ -100,42 +97,21 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     MojoCommon.checkUseCurrentTimestampDeprecation(this);
 
-    try {
-      RawConfiguration mavenRawConfiguration = new MavenRawConfiguration(this);
-      MavenProjectProperties projectProperties =
-          MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
+    MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
+        getSession().getSettings(), getSettingsDecrypter());
 
-      PluginConfigurationProcessor pluginConfigurationProcessor =
-          PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
-              mavenRawConfiguration,
+    MavenProjectProperties projectProperties =
+        MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
+    try {
+      PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
+              new MavenRawConfiguration(this),
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter()),
               projectProperties,
               dockerExecutable,
               getDockerClientEnvironment(),
-              new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
-      MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
-          getSession().getSettings(), getSettingsDecrypter());
-
-      ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
-
-      Path buildOutput = Paths.get(getProject().getBuild().getDirectory());
-
-      try {
-        JibBuildRunner.forBuildToDockerDaemon(targetImageReference, getTargetImageAdditionalTags())
-            .writeImageDigest(buildOutput.resolve("jib-image.digest"))
-            .writeImageId(buildOutput.resolve("jib-image.id"))
-            .build(
-                pluginConfigurationProcessor.getJibContainerBuilder(),
-                pluginConfigurationProcessor.getContainerizer(),
-                projectProperties::log,
-                new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
-
-      } finally {
-        // TODO: This should not be called on projectProperties.
-        projectProperties.waitForLoggingThread();
-        getLog().info("");
-      }
+              new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
+          .runBuild();
 
     } catch (InvalidAppRootException ex) {
       throw new MojoExecutionException(
@@ -186,6 +162,10 @@ public class BuildDockerMojo extends JibPluginConfiguration {
 
     } catch (BuildStepsExecutionException ex) {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
+
+    } finally {
+      projectProperties.waitForLoggingThread();
+      getLog().info("");
     }
   }
 

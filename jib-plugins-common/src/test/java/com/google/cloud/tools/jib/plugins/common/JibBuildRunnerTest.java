@@ -59,14 +59,20 @@ public class JibBuildRunnerTest {
 
   @Before
   public void setUpMocks() {
-    testJibBuildRunner = new JibBuildRunner("ignored", "ignored");
+    testJibBuildRunner =
+        new JibBuildRunner(
+            mockJibContainerBuilder,
+            mockContainerizer,
+            ignored -> {},
+            TEST_HELPFUL_SUGGESTIONS,
+            "ignored",
+            "ignored");
   }
 
   @Test
   public void testBuildImage_pass()
       throws BuildStepsExecutionException, IOException, CacheDirectoryCreationException {
-    testJibBuildRunner.build(
-        mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
+    testJibBuildRunner.runBuild();
   }
 
   @Test
@@ -80,8 +86,7 @@ public class JibBuildRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
+      testJibBuildRunner.runBuild();
       Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {
@@ -99,8 +104,7 @@ public class JibBuildRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
+      testJibBuildRunner.runBuild();
       Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {
@@ -119,8 +123,7 @@ public class JibBuildRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
+      testJibBuildRunner.runBuild();
       Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {
@@ -144,8 +147,7 @@ public class JibBuildRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
+      testJibBuildRunner.runBuild();
       Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {
@@ -170,8 +172,7 @@ public class JibBuildRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
+      testJibBuildRunner.runBuild();
       Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {
@@ -190,8 +191,7 @@ public class JibBuildRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
+      testJibBuildRunner.runBuild();
       Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {
@@ -208,8 +208,7 @@ public class JibBuildRunnerTest {
         .containerize(mockContainerizer);
 
     try {
-      testJibBuildRunner.build(
-          mockJibContainerBuilder, mockContainerizer, logEvent -> {}, TEST_HELPFUL_SUGGESTIONS);
+      testJibBuildRunner.runBuild();
       Assert.fail();
 
     } catch (BuildStepsExecutionException ex) {

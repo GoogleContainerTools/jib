@@ -27,10 +27,8 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeExcept
 import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
-import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
-import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -105,36 +103,15 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
     TaskCommon.disableHttpLogging();
 
+    GradleProjectProperties projectProperties =
+        GradleProjectProperties.getForProject(getProject(), getLogger());
     try {
-      RawConfiguration gradleRawConfiguration = new GradleRawConfiguration(jibExtension);
-      GradleProjectProperties projectProperties =
-          GradleProjectProperties.getForProject(getProject(), getLogger());
-
-      Path tarOutputPath = getTargetPath();
-      PluginConfigurationProcessor pluginConfigurationProcessor =
-          PluginConfigurationProcessor.processCommonConfigurationForTarImage(
-              gradleRawConfiguration,
+      PluginConfigurationProcessor.createJibBuildRunnerForTarImage(
+              new GradleRawConfiguration(jibExtension),
               ignored -> Optional.empty(),
               projectProperties,
-              tarOutputPath,
-              new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
-
-      Path buildOutput = getProject().getBuildDir().toPath();
-
-      try {
-        JibBuildRunner.forBuildTar(tarOutputPath)
-            .writeImageDigest(buildOutput.resolve("jib-image.digest"))
-            .writeImageId(buildOutput.resolve("jib-image.id"))
-            .build(
-                pluginConfigurationProcessor.getJibContainerBuilder(),
-                pluginConfigurationProcessor.getContainerizer(),
-                projectProperties::log,
-                new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
-
-      } finally {
-        // TODO: This should not be called on projectProperties.
-        projectProperties.waitForLoggingThread();
-      }
+              new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
+          .runBuild();
 
     } catch (InvalidAppRootException ex) {
       throw new GradleException(
@@ -178,6 +155,9 @@ public class BuildTarTask extends DefaultTask implements JibTask {
     } catch (InvalidImageReferenceException ex) {
       throw new GradleException(
           HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
+
+    } finally {
+      projectProperties.waitForLoggingThread();
     }
   }
 

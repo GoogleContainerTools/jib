@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
@@ -28,14 +27,11 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeExcept
 import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
-import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
-import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
@@ -82,11 +78,9 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
     TaskCommon.disableHttpLogging();
 
+    GradleProjectProperties projectProperties =
+        GradleProjectProperties.getForProject(getProject(), getLogger());
     try {
-      RawConfiguration gradleRawConfiguration = new GradleRawConfiguration(jibExtension);
-      GradleProjectProperties projectProperties =
-          GradleProjectProperties.getForProject(getProject(), getLogger());
-
       if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
         throw new GradleException(
             HelpfulSuggestions.forToNotConfigured(
@@ -96,28 +90,12 @@ public class BuildImageTask extends DefaultTask implements JibTask {
                 "gradle jib --image <your image name>"));
       }
 
-      PluginConfigurationProcessor pluginConfigurationProcessor =
-          PluginConfigurationProcessor.processCommonConfigurationForRegistryImage(
-              gradleRawConfiguration, ignored -> Optional.empty(), projectProperties);
-
-      ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
-
-      Path buildOutput = getProject().getBuildDir().toPath();
-
-      try {
-        JibBuildRunner.forBuildImage(targetImageReference, jibExtension.getTo().getTags())
-            .writeImageDigest(buildOutput.resolve("jib-image.digest"))
-            .writeImageId(buildOutput.resolve("jib-image.id"))
-            .build(
-                pluginConfigurationProcessor.getJibContainerBuilder(),
-                pluginConfigurationProcessor.getContainerizer(),
-                projectProperties::log,
-                new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
-
-      } finally {
-        // TODO: This should not be called on projectProperties.
-        projectProperties.waitForLoggingThread();
-      }
+      PluginConfigurationProcessor.createJibBuildRunnerForRegistryImage(
+              new GradleRawConfiguration(jibExtension),
+              ignored -> Optional.empty(),
+              projectProperties,
+              new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
+          .runBuild();
 
     } catch (InvalidAppRootException ex) {
       throw new GradleException(
@@ -161,6 +139,9 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     } catch (InvalidImageReferenceException ex) {
       throw new GradleException(
           HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
+
+    } finally {
+      projectProperties.waitForLoggingThread();
     }
   }
 

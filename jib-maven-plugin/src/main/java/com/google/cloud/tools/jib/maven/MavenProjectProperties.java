@@ -368,6 +368,11 @@ public class MavenProjectProperties implements ProjectProperties {
   }
 
   @Override
+  public Path getOutputDirectory() {
+    return Paths.get(project.getBuild().getDirectory());
+  }
+
+  @Override
   public int getMajorJavaVersion() {
     // Check properties for version
     if (project.getProperties().getProperty("maven.compiler.target") != null) {

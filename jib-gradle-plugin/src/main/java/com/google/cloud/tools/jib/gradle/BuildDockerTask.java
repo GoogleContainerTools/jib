@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
@@ -29,10 +28,8 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeExcept
 import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
-import com.google.cloud.tools.jib.plugins.common.JibBuildRunner;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
-import com.google.cloud.tools.jib.plugins.common.RawConfiguration;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -105,37 +102,17 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
     TaskCommon.disableHttpLogging();
 
+    GradleProjectProperties projectProperties =
+        GradleProjectProperties.getForProject(getProject(), getLogger());
     try {
-      RawConfiguration gradleRawConfiguration = new GradleRawConfiguration(jibExtension);
-      GradleProjectProperties projectProperties =
-          GradleProjectProperties.getForProject(getProject(), getLogger());
-
-      PluginConfigurationProcessor pluginConfigurationProcessor =
-          PluginConfigurationProcessor.processCommonConfigurationForDockerDaemonImage(
-              gradleRawConfiguration,
+      PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
+              new GradleRawConfiguration(jibExtension),
               ignored -> java.util.Optional.empty(),
               projectProperties,
               dockerClientParameters.getExecutablePath(),
               dockerClientParameters.getEnvironment(),
-              new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
-
-      ImageReference targetImageReference = pluginConfigurationProcessor.getTargetImageReference();
-      Path buildOutput = getProject().getBuildDir().toPath();
-
-      try {
-        JibBuildRunner.forBuildToDockerDaemon(targetImageReference, jibExtension.getTo().getTags())
-            .writeImageDigest(buildOutput.resolve("jib-image.digest"))
-            .writeImageId(buildOutput.resolve("jib-image.id"))
-            .build(
-                pluginConfigurationProcessor.getJibContainerBuilder(),
-                pluginConfigurationProcessor.getContainerizer(),
-                projectProperties::log,
-                new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX));
-
-      } finally {
-        // TODO: This should not be called on projectProperties.
-        projectProperties.waitForLoggingThread();
-      }
+              new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
+          .runBuild();
 
     } catch (InvalidAppRootException ex) {
       throw new GradleException(
@@ -179,6 +156,9 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     } catch (InvalidImageReferenceException ex) {
       throw new GradleException(
           HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
+
+    } finally {
+      projectProperties.waitForLoggingThread();
     }
   }
 
