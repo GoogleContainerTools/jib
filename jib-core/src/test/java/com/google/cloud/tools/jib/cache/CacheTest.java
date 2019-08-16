@@ -24,7 +24,6 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
-import com.google.common.io.CountingOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -33,7 +32,6 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,21 +40,6 @@ import org.junit.rules.TemporaryFolder;
 
 /** Tests for {@link Cache}. */
 public class CacheTest {
-
-  /**
-   * Gets a {@link Blob} that is {@code blob} compressed.
-   *
-   * @param blob the {@link Blob} to compress
-   * @return the compressed {@link Blob}
-   */
-  private static Blob compress(Blob blob) {
-    return Blobs.from(
-        outputStream -> {
-          try (GZIPOutputStream compressorStream = new GZIPOutputStream(outputStream)) {
-            blob.writeTo(compressorStream);
-          }
-        });
-  }
 
   /**
    * Gets a {@link Blob} that is {@code blob} decompressed.
@@ -88,10 +71,7 @@ public class CacheTest {
    * @throws IOException if an I/O exception occurs
    */
   private static long sizeOf(Blob blob) throws IOException {
-    CountingOutputStream countingOutputStream =
-        new CountingOutputStream(ByteStreams.nullOutputStream());
-    blob.writeTo(countingOutputStream);
-    return countingOutputStream.getCount();
+    return blob.writeTo(ByteStreams.nullOutputStream()).getSize();
   }
 
   private static LayerEntry defaultLayerEntry(Path source, AbsoluteUnixPath destination) {
@@ -125,9 +105,9 @@ public class CacheTest {
     Files.createFile(directory.resolve("another/source/file"));
 
     layerBlob1 = Blobs.from("layerBlob1");
-    layerDigest1 = digestOf(compress(layerBlob1));
+    layerDigest1 = digestOf(Blobs.compress(layerBlob1));
     layerDiffId1 = digestOf(layerBlob1);
-    layerSize1 = sizeOf(compress(layerBlob1));
+    layerSize1 = sizeOf(Blobs.compress(layerBlob1));
     layerEntries1 =
         ImmutableList.of(
             defaultLayerEntry(
@@ -137,9 +117,9 @@ public class CacheTest {
                 AbsoluteUnixPath.get("/another/extraction/path")));
 
     layerBlob2 = Blobs.from("layerBlob2");
-    layerDigest2 = digestOf(compress(layerBlob2));
+    layerDigest2 = digestOf(Blobs.compress(layerBlob2));
     layerDiffId2 = digestOf(layerBlob2);
-    layerSize2 = sizeOf(compress(layerBlob2));
+    layerSize2 = sizeOf(Blobs.compress(layerBlob2));
     layerEntries2 = ImmutableList.of();
   }
 
@@ -161,7 +141,7 @@ public class CacheTest {
       throws IOException, CacheCorruptedException {
     Cache cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    verifyIsLayer1(cache.writeCompressedLayer(compress(layerBlob1)));
+    verifyIsLayer1(cache.writeCompressedLayer(Blobs.compress(layerBlob1)));
     verifyIsLayer1(cache.retrieve(layerDigest1).orElseThrow(AssertionError::new));
     Assert.assertFalse(cache.retrieve(layerDigest2).isPresent());
   }

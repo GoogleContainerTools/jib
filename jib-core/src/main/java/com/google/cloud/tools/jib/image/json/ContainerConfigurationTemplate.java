@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.image.json;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.json.JsonTemplate;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -369,8 +368,11 @@ public class ContainerConfigurationTemplate implements JsonTemplate {
     return config.Volumes;
   }
 
-  @VisibleForTesting
-  DescriptorDigest getLayerDiffId(int index) {
+  public DescriptorDigest getLayerDiffId(int index) {
     return rootfs.diff_ids.get(index);
+  }
+
+  public int getLayerCount() {
+    return rootfs.diff_ids.size();
   }
 }

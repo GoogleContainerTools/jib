@@ -35,7 +35,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -47,15 +46,6 @@ public class CacheStorageWriterTest {
 
   private static BlobDescriptor getDigest(Blob blob) throws IOException {
     return blob.writeTo(ByteStreams.nullOutputStream());
-  }
-
-  private static Blob compress(Blob blob) {
-    return Blobs.from(
-        outputStream -> {
-          try (GZIPOutputStream compressorStream = new GZIPOutputStream(outputStream)) {
-            blob.writeTo(compressorStream);
-          }
-        });
   }
 
   private static Blob decompress(Blob blob) throws IOException {
@@ -78,7 +68,8 @@ public class CacheStorageWriterTest {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
 
     CachedLayer cachedLayer =
-        new CacheStorageWriter(cacheStorageFiles).writeCompressed(compress(uncompressedLayerBlob));
+        new CacheStorageWriter(cacheStorageFiles)
+            .writeCompressed(Blobs.compress(uncompressedLayerBlob));
 
     verifyCachedLayer(cachedLayer, uncompressedLayerBlob);
   }
@@ -86,7 +77,7 @@ public class CacheStorageWriterTest {
   @Test
   public void testWrite_uncompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
-    DescriptorDigest layerDigest = getDigest(compress(uncompressedLayerBlob)).getDigest();
+    DescriptorDigest layerDigest = getDigest(Blobs.compress(uncompressedLayerBlob)).getDigest();
     DescriptorDigest selector = getDigest(Blobs.from("selector")).getDigest();
 
     CachedLayer cachedLayer =
@@ -159,7 +150,7 @@ public class CacheStorageWriterTest {
 
   private void verifyCachedLayer(CachedLayer cachedLayer, Blob uncompressedLayerBlob)
       throws IOException {
-    BlobDescriptor layerBlobDescriptor = getDigest(compress(uncompressedLayerBlob));
+    BlobDescriptor layerBlobDescriptor = getDigest(Blobs.compress(uncompressedLayerBlob));
     DescriptorDigest layerDiffId = getDigest(uncompressedLayerBlob).getDigest();
 
     // Verifies cachedLayer is correct.
