@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.10.1
+
+### Added
+
 - `JavaContainerBuilder#setLastModifiedTimeProvider` to set file timestamps ([#1818](https://github.com/GoogleContainerTools/jib/pull/1818))
 
 ### Changed
