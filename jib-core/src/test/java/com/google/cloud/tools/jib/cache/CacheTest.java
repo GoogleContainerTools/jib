@@ -24,12 +24,14 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.util.zip.GZIPInputStream;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -38,6 +40,17 @@ import org.junit.rules.TemporaryFolder;
 
 /** Tests for {@link Cache}. */
 public class CacheTest {
+
+  /**
+   * Gets a {@link Blob} that is {@code blob} decompressed.
+   *
+   * @param blob the {@link Blob} to decompress
+   * @return the decompressed {@link Blob}
+   * @throws IOException if an I/O exception occurs
+   */
+  public static Blob decompress(Blob blob) throws IOException {
+    return Blobs.from(new GZIPInputStream(new ByteArrayInputStream(Blobs.writeToByteArray(blob))));
+  }
 
   /**
    * Gets the digest of {@code blob}.
@@ -177,7 +190,7 @@ public class CacheTest {
    * @throws IOException if an I/O exception occurs
    */
   private void verifyIsLayer1(CachedLayer cachedLayer) throws IOException {
-    Assert.assertEquals("layerBlob1", Blobs.writeToString(Blobs.decompress(cachedLayer.getBlob())));
+    Assert.assertEquals("layerBlob1", Blobs.writeToString(decompress(cachedLayer.getBlob())));
     Assert.assertEquals(layerDigest1, cachedLayer.getDigest());
     Assert.assertEquals(layerDiffId1, cachedLayer.getDiffId());
     Assert.assertEquals(layerSize1, cachedLayer.getSize());
@@ -190,7 +203,7 @@ public class CacheTest {
    * @throws IOException if an I/O exception occurs
    */
   private void verifyIsLayer2(CachedLayer cachedLayer) throws IOException {
-    Assert.assertEquals("layerBlob2", Blobs.writeToString(Blobs.decompress(cachedLayer.getBlob())));
+    Assert.assertEquals("layerBlob2", Blobs.writeToString(decompress(cachedLayer.getBlob())));
     Assert.assertEquals(layerDigest2, cachedLayer.getDigest());
     Assert.assertEquals(layerDiffId2, cachedLayer.getDiffId());
     Assert.assertEquals(layerSize2, cachedLayer.getSize());

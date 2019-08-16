@@ -34,7 +34,6 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarExtractor;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -47,9 +46,10 @@ import java.util.zip.GZIPInputStream;
 /** Extracts a tar file base image. */
 public class ExtractTarStep implements Callable<LocalImage> {
 
+  /** Contains an {@link Image} and its layers. * */
   static class LocalImage {
-    Image baseImage;
-    List<PreparedLayer> layers;
+    final Image baseImage;
+    final List<PreparedLayer> layers;
 
     LocalImage(Image baseImage, List<PreparedLayer> layers) {
       this.baseImage = baseImage;
@@ -57,9 +57,17 @@ public class ExtractTarStep implements Callable<LocalImage> {
     }
   }
 
+  /**
+   * Checks the first two bytes of a file to see if it has been gzipped.
+   *
+   * @param path the file to check
+   * @return {@code true} if the file is gzipped, {@code false} if not
+   * @throws IOException if reading the file fails
+   * @see <a href="http://www.zlib.org/rfc-gzip.html#file-format">GZIP file format</a>
+   */
   @VisibleForTesting
   static boolean isGzipped(Path path) throws IOException {
-    try (InputStream inputStream = new BufferedInputStream(Files.newInputStream(path))) {
+    try (InputStream inputStream = Files.newInputStream(path)) {
       inputStream.mark(2);
       int magic = (inputStream.read() & 0xff) | ((inputStream.read() << 8) & 0xff00);
       return magic == GZIPInputStream.GZIP_MAGIC;
@@ -78,12 +86,13 @@ public class ExtractTarStep implements Callable<LocalImage> {
   public LocalImage call()
       throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException {
     TarExtractor.extract(tarPath, destination);
+
+    InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
     DockerManifestEntryTemplate loadManifest =
         new ObjectMapper()
             .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-            .readValue(
-                Files.newInputStream(destination.resolve("manifest.json")),
-                DockerManifestEntryTemplate[].class)[0];
+            .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
+    manifestStream.close();
     ContainerConfigurationTemplate configuration =
         JsonTemplateMapper.readJsonFromFile(
             destination.resolve(loadManifest.getConfig()), ContainerConfigurationTemplate.class);
@@ -106,7 +115,7 @@ public class ExtractTarStep implements Callable<LocalImage> {
     // Process layer blobs
     // TODO: Optimize; compressing/calculating layer digests is slow
     List<PreparedLayer> layers = new ArrayList<>();
-    V22ManifestTemplate newManifest = new V22ManifestTemplate();
+    V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
     for (int index = 0; index < layerFiles.size(); index++) {
       Path file = destination.resolve(layerFiles.get(index));
 
@@ -125,16 +134,14 @@ public class ExtractTarStep implements Callable<LocalImage> {
               .setLayerDiffId(configuration.getLayerDiffId(index))
               .build();
 
-      // TODO: Check blob existence on target registry (online mode only)
-
       layers.add(new PreparedLayer.Builder(layer).build());
-      newManifest.addLayer(blobDescriptor.getSize(), blobDescriptor.getDigest());
+      v22Manifest.addLayer(blobDescriptor.getSize(), blobDescriptor.getDigest());
     }
 
     BlobDescriptor configDescriptor =
         Blobs.from(configuration).writeTo(ByteStreams.nullOutputStream());
-    newManifest.setContainerConfiguration(configDescriptor.getSize(), configDescriptor.getDigest());
-    Image image = JsonToImageTranslator.toImage(newManifest, configuration);
+    v22Manifest.setContainerConfiguration(configDescriptor.getSize(), configDescriptor.getDigest());
+    Image image = JsonToImageTranslator.toImage(v22Manifest, configuration);
     return new LocalImage(image, layers);
   }
 }

@@ -18,13 +18,11 @@ package com.google.cloud.tools.jib.blob;
 
 import com.google.cloud.tools.jib.hash.WritableContents;
 import com.google.cloud.tools.jib.json.JsonTemplate;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /** Static methods for {@link Blob}. */
@@ -93,17 +91,6 @@ public class Blobs {
             blob.writeTo(compressorStream);
           }
         });
-  }
-
-  /**
-   * Gets a {@link Blob} that is {@code blob} decompressed.
-   *
-   * @param blob the {@link Blob} to decompress
-   * @return the decompressed {@link Blob}
-   * @throws IOException if an I/O exception occurs
-   */
-  public static Blob decompress(Blob blob) throws IOException {
-    return Blobs.from(new GZIPInputStream(new ByteArrayInputStream(Blobs.writeToByteArray(blob))));
   }
 
   private Blobs() {}
