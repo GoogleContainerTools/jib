@@ -22,8 +22,7 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.apache.v2.ApacheHttpTransport;
-import com.google.api.client.util.SslUtils;
+import com.google.api.client.http.apache.ApacheHttpTransport;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import java.io.Closeable;
@@ -32,8 +31,9 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.impl.client.DefaultHttpClient;
 
 /**
  * Sends an HTTP {@link Request} and stores the {@link Response}. Clients should not send more than
@@ -56,12 +56,17 @@ public class Connection implements Closeable {
    * @return {@link Connection} factory, a function that generates a {@link Connection} to a URL
    */
   public static Function<URL, Connection> getConnectionFactory() {
-    // Do not use NetHttpTransport. It does not process response errors properly.
-    // See https://github.com/google/google-http-java-client/issues/39
-    //
-    // A new ApacheHttpTransport needs to be created for each connection because otherwise HTTP
-    // connection persistence causes the connection to throw NoHttpResponseException.
-    return url -> new Connection(url, new ApacheHttpTransport());
+    /*
+     * Do not use {@link NetHttpTransport}. It does not process response errors properly. A new
+     * {@link ApacheHttpTransport} needs to be created for each connection because otherwise HTTP
+     * connection persistence causes the connection to throw {@link NoHttpResponseException}.
+     *
+     * @see <a
+     *     href="https://github.com/google/google-http-java-client/issues/39">https://github.com/google/google-http-java-client/issues/39</a>
+     */
+    ApacheHttpTransport transport = new ApacheHttpTransport();
+    addProxyCredentials(transport);
+    return url -> new Connection(url, transport);
   }
 
   /**
@@ -72,14 +77,44 @@ public class Connection implements Closeable {
    */
   public static Function<URL, Connection> getInsecureConnectionFactory()
       throws GeneralSecurityException {
-    HttpClientBuilder httpClientBuilder =
-        ApacheHttpTransport.newDefaultHttpClientBuilder()
-            .setSSLSocketFactory(null) // creates new factory with the SSLContext given below
-            .setSSLContext(SslUtils.trustAllSSLContext())
-            .setSSLHostnameVerifier(new NoopHostnameVerifier());
+    // Do not use {@link NetHttpTransport}. See {@link getConnectionFactory} for details.
+    ApacheHttpTransport transport =
+        new ApacheHttpTransport.Builder().doNotValidateCertificate().build();
+    addProxyCredentials(transport);
+    return url -> new Connection(url, transport);
+  }
 
-    // Do not use NetHttpTransport. See comments in getConnectionFactory for details.
-    return url -> new Connection(url, new ApacheHttpTransport(httpClientBuilder.build()));
+  /**
+   * Registers proxy credentials onto transport client, in order to deal with proxies that require
+   * basic authentication.
+   *
+   * @param transport Apache HTTP transport
+   */
+  @VisibleForTesting
+  static void addProxyCredentials(ApacheHttpTransport transport) {
+    addProxyCredentials(transport, "https");
+    addProxyCredentials(transport, "http");
+  }
+
+  private static void addProxyCredentials(ApacheHttpTransport transport, String protocol) {
+    Preconditions.checkArgument(protocol.equals("http") || protocol.equals("https"));
+
+    String proxyHost = System.getProperty(protocol + ".proxyHost");
+    String proxyUser = System.getProperty(protocol + ".proxyUser");
+    String proxyPassword = System.getProperty(protocol + ".proxyPassword");
+    if (proxyHost == null || proxyUser == null || proxyPassword == null) {
+      return;
+    }
+
+    String defaultProxyPort = protocol.equals("http") ? "80" : "443";
+    int proxyPort = Integer.parseInt(System.getProperty(protocol + ".proxyPort", defaultProxyPort));
+
+    DefaultHttpClient httpClient = (DefaultHttpClient) transport.getHttpClient();
+    httpClient
+        .getCredentialsProvider()
+        .setCredentials(
+            new AuthScope(proxyHost, proxyPort),
+            new UsernamePasswordCredentials(proxyUser, proxyPassword));
   }
 
   private HttpRequestFactory requestFactory;

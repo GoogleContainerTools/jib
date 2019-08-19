@@ -16,8 +16,6 @@ group 'com.google.cloud.tools'
 sourceCompatibility = JavaVersion.VERSION_1_8
 targetCompatibility = JavaVersion.VERSION_1_8
 compileJava.options.encoding = 'UTF-8'
-compileJava.options.compilerArgs += [ '-Xlint:deprecation' ]
-compileTestJava.options.compilerArgs += [ '-Xlint:deprecation' ]
 
 repositories {
   mavenCentral()
@@ -41,8 +39,7 @@ dependencies {
   // For Google libraries, check <http-client-bom.version>, <google.auth.version>, <guava.version>,
   // ... in https://github.com/googleapis/google-cloud-java/blob/master/google-cloud-clients/pom.xml
   // for best compatibility.
-  implementation 'com.google.http-client:google-http-client:1.31.0'
-  implementation 'com.google.http-client:google-http-client-apache-v2:1.31.0'
+  implementation 'com.google.http-client:google-http-client:1.27.0'
   implementation 'com.google.auth:google-auth-library-oauth2-http:0.16.2'
   implementation 'com.google.guava:guava:28.0-jre'
 
