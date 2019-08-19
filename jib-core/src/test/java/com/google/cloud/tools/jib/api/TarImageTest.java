@@ -24,9 +24,16 @@ import org.junit.Test;
 public class TarImageTest {
 
   @Test
-  public void testGetters() throws InvalidImageReferenceException {
-    TarImage tarImage = TarImage.named("tar/image").saveTo(Paths.get("output/file"));
-    Assert.assertEquals("tar/image", tarImage.getImageReference().toString());
-    Assert.assertEquals(Paths.get("output/file"), tarImage.getOutputFile());
+  public void testGetters_bothSet() throws InvalidImageReferenceException {
+    TarImage tarImage = TarImage.at(Paths.get("output/file")).named("tar/image");
+    Assert.assertEquals("tar/image", tarImage.getImageReference().get().toString());
+    Assert.assertEquals(Paths.get("output/file"), tarImage.getPath());
+  }
+
+  @Test
+  public void testGetters_nameMissing() {
+    TarImage tarImage = TarImage.at(Paths.get("output/file"));
+    Assert.assertFalse(tarImage.getImageReference().isPresent());
+    Assert.assertEquals(Paths.get("output/file"), tarImage.getPath());
   }
 }
