@@ -45,7 +45,7 @@ public class Jib {
   }
 
   /**
-   * Starts building the container from a base image.
+   * Starts building the container from a registry base image.
    *
    * @param registryImage the {@link RegistryImage} that defines base container registry and
    *     credentials
@@ -53,6 +53,28 @@ public class Jib {
    */
   public static JibContainerBuilder from(RegistryImage registryImage) {
     return new JibContainerBuilder(registryImage);
+  }
+
+  /**
+   * Starts building the container from a base image stored in the Docker cache. Requires a running
+   * Docker daemon.
+   *
+   * @param dockerDaemonImage the {@link DockerDaemonImage} that defines the base image and Docker
+   *     client
+   * @return a new {@link JibContainerBuilder} to continue building the container
+   */
+  public static JibContainerBuilder from(DockerDaemonImage dockerDaemonImage) {
+    return new JibContainerBuilder(dockerDaemonImage);
+  }
+
+  /**
+   * Starts building the container from a tarball.
+   *
+   * @param tarImage the {@link TarImage} that defines the path to the base image
+   * @return a new {@link JibContainerBuilder} to continue building the container
+   */
+  public static JibContainerBuilder from(TarImage tarImage) {
+    return new JibContainerBuilder(tarImage);
   }
 
   /**

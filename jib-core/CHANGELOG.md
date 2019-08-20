@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `Jib#from` overloads to allow using a `DockerDaemonImage` or a `TarImage` as the base image ([#1468](https://github.com/GoogleContainerTools/jib/issues/1468), [#1905](https://github.com/GoogleContainerTools/jib/issues/1905))
+
 ### Changed
 
 ### Fixed

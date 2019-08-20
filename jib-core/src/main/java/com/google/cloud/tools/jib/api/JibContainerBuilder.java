@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
+import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
@@ -73,19 +74,37 @@ public class JibContainerBuilder {
 
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(RegistryImage baseImage) {
-    this(baseImage, BuildConfiguration.builder());
+    this(
+        ImageConfiguration.builder(baseImage.getImageReference())
+            .setCredentialRetrievers(baseImage.getCredentialRetrievers())
+            .build(),
+        BuildConfiguration.builder());
+  }
+
+  /** Instantiate with {@link Jib#from}. */
+  JibContainerBuilder(DockerDaemonImage baseImage) {
+    this(
+        ImageConfiguration.builder(baseImage.getImageReference())
+            .setDockerClient(
+                new DockerClient(baseImage.getDockerExecutable(), baseImage.getDockerEnvironment()))
+            .build(),
+        BuildConfiguration.builder());
+  }
+
+  /** Instantiate with {@link Jib#from}. */
+  JibContainerBuilder(TarImage baseImage) {
+    this(
+        ImageConfiguration.builder(baseImage.getImageReference())
+            .setTarPath(baseImage.getOutputFile())
+            .build(),
+        BuildConfiguration.builder());
   }
 
   @VisibleForTesting
   JibContainerBuilder(
-      RegistryImage baseImage, BuildConfiguration.Builder buildConfigurationBuilder) {
-    this.buildConfigurationBuilder = buildConfigurationBuilder;
-
-    ImageConfiguration imageConfiguration =
-        ImageConfiguration.builder(baseImage.getImageReference())
-            .setCredentialRetrievers(baseImage.getCredentialRetrievers())
-            .build();
-    buildConfigurationBuilder.setBaseImageConfiguration(imageConfiguration);
+      ImageConfiguration imageConfiguration, BuildConfiguration.Builder buildConfigurationBuilder) {
+    this.buildConfigurationBuilder =
+        buildConfigurationBuilder.setBaseImageConfiguration(imageConfiguration);
   }
 
   /**
