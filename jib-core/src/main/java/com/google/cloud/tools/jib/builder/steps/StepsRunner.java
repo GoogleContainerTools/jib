@@ -170,7 +170,7 @@ public class StepsRunner {
 
     if (baseImageConfiguration.getTarPath().isPresent()) {
       // If tarPath is present, a TarImage was used
-      results.tarPath = executorService.submit(() -> baseImageConfiguration.getTarPath().get());
+      results.tarPath = Futures.immediateFuture(baseImageConfiguration.getTarPath().get());
       stepsToRun.add(this::extractTar);
 
     } else if (baseImageConfiguration.getDockerClient().isPresent()) {
@@ -235,8 +235,7 @@ public class StepsRunner {
     Verify.verify(dockerClient.isPresent());
 
     results.tarPath =
-        executorService.submit(
-            () -> new SaveDockerStep(buildConfiguration, dockerClient.get()).call());
+        executorService.submit(new SaveDockerStep(buildConfiguration, dockerClient.get()));
   }
 
   private void extractTar() {
@@ -256,7 +255,7 @@ public class StepsRunner {
                     .get()
                     .layers
                     .stream()
-                    .map(layer -> executorService.submit(() -> layer))
+                    .map(Futures::immediateFuture)
                     .collect(Collectors.toList()));
   }
 
