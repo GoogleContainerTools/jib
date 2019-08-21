@@ -31,6 +31,9 @@ dependencies {
   // Make sure these are consistent with jib-maven-plugin.
   compile 'com.google.http-client:google-http-client:1.31.0'
   compile 'com.google.http-client:google-http-client-apache-v2:1.31.0'
+  compile('org.apache.httpcomponents:httpclient:4.5.6') {
+    force = true
+  }
   compile 'com.google.auth:google-auth-library-oauth2-http:0.16.2'
   compile 'com.google.guava:guava:28.0-jre'
 

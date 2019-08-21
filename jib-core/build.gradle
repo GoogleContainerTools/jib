@@ -43,6 +43,11 @@ dependencies {
   // for best compatibility.
   implementation 'com.google.http-client:google-http-client:1.31.0'
   implementation 'com.google.http-client:google-http-client-apache-v2:1.31.0'
+  // TODO: remove once https://github.com/googleapis/google-http-java-client/issues/795 is fixed and released.
+  // Forcing to downgrade this to 4.5.6 fixes https://github.com/GoogleContainerTools/jib/issues/1914
+  implementation('org.apache.httpcomponents:httpclient:4.5.6') {
+    force = true
+  }
   implementation 'com.google.auth:google-auth-library-oauth2-http:0.16.2'
   implementation 'com.google.guava:guava:28.0-jre'
 
