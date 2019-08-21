@@ -29,9 +29,11 @@ import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -89,12 +91,13 @@ public class PluginConfigurationProcessorTest {
 
   @Mock private RawConfiguration rawConfiguration;
   @Mock private ProjectProperties projectProperties;
+  @Mock private InferredAuthProvider inferredAuthProvider;
   @Mock private Containerizer containerizer;
   @Mock private AuthProperty authProperty;
   @Mock private Consumer<LogEvent> logger;
 
   @Before
-  public void setUp() throws IOException, InvalidImageReferenceException {
+  public void setUp() throws IOException, InvalidImageReferenceException, InferredAuthException {
     Mockito.when(rawConfiguration.getFromAuth()).thenReturn(authProperty);
     Mockito.when(rawConfiguration.getEntrypoint()).thenReturn(Optional.empty());
     Mockito.when(rawConfiguration.getAppRoot()).thenReturn("/app");
@@ -112,6 +115,8 @@ public class PluginConfigurationProcessorTest {
                 Mockito.any(JavaContainerBuilder.class), Mockito.any(ContainerizingMode.class)))
         .thenReturn(Jib.from("base"));
     Mockito.when(projectProperties.isOffline()).thenReturn(false);
+
+    Mockito.when(inferredAuthProvider.inferAuth(Mockito.any())).thenReturn(Optional.empty());
 
     Mockito.when(containerizer.setToolName(Mockito.anyString())).thenReturn(containerizer);
     Mockito.when(containerizer.setAllowInsecureRegistries(Mockito.anyBoolean()))
@@ -205,16 +210,6 @@ public class PluginConfigurationProcessorTest {
 
     Mockito.verify(containerizer).setBaseImageLayersCache(Paths.get("new/base/cache"));
     Mockito.verify(containerizer).setApplicationLayersCache(Paths.get("/new/application/cache"));
-  }
-
-  @Test
-  public void testGetBaseImage_warProject()
-      throws IncompatibleBaseImageJavaVersionException, NumberFormatException {
-    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
-
-    Assert.assertEquals(
-        "gcr.io/distroless/java/jetty:java8",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
   }
 
   @Test
@@ -613,89 +608,109 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetBaseImage_chooseJava8Distroless()
+  public void testGetDefaultBaseImage_nonWarPackaging()
+      throws IncompatibleBaseImageJavaVersionException {
+    Mockito.when(projectProperties.isWarProject()).thenReturn(false);
+
+    Assert.assertEquals(
+        "gcr.io/distroless/java:8",
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+  }
+
+  @Test
+  public void testGetDefaultBaseImage_warProject()
+      throws IncompatibleBaseImageJavaVersionException {
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
+
+    Assert.assertEquals(
+        "gcr.io/distroless/java/jetty:java8",
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
+  }
+
+  @Test
+  public void testGetDefaultBaseImage_chooseJava8Distroless()
       throws IncompatibleBaseImageJavaVersionException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(6);
     Assert.assertEquals(
         "gcr.io/distroless/java:8",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
 
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(7);
     Assert.assertEquals(
         "gcr.io/distroless/java:8",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
 
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(8);
     Assert.assertEquals(
         "gcr.io/distroless/java:8",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
   }
 
   @Test
-  public void testGetBaseImage_chooseJava11Distroless()
+  public void testGetDefaultBaseImage_chooseJava11Distroless()
       throws IncompatibleBaseImageJavaVersionException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(9);
     Assert.assertEquals(
         "gcr.io/distroless/java:11",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
 
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(10);
     Assert.assertEquals(
         "gcr.io/distroless/java:11",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
 
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(11);
     Assert.assertEquals(
         "gcr.io/distroless/java:11",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
   }
 
   @Test
-  public void testGetBaseImage_chooseJava8JettyDistroless()
+  public void testGetDefaultBaseImage_chooseJava8JettyDistroless()
       throws IncompatibleBaseImageJavaVersionException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(6);
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
     Assert.assertEquals(
         "gcr.io/distroless/java/jetty:java8",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
 
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(7);
     Assert.assertEquals(
         "gcr.io/distroless/java/jetty:java8",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
 
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(8);
     Assert.assertEquals(
         "gcr.io/distroless/java/jetty:java8",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
   }
 
   @Test
-  public void testGetBaseImage_chooseJava11JettyDistroless()
+  public void testGetDefaultBaseImage_chooseJava11JettyDistroless()
       throws IncompatibleBaseImageJavaVersionException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(9);
     Mockito.when(projectProperties.isWarProject()).thenReturn(true);
     Assert.assertEquals(
         "gcr.io/distroless/java/jetty:java11",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
 
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(10);
     Assert.assertEquals(
         "gcr.io/distroless/java/jetty:java11",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
 
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(11);
     Assert.assertEquals(
         "gcr.io/distroless/java/jetty:java11",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
+        PluginConfigurationProcessor.getDefaultBaseImage(projectProperties));
   }
 
   @Test
-  public void testGetBaseImage_projectHigherThanJava11() {
+  public void testGetDefaultBaseImage_projectHigherThanJava11() {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(12);
 
     try {
-      PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getDefaultBaseImage(projectProperties);
       Assert.fail();
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       Assert.assertEquals(11, ex.getBaseImageMajorJavaVersion());
@@ -704,13 +719,74 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetBaseImage_incompatibleJava8BaseImage() {
+  public void testGetJavaContainerBuilderWithBaseImage_tar()
+      throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("tar:///path/to.tar"));
+    ImageConfiguration result =
+        getBuildConfiguration(
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                        rawConfiguration, projectProperties, inferredAuthProvider)
+                    .toContainerBuilder())
+            .getBaseImageConfiguration();
+    Assert.assertEquals(Paths.get("/path/to.tar"), result.getTarPath().get());
+  }
+
+  @Test
+  public void testGetJavaContainerBuilderWithBaseImage_dockerDaemon()
+      throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("docker://imagename"));
+    ImageConfiguration result =
+        getBuildConfiguration(
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                        rawConfiguration, projectProperties, inferredAuthProvider)
+                    .toContainerBuilder())
+            .getBaseImageConfiguration();
+    Assert.assertEquals("imagename", result.getImageRepository());
+    Assert.assertTrue(result.getDockerClient().isPresent());
+  }
+
+  @Test
+  public void testGetJavaContainerBuilderWithBaseImage_registryPrefix()
+      throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("registry://imagename"));
+    ImageConfiguration result =
+        getBuildConfiguration(
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                        rawConfiguration, projectProperties, inferredAuthProvider)
+                    .toContainerBuilder())
+            .getBaseImageConfiguration();
+    Assert.assertEquals("imagename", result.getImageRepository());
+    Assert.assertFalse(result.getDockerClient().isPresent());
+  }
+
+  @Test
+  public void testGetJavaContainerBuilderWithBaseImage_registryWithoutPrefix()
+      throws IncompatibleBaseImageJavaVersionException, InvalidImageReferenceException, IOException,
+          CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("imagename"));
+    ImageConfiguration result =
+        getBuildConfiguration(
+                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                        rawConfiguration, projectProperties, inferredAuthProvider)
+                    .toContainerBuilder())
+            .getBaseImageConfiguration();
+    Assert.assertEquals("imagename", result.getImageRepository());
+    Assert.assertFalse(result.getDockerClient().isPresent());
+  }
+
+  @Test
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8BaseImage()
+      throws InvalidImageReferenceException, FileNotFoundException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(11);
 
     Mockito.when(rawConfiguration.getFromImage())
         .thenReturn(Optional.of("gcr.io/distroless/java:8"));
     try {
-      PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+          rawConfiguration, projectProperties, inferredAuthProvider);
       Assert.fail();
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       Assert.assertEquals(8, ex.getBaseImageMajorJavaVersion());
@@ -720,7 +796,8 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getFromImage())
         .thenReturn(Optional.of("gcr.io/distroless/java:latest"));
     try {
-      PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+          rawConfiguration, projectProperties, inferredAuthProvider);
       Assert.fail();
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       Assert.assertEquals(8, ex.getBaseImageMajorJavaVersion());
@@ -729,13 +806,15 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetBaseImage_incompatibleJava11BaseImage() {
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11BaseImage()
+      throws InvalidImageReferenceException, FileNotFoundException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(15);
 
     Mockito.when(rawConfiguration.getFromImage())
         .thenReturn(Optional.of("gcr.io/distroless/java:11"));
     try {
-      PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+          rawConfiguration, projectProperties, inferredAuthProvider);
       Assert.fail();
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       Assert.assertEquals(11, ex.getBaseImageMajorJavaVersion());
@@ -744,13 +823,15 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetBaseImage_incompatibleJava8JettyBaseImage() {
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8JettyBaseImage()
+      throws InvalidImageReferenceException, FileNotFoundException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(11);
 
     Mockito.when(rawConfiguration.getFromImage())
         .thenReturn(Optional.of("gcr.io/distroless/java/jetty:java8"));
     try {
-      PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+          rawConfiguration, projectProperties, inferredAuthProvider);
       Assert.fail();
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       Assert.assertEquals(8, ex.getBaseImageMajorJavaVersion());
@@ -759,46 +840,20 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetBaseImage_incompatibleJava11JettyBaseImage() {
+  public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava11JettyBaseImage()
+      throws InvalidImageReferenceException, FileNotFoundException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(15);
 
     Mockito.when(rawConfiguration.getFromImage())
         .thenReturn(Optional.of("gcr.io/distroless/java/jetty:java11"));
     try {
-      PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties);
+      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+          rawConfiguration, projectProperties, inferredAuthProvider);
       Assert.fail();
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       Assert.assertEquals(11, ex.getBaseImageMajorJavaVersion());
       Assert.assertEquals(15, ex.getProjectMajorJavaVersion());
     }
-  }
-
-  @Test
-  public void testGetBaseImage_defaultNonWarPackaging()
-      throws IncompatibleBaseImageJavaVersionException {
-    Mockito.when(projectProperties.isWarProject()).thenReturn(false);
-
-    Assert.assertEquals(
-        "gcr.io/distroless/java:8",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
-  }
-
-  @Test
-  public void testGetBaseImage_defaultWarProject()
-      throws IncompatibleBaseImageJavaVersionException {
-    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
-
-    Assert.assertEquals(
-        "gcr.io/distroless/java/jetty:java8",
-        PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
-  }
-
-  @Test
-  public void testGetBaseImage_nonDefault() throws IncompatibleBaseImageJavaVersionException {
-    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("tomcat"));
-
-    Assert.assertEquals(
-        "tomcat", PluginConfigurationProcessor.getBaseImage(rawConfiguration, projectProperties));
   }
 
   @Test

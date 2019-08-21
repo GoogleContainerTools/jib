@@ -66,11 +66,11 @@ public class ConfigurationPropertyValidator {
     // Warn if a system property is missing
     String missingProperty =
         "%s system property is set, but %s is not; attempting other authentication methods.";
-    if (!commandlinePassword.isEmpty() && commandlineUsername.isEmpty()) {
+    if (!commandlinePassword.isEmpty()) {
       logger.accept(
           LogEvent.warn(String.format(missingProperty, passwordProperty, usernameProperty)));
     }
-    if (!commandlineUsername.isEmpty() && commandlinePassword.isEmpty()) {
+    if (!commandlineUsername.isEmpty()) {
       logger.accept(
           LogEvent.warn(String.format(missingProperty, usernameProperty, passwordProperty)));
     }
