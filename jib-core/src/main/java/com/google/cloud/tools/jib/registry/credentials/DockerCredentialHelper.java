@@ -29,7 +29,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import javax.annotation.Nullable;
 
 /**
@@ -60,10 +59,6 @@ public class DockerCredentialHelper {
   public DockerCredentialHelper(String serverUrl, Path credentialHelper) {
     this.serverUrl = serverUrl;
     this.credentialHelper = credentialHelper;
-  }
-
-  DockerCredentialHelper(String registry, String credentialHelperSuffix) {
-    this(registry, Paths.get("docker-credential-" + credentialHelperSuffix));
   }
 
   /**
