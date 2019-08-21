@@ -41,7 +41,7 @@ dependencies {
   // For Google libraries, check <http-client-bom.version>, <google.auth.version>, <guava.version>,
   // ... in https://github.com/googleapis/google-cloud-java/blob/master/google-cloud-clients/pom.xml
   // for best compatibility.
-  /
+  //
   // TODO: remove once https://github.com/googleapis/google-http-java-client/issues/795 is fixed and released.
   // Forcing to downgrade this to 4.5.6 fixes https://github.com/GoogleContainerTools/jib/issues/1914
   // However, #795 and upgrading httpclient alone may not fix #1914. We may need to explicitly disable URI
