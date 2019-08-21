@@ -45,6 +45,8 @@ dependencies {
   implementation 'com.google.http-client:google-http-client-apache-v2:1.31.0'
   // TODO: remove once https://github.com/googleapis/google-http-java-client/issues/795 is fixed and released.
   // Forcing to downgrade this to 4.5.6 fixes https://github.com/GoogleContainerTools/jib/issues/1914
+  // However, #795 and upgrading httpclient alone may not fix #1914. We may need to explicitly disable URI
+  // normalization as discussed in #795.
   implementation('org.apache.httpcomponents:httpclient:4.5.6') {
     force = true
   }
