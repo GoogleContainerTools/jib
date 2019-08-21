@@ -66,6 +66,7 @@ public class JibExtension {
   // Defines default configuration values.
   private static final boolean DEFAULT_ALLOW_INSECURE_REGISTIRIES = false;
   private static final String DEFAULT_CONTAINERIZING_MODE = "exploded";
+  private static final String DEFAULT_OUTPUT_NAME = "jib-image";
 
   private final BaseImageParameters from;
   private final TargetImageParameters to;
@@ -73,6 +74,7 @@ public class JibExtension {
   private final ExtraDirectoriesParameters extraDirectories;
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<String> containerizingMode;
+  private final Property<String> outputName;
 
   @Deprecated boolean extraDirectoryConfigured;
   @Deprecated boolean extraDirectoriesConfigured;
@@ -87,10 +89,12 @@ public class JibExtension {
 
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
+    outputName = objectFactory.property(String.class);
 
     // Sets defaults.
     allowInsecureRegistries.set(DEFAULT_ALLOW_INSECURE_REGISTIRIES);
     containerizingMode.set(DEFAULT_CONTAINERIZING_MODE);
+    outputName.set(DEFAULT_OUTPUT_NAME);
   }
 
   public void from(Action<? super BaseImageParameters> action) {
@@ -129,6 +133,10 @@ public class JibExtension {
 
   public void setContainerizingMode(String containerizingMode) {
     this.containerizingMode.set(containerizingMode);
+  }
+
+  public void setOutputName(String outputName) {
+    this.outputName.set(outputName);
   }
 
   @Nested
@@ -176,5 +184,12 @@ public class JibExtension {
   public String getContainerizingMode() {
     String property = System.getProperty(PropertyNames.CONTAINERIZING_MODE);
     return property != null ? property : containerizingMode.get();
+  }
+
+  @Input
+  @Optional
+  public String getOutputName() {
+    String property = System.getProperty(PropertyNames.OUTPUT_NAME);
+    return property != null ? property : outputName.get();
   }
 }

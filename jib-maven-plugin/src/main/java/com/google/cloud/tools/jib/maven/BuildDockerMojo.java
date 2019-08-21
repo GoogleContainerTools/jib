@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException
 import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
 import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidOutputNameException;
 import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
@@ -127,6 +128,10 @@ public class BuildDockerMojo extends JibPluginConfiguration {
           "<container><workingDirectory> is not an absolute Unix-style path: "
               + ex.getInvalidPathValue(),
           ex);
+
+    } catch (InvalidOutputNameException ex) {
+      throw new MojoExecutionException(
+          "Invalid value for <outputName>: " + ex.getInvalidOutputName(), ex);
 
     } catch (InvalidContainerVolumeException ex) {
       throw new MojoExecutionException(

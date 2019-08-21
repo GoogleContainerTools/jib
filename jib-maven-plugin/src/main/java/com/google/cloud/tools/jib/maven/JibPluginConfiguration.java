@@ -256,6 +256,9 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter(property = PropertyNames.CONTAINERIZING_MODE)
   private String containerizingMode = "exploded";
 
+  @Parameter(property = PropertyNames.OUTPUT_NAME)
+  private String outputName = "jib-image";
+
   @Parameter(property = PropertyNames.SKIP)
   private boolean skip;
 
@@ -664,6 +667,11 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   public String getContainerizingMode() {
     String property = getProperty(PropertyNames.CONTAINERIZING_MODE);
     return property != null ? property : containerizingMode;
+  }
+
+  public String getOutputName() {
+    String property = getProperty(PropertyNames.OUTPUT_NAME);
+    return property != null ? property : outputName;
   }
 
   boolean isSkipped() {

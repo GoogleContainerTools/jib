@@ -180,4 +180,9 @@ class MavenRawConfiguration implements RawConfiguration {
   public String getContainerizingMode() {
     return jibPluginConfiguration.getContainerizingMode();
   }
+
+  @Override
+  public String getOutputName() {
+    return jibPluginConfiguration.getOutputName();
+  }
 }

@@ -103,10 +103,12 @@ public class PluginConfigurationProcessorTest {
     Mockito.when(rawConfiguration.getExtraDirectories())
         .thenReturn(Arrays.asList(Paths.get("nonexistent/path")));
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
+    Mockito.when(rawConfiguration.getOutputName()).thenReturn("jib-image");
 
     Mockito.when(projectProperties.getToolName()).thenReturn("tool");
     Mockito.when(projectProperties.getMainClassFromJar()).thenReturn("java.lang.Object");
     Mockito.when(projectProperties.getDefaultCacheDirectory()).thenReturn(Paths.get("cache"));
+    Mockito.when(projectProperties.getOutputDirectory()).thenReturn(Paths.get("out"));
     Mockito.when(
             projectProperties.createJibContainerBuilder(
                 Mockito.any(JavaContainerBuilder.class), Mockito.any(ContainerizingMode.class)))
@@ -887,6 +889,53 @@ public class PluginConfigurationProcessorTest {
     } catch (InvalidCreationTimeException ex) {
       Assert.assertEquals("invalid format", ex.getMessage());
       Assert.assertEquals("invalid format", ex.getInvalidCreationTime());
+    }
+  }
+
+  @Test
+  public void testGetOutputPathChecked_default() throws InvalidOutputNameException {
+    Assert.assertEquals(
+        projectProperties.getOutputDirectory().resolve("jib-image.digest"),
+        PluginConfigurationProcessor.getOutputPathChecked(
+            rawConfiguration, projectProperties, ".digest"));
+  }
+
+  @Test
+  public void testGetOutputPathChecked_customOutputName() throws InvalidOutputNameException {
+    Mockito.when(rawConfiguration.getOutputName()).thenReturn("random-output-name");
+
+    Assert.assertEquals(
+        projectProperties.getOutputDirectory().resolve("random-output-name.digest"),
+        PluginConfigurationProcessor.getOutputPathChecked(
+            rawConfiguration, projectProperties, ".digest"));
+  }
+
+  @Test
+  public void testGetOutputPathChecked_invalidPath() {
+    Mockito.when(rawConfiguration.getOutputName())
+        .thenReturn("not/allowed/path/to/the/output-file");
+
+    try {
+      PluginConfigurationProcessor.getOutputPathChecked(
+          rawConfiguration, projectProperties, ".digest");
+      Assert.fail();
+    } catch (InvalidOutputNameException ex) {
+      Assert.assertEquals("not/allowed/path/to/the/output-file", ex.getMessage());
+      Assert.assertEquals("not/allowed/path/to/the/output-file", ex.getInvalidOutputName());
+    }
+  }
+
+  @Test
+  public void testGetOutputPathChecked_invalidPathWin() {
+    Mockito.when(rawConfiguration.getOutputName()).thenReturn("not\\allowed\\backslashes");
+
+    try {
+      PluginConfigurationProcessor.getOutputPathChecked(
+          rawConfiguration, projectProperties, ".digest");
+      Assert.fail();
+    } catch (InvalidOutputNameException ex) {
+      Assert.assertEquals("not\\allowed\\backslashes", ex.getMessage());
+      Assert.assertEquals("not\\allowed\\backslashes", ex.getInvalidOutputName());
     }
   }
 

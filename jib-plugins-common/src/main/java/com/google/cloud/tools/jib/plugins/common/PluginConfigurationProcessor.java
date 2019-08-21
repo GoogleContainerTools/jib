@@ -68,7 +68,7 @@ public class PluginConfigurationProcessor {
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
+          InvalidCreationTimeException, InvalidOutputNameException {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
@@ -91,8 +91,8 @@ public class PluginConfigurationProcessor {
             helpfulSuggestions,
             targetImageReference,
             rawConfiguration.getToTags())
-        .writeImageDigest(projectProperties.getOutputDirectory().resolve("jib-image.digest"))
-        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
+        .writeImageDigest(getOutputPathChecked(rawConfiguration, projectProperties, ".digest"))
+        .writeImageId(getOutputPathChecked(rawConfiguration, projectProperties, ".id"));
   }
 
   public static JibBuildRunner createJibBuildRunnerForTarImage(
@@ -104,8 +104,8 @@ public class PluginConfigurationProcessor {
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
-    Path tarImagePath = projectProperties.getOutputDirectory().resolve("jib-image.tar");
+          InvalidCreationTimeException, InvalidOutputNameException {
+    Path tarImagePath = getOutputPathChecked(rawConfiguration, projectProperties, ".tar");
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
@@ -121,8 +121,8 @@ public class PluginConfigurationProcessor {
             projectProperties::log,
             helpfulSuggestions,
             tarImagePath)
-        .writeImageDigest(projectProperties.getOutputDirectory().resolve("jib-image.digest"))
-        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
+        .writeImageDigest(getOutputPathChecked(rawConfiguration, projectProperties, ".digest"))
+        .writeImageId(getOutputPathChecked(rawConfiguration, projectProperties, ".id"));
   }
 
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
@@ -134,7 +134,7 @@ public class PluginConfigurationProcessor {
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
-          InvalidCreationTimeException {
+          InvalidCreationTimeException, InvalidOutputNameException {
     Preconditions.checkArgument(rawConfiguration.getToImage().isPresent());
 
     ImageReference targetImageReference = ImageReference.parse(rawConfiguration.getToImage().get());
@@ -166,8 +166,8 @@ public class PluginConfigurationProcessor {
             helpfulSuggestions,
             targetImageReference,
             rawConfiguration.getToTags())
-        .writeImageDigest(projectProperties.getOutputDirectory().resolve("jib-image.digest"))
-        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
+        .writeImageDigest(getOutputPathChecked(rawConfiguration, projectProperties, ".digest"))
+        .writeImageId(getOutputPathChecked(rawConfiguration, projectProperties, ".id"));
   }
 
   @VisibleForTesting
@@ -456,6 +456,22 @@ public class PluginConfigurationProcessor {
       return Optional.of(AbsoluteUnixPath.get(path));
     } catch (IllegalArgumentException ex) {
       throw new InvalidWorkingDirectoryException(path, path, ex);
+    }
+  }
+
+  @VisibleForTesting
+  static Path getOutputPathChecked(
+      RawConfiguration rawConfiguration, ProjectProperties projectProperties, String fileSuffix)
+      throws InvalidOutputNameException {
+    String outputName = rawConfiguration.getOutputName();
+    try {
+      if (outputName.contains("/") || outputName.contains("\\")) {
+        throw new IllegalArgumentException("output name might not contain a path: " + outputName);
+      }
+
+      return projectProperties.getOutputDirectory().resolve(outputName + fileSuffix);
+    } catch (RuntimeException ex) {
+      throw new InvalidOutputNameException(outputName, outputName, ex);
     }
   }
 
