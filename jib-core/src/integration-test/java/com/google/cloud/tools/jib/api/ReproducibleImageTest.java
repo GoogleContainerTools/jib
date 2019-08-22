@@ -72,7 +72,7 @@ public class ReproducibleImageTest {
 
     imageTar = new File(imageLocation.getRoot(), "image.tar");
     Containerizer containerizer =
-        Containerizer.to(TarImage.named("jib-core/reproducible").saveTo(imageTar.toPath()));
+        Containerizer.to(TarImage.at(imageTar.toPath()).named("jib-core/reproducible"));
 
     Jib.fromScratch()
         .setEntrypoint("echo", "Hello World")

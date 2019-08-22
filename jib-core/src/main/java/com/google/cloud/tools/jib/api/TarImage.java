@@ -17,6 +17,8 @@
 package com.google.cloud.tools.jib.api;
 
 import java.nio.file.Path;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * Builds to a tarball archive.
@@ -24,73 +26,59 @@ import java.nio.file.Path;
  * <p>Usage example:
  *
  * <pre>{@code
- * TarImage tarImage = TarImage.named("myimage")
- *                             .saveTo(Paths.get("image.tar"));
+ * TarImage tarImage = TarImage.at(Paths.get("image.tar"))
+ *                             .named("myimage");
  * }</pre>
  */
 public class TarImage {
 
-  /** Finishes constructing a {@link TarImage}. */
-  public static class Builder {
-
-    private final ImageReference imageReference;
-
-    private Builder(ImageReference imageReference) {
-      this.imageReference = imageReference;
-    }
-
-    /**
-     * Sets the output file to save the tarball archive to.
-     *
-     * @param outputFile the output file
-     * @return a new {@link TarImage}
-     */
-    public TarImage saveTo(Path outputFile) {
-      return new TarImage(imageReference, outputFile);
-    }
-  }
-
   /**
-   * Configures the output tarball archive with an image reference. This image reference will be the
-   * name of the image if loaded into the Docker daemon.
+   * Constructs a {@link TarImage} with the specified path.
    *
-   * @param imageReference the image reference
-   * @return a {@link Builder} to finish constructing a new {@link TarImage}
+   * @param path the path to the tarball archive
+   * @return a new {@link TarImage}
    */
-  public static Builder named(ImageReference imageReference) {
-    return new Builder(imageReference);
+  public static TarImage at(Path path) {
+    return new TarImage(path);
+  }
+
+  private final Path path;
+  @Nullable private ImageReference imageReference;
+
+  /** Instantiate with {@link #at}. */
+  private TarImage(Path path) {
+    this.path = path;
   }
 
   /**
-   * Configures the output tarball archive with an image reference to set as its tag.
+   * Sets the name of the image. This is the name that shows up when the tar is loaded by the Docker
+   * daemon.
    *
    * @param imageReference the image reference
-   * @return a {@link Builder} to finish constructing a new {@link TarImage}
+   * @return this
+   */
+  public TarImage named(ImageReference imageReference) {
+    this.imageReference = imageReference;
+    return this;
+  }
+
+  /**
+   * Sets the name of the image. This is the name that shows up when the tar is loaded by the Docker
+   * daemon.
+   *
+   * @param imageReference the image reference
+   * @return this
    * @throws InvalidImageReferenceException if {@code imageReference} is not a valid image reference
    */
-  public static Builder named(String imageReference) throws InvalidImageReferenceException {
+  public TarImage named(String imageReference) throws InvalidImageReferenceException {
     return named(ImageReference.parse(imageReference));
   }
 
-  private final ImageReference imageReference;
-  private final Path outputFile;
-
-  /** Instantiate with {@link #named}. */
-  private TarImage(ImageReference imageReference, Path outputFile) {
-    this.imageReference = imageReference;
-    this.outputFile = outputFile;
+  Path getPath() {
+    return path;
   }
 
-  /**
-   * Gets the output file to save the tarball archive to.
-   *
-   * @return the output file
-   */
-  Path getOutputFile() {
-    return outputFile;
-  }
-
-  ImageReference getImageReference() {
-    return imageReference;
+  Optional<ImageReference> getImageReference() {
+    return Optional.ofNullable(imageReference);
   }
 }

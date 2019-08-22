@@ -281,8 +281,8 @@ public class JavaContainerBuilderTest {
       Assert.assertEquals(
           "Failed to construct entrypoint on JavaContainerBuilder; jvmFlags were set, but "
               + "mainClass is null. Specify the main class using "
-              + "JavaContainerBuilder#setMainClass(String), or consider using a "
-              + "jib.frontend.MainClassFinder to infer the main class.",
+              + "JavaContainerBuilder#setMainClass(String), or consider using MainClassFinder to "
+              + "infer the main class.",
           ex.getMessage());
     }
   }

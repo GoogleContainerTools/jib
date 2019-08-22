@@ -30,15 +30,19 @@ import org.junit.Test;
 /** Integration tests for {@link DockerCredentialHelper}. */
 public class DockerCredentialHelperIntegrationTest {
 
+  // This binary must exist and be functioning properly for these tests to succeed.
+  private static final String GCR_CREDENTIAL_HELPER = "docker-credential-gcr";
+
   /** Tests retrieval via {@code docker-credential-gcr} CLI. */
   @Test
   public void testRetrieveGCR()
       throws IOException, CredentialHelperUnhandledServerUrlException,
           CredentialHelperNotFoundException, URISyntaxException, InterruptedException {
-    new Command("docker-credential-gcr", "store")
+    new Command(GCR_CREDENTIAL_HELPER, "store")
         .run(Files.readAllBytes(Paths.get(Resources.getResource("credentials.json").toURI())));
 
-    DockerCredentialHelper dockerCredentialHelper = new DockerCredentialHelper("myregistry", "gcr");
+    DockerCredentialHelper dockerCredentialHelper =
+        new DockerCredentialHelper("myregistry", Paths.get(GCR_CREDENTIAL_HELPER));
 
     Credential credentials = dockerCredentialHelper.retrieve();
     Assert.assertEquals("myusername", credentials.getUsername());
@@ -50,15 +54,14 @@ public class DockerCredentialHelperIntegrationTest {
       throws IOException, CredentialHelperUnhandledServerUrlException {
     try {
       DockerCredentialHelper fakeDockerCredentialHelper =
-          new DockerCredentialHelper("", "fake-cloud-provider");
+          new DockerCredentialHelper("", Paths.get("non-existing-helper"));
 
       fakeDockerCredentialHelper.retrieve();
 
       Assert.fail("Retrieve should have failed for nonexistent credential helper");
 
     } catch (CredentialHelperNotFoundException ex) {
-      Assert.assertEquals(
-          "The system does not have docker-credential-fake-cloud-provider CLI", ex.getMessage());
+      Assert.assertEquals("The system does not have non-existing-helper CLI", ex.getMessage());
     }
   }
 
@@ -67,7 +70,7 @@ public class DockerCredentialHelperIntegrationTest {
       throws IOException, CredentialHelperNotFoundException {
     try {
       DockerCredentialHelper fakeDockerCredentialHelper =
-          new DockerCredentialHelper("fake.server.url", "gcr");
+          new DockerCredentialHelper("fake.server.url", Paths.get(GCR_CREDENTIAL_HELPER));
 
       fakeDockerCredentialHelper.retrieve();
 
