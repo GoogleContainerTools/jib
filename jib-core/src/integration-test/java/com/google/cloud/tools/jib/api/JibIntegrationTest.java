@@ -127,7 +127,7 @@ public class JibIntegrationTest {
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-helloworld-dockersavedtar");
     JibContainer jibContainer =
-        Jib.from(TarImage.named("ignored").saveTo(path))
+        Jib.from(TarImage.at(path).named("ignored"))
             .setEntrypoint("echo", "Hello World")
             .containerize(
                 Containerizer.to(
@@ -154,13 +154,13 @@ public class JibIntegrationTest {
         .addLayer(
             Collections.singletonList(Paths.get(Resources.getResource("core/hello").toURI())), "/")
         .containerize(
-            Containerizer.to(TarImage.named(targetImageReference).saveTo(outputPath))
+            Containerizer.to(TarImage.at(outputPath).named(targetImageReference))
                 .setAllowInsecureRegistries(true));
 
     targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-helloworld-jibtar");
     JibContainer jibContainer =
-        Jib.from(TarImage.named("ignored").saveTo(outputPath))
+        Jib.from(TarImage.at(outputPath).named("ignored"))
             .setEntrypoint("cat", "/hello")
             .containerize(
                 Containerizer.to(
