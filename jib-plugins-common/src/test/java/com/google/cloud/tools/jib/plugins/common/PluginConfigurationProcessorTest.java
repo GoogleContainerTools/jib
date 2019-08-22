@@ -53,6 +53,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
@@ -88,6 +89,7 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private RawConfiguration rawConfiguration;
   @Mock private ProjectProperties projectProperties;
@@ -723,12 +725,7 @@ public class PluginConfigurationProcessorTest {
       throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("tar:///path/to.tar"));
-    ImageConfiguration result =
-        getBuildConfiguration(
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                        rawConfiguration, projectProperties, inferredAuthProvider)
-                    .toContainerBuilder())
-            .getBaseImageConfiguration();
+    ImageConfiguration result = getCommonImageConfiguration();
     Assert.assertEquals(Paths.get("/path/to.tar"), result.getTarPath().get());
   }
 
@@ -737,13 +734,8 @@ public class PluginConfigurationProcessorTest {
       throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("docker://imagename"));
-    ImageConfiguration result =
-        getBuildConfiguration(
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                        rawConfiguration, projectProperties, inferredAuthProvider)
-                    .toContainerBuilder())
-            .getBaseImageConfiguration();
-    Assert.assertEquals("imagename", result.getImageRepository());
+    ImageConfiguration result = getCommonImageConfiguration();
+    Assert.assertEquals("imagename", result.getImage().toString());
     Assert.assertTrue(result.getDockerClient().isPresent());
   }
 
@@ -751,14 +743,9 @@ public class PluginConfigurationProcessorTest {
   public void testGetJavaContainerBuilderWithBaseImage_registryPrefix()
       throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("registry://imagename"));
-    ImageConfiguration result =
-        getBuildConfiguration(
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                        rawConfiguration, projectProperties, inferredAuthProvider)
-                    .toContainerBuilder())
-            .getBaseImageConfiguration();
-    Assert.assertEquals("imagename", result.getImageRepository());
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("registry://ima.ge/name"));
+    ImageConfiguration result = getCommonImageConfiguration();
+    Assert.assertEquals("ima.ge/name", result.getImage().toString());
     Assert.assertFalse(result.getDockerClient().isPresent());
   }
 
@@ -766,14 +753,9 @@ public class PluginConfigurationProcessorTest {
   public void testGetJavaContainerBuilderWithBaseImage_registryWithoutPrefix()
       throws IncompatibleBaseImageJavaVersionException, InvalidImageReferenceException, IOException,
           CacheDirectoryCreationException {
-    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("imagename"));
-    ImageConfiguration result =
-        getBuildConfiguration(
-                PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
-                        rawConfiguration, projectProperties, inferredAuthProvider)
-                    .toContainerBuilder())
-            .getBaseImageConfiguration();
-    Assert.assertEquals("imagename", result.getImageRepository());
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("ima.ge/name"));
+    ImageConfiguration result = getCommonImageConfiguration();
+    Assert.assertEquals("ima.ge/name", result.getImage().toString());
     Assert.assertFalse(result.getDockerClient().isPresent());
   }
 
@@ -943,6 +925,17 @@ public class PluginConfigurationProcessorTest {
       Assert.assertEquals("invalid format", ex.getMessage());
       Assert.assertEquals("invalid format", ex.getInvalidCreationTime());
     }
+  }
+
+  private ImageConfiguration getCommonImageConfiguration()
+      throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
+    return getBuildConfiguration(
+            PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+                    rawConfiguration, projectProperties, inferredAuthProvider)
+                .addClasses(temporaryFolder.getRoot().toPath())
+                .toContainerBuilder())
+        .getBaseImageConfiguration();
   }
 
   private JibContainerBuilder processCommonConfiguration()
