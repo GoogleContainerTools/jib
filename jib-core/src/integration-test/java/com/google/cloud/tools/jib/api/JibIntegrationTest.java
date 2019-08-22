@@ -201,8 +201,8 @@ public class JibIntegrationTest {
             ManifestPullerIntegrationTest.KNOWN_MANIFEST_LIST_SHA);
     Containerizer containerizer =
         Containerizer.to(
-            TarImage.named("whatever")
-                .saveTo(cacheFolder.newFolder("goose").toPath().resolve("moose")));
+            TarImage.at(cacheFolder.newFolder("goose").toPath().resolve("moose"))
+                .named("whatever"));
 
     Jib.from(sourceImageReferenceAsManifestList).containerize(containerizer);
     // pass, no exceptions thrown

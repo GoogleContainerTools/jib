@@ -322,9 +322,7 @@ public class ContainerizerIntegrationTest {
       throws IOException, InterruptedException, RegistryException, CacheDirectoryCreationException,
           ExecutionException {
     return buildImage(
-        baseImage,
-        Containerizer.to(TarImage.named(targetImage).saveTo(outputPath)),
-        additionalTags);
+        baseImage, Containerizer.to(TarImage.at(outputPath).named(targetImage)), additionalTags);
   }
 
   private JibContainer buildImage(
