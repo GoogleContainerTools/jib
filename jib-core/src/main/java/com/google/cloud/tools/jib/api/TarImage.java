@@ -42,12 +42,12 @@ public class TarImage {
     return new TarImage(path);
   }
 
-  private final Path outputFile;
+  private final Path path;
   @Nullable private ImageReference imageReference;
 
   /** Instantiate with {@link #at}. */
-  private TarImage(Path outputFile) {
-    this.outputFile = outputFile;
+  private TarImage(Path path) {
+    this.path = path;
   }
 
   /**
@@ -74,13 +74,8 @@ public class TarImage {
     return named(ImageReference.parse(imageReference));
   }
 
-  /**
-   * Gets the output file to save the tarball archive to.
-   *
-   * @return the output file
-   */
   Path getPath() {
-    return outputFile;
+    return path;
   }
 
   Optional<ImageReference> getImageReference() {
