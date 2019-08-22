@@ -33,7 +33,7 @@ import javax.annotation.Nullable;
 public class TarImage {
 
   /**
-   * Sets the path to the tarball archive.
+   * Constructs a {@link TarImage} with the specified path.
    *
    * @param path the path to the tarball archive
    * @return a new {@link TarImage}

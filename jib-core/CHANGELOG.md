@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- `TarImage` is constructed using `TarImage.at(...).named(...)` instead of `TarImage.named(...).saveTo(...)` ([#1918](https://github.com/GoogleContainerTools/jib/issues/1918))
+
 ### Fixed
 
 ## 0.10.1
