@@ -232,7 +232,7 @@ public class StepsRunner {
   private void saveDocker() {
     Optional<DockerClient> dockerClient =
         buildConfiguration.getBaseImageConfiguration().getDockerClient();
-    Verify.verify(dockerClient.isPresent());
+    Preconditions.checkArgument(dockerClient.isPresent());
 
     results.tarPath =
         executorService.submit(new SaveDockerStep(buildConfiguration, dockerClient.get()));

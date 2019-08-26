@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
-/** Immutable configuration options for an image reference with credentials. */
+/** Immutable configuration options for a base or target image reference. */
 public class ImageConfiguration {
 
   /** Builder for instantiating an {@link ImageConfiguration}. */
@@ -79,6 +79,11 @@ public class ImageConfiguration {
      * @return the corresponding {@link ImageConfiguration}
      */
     public ImageConfiguration build() {
+      Preconditions.checkArgument(
+          (credentialRetrievers.isEmpty() && dockerClient == null && tarPath == null)
+              ^ !credentialRetrievers.isEmpty()
+              ^ dockerClient != null
+              ^ tarPath != null);
       return new ImageConfiguration(imageReference, credentialRetrievers, dockerClient, tarPath);
     }
 
