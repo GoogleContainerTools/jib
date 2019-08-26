@@ -109,7 +109,7 @@ public class PluginConfigurationProcessor {
     Path tarImagePath = projectProperties.getOutputDirectory().resolve("jib-image.tar");
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
-    TarImage targetImage = TarImage.named(targetImageReference).saveTo(tarImagePath);
+    TarImage targetImage = TarImage.at(tarImagePath).named(targetImageReference);
 
     Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =

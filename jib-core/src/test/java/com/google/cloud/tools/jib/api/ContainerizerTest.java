@@ -40,7 +40,7 @@ public class ContainerizerTest {
     DockerDaemonImage dockerDaemonImage =
         DockerDaemonImage.named(ImageReference.of(null, "repository", null));
     TarImage tarImage =
-        TarImage.named(ImageReference.of(null, "repository", null)).saveTo(Paths.get("ignored"));
+        TarImage.at(Paths.get("ignored")).named(ImageReference.of(null, "repository", null));
 
     verifyTo(Containerizer.to(registryImage));
     verifyTo(Containerizer.to(dockerDaemonImage));
@@ -119,7 +119,7 @@ public class ContainerizerTest {
   @Test
   public void testGetImageConfiguration_tarImage() throws InvalidImageReferenceException {
     Containerizer containerizer =
-        Containerizer.to(TarImage.named("tar/image").saveTo(Paths.get("output/file")));
+        Containerizer.to(TarImage.at(Paths.get("output/file")).named("tar/image"));
 
     ImageConfiguration imageConfiguration = containerizer.getImageConfiguration();
     Assert.assertEquals("tar/image", imageConfiguration.getImage().toString());
