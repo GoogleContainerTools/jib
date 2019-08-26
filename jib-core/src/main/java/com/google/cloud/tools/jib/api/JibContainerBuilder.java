@@ -93,9 +93,10 @@ public class JibContainerBuilder {
 
   /** Instantiate with {@link Jib#from}. */
   JibContainerBuilder(TarImage baseImage) {
+    // TODO: Cleanup using scratch as placeholder
     this(
-        ImageConfiguration.builder(baseImage.getImageReference())
-            .setTarPath(baseImage.getOutputFile())
+        ImageConfiguration.builder(baseImage.getImageReference().orElse(ImageReference.scratch()))
+            .setTarPath(baseImage.getPath())
             .build(),
         BuildConfiguration.builder());
   }

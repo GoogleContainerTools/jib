@@ -50,9 +50,7 @@ public class Jib {
                   baseImageReference.replaceFirst(DOCKER_DAEMON_IMAGE_PREFIX, ""))));
     }
     if (baseImageReference.startsWith(TAR_IMAGE_PREFIX)) {
-      return from(
-          TarImage.named("ignored")
-              .saveTo(Paths.get(baseImageReference.replaceFirst(TAR_IMAGE_PREFIX, ""))));
+      return from(TarImage.at(Paths.get(baseImageReference.replaceFirst(TAR_IMAGE_PREFIX, ""))));
     }
     if (baseImageReference.startsWith(REGISTRY_IMAGE_PREFIX)) {
       baseImageReference = baseImageReference.replaceFirst(REGISTRY_IMAGE_PREFIX, "");

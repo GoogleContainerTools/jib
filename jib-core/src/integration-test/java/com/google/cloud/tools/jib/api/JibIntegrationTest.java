@@ -117,7 +117,7 @@ public class JibIntegrationTest {
   }
 
   @Test
-  public void testBasic_tarBaseImage_dockerSaved()
+  public void testBasic_tarBaseImage_dockerSavedCommand()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
     localRegistry.pull("busybox");
@@ -144,6 +144,32 @@ public class JibIntegrationTest {
   }
 
   @Test
+  public void testBasic_tarBaseImage_dockerSavedFile()
+      throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
+          RegistryException, CacheDirectoryCreationException, URISyntaxException {
+    // tar saved with 'docker save busybox -o busybox.tar'
+    Path path = Paths.get(Resources.getResource("core/busybox.tar").toURI());
+
+    ImageReference targetImageReference =
+        ImageReference.of("localhost:5000", "jib-core", "basic-helloworld-dockersavedtar");
+    JibContainer jibContainer =
+        Jib.from(TarImage.at(path).named("ignored"))
+            .setEntrypoint("echo", "Hello World")
+            .containerize(
+                Containerizer.to(
+                        RegistryImage.named(targetImageReference)
+                            .addCredentialRetriever(
+                                () -> Optional.of(Credential.from("username", "password"))))
+                    .setAllowInsecureRegistries(true));
+
+    Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
+    Assert.assertEquals(
+        "Hello World\n",
+        pullAndRunBuiltImage(
+            targetImageReference.withTag(jibContainer.getDigest().toString()).toString()));
+  }
+
+  @Test
   public void testBasic_tarBaseImage_jibImage()
       throws InvalidImageReferenceException, InterruptedException, ExecutionException,
           RegistryException, CacheDirectoryCreationException, IOException, URISyntaxException {
@@ -154,13 +180,13 @@ public class JibIntegrationTest {
         .addLayer(
             Collections.singletonList(Paths.get(Resources.getResource("core/hello").toURI())), "/")
         .containerize(
-            Containerizer.to(TarImage.named(targetImageReference).saveTo(outputPath))
+            Containerizer.to(TarImage.at(outputPath).named(targetImageReference))
                 .setAllowInsecureRegistries(true));
 
     targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-helloworld-jibtar");
     JibContainer jibContainer =
-        Jib.from(TarImage.named("ignored").saveTo(outputPath))
+        Jib.from(TarImage.at(outputPath).named("ignored"))
             .setEntrypoint("cat", "/hello")
             .containerize(
                 Containerizer.to(
