@@ -16,12 +16,25 @@
 
 package com.google.cloud.tools.jib.api;
 
+import java.nio.file.Paths;
+
 /** Build containers with Jib. */
 public class Jib {
 
+  public static final String REGISTRY_IMAGE_PREFIX = "registry://";
+  public static final String DOCKER_DAEMON_IMAGE_PREFIX = "docker://";
+  public static final String TAR_IMAGE_PREFIX = "tar://";
+
   /**
-   * Starts building the container from a base image. The base image should be publicly-available.
-   * For a base image that requires credentials, use {@link #from(RegistryImage)}.
+   * Starts building the container from a base image. The type of base image can be specified using
+   * a prefix, e.g. {@code registry://gcr.io/project/image}. The available prefixes are described
+   * below:
+   *
+   * <ul>
+   *   <li>No prefix, or {@code registry://}: uses a registry base image
+   *   <li>{@code docker://}: uses a base image found in the local Docker daemon
+   *   <li>{@code tar://}: uses a tarball base image at the path following the prefix
+   * </ul>
    *
    * @param baseImageReference the base image reference
    * @return a new {@link JibContainerBuilder} to continue building the container
@@ -30,6 +43,20 @@ public class Jib {
    */
   public static JibContainerBuilder from(String baseImageReference)
       throws InvalidImageReferenceException {
+    if (baseImageReference.startsWith(DOCKER_DAEMON_IMAGE_PREFIX)) {
+      return from(
+          DockerDaemonImage.named(
+              ImageReference.parse(
+                  baseImageReference.replaceFirst(DOCKER_DAEMON_IMAGE_PREFIX, ""))));
+    }
+    if (baseImageReference.startsWith(TAR_IMAGE_PREFIX)) {
+      return from(
+          TarImage.named("ignored")
+              .saveTo(Paths.get(baseImageReference.replaceFirst(TAR_IMAGE_PREFIX, ""))));
+    }
+    if (baseImageReference.startsWith(REGISTRY_IMAGE_PREFIX)) {
+      baseImageReference = baseImageReference.replaceFirst(REGISTRY_IMAGE_PREFIX, "");
+    }
     return from(RegistryImage.named(baseImageReference));
   }
 

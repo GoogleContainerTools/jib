@@ -127,7 +127,15 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Creates a new {@link JavaContainerBuilder} with the specified base image reference.
+   * Creates a new {@link JavaContainerBuilder} with the specified base image reference. The type of
+   * base image can be specified using a prefix, e.g. {@code registry://gcr.io/project/image}. The
+   * available prefixes are described below:
+   *
+   * <ul>
+   *   <li>No prefix, or {@code registry://}: uses a registry base image
+   *   <li>{@code docker://}: uses a base image found in the local Docker daemon
+   *   <li>{@code tar://}: uses a tarball base image at the path following the prefix
+   * </ul>
    *
    * @param baseImageReference the base image reference
    * @return a new {@link JavaContainerBuilder}
@@ -135,7 +143,7 @@ public class JavaContainerBuilder {
    */
   public static JavaContainerBuilder from(String baseImageReference)
       throws InvalidImageReferenceException {
-    return from(RegistryImage.named(baseImageReference));
+    return new JavaContainerBuilder(Jib.from(baseImageReference));
   }
 
   /**

@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.api.DockerDaemonImage;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
+import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.Ports;
@@ -56,10 +57,6 @@ import javax.annotation.Nullable;
  * configuration values and project properties.
  */
 public class PluginConfigurationProcessor {
-
-  private static final String REGISTRY_IMAGE_PREFIX = "registry://";
-  private static final String DOCKER_DAEMON_IMAGE_PREFIX = "docker://";
-  private static final String TAR_IMAGE_PREFIX = "tar://";
 
   public static JibBuildRunner createJibBuildRunnerForDockerDaemonImage(
       RawConfiguration rawConfiguration,
@@ -262,44 +259,38 @@ public class PluginConfigurationProcessor {
       InferredAuthProvider inferredAuthProvider)
       throws IncompatibleBaseImageJavaVersionException, InvalidImageReferenceException,
           FileNotFoundException {
+    // Use image configuration as-is if it's a local base image
     String baseImageConfig =
         rawConfiguration.getFromImage().orElse(getDefaultBaseImage(projectProperties));
-
-    if (baseImageConfig.startsWith(DOCKER_DAEMON_IMAGE_PREFIX)) {
-      return JavaContainerBuilder.from(
-          DockerDaemonImage.named(
-              ImageReference.parse(baseImageConfig.replaceFirst(DOCKER_DAEMON_IMAGE_PREFIX, ""))));
-
-    } else if (baseImageConfig.startsWith(TAR_IMAGE_PREFIX)) {
-      return JavaContainerBuilder.from(
-          TarImage.named("ignored")
-              .saveTo(Paths.get(baseImageConfig.replaceFirst(TAR_IMAGE_PREFIX, ""))));
-
-    } else {
-      if (baseImageConfig.startsWith(REGISTRY_IMAGE_PREFIX)) {
-        baseImageConfig = baseImageConfig.replaceFirst(REGISTRY_IMAGE_PREFIX, "");
-      }
-      int javaVersion = projectProperties.getMajorJavaVersion();
-      if (isKnownDistrolessJava8Image(baseImageConfig) && javaVersion > 8) {
-        throw new IncompatibleBaseImageJavaVersionException(8, javaVersion);
-      }
-      if (isKnownDistrolessJava11Image(baseImageConfig) && javaVersion > 11) {
-        throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
-      }
-      ImageReference baseImageReference = ImageReference.parse(baseImageConfig);
-      RegistryImage baseImage = RegistryImage.named(baseImageReference);
-      configureCredentialRetrievers(
-          rawConfiguration,
-          projectProperties,
-          baseImage,
-          baseImageReference,
-          PropertyNames.FROM_AUTH_USERNAME,
-          PropertyNames.FROM_AUTH_PASSWORD,
-          rawConfiguration.getFromAuth(),
-          inferredAuthProvider,
-          rawConfiguration.getFromCredHelper().orElse(null));
-      return JavaContainerBuilder.from(baseImage);
+    if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)
+        || baseImageConfig.startsWith(Jib.TAR_IMAGE_PREFIX)) {
+      return JavaContainerBuilder.from(baseImageConfig);
     }
+
+    // If using a registry base image, verify Java version is compatible
+    if (baseImageConfig.startsWith(Jib.REGISTRY_IMAGE_PREFIX)) {
+      baseImageConfig = baseImageConfig.replaceFirst(Jib.REGISTRY_IMAGE_PREFIX, "");
+    }
+    int javaVersion = projectProperties.getMajorJavaVersion();
+    if (isKnownDistrolessJava8Image(baseImageConfig) && javaVersion > 8) {
+      throw new IncompatibleBaseImageJavaVersionException(8, javaVersion);
+    }
+    if (isKnownDistrolessJava11Image(baseImageConfig) && javaVersion > 11) {
+      throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
+    }
+    ImageReference baseImageReference = ImageReference.parse(baseImageConfig);
+    RegistryImage baseImage = RegistryImage.named(baseImageReference);
+    configureCredentialRetrievers(
+        rawConfiguration,
+        projectProperties,
+        baseImage,
+        baseImageReference,
+        PropertyNames.FROM_AUTH_USERNAME,
+        PropertyNames.FROM_AUTH_PASSWORD,
+        rawConfiguration.getFromAuth(),
+        inferredAuthProvider,
+        rawConfiguration.getFromCredHelper().orElse(null));
+    return JavaContainerBuilder.from(baseImage);
   }
 
   /**
