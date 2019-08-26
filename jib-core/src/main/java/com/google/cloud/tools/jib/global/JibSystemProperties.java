@@ -35,6 +35,7 @@ public class JibSystemProperties {
   private static final String SERIALIZE = "jibSerialize";
 
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
+  public static final String UPSTREAM_CLIENT = "jib.upstreamClient";
 
   /**
    * Gets the HTTP connection/read timeouts for registry interactions in milliseconds. This is

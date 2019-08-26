@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import org.junit.Assert;
 import org.junit.Before;
@@ -70,6 +71,20 @@ public class RegistryClientTest {
 
     Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
     Assert.assertTrue(registryClient.getUserAgent().endsWith(" some user agent suffix"));
+  }
+
+  @Test
+  public void testGetUserAgentWithUpstreamClient() {
+    System.setProperty(JibSystemProperties.UPSTREAM_CLIENT, "skaffold-0.34.0");
+
+    RegistryClient registryClient =
+        testRegistryClientFactory
+            .setAllowInsecureRegistries(true)
+            .setUserAgentSuffix("foo")
+            .newRegistryClient();
+    Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
+    Assert.assertTrue(registryClient.getUserAgent().endsWith(" skaffold-0.34.0"));
+    System.clearProperty(JibSystemProperties.UPSTREAM_CLIENT);
   }
 
   @Test

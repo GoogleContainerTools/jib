@@ -129,6 +129,11 @@ public class RegistryClient {
       if (userAgentSuffix != null) {
         userAgentBuilder.append(" ").append(userAgentSuffix);
       }
+      if (System.getProperty(JibSystemProperties.UPSTREAM_CLIENT) != null) {
+        userAgentBuilder
+            .append(" ")
+            .append(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT));
+      }
       return userAgentBuilder.toString();
     }
   }
