@@ -43,7 +43,9 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /** Integration tests for {@link BuildImageMojo}. */
 public class BuildImageMojoIntegrationTest {
@@ -73,6 +75,8 @@ public class BuildImageMojoIntegrationTest {
 
   @ClassRule
   public static final TestProject servlet25Project = new TestProject(testPlugin, "war_servlet25");
+
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static String getTestImageReference(String label) {
     String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';
@@ -159,6 +163,22 @@ public class BuildImageMojoIntegrationTest {
     }
 
     return output;
+  }
+
+  private static String buildAndRunFromLocalBase(
+      Path projectRoot, String targetImage, String baseImage)
+      throws VerificationException, IOException, InterruptedException {
+    Verifier verifier = new Verifier(projectRoot.toString());
+    verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
+    verifier.setSystemProperty("_TARGET_IMAGE", targetImage);
+    verifier.setSystemProperty("_BASE_IMAGE", baseImage);
+    verifier.setSystemProperty("jib.allowInsecureRegistries", "true");
+    verifier.setAutoclean(false);
+    verifier.addCliOption("-X");
+    verifier.addCliOption("--file=pom-localbase.xml");
+    verifier.executeGoals(Arrays.asList("clean", "compile"));
+    verifier.executeGoal("jib:build");
+    return pullAndRunBuiltImage(targetImage);
   }
 
   private static String buildAndRunAdditionalTag(
@@ -324,6 +344,17 @@ public class BuildImageMojoIntegrationTest {
   public void setUp() throws IOException, InterruptedException {
     // Pull distroless to local registry so we can test 'from' credentials
     localRegistry1.pullAndPushToLocal("gcr.io/distroless/java:latest", "distroless/java");
+
+    // Make sure resource file has a consistent value at the beginning of each test
+    // (testExecute_simple overwrites it)
+    Files.write(
+        simpleTestProject
+            .getProjectRoot()
+            .resolve("src")
+            .resolve("main")
+            .resolve("resources")
+            .resolve("world"),
+        "world".getBytes(StandardCharsets.UTF_8));
   }
 
   @After
@@ -380,6 +411,38 @@ public class BuildImageMojoIntegrationTest {
     assertCreationTimeEpoch(targetImage);
     assertWorkingDirectory("/home", targetImage);
     assertLayerSize(8, targetImage);
+  }
+
+  @Test
+  public void testBuild_dockerDaemonBase()
+      throws IOException, InterruptedException, VerificationException {
+    String targetImage =
+        IntegrationTestingConfiguration.getTestRepositoryLocation()
+            + "/simplewithdockerdaemonbase:maven"
+            + System.nanoTime();
+
+    Assert.assertEquals(
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
+        buildAndRunFromLocalBase(
+            simpleTestProject.getProjectRoot(),
+            targetImage,
+            "docker://gcr.io/distroless/java:latest"));
+  }
+
+  @Test
+  public void testBuild_tarBase() throws IOException, InterruptedException, VerificationException {
+    Path path = temporaryFolder.getRoot().toPath().resolve("docker-save-distroless");
+    new Command("docker", "save", "gcr.io/distroless/java:latest", "-o", path.toString()).run();
+    String targetImage =
+        IntegrationTestingConfiguration.getTestRepositoryLocation()
+            + "/simplewithtarbase:maven"
+            + System.nanoTime();
+
+    Assert.assertEquals(
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
+        buildAndRunFromLocalBase(simpleTestProject.getProjectRoot(), targetImage, "tar://" + path));
   }
 
   @Test
