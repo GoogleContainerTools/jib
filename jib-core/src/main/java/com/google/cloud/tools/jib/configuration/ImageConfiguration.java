@@ -79,11 +79,17 @@ public class ImageConfiguration {
      * @return the corresponding {@link ImageConfiguration}
      */
     public ImageConfiguration build() {
-      Preconditions.checkArgument(
-          (credentialRetrievers.isEmpty() && dockerClient == null && tarPath == null)
-              ^ !credentialRetrievers.isEmpty()
-              ^ dockerClient != null
-              ^ tarPath != null);
+      int numArguments = 0;
+      if (!credentialRetrievers.isEmpty()) {
+        numArguments++;
+      }
+      if (dockerClient != null) {
+        numArguments++;
+      }
+      if (tarPath != null) {
+        numArguments++;
+      }
+      Preconditions.checkArgument(numArguments <= 1);
       return new ImageConfiguration(imageReference, credentialRetrievers, dockerClient, tarPath);
     }
 
