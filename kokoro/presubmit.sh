@@ -28,7 +28,5 @@ cd github/jib
 # TODO: Follow-up with Kokoro about why this is happening.
 rm /usr/local/bin/docker-credential-osxkeychain || true
 
-(cd jib-core; ./gradlew clean build integrationTest --info --stacktrace)
-(cd jib-plugins-common; ./gradlew clean build --info --stacktrace)
-(cd jib-maven-plugin; ./mvnw clean install -B -U -e)
-(cd jib-gradle-plugin; ./gradlew clean build --info --stacktrace)
+# we only run integration tests on jib-core for presubmit
+./gradlew clean build :jib-core:integrationTest --info --stacktrace
