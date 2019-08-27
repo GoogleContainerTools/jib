@@ -5,7 +5,7 @@ plugins {
   id 'net.ltgt.errorprone' version '0.6' apply false
   id 'net.researchgate.release' version '2.7.0' apply false
   id 'com.gradle.plugin-publish' version '0.10.1' apply false
-  id 'io.freefair.maven-plugin' version '3.8.1' apply false
+  id 'io.freefair.maven-plugin' version '4.0.0' apply false
 }
 
 import net.ltgt.gradle.errorprone.CheckSeverity
