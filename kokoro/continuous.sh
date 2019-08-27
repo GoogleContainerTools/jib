@@ -30,4 +30,6 @@ if [ "${KOKORO_JOB_CLUSTER}" = "MACOS_EXTERNAL" ]; then
   while ! docker info > /dev/null 2>&1; do sleep 1; done
 fi
 
+cd github/jib
+
 ./gradlew clean build integrationTest --info --stacktrace
