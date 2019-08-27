@@ -6,6 +6,17 @@ plugins {
   id 'net.researchgate.release' version '2.7.0' apply false
   id 'com.gradle.plugin-publish' version '0.10.1' apply false
   id 'io.freefair.maven-plugin' version '3.8.1' apply false
+
+  // apply so we can correctly configure the test runner to be gradle at the project level
+  id "org.jetbrains.gradle.plugin.idea-ext" version "0.5"
+}
+
+// run tests in intellij using gradle test runner
+idea.project.settings {
+  delegateActions {
+    delegateBuildRunToGradle = false
+    testRunner = 'GRADLE'
+  }
 }
 
 import net.ltgt.gradle.errorprone.CheckSeverity
