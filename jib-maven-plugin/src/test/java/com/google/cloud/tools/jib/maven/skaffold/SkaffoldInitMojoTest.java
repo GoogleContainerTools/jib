@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven.skaffold;
 
-import com.google.cloud.tools.jib.maven.TestPlugin;
 import com.google.cloud.tools.jib.maven.TestProject;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldInitOutput;
 import java.io.IOException;
@@ -38,13 +37,9 @@ import org.junit.Test;
 /** Tests for {@link SkaffoldInitMojo}. */
 public class SkaffoldInitMojoTest {
 
-  @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
+  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
-  @ClassRule
-  public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
-
-  @ClassRule
-  public static final TestProject multiTestProject = new TestProject(testPlugin, "multi");
+  @ClassRule public static final TestProject multiTestProject = new TestProject("multi");
 
   /**
    * Verifies that the files task succeeded and returns the list of JSON strings printed by the

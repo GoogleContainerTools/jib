@@ -1,6 +1,7 @@
 build
 target
 out
+bin
 *.iml
 *.ipr
 *.iws
