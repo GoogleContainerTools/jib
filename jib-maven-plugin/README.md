@@ -229,7 +229,7 @@ Field | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`image` | string | `gcr.io/distroless/java` | The image reference for the base image.
+`image` | string | `gcr.io/distroless/java` | The image reference for the base image. The source type can be specified using a [URL scheme](#setting-the-base-image)).
 `auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 
@@ -358,6 +358,17 @@ In this configuration, the image:
   </container>
 </configuration>
 ```
+
+### Setting the Base Image
+
+There are three different types of base images that Jib accepts: an image from a container registry, an image stored in the Docker daemon, or an image tarball on the local filesystem. You can specify which you would like to use by prepending the `<from><image>` configuration with a special prefix, listed below:
+
+Prefix | Example | Type
+--- | --- | ---
+*None* | `gcr.io/distroless/java` | Pulls the base image from a registry
+`registry://` | `registry://gcr.io/distroless/java` | Pulls the base image from a registry
+`docker://` | `docker://busybox` | Retrieves the base image from the Docker daemon
+`tar://` | `tar:///path/to/file.tar` | Uses an image tarball stored at the specified path as the base image
 
 ### Adding Arbitrary Files to the Image
 
