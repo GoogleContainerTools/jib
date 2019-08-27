@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.maven.skaffold;
 
 import com.google.cloud.tools.jib.maven.MojoCommon;
-import com.google.cloud.tools.jib.maven.TestPlugin;
 import com.google.cloud.tools.jib.maven.TestProject;
 import java.io.IOException;
 import org.apache.maven.it.VerificationException;
@@ -28,10 +27,8 @@ import org.junit.Test;
 
 /** Tests for {@link CheckJibVersionMojo}. */
 public class CheckJibVersionMojoTest {
-  @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
 
-  @ClassRule
-  public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
+  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
   @Test
   public void testIdentifiers() {

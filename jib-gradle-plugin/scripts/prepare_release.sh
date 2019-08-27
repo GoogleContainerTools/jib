@@ -16,7 +16,7 @@ Die() {
 }
 
 DieUsage() {
-    Die "Usage: ./scripts/prepare_release.sh <release version> [<post-release version>]"
+    Die "Usage: ./jib-gradle-plugin/scripts/prepare_release.sh <release version> [<post-release version>]"
 }
 
 # Usage: CheckVersion <version>
@@ -40,14 +40,14 @@ if [[ $(git status -uno --porcelain) ]]; then
 fi
 
 # Runs integration tests.
-./gradlew integrationTest --info --stacktrace
+./gradlew jib-gradle-plugin:integrationTest --info --stacktrace
 
 # Checks out a new branch for this version release (eg. 1.5.7).
 BRANCH=gradle_release_v${VERSION}
 git checkout -b ${BRANCH}
 
 # Changes the version for release and creates the commits/tags.
-echo | ./gradlew release -Prelease.releaseVersion=${VERSION} ${POST_RELEASE_VERSION:+"-Prelease.newVersion=${POST_RELEASE_VERSION}"}
+echo | ./gradlew jib-gradle-plugin:release -Prelease.releaseVersion=${VERSION} ${POST_RELEASE_VERSION:+"-Prelease.newVersion=${POST_RELEASE_VERSION}"}
 
 # Pushes the release branch and tag to Github.
 git push origin ${BRANCH}
@@ -57,4 +57,4 @@ git push origin v${VERSION}-gradle
 EchoGreen 'File a PR for the new release branch:'
 echo https://github.com/GoogleContainerTools/jib/compare/${BRANCH}
 
-EchoGreen "Once approved and merged, checkout the 'v${VERSION}-gradle' tag and run './gradlew publishPlugins'."
+EchoGreen "Once approved and merged, checkout the 'v${VERSION}-gradle' tag and run './gradlew jib-gradle-plugin:publishPlugins'."

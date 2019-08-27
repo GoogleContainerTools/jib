@@ -32,17 +32,12 @@ import org.junit.Test;
 /** Integration tests for {@link BuildDockerMojo}. */
 public class BuildDockerMojoIntegrationTest {
 
-  @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
+  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+
+  @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
 
   @ClassRule
-  public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
-
-  @ClassRule
-  public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
-
-  @ClassRule
-  public static final TestProject defaultTargetTestProject =
-      new TestProject(testPlugin, "default-target");
+  public static final TestProject defaultTargetTestProject = new TestProject("default-target");
 
   private static void buildToDockerDaemon(Path projectRoot, String imageReference, String pomXml)
       throws VerificationException, DigestException, IOException {

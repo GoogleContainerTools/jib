@@ -5,5 +5,5 @@ set -e
 # Display commands to stderr.
 set -x
 
-cd github/jib/jib-core
-./gradlew prepareRelease
+cd github/jib
+./gradlew :jib-core:prepareRelease

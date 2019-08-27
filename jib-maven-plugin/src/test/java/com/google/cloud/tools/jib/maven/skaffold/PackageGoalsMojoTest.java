@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven.skaffold;
 
-import com.google.cloud.tools.jib.maven.TestPlugin;
 import com.google.cloud.tools.jib.maven.TestProject;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -35,10 +34,7 @@ import org.junit.Test;
 /** Tests for {@link PackageGoalsMojo}. */
 public class PackageGoalsMojoTest {
 
-  @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
-
-  @ClassRule
-  public static final TestProject multiTestProject = new TestProject(testPlugin, "multi");
+  @ClassRule public static final TestProject multiTestProject = new TestProject("multi");
 
   private void verifyGoals(Path projectRoot, String profilesString, String... expectedGoals)
       throws VerificationException, IOException {

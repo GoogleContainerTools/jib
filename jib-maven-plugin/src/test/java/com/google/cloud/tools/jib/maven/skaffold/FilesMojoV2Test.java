@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.maven.skaffold;
 
-import com.google.cloud.tools.jib.maven.TestPlugin;
 import com.google.cloud.tools.jib.maven.TestProject;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldFilesOutput;
 import com.google.common.base.Strings;
@@ -37,13 +36,9 @@ import org.junit.Test;
 /** Tests for {@link FilesMojoV2}. */
 public class FilesMojoV2Test {
 
-  @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
+  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
-  @ClassRule
-  public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
-
-  @ClassRule
-  public static final TestProject multiTestProject = new TestProject(testPlugin, "multi");
+  @ClassRule public static final TestProject multiTestProject = new TestProject("multi");
 
   private static void verifyFiles(
       Path projectRoot,

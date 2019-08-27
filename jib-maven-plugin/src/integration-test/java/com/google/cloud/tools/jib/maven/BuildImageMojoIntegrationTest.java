@@ -56,23 +56,16 @@ public class BuildImageMojoIntegrationTest {
   public static final LocalRegistry localRegistry2 =
       new LocalRegistry(6000, "testuser2", "testpassword2");
 
-  @ClassRule public static final TestPlugin testPlugin = new TestPlugin();
+  @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+
+  @ClassRule public static final TestProject emptyTestProject = new TestProject("empty");
+
+  @ClassRule public static final TestProject skippedTestProject = new TestProject("empty");
 
   @ClassRule
-  public static final TestProject simpleTestProject = new TestProject(testPlugin, "simple");
+  public static final TestProject defaultTargetTestProject = new TestProject("default-target");
 
-  @ClassRule
-  public static final TestProject emptyTestProject = new TestProject(testPlugin, "empty");
-
-  @ClassRule
-  public static final TestProject skippedTestProject = new TestProject(testPlugin, "empty");
-
-  @ClassRule
-  public static final TestProject defaultTargetTestProject =
-      new TestProject(testPlugin, "default-target");
-
-  @ClassRule
-  public static final TestProject servlet25Project = new TestProject(testPlugin, "war_servlet25");
+  @ClassRule public static final TestProject servlet25Project = new TestProject("war_servlet25");
 
   private static String getTestImageReference(String label) {
     String nameBase = IntegrationTestingConfiguration.getTestRepositoryLocation() + '/';

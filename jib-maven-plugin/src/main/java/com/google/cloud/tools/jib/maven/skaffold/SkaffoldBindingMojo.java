@@ -26,7 +26,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 /** Base class for Skaffold-related goals. */
 abstract class SkaffoldBindingMojo extends AbstractMojo {
-
   @Nullable
   @Parameter(defaultValue = "${plugin}", readonly = true)
   protected PluginDescriptor descriptor;
