@@ -19,8 +19,10 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
+import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -31,6 +33,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +62,7 @@ public class StepsRunner {
           new IllegalStateException("invalid usage; required step not configured"));
     }
 
+    private Future<Path> tarPath = failedFuture();
     private Future<ImageAndAuthorization> baseImageAndAuth = failedFuture();
     private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
@@ -121,11 +125,10 @@ public class StepsRunner {
   public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
     rootProgressDescription = "building image to Docker daemon";
 
-    // build and cache
-    stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(() -> obtainBaseImageLayers(true)); // always pull layers for docker builds
+    addRetrievalSteps(true); // always pull layers for docker builds
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
+
     // load to Docker
     stepsToRun.add(() -> loadDocker(dockerClient));
     return this;
@@ -134,11 +137,10 @@ public class StepsRunner {
   public StepsRunner tarBuildSteps(Path outputPath) {
     rootProgressDescription = "building image to tar file";
 
-    // build and cache
-    stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(() -> obtainBaseImageLayers(true)); // always pull layers for tar builds
+    addRetrievalSteps(true); // always pull layers for tar builds
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
+
     // create a tar
     stepsToRun.add(() -> writeTarFile(outputPath));
     return this;
@@ -151,8 +153,7 @@ public class StepsRunner {
     stepsToRun.add(this::retrieveTargetRegistryCredentials);
     stepsToRun.add(this::authenticatePush);
 
-    stepsToRun.add(this::pullBaseImage);
-    stepsToRun.add(() -> obtainBaseImageLayers(layersRequiredLocally));
+    addRetrievalSteps(layersRequiredLocally);
     stepsToRun.add(this::buildAndCacheApplicationLayers);
     stepsToRun.add(this::buildImage);
 
@@ -162,6 +163,26 @@ public class StepsRunner {
     stepsToRun.add(this::pushContainerConfiguration);
     stepsToRun.add(this::pushImages);
     return this;
+  }
+
+  private void addRetrievalSteps(boolean layersRequiredLocally) {
+    ImageConfiguration baseImageConfiguration = buildConfiguration.getBaseImageConfiguration();
+
+    if (baseImageConfiguration.getTarPath().isPresent()) {
+      // If tarPath is present, a TarImage was used
+      results.tarPath = Futures.immediateFuture(baseImageConfiguration.getTarPath().get());
+      stepsToRun.add(this::extractTar);
+
+    } else if (baseImageConfiguration.getDockerClient().isPresent()) {
+      // If dockerClient is present, a DockerDaemonImage was used
+      stepsToRun.add(this::saveDocker);
+      stepsToRun.add(this::extractTar);
+
+    } else {
+      // Otherwise default to RegistryImage
+      stepsToRun.add(this::pullBaseImage);
+      stepsToRun.add(() -> obtainBaseImageLayers(layersRequiredLocally));
+    }
   }
 
   public BuildResult run() throws ExecutionException, InterruptedException {
@@ -206,6 +227,36 @@ public class StepsRunner {
                         childProgressDispatcherFactory,
                         results.targetRegistryCredentials.get().orElse(null))
                     .call());
+  }
+
+  private void saveDocker() {
+    Optional<DockerClient> dockerClient =
+        buildConfiguration.getBaseImageConfiguration().getDockerClient();
+    Preconditions.checkArgument(dockerClient.isPresent());
+
+    results.tarPath =
+        executorService.submit(new SaveDockerStep(buildConfiguration, dockerClient.get()));
+  }
+
+  private void extractTar() {
+    Future<LocalImage> localImageFuture =
+        executorService.submit(
+            () ->
+                new ExtractTarStep(
+                        results.tarPath.get(), Files.createTempDirectory("jib-extract-tar"))
+                    .call());
+    results.baseImageAndAuth =
+        executorService.submit(
+            () -> new ImageAndAuthorization(localImageFuture.get().baseImage, null));
+    results.baseImageLayers =
+        executorService.submit(
+            () ->
+                localImageFuture
+                    .get()
+                    .layers
+                    .stream()
+                    .map(Futures::immediateFuture)
+                    .collect(Collectors.toList()));
   }
 
   private void pullBaseImage() {

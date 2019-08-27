@@ -60,8 +60,10 @@ public class JibContainerBuilderTest {
   @Test
   public void testToBuildConfiguration_containerConfigurationSet()
       throws InvalidImageReferenceException, CacheDirectoryCreationException, IOException {
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
-        new JibContainerBuilder(RegistryImage.named("base/image"), spyBuildConfigurationBuilder)
+        new JibContainerBuilder(imageConfiguration, spyBuildConfigurationBuilder)
             .setEntrypoint(Arrays.asList("entry", "point"))
             .setEnvironment(ImmutableMap.of("name", "value"))
             .setExposedPorts(ImmutableSet.of(Port.tcp(1234), Port.udp(5678)))
@@ -93,8 +95,10 @@ public class JibContainerBuilderTest {
   @Test
   public void testToBuildConfiguration_containerConfigurationAdd()
       throws InvalidImageReferenceException, CacheDirectoryCreationException, IOException {
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
-        new JibContainerBuilder(RegistryImage.named("base/image"), spyBuildConfigurationBuilder)
+        new JibContainerBuilder(imageConfiguration, spyBuildConfigurationBuilder)
             .setEntrypoint("entry", "point")
             .setEnvironment(ImmutableMap.of("name", "value"))
             .addEnvironmentVariable("environment", "variable")
@@ -137,10 +141,12 @@ public class JibContainerBuilderTest {
             .setExecutorService(mockExecutorService)
             .addEventHandler(mockJibEventConsumer);
 
-    RegistryImage baseImage =
-        RegistryImage.named("base/image").addCredentialRetriever(mockCredentialRetriever);
+    ImageConfiguration baseImageConfiguration =
+        ImageConfiguration.builder(ImageReference.parse("base/image"))
+            .setCredentialRetrievers(Collections.singletonList(mockCredentialRetriever))
+            .build();
     JibContainerBuilder jibContainerBuilder =
-        new JibContainerBuilder(baseImage, spyBuildConfigurationBuilder)
+        new JibContainerBuilder(baseImageConfiguration, spyBuildConfigurationBuilder)
             .setLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2));
     BuildConfiguration buildConfiguration =
         jibContainerBuilder.toBuildConfiguration(
@@ -211,8 +217,10 @@ public class JibContainerBuilderTest {
   /** Verify that an internally-created ExecutorService is shutdown. */
   @Test
   public void testContainerize_executorCreated() throws Exception {
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
-        new JibContainerBuilder(RegistryImage.named("base/image"), spyBuildConfigurationBuilder)
+        new JibContainerBuilder(imageConfiguration, spyBuildConfigurationBuilder)
             .setEntrypoint(Arrays.asList("entry", "point"))
             .setEnvironment(ImmutableMap.of("name", "value"))
             .setExposedPorts(ImmutableSet.of(Port.tcp(1234), Port.udp(5678)))
@@ -232,8 +240,10 @@ public class JibContainerBuilderTest {
   /** Verify that a provided ExecutorService is not shutdown. */
   @Test
   public void testContainerize_configuredExecutor() throws Exception {
+    ImageConfiguration imageConfiguration =
+        ImageConfiguration.builder(ImageReference.parse("base/image")).build();
     JibContainerBuilder jibContainerBuilder =
-        new JibContainerBuilder(RegistryImage.named("base/image"), spyBuildConfigurationBuilder)
+        new JibContainerBuilder(imageConfiguration, spyBuildConfigurationBuilder)
             .setEntrypoint(Arrays.asList("entry", "point"))
             .setEnvironment(ImmutableMap.of("name", "value"))
             .setExposedPorts(ImmutableSet.of(Port.tcp(1234), Port.udp(5678)))
