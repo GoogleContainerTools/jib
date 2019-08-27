@@ -128,14 +128,8 @@ public class JavaContainerBuilder {
 
   /**
    * Creates a new {@link JavaContainerBuilder} with the specified base image reference. The type of
-   * base image can be specified using a prefix, e.g. {@code registry://gcr.io/project/image}. The
-   * available prefixes are described below:
-   *
-   * <ul>
-   *   <li>No prefix, or {@code registry://}: uses a registry base image
-   *   <li>{@code docker://}: uses a base image found in the local Docker daemon
-   *   <li>{@code tar://}: uses a tarball base image at the path following the prefix
-   * </ul>
+   * base image can be specified using a prefix; see {@link Jib#from(String)} for the accepted
+   * prefixes.
    *
    * @param baseImageReference the base image reference
    * @return a new {@link JavaContainerBuilder}
