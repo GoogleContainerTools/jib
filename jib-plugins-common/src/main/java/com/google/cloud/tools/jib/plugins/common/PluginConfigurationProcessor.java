@@ -268,9 +268,6 @@ public class PluginConfigurationProcessor {
     }
 
     // If using a registry base image, verify Java version is compatible
-    if (baseImageConfig.startsWith(Jib.REGISTRY_IMAGE_PREFIX)) {
-      baseImageConfig = baseImageConfig.replaceFirst(Jib.REGISTRY_IMAGE_PREFIX, "");
-    }
     int javaVersion = projectProperties.getMajorJavaVersion();
     if (isKnownDistrolessJava8Image(baseImageConfig) && javaVersion > 8) {
       throw new IncompatibleBaseImageJavaVersionException(8, javaVersion);
