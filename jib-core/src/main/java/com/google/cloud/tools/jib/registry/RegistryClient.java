@@ -130,10 +130,10 @@ public class RegistryClient {
       if (userAgentSuffix != null) {
         userAgentBuilder.append(" ").append(userAgentSuffix);
       }
-      if (!Strings.isNullOrEmpty(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT))) {
+      if (!Strings.isNullOrEmpty(System.getProperty(JibSystemProperties._JIB_UPSTREAM_CLIENT))) {
         userAgentBuilder
             .append(" ")
-            .append(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT));
+            .append(System.getProperty(JibSystemProperties._JIB_UPSTREAM_CLIENT));
       }
       return userAgentBuilder.toString();
     }

@@ -79,7 +79,7 @@ public class RegistryClientTest {
 
   @Test
   public void testGetUserAgentWithUpstreamClient() {
-    System.setProperty(JibSystemProperties.UPSTREAM_CLIENT, "skaffold-0.34.0");
+    System.setProperty(JibSystemProperties._JIB_UPSTREAM_CLIENT, "skaffold/0.34.0");
 
     RegistryClient registryClient =
         testRegistryClientFactory
@@ -87,7 +87,7 @@ public class RegistryClientTest {
             .setUserAgentSuffix("foo")
             .newRegistryClient();
     Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
-    Assert.assertTrue(registryClient.getUserAgent().endsWith(" skaffold-0.34.0"));
+    Assert.assertTrue(registryClient.getUserAgent().endsWith(" skaffold/0.34.0"));
   }
 
   @Test
