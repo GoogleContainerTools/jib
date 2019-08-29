@@ -126,12 +126,12 @@ public class ExtractTarStep implements Callable<LocalImage> {
       // Compress layers if necessary and calculate the digest/size
       Blob blob = Blobs.from(file);
       if (!layersAreCompressed) {
-        Path temp = destination.resolve(layerFiles.get(index) + ".compressed");
+        Path compressedFile = destination.resolve(layerFiles.get(index) + ".compressed");
         try (GZIPOutputStream compressorStream =
-            new GZIPOutputStream(Files.newOutputStream(temp))) {
+            new GZIPOutputStream(Files.newOutputStream(compressedFile))) {
           blob.writeTo(compressorStream);
         }
-        blob = Blobs.from(temp);
+        blob = Blobs.from(compressedFile);
       }
       BlobDescriptor blobDescriptor = blob.writeTo(ByteStreams.nullOutputStream());
 
