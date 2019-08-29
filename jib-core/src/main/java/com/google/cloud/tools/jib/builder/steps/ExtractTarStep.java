@@ -18,11 +18,14 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.cloud.tools.jib.blob.Blob;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
+import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.image.Image;
@@ -77,15 +80,20 @@ public class ExtractTarStep implements Callable<LocalImage> {
 
   private final Path tarPath;
   private final Path destination;
+  private final BuildConfiguration buildConfiguration;
 
-  ExtractTarStep(Path tarPath, Path destination) {
+  ExtractTarStep(Path tarPath, Path destination, BuildConfiguration buildConfiguration) {
     this.tarPath = tarPath;
     this.destination = destination;
+    this.buildConfiguration = buildConfiguration;
   }
 
   @Override
   public LocalImage call()
-      throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException {
+      throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException,
+          CacheCorruptedException {
+    Cache cache = buildConfiguration.getBaseImageLayersCache();
+
     Files.createDirectories(destination);
     FileOperations.deleteRecursiveOnExit(destination);
     TarExtractor.extract(tarPath, destination);
@@ -121,24 +129,16 @@ public class ExtractTarStep implements Callable<LocalImage> {
     V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
     for (int index = 0; index < layerFiles.size(); index++) {
       Path file = destination.resolve(layerFiles.get(index));
-
-      // Compress layers if necessary and calculate the digest/size
-      Blob blob = layersAreCompressed ? Blobs.from(file) : Blobs.compress(Blobs.from(file));
-      BlobDescriptor blobDescriptor = blob.writeTo(ByteStreams.nullOutputStream());
-
-      // 'manifest' contains the layer files in the same order as the diff ids in 'configuration',
-      // so we don't need to recalculate those.
-      // https://containers.gitbook.io/build-containers-the-hard-way/#docker-load-format
+      DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
       CachedLayer layer =
-          CachedLayer.builder()
-              .setLayerBlob(blob)
-              .setLayerDigest(blobDescriptor.getDigest())
-              .setLayerSize(blobDescriptor.getSize())
-              .setLayerDiffId(configurationTemplate.getLayerDiffId(index))
-              .build();
-
+          cache
+              .retrieveTarLayer(diffId)
+              .orElse(
+                  cache.writeTarLayer(
+                      diffId,
+                      layersAreCompressed ? Blobs.from(file) : Blobs.compress(Blobs.from(file))));
       layers.add(new PreparedLayer.Builder(layer).build());
-      v22Manifest.addLayer(blobDescriptor.getSize(), blobDescriptor.getDigest());
+      v22Manifest.addLayer(layer.getSize(), layer.getDigest());
     }
 
     BlobDescriptor configDescriptor =

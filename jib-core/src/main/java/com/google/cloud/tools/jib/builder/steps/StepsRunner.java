@@ -243,7 +243,9 @@ public class StepsRunner {
         executorService.submit(
             () ->
                 new ExtractTarStep(
-                        results.tarPath.get(), Files.createTempDirectory("jib-extract-tar"))
+                        results.tarPath.get(),
+                        Files.createTempDirectory("jib-extract-tar"),
+                        buildConfiguration)
                     .call());
     results.baseImageAndAuth =
         executorService.submit(

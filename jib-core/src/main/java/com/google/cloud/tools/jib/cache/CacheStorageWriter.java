@@ -252,6 +252,47 @@ class CacheStorageWriter {
   }
 
   /**
+   * Saves a local base image layer.
+   *
+   * @param diffId the layer blob's diff ID
+   * @param compressedBlob the blob to save
+   * @throws IOException if an I/O exception occurs
+   */
+  CachedLayer writeTarLayer(DescriptorDigest diffId, Blob compressedBlob) throws IOException {
+    Files.createDirectories(cacheStorageFiles.getLocalDirectory());
+    Files.createDirectories(cacheStorageFiles.getTemporaryDirectory());
+    try (TemporaryDirectory temporaryDirectory =
+        new TemporaryDirectory(cacheStorageFiles.getTemporaryDirectory())) {
+      Path temporaryLayerDirectory = temporaryDirectory.getDirectory();
+      Path temporaryLayerFile = cacheStorageFiles.getTemporaryLayerFile(temporaryLayerDirectory);
+
+      BlobDescriptor layerBlobDescriptor;
+      try (OutputStream fileOutputStream =
+          new BufferedOutputStream(Files.newOutputStream(temporaryLayerFile))) {
+        layerBlobDescriptor = compressedBlob.writeTo(fileOutputStream);
+      }
+
+      // Renames the temporary layer file to the correct filename.
+      Path layerFile =
+          temporaryLayerDirectory.resolve(
+              cacheStorageFiles.getLayerFilename(layerBlobDescriptor.getDigest()));
+      moveIfDoesNotExist(temporaryLayerFile, layerFile);
+
+      // Moves the temporary directory to the final location.
+      moveIfDoesNotExist(
+          temporaryLayerDirectory, cacheStorageFiles.getLocalDirectory().resolve(diffId.getHash()));
+
+      // Updates cachedLayer with the blob information.
+      return CachedLayer.builder()
+          .setLayerDigest(layerBlobDescriptor.getDigest())
+          .setLayerDiffId(diffId)
+          .setLayerSize(layerBlobDescriptor.getSize())
+          .setLayerBlob(Blobs.from(layerFile))
+          .build();
+    }
+  }
+
+  /**
    * Saves the manifest and container configuration for a V2.2 or OCI image.
    *
    * @param imageReference the image reference to store the metadata for
@@ -286,7 +327,7 @@ class CacheStorageWriter {
     Path imageDirectory = cacheStorageFiles.getImageDirectory(imageReference);
     Files.createDirectories(imageDirectory);
 
-    try (LockFile ignored1 = LockFile.lock(imageDirectory.resolve("lock"))) {
+    try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
       writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
     }
   }
