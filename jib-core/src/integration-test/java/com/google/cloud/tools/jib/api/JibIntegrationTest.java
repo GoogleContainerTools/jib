@@ -117,6 +117,21 @@ public class JibIntegrationTest {
   }
 
   @Test
+  public void testBasic_dockerDaemonBaseImageToDockerDaemon()
+      throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
+          RegistryException, CacheDirectoryCreationException {
+    localRegistry.pull("busybox");
+    ImageReference targetImageReference =
+        ImageReference.of("localhost:5000", "jib-core", "basic-helloworld-dockerdaemon");
+    Jib.from(DockerDaemonImage.named("busybox"))
+        .setEntrypoint("echo", "Hello World")
+        .containerize(Containerizer.to(DockerDaemonImage.named(targetImageReference)));
+
+    String output = new Command("docker", "run", "--rm", targetImageReference.toString()).run();
+    Assert.assertEquals("Hello World\n", output);
+  }
+
+  @Test
   public void testBasic_tarBaseImage_dockerSavedCommand()
       throws IOException, InterruptedException, InvalidImageReferenceException, ExecutionException,
           RegistryException, CacheDirectoryCreationException {
