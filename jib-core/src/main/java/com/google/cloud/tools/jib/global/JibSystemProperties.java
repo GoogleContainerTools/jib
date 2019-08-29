@@ -23,6 +23,8 @@ import com.google.common.collect.Range;
 /** Names of system properties defined/used by Jib. */
 public class JibSystemProperties {
 
+  public static final String UPSTREAM_CLIENT = "jib.upstreamClient";
+
   @VisibleForTesting public static final String HTTP_TIMEOUT = "jib.httpTimeout";
 
   @VisibleForTesting static final String CROSS_REPOSITORY_BLOB_MOUNTS = "jib.blobMounts";
@@ -35,7 +37,6 @@ public class JibSystemProperties {
   private static final String SERIALIZE = "jibSerialize";
 
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
-  public static final String UPSTREAM_CLIENT = "jib.upstreamClient";
 
   /**
    * Gets the HTTP connection/read timeouts for registry interactions in milliseconds. This is

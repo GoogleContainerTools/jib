@@ -34,6 +34,7 @@ import com.google.cloud.tools.jib.image.json.ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
 import java.io.IOException;
@@ -129,7 +130,7 @@ public class RegistryClient {
       if (userAgentSuffix != null) {
         userAgentBuilder.append(" ").append(userAgentSuffix);
       }
-      if (System.getProperty(JibSystemProperties.UPSTREAM_CLIENT) != null) {
+      if (!Strings.isNullOrEmpty(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT))) {
         userAgentBuilder
             .append(" ")
             .append(System.getProperty(JibSystemProperties.UPSTREAM_CLIENT));

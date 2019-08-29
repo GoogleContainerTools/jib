@@ -21,7 +21,9 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -42,6 +44,8 @@ public class RegistryClientTest {
     testRegistryClientFactory =
         RegistryClient.factory(eventHandlers, "some.server.url", "some image name");
   }
+
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   @Test
   public void testGetUserAgent_null() {
@@ -84,7 +88,6 @@ public class RegistryClientTest {
             .newRegistryClient();
     Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
     Assert.assertTrue(registryClient.getUserAgent().endsWith(" skaffold-0.34.0"));
-    System.clearProperty(JibSystemProperties.UPSTREAM_CLIENT);
   }
 
   @Test
