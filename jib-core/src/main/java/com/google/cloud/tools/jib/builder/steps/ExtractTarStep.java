@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
@@ -46,6 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /** Extracts a tar file base image. */
 public class ExtractTarStep implements Callable<LocalImage> {
@@ -130,13 +132,19 @@ public class ExtractTarStep implements Callable<LocalImage> {
     for (int index = 0; index < layerFiles.size(); index++) {
       Path file = destination.resolve(layerFiles.get(index));
       DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
-      CachedLayer layer =
-          cache
-              .retrieveTarLayer(diffId)
-              .orElse(
-                  cache.writeTarLayer(
-                      diffId,
-                      layersAreCompressed ? Blobs.from(file) : Blobs.compress(Blobs.from(file))));
+
+      // Compress layers if necessary and calculate the digest/size
+      Blob blob = Blobs.from(file);
+      if (!layersAreCompressed) {
+        Path compressedFile = destination.resolve(layerFiles.get(index) + ".compressed");
+        try (GZIPOutputStream compressorStream =
+            new GZIPOutputStream(Files.newOutputStream(compressedFile))) {
+          blob.writeTo(compressorStream);
+        }
+        blob = Blobs.from(compressedFile);
+      }
+
+      CachedLayer layer = cache.retrieveTarLayer(diffId).orElse(cache.writeTarLayer(diffId, blob));
       layers.add(new PreparedLayer.Builder(layer).build());
       v22Manifest.addLayer(layer.getSize(), layer.getDigest());
     }
