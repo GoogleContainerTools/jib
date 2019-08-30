@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /** Extracts a tar file base image. */
 public class ExtractTarStep implements Callable<LocalImage> {
@@ -123,7 +124,15 @@ public class ExtractTarStep implements Callable<LocalImage> {
       Path file = destination.resolve(layerFiles.get(index));
 
       // Compress layers if necessary and calculate the digest/size
-      Blob blob = layersAreCompressed ? Blobs.from(file) : Blobs.compress(Blobs.from(file));
+      Blob blob = Blobs.from(file);
+      if (!layersAreCompressed) {
+        Path compressedFile = destination.resolve(layerFiles.get(index) + ".compressed");
+        try (GZIPOutputStream compressorStream =
+            new GZIPOutputStream(Files.newOutputStream(compressedFile))) {
+          blob.writeTo(compressorStream);
+        }
+        blob = Blobs.from(compressedFile);
+      }
       BlobDescriptor blobDescriptor = blob.writeTo(ByteStreams.nullOutputStream());
 
       // 'manifest' contains the layer files in the same order as the diff ids in 'configuration',
