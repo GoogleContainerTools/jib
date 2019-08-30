@@ -79,7 +79,7 @@ public class RegistryClientTest {
 
   @Test
   public void testGetUserAgentWithUpstreamClient() {
-    System.setProperty(JibSystemProperties._JIB_UPSTREAM_CLIENT, "skaffold/0.34.0");
+    System.setProperty(JibSystemProperties.UPSTREAM_CLIENT, "skaffold/0.34.0");
 
     RegistryClient registryClient =
         testRegistryClientFactory

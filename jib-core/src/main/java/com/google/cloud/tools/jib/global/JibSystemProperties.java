@@ -23,7 +23,7 @@ import com.google.common.collect.Range;
 /** Names of system properties defined/used by Jib. */
 public class JibSystemProperties {
 
-  public static final String _JIB_UPSTREAM_CLIENT = "jib.upstreamClient";
+  public static final String UPSTREAM_CLIENT = "_JIB_UPSTREAM_CLIENT";
 
   @VisibleForTesting public static final String HTTP_TIMEOUT = "jib.httpTimeout";
 
