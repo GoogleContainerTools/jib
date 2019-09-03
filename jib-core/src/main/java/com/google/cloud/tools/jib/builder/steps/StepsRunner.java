@@ -165,26 +165,6 @@ public class StepsRunner {
     return this;
   }
 
-  private void addRetrievalSteps(boolean layersRequiredLocally) {
-    ImageConfiguration baseImageConfiguration = buildConfiguration.getBaseImageConfiguration();
-
-    if (baseImageConfiguration.getTarPath().isPresent()) {
-      // If tarPath is present, a TarImage was used
-      results.tarPath = Futures.immediateFuture(baseImageConfiguration.getTarPath().get());
-      stepsToRun.add(this::extractTar);
-
-    } else if (baseImageConfiguration.getDockerClient().isPresent()) {
-      // If dockerClient is present, a DockerDaemonImage was used
-      stepsToRun.add(this::saveDocker);
-      stepsToRun.add(this::extractTar);
-
-    } else {
-      // Otherwise default to RegistryImage
-      stepsToRun.add(this::pullBaseImage);
-      stepsToRun.add(() -> obtainBaseImageLayers(layersRequiredLocally));
-    }
-  }
-
   public BuildResult run() throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(rootProgressDescription);
 
@@ -202,6 +182,26 @@ public class StepsRunner {
         unrolled = (ExecutionException) unrolled.getCause();
       }
       throw unrolled;
+    }
+  }
+
+  private void addRetrievalSteps(boolean layersRequiredLocally) {
+    ImageConfiguration baseImageConfiguration = buildConfiguration.getBaseImageConfiguration();
+
+    if (baseImageConfiguration.getTarPath().isPresent()) {
+      // If tarPath is present, a TarImage was used
+      results.tarPath = Futures.immediateFuture(baseImageConfiguration.getTarPath().get());
+      stepsToRun.add(this::extractTar);
+
+    } else if (baseImageConfiguration.getDockerClient().isPresent()) {
+      // If dockerClient is present, a DockerDaemonImage was used
+      stepsToRun.add(this::saveDocker);
+      stepsToRun.add(this::extractTar);
+
+    } else {
+      // Otherwise default to RegistryImage
+      stepsToRun.add(this::pullBaseImage);
+      stepsToRun.add(() -> obtainBaseImageLayers(layersRequiredLocally));
     }
   }
 

@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.api.RegistryException;
 /** Thrown when a registry did not respond. */
 class RegistryNoResponseException extends RegistryException {
 
-  RegistryNoResponseException(Throwable cause) {
-    super(cause);
+  RegistryNoResponseException(String registry, String repository, Throwable cause) {
+    super("no response from " + registry + "/" + repository, cause);
   }
 }
