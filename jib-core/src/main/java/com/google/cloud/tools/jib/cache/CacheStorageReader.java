@@ -195,7 +195,7 @@ class CacheStorageReader {
    */
   Optional<CachedLayer> retrieveTarLayer(DescriptorDigest diffId)
       throws IOException, CacheCorruptedException {
-    Path layerDirectory = cacheStorageFiles.getLayerDirectory(diffId);
+    Path layerDirectory = cacheStorageFiles.getLocalDirectory().resolve(diffId.getHash());
     if (!Files.exists(layerDirectory)) {
       return Optional.empty();
     }

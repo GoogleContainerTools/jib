@@ -272,22 +272,22 @@ class CacheStorageWriter {
         layerBlobDescriptor = compressedBlob.writeTo(fileOutputStream);
       }
 
-      // Renames the temporary layer file to the correct filename.
-      Path layerFile =
-          temporaryLayerDirectory.resolve(
-              cacheStorageFiles.getLayerFilename(layerBlobDescriptor.getDigest()));
-      moveIfDoesNotExist(temporaryLayerFile, layerFile);
+      // Renames the temporary layer file to its digest
+      // (temp/temp -> temp/<digest>)
+      Path digestLayerFile =
+          temporaryLayerDirectory.resolve(layerBlobDescriptor.getDigest().getHash());
+      moveIfDoesNotExist(temporaryLayerFile, digestLayerFile);
 
-      // Moves the temporary directory to the final location.
-      moveIfDoesNotExist(
-          temporaryLayerDirectory, cacheStorageFiles.getLocalDirectory().resolve(diffId.getHash()));
+      // Moves the temporary directory to directory named with diff ID
+      // (temp/<digest> -> <diffID>/<digest>)
+      Path destination = cacheStorageFiles.getLocalDirectory().resolve(diffId.getHash());
+      moveIfDoesNotExist(temporaryLayerDirectory, destination);
 
-      // Updates cachedLayer with the blob information.
       return CachedLayer.builder()
           .setLayerDigest(layerBlobDescriptor.getDigest())
           .setLayerDiffId(diffId)
           .setLayerSize(layerBlobDescriptor.getSize())
-          .setLayerBlob(Blobs.from(layerFile))
+          .setLayerBlob(Blobs.from(destination))
           .build();
     }
   }
