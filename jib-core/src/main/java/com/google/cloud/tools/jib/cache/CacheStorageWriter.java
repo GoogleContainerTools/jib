@@ -274,8 +274,8 @@ class CacheStorageWriter {
 
       // Renames the temporary layer file to its digest
       // (temp/temp -> temp/<digest>)
-      Path digestLayerFile =
-          temporaryLayerDirectory.resolve(layerBlobDescriptor.getDigest().getHash());
+      String fileName = layerBlobDescriptor.getDigest().getHash();
+      Path digestLayerFile = temporaryLayerDirectory.resolve(fileName);
       moveIfDoesNotExist(temporaryLayerFile, digestLayerFile);
 
       // Moves the temporary directory to directory named with diff ID
@@ -287,7 +287,7 @@ class CacheStorageWriter {
           .setLayerDigest(layerBlobDescriptor.getDigest())
           .setLayerDiffId(diffId)
           .setLayerSize(layerBlobDescriptor.getSize())
-          .setLayerBlob(Blobs.from(destination))
+          .setLayerBlob(Blobs.from(destination.resolve(fileName)))
           .build();
     }
   }
