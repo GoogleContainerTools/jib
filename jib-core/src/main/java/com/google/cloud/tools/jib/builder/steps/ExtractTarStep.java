@@ -133,13 +133,15 @@ public class ExtractTarStep implements Callable<LocalImage> {
     for (int index = 0; index < layerFiles.size(); index++) {
       Path file = destination.resolve(layerFiles.get(index));
       DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
+
       Optional<CachedLayer> optionalLayer = cache.retrieveTarLayer(diffId);
       if (optionalLayer.isPresent()) {
+        // Retrieve pre-compressed layer from cache
         CachedLayer layer = optionalLayer.get();
         layers.add(new PreparedLayer.Builder(layer).build());
         v22Manifest.addLayer(layer.getSize(), layer.getDigest());
       } else {
-        // Compress layers if necessary and calculate the digest/size
+        // Compress layers and calculate the digest/size
         Blob blob = Blobs.from(file);
         if (!layersAreCompressed) {
           Path compressedFile = destination.resolve(layerFiles.get(index) + ".compressed");
@@ -149,6 +151,7 @@ public class ExtractTarStep implements Callable<LocalImage> {
           }
           blob = Blobs.from(compressedFile);
         }
+
         CachedLayer layer = cache.writeTarLayer(diffId, blob);
         layers.add(new PreparedLayer.Builder(layer).build());
         v22Manifest.addLayer(layer.getSize(), layer.getDigest());
