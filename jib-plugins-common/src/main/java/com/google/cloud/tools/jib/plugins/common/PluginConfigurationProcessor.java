@@ -261,18 +261,22 @@ public class PluginConfigurationProcessor {
     // Use image configuration as-is if it's a local base image
     String baseImageConfig =
         rawConfiguration.getFromImage().orElse(getDefaultBaseImage(projectProperties));
-    if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)
-        || baseImageConfig.startsWith(Jib.TAR_IMAGE_PREFIX)) {
+    if (baseImageConfig.startsWith(Jib.TAR_IMAGE_PREFIX)) {
       return JavaContainerBuilder.from(baseImageConfig);
     }
 
-    // If using a registry base image, verify Java version is compatible
+    // Verify Java version is compatible
+    String prefixRemoved = baseImageConfig.replaceFirst(".*://", "");
     int javaVersion = projectProperties.getMajorJavaVersion();
-    if (isKnownDistrolessJava8Image(baseImageConfig) && javaVersion > 8) {
+    if (isKnownDistrolessJava8Image(prefixRemoved) && javaVersion > 8) {
       throw new IncompatibleBaseImageJavaVersionException(8, javaVersion);
     }
-    if (isKnownDistrolessJava11Image(baseImageConfig) && javaVersion > 11) {
+    if (isKnownDistrolessJava11Image(prefixRemoved) && javaVersion > 11) {
       throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
+    }
+
+    if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
+      return JavaContainerBuilder.from(baseImageConfig);
     }
     ImageReference baseImageReference = ImageReference.parse(baseImageConfig);
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
