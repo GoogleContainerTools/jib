@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.blob;
 
 import com.google.cloud.tools.jib.hash.WritableContents;
 import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,6 +85,7 @@ public class Blobs {
    * @param blob the {@link Blob} to compress
    * @return the compressed {@link Blob}
    */
+  @VisibleForTesting
   public static Blob compress(Blob blob) {
     return Blobs.from(
         outputStream -> {
