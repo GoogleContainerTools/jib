@@ -21,15 +21,11 @@ import com.google.cloud.tools.jib.api.RegistryException;
 /** Thrown when the registry shut down the connection. */
 class RegistryBrokenPipeException extends RegistryException {
 
-  RegistryBrokenPipeException(String registry, String repository, Throwable cause) {
+  RegistryBrokenPipeException(Throwable cause) {
     super(
-        "I/O error due to broken pipe from "
-            + registry
-            + "/"
-            + repository
-            + ": the server shut down the connection. Check the server log if possible. This could "
-            + "also be a proxy issue. For example, a proxy may prevent sending packets that are "
-            + "too large.",
+        "I/O error due to broken pipe: the server shut down the connection. "
+            + "Check the server log if possible. This could also be a proxy issue. For example,"
+            + "a proxy may prevent sending packets that are too large.",
         cause);
   }
 }

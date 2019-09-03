@@ -177,8 +177,8 @@ class RegistryEndpointCaller<T> {
     } catch (ConnectException ex) {
       // It is observed that Open/Oracle JDKs sometimes throw SocketTimeoutException but other times
       // ConnectException for connection timeout. (Could be a JDK bug.) Note SocketTimeoutException
-      // does not extend ConnectException, and we want to be consistent to error out on timeouts.
-      // See https://github.com/GoogleContainerTools/jib/issues/1895#issuecomment-527544094
+      // does not extend ConnectException (or vice versa), and we want to be consistent to error out
+      // on timeouts: https://github.com/GoogleContainerTools/jib/issues/1895#issuecomment-527544094
       if (ex.getMessage() != null && ex.getMessage().contains("timed out")) {
         throw ex;
       }
@@ -305,17 +305,11 @@ class RegistryEndpointCaller<T> {
         }
       }
     } catch (NoHttpResponseException ex) {
-      throw new RegistryNoResponseException(
-          registryEndpointRequestProperties.getServerUrl(),
-          registryEndpointRequestProperties.getImageName(),
-          ex);
+      throw new RegistryNoResponseException(ex);
 
     } catch (IOException ex) {
       if (isBrokenPipe(ex)) {
-        throw new RegistryBrokenPipeException(
-            registryEndpointRequestProperties.getServerUrl(),
-            registryEndpointRequestProperties.getImageName(),
-            ex);
+        throw new RegistryBrokenPipeException(ex);
       }
       throw ex;
     }
