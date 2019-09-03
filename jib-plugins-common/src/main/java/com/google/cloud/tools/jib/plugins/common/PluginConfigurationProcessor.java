@@ -192,10 +192,9 @@ public class PluginConfigurationProcessor {
                   + "enable this on a public network!"));
     }
 
-    // 1. configure containerizer
     configureContainerizer(containerizer, rawConfiguration, projectProperties);
 
-    // 3. create and configure JibContainerBuilder
+    // Create and configure JibContainerBuilder
     BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
         createModificationTimeProvider(rawConfiguration.getFilesModificationTime());
     JavaContainerBuilder javaContainerBuilder =

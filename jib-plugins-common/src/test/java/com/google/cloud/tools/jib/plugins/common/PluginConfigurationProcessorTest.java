@@ -721,12 +721,24 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_nonRegistry()
+  public void testGetJavaContainerBuilderWithBaseImage_dockerBase()
+      throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("docker://ima.ge/name"));
+    ImageConfiguration result = getCommonImageConfiguration();
+    Assert.assertEquals("ima.ge/name", result.getImage().toString());
+    Assert.assertTrue(result.getDockerClient().isPresent());
+    Assert.assertFalse(result.getTarPath().isPresent());
+  }
+
+  @Test
+  public void testGetJavaContainerBuilderWithBaseImage_tarBase()
       throws IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
     Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("tar:///path/to.tar"));
     ImageConfiguration result = getCommonImageConfiguration();
     Assert.assertEquals(Paths.get("/path/to.tar"), result.getTarPath().get());
+    Assert.assertFalse(result.getDockerClient().isPresent());
   }
 
   @Test
@@ -737,6 +749,7 @@ public class PluginConfigurationProcessorTest {
     ImageConfiguration result = getCommonImageConfiguration();
     Assert.assertEquals("ima.ge/name", result.getImage().toString());
     Assert.assertFalse(result.getDockerClient().isPresent());
+    Assert.assertFalse(result.getTarPath().isPresent());
   }
 
   @Test

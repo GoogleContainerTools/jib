@@ -81,10 +81,10 @@ public class ConfigurationPropertyValidator {
     }
 
     String missingConfig = "%s is missing from build configuration; ignoring auth section.";
-    if (!Strings.isNullOrEmpty(auth.getPassword()) && Strings.isNullOrEmpty(auth.getUsername())) {
+    if (!Strings.isNullOrEmpty(auth.getPassword())) {
       logger.accept(LogEvent.warn(String.format(missingConfig, auth.getUsernameDescriptor())));
     }
-    if (!Strings.isNullOrEmpty(auth.getUsername()) && Strings.isNullOrEmpty(auth.getPassword())) {
+    if (!Strings.isNullOrEmpty(auth.getUsername())) {
       logger.accept(LogEvent.warn(String.format(missingConfig, auth.getPasswordDescriptor())));
     }
 

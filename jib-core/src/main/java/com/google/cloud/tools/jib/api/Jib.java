@@ -44,9 +44,7 @@ public class Jib {
       throws InvalidImageReferenceException {
     if (baseImageReference.startsWith(DOCKER_DAEMON_IMAGE_PREFIX)) {
       return from(
-          DockerDaemonImage.named(
-              ImageReference.parse(
-                  baseImageReference.replaceFirst(DOCKER_DAEMON_IMAGE_PREFIX, ""))));
+          DockerDaemonImage.named(baseImageReference.replaceFirst(DOCKER_DAEMON_IMAGE_PREFIX, "")));
     }
     if (baseImageReference.startsWith(TAR_IMAGE_PREFIX)) {
       return from(TarImage.at(Paths.get(baseImageReference.replaceFirst(TAR_IMAGE_PREFIX, ""))));
