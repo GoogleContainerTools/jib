@@ -62,6 +62,31 @@ public class ImageReferenceTest {
   }
 
   @Test
+  public void testParse_withRegistryPrefix() throws InvalidImageReferenceException {
+    String imageReferenceString = "registry://test.registry/repository:tag";
+    ImageReference imageReference = ImageReference.parse(imageReferenceString);
+
+    Assert.assertEquals("test.registry", imageReference.getRegistry());
+    Assert.assertEquals("repository", imageReference.getRepository());
+    Assert.assertEquals("tag", imageReference.getTag());
+
+    try {
+      ImageReference.parse("registry://noregistry:tag");
+      Assert.fail();
+    } catch (InvalidImageReferenceException ex) {
+      Assert.assertEquals(ex.getMessage(), "Invalid image reference: registry://noregistry:tag");
+    }
+
+    try {
+      ImageReference.parse("registry://noregistry/repository");
+      Assert.fail();
+    } catch (InvalidImageReferenceException ex) {
+      Assert.assertEquals(
+          ex.getMessage(), "Invalid image reference: registry://noregistry/repository");
+    }
+  }
+
+  @Test
   public void testParse_dockerHub_official() throws InvalidImageReferenceException {
     String imageReferenceString = "busybox";
     ImageReference imageReference = ImageReference.parse(imageReferenceString);

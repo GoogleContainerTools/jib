@@ -71,7 +71,7 @@ public class ImageReference {
    */
   private static final String REFERENCE_REGEX =
       String.format(
-          "^(?:(%s)/)?(%s)(?:(?::(%s))|(?:@(%s)))?$",
+          "^(?:(registry://))?(?:(%s)/)?(%s)(?:(?::(%s))|(?:@(%s)))?$",
           REGISTRY_REGEX, REPOSITORY_REGEX, TAG_REGEX, DescriptorDigest.DIGEST_REGEX);
 
   private static final Pattern REFERENCE_PATTERN = Pattern.compile(REFERENCE_REGEX);
@@ -98,17 +98,21 @@ public class ImageReference {
 
     Matcher matcher = REFERENCE_PATTERN.matcher(reference);
 
-    if (!matcher.find() || matcher.groupCount() < 4) {
+    if (!matcher.find() || matcher.groupCount() < 5) {
       throw new InvalidImageReferenceException(reference);
     }
 
-    String registry = matcher.group(1);
-    String repository = matcher.group(2);
-    String tag = matcher.group(3);
-    String digest = matcher.group(4);
+    String prefix = matcher.group(1);
+    String registry = matcher.group(2);
+    String repository = matcher.group(3);
+    String tag = matcher.group(4);
+    String digest = matcher.group(5);
 
     // If no registry was matched, use Docker Hub by default.
     if (Strings.isNullOrEmpty(registry)) {
+      if (!Strings.isNullOrEmpty(prefix)) {
+        throw new InvalidImageReferenceException(reference);
+      }
       registry = DOCKER_HUB_REGISTRY;
     }
 
@@ -122,6 +126,9 @@ public class ImageReference {
      * See https://github.com/docker/distribution/blob/245ca4659e09e9745f3cc1217bf56e946509220c/reference/normalize.go#L62
      */
     if (!registry.contains(".") && !registry.contains(":") && !"localhost".equals(registry)) {
+      if (!Strings.isNullOrEmpty(prefix)) {
+        throw new InvalidImageReferenceException(reference);
+      }
       repository = registry + "/" + repository;
       registry = DOCKER_HUB_REGISTRY;
     }

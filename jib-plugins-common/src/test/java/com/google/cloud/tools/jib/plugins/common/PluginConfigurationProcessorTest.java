@@ -753,6 +753,17 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testGetJavaContainerBuilderWithBaseImage_registryWithPrefix()
+      throws IncompatibleBaseImageJavaVersionException, InvalidImageReferenceException, IOException,
+          CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("registry://ima.ge/name"));
+    ImageConfiguration result = getCommonImageConfiguration();
+    Assert.assertEquals("ima.ge/name", result.getImage().toString());
+    Assert.assertFalse(result.getDockerClient().isPresent());
+    Assert.assertFalse(result.getTarPath().isPresent());
+  }
+
+  @Test
   public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8BaseImage()
       throws InvalidImageReferenceException, FileNotFoundException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(11);
