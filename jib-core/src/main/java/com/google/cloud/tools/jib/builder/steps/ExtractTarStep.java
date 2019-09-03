@@ -133,21 +133,26 @@ public class ExtractTarStep implements Callable<LocalImage> {
     for (int index = 0; index < layerFiles.size(); index++) {
       Path file = destination.resolve(layerFiles.get(index));
       DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
-
-      // Compress layers if necessary and calculate the digest/size
-      Blob blob = Blobs.from(file);
-      if (!layersAreCompressed) {
-        Path compressedFile = destination.resolve(layerFiles.get(index) + ".compressed");
-        try (GZIPOutputStream compressorStream =
-            new GZIPOutputStream(Files.newOutputStream(compressedFile))) {
-          blob.writeTo(compressorStream);
+      Optional<CachedLayer> optionalLayer = cache.retrieveTarLayer(diffId);
+      if (optionalLayer.isPresent()) {
+        CachedLayer layer = optionalLayer.get();
+        layers.add(new PreparedLayer.Builder(layer).build());
+        v22Manifest.addLayer(layer.getSize(), layer.getDigest());
+      } else {
+        // Compress layers if necessary and calculate the digest/size
+        Blob blob = Blobs.from(file);
+        if (!layersAreCompressed) {
+          Path compressedFile = destination.resolve(layerFiles.get(index) + ".compressed");
+          try (GZIPOutputStream compressorStream =
+              new GZIPOutputStream(Files.newOutputStream(compressedFile))) {
+            blob.writeTo(compressorStream);
+          }
+          blob = Blobs.from(compressedFile);
         }
-        blob = Blobs.from(compressedFile);
+        CachedLayer layer = cache.writeTarLayer(diffId, blob);
+        layers.add(new PreparedLayer.Builder(layer).build());
+        v22Manifest.addLayer(layer.getSize(), layer.getDigest());
       }
-
-      CachedLayer layer = cache.retrieveTarLayer(diffId).orElse(cache.writeTarLayer(diffId, blob));
-      layers.add(new PreparedLayer.Builder(layer).build());
-      v22Manifest.addLayer(layer.getSize(), layer.getDigest());
     }
 
     BlobDescriptor configDescriptor =
