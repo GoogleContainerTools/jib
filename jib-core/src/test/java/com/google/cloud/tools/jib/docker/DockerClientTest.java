@@ -185,7 +185,7 @@ public class DockerClientTest {
 
     testDockerClient.save(
         ImageReference.of(null, "testimage", null),
-        Paths.get("out.tar"),
+        temporaryFolder.getRoot().toPath().resolve("out.tar"),
         progressEventDispatcherFactory);
   }
 
@@ -200,7 +200,7 @@ public class DockerClientTest {
     try {
       testDockerClient.save(
           ImageReference.of(null, "testimage", null),
-          Paths.get("out.tar"),
+          temporaryFolder.getRoot().toPath().resolve("out.tar"),
           progressEventDispatcherFactory);
       Assert.fail("docker save should have failed");
 
