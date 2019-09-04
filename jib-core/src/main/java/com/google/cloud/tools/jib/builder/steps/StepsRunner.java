@@ -230,12 +230,17 @@ public class StepsRunner {
   }
 
   private void saveDocker() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     Optional<DockerClient> dockerClient =
         buildConfiguration.getBaseImageConfiguration().getDockerClient();
     Preconditions.checkArgument(dockerClient.isPresent());
 
     results.tarPath =
-        executorService.submit(new SaveDockerStep(buildConfiguration, dockerClient.get()));
+        executorService.submit(
+            new SaveDockerStep(
+                buildConfiguration, dockerClient.get(), childProgressDispatcherFactory));
   }
 
   private void extractTar() {

@@ -17,13 +17,18 @@
 package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -168,16 +173,38 @@ public class DockerClient {
    * @throws InterruptedException if the 'docker save' process is interrupted
    * @throws IOException if creating the tarball fails
    */
-  public void save(ImageReference imageReference, Path outputPath)
+  public void save(
+      ImageReference imageReference,
+      Path outputPath,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory)
       throws InterruptedException, IOException {
-    // Runs 'docker save'.
-    Process dockerProcess = docker("save", imageReference.toString(), "-o", outputPath.toString());
+    Process sizeProcess = docker("inspect", "-f", "{{.Size}}", imageReference.toString());
+    int size =
+        Integer.parseInt(
+            CharStreams.toString(
+                new InputStreamReader(sizeProcess.getInputStream(), StandardCharsets.UTF_8)));
 
-    if (dockerProcess.waitFor() != 0) {
-      try (InputStreamReader stderr =
-          new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
-        throw new IOException(
-            "'docker save' command failed with output: " + CharStreams.toString(stderr));
+    // Runs 'docker save'.
+    try (ProgressEventDispatcher progressEventDispatcher =
+        progressEventDispatcherFactory.create(
+            "saving base image " + imageReference.toString(), size)) {
+      Process dockerProcess = docker("save", imageReference.toString());
+      try (InputStream stdout = new BufferedInputStream(dockerProcess.getInputStream());
+          OutputStream fileStream = new BufferedOutputStream(Files.newOutputStream(outputPath))) {
+        byte[] buffer = new byte[1024];
+        int length;
+        while ((length = stdout.read(buffer)) != -1) {
+          fileStream.write(buffer, 0, length);
+          progressEventDispatcher.dispatchProgress(length);
+        }
+      }
+
+      if (dockerProcess.waitFor() != 0) {
+        try (InputStreamReader stderr =
+            new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
+          throw new IOException(
+              "'docker save' command failed with output: " + CharStreams.toString(stderr));
+        }
       }
     }
   }

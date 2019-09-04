@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
@@ -52,6 +53,7 @@ public class DockerClientTest {
   @Mock private ProcessBuilder mockProcessBuilder;
   @Mock private Process mockProcess;
   @Mock private ImageTarball imageTarball;
+  @Mock private ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   @Before
   public void setUp() throws IOException {
@@ -178,12 +180,18 @@ public class DockerClientTest {
     DockerClient testDockerClient =
         new DockerClient(
             subcommand -> {
-              Assert.assertEquals(Arrays.asList("save", "testimage", "-o", "out.tar"), subcommand);
+              if (!subcommand.contains("{{.Size}}")) {
+                Assert.assertEquals(
+                    Arrays.asList("save", "testimage", "-o", "out.tar"), subcommand);
+              }
               return mockProcessBuilder;
             });
     Mockito.when(mockProcess.waitFor()).thenReturn(0);
 
-    testDockerClient.save(ImageReference.of(null, "testimage", null), Paths.get("out.tar"));
+    testDockerClient.save(
+        ImageReference.of(null, "testimage", null),
+        Paths.get("out.tar"),
+        progressEventDispatcherFactory);
   }
 
   @Test
@@ -191,7 +199,10 @@ public class DockerClientTest {
     DockerClient testDockerClient =
         new DockerClient(
             subcommand -> {
-              Assert.assertEquals(Arrays.asList("save", "testimage", "-o", "out.tar"), subcommand);
+              if (!subcommand.contains("{{.Size}}")) {
+                Assert.assertEquals(
+                    Arrays.asList("save", "testimage", "-o", "out.tar"), subcommand);
+              }
               return mockProcessBuilder;
             });
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
@@ -200,7 +211,10 @@ public class DockerClientTest {
         .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
 
     try {
-      testDockerClient.save(ImageReference.of(null, "testimage", null), Paths.get("out.tar"));
+      testDockerClient.save(
+          ImageReference.of(null, "testimage", null),
+          Paths.get("out.tar"),
+          progressEventDispatcherFactory);
       Assert.fail("docker save should have failed");
 
     } catch (IOException ex) {
