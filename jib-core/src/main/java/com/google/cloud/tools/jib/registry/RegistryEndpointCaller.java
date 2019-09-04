@@ -175,6 +175,14 @@ class RegistryEndpointCaller<T> {
       return handleUnverifiableServerException(url);
 
     } catch (ConnectException ex) {
+      // It is observed that Open/Oracle JDKs sometimes throw SocketTimeoutException but other times
+      // ConnectException for connection timeout. (Could be a JDK bug.) Note SocketTimeoutException
+      // does not extend ConnectException (or vice versa), and we want to be consistent to error out
+      // on timeouts: https://github.com/GoogleContainerTools/jib/issues/1895#issuecomment-527544094
+      if (ex.getMessage() != null && ex.getMessage().contains("timed out")) {
+        throw ex;
+      }
+
       if (allowInsecureRegistries && isHttpsProtocol(url) && url.getPort() == -1) {
         // Fall back to HTTP only if "url" had no port specified (i.e., we tried the default HTTPS
         // port 443) and we could not connect to 443. It's worth trying port 80.

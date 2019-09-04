@@ -278,6 +278,26 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
+  public void testCall_timeoutFromConnectException() throws IOException, RegistryException {
+    ConnectException mockConnectException = Mockito.mock(ConnectException.class);
+    Mockito.when(mockConnectException.getMessage()).thenReturn("Connection timed out");
+    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
+        .thenThrow(mockConnectException) // server times out on 443
+        .thenReturn(mockResponse); // respond when connected through 80
+
+    try {
+      RegistryEndpointCaller<String> insecureEndpointCaller =
+          createRegistryEndpointCaller(true, -1);
+      insecureEndpointCaller.call();
+      Assert.fail("Should not fall back to HTTP if timed out even for ConnectionException");
+
+    } catch (ConnectException ex) {
+      Assert.assertSame(mockConnectException, ex);
+      Mockito.verify(mockConnection).send(Mockito.anyString(), Mockito.any());
+    }
+  }
+
+  @Test
   public void testCall_noHttpResponse() throws IOException, RegistryException {
     NoHttpResponseException mockNoHttpResponseException =
         Mockito.mock(NoHttpResponseException.class);
