@@ -279,11 +279,6 @@ public class PluginConfigurationProcessor {
       return JavaContainerBuilder.from(baseImageConfig);
     }
     ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
-    if (!baseImageReference.registryIsSpecified()
-        && baseImageConfig.startsWith(Jib.REGISTRY_IMAGE_PREFIX)) {
-      throw new InvalidImageReferenceException(
-          baseImageConfig + " (Registry must be specified when using registry:// prefix)");
-    }
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     configureCredentialRetrievers(
         rawConfiguration,

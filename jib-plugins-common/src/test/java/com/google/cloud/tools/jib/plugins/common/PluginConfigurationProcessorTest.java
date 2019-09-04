@@ -764,21 +764,6 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetJavaContainerBuilderWithBaseImage_registryWithPrefix_missingRegistry()
-      throws IncompatibleBaseImageJavaVersionException, IOException,
-          CacheDirectoryCreationException {
-    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("registry://image/name"));
-    try {
-      getCommonImageConfiguration();
-      Assert.fail();
-    } catch (InvalidImageReferenceException ex) {
-      Assert.assertEquals(
-          "Invalid image reference: registry://image/name (Registry must be specified when using registry:// prefix)",
-          ex.getMessage());
-    }
-  }
-
-  @Test
   public void testGetJavaContainerBuilderWithBaseImage_incompatibleJava8BaseImage()
       throws InvalidImageReferenceException, FileNotFoundException {
     Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(11);

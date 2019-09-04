@@ -62,13 +62,6 @@ public class ImageReferenceTest {
   }
 
   @Test
-  public void testRegistryIsSpecified() throws InvalidImageReferenceException {
-    Assert.assertTrue(ImageReference.parse("gcr.io/test/image:tag").registryIsSpecified());
-    Assert.assertTrue(ImageReference.parse("localhost/image:tag").registryIsSpecified());
-    Assert.assertFalse(ImageReference.parse("test/image:tag").registryIsSpecified());
-  }
-
-  @Test
   public void testParse_dockerHub_official() throws InvalidImageReferenceException {
     String imageReferenceString = "busybox";
     ImageReference imageReference = ImageReference.parse(imageReferenceString);

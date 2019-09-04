@@ -106,12 +106,10 @@ public class ImageReference {
     String repository = matcher.group(2);
     String tag = matcher.group(3);
     String digest = matcher.group(4);
-    boolean registryIsSpecified = true;
 
     // If no registry was matched, use Docker Hub by default.
     if (Strings.isNullOrEmpty(registry)) {
       registry = DOCKER_HUB_REGISTRY;
-      registryIsSpecified = false;
     }
 
     if (Strings.isNullOrEmpty(repository)) {
@@ -126,7 +124,6 @@ public class ImageReference {
     if (!registry.contains(".") && !registry.contains(":") && !"localhost".equals(registry)) {
       repository = registry + "/" + repository;
       registry = DOCKER_HUB_REGISTRY;
-      registryIsSpecified = false;
     }
 
     /*
@@ -150,7 +147,7 @@ public class ImageReference {
       tag = DEFAULT_TAG;
     }
 
-    return new ImageReference(registry, repository, tag, registryIsSpecified);
+    return new ImageReference(registry, repository, tag);
   }
 
   /**
@@ -168,14 +165,13 @@ public class ImageReference {
     Preconditions.checkArgument(isValidRepository(repository));
     Preconditions.checkArgument(Strings.isNullOrEmpty(tag) || isValidTag(tag));
 
-    boolean registryIsSpecified = !Strings.isNullOrEmpty(registry);
     if (Strings.isNullOrEmpty(registry)) {
       registry = DOCKER_HUB_REGISTRY;
     }
     if (Strings.isNullOrEmpty(tag)) {
       tag = DEFAULT_TAG;
     }
-    return new ImageReference(registry, repository, tag, registryIsSpecified);
+    return new ImageReference(registry, repository, tag);
   }
 
   /**
@@ -186,7 +182,7 @@ public class ImageReference {
    *     to "scratch"
    */
   public static ImageReference scratch() {
-    return new ImageReference("", "scratch", "", false);
+    return new ImageReference("", "scratch", "");
   }
 
   /**
@@ -237,15 +233,12 @@ public class ImageReference {
   private final String registry;
   private final String repository;
   private final String tag;
-  private final boolean registryIsSpecified;
 
   /** Construct with {@link #parse}. */
-  private ImageReference(
-      String registry, String repository, String tag, boolean registryIsSpecified) {
+  private ImageReference(String registry, String repository, String tag) {
     this.registry = RegistryAliasGroup.getHost(registry);
     this.repository = repository;
     this.tag = tag;
-    this.registryIsSpecified = registryIsSpecified;
   }
 
   /**
@@ -353,14 +346,5 @@ public class ImageReference {
    */
   public String toStringWithTag() {
     return toString() + (usesDefaultTag() ? ":" + DEFAULT_TAG : "");
-  }
-
-  /**
-   * Returns whether or not the registry was specified.
-   *
-   * @return {@code true} if the registry was specified, {@code false} if the default is used
-   */
-  public boolean registryIsSpecified() {
-    return registryIsSpecified;
   }
 }
