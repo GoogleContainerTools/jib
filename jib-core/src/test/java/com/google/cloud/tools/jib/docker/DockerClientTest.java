@@ -54,10 +54,13 @@ public class DockerClientTest {
   @Mock private Process mockProcess;
   @Mock private ImageTarball imageTarball;
   @Mock private ProgressEventDispatcher.Factory progressEventDispatcherFactory;
+  @Mock private ProgressEventDispatcher progressEventDispatcher;
 
   @Before
   public void setUp() throws IOException {
     Mockito.when(mockProcessBuilder.start()).thenReturn(mockProcess);
+    Mockito.when(progressEventDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
+        .thenReturn(progressEventDispatcher);
 
     Mockito.doAnswer(
             AdditionalAnswers.answerVoid(
@@ -177,15 +180,7 @@ public class DockerClientTest {
 
   @Test
   public void testSave() throws InterruptedException, IOException {
-    DockerClient testDockerClient =
-        new DockerClient(
-            subcommand -> {
-              if (!subcommand.contains("{{.Size}}")) {
-                Assert.assertEquals(
-                    Arrays.asList("save", "testimage", "-o", "out.tar"), subcommand);
-              }
-              return mockProcessBuilder;
-            });
+    DockerClient testDockerClient = makeDockerSaveClient();
     Mockito.when(mockProcess.waitFor()).thenReturn(0);
 
     testDockerClient.save(
@@ -196,15 +191,7 @@ public class DockerClientTest {
 
   @Test
   public void testSave_fail() throws InterruptedException {
-    DockerClient testDockerClient =
-        new DockerClient(
-            subcommand -> {
-              if (!subcommand.contains("{{.Size}}")) {
-                Assert.assertEquals(
-                    Arrays.asList("save", "testimage", "-o", "out.tar"), subcommand);
-              }
-              return mockProcessBuilder;
-            });
+    DockerClient testDockerClient = makeDockerSaveClient();
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
 
     Mockito.when(mockProcess.getErrorStream())
@@ -280,5 +267,26 @@ public class DockerClientTest {
     } catch (IOException ex) {
       Assert.assertEquals("'docker tag' command failed with error: error", ex.getMessage());
     }
+  }
+
+  private DockerClient makeDockerSaveClient() {
+    return new DockerClient(
+        subcommand -> {
+          try {
+            if (subcommand.contains("{{.Size}}")) {
+              Process mockSize = Mockito.mock(Process.class);
+              Mockito.when(mockSize.getInputStream())
+                  .thenReturn(new ByteArrayInputStream("150000".getBytes(StandardCharsets.UTF_8)));
+              Mockito.when(mockProcessBuilder.start()).thenReturn(mockSize);
+            } else {
+              Assert.assertEquals(Arrays.asList("save", "testimage"), subcommand);
+              Mockito.when(mockProcess.getInputStream())
+                  .thenReturn(new ByteArrayInputStream("jib".getBytes(StandardCharsets.UTF_8)));
+              Mockito.when(mockProcessBuilder.start()).thenReturn(mockProcess);
+            }
+          } catch (IOException ignored) {
+          }
+          return mockProcessBuilder;
+        });
   }
 }
