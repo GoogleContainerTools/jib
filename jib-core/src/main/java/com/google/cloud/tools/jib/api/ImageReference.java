@@ -71,8 +71,12 @@ public class ImageReference {
    */
   private static final String REFERENCE_REGEX =
       String.format(
-          "^(?:(registry://))?(?:(%s)/)?(%s)(?:(?::(%s))|(?:@(%s)))?$",
-          REGISTRY_REGEX, REPOSITORY_REGEX, TAG_REGEX, DescriptorDigest.DIGEST_REGEX);
+          "^(?:(%s))?(?:(%s)/)?(%s)(?:(?::(%s))|(?:@(%s)))?$",
+          Jib.REGISTRY_IMAGE_PREFIX,
+          REGISTRY_REGEX,
+          REPOSITORY_REGEX,
+          TAG_REGEX,
+          DescriptorDigest.DIGEST_REGEX);
 
   private static final Pattern REFERENCE_PATTERN = Pattern.compile(REFERENCE_REGEX);
 

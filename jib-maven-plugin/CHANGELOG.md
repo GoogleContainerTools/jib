@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Support for local base images using a URL scheme in `<from><image>`. Use the format `docker://name-of-image` to use a base image stored in the local Docker daemon, or `tar:///path/to/file.tar` to use a base image tarball stored on the filesystem (may be absolute or relative) ([#1468](https://github.com/GoogleContainerTools/jib/issues/1468), [#1905](https://github.com/GoogleContainerTools/jib/issues/1905))
+- Support for local base images by prefixing `jib.from.image>` with `docker://` to build from a docker daemon image, or `tar://` to build from a tarball image ([#1468](https://github.com/GoogleContainerTools/jib/issues/1468), [#1905](https://github.com/GoogleContainerTools/jib/issues/1905))
 
 ### Changed
 
