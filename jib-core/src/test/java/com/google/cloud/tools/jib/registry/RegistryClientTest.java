@@ -17,10 +17,13 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -41,6 +44,8 @@ public class RegistryClientTest {
     testRegistryClientFactory =
         RegistryClient.factory(eventHandlers, "some.server.url", "some image name");
   }
+
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   @Test
   public void testGetUserAgent_null() {
@@ -70,6 +75,19 @@ public class RegistryClientTest {
 
     Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
     Assert.assertTrue(registryClient.getUserAgent().endsWith(" some user agent suffix"));
+  }
+
+  @Test
+  public void testGetUserAgentWithUpstreamClient() {
+    System.setProperty(JibSystemProperties.UPSTREAM_CLIENT, "skaffold/0.34.0");
+
+    RegistryClient registryClient =
+        testRegistryClientFactory
+            .setAllowInsecureRegistries(true)
+            .setUserAgentSuffix("foo")
+            .newRegistryClient();
+    Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
+    Assert.assertTrue(registryClient.getUserAgent().endsWith(" skaffold/0.34.0"));
   }
 
   @Test
