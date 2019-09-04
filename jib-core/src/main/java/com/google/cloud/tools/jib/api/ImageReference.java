@@ -71,12 +71,8 @@ public class ImageReference {
    */
   private static final String REFERENCE_REGEX =
       String.format(
-          "^(?:(%s))?(?:(%s)/)?(%s)(?:(?::(%s))|(?:@(%s)))?$",
-          Jib.REGISTRY_IMAGE_PREFIX,
-          REGISTRY_REGEX,
-          REPOSITORY_REGEX,
-          TAG_REGEX,
-          DescriptorDigest.DIGEST_REGEX);
+          "^(?:(%s)/)?(%s)(?:(?::(%s))|(?:@(%s)))?$",
+          REGISTRY_REGEX, REPOSITORY_REGEX, TAG_REGEX, DescriptorDigest.DIGEST_REGEX);
 
   private static final Pattern REFERENCE_PATTERN = Pattern.compile(REFERENCE_REGEX);
 
@@ -102,22 +98,20 @@ public class ImageReference {
 
     Matcher matcher = REFERENCE_PATTERN.matcher(reference);
 
-    if (!matcher.find() || matcher.groupCount() < 5) {
+    if (!matcher.find() || matcher.groupCount() < 4) {
       throw new InvalidImageReferenceException(reference);
     }
 
-    String prefix = matcher.group(1);
-    String registry = matcher.group(2);
-    String repository = matcher.group(3);
-    String tag = matcher.group(4);
-    String digest = matcher.group(5);
+    String registry = matcher.group(1);
+    String repository = matcher.group(2);
+    String tag = matcher.group(3);
+    String digest = matcher.group(4);
+    boolean registryIsSpecified = true;
 
     // If no registry was matched, use Docker Hub by default.
     if (Strings.isNullOrEmpty(registry)) {
-      if (!Strings.isNullOrEmpty(prefix)) {
-        throw new InvalidImageReferenceException(reference);
-      }
       registry = DOCKER_HUB_REGISTRY;
+      registryIsSpecified = false;
     }
 
     if (Strings.isNullOrEmpty(repository)) {
@@ -130,11 +124,9 @@ public class ImageReference {
      * See https://github.com/docker/distribution/blob/245ca4659e09e9745f3cc1217bf56e946509220c/reference/normalize.go#L62
      */
     if (!registry.contains(".") && !registry.contains(":") && !"localhost".equals(registry)) {
-      if (!Strings.isNullOrEmpty(prefix)) {
-        throw new InvalidImageReferenceException(reference);
-      }
       repository = registry + "/" + repository;
       registry = DOCKER_HUB_REGISTRY;
+      registryIsSpecified = false;
     }
 
     /*
@@ -158,7 +150,7 @@ public class ImageReference {
       tag = DEFAULT_TAG;
     }
 
-    return new ImageReference(registry, repository, tag);
+    return new ImageReference(registry, repository, tag, registryIsSpecified);
   }
 
   /**
@@ -176,13 +168,14 @@ public class ImageReference {
     Preconditions.checkArgument(isValidRepository(repository));
     Preconditions.checkArgument(Strings.isNullOrEmpty(tag) || isValidTag(tag));
 
+    boolean registryIsSpecified = !Strings.isNullOrEmpty(registry);
     if (Strings.isNullOrEmpty(registry)) {
       registry = DOCKER_HUB_REGISTRY;
     }
     if (Strings.isNullOrEmpty(tag)) {
       tag = DEFAULT_TAG;
     }
-    return new ImageReference(registry, repository, tag);
+    return new ImageReference(registry, repository, tag, registryIsSpecified);
   }
 
   /**
@@ -193,7 +186,7 @@ public class ImageReference {
    *     to "scratch"
    */
   public static ImageReference scratch() {
-    return new ImageReference("", "scratch", "");
+    return new ImageReference("", "scratch", "", false);
   }
 
   /**
@@ -244,12 +237,15 @@ public class ImageReference {
   private final String registry;
   private final String repository;
   private final String tag;
+  private final boolean registryIsSpecified;
 
   /** Construct with {@link #parse}. */
-  private ImageReference(String registry, String repository, String tag) {
+  private ImageReference(
+      String registry, String repository, String tag, boolean registryIsSpecified) {
     this.registry = RegistryAliasGroup.getHost(registry);
     this.repository = repository;
     this.tag = tag;
+    this.registryIsSpecified = registryIsSpecified;
   }
 
   /**
@@ -357,5 +353,14 @@ public class ImageReference {
    */
   public String toStringWithTag() {
     return toString() + (usesDefaultTag() ? ":" + DEFAULT_TAG : "");
+  }
+
+  /**
+   * Returns whether or not the registry was specified.
+   *
+   * @return {@code true} if the registry was specified, {@code false} if the default is used
+   */
+  public boolean registryIsSpecified() {
+    return registryIsSpecified;
   }
 }

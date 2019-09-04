@@ -50,7 +50,13 @@ public class Jib {
     if (baseImageReference.startsWith(TAR_IMAGE_PREFIX)) {
       return from(TarImage.at(Paths.get(baseImageReference.replaceFirst(TAR_IMAGE_PREFIX, ""))));
     }
-    return from(RegistryImage.named(baseImageReference));
+    ImageReference imageReference =
+        ImageReference.parse(baseImageReference.replaceFirst(REGISTRY_IMAGE_PREFIX, ""));
+    if (baseImageReference.startsWith("registry://") && !imageReference.registryIsSpecified()) {
+      throw new InvalidImageReferenceException(
+          "Registry must be specified when using registry:// prefix");
+    }
+    return from(RegistryImage.named(imageReference));
   }
 
   /**

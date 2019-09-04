@@ -278,7 +278,12 @@ public class PluginConfigurationProcessor {
     if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
       return JavaContainerBuilder.from(baseImageConfig);
     }
-    ImageReference baseImageReference = ImageReference.parse(baseImageConfig);
+    ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
+    if (!baseImageReference.registryIsSpecified()
+        && baseImageConfig.startsWith(Jib.REGISTRY_IMAGE_PREFIX)) {
+      throw new InvalidImageReferenceException(
+          baseImageConfig + " (Registry must be specified when using registry:// prefix)");
+    }
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     configureCredentialRetrievers(
         rawConfiguration,
