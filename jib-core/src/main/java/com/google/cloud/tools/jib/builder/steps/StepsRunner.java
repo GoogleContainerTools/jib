@@ -244,11 +244,15 @@ public class StepsRunner {
   }
 
   private void extractTar() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
     Future<LocalImage> localImageFuture =
         executorService.submit(
             () ->
                 new ExtractTarStep(
-                        results.tarPath.get(), Files.createTempDirectory("jib-extract-tar"))
+                        results.tarPath.get(),
+                        Files.createTempDirectory("jib-extract-tar"),
+                        childProgressDispatcherFactory)
                     .call());
     results.baseImageAndAuth =
         executorService.submit(

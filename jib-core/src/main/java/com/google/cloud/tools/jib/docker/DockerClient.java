@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
+import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
@@ -179,15 +180,18 @@ public class DockerClient {
       ProgressEventDispatcher.Factory progressEventDispatcherFactory)
       throws InterruptedException, IOException {
     Process sizeProcess = docker("inspect", "-f", "{{.Size}}", imageReference.toString());
-    int size =
-        Integer.parseInt(
+    long size =
+        Long.parseLong(
             CharStreams.toString(
-                new InputStreamReader(sizeProcess.getInputStream(), StandardCharsets.UTF_8)));
+                    new InputStreamReader(sizeProcess.getInputStream(), StandardCharsets.UTF_8))
+                .trim());
 
     // Runs 'docker save'.
     try (ProgressEventDispatcher progressEventDispatcher =
-        progressEventDispatcherFactory.create(
-            "saving base image " + imageReference.toString(), size)) {
+            progressEventDispatcherFactory.create(
+                "saving base image " + imageReference.toString(), size);
+        ThrottledAccumulatingConsumer throttledProgressReporter =
+            new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
       Process dockerProcess = docker("save", imageReference.toString());
       try (InputStream stdout = new BufferedInputStream(dockerProcess.getInputStream());
           OutputStream fileStream = new BufferedOutputStream(Files.newOutputStream(outputPath))) {
@@ -195,7 +199,7 @@ public class DockerClient {
         int length;
         while ((length = stdout.read(buffer)) != -1) {
           fileStream.write(buffer, 0, length);
-          progressEventDispatcher.dispatchProgress(length);
+          throttledProgressReporter.accept((long) length);
         }
       }
 

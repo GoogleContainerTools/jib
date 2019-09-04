@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
+import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
@@ -25,16 +26,36 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class ExtractTarStepTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  @Mock private ProgressEventDispatcher.Factory progressEventDispatcherFactory;
+  @Mock private ProgressEventDispatcher progressEventDispatcher;
+  @Mock private ProgressEventDispatcher.Factory childFactory;
+  @Mock private ProgressEventDispatcher childDispatcher;
+
   private static Path getResource(String resource) throws URISyntaxException {
     return Paths.get(Resources.getResource(resource).toURI());
+  }
+
+  @Before
+  public void setup() {
+    Mockito.when(progressEventDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
+        .thenReturn(progressEventDispatcher);
+    Mockito.when(progressEventDispatcher.newChildProducer()).thenReturn(childFactory);
+    Mockito.when(childFactory.create(Mockito.anyString(), Mockito.anyLong()))
+        .thenReturn(childDispatcher);
   }
 
   @Test
@@ -42,8 +63,12 @@ public class ExtractTarStepTest {
       throws URISyntaxException, LayerCountMismatchException,
           BadContainerConfigurationFormatException, IOException {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
-    LocalImage result = new ExtractTarStep(dockerBuild, temporaryFolder.getRoot().toPath()).call();
+    LocalImage result =
+        new ExtractTarStep(
+                dockerBuild, temporaryFolder.getRoot().toPath(), progressEventDispatcherFactory)
+            .call();
 
+    Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
     Assert.assertEquals(
         "5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd",
@@ -65,8 +90,12 @@ public class ExtractTarStepTest {
       throws URISyntaxException, LayerCountMismatchException,
           BadContainerConfigurationFormatException, IOException {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
-    LocalImage result = new ExtractTarStep(tarBuild, temporaryFolder.getRoot().toPath()).call();
+    LocalImage result =
+        new ExtractTarStep(
+                tarBuild, temporaryFolder.getRoot().toPath(), progressEventDispatcherFactory)
+            .call();
 
+    Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
     Assert.assertEquals(
         "5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd",
