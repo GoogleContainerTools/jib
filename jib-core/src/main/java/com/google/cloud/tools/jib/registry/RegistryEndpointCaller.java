@@ -42,7 +42,6 @@ import java.util.Locale;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
-import org.apache.http.NoHttpResponseException;
 
 /**
  * Makes requests to a registry endpoint.
@@ -160,7 +159,22 @@ class RegistryEndpointCaller<T> {
    * @throws RegistryException for known exceptions when interacting with the registry
    */
   T call() throws IOException, RegistryException {
-    return callWithAllowInsecureRegistryHandling(initialRequestUrl);
+    try {
+      return callWithAllowInsecureRegistryHandling(initialRequestUrl);
+
+    } catch (IOException ex) {
+      String registry = registryEndpointRequestProperties.getServerUrl();
+      String repository = registryEndpointRequestProperties.getImageName();
+      logError("I/O error for image [" + registry + "/" + repository + "]:");
+      logError("    " + ex.getMessage());
+      if (isBrokenPipe(ex)) {
+        logError(
+            "broken pipe: the server shut down the connection. Check the server log if possible. "
+                + "This could also be a proxy issue. For example, a proxy may prevent sending "
+                + "packets that are too large.");
+      }
+      throw ex;
+    }
   }
 
   private T callWithAllowInsecureRegistryHandling(URL url) throws IOException, RegistryException {
@@ -304,14 +318,6 @@ class RegistryEndpointCaller<T> {
           throw httpResponseException;
         }
       }
-    } catch (NoHttpResponseException ex) {
-      throw new RegistryNoResponseException(ex);
-
-    } catch (IOException ex) {
-      if (isBrokenPipe(ex)) {
-        throw new RegistryBrokenPipeException(ex);
-      }
-      throw ex;
     }
   }
 
@@ -338,5 +344,10 @@ class RegistryEndpointCaller<T> {
     }
 
     return registryErrorExceptionBuilder.build();
+  }
+
+  /** Logs error message in red. */
+  private void logError(String message) {
+    eventHandlers.dispatch(LogEvent.error("\u001B[31;1m" + message + "\u001B[0m"));
   }
 }

@@ -308,8 +308,8 @@ public class RegistryEndpointCallerTest {
       secureEndpointCaller.call();
       Assert.fail("Call should have failed");
 
-    } catch (RegistryNoResponseException ex) {
-      Assert.assertSame(mockNoHttpResponseException, ex.getCause());
+    } catch (NoHttpResponseException ex) {
+      Assert.assertSame(mockNoHttpResponseException, ex);
     }
   }
 
