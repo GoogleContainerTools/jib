@@ -17,6 +17,9 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
+import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.cache.CacheCorruptedException;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
 import com.google.common.io.Resources;
@@ -25,24 +28,40 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
+@RunWith(MockitoJUnitRunner.class)
 public class ExtractTarStepTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Mock BuildConfiguration mockBuildConfiguration;
 
   private static Path getResource(String resource) throws URISyntaxException {
     return Paths.get(Resources.getResource(resource).toURI());
   }
 
+  @Before
+  public void setup() throws IOException {
+    Mockito.when(mockBuildConfiguration.getBaseImageLayersCache())
+        .thenReturn(Cache.withDirectory(temporaryFolder.newFolder().toPath()));
+  }
+
   @Test
   public void testCall_validDocker()
       throws URISyntaxException, LayerCountMismatchException,
-          BadContainerConfigurationFormatException, IOException {
+          BadContainerConfigurationFormatException, IOException, CacheCorruptedException {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
-    LocalImage result = new ExtractTarStep(dockerBuild, temporaryFolder.getRoot().toPath()).call();
+    LocalImage result =
+        new ExtractTarStep(dockerBuild, temporaryFolder.getRoot().toPath(), mockBuildConfiguration)
+            .call();
 
     Assert.assertEquals(2, result.layers.size());
     Assert.assertEquals(
@@ -63,9 +82,11 @@ public class ExtractTarStepTest {
   @Test
   public void testCall_validTar()
       throws URISyntaxException, LayerCountMismatchException,
-          BadContainerConfigurationFormatException, IOException {
+          BadContainerConfigurationFormatException, IOException, CacheCorruptedException {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
-    LocalImage result = new ExtractTarStep(tarBuild, temporaryFolder.getRoot().toPath()).call();
+    LocalImage result =
+        new ExtractTarStep(tarBuild, temporaryFolder.getRoot().toPath(), mockBuildConfiguration)
+            .call();
 
     Assert.assertEquals(2, result.layers.size());
     Assert.assertEquals(
