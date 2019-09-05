@@ -18,11 +18,15 @@ package com.google.cloud.tools.jib.configuration;
 
 import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
-/** Immutable configuration options for an image reference with credentials. */
+/** Immutable configuration options for a base or target image reference. */
 public class ImageConfiguration {
 
   /** Builder for instantiating an {@link ImageConfiguration}. */
@@ -30,6 +34,8 @@ public class ImageConfiguration {
 
     private ImageReference imageReference;
     private ImmutableList<CredentialRetriever> credentialRetrievers = ImmutableList.of();
+    @Nullable private DockerClient dockerClient;
+    @Nullable private Path tarPath;
 
     /**
      * Sets the providers for registry credentials. The order determines the priority in which the
@@ -46,12 +52,45 @@ public class ImageConfiguration {
     }
 
     /**
+     * Sets the Docker client to be used for Docker daemon base images.
+     *
+     * @param dockerClient the Docker client
+     * @return this
+     */
+    public Builder setDockerClient(DockerClient dockerClient) {
+      this.dockerClient = dockerClient;
+      return this;
+    }
+
+    /**
+     * Sets the path for tarball base images.
+     *
+     * @param tarPath the path
+     * @return this
+     */
+    public Builder setTarPath(Path tarPath) {
+      this.tarPath = tarPath;
+      return this;
+    }
+
+    /**
      * Builds the {@link ImageConfiguration}.
      *
      * @return the corresponding {@link ImageConfiguration}
      */
     public ImageConfiguration build() {
-      return new ImageConfiguration(imageReference, credentialRetrievers);
+      int numArguments = 0;
+      if (!credentialRetrievers.isEmpty()) {
+        numArguments++;
+      }
+      if (dockerClient != null) {
+        numArguments++;
+      }
+      if (tarPath != null) {
+        numArguments++;
+      }
+      Preconditions.checkArgument(numArguments <= 1);
+      return new ImageConfiguration(imageReference, credentialRetrievers, dockerClient, tarPath);
     }
 
     private Builder(ImageReference imageReference) {
@@ -71,11 +110,18 @@ public class ImageConfiguration {
 
   private final ImageReference image;
   private final ImmutableList<CredentialRetriever> credentialRetrievers;
+  @Nullable private DockerClient dockerClient;
+  @Nullable private Path tarPath;
 
   private ImageConfiguration(
-      ImageReference image, ImmutableList<CredentialRetriever> credentialRetrievers) {
+      ImageReference image,
+      ImmutableList<CredentialRetriever> credentialRetrievers,
+      @Nullable DockerClient dockerClient,
+      @Nullable Path tarPath) {
     this.image = image;
     this.credentialRetrievers = credentialRetrievers;
+    this.dockerClient = dockerClient;
+    this.tarPath = tarPath;
   }
 
   public ImageReference getImage() {
@@ -96,5 +142,13 @@ public class ImageConfiguration {
 
   public ImmutableList<CredentialRetriever> getCredentialRetrievers() {
     return credentialRetrievers;
+  }
+
+  public Optional<DockerClient> getDockerClient() {
+    return Optional.ofNullable(dockerClient);
+  }
+
+  public Optional<Path> getTarPath() {
+    return Optional.ofNullable(tarPath);
   }
 }

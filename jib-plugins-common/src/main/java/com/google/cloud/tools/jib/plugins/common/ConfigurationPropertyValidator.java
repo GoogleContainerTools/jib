@@ -66,11 +66,11 @@ public class ConfigurationPropertyValidator {
     // Warn if a system property is missing
     String missingProperty =
         "%s system property is set, but %s is not; attempting other authentication methods.";
-    if (!commandlinePassword.isEmpty() && commandlineUsername.isEmpty()) {
+    if (!commandlinePassword.isEmpty()) {
       logger.accept(
           LogEvent.warn(String.format(missingProperty, passwordProperty, usernameProperty)));
     }
-    if (!commandlineUsername.isEmpty() && commandlinePassword.isEmpty()) {
+    if (!commandlineUsername.isEmpty()) {
       logger.accept(
           LogEvent.warn(String.format(missingProperty, usernameProperty, passwordProperty)));
     }
@@ -81,10 +81,10 @@ public class ConfigurationPropertyValidator {
     }
 
     String missingConfig = "%s is missing from build configuration; ignoring auth section.";
-    if (!Strings.isNullOrEmpty(auth.getPassword()) && Strings.isNullOrEmpty(auth.getUsername())) {
+    if (!Strings.isNullOrEmpty(auth.getPassword())) {
       logger.accept(LogEvent.warn(String.format(missingConfig, auth.getUsernameDescriptor())));
     }
-    if (!Strings.isNullOrEmpty(auth.getUsername()) && Strings.isNullOrEmpty(auth.getPassword())) {
+    if (!Strings.isNullOrEmpty(auth.getUsername())) {
       logger.accept(LogEvent.warn(String.format(missingConfig, auth.getPasswordDescriptor())));
     }
 
