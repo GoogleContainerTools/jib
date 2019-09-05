@@ -230,7 +230,7 @@ public class DockerClient {
    * @return the size in bytes
    * @throws IOException if an I/O exception occurs
    */
-  public long size(ImageReference imageReference) throws IOException {
+  public long sizeOf(ImageReference imageReference) throws IOException {
     Process sizeProcess = docker("inspect", "-f", "{{.Size}}", imageReference.toString());
     return Long.parseLong(
         CharStreams.toString(

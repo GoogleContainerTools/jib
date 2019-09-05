@@ -50,7 +50,7 @@ public class SaveDockerStep implements Callable<Path> {
     Path outputPath = outputDir.resolve("out.tar");
     ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
 
-    long size = dockerClient.size(imageReference);
+    long size = dockerClient.sizeOf(imageReference);
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("saving base image " + imageReference, size);
         ThrottledAccumulatingConsumer throttledProgressReporter =
