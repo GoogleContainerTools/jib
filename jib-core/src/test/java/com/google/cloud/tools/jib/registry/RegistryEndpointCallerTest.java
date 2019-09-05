@@ -308,8 +308,8 @@ public class RegistryEndpointCallerTest {
       secureEndpointCaller.call();
       Assert.fail("Call should have failed");
 
-    } catch (RegistryNoResponseException ex) {
-      Assert.assertSame(mockNoHttpResponseException, ex.getCause());
+    } catch (NoHttpResponseException ex) {
+      Assert.assertSame(mockNoHttpResponseException, ex);
     }
   }
 
@@ -448,6 +448,54 @@ public class RegistryEndpointCallerTest {
 
     } catch (InsecureRegistryException ex) {
       // pass
+    }
+  }
+
+  @Test
+  public void testCall_logErrorOnIoExceptions() throws IOException, RegistryException {
+    IOException ioException = new IOException("detailed exception message");
+    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
+        .thenThrow(ioException);
+
+    try {
+      secureEndpointCaller.call();
+      Assert.fail();
+
+    } catch (IOException ex) {
+      Assert.assertSame(ioException, ex);
+      Mockito.verify(mockEventHandlers)
+          .dispatch(
+              LogEvent.error("\u001B[31;1mI/O error for image [serverUrl/imageName]:\u001B[0m"));
+      Mockito.verify(mockEventHandlers)
+          .dispatch(LogEvent.error("\u001B[31;1m    detailed exception message\u001B[0m"));
+      Mockito.verifyNoMoreInteractions(mockEventHandlers);
+    }
+  }
+
+  @Test
+  public void testCall_logErrorOnBrokenPipe() throws IOException, RegistryException {
+    IOException ioException = new IOException("this is due to broken pipe");
+    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
+        .thenThrow(ioException);
+
+    try {
+      secureEndpointCaller.call();
+      Assert.fail();
+
+    } catch (IOException ex) {
+      Assert.assertSame(ioException, ex);
+      Mockito.verify(mockEventHandlers)
+          .dispatch(
+              LogEvent.error("\u001B[31;1mI/O error for image [serverUrl/imageName]:\u001B[0m"));
+      Mockito.verify(mockEventHandlers)
+          .dispatch(LogEvent.error("\u001B[31;1m    this is due to broken pipe\u001B[0m"));
+      Mockito.verify(mockEventHandlers)
+          .dispatch(
+              LogEvent.error(
+                  "\u001B[31;1mbroken pipe: the server shut down the connection. Check the server "
+                      + "log if possible. This could also be a proxy issue. For example, a proxy "
+                      + "may prevent sending packets that are too large.\u001B[0m"));
+      Mockito.verifyNoMoreInteractions(mockEventHandlers);
     }
   }
 
