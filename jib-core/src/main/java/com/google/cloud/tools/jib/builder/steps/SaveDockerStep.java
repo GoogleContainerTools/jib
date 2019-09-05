@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -48,7 +49,14 @@ public class SaveDockerStep implements Callable<Path> {
     FileOperations.deleteRecursiveOnExit(outputDir);
     Path outputPath = outputDir.resolve("out.tar");
     ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
-    dockerClient.save(imageReference, outputPath, progressEventDispatcherFactory);
+
+    long size = dockerClient.size(imageReference);
+    try (ProgressEventDispatcher progressEventDispatcher =
+            progressEventDispatcherFactory.create("saving base image " + imageReference, size);
+        ThrottledAccumulatingConsumer throttledProgressReporter =
+            new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
+      dockerClient.save(imageReference, outputPath, throttledProgressReporter);
+    }
     return outputPath;
   }
 }

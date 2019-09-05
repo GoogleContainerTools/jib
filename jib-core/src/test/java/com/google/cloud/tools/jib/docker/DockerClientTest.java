@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
@@ -53,15 +52,10 @@ public class DockerClientTest {
   @Mock private ProcessBuilder mockProcessBuilder;
   @Mock private Process mockProcess;
   @Mock private ImageTarball imageTarball;
-  @Mock private ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  @Mock private ProgressEventDispatcher progressEventDispatcher;
 
   @Before
   public void setUp() throws IOException {
     Mockito.when(mockProcessBuilder.start()).thenReturn(mockProcess);
-    Mockito.when(progressEventDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
-        .thenReturn(progressEventDispatcher);
-
     Mockito.doAnswer(
             AdditionalAnswers.answerVoid(
                 (VoidAnswer1<OutputStream>)
@@ -183,10 +177,13 @@ public class DockerClientTest {
     DockerClient testDockerClient = makeDockerSaveClient();
     Mockito.when(mockProcess.waitFor()).thenReturn(0);
 
+    long[] counter = new long[1];
     testDockerClient.save(
         ImageReference.of(null, "testimage", null),
         temporaryFolder.getRoot().toPath().resolve("out.tar"),
-        progressEventDispatcherFactory);
+        bytes -> counter[0] += bytes);
+
+    Assert.assertEquals(3, counter[0]);
   }
 
   @Test
@@ -201,7 +198,7 @@ public class DockerClientTest {
       testDockerClient.save(
           ImageReference.of(null, "testimage", null),
           temporaryFolder.getRoot().toPath().resolve("out.tar"),
-          progressEventDispatcherFactory);
+          ignored -> {});
       Assert.fail("docker save should have failed");
 
     } catch (IOException ex) {
