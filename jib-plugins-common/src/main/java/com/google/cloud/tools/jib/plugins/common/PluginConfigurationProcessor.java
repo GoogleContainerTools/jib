@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.api.DockerDaemonImage;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.JavaContainerBuilder;
+import com.google.cloud.tools.jib.api.Jib;
 import com.google.cloud.tools.jib.api.JibContainerBuilder;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.Ports;
@@ -184,9 +185,6 @@ public class PluginConfigurationProcessor {
     JibSystemProperties.checkHttpTimeoutProperty();
     JibSystemProperties.checkProxyPortProperty();
 
-    ImageReference baseImageReference =
-        ImageReference.parse(getBaseImage(rawConfiguration, projectProperties));
-
     if (JibSystemProperties.sendCredentialsOverHttp()) {
       projectProperties.log(
           LogEvent.warn(
@@ -194,27 +192,14 @@ public class PluginConfigurationProcessor {
                   + "enable this on a public network!"));
     }
 
-    // 1. configure containerizer
     configureContainerizer(containerizer, rawConfiguration, projectProperties);
 
-    RegistryImage baseImage = RegistryImage.named(baseImageReference);
-    // 2. create and configure credential retrievers for base image
-    configureCredentialRetrievers(
-        rawConfiguration,
-        projectProperties,
-        baseImage,
-        baseImageReference,
-        PropertyNames.FROM_AUTH_USERNAME,
-        PropertyNames.FROM_AUTH_PASSWORD,
-        rawConfiguration.getFromAuth(),
-        inferredAuthProvider,
-        rawConfiguration.getFromCredHelper().orElse(null));
-
-    // 3. create and configure JibContainerBuilder
+    // Create and configure JibContainerBuilder
     BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
         createModificationTimeProvider(rawConfiguration.getFilesModificationTime());
     JavaContainerBuilder javaContainerBuilder =
-        JavaContainerBuilder.from(baseImage)
+        getJavaContainerBuilderWithBaseImage(
+                rawConfiguration, projectProperties, inferredAuthProvider)
             .setAppRoot(getAppRootChecked(rawConfiguration, projectProperties))
             .setModificationTimeProvider(modificationTimeProvider);
     JibContainerBuilder jibContainerBuilder =
@@ -252,6 +237,60 @@ public class PluginConfigurationProcessor {
       }
     }
     return jibContainerBuilder;
+  }
+
+  /**
+   * Returns a {@link JavaContainerBuilder} with the correctly parsed base image configuration.
+   *
+   * @param rawConfiguration contains the base image configuration
+   * @param projectProperties used for providing additional information
+   * @param inferredAuthProvider provides inferred auths for registry images
+   * @return a new {@link JavaContainerBuilder} with the configured base image
+   * @throws IncompatibleBaseImageJavaVersionException when the Java version in the base image is
+   *     incompatible with the Java version of the application to be containerized
+   * @throws InvalidImageReferenceException if the base image configuration can't be parsed
+   * @throws FileNotFoundException if a credential helper can't be found
+   */
+  @VisibleForTesting
+  static JavaContainerBuilder getJavaContainerBuilderWithBaseImage(
+      RawConfiguration rawConfiguration,
+      ProjectProperties projectProperties,
+      InferredAuthProvider inferredAuthProvider)
+      throws IncompatibleBaseImageJavaVersionException, InvalidImageReferenceException,
+          FileNotFoundException {
+    // Use image configuration as-is if it's a local base image
+    String baseImageConfig =
+        rawConfiguration.getFromImage().orElse(getDefaultBaseImage(projectProperties));
+    if (baseImageConfig.startsWith(Jib.TAR_IMAGE_PREFIX)) {
+      return JavaContainerBuilder.from(baseImageConfig);
+    }
+
+    // Verify Java version is compatible
+    String prefixRemoved = baseImageConfig.replaceFirst(".*://", "");
+    int javaVersion = projectProperties.getMajorJavaVersion();
+    if (isKnownDistrolessJava8Image(prefixRemoved) && javaVersion > 8) {
+      throw new IncompatibleBaseImageJavaVersionException(8, javaVersion);
+    }
+    if (isKnownDistrolessJava11Image(prefixRemoved) && javaVersion > 11) {
+      throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
+    }
+
+    if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
+      return JavaContainerBuilder.from(baseImageConfig);
+    }
+    ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
+    RegistryImage baseImage = RegistryImage.named(baseImageReference);
+    configureCredentialRetrievers(
+        rawConfiguration,
+        projectProperties,
+        baseImage,
+        baseImageReference,
+        PropertyNames.FROM_AUTH_USERNAME,
+        PropertyNames.FROM_AUTH_PASSWORD,
+        rawConfiguration.getFromAuth(),
+        inferredAuthProvider,
+        rawConfiguration.getFromCredHelper().orElse(null));
+    return JavaContainerBuilder.from(baseImage);
   }
 
   /**
@@ -335,30 +374,15 @@ public class PluginConfigurationProcessor {
    * {@code "gcr.io/distroless/java/jetty"} for WAR projects or {@code "gcr.io/distroless/java"} for
    * non-WAR.
    *
-   * @param rawConfiguration raw configuration data
    * @param projectProperties used for providing additional information
    * @return the base image
    * @throws IncompatibleBaseImageJavaVersionException when the Java version in the base image is
    *     incompatible with the Java version of the application to be containerized
    */
   @VisibleForTesting
-  static String getBaseImage(RawConfiguration rawConfiguration, ProjectProperties projectProperties)
+  static String getDefaultBaseImage(ProjectProperties projectProperties)
       throws IncompatibleBaseImageJavaVersionException {
     int javaVersion = projectProperties.getMajorJavaVersion();
-
-    if (rawConfiguration.getFromImage().isPresent()) {
-      String baseImage = rawConfiguration.getFromImage().get();
-
-      if (isKnownDistrolessJava8Image(baseImage) && javaVersion > 8) {
-        throw new IncompatibleBaseImageJavaVersionException(8, javaVersion);
-      }
-      if (isKnownDistrolessJava11Image(baseImage) && javaVersion > 11) {
-        throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
-      }
-      return baseImage;
-    }
-
-    // Base image not configured; auto-pick Distroless.
     if (javaVersion <= 8) {
       return projectProperties.isWarProject()
           ? "gcr.io/distroless/java/jetty:java8"

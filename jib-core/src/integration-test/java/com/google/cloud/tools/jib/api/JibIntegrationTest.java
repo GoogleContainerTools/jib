@@ -100,7 +100,7 @@ public class JibIntegrationTest {
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-helloworld-dockerdaemon");
     JibContainer jibContainer =
-        Jib.from(DockerDaemonImage.named("busybox"))
+        Jib.from("docker://busybox")
             .setEntrypoint("echo", "Hello World")
             .containerize(
                 Containerizer.to(
@@ -142,7 +142,7 @@ public class JibIntegrationTest {
     ImageReference targetImageReference =
         ImageReference.of("localhost:5000", "jib-core", "basic-helloworld-dockersavedtar");
     JibContainer jibContainer =
-        Jib.from(TarImage.at(path).named("ignored"))
+        Jib.from("tar://" + path)
             .setEntrypoint("echo", "Hello World")
             .containerize(
                 Containerizer.to(
