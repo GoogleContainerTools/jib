@@ -32,12 +32,12 @@ import javax.annotation.Nullable;
  * {
  *   "auths": {
  *     "registry": {
- *       "auth": "username:password in base64"
+ *       "auth": "username:password string in base64"
  *     },
  *     "anotherregistry": {},
  *     ...
  *   },
- *   "credsStore": "credential helper name",
+ *   "credsStore": "legacy credential helper config acting as a \"default\" helper",
  *   "credHelpers": {
  *     "registry": "credential helper name",
  *     "anotherregistry": "another credential helper name",
@@ -46,17 +46,15 @@ import javax.annotation.Nullable;
  * }
  * }</pre>
  *
- * If an {@code auth} is defined for a registry, that is a valid {@code Basic} authorization to use
- * for that registry.
- *
- * <p>If {@code credsStore} is defined, is a credential helper that stores authorizations for all
- * registries listed under {@code auths}.
- *
  * <p>Each entry in {@code credHelpers} is a mapping from a registry to a credential helper that
- * stores the authorization for that registry.
+ * stores the authorization for that registry. This takes precedence over {@code credsStore} if
+ * there exists a match.
  *
- * @see <a
- *     href="https://www.projectatomic.io/blog/2016/03/docker-credentials-store/">https://www.projectatomic.io/blog/2016/03/docker-credentials-store/</a>
+ * <p>{@code credsStore} is a legacy config that acts to provide a "default" credential helper if
+ * there is no match in {@code credHelpers}.
+ *
+ * <p>If an {@code auth} is defined for a registry, that is a valid {@code Basic} authorization to
+ * use for that registry.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class DockerConfigTemplate implements JsonTemplate {
