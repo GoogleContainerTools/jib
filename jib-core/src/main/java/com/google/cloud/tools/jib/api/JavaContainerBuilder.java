@@ -127,7 +127,9 @@ public class JavaContainerBuilder {
   }
 
   /**
-   * Creates a new {@link JavaContainerBuilder} with the specified base image reference.
+   * Creates a new {@link JavaContainerBuilder} with the specified base image reference. The type of
+   * base image can be specified using a prefix; see {@link Jib#from(String)} for the accepted
+   * prefixes.
    *
    * @param baseImageReference the base image reference
    * @return a new {@link JavaContainerBuilder}
@@ -135,7 +137,7 @@ public class JavaContainerBuilder {
    */
   public static JavaContainerBuilder from(String baseImageReference)
       throws InvalidImageReferenceException {
-    return from(RegistryImage.named(baseImageReference));
+    return new JavaContainerBuilder(Jib.from(baseImageReference));
   }
 
   /**
