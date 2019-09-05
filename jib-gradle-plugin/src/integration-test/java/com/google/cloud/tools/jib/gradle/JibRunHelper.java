@@ -65,6 +65,24 @@ public class JibRunHelper {
     return pullAndRunBuiltImage(imageReference, extraRunArguments);
   }
 
+  static String buildAndRunFromLocalBase(String target, String base)
+      throws IOException, InterruptedException, DigestException {
+    BuildResult buildResult =
+        SingleProjectIntegrationTest.simpleTestProject.build(
+            "clean",
+            "jib",
+            "-Djib.useOnlyProjectCache=true",
+            "-Djib.console=plain",
+            "-D_TARGET_IMAGE=" + target,
+            "-D_BASE_IMAGE=" + base,
+            "-Djib.allowInsecureRegistries=" + target.startsWith("localhost"),
+            "-b=" + "build-local-base.gradle");
+    assertBuildSuccess(buildResult, "jib", "Built and pushed image as ");
+    assertImageDigestAndId(SingleProjectIntegrationTest.simpleTestProject.getProjectRoot());
+    Assert.assertThat(buildResult.getOutput(), CoreMatchers.containsString(target));
+    return pullAndRunBuiltImage(target);
+  }
+
   static void buildAndRunAdditionalTag(
       TestProject testProject, String imageReference, String additionalTag, String expectedOutput)
       throws InvalidImageReferenceException, IOException, InterruptedException, DigestException {

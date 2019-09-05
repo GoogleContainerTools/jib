@@ -32,7 +32,9 @@ import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /** Integration tests for building single project images. */
 public class SingleProjectIntegrationTest {
@@ -46,6 +48,8 @@ public class SingleProjectIntegrationTest {
       new LocalRegistry(6000, "testuser2", "testpassword2");
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
+
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private static boolean isJava11RuntimeOrHigher() {
     Iterable<String> split = Splitter.on(".").split(System.getProperty("java.version"));
@@ -202,6 +206,34 @@ public class SingleProjectIntegrationTest {
         "[java -cp /d1:/d2:/app/resources:/app/classes:/app/libs/* com.test.HelloWorld]",
         targetImage);
     assertLayerSize(8, targetImage);
+  }
+
+  @Test
+  public void testBuild_dockerDaemonBase()
+      throws IOException, InterruptedException, DigestException {
+    String targetImage =
+        IntegrationTestingConfiguration.getTestRepositoryLocation()
+            + "/simplewithdockerdaemonbase:gradle"
+            + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
+        JibRunHelper.buildAndRunFromLocalBase(
+            targetImage, "docker://gcr.io/distroless/java:latest"));
+  }
+
+  @Test
+  public void testBuild_tarBase() throws IOException, InterruptedException, DigestException {
+    Path path = temporaryFolder.getRoot().toPath().resolve("docker-save-distroless");
+    new Command("docker", "save", "gcr.io/distroless/java:latest", "-o", path.toString()).run();
+    String targetImage =
+        IntegrationTestingConfiguration.getTestRepositoryLocation()
+            + "/simplewithtarbase:gradle"
+            + System.nanoTime();
+    Assert.assertEquals(
+        "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
+            + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
+        JibRunHelper.buildAndRunFromLocalBase(targetImage, "tar://" + path));
   }
 
   @Test
