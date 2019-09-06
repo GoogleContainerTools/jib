@@ -87,7 +87,7 @@ public class DockerClientTest {
     Mockito.when(mockProcess.getInputStream())
         .thenReturn(new ByteArrayInputStream("output".getBytes(StandardCharsets.UTF_8)));
 
-    String output = testDockerClient.load(imageTarball);
+    String output = testDockerClient.load(imageTarball, ignored -> {});
 
     Assert.assertEquals(
         "jib", new String(byteArrayOutputStream.toByteArray(), StandardCharsets.UTF_8));
@@ -111,7 +111,7 @@ public class DockerClientTest {
         .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
 
     try {
-      testDockerClient.load(imageTarball);
+      testDockerClient.load(imageTarball, ignored -> {});
       Assert.fail("Write should have failed");
 
     } catch (IOException ex) {
@@ -144,7 +144,7 @@ public class DockerClientTest {
             });
 
     try {
-      testDockerClient.load(imageTarball);
+      testDockerClient.load(imageTarball, ignored -> {});
       Assert.fail("Write should have failed");
 
     } catch (IOException ex) {
@@ -164,7 +164,7 @@ public class DockerClientTest {
         .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
 
     try {
-      testDockerClient.load(imageTarball);
+      testDockerClient.load(imageTarball, ignored -> {});
       Assert.fail("Process should have failed");
 
     } catch (IOException ex) {

@@ -41,7 +41,6 @@ public class ImageTarball {
   private static final String LAYER_FILE_EXTENSION = ".tar.gz";
 
   private final Image image;
-
   private final ImageReference imageReference;
 
   /**
@@ -82,5 +81,18 @@ public class ImageTarball {
         MANIFEST_JSON_FILE_NAME);
 
     tarStreamBuilder.writeAsTarArchiveTo(out);
+  }
+
+  /**
+   * Returns the total size of the image's layers in bytes.
+   *
+   * @return the total size of the image's layers in bytes
+   */
+  public long getSize() {
+    long size = 0;
+    for (Layer layer : image.getLayers()) {
+      size += layer.getBlobDescriptor().getSize();
+    }
+    return size;
   }
 }
