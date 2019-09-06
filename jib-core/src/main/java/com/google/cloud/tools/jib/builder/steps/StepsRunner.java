@@ -33,7 +33,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -230,20 +229,27 @@ public class StepsRunner {
   }
 
   private void saveDocker() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+
     Optional<DockerClient> dockerClient =
         buildConfiguration.getBaseImageConfiguration().getDockerClient();
     Preconditions.checkArgument(dockerClient.isPresent());
 
     results.tarPath =
-        executorService.submit(new SaveDockerStep(buildConfiguration, dockerClient.get()));
+        executorService.submit(
+            new SaveDockerStep(
+                buildConfiguration, dockerClient.get(), childProgressDispatcherFactory));
   }
 
   private void extractTar() {
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
     Future<LocalImage> localImageFuture =
         executorService.submit(
             () ->
                 new ExtractTarStep(
-                        results.tarPath.get(), Files.createTempDirectory("jib-extract-tar"))
+                        buildConfiguration, results.tarPath.get(), childProgressDispatcherFactory)
                     .call());
     results.baseImageAndAuth =
         executorService.submit(
