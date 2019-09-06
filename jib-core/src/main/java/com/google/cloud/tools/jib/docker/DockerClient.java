@@ -27,7 +27,6 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -120,33 +119,34 @@ public class DockerClient {
    *
    * @see <a
    *     href="https://docs.docker.com/engine/reference/commandline/load/">https://docs.docker.com/engine/reference/commandline/load</a>
-   * @param imageTarball the built container tarball.
-   * @return stdout from {@code docker}.
-   * @throws InterruptedException if the 'docker load' process is interrupted.
-   * @throws IOException if streaming the blob to 'docker load' fails.
+   * @param imageTarball the built container tarball
+   * @param writtenByteCountListener callback to call when bytes are loaded
+   * @return stdout from {@code docker}
+   * @throws InterruptedException if the 'docker load' process is interrupted
+   * @throws IOException if streaming the blob to 'docker load' fails
    */
-  public String load(ImageTarball imageTarball) throws InterruptedException, IOException {
+  public String load(ImageTarball imageTarball, Consumer<Long> writtenByteCountListener)
+      throws InterruptedException, IOException {
     // Runs 'docker load'.
     Process dockerProcess = docker("load");
 
-    try (OutputStream stdin = dockerProcess.getOutputStream()) {
-      try {
-        imageTarball.writeTo(stdin);
+    try (NotifyingOutputStream stdin =
+        new NotifyingOutputStream(dockerProcess.getOutputStream(), writtenByteCountListener)) {
+      imageTarball.writeTo(stdin);
 
-      } catch (IOException ex) {
-        // Tries to read from stderr.
-        String error;
-        try (InputStreamReader stderr =
-            new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
-          error = CharStreams.toString(stderr);
+    } catch (IOException ex) {
+      // Tries to read from stderr.
+      String error;
+      try (InputStreamReader stderr =
+          new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
+        error = CharStreams.toString(stderr);
 
-        } catch (IOException ignored) {
-          // This ignores exceptions from reading stderr and throws the original exception from
-          // writing to stdin.
-          throw ex;
-        }
-        throw new IOException("'docker load' command failed with error: " + error, ex);
+      } catch (IOException ignored) {
+        // This ignores exceptions from reading stderr and throws the original exception from
+        // writing to stdin.
+        throw ex;
       }
+      throw new IOException("'docker load' command failed with error: " + error, ex);
     }
 
     try (InputStreamReader stdout =
