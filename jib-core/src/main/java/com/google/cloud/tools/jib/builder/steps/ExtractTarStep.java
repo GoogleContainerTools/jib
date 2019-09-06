@@ -151,13 +151,13 @@ public class ExtractTarStep implements Callable<LocalImage> {
         }
 
         for (int index = 0; index < layerFiles.size(); index++) {
-          Path file = destination.resolve(layerFiles.get(index));
+          Path layerFile = destination.resolve(layerFiles.get(index));
           DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
 
           try (ProgressEventDispatcher childDispatcher =
                   childProgressFactories
                       .get(index)
-                      .create("compressing layer " + diffId, Files.size(file));
+                      .create("compressing layer " + diffId, Files.size(layerFile));
               ThrottledAccumulatingConsumer throttledProgressReporter =
                   new ThrottledAccumulatingConsumer(childDispatcher::dispatchProgress)) {
             Optional<CachedLayer> optionalLayer = cache.retrieveTarLayer(diffId);
@@ -168,7 +168,7 @@ public class ExtractTarStep implements Callable<LocalImage> {
               v22Manifest.addLayer(layer.getSize(), layer.getDigest());
             } else {
               // Compress layers and calculate the digest/size
-              Blob blob = Blobs.from(file);
+              Blob blob = Blobs.from(layerFile);
               if (!layersAreCompressed) {
                 Path compressedFile = destination.resolve(layerFiles.get(index) + ".compressed");
                 try (GZIPOutputStream compressorStream =

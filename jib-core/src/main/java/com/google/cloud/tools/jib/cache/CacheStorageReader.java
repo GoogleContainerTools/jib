@@ -206,7 +206,7 @@ class CacheStorageReader {
       if (layerFiles.size() != 1) {
         throw new CacheCorruptedException(
             cacheStorageFiles.getCacheDirectory(),
-            "No or multiple layer files found for layer with hash "
+            "No or multiple layer files found for layer hash "
                 + diffId.getHash()
                 + " in directory: "
                 + layerDirectory);

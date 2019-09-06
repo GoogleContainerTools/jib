@@ -206,6 +206,49 @@ public class CacheStorageReaderTest {
   }
 
   @Test
+  public void testRetrieveTarLayer() throws IOException, CacheCorruptedException {
+    CacheStorageFiles cacheStorageFiles =
+        new CacheStorageFiles(temporaryFolder.newFolder().toPath());
+
+    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+
+    // Creates the test layer directory.
+    Path localDirectory = cacheStorageFiles.getLocalDirectory();
+    DescriptorDigest layerDigest = layerDigest1;
+    DescriptorDigest layerDiffId = layerDigest2;
+    Files.createDirectories(localDirectory.resolve(layerDiffId.getHash()));
+    try (OutputStream out =
+        Files.newOutputStream(
+            localDirectory.resolve(layerDiffId.getHash()).resolve(layerDigest.getHash()))) {
+      out.write("layerBlob".getBytes(StandardCharsets.UTF_8));
+    }
+
+    // Checks that the CachedLayer is retrieved correctly.
+    Optional<CachedLayer> optionalCachedLayer = cacheStorageReader.retrieveTarLayer(layerDiffId);
+    Assert.assertTrue(optionalCachedLayer.isPresent());
+    Assert.assertEquals(layerDigest, optionalCachedLayer.get().getDigest());
+    Assert.assertEquals(layerDiffId, optionalCachedLayer.get().getDiffId());
+    Assert.assertEquals("layerBlob".length(), optionalCachedLayer.get().getSize());
+    Assert.assertEquals("layerBlob", Blobs.writeToString(optionalCachedLayer.get().getBlob()));
+
+    // Checks that multiple .layer files means the cache is corrupted.
+    Files.createFile(localDirectory.resolve(layerDiffId.getHash()).resolve(layerDiffId.getHash()));
+    try {
+      cacheStorageReader.retrieveTarLayer(layerDiffId);
+      Assert.fail("Should have thrown CacheCorruptedException");
+
+    } catch (CacheCorruptedException ex) {
+      Assert.assertThat(
+          ex.getMessage(),
+          CoreMatchers.startsWith(
+              "No or multiple layer files found for layer hash "
+                  + layerDiffId.getHash()
+                  + " in directory: "
+                  + localDirectory.resolve(layerDiffId.getHash())));
+    }
+  }
+
+  @Test
   public void testSelect_invalidLayerDigest() throws IOException {
     CacheStorageFiles cacheStorageFiles =
         new CacheStorageFiles(temporaryFolder.newFolder().toPath());
