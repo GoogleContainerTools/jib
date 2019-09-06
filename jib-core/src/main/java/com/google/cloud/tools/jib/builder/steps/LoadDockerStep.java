@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.ImageTarball;
@@ -51,30 +52,34 @@ class LoadDockerStep implements Callable<BuildResult> {
   @Override
   public BuildResult call() throws InterruptedException, IOException {
     EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
-    eventHandlers.dispatch(LogEvent.progress("Loading to Docker daemon..."));
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(eventHandlers, "Loading to Docker daemon")) {
+      eventHandlers.dispatch(LogEvent.progress("Loading to Docker daemon..."));
 
-    ImageReference targetImageReference =
-        buildConfiguration.getTargetImageConfiguration().getImage();
-    ImageTarball imageTarball = new ImageTarball(builtImage, targetImageReference);
-    try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create(
-                "loading to Docker daemon", imageTarball.getSize());
-        ThrottledAccumulatingConsumer throttledProgressReporter =
-            new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
-      // Load the image to docker daemon.
-      eventHandlers.dispatch(
-          LogEvent.debug(dockerClient.load(imageTarball, throttledProgressReporter)));
+      ImageReference targetImageReference =
+          buildConfiguration.getTargetImageConfiguration().getImage();
+      ImageTarball imageTarball = new ImageTarball(builtImage, targetImageReference);
+      try (ProgressEventDispatcher progressEventDispatcher =
+              progressEventDispatcherFactory.create(
+                  "loading to Docker daemon", imageTarball.getSize());
+          ThrottledAccumulatingConsumer throttledProgressReporter =
+              new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
+        // Load the image to docker daemon.
+        eventHandlers.dispatch(
+            LogEvent.debug(dockerClient.load(imageTarball, throttledProgressReporter)));
 
-      // Tags the image with all the additional tags, skipping the one 'docker load' already loaded.
-      for (String tag : buildConfiguration.getAllTargetImageTags()) {
-        if (tag.equals(targetImageReference.getTag())) {
-          continue;
+        // Tags the image with all the additional tags, skipping the one 'docker load' already
+        // loaded.
+        for (String tag : buildConfiguration.getAllTargetImageTags()) {
+          if (tag.equals(targetImageReference.getTag())) {
+            continue;
+          }
+
+          dockerClient.tag(targetImageReference, targetImageReference.withTag(tag));
         }
 
-        dockerClient.tag(targetImageReference, targetImageReference.withTag(tag));
+        return BuildResult.fromImage(builtImage, buildConfiguration.getTargetFormat());
       }
-
-      return BuildResult.fromImage(builtImage, buildConfiguration.getTargetFormat());
     }
   }
 }
