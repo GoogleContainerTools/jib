@@ -111,7 +111,7 @@ public class DockerConfigTest {
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals(
-        Paths.get("docker-credential-credHelper for https://with.protocol.in.helpers"),
+        Paths.get("docker-credential-credHelper for https__with.protocol.in.helpers"),
         dockerConfig.getCredentialHelperFor("with.protocol.in.helpers").getCredentialHelper());
   }
 
@@ -137,7 +137,7 @@ public class DockerConfigTest {
 
     Assert.assertEquals(
         Paths.get(
-            "docker-credential-credHelper for https://with.protocol.and.suffix.in.helpers/suffix"),
+            "docker-credential-credHelper for https__with.protocol.and.suffix.in.helpers/suffix"),
         dockerConfig
             .getCredentialHelperFor("with.protocol.and.suffix.in.helpers")
             .getCredentialHelper());
