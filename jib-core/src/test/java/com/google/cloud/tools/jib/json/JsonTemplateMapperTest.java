@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.json;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.common.io.Resources;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -152,5 +153,14 @@ public class JsonTemplateMapperTest {
     List<TestJson> listOfJson = JsonTemplateMapper.readListOfJson(jsonString, TestJson.class);
 
     Assert.assertEquals(jsonString, JsonTemplateMapper.toUtf8String(listOfJson));
+  }
+
+  @Test
+  public void testReadJson_inputStream() throws IOException {
+    String testJson = "{\"number\":3, \"text\":\"cool\"}";
+    ByteArrayInputStream in = new ByteArrayInputStream(testJson.getBytes(StandardCharsets.UTF_8));
+    TestJson json = JsonTemplateMapper.readJson(in, TestJson.class);
+    Assert.assertEquals(3, json.number);
+    Assert.assertEquals("cool", json.text);
   }
 }

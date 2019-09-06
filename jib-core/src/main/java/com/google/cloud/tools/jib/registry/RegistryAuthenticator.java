@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.api.client.http.HttpMethods;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -31,13 +32,10 @@ import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.CharStreams;
 import com.google.common.net.MediaType;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -245,10 +243,7 @@ public class RegistryAuthenticator {
                 scope,
                 registryEndpointRequestProperties.getSourceImageName(),
                 "pull");
-        Authorization auth = authenticate(credential, scopes);
-        if (auth != null) {
-          return auth;
-        }
+        return authenticate(credential, scopes);
       } catch (RegistryAuthenticationFailedException ex) {
         // Unable to obtain authorization with source image: fallthrough and try without
       }
@@ -279,14 +274,11 @@ public class RegistryAuthenticator {
             Authorization.fromBasicCredentials(credential.getUsername(), credential.getPassword()));
       }
 
-      Request request = requestBuilder.build();
-      Response response =
-          isOAuth2Auth(credential) ? connection.post(request) : connection.get(request);
-      String responseString =
-          CharStreams.toString(new InputStreamReader(response.getBody(), StandardCharsets.UTF_8));
+      String httpMethod = isOAuth2Auth(credential) ? HttpMethods.POST : HttpMethods.GET;
+      Response response = connection.send(httpMethod, requestBuilder.build());
 
       AuthenticationResponseTemplate responseJson =
-          JsonTemplateMapper.readJson(responseString, AuthenticationResponseTemplate.class);
+          JsonTemplateMapper.readJson(response.getBody(), AuthenticationResponseTemplate.class);
 
       if (responseJson.getToken() == null) {
         throw new RegistryAuthenticationFailedException(
