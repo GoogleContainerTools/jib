@@ -81,17 +81,17 @@ public class ExtractTarStep implements Callable<LocalImage> {
     }
   }
 
+  private final BuildConfiguration buildConfiguration;
   private final Path tarPath;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  private final BuildConfiguration buildConfiguration;
 
   ExtractTarStep(
+      BuildConfiguration buildConfiguration,
       Path tarPath,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      BuildConfiguration buildConfiguration) {
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+    this.buildConfiguration = buildConfiguration;
     this.tarPath = tarPath;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.buildConfiguration = buildConfiguration;
   }
 
   @Override
@@ -102,7 +102,6 @@ public class ExtractTarStep implements Callable<LocalImage> {
         new TimerEventDispatcher(
             buildConfiguration.getEventHandlers(),
             "Extracting tar " + tarPath + " into " + destination)) {
-      Files.createDirectories(destination);
       FileOperations.deleteRecursiveOnExit(destination);
       TarExtractor.extract(tarPath, destination);
 

@@ -249,7 +249,7 @@ public class StepsRunner {
         executorService.submit(
             () ->
                 new ExtractTarStep(
-                        results.tarPath.get(), childProgressDispatcherFactory, buildConfiguration)
+                        buildConfiguration, results.tarPath.get(), childProgressDispatcherFactory)
                     .call());
     results.baseImageAndAuth =
         executorService.submit(

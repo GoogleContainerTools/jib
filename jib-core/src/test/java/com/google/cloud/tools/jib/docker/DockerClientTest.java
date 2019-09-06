@@ -183,6 +183,7 @@ public class DockerClientTest {
         temporaryFolder.getRoot().toPath().resolve("out.tar"),
         bytes -> counter[0] += bytes);
 
+    // InputStream writes "jib", so 3 bytes of progress should have been counted.
     Assert.assertEquals(3, counter[0]);
   }
 
@@ -271,10 +272,12 @@ public class DockerClientTest {
         subcommand -> {
           try {
             if (subcommand.contains("{{.Size}}")) {
-              Process mockSize = Mockito.mock(Process.class);
-              Mockito.when(mockSize.getInputStream())
+              // It doesn't matter what size is actually returned by 'docker inspect' here, so just
+              // use 150000 as a placeholder.
+              Process mockSizeProcess = Mockito.mock(Process.class);
+              Mockito.when(mockSizeProcess.getInputStream())
                   .thenReturn(new ByteArrayInputStream("150000".getBytes(StandardCharsets.UTF_8)));
-              Mockito.when(mockProcessBuilder.start()).thenReturn(mockSize);
+              Mockito.when(mockProcessBuilder.start()).thenReturn(mockSizeProcess);
             } else {
               Assert.assertEquals(Arrays.asList("save", "testimage"), subcommand);
               Mockito.when(mockProcess.getInputStream())

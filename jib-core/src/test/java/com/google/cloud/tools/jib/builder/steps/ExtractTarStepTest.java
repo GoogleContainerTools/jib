@@ -69,7 +69,7 @@ public class ExtractTarStepTest {
           BadContainerConfigurationFormatException, IOException {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
-        new ExtractTarStep(dockerBuild, progressEventDispatcherFactory, buildConfiguration).call();
+        new ExtractTarStep(buildConfiguration, dockerBuild, progressEventDispatcherFactory).call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
@@ -94,7 +94,7 @@ public class ExtractTarStepTest {
           BadContainerConfigurationFormatException, IOException {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
-        new ExtractTarStep(tarBuild, progressEventDispatcherFactory, buildConfiguration).call();
+        new ExtractTarStep(buildConfiguration, tarBuild, progressEventDispatcherFactory).call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
