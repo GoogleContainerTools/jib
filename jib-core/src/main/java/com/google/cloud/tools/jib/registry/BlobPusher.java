@@ -217,7 +217,7 @@ class BlobPusher {
 
   /**
    * @param location the upload URL
-   * @param blobProgressListener the listener for {@link Blob} push progress
+   * @param writtenByteCountListener the listener for {@link Blob} push progress (written bytes)
    * @return a {@link RegistryEndpointProvider} for writing the BLOB to an upload location
    */
   RegistryEndpointProvider<URL> writer(URL location, Consumer<Long> writtenByteCountListener) {

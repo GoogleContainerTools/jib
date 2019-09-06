@@ -17,19 +17,26 @@
 package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.http.NotifyingOutputStream;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /** Calls out to the {@code docker} CLI. */
@@ -165,13 +172,21 @@ public class DockerClient {
    *     href="https://docs.docker.com/engine/reference/commandline/save/">https://docs.docker.com/engine/reference/commandline/save</a>
    * @param imageReference the image to save
    * @param outputPath the destination path to save the output tarball
+   * @param writtenByteCountListener callback to call when bytes are saved
    * @throws InterruptedException if the 'docker save' process is interrupted
    * @throws IOException if creating the tarball fails
    */
-  public void save(ImageReference imageReference, Path outputPath)
+  public void save(
+      ImageReference imageReference, Path outputPath, Consumer<Long> writtenByteCountListener)
       throws InterruptedException, IOException {
-    // Runs 'docker save'.
-    Process dockerProcess = docker("save", imageReference.toString(), "-o", outputPath.toString());
+    Process dockerProcess = docker("save", imageReference.toString());
+    try (InputStream stdout = new BufferedInputStream(dockerProcess.getInputStream());
+        NotifyingOutputStream fileStream =
+            new NotifyingOutputStream(
+                new BufferedOutputStream(Files.newOutputStream(outputPath)),
+                writtenByteCountListener)) {
+      ByteStreams.copy(stdout, fileStream);
+    }
 
     if (dockerProcess.waitFor() != 0) {
       try (InputStreamReader stderr =
@@ -206,6 +221,21 @@ public class DockerClient {
             "'docker tag' command failed with error: " + CharStreams.toString(stderr));
       }
     }
+  }
+
+  /**
+   * Gets the size of an image in the Docker daemon.
+   *
+   * @param imageReference the image to find the size of
+   * @return the size in bytes
+   * @throws IOException if an I/O exception occurs
+   */
+  public long sizeOf(ImageReference imageReference) throws IOException {
+    Process sizeProcess = docker("inspect", "-f", "{{.Size}}", imageReference.toString());
+    return Long.parseLong(
+        CharStreams.toString(
+                new InputStreamReader(sizeProcess.getInputStream(), StandardCharsets.UTF_8))
+            .trim());
   }
 
   /** Runs a {@code docker} command. */

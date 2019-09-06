@@ -132,21 +132,29 @@ public class AnsiLoggerWithFooterTest {
 
     Assert.assertEquals(
         Arrays.asList(
-            "\033[1mfooter\033[0m",
-            "\033[1A\033[0J",
-            "\033[1Amessage",
-            "\033[1mfooter\033[0m",
-            "\033[1A\033[0J",
-            "\033[1Aanother message",
-            "\033[1mfooter\033[0m"),
+            "\033[1mfooter\033[0m", // single-line footer in bold
+
+            // now triggered by logging a message
+            "\033[1A\033[0J", // cursor up and erase to the end
+            "\033[2A", // up two lines
+            "message",
+            "\033[1mfooter\033[0m", // footer
+
+            // by logging another message
+            "\033[1A\033[0J", // cursor up and erase
+            "\033[2A", // up two
+            "another message",
+            "\033[1mfooter\033[0m"), // footer
         messages);
     Assert.assertEquals(
         Arrays.asList(
             Level.LIFECYCLE,
             Level.LIFECYCLE,
             Level.INFO,
+            Level.INFO,
             Level.LIFECYCLE,
             Level.LIFECYCLE,
+            Level.INFO,
             Level.INFO,
             Level.LIFECYCLE),
         levels);
@@ -163,28 +171,40 @@ public class AnsiLoggerWithFooterTest {
 
     Assert.assertEquals(
         Arrays.asList(
-            "\033[1mfooter\033[0m",
-            "\033[1A\033[0J",
-            "\033[1Amessage",
-            "\033[1mfooter\033[0m",
-            "\033[1A\033[0J",
-            "\033[1A\033[1mtwo line\033[0m",
-            "\033[1mfooter\033[0m",
-            "\033[1A\033[1A\033[0J",
-            "\033[1Aanother message",
-            "\033[1mtwo line\033[0m",
-            "\033[1mfooter\033[0m"),
+            "\033[1mfooter\033[0m", // single-line footer in bold
+
+            // now triggered by logging a warning
+            "\033[1A\033[0J", // cursor up and erase to the end
+            "\033[2A", // up two lines
+            "message",
+            "\033[1mfooter\033[0m", // footer
+
+            // by setting a two-line footer
+            "\033[1A\033[0J", // cursor up and erase
+            "\033[2A", // up two lines
+            "\033[1mtwo line\033[0m", // footer line 1
+            "\033[1mfooter\033[0m", // footer line 2
+
+            // by logging another warning
+            "\033[2A\033[0J", // cursor up twice (to erase two-line footer) and erase
+            "\033[2A", // up two lines
+            "another message",
+            "\033[1mtwo line\033[0m", // footer line 1
+            "\033[1mfooter\033[0m"), // footer line 2
         messages);
     Assert.assertEquals(
         Arrays.asList(
             Level.LIFECYCLE,
             Level.LIFECYCLE,
             Level.WARN,
+            Level.WARN,
             Level.LIFECYCLE,
             Level.LIFECYCLE,
             Level.LIFECYCLE,
             Level.LIFECYCLE,
             Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.WARN,
             Level.WARN,
             Level.LIFECYCLE,
             Level.LIFECYCLE),

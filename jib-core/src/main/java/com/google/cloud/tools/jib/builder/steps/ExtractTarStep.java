@@ -22,13 +22,17 @@ import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
+import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
+import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
+import com.google.cloud.tools.jib.http.NotifyingOutputStream;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
@@ -81,87 +85,114 @@ public class ExtractTarStep implements Callable<LocalImage> {
     }
   }
 
-  private final Path tarPath;
-  private final Path destination;
   private final BuildConfiguration buildConfiguration;
+  private final Path tarPath;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  ExtractTarStep(Path tarPath, Path destination, BuildConfiguration buildConfiguration) {
-    this.tarPath = tarPath;
-    this.destination = destination;
+  ExtractTarStep(
+      BuildConfiguration buildConfiguration,
+      Path tarPath,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
     this.buildConfiguration = buildConfiguration;
+    this.tarPath = tarPath;
+    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
   }
 
   @Override
   public LocalImage call()
       throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException {
-    Cache cache = buildConfiguration.getBaseImageLayersCache();
+    Path destination = Files.createTempDirectory("jib-extract-tar");
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(
+            buildConfiguration.getEventHandlers(),
+            "Extracting tar " + tarPath + " into " + destination)) {
+      Cache cache = buildConfiguration.getBaseImageLayersCache();
+      FileOperations.deleteRecursiveOnExit(destination);
+      TarExtractor.extract(tarPath, destination);
 
-    Files.createDirectories(destination);
-    FileOperations.deleteRecursiveOnExit(destination);
-    TarExtractor.extract(tarPath, destination);
+      InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
+      DockerManifestEntryTemplate loadManifest =
+          new ObjectMapper()
+              .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+              .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
+      manifestStream.close();
+      ContainerConfigurationTemplate configurationTemplate =
+          JsonTemplateMapper.readJsonFromFile(
+              destination.resolve(loadManifest.getConfig()), ContainerConfigurationTemplate.class);
 
-    InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
-    DockerManifestEntryTemplate loadManifest =
-        new ObjectMapper()
-            .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-            .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
-    manifestStream.close();
-    ContainerConfigurationTemplate configurationTemplate =
-        JsonTemplateMapper.readJsonFromFile(
-            destination.resolve(loadManifest.getConfig()), ContainerConfigurationTemplate.class);
+      List<String> layerFiles = loadManifest.getLayerFiles();
+      if (configurationTemplate.getLayerCount() != layerFiles.size()) {
+        throw new LayerCountMismatchException(
+            "Invalid base image format: manifest contains "
+                + layerFiles.size()
+                + " layers, but container configuration contains "
+                + configurationTemplate.getLayerCount()
+                + " layers");
+      }
 
-    List<String> layerFiles = loadManifest.getLayerFiles();
-    if (configurationTemplate.getLayerCount() != layerFiles.size()) {
-      throw new LayerCountMismatchException(
-          "Invalid base image format: manifest contains "
-              + layerFiles.size()
-              + " layers, but container configuration contains "
-              + configurationTemplate.getLayerCount()
-              + " layers");
-    }
+      // Check the first layer to see if the layers are compressed already. 'docker save' output is
+      // uncompressed, but a jib-built tar has compressed layers.
+      boolean layersAreCompressed =
+          layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
 
-    // Check the first layer to see if the layers are compressed already. 'docker save' output is
-    // uncompressed, but a jib-built tar has compressed layers.
-    boolean layersAreCompressed =
-        layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
+      // Process layer blobs
+      // TODO: Optimize; compressing/calculating layer digests is slow
+      try (ProgressEventDispatcher progressEventDispatcher =
+          progressEventDispatcherFactory.create(
+              "processing base image layers", layerFiles.size())) {
+        List<PreparedLayer> layers = new ArrayList<>(layerFiles.size());
+        V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
 
-    // Process layer blobs
-    // TODO: Optimize; compressing/calculating layer digests is slow
-    List<PreparedLayer> layers = new ArrayList<>();
-    V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
-    for (int index = 0; index < layerFiles.size(); index++) {
-      Path file = destination.resolve(layerFiles.get(index));
-      DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
-
-      Optional<CachedLayer> optionalLayer = cache.retrieveTarLayer(diffId);
-      if (optionalLayer.isPresent()) {
-        // Retrieve pre-compressed layer from cache
-        CachedLayer layer = optionalLayer.get();
-        layers.add(new PreparedLayer.Builder(layer).build());
-        v22Manifest.addLayer(layer.getSize(), layer.getDigest());
-      } else {
-        // Compress layers and calculate the digest/size
-        Blob blob = Blobs.from(file);
-        if (!layersAreCompressed) {
-          Path compressedFile = destination.resolve(layerFiles.get(index) + ".compressed");
-          try (GZIPOutputStream compressorStream =
-              new GZIPOutputStream(Files.newOutputStream(compressedFile))) {
-            blob.writeTo(compressorStream);
-          }
-          blob = Blobs.from(compressedFile);
+        List<ProgressEventDispatcher.Factory> childProgressFactories = new ArrayList<>();
+        for (String ignored1 : layerFiles) {
+          childProgressFactories.add(progressEventDispatcher.newChildProducer());
         }
 
-        CachedLayer layer = cache.writeTarLayer(diffId, blob);
-        layers.add(new PreparedLayer.Builder(layer).build());
-        v22Manifest.addLayer(layer.getSize(), layer.getDigest());
+        for (int index = 0; index < layerFiles.size(); index++) {
+          Path file = destination.resolve(layerFiles.get(index));
+          DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
+
+          try (ProgressEventDispatcher childDispatcher =
+                  childProgressFactories
+                      .get(index)
+                      .create("compressing " + file, Files.size(file));
+              ThrottledAccumulatingConsumer throttledProgressReporter =
+                  new ThrottledAccumulatingConsumer(childDispatcher::dispatchProgress)) {
+            Optional<CachedLayer> optionalLayer = cache.retrieveTarLayer(diffId);
+            if (optionalLayer.isPresent()) {
+              // Retrieve pre-compressed layer from cache
+              CachedLayer layer = optionalLayer.get();
+              layers.add(new PreparedLayer.Builder(layer).build());
+              v22Manifest.addLayer(layer.getSize(), layer.getDigest());
+            } else {
+              // Compress layers and calculate the digest/size
+              Blob blob = Blobs.from(file);
+              if (!layersAreCompressed) {
+                Path compressedFile = destination.resolve(layerFiles.get(index) + ".compressed");
+                try (GZIPOutputStream compressorStream =
+                        new GZIPOutputStream(Files.newOutputStream(compressedFile));
+                    NotifyingOutputStream notifyingOutputStream =
+                        new NotifyingOutputStream(compressorStream, throttledProgressReporter)) {
+                  blob.writeTo(notifyingOutputStream);
+                }
+                blob = Blobs.from(compressedFile);
+              }
+
+              CachedLayer layer = cache.writeTarLayer(diffId, blob);
+              layers.add(new PreparedLayer.Builder(layer).build());
+              v22Manifest.addLayer(layer.getSize(), layer.getDigest());
+            }
+          }
+        }
+
+        BlobDescriptor configDescriptor =
+            Blobs.from(configurationTemplate).writeTo(ByteStreams.nullOutputStream());
+        v22Manifest.setContainerConfiguration(
+            configDescriptor.getSize(), configDescriptor.getDigest());
+        Image image = JsonToImageTranslator.toImage(v22Manifest, configurationTemplate);
+        return new LocalImage(image, layers);
       }
     }
-
-    BlobDescriptor configDescriptor =
-        Blobs.from(configurationTemplate).writeTo(ByteStreams.nullOutputStream());
-    v22Manifest.setContainerConfiguration(configDescriptor.getSize(), configDescriptor.getDigest());
-    Image image = JsonToImageTranslator.toImage(v22Manifest, configurationTemplate);
-    return new LocalImage(image, layers);
   }
 }

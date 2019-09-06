@@ -56,7 +56,6 @@ public class DockerClientTest {
   @Before
   public void setUp() throws IOException {
     Mockito.when(mockProcessBuilder.start()).thenReturn(mockProcess);
-
     Mockito.doAnswer(
             AdditionalAnswers.answerVoid(
                 (VoidAnswer1<OutputStream>)
@@ -175,32 +174,32 @@ public class DockerClientTest {
 
   @Test
   public void testSave() throws InterruptedException, IOException {
-    DockerClient testDockerClient =
-        new DockerClient(
-            subcommand -> {
-              Assert.assertEquals(Arrays.asList("save", "testimage", "-o", "out.tar"), subcommand);
-              return mockProcessBuilder;
-            });
+    DockerClient testDockerClient = makeDockerSaveClient();
     Mockito.when(mockProcess.waitFor()).thenReturn(0);
 
-    testDockerClient.save(ImageReference.of(null, "testimage", null), Paths.get("out.tar"));
+    long[] counter = new long[1];
+    testDockerClient.save(
+        ImageReference.of(null, "testimage", null),
+        temporaryFolder.getRoot().toPath().resolve("out.tar"),
+        bytes -> counter[0] += bytes);
+
+    // InputStream writes "jib", so 3 bytes of progress should have been counted.
+    Assert.assertEquals(3, counter[0]);
   }
 
   @Test
   public void testSave_fail() throws InterruptedException {
-    DockerClient testDockerClient =
-        new DockerClient(
-            subcommand -> {
-              Assert.assertEquals(Arrays.asList("save", "testimage", "-o", "out.tar"), subcommand);
-              return mockProcessBuilder;
-            });
+    DockerClient testDockerClient = makeDockerSaveClient();
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
 
     Mockito.when(mockProcess.getErrorStream())
         .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
 
     try {
-      testDockerClient.save(ImageReference.of(null, "testimage", null), Paths.get("out.tar"));
+      testDockerClient.save(
+          ImageReference.of(null, "testimage", null),
+          temporaryFolder.getRoot().toPath().resolve("out.tar"),
+          ignored -> {});
       Assert.fail("docker save should have failed");
 
     } catch (IOException ex) {
@@ -266,5 +265,28 @@ public class DockerClientTest {
     } catch (IOException ex) {
       Assert.assertEquals("'docker tag' command failed with error: error", ex.getMessage());
     }
+  }
+
+  private DockerClient makeDockerSaveClient() {
+    return new DockerClient(
+        subcommand -> {
+          try {
+            if (subcommand.contains("{{.Size}}")) {
+              // It doesn't matter what size is actually returned by 'docker inspect' here, so just
+              // use 150000 as a placeholder.
+              Process mockSizeProcess = Mockito.mock(Process.class);
+              Mockito.when(mockSizeProcess.getInputStream())
+                  .thenReturn(new ByteArrayInputStream("150000".getBytes(StandardCharsets.UTF_8)));
+              Mockito.when(mockProcessBuilder.start()).thenReturn(mockSizeProcess);
+            } else {
+              Assert.assertEquals(Arrays.asList("save", "testimage"), subcommand);
+              Mockito.when(mockProcess.getInputStream())
+                  .thenReturn(new ByteArrayInputStream("jib".getBytes(StandardCharsets.UTF_8)));
+              Mockito.when(mockProcessBuilder.start()).thenReturn(mockProcess);
+            }
+          } catch (IOException ignored) {
+          }
+          return mockProcessBuilder;
+        });
   }
 }
