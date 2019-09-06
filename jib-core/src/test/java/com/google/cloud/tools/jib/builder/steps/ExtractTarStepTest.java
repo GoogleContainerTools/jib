@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
 import com.google.common.io.Resources;
@@ -40,6 +42,8 @@ public class ExtractTarStepTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  @Mock private BuildConfiguration buildConfiguration;
+  @Mock private EventHandlers eventHandlers;
   @Mock private ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   @Mock private ProgressEventDispatcher progressEventDispatcher;
   @Mock private ProgressEventDispatcher.Factory childFactory;
@@ -51,6 +55,7 @@ public class ExtractTarStepTest {
 
   @Before
   public void setup() {
+    Mockito.when(buildConfiguration.getEventHandlers()).thenReturn(eventHandlers);
     Mockito.when(progressEventDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
         .thenReturn(progressEventDispatcher);
     Mockito.when(progressEventDispatcher.newChildProducer()).thenReturn(childFactory);
@@ -64,9 +69,7 @@ public class ExtractTarStepTest {
           BadContainerConfigurationFormatException, IOException {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
-        new ExtractTarStep(
-                dockerBuild, temporaryFolder.getRoot().toPath(), progressEventDispatcherFactory)
-            .call();
+        new ExtractTarStep(dockerBuild, progressEventDispatcherFactory, buildConfiguration).call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
@@ -91,9 +94,7 @@ public class ExtractTarStepTest {
           BadContainerConfigurationFormatException, IOException {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
-        new ExtractTarStep(
-                tarBuild, temporaryFolder.getRoot().toPath(), progressEventDispatcherFactory)
-            .call();
+        new ExtractTarStep(tarBuild, progressEventDispatcherFactory, buildConfiguration).call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());

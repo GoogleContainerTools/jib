@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
@@ -49,14 +50,18 @@ public class SaveDockerStep implements Callable<Path> {
     FileOperations.deleteRecursiveOnExit(outputDir);
     Path outputPath = outputDir.resolve("out.tar");
     ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
-
-    long size = dockerClient.sizeOf(imageReference);
-    try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("saving base image " + imageReference, size);
-        ThrottledAccumulatingConsumer throttledProgressReporter =
-            new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
-      dockerClient.save(imageReference, outputPath, throttledProgressReporter);
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(
+            buildConfiguration.getEventHandlers(),
+            "Saving " + imageReference + " from Docker daemon")) {
+      long size = dockerClient.sizeOf(imageReference);
+      try (ProgressEventDispatcher progressEventDispatcher =
+              progressEventDispatcherFactory.create("saving base image " + imageReference, size);
+          ThrottledAccumulatingConsumer throttledProgressReporter =
+              new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
+        dockerClient.save(imageReference, outputPath, throttledProgressReporter);
+      }
+      return outputPath;
     }
-    return outputPath;
   }
 }

@@ -33,7 +33,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -250,9 +249,7 @@ public class StepsRunner {
         executorService.submit(
             () ->
                 new ExtractTarStep(
-                        results.tarPath.get(),
-                        Files.createTempDirectory("jib-extract-tar"),
-                        childProgressDispatcherFactory)
+                        results.tarPath.get(), childProgressDispatcherFactory, buildConfiguration)
                     .call());
     results.baseImageAndAuth =
         executorService.submit(

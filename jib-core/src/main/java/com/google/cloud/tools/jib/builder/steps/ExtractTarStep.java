@@ -22,8 +22,10 @@ import com.google.cloud.tools.jib.blob.Blob;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
 import com.google.cloud.tools.jib.cache.CachedLayer;
+import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
@@ -80,106 +82,116 @@ public class ExtractTarStep implements Callable<LocalImage> {
   }
 
   private final Path tarPath;
-  private final Path destination;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
+  private final BuildConfiguration buildConfiguration;
 
   ExtractTarStep(
       Path tarPath,
-      Path destination,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      BuildConfiguration buildConfiguration) {
     this.tarPath = tarPath;
-    this.destination = destination;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
+    this.buildConfiguration = buildConfiguration;
   }
 
   @Override
   public LocalImage call()
       throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException {
-    Files.createDirectories(destination);
-    FileOperations.deleteRecursiveOnExit(destination);
-    TarExtractor.extract(tarPath, destination);
+    Path destination = Files.createTempDirectory("jib-extract-tar");
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(
+            buildConfiguration.getEventHandlers(),
+            "Extracting tar " + tarPath + " into " + destination)) {
+      Files.createDirectories(destination);
+      FileOperations.deleteRecursiveOnExit(destination);
+      TarExtractor.extract(tarPath, destination);
 
-    InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
-    DockerManifestEntryTemplate loadManifest =
-        new ObjectMapper()
-            .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-            .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
-    manifestStream.close();
-    ContainerConfigurationTemplate configurationTemplate =
-        JsonTemplateMapper.readJsonFromFile(
-            destination.resolve(loadManifest.getConfig()), ContainerConfigurationTemplate.class);
+      InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
+      DockerManifestEntryTemplate loadManifest =
+          new ObjectMapper()
+              .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+              .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
+      manifestStream.close();
+      ContainerConfigurationTemplate configurationTemplate =
+          JsonTemplateMapper.readJsonFromFile(
+              destination.resolve(loadManifest.getConfig()), ContainerConfigurationTemplate.class);
 
-    List<String> layerFiles = loadManifest.getLayerFiles();
-    if (configurationTemplate.getLayerCount() != layerFiles.size()) {
-      throw new LayerCountMismatchException(
-          "Invalid base image format: manifest contains "
-              + layerFiles.size()
-              + " layers, but container configuration contains "
-              + configurationTemplate.getLayerCount()
-              + " layers");
-    }
-
-    // Check the first layer to see if the layers are compressed already. 'docker save' output is
-    // uncompressed, but a jib-built tar has compressed layers.
-    boolean layersAreCompressed =
-        layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
-
-    // Process layer blobs
-    // TODO: Optimize; compressing/calculating layer digests is slow
-    try (ProgressEventDispatcher progressEventDispatcher =
-        progressEventDispatcherFactory.create("processing base image layers", layerFiles.size())) {
-      List<PreparedLayer> layers = new ArrayList<>(layerFiles.size());
-      V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
-
-      List<ProgressEventDispatcher.Factory> childProgressFactories = new ArrayList<>();
-      for (String ignored : layerFiles) {
-        childProgressFactories.add(progressEventDispatcher.newChildProducer());
+      List<String> layerFiles = loadManifest.getLayerFiles();
+      if (configurationTemplate.getLayerCount() != layerFiles.size()) {
+        throw new LayerCountMismatchException(
+            "Invalid base image format: manifest contains "
+                + layerFiles.size()
+                + " layers, but container configuration contains "
+                + configurationTemplate.getLayerCount()
+                + " layers");
       }
 
-      for (int index = 0; index < layerFiles.size(); index++) {
-        Path file = destination.resolve(layerFiles.get(index));
+      // Check the first layer to see if the layers are compressed already. 'docker save' output is
+      // uncompressed, but a jib-built tar has compressed layers.
+      boolean layersAreCompressed =
+          layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
 
-        // Compress layers if necessary and calculate the digest/size
-        Blob blob = Blobs.from(file);
-        try (ProgressEventDispatcher childDispatcher =
-                childProgressFactories.get(index).create("compressing " + file, Files.size(file));
-            ThrottledAccumulatingConsumer throttledProgressReporter =
-                new ThrottledAccumulatingConsumer(childDispatcher::dispatchProgress)) {
-          if (!layersAreCompressed) {
-            Path compressedFile = destination.resolve(layerFiles.get(index) + ".compressed");
-            try (GZIPOutputStream compressorStream =
-                    new GZIPOutputStream(Files.newOutputStream(compressedFile));
-                NotifyingOutputStream notifyingOutputStream =
-                    new NotifyingOutputStream(compressorStream, throttledProgressReporter)) {
-              blob.writeTo(notifyingOutputStream);
-            }
-            blob = Blobs.from(compressedFile);
-          }
+      // Process layer blobs
+      // TODO: Optimize; compressing/calculating layer digests is slow
+      //       e.g. parallelize, cache layers, faster compression method
+      try (ProgressEventDispatcher progressEventDispatcher =
+          progressEventDispatcherFactory.create(
+              "processing base image layers", layerFiles.size())) {
+        List<PreparedLayer> layers = new ArrayList<>(layerFiles.size());
+        V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
+
+        List<ProgressEventDispatcher.Factory> childProgressFactories = new ArrayList<>();
+        for (String ignored1 : layerFiles) {
+          childProgressFactories.add(progressEventDispatcher.newChildProducer());
         }
-        BlobDescriptor blobDescriptor = blob.writeTo(ByteStreams.nullOutputStream());
 
-        // 'manifest' contains the layer files in the same order as the diff ids in 'configuration',
-        // so we don't need to recalculate those.
-        // https://containers.gitbook.io/build-containers-the-hard-way/#docker-load-format
-        CachedLayer layer =
-            CachedLayer.builder()
-                .setLayerBlob(blob)
-                .setLayerDigest(blobDescriptor.getDigest())
-                .setLayerSize(blobDescriptor.getSize())
-                .setLayerDiffId(configurationTemplate.getLayerDiffId(index))
-                .build();
+        for (int index = 0; index < layerFiles.size(); index++) {
+          Path file = destination.resolve(layerFiles.get(index));
 
-        layers.add(new PreparedLayer.Builder(layer).build());
-        v22Manifest.addLayer(blobDescriptor.getSize(), blobDescriptor.getDigest());
-        progressEventDispatcher.dispatchProgress(1);
+          // Compress layers if necessary and calculate the digest/size
+          Blob blob = Blobs.from(file);
+          try (ProgressEventDispatcher childDispatcher =
+                  childProgressFactories
+                      .get(index)
+                      .create("compressing " + file, Files.size(file));
+              ThrottledAccumulatingConsumer throttledProgressReporter =
+                  new ThrottledAccumulatingConsumer(childDispatcher::dispatchProgress)) {
+            if (!layersAreCompressed) {
+              Path compressedFile = destination.resolve(layerFiles.get(index) + ".compressed");
+              try (GZIPOutputStream compressorStream =
+                      new GZIPOutputStream(Files.newOutputStream(compressedFile));
+                  NotifyingOutputStream notifyingOutputStream =
+                      new NotifyingOutputStream(compressorStream, throttledProgressReporter)) {
+                blob.writeTo(notifyingOutputStream);
+              }
+              blob = Blobs.from(compressedFile);
+            }
+          }
+          BlobDescriptor blobDescriptor = blob.writeTo(ByteStreams.nullOutputStream());
+
+          // 'manifest' contains the layer files in the same order as the diff ids in
+          // 'configuration', so we don't need to recalculate those.
+          // https://containers.gitbook.io/build-containers-the-hard-way/#docker-load-format
+          CachedLayer layer =
+              CachedLayer.builder()
+                  .setLayerBlob(blob)
+                  .setLayerDigest(blobDescriptor.getDigest())
+                  .setLayerSize(blobDescriptor.getSize())
+                  .setLayerDiffId(configurationTemplate.getLayerDiffId(index))
+                  .build();
+
+          layers.add(new PreparedLayer.Builder(layer).build());
+          v22Manifest.addLayer(blobDescriptor.getSize(), blobDescriptor.getDigest());
+          progressEventDispatcher.dispatchProgress(1);
+        }
+
+        BlobDescriptor configDescriptor =
+            Blobs.from(configurationTemplate).writeTo(ByteStreams.nullOutputStream());
+        v22Manifest.setContainerConfiguration(
+            configDescriptor.getSize(), configDescriptor.getDigest());
+        Image image = JsonToImageTranslator.toImage(v22Manifest, configurationTemplate);
+        return new LocalImage(image, layers);
       }
-
-      BlobDescriptor configDescriptor =
-          Blobs.from(configurationTemplate).writeTo(ByteStreams.nullOutputStream());
-      v22Manifest.setContainerConfiguration(
-          configDescriptor.getSize(), configDescriptor.getDigest());
-      Image image = JsonToImageTranslator.toImage(v22Manifest, configurationTemplate);
-      return new LocalImage(image, layers);
     }
   }
 }

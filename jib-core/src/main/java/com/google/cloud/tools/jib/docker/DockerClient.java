@@ -17,8 +17,10 @@
 package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.http.NotifyingOutputStream;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -179,13 +181,11 @@ public class DockerClient {
       throws InterruptedException, IOException {
     Process dockerProcess = docker("save", imageReference.toString());
     try (InputStream stdout = new BufferedInputStream(dockerProcess.getInputStream());
-        OutputStream fileStream = new BufferedOutputStream(Files.newOutputStream(outputPath))) {
-      byte[] buffer = new byte[1024];
-      int length;
-      while ((length = stdout.read(buffer)) != -1) {
-        fileStream.write(buffer, 0, length);
-        writtenByteCountListener.accept((long) length);
-      }
+        NotifyingOutputStream fileStream =
+            new NotifyingOutputStream(
+                new BufferedOutputStream(Files.newOutputStream(outputPath)),
+                writtenByteCountListener)) {
+      ByteStreams.copy(stdout, fileStream);
     }
 
     if (dockerProcess.waitFor() != 0) {
