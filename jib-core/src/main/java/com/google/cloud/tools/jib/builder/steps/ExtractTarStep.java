@@ -138,6 +138,7 @@ public class ExtractTarStep implements Callable<LocalImage> {
 
       // Process layer blobs
       // TODO: Optimize; compressing/calculating layer digests is slow
+      //       e.g. parallelize, faster compression method
       try (ProgressEventDispatcher progressEventDispatcher =
           progressEventDispatcherFactory.create(
               "processing base image layers", layerFiles.size())) {
@@ -156,7 +157,7 @@ public class ExtractTarStep implements Callable<LocalImage> {
           try (ProgressEventDispatcher childDispatcher =
                   childProgressFactories
                       .get(index)
-                      .create("compressing " + file, Files.size(file));
+                      .create("compressing layer " + diffId, Files.size(file));
               ThrottledAccumulatingConsumer throttledProgressReporter =
                   new ThrottledAccumulatingConsumer(childDispatcher::dispatchProgress)) {
             Optional<CachedLayer> optionalLayer = cache.retrieveTarLayer(diffId);
