@@ -61,7 +61,7 @@ class LoadDockerStep implements Callable<BuildResult> {
       ImageTarball imageTarball = new ImageTarball(builtImage, targetImageReference);
       try (ProgressEventDispatcher progressEventDispatcher =
               progressEventDispatcherFactory.create(
-                  "loading to Docker daemon", imageTarball.getSize());
+                  "loading to Docker daemon", imageTarball.getTotalLayerSize());
           ThrottledAccumulatingConsumer throttledProgressReporter =
               new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
         // Load the image to docker daemon.

@@ -132,23 +132,21 @@ public class DockerClient {
 
     try (NotifyingOutputStream stdin =
         new NotifyingOutputStream(dockerProcess.getOutputStream(), writtenByteCountListener)) {
-      try {
-        imageTarball.writeTo(stdin);
+      imageTarball.writeTo(stdin);
 
-      } catch (IOException ex) {
-        // Tries to read from stderr.
-        String error;
-        try (InputStreamReader stderr =
-            new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
-          error = CharStreams.toString(stderr);
+    } catch (IOException ex) {
+      // Tries to read from stderr.
+      String error;
+      try (InputStreamReader stderr =
+          new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
+        error = CharStreams.toString(stderr);
 
-        } catch (IOException ignored) {
-          // This ignores exceptions from reading stderr and throws the original exception from
-          // writing to stdin.
-          throw ex;
-        }
-        throw new IOException("'docker load' command failed with error: " + error, ex);
+      } catch (IOException ignored) {
+        // This ignores exceptions from reading stderr and throws the original exception from
+        // writing to stdin.
+        throw ex;
       }
+      throw new IOException("'docker load' command failed with error: " + error, ex);
     }
 
     try (InputStreamReader stdout =

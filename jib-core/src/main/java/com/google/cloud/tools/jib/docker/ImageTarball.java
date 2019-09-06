@@ -88,7 +88,7 @@ public class ImageTarball {
    *
    * @return the total size of the image's layers in bytes
    */
-  public long getSize() {
+  public long getTotalLayerSize() {
     long size = 0;
     for (Layer layer : image.getLayers()) {
       size += layer.getBlobDescriptor().getSize();
