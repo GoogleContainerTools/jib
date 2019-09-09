@@ -160,30 +160,30 @@ public class ExtractTarStep implements Callable<LocalImage> {
                       .create("compressing layer " + diffId, Files.size(layerFile));
               ThrottledAccumulatingConsumer throttledProgressReporter =
                   new ThrottledAccumulatingConsumer(childDispatcher::dispatchProgress)) {
+            CachedLayer layer;
             Optional<CachedLayer> optionalLayer = cache.retrieveTarLayer(diffId);
             if (optionalLayer.isPresent()) {
               // Retrieve pre-compressed layer from cache
-              CachedLayer layer = optionalLayer.get();
-              layers.add(new PreparedLayer.Builder(layer).build());
-              v22Manifest.addLayer(layer.getSize(), layer.getDigest());
+              layer = optionalLayer.get();
             } else {
               // Compress layers and calculate the digest/size
-              Blob blob = Blobs.from(layerFile);
-              if (!layersAreCompressed) {
-                Path compressedFile = destination.resolve(layerFiles.get(index) + ".compressed");
-                try (GZIPOutputStream compressorStream =
-                        new GZIPOutputStream(Files.newOutputStream(compressedFile));
-                    NotifyingOutputStream notifyingOutputStream =
-                        new NotifyingOutputStream(compressorStream, throttledProgressReporter)) {
-                  blob.writeTo(notifyingOutputStream);
-                }
-                blob = Blobs.from(compressedFile);
-              }
-
-              CachedLayer layer = cache.writeTarLayer(diffId, blob);
-              layers.add(new PreparedLayer.Builder(layer).build());
-              v22Manifest.addLayer(layer.getSize(), layer.getDigest());
+              Blob blob =
+                  layersAreCompressed
+                      ? Blobs.from(layerFile)
+                      : Blobs.from(
+                          outputStream -> {
+                            try (GZIPOutputStream compressorStream =
+                                    new GZIPOutputStream(outputStream);
+                                NotifyingOutputStream notifyingOutputStream =
+                                    new NotifyingOutputStream(
+                                        compressorStream, throttledProgressReporter)) {
+                              Blobs.from(layerFile).writeTo(notifyingOutputStream);
+                            }
+                          });
+              layer = cache.writeTarLayer(diffId, blob);
             }
+            layers.add(new PreparedLayer.Builder(layer).build());
+            v22Manifest.addLayer(layer.getSize(), layer.getDigest());
           }
         }
 
