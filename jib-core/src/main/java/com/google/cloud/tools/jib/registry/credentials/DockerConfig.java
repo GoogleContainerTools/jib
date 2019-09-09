@@ -85,10 +85,9 @@ class DockerConfig {
   /**
    * Determines a {@link DockerCredentialHelper} to use for {@code registry}.
    *
-   * <p>If there exists a matching registry entry (or its aliases) in {@code auths} for {@code
-   * registry}, the credential helper is {@code credStore}; otherwise, if there exists a matching
-   * registry entry (or its aliases) in {@code credHelpers}, the corresponding credential helper
-   * suffix is used.
+   * <p>If there exists a matching registry entry (or its aliases) in {@code credHelpers}, returns
+   * the corresponding credential helper is returned. Otherwise, returns the credential helper
+   * defined by {@code credStore}.
    *
    * <p>See {@link #getRegistryMatchersFor} for the alias lookup order.
    *
@@ -100,20 +99,17 @@ class DockerConfig {
   DockerCredentialHelper getCredentialHelperFor(String registry) {
     List<Predicate<String>> registryMatchers = getRegistryMatchersFor(registry);
 
-    Map.Entry<String, ?> firstAuthMatch =
-        findFirstInMapByKey(dockerConfigTemplate.getAuths(), registryMatchers);
-    if (firstAuthMatch != null && dockerConfigTemplate.getCredsStore() != null) {
-      return new DockerCredentialHelper(
-          firstAuthMatch.getKey(),
-          Paths.get("docker-credential-" + dockerConfigTemplate.getCredsStore()));
-    }
-
     Map.Entry<String, String> firstCredHelperMatch =
         findFirstInMapByKey(dockerConfigTemplate.getCredHelpers(), registryMatchers);
     if (firstCredHelperMatch != null) {
       return new DockerCredentialHelper(
           firstCredHelperMatch.getKey(),
           Paths.get("docker-credential-" + firstCredHelperMatch.getValue()));
+    }
+
+    if (dockerConfigTemplate.getCredsStore() != null) {
+      return new DockerCredentialHelper(
+          registry, Paths.get("docker-credential-" + dockerConfigTemplate.getCredsStore()));
     }
 
     return null;

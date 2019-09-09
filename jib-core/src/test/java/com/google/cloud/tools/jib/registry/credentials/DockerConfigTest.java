@@ -52,21 +52,14 @@ public class DockerConfigTest {
     Assert.assertNull(dockerConfig.getAuthFor("just registry"));
 
     Assert.assertEquals(
-        Paths.get("docker-credential-some credential store"),
+        Paths.get("docker-credential-some credential helper"),
         dockerConfig.getCredentialHelperFor("some registry").getCredentialHelper());
-    Assert.assertEquals(
-        Paths.get("docker-credential-some credential store"),
-        dockerConfig.getCredentialHelperFor("some other registry").getCredentialHelper());
-    Assert.assertEquals(
-        Paths.get("docker-credential-some credential store"),
-        dockerConfig.getCredentialHelperFor("just registry").getCredentialHelper());
-    Assert.assertEquals(
-        Paths.get("docker-credential-some credential store"),
-        dockerConfig.getCredentialHelperFor("with.protocol").getCredentialHelper());
     Assert.assertEquals(
         Paths.get("docker-credential-another credential helper"),
         dockerConfig.getCredentialHelperFor("another registry").getCredentialHelper());
-    Assert.assertNull(dockerConfig.getCredentialHelperFor("unknonwn registry"));
+    Assert.assertEquals(
+        Paths.get("docker-credential-some credential store"),
+        dockerConfig.getCredentialHelperFor("unknown registry").getCredentialHelper());
   }
 
   @Test
@@ -98,15 +91,16 @@ public class DockerConfigTest {
   }
 
   @Test
-  public void testGetCredentialHelperFor() throws URISyntaxException, IOException {
+  public void testGetCredentialHelperFor_exactMatchInCredHelpers()
+      throws URISyntaxException, IOException {
     Path json = Paths.get(Resources.getResource("core/json/dockerconfig.json").toURI());
 
     DockerConfig dockerConfig =
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals(
-        Paths.get("docker-credential-some credential store"),
-        dockerConfig.getCredentialHelperFor("just registry").getCredentialHelper());
+        Paths.get("docker-credential-credHelper for just.registry.in.helpers"),
+        dockerConfig.getCredentialHelperFor("just.registry.in.helpers").getCredentialHelper());
   }
 
   @Test
@@ -117,8 +111,8 @@ public class DockerConfigTest {
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals(
-        Paths.get("docker-credential-some credential store"),
-        dockerConfig.getCredentialHelperFor("with.protocol").getCredentialHelper());
+        Paths.get("docker-credential-credHelper for https__with.protocol.in.helpers"),
+        dockerConfig.getCredentialHelperFor("with.protocol.in.helpers").getCredentialHelper());
   }
 
   @Test
@@ -129,8 +123,8 @@ public class DockerConfigTest {
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals(
-        Paths.get("docker-credential-some credential store"),
-        dockerConfig.getCredentialHelperFor("with.suffix").getCredentialHelper());
+        Paths.get("docker-credential-credHelper for with.suffix.in.helpers/v2/"),
+        dockerConfig.getCredentialHelperFor("with.suffix.in.helpers").getCredentialHelper());
   }
 
   @Test
@@ -142,8 +136,11 @@ public class DockerConfigTest {
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
     Assert.assertEquals(
-        Paths.get("docker-credential-some credential store"),
-        dockerConfig.getCredentialHelperFor("with.protocol.and.suffix").getCredentialHelper());
+        Paths.get(
+            "docker-credential-credHelper for https__with.protocol.and.suffix.in.helpers/suffix"),
+        dockerConfig
+            .getCredentialHelperFor("with.protocol.and.suffix.in.helpers")
+            .getCredentialHelper());
   }
 
   @Test
@@ -154,7 +151,12 @@ public class DockerConfigTest {
     DockerConfig dockerConfig =
         new DockerConfig(JsonTemplateMapper.readJsonFromFile(json, DockerConfigTemplate.class));
 
-    Assert.assertNull(dockerConfig.getCredentialHelperFor("example"));
-    Assert.assertNull(dockerConfig.getCredentialHelperFor("another.example"));
+    // Should fall back to credsStore
+    Assert.assertEquals(
+        Paths.get("docker-credential-some credential store"),
+        dockerConfig.getCredentialHelperFor("example").getCredentialHelper());
+    Assert.assertEquals(
+        Paths.get("docker-credential-some credential store"),
+        dockerConfig.getCredentialHelperFor("another.example").getCredentialHelper());
   }
 }
