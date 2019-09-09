@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.zip.GZIPOutputStream;
 
 /** Static methods for {@link Blob}. */
 public class Blobs {
@@ -76,21 +75,6 @@ public class Blobs {
     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
     blob.writeTo(byteArrayOutputStream);
     return byteArrayOutputStream.toByteArray();
-  }
-
-  /**
-   * Gets a {@link Blob} that is {@code blob} compressed.
-   *
-   * @param blob the {@link Blob} to compress
-   * @return the compressed {@link Blob}
-   */
-  public static Blob compress(Blob blob) {
-    return Blobs.from(
-        outputStream -> {
-          try (GZIPOutputStream compressorStream = new GZIPOutputStream(outputStream)) {
-            blob.writeTo(compressorStream);
-          }
-        });
   }
 
   private Blobs() {}
