@@ -163,7 +163,7 @@ public class MavenProjectProperties implements ProjectProperties {
     this.session = session;
     ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(session)
-                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
+                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor, true)
                 : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(log::info))
             .lifecycle(log::info);
     if (log.isDebugEnabled()) {

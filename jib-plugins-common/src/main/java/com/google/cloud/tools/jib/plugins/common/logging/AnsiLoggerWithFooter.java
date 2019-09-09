@@ -40,6 +40,9 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
   /** ANSI escape sequence template for moving the cursor up multiple lines. */
   private static final String CURSOR_UP_SEQUENCE_TEMPLATE = "\033[%dA";
 
+  /** ANSI escape sequence template for moving the cursor up multiple lines. */
+  private static final String CURSOR_UP_SEQUENCE = String.format(CURSOR_UP_SEQUENCE_TEMPLATE, 1);
+
   /** ANSI escape sequence for erasing to end of display. */
   private static final String ERASE_DISPLAY_BELOW = "\033[0J";
 
@@ -76,22 +79,32 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
 
   private List<String> footerLines = Collections.emptyList();
 
+  // When a footer was erased, go up two lines (and then down one line by calling "accept()" once)
+  // before printing the next message to correct an issue in Maven:
+  // https://github.com/GoogleContainerTools/jib/issues/1952
+  private boolean twoCursorUpOverwrite;
+
   /**
    * Creates a new {@link AnsiLoggerWithFooter}.
    *
    * @param messageConsumers map from each {@link Level} to a corresponding message logger
    * @param singleThreadedExecutor a {@link SingleThreadedExecutor} to ensure that all messages are
    *     logged in a sequential, deterministic order
+   * @param twoCursorUpOverwrite makes the logger move the cursor up twice and down once before
+   *     printing a message when a footer is erased; useful for Maven
+   *     (https://github.com/GoogleContainerTools/jib/issues/1952)
    */
   AnsiLoggerWithFooter(
       ImmutableMap<Level, Consumer<String>> messageConsumers,
-      SingleThreadedExecutor singleThreadedExecutor) {
+      SingleThreadedExecutor singleThreadedExecutor,
+      boolean twoCursorUpOverwrite) {
     Preconditions.checkArgument(
         messageConsumers.containsKey(Level.LIFECYCLE),
         "Cannot construct AnsiLoggerFooter without LIFECYCLE message consumer");
     this.messageConsumers = messageConsumers;
     this.lifecycleConsumer = Preconditions.checkNotNull(messageConsumers.get(Level.LIFECYCLE));
     this.singleThreadedExecutor = singleThreadedExecutor;
+    this.twoCursorUpOverwrite = twoCursorUpOverwrite;
   }
 
   @Override
@@ -103,13 +116,16 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
 
     singleThreadedExecutor.execute(
         () -> {
-          if (eraseFooter()) {
-            // If a previous footer was erased, the message needs to go up a line. However, we go up
-            // two lines (and then down one line by calling "accept()" once) to correct an issue in
-            // Maven: https://github.com/GoogleContainerTools/jib/issues/1952
+          boolean didErase = eraseFooter();
+
+          // If a previous footer was erased, the message needs to go up a line.
+          String prefix = didErase && !twoCursorUpOverwrite ? CURSOR_UP_SEQUENCE : "";
+          if (didErase && twoCursorUpOverwrite) {
+            // https://github.com/GoogleContainerTools/jib/issues/1952
             messageConsumer.accept(String.format(CURSOR_UP_SEQUENCE_TEMPLATE, 2));
           }
-          messageConsumer.accept(message);
+
+          messageConsumer.accept(prefix + message);
 
           footerLines.forEach(line -> lifecycleConsumer.accept(BOLD + line + UNBOLD));
         });
@@ -133,14 +149,19 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
 
     singleThreadedExecutor.execute(
         () -> {
-          if (eraseFooter()) {
-            // If a previous footer was erased, the first new footer line needs to go up a line.
-            // However, we go up two lines (and then down one line by calling "accept()" once to
-            // correct an issue in Maven: https://github.com/GoogleContainerTools/jib/issues/1952
+          boolean didErase = eraseFooter();
+
+          // If a previous footer was erased, the first new footer line needs to go up a line.
+          String prefix = didErase && !twoCursorUpOverwrite ? CURSOR_UP_SEQUENCE : "";
+          if (didErase && twoCursorUpOverwrite) {
+            // https://github.com/GoogleContainerTools/jib/issues/1952
             lifecycleConsumer.accept(String.format(CURSOR_UP_SEQUENCE_TEMPLATE, 2));
           }
 
-          truncatedNewFooterLines.forEach(line -> lifecycleConsumer.accept(BOLD + line + UNBOLD));
+          for (int i = 0; i < truncatedNewFooterLines.size(); i++) {
+            String line = BOLD + truncatedNewFooterLines.get(i) + UNBOLD;
+            lifecycleConsumer.accept((i == 0 ? prefix : "") + line);
+          }
 
           footerLines = truncatedNewFooterLines;
         });

@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Tests for {@link AnsiLoggerWithFooter}. */
@@ -45,19 +44,6 @@ public class AnsiLoggerWithFooterTest {
             messages.add(message);
           };
 
-  private AnsiLoggerWithFooter testAnsiLoggerWithFooter;
-
-  @Before
-  public void setUp() {
-    ImmutableMap.Builder<Level, Consumer<String>> messageConsumers = ImmutableMap.builder();
-    for (Level level : Level.values()) {
-      messageConsumers.put(level, messageConsumerFactory.apply(level));
-    }
-
-    testAnsiLoggerWithFooter =
-        new AnsiLoggerWithFooter(messageConsumers.build(), singleThreadedExecutor);
-  }
-
   @Test
   public void testTruncateToMaxWidth() {
     List<String> lines =
@@ -74,7 +60,7 @@ public class AnsiLoggerWithFooterTest {
   @Test
   public void testNoLifecycle() {
     try {
-      new AnsiLoggerWithFooter(ImmutableMap.of(), singleThreadedExecutor);
+      new AnsiLoggerWithFooter(ImmutableMap.of(), singleThreadedExecutor, false);
       Assert.fail();
 
     } catch (IllegalArgumentException ex) {
@@ -85,6 +71,7 @@ public class AnsiLoggerWithFooterTest {
 
   @Test
   public void testLog_noFooter() {
+    AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(false);
     testAnsiLoggerWithFooter.log(Level.LIFECYCLE, "lifecycle");
     testAnsiLoggerWithFooter.log(Level.PROGRESS, "progress");
     testAnsiLoggerWithFooter.log(Level.INFO, "info");
@@ -107,7 +94,8 @@ public class AnsiLoggerWithFooterTest {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter =
         new AnsiLoggerWithFooter(
             ImmutableMap.of(Level.LIFECYCLE, messageConsumerFactory.apply(Level.LIFECYCLE)),
-            singleThreadedExecutor);
+            singleThreadedExecutor,
+            false);
 
     testAnsiLoggerWithFooter.log(Level.LIFECYCLE, "lifecycle");
     testAnsiLoggerWithFooter.log(Level.PROGRESS, "progress");
@@ -124,6 +112,7 @@ public class AnsiLoggerWithFooterTest {
 
   @Test
   public void testLog_sameFooter() {
+    AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(true);
     testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
     testAnsiLoggerWithFooter.log(Level.INFO, "message");
     testAnsiLoggerWithFooter.log(Level.INFO, "another message");
@@ -162,6 +151,7 @@ public class AnsiLoggerWithFooterTest {
 
   @Test
   public void testLog_changingFooter() {
+    AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(true);
     testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
     testAnsiLoggerWithFooter.log(Level.WARN, "message");
     testAnsiLoggerWithFooter.setFooter(Arrays.asList("two line", "footer"));
@@ -209,5 +199,15 @@ public class AnsiLoggerWithFooterTest {
             Level.LIFECYCLE,
             Level.LIFECYCLE),
         levels);
+  }
+
+  private AnsiLoggerWithFooter createTestLogger(boolean twoCursorUpOverwrite) {
+    ImmutableMap.Builder<Level, Consumer<String>> messageConsumers = ImmutableMap.builder();
+    for (Level level : Level.values()) {
+      messageConsumers.put(level, messageConsumerFactory.apply(level));
+    }
+
+    return new AnsiLoggerWithFooter(
+        messageConsumers.build(), singleThreadedExecutor, twoCursorUpOverwrite);
   }
 }
