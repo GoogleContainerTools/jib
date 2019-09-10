@@ -40,7 +40,7 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
   /** ANSI escape sequence template for moving the cursor up multiple lines. */
   private static final String CURSOR_UP_SEQUENCE_TEMPLATE = "\033[%dA";
 
-  /** ANSI escape sequence template for moving the cursor up multiple lines. */
+  /** ANSI escape sequence for moving the cursor up. */
   private static final String CURSOR_UP_SEQUENCE = String.format(CURSOR_UP_SEQUENCE_TEMPLATE, 1);
 
   /** ANSI escape sequence for erasing to end of display. */
@@ -102,7 +102,7 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
         messageConsumers.containsKey(Level.LIFECYCLE),
         "Cannot construct AnsiLoggerFooter without LIFECYCLE message consumer");
     this.messageConsumers = messageConsumers;
-    this.lifecycleConsumer = Preconditions.checkNotNull(messageConsumers.get(Level.LIFECYCLE));
+    lifecycleConsumer = Preconditions.checkNotNull(messageConsumers.get(Level.LIFECYCLE));
     this.singleThreadedExecutor = singleThreadedExecutor;
     this.twoCursorUpOverwrite = twoCursorUpOverwrite;
   }

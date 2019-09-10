@@ -230,6 +230,7 @@ public class AnsiLoggerWithFooterTest {
         levels);
   }
 
+  @Test
   public void testLog_changingFooterWithTwoCursorUpOverwrite() {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(true);
     testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
