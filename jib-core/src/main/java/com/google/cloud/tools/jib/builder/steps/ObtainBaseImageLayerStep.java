@@ -90,10 +90,10 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                "preparing base image layer pullers", baseImageLayers.size());
+                "launching base image layer pullers", baseImageLayers.size());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), "Preparing base image layer pullers")) {
+                buildConfiguration.getEventHandlers(), "Launching base image layer pullers")) {
 
       List<ObtainBaseImageLayerStep> layerPullers = new ArrayList<>();
       for (Layer layer : baseImageLayers) {
