@@ -40,7 +40,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
       List<Future<PreparedLayer>> cachedLayers) {
     try (TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), "Launching layer pushers");
+                buildConfiguration.getEventHandlers(), "Preparing layer pushers");
         ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("launching layer pushers", cachedLayers.size())) {
 

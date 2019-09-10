@@ -55,7 +55,7 @@ class PushImageStep implements Callable<BuildResult> {
 
     try (TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), "Launching manifest pushers");
+                buildConfiguration.getEventHandlers(), "Preparing manifest pushers");
         ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("launching manifest pushers", tags.size())) {
 

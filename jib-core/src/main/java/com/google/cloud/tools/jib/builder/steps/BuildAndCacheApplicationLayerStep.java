@@ -52,7 +52,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
                 "launching application layer builders", layerConfigurations.size());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), "Launching application layer builders")) {
+                buildConfiguration.getEventHandlers(), "Preparing application layer builders")) {
       return layerConfigurations
           .stream()
           // Skips the layer if empty.
