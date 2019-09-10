@@ -84,13 +84,9 @@ public class SkaffoldInitMojoTest {
   @Test
   public void testFilesMojo_multiModule() throws IOException, VerificationException {
     List<String> outputs = getJsons(multiTestProject);
-    Assert.assertEquals(4, outputs.size());
+    Assert.assertEquals(3, outputs.size());
 
-    SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
-    Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertNull(skaffoldInitOutput.getProject());
-
-    skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(1));
+    SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(1));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
     Assert.assertEquals("name-service", skaffoldInitOutput.getProject());
 
