@@ -313,7 +313,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
    * @return the configured target image reference
    */
   @Nullable
-  public String getTargetImage() {
+  protected String getTargetImage() {
     String propertyAlternate = getProperty(PropertyNames.TO_IMAGE_ALTERNATE);
     if (propertyAlternate != null) {
       return propertyAlternate;
