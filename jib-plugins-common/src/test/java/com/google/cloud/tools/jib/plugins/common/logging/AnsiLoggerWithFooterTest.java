@@ -146,7 +146,7 @@ public class AnsiLoggerWithFooterTest {
   }
 
   @Test
-  public void testLog_sameFooterWithTwoCursorUpOverwrite() {
+  public void testLog_sameFooterWithEnableTwoCursorUpJump() {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(true);
     testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
     testAnsiLoggerWithFooter.log(Level.INFO, "message");
@@ -231,7 +231,7 @@ public class AnsiLoggerWithFooterTest {
   }
 
   @Test
-  public void testLog_changingFooterWithTwoCursorUpOverwrite() {
+  public void testLog_changingFooterWithEnableTwoCursorUpJump() {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(true);
     testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
     testAnsiLoggerWithFooter.log(Level.WARN, "message");

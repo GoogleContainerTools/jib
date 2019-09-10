@@ -79,10 +79,10 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
 
   private List<String> footerLines = Collections.emptyList();
 
-  // When a footer is erased, go up two lines (and then down one line by calling "accept()" once)
-  // before printing the next message to correct an issue in Maven:
+  // When a footer is erased, makes the logger go up two lines (and then down one line by calling
+  // "accept()" once) before printing the next message. This is useful to correct an issue in Maven:
   // https://github.com/GoogleContainerTools/jib/issues/1952
-  private boolean twoCursorUpOverwrite;
+  private boolean enableTwoCursorUpJump;
 
   /**
    * Creates a new {@link AnsiLoggerWithFooter}.
@@ -90,21 +90,21 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
    * @param messageConsumers map from each {@link Level} to a corresponding message logger
    * @param singleThreadedExecutor a {@link SingleThreadedExecutor} to ensure that all messages are
    *     logged in a sequential, deterministic order
-   * @param twoCursorUpOverwrite makes the logger move the cursor up twice and down once before
-   *     printing a message when a footer is erased; useful for Maven
-   *     (https://github.com/GoogleContainerTools/jib/issues/1952)
+   * @param enableTwoCursorUpJump allows the logger move the cursor up twice at once. Fixes a
+   *     logging issue in Maven (https://github.com/GoogleContainerTools/jib/issues/1952) but causes
+   *     a problem in Gradle (https://github.com/GoogleContainerTools/jib/issues/1963)
    */
   AnsiLoggerWithFooter(
       ImmutableMap<Level, Consumer<String>> messageConsumers,
       SingleThreadedExecutor singleThreadedExecutor,
-      boolean twoCursorUpOverwrite) {
+      boolean enableTwoCursorUpJump) {
     Preconditions.checkArgument(
         messageConsumers.containsKey(Level.LIFECYCLE),
         "Cannot construct AnsiLoggerFooter without LIFECYCLE message consumer");
     this.messageConsumers = messageConsumers;
     lifecycleConsumer = Preconditions.checkNotNull(messageConsumers.get(Level.LIFECYCLE));
     this.singleThreadedExecutor = singleThreadedExecutor;
-    this.twoCursorUpOverwrite = twoCursorUpOverwrite;
+    this.enableTwoCursorUpJump = enableTwoCursorUpJump;
   }
 
   @Override
@@ -120,8 +120,8 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
 
           // If a previous footer was erased, the message needs to go up a line. But only do so when
           // not doing the two-cursor-up fix.
-          String prefix = didErase && !twoCursorUpOverwrite ? CURSOR_UP_SEQUENCE : "";
-          if (didErase && twoCursorUpOverwrite) {
+          String prefix = didErase && !enableTwoCursorUpJump ? CURSOR_UP_SEQUENCE : "";
+          if (didErase && enableTwoCursorUpJump) {
             messageConsumer.accept(String.format(CURSOR_UP_SEQUENCE_TEMPLATE, 2));
           }
 
@@ -153,8 +153,8 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
 
           // If a previous footer was erased, the first new footer line needs to go up a line. But
           // only do so when not doing the two-cursor-up fix.
-          String firstLinePrefix = didErase && !twoCursorUpOverwrite ? CURSOR_UP_SEQUENCE : "";
-          if (didErase && twoCursorUpOverwrite) {
+          String firstLinePrefix = didErase && !enableTwoCursorUpJump ? CURSOR_UP_SEQUENCE : "";
+          if (didErase && enableTwoCursorUpJump) {
             lifecycleConsumer.accept(String.format(CURSOR_UP_SEQUENCE_TEMPLATE, 2));
           }
 
