@@ -282,13 +282,13 @@ public class AnsiLoggerWithFooterTest {
         levels);
   }
 
-  private AnsiLoggerWithFooter createTestLogger(boolean twoCursorUpOverwrite) {
+  private AnsiLoggerWithFooter createTestLogger(boolean enableTwoCursorUpJump) {
     ImmutableMap.Builder<Level, Consumer<String>> messageConsumers = ImmutableMap.builder();
     for (Level level : Level.values()) {
       messageConsumers.put(level, messageConsumerFactory.apply(level));
     }
 
     return new AnsiLoggerWithFooter(
-        messageConsumers.build(), singleThreadedExecutor, twoCursorUpOverwrite);
+        messageConsumers.build(), singleThreadedExecutor, enableTwoCursorUpJump);
   }
 }
