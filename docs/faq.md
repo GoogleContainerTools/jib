@@ -519,7 +519,7 @@ See more at [Using Google Container Registry (GCR) with Minikube](https://ryanes
 
 ### How can I examine network traffic?
 
-It can be useful to examine network traffic to diagnose connectivity issues. Jib uses the Google HTTP client library to interact with registries which logs HTTP requests using the JVM-provided `java.util.logging` facilities.  It is very helpful to serialize Jib's actions using the `jibSerialize` property.
+It can be useful to examine network traffic to diagnose connectivity issues. Jib uses the Google HTTP client library to interact with registries which logs HTTP requests using the JVM-provided `java.util.logging` facilities.  It is very helpful to serialize Jib's actions using the `jib.serialize` property.
 
 To see the HTTP traffic, create a `logging.properties` file with the following:
 ```
@@ -533,16 +533,15 @@ com.google.api.client.http.level=CONFIG
 
 And then launch your build tool as follows:
 ```sh
-mvn -Djava.util.logging.config.file=path/to/log.properties -DjibSerialize=true -Djib.console=plain ...
+mvn -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
 ```
 or
 ```sh
-gradle -Djava.util.logging.config.file=path/to/log.properties -DjibSerialize=true -Djib.console=plain ...
+gradle -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=true -Djib.console=plain ...
 ```
-Note there is no dot(.) in `jibSerialize`.
 
 ### How do I view debug logs for Jib?
 
-Maven: use `mvn -X -DjibSerialize=true` to enable more detailed logging and serialize Jib's actions.
+Maven: use `mvn -X -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
 
-Gradle: use `grade --debug -DjibSerialize=true` to enable more detailed logging and serialize Jib's actions.
+Gradle: use `grade --debug -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
