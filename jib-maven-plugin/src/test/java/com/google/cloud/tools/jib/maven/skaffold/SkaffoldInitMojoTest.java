@@ -86,15 +86,15 @@ public class SkaffoldInitMojoTest {
     List<String> outputs = getJsons(multiTestProject);
     Assert.assertEquals(3, outputs.size());
 
-    SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(1));
+    SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
     Assert.assertEquals("name-service", skaffoldInitOutput.getProject());
 
-    skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(2));
+    skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(1));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
     Assert.assertEquals("lib", skaffoldInitOutput.getProject());
 
-    skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(3));
+    skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(2));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
     Assert.assertEquals("service", skaffoldInitOutput.getProject());
   }
