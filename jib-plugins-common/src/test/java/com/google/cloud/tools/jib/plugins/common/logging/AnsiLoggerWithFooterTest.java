@@ -112,6 +112,41 @@ public class AnsiLoggerWithFooterTest {
 
   @Test
   public void testLog_sameFooter() {
+    AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(false);
+    testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
+    testAnsiLoggerWithFooter.log(Level.INFO, "message");
+    testAnsiLoggerWithFooter.log(Level.INFO, "another message");
+
+    singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
+
+    Assert.assertEquals(
+        Arrays.asList(
+            "\033[1mfooter\033[0m", // single-line footer in bold
+
+            // now triggered by logging a message
+            "\033[1A\033[0J", // cursor up and erase to the end
+            "\033[1Amessage", // cursor up + message
+            "\033[1mfooter\033[0m", // footer
+
+            // by logging another message
+            "\033[1A\033[0J", // cursor up and erase
+            "\033[1Aanother message", // cursor up + message
+            "\033[1mfooter\033[0m"), // footer
+        messages);
+    Assert.assertEquals(
+        Arrays.asList(
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.INFO,
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.INFO,
+            Level.LIFECYCLE),
+        levels);
+  }
+
+  @Test
+  public void testLog_sameFooterWithTwoCursorUpOverwrite() {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(true);
     testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
     testAnsiLoggerWithFooter.log(Level.INFO, "message");
@@ -151,6 +186,51 @@ public class AnsiLoggerWithFooterTest {
 
   @Test
   public void testLog_changingFooter() {
+    AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(false);
+    testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
+    testAnsiLoggerWithFooter.log(Level.WARN, "message");
+    testAnsiLoggerWithFooter.setFooter(Arrays.asList("two line", "footer"));
+    testAnsiLoggerWithFooter.log(Level.WARN, "another message");
+
+    singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
+
+    Assert.assertEquals(
+        Arrays.asList(
+            "\033[1mfooter\033[0m", // single-line footer in bold
+
+            // now triggered by logging a warning
+            "\033[1A\033[0J", // cursor up and erase to the end
+            "\033[1Amessage", // cursor up + message
+            "\033[1mfooter\033[0m", // footer
+
+            // by setting a two-line footer
+            "\033[1A\033[0J", // cursor up and erase
+            "\033[1A\033[1mtwo line\033[0m", // cursor up + footer line 1
+            "\033[1mfooter\033[0m", // footer line 2
+
+            // by logging another warning
+            "\033[2A\033[0J", // cursor up twice (to erase two-line footer) and erase
+            "\033[1Aanother message", // cursor up + message
+            "\033[1mtwo line\033[0m", // footer line 1
+            "\033[1mfooter\033[0m"), // footer line 2
+        messages);
+    Assert.assertEquals(
+        Arrays.asList(
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.WARN,
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.WARN,
+            Level.LIFECYCLE,
+            Level.LIFECYCLE),
+        levels);
+  }
+
+  public void testLog_changingFooterWithTwoCursorUpOverwrite() {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(true);
     testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
     testAnsiLoggerWithFooter.log(Level.WARN, "message");
