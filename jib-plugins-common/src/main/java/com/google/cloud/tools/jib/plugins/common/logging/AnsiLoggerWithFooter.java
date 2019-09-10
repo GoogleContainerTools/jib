@@ -79,7 +79,7 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
 
   private List<String> footerLines = Collections.emptyList();
 
-  // When a footer was erased, go up two lines (and then down one line by calling "accept()" once)
+  // When a footer is erased, go up two lines (and then down one line by calling "accept()" once)
   // before printing the next message to correct an issue in Maven:
   // https://github.com/GoogleContainerTools/jib/issues/1952
   private boolean twoCursorUpOverwrite;
@@ -118,10 +118,10 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
         () -> {
           boolean didErase = eraseFooter();
 
-          // If a previous footer was erased, the message needs to go up a line.
+          // If a previous footer was erased, the message needs to go up a line. But only do so when
+          // not doing the two-cursor-up fix.
           String prefix = didErase && !twoCursorUpOverwrite ? CURSOR_UP_SEQUENCE : "";
           if (didErase && twoCursorUpOverwrite) {
-            // https://github.com/GoogleContainerTools/jib/issues/1952
             messageConsumer.accept(String.format(CURSOR_UP_SEQUENCE_TEMPLATE, 2));
           }
 
@@ -151,16 +151,16 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
         () -> {
           boolean didErase = eraseFooter();
 
-          // If a previous footer was erased, the first new footer line needs to go up a line.
-          String prefix = didErase && !twoCursorUpOverwrite ? CURSOR_UP_SEQUENCE : "";
+          // If a previous footer was erased, the first new footer line needs to go up a line. But
+          // only do so when not doing the two-cursor-up fix.
+          String firstLinePrefix = didErase && !twoCursorUpOverwrite ? CURSOR_UP_SEQUENCE : "";
           if (didErase && twoCursorUpOverwrite) {
-            // https://github.com/GoogleContainerTools/jib/issues/1952
             lifecycleConsumer.accept(String.format(CURSOR_UP_SEQUENCE_TEMPLATE, 2));
           }
 
           for (int i = 0; i < truncatedNewFooterLines.size(); i++) {
             String line = BOLD + truncatedNewFooterLines.get(i) + UNBOLD;
-            lifecycleConsumer.accept((i == 0 ? prefix : "") + line);
+            lifecycleConsumer.accept((i == 0 ? firstLinePrefix : "") + line);
           }
 
           footerLines = truncatedNewFooterLines;
