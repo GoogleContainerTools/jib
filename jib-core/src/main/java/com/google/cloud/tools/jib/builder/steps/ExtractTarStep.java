@@ -178,16 +178,19 @@ public class ExtractTarStep implements Callable<LocalImage> {
         ThrottledAccumulatingConsumer throttledProgressReporter =
             new ThrottledAccumulatingConsumer(childDispatcher::dispatchProgress)) {
       Cache cache = buildConfiguration.getBaseImageLayersCache();
+
+      // Retrieve pre-compressed layer from cache
       Optional<CachedLayer> optionalLayer = cache.retrieveTarLayer(diffId);
       if (optionalLayer.isPresent()) {
-        // Retrieve pre-compressed layer from cache
         return optionalLayer.get();
       }
 
+      // Just write layers that are already compressed
       if (layersAreCompressed) {
         return cache.writeTarLayer(diffId, Blobs.from(layerFile));
       }
-      // Compress layers and calculate the digest/size
+
+      // Compress uncompressed layers while writing
       Blob compressedBlob =
           Blobs.from(
               outputStream -> {
