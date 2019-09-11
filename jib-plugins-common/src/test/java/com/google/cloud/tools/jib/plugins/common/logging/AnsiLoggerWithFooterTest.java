@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 /** Tests for {@link AnsiLoggerWithFooter}. */
@@ -45,19 +44,6 @@ public class AnsiLoggerWithFooterTest {
             messages.add(message);
           };
 
-  private AnsiLoggerWithFooter testAnsiLoggerWithFooter;
-
-  @Before
-  public void setUp() {
-    ImmutableMap.Builder<Level, Consumer<String>> messageConsumers = ImmutableMap.builder();
-    for (Level level : Level.values()) {
-      messageConsumers.put(level, messageConsumerFactory.apply(level));
-    }
-
-    testAnsiLoggerWithFooter =
-        new AnsiLoggerWithFooter(messageConsumers.build(), singleThreadedExecutor);
-  }
-
   @Test
   public void testTruncateToMaxWidth() {
     List<String> lines =
@@ -74,7 +60,7 @@ public class AnsiLoggerWithFooterTest {
   @Test
   public void testNoLifecycle() {
     try {
-      new AnsiLoggerWithFooter(ImmutableMap.of(), singleThreadedExecutor);
+      new AnsiLoggerWithFooter(ImmutableMap.of(), singleThreadedExecutor, false);
       Assert.fail();
 
     } catch (IllegalArgumentException ex) {
@@ -85,6 +71,7 @@ public class AnsiLoggerWithFooterTest {
 
   @Test
   public void testLog_noFooter() {
+    AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(false);
     testAnsiLoggerWithFooter.log(Level.LIFECYCLE, "lifecycle");
     testAnsiLoggerWithFooter.log(Level.PROGRESS, "progress");
     testAnsiLoggerWithFooter.log(Level.INFO, "info");
@@ -107,7 +94,8 @@ public class AnsiLoggerWithFooterTest {
     AnsiLoggerWithFooter testAnsiLoggerWithFooter =
         new AnsiLoggerWithFooter(
             ImmutableMap.of(Level.LIFECYCLE, messageConsumerFactory.apply(Level.LIFECYCLE)),
-            singleThreadedExecutor);
+            singleThreadedExecutor,
+            false);
 
     testAnsiLoggerWithFooter.log(Level.LIFECYCLE, "lifecycle");
     testAnsiLoggerWithFooter.log(Level.PROGRESS, "progress");
@@ -124,6 +112,42 @@ public class AnsiLoggerWithFooterTest {
 
   @Test
   public void testLog_sameFooter() {
+    AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(false);
+    testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
+    testAnsiLoggerWithFooter.log(Level.INFO, "message");
+    testAnsiLoggerWithFooter.log(Level.INFO, "another message");
+
+    singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
+
+    Assert.assertEquals(
+        Arrays.asList(
+            "\033[1mfooter\033[0m", // single-line footer in bold
+
+            // now triggered by logging a message
+            "\033[1A\033[0J", // cursor up and erase to the end
+            "\033[1Amessage", // cursor up + message
+            "\033[1mfooter\033[0m", // footer
+
+            // by logging another message
+            "\033[1A\033[0J", // cursor up and erase
+            "\033[1Aanother message", // cursor up + message
+            "\033[1mfooter\033[0m"), // footer
+        messages);
+    Assert.assertEquals(
+        Arrays.asList(
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.INFO,
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.INFO,
+            Level.LIFECYCLE),
+        levels);
+  }
+
+  @Test
+  public void testLog_sameFooterWithEnableTwoCursorUpJump() {
+    AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(true);
     testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
     testAnsiLoggerWithFooter.log(Level.INFO, "message");
     testAnsiLoggerWithFooter.log(Level.INFO, "another message");
@@ -162,6 +186,53 @@ public class AnsiLoggerWithFooterTest {
 
   @Test
   public void testLog_changingFooter() {
+    AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(false);
+    testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
+    testAnsiLoggerWithFooter.log(Level.WARN, "message");
+    testAnsiLoggerWithFooter.setFooter(Arrays.asList("two line", "footer"));
+    testAnsiLoggerWithFooter.log(Level.WARN, "another message");
+
+    singleThreadedExecutor.shutDownAndAwaitTermination(SHUTDOWN_TIMEOUT);
+
+    Assert.assertEquals(
+        Arrays.asList(
+            "\033[1mfooter\033[0m", // single-line footer in bold
+
+            // now triggered by logging a warning
+            "\033[1A\033[0J", // cursor up and erase to the end
+            "\033[1Amessage", // cursor up + message
+            "\033[1mfooter\033[0m", // footer
+
+            // by setting a two-line footer
+            "\033[1A\033[0J", // cursor up and erase
+            "\033[1A\033[1mtwo line\033[0m", // cursor up + footer line 1
+            "\033[1mfooter\033[0m", // footer line 2
+
+            // by logging another warning
+            "\033[2A\033[0J", // cursor up twice (to erase two-line footer) and erase
+            "\033[1Aanother message", // cursor up + message
+            "\033[1mtwo line\033[0m", // footer line 1
+            "\033[1mfooter\033[0m"), // footer line 2
+        messages);
+    Assert.assertEquals(
+        Arrays.asList(
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.WARN,
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.LIFECYCLE,
+            Level.WARN,
+            Level.LIFECYCLE,
+            Level.LIFECYCLE),
+        levels);
+  }
+
+  @Test
+  public void testLog_changingFooterWithEnableTwoCursorUpJump() {
+    AnsiLoggerWithFooter testAnsiLoggerWithFooter = createTestLogger(true);
     testAnsiLoggerWithFooter.setFooter(Collections.singletonList("footer"));
     testAnsiLoggerWithFooter.log(Level.WARN, "message");
     testAnsiLoggerWithFooter.setFooter(Arrays.asList("two line", "footer"));
@@ -209,5 +280,15 @@ public class AnsiLoggerWithFooterTest {
             Level.LIFECYCLE,
             Level.LIFECYCLE),
         levels);
+  }
+
+  private AnsiLoggerWithFooter createTestLogger(boolean enableTwoCursorUpJump) {
+    ImmutableMap.Builder<Level, Consumer<String>> messageConsumers = ImmutableMap.builder();
+    for (Level level : Level.values()) {
+      messageConsumers.put(level, messageConsumerFactory.apply(level));
+    }
+
+    return new AnsiLoggerWithFooter(
+        messageConsumers.build(), singleThreadedExecutor, enableTwoCursorUpJump);
   }
 }
