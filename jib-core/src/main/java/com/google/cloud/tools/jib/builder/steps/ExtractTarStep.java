@@ -107,7 +107,6 @@ public class ExtractTarStep implements Callable<LocalImage> {
         new TimerEventDispatcher(
             buildConfiguration.getEventHandlers(),
             "Extracting tar " + tarPath + " into " + destination)) {
-      Cache cache = buildConfiguration.getBaseImageLayersCache();
       FileOperations.deleteRecursiveOnExit(destination);
       TarExtractor.extract(tarPath, destination);
 
@@ -152,39 +151,14 @@ public class ExtractTarStep implements Callable<LocalImage> {
 
         for (int index = 0; index < layerFiles.size(); index++) {
           Path layerFile = destination.resolve(layerFiles.get(index));
-          DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
-
-          try (ProgressEventDispatcher childDispatcher =
-                  childProgressFactories
-                      .get(index)
-                      .create("compressing layer " + diffId, Files.size(layerFile));
-              ThrottledAccumulatingConsumer throttledProgressReporter =
-                  new ThrottledAccumulatingConsumer(childDispatcher::dispatchProgress)) {
-            CachedLayer layer;
-            Optional<CachedLayer> optionalLayer = cache.retrieveTarLayer(diffId);
-            if (optionalLayer.isPresent()) {
-              // Retrieve pre-compressed layer from cache
-              layer = optionalLayer.get();
-            } else {
-              // Compress layers and calculate the digest/size
-              Blob blob =
-                  layersAreCompressed
-                      ? Blobs.from(layerFile)
-                      : Blobs.from(
-                          outputStream -> {
-                            try (GZIPOutputStream compressorStream =
-                                    new GZIPOutputStream(outputStream);
-                                NotifyingOutputStream notifyingOutputStream =
-                                    new NotifyingOutputStream(
-                                        compressorStream, throttledProgressReporter)) {
-                              Blobs.from(layerFile).writeTo(notifyingOutputStream);
-                            }
-                          });
-              layer = cache.writeTarLayer(diffId, blob);
-            }
-            layers.add(new PreparedLayer.Builder(layer).build());
-            v22Manifest.addLayer(layer.getSize(), layer.getDigest());
-          }
+          CachedLayer layer =
+              getCachedTarLayer(
+                  configurationTemplate.getLayerDiffId(index),
+                  layerFile,
+                  layersAreCompressed,
+                  childProgressFactories.get(index));
+          layers.add(new PreparedLayer.Builder(layer).build());
+          v22Manifest.addLayer(layer.getSize(), layer.getDigest());
         }
 
         BlobDescriptor configDescriptor =
@@ -194,6 +168,41 @@ public class ExtractTarStep implements Callable<LocalImage> {
         Image image = JsonToImageTranslator.toImage(v22Manifest, configurationTemplate);
         return new LocalImage(image, layers);
       }
+    }
+  }
+
+  private CachedLayer getCachedTarLayer(
+      DescriptorDigest diffId,
+      Path layerFile,
+      boolean layersAreCompressed,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory)
+      throws IOException, CacheCorruptedException {
+    try (ProgressEventDispatcher childDispatcher =
+            progressEventDispatcherFactory.create(
+                "compressing layer " + diffId, Files.size(layerFile));
+        ThrottledAccumulatingConsumer throttledProgressReporter =
+            new ThrottledAccumulatingConsumer(childDispatcher::dispatchProgress)) {
+      Cache cache = buildConfiguration.getBaseImageLayersCache();
+      Optional<CachedLayer> optionalLayer = cache.retrieveTarLayer(diffId);
+      if (optionalLayer.isPresent()) {
+        // Retrieve pre-compressed layer from cache
+        return optionalLayer.get();
+      }
+
+      if (layersAreCompressed) {
+        return cache.writeTarLayer(diffId, Blobs.from(layerFile));
+      }
+      // Compress layers and calculate the digest/size
+      Blob compressedBlob =
+          Blobs.from(
+              outputStream -> {
+                try (GZIPOutputStream compressorStream = new GZIPOutputStream(outputStream);
+                    NotifyingOutputStream notifyingOutputStream =
+                        new NotifyingOutputStream(compressorStream, throttledProgressReporter)) {
+                  Blobs.from(layerFile).writeTo(notifyingOutputStream);
+                }
+              });
+      return cache.writeTarLayer(diffId, compressedBlob);
     }
   }
 }
