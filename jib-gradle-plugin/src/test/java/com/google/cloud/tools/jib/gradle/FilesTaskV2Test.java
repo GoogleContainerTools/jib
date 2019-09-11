@@ -132,14 +132,10 @@ public class FilesTaskV2Test {
             complexServiceRoot.resolve("src/main/java"),
             complexServiceRoot.resolve("src/main/other-jib"),
             libRoot.resolve("src/main/resources"),
-            libRoot.resolve("src/main/java")),
-        result.getInputs().subList(0, 6));
-    // guava jar is in a temporary-looking directory, so we need to do some extra processing to
-    // match this
-    Assert.assertThat(
-        result.getInputs().get(result.getInputs().size() - 1),
-        CoreMatchers.endsWith("guava-HEAD-jre-SNAPSHOT.jar"));
-    Assert.assertEquals(7, result.getInputs().size());
+            libRoot.resolve("src/main/java"),
+            complexServiceRoot.resolve(
+                "local-m2-repo/com/google/cloud/tools/tiny-test-lib/0.0.1-SNAPSHOT/tiny-test-lib-0.0.1-SNAPSHOT.jar")),
+        result.getInputs());
     Assert.assertEquals(result.getIgnore().size(), 0);
   }
 }

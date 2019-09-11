@@ -8,8 +8,13 @@ targetCompatibility = 1.8
 
 repositories {
   mavenCentral()
+  // The local repo contains one tiny test library installed with
+  //   mvn org.apache.maven.plugins:maven-install-plugin:2.3.1:install-file \
+  //       -Dfile=tiny.jar -DlocalRepositoryPath=local-m2-repo/ \
+  //       -DgroupId=com.google.cloud.tools -DartifactId=tiny-test-lib \
+  //       -Dversion=0.0.1-SNAPSHOT -Dpackaging=jar
   maven {
-    url 'https://oss.sonatype.org/content/repositories/snapshots/'
+    url "file:" + project.projectDir + "/local-m2-repo"
   }
 }
 
@@ -33,5 +38,5 @@ sourceSets {
 dependencies {
   compile project(':lib')
   compile 'org.apache.commons:commons-io:1.3.2'
-  compile 'com.google.guava:guava:HEAD-jre-SNAPSHOT'
+  compile 'com.google.cloud.tools:tiny-test-lib:0.0.1-SNAPSHOT'
 }

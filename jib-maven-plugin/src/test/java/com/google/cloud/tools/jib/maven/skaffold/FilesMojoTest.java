@@ -137,6 +137,6 @@ public class FilesMojoTest {
             // this test expects standard .m2 locations
             Paths.get(
                 System.getProperty("user.home"),
-                ".m2/repository/com/google/guava/guava/HEAD-jre-SNAPSHOT/guava-HEAD-jre-SNAPSHOT.jar")));
+                ".m2/repository/com/google/cloud/tools/tiny-test-lib/0.0.1-SNAPSHOT/tiny-test-lib-0.0.1-SNAPSHOT.jar")));
   }
 }
