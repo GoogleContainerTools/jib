@@ -90,4 +90,21 @@ public class AllocationTest {
             + rightDown.getFractionOfRoot() * rightDown.getAllocationUnits();
     Assert.assertEquals(1.0, total, DOUBLE_ERROR_MARGIN);
   }
+
+  @Test
+  public void testNonPositiveAllocationUnits() {
+    Allocation root = Allocation.newRoot("ignored", 2);
+
+    Allocation left = root.newChild("ignored", -30);
+    Allocation right = root.newChild("ignored", 0);
+
+    Assert.assertEquals(0.5, root.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
+    Assert.assertEquals(2, root.getAllocationUnits());
+
+    Assert.assertEquals(0.5, left.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
+    Assert.assertEquals(1, left.getAllocationUnits());
+
+    Assert.assertEquals(0.5, right.getFractionOfRoot(), DOUBLE_ERROR_MARGIN);
+    Assert.assertEquals(1, right.getAllocationUnits());
+  }
 }
