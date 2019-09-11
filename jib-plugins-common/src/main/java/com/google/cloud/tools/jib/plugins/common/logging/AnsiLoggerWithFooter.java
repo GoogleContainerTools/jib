@@ -117,17 +117,19 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
     singleThreadedExecutor.execute(
         () -> {
           boolean didErase = eraseFooter();
-
-          // If a previous footer was erased, the message needs to go up a line. But only do so when
-          // not doing the two-cursor-up fix.
-          String prefix = didErase && !enableTwoCursorUpJump ? CURSOR_UP_SEQUENCE : "";
-          if (didErase && enableTwoCursorUpJump) {
-            messageConsumer.accept(String.format(CURSOR_UP_SEQUENCE_TEMPLATE, 2));
+          // If a previous footer was erased, the message needs to go up a line.
+          if (didErase) {
+            if (enableTwoCursorUpJump) {
+              messageConsumer.accept(String.format(CURSOR_UP_SEQUENCE_TEMPLATE, 2));
+              messageConsumer.accept(message);
+            } else {
+              messageConsumer.accept(CURSOR_UP_SEQUENCE + message);
+            }
+          } else {
+            messageConsumer.accept(message);
           }
 
-          messageConsumer.accept(prefix + message);
-
-          footerLines.forEach(line -> lifecycleConsumer.accept(BOLD + line + UNBOLD));
+          printInBold(footerLines);
         });
   }
 
@@ -150,17 +152,16 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
     singleThreadedExecutor.execute(
         () -> {
           boolean didErase = eraseFooter();
-
-          // If a previous footer was erased, the first new footer line needs to go up a line. But
-          // only do so when not doing the two-cursor-up fix.
-          String firstLinePrefix = didErase && !enableTwoCursorUpJump ? CURSOR_UP_SEQUENCE : "";
-          if (didErase && enableTwoCursorUpJump) {
-            lifecycleConsumer.accept(String.format(CURSOR_UP_SEQUENCE_TEMPLATE, 2));
-          }
-
-          for (int i = 0; i < truncatedNewFooterLines.size(); i++) {
-            String line = BOLD + truncatedNewFooterLines.get(i) + UNBOLD;
-            lifecycleConsumer.accept((i == 0 ? firstLinePrefix : "") + line);
+          // If a previous footer was erased, the first new footer line needs to go up a line.
+          if (didErase) {
+            if (enableTwoCursorUpJump) {
+              lifecycleConsumer.accept(String.format(CURSOR_UP_SEQUENCE_TEMPLATE, 2));
+              printInBold(truncatedNewFooterLines);
+            } else {
+              printInBold(truncatedNewFooterLines, CURSOR_UP_SEQUENCE);
+            }
+          } else {
+            printInBold(truncatedNewFooterLines);
           }
 
           footerLines = truncatedNewFooterLines;
@@ -188,5 +189,15 @@ class AnsiLoggerWithFooter implements ConsoleLogger {
     lifecycleConsumer.accept(footerEraserBuilder.toString());
 
     return true;
+  }
+
+  private void printInBold(List<String> lines) {
+    printInBold(lines, "");
+  }
+
+  private void printInBold(List<String> lines, String firstLinePrefix) {
+    for (int i = 0; i < lines.size(); i++) {
+      lifecycleConsumer.accept((i == 0 ? firstLinePrefix : "") + BOLD + lines.get(i) + UNBOLD);
+    }
   }
 }
