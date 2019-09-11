@@ -144,11 +144,6 @@ public class ExtractTarStep implements Callable<LocalImage> {
         List<PreparedLayer> layers = new ArrayList<>(layerFiles.size());
         V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
 
-        List<ProgressEventDispatcher.Factory> childProgressFactories = new ArrayList<>();
-        for (String ignored1 : layerFiles) {
-          childProgressFactories.add(progressEventDispatcher.newChildProducer());
-        }
-
         for (int index = 0; index < layerFiles.size(); index++) {
           Path layerFile = destination.resolve(layerFiles.get(index));
           CachedLayer layer =
@@ -156,7 +151,7 @@ public class ExtractTarStep implements Callable<LocalImage> {
                   configurationTemplate.getLayerDiffId(index),
                   layerFile,
                   layersAreCompressed,
-                  childProgressFactories.get(index));
+                  progressEventDispatcher.newChildProducer());
           layers.add(new PreparedLayer.Builder(layer).build());
           v22Manifest.addLayer(layer.getSize(), layer.getDigest());
         }
