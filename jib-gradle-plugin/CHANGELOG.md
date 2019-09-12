@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - For retrieving credentials from Docker config (`~/.docker/config.json`), `credHelpers` now takes precedence over `credsStore`, followed by `auths`. ([#1958](https://github.com/GoogleContainerTools/jib/pull/1958))
 - The legacy `credsStore` no longer requires defining empty registry entries in `auths` to be used. This now means that if `credsStore` is defined, `auths` will be completely ignored. ([#1958](https://github.com/GoogleContainerTools/jib/pull/1958))
 - `jib.dockerClient` is now configurable on all tasks, not just `jibDockerBuild`. ([#1932](https://github.com/GoogleContainerTools/jib/issues/1932))
+- `jibDockerBuild.dockerClient` is deprecated in favor of `jib.dockerClient`.
 
 ### Fixed
 
