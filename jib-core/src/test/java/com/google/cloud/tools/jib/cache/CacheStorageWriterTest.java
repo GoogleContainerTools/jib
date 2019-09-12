@@ -104,8 +104,7 @@ public class CacheStorageWriterTest {
   @Test
   public void testWriteTarLayer() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
-    DescriptorDigest diffId =
-        uncompressedLayerBlob.writeTo(ByteStreams.nullOutputStream()).getDigest();
+    DescriptorDigest diffId = getDigest(uncompressedLayerBlob).getDigest();
 
     CachedLayer cachedLayer =
         new CacheStorageWriter(cacheStorageFiles)

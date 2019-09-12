@@ -231,7 +231,7 @@ public class CacheStorageReaderTest {
     Assert.assertEquals("layerBlob".length(), optionalCachedLayer.get().getSize());
     Assert.assertEquals("layerBlob", Blobs.writeToString(optionalCachedLayer.get().getBlob()));
 
-    // Checks that multiple .layer files means the cache is corrupted.
+    // Checks that multiple layer files means the cache is corrupted.
     Files.createFile(localDirectory.resolve(layerDiffId.getHash()).resolve(layerDiffId.getHash()));
     try {
       cacheStorageReader.retrieveTarLayer(layerDiffId);
