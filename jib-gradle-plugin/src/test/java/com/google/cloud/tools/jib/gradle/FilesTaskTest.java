@@ -27,7 +27,6 @@ import javax.annotation.Nullable;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
-import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -124,13 +123,9 @@ public class FilesTaskTest {
             complexServiceRoot.resolve("src/main/other-jib"),
             libRoot.resolve("build.gradle"),
             libRoot.resolve("src/main/resources"),
-            libRoot.resolve("src/main/java"));
-    assertPathListsAreEqual(expected, result.subList(0, 11));
-
-    // guava jar is in a temporary-looking directory, so don't do a full match here
-    Assert.assertThat(
-        result.get(result.size() - 1).toString(),
-        CoreMatchers.endsWith("guava-HEAD-jre-SNAPSHOT.jar"));
-    Assert.assertEquals(12, result.size());
+            libRoot.resolve("src/main/java"),
+            complexServiceRoot.resolve(
+                "local-m2-repo/com/google/cloud/tools/tiny-test-lib/0.0.1-SNAPSHOT/tiny-test-lib-0.0.1-SNAPSHOT.jar"));
+    assertPathListsAreEqual(expected, result);
   }
 }
