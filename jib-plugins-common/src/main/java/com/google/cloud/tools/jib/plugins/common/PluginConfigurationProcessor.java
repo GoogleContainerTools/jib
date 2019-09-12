@@ -63,7 +63,7 @@ public class PluginConfigurationProcessor {
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
       @Nullable Path dockerExecutable,
-      @Nullable Map<String, String> dockerEnvironment,
+      Map<String, String> dockerEnvironment,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
@@ -76,9 +76,7 @@ public class PluginConfigurationProcessor {
     if (dockerExecutable != null) {
       targetImage.setDockerExecutable(dockerExecutable);
     }
-    if (dockerEnvironment != null) {
-      targetImage.setDockerEnvironment(dockerEnvironment);
-    }
+    targetImage.setDockerEnvironment(dockerEnvironment);
 
     Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =
@@ -275,10 +273,16 @@ public class PluginConfigurationProcessor {
       throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
     }
 
-    if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
-      return JavaContainerBuilder.from(baseImageConfig);
-    }
     ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
+    if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
+      DockerDaemonImage dockerDaemonImage =
+          DockerDaemonImage.named(baseImageReference)
+              .setDockerEnvironment(rawConfiguration.getDockerEnvironment());
+      if (rawConfiguration.getDockerExecutable().isPresent()) {
+        dockerDaemonImage.setDockerExecutable(rawConfiguration.getDockerExecutable().get());
+      }
+      return JavaContainerBuilder.from(dockerDaemonImage);
+    }
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     configureCredentialRetrievers(
         rawConfiguration,
