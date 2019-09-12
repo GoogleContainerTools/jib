@@ -18,6 +18,8 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fixed an issue interacting with certain registries due to changes to URL handling in the underlying Apache HttpClient library. ([#1924](https://github.com/GoogleContainerTools/jib/issues/1924))
+- Fixed the regression of slow network operations introduced at 0.10.1. ([#1980](https://github.com/GoogleContainerTools/jib/pull/1980))
+- Fixed an issue where connection timeout sometimes fell back to attempting plain HTTP (non-HTTPS) requests when the `Containerizer` is set to allow insecure registries. ([#1949](https://github.com/GoogleContainerTools/jib/pull/1949))
 
 ## 0.10.1
 

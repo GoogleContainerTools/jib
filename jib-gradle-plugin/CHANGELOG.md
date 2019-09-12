@@ -15,6 +15,9 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed the regression of slow network operations introduced at 1.5.0. ([#1980](https://github.com/GoogleContainerTools/jib/pull/1980))
+- Fixed an issue where connection timeout sometimes fell back to attempting plain HTTP (non-HTTPS) requests when `allowInsecureRegistries` is set. ([#1949](https://github.com/GoogleContainerTools/jib/pull/1949))
+
 ## 1.5.1
 
 ### Fixed
