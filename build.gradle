@@ -46,16 +46,10 @@ subprojects {
     // For Google libraries, check <http-client-bom.version>, <google.auth.version>, <guava.version>,
     // ... in https://github.com/googleapis/google-cloud-java/blob/master/google-cloud-clients/pom.xml
     // for best compatibility.
-    GOOGLE_HTTP_CLIENT: '1.31.0',
-    GOOGLE_HTTP_CLIENT_APACHE_V2: '1.31.0',
+    GOOGLE_HTTP_CLIENT: '1.27.0',
     GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: '0.16.2',
     GUAVA: '28.0-jre',
 
-    // TODO: remove once https://github.com/googleapis/google-http-java-client/issues/795 is fixed and released.
-    // Forcing to downgrade this to 4.5.6 fixes https://github.com/GoogleContainerTools/jib/issues/1914
-    // However, #795 and upgrading httpclient alone may not fix #1914. We may need to explicitly disable URI
-    // normalization as discussed in #795.
-    APACHE_HTTP_CLIENT_OVERRIDE: '4.5.6',
     COMMONS_COMPRESS: '1.18',
     JACKSON_DATABIND: '2.9.9.2',
     ASM: '7.0',
@@ -67,23 +61,6 @@ subprojects {
     SYSTEM_RULES: '1.19.0',
   ]
 
-  // Use this to ensure we correctly override transitive dependencies
-  // TODO: There might be a plugin that does this
-  task ensureTransitiveDependencyOverrides {
-    def rules = ["httpclient": dependencyVersions.APACHE_HTTP_CLIENT_OVERRIDE]
-    doLast {
-      configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
-        def dependency = artifact.moduleVersion.id
-        if (rules[dependency.name] && rules[dependency.name] != dependency.version) {
-          throw new GradleException(
-              dependency.name + " version error in " + project
-              + ", expected:" + rules[dependency.name]
-              + ", found:" + dependency.version);
-        }
-      }
-    }
-  }
-  compileJava.dependsOn ensureTransitiveDependencyOverrides
   /* PROJECT DEPENDENCY VERSIONS */
 
   /* NULLAWAY */
