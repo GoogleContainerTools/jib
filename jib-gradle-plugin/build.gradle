@@ -17,11 +17,6 @@ dependencies {
   sourceProject project(":jib-core")
   sourceProject project(":jib-plugins-common")
 
-  implementation "com.google.http-client:google-http-client:${dependencyVersions.GOOGLE_HTTP_CLIENT}"
-
-  implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
-  implementation "com.fasterxml.jackson.core:jackson-databind:${dependencyVersions.JACKSON_DATABIND}"
-
   testImplementation "junit:junit:${dependencyVersions.JUNIT}"
   testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
   testImplementation "org.slf4j:slf4j-api:${dependencyVersions.SLF4J_API}"

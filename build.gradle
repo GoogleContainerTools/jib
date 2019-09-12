@@ -61,6 +61,23 @@ subprojects {
     SYSTEM_RULES: '1.19.0',
   ]
 
+  // Use this to ensure we correctly override transitive dependencies
+  // TODO: There might be a plugin that does this
+  task ensureTransitiveDependencyOverrides {
+    def rules = ["google-http-client": dependencyVersions.GOOGLE_HTTP_CLIENT]
+    doLast {
+      configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+        def dependency = artifact.moduleVersion.id
+        if (rules[dependency.name] && rules[dependency.name] != dependency.version) {
+          throw new GradleException(
+              dependency.name + " version error in " + project
+              + ", expected:" + rules[dependency.name]
+              + ", found:" + dependency.version);
+        }
+      }
+    }
+  }
+  compileJava.dependsOn ensureTransitiveDependencyOverrides
   /* PROJECT DEPENDENCY VERSIONS */
 
   /* NULLAWAY */

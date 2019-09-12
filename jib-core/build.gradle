@@ -6,7 +6,7 @@ plugins {
 dependencies {
   implementation "com.google.http-client:google-http-client:${dependencyVersions.GOOGLE_HTTP_CLIENT}"
   implementation("com.google.auth:google-auth-library-oauth2-http:${dependencyVersions.GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP}") {
-    exclude group: "org.apache.httpcomponents", module: "httpclient"
+    exclude group: "com.google.http-client", module: "google-http-client"
   }
 
   implementation "org.apache.commons:commons-compress:${dependencyVersions.COMMONS_COMPRESS}"
