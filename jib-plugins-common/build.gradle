@@ -1,8 +1,6 @@
 dependencies {
   implementation project(':jib-core')
   implementation "com.google.http-client:google-http-client:${dependencyVersions.GOOGLE_HTTP_CLIENT}"
-    exclude group: "org.apache.httpcomponents", module: "httpclient"
-  }
   implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
   implementation "com.fasterxml.jackson.core:jackson-databind:${dependencyVersions.JACKSON_DATABIND}"
 
