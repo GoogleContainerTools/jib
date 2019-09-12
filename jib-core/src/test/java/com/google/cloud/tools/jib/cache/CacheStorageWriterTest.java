@@ -74,7 +74,7 @@ public class CacheStorageWriterTest {
   }
 
   @Test
-  public void testWrite_compressed() throws IOException {
+  public void testWriteCompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
 
     CachedLayer cachedLayer =
@@ -84,7 +84,7 @@ public class CacheStorageWriterTest {
   }
 
   @Test
-  public void testWrite_uncompressed() throws IOException {
+  public void testWriteUncompressed() throws IOException {
     Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
     DescriptorDigest layerDigest = getDigest(compress(uncompressedLayerBlob)).getDigest();
     DescriptorDigest selector = getDigest(Blobs.from("selector")).getDigest();
@@ -99,6 +99,34 @@ public class CacheStorageWriterTest {
     Path selectorFile = cacheStorageFiles.getSelectorFile(selector);
     Assert.assertTrue(Files.exists(selectorFile));
     Assert.assertEquals(layerDigest.getHash(), Blobs.writeToString(Blobs.from(selectorFile)));
+  }
+
+  @Test
+  public void testWriteTarLayer() throws IOException {
+    Blob uncompressedLayerBlob = Blobs.from("uncompressedLayerBlob");
+    DescriptorDigest diffId = getDigest(uncompressedLayerBlob).getDigest();
+
+    CachedLayer cachedLayer =
+        new CacheStorageWriter(cacheStorageFiles)
+            .writeTarLayer(diffId, compress(uncompressedLayerBlob));
+
+    BlobDescriptor layerBlobDescriptor = getDigest(compress(uncompressedLayerBlob));
+
+    // Verifies cachedLayer is correct.
+    Assert.assertEquals(layerBlobDescriptor.getDigest(), cachedLayer.getDigest());
+    Assert.assertEquals(diffId, cachedLayer.getDiffId());
+    Assert.assertEquals(layerBlobDescriptor.getSize(), cachedLayer.getSize());
+    Assert.assertArrayEquals(
+        Blobs.writeToByteArray(uncompressedLayerBlob),
+        Blobs.writeToByteArray(decompress(cachedLayer.getBlob())));
+
+    // Verifies that the files are present.
+    Assert.assertTrue(
+        Files.exists(
+            cacheStorageFiles
+                .getLocalDirectory()
+                .resolve(cachedLayer.getDiffId().getHash())
+                .resolve(cachedLayer.getDigest().getHash())));
   }
 
   @Test

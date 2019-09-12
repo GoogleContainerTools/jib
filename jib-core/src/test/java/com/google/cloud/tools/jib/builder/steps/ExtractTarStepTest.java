@@ -18,6 +18,8 @@ package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
+import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
@@ -54,7 +56,9 @@ public class ExtractTarStepTest {
   }
 
   @Before
-  public void setup() {
+  public void setup() throws IOException {
+    Mockito.when(buildConfiguration.getBaseImageLayersCache())
+        .thenReturn(Cache.withDirectory(temporaryFolder.newFolder().toPath()));
     Mockito.when(buildConfiguration.getEventHandlers()).thenReturn(eventHandlers);
     Mockito.when(progressEventDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
         .thenReturn(progressEventDispatcher);
@@ -66,7 +70,7 @@ public class ExtractTarStepTest {
   @Test
   public void testCall_validDocker()
       throws URISyntaxException, LayerCountMismatchException,
-          BadContainerConfigurationFormatException, IOException {
+          BadContainerConfigurationFormatException, IOException, CacheCorruptedException {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
         new ExtractTarStep(buildConfiguration, dockerBuild, progressEventDispatcherFactory).call();
@@ -91,7 +95,7 @@ public class ExtractTarStepTest {
   @Test
   public void testCall_validTar()
       throws URISyntaxException, LayerCountMismatchException,
-          BadContainerConfigurationFormatException, IOException {
+          BadContainerConfigurationFormatException, IOException, CacheCorruptedException {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
         new ExtractTarStep(buildConfiguration, tarBuild, progressEventDispatcherFactory).call();

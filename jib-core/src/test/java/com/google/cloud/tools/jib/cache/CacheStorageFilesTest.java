@@ -48,7 +48,7 @@ public class CacheStorageFilesTest {
     Assert.assertEquals(
         DescriptorDigest.fromHash(
             "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
-        TEST_CACHE_STORAGE_FILES.getDiffId(
+        TEST_CACHE_STORAGE_FILES.getDigestFromFilename(
             Paths.get(
                 "layer",
                 "file",
@@ -56,25 +56,25 @@ public class CacheStorageFilesTest {
     Assert.assertEquals(
         DescriptorDigest.fromHash(
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-        TEST_CACHE_STORAGE_FILES.getDiffId(
+        TEST_CACHE_STORAGE_FILES.getDigestFromFilename(
             Paths.get("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")));
   }
 
   @Test
   public void testGetDiffId_corrupted() {
     try {
-      TEST_CACHE_STORAGE_FILES.getDiffId(Paths.get("not long enough"));
+      TEST_CACHE_STORAGE_FILES.getDigestFromFilename(Paths.get("not long enough"));
       Assert.fail("Should have thrown CacheCorruptedException");
 
     } catch (CacheCorruptedException ex) {
       Assert.assertThat(
           ex.getMessage(),
-          CoreMatchers.startsWith("Layer file did not include valid diff ID: not long enough"));
+          CoreMatchers.startsWith("Layer file did not include valid hash: not long enough"));
       Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
     }
 
     try {
-      TEST_CACHE_STORAGE_FILES.getDiffId(
+      TEST_CACHE_STORAGE_FILES.getDigestFromFilename(
           Paths.get(
               "not valid hash bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
       Assert.fail("Should have thrown CacheCorruptedException");
@@ -83,7 +83,7 @@ public class CacheStorageFilesTest {
       Assert.assertThat(
           ex.getMessage(),
           CoreMatchers.startsWith(
-              "Layer file did not include valid diff ID: "
+              "Layer file did not include valid hash: "
                   + "not valid hash bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
       Assert.assertThat(ex.getCause(), CoreMatchers.instanceOf(DigestException.class));
     }

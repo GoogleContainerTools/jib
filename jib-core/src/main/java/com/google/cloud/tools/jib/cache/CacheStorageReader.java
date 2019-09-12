@@ -168,7 +168,7 @@ class CacheStorageReader {
       if (layerFiles.size() != 1) {
         throw new CacheCorruptedException(
             cacheStorageFiles.getCacheDirectory(),
-            "No or multiple layer files found for layer with digest "
+            "No or multiple layer files found for layer hash "
                 + layerDigest.getHash()
                 + " in directory: "
                 + layerDirectory);
@@ -180,7 +180,45 @@ class CacheStorageReader {
               .setLayerDigest(layerDigest)
               .setLayerSize(Files.size(layerFile))
               .setLayerBlob(Blobs.from(layerFile))
-              .setLayerDiffId(cacheStorageFiles.getDiffId(layerFile))
+              .setLayerDiffId(cacheStorageFiles.getDigestFromFilename(layerFile))
+              .build());
+    }
+  }
+
+  /**
+   * Retrieves the {@link CachedLayer} for the local base image layer with the given diff ID.
+   *
+   * @param diffId the diff ID
+   * @return the {@link CachedLayer} referenced by the diff ID, if found
+   * @throws CacheCorruptedException if the cache was found to be corrupted
+   * @throws IOException if an I/O exception occurs
+   */
+  Optional<CachedLayer> retrieveTarLayer(DescriptorDigest diffId)
+      throws IOException, CacheCorruptedException {
+    Path layerDirectory = cacheStorageFiles.getLocalDirectory().resolve(diffId.getHash());
+    if (!Files.exists(layerDirectory)) {
+      return Optional.empty();
+    }
+
+    try (Stream<Path> files = Files.list(layerDirectory)) {
+      List<Path> layerFiles =
+          files.filter(CacheStorageFiles::isLayerFile).collect(Collectors.toList());
+      if (layerFiles.size() != 1) {
+        throw new CacheCorruptedException(
+            cacheStorageFiles.getCacheDirectory(),
+            "No or multiple layer files found for layer hash "
+                + diffId.getHash()
+                + " in directory: "
+                + layerDirectory);
+      }
+
+      Path layerFile = layerFiles.get(0);
+      return Optional.of(
+          CachedLayer.builder()
+              .setLayerDigest(cacheStorageFiles.getDigestFromFilename(layerFile))
+              .setLayerSize(Files.size(layerFile))
+              .setLayerBlob(Blobs.from(layerFile))
+              .setLayerDiffId(diffId)
               .build());
     }
   }
