@@ -306,7 +306,7 @@ Prefix | Example | Type
 *None* | `gcr.io/distroless/java` | Pulls the base image from a registry.
 `registry://` | `registry://gcr.io/distroless/java` | Pulls the base image from a registry.
 `docker://` | `docker://busybox` | Retrieves the base image from the Docker daemon.
-`tar://` | `tar:///path/to/file.tar` | Uses an image tarball stored at the specified path as the base image. Also accepts relative paths.
+`tar://` | `tar:///path/to/file.tar` | Uses an image tarball stored at the specified path as the base image. Also accepts relative paths (e.g. `tar://build/jib-image.tar`).
 
 ### Adding Arbitrary Files to the Image
 
