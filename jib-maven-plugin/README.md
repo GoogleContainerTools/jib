@@ -276,7 +276,7 @@ Property | Type | Default | Description
 `paths` | list | `[(project-dir)/src/main/jib]` | List of extra directories. Can be absolute or relative to the project root.
 `permissions` | list | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
 
-<a name="dockerclient-object"></a>**(`jib:dockerBuild` only)** `dockerClient` is an object with the following properties:
+<a name="dockerclient-object"></a>`dockerClient` is an object used to configure Docker when building to/from the Docker daemon. It has the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
