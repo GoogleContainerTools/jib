@@ -95,11 +95,19 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     Map<String, String> dockerEnvironment = jibExtension.getDockerClient().getEnvironment();
 
     // Check deprecated parameters
-    if (getDockerClient().getExecutable() != null
-        || !getDockerClient().getEnvironment().isEmpty()) {
+    if (getDockerClient().getExecutable() != null) {
+      jibExtension.getDockerClient().setExecutable(getDockerClient().getExecutable());
       getProject()
           .getLogger()
-          .warn("'jibDockerBuild.dockerClient' is deprecated; use 'jib.dockerClient' instead.");
+          .warn(
+              "'jibDockerBuild.dockerClient.executable' is deprecated; use 'jib.dockerClient.executable' instead.");
+    }
+    if (!getDockerClient().getEnvironment().isEmpty()) {
+      jibExtension.getDockerClient().setEnvironment(getDockerClient().getEnvironment());
+      getProject()
+          .getLogger()
+          .warn(
+              "'jibDockerBuild.dockerClient.environment' is deprecated; use 'jib.dockerClient.environment' instead.");
     }
     if ((getDockerClient().getExecutable() != null && dockerExecutable != null)
         || (!getDockerClient().getEnvironment().isEmpty() && !dockerEnvironment.isEmpty())) {
