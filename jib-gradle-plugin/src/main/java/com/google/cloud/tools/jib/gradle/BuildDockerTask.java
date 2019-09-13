@@ -91,10 +91,10 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
       throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
           MainClassInferenceException {
     Preconditions.checkNotNull(jibExtension);
-    Path dockerExecutable = jibExtension.getDockerClient().getExecutablePath();
-    Map<String, String> dockerEnvironment = jibExtension.getDockerClient().getEnvironment();
 
     // Check deprecated parameters
+    Path dockerExecutable = jibExtension.getDockerClient().getExecutablePath();
+    Map<String, String> dockerEnvironment = jibExtension.getDockerClient().getEnvironment();
     if (getDockerClient().getExecutable() != null) {
       jibExtension.getDockerClient().setExecutable(getDockerClient().getExecutable());
       getProject()
