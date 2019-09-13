@@ -112,7 +112,7 @@ class GradleProjectProperties implements ProjectProperties {
     this.logger = logger;
     ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(project)
-                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor)
+                ? ConsoleLoggerBuilder.rich(singleThreadedExecutor, false)
                 : ConsoleLoggerBuilder.plain(singleThreadedExecutor).progress(logger::lifecycle))
             .lifecycle(logger::lifecycle);
     if (logger.isDebugEnabled()) {

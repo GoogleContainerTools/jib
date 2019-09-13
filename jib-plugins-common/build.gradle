@@ -1,11 +1,11 @@
 dependencies {
   implementation project(':jib-core')
-  implementation ("com.google.http-client:google-http-client:${dependencyVersions.GOOGLE_HTTP_CLIENT}") {
-    exclude group: "org.apache.httpcomponents", module: "httpclient"
-  }
-  implementation "org.apache.httpcomponents:httpclient:${dependencyVersions.APACHE_HTTP_CLIENT_OVERRIDE}"
-  implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
-  implementation "com.fasterxml.jackson.core:jackson-databind:${dependencyVersions.JACKSON_DATABIND}"
+  // since jib core doesn't export dependencies to a compile scope
+  // (they are "runtime"), just grab them manually. This means we don't have
+  // to synchronize dependencies between the two projects -- we don't
+  // want to use the sourceProject helper because it does things we don't want
+  // for an unpublished library.
+  implementation project(':jib-core').configurations.implementation.dependencies
 
   testImplementation "junit:junit:${dependencyVersions.JUNIT}"
   testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"

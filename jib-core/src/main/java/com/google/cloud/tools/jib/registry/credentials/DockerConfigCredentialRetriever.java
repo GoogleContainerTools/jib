@@ -37,9 +37,9 @@ import java.util.function.Consumer;
  * <p>The credentials are searched in the following order (stopping when credentials are found):
  *
  * <ol>
+ *   <li>The credential helper from {@code credHelpers} defined for a registry, if available.
+ *   <li>The {@code credsStore} credential helper, if available.
  *   <li>If there is an {@code auth} defined for a registry.
- *   <li>Using the {@code credsStore} credential helper, if available.
- *   <li>Using the credential helper from {@code credHelpers}, if available.
  * </ol>
  *
  * @see <a
@@ -93,18 +93,7 @@ public class DockerConfigCredentialRetriever {
   @VisibleForTesting
   Optional<Credential> retrieve(DockerConfig dockerConfig, Consumer<LogEvent> logger) {
     for (String registryAlias : RegistryAliasGroup.getAliasesGroup(registry)) {
-      // First, tries to find defined auth.
-      String auth = dockerConfig.getAuthFor(registryAlias);
-      if (auth != null) {
-        // 'auth' is a basic authentication token that should be parsed back into credentials
-        String usernameColonPassword =
-            new String(Base64.decodeBase64(auth), StandardCharsets.UTF_8);
-        String username = usernameColonPassword.substring(0, usernameColonPassword.indexOf(":"));
-        String password = usernameColonPassword.substring(usernameColonPassword.indexOf(":") + 1);
-        return Optional.of(Credential.from(username, password));
-      }
-
-      // Then, tries to use a defined credHelpers credential helper.
+      // First, find a credential helper from "credentialHelpers" and "credsStore" in order.
       DockerCredentialHelper dockerCredentialHelper =
           dockerConfig.getCredentialHelperFor(registryAlias);
       if (dockerCredentialHelper != null) {
@@ -123,6 +112,17 @@ public class DockerConfigCredentialRetriever {
             }
           }
         }
+      }
+
+      // Lastly, find defined auth.
+      String auth = dockerConfig.getAuthFor(registryAlias);
+      if (auth != null) {
+        // 'auth' is a basic authentication token that should be parsed back into credentials
+        String usernameColonPassword =
+            new String(Base64.decodeBase64(auth), StandardCharsets.UTF_8);
+        String username = usernameColonPassword.substring(0, usernameColonPassword.indexOf(":"));
+        String password = usernameColonPassword.substring(usernameColonPassword.indexOf(":") + 1);
+        return Optional.of(Credential.from(username, password));
       }
     }
     return Optional.empty();

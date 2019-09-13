@@ -225,6 +225,14 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     }
   }
 
+  /** Configuration for the {@code dockerClient} parameter. */
+  public static class DockerClientParameters {
+
+    @Nullable @Parameter private File executable;
+
+    @Parameter private Map<String, String> environment = Collections.emptyMap();
+  }
+
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
   private MavenSession session;
@@ -249,6 +257,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   // this parameter is cloned in FilesMojo
   @Parameter private ExtraDirectoriesParameters extraDirectories = new ExtraDirectoriesParameters();
+
+  @Parameter private DockerClientParameters dockerClient = new DockerClientParameters();
 
   @Parameter(property = PropertyNames.ALLOW_INSECURE_REGISTRIES)
   private boolean allowInsecureRegistries;
@@ -655,6 +665,23 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     return !extraDirectories.getPaths().isEmpty()
         ? extraDirectories.permissions
         : extraDirectory.permissions;
+  }
+
+  @Nullable
+  Path getDockerClientExecutable() {
+    String property = getProperty(PropertyNames.DOCKER_CLIENT_EXECUTABLE);
+    if (property != null) {
+      return Paths.get(property);
+    }
+    return dockerClient.executable == null ? null : dockerClient.executable.toPath();
+  }
+
+  Map<String, String> getDockerClientEnvironment() {
+    String property = getProperty(PropertyNames.DOCKER_CLIENT_ENVIRONMENT);
+    if (property != null) {
+      return ConfigurationPropertyValidator.parseMapProperty(property);
+    }
+    return dockerClient.environment;
   }
 
   boolean getAllowInsecureRegistries() {

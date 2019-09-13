@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.maven.JibPluginConfiguration.FromAuthConfigura
 import com.google.cloud.tools.jib.plugins.common.AuthProperty;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -78,6 +79,9 @@ public class MavenRawConfigurationTest {
     Mockito.when(jibPluginConfiguration.getUser()).thenReturn("admin:wheel");
     Mockito.when(jibPluginConfiguration.getFilesModificationTime())
         .thenReturn("2011-12-03T22:42:05Z");
+    Mockito.when(jibPluginConfiguration.getDockerClientExecutable()).thenReturn(Paths.get("test"));
+    Mockito.when(jibPluginConfiguration.getDockerClientEnvironment())
+        .thenReturn(new HashMap<>(ImmutableMap.of("docker", "client")));
 
     MavenRawConfiguration rawConfiguration = new MavenRawConfiguration(jibPluginConfiguration);
 
@@ -107,6 +111,10 @@ public class MavenRawConfigurationTest {
     Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
     Assert.assertEquals("2011-12-03T22:42:05Z", rawConfiguration.getFilesModificationTime());
+    Assert.assertEquals(Paths.get("test"), rawConfiguration.getDockerExecutable().get());
+    Assert.assertEquals(
+        new HashMap<>(ImmutableMap.of("docker", "client")),
+        rawConfiguration.getDockerEnvironment());
 
     Mockito.verifyNoMoreInteractions(eventHandlers);
   }

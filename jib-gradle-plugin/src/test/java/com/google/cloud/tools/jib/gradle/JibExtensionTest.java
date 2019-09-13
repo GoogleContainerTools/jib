@@ -226,6 +226,21 @@ public class JibExtensionTest {
   }
 
   @Test
+  public void testDockerClient() {
+    testJibExtension.dockerClient(
+        dockerClient -> {
+          dockerClient.setExecutable("test-executable");
+          dockerClient.setEnvironment(ImmutableMap.of("key1", "val1", "key2", "val2"));
+        });
+
+    Assert.assertEquals(
+        Paths.get("test-executable"), testJibExtension.getDockerClient().getExecutablePath());
+    Assert.assertEquals(
+        ImmutableMap.of("key1", "val1", "key2", "val2"),
+        testJibExtension.getDockerClient().getEnvironment());
+  }
+
+  @Test
   public void testProperties() {
     System.setProperty("jib.from.image", "fromImage");
     Assert.assertEquals("fromImage", testJibExtension.getFrom().getImage());
@@ -279,6 +294,7 @@ public class JibExtensionTest {
         "2011-12-03T22:42:05Z", testJibExtension.getContainer().getFilesModificationTime());
     System.setProperty("jib.containerizingMode", "packaged");
     Assert.assertEquals("packaged", testJibExtension.getContainerizingMode());
+
     System.setProperty("jib.extraDirectories.paths", "/foo,/bar/baz");
     Assert.assertEquals(
         Arrays.asList(Paths.get("/foo"), Paths.get("/bar/baz")),
@@ -287,6 +303,14 @@ public class JibExtensionTest {
     Assert.assertEquals(
         ImmutableMap.of("/foo/bar", "707", "/baz", "456"),
         testJibExtension.getExtraDirectories().getPermissions());
+
+    System.setProperty("jib.dockerClient.executable", "test-exec");
+    Assert.assertEquals(
+        Paths.get("test-exec"), testJibExtension.getDockerClient().getExecutablePath());
+    System.setProperty("jib.dockerClient.environment", "env1=val1,env2=val2");
+    Assert.assertEquals(
+        ImmutableMap.of("env1", "val1", "env2", "val2"),
+        testJibExtension.getDockerClient().getEnvironment());
   }
 
   @Test

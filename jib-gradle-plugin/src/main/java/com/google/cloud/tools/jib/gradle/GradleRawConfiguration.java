@@ -172,6 +172,16 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public Optional<Path> getDockerExecutable() {
+    return Optional.ofNullable(jibExtension.getDockerClient().getExecutablePath());
+  }
+
+  @Override
+  public Map<String, String> getDockerEnvironment() {
+    return jibExtension.getDockerClient().getEnvironment();
+  }
+
+  @Override
   public String getContainerizingMode() {
     return jibExtension.getContainerizingMode();
   }

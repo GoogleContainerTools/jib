@@ -5,16 +5,29 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.11.0
+
+### Added
+
 - `Jib#from` and `JavaContainerBuilder#from` overloads to allow using a `DockerDaemonImage` or a `TarImage` as the base image ([#1468](https://github.com/GoogleContainerTools/jib/issues/1468), [#1905](https://github.com/GoogleContainerTools/jib/issues/1905))
 - `Jib#from(String)` accepts strings prefixed with `docker://`, `tar://`, or `registry://` to specify image type
 
 ### Changed
 
+- To disable parallel execution, the property `jib.serialize` should be used instead of `jibSerialize`. ([#1968](https://github.com/GoogleContainerTools/jib/issues/1968))
 - `TarImage` is constructed using `TarImage.at(...).named(...)` instead of `TarImage.named(...).saveTo(...)` ([#1918](https://github.com/GoogleContainerTools/jib/issues/1918))
+- For retrieving credentials from Docker config (`~/.docker/config.json`), `credHelpers` now takes precedence over `credsStore`, followed by `auths`. ([#1958](https://github.com/GoogleContainerTools/jib/pull/1958))
+- The legacy `credsStore` no longer requires defining empty registry entries in `auths` to be used. This now means that if `credsStore` is defined, `auths` will be completely ignored. ([#1958](https://github.com/GoogleContainerTools/jib/pull/1958))
 
 ### Fixed
 
 - Fixed an issue interacting with certain registries due to changes to URL handling in the underlying Apache HttpClient library. ([#1924](https://github.com/GoogleContainerTools/jib/issues/1924))
+- Fixed the regression of slow network operations introduced at 0.10.1. ([#1980](https://github.com/GoogleContainerTools/jib/pull/1980))
+- Fixed an issue where connection timeout sometimes fell back to attempting plain HTTP (non-HTTPS) requests when the `Containerizer` is set to allow insecure registries. ([#1949](https://github.com/GoogleContainerTools/jib/pull/1949))
 
 ## 0.10.1
 

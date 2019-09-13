@@ -5,11 +5,28 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.6.0
+
+### Added
+
 - Support for local base images by prefixing `jib.from.image` with `docker://` to build from a docker daemon image, or `tar://` to build from a tarball image ([#1468](https://github.com/GoogleContainerTools/jib/issues/1468), [#1905](https://github.com/GoogleContainerTools/jib/issues/1905))
 
 ### Changed
 
+- To disable parallel execution, the property `jib.serialize` should be used instead of `jibSerialize`. ([#1968](https://github.com/GoogleContainerTools/jib/issues/1968))
+- For retrieving credentials from Docker config (`~/.docker/config.json`), `credHelpers` now takes precedence over `credsStore`, followed by `auths`. ([#1958](https://github.com/GoogleContainerTools/jib/pull/1958))
+- The legacy `credsStore` no longer requires defining empty registry entries in `auths` to be used. This now means that if `credsStore` is defined, `auths` will be completely ignored. ([#1958](https://github.com/GoogleContainerTools/jib/pull/1958))
+- `jib.dockerClient` is now configurable on all tasks, not just `jibDockerBuild`. ([#1932](https://github.com/GoogleContainerTools/jib/issues/1932))
+- `jibDockerBuild.dockerClient` is deprecated in favor of `jib.dockerClient`.
+
 ### Fixed
+
+- Fixed the regression of slow network operations introduced at 1.5.0. ([#1980](https://github.com/GoogleContainerTools/jib/pull/1980))
+- Fixed an issue where connection timeout sometimes fell back to attempting plain HTTP (non-HTTPS) requests when `allowInsecureRegistries` is set. ([#1949](https://github.com/GoogleContainerTools/jib/pull/1949))
 
 ## 1.5.1
 

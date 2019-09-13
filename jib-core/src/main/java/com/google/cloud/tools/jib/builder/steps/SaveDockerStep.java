@@ -17,8 +17,11 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
+import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,10 +33,15 @@ public class SaveDockerStep implements Callable<Path> {
 
   private final BuildConfiguration buildConfiguration;
   private final DockerClient dockerClient;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
-  SaveDockerStep(BuildConfiguration buildConfiguration, DockerClient dockerClient) {
+  SaveDockerStep(
+      BuildConfiguration buildConfiguration,
+      DockerClient dockerClient,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
     this.buildConfiguration = buildConfiguration;
     this.dockerClient = dockerClient;
+    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
   }
 
   @Override
@@ -42,7 +50,18 @@ public class SaveDockerStep implements Callable<Path> {
     FileOperations.deleteRecursiveOnExit(outputDir);
     Path outputPath = outputDir.resolve("out.tar");
     ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
-    dockerClient.save(imageReference, outputPath);
-    return outputPath;
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(
+            buildConfiguration.getEventHandlers(),
+            "Saving " + imageReference + " from Docker daemon")) {
+      long size = dockerClient.sizeOf(imageReference);
+      try (ProgressEventDispatcher progressEventDispatcher =
+              progressEventDispatcherFactory.create("saving base image " + imageReference, size);
+          ThrottledAccumulatingConsumer throttledProgressReporter =
+              new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
+        dockerClient.save(imageReference, outputPath, throttledProgressReporter);
+      }
+      return outputPath;
+    }
   }
 }

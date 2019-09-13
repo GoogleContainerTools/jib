@@ -26,6 +26,7 @@ import java.security.DigestException;
 class CacheStorageFiles {
 
   private static final String LAYERS_DIRECTORY = "layers";
+  private static final String LOCAL_DIRECTORY = "local";
   private static final String IMAGES_DIRECTORY = "images";
   private static final String SELECTORS_DIRECTORY = "selectors";
   private static final String TEMPORARY_DIRECTORY = "tmp";
@@ -54,14 +55,14 @@ class CacheStorageFiles {
    * @return the diff ID portion of the layer file filename
    * @throws CacheCorruptedException if no valid diff ID could be parsed
    */
-  DescriptorDigest getDiffId(Path layerFile) throws CacheCorruptedException {
+  DescriptorDigest getDigestFromFilename(Path layerFile) throws CacheCorruptedException {
     try {
-      String diffId = layerFile.getFileName().toString();
-      return DescriptorDigest.fromHash(diffId);
+      String hash = layerFile.getFileName().toString();
+      return DescriptorDigest.fromHash(hash);
 
     } catch (DigestException | IndexOutOfBoundsException ex) {
       throw new CacheCorruptedException(
-          cacheDirectory, "Layer file did not include valid diff ID: " + layerFile, ex);
+          cacheDirectory, "Layer file did not include valid hash: " + layerFile, ex);
     }
   }
 
@@ -123,6 +124,15 @@ class CacheStorageFiles {
    */
   Path getLayerDirectory(DescriptorDigest layerDigest) {
     return getLayersDirectory().resolve(layerDigest.getHash());
+  }
+
+  /**
+   * Resolves the {@link #LOCAL_DIRECTORY} in the {@link #cacheDirectory}.
+   *
+   * @return the directory containing local base image layers
+   */
+  Path getLocalDirectory() {
+    return cacheDirectory.resolve(LOCAL_DIRECTORY);
   }
 
   /**

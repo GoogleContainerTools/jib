@@ -46,7 +46,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -62,8 +61,6 @@ public class PluginConfigurationProcessor {
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
-      @Nullable Path dockerExecutable,
-      @Nullable Map<String, String> dockerEnvironment,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
@@ -73,12 +70,10 @@ public class PluginConfigurationProcessor {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
-    if (dockerExecutable != null) {
-      targetImage.setDockerExecutable(dockerExecutable);
+    if (rawConfiguration.getDockerExecutable().isPresent()) {
+      targetImage.setDockerExecutable(rawConfiguration.getDockerExecutable().get());
     }
-    if (dockerEnvironment != null) {
-      targetImage.setDockerEnvironment(dockerEnvironment);
-    }
+    targetImage.setDockerEnvironment(rawConfiguration.getDockerEnvironment());
 
     Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =
@@ -275,10 +270,16 @@ public class PluginConfigurationProcessor {
       throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
     }
 
-    if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
-      return JavaContainerBuilder.from(baseImageConfig);
-    }
     ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
+    if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
+      DockerDaemonImage dockerDaemonImage =
+          DockerDaemonImage.named(baseImageReference)
+              .setDockerEnvironment(rawConfiguration.getDockerEnvironment());
+      if (rawConfiguration.getDockerExecutable().isPresent()) {
+        dockerDaemonImage.setDockerExecutable(rawConfiguration.getDockerExecutable().get());
+      }
+      return JavaContainerBuilder.from(dockerDaemonImage);
+    }
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     configureCredentialRetrievers(
         rawConfiguration,

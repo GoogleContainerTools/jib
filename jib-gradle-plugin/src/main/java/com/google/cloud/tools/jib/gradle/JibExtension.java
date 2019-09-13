@@ -71,6 +71,7 @@ public class JibExtension {
   private final TargetImageParameters to;
   private final ContainerParameters container;
   private final ExtraDirectoriesParameters extraDirectories;
+  private final DockerClientParameters dockerClient;
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<String> containerizingMode;
 
@@ -84,6 +85,7 @@ public class JibExtension {
     to = objectFactory.newInstance(TargetImageParameters.class);
     container = objectFactory.newInstance(ContainerParameters.class);
     extraDirectories = objectFactory.newInstance(ExtraDirectoriesParameters.class, project, this);
+    dockerClient = objectFactory.newInstance(DockerClientParameters.class);
 
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
@@ -114,6 +116,10 @@ public class JibExtension {
   public void extraDirectories(Action<? super ExtraDirectoriesParameters> action) {
     extraDirectoriesConfigured = true;
     action.execute(extraDirectories);
+  }
+
+  public void dockerClient(Action<? super DockerClientParameters> action) {
+    action.execute(dockerClient);
   }
 
   @Deprecated
@@ -160,6 +166,12 @@ public class JibExtension {
   @Optional
   public ExtraDirectoriesParameters getExtraDirectories() {
     return extraDirectories;
+  }
+
+  @Nested
+  @Optional
+  public DockerClientParameters getDockerClient() {
+    return dockerClient;
   }
 
   @Input

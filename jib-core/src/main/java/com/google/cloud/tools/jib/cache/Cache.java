@@ -117,6 +117,20 @@ public class Cache {
   }
 
   /**
+   * Caches a layer that was extracted from a local base image, and names the file using the
+   * provided diff id.
+   *
+   * @param diffId the diff id
+   * @param compressedBlob the compressed layer blob
+   * @return the {@link CachedLayer} for the written layer
+   * @throws IOException if an I/O exception occurs
+   */
+  public CachedLayer writeTarLayer(DescriptorDigest diffId, Blob compressedBlob)
+      throws IOException {
+    return cacheStorageWriter.writeTarLayer(diffId, compressedBlob);
+  }
+
+  /**
    * Retrieves the cached manifest and container configuration for an image reference.
    *
    * @param imageReference the image reference
@@ -159,5 +173,18 @@ public class Cache {
   public Optional<CachedLayer> retrieve(DescriptorDigest layerDigest)
       throws IOException, CacheCorruptedException {
     return cacheStorageReader.retrieve(layerDigest);
+  }
+
+  /**
+   * Retrieves a {@link CachedLayer} for a local base image layer with the given diff id.
+   *
+   * @param diffId the diff id
+   * @return the {@link CachedLayer} with the given diff id
+   * @throws CacheCorruptedException if the cache was found to be corrupted
+   * @throws IOException if an I/O exception occurs
+   */
+  public Optional<CachedLayer> retrieveTarLayer(DescriptorDigest diffId)
+      throws IOException, CacheCorruptedException {
+    return cacheStorageReader.retrieveTarLayer(diffId);
   }
 }

@@ -86,5 +86,9 @@ public interface RawConfiguration {
 
   Map<AbsoluteUnixPath, FilePermissions> getExtraDirectoryPermissions();
 
+  Optional<Path> getDockerExecutable();
+
+  Map<String, String> getDockerEnvironment();
+
   String getContainerizingMode();
 }

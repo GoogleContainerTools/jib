@@ -23,6 +23,7 @@ import java.io.IOException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
 
 /**
  * Prints out to.image configuration and project name, used for Jib project detection in Skaffold.
@@ -37,12 +38,17 @@ public class SkaffoldInitMojo extends JibPluginConfiguration {
   @Override
   public void execute() throws MojoExecutionException {
     checkJibVersion();
-    SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
-    skaffoldInitOutput.setImage(getTargetImage());
-    if (getProject().getParent() != null) {
-      skaffoldInitOutput.setProject(getProject().getName());
+    MavenProject project = getProject();
+    // Ignore parent projects
+    if (project.getModules().size() > 0) {
+      return;
     }
 
+    SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
+    skaffoldInitOutput.setImage(getTargetImage());
+    if (project.getParent() != null && project.getParent().getFile() != null) {
+      skaffoldInitOutput.setProject(project.getName());
+    }
     System.out.println("\nBEGIN JIB JSON");
     try {
       System.out.println(skaffoldInitOutput.getJsonString());
