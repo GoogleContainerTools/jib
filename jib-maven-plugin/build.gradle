@@ -56,7 +56,8 @@ publishing {
 
 
 release {
-  tagTemplate = 'v$version-gradle'
+  tagTemplate = 'v$version-maven'
+  ignoredSnapshotDependencies = ["com.google.cloud.tools:jib-core", "com.google.cloud.tools:jib-plugins-common"]
   git {
     requireBranch = /^maven_release_v\d+.*$/  //regex
   }
