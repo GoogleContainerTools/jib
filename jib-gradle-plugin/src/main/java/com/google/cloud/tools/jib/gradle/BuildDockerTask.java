@@ -95,27 +95,16 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
     Map<String, String> dockerEnvironment = jibExtension.getDockerClient().getEnvironment();
 
     // Check deprecated parameters
-    if (getDockerClient().getExecutable() != null) {
-      if (dockerExecutable != null) {
-        throw new GradleException(
-            "Cannot configure 'jibDockerBuild.dockerClient.executable' and 'jib.dockerClient.executable' simultaneously");
-      }
+    if (getDockerClient().getExecutable() != null
+        || !getDockerClient().getEnvironment().isEmpty()) {
       getProject()
           .getLogger()
-          .warn(
-              "'jibDockerBuild.dockerClient.executable' is deprecated; use 'jib.dockerClient.executable' instead.");
-      dockerExecutable = getDockerClient().getExecutablePath();
+          .warn("'jibDockerBuild.dockerClient' is deprecated; use 'jib.dockerClient' instead.");
     }
-    if (getDockerClient().getEnvironment().size() > 0) {
-      if (dockerEnvironment.size() > 0) {
-        throw new GradleException(
-            "Cannot configure 'jibDockerBuild.dockerClient.environment' and 'jib.dockerClient.environment' simultaneously");
-      }
-      getProject()
-          .getLogger()
-          .warn(
-              "'jibDockerBuild.dockerClient.environment' is deprecated; use 'jib.dockerClient.environment' instead.");
-      dockerEnvironment = getDockerClient().getEnvironment();
+    if ((getDockerClient().getExecutable() != null && dockerExecutable != null)
+        || (!getDockerClient().getEnvironment().isEmpty() && !dockerEnvironment.isEmpty())) {
+      throw new GradleException(
+          "Cannot configure 'jibDockerBuild.dockerClient' and 'jib.dockerClient' simultaneously");
     }
 
     boolean isDockerInstalled =
@@ -127,7 +116,6 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
-    // Asserts required @Input parameters are not null.
     TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
     TaskCommon.disableHttpLogging();
 
@@ -138,8 +126,6 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               new GradleRawConfiguration(jibExtension),
               ignored -> java.util.Optional.empty(),
               projectProperties,
-              dockerExecutable,
-              dockerEnvironment,
               new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 

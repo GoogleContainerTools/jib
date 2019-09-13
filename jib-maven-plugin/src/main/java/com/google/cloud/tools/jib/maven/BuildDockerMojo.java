@@ -90,8 +90,6 @@ public class BuildDockerMojo extends JibPluginConfiguration {
               new MavenSettingsServerCredentials(
                   getSession().getSettings(), getSettingsDecrypter()),
               projectProperties,
-              dockerExecutable,
-              getDockerClientEnvironment(),
               new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 

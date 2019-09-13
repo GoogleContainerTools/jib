@@ -46,7 +46,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -62,8 +61,6 @@ public class PluginConfigurationProcessor {
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
-      @Nullable Path dockerExecutable,
-      Map<String, String> dockerEnvironment,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
@@ -73,10 +70,10 @@ public class PluginConfigurationProcessor {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
-    if (dockerExecutable != null) {
-      targetImage.setDockerExecutable(dockerExecutable);
+    if (rawConfiguration.getDockerExecutable().isPresent()) {
+      targetImage.setDockerExecutable(rawConfiguration.getDockerExecutable().get());
     }
-    targetImage.setDockerEnvironment(dockerEnvironment);
+    targetImage.setDockerEnvironment(rawConfiguration.getDockerEnvironment());
 
     Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =
