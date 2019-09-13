@@ -183,7 +183,7 @@ Field | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`image` | `String` | `gcr.io/distroless/java` | The image reference for the base image.
+`image` | `String` | `gcr.io/distroless/java` | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
 `auth` | [`auth`](#auth-closure) | *None* | Specify credentials directly (alternative to `credHelper`).
 `credHelper` | `String` | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 
@@ -230,7 +230,7 @@ Property | Type | Default | Description
 `paths` | `Object` | `(project-dir)/src/main/jib` | Extra directories acceptable by [`Project.files()`](https://docs.gradle.org/current/javadoc/org/gradle/api/Project.html#files-java.lang.Object...-), such as `String`, `File`, `Path`, `List<String\|File\|Path>`, etc. Can be absolute or relative to the project root.
 `permissions` | `Map<String, String>` | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
 
-<a name="dockerclient-closure"></a>**(`jibDockerBuild` only)** `dockerClient` is an object that can be configured directly on the `jibDockerBuild` task, and has the following properties:
+<a name="dockerclient-closure"></a>`dockerClient` is an object used to configure Docker when building to/from the Docker daemon. It has the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
@@ -296,6 +296,17 @@ jib {
   }
 }
 ```
+
+### Setting the Base Image
+
+There are three different types of base images that Jib accepts: an image from a container registry, an image stored in the Docker daemon, or an image tarball on the local filesystem. You can specify which you would like to use by prepending the `jib.from.image` configuration with a special prefix, listed below:
+
+Prefix | Example | Type
+--- | --- | ---
+*None* | `gcr.io/distroless/java` | Pulls the base image from a registry.
+`registry://` | `registry://gcr.io/distroless/java` | Pulls the base image from a registry.
+`docker://` | `docker://busybox` | Retrieves the base image from the Docker daemon.
+`tar://` | `tar:///path/to/file.tar` | Uses an image tarball stored at the specified path as the base image. Also accepts relative paths (e.g. `tar://build/jib-image.tar`).
 
 ### Adding Arbitrary Files to the Image
 
