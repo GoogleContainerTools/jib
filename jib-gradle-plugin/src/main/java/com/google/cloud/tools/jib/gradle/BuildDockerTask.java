@@ -33,6 +33,7 @@ import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
@@ -75,10 +76,12 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
 
   @Nested
   @Optional
+  @Deprecated
   public DockerClientParameters getDockerClient() {
     return dockerClientParameters;
   }
 
+  @Deprecated
   public void dockerClient(Action<? super DockerClientParameters> action) {
     action.execute(dockerClientParameters);
   }
@@ -87,7 +90,31 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   public void buildDocker()
       throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
           MainClassInferenceException {
-    Path dockerExecutable = dockerClientParameters.getExecutablePath();
+    Preconditions.checkNotNull(jibExtension);
+
+    // Check deprecated parameters
+    Path dockerExecutable = jibExtension.getDockerClient().getExecutablePath();
+    Map<String, String> dockerEnvironment = jibExtension.getDockerClient().getEnvironment();
+    if (getDockerClient().getExecutable() != null) {
+      jibExtension.getDockerClient().setExecutable(getDockerClient().getExecutable());
+      getProject()
+          .getLogger()
+          .warn(
+              "'jibDockerBuild.dockerClient.executable' is deprecated; use 'jib.dockerClient.executable' instead.");
+    }
+    if (!getDockerClient().getEnvironment().isEmpty()) {
+      jibExtension.getDockerClient().setEnvironment(getDockerClient().getEnvironment());
+      getProject()
+          .getLogger()
+          .warn(
+              "'jibDockerBuild.dockerClient.environment' is deprecated; use 'jib.dockerClient.environment' instead.");
+    }
+    if ((getDockerClient().getExecutable() != null && dockerExecutable != null)
+        || (!getDockerClient().getEnvironment().isEmpty() && !dockerEnvironment.isEmpty())) {
+      throw new GradleException(
+          "Cannot configure 'jibDockerBuild.dockerClient' and 'jib.dockerClient' simultaneously");
+    }
+
     boolean isDockerInstalled =
         dockerExecutable == null
             ? DockerClient.isDefaultDockerInstalled()
@@ -97,8 +124,6 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
           HelpfulSuggestions.forDockerNotInstalled(HELPFUL_SUGGESTIONS_PREFIX));
     }
 
-    // Asserts required @Input parameters are not null.
-    Preconditions.checkNotNull(jibExtension);
     TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
     TaskCommon.disableHttpLogging();
 
@@ -109,8 +134,6 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               new GradleRawConfiguration(jibExtension),
               ignored -> java.util.Optional.empty(),
               projectProperties,
-              dockerClientParameters.getExecutablePath(),
-              dockerClientParameters.getEnvironment(),
               new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 

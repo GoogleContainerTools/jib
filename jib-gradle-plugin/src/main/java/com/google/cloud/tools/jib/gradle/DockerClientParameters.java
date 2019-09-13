@@ -20,6 +20,7 @@ import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nullable;
 import org.gradle.api.tasks.Input;
@@ -33,7 +34,7 @@ import org.gradle.api.tasks.Optional;
 public class DockerClientParameters {
 
   @Nullable private Path executable;
-  @Nullable private Map<String, String> environment;
+  private Map<String, String> environment = Collections.emptyMap();
 
   @Input
   @Nullable
@@ -48,6 +49,9 @@ public class DockerClientParameters {
   @Internal
   @Nullable
   Path getExecutablePath() {
+    if (System.getProperty(PropertyNames.DOCKER_CLIENT_EXECUTABLE) != null) {
+      return Paths.get(System.getProperty(PropertyNames.DOCKER_CLIENT_EXECUTABLE));
+    }
     return executable;
   }
 
@@ -56,7 +60,6 @@ public class DockerClientParameters {
   }
 
   @Input
-  @Nullable
   @Optional
   public Map<String, String> getEnvironment() {
     if (System.getProperty(PropertyNames.DOCKER_CLIENT_ENVIRONMENT) != null) {
@@ -66,7 +69,7 @@ public class DockerClientParameters {
     return environment;
   }
 
-  public void setEnvironment(@Nullable Map<String, String> environment) {
+  public void setEnvironment(Map<String, String> environment) {
     this.environment = environment;
   }
 }
