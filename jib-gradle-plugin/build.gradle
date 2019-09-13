@@ -33,6 +33,7 @@ dependencies {
 // Prepare release
 release {
   tagTemplate = 'v$version-gradle'
+  ignoredSnapshotDependencies = ["com.google.cloud.tools:jib-core", "com.google.cloud.tools:jib-plugins-common"]
   git {
     requireBranch = /^gradle_release_v\d+.*$/  //regex
   }
