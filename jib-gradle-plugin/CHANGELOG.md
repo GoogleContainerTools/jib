@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.6.0
+
+### Added
+
 - Support for local base images by prefixing `jib.from.image` with `docker://` to build from a docker daemon image, or `tar://` to build from a tarball image ([#1468](https://github.com/GoogleContainerTools/jib/issues/1468), [#1905](https://github.com/GoogleContainerTools/jib/issues/1905))
 
 ### Changed
