@@ -544,4 +544,4 @@ gradle -Djava.util.logging.config.file=path/to/log.properties -Djib.serialize=tr
 
 Maven: use `mvn -X -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
 
-Gradle: use `grade --debug -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
+Gradle: use `gradle --debug -Djib.serialize=true` to enable more detailed logging and serialize Jib's actions.
