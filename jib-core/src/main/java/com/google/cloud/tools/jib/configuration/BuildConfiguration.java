@@ -245,7 +245,7 @@ public class BuildConfiguration {
       switch (missingFields.size()) {
         case 0: // No errors
           Preconditions.checkNotNull(baseImageConfiguration);
-          if (baseImageConfiguration.getImage().usesDefaultTag()
+          if (!baseImageConfiguration.getImage().isTagDigest()
               && !baseImageConfiguration.getImage().isScratch()) {
             eventHandlers.dispatch(
                 LogEvent.warn(
