@@ -269,10 +269,7 @@ public class BuildConfigurationTest {
                         "image@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
                 .build())
         .build();
-    Mockito.verify(mockEventHandlers, Mockito.never())
-        .dispatch(
-            LogEvent.warn(
-                "Base image 'image:tag' does not use a specific image digest - build may not be reproducible"));
+    Mockito.verify(mockEventHandlers, Mockito.never()).dispatch(LogEvent.warn(Mockito.anyString()));
 
     builder
         .setBaseImageConfiguration(
