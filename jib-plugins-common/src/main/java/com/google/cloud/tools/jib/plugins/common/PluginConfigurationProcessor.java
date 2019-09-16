@@ -339,6 +339,12 @@ public class PluginConfigurationProcessor {
     }
 
     if (projectProperties.isWarProject()) {
+      if (rawConfiguration.getMainClass().isPresent()
+          || !rawConfiguration.getJvmFlags().isEmpty()
+          || !rawExtraClasspath.isEmpty()) {
+        projectProperties.log(
+            LogEvent.warn("mainClass, extraClasspath, and jvmFlags are ignored for WAR projects"));
+      }
       return null;
     }
 
