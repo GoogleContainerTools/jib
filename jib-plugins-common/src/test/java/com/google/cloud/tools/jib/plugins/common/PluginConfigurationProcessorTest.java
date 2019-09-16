@@ -842,6 +842,33 @@ public class PluginConfigurationProcessorTest {
     }
   }
 
+  // https://github.com/GoogleContainerTools/jib/issues/1995
+  @Test
+  public void testGetJavaContainerBuilderWithBaseImage_java12BaseImage()
+      throws InvalidImageReferenceException, IOException, IncompatibleBaseImageJavaVersionException,
+          CacheDirectoryCreationException {
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(12);
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("regis.try/java12image"));
+    ImageConfiguration imageConfiguration = getCommonImageConfiguration();
+    Assert.assertEquals("regis.try", imageConfiguration.getImageRegistry());
+    Assert.assertEquals("java12image", imageConfiguration.getImageRepository());
+  }
+
+  @Test
+  public void testGetJavaContainerBuilderWithBaseImage_java12NoBaseImage()
+      throws InvalidImageReferenceException, IOException {
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(12);
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.empty());
+    try {
+      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+          rawConfiguration, projectProperties, inferredAuthProvider);
+      Assert.fail();
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      Assert.assertEquals(11, ex.getBaseImageMajorJavaVersion());
+      Assert.assertEquals(12, ex.getProjectMajorJavaVersion());
+    }
+  }
+
   @Test
   public void testGetValidVolumesList() throws InvalidContainerVolumeException {
     Mockito.when(rawConfiguration.getVolumes()).thenReturn(Collections.singletonList("/some/root"));

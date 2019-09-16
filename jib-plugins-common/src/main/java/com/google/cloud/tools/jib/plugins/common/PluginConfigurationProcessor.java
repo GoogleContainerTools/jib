@@ -255,7 +255,9 @@ public class PluginConfigurationProcessor {
           FileNotFoundException {
     // Use image configuration as-is if it's a local base image
     String baseImageConfig =
-        rawConfiguration.getFromImage().orElse(getDefaultBaseImage(projectProperties));
+        rawConfiguration.getFromImage().isPresent()
+            ? rawConfiguration.getFromImage().get()
+            : getDefaultBaseImage(projectProperties);
     if (baseImageConfig.startsWith(Jib.TAR_IMAGE_PREFIX)) {
       return JavaContainerBuilder.from(baseImageConfig);
     }
