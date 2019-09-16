@@ -144,7 +144,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       throw new MojoExecutionException(
-          HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForMaven(
+          HelpfulSuggestions.forIncompatibleBaseImageJavaVersionForMaven(
               ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
           ex);
 

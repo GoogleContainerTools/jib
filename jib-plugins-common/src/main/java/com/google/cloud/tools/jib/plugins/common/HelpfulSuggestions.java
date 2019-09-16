@@ -50,9 +50,9 @@ public class HelpfulSuggestions {
     return suggest(messagePrefix, "add a `mainClass` configuration to " + pluginName);
   }
 
-  public static String forIncompatibleBaseImageJavaVesionForGradle(
+  public static String forIncompatibleBaseImageJavaVersionForGradle(
       int baseImageMajorJavaVersion, int projectMajorJavaVersion) {
-    return forIncompatibleBaseImageJavaVesion(
+    return forIncompatibleBaseImageJavaVersion(
         baseImageMajorJavaVersion,
         projectMajorJavaVersion,
         "using the 'jib.from.image' parameter, or set targetCompatibility = "
@@ -60,9 +60,9 @@ public class HelpfulSuggestions {
             + " or below");
   }
 
-  public static String forIncompatibleBaseImageJavaVesionForMaven(
+  public static String forIncompatibleBaseImageJavaVersionForMaven(
       int baseImageMajorJavaVersion, int projectMajorJavaVersion) {
-    return forIncompatibleBaseImageJavaVesion(
+    return forIncompatibleBaseImageJavaVersion(
         baseImageMajorJavaVersion,
         projectMajorJavaVersion,
         "using the '<from><image>' parameter, or set maven-compiler-plugin's '<target>' or "
@@ -88,7 +88,7 @@ public class HelpfulSuggestions {
     return messagePrefix + ", perhaps you should " + suggestion;
   }
 
-  private static String forIncompatibleBaseImageJavaVesion(
+  private static String forIncompatibleBaseImageJavaVersion(
       int baseImageMajorJavaVersion, int projectMajorJavaVersion, String parameterInstructions) {
     return suggest(
         "Your project is using Java "
