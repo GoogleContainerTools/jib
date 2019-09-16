@@ -55,7 +55,7 @@ git push origin v${VERSION}-gradle
 
 # File a PR on Github for the new branch. Have someone LGTM it, which gives you permission to continue.
 EchoGreen 'File a PR for the new release branch:'
-echo https://github.com/GoogleContainerTools/jib/compare/${BRANCH}
+echo https://github.com/GoogleContainerTools/jib/pull/new/${BRANCH}
 
 EchoGreen "Once approved, checkout the 'v${VERSION}-gradle' tag and run './gradlew jib-gradle-plugin:publishPlugins'."
 EchoGreen "Merge the PR after the plugin is released."
