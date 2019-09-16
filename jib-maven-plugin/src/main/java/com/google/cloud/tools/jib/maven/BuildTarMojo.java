@@ -42,7 +42,8 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
  */
 @Mojo(
     name = BuildTarMojo.GOAL_NAME,
-    requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
+    requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM,
+    threadSafe = true)
 public class BuildTarMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "buildTar";
