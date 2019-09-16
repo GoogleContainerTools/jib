@@ -335,7 +335,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Minor improvements and issue fixes
+- Minor improvements and issue fixes.
 
 ## 0.9.1
 

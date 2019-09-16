@@ -14,7 +14,7 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 - `Jib#from` and `JavaContainerBuilder#from` overloads to allow using a `DockerDaemonImage` or a `TarImage` as the base image. ([#1468](https://github.com/GoogleContainerTools/jib/issues/1468), [#1905](https://github.com/GoogleContainerTools/jib/issues/1905))
-- `Jib#from(String)` accepts strings prefixed with `docker://`, `tar://`, or `registry://` to specify image type
+- `Jib#from(String)` accepts strings prefixed with `docker://`, `tar://`, or `registry://` to specify image type.
 
 ### Changed
 
@@ -48,14 +48,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- `Containerizer#addEventHandler` for adding event handlers
+- `Containerizer#addEventHandler` for adding event handlers.
 
 ### Changed
 
-- Multiple classes have been moved to the `com.google.cloud.tools.jib.api` package
-- Event handlers are now added directly to the `Containerizer` rather than adding them to an `EventHandlers` object first
+- Multiple classes have been moved to the `com.google.cloud.tools.jib.api` package.
+- Event handlers are now added directly to the `Containerizer` rather than adding them to an `EventHandlers` object first.
 - Removed multiple classes to simplify the event system (`JibEventType`, `BuildStepType`, `EventDispatcher`, `DefaultEventDispatcher`, `LayerCountEvent`)
-- MainClassFinder now uses a static method instead of requiring instantiation
+- MainClassFinder now uses a static method instead of requiring instantiation.
 
 ## 0.9.2
 
@@ -77,7 +77,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- `LayerConfiguration` takes file modification time as an `Instant` instead of a `long`
+- `LayerConfiguration` takes file modification time as an `Instant` instead of a `long`.
 
 ### Fixed
 
@@ -90,11 +90,11 @@ All notable changes to this project will be documented in this file.
 
 - `JavaContainerBuilder#setAppRoot()` and `JavaContainerBuilder#fromDistrolessJetty()` for building WAR containers. ([#1464](https://github.com/GoogleContainerTools/jib/issues/1464))
 - `Jib#fromScratch()` to start building from an empty base image. ([#1471](https://github.com/GoogleContainerTools/jib/issues/1471))
-- Methods in `JavaContainerBuilder` for setting the destination directories for classes, resources, directories, and additional classpath files
+- Methods in `JavaContainerBuilder` for setting the destination directories for classes, resources, directories, and additional classpath files.
 
 ### Changed
 
-- Allow skipping `JavaContainerBuilder#setMainClass()` to skip setting the entrypoint
+- Allow skipping `JavaContainerBuilder#setMainClass()` to skip setting the entrypoint.
 - `os` and `architecture` are taken from base image. ([#1564](https://github.com/GoogleContainerTools/jib/pull/1564))
 
 ### Fixed

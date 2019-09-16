@@ -202,7 +202,7 @@ All notable changes to this project will be documented in this file.
 - Preliminary support for building images for WAR projects. ([#431](https://github.com/GoogleContainerTools/jib/issues/431))
 - `jib.extraDirectory` closure with a `path` and `permissions` field. ([#794](https://github.com/GoogleContainerTools/jib/issues/794))
   - `jib.extraDirectory.path` configures the extra layer directory (still also configurable via `jib.extraDirectory = file(...)`)
-  - `jib.extraDirectory.permissions` is a map from absolute path on container to the file's permission bits (represented as an octal string)
+  - `jib.extraDirectory.permissions` is a map from absolute path on container to the file's permission bits (represented as an octal string).
 - Image digest is now written to `build/jib-image.digest`. ([#933](https://github.com/GoogleContainerTools/jib/issues/933))
 - Adds the layer type to the layer history as comments. ([#1198](https://github.com/GoogleContainerTools/jib/issues/1198))
 - `jibDockerBuild.dockerClient.executable` and `jibDockerBuild.dockerClient.environment` to set Docker client binary path (defaulting to `docker`) and additional environment variables to apply when running the binary. ([#1214](https://github.com/GoogleContainerTools/jib/pull/1214))
@@ -259,7 +259,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- Reordered classpath in entrypoint to use _resources_, _classes_, and then _dependencies_, to allow dependency patching
+- Reordered classpath in entrypoint to use _resources_, _classes_, and then _dependencies_, to allow dependency patching.
  . ([#777](https://github.com/GoogleContainerTools/jib/issues/777)).  Note that this classpath ordering differs from that used by Gradle's `run` task.
 - Changed logging level of missing build output directory message. ([#677](https://github.com/GoogleContainerTools/jib/issues/677))
 
