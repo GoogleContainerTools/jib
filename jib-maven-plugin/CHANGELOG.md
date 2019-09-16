@@ -9,6 +9,12 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+## 1.6.1
+
+### Fixed
+
+- Fixed an issue with using custom base images in Java 12 projects. ([#1995](https://github.com/GoogleContainerTools/jib/issues/1995))
+
 ## 1.6.0
 
 ### Added
