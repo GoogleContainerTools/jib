@@ -411,6 +411,24 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testEntrypoint_warningOnMainclassForWar()
+      throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
+          IncompatibleBaseImageJavaVersionException, InvalidContainerVolumeException,
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidFilesModificationTimeException, InvalidContainerizingModeException,
+          CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
+
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
+    Mockito.verify(projectProperties)
+        .log(LogEvent.warn("mainClass, extraClasspath, and jvmFlags are ignored for WAR projects"));
+  }
+
+  @Test
   public void testEntrypointClasspath_nonDefaultAppRoot()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
