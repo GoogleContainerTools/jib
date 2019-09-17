@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.maven.skaffold;
 
+import com.google.api.client.util.Strings;
 import com.google.cloud.tools.jib.maven.MavenProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.ConfigurationPropertyValidator;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
@@ -27,8 +28,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -67,6 +70,44 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
 
   @VisibleForTesting static final String GOAL_NAME = "_skaffold-files-v2";
 
+  @VisibleForTesting
+  static Set<Path> getKotlinSourceDirectories(MavenProject project) {
+    Plugin kotlinPlugin = project.getPlugin("org.jetbrains.kotlin:kotlin-maven-plugin");
+    if (kotlinPlugin == null) {
+      return Collections.emptySet();
+    }
+
+    Path projectBaseDir = project.getBasedir().toPath();
+
+    // Extract <sourceDir> values from <configuration> in the plugin <executions>. Sample:
+    // <executions><execution><configuration>
+    //   <sourceDirs>
+    //     <sourceDir>src/main/kotlin</sourceDir>
+    //     <sourceDir>${project.basedir}/src/main/java</sourceDir>
+    //   </sourceDirs>
+    // </configuration></execution></executions>
+    Set<Path> kotlinSourceDirectories =
+        kotlinPlugin
+            .getExecutions()
+            .stream()
+            .map(execution -> (Xpp3Dom) execution.getConfiguration())
+            .filter(Objects::nonNull)
+            .map(configuration -> configuration.getChild("sourceDirs"))
+            .filter(Objects::nonNull)
+            .map(sourceDirs -> Arrays.asList(sourceDirs.getChildren()))
+            .flatMap(Collection::stream) // "array of arrays" into "arrays"
+            .map(Xpp3Dom::getValue)
+            .filter(value -> !Strings.isNullOrEmpty(value))
+            .map(Paths::get)
+            .map(path -> path.isAbsolute() ? path : project.getBasedir().toPath().resolve(path))
+            .collect(Collectors.toSet());
+
+    Path conventionalDirectory = projectBaseDir.resolve(Paths.get("src", "main", "kotlin"));
+    kotlinSourceDirectories.add(conventionalDirectory);
+
+    return kotlinSourceDirectories;
+  }
+
   @Nullable
   @Parameter(defaultValue = "${session}", required = true, readonly = true)
   private MavenSession session;
@@ -97,6 +138,8 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
 
       // Add sources directory (resolved by maven to be an absolute path)
       skaffoldFilesOutput.addInput(Paths.get(project.getBuild().getSourceDirectory()));
+
+      getKotlinSourceDirectories(project).forEach(skaffoldFilesOutput::addInput);
 
       // Add resources directory (resolved by maven to be an absolute path)
       project
