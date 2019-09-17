@@ -66,7 +66,9 @@ public class JsonTemplateMapper {
    */
   public static <T extends JsonTemplate> T readJsonFromFile(Path jsonFile, Class<T> templateClass)
       throws IOException {
-    return objectMapper.readValue(Files.newInputStream(jsonFile), templateClass);
+    try (InputStream fileIn = Files.newInputStream(jsonFile)) {
+      return objectMapper.readValue(fileIn, templateClass);
+    }
   }
 
   /**
@@ -89,7 +91,7 @@ public class JsonTemplateMapper {
   }
 
   /**
-   * Deserializes a JSON object from a JSON string.
+   * Deserializes a JSON object from a JSON input stream.
    *
    * @param <T> child type of {@link JsonTemplate}
    * @param jsonStream input stream
