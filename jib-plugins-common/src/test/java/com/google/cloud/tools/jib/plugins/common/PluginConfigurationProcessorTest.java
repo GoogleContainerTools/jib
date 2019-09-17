@@ -411,6 +411,24 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
+  public void testEntrypoint_warningOnMainclassForWar()
+      throws IOException, InvalidCreationTimeException, InvalidImageReferenceException,
+          IncompatibleBaseImageJavaVersionException, InvalidContainerVolumeException,
+          MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
+          InvalidFilesModificationTimeException, InvalidContainerizingModeException,
+          CacheDirectoryCreationException {
+    Mockito.when(rawConfiguration.getMainClass()).thenReturn(Optional.of("java.util.Object"));
+    Mockito.when(projectProperties.isWarProject()).thenReturn(true);
+
+    BuildConfiguration buildConfiguration = getBuildConfiguration(processCommonConfiguration());
+
+    Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
+    Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
+    Mockito.verify(projectProperties)
+        .log(LogEvent.warn("mainClass, extraClasspath, and jvmFlags are ignored for WAR projects"));
+  }
+
+  @Test
   public void testEntrypointClasspath_nonDefaultAppRoot()
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException,
           MainClassInferenceException, InvalidAppRootException, InvalidWorkingDirectoryException,
@@ -839,6 +857,33 @@ public class PluginConfigurationProcessorTest {
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       Assert.assertEquals(11, ex.getBaseImageMajorJavaVersion());
       Assert.assertEquals(15, ex.getProjectMajorJavaVersion());
+    }
+  }
+
+  // https://github.com/GoogleContainerTools/jib/issues/1995
+  @Test
+  public void testGetJavaContainerBuilderWithBaseImage_java12BaseImage()
+      throws InvalidImageReferenceException, IOException, IncompatibleBaseImageJavaVersionException,
+          CacheDirectoryCreationException {
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(12);
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.of("regis.try/java12image"));
+    ImageConfiguration imageConfiguration = getCommonImageConfiguration();
+    Assert.assertEquals("regis.try", imageConfiguration.getImageRegistry());
+    Assert.assertEquals("java12image", imageConfiguration.getImageRepository());
+  }
+
+  @Test
+  public void testGetJavaContainerBuilderWithBaseImage_java12NoBaseImage()
+      throws InvalidImageReferenceException, IOException {
+    Mockito.when(projectProperties.getMajorJavaVersion()).thenReturn(12);
+    Mockito.when(rawConfiguration.getFromImage()).thenReturn(Optional.empty());
+    try {
+      PluginConfigurationProcessor.getJavaContainerBuilderWithBaseImage(
+          rawConfiguration, projectProperties, inferredAuthProvider);
+      Assert.fail();
+    } catch (IncompatibleBaseImageJavaVersionException ex) {
+      Assert.assertEquals(11, ex.getBaseImageMajorJavaVersion());
+      Assert.assertEquals(12, ex.getProjectMajorJavaVersion());
     }
   }
 

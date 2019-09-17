@@ -46,7 +46,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -62,8 +61,6 @@ public class PluginConfigurationProcessor {
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
       ProjectProperties projectProperties,
-      @Nullable Path dockerExecutable,
-      @Nullable Map<String, String> dockerEnvironment,
       HelpfulSuggestions helpfulSuggestions)
       throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
           IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
@@ -73,12 +70,10 @@ public class PluginConfigurationProcessor {
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
     DockerDaemonImage targetImage = DockerDaemonImage.named(targetImageReference);
-    if (dockerExecutable != null) {
-      targetImage.setDockerExecutable(dockerExecutable);
+    if (rawConfiguration.getDockerExecutable().isPresent()) {
+      targetImage.setDockerExecutable(rawConfiguration.getDockerExecutable().get());
     }
-    if (dockerEnvironment != null) {
-      targetImage.setDockerEnvironment(dockerEnvironment);
-    }
+    targetImage.setDockerEnvironment(rawConfiguration.getDockerEnvironment());
 
     Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =
@@ -260,7 +255,9 @@ public class PluginConfigurationProcessor {
           FileNotFoundException {
     // Use image configuration as-is if it's a local base image
     String baseImageConfig =
-        rawConfiguration.getFromImage().orElse(getDefaultBaseImage(projectProperties));
+        rawConfiguration.getFromImage().isPresent()
+            ? rawConfiguration.getFromImage().get()
+            : getDefaultBaseImage(projectProperties);
     if (baseImageConfig.startsWith(Jib.TAR_IMAGE_PREFIX)) {
       return JavaContainerBuilder.from(baseImageConfig);
     }
@@ -275,10 +272,16 @@ public class PluginConfigurationProcessor {
       throw new IncompatibleBaseImageJavaVersionException(11, javaVersion);
     }
 
-    if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
-      return JavaContainerBuilder.from(baseImageConfig);
-    }
     ImageReference baseImageReference = ImageReference.parse(prefixRemoved);
+    if (baseImageConfig.startsWith(Jib.DOCKER_DAEMON_IMAGE_PREFIX)) {
+      DockerDaemonImage dockerDaemonImage =
+          DockerDaemonImage.named(baseImageReference)
+              .setDockerEnvironment(rawConfiguration.getDockerEnvironment());
+      if (rawConfiguration.getDockerExecutable().isPresent()) {
+        dockerDaemonImage.setDockerExecutable(rawConfiguration.getDockerExecutable().get());
+      }
+      return JavaContainerBuilder.from(dockerDaemonImage);
+    }
     RegistryImage baseImage = RegistryImage.named(baseImageReference);
     configureCredentialRetrievers(
         rawConfiguration,
@@ -336,6 +339,12 @@ public class PluginConfigurationProcessor {
     }
 
     if (projectProperties.isWarProject()) {
+      if (rawConfiguration.getMainClass().isPresent()
+          || !rawConfiguration.getJvmFlags().isEmpty()
+          || !rawExtraClasspath.isEmpty()) {
+        projectProperties.log(
+            LogEvent.warn("mainClass, extraClasspath, and jvmFlags are ignored for WAR projects"));
+      }
       return null;
     }
 

@@ -159,7 +159,7 @@ public class BuildImageMojoIntegrationTest {
   }
 
   private static String buildAndRunFromLocalBase(
-      Path projectRoot, String targetImage, String baseImage)
+      Path projectRoot, String targetImage, String baseImage, boolean buildTwice)
       throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
@@ -170,7 +170,20 @@ public class BuildImageMojoIntegrationTest {
     verifier.addCliOption("-X");
     verifier.addCliOption("--file=pom-localbase.xml");
     verifier.executeGoals(Arrays.asList("clean", "compile"));
+    if (!buildTwice) {
+      verifier.executeGoal("jib:build");
+      return pullAndRunBuiltImage(targetImage);
+    }
+
     verifier.executeGoal("jib:build");
+    float timeOne = getBuildTimeFromVerifierLog(verifier);
+
+    verifier.resetStreams();
+    verifier.executeGoal("jib:build");
+    float timeTwo = getBuildTimeFromVerifierLog(verifier);
+
+    String failMessage = "First build time (%s) is not greater than second build time (%s)";
+    Assert.assertTrue(String.format(failMessage, timeOne, timeTwo), timeOne > timeTwo);
     return pullAndRunBuiltImage(targetImage);
   }
 
@@ -420,7 +433,8 @@ public class BuildImageMojoIntegrationTest {
         buildAndRunFromLocalBase(
             simpleTestProject.getProjectRoot(),
             targetImage,
-            "docker://gcr.io/distroless/java:latest"));
+            "docker://gcr.io/distroless/java:latest",
+            false));
   }
 
   @Test
@@ -435,7 +449,8 @@ public class BuildImageMojoIntegrationTest {
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        buildAndRunFromLocalBase(simpleTestProject.getProjectRoot(), targetImage, "tar://" + path));
+        buildAndRunFromLocalBase(
+            simpleTestProject.getProjectRoot(), targetImage, "tar://" + path, true));
   }
 
   @Test

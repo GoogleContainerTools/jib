@@ -177,6 +177,16 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
+  public Optional<Path> getDockerExecutable() {
+    return Optional.ofNullable(jibPluginConfiguration.getDockerClientExecutable());
+  }
+
+  @Override
+  public Map<String, String> getDockerEnvironment() {
+    return jibPluginConfiguration.getDockerClientEnvironment();
+  }
+
+  @Override
   public String getContainerizingMode() {
     return jibPluginConfiguration.getContainerizingMode();
   }

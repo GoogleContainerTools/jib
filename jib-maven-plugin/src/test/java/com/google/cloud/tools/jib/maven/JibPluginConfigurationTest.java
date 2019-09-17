@@ -142,6 +142,14 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("123", permissions.get(0).getMode().get());
     Assert.assertEquals("/another/file", permissions.get(1).getFile().get());
     Assert.assertEquals("456", permissions.get(1).getMode().get());
+
+    sessionProperties.put("jib.dockerClient.executable", "test-exec");
+    Assert.assertEquals(
+        Paths.get("test-exec"), testPluginConfiguration.getDockerClientExecutable());
+    sessionProperties.put("jib.dockerClient.environment", "env1=val1,env2=val2");
+    Assert.assertEquals(
+        ImmutableMap.of("env1", "val1", "env2", "val2"),
+        testPluginConfiguration.getDockerClientEnvironment());
   }
 
   @Test
@@ -217,6 +225,14 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals("123", permissions.get(0).getMode().get());
     Assert.assertEquals("/another/file", permissions.get(1).getFile().get());
     Assert.assertEquals("456", permissions.get(1).getMode().get());
+
+    project.getProperties().setProperty("jib.dockerClient.executable", "test-exec");
+    Assert.assertEquals(
+        Paths.get("test-exec"), testPluginConfiguration.getDockerClientExecutable());
+    project.getProperties().setProperty("jib.dockerClient.environment", "env1=val1,env2=val2");
+    Assert.assertEquals(
+        ImmutableMap.of("env1", "val1", "env2", "val2"),
+        testPluginConfiguration.getDockerClientEnvironment());
   }
 
   @Test

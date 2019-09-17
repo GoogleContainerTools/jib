@@ -34,7 +34,7 @@ public class JibSystemProperties {
   @VisibleForTesting
   public static final String SEND_CREDENTIALS_OVER_HTTP = "sendCredentialsOverHttp";
 
-  private static final String SERIALIZE = "jibSerialize";
+  private static final String SERIALIZE = "jib.serialize";
 
   private static final String DISABLE_USER_AGENT = "_JIB_DISABLE_USER_AGENT";
 
@@ -65,7 +65,7 @@ public class JibSystemProperties {
   }
 
   /**
-   * Gets whether or not to serialize Jib's execution. This is defined by the {@code jibSerialize}
+   * Gets whether or not to serialize Jib's execution. This is defined by the {@code jib.serialize}
    * system property.
    *
    * @return {@code true} if Jib's execution should be serialized, {@code false} if not

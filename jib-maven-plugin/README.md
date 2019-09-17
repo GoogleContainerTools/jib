@@ -37,7 +37,7 @@ For information about the project, see the [Jib project README](../README.md).
 You can containerize your application easily with one command:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:1.5.1:build -Dimage=<MY IMAGE>
+mvn compile com.google.cloud.tools:jib-maven-plugin:1.6.1:build -Dimage=<MY IMAGE>
 ```
 
 This builds and pushes a container image for your application to a container registry. *If you encounter authentication issues, see [Authentication Methods](#authentication-methods).*
@@ -45,7 +45,7 @@ This builds and pushes a container image for your application to a container reg
 To build to a Docker daemon, use:
 
 ```shell
-mvn compile com.google.cloud.tools:jib-maven-plugin:1.5.1:dockerBuild
+mvn compile com.google.cloud.tools:jib-maven-plugin:1.6.1:dockerBuild
 ```
 
 If you would like to set up Jib as part of your Maven build, follow the guide below.
@@ -63,7 +63,7 @@ In your Maven Java project, add the plugin to your `pom.xml`:
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>1.5.1</version>
+        <version>1.6.1</version>
         <configuration>
           <to>
             <image>myimage</image>
@@ -229,7 +229,7 @@ Field | Type | Default | Description
 
 Property | Type | Default | Description
 --- | --- | --- | ---
-`image` | string | `gcr.io/distroless/java` | The image reference for the base image.
+`image` | string | `gcr.io/distroless/java` | The image reference for the base image. The source type can be specified using a [special type prefix](#setting-the-base-image).
 `auth` | [`auth`](#auth-object) | *None* | Specify credentials directly (alternative to `credHelper`).
 `credHelper` | string | *None* | Specifies a credential helper that can authenticate pulling the base image. This parameter can either be configured as an absolute path to the credential helper executable or as a credential helper suffix (following `docker-credential-`).
 
@@ -276,7 +276,7 @@ Property | Type | Default | Description
 `paths` | list | `[(project-dir)/src/main/jib]` | List of extra directories. Can be absolute or relative to the project root.
 `permissions` | list | *None* | Maps file paths on container to Unix permissions. (Effective only for files added from extra directories.) If not configured, permissions default to "755" for directories and "644" for files.
 
-<a name="dockerclient-object"></a>**(`jib:dockerBuild` only)** `dockerClient` is an object with the following properties:
+<a name="dockerclient-object"></a>`dockerClient` is an object used to configure Docker when building to/from the Docker daemon. It has the following properties:
 
 Property | Type | Default | Description
 --- | --- | --- | ---
@@ -358,6 +358,17 @@ In this configuration, the image:
   </container>
 </configuration>
 ```
+
+### Setting the Base Image
+
+There are three different types of base images that Jib accepts: an image from a container registry, an image stored in the Docker daemon, or an image tarball on the local filesystem. You can specify which you would like to use by prepending the `<from><image>` configuration with a special prefix, listed below:
+
+Prefix | Example | Type
+--- | --- | ---
+*None* | `gcr.io/distroless/java` | Pulls the base image from a registry.
+`registry://` | `registry://gcr.io/distroless/java` | Pulls the base image from a registry.
+`docker://` | `docker://busybox` | Retrieves the base image from the Docker daemon.
+`tar://` | `tar:///path/to/file.tar` | Uses an image tarball stored at the specified path as the base image. Also accepts relative paths (e.g. `tar://target/jib-image.tar`).
 
 ### Adding Arbitrary Files to the Image
 

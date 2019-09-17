@@ -57,7 +57,7 @@ class PushImageStep implements Callable<BuildResult> {
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), "Preparing manifest pushers");
         ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("preparing manifest pushers", tags.size())) {
+            progressEventDispatcherFactory.create("launching manifest pushers", tags.size())) {
 
       // Gets the image manifest to push.
       BuildableManifestTemplate manifestTemplate =

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <groupId>com.google.cloud.tools</groupId>
+  <artifactId>tiny-test-lib</artifactId>
+  <versioning>
+    <versions>
+      <version>0.0.1-SNAPSHOT</version>
+    </versions>
+    <lastUpdated>20190911205316</lastUpdated>
+  </versioning>
+</metadata>

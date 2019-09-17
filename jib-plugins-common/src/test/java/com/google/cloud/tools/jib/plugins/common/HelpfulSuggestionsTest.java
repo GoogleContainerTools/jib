@@ -59,13 +59,13 @@ public class HelpfulSuggestionsTest {
             + "configure a Java 11-compatible base image using the 'jib.from.image' "
             + "parameter, or set targetCompatibility = 8 or below in your build "
             + "configuration",
-        HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForGradle(8, 11));
+        HelpfulSuggestions.forIncompatibleBaseImageJavaVersionForGradle(8, 11));
     Assert.assertEquals(
         "Your project is using Java 11 but the base image is for Java 8, perhaps you should "
             + "configure a Java 11-compatible base image using the '<from><image>' "
             + "parameter, or set maven-compiler-plugin's '<target>' or '<release>' version "
             + "to 8 or below in your build configuration",
-        HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForMaven(8, 11));
+        HelpfulSuggestions.forIncompatibleBaseImageJavaVersionForMaven(8, 11));
     Assert.assertEquals(
         "Invalid image reference gcr.io/invalid_REF, perhaps you should check that the reference "
             + "is formatted correctly according to https://docs.docker.com/engine/reference/commandline/tag/#extended-description\n"

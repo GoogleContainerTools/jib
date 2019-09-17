@@ -22,7 +22,7 @@ Add Jib Core as a dependency using Maven:
 <dependency>
   <groupId>com.google.cloud.tools</groupId>
   <artifactId>jib-core</artifactId>
-  <version>0.10.1</version>
+  <version>0.11.0</version>
 </dependency>
 ```
 
@@ -30,7 +30,7 @@ Add Jib Core as a dependency using Gradle:
 
 ```groovy
 dependencies {
-  compile 'com.google.cloud.tools:jib-core:0.10.1'
+  compile 'com.google.cloud.tools:jib-core:0.11.0'
 }
 ```
 
@@ -65,10 +65,10 @@ See [examples](examples/README.md) for links to more jib-core samples. We welcom
 
 [`JibContainer`](http://www.javadoc.io/page/com.google.cloud.tools/jib-core/latest/com/google/cloud/tools/jib/api/JibContainer.html) - information about the built container
 
-Three `TargetImage` types define the 3 different targets Jib can build to:
-- [`RegistryImage`](http://www.javadoc.io/page/com.google.cloud.tools/jib-core/latest/com/google/cloud/tools/jib/api/RegistryImage.html) - builds to a container registry
-- [`DockerDaemonImage`](http://www.javadoc.io/page/com.google.cloud.tools/jib-core/latest/com/google/cloud/tools/jib/api/DockerDaemonImage.html) - builds to a Docker daemon
-- [`TarImage`](http://www.javadoc.io/page/com.google.cloud.tools/jib-core/latest/com/google/cloud/tools/jib/api/TarImage.html) - saves as a tarball archive
+Three types define what Jib can accept as either the base image or as the build target:
+- [`RegistryImage`](http://www.javadoc.io/page/com.google.cloud.tools/jib-core/latest/com/google/cloud/tools/jib/api/RegistryImage.html) - an image on a container registry
+- [`DockerDaemonImage`](http://www.javadoc.io/page/com.google.cloud.tools/jib-core/latest/com/google/cloud/tools/jib/api/DockerDaemonImage.html) - an image in the Docker daemon
+- [`TarImage`](http://www.javadoc.io/page/com.google.cloud.tools/jib-core/latest/com/google/cloud/tools/jib/api/TarImage.html) - an image saved as a tarball archive on the filesystem
 
 Other useful classes:
 - [`ImageReference`](http://www.javadoc.io/page/com.google.cloud.tools/jib-core/latest/com/google/cloud/tools/jib/api/ImageReference.html) - represents an image reference and has useful methods for parsing and manipulating image references

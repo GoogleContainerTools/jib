@@ -49,7 +49,7 @@ class BuildAndCacheApplicationLayerStep implements Callable<PreparedLayer> {
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
-                "preparing application layer builders", layerConfigurations.size());
+                "launching application layer builders", layerConfigurations.size());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), "Preparing application layer builders")) {

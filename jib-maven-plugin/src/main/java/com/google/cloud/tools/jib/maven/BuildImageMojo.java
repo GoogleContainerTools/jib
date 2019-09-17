@@ -43,7 +43,8 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 /** Builds a container image. */
 @Mojo(
     name = BuildImageMojo.GOAL_NAME,
-    requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM)
+    requiresDependencyResolution = ResolutionScope.RUNTIME_PLUS_SYSTEM,
+    threadSafe = true)
 public class BuildImageMojo extends JibPluginConfiguration {
 
   @VisibleForTesting static final String GOAL_NAME = "build";
@@ -143,7 +144,7 @@ public class BuildImageMojo extends JibPluginConfiguration {
 
     } catch (IncompatibleBaseImageJavaVersionException ex) {
       throw new MojoExecutionException(
-          HelpfulSuggestions.forIncompatibleBaseImageJavaVesionForMaven(
+          HelpfulSuggestions.forIncompatibleBaseImageJavaVersionForMaven(
               ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
           ex);
 

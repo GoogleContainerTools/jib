@@ -39,11 +39,17 @@ public class ConsoleLoggerBuilder {
    *
    * @param singleThreadedExecutor a {@link SingleThreadedExecutor} to ensure that all messages are
    *     logged in a sequential, deterministic order
+   * @param enableTwoCursorUpJump allows the logger to move the cursor up twice at once. Fixes a
+   *     logging issue in Maven (https://github.com/GoogleContainerTools/jib/issues/1952) but causes
+   *     a problem in Gradle (https://github.com/GoogleContainerTools/jib/issues/1963)
    * @return a new {@link ConsoleLoggerBuilder}
    */
-  public static ConsoleLoggerBuilder rich(SingleThreadedExecutor singleThreadedExecutor) {
+  public static ConsoleLoggerBuilder rich(
+      SingleThreadedExecutor singleThreadedExecutor, boolean enableTwoCursorUpJump) {
     return new ConsoleLoggerBuilder(
-        messageConsumers -> new AnsiLoggerWithFooter(messageConsumers, singleThreadedExecutor));
+        messageConsumers ->
+            new AnsiLoggerWithFooter(
+                messageConsumers, singleThreadedExecutor, enableTwoCursorUpJump));
   }
 
   /**

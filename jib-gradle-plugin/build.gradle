@@ -14,17 +14,8 @@ repositories {
 }
 
 dependencies {
-
   sourceProject project(":jib-core")
   sourceProject project(":jib-plugins-common")
-
-  implementation ("com.google.http-client:google-http-client:${dependencyVersions.GOOGLE_HTTP_CLIENT}") {
-    exclude group: "org.apache.httpcomponents", module: "httpclient"
-  }
-  implementation "org.apache.httpcomponents:httpclient:${dependencyVersions.APACHE_HTTP_CLIENT_OVERRIDE}"
-
-  implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"
-  implementation "com.fasterxml.jackson.core:jackson-databind:${dependencyVersions.JACKSON_DATABIND}"
 
   testImplementation "junit:junit:${dependencyVersions.JUNIT}"
   testImplementation "org.mockito:mockito-core:${dependencyVersions.MOCKITO_CORE}"
@@ -42,6 +33,7 @@ dependencies {
 // Prepare release
 release {
   tagTemplate = 'v$version-gradle'
+  ignoredSnapshotDependencies = ["com.google.cloud.tools:jib-core", "com.google.cloud.tools:jib-plugins-common"]
   git {
     requireBranch = /^gradle_release_v\d+.*$/  //regex
   }

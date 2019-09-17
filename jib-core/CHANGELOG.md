@@ -5,107 +5,120 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- `Jib#from` and `JavaContainerBuilder#from` overloads to allow using a `DockerDaemonImage` or a `TarImage` as the base image ([#1468](https://github.com/GoogleContainerTools/jib/issues/1468), [#1905](https://github.com/GoogleContainerTools/jib/issues/1905))
-- `Jib#from(String)` accepts strings prefixed with `docker://`, `tar://`, or `registry://` to specify image type
+### Changed
+
+### Fixed
+
+## 0.11.0
+
+### Added
+
+- `Jib#from` and `JavaContainerBuilder#from` overloads to allow using a `DockerDaemonImage` or a `TarImage` as the base image. ([#1468](https://github.com/GoogleContainerTools/jib/issues/1468), [#1905](https://github.com/GoogleContainerTools/jib/issues/1905))
+- `Jib#from(String)` accepts strings prefixed with `docker://`, `tar://`, or `registry://` to specify image type.
 
 ### Changed
 
-- `TarImage` is constructed using `TarImage.at(...).named(...)` instead of `TarImage.named(...).saveTo(...)` ([#1918](https://github.com/GoogleContainerTools/jib/issues/1918))
+- To disable parallel execution, the property `jib.serialize` should be used instead of `jibSerialize`. ([#1968](https://github.com/GoogleContainerTools/jib/issues/1968))
+- `TarImage` is constructed using `TarImage.at(...).named(...)` instead of `TarImage.named(...).saveTo(...)`. ([#1918](https://github.com/GoogleContainerTools/jib/issues/1918))
+- For retrieving credentials from Docker config (`~/.docker/config.json`), `credHelpers` now takes precedence over `credsStore`, followed by `auths`. ([#1958](https://github.com/GoogleContainerTools/jib/pull/1958))
+- The legacy `credsStore` no longer requires defining empty registry entries in `auths` to be used. This now means that if `credsStore` is defined, `auths` will be completely ignored. ([#1958](https://github.com/GoogleContainerTools/jib/pull/1958))
 
 ### Fixed
 
 - Fixed an issue interacting with certain registries due to changes to URL handling in the underlying Apache HttpClient library. ([#1924](https://github.com/GoogleContainerTools/jib/issues/1924))
+- Fixed the regression of slow network operations introduced at 0.10.1. ([#1980](https://github.com/GoogleContainerTools/jib/pull/1980))
+- Fixed an issue where connection timeout sometimes fell back to attempting plain HTTP (non-HTTPS) requests when the `Containerizer` is set to allow insecure registries. ([#1949](https://github.com/GoogleContainerTools/jib/pull/1949))
 
 ## 0.10.1
 
 ### Added
 
-- `JavaContainerBuilder#setLastModifiedTimeProvider` to set file timestamps ([#1818](https://github.com/GoogleContainerTools/jib/pull/1818))
+- `JavaContainerBuilder#setLastModifiedTimeProvider` to set file timestamps. ([#1818](https://github.com/GoogleContainerTools/jib/pull/1818))
 
 ### Changed
 
-- `JibContainerBuilder#addDependencies` is now split into three methods: `addDependencies`, `addSnapshotDependencies`, `addProjectDependencies` ([#1773](https://github.com/GoogleContainerTools/jib/pull/1773))
-- For building and pushing to a registry, Jib now skips downloading and caching base image layers if the layers already exist in the target registry. This feature will be particularly useful in CI/CD environments. However, if you want to force caching base image layers locally, set the system property `-Djib.alwaysCacheBaseImage=true` ([#1840](https://github.com/GoogleContainerTools/jib/pull/1840))
+- `JibContainerBuilder#addDependencies` is now split into three methods: `addDependencies`, `addSnapshotDependencies`, `addProjectDependencies`. ([#1773](https://github.com/GoogleContainerTools/jib/pull/1773))
+- For building and pushing to a registry, Jib now skips downloading and caching base image layers if the layers already exist in the target registry. This feature will be particularly useful in CI/CD environments. However, if you want to force caching base image layers locally, set the system property `-Djib.alwaysCacheBaseImage=true`. ([#1840](https://github.com/GoogleContainerTools/jib/pull/1840))
 
 ### Fixed
 
-- Manifest lists referenced directly by sha256 are automatically parsed and the first `linux/amd64` manifest is used ([#1811](https://github.com/GoogleContainerTools/jib/issues/1811))
+- Manifest lists referenced directly by sha256 are automatically parsed and the first `linux/amd64` manifest is used. ([#1811](https://github.com/GoogleContainerTools/jib/issues/1811))
 
 ## 0.10.0
 
 ### Added
 
-- `Containerizer#addEventHandler` for adding event handlers
+- `Containerizer#addEventHandler` for adding event handlers.
 
 ### Changed
 
-- Multiple classes have been moved to the `com.google.cloud.tools.jib.api` package
-- Event handlers are now added directly to the `Containerizer` rather than adding them to an `EventHandlers` object first
+- Multiple classes have been moved to the `com.google.cloud.tools.jib.api` package.
+- Event handlers are now added directly to the `Containerizer` rather than adding them to an `EventHandlers` object first.
 - Removed multiple classes to simplify the event system (`JibEventType`, `BuildStepType`, `EventDispatcher`, `DefaultEventDispatcher`, `LayerCountEvent`)
-- MainClassFinder now uses a static method instead of requiring instantiation
+- MainClassFinder now uses a static method instead of requiring instantiation.
 
 ## 0.9.2
 
 ### Added
 
-- Container configurations in the base image are now propagated when registry uses the old V2 image manifest, schema version 1 (such as Quay) ([#1641](https://github.com/GoogleContainerTools/jib/issues/1641))
-- `Containerizer#setOfflineMode` to retrieve the base image from Jib's cache rather than a container registry ([#718](https://github.com/GoogleContainerTools/jib/issues/718))
+- Container configurations in the base image are now propagated when registry uses the old V2 image manifest, schema version 1 (such as Quay). ([#1641](https://github.com/GoogleContainerTools/jib/issues/1641))
+- `Containerizer#setOfflineMode` to retrieve the base image from Jib's cache rather than a container registry. ([#718](https://github.com/GoogleContainerTools/jib/issues/718))
 
 ### Fixed
 
-- Labels in the base image are now propagated ([#1643](https://github.com/GoogleContainerTools/jib/issues/1643))
-- Fixed an issue with using OCI base images ([#1683](https://github.com/GoogleContainerTools/jib/issues/1683))
+- Labels in the base image are now propagated. ([#1643](https://github.com/GoogleContainerTools/jib/issues/1643))
+- Fixed an issue with using OCI base images. ([#1683](https://github.com/GoogleContainerTools/jib/issues/1683))
 
 ## 0.9.1
 
 ### Added
 
-- Overloads for `LayerConfiguration#addEntryRecursive` that take providers to set file permissions and file modification time on a per-file basis ([#1607](https://github.com/GoogleContainerTools/jib/issues/1607))
+- Overloads for `LayerConfiguration#addEntryRecursive` that take providers to set file permissions and file modification time on a per-file basis. ([#1607](https://github.com/GoogleContainerTools/jib/issues/1607))
 
 ### Changed
 
-- `LayerConfiguration` takes file modification time as an `Instant` instead of a `long`
+- `LayerConfiguration` takes file modification time as an `Instant` instead of a `long`.
 
 ### Fixed
 
-- Fixed an issue where automatically generated parent directories in a layer did not get their timestamp configured correctly to epoch + 1s ([#1648](https://github.com/GoogleContainerTools/jib/issues/1648))
-- Fixed an issue where the library creates wrong images by adding base image layers in reverse order when registry uses the old V2 image manifest, schema version 1 (such as Quay) ([#1627](https://github.com/GoogleContainerTools/jib/issues/1627))
+- Fixed an issue where automatically generated parent directories in a layer did not get their timestamp configured correctly to epoch + 1s. ([#1648](https://github.com/GoogleContainerTools/jib/issues/1648))
+- Fixed an issue where the library creates wrong images by adding base image layers in reverse order when registry uses the old V2 image manifest, schema version 1 (such as Quay). ([#1627](https://github.com/GoogleContainerTools/jib/issues/1627))
 
 ## 0.9.0
 
 ### Added
 
-- `JavaContainerBuilder#setAppRoot()` and `JavaContainerBuilder#fromDistrolessJetty()` for building WAR containers ([#1464](https://github.com/GoogleContainerTools/jib/issues/1464))
-- `Jib#fromScratch()` to start building from an empty base image ([#1471](https://github.com/GoogleContainerTools/jib/issues/1471))
-- Methods in `JavaContainerBuilder` for setting the destination directories for classes, resources, directories, and additional classpath files
+- `JavaContainerBuilder#setAppRoot()` and `JavaContainerBuilder#fromDistrolessJetty()` for building WAR containers. ([#1464](https://github.com/GoogleContainerTools/jib/issues/1464))
+- `Jib#fromScratch()` to start building from an empty base image. ([#1471](https://github.com/GoogleContainerTools/jib/issues/1471))
+- Methods in `JavaContainerBuilder` for setting the destination directories for classes, resources, directories, and additional classpath files.
 
 ### Changed
 
-- Allow skipping `JavaContainerBuilder#setMainClass()` to skip setting the entrypoint
-- `os` and `architecture` are taken from base image ([#1564](https://github.com/GoogleContainerTools/jib/pull/1564))
+- Allow skipping `JavaContainerBuilder#setMainClass()` to skip setting the entrypoint.
+- `os` and `architecture` are taken from base image. ([#1564](https://github.com/GoogleContainerTools/jib/pull/1564))
 
 ### Fixed
 
-- `ImageReference` assumes `registry-1.docker.io` as the registry if the host part of an image reference is `docker.io` ([#1549](https://github.com/GoogleContainerTools/jib/issues/1549))
+- `ImageReference` assumes `registry-1.docker.io` as the registry if the host part of an image reference is `docker.io`. ([#1549](https://github.com/GoogleContainerTools/jib/issues/1549))
 
 ## 0.1.2
 
 ### Added
 
-- `ProgressEvent#getBuildStepType` method to get which step in the build process a progress event corresponds to ([#1449](https://github.com/GoogleContainerTools/jib/pull/1449))
-- `LayerCountEvent` that is dispatched at the beginning of certain pull/build/push build steps to indicate the number of layers being processed ([#1461](https://github.com/GoogleContainerTools/jib/pull/1461))
+- `ProgressEvent#getBuildStepType` method to get which step in the build process a progress event corresponds to. ([#1449](https://github.com/GoogleContainerTools/jib/pull/1449))
+- `LayerCountEvent` that is dispatched at the beginning of certain pull/build/push build steps to indicate the number of layers being processed. ([#1461](https://github.com/GoogleContainerTools/jib/pull/1461))
 
 ### Changed
 
-- `JibContainerBuilder#containerize()` throws multiple sub-types of `RegistryException` rather than wrapping them in an `ExecutionException` ([#1440](https://github.com/GoogleContainerTools/jib/issues/1440))
+- `JibContainerBuilder#containerize()` throws multiple sub-types of `RegistryException` rather than wrapping them in an `ExecutionException`. ([#1440](https://github.com/GoogleContainerTools/jib/issues/1440))
 
 ### Fixed
 
-- `MainClassFinder` failure when main method is defined using varargs (i.e. `public static void main(String... args)`) ([#1456](https://github.com/GoogleContainerTools/jib/issues/1456))
+- `MainClassFinder` failure when main method is defined using varargs (i.e. `public static void main(String... args)`). ([#1456](https://github.com/GoogleContainerTools/jib/issues/1456))
 
 ## 0.1.1
 
 ### Added
 
-- Adds support for configuring volumes ([#1121](https://github.com/GoogleContainerTools/jib/issues/1121))
-- Adds `JavaContainerBuilder` for building opinionated containers for Java applications ([#1212](https://github.com/GoogleContainerTools/jib/issues/1212))
+- Adds support for configuring volumes. ([#1121](https://github.com/GoogleContainerTools/jib/issues/1121))
+- Adds `JavaContainerBuilder` for building opinionated containers for Java applications. ([#1212](https://github.com/GoogleContainerTools/jib/issues/1212))

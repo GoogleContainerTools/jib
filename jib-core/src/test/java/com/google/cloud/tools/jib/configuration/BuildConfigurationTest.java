@@ -21,8 +21,11 @@ import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.CredentialRetriever;
 import com.google.cloud.tools.jib.api.ImageFormat;
 import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.Port;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -245,5 +248,36 @@ public class BuildConfigurationTest {
               + "application layers cache directory, and executor service are required but not set",
           ex.getMessage());
     }
+  }
+
+  @Test
+  public void testBuilder_digestWarning() throws IOException, InvalidImageReferenceException {
+    EventHandlers mockEventHandlers = Mockito.mock(EventHandlers.class);
+    BuildConfiguration.Builder builder =
+        BuildConfiguration.builder()
+            .setEventHandlers(mockEventHandlers)
+            .setTargetImageConfiguration(
+                ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
+            .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
+            .setApplicationLayersCacheDirectory(Paths.get("ignored"))
+            .setExecutorService(MoreExecutors.newDirectExecutorService());
+
+    builder
+        .setBaseImageConfiguration(
+            ImageConfiguration.builder(
+                    ImageReference.parse(
+                        "image@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+                .build())
+        .build();
+    Mockito.verify(mockEventHandlers, Mockito.never()).dispatch(LogEvent.warn(Mockito.anyString()));
+
+    builder
+        .setBaseImageConfiguration(
+            ImageConfiguration.builder(ImageReference.parse("image:tag")).build())
+        .build();
+    Mockito.verify(mockEventHandlers)
+        .dispatch(
+            LogEvent.warn(
+                "Base image 'image:tag' does not use a specific image digest - build may not be reproducible"));
   }
 }
