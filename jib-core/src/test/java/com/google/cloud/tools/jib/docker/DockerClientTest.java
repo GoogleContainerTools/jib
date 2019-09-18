@@ -122,7 +122,6 @@ public class DockerClientTest {
   @Test
   public void testLoad_stdinFail_stderrFail() throws InterruptedException {
     DockerClient testDockerClient = new DockerClient(ignored -> mockProcessBuilder);
-    IOException expectedIOException = new IOException();
 
     Mockito.when(mockProcess.getOutputStream())
         .thenReturn(
@@ -130,7 +129,7 @@ public class DockerClientTest {
 
               @Override
               public void write(int b) throws IOException {
-                throw expectedIOException;
+                throw new IOException("I/O failed");
               }
             });
     Mockito.when(mockProcess.getErrorStream())
@@ -148,7 +147,7 @@ public class DockerClientTest {
       Assert.fail("Write should have failed");
 
     } catch (IOException ex) {
-      Assert.assertSame(expectedIOException, ex);
+      Assert.assertEquals("'docker load' command failed with error: I/O failed", ex.getMessage());
     }
   }
 
@@ -168,7 +167,7 @@ public class DockerClientTest {
       Assert.fail("Process should have failed");
 
     } catch (IOException ex) {
-      Assert.assertEquals("'docker load' command failed with output: error", ex.getMessage());
+      Assert.assertEquals("'docker load' command failed with error: error", ex.getMessage());
     }
   }
 
@@ -203,7 +202,7 @@ public class DockerClientTest {
       Assert.fail("docker save should have failed");
 
     } catch (IOException ex) {
-      Assert.assertEquals("'docker save' command failed with output: error", ex.getMessage());
+      Assert.assertEquals("'docker save' command failed with error: error", ex.getMessage());
     }
   }
 
@@ -264,6 +263,28 @@ public class DockerClientTest {
 
     } catch (IOException ex) {
       Assert.assertEquals("'docker tag' command failed with error: error", ex.getMessage());
+    }
+  }
+
+  @Test
+  public void testSize_fail() throws InterruptedException {
+    DockerClient testDockerClient =
+        new DockerClient(
+            subcommand -> {
+              Assert.assertEquals(Arrays.asList("inspect", "-f", "{{.Size}}", "image"), subcommand);
+              return mockProcessBuilder;
+            });
+    Mockito.when(mockProcess.waitFor()).thenReturn(1);
+
+    Mockito.when(mockProcess.getErrorStream())
+        .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
+
+    try {
+      testDockerClient.sizeOf(ImageReference.of(null, "image", null));
+      Assert.fail("docker inspect should have failed");
+
+    } catch (IOException ex) {
+      Assert.assertEquals("'docker inspect' command failed with error: error", ex.getMessage());
     }
   }
 
