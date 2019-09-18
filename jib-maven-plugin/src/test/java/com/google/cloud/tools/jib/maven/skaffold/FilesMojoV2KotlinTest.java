@@ -37,18 +37,19 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class FilesMojoV2KotlinTest {
 
+  private final Xpp3Dom configuration1 = new Xpp3Dom("configuration");
+  private final Xpp3Dom configuration2 = new Xpp3Dom("configuration");
+  private final Xpp3Dom sourceDirs1 = new Xpp3Dom("sourceDirs");
+  private final Xpp3Dom sourceDirs2 = new Xpp3Dom("sourceDirs");
+  private final Xpp3Dom sourceDir1 = new Xpp3Dom("sourceDir");
+  private final Xpp3Dom sourceDir2 = new Xpp3Dom("sourceDir");
+  private final Xpp3Dom sourceDir3 = new Xpp3Dom("sourceDir");
+  private final Xpp3Dom sourceDir4 = new Xpp3Dom("sourceDir");
+
   @Mock private MavenProject mavenProject;
   @Mock private Plugin kotlinPlugin;
   @Mock private PluginExecution pluginExecution1;
   @Mock private PluginExecution pluginExecution2;
-  @Mock private Xpp3Dom configuration1;
-  @Mock private Xpp3Dom configuration2;
-  @Mock private Xpp3Dom sourceDirs1;
-  @Mock private Xpp3Dom sourceDirs2;
-  @Mock private Xpp3Dom sourceDir1;
-  @Mock private Xpp3Dom sourceDir2;
-  @Mock private Xpp3Dom sourceDir3;
-  @Mock private Xpp3Dom sourceDir4;
 
   @Before
   public void setUp() {
@@ -95,8 +96,7 @@ public class FilesMojoV2KotlinTest {
   public void getKotlinSourceDirectories_noSourceDirsChildren() {
     Mockito.when(kotlinPlugin.getExecutions()).thenReturn(Arrays.asList(pluginExecution1));
     Mockito.when(pluginExecution1.getConfiguration()).thenReturn(configuration1);
-    Mockito.when(configuration1.getChild("sourceDirs")).thenReturn(sourceDirs1);
-    Mockito.when(sourceDirs1.getChildren()).thenReturn(new Xpp3Dom[0]);
+    configuration1.addChild(sourceDirs1);
 
     Assert.assertEquals(
         ImmutableSet.of(Paths.get("/base/src/main/kotlin")),
@@ -107,9 +107,8 @@ public class FilesMojoV2KotlinTest {
   public void getKotlinSourceDirectories_nullSourceDir() {
     Mockito.when(kotlinPlugin.getExecutions()).thenReturn(Arrays.asList(pluginExecution1));
     Mockito.when(pluginExecution1.getConfiguration()).thenReturn(configuration1);
-    Mockito.when(configuration1.getChild("sourceDirs")).thenReturn(sourceDirs1);
-    Mockito.when(sourceDirs1.getChildren()).thenReturn(new Xpp3Dom[] {sourceDir1});
-    Mockito.when(sourceDir1.getValue()).thenReturn(null);
+    configuration1.addChild(sourceDirs1);
+    sourceDirs1.addChild(sourceDir1);
 
     Assert.assertEquals(
         ImmutableSet.of(Paths.get("/base/src/main/kotlin")),
@@ -120,9 +119,9 @@ public class FilesMojoV2KotlinTest {
   public void getKotlinSourceDirectories_emptySourceDir() {
     Mockito.when(kotlinPlugin.getExecutions()).thenReturn(Arrays.asList(pluginExecution1));
     Mockito.when(pluginExecution1.getConfiguration()).thenReturn(configuration1);
-    Mockito.when(configuration1.getChild("sourceDirs")).thenReturn(sourceDirs1);
-    Mockito.when(sourceDirs1.getChildren()).thenReturn(new Xpp3Dom[] {sourceDir1});
-    Mockito.when(sourceDir1.getValue()).thenReturn("");
+    configuration1.addChild(sourceDirs1);
+    sourceDirs1.addChild(sourceDir1);
+    sourceDir1.setValue("");
 
     Assert.assertEquals(
         ImmutableSet.of(Paths.get("/base/src/main/kotlin")),
@@ -133,9 +132,9 @@ public class FilesMojoV2KotlinTest {
   public void getKotlinSourceDirectories_relativePath() {
     Mockito.when(kotlinPlugin.getExecutions()).thenReturn(Arrays.asList(pluginExecution1));
     Mockito.when(pluginExecution1.getConfiguration()).thenReturn(configuration1);
-    Mockito.when(configuration1.getChild("sourceDirs")).thenReturn(sourceDirs1);
-    Mockito.when(sourceDirs1.getChildren()).thenReturn(new Xpp3Dom[] {sourceDir1});
-    Mockito.when(sourceDir1.getValue()).thenReturn("kotlin/src");
+    configuration1.addChild(sourceDirs1);
+    sourceDirs1.addChild(sourceDir1);
+    sourceDir1.setValue("kotlin/src");
 
     Assert.assertEquals(
         ImmutableSet.of(Paths.get("/base/src/main/kotlin"), Paths.get("/base/kotlin/src")),
@@ -146,9 +145,9 @@ public class FilesMojoV2KotlinTest {
   public void getKotlinSourceDirectories_absolutePath() {
     Mockito.when(kotlinPlugin.getExecutions()).thenReturn(Arrays.asList(pluginExecution1));
     Mockito.when(pluginExecution1.getConfiguration()).thenReturn(configuration1);
-    Mockito.when(configuration1.getChild("sourceDirs")).thenReturn(sourceDirs1);
-    Mockito.when(sourceDirs1.getChildren()).thenReturn(new Xpp3Dom[] {sourceDir1});
-    Mockito.when(sourceDir1.getValue()).thenReturn("/absolute/src");
+    configuration1.addChild(sourceDirs1);
+    sourceDirs1.addChild(sourceDir1);
+    sourceDir1.setValue("/absolute/src");
 
     Assert.assertEquals(
         ImmutableSet.of(Paths.get("/base/src/main/kotlin"), Paths.get("/absolute/src")),
@@ -161,14 +160,16 @@ public class FilesMojoV2KotlinTest {
         .thenReturn(Arrays.asList(pluginExecution1, pluginExecution2));
     Mockito.when(pluginExecution1.getConfiguration()).thenReturn(configuration1);
     Mockito.when(pluginExecution2.getConfiguration()).thenReturn(configuration2);
-    Mockito.when(configuration1.getChild("sourceDirs")).thenReturn(sourceDirs1);
-    Mockito.when(configuration2.getChild("sourceDirs")).thenReturn(sourceDirs2);
-    Mockito.when(sourceDirs1.getChildren()).thenReturn(new Xpp3Dom[] {sourceDir1, sourceDir2});
-    Mockito.when(sourceDirs2.getChildren()).thenReturn(new Xpp3Dom[] {sourceDir3, sourceDir4});
-    Mockito.when(sourceDir1.getValue()).thenReturn("/absolute/src1");
-    Mockito.when(sourceDir2.getValue()).thenReturn("relative/src2");
-    Mockito.when(sourceDir3.getValue()).thenReturn("/absolute/src3");
-    Mockito.when(sourceDir4.getValue()).thenReturn("relative/src4");
+    configuration1.addChild(sourceDirs1);
+    configuration2.addChild(sourceDirs2);
+    sourceDirs1.addChild(sourceDir1);
+    sourceDirs1.addChild(sourceDir2);
+    sourceDirs2.addChild(sourceDir3);
+    sourceDirs2.addChild(sourceDir4);
+    sourceDir1.setValue("/absolute/src1");
+    sourceDir2.setValue("relative/src2");
+    sourceDir3.setValue("/absolute/src3");
+    sourceDir4.setValue("relative/src4");
 
     Assert.assertEquals(
         ImmutableSet.of(
@@ -186,14 +187,16 @@ public class FilesMojoV2KotlinTest {
         .thenReturn(Arrays.asList(pluginExecution1, pluginExecution2));
     Mockito.when(pluginExecution1.getConfiguration()).thenReturn(configuration1);
     Mockito.when(pluginExecution2.getConfiguration()).thenReturn(configuration2);
-    Mockito.when(configuration1.getChild("sourceDirs")).thenReturn(sourceDirs1);
-    Mockito.when(configuration2.getChild("sourceDirs")).thenReturn(sourceDirs2);
-    Mockito.when(sourceDirs1.getChildren()).thenReturn(new Xpp3Dom[] {sourceDir1, sourceDir2});
-    Mockito.when(sourceDirs2.getChildren()).thenReturn(new Xpp3Dom[] {sourceDir3, sourceDir4});
-    Mockito.when(sourceDir1.getValue()).thenReturn("src/main/kotlin");
-    Mockito.when(sourceDir2.getValue()).thenReturn("/base/another/src");
-    Mockito.when(sourceDir3.getValue()).thenReturn("another/src");
-    Mockito.when(sourceDir4.getValue()).thenReturn("/base/src/main/kotlin");
+    configuration1.addChild(sourceDirs1);
+    configuration1.addChild(sourceDirs2);
+    sourceDirs1.addChild(sourceDir1);
+    sourceDirs1.addChild(sourceDir2);
+    sourceDirs2.addChild(sourceDir3);
+    sourceDirs2.addChild(sourceDir4);
+    sourceDir1.setValue("src/main/kotlin");
+    sourceDir2.setValue("/base/another/src");
+    sourceDir3.setValue("another/src");
+    sourceDir4.setValue("/base/src/main/kotlin");
 
     Assert.assertEquals(
         ImmutableSet.of(Paths.get("/base/src/main/kotlin"), Paths.get("/base/another/src")),

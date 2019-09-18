@@ -33,12 +33,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.model.Plugin;
+import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
@@ -70,6 +72,7 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
 
   @VisibleForTesting static final String GOAL_NAME = "_skaffold-files-v2";
 
+  // extracting source directories based on https://kotlinlang.org/docs/reference/using-maven.html
   @VisibleForTesting
   static Set<Path> getKotlinSourceDirectories(MavenProject project) {
     Plugin kotlinPlugin = project.getPlugin("org.jetbrains.kotlin:kotlin-maven-plugin");
@@ -79,6 +82,8 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
 
     Path projectBaseDir = project.getBasedir().toPath();
 
+    Predicate<PluginExecution> noTestCompileGoal =
+        execution -> !execution.getGoals().contains("test-compile");
     // Extract <sourceDir> values from <configuration> in the plugin <executions>. Sample:
     // <executions><execution><configuration>
     //   <sourceDirs>
@@ -90,6 +95,7 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
         kotlinPlugin
             .getExecutions()
             .stream()
+            .filter(noTestCompileGoal)
             .map(execution -> (Xpp3Dom) execution.getConfiguration())
             .filter(Objects::nonNull)
             .map(configuration -> configuration.getChild("sourceDirs"))
@@ -139,7 +145,9 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
       // Add sources directory (resolved by maven to be an absolute path)
       skaffoldFilesOutput.addInput(Paths.get(project.getBuild().getSourceDirectory()));
 
-      getKotlinSourceDirectories(project).forEach(skaffoldFilesOutput::addInput);
+      for (Path directory : getKotlinSourceDirectories(project)) {
+        skaffoldFilesOutput.addInput(directory);
+      }
 
       // Add resources directory (resolved by maven to be an absolute path)
       project
