@@ -33,14 +33,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.FileSet;
 import org.apache.maven.model.Plugin;
-import org.apache.maven.model.PluginExecution;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Component;
@@ -82,8 +80,6 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
 
     Path projectBaseDir = project.getBasedir().toPath();
 
-    Predicate<PluginExecution> noTestCompileGoal =
-        execution -> !execution.getGoals().contains("test-compile");
     // Extract <sourceDir> values from <configuration> in the plugin <executions>. Sample:
     // <executions><execution><configuration>
     //   <sourceDirs>
@@ -95,7 +91,7 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
         kotlinPlugin
             .getExecutions()
             .stream()
-            .filter(noTestCompileGoal)
+            .filter(execution -> !execution.getGoals().contains("test-compile"))
             .map(execution -> (Xpp3Dom) execution.getConfiguration())
             .filter(Objects::nonNull)
             .map(configuration -> configuration.getChild("sourceDirs"))
@@ -105,7 +101,7 @@ public class FilesMojoV2 extends SkaffoldBindingMojo {
             .map(Xpp3Dom::getValue)
             .filter(value -> !Strings.isNullOrEmpty(value))
             .map(Paths::get)
-            .map(path -> path.isAbsolute() ? path : project.getBasedir().toPath().resolve(path))
+            .map(path -> path.isAbsolute() ? path : projectBaseDir.resolve(path))
             .collect(Collectors.toSet());
 
     Path conventionalDirectory = projectBaseDir.resolve(Paths.get("src", "main", "kotlin"));
