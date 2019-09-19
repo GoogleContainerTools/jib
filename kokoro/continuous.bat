@@ -12,4 +12,6 @@ REM FOR /f "tokens=*" %%i IN ('docker ps -aq') DO docker rm -vf %%i
 REM Sets the integration testing project.
 set JIB_INTEGRATION_TESTING_PROJECT=jib-integration-testing
 
+docker --version
+
 docker info
