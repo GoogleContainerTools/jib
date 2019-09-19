@@ -14,4 +14,8 @@ set JIB_INTEGRATION_TESTING_PROJECT=jib-integration-testing
 
 docker --version
 
+docker pull busybox
+
+docker run --rm busybox echo hello_world
+
 docker info
