@@ -27,6 +27,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -135,16 +136,16 @@ public class DockerClient {
       imageTarball.writeTo(stdin);
 
     } catch (IOException ex) {
-      // Tries to read from stderr.
+      // Tries to read from stderr. Not using getStderrOutput(), as we want to show the error
+      // message from the tarball I/O write failure when reading from stderr fails.
       String error;
       try (InputStreamReader stderr =
           new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
         error = CharStreams.toString(stderr);
-
       } catch (IOException ignored) {
-        // This ignores exceptions from reading stderr and throws the original exception from
+        // This ignores exceptions from reading stderr and uses the original exception from
         // writing to stdin.
-        throw ex;
+        error = ex.getMessage();
       }
       throw new IOException("'docker load' command failed with error: " + error, ex);
     }
@@ -154,11 +155,8 @@ public class DockerClient {
       String output = CharStreams.toString(stdout);
 
       if (dockerProcess.waitFor() != 0) {
-        try (InputStreamReader stderr =
-            new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
-          throw new IOException(
-              "'docker load' command failed with output: " + CharStreams.toString(stderr));
-        }
+        throw new IOException(
+            "'docker load' command failed with error: " + getStderrOutput(dockerProcess));
       }
 
       return output;
@@ -180,20 +178,17 @@ public class DockerClient {
       ImageReference imageReference, Path outputPath, Consumer<Long> writtenByteCountListener)
       throws InterruptedException, IOException {
     Process dockerProcess = docker("save", imageReference.toString());
+
     try (InputStream stdout = new BufferedInputStream(dockerProcess.getInputStream());
-        NotifyingOutputStream fileStream =
-            new NotifyingOutputStream(
-                new BufferedOutputStream(Files.newOutputStream(outputPath)),
-                writtenByteCountListener)) {
-      ByteStreams.copy(stdout, fileStream);
+        OutputStream fileStream = new BufferedOutputStream(Files.newOutputStream(outputPath));
+        NotifyingOutputStream notifyingFileStream =
+            new NotifyingOutputStream(fileStream, writtenByteCountListener)) {
+      ByteStreams.copy(stdout, notifyingFileStream);
     }
 
     if (dockerProcess.waitFor() != 0) {
-      try (InputStreamReader stderr =
-          new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
-        throw new IOException(
-            "'docker save' command failed with output: " + CharStreams.toString(stderr));
-      }
+      throw new IOException(
+          "'docker save' command failed with error: " + getStderrOutput(dockerProcess));
     }
   }
 
@@ -205,7 +200,7 @@ public class DockerClient {
    * @param newImageReference the new image reference
    * @see <a
    *     href="https://docs.docker.com/engine/reference/commandline/tag/">https://docs.docker.com/engine/reference/commandline/tag/</a>
-   * @throws InterruptedException if the 'docker tag' process is interrupted.
+   * @throws InterruptedException if the 'docker tag' process is interrupted
    * @throws IOException if an I/O exception occurs or {@code docker tag} failed
    */
   public void tag(ImageReference originalImageReference, ImageReference newImageReference)
@@ -213,13 +208,9 @@ public class DockerClient {
     // Runs 'docker tag'.
     Process dockerProcess =
         docker("tag", originalImageReference.toString(), newImageReference.toString());
-
     if (dockerProcess.waitFor() != 0) {
-      try (InputStreamReader stderr =
-          new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
-        throw new IOException(
-            "'docker tag' command failed with error: " + CharStreams.toString(stderr));
-      }
+      throw new IOException(
+          "'docker tag' command failed with error: " + getStderrOutput(dockerProcess));
     }
   }
 
@@ -229,9 +220,16 @@ public class DockerClient {
    * @param imageReference the image to find the size of
    * @return the size in bytes
    * @throws IOException if an I/O exception occurs
+   * @throws InterruptedException if the 'docker inspect' process is interrupted
    */
-  public long sizeOf(ImageReference imageReference) throws IOException {
+  public long sizeOf(ImageReference imageReference) throws IOException, InterruptedException {
     Process sizeProcess = docker("inspect", "-f", "{{.Size}}", imageReference.toString());
+
+    if (sizeProcess.waitFor() != 0) {
+      throw new IOException(
+          "'docker inspect' command failed with error: " + getStderrOutput(sizeProcess));
+    }
+
     return Long.parseLong(
         CharStreams.toString(
                 new InputStreamReader(sizeProcess.getInputStream(), StandardCharsets.UTF_8))
@@ -241,5 +239,14 @@ public class DockerClient {
   /** Runs a {@code docker} command. */
   private Process docker(String... subCommand) throws IOException {
     return processBuilderFactory.apply(Arrays.asList(subCommand)).start();
+  }
+
+  private static String getStderrOutput(Process process) {
+    try (InputStreamReader stderr =
+        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
+      return CharStreams.toString(stderr);
+    } catch (IOException ex) {
+      return "unknown (failed to read error message from stderr due to " + ex.getMessage() + ")";
+    }
   }
 }
