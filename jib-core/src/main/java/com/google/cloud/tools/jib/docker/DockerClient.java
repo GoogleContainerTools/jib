@@ -136,7 +136,8 @@ public class DockerClient {
       imageTarball.writeTo(stdin);
 
     } catch (IOException ex) {
-      // Tries to read from stderr.
+      // Tries to read from stderr. Not using getStderrOutput(), as we want to show the error
+      // message from the tarball I/O write failure when reading from stderr fails.
       String error;
       try (InputStreamReader stderr =
           new InputStreamReader(dockerProcess.getErrorStream(), StandardCharsets.UTF_8)) {
