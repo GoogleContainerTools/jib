@@ -31,7 +31,6 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
-import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
@@ -50,6 +49,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.Callable;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -88,14 +88,17 @@ public class ExtractTarStep implements Callable<LocalImage> {
   private final BuildConfiguration buildConfiguration;
   private final Path tarPath;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
+  private final Queue<Path> directoriesToDelete;
 
   ExtractTarStep(
       BuildConfiguration buildConfiguration,
       Path tarPath,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      Queue<Path> directoriesToDelete) {
     this.buildConfiguration = buildConfiguration;
     this.tarPath = tarPath;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
+    this.directoriesToDelete = directoriesToDelete;
   }
 
   @Override
@@ -107,7 +110,9 @@ public class ExtractTarStep implements Callable<LocalImage> {
         new TimerEventDispatcher(
             buildConfiguration.getEventHandlers(),
             "Extracting tar " + tarPath + " into " + destination)) {
-      FileOperations.deleteRecursiveOnExit(destination);
+      // Mark "destination" for cleanup in StepsRunner
+      directoriesToDelete.add(destination);
+
       TarExtractor.extract(tarPath, destination);
 
       InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
