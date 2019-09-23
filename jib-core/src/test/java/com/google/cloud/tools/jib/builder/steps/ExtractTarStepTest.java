@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -73,7 +74,12 @@ public class ExtractTarStepTest {
           BadContainerConfigurationFormatException, IOException, CacheCorruptedException {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
-        new ExtractTarStep(buildConfiguration, dockerBuild, progressEventDispatcherFactory).call();
+        new ExtractTarStep(
+                buildConfiguration,
+                dockerBuild,
+                progressEventDispatcherFactory,
+                new ConcurrentLinkedQueue<>())
+            .call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
@@ -98,7 +104,12 @@ public class ExtractTarStepTest {
           BadContainerConfigurationFormatException, IOException, CacheCorruptedException {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
-        new ExtractTarStep(buildConfiguration, tarBuild, progressEventDispatcherFactory).call();
+        new ExtractTarStep(
+                buildConfiguration,
+                tarBuild,
+                progressEventDispatcherFactory,
+                new ConcurrentLinkedQueue<>())
+            .call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
