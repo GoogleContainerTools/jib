@@ -43,7 +43,7 @@ public class TempDirectoryProviderTest {
   @Test
   public void testClose_directoriesDeleted() throws IOException, URISyntaxException {
     Path parent = temporaryFolder.newFolder().toPath();
-    
+
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
       Path directory1 = tempDirectoryProvider.newDirectory(parent);
       createFilesInDirectory(directory1);

@@ -103,7 +103,7 @@ public class StepsRunner {
 
   private final ExecutorService executorService;
   private final BuildConfiguration buildConfiguration;
-  private final TempDirectoryProvider tempDirectories = new TempDirectoryProvider();
+  private final TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
   // We save steps to run by wrapping each step into a Runnable, only because of the unfortunate
   // chicken-and-egg situation arising from using ProgressEventDispatcher. The current
@@ -185,7 +185,7 @@ public class StepsRunner {
       throw unrolled;
 
     } finally {
-      tempDirectories.close();
+      tempDirectoryProvider.close();
     }
   }
 
@@ -247,7 +247,7 @@ public class StepsRunner {
                 buildConfiguration,
                 dockerClient.get(),
                 childProgressDispatcherFactory,
-                tempDirectories));
+                tempDirectoryProvider));
   }
 
   private void extractTar() {
@@ -260,7 +260,7 @@ public class StepsRunner {
                         buildConfiguration,
                         results.tarPath.get(),
                         childProgressDispatcherFactory,
-                        tempDirectories)
+                        tempDirectoryProvider)
                     .call());
     results.baseImageAndAuth =
         executorService.submit(

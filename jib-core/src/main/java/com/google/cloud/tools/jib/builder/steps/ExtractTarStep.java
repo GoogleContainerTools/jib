@@ -88,24 +88,24 @@ public class ExtractTarStep implements Callable<LocalImage> {
   private final BuildConfiguration buildConfiguration;
   private final Path tarPath;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  private final TempDirectoryProvider tempDirectories;
+  private final TempDirectoryProvider tempDirectoryProvider;
 
   ExtractTarStep(
       BuildConfiguration buildConfiguration,
       Path tarPath,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      TempDirectoryProvider tempDirectories) {
+      TempDirectoryProvider tempDirectoryProvider) {
     this.buildConfiguration = buildConfiguration;
     this.tarPath = tarPath;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.tempDirectories = tempDirectories;
+    this.tempDirectoryProvider = tempDirectoryProvider;
   }
 
   @Override
   public LocalImage call()
       throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException,
           CacheCorruptedException {
-    Path destination = tempDirectories.newDirectory();
+    Path destination = tempDirectoryProvider.newDirectory();
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(
             buildConfiguration.getEventHandlers(),
