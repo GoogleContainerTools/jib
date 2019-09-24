@@ -29,7 +29,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.HashSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -75,10 +75,7 @@ public class ExtractTarStepTest {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
         new ExtractTarStep(
-                buildConfiguration,
-                dockerBuild,
-                progressEventDispatcherFactory,
-                new ConcurrentLinkedQueue<>())
+                buildConfiguration, dockerBuild, progressEventDispatcherFactory, new HashSet<>())
             .call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
@@ -105,10 +102,7 @@ public class ExtractTarStepTest {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
         new ExtractTarStep(
-                buildConfiguration,
-                tarBuild,
-                progressEventDispatcherFactory,
-                new ConcurrentLinkedQueue<>())
+                buildConfiguration, tarBuild, progressEventDispatcherFactory, new HashSet<>())
             .call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();

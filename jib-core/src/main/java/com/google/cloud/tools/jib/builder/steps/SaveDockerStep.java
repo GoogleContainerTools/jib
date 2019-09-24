@@ -25,7 +25,7 @@ import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 /** Saves an image from the docker daemon. */
@@ -34,13 +34,13 @@ public class SaveDockerStep implements Callable<Path> {
   private final BuildConfiguration buildConfiguration;
   private final DockerClient dockerClient;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  private final Queue<Path> directoriesToDelete;
+  private final Set<Path> directoriesToDelete;
 
   SaveDockerStep(
       BuildConfiguration buildConfiguration,
       DockerClient dockerClient,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Queue<Path> directoriesToDelete) {
+      Set<Path> directoriesToDelete) {
     this.buildConfiguration = buildConfiguration;
     this.dockerClient = dockerClient;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;

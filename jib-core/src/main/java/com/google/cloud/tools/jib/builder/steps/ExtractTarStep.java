@@ -49,7 +49,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -88,13 +88,13 @@ public class ExtractTarStep implements Callable<LocalImage> {
   private final BuildConfiguration buildConfiguration;
   private final Path tarPath;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  private final Queue<Path> directoriesToDelete;
+  private final Set<Path> directoriesToDelete;
 
   ExtractTarStep(
       BuildConfiguration buildConfiguration,
       Path tarPath,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Queue<Path> directoriesToDelete) {
+      Set<Path> directoriesToDelete) {
     this.buildConfiguration = buildConfiguration;
     this.tarPath = tarPath;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;

@@ -39,11 +39,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -119,7 +120,7 @@ public class StepsRunner {
   private final List<Runnable> stepsToRun = new ArrayList<>();
 
   // Used to keep track of temporary directories that should be deleted when the build is finished
-  private final Queue<Path> directoriesToDelete = new ConcurrentLinkedQueue<>();
+  private final Set<Path> directoriesToDelete = Collections.synchronizedSet(new HashSet<>());
 
   @Nullable private String rootProgressDescription;
   @Nullable private ProgressEventDispatcher rootProgressDispatcher;
