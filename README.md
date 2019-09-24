@@ -10,6 +10,11 @@
 
 <image src="https://github.com/GoogleContainerTools/jib/raw/master/logo/jib-build-docker-java-container-image.png" alt="Jib - Containerize your Java applications." width="650px" />
 
+
+| Survey |
+| :----- |
+| Please help us improve Jib by filling out this [simple survey](https://forms.gle/YRFeamGj51xmgnx28). Your responses will help us understand Jib usage and allow us to serve our customers (you!) better. |
+
 ## What is Jib?
 
 Jib builds optimized Docker and [OCI](https://github.com/opencontainers/image-spec) images for your Java applications without a Docker daemon - and without deep mastery of Docker best-practices. It is available as plugins for [Maven](jib-maven-plugin) and [Gradle](jib-gradle-plugin) and as a Java library.
