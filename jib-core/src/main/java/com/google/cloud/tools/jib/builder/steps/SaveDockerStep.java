@@ -22,10 +22,9 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
 /** Saves an image from the docker daemon. */
@@ -34,26 +33,22 @@ public class SaveDockerStep implements Callable<Path> {
   private final BuildConfiguration buildConfiguration;
   private final DockerClient dockerClient;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-  private final Set<Path> directoriesToDelete;
+  private final TempDirectoryProvider tempDirectories;
 
   SaveDockerStep(
       BuildConfiguration buildConfiguration,
       DockerClient dockerClient,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Set<Path> directoriesToDelete) {
+      TempDirectoryProvider tempDirectories) {
     this.buildConfiguration = buildConfiguration;
     this.dockerClient = dockerClient;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-    this.directoriesToDelete = directoriesToDelete;
+    this.tempDirectories = tempDirectories;
   }
 
   @Override
   public Path call() throws IOException, InterruptedException {
-    Path outputDir = Files.createTempDirectory("jib-docker-save");
-
-    // Mark outputDir for cleanup in StepsRunner
-    directoriesToDelete.add(outputDir);
-
+    Path outputDir = tempDirectories.newDirectory();
     Path outputPath = outputDir.resolve("out.tar");
     ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
     try (TimerEventDispatcher ignored =

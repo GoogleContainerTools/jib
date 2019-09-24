@@ -24,26 +24,20 @@ import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthor
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.MoreFiles;
-import com.google.common.io.RecursiveDeleteOption;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -109,6 +103,7 @@ public class StepsRunner {
 
   private final ExecutorService executorService;
   private final BuildConfiguration buildConfiguration;
+  private final TempDirectoryProvider tempDirectories = new TempDirectoryProvider();
 
   // We save steps to run by wrapping each step into a Runnable, only because of the unfortunate
   // chicken-and-egg situation arising from using ProgressEventDispatcher. The current
@@ -118,9 +113,6 @@ public class StepsRunner {
   // dispatcher. So, we wrap steps into Runnables and save them to run them later. Then we can count
   // the number of Runnables and, create a root dispatcher, and run the saved Runnables.
   private final List<Runnable> stepsToRun = new ArrayList<>();
-
-  // Used to keep track of temporary directories that should be deleted when the build is finished
-  private final Set<Path> directoriesToDelete = Collections.synchronizedSet(new HashSet<>());
 
   @Nullable private String rootProgressDescription;
   @Nullable private ProgressEventDispatcher rootProgressDispatcher;
@@ -193,15 +185,7 @@ public class StepsRunner {
       throw unrolled;
 
     } finally {
-      // Cleanup temporary directories
-      for (Path path : directoriesToDelete) {
-        if (Files.exists(path)) {
-          try {
-            MoreFiles.deleteRecursively(path, RecursiveDeleteOption.ALLOW_INSECURE);
-          } catch (IOException ignored) {
-          }
-        }
-      }
+      tempDirectories.close();
     }
   }
 
@@ -263,7 +247,7 @@ public class StepsRunner {
                 buildConfiguration,
                 dockerClient.get(),
                 childProgressDispatcherFactory,
-                directoriesToDelete));
+                tempDirectories));
   }
 
   private void extractTar() {
@@ -276,7 +260,7 @@ public class StepsRunner {
                         buildConfiguration,
                         results.tarPath.get(),
                         childProgressDispatcherFactory,
-                        directoriesToDelete)
+                        tempDirectories)
                     .call());
     results.baseImageAndAuth =
         executorService.submit(
