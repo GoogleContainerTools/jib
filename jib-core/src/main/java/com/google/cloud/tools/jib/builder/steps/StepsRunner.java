@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthor
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
@@ -102,6 +103,7 @@ public class StepsRunner {
 
   private final ExecutorService executorService;
   private final BuildConfiguration buildConfiguration;
+  private final TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
   // We save steps to run by wrapping each step into a Runnable, only because of the unfortunate
   // chicken-and-egg situation arising from using ProgressEventDispatcher. The current
@@ -181,6 +183,9 @@ public class StepsRunner {
         unrolled = (ExecutionException) unrolled.getCause();
       }
       throw unrolled;
+
+    } finally {
+      tempDirectoryProvider.close();
     }
   }
 
@@ -239,7 +244,10 @@ public class StepsRunner {
     results.tarPath =
         executorService.submit(
             new SaveDockerStep(
-                buildConfiguration, dockerClient.get(), childProgressDispatcherFactory));
+                buildConfiguration,
+                dockerClient.get(),
+                childProgressDispatcherFactory,
+                tempDirectoryProvider));
   }
 
   private void extractTar() {
@@ -249,7 +257,10 @@ public class StepsRunner {
         executorService.submit(
             () ->
                 new ExtractTarStep(
-                        buildConfiguration, results.tarPath.get(), childProgressDispatcherFactory)
+                        buildConfiguration,
+                        results.tarPath.get(),
+                        childProgressDispatcherFactory,
+                        tempDirectoryProvider)
                     .call());
     results.baseImageAndAuth =
         executorService.submit(

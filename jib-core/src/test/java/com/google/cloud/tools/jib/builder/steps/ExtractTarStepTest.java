@@ -22,6 +22,7 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
 import com.google.common.io.Resources;
@@ -73,7 +74,12 @@ public class ExtractTarStepTest {
           BadContainerConfigurationFormatException, IOException, CacheCorruptedException {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
-        new ExtractTarStep(buildConfiguration, dockerBuild, progressEventDispatcherFactory).call();
+        new ExtractTarStep(
+                buildConfiguration,
+                dockerBuild,
+                progressEventDispatcherFactory,
+                new TempDirectoryProvider())
+            .call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
@@ -98,7 +104,12 @@ public class ExtractTarStepTest {
           BadContainerConfigurationFormatException, IOException, CacheCorruptedException {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
-        new ExtractTarStep(buildConfiguration, tarBuild, progressEventDispatcherFactory).call();
+        new ExtractTarStep(
+                buildConfiguration,
+                tarBuild,
+                progressEventDispatcherFactory,
+                new TempDirectoryProvider())
+            .call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
