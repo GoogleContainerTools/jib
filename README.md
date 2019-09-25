@@ -11,9 +11,9 @@
 <image src="https://github.com/GoogleContainerTools/jib/raw/master/logo/jib-build-docker-java-container-image.png" alt="Jib - Containerize your Java applications." width="650px" />
 
 
-| Survey |
+| Jib User Survey |
 | :----- |
-| Please help us improve Jib by filling out this [simple survey](https://forms.gle/YRFeamGj51xmgnx28). Your responses will help us understand Jib usage and allow us to serve our customers (you!) better. |
+| What do you like best about jib? What needs to be improved? Please tell us by taking our [simple survey](https://forms.gle/YRFeamGj51xmgnx28). Your responses will help us understand Jib usage and allow us to serve our customers (you!) better. |
 
 ## What is Jib?
 
