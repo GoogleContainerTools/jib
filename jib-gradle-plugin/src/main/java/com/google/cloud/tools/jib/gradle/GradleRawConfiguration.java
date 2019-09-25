@@ -185,4 +185,19 @@ class GradleRawConfiguration implements RawConfiguration {
   public String getContainerizingMode() {
     return jibExtension.getContainerizingMode();
   }
+
+  @Override
+  public Path getTarOutputPath() {
+    return jibExtension.getOutputFiles().getTarPath();
+  }
+
+  @Override
+  public Path getDigestOutputPath() {
+    return jibExtension.getOutputFiles().getDigestPath();
+  }
+
+  @Override
+  public Path getIdOutputPath() {
+    return jibExtension.getOutputFiles().getIdPath();
+  }
 }

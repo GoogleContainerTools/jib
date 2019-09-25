@@ -87,8 +87,8 @@ public class PluginConfigurationProcessor {
             helpfulSuggestions,
             targetImageReference,
             rawConfiguration.getToTags())
-        .writeImageDigest(projectProperties.getOutputDirectory().resolve("jib-image.digest"))
-        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
+        .writeImageDigest(rawConfiguration.getDigestOutputPath())
+        .writeImageId(rawConfiguration.getIdOutputPath());
   }
 
   public static JibBuildRunner createJibBuildRunnerForTarImage(
@@ -101,10 +101,10 @@ public class PluginConfigurationProcessor {
           IncompatibleBaseImageJavaVersionException, NumberFormatException,
           InvalidContainerizingModeException, InvalidFilesModificationTimeException,
           InvalidCreationTimeException {
-    Path tarImagePath = projectProperties.getOutputDirectory().resolve("jib-image.tar");
     ImageReference targetImageReference =
         getGeneratedTargetDockerTag(rawConfiguration, projectProperties, helpfulSuggestions);
-    TarImage targetImage = TarImage.at(tarImagePath).named(targetImageReference);
+    TarImage targetImage =
+        TarImage.at(rawConfiguration.getTarOutputPath()).named(targetImageReference);
 
     Containerizer containerizer = Containerizer.to(targetImage);
     JibContainerBuilder jibContainerBuilder =
@@ -116,9 +116,9 @@ public class PluginConfigurationProcessor {
             containerizer,
             projectProperties::log,
             helpfulSuggestions,
-            tarImagePath)
-        .writeImageDigest(projectProperties.getOutputDirectory().resolve("jib-image.digest"))
-        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
+            rawConfiguration.getTarOutputPath())
+        .writeImageDigest(rawConfiguration.getDigestOutputPath())
+        .writeImageId(rawConfiguration.getIdOutputPath());
   }
 
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
@@ -162,8 +162,8 @@ public class PluginConfigurationProcessor {
             helpfulSuggestions,
             targetImageReference,
             rawConfiguration.getToTags())
-        .writeImageDigest(projectProperties.getOutputDirectory().resolve("jib-image.digest"))
-        .writeImageId(projectProperties.getOutputDirectory().resolve("jib-image.id"));
+        .writeImageDigest(rawConfiguration.getDigestOutputPath())
+        .writeImageId(rawConfiguration.getIdOutputPath());
   }
 
   @VisibleForTesting

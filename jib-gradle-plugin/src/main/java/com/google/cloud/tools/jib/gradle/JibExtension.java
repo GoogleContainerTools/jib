@@ -56,6 +56,11 @@ import org.gradle.api.tasks.Optional;
  *       '/path/on/container/file2': 123
  *     ]
  *   }
+ *   outputFiles {
+ *     tar = file('jib-image.tar')
+ *     digest = file('jib-image.digest')
+ *     id = file('jib-image.id')
+ *   }
  *   allowInsecureRegistries = false
  *   containerizingMode = 'exploded'
  * }
@@ -72,6 +77,7 @@ public class JibExtension {
   private final ContainerParameters container;
   private final ExtraDirectoriesParameters extraDirectories;
   private final DockerClientParameters dockerClient;
+  private final OutputFilesParameters outputFiles;
   private final Property<Boolean> allowInsecureRegistries;
   private final Property<String> containerizingMode;
 
@@ -86,6 +92,7 @@ public class JibExtension {
     container = objectFactory.newInstance(ContainerParameters.class);
     extraDirectories = objectFactory.newInstance(ExtraDirectoriesParameters.class, project, this);
     dockerClient = objectFactory.newInstance(DockerClientParameters.class);
+    outputFiles = objectFactory.newInstance(OutputFilesParameters.class, project);
 
     allowInsecureRegistries = objectFactory.property(Boolean.class);
     containerizingMode = objectFactory.property(String.class);
@@ -120,6 +127,10 @@ public class JibExtension {
 
   public void dockerClient(Action<? super DockerClientParameters> action) {
     action.execute(dockerClient);
+  }
+
+  public void outputFiles(Action<? super OutputFilesParameters> action) {
+    action.execute(outputFiles);
   }
 
   @Deprecated
@@ -172,6 +183,12 @@ public class JibExtension {
   @Optional
   public DockerClientParameters getDockerClient() {
     return dockerClient;
+  }
+
+  @Nested
+  @Optional
+  public OutputFilesParameters getOutputFiles() {
+    return outputFiles;
   }
 
   @Input
