@@ -19,17 +19,18 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
 import com.google.cloud.tools.jib.cache.Cache;
-import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
 import com.google.common.io.Resources;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -71,10 +72,12 @@ public class ExtractTarStepTest {
   @Test
   public void testCall_validDocker()
       throws URISyntaxException, LayerCountMismatchException,
-          BadContainerConfigurationFormatException, IOException, CacheCorruptedException {
+          BadContainerConfigurationFormatException, IOException, ExecutionException,
+          InterruptedException {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
         new ExtractTarStep(
+                MoreExecutors.newDirectExecutorService(),
                 buildConfiguration,
                 dockerBuild,
                 progressEventDispatcherFactory,
@@ -101,10 +104,12 @@ public class ExtractTarStepTest {
   @Test
   public void testCall_validTar()
       throws URISyntaxException, LayerCountMismatchException,
-          BadContainerConfigurationFormatException, IOException, CacheCorruptedException {
+          BadContainerConfigurationFormatException, IOException, ExecutionException,
+          InterruptedException {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
         new ExtractTarStep(
+                MoreExecutors.newDirectExecutorService(),
                 buildConfiguration,
                 tarBuild,
                 progressEventDispatcherFactory,

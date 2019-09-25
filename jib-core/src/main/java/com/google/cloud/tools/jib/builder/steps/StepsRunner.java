@@ -257,6 +257,7 @@ public class StepsRunner {
         executorService.submit(
             () ->
                 new ExtractTarStep(
+                        executorService,
                         buildConfiguration,
                         results.tarPath.get(),
                         childProgressDispatcherFactory,

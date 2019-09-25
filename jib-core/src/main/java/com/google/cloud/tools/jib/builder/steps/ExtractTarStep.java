@@ -51,6 +51,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -85,16 +88,19 @@ public class ExtractTarStep implements Callable<LocalImage> {
     }
   }
 
+  private final ExecutorService executorService;
   private final BuildConfiguration buildConfiguration;
   private final Path tarPath;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   private final TempDirectoryProvider tempDirectoryProvider;
 
   ExtractTarStep(
+      ExecutorService executorService,
       BuildConfiguration buildConfiguration,
       Path tarPath,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       TempDirectoryProvider tempDirectoryProvider) {
+    this.executorService = executorService;
     this.buildConfiguration = buildConfiguration;
     this.tarPath = tarPath;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
@@ -104,7 +110,7 @@ public class ExtractTarStep implements Callable<LocalImage> {
   @Override
   public LocalImage call()
       throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException,
-          CacheCorruptedException {
+          ExecutionException, InterruptedException {
     Path destination = tempDirectoryProvider.newDirectory();
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(
@@ -139,21 +145,31 @@ public class ExtractTarStep implements Callable<LocalImage> {
 
       // Process layer blobs
       // TODO: Optimize; compressing/calculating layer digests is slow
-      //       e.g. parallelize, faster compression method
+      //       e.g. faster compression method
       try (ProgressEventDispatcher progressEventDispatcher =
           progressEventDispatcherFactory.create(
               "processing base image layers", layerFiles.size())) {
         List<PreparedLayer> layers = new ArrayList<>(layerFiles.size());
         V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
 
+        // Start compressing layers in parallel
+        List<Future<CachedLayer>> cachedLayers = new ArrayList<>();
         for (int index = 0; index < layerFiles.size(); index++) {
           Path layerFile = destination.resolve(layerFiles.get(index));
-          CachedLayer layer =
-              getCachedTarLayer(
-                  configurationTemplate.getLayerDiffId(index),
-                  layerFile,
-                  layersAreCompressed,
-                  progressEventDispatcher.newChildProducer());
+          DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
+          ProgressEventDispatcher.Factory progressEventDispatcherFactory =
+              progressEventDispatcher.newChildProducer();
+
+          cachedLayers.add(
+              executorService.submit(
+                  () ->
+                      getCachedTarLayer(
+                          diffId, layerFile, layersAreCompressed, progressEventDispatcherFactory)));
+        }
+
+        // Collect compressed layers and add to manifest
+        for (Future<CachedLayer> layerFuture : cachedLayers) {
+          CachedLayer layer = layerFuture.get();
           layers.add(new PreparedLayer.Builder(layer).build());
           v22Manifest.addLayer(layer.getSize(), layer.getDigest());
         }
