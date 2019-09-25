@@ -116,7 +116,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
   private final @Nullable Authorization pullAuthorization;
   private final BlobExistenceChecker blobExistenceChecker;
 
-  ObtainBaseImageLayerStep(
+  private ObtainBaseImageLayerStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Layer layer,
