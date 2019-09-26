@@ -35,11 +35,11 @@ IMAGE=<your image, eg. gcr.io/my-project/spring-boot-jib>
 kubectl run spring-boot-jib --image=$IMAGE --port=8080 --restart=Never
 
 # Wait until pod is running
-kubectl port-forward spring-boot-jib 8080 > /dev/null 2>&1 &
+kubectl port-forward spring-boot-jib 8080
 ```
 ```shell
 curl localhost:8080
-> Greetings from Kubernetes!
+> Greetings from Spring Boot and Jib!
 ```
 
 \* If you are using Gradle, use `./gradlew jib --image=$IMAGE` instead of the `./mvnw` command
