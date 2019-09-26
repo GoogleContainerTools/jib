@@ -13,7 +13,7 @@
 
 | ☑️  Jib User Survey |
 | :----- |
-| What do you like best about Jib? What needs to be improved? Please tell us by taking our [simple survey](https://forms.gle/YRFeamGj51xmgnx28). Your responses will help us understand Jib usage and allow us to serve our customers (you!) better. |
+| What do you like best about Jib? What needs to be improved? Please tell us by taking a [one-minute survey](https://forms.gle/YRFeamGj51xmgnx28). Your responses will help us understand Jib usage and allow us to serve our customers (you!) better. |
 
 ## What is Jib?
 
