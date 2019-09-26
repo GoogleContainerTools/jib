@@ -6,7 +6,7 @@
 1. Start the application
     - **With Docker**: `docker run --rm -p 8080:8080 dropwizard-jib-example:1`
     - **Without Docker**: `./mvnw exec:java`
-1. Check that your application is running at http://localhost:8080/hello-world
+1. Check that your application is running at http://localhost:8080
 
 ## Health Check
 
