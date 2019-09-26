@@ -36,3 +36,8 @@ The remainder of the archetype code was filled-in following the above guide.
 Learn [more about Jib](https://github.com/GoogleContainerTools/jib).
 
 Learn [more about Dropwizard](https://dropwizard.io).
+
+## Build and run on Cloud Run
+
+[![Run on Google Cloud](https://storage.googleapis.com/cloudrun/button.svg)](https://console.cloud.google.com/cloudshell/editor?shellonly=true&cloudshell_image=gcr.io/chanseok-playground-new/cloud-run-button&cloudshell_git_repo=https://github.com/GoogleContainerTools/jib.git&cloudshell_working_dir=examples/dropwizard)
+
