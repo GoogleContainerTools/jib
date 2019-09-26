@@ -10,6 +10,10 @@ For the Maven plugin, see the [jib-maven-plugin project](../jib-maven-plugin).
 
 For information about the project, see the [Jib project README](../README.md).
 
+| ☑️  Jib User Survey |
+| :----- |
+| What do you like best about Jib? What needs to be improved? Please tell us by taking a [one-minute survey](https://forms.gle/YRFeamGj51xmgnx28). Your responses will help us understand Jib usage and allow us to serve our customers (you!) better. |
+
 ## Table of Contents
 
 * [Upcoming Features](#upcoming-features)
