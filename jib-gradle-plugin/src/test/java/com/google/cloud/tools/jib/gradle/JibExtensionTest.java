@@ -241,6 +241,21 @@ public class JibExtensionTest {
   }
 
   @Test
+  public void testOutputFiles() {
+    testJibExtension.outputFiles(
+        outputFiles -> {
+          outputFiles.setDigest("path/to/digest");
+          outputFiles.setId("path/to/id");
+          outputFiles.setTar("path/to/tar");
+        });
+
+    Assert.assertEquals(
+        Paths.get("path/to/digest"), testJibExtension.getOutputFiles().getDigestPath());
+    Assert.assertEquals(Paths.get("path/to/id"), testJibExtension.getOutputFiles().getIdPath());
+    Assert.assertEquals(Paths.get("path/to/tar"), testJibExtension.getOutputFiles().getTarPath());
+  }
+
+  @Test
   public void testProperties() {
     System.setProperty("jib.from.image", "fromImage");
     Assert.assertEquals("fromImage", testJibExtension.getFrom().getImage());
@@ -311,6 +326,14 @@ public class JibExtensionTest {
     Assert.assertEquals(
         ImmutableMap.of("env1", "val1", "env2", "val2"),
         testJibExtension.getDockerClient().getEnvironment());
+
+    System.setProperty("jib.outputFiles.digest", "digest/path");
+    Assert.assertEquals(
+        Paths.get("digest/path"), testJibExtension.getOutputFiles().getDigestPath());
+    System.setProperty("jib.outputFiles.id", "id/path");
+    Assert.assertEquals(Paths.get("id/path"), testJibExtension.getOutputFiles().getIdPath());
+    System.setProperty("jib.outputFiles.tar", "tar/path");
+    Assert.assertEquals(Paths.get("tar/path"), testJibExtension.getOutputFiles().getTarPath());
   }
 
   @Test
