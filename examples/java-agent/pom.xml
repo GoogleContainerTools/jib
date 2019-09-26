@@ -11,8 +11,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jib-maven-plugin.version>1.6.1</jib-maven-plugin.version>
     <maven-compiler-plugin.version>3.8.0</maven-compiler-plugin.version>
-    <download-maven-plugin.version>1.4.1</download-maven-plugin.version>
-    <git-commit-id-plugin.version>2.2.5</git-commit-id-plugin.version>
+    <download-maven-plugin.version>1.4.2</download-maven-plugin.version>
+    <git-commit-id-plugin.version>3.0.1</git-commit-id-plugin.version>
 
     <!-- agents will be extracted relative to this build location -->
     <agent-extraction-root>${project.build.directory}/jib-agents</agent-extraction-root>
@@ -28,12 +28,12 @@
     <dependency>
       <groupId>com.sparkjava</groupId>
       <artifactId>spark-core</artifactId>
-      <version>2.7.2</version>
+      <version>2.9.1</version>
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-simple</artifactId>
-      <version>1.7.21</version>
+      <version>1.7.28</version>
     </dependency>
   </dependencies>
 
@@ -77,7 +77,9 @@
           <to>
             <image>gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib</image>
           </to>
-          <extraDirectory>${agent-extraction-root}</extraDirectory>
+          <extraDirectories>
+            <paths>${agent-extraction-root}</paths>
+          </extraDirectories>
           <container>
             <ports>4567</ports>
             <jvmFlags>
