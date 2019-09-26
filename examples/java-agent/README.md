@@ -8,3 +8,7 @@ To build the image:
 1. Run `mvn package` or `./gradlew` to build the image.
 
 SparkJava listens on port 4567 by default.
+
+## Build run on Google Cloud
+
+[![Run on Google Cloud](https://storage.googleapis.com/cloudrun/button.svg)](https://console.cloud.google.com/cloudshell/editor?shellonly=true&cloudshell_image=gcr.io/chanseok-playground-new/cloud-run-button&cloudshell_git_repo=https://github.com/GoogleContainerTools/jib.git&cloudshell_working_dir=examples/java-agent)
