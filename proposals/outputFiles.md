@@ -18,7 +18,7 @@ Jib currently doesn't allow configuring these locations, and instead it uses har
 
 ## Proposed Configuration
 
-The proposal is to allow users to configure their build configuration (maven/gradle) with the following rules:
+The proposal is to allow users to configure their build with the following rules:
 1. Extensions to the filename (like id, digest, tar) will not be automatically appended
 1. Existing files at the specified locations will be overwritten
 1. Running `clean` will not delete output files created outside of the project's build directory
