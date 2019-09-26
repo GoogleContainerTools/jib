@@ -38,9 +38,9 @@ The proposal is to allow users to configure their build with the following rules
 ```groovy
 jib {
   outputFiles {
-    tar = file('/some/location.tar')
-    digest = file('/some/other/location.digest')
-    id = file('$buildDir/id')
+    tar = file("/some/location.tar")
+    digest = file("/some/other/location.digest")
+    id = file("$buildDir/id")
   }
 }
 ```
