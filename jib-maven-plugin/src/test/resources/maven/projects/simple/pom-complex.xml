@@ -95,6 +95,10 @@
               </permission>
             </permissions>
           </extraDirectory>
+          <outputFiles>
+            <digest>${project.build.directory}/different-jib-image.digest</digest>
+            <id>${project.build.directory}/different-jib-image.id</id>
+          </outputFiles>
           <allowInsecureRegistries>true</allowInsecureRegistries>
         </configuration>
       </plugin>

@@ -60,6 +60,9 @@
             <workingDirectory>/home</workingDirectory>
           </container>
           <extraDirectory>${project.basedir}/src/main/jib-custom</extraDirectory>
+          <outputFiles>
+            <tar>${project.basedir}/different-jib-image.tar</tar>
+          </outputFiles>
         </configuration>
       </plugin>
     </plugins>

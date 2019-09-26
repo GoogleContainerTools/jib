@@ -76,15 +76,13 @@ public class BuildImageMojoIntegrationTest {
     return nameBase + label + System.nanoTime();
   }
 
-  static String assertImageDigest(Path projectRoot) throws IOException, DigestException {
-    Path digestPath = projectRoot.resolve("target/jib-image.digest");
+  static String assertImageDigest(Path digestPath) throws IOException, DigestException {
     Assert.assertTrue(Files.exists(digestPath));
     String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
     return DescriptorDigest.fromDigest(digest).toString();
   }
 
-  static String assertImageId(Path projectRoot) throws IOException, DigestException {
-    Path idPath = projectRoot.resolve("target/jib-image.id");
+  private static String assertImageId(Path idPath) throws IOException, DigestException {
     Assert.assertTrue(Files.exists(idPath));
     String id = new String(Files.readAllBytes(idPath), StandardCharsets.UTF_8);
     return DescriptorDigest.fromDigest(id).toString();
@@ -141,13 +139,13 @@ public class BuildImageMojoIntegrationTest {
 
     try {
       // Test pulling/running using image digest
-      String digest = assertImageDigest(projectRoot);
+      String digest = assertImageDigest(projectRoot.resolve("target/jib-image.digest"));
       String imageReferenceWithDigest =
           ImageReference.parse(imageReference).withTag(digest).toString();
       Assert.assertEquals(output, pullAndRunBuiltImage(imageReferenceWithDigest));
 
       // Test running using image id
-      String id = assertImageId(projectRoot);
+      String id = assertImageId(projectRoot.resolve("target/jib-image.id"));
       Assert.assertNotEquals(digest, id);
       Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
@@ -210,7 +208,7 @@ public class BuildImageMojoIntegrationTest {
     String additionalOutput = pullAndRunBuiltImage(additionalImageReference);
     Assert.assertEquals(output, additionalOutput);
 
-    String digest = assertImageDigest(projectRoot);
+    String digest = assertImageDigest(projectRoot.resolve("target/jib-image.digest"));
     String digestImageReference = ImageReference.parse(imageReference).withTag(digest).toString();
     String digestOutput = pullAndRunBuiltImage(digestImageReference);
     Assert.assertEquals(output, digestOutput);
@@ -240,12 +238,20 @@ public class BuildImageMojoIntegrationTest {
     verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
     verifier.verifyErrorFreeLog();
 
-    assertImageDigest(simpleTestProject.getProjectRoot());
-
     // Verify output
     targetRegistry.pull(imageReference);
     assertDockerInspectParameters(imageReference);
-    return new Command("docker", "run", "--rm", imageReference).run();
+    String output = new Command("docker", "run", "--rm", imageReference).run();
+
+    String digest =
+        assertImageDigest(
+            simpleTestProject.getProjectRoot().resolve("target/different-jib-image.digest"));
+    String id =
+        assertImageId(simpleTestProject.getProjectRoot().resolve("target/different-jib-image.id"));
+    Assert.assertNotEquals(digest, id);
+    Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
+
+    return output;
   }
 
   /**

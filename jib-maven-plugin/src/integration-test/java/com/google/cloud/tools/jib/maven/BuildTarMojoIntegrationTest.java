@@ -47,7 +47,8 @@ public class BuildTarMojoIntegrationTest {
     verifier.executeGoal("jib:" + BuildTarMojo.GOAL_NAME);
     verifier.verifyErrorFreeLog();
 
-    BuildImageMojoIntegrationTest.assertImageDigest(simpleTestProject.getProjectRoot());
+    BuildImageMojoIntegrationTest.assertImageDigest(
+        simpleTestProject.getProjectRoot().resolve("jib-image.digest"));
 
     new Command(
             "docker",
@@ -56,7 +57,7 @@ public class BuildTarMojoIntegrationTest {
             simpleTestProject
                 .getProjectRoot()
                 .resolve("target")
-                .resolve("jib-image.tar")
+                .resolve("different-jib-image.tar")
                 .toString())
         .run();
     Assert.assertEquals(
