@@ -42,7 +42,7 @@ jib {
   to {
     image = 'gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib'
   }
-  extraDirectory = file(jibExtraDirectory)
+  extraDirectories.paths = [file(jibExtraDirectory)]
   container {
     ports = ['4567']
     jvmFlags = [
