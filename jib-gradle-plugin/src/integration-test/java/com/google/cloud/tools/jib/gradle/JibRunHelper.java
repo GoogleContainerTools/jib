@@ -196,7 +196,7 @@ public class JibRunHelper {
    * @throws IOException if an I/O exception occurs
    * @throws InterruptedException if the process was interrupted
    */
-  private static String pullAndRunBuiltImage(String imageReference, String... extraRunArguments)
+  static String pullAndRunBuiltImage(String imageReference, String... extraRunArguments)
       throws IOException, InterruptedException {
     new Command("docker", "pull", imageReference).run();
     String history = new Command("docker", "history", imageReference).run();

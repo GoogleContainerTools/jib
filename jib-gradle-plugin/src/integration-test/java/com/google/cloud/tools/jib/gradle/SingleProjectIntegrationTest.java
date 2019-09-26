@@ -18,9 +18,13 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.Command;
 import com.google.cloud.tools.jib.IntegrationTestingConfiguration;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.ImageReference;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.registry.LocalRegistry;
 import com.google.common.base.Splitter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.DigestException;
@@ -117,6 +121,12 @@ public class SingleProjectIntegrationTest {
                 + "            }"));
   }
 
+  static String assertDigestFile(Path digestPath) throws IOException, DigestException {
+    Assert.assertTrue(Files.exists(digestPath));
+    String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
+    return DescriptorDigest.fromDigest(digest).toString();
+  }
+
   private static void assertExtraDirectoryDeprecationWarning(String buildFile)
       throws DigestException, IOException, InterruptedException {
     String targetImage = "localhost:6000/simpleimage:gradle" + System.nanoTime();
@@ -134,7 +144,7 @@ public class SingleProjectIntegrationTest {
                 + "'jib.extraDirectories.permissions'"));
   }
 
-  private static void buildAndRunComplex(
+  private static String buildAndRunComplex(
       String imageReference, String username, String password, LocalRegistry targetRegistry)
       throws IOException, InterruptedException {
     Path baseCache = simpleTestProject.getProjectRoot().resolve("build/jib-base-cache");
@@ -157,11 +167,14 @@ public class SingleProjectIntegrationTest {
     assertDockerInspect(imageReference);
     String history = new Command("docker", "history", imageReference).run();
     Assert.assertThat(history, CoreMatchers.containsString("jib-gradle-plugin"));
+
+    String output = new Command("docker", "run", "--rm", imageReference).run();
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        new Command("docker", "run", "--rm", imageReference).run());
+        output);
+    return output;
   }
 
   @Before
@@ -171,7 +184,8 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_simple() throws IOException, InterruptedException, DigestException {
+  public void testBuild_simple()
+      throws IOException, InterruptedException, DigestException, InvalidImageReferenceException {
     String targetImage =
         IntegrationTestingConfiguration.getTestRepositoryLocation()
             + "/simpleimage:gradle"
@@ -195,10 +209,23 @@ public class SingleProjectIntegrationTest {
               "No classes files were found - did you compile your project?"));
     }
 
+    String output = JibRunHelper.buildAndRun(simpleTestProject, targetImage);
+
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrw-r--r--\nrw-r--r--\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n",
-        JibRunHelper.buildAndRun(simpleTestProject, targetImage));
+        output);
+
+    String digest =
+        assertDigestFile(simpleTestProject.getProjectRoot().resolve("build/jib-image.digest"));
+    String imageReferenceWithDigest = ImageReference.parse(targetImage).withTag(digest).toString();
+    Assert.assertEquals(
+        output, JibRunHelper.buildAndRun(simpleTestProject, imageReferenceWithDigest));
+
+    String id = assertDigestFile(simpleTestProject.getProjectRoot().resolve("build/jib-image.id"));
+    Assert.assertNotEquals(digest, id);
+    Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
+
     assertDockerInspect(targetImage);
     JibRunHelper.assertSimpleCreationTimeIsEqual(Instant.EPOCH, targetImage);
     assertWorkingDirectory("/home", targetImage);
@@ -335,10 +362,26 @@ public class SingleProjectIntegrationTest {
   }
 
   @Test
-  public void testBuild_complex() throws IOException, InterruptedException {
+  public void testBuild_complex()
+      throws IOException, InterruptedException, DigestException, InvalidImageReferenceException {
     String targetImage = "localhost:6000/compleximage:gradle" + System.nanoTime();
     Instant beforeBuild = Instant.now();
-    buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
+    String output = buildAndRunComplex(targetImage, "testuser2", "testpassword2", localRegistry2);
+
+    String digest =
+        assertDigestFile(
+            simpleTestProject.getProjectRoot().resolve("build/different-jib-image.digest"));
+    String imageReferenceWithDigest = ImageReference.parse(targetImage).withTag(digest).toString();
+    localRegistry2.pull(imageReferenceWithDigest);
+    Assert.assertEquals(
+        output, new Command("docker", "run", "--rm", imageReferenceWithDigest).run());
+
+    String id =
+        assertDigestFile(
+            simpleTestProject.getProjectRoot().resolve("build/different-jib-image.id"));
+    Assert.assertNotEquals(digest, id);
+    Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
+
     JibRunHelper.assertSimpleCreationTimeIsAfter(beforeBuild, targetImage);
     assertWorkingDirectory("", targetImage);
   }
@@ -464,7 +507,11 @@ public class SingleProjectIntegrationTest {
     String targetImage = "simpleimage:gradle" + System.nanoTime();
 
     String outputPath =
-        simpleTestProject.getProjectRoot().resolve("build").resolve("jib-image.tar").toString();
+        simpleTestProject
+            .getProjectRoot()
+            .resolve("build")
+            .resolve("different-jib-image.tar")
+            .toString();
     BuildResult buildResult =
         simpleTestProject.build(
             "clean",

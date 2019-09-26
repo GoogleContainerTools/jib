@@ -28,5 +28,8 @@ jib {
     workingDirectory = '/home'
     extraClasspath = ['/d1','/d2']
   }
+  outputFiles {
+    tar = file("$buildDir/different-jib-image.tar")
+  }
   extraDirectories.paths = file('src/main/custom-extra-dir')
 }
