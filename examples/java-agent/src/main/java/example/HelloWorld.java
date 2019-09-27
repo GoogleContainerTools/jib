@@ -17,9 +17,16 @@
 package example;
 
 import static spark.Spark.get;
+import static spark.Spark.port;
 
 public class HelloWorld {
   public static void main(String[] args) {
-    get("/hello", (req, res) -> "Hello World");
+    // Allow use with Cloud Run which requires listening on the value in PORT
+    String portEnv = System.getenv("PORT");
+    if (portEnv != null) {
+      port(Integer.parseInt(portEnv));
+    }
+
+    get("/", (req, res) -> "Hello World");
   }
 }
