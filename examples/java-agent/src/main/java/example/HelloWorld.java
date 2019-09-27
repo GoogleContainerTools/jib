@@ -23,7 +23,7 @@ public class HelloWorld {
   public static void main(String[] args) {
     // Allow use with Cloud Run which requires listening on the value in PORT
     String portEnv = System.getenv("PORT");
-    if(portEnv != null) {
+    if (portEnv != null) {
       port(Integer.parseInt(portEnv));
     }
 
