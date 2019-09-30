@@ -91,7 +91,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
    */
   @OutputFile
   public String getOutputFile() {
-    return getTargetPath().toString();
+    return Preconditions.checkNotNull(jibExtension).getOutputFiles().getTarPath().toString();
   }
 
   @TaskAction
@@ -165,14 +165,5 @@ public class BuildTarTask extends DefaultTask implements JibTask {
   public BuildTarTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
-  }
-
-  /**
-   * Returns the output directory for the tarball. By default, it is {@code build/jib-image.tar}.
-   *
-   * @return the output directory
-   */
-  private Path getTargetPath() {
-    return getProject().getBuildDir().toPath().resolve("jib-image.tar");
   }
 }

@@ -27,16 +27,12 @@ import org.gradle.api.tasks.Internal;
 /** Object that configures where Jib should create its build output files. */
 public class OutputFilesParameters {
 
-  private final Project project;
-
   private Path digest;
   private Path tar;
   private Path id;
 
   @Inject
   public OutputFilesParameters(Project project) {
-    this.project = project;
-
     digest = project.getBuildDir().toPath().resolve("jib-image.digest");
     id = project.getBuildDir().toPath().resolve("jib-image.id");
     tar = project.getBuildDir().toPath().resolve("jib-image.tar");
