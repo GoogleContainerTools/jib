@@ -233,13 +233,13 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private Map<String, String> environment = Collections.emptyMap();
   }
 
-  public static class OutputFilesParameters {
+  public static class OutputPathsParameters {
 
     @Nullable @Parameter private File tar;
 
     @Nullable @Parameter private File digest;
 
-    @Nullable @Parameter private File id;
+    @Nullable @Parameter private File imageId;
   }
 
   @Nullable
@@ -269,7 +269,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
 
   @Parameter private DockerClientParameters dockerClient = new DockerClientParameters();
 
-  @Parameter private OutputFilesParameters outputFiles = new OutputFilesParameters();
+  @Parameter private OutputPathsParameters outputPaths = new OutputPathsParameters();
 
   @Parameter(property = PropertyNames.ALLOW_INSECURE_REGISTRIES)
   private boolean allowInsecureRegistries;
@@ -696,36 +696,36 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   Path getTarOutputPath() {
-    String property = getProperty(PropertyNames.OUTPUT_FILES_TAR);
+    String property = getProperty(PropertyNames.OUTPUT_PATHS_TAR);
     if (property != null) {
       return Paths.get(property);
     }
-    return outputFiles.tar == null
+    return outputPaths.tar == null
         ? Paths.get(Preconditions.checkNotNull(project).getBuild().getDirectory())
             .resolve("jib-image.tar")
-        : outputFiles.tar.toPath();
+        : outputPaths.tar.toPath();
   }
 
   Path getDigestOutputPath() {
-    String property = getProperty(PropertyNames.OUTPUT_FILES_DIGEST);
+    String property = getProperty(PropertyNames.OUTPUT_PATHS_DIGEST);
     if (property != null) {
       return Paths.get(property);
     }
-    return outputFiles.digest == null
+    return outputPaths.digest == null
         ? Paths.get(Preconditions.checkNotNull(project).getBuild().getDirectory())
             .resolve("jib-image.digest")
-        : outputFiles.digest.toPath();
+        : outputPaths.digest.toPath();
   }
 
   Path getIdOutputPath() {
-    String property = getProperty(PropertyNames.OUTPUT_FILES_ID);
+    String property = getProperty(PropertyNames.OUTPUT_PATHS_IMAGE_ID);
     if (property != null) {
       return Paths.get(property);
     }
-    return outputFiles.id == null
+    return outputPaths.imageId == null
         ? Paths.get(Preconditions.checkNotNull(project).getBuild().getDirectory())
             .resolve("jib-image.id")
-        : outputFiles.id.toPath();
+        : outputPaths.imageId.toPath();
   }
 
   boolean getAllowInsecureRegistries() {

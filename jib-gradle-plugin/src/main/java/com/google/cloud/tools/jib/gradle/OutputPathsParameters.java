@@ -25,14 +25,14 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 
 /** Object that configures where Jib should create its build output files. */
-public class OutputFilesParameters {
+public class OutputPathsParameters {
 
   private Path digest;
   private Path tar;
   private Path id;
 
   @Inject
-  public OutputFilesParameters(Project project) {
+  public OutputPathsParameters(Project project) {
     digest = project.getBuildDir().toPath().resolve("jib-image.digest");
     id = project.getBuildDir().toPath().resolve("jib-image.id");
     tar = project.getBuildDir().toPath().resolve("jib-image.tar");
@@ -40,13 +40,13 @@ public class OutputFilesParameters {
 
   @Input
   public String getDigest() {
-    String property = System.getProperty(PropertyNames.OUTPUT_FILES_DIGEST);
+    String property = System.getProperty(PropertyNames.OUTPUT_PATHS_DIGEST);
     return property == null ? digest.toString() : property;
   }
 
   @Internal
   Path getDigestPath() {
-    String property = System.getProperty(PropertyNames.OUTPUT_FILES_DIGEST);
+    String property = System.getProperty(PropertyNames.OUTPUT_PATHS_DIGEST);
     return property == null ? digest : Paths.get(property);
   }
 
@@ -55,30 +55,30 @@ public class OutputFilesParameters {
   }
 
   @Input
-  public String getId() {
-    String property = System.getProperty(PropertyNames.OUTPUT_FILES_ID);
+  public String getImageId() {
+    String property = System.getProperty(PropertyNames.OUTPUT_PATHS_IMAGE_ID);
     return property == null ? id.toString() : property;
   }
 
   @Internal
-  Path getIdPath() {
-    String property = System.getProperty(PropertyNames.OUTPUT_FILES_ID);
+  Path getImageIdPath() {
+    String property = System.getProperty(PropertyNames.OUTPUT_PATHS_IMAGE_ID);
     return property == null ? id : Paths.get(property);
   }
 
-  public void setId(String id) {
+  public void setImageId(String id) {
     this.id = Paths.get(id);
   }
 
   @Input
   public String getTar() {
-    String property = System.getProperty(PropertyNames.OUTPUT_FILES_TAR);
+    String property = System.getProperty(PropertyNames.OUTPUT_PATHS_TAR);
     return property == null ? tar.toString() : property;
   }
 
   @Internal
   Path getTarPath() {
-    String property = System.getProperty(PropertyNames.OUTPUT_FILES_TAR);
+    String property = System.getProperty(PropertyNames.OUTPUT_PATHS_TAR);
     return property == null ? tar : Paths.get(property);
   }
 

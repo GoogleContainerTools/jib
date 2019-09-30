@@ -151,11 +151,11 @@ public class JibPluginConfigurationTest {
         ImmutableMap.of("env1", "val1", "env2", "val2"),
         testPluginConfiguration.getDockerClientEnvironment());
 
-    sessionProperties.put("jib.outputFiles.digest", "digest/path");
+    sessionProperties.put("jib.outputPaths.digest", "digest/path");
     Assert.assertEquals(Paths.get("digest/path"), testPluginConfiguration.getDigestOutputPath());
-    sessionProperties.put("jib.outputFiles.id", "id/path");
+    sessionProperties.put("jib.outputPaths.imageId", "id/path");
     Assert.assertEquals(Paths.get("id/path"), testPluginConfiguration.getIdOutputPath());
-    sessionProperties.put("jib.outputFiles.tar", "tar/path");
+    sessionProperties.put("jib.outputPaths.tar", "tar/path");
     Assert.assertEquals(Paths.get("tar/path"), testPluginConfiguration.getTarOutputPath());
   }
 
@@ -241,11 +241,11 @@ public class JibPluginConfigurationTest {
         ImmutableMap.of("env1", "val1", "env2", "val2"),
         testPluginConfiguration.getDockerClientEnvironment());
 
-    project.getProperties().setProperty("jib.outputFiles.digest", "digest/path");
+    project.getProperties().setProperty("jib.outputPaths.digest", "digest/path");
     Assert.assertEquals(Paths.get("digest/path"), testPluginConfiguration.getDigestOutputPath());
-    project.getProperties().setProperty("jib.outputFiles.id", "id/path");
+    project.getProperties().setProperty("jib.outputPaths.imageId", "id/path");
     Assert.assertEquals(Paths.get("id/path"), testPluginConfiguration.getIdOutputPath());
-    project.getProperties().setProperty("jib.outputFiles.tar", "tar/path");
+    project.getProperties().setProperty("jib.outputPaths.tar", "tar/path");
     Assert.assertEquals(Paths.get("tar/path"), testPluginConfiguration.getTarOutputPath());
   }
 

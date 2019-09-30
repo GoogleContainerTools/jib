@@ -188,16 +188,16 @@ class GradleRawConfiguration implements RawConfiguration {
 
   @Override
   public Path getTarOutputPath() {
-    return jibExtension.getOutputFiles().getTarPath();
+    return jibExtension.getOutputPaths().getTarPath();
   }
 
   @Override
   public Path getDigestOutputPath() {
-    return jibExtension.getOutputFiles().getDigestPath();
+    return jibExtension.getOutputPaths().getDigestPath();
   }
 
   @Override
   public Path getIdOutputPath() {
-    return jibExtension.getOutputFiles().getIdPath();
+    return jibExtension.getOutputPaths().getImageIdPath();
   }
 }

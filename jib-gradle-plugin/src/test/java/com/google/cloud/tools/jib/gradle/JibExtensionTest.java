@@ -242,17 +242,18 @@ public class JibExtensionTest {
 
   @Test
   public void testOutputFiles() {
-    testJibExtension.outputFiles(
+    testJibExtension.outputPaths(
         outputFiles -> {
           outputFiles.setDigest("path/to/digest");
-          outputFiles.setId("path/to/id");
+          outputFiles.setImageId("path/to/id");
           outputFiles.setTar("path/to/tar");
         });
 
     Assert.assertEquals(
-        Paths.get("path/to/digest"), testJibExtension.getOutputFiles().getDigestPath());
-    Assert.assertEquals(Paths.get("path/to/id"), testJibExtension.getOutputFiles().getIdPath());
-    Assert.assertEquals(Paths.get("path/to/tar"), testJibExtension.getOutputFiles().getTarPath());
+        Paths.get("path/to/digest"), testJibExtension.getOutputPaths().getDigestPath());
+    Assert.assertEquals(
+        Paths.get("path/to/id"), testJibExtension.getOutputPaths().getImageIdPath());
+    Assert.assertEquals(Paths.get("path/to/tar"), testJibExtension.getOutputPaths().getTarPath());
   }
 
   @Test
@@ -327,13 +328,13 @@ public class JibExtensionTest {
         ImmutableMap.of("env1", "val1", "env2", "val2"),
         testJibExtension.getDockerClient().getEnvironment());
 
-    System.setProperty("jib.outputFiles.digest", "digest/path");
+    System.setProperty("jib.outputPaths.digest", "digest/path");
     Assert.assertEquals(
-        Paths.get("digest/path"), testJibExtension.getOutputFiles().getDigestPath());
-    System.setProperty("jib.outputFiles.id", "id/path");
-    Assert.assertEquals(Paths.get("id/path"), testJibExtension.getOutputFiles().getIdPath());
-    System.setProperty("jib.outputFiles.tar", "tar/path");
-    Assert.assertEquals(Paths.get("tar/path"), testJibExtension.getOutputFiles().getTarPath());
+        Paths.get("digest/path"), testJibExtension.getOutputPaths().getDigestPath());
+    System.setProperty("jib.outputPaths.imageId", "id/path");
+    Assert.assertEquals(Paths.get("id/path"), testJibExtension.getOutputPaths().getImageIdPath());
+    System.setProperty("jib.outputPaths.tar", "tar/path");
+    Assert.assertEquals(Paths.get("tar/path"), testJibExtension.getOutputPaths().getTarPath());
   }
 
   @Test

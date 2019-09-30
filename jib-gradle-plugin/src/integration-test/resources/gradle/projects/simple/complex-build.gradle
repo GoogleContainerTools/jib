@@ -43,9 +43,9 @@ jib {
     paths = file('src/main/custom-extra-dir')
     permissions = ['/foo':'755', '/bar/cat':'777']
   }
-  outputFiles {
+  outputPaths {
     digest = file("$buildDir/different-jib-image.digest")
-    id = file("$buildDir/different-jib-image.id")
+    imageId = file("$buildDir/different-jib-image.id")
   }
   allowInsecureRegistries = true
 }

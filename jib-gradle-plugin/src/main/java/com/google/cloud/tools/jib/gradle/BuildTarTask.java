@@ -91,7 +91,7 @@ public class BuildTarTask extends DefaultTask implements JibTask {
    */
   @OutputFile
   public String getOutputFile() {
-    return Preconditions.checkNotNull(jibExtension).getOutputFiles().getTarPath().toString();
+    return Preconditions.checkNotNull(jibExtension).getOutputPaths().getTarPath().toString();
   }
 
   @TaskAction

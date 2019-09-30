@@ -53,9 +53,9 @@ public class PropertyNames {
   public static final String EXTRA_DIRECTORIES_PERMISSIONS = "jib.extraDirectories.permissions";
   public static final String DOCKER_CLIENT_EXECUTABLE = "jib.dockerClient.executable";
   public static final String DOCKER_CLIENT_ENVIRONMENT = "jib.dockerClient.environment";
-  public static final String OUTPUT_FILES_DIGEST = "jib.outputFiles.digest";
-  public static final String OUTPUT_FILES_ID = "jib.outputFiles.id";
-  public static final String OUTPUT_FILES_TAR = "jib.outputFiles.tar";
+  public static final String OUTPUT_PATHS_DIGEST = "jib.outputPaths.digest";
+  public static final String OUTPUT_PATHS_IMAGE_ID = "jib.outputPaths.imageId";
+  public static final String OUTPUT_PATHS_TAR = "jib.outputPaths.tar";
   public static final String CONTAINERIZING_MODE = "jib.containerizingMode";
   public static final String SKIP = "jib.skip";
   public static final String CONSOLE = "jib.console";
