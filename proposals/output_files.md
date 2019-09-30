@@ -20,7 +20,7 @@ Jib currently doesn't allow configuring these locations, and instead it uses har
 
 The proposal is to allow users to configure their build with the following rules:
 1. Extensions to the filename (like id, digest, tar) will not be automatically appended.
-1. Existing files at the specified locations will be overwritten.
+1. Existing files at the specified locations will be overwritten if necessary.
 1. Running `clean` will not delete output files created outside of the project's build directory.
 1. The configuration will accept both absolute and relative paths. Relative paths are resolved in the build tool's default manner.
 
@@ -39,7 +39,7 @@ The proposal is to allow users to configure their build with the following rules
 ```groovy
 jib {
   outputPaths {
-    tar = file("/absolute/location.tar")
+    tar = "/absolute/location.tar"
     digest = file("relative/path/digest")
     imageId = file("$buildDir/id")
   }
