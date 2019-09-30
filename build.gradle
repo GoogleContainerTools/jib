@@ -51,7 +51,7 @@ subprojects {
     GUAVA: '28.0-jre',
 
     COMMONS_COMPRESS: '1.19',
-    JACKSON_DATABIND: '2.9.9.2',
+    JACKSON_DATABIND: '2.9.10',
     ASM: '7.1',
 
     //test
