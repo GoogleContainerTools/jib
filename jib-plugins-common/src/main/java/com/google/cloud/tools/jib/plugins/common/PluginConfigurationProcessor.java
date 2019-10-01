@@ -88,7 +88,7 @@ public class PluginConfigurationProcessor {
             targetImageReference,
             rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath());
   }
 
   public static JibBuildRunner createJibBuildRunnerForTarImage(
@@ -118,7 +118,7 @@ public class PluginConfigurationProcessor {
             helpfulSuggestions,
             rawConfiguration.getTarOutputPath())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath());
   }
 
   public static JibBuildRunner createJibBuildRunnerForRegistryImage(
@@ -163,7 +163,7 @@ public class PluginConfigurationProcessor {
             targetImageReference,
             rawConfiguration.getToTags())
         .writeImageDigest(rawConfiguration.getDigestOutputPath())
-        .writeImageId(rawConfiguration.getIdOutputPath());
+        .writeImageId(rawConfiguration.getImageIdOutputPath());
   }
 
   @VisibleForTesting

@@ -116,7 +116,7 @@ public class GradleRawConfigurationTest {
         new HashMap<>(ImmutableMap.of("docker", "client")),
         rawConfiguration.getDockerEnvironment());
     Assert.assertEquals(Paths.get("digest/path"), rawConfiguration.getDigestOutputPath());
-    Assert.assertEquals(Paths.get("id/path"), rawConfiguration.getIdOutputPath());
+    Assert.assertEquals(Paths.get("id/path"), rawConfiguration.getImageIdOutputPath());
     Assert.assertEquals(Paths.get("tar/path"), rawConfiguration.getTarOutputPath());
   }
 }

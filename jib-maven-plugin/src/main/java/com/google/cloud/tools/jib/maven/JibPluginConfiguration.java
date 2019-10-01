@@ -701,8 +701,7 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return Paths.get(property);
     }
     return outputPaths.tar == null
-        ? Paths.get(Preconditions.checkNotNull(project).getBuild().getDirectory())
-            .resolve("jib-image.tar")
+        ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.tar")
         : outputPaths.tar.toPath();
   }
 
@@ -712,19 +711,17 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return Paths.get(property);
     }
     return outputPaths.digest == null
-        ? Paths.get(Preconditions.checkNotNull(project).getBuild().getDirectory())
-            .resolve("jib-image.digest")
+        ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.digest")
         : outputPaths.digest.toPath();
   }
 
-  Path getIdOutputPath() {
+  Path getImageIdOutputPath() {
     String property = getProperty(PropertyNames.OUTPUT_PATHS_IMAGE_ID);
     if (property != null) {
       return Paths.get(property);
     }
     return outputPaths.imageId == null
-        ? Paths.get(Preconditions.checkNotNull(project).getBuild().getDirectory())
-            .resolve("jib-image.id")
+        ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.id")
         : outputPaths.imageId.toPath();
   }
 

@@ -197,7 +197,7 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public Path getIdOutputPath() {
+  public Path getImageIdOutputPath() {
     return jibExtension.getOutputPaths().getImageIdPath();
   }
 }

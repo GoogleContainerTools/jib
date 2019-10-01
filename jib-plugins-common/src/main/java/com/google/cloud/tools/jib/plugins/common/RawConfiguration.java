@@ -96,5 +96,5 @@ public interface RawConfiguration {
 
   Path getDigestOutputPath();
 
-  Path getIdOutputPath();
+  Path getImageIdOutputPath();
 }

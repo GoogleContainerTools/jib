@@ -57,9 +57,9 @@ import org.gradle.api.tasks.Optional;
  *     ]
  *   }
  *   outputPaths {
- *     tar = file('jib-image.tar')
- *     digest = file('jib-image.digest')
- *     imageId = file('jib-image.id')
+ *     tar = file('reative/to/project/root/jib-image.tar')
+ *     digest = file('/absolute/path/jib-image.digest')
+ *     imageId = file("$buildDir/jib-image.id")
  *   }
  *   allowInsecureRegistries = false
  *   containerizingMode = 'exploded'

@@ -51,7 +51,7 @@ public class BuildDockerMojoIntegrationTest {
     verifier.executeGoal("jib:dockerBuild");
     verifier.verifyErrorFreeLog();
 
-    BuildImageMojoIntegrationTest.assertDigestFile(projectRoot.resolve("target/jib-image.digest"));
+    BuildImageMojoIntegrationTest.readDigestFile(projectRoot.resolve("target/jib-image.digest"));
   }
 
   /**

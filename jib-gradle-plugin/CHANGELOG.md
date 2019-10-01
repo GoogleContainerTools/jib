@@ -5,10 +5,10 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- `jib.outputFiles` object for configuration output file locations ([#1561](https://github.com/GoogleContainerTools/jib/issues/1561))
-  - `jib.outputFiles.tar` configures output path of `jibBuildTar` (`build/jib-image.tar` by default)
-  - `jib.outputFiles.digest` configures the output path of the image digest (`build/jib-image.digest` by default)
-  - `jib.outputFiles.id` configures output path of the image id  (`build/jib-image.id` by default)
+- `jib.outputPaths` object for configuration output file locations ([#1561](https://github.com/GoogleContainerTools/jib/issues/1561))
+  - `jib.outputPaths.tar` configures output path of `jibBuildTar` (`build/jib-image.tar` by default)
+  - `jib.outputPaths.digest` configures the output path of the image digest (`build/jib-image.digest` by default)
+  - `jib.outputPaths.imageId` configures output path of the image id  (`build/jib-image.id` by default)
 
 ### Changed
 

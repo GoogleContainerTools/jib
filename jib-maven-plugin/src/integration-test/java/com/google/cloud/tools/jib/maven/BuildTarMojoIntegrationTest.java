@@ -47,7 +47,7 @@ public class BuildTarMojoIntegrationTest {
     verifier.executeGoal("jib:" + BuildTarMojo.GOAL_NAME);
     verifier.verifyErrorFreeLog();
 
-    BuildImageMojoIntegrationTest.assertDigestFile(
+    BuildImageMojoIntegrationTest.readDigestFile(
         simpleTestProject.getProjectRoot().resolve("target/jib-image.digest"));
 
     new Command(
