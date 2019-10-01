@@ -219,8 +219,7 @@ public class SingleProjectIntegrationTest {
     String digest =
         readDigestFile(simpleTestProject.getProjectRoot().resolve("build/jib-image.digest"));
     String imageReferenceWithDigest = ImageReference.parse(targetImage).withTag(digest).toString();
-    Assert.assertEquals(
-        output, JibRunHelper.buildAndRun(simpleTestProject, imageReferenceWithDigest));
+    Assert.assertEquals(output, JibRunHelper.pullAndRunBuiltImage(imageReferenceWithDigest));
 
     String id = readDigestFile(simpleTestProject.getProjectRoot().resolve("build/jib-image.id"));
     Assert.assertNotEquals(digest, id);
