@@ -696,33 +696,33 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   }
 
   Path getTarOutputPath() {
-    String property = getProperty(PropertyNames.OUTPUT_PATHS_TAR);
-    if (property != null) {
-      return Paths.get(property);
-    }
-    return outputPaths.tar == null
-        ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.tar")
-        : outputPaths.tar.toPath();
+    Path configuredPath =
+        outputPaths.tar == null
+            ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.tar")
+            : outputPaths.tar.toPath();
+    return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_TAR);
   }
 
   Path getDigestOutputPath() {
-    String property = getProperty(PropertyNames.OUTPUT_PATHS_DIGEST);
-    if (property != null) {
-      return Paths.get(property);
-    }
-    return outputPaths.digest == null
-        ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.digest")
-        : outputPaths.digest.toPath();
+    Path configuredPath =
+        outputPaths.digest == null
+            ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.digest")
+            : outputPaths.digest.toPath();
+    return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_DIGEST);
   }
 
   Path getImageIdOutputPath() {
-    String property = getProperty(PropertyNames.OUTPUT_PATHS_IMAGE_ID);
-    if (property != null) {
-      return Paths.get(property);
-    }
-    return outputPaths.imageId == null
-        ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.id")
-        : outputPaths.imageId.toPath();
+    Path configuredPath =
+        outputPaths.imageId == null
+            ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.id")
+            : outputPaths.imageId.toPath();
+    return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_IMAGE_ID);
+  }
+
+  private Path getRelativeToProjectRoot(Path configuration, String propertyName) {
+    String property = getProperty(propertyName);
+    Path path = property != null ? Paths.get(property) : configuration;
+    return path.isAbsolute() ? path : getProject().getBasedir().toPath().resolve(path);
   }
 
   boolean getAllowInsecureRegistries() {

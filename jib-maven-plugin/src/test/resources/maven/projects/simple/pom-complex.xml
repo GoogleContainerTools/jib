@@ -97,7 +97,7 @@
           </extraDirectory>
           <outputPaths>
             <digest>${project.build.directory}/different-jib-image.digest</digest>
-            <imageId>${project.build.directory}/different-jib-image.id</imageId>
+            <imageId>different-jib-image.id</imageId>
           </outputPaths>
           <allowInsecureRegistries>true</allowInsecureRegistries>
         </configuration>

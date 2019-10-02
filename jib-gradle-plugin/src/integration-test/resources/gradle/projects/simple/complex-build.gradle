@@ -45,7 +45,7 @@ jib {
   }
   outputPaths {
     digest = file("$buildDir/different-jib-image.digest")
-    imageId = file("$buildDir/different-jib-image.id")
+    imageId = file("different-jib-image.id")
   }
   allowInsecureRegistries = true
 }

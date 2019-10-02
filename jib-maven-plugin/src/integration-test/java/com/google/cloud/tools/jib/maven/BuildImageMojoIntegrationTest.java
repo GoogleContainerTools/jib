@@ -77,7 +77,7 @@ public class BuildImageMojoIntegrationTest {
   }
 
   static String readDigestFile(Path digestPath) throws IOException, DigestException {
-    Assert.assertTrue(Files.exists(digestPath));
+    Assert.assertTrue("File missing: " + digestPath, Files.exists(digestPath));
     String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
     return DescriptorDigest.fromDigest(digest).toString();
   }
@@ -585,7 +585,7 @@ public class BuildImageMojoIntegrationTest {
         readDigestFile(
             simpleTestProject.getProjectRoot().resolve("target/different-jib-image.digest"));
     String id =
-        readDigestFile(simpleTestProject.getProjectRoot().resolve("target/different-jib-image.id"));
+        readDigestFile(simpleTestProject.getProjectRoot().resolve("different-jib-image.id"));
     Assert.assertNotEquals(digest, id);
     Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 

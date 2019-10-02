@@ -27,27 +27,28 @@ import org.gradle.api.tasks.Internal;
 /** Object that configures where Jib should create its build output files. */
 public class OutputPathsParameters {
 
+  private final Project project;
+
   private Path digest;
   private Path tar;
-  private Path id;
+  private Path imageId;
 
   @Inject
   public OutputPathsParameters(Project project) {
+    this.project = project;
     digest = project.getBuildDir().toPath().resolve("jib-image.digest");
-    id = project.getBuildDir().toPath().resolve("jib-image.id");
+    imageId = project.getBuildDir().toPath().resolve("jib-image.id");
     tar = project.getBuildDir().toPath().resolve("jib-image.tar");
   }
 
   @Input
   public String getDigest() {
-    String property = System.getProperty(PropertyNames.OUTPUT_PATHS_DIGEST);
-    return property == null ? digest.toString() : property;
+    return getRelativeToProjectRoot(digest, PropertyNames.OUTPUT_PATHS_DIGEST).toString();
   }
 
   @Internal
   Path getDigestPath() {
-    String property = System.getProperty(PropertyNames.OUTPUT_PATHS_DIGEST);
-    return property == null ? digest : Paths.get(property);
+    return getRelativeToProjectRoot(digest, PropertyNames.OUTPUT_PATHS_DIGEST);
   }
 
   public void setDigest(String digest) {
@@ -56,33 +57,35 @@ public class OutputPathsParameters {
 
   @Input
   public String getImageId() {
-    String property = System.getProperty(PropertyNames.OUTPUT_PATHS_IMAGE_ID);
-    return property == null ? id.toString() : property;
+    return getRelativeToProjectRoot(imageId, PropertyNames.OUTPUT_PATHS_IMAGE_ID).toString();
   }
 
   @Internal
   Path getImageIdPath() {
-    String property = System.getProperty(PropertyNames.OUTPUT_PATHS_IMAGE_ID);
-    return property == null ? id : Paths.get(property);
+    return getRelativeToProjectRoot(imageId, PropertyNames.OUTPUT_PATHS_IMAGE_ID);
   }
 
   public void setImageId(String id) {
-    this.id = Paths.get(id);
+    this.imageId = Paths.get(id);
   }
 
   @Input
   public String getTar() {
-    String property = System.getProperty(PropertyNames.OUTPUT_PATHS_TAR);
-    return property == null ? tar.toString() : property;
+    return getRelativeToProjectRoot(tar, PropertyNames.OUTPUT_PATHS_TAR).toString();
   }
 
   @Internal
   Path getTarPath() {
-    String property = System.getProperty(PropertyNames.OUTPUT_PATHS_TAR);
-    return property == null ? tar : Paths.get(property);
+    return getRelativeToProjectRoot(tar, PropertyNames.OUTPUT_PATHS_TAR);
   }
 
   public void setTar(String tar) {
     this.tar = Paths.get(tar);
+  }
+
+  private Path getRelativeToProjectRoot(Path configuration, String propertyName) {
+    String property = System.getProperty(propertyName);
+    Path path = property != null ? Paths.get(property) : configuration;
+    return path.isAbsolute() ? path : project.getProjectDir().toPath().resolve(path);
   }
 }

@@ -376,7 +376,7 @@ public class SingleProjectIntegrationTest {
         output, new Command("docker", "run", "--rm", imageReferenceWithDigest).run());
 
     String id =
-        readDigestFile(simpleTestProject.getProjectRoot().resolve("build/different-jib-image.id"));
+        readDigestFile(simpleTestProject.getProjectRoot().resolve("different-jib-image.id"));
     Assert.assertNotEquals(digest, id);
     Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
