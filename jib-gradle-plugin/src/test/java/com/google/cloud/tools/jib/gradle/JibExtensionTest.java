@@ -250,9 +250,11 @@ public class JibExtensionTest {
         });
 
     Assert.assertEquals(
-        Paths.get("/path/to/digest"), testJibExtension.getOutputPaths().getDigestPath());
+        Paths.get("/path/to/digest").toAbsolutePath(),
+        testJibExtension.getOutputPaths().getDigestPath());
     Assert.assertEquals(
-        Paths.get("/path/to/id"), testJibExtension.getOutputPaths().getImageIdPath());
+        Paths.get("/path/to/id").toAbsolutePath(),
+        testJibExtension.getOutputPaths().getImageIdPath());
     Assert.assertEquals(
         fakeProject.getProjectDir().toPath().resolve(Paths.get("path/to/tar")),
         testJibExtension.getOutputPaths().getTarPath());
@@ -333,11 +335,14 @@ public class JibExtensionTest {
     // Absolute paths
     System.setProperty("jib.outputPaths.digest", "/digest/path");
     Assert.assertEquals(
-        Paths.get("/digest/path"), testJibExtension.getOutputPaths().getDigestPath());
+        Paths.get("/digest/path").toAbsolutePath(),
+        testJibExtension.getOutputPaths().getDigestPath());
     System.setProperty("jib.outputPaths.imageId", "/id/path");
-    Assert.assertEquals(Paths.get("/id/path"), testJibExtension.getOutputPaths().getImageIdPath());
+    Assert.assertEquals(
+        Paths.get("/id/path").toAbsolutePath(), testJibExtension.getOutputPaths().getImageIdPath());
     System.setProperty("jib.outputPaths.tar", "/tar/path");
-    Assert.assertEquals(Paths.get("/tar/path"), testJibExtension.getOutputPaths().getTarPath());
+    Assert.assertEquals(
+        Paths.get("/tar/path").toAbsolutePath(), testJibExtension.getOutputPaths().getTarPath());
     // Relative paths
     System.setProperty("jib.outputPaths.digest", "digest/path");
     Assert.assertEquals(
