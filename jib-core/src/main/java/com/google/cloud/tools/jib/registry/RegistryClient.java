@@ -443,12 +443,6 @@ public class RegistryClient {
     return repositoryGrants == null || repositoryGrants.containsEntry(repository, "pull");
   }
 
-  /** @return the registry endpoint's API root, without the protocol */
-  @VisibleForTesting
-  String getApiRouteBase() {
-    return registryEndpointRequestProperties.getServerUrl() + "/v2/";
-  }
-
   @VisibleForTesting
   String getUserAgent() {
     return userAgent;
@@ -466,7 +460,6 @@ public class RegistryClient {
     return new RegistryEndpointCaller<>(
             eventHandlers,
             userAgent,
-            getApiRouteBase(),
             registryEndpointProvider,
             authorization,
             registryEndpointRequestProperties,

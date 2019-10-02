@@ -56,8 +56,6 @@ class RegistryEndpointCaller<T> {
    */
   @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
 
-  private static final String DEFAULT_PROTOCOL = "https";
-
   private static boolean isHttpsProtocol(URL url) {
     return "https".equals(url.getProtocol());
   }
@@ -81,7 +79,6 @@ class RegistryEndpointCaller<T> {
   }
 
   private final EventHandlers eventHandlers;
-  private final URL initialRequestUrl;
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
   @Nullable private final Authorization authorization;
@@ -99,7 +96,6 @@ class RegistryEndpointCaller<T> {
    *
    * @param eventHandlers the event dispatcher used for dispatching log events
    * @param userAgent {@code User-Agent} header to send with the request
-   * @param apiRouteBase the endpoint's API root, without the protocol
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
    * @param authorization optional authentication credentials to use
    * @param registryEndpointRequestProperties properties of the registry endpoint request
@@ -109,7 +105,6 @@ class RegistryEndpointCaller<T> {
   RegistryEndpointCaller(
       EventHandlers eventHandlers,
       String userAgent,
-      String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
@@ -118,7 +113,6 @@ class RegistryEndpointCaller<T> {
     this(
         eventHandlers,
         userAgent,
-        apiRouteBase,
         registryEndpointProvider,
         authorization,
         registryEndpointRequestProperties,
@@ -131,7 +125,6 @@ class RegistryEndpointCaller<T> {
   RegistryEndpointCaller(
       EventHandlers eventHandlers,
       String userAgent,
-      String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
@@ -140,8 +133,6 @@ class RegistryEndpointCaller<T> {
       @Nullable Function<URL, Connection> insecureConnectionFactory)
       throws MalformedURLException {
     this.eventHandlers = eventHandlers;
-    this.initialRequestUrl =
-        registryEndpointProvider.getApiRoute(DEFAULT_PROTOCOL + "://" + apiRouteBase);
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;
     this.authorization = authorization;
@@ -160,6 +151,8 @@ class RegistryEndpointCaller<T> {
    */
   T call() throws IOException, RegistryException {
     try {
+      String apiRouteBase = "https://" + registryEndpointRequestProperties.getServerUrl() + "/v2/";
+      URL initialRequestUrl = registryEndpointProvider.getApiRoute(apiRouteBase);
       return callWithAllowInsecureRegistryHandling(initialRequestUrl);
 
     } catch (IOException ex) {

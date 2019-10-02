@@ -89,14 +89,4 @@ public class RegistryClientTest {
     Assert.assertTrue(registryClient.getUserAgent().startsWith("jib "));
     Assert.assertTrue(registryClient.getUserAgent().endsWith(" skaffold/0.34.0"));
   }
-
-  @Test
-  public void testGetApiRouteBase() {
-    Assert.assertEquals(
-        "some.server.url/v2/",
-        testRegistryClientFactory
-            .setAllowInsecureRegistries(true)
-            .newRegistryClient()
-            .getApiRouteBase());
-  }
 }
