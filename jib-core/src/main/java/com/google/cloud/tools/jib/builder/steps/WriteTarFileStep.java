@@ -58,7 +58,9 @@ public class WriteTarFileStep implements Callable<BuildResult> {
     try (ProgressEventDispatcher ignored =
         progressEventDispatcherFactory.create("writing to tar file", 1)) {
       // Builds the image to a tarball.
-      Files.createDirectories(outputPath.getParent());
+      if (outputPath.getParent() != null) {
+        Files.createDirectories(outputPath.getParent());
+      }
       try (OutputStream outputStream =
           new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
         new ImageTarball(builtImage, buildConfiguration.getTargetImageConfiguration().getImage())

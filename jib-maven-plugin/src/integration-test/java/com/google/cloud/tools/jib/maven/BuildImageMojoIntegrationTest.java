@@ -76,18 +76,10 @@ public class BuildImageMojoIntegrationTest {
     return nameBase + label + System.nanoTime();
   }
 
-  static String assertImageDigest(Path projectRoot) throws IOException, DigestException {
-    Path digestPath = projectRoot.resolve("target/jib-image.digest");
-    Assert.assertTrue(Files.exists(digestPath));
+  static String readDigestFile(Path digestPath) throws IOException, DigestException {
+    Assert.assertTrue("File missing: " + digestPath, Files.exists(digestPath));
     String digest = new String(Files.readAllBytes(digestPath), StandardCharsets.UTF_8);
     return DescriptorDigest.fromDigest(digest).toString();
-  }
-
-  static String assertImageId(Path projectRoot) throws IOException, DigestException {
-    Path idPath = projectRoot.resolve("target/jib-image.id");
-    Assert.assertTrue(Files.exists(idPath));
-    String id = new String(Files.readAllBytes(idPath), StandardCharsets.UTF_8);
-    return DescriptorDigest.fromDigest(id).toString();
   }
 
   private static boolean isJava11RuntimeOrHigher() {
@@ -141,13 +133,13 @@ public class BuildImageMojoIntegrationTest {
 
     try {
       // Test pulling/running using image digest
-      String digest = assertImageDigest(projectRoot);
+      String digest = readDigestFile(projectRoot.resolve("target/jib-image.digest"));
       String imageReferenceWithDigest =
           ImageReference.parse(imageReference).withTag(digest).toString();
       Assert.assertEquals(output, pullAndRunBuiltImage(imageReferenceWithDigest));
 
       // Test running using image id
-      String id = assertImageId(projectRoot);
+      String id = readDigestFile(projectRoot.resolve("target/jib-image.id"));
       Assert.assertNotEquals(digest, id);
       Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
 
@@ -210,7 +202,7 @@ public class BuildImageMojoIntegrationTest {
     String additionalOutput = pullAndRunBuiltImage(additionalImageReference);
     Assert.assertEquals(output, additionalOutput);
 
-    String digest = assertImageDigest(projectRoot);
+    String digest = readDigestFile(projectRoot.resolve("target/jib-image.digest"));
     String digestImageReference = ImageReference.parse(imageReference).withTag(digest).toString();
     String digestOutput = pullAndRunBuiltImage(digestImageReference);
     Assert.assertEquals(output, digestOutput);
@@ -239,8 +231,6 @@ public class BuildImageMojoIntegrationTest {
     verifier.addCliOption("--file=" + pomFile);
     verifier.executeGoals(Arrays.asList("clean", "compile", "jib:build"));
     verifier.verifyErrorFreeLog();
-
-    assertImageDigest(simpleTestProject.getProjectRoot());
 
     // Verify output
     targetRegistry.pull(imageReference);
@@ -583,12 +573,22 @@ public class BuildImageMojoIntegrationTest {
       throws IOException, InterruptedException, VerificationException, DigestException {
     String targetImage = "localhost:6000/compleximage:maven" + System.nanoTime();
     Instant before = Instant.now();
+    String output =
+        buildAndRunComplex(
+            targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml");
     Assert.assertEquals(
         "Hello, world. An argument.\n1970-01-01T00:00:01Z\nrwxr-xr-x\nrwxrwxrwx\nfoo\ncat\n"
             + "1970-01-01T00:00:01Z\n1970-01-01T00:00:01Z\n"
             + "-Xms512m\n-Xdebug\nenvvalue1\nenvvalue2\n",
-        buildAndRunComplex(
-            targetImage, "testuser2", "testpassword2", localRegistry2, "pom-complex.xml"));
+        output);
+    String digest =
+        readDigestFile(
+            simpleTestProject.getProjectRoot().resolve("target/different-jib-image.digest"));
+    String id =
+        readDigestFile(simpleTestProject.getProjectRoot().resolve("different-jib-image.id"));
+    Assert.assertNotEquals(digest, id);
+    Assert.assertEquals(output, new Command("docker", "run", "--rm", id).run());
+
     assertCreationTimeIsAfter(before, targetImage);
     assertWorkingDirectory("", targetImage);
     assertEntrypoint(

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `jib.outputPaths` object for configuration output file locations ([#1561](https://github.com/GoogleContainerTools/jib/issues/1561))
+  - `jib.outputPaths.tar` configures output path of `jibBuildTar` (`build/jib-image.tar` by default)
+  - `jib.outputPaths.digest` configures the output path of the image digest (`build/jib-image.digest` by default)
+  - `jib.outputPaths.imageId` configures output path of the image id  (`build/jib-image.id` by default)
+
 ### Changed
 
 - Local base image layers are now processed in parallel, speeding up builds using large local base images. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))

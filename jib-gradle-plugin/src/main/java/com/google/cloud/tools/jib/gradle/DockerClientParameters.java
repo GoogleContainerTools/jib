@@ -28,8 +28,8 @@ import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
 
 /**
- * Object in {@link BuildDockerTask} that configures the Docker executable and the additional
- * environment variables to use when executing the executable.
+ * Object that configures the Docker executable and the additional environment variables to use when
+ * executing the executable.
  */
 public class DockerClientParameters {
 

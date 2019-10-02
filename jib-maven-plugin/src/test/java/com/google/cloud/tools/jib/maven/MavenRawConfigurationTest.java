@@ -82,6 +82,9 @@ public class MavenRawConfigurationTest {
     Mockito.when(jibPluginConfiguration.getDockerClientExecutable()).thenReturn(Paths.get("test"));
     Mockito.when(jibPluginConfiguration.getDockerClientEnvironment())
         .thenReturn(new HashMap<>(ImmutableMap.of("docker", "client")));
+    Mockito.when(jibPluginConfiguration.getDigestOutputPath()).thenReturn(Paths.get("digest/path"));
+    Mockito.when(jibPluginConfiguration.getImageIdOutputPath()).thenReturn(Paths.get("id/path"));
+    Mockito.when(jibPluginConfiguration.getTarOutputPath()).thenReturn(Paths.get("tar/path"));
 
     MavenRawConfiguration rawConfiguration = new MavenRawConfiguration(jibPluginConfiguration);
 
@@ -115,6 +118,9 @@ public class MavenRawConfigurationTest {
     Assert.assertEquals(
         new HashMap<>(ImmutableMap.of("docker", "client")),
         rawConfiguration.getDockerEnvironment());
+    Assert.assertEquals(Paths.get("digest/path"), jibPluginConfiguration.getDigestOutputPath());
+    Assert.assertEquals(Paths.get("id/path"), jibPluginConfiguration.getImageIdOutputPath());
+    Assert.assertEquals(Paths.get("tar/path"), jibPluginConfiguration.getTarOutputPath());
 
     Mockito.verifyNoMoreInteractions(eventHandlers);
   }
