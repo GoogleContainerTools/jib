@@ -52,7 +52,7 @@ subprojects {
 
     COMMONS_COMPRESS: '1.19',
     JACKSON_DATABIND: '2.9.10',
-    ASM: '7.1',
+    ASM: '7.2',
 
     //test
     JUNIT: '4.12',
