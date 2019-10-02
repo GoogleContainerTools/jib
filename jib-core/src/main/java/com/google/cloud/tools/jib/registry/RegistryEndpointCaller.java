@@ -56,8 +56,6 @@ class RegistryEndpointCaller<T> {
    */
   @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
 
-  private static final String DEFAULT_PROTOCOL = "https";
-
   private static boolean isHttpsProtocol(URL url) {
     return "https".equals(url.getProtocol());
   }
