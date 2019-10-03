@@ -2,7 +2,7 @@
 
 Jib relies on the Java Runtime Environment's list of approved _Certification Authority Certificates_ for validating SSL certificates, and will hence fail when connecting to a docker registry that uses a self-signed `https` certificate.  This document describes two approaches for handling registries with self-signed certificates.  Both approaches configure the JRE's list of approved CA Certificates.
 
-These CA Certificates are managed through a _keystore_ file. The easiest way to manipulate keystores is using the [KeyStore Explorer](http://keystore-explorer.org/), an open source GUI replacement for the Java command-line  `keytool` and `jarsigner` utilities. Download and install KeyStore Explorer from the [official website](http://keystore-explorer.org/downloads.html).
+These CA Certificates for JRE are managed through a type of a keystore file called _truststore_. The easiest way to manipulate truststore is using the [KeyStore Explorer](http://keystore-explorer.org/), an open source GUI replacement for the Java command-line  `keytool` and `jarsigner` utilities. Download and install KeyStore Explorer from the [official website](http://keystore-explorer.org/downloads.html).
 
 
 ## Step 1. Identify Java runtime used by build tool
@@ -73,20 +73,20 @@ Otherwise use _Examine > Examine SSL_ to connect to your service and click the _
 
 ## 4. Save the CA Certificates
 
-Now we save the updated keystore. We can either save to a new keystore and configure our build's JVM to use this new keystore as a _trusted keystore_, or modify the JRE's list of CA Certificates.
+Now we save the updated truststore. We can either save to a new truststore and configure our build's JVM to use this new truststore, or modify the JRE's list of CA Certificates.
 
-#### Option 1: Create a New Trusted Keystore
+#### Option 1: Create a New Truststore
 
-This option creates a _new_ list of CA Certificates and configures your build tool to use ths new list as the JRE's list of approved CA certificates, called the _trust store_.
+This option creates a _new_ list of CA Certificates and configures your build tool to use ths new list as the JRE's list of approved CA certificates.
 
-Within _KeyStore Explorer_, select _File > Save As..._ and save the new trusted keystore file as a _JKS_ file within your project location. You will be prompted for a password; we use `password` in the examples below.
+Within _KeyStore Explorer_, select _File > Save As..._ and save the new truststore file as a _JKS_ file within your project location. You will be prompted for a password; we use `password` in the examples below.
 
 ##### Maven
 
-The following snippet shows how to configure Maven to use this new trusted keystore file:
+The following snippet shows how to configure Maven to use this new truststore file:
 
 ```shell
-$ ./mvnw -Djavax.net.ssl.trustStore=path/to/cacerts.jks \
+$ ./mvnw -Djavax.net.ssl.trustStore=path/to/truststore.jks \
   -Djavax.net.ssl.trustStorePassword=password \
   -Dimage=<host>:<port>/<image> jib:build
 ```
@@ -95,11 +95,11 @@ You may choose to configure your registry credentials with [the `~/.m2/settings.
 
 ##### Gradle
 
-The following snippet shows how to configure Gradle to use this new trusted keystore file:
+The following snippet shows how to configure Gradle to use this new truststore file:
 
 ```shell
 $ ./gradlew jib \
-  -Djavax.net.ssl.trustStore=path/to/cacerts.jks \
+  -Djavax.net.ssl.trustStore=path/to/truststore.jks \
   -Djavax.net.ssl.trustStorePassword=password
 ```
 
