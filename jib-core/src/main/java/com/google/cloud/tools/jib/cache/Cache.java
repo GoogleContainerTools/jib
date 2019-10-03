@@ -131,6 +131,19 @@ public class Cache {
   }
 
   /**
+   * Writes a container configuration to {@code (cache directory)/local/config/(image id)}.
+   *
+   * @param imageId the ID of the image to store the container configuration for
+   * @param containerConfiguration the container configuration
+   * @throws IOException if an I/O exception occurs
+   */
+  void writeLocalConfig(
+      DescriptorDigest imageId, ContainerConfigurationTemplate containerConfiguration)
+      throws IOException {
+    cacheStorageWriter.writeLocalConfig(imageId, containerConfiguration);
+  }
+
+  /**
    * Retrieves the cached manifest and container configuration for an image reference.
    *
    * @param imageReference the image reference
@@ -186,5 +199,17 @@ public class Cache {
   public Optional<CachedLayer> retrieveTarLayer(DescriptorDigest diffId)
       throws IOException, CacheCorruptedException {
     return cacheStorageReader.retrieveTarLayer(diffId);
+  }
+
+  /**
+   * Retrieves the {@link ContainerConfigurationTemplate} for the image with the given image ID.
+   *
+   * @param imageId the image ID
+   * @return the {@link ContainerConfigurationTemplate} referenced by the image ID, if found
+   * @throws IOException if an I/O exception occurs
+   */
+  public Optional<ContainerConfigurationTemplate> retrieveLocalConfig(DescriptorDigest imageId)
+      throws IOException {
+    return cacheStorageReader.retrieveLocalConfig(imageId);
   }
 }

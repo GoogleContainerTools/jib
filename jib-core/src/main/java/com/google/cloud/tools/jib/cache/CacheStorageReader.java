@@ -224,6 +224,26 @@ class CacheStorageReader {
   }
 
   /**
+   * Retrieves the {@link ContainerConfigurationTemplate} for the image with the given image ID.
+   *
+   * @param imageId the image ID
+   * @return the {@link ContainerConfigurationTemplate} referenced by the image ID, if found
+   * @throws IOException if an I/O exception occurs
+   */
+  Optional<ContainerConfigurationTemplate> retrieveLocalConfig(DescriptorDigest imageId)
+      throws IOException {
+    Path configPath =
+        cacheStorageFiles.getLocalDirectory().resolve("config").resolve(imageId.getHash());
+    if (!Files.exists(configPath)) {
+      return Optional.empty();
+    }
+
+    ContainerConfigurationTemplate config =
+        JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
+    return Optional.of(config);
+  }
+
+  /**
    * Retrieves the layer digest selected by the {@code selector}.
    *
    * @param selector the selector
