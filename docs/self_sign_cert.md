@@ -79,14 +79,14 @@ Now we save the updated keystore. We can either save to a new keystore and confi
 
 This option creates a _new_ list of CA Certificates and configures your build tool to use ths new list as the JRE's list of approved CA certificates, called the _trust store_.
 
-Within _KeyStore Explorer_, select _File > Save As..._ and save the new keystore file as a _JKS_ file within your project location. You will be prompted for a password; we use `password` in the examples below.
+Within _KeyStore Explorer_, select _File > Save As..._ and save the new trusted keystore file as a _JKS_ file within your project location. You will be prompted for a password; we use `password` in the examples below.
 
 ##### Maven
 
-The following snippet shows how to configure Maven to use this new keystore file:
+The following snippet shows how to configure Maven to use this new trusted keystore file:
 
 ```shell
-$ ./mvnw -Djavax.net.ssl.trustStore=path/to/keystore.jks \
+$ ./mvnw -Djavax.net.ssl.trustStore=path/to/cacerts.jks \
   -Djavax.net.ssl.trustStorePassword=password \
   -Dimage=<host>:<port>/<image> jib:build
 ```
@@ -95,11 +95,11 @@ You may choose to configure your registry credentials with [the `~/.m2/settings.
 
 ##### Gradle
 
-The following snippet shows how to configure Gradle to use this new keystore file:
+The following snippet shows how to configure Gradle to use this new trusted keystore file:
 
 ```shell
 $ ./gradlew jib \
-  -Djavax.net.ssl.trustStore=path/to/keystore.jks \
+  -Djavax.net.ssl.trustStore=path/to/cacerts.jks \
   -Djavax.net.ssl.trustStorePassword=password
 ```
 
