@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- Java 14 main class inference support. ([#2015](https://github.com/GoogleContainerTools/jib/issues/2015))
+- Main class inference support for Java 13/14. ([#2015](https://github.com/GoogleContainerTools/jib/issues/2015))
 
 ### Changed
 

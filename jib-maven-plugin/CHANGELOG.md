@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
   - `<outputPaths><tar>` configures output path of `jib:buildTar` (`target/jib-image.tar` by default)
   - `<outputPaths><digest>` configures the output path of the image digest (`target/jib-image.digest` by default)
   - `<outputPaths><imageId>` configures output path of the image id  (`target/jib-image.id` by default)
-- Java 14 main class inference support. ([#2015](https://github.com/GoogleContainerTools/jib/issues/2015))
+- Main class inference support for Java 13/14. ([#2015](https://github.com/GoogleContainerTools/jib/issues/2015))
 
 ### Changed
 
