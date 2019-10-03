@@ -101,26 +101,29 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
     EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
     // Skip this step if this is a scratch image
     ImageConfiguration baseImageConfiguration = buildConfiguration.getBaseImageConfiguration();
-    if (baseImageConfiguration.getImage().isScratch()) {
+    ImageReference imageReference = baseImageConfiguration.getImage();
+    if (imageReference.isScratch()) {
       eventHandlers.dispatch(LogEvent.progress("Getting scratch base image..."));
       return new ImageAndAuthorization(
           Image.builder(buildConfiguration.getTargetFormat()).build(), null);
     }
 
-    eventHandlers.dispatch(
-        LogEvent.progress(
-            "Getting base image "
-                + buildConfiguration.getBaseImageConfiguration().getImage()
-                + "..."));
+    eventHandlers.dispatch(LogEvent.progress("Getting base image " + imageReference + "..."));
 
-    if (buildConfiguration.isOffline()) {
-      return new ImageAndAuthorization(pullBaseImageOffline(), null);
+    if (buildConfiguration.isOffline() || imageReference.isTagDigest()) {
+      Optional<Image> image = getCachedBaseImage();
+      if (image.isPresent()) {
+        return new ImageAndAuthorization(image.get(), null);
+      }
+      if (buildConfiguration.isOffline()) {
+        throw new IOException(
+            "Cannot run Jib in offline mode; " + imageReference + " not found in local Jib cache");
+      }
     }
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("pulling base image manifest", 2);
-        TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
+        TimerEventDispatcher ignored = new TimerEventDispatcher(eventHandlers, DESCRIPTION)) {
       // First, try with no credentials.
       try {
         return new ImageAndAuthorization(pullBaseImage(null, progressEventDispatcher), null);
@@ -128,9 +131,7 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
       } catch (RegistryUnauthorizedException ex) {
         eventHandlers.dispatch(
             LogEvent.lifecycle(
-                "The base image requires auth. Trying again for "
-                    + buildConfiguration.getBaseImageConfiguration().getImage()
-                    + "..."));
+                "The base image requires auth. Trying again for " + imageReference + "..."));
 
         // If failed, then, retrieve base registry credentials and try with retrieved credentials.
         // TODO: Refactor the logic in RetrieveRegistryCredentialsStep out to
@@ -294,32 +295,32 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
   /**
    * Retrieves the cached base image.
    *
-   * @return the cached image
+   * @return the cached image, if found
    * @throws IOException when an I/O exception occurs
    * @throws CacheCorruptedException if the cache is corrupted
    * @throws LayerPropertyNotFoundException if adding image layers fails
    * @throws BadContainerConfigurationFormatException if the container configuration is in a bad
    *     format
    */
-  private Image pullBaseImageOffline()
+  private Optional<Image> getCachedBaseImage()
       throws IOException, CacheCorruptedException, BadContainerConfigurationFormatException,
           LayerCountMismatchException {
     ImageReference baseImage = buildConfiguration.getBaseImageConfiguration().getImage();
     Optional<ManifestAndConfig> metadata =
         buildConfiguration.getBaseImageLayersCache().retrieveMetadata(baseImage);
     if (!metadata.isPresent()) {
-      throw new IOException(
-          "Cannot run Jib in offline mode; " + baseImage + " not found in local Jib cache");
+      return Optional.empty();
     }
 
     ManifestTemplate manifestTemplate = metadata.get().getManifest();
     if (manifestTemplate instanceof V21ManifestTemplate) {
-      return JsonToImageTranslator.toImage((V21ManifestTemplate) manifestTemplate);
+      return Optional.of(JsonToImageTranslator.toImage((V21ManifestTemplate) manifestTemplate));
     }
 
     ContainerConfigurationTemplate configurationTemplate =
         metadata.get().getConfig().orElseThrow(IllegalStateException::new);
-    return JsonToImageTranslator.toImage(
-        (BuildableManifestTemplate) manifestTemplate, configurationTemplate);
+    return Optional.of(
+        JsonToImageTranslator.toImage(
+            (BuildableManifestTemplate) manifestTemplate, configurationTemplate));
   }
 }
