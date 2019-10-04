@@ -251,15 +251,12 @@ public class CacheStorageReaderTest {
   @Test
   public void testRetrieveLocalConfig() throws IOException, URISyntaxException, DigestException {
     Path cacheDirectory = temporaryFolder.newFolder().toPath();
-    Path configDirectory =
-        cacheDirectory
-            .resolve("local")
-            .resolve("config")
-            .resolve("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    Path configDirectory = cacheDirectory.resolve("local").resolve("config");
     Files.createDirectories(configDirectory);
     Files.copy(
         Paths.get(Resources.getResource("core/json/containerconfig.json").toURI()),
-        configDirectory.resolve("config.json"));
+        configDirectory.resolve(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
 
     CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
     CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);

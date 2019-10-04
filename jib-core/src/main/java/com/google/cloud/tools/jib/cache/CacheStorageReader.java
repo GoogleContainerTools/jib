@@ -233,11 +233,7 @@ class CacheStorageReader {
   Optional<ContainerConfigurationTemplate> retrieveLocalConfig(DescriptorDigest imageId)
       throws IOException {
     Path configPath =
-        cacheStorageFiles
-            .getLocalDirectory()
-            .resolve("config")
-            .resolve(imageId.getHash())
-            .resolve("config.json");
+        cacheStorageFiles.getLocalDirectory().resolve("config").resolve(imageId.getHash());
     if (!Files.exists(configPath)) {
       return Optional.empty();
     }

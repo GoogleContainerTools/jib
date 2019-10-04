@@ -205,8 +205,7 @@ public class CacheStorageWriterTest {
         cacheStorageFiles
             .getLocalDirectory()
             .resolve("config")
-            .resolve("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-            .resolve("config.json");
+            .resolve("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     Assert.assertTrue(Files.exists(savedConfigPath));
     ContainerConfigurationTemplate savedContainerConfig =
         JsonTemplateMapper.readJsonFromFile(savedConfigPath, ContainerConfigurationTemplate.class);
