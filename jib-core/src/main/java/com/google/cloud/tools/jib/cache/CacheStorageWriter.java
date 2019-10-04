@@ -133,18 +133,16 @@ class CacheStorageWriter {
     temporaryFile.toFile().deleteOnExit();
     try (OutputStream outputStream = Files.newOutputStream(temporaryFile)) {
       JsonTemplateMapper.writeTo(jsonTemplate, outputStream);
-    }
 
-    // Attempts an atomic move first, and falls back to non-atomic if the file system does not
-    // support atomic moves.
-    try {
+      // Attempts an atomic move first, and falls back to non-atomic if the file system does not
+      // support atomic moves.
       Files.move(
           temporaryFile,
           destination,
           StandardCopyOption.ATOMIC_MOVE,
           StandardCopyOption.REPLACE_EXISTING);
 
-    } catch (AtomicMoveNotSupportedException ignored2) {
+    } catch (AtomicMoveNotSupportedException ignored) {
       Files.move(temporaryFile, destination, StandardCopyOption.REPLACE_EXISTING);
     }
   }
