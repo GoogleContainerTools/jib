@@ -333,6 +333,21 @@ class CacheStorageWriter {
   }
 
   /**
+   * Writes a container configuration to {@code (cache directory)/local/config/(image id)}.
+   *
+   * @param imageId the ID of the image to store the container configuration for
+   * @param containerConfiguration the container configuration
+   * @throws IOException if an I/O exception occurs
+   */
+  void writeLocalConfig(
+      DescriptorDigest imageId, ContainerConfigurationTemplate containerConfiguration)
+      throws IOException {
+    Path configDirectory = cacheStorageFiles.getLocalDirectory().resolve("config");
+    Files.createDirectories(configDirectory);
+    writeMetadata(containerConfiguration, configDirectory.resolve(imageId.getHash()));
+  }
+
+  /**
    * Writes a compressed {@code layerBlob} to the {@code layerDirectory}.
    *
    * @param compressedLayerBlob the compressed layer {@link Blob}
