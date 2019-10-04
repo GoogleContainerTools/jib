@@ -47,6 +47,9 @@ import java.util.function.Function;
 /** Calls out to the {@code docker} CLI. */
 public class DockerClient {
 
+  /**
+   * Contains the size, image ID, and diff IDs of an image inspected with {@code docker inspect}.
+   */
   public static class InspectResults {
     private long size;
     private String imageId;
@@ -124,6 +127,14 @@ public class DockerClient {
     };
   }
 
+  /**
+   * Parses the results of {@code docker inspect} into an {@link InspectResults}.
+   *
+   * @param output the output of the {@code docker inspect} command containing the size, image ID,
+   *     and diff IDs
+   * @return the {@link InspectResults}
+   * @throws DigestException if parsing the digests fails
+   */
   @VisibleForTesting
   static InspectResults parseInspectResults(String output) throws DigestException {
     List<String> items = Splitter.on(',').splitToList(output);
@@ -135,7 +146,7 @@ public class DockerClient {
         Splitter.on(' ').splitToList(items.get(2).replace("[", "").replace("]", ""));
     List<String> processedDiffIds = new ArrayList<>(diffIds.size());
     for (String diffId : diffIds) {
-      processedDiffIds.add(DescriptorDigest.fromDigest(diffId).getHash());
+      processedDiffIds.add(DescriptorDigest.fromDigest(diffId.trim()).getHash());
     }
 
     return new InspectResults(size, imageId, processedDiffIds);
