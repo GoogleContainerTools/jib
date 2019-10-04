@@ -2,7 +2,7 @@
 
 Jib relies on the Java Runtime Environment's list of approved _Certification Authority Certificates_ for validating SSL certificates, and will hence fail when connecting to a docker registry that uses a self-signed `https` certificate.  This document describes two approaches for handling registries with self-signed certificates.  Both approaches configure the JRE's list of approved CA Certificates.
 
-These CA Certificates for JRE are managed through a type of a keystore file called _truststore_. The easiest way to manipulate truststores is using the [KeyStore Explorer](http://keystore-explorer.org/), an open source GUI replacement for the Java command-line  `keytool` and `jarsigner` utilities. Download and install KeyStore Explorer from the [official website](http://keystore-explorer.org/downloads.html).
+These CA Certificates for JRE are managed through a type of a keystore file called _truststore_. An easy way to manipulate truststores is using the [KeyStore Explorer](http://keystore-explorer.org/), an open source GUI replacement for the Java command-line  `keytool` and `jarsigner` utilities. Download and install KeyStore Explorer from the [official website](http://keystore-explorer.org/downloads.html).
 
 
 ## Step 1. Identify Java runtime used by build tool
