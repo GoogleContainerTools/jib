@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.docker.DockerClient.InspectResults;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
@@ -27,6 +28,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.security.DigestException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -267,11 +269,11 @@ public class DockerClientTest {
   }
 
   @Test
-  public void testSize_fail() throws InterruptedException {
+  public void testSize_fail() throws InterruptedException, DigestException {
     DockerClient testDockerClient =
         new DockerClient(
             subcommand -> {
-              Assert.assertEquals(Arrays.asList("inspect", "-f", "{{.Size}}", "image"), subcommand);
+              Assert.assertEquals("inspect", subcommand.get(0));
               return mockProcessBuilder;
             });
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
@@ -280,12 +282,31 @@ public class DockerClientTest {
         .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
 
     try {
-      testDockerClient.sizeOf(ImageReference.of(null, "image", null));
+      testDockerClient.inspect(ImageReference.of(null, "image", null));
       Assert.fail("docker inspect should have failed");
 
     } catch (IOException ex) {
       Assert.assertEquals("'docker inspect' command failed with error: error", ex.getMessage());
     }
+  }
+
+  @Test
+  public void testParseInspectResults() throws DigestException {
+    String output =
+        "488118507,sha256:e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd,"
+            + "[sha256:55e6b89812f369277290d098c1e44c9e85a5ab0286c649f37e66e11074f8ebd1 "
+            + "sha256:26b1991f37bd5b798e1523f65d7f6aa6961b75515f465cf44123fa0ad3b8961b "
+            + "sha256:8bacec4e34468110538ebf108ca8ec0d880a37018a55be91b9670b8e900c593a]\n";
+    InspectResults results = DockerClient.parseInspectResults(output);
+    Assert.assertEquals(488118507, results.getSize());
+    Assert.assertEquals(
+        "e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd", results.getImageId());
+    Assert.assertEquals(
+        Arrays.asList(
+            "55e6b89812f369277290d098c1e44c9e85a5ab0286c649f37e66e11074f8ebd1",
+            "26b1991f37bd5b798e1523f65d7f6aa6961b75515f465cf44123fa0ad3b8961b",
+            "8bacec4e34468110538ebf108ca8ec0d880a37018a55be91b9670b8e900c593a"),
+        results.getDiffIds());
   }
 
   private DockerClient makeDockerSaveClient() {

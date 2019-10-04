@@ -25,6 +25,7 @@ import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.security.DigestException;
 import java.util.concurrent.Callable;
 
 /** Saves an image from the docker daemon. */
@@ -47,7 +48,7 @@ public class SaveDockerStep implements Callable<Path> {
   }
 
   @Override
-  public Path call() throws IOException, InterruptedException {
+  public Path call() throws IOException, InterruptedException, DigestException {
     Path outputDir = tempDirectoryProvider.newDirectory();
     Path outputPath = outputDir.resolve("out.tar");
     ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
@@ -55,7 +56,7 @@ public class SaveDockerStep implements Callable<Path> {
         new TimerEventDispatcher(
             buildConfiguration.getEventHandlers(),
             "Saving " + imageReference + " from Docker daemon")) {
-      long size = dockerClient.sizeOf(imageReference);
+      long size = dockerClient.inspect(imageReference).getSize();
       try (ProgressEventDispatcher progressEventDispatcher =
               progressEventDispatcherFactory.create("saving base image " + imageReference, size);
           ThrottledAccumulatingConsumer throttledProgressReporter =

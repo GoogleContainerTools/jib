@@ -16,9 +16,13 @@
 
 package com.google.cloud.tools.jib.docker;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
+import com.google.common.base.Verify;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
@@ -32,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.DigestException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,6 +46,30 @@ import java.util.function.Function;
 
 /** Calls out to the {@code docker} CLI. */
 public class DockerClient {
+
+  public static class InspectResults {
+    private long size;
+    private String imageId;
+    private List<String> diffIds;
+
+    InspectResults(long size, String imageId, List<String> diffIds) {
+      this.size = size;
+      this.imageId = imageId;
+      this.diffIds = ImmutableList.copyOf(diffIds);
+    }
+
+    public long getSize() {
+      return size;
+    }
+
+    public String getImageId() {
+      return imageId;
+    }
+
+    public List<String> getDiffIds() {
+      return diffIds;
+    }
+  }
 
   /** Default path to the docker executable. */
   public static final Path DEFAULT_DOCKER_CLIENT = Paths.get("docker");
@@ -93,6 +122,23 @@ public class DockerClient {
 
       return processBuilder;
     };
+  }
+
+  @VisibleForTesting
+  static InspectResults parseInspectResults(String output) throws DigestException {
+    List<String> items = Splitter.on(',').splitToList(output);
+    Verify.verify(items.size() == 3);
+
+    long size = Long.parseLong(items.get(0));
+    String imageId = DescriptorDigest.fromDigest(items.get(1)).getHash();
+    List<String> diffIds =
+        Splitter.on(' ').splitToList(items.get(2).replace("[", "").replace("]", ""));
+    List<String> processedDiffIds = new ArrayList<>(diffIds.size());
+    for (String diffId : diffIds) {
+      processedDiffIds.add(DescriptorDigest.fromDigest(diffId).getHash());
+    }
+
+    return new InspectResults(size, imageId, processedDiffIds);
   }
 
   /** Factory for generating the {@link ProcessBuilder} for running {@code docker} commands. */
@@ -215,24 +261,25 @@ public class DockerClient {
   }
 
   /**
-   * Gets the size of an image in the Docker daemon.
+   * Gets the size, image ID, and diff IDs of an image in the Docker daemon.
    *
-   * @param imageReference the image to find the size of
-   * @return the size in bytes
-   * @throws IOException if an I/O exception occurs
-   * @throws InterruptedException if the 'docker inspect' process is interrupted
+   * @param imageReference the image to inspect
+   * @return the size, image ID, and diff IDs of the image
+   * @throws IOException if an I/O exception occurs or {@code docker inspect} failed
+   * @throws InterruptedException if the {@code docker inspect} process was interrupted
+   * @throws DigestException if parsing the image ID or diff IDs failed
    */
-  public long sizeOf(ImageReference imageReference) throws IOException, InterruptedException {
-    Process sizeProcess = docker("inspect", "-f", "{{.Size}}", imageReference.toString());
-
-    if (sizeProcess.waitFor() != 0) {
+  public InspectResults inspect(ImageReference imageReference)
+      throws IOException, InterruptedException, DigestException {
+    Process inspectProcess =
+        docker("inspect", "-f", "{{.Size}},{{.Id}},{{.RootFS.Layers}}", imageReference.toString());
+    if (inspectProcess.waitFor() != 0) {
       throw new IOException(
-          "'docker inspect' command failed with error: " + getStderrOutput(sizeProcess));
+          "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
     }
-
-    return Long.parseLong(
+    return parseInspectResults(
         CharStreams.toString(
-                new InputStreamReader(sizeProcess.getInputStream(), StandardCharsets.UTF_8))
+                new InputStreamReader(inspectProcess.getInputStream(), StandardCharsets.UTF_8))
             .trim());
   }
 
