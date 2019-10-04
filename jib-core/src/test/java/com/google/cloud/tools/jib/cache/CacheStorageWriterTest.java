@@ -34,6 +34,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.DigestException;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assert;
@@ -180,6 +181,32 @@ public class CacheStorageWriterTest {
         "8c662931926fa990b41da3c9f42663a537ccd498130030f9149173a0493832ad",
         savedManifest.getContainerConfiguration().getDigest().getHash());
 
+    ContainerConfigurationTemplate savedContainerConfig =
+        JsonTemplateMapper.readJsonFromFile(savedConfigPath, ContainerConfigurationTemplate.class);
+    Assert.assertEquals("wasm", savedContainerConfig.getArchitecture());
+  }
+
+  @Test
+  public void testWriteLocalConfig() throws IOException, URISyntaxException, DigestException {
+    Path containerConfigurationJsonFile =
+        Paths.get(
+            getClass().getClassLoader().getResource("core/json/containerconfig.json").toURI());
+    ContainerConfigurationTemplate containerConfigurationTemplate =
+        JsonTemplateMapper.readJsonFromFile(
+            containerConfigurationJsonFile, ContainerConfigurationTemplate.class);
+
+    new CacheStorageWriter(cacheStorageFiles)
+        .writeLocalConfig(
+            DescriptorDigest.fromHash(
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+            containerConfigurationTemplate);
+
+    Path savedConfigPath =
+        cacheStorageFiles
+            .getLocalDirectory()
+            .resolve("config")
+            .resolve("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    Assert.assertTrue(Files.exists(savedConfigPath));
     ContainerConfigurationTemplate savedContainerConfig =
         JsonTemplateMapper.readJsonFromFile(savedConfigPath, ContainerConfigurationTemplate.class);
     Assert.assertEquals("wasm", savedContainerConfig.getArchitecture());
