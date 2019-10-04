@@ -272,12 +272,9 @@ public class JibBuildRunner {
       throw new BuildStepsExecutionException(message, ex);
 
     } catch (ExecutionException ex) {
-      if (ex.getCause().getMessage() != null) {
-        String message = Verify.verifyNotNull(ex.getCause().getMessage()); // keep null-away happy
-        throw new BuildStepsExecutionException(message, ex.getCause());
-      } else {
-        throw new BuildStepsExecutionException(Verify.verifyNotNull(ex.getMessage()), ex);
-      }
+      String message = Verify.verifyNotNull(ex.getCause().getMessage()); // keep null-away happy
+      throw new BuildStepsExecutionException(message, ex.getCause());
+
     } catch (InterruptedException ex) {
       throw new BuildStepsExecutionException(helpfulSuggestions.none(), ex);
     }

@@ -228,8 +228,6 @@ public class SaveAndExtractTarStep {
             layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
 
         // Process layer blobs
-        // TODO: Optimize; compressing/calculating layer digests is slow
-        //       e.g. faster compression method
         try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create(
                 "processing base image layers", layerFiles.size())) {
