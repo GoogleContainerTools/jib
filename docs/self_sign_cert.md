@@ -77,7 +77,7 @@ Now we save the updated truststore. We can either save to a new truststore and c
 
 #### Option 1: Create a New Truststore
 
-This option creates a _new_ list of CA Certificates and configures your build tool to use ths new list as the JRE's list of approved CA certificates.
+This option creates a _new_ list of CA Certificates and configures your build tool to use this new list as the JRE's list of approved CA certificates.
 
 Within _KeyStore Explorer_, select _File > Save As..._ and save the new truststore file as a _JKS_ file within your project location. You will be prompted for a password; we use `password` in the examples below.
 
