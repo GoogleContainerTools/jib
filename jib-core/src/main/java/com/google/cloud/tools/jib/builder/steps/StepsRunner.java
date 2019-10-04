@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
-import com.google.cloud.tools.jib.builder.steps.SaveAndExtractTarStep.LocalImage;
+import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
@@ -240,7 +240,7 @@ public class StepsRunner {
     Future<LocalImage> localImageFuture =
         executorService.submit(
             () ->
-                SaveAndExtractTarStep.dockerDaemonImageStep(
+                LocalBaseImageSteps.dockerDaemonImageStep(
                         executorService,
                         buildConfiguration,
                         childProgressDispatcherFactory,
@@ -268,7 +268,7 @@ public class StepsRunner {
     Future<LocalImage> localImageFuture =
         executorService.submit(
             () ->
-                SaveAndExtractTarStep.tarImageStep(
+                LocalBaseImageSteps.tarImageStep(
                         executorService,
                         buildConfiguration,
                         childProgressDispatcherFactory,

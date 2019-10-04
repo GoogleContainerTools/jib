@@ -17,7 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.builder.steps.SaveAndExtractTarStep.LocalImage;
+import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
@@ -38,7 +38,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
-public class SaveAndExtractTarStepTest {
+public class LocalBaseImageStepsTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -69,7 +69,7 @@ public class SaveAndExtractTarStepTest {
   public void testCall_validDocker() throws Exception {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
-        SaveAndExtractTarStep.tarImageStep(
+        LocalBaseImageSteps.tarImageStep(
                 MoreExecutors.newDirectExecutorService(),
                 buildConfiguration,
                 progressEventDispatcherFactory,
@@ -97,7 +97,7 @@ public class SaveAndExtractTarStepTest {
   public void testCall_validTar() throws Exception {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
-        SaveAndExtractTarStep.tarImageStep(
+        LocalBaseImageSteps.tarImageStep(
                 MoreExecutors.newDirectExecutorService(),
                 buildConfiguration,
                 progressEventDispatcherFactory,
@@ -124,8 +124,8 @@ public class SaveAndExtractTarStepTest {
   @Test
   public void testIsGzipped() throws URISyntaxException, IOException {
     Assert.assertTrue(
-        SaveAndExtractTarStep.isGzipped(getResource("core/extraction/compressed.tar.gz")));
+        LocalBaseImageSteps.isGzipped(getResource("core/extraction/compressed.tar.gz")));
     Assert.assertFalse(
-        SaveAndExtractTarStep.isGzipped(getResource("core/extraction/not-compressed.tar")));
+        LocalBaseImageSteps.isGzipped(getResource("core/extraction/not-compressed.tar")));
   }
 }
