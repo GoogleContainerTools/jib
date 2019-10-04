@@ -29,7 +29,6 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -100,8 +99,7 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
           CacheCorruptedException, CredentialRetrievalException {
     EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
     // Skip this step if this is a scratch image
-    ImageConfiguration baseImageConfiguration = buildConfiguration.getBaseImageConfiguration();
-    ImageReference imageReference = baseImageConfiguration.getImage();
+    ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
     if (imageReference.isScratch()) {
       eventHandlers.dispatch(LogEvent.progress("Getting scratch base image..."));
       return new ImageAndAuthorization(
