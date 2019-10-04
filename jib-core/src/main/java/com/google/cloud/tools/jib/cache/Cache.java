@@ -131,7 +131,13 @@ public class Cache {
   }
 
   /**
-   * Writes a container configuration to {@code (cache directory)/local/config/(image id)}.
+   * Writes a container configuration to {@code (cache directory)/local/config/(image id)}. An image
+   * ID is a SHA hash of a container configuration JSON. The value is also shown as IMAGE ID in
+   * {@code docker images}.
+   *
+   * <p>Note: the {@code imageID} to the {@code containerConfiguration} is a one-way relationship;
+   * there is no guarantee that {@code containerConfiguration}'s SHA will be {@code imageID}, since
+   * the original container configuration is being rewritten here rather than being moved.
    *
    * @param imageId the ID of the image to store the container configuration for
    * @param containerConfiguration the container configuration
@@ -202,7 +208,14 @@ public class Cache {
   }
 
   /**
-   * Retrieves the {@link ContainerConfigurationTemplate} for the image with the given image ID.
+   * Retrieves the {@link ContainerConfigurationTemplate} for the image saved from the given image
+   * ID. An image ID is a SHA hash of a container configuration JSON. The value is also shown as
+   * IMAGE ID in {@code docker images}.
+   *
+   * <p>Note: the {@code imageID} is only used to find the {@code containerConfiguration}, and is
+   * not necessarily the actual SHA of {@code containerConfiguration}. There is no guarantee that
+   * {@code containerConfiguration}'s SHA will be {@code imageID}, since the saved container
+   * configuration is not a direct copy of the base image's original configuration.
    *
    * @param imageId the image ID
    * @return the {@link ContainerConfigurationTemplate} referenced by the image ID, if found
