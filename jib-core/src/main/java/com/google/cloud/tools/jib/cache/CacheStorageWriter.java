@@ -342,9 +342,24 @@ class CacheStorageWriter {
   void writeLocalConfig(
       DescriptorDigest imageId, ContainerConfigurationTemplate containerConfiguration)
       throws IOException {
-    Path configDirectory = cacheStorageFiles.getLocalDirectory().resolve("config");
-    Files.createDirectories(configDirectory);
-    writeMetadata(containerConfiguration, configDirectory.resolve(imageId.getHash()));
+    Files.createDirectories(cacheStorageFiles.getLocalDirectory().resolve("config"));
+    Files.createDirectories(cacheStorageFiles.getTemporaryDirectory());
+    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+      Path temporaryLayerDirectory =
+          tempDirectoryProvider.newDirectory(cacheStorageFiles.getTemporaryDirectory());
+      Path temporaryConfig = temporaryLayerDirectory.resolve("config.json");
+      temporaryConfig.toFile().deleteOnExit();
+
+      try (OutputStream outputStream = Files.newOutputStream(temporaryConfig)) {
+        JsonTemplateMapper.writeTo(containerConfiguration, outputStream);
+      }
+
+      // Moves the temporary directory to directory named with image ID
+      // (temp/config.json -> <imageID>/config.json)
+      Path destination =
+          cacheStorageFiles.getLocalDirectory().resolve("config").resolve(imageId.getHash());
+      moveIfDoesNotExist(temporaryLayerDirectory, destination);
+    }
   }
 
   /**
