@@ -280,6 +280,8 @@ public class DockerClient {
             "inspect",
             "-f",
             "{\"size\":{{.Size}},\"imageId\":\"{{.Id}}\",\"diffIds\":{{json .RootFS.Layers}}}",
+            "--type",
+            "image",
             imageReference.toString());
     if (inspectProcess.waitFor() != 0) {
       throw new IOException(
