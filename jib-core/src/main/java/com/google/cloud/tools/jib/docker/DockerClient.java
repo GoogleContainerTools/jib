@@ -19,10 +19,9 @@ package com.google.cloud.tools.jib.docker;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
+import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.base.Verify;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
@@ -39,6 +38,7 @@ import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -50,27 +50,25 @@ public class DockerClient {
   /**
    * Contains the size, image ID, and diff IDs of an image inspected with {@code docker inspect}.
    */
-  public static class InspectResults {
+  public static class DockerImageDetails implements JsonTemplate {
     private long size;
-    private String imageId;
-    private List<String> diffIds;
-
-    InspectResults(long size, String imageId, List<String> diffIds) {
-      this.size = size;
-      this.imageId = imageId;
-      this.diffIds = ImmutableList.copyOf(diffIds);
-    }
+    private String imageId = "";
+    private List<String> diffIds = Collections.emptyList();
 
     public long getSize() {
       return size;
     }
 
-    public String getImageId() {
-      return imageId;
+    public DescriptorDigest getImageId() throws DigestException {
+      return DescriptorDigest.fromDigest(imageId);
     }
 
-    public List<String> getDiffIds() {
-      return diffIds;
+    public List<DescriptorDigest> getDiffIds() throws DigestException {
+      List<DescriptorDigest> processedDiffIds = new ArrayList<>(diffIds.size());
+      for (String diffId : diffIds) {
+        processedDiffIds.add(DescriptorDigest.fromDigest(diffId.trim()));
+      }
+      return processedDiffIds;
     }
   }
 
@@ -128,28 +126,24 @@ public class DockerClient {
   }
 
   /**
-   * Parses the results of {@code docker inspect} into an {@link InspectResults}.
+   * Parses the results of {@code docker inspect} into an {@link DockerImageDetails}.
    *
-   * @param output the output of the {@code docker inspect} command containing the size, image ID,
-   *     and diff IDs
-   * @return the {@link InspectResults}
-   * @throws DigestException if parsing the digests fails
+   * @param inspectOutput the output of the {@code docker inspect} command containing the size,
+   *     image ID, and diff IDs
+   * @return the {@link DockerImageDetails}
    */
   @VisibleForTesting
-  static InspectResults parseInspectResults(String output) throws DigestException {
-    List<String> items = Splitter.on(',').splitToList(output);
-    Verify.verify(items.size() == 3);
+  static DockerImageDetails parseInspectResults(String inspectOutput) throws IOException {
+    return JsonTemplateMapper.readJson(inspectOutput, DockerImageDetails.class);
+  }
 
-    long size = Long.parseLong(items.get(0));
-    String imageId = DescriptorDigest.fromDigest(items.get(1)).getHash();
-    List<String> diffIds =
-        Splitter.on(' ').splitToList(items.get(2).replace("[", "").replace("]", ""));
-    List<String> processedDiffIds = new ArrayList<>(diffIds.size());
-    for (String diffId : diffIds) {
-      processedDiffIds.add(DescriptorDigest.fromDigest(diffId.trim()).getHash());
+  private static String getStderrOutput(Process process) {
+    try (InputStreamReader stderr =
+        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
+      return CharStreams.toString(stderr);
+    } catch (IOException ex) {
+      return "unknown (failed to read error message from stderr due to " + ex.getMessage() + ")";
     }
-
-    return new InspectResults(size, imageId, processedDiffIds);
   }
 
   /** Factory for generating the {@link ProcessBuilder} for running {@code docker} commands. */
@@ -278,12 +272,15 @@ public class DockerClient {
    * @return the size, image ID, and diff IDs of the image
    * @throws IOException if an I/O exception occurs or {@code docker inspect} failed
    * @throws InterruptedException if the {@code docker inspect} process was interrupted
-   * @throws DigestException if parsing the image ID or diff IDs failed
    */
-  public InspectResults inspect(ImageReference imageReference)
-      throws IOException, InterruptedException, DigestException {
+  public DockerImageDetails inspect(ImageReference imageReference)
+      throws IOException, InterruptedException {
     Process inspectProcess =
-        docker("inspect", "-f", "{{.Size}},{{.Id}},{{.RootFS.Layers}}", imageReference.toString());
+        docker(
+            "inspect",
+            "-f",
+            "{\"size\":{{.Size}},\"imageId\":\"{{.Id}}\",\"diffIds\":{{json .RootFS.Layers}}}",
+            imageReference.toString());
     if (inspectProcess.waitFor() != 0) {
       throw new IOException(
           "'docker inspect' command failed with error: " + getStderrOutput(inspectProcess));
@@ -297,14 +294,5 @@ public class DockerClient {
   /** Runs a {@code docker} command. */
   private Process docker(String... subCommand) throws IOException {
     return processBuilderFactory.apply(Arrays.asList(subCommand)).start();
-  }
-
-  private static String getStderrOutput(Process process) {
-    try (InputStreamReader stderr =
-        new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8)) {
-      return CharStreams.toString(stderr);
-    } catch (IOException ex) {
-      return "unknown (failed to read error message from stderr due to " + ex.getMessage() + ")";
-    }
   }
 }

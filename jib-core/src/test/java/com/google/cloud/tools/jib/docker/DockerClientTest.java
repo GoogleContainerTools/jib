@@ -16,9 +16,10 @@
 
 package com.google.cloud.tools.jib.docker;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
-import com.google.cloud.tools.jib.docker.DockerClient.InspectResults;
+import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
@@ -269,7 +270,7 @@ public class DockerClientTest {
   }
 
   @Test
-  public void testSize_fail() throws InterruptedException, DigestException {
+  public void testSize_fail() throws InterruptedException {
     DockerClient testDockerClient =
         new DockerClient(
             subcommand -> {
@@ -291,21 +292,27 @@ public class DockerClientTest {
   }
 
   @Test
-  public void testParseInspectResults() throws DigestException {
+  public void testParseInspectResults() throws DigestException, IOException {
     String output =
-        "488118507,sha256:e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd,"
-            + "[sha256:55e6b89812f369277290d098c1e44c9e85a5ab0286c649f37e66e11074f8ebd1 "
-            + "sha256:26b1991f37bd5b798e1523f65d7f6aa6961b75515f465cf44123fa0ad3b8961b "
-            + "sha256:8bacec4e34468110538ebf108ca8ec0d880a37018a55be91b9670b8e900c593a]\n";
-    InspectResults results = DockerClient.parseInspectResults(output);
+        "{\"size\":488118507,"
+            + "\"imageId\":\"sha256:e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd\","
+            + "\"diffIds\":[\"sha256:55e6b89812f369277290d098c1e44c9e85a5ab0286c649f37e66e11074f8ebd1\","
+            + "\"sha256:26b1991f37bd5b798e1523f65d7f6aa6961b75515f465cf44123fa0ad3b8961b\","
+            + "\"sha256:8bacec4e34468110538ebf108ca8ec0d880a37018a55be91b9670b8e900c593a\"]}\n";
+    DockerImageDetails results = DockerClient.parseInspectResults(output);
     Assert.assertEquals(488118507, results.getSize());
     Assert.assertEquals(
-        "e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd", results.getImageId());
+        DescriptorDigest.fromHash(
+            "e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd"),
+        results.getImageId());
     Assert.assertEquals(
         Arrays.asList(
-            "55e6b89812f369277290d098c1e44c9e85a5ab0286c649f37e66e11074f8ebd1",
-            "26b1991f37bd5b798e1523f65d7f6aa6961b75515f465cf44123fa0ad3b8961b",
-            "8bacec4e34468110538ebf108ca8ec0d880a37018a55be91b9670b8e900c593a"),
+            DescriptorDigest.fromHash(
+                "55e6b89812f369277290d098c1e44c9e85a5ab0286c649f37e66e11074f8ebd1"),
+            DescriptorDigest.fromHash(
+                "26b1991f37bd5b798e1523f65d7f6aa6961b75515f465cf44123fa0ad3b8961b"),
+            DescriptorDigest.fromHash(
+                "8bacec4e34468110538ebf108ca8ec0d880a37018a55be91b9670b8e900c593a")),
         results.getDiffIds());
   }
 
