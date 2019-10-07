@@ -21,15 +21,12 @@ import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.image.LayerCountMismatchException;
-import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -69,16 +66,15 @@ public class LocalBaseImageStepsTest {
   }
 
   @Test
-  public void testCall_validDocker()
-      throws InterruptedException, ExecutionException, BadContainerConfigurationFormatException,
-          LayerCountMismatchException, IOException, URISyntaxException {
+  public void testCall_validDocker() throws Exception {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
         new LocalBaseImageSteps(
                 MoreExecutors.newDirectExecutorService(),
                 buildConfiguration,
                 progressEventDispatcherFactory)
-            .tarImageStep(dockerBuild);
+            .processTarBaseImageStep(dockerBuild)
+            .call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
@@ -98,16 +94,15 @@ public class LocalBaseImageStepsTest {
   }
 
   @Test
-  public void testCall_validTar()
-      throws InterruptedException, ExecutionException, BadContainerConfigurationFormatException,
-          LayerCountMismatchException, IOException, URISyntaxException {
+  public void testCall_validTar() throws Exception {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
         new LocalBaseImageSteps(
                 MoreExecutors.newDirectExecutorService(),
                 buildConfiguration,
                 progressEventDispatcherFactory)
-            .tarImageStep(tarBuild);
+            .processTarBaseImageStep(tarBuild)
+            .call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());

@@ -51,6 +51,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -101,40 +102,41 @@ public class LocalBaseImageSteps {
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
   }
 
-  LocalImage dockerDaemonImageStep(DockerClient dockerClient)
-      throws InterruptedException, ExecutionException, BadContainerConfigurationFormatException,
-          LayerCountMismatchException, IOException {
-    ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
-    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
-        ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create("processing base image " + imageReference, 2)) {
-      Path outputDir = tempDirectoryProvider.newDirectory();
-      Path tarPath = outputDir.resolve("out.tar");
-      try (TimerEventDispatcher ignored =
-          new TimerEventDispatcher(
-              buildConfiguration.getEventHandlers(),
-              "Saving " + imageReference + " from Docker daemon")) {
-        long size = dockerClient.sizeOf(imageReference);
-        try (ProgressEventDispatcher dockerProgress =
-                progressEventDispatcher
-                    .newChildProducer()
-                    .create("saving base image " + imageReference, size);
-            ThrottledAccumulatingConsumer throttledProgressReporter =
-                new ThrottledAccumulatingConsumer(dockerProgress::dispatchProgress)) {
-          dockerClient.save(imageReference, tarPath, throttledProgressReporter);
+  Callable<LocalImage> processDockerDaemonBaseImageStep(DockerClient dockerClient) {
+    return () -> {
+      ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
+      try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
+          ProgressEventDispatcher progressEventDispatcher =
+              progressEventDispatcherFactory.create("processing base image " + imageReference, 2)) {
+        Path outputDir = tempDirectoryProvider.newDirectory();
+        Path tarPath = outputDir.resolve("out.tar");
+        try (TimerEventDispatcher ignored =
+            new TimerEventDispatcher(
+                buildConfiguration.getEventHandlers(),
+                "Saving " + imageReference + " from Docker daemon")) {
+          long size = dockerClient.sizeOf(imageReference);
+          try (ProgressEventDispatcher dockerProgress =
+                  progressEventDispatcher
+                      .newChildProducer()
+                      .create("saving base image " + imageReference, size);
+              ThrottledAccumulatingConsumer throttledProgressReporter =
+                  new ThrottledAccumulatingConsumer(dockerProgress::dispatchProgress)) {
+            dockerClient.save(imageReference, tarPath, throttledProgressReporter);
+          }
         }
-      }
 
-      return extractTar(tarPath, tempDirectoryProvider, progressEventDispatcher.newChildProducer());
-    }
+        return extractTar(
+            tarPath, tempDirectoryProvider, progressEventDispatcher.newChildProducer());
+      }
+    };
   }
 
-  LocalImage tarImageStep(Path tarPath)
-      throws InterruptedException, ExecutionException, BadContainerConfigurationFormatException,
-          LayerCountMismatchException, IOException {
-    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
-      return extractTar(tarPath, tempDirectoryProvider, progressEventDispatcherFactory);
-    }
+  Callable<LocalImage> processTarBaseImageStep(Path tarPath) {
+    return () -> {
+      try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+        return extractTar(tarPath, tempDirectoryProvider, progressEventDispatcherFactory);
+      }
+    };
   }
 
   private LocalImage extractTar(

@@ -239,10 +239,9 @@ public class StepsRunner {
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
     Future<LocalImage> localImageFuture =
         executorService.submit(
-            () ->
-                new LocalBaseImageSteps(
-                        executorService, buildConfiguration, childProgressDispatcherFactory)
-                    .dockerDaemonImageStep(dockerClient.get()));
+            new LocalBaseImageSteps(
+                    executorService, buildConfiguration, childProgressDispatcherFactory)
+                .processDockerDaemonBaseImageStep(dockerClient.get()));
     results.baseImageAndAuth =
         executorService.submit(
             () -> new ImageAndAuthorization(localImageFuture.get().baseImage, null));
@@ -264,10 +263,9 @@ public class StepsRunner {
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
     Future<LocalImage> localImageFuture =
         executorService.submit(
-            () ->
-                new LocalBaseImageSteps(
-                        executorService, buildConfiguration, childProgressDispatcherFactory)
-                    .tarImageStep(tarPath.get()));
+            new LocalBaseImageSteps(
+                    executorService, buildConfiguration, childProgressDispatcherFactory)
+                .processTarBaseImageStep(tarPath.get()));
     results.baseImageAndAuth =
         executorService.submit(
             () -> new ImageAndAuthorization(localImageFuture.get().baseImage, null));
