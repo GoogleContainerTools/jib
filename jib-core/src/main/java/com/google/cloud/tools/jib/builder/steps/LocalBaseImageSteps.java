@@ -51,7 +51,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -102,41 +101,40 @@ public class LocalBaseImageSteps {
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
   }
 
-  Callable<LocalImage> dockerDaemonImageStep(DockerClient dockerClient) {
-    return () -> {
-      ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
-      try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
-          ProgressEventDispatcher progressEventDispatcher =
-              progressEventDispatcherFactory.create("processing base image " + imageReference, 2)) {
-        Path outputDir = tempDirectoryProvider.newDirectory();
-        Path tarPath = outputDir.resolve("out.tar");
-        try (TimerEventDispatcher ignored =
-            new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(),
-                "Saving " + imageReference + " from Docker daemon")) {
-          long size = dockerClient.sizeOf(imageReference);
-          try (ProgressEventDispatcher dockerProgress =
-                  progressEventDispatcher
-                      .newChildProducer()
-                      .create("saving base image " + imageReference, size);
-              ThrottledAccumulatingConsumer throttledProgressReporter =
-                  new ThrottledAccumulatingConsumer(dockerProgress::dispatchProgress)) {
-            dockerClient.save(imageReference, tarPath, throttledProgressReporter);
-          }
+  LocalImage dockerDaemonImageStep(DockerClient dockerClient)
+      throws InterruptedException, ExecutionException, BadContainerConfigurationFormatException,
+          LayerCountMismatchException, IOException {
+    ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
+    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
+        ProgressEventDispatcher progressEventDispatcher =
+            progressEventDispatcherFactory.create("processing base image " + imageReference, 2)) {
+      Path outputDir = tempDirectoryProvider.newDirectory();
+      Path tarPath = outputDir.resolve("out.tar");
+      try (TimerEventDispatcher ignored =
+          new TimerEventDispatcher(
+              buildConfiguration.getEventHandlers(),
+              "Saving " + imageReference + " from Docker daemon")) {
+        long size = dockerClient.sizeOf(imageReference);
+        try (ProgressEventDispatcher dockerProgress =
+                progressEventDispatcher
+                    .newChildProducer()
+                    .create("saving base image " + imageReference, size);
+            ThrottledAccumulatingConsumer throttledProgressReporter =
+                new ThrottledAccumulatingConsumer(dockerProgress::dispatchProgress)) {
+          dockerClient.save(imageReference, tarPath, throttledProgressReporter);
         }
-
-        return extractTar(
-            tarPath, tempDirectoryProvider, progressEventDispatcher.newChildProducer());
       }
-    };
+
+      return extractTar(tarPath, tempDirectoryProvider, progressEventDispatcher.newChildProducer());
+    }
   }
 
-  Callable<LocalImage> tarImageStep(Path tarPath) {
-    return () -> {
-      try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
-        return extractTar(tarPath, tempDirectoryProvider, progressEventDispatcherFactory);
-      }
-    };
+  LocalImage tarImageStep(Path tarPath)
+      throws InterruptedException, ExecutionException, BadContainerConfigurationFormatException,
+          LayerCountMismatchException, IOException {
+    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+      return extractTar(tarPath, tempDirectoryProvider, progressEventDispatcherFactory);
+    }
   }
 
   private LocalImage extractTar(
@@ -171,8 +169,7 @@ public class LocalBaseImageSteps {
                 + " layers");
       }
 
-      // Check the first layer to see if the layers are compressed already. 'docker save'
-      // output is
+      // Check the first layer to see if the layers are compressed already. 'docker save' output is
       // uncompressed, but a jib-built tar has compressed layers.
       boolean layersAreCompressed =
           layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
@@ -189,16 +186,13 @@ public class LocalBaseImageSteps {
         for (int index = 0; index < layerFiles.size(); index++) {
           Path layerFile = destination.resolve(layerFiles.get(index));
           DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
-          ProgressEventDispatcher.Factory childProgressEventDispatcherFactory =
+          ProgressEventDispatcher.Factory layerProgressFactory =
               progressEventDispatcher.newChildProducer();
           cachedLayers.add(
               executorService.submit(
                   () ->
                       getCachedTarLayer(
-                          diffId,
-                          layerFile,
-                          layersAreCompressed,
-                          childProgressEventDispatcherFactory)));
+                          diffId, layerFile, layersAreCompressed, layerProgressFactory)));
         }
 
         // Collect compressed layers and add to manifest

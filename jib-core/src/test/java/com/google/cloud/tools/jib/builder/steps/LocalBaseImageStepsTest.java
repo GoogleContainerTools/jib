@@ -73,8 +73,7 @@ public class LocalBaseImageStepsTest {
                 MoreExecutors.newDirectExecutorService(),
                 buildConfiguration,
                 progressEventDispatcherFactory)
-            .tarImageStep(dockerBuild)
-            .call();
+            .tarImageStep(dockerBuild);
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
@@ -101,8 +100,7 @@ public class LocalBaseImageStepsTest {
                 MoreExecutors.newDirectExecutorService(),
                 buildConfiguration,
                 progressEventDispatcherFactory)
-            .tarImageStep(tarBuild)
-            .call();
+            .tarImageStep(tarBuild);
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());

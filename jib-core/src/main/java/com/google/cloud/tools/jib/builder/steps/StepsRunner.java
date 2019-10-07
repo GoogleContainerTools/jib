@@ -242,8 +242,7 @@ public class StepsRunner {
             () ->
                 new LocalBaseImageSteps(
                         executorService, buildConfiguration, childProgressDispatcherFactory)
-                    .dockerDaemonImageStep(dockerClient.get())
-                    .call());
+                    .dockerDaemonImageStep(dockerClient.get()));
     results.baseImageAndAuth =
         executorService.submit(
             () -> new ImageAndAuthorization(localImageFuture.get().baseImage, null));
@@ -268,8 +267,7 @@ public class StepsRunner {
             () ->
                 new LocalBaseImageSteps(
                         executorService, buildConfiguration, childProgressDispatcherFactory)
-                    .tarImageStep(tarPath.get())
-                    .call());
+                    .tarImageStep(tarPath.get()));
     results.baseImageAndAuth =
         executorService.submit(
             () -> new ImageAndAuthorization(localImageFuture.get().baseImage, null));
