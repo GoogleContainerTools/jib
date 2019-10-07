@@ -114,7 +114,7 @@ public class LocalBaseImageSteps {
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(),
                 "Saving " + imageReference + " from Docker daemon")) {
-          long size = dockerClient.sizeOf(imageReference);
+          long size = dockerClient.inspect(imageReference).getSize();
           try (ProgressEventDispatcher dockerProgress =
                   progressEventDispatcher
                       .newChildProducer()
