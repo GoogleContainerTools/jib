@@ -143,10 +143,11 @@ public class LocalBaseImageSteps {
       ProgressEventDispatcher.Factory progressEventDispatcherFactory)
       throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException,
           ExecutionException, InterruptedException {
+    Path destination = tempDirectoryProvider.newDirectory();
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(
-            buildConfiguration.getEventHandlers(), "Extracting tar " + tarPath)) {
-      Path destination = tempDirectoryProvider.newDirectory();
+            buildConfiguration.getEventHandlers(),
+            "Extracting tar " + tarPath + " into " + destination)) {
       TarExtractor.extract(tarPath, destination);
 
       InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
