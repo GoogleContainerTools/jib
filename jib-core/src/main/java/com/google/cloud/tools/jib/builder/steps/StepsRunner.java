@@ -19,8 +19,8 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
+import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
@@ -240,11 +240,9 @@ public class StepsRunner {
     Future<LocalImage> localImageFuture =
         executorService.submit(
             () ->
-                LocalBaseImageSteps.dockerDaemonImageStep(
-                        executorService,
-                        buildConfiguration,
-                        childProgressDispatcherFactory,
-                        dockerClient.get())
+                new LocalBaseImageSteps(
+                        executorService, buildConfiguration, childProgressDispatcherFactory)
+                    .dockerDaemonImageStep(dockerClient.get())
                     .call());
     results.baseImageAndAuth =
         executorService.submit(
@@ -268,11 +266,9 @@ public class StepsRunner {
     Future<LocalImage> localImageFuture =
         executorService.submit(
             () ->
-                LocalBaseImageSteps.tarImageStep(
-                        executorService,
-                        buildConfiguration,
-                        childProgressDispatcherFactory,
-                        tarPath.get())
+                new LocalBaseImageSteps(
+                        executorService, buildConfiguration, childProgressDispatcherFactory)
+                    .tarImageStep(tarPath.get())
                     .call());
     results.baseImageAndAuth =
         executorService.submit(

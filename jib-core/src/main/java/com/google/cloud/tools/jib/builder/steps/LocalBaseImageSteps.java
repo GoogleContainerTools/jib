@@ -36,6 +36,7 @@ import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
+import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.JsonToImageTranslator;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -51,6 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.zip.GZIPInputStream;
@@ -87,11 +89,20 @@ public class LocalBaseImageSteps {
     }
   }
 
-  static Callable<LocalImage> dockerDaemonImageStep(
+  private final ExecutorService executorService;
+  private final BuildConfiguration buildConfiguration;
+  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
+
+  LocalBaseImageSteps(
       ExecutorService executorService,
       BuildConfiguration buildConfiguration,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      DockerClient dockerClient) {
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+    this.executorService = executorService;
+    this.buildConfiguration = buildConfiguration;
+    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
+  }
+
+  Callable<LocalImage> dockerDaemonImageStep(DockerClient dockerClient) {
     return () -> {
       ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
       try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
@@ -114,163 +125,100 @@ public class LocalBaseImageSteps {
           }
         }
 
-        try (TimerEventDispatcher ignored =
-            new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), "Extracting tar " + tarPath)) {
-          Path destination = tempDirectoryProvider.newDirectory();
-          TarExtractor.extract(tarPath, destination);
-
-          InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
-          DockerManifestEntryTemplate loadManifest =
-              new ObjectMapper()
-                  .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-                  .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
-          manifestStream.close();
-          ContainerConfigurationTemplate configurationTemplate =
-              JsonTemplateMapper.readJsonFromFile(
-                  destination.resolve(loadManifest.getConfig()),
-                  ContainerConfigurationTemplate.class);
-
-          List<String> layerFiles = loadManifest.getLayerFiles();
-          if (configurationTemplate.getLayerCount() != layerFiles.size()) {
-            throw new LayerCountMismatchException(
-                "Invalid base image format: manifest contains "
-                    + layerFiles.size()
-                    + " layers, but container configuration contains "
-                    + configurationTemplate.getLayerCount()
-                    + " layers");
-          }
-
-          // Process layer blobs
-          try (ProgressEventDispatcher tarProgress =
-              progressEventDispatcher
-                  .newChildProducer()
-                  .create("processing base image layers", layerFiles.size())) {
-            List<PreparedLayer> layers = new ArrayList<>(layerFiles.size());
-            V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
-
-            // Start compressing layers in parallel
-            List<Future<CachedLayer>> cachedLayers = new ArrayList<>();
-            for (int index = 0; index < layerFiles.size(); index++) {
-              Path layerFile = destination.resolve(layerFiles.get(index));
-              DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
-              ProgressEventDispatcher.Factory childProgressEventDispatcherFactory =
-                  tarProgress.newChildProducer();
-              cachedLayers.add(
-                  executorService.submit(
-                      () ->
-                          getCachedTarLayer(
-                              buildConfiguration,
-                              diffId,
-                              layerFile,
-                              false,
-                              childProgressEventDispatcherFactory)));
-            }
-
-            // Collect compressed layers and add to manifest
-            for (Future<CachedLayer> layerFuture : cachedLayers) {
-              CachedLayer layer = layerFuture.get();
-              layers.add(new PreparedLayer.Builder(layer).build());
-              v22Manifest.addLayer(layer.getSize(), layer.getDigest());
-            }
-
-            BlobDescriptor configDescriptor =
-                Blobs.from(configurationTemplate).writeTo(ByteStreams.nullOutputStream());
-            v22Manifest.setContainerConfiguration(
-                configDescriptor.getSize(), configDescriptor.getDigest());
-            Image image = JsonToImageTranslator.toImage(v22Manifest, configurationTemplate);
-            return new LocalImage(image, layers);
-          }
-        }
+        return extractTar(
+            tarPath, tempDirectoryProvider, progressEventDispatcher.newChildProducer());
       }
     };
   }
 
-  static Callable<LocalImage> tarImageStep(
-      ExecutorService executorService,
-      BuildConfiguration buildConfiguration,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Path tarPath) {
+  Callable<LocalImage> tarImageStep(Path tarPath) {
     return () -> {
-      try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
-          TimerEventDispatcher ignored =
-              new TimerEventDispatcher(
-                  buildConfiguration.getEventHandlers(), "Extracting tar " + tarPath)) {
-        Path destination = tempDirectoryProvider.newDirectory();
-        TarExtractor.extract(tarPath, destination);
-
-        InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
-        DockerManifestEntryTemplate loadManifest =
-            new ObjectMapper()
-                .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-                .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
-        manifestStream.close();
-        ContainerConfigurationTemplate configurationTemplate =
-            JsonTemplateMapper.readJsonFromFile(
-                destination.resolve(loadManifest.getConfig()),
-                ContainerConfigurationTemplate.class);
-
-        List<String> layerFiles = loadManifest.getLayerFiles();
-        if (configurationTemplate.getLayerCount() != layerFiles.size()) {
-          throw new LayerCountMismatchException(
-              "Invalid base image format: manifest contains "
-                  + layerFiles.size()
-                  + " layers, but container configuration contains "
-                  + configurationTemplate.getLayerCount()
-                  + " layers");
-        }
-
-        // Check the first layer to see if the layers are compressed already. 'docker save'
-        // output is
-        // uncompressed, but a jib-built tar has compressed layers.
-        boolean layersAreCompressed =
-            layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
-
-        // Process layer blobs
-        try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create(
-                "processing base image layers", layerFiles.size())) {
-          List<PreparedLayer> layers = new ArrayList<>(layerFiles.size());
-          V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
-
-          // Start compressing layers in parallel
-          List<Future<CachedLayer>> cachedLayers = new ArrayList<>();
-          for (int index = 0; index < layerFiles.size(); index++) {
-            Path layerFile = destination.resolve(layerFiles.get(index));
-            DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
-            ProgressEventDispatcher.Factory childProgressEventDispatcherFactory =
-                progressEventDispatcher.newChildProducer();
-            cachedLayers.add(
-                executorService.submit(
-                    () ->
-                        getCachedTarLayer(
-                            buildConfiguration,
-                            diffId,
-                            layerFile,
-                            layersAreCompressed,
-                            childProgressEventDispatcherFactory)));
-          }
-
-          // Collect compressed layers and add to manifest
-          for (Future<CachedLayer> layerFuture : cachedLayers) {
-            CachedLayer layer = layerFuture.get();
-            layers.add(new PreparedLayer.Builder(layer).build());
-            v22Manifest.addLayer(layer.getSize(), layer.getDigest());
-          }
-
-          BlobDescriptor configDescriptor =
-              Blobs.from(configurationTemplate).writeTo(ByteStreams.nullOutputStream());
-          v22Manifest.setContainerConfiguration(
-              configDescriptor.getSize(), configDescriptor.getDigest());
-          Image image = JsonToImageTranslator.toImage(v22Manifest, configurationTemplate);
-          return new LocalImage(image, layers);
-        }
+      try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+        return extractTar(tarPath, tempDirectoryProvider, progressEventDispatcherFactory);
       }
     };
   }
 
-  private static CachedLayer getCachedTarLayer(
-      BuildConfiguration buildConfiguration,
+  private LocalImage extractTar(
+      Path tarPath,
+      TempDirectoryProvider tempDirectoryProvider,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory)
+      throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException,
+          ExecutionException, InterruptedException {
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(
+            buildConfiguration.getEventHandlers(), "Extracting tar " + tarPath)) {
+      Path destination = tempDirectoryProvider.newDirectory();
+      TarExtractor.extract(tarPath, destination);
+
+      InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
+      DockerManifestEntryTemplate loadManifest =
+          new ObjectMapper()
+              .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+              .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
+      manifestStream.close();
+      ContainerConfigurationTemplate configurationTemplate =
+          JsonTemplateMapper.readJsonFromFile(
+              destination.resolve(loadManifest.getConfig()), ContainerConfigurationTemplate.class);
+
+      List<String> layerFiles = loadManifest.getLayerFiles();
+      if (configurationTemplate.getLayerCount() != layerFiles.size()) {
+        throw new LayerCountMismatchException(
+            "Invalid base image format: manifest contains "
+                + layerFiles.size()
+                + " layers, but container configuration contains "
+                + configurationTemplate.getLayerCount()
+                + " layers");
+      }
+
+      // Check the first layer to see if the layers are compressed already. 'docker save'
+      // output is
+      // uncompressed, but a jib-built tar has compressed layers.
+      boolean layersAreCompressed =
+          layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
+
+      // Process layer blobs
+      try (ProgressEventDispatcher progressEventDispatcher =
+          progressEventDispatcherFactory.create(
+              "processing base image layers", layerFiles.size())) {
+        List<PreparedLayer> layers = new ArrayList<>(layerFiles.size());
+        V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
+
+        // Start compressing layers in parallel
+        List<Future<CachedLayer>> cachedLayers = new ArrayList<>();
+        for (int index = 0; index < layerFiles.size(); index++) {
+          Path layerFile = destination.resolve(layerFiles.get(index));
+          DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
+          ProgressEventDispatcher.Factory childProgressEventDispatcherFactory =
+              progressEventDispatcher.newChildProducer();
+          cachedLayers.add(
+              executorService.submit(
+                  () ->
+                      getCachedTarLayer(
+                          diffId,
+                          layerFile,
+                          layersAreCompressed,
+                          childProgressEventDispatcherFactory)));
+        }
+
+        // Collect compressed layers and add to manifest
+        for (Future<CachedLayer> layerFuture : cachedLayers) {
+          CachedLayer layer = layerFuture.get();
+          layers.add(new PreparedLayer.Builder(layer).build());
+          v22Manifest.addLayer(layer.getSize(), layer.getDigest());
+        }
+
+        BlobDescriptor configDescriptor =
+            Blobs.from(configurationTemplate).writeTo(ByteStreams.nullOutputStream());
+        v22Manifest.setContainerConfiguration(
+            configDescriptor.getSize(), configDescriptor.getDigest());
+        Image image = JsonToImageTranslator.toImage(v22Manifest, configurationTemplate);
+        return new LocalImage(image, layers);
+      }
+    }
+  }
+
+  private CachedLayer getCachedTarLayer(
       DescriptorDigest diffId,
       Path layerFile,
       boolean layersAreCompressed,
