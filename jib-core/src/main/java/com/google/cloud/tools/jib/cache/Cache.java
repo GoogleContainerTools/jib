@@ -143,7 +143,7 @@ public class Cache {
    * @param containerConfiguration the container configuration
    * @throws IOException if an I/O exception occurs
    */
-  void writeLocalConfig(
+  public void writeLocalConfig(
       DescriptorDigest imageId, ContainerConfigurationTemplate containerConfiguration)
       throws IOException {
     cacheStorageWriter.writeLocalConfig(imageId, containerConfiguration);

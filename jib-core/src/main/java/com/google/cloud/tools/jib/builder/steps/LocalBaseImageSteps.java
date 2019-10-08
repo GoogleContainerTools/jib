@@ -30,6 +30,7 @@ import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
@@ -48,6 +49,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.DigestException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -114,7 +116,13 @@ public class LocalBaseImageSteps {
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(),
                 "Saving " + imageReference + " from Docker daemon")) {
-          long size = dockerClient.inspect(imageReference).getSize();
+          DockerClient.DockerImageDetails dockerImageDetails = dockerClient.inspect(imageReference);
+          Optional<LocalImage> cachedImage = getCachedDockerImage(dockerImageDetails);
+          if (cachedImage.isPresent()) {
+            return cachedImage.get();
+          }
+
+          long size = dockerImageDetails.getSize();
           try (ProgressEventDispatcher dockerProgress =
                   progressEventDispatcher
                       .newChildProducer()
@@ -139,6 +147,39 @@ public class LocalBaseImageSteps {
     };
   }
 
+  private Optional<LocalImage> getCachedDockerImage(DockerImageDetails dockerImageDetails)
+      throws DigestException, IOException, CacheCorruptedException, LayerCountMismatchException,
+          BadContainerConfigurationFormatException {
+    Cache cache = buildConfiguration.getBaseImageLayersCache();
+    V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
+    List<PreparedLayer> cachedLayers = new ArrayList<>();
+
+    // Get config
+    Optional<ContainerConfigurationTemplate> cachedConfig =
+        cache.retrieveLocalConfig(dockerImageDetails.getImageId());
+    if (!cachedConfig.isPresent()) {
+      return Optional.empty();
+    }
+
+    // Get layers
+    for (DescriptorDigest diffId : dockerImageDetails.getDiffIds()) {
+      Optional<CachedLayer> cachedLayer = cache.retrieveTarLayer(diffId);
+      if (!cachedLayer.isPresent()) {
+        return Optional.empty();
+      }
+      CachedLayer layer = cachedLayer.get();
+      cachedLayers.add(new PreparedLayer.Builder(layer).build());
+      v22Manifest.addLayer(layer.getSize(), layer.getDigest());
+    }
+
+    // Create manifest
+    ContainerConfigurationTemplate config = cachedConfig.get();
+    BlobDescriptor configDescriptor = Blobs.from(config).writeTo(ByteStreams.nullOutputStream());
+    v22Manifest.setContainerConfiguration(configDescriptor.getSize(), configDescriptor.getDigest());
+    Image image = JsonToImageTranslator.toImage(v22Manifest, config);
+    return Optional.of(new LocalImage(image, cachedLayers));
+  }
+
   private LocalImage extractTar(
       Path tarPath,
       TempDirectoryProvider tempDirectoryProvider,
@@ -158,9 +199,12 @@ public class LocalBaseImageSteps {
               .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
               .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
       manifestStream.close();
+
+      Path configPath = destination.resolve(loadManifest.getConfig());
       ContainerConfigurationTemplate configurationTemplate =
-          JsonTemplateMapper.readJsonFromFile(
-              destination.resolve(loadManifest.getConfig()), ContainerConfigurationTemplate.class);
+          JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
+      BlobDescriptor originalConfigDescriptor =
+          Blobs.from(configPath).writeTo(ByteStreams.nullOutputStream());
 
       List<String> layerFiles = loadManifest.getLayerFiles();
       if (configurationTemplate.getLayerCount() != layerFiles.size()) {
@@ -171,6 +215,9 @@ public class LocalBaseImageSteps {
                 + configurationTemplate.getLayerCount()
                 + " layers");
       }
+      buildConfiguration
+          .getBaseImageLayersCache()
+          .writeLocalConfig(originalConfigDescriptor.getDigest(), configurationTemplate);
 
       // Check the first layer to see if the layers are compressed already. 'docker save' output is
       // uncompressed, but a jib-built tar has compressed layers.
@@ -204,7 +251,6 @@ public class LocalBaseImageSteps {
           layers.add(new PreparedLayer.Builder(layer).build());
           v22Manifest.addLayer(layer.getSize(), layer.getDigest());
         }
-
         BlobDescriptor configDescriptor =
             Blobs.from(configurationTemplate).writeTo(ByteStreams.nullOutputStream());
         v22Manifest.setContainerConfiguration(
