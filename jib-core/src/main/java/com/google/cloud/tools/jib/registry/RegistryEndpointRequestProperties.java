@@ -57,4 +57,11 @@ class RegistryEndpointRequestProperties {
   String getSourceImageName() {
     return sourceImageName;
   }
+
+  /**
+   * Return {@code true} if we have a source image and it is difference from the base image name.
+   */
+  public boolean hasDistinctSourceImageName() {
+    return sourceImageName != null && !imageName.equals(sourceImageName);
+  }
 }
