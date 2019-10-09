@@ -235,7 +235,7 @@ public class RegistryAuthenticator {
       throws RegistryAuthenticationFailedException {
     // try authorizing against both the main repository and the source repository too
     // to enable cross-repository mounts on pushes
-    if (registryEndpointRequestProperties.getSourceImageName() != null) {
+    if (registryEndpointRequestProperties.hasDistinctSourceImageName()) {
       try {
         Map<String, String> scopes =
             ImmutableMap.of(
