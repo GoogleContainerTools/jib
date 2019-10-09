@@ -52,7 +52,7 @@ public class BlobPullerIntegrationTest {
             .setAllowInsecureRegistries(true)
             .newRegistryClient();
     V21ManifestTemplate manifestTemplate =
-        registryClient.pullManifest("latest", V21ManifestTemplate.class);
+        registryClient.pullManifest("latest", V21ManifestTemplate.class).getManifest();
 
     DescriptorDigest realDigest = manifestTemplate.getLayerDigests().get(0);
 

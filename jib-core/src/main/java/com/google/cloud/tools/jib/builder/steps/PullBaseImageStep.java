@@ -45,6 +45,7 @@ import com.google.cloud.tools.jib.image.json.UnknownManifestFormatException;
 import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.cloud.tools.jib.registry.ManifestAndDigest;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
@@ -206,7 +207,9 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
             .newRegistryClient();
 
     ManifestTemplate manifestTemplate =
-        registryClient.pullManifest(buildConfiguration.getBaseImageConfiguration().getImageTag());
+        registryClient
+            .pullManifest(buildConfiguration.getBaseImageConfiguration().getImageTag())
+            .getManifest();
 
     // special handling if we happen upon a manifest list, redirect to a manifest and continue
     // handling it normally
@@ -218,9 +221,9 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
                   "The base image reference is manifest list, searching for linux/amd64"));
       manifestTemplate =
           obtainPlatformSpecificImageManifest(
-              registryClient, (V22ManifestListTemplate) manifestTemplate);
+                  registryClient, (V22ManifestListTemplate) manifestTemplate)
+              .getManifest();
     }
-
     switch (manifestTemplate.getSchemaVersion()) {
       case 1:
         V21ManifestTemplate v21ManifestTemplate = (V21ManifestTemplate) manifestTemplate;
@@ -275,7 +278,7 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
    * Looks through a manifest list for any amd64/linux manifest and downloads and returns the first
    * manifest it finds.
    */
-  private ManifestTemplate obtainPlatformSpecificImageManifest(
+  private ManifestAndDigest obtainPlatformSpecificImageManifest(
       RegistryClient registryClient, V22ManifestListTemplate manifestListTemplate)
       throws RegistryException, IOException {
 
