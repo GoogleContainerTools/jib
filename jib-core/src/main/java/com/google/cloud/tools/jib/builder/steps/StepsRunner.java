@@ -237,23 +237,13 @@ public class StepsRunner {
     Preconditions.checkArgument(dockerClient.isPresent());
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-    Future<LocalImage> localImageFuture =
+    getImageAndLayers(
         executorService.submit(
-            new LocalBaseImageSteps(
-                    executorService, buildConfiguration, childProgressDispatcherFactory)
-                .processDockerDaemonBaseImageStep(dockerClient.get()));
-    results.baseImageAndAuth =
-        executorService.submit(
-            () -> new ImageAndAuthorization(localImageFuture.get().baseImage, null));
-    results.baseImageLayers =
-        executorService.submit(
-            () ->
-                localImageFuture
-                    .get()
-                    .layers
-                    .stream()
-                    .map(Futures::immediateFuture)
-                    .collect(Collectors.toList()));
+            LocalBaseImageSteps.retrieveDockerDaemonImageStep(
+                executorService,
+                buildConfiguration,
+                childProgressDispatcherFactory,
+                dockerClient.get())));
   }
 
   private void extractTar() {
@@ -261,11 +251,16 @@ public class StepsRunner {
     Preconditions.checkArgument(tarPath.isPresent());
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-    Future<LocalImage> localImageFuture =
+    getImageAndLayers(
         executorService.submit(
-            new LocalBaseImageSteps(
-                    executorService, buildConfiguration, childProgressDispatcherFactory)
-                .processTarBaseImageStep(tarPath.get()));
+            LocalBaseImageSteps.retrieveTarImageStep(
+                executorService,
+                buildConfiguration,
+                childProgressDispatcherFactory,
+                tarPath.get())));
+  }
+
+  private void getImageAndLayers(Future<LocalImage> localImageFuture) {
     results.baseImageAndAuth =
         executorService.submit(
             () -> new ImageAndAuthorization(localImageFuture.get().baseImage, null));

@@ -69,11 +69,11 @@ public class LocalBaseImageStepsTest {
   public void testCall_validDocker() throws Exception {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
-        new LocalBaseImageSteps(
+        LocalBaseImageSteps.retrieveTarImageStep(
                 MoreExecutors.newDirectExecutorService(),
                 buildConfiguration,
-                progressEventDispatcherFactory)
-            .processTarBaseImageStep(dockerBuild)
+                progressEventDispatcherFactory,
+                dockerBuild)
             .call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
@@ -97,11 +97,11 @@ public class LocalBaseImageStepsTest {
   public void testCall_validTar() throws Exception {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
-        new LocalBaseImageSteps(
+        LocalBaseImageSteps.retrieveTarImageStep(
                 MoreExecutors.newDirectExecutorService(),
                 buildConfiguration,
-                progressEventDispatcherFactory)
-            .processTarBaseImageStep(tarBuild)
+                progressEventDispatcherFactory,
+                tarBuild)
             .call();
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();

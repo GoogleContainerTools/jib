@@ -89,20 +89,11 @@ public class LocalBaseImageSteps {
     }
   }
 
-  private final ExecutorService executorService;
-  private final BuildConfiguration buildConfiguration;
-  private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-
-  LocalBaseImageSteps(
+  static Callable<LocalImage> retrieveDockerDaemonImageStep(
       ExecutorService executorService,
       BuildConfiguration buildConfiguration,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
-    this.executorService = executorService;
-    this.buildConfiguration = buildConfiguration;
-    this.progressEventDispatcherFactory = progressEventDispatcherFactory;
-  }
-
-  Callable<LocalImage> processDockerDaemonBaseImageStep(DockerClient dockerClient) {
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      DockerClient dockerClient) {
     return () -> {
       ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
       try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
@@ -125,21 +116,36 @@ public class LocalBaseImageSteps {
           }
         }
 
-        return extractTar(
-            tarPath, tempDirectoryProvider, progressEventDispatcher.newChildProducer());
+        return handleDockerImageTar(
+            buildConfiguration,
+            executorService,
+            tarPath,
+            tempDirectoryProvider,
+            progressEventDispatcher.newChildProducer());
       }
     };
   }
 
-  Callable<LocalImage> processTarBaseImageStep(Path tarPath) {
+  static Callable<LocalImage> retrieveTarImageStep(
+      ExecutorService executorService,
+      BuildConfiguration buildConfiguration,
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      Path tarPath) {
     return () -> {
       try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
-        return extractTar(tarPath, tempDirectoryProvider, progressEventDispatcherFactory);
+        return handleDockerImageTar(
+            buildConfiguration,
+            executorService,
+            tarPath,
+            tempDirectoryProvider,
+            progressEventDispatcherFactory);
       }
     };
   }
 
-  private LocalImage extractTar(
+  private static LocalImage handleDockerImageTar(
+      BuildConfiguration buildConfiguration,
+      ExecutorService executorService,
       Path tarPath,
       TempDirectoryProvider tempDirectoryProvider,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory)
@@ -195,7 +201,11 @@ public class LocalBaseImageSteps {
               executorService.submit(
                   () ->
                       getCachedTarLayer(
-                          diffId, layerFile, layersAreCompressed, layerProgressFactory)));
+                          buildConfiguration.getBaseImageLayersCache(),
+                          diffId,
+                          layerFile,
+                          layersAreCompressed,
+                          layerProgressFactory)));
         }
 
         // Collect compressed layers and add to manifest
@@ -215,7 +225,8 @@ public class LocalBaseImageSteps {
     }
   }
 
-  private CachedLayer getCachedTarLayer(
+  private static CachedLayer getCachedTarLayer(
+      Cache cache,
       DescriptorDigest diffId,
       Path layerFile,
       boolean layersAreCompressed,
@@ -226,8 +237,6 @@ public class LocalBaseImageSteps {
                 "compressing layer " + diffId, Files.size(layerFile));
         ThrottledAccumulatingConsumer throttledProgressReporter =
             new ThrottledAccumulatingConsumer(childDispatcher::dispatchProgress)) {
-      Cache cache = buildConfiguration.getBaseImageLayersCache();
-
       // Retrieve pre-compressed layer from cache
       Optional<CachedLayer> optionalLayer = cache.retrieveTarLayer(diffId);
       if (optionalLayer.isPresent()) {
