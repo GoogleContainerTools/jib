@@ -111,7 +111,7 @@ public class ReproducibleImageTest {
 
   @Test
   public void testManifest() throws IOException {
-    try (InputStream input = Files.newInputStream(imageTar.toPath())) {
+    try (InputStream ignored = Files.newInputStream(imageTar.toPath())) {
       String exectedManifest =
           "[{\"config\":\"config.json\",\"repoTags\":[\"jib-core/reproducible:latest\"],"
               + "\"layers\":[\"c46572ef74f58d95e44dd36c1fbdfebd3752e8b56a794a13c11cfed35a1a6e1c.tar.gz\",\"6d2763b0f3940d324ea6b55386429e5b173899608abf7d1bff62e25dd2e4dcea.tar.gz\",\"530c1954a2b087d0b989895ea56435c9dc739a973f2d2b6cb9bb98e55bbea7ac.tar.gz\"]}]";
@@ -122,7 +122,7 @@ public class ReproducibleImageTest {
 
   @Test
   public void testConfiguration() throws IOException {
-    try (InputStream input = Files.newInputStream(imageTar.toPath())) {
+    try (InputStream ignored = Files.newInputStream(imageTar.toPath())) {
       String exectedConfig =
           "{\"created\":\"1970-01-01T00:00:00Z\",\"architecture\":\"amd64\",\"os\":\"linux\","
               + "\"config\":{\"Env\":[],\"Entrypoint\":[\"echo\",\"Hello World\"],\"ExposedPorts\":{},\"Labels\":{},\"Volumes\":{}},"

@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - Fixed temporary directory cleanup during builds using local base images. ([#2016](https://github.com/GoogleContainerTools/jib/issues/2016))
+- Fixed additional tags being ignored when building to a tarball. ([#2043](https://github.com/GoogleContainerTools/jib/issues/2043))
 
 ## 1.6.1
 

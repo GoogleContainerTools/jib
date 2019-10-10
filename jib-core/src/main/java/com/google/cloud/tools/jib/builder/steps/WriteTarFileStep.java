@@ -28,7 +28,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 
 public class WriteTarFileStep implements Callable<BuildResult> {
 
@@ -50,7 +49,7 @@ public class WriteTarFileStep implements Callable<BuildResult> {
   }
 
   @Override
-  public BuildResult call() throws ExecutionException, InterruptedException, IOException {
+  public BuildResult call() throws IOException {
     buildConfiguration
         .getEventHandlers()
         .dispatch(LogEvent.progress("Building image to tar file..."));
@@ -63,8 +62,7 @@ public class WriteTarFileStep implements Callable<BuildResult> {
       }
       try (OutputStream outputStream =
           new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
-        new ImageTarball(builtImage, buildConfiguration.getTargetImageConfiguration().getImage())
-            .writeTo(outputStream);
+        new ImageTarball(builtImage, buildConfiguration).writeTo(outputStream);
       }
 
       return BuildResult.fromImage(builtImage, buildConfiguration.getTargetFormat());

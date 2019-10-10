@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
@@ -210,19 +209,6 @@ public class DockerClientTest {
   }
 
   @Test
-  public void testTag() throws InterruptedException, IOException, InvalidImageReferenceException {
-    DockerClient testDockerClient =
-        new DockerClient(
-            subcommand -> {
-              Assert.assertEquals(Arrays.asList("tag", "original", "new"), subcommand);
-              return mockProcessBuilder;
-            });
-    Mockito.when(mockProcess.waitFor()).thenReturn(0);
-
-    testDockerClient.tag(ImageReference.of(null, "original", null), ImageReference.parse("new"));
-  }
-
-  @Test
   public void testDefaultProcessorBuilderFactory_customExecutable() {
     ProcessBuilder processBuilder =
         DockerClient.defaultProcessBuilderFactory("docker-executable", ImmutableMap.of())
@@ -245,28 +231,6 @@ public class DockerClientTest {
             .apply(Collections.emptyList());
 
     Assert.assertEquals(expectedEnvironment, processBuilder.environment());
-  }
-
-  @Test
-  public void testTag_fail() throws InterruptedException, InvalidImageReferenceException {
-    DockerClient testDockerClient =
-        new DockerClient(
-            subcommand -> {
-              Assert.assertEquals(Arrays.asList("tag", "original", "new"), subcommand);
-              return mockProcessBuilder;
-            });
-    Mockito.when(mockProcess.waitFor()).thenReturn(1);
-
-    Mockito.when(mockProcess.getErrorStream())
-        .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
-
-    try {
-      testDockerClient.tag(ImageReference.of(null, "original", null), ImageReference.parse("new"));
-      Assert.fail("docker tag should have failed");
-
-    } catch (IOException ex) {
-      Assert.assertEquals("'docker tag' command failed with error: error", ex.getMessage());
-    }
   }
 
   @Test
