@@ -48,7 +48,7 @@ import java.util.List;
 public class DockerManifestEntryTemplate implements JsonTemplate {
 
   private String config = "config.json";
-  private List<String> repoTags = new ArrayList<>();
+  private final List<String> repoTags = new ArrayList<>();
   private final List<String> layers = new ArrayList<>();
 
   public void setConfig(String config) {
