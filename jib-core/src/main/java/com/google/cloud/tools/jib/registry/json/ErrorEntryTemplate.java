@@ -32,6 +32,7 @@ public class ErrorEntryTemplate implements JsonTemplate {
     this.message = message;
   }
 
+  /** Necessary for Jackson to create from JSON. */
   private ErrorEntryTemplate() {}
 
   @Nullable

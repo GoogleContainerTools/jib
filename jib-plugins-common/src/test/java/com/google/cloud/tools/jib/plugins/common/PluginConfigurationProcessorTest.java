@@ -230,7 +230,7 @@ public class PluginConfigurationProcessorTest {
     Assert.assertEquals(
         Arrays.asList("custom", "entrypoint"),
         buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Mockito.verifyZeroInteractions(logger);
+    Mockito.verifyNoInteractions(logger);
   }
 
   @Test
@@ -288,7 +288,7 @@ public class PluginConfigurationProcessorTest {
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
-    Mockito.verifyZeroInteractions(logger);
+    Mockito.verifyNoInteractions(logger);
   }
 
   @Test

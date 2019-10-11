@@ -61,8 +61,7 @@ class BlobChecker implements RegistryEndpointProvider<Optional<BlobDescriptor>> 
 
   @Override
   public Optional<BlobDescriptor> handleHttpResponseException(
-      HttpResponseException httpResponseException)
-      throws RegistryErrorException, HttpResponseException {
+      HttpResponseException httpResponseException) throws HttpResponseException {
     if (httpResponseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
       throw httpResponseException;
     }
