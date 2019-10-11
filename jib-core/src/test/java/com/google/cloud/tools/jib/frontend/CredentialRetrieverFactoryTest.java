@@ -144,7 +144,7 @@ public class CredentialRetrieverFactoryTest {
     Assert.assertFalse(
         credentialRetrieverFactory.googleApplicationDefaultCredentials().retrieve().isPresent());
 
-    Mockito.verifyNoInteractions(mockLogger);
+    Mockito.verifyNoMoreInteractions(mockLogger);
   }
 
   @Test
