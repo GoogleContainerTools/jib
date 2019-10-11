@@ -146,7 +146,7 @@ public class RegistryAuthenticator {
   private final String service;
   private final String userAgent;
 
-  RegistryAuthenticator(
+  private RegistryAuthenticator(
       String realm,
       String service,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
@@ -181,8 +181,7 @@ public class RegistryAuthenticator {
     return authenticate(credential, "pull,push");
   }
 
-  @VisibleForTesting
-  String getServiceScopeRequestParameters(Map<String, String> repositoryScopes) {
+  private String getServiceScopeRequestParameters(Map<String, String> repositoryScopes) {
     StringBuilder parameters = new StringBuilder("service=").append(service);
     for (Entry<String, String> pair : repositoryScopes.entrySet()) {
       parameters
@@ -235,23 +234,16 @@ public class RegistryAuthenticator {
       throws RegistryAuthenticationFailedException {
     // try authorizing against both the main repository and the source repository too
     // to enable cross-repository mounts on pushes
-    if (registryEndpointRequestProperties.hasDistinctSourceImageName()) {
+    String sourceImageName = registryEndpointRequestProperties.getSourceImageName();
+    String imageName = registryEndpointRequestProperties.getImageName();
+    if (sourceImageName != null && !sourceImageName.equals(imageName)) {
       try {
-        Map<String, String> scopes =
-            ImmutableMap.of(
-                registryEndpointRequestProperties.getImageName(),
-                scope,
-                registryEndpointRequestProperties.getSourceImageName(),
-                "pull");
-        return authenticate(credential, scopes);
+        return authenticate(credential, ImmutableMap.of(imageName, scope, sourceImageName, "pull"));
       } catch (RegistryAuthenticationFailedException ex) {
         // Unable to obtain authorization with source image: fallthrough and try without
       }
     }
-    Map<String, String> repositoryScopes =
-        ImmutableMap.of(registryEndpointRequestProperties.getImageName(), scope);
-    Authorization auth = authenticate(credential, repositoryScopes);
-    return auth;
+    return authenticate(credential, ImmutableMap.of(imageName, scope));
   }
 
   private Authorization authenticate(

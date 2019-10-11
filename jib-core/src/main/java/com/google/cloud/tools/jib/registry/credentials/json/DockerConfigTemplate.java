@@ -18,7 +18,6 @@ package com.google.cloud.tools.jib.registry.credentials.json;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.cloud.tools.jib.json.JsonTemplate;
-import com.google.common.annotations.VisibleForTesting;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -90,25 +89,5 @@ public class DockerConfigTemplate implements JsonTemplate {
 
   public Map<String, String> getCredHelpers() {
     return credHelpers;
-  }
-
-  @VisibleForTesting
-  DockerConfigTemplate addAuth(String registry, @Nullable String auth) {
-    AuthTemplate authTemplate = new AuthTemplate();
-    authTemplate.auth = auth;
-    auths.put(registry, authTemplate);
-    return this;
-  }
-
-  @VisibleForTesting
-  DockerConfigTemplate setCredsStore(String credsStore) {
-    this.credsStore = credsStore;
-    return this;
-  }
-
-  @VisibleForTesting
-  DockerConfigTemplate addCredHelper(String registry, String credHelper) {
-    credHelpers.put(registry, credHelper);
-    return this;
   }
 }
