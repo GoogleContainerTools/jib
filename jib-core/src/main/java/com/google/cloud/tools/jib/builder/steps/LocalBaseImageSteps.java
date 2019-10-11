@@ -143,7 +143,8 @@ public class LocalBaseImageSteps {
     };
   }
 
-  private static LocalImage cacheDockerImageTar(
+  @VisibleForTesting
+  static LocalImage cacheDockerImageTar(
       BuildConfiguration buildConfiguration,
       ExecutorService executorService,
       Path tarPath,
