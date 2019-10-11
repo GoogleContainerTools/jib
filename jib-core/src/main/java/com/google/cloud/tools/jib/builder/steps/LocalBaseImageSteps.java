@@ -116,7 +116,7 @@ public class LocalBaseImageSteps {
           }
         }
 
-        return handleDockerImageTar(
+        return cacheDockerImageTar(
             buildConfiguration,
             executorService,
             tarPath,
@@ -133,7 +133,7 @@ public class LocalBaseImageSteps {
       Path tarPath) {
     return () -> {
       try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
-        return handleDockerImageTar(
+        return cacheDockerImageTar(
             buildConfiguration,
             executorService,
             tarPath,
@@ -143,7 +143,7 @@ public class LocalBaseImageSteps {
     };
   }
 
-  private static LocalImage handleDockerImageTar(
+  private static LocalImage cacheDockerImageTar(
       BuildConfiguration buildConfiguration,
       ExecutorService executorService,
       Path tarPath,
@@ -200,7 +200,7 @@ public class LocalBaseImageSteps {
           cachedLayers.add(
               executorService.submit(
                   () ->
-                      getCachedTarLayer(
+                      compressAndCacheTarLayer(
                           buildConfiguration.getBaseImageLayersCache(),
                           diffId,
                           layerFile,
@@ -225,7 +225,7 @@ public class LocalBaseImageSteps {
     }
   }
 
-  private static CachedLayer getCachedTarLayer(
+  private static CachedLayer compressAndCacheTarLayer(
       Cache cache,
       DescriptorDigest diffId,
       Path layerFile,
