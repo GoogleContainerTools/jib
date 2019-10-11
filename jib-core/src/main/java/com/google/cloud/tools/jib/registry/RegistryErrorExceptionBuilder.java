@@ -79,6 +79,7 @@ class RegistryErrorExceptionBuilder {
     this(method, null);
   }
 
+  // TODO: Don't use a JsonTemplate as a data object to pass around.
   /**
    * Builds an entry to the error reasons from an {@link ErrorEntryTemplate}.
    *
