@@ -56,7 +56,7 @@ public class DockerManifestEntryTemplate implements JsonTemplate {
   }
 
   public void addRepoTag(String repoTag) {
-    this.repoTags.add(repoTag);
+    repoTags.add(repoTag);
   }
 
   public void addLayerFile(String layer) {

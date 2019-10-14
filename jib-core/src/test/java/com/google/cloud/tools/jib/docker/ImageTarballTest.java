@@ -93,7 +93,7 @@ public class ImageTarballTest {
     Mockito.when(mockBuildConfiguration.getAllTargetImageTags())
         .thenReturn(ImmutableSet.of("tag", "another-tag", "tag3"));
     Mockito.when(mockTargetImageConfiguration.getImage())
-        .thenReturn(ImageReference.parse("my/image"));
+        .thenReturn(ImageReference.parse("my/image:tag"));
 
     ImageTarball imageToTarball = new ImageTarball(testImage, mockBuildConfiguration);
 
