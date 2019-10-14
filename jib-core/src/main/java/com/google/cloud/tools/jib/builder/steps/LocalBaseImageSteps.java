@@ -103,8 +103,7 @@ public class LocalBaseImageSteps {
               new TimerEventDispatcher(
                   buildConfiguration.getEventHandlers(),
                   "Saving " + imageReference + " from Docker daemon")) {
-        Path outputDir = tempDirectoryProvider.newDirectory();
-        Path tarPath = outputDir.resolve("out.tar");
+        Path tarPath = tempDirectoryProvider.newDirectory().resolve("out.tar");
         long size = dockerClient.inspect(imageReference).getSize();
         try (ProgressEventDispatcher dockerProgress =
                 progressEventDispatcher
