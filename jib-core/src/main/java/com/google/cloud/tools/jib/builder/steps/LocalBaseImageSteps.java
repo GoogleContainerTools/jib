@@ -198,10 +198,12 @@ public class LocalBaseImageSteps {
                 .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
                 .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
         manifestStream.close();
+
+        Path configPath = destination.resolve(loadManifest.getConfig());
         ContainerConfigurationTemplate configurationTemplate =
-            JsonTemplateMapper.readJsonFromFile(
-                destination.resolve(loadManifest.getConfig()),
-                ContainerConfigurationTemplate.class);
+            JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
+        BlobDescriptor originalConfigDescriptor =
+            Blobs.from(configPath).writeTo(ByteStreams.nullOutputStream());
 
         List<String> layerFiles = loadManifest.getLayerFiles();
         if (configurationTemplate.getLayerCount() != layerFiles.size()) {
@@ -212,6 +214,9 @@ public class LocalBaseImageSteps {
                   + configurationTemplate.getLayerCount()
                   + " layers");
         }
+        buildConfiguration
+            .getBaseImageLayersCache()
+            .writeLocalConfig(originalConfigDescriptor.getDigest(), configurationTemplate);
 
         // Check the first layer to see if the layers are compressed already. 'docker save' output
         // is uncompressed, but a jib-built tar has compressed layers.
