@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.docker;
 
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -25,6 +24,7 @@ import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
@@ -42,17 +42,21 @@ public class ImageTarball {
   private static final String LAYER_FILE_EXTENSION = ".tar.gz";
 
   private final Image image;
-  private final BuildConfiguration buildConfiguration;
+  private final ImageReference imageReference;
+  private final ImmutableSet<String> allTargetImageTags;
 
   /**
    * Instantiate with an {@link Image}.
    *
    * @param image the image to convert into a tarball
-   * @param buildConfiguration used for setting target image information in manifest
+   * @param imageReference image reference to set in the manifest
+   * @param allTargetImageTags the tags to tag the image with
    */
-  public ImageTarball(Image image, BuildConfiguration buildConfiguration) {
+  public ImageTarball(
+      Image image, ImageReference imageReference, ImmutableSet<String> allTargetImageTags) {
     this.image = image;
-    this.buildConfiguration = buildConfiguration;
+    this.imageReference = imageReference;
+    this.allTargetImageTags = allTargetImageTags;
   }
 
   public void writeTo(OutputStream out) throws IOException {
@@ -76,8 +80,7 @@ public class ImageTarball {
         CONTAINER_CONFIGURATION_JSON_FILE_NAME);
 
     // Adds the manifest to tarball.
-    ImageReference imageReference = buildConfiguration.getTargetImageConfiguration().getImage();
-    for (String tag : buildConfiguration.getAllTargetImageTags()) {
+    for (String tag : allTargetImageTags) {
       manifestTemplate.addRepoTag(imageReference.withTag(tag).toStringWithTag());
     }
     tarStreamBuilder.addByteEntry(

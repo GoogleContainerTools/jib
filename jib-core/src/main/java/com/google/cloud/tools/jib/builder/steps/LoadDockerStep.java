@@ -54,7 +54,11 @@ class LoadDockerStep implements Callable<BuildResult> {
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(eventHandlers, "Loading to Docker daemon")) {
       eventHandlers.dispatch(LogEvent.progress("Loading to Docker daemon..."));
-      ImageTarball imageTarball = new ImageTarball(builtImage, buildConfiguration);
+      ImageTarball imageTarball =
+          new ImageTarball(
+              builtImage,
+              buildConfiguration.getTargetImageConfiguration().getImage(),
+              buildConfiguration.getAllTargetImageTags());
 
       // Note: The progress reported here is not entirely accurate. The total allocation units is
       // the size of the layers, but the progress being reported includes the config and manifest

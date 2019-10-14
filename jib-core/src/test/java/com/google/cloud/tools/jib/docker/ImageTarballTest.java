@@ -21,8 +21,6 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
-import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
@@ -57,8 +55,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class ImageTarballTest {
 
-  @Mock private BuildConfiguration mockBuildConfiguration;
-  @Mock private ImageConfiguration mockTargetImageConfiguration;
   @Mock private Layer mockLayer1;
   @Mock private Layer mockLayer2;
 
@@ -88,14 +84,11 @@ public class ImageTarballTest {
     Mockito.when(mockLayer2.getDiffId()).thenReturn(fakeDigestB);
     Image testImage =
         Image.builder(V22ManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();
-    Mockito.when(mockBuildConfiguration.getTargetImageConfiguration())
-        .thenReturn(mockTargetImageConfiguration);
-    Mockito.when(mockBuildConfiguration.getAllTargetImageTags())
-        .thenReturn(ImmutableSet.of("tag", "another-tag", "tag3"));
-    Mockito.when(mockTargetImageConfiguration.getImage())
-        .thenReturn(ImageReference.parse("my/image:tag"));
-
-    ImageTarball imageToTarball = new ImageTarball(testImage, mockBuildConfiguration);
+    ImageTarball imageToTarball =
+        new ImageTarball(
+            testImage,
+            ImageReference.parse("my/image:tag"),
+            ImmutableSet.of("tag", "another-tag", "tag3"));
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     imageToTarball.writeTo(out);

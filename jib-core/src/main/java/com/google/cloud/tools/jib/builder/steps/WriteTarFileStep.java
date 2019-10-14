@@ -62,7 +62,11 @@ public class WriteTarFileStep implements Callable<BuildResult> {
       }
       try (OutputStream outputStream =
           new BufferedOutputStream(FileOperations.newLockingOutputStream(outputPath))) {
-        new ImageTarball(builtImage, buildConfiguration).writeTo(outputStream);
+        new ImageTarball(
+                builtImage,
+                buildConfiguration.getTargetImageConfiguration().getImage(),
+                buildConfiguration.getAllTargetImageTags())
+            .writeTo(outputStream);
       }
 
       return BuildResult.fromImage(builtImage, buildConfiguration.getTargetFormat());
