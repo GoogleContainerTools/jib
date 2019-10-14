@@ -62,7 +62,6 @@ public class StepsRunner {
           new IllegalStateException("invalid usage; required step not configured"));
     }
 
-    private Future<Path> tarPath = failedFuture();
     private Future<ImageAndAuthorization> baseImageAndAuth = failedFuture();
     private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
@@ -237,7 +236,7 @@ public class StepsRunner {
     Preconditions.checkArgument(dockerClient.isPresent());
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-    getImageAndLayers(
+    assignLocalImageResult(
         executorService.submit(
             LocalBaseImageSteps.retrieveDockerDaemonImageStep(
                 executorService,
@@ -251,7 +250,7 @@ public class StepsRunner {
     Preconditions.checkArgument(tarPath.isPresent());
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-    getImageAndLayers(
+    assignLocalImageResult(
         executorService.submit(
             LocalBaseImageSteps.retrieveTarImageStep(
                 executorService,
@@ -260,7 +259,7 @@ public class StepsRunner {
                 tarPath.get())));
   }
 
-  private void getImageAndLayers(Future<LocalImage> localImageFuture) {
+  private void assignLocalImageResult(Future<LocalImage> localImageFuture) {
     results.baseImageAndAuth =
         executorService.submit(
             () -> new ImageAndAuthorization(localImageFuture.get().baseImage, null));

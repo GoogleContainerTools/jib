@@ -21,14 +21,12 @@ import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
-import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -51,8 +49,6 @@ public class LocalBaseImageStepsTest {
   @Mock private ProgressEventDispatcher.Factory childFactory;
   @Mock private ProgressEventDispatcher childDispatcher;
 
-  private TempDirectoryProvider tempDirectoryProvider;
-
   private static Path getResource(String resource) throws URISyntaxException {
     return Paths.get(Resources.getResource(resource).toURI());
   }
@@ -67,12 +63,6 @@ public class LocalBaseImageStepsTest {
     Mockito.when(progressEventDispatcher.newChildProducer()).thenReturn(childFactory);
     Mockito.when(childFactory.create(Mockito.anyString(), Mockito.anyLong()))
         .thenReturn(childDispatcher);
-    tempDirectoryProvider = new TempDirectoryProvider();
-  }
-
-  @After
-  public void cleanup() {
-    tempDirectoryProvider.close();
   }
 
   @Test
@@ -83,7 +73,6 @@ public class LocalBaseImageStepsTest {
             buildConfiguration,
             MoreExecutors.newDirectExecutorService(),
             dockerBuild,
-            new TempDirectoryProvider(),
             progressEventDispatcherFactory);
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
@@ -111,7 +100,6 @@ public class LocalBaseImageStepsTest {
             buildConfiguration,
             MoreExecutors.newDirectExecutorService(),
             tarBuild,
-            new TempDirectoryProvider(),
             progressEventDispatcherFactory);
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
