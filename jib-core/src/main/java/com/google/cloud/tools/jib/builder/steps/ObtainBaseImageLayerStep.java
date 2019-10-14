@@ -144,9 +144,8 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
       if (stateInTarget == StateInTarget.EXISTING) {
         eventHandlers.dispatch(
             LogEvent.info(
-                "Pull skipped for BLOB : "
-                    + layer.getBlobDescriptor()
-                    + " already exists on target registry"));
+                "Skipping pull; BLOB already exists on target registry : "
+                    + layer.getBlobDescriptor()));
         return new PreparedLayer.Builder(layer).setStateInTarget(stateInTarget).build();
       }
 
