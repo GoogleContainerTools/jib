@@ -701,7 +701,7 @@ public class RegistryEndpointCallerTest {
   }
 
   private RegistryEndpointCaller<String> createRegistryEndpointCaller(
-      boolean allowInsecure, int port) throws MalformedURLException {
+      boolean allowInsecure, int port) {
     return new RegistryEndpointCaller<>(
         mockEventHandlers,
         "userAgent",

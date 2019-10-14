@@ -35,7 +35,6 @@ import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Locale;
@@ -100,7 +99,6 @@ class RegistryEndpointCaller<T> {
    * @param authorization optional authentication credentials to use
    * @param registryEndpointRequestProperties properties of the registry endpoint request
    * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
-   * @throws MalformedURLException if the URL generated for the endpoint is malformed
    */
   RegistryEndpointCaller(
       EventHandlers eventHandlers,
@@ -108,8 +106,7 @@ class RegistryEndpointCaller<T> {
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      boolean allowInsecureRegistries)
-      throws MalformedURLException {
+      boolean allowInsecureRegistries) {
     this(
         eventHandlers,
         userAgent,
@@ -130,8 +127,7 @@ class RegistryEndpointCaller<T> {
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowInsecureRegistries,
       Function<URL, Connection> connectionFactory,
-      @Nullable Function<URL, Connection> insecureConnectionFactory)
-      throws MalformedURLException {
+      @Nullable Function<URL, Connection> insecureConnectionFactory) {
     this.eventHandlers = eventHandlers;
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;

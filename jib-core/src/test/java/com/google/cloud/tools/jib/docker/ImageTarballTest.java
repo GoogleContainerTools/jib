@@ -28,6 +28,8 @@ import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
 import com.google.cloud.tools.jib.image.json.ContainerConfigurationTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.CharStreams;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
@@ -82,8 +84,11 @@ public class ImageTarballTest {
     Mockito.when(mockLayer2.getDiffId()).thenReturn(fakeDigestB);
     Image testImage =
         Image.builder(V22ManifestTemplate.class).addLayer(mockLayer1).addLayer(mockLayer2).build();
-
-    ImageTarball imageToTarball = new ImageTarball(testImage, ImageReference.parse("my/image:tag"));
+    ImageTarball imageToTarball =
+        new ImageTarball(
+            testImage,
+            ImageReference.parse("my/image:tag"),
+            ImmutableSet.of("tag", "another-tag", "tag3"));
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     imageToTarball.writeTo(out);
@@ -120,7 +125,11 @@ public class ImageTarballTest {
       String manifestJson =
           CharStreams.toString(
               new InputStreamReader(tarArchiveInputStream, StandardCharsets.UTF_8));
-      JsonTemplateMapper.readListOfJson(manifestJson, DockerManifestEntryTemplate.class);
+      DockerManifestEntryTemplate manifest =
+          JsonTemplateMapper.readListOfJson(manifestJson, DockerManifestEntryTemplate.class).get(0);
+      Assert.assertEquals(
+          ImmutableList.of("my/image:tag", "my/image:another-tag", "my/image:tag3"),
+          manifest.getRepoTags());
     }
   }
 }
