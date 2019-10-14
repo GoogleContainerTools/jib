@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.builder.steps;
 
-import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
@@ -55,10 +54,11 @@ class LoadDockerStep implements Callable<BuildResult> {
     try (TimerEventDispatcher ignored =
         new TimerEventDispatcher(eventHandlers, "Loading to Docker daemon")) {
       eventHandlers.dispatch(LogEvent.progress("Loading to Docker daemon..."));
-
-      ImageReference targetImageReference =
-          buildConfiguration.getTargetImageConfiguration().getImage();
-      ImageTarball imageTarball = new ImageTarball(builtImage, targetImageReference);
+      ImageTarball imageTarball =
+          new ImageTarball(
+              builtImage,
+              buildConfiguration.getTargetImageConfiguration().getImage(),
+              buildConfiguration.getAllTargetImageTags());
 
       // Note: The progress reported here is not entirely accurate. The total allocation units is
       // the size of the layers, but the progress being reported includes the config and manifest
@@ -72,16 +72,6 @@ class LoadDockerStep implements Callable<BuildResult> {
         // Load the image to docker daemon.
         eventHandlers.dispatch(
             LogEvent.debug(dockerClient.load(imageTarball, throttledProgressReporter)));
-
-        // Tags the image with all the additional tags, skipping the one 'docker load' already
-        // loaded.
-        for (String tag : buildConfiguration.getAllTargetImageTags()) {
-          if (tag.equals(targetImageReference.getTag())) {
-            continue;
-          }
-
-          dockerClient.tag(targetImageReference, targetImageReference.withTag(tag));
-        }
 
         return BuildResult.fromImage(builtImage, buildConfiguration.getTargetFormat());
       }

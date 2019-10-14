@@ -244,28 +244,6 @@ public class DockerClient {
   }
 
   /**
-   * Tags the image referenced by {@code originalImageReference} with a new image reference {@code
-   * newImageReference}.
-   *
-   * @param originalImageReference the existing image reference on the Docker daemon
-   * @param newImageReference the new image reference
-   * @see <a
-   *     href="https://docs.docker.com/engine/reference/commandline/tag/">https://docs.docker.com/engine/reference/commandline/tag/</a>
-   * @throws InterruptedException if the 'docker tag' process is interrupted
-   * @throws IOException if an I/O exception occurs or {@code docker tag} failed
-   */
-  public void tag(ImageReference originalImageReference, ImageReference newImageReference)
-      throws IOException, InterruptedException {
-    // Runs 'docker tag'.
-    Process dockerProcess =
-        docker("tag", originalImageReference.toString(), newImageReference.toString());
-    if (dockerProcess.waitFor() != 0) {
-      throw new IOException(
-          "'docker tag' command failed with error: " + getStderrOutput(dockerProcess));
-    }
-  }
-
-  /**
    * Gets the size, image ID, and diff IDs of an image in the Docker daemon.
    *
    * @param imageReference the image to inspect
