@@ -76,7 +76,7 @@ public class LocalBaseImageStepsTest {
   }
 
   @Test
-  public void testCall_validDocker() throws Exception {
+  public void testCacheDockerImageTar_validDocker() throws Exception {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
         LocalBaseImageSteps.cacheDockerImageTar(
@@ -104,7 +104,7 @@ public class LocalBaseImageStepsTest {
   }
 
   @Test
-  public void testCall_validTar() throws Exception {
+  public void testCacheDockerImageTar_validTar() throws Exception {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
         LocalBaseImageSteps.cacheDockerImageTar(
