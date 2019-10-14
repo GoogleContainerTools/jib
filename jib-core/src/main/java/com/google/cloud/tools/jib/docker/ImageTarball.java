@@ -49,7 +49,8 @@ public class ImageTarball {
    * Instantiate with an {@link Image}.
    *
    * @param image the image to convert into a tarball
-   * @param imageReference image reference to set in the manifest
+   * @param imageReference image reference to set in the manifest (note that the tag portion of the
+   *     image reference is ignored)
    * @param allTargetImageTags the tags to tag the image with
    */
   public ImageTarball(
