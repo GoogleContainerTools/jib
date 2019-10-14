@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.builder.steps.ExtractTarStep.LocalImage;
+import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
@@ -62,7 +62,6 @@ public class StepsRunner {
           new IllegalStateException("invalid usage; required step not configured"));
     }
 
-    private Future<Path> tarPath = failedFuture();
     private Future<ImageAndAuthorization> baseImageAndAuth = failedFuture();
     private Future<List<Future<PreparedLayer>>> baseImageLayers = failedFuture();
     @Nullable private List<Future<PreparedLayer>> applicationLayers;
@@ -194,13 +193,11 @@ public class StepsRunner {
 
     if (baseImageConfiguration.getTarPath().isPresent()) {
       // If tarPath is present, a TarImage was used
-      results.tarPath = Futures.immediateFuture(baseImageConfiguration.getTarPath().get());
       stepsToRun.add(this::extractTar);
 
     } else if (baseImageConfiguration.getDockerClient().isPresent()) {
       // If dockerClient is present, a DockerDaemonImage was used
       stepsToRun.add(this::saveDocker);
-      stepsToRun.add(this::extractTar);
 
     } else {
       // Otherwise default to RegistryImage
@@ -234,35 +231,35 @@ public class StepsRunner {
   }
 
   private void saveDocker() {
-    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
-        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-
     Optional<DockerClient> dockerClient =
         buildConfiguration.getBaseImageConfiguration().getDockerClient();
     Preconditions.checkArgument(dockerClient.isPresent());
-
-    results.tarPath =
+    ProgressEventDispatcher.Factory childProgressDispatcherFactory =
+        Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
+    assignLocalImageResult(
         executorService.submit(
-            new SaveDockerStep(
+            LocalBaseImageSteps.retrieveDockerDaemonImageStep(
+                executorService,
                 buildConfiguration,
-                dockerClient.get(),
                 childProgressDispatcherFactory,
-                tempDirectoryProvider));
+                dockerClient.get())));
   }
 
   private void extractTar() {
+    Optional<Path> tarPath = buildConfiguration.getBaseImageConfiguration().getTarPath();
+    Preconditions.checkArgument(tarPath.isPresent());
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-    Future<LocalImage> localImageFuture =
+    assignLocalImageResult(
         executorService.submit(
-            () ->
-                new ExtractTarStep(
-                        executorService,
-                        buildConfiguration,
-                        results.tarPath.get(),
-                        childProgressDispatcherFactory,
-                        tempDirectoryProvider)
-                    .call());
+            LocalBaseImageSteps.retrieveTarImageStep(
+                executorService,
+                buildConfiguration,
+                childProgressDispatcherFactory,
+                tarPath.get())));
+  }
+
+  private void assignLocalImageResult(Future<LocalImage> localImageFuture) {
     results.baseImageAndAuth =
         executorService.submit(
             () -> new ImageAndAuthorization(localImageFuture.get().baseImage, null));
