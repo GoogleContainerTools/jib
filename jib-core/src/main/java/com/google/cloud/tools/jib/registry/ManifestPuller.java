@@ -19,6 +19,8 @@ package com.google.cloud.tools.jib.registry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.api.client.http.HttpMethods;
+import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
@@ -28,9 +30,8 @@ import com.google.cloud.tools.jib.image.json.V21ManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestListTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
-import com.google.common.io.CharStreams;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -40,7 +41,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /** Pulls an image's manifest. */
-class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProvider<T> {
+class ManifestPuller<T extends ManifestTemplate>
+    implements RegistryEndpointProvider<ManifestAndDigest<T>> {
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final String imageTag;
@@ -85,12 +87,16 @@ class ManifestPuller<T extends ManifestTemplate> implements RegistryEndpointProv
         V21ManifestTemplate.MEDIA_TYPE);
   }
 
-  /** Parses the response body into a {@link ManifestTemplate}. */
+  /** Parses the response body into a {@link ManifestAndDigest}. */
   @Override
-  public T handleResponse(Response response) throws IOException, UnknownManifestFormatException {
-    String jsonString =
-        CharStreams.toString(new InputStreamReader(response.getBody(), StandardCharsets.UTF_8));
-    return getManifestTemplateFromJson(jsonString);
+  public ManifestAndDigest<T> handleResponse(Response response)
+      throws IOException, UnknownManifestFormatException {
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    DescriptorDigest digest =
+        Digests.computeDigest(response.getBody(), byteArrayOutputStream).getDigest();
+    String jsonString = byteArrayOutputStream.toString(StandardCharsets.UTF_8.name());
+    T manifestTemplate = getManifestTemplateFromJson(jsonString);
+    return new ManifestAndDigest<>(manifestTemplate, digest);
   }
 
   @Override
