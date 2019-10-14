@@ -17,6 +17,7 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.DescriptorDigest;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
@@ -26,6 +27,7 @@ import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.registry.RegistryClient;
@@ -131,15 +133,20 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
 
   @Override
   public PreparedLayer call() throws IOException, CacheCorruptedException, RegistryException {
+    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
     DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("checking base image layer " + layerDigest, 1);
         TimerEventDispatcher ignored =
-            new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, layerDigest))) {
+            new TimerEventDispatcher(eventHandlers, String.format(DESCRIPTION, layerDigest))) {
 
       StateInTarget stateInTarget = blobExistenceChecker.check(layerDigest);
       if (stateInTarget == StateInTarget.EXISTING) {
+        eventHandlers.dispatch(
+            LogEvent.info(
+                "Pull skipped for BLOB : "
+                    + layer.getBlobDescriptor()
+                    + " already exists on target registry"));
         return new PreparedLayer.Builder(layer).setStateInTarget(stateInTarget).build();
       }
 

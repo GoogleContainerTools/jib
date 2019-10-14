@@ -106,7 +106,8 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
           Image.builder(buildConfiguration.getTargetFormat()).build(), null);
     }
 
-    eventHandlers.dispatch(LogEvent.progress("Getting base image " + imageReference + "..."));
+    eventHandlers.dispatch(
+        LogEvent.progress("Getting manifest for base image " + imageReference + "..."));
 
     if (buildConfiguration.isOffline() || imageReference.isTagDigest()) {
       Optional<Image> image = getCachedBaseImage();
