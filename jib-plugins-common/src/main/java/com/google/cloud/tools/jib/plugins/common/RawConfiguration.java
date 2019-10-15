@@ -91,4 +91,10 @@ public interface RawConfiguration {
   Map<String, String> getDockerEnvironment();
 
   String getContainerizingMode();
+
+  Path getTarOutputPath();
+
+  Path getDigestOutputPath();
+
+  Path getImageIdOutputPath();
 }

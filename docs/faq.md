@@ -2,6 +2,10 @@
 
 If a question you have is not answered below, please [submit an issue](/../../issues/new).
 
+| ☑️  Jib User Survey |
+| :----- |
+| What do you like best about Jib? What needs to be improved? Please tell us by taking a [one-minute survey](https://forms.gle/YRFeamGj51xmgnx28). Your responses will help us understand Jib usage and allow us to serve our customers (you!) better. |
+
 [But, I'm not a Java developer.](#but-im-not-a-java-developer)\
 [How do I run the image I built?](#how-do-i-run-the-image-i-built)\
 [Where is bash?](#where-is-bash)\

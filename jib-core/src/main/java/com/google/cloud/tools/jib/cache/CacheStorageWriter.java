@@ -23,7 +23,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.cloud.tools.jib.filesystem.LockFile;
-import com.google.cloud.tools.jib.filesystem.TemporaryDirectory;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.hash.CountingDigestOutputStream;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
@@ -169,9 +169,9 @@ class CacheStorageWriter {
 
     // Creates the temporary directory.
     Files.createDirectories(cacheStorageFiles.getTemporaryDirectory());
-    try (TemporaryDirectory temporaryDirectory =
-        new TemporaryDirectory(cacheStorageFiles.getTemporaryDirectory())) {
-      Path temporaryLayerDirectory = temporaryDirectory.getDirectory();
+    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+      Path temporaryLayerDirectory =
+          tempDirectoryProvider.newDirectory(cacheStorageFiles.getTemporaryDirectory());
 
       // Writes the layer file to the temporary directory.
       WrittenLayer writtenLayer =
@@ -218,9 +218,9 @@ class CacheStorageWriter {
     // Creates the temporary directory. The temporary directory must be in the same FileStore as the
     // final location for Files.move to work.
     Files.createDirectories(cacheStorageFiles.getTemporaryDirectory());
-    try (TemporaryDirectory temporaryDirectory =
-        new TemporaryDirectory(cacheStorageFiles.getTemporaryDirectory())) {
-      Path temporaryLayerDirectory = temporaryDirectory.getDirectory();
+    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+      Path temporaryLayerDirectory =
+          tempDirectoryProvider.newDirectory(cacheStorageFiles.getTemporaryDirectory());
 
       // Writes the layer file to the temporary directory.
       WrittenLayer writtenLayer =
@@ -259,9 +259,9 @@ class CacheStorageWriter {
   CachedLayer writeTarLayer(DescriptorDigest diffId, Blob compressedBlob) throws IOException {
     Files.createDirectories(cacheStorageFiles.getLocalDirectory());
     Files.createDirectories(cacheStorageFiles.getTemporaryDirectory());
-    try (TemporaryDirectory temporaryDirectory =
-        new TemporaryDirectory(cacheStorageFiles.getTemporaryDirectory())) {
-      Path temporaryLayerDirectory = temporaryDirectory.getDirectory();
+    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+      Path temporaryLayerDirectory =
+          tempDirectoryProvider.newDirectory(cacheStorageFiles.getTemporaryDirectory());
       Path temporaryLayerFile = cacheStorageFiles.getTemporaryLayerFile(temporaryLayerDirectory);
 
       BlobDescriptor layerBlobDescriptor;
@@ -328,6 +328,21 @@ class CacheStorageWriter {
     try (LockFile ignored = LockFile.lock(imageDirectory.resolve("lock"))) {
       writeMetadata(manifestTemplate, imageDirectory.resolve("manifest.json"));
     }
+  }
+
+  /**
+   * Writes a container configuration to {@code (cache directory)/local/config/(image id)}.
+   *
+   * @param imageId the ID of the image to store the container configuration for
+   * @param containerConfiguration the container configuration
+   * @throws IOException if an I/O exception occurs
+   */
+  void writeLocalConfig(
+      DescriptorDigest imageId, ContainerConfigurationTemplate containerConfiguration)
+      throws IOException {
+    Path configDirectory = cacheStorageFiles.getLocalDirectory().resolve("config");
+    Files.createDirectories(configDirectory);
+    writeMetadata(containerConfiguration, configDirectory.resolve(imageId.getHash()));
   }
 
   /**

@@ -190,4 +190,19 @@ class MavenRawConfiguration implements RawConfiguration {
   public String getContainerizingMode() {
     return jibPluginConfiguration.getContainerizingMode();
   }
+
+  @Override
+  public Path getTarOutputPath() {
+    return jibPluginConfiguration.getTarOutputPath();
+  }
+
+  @Override
+  public Path getDigestOutputPath() {
+    return jibPluginConfiguration.getDigestOutputPath();
+  }
+
+  @Override
+  public Path getImageIdOutputPath() {
+    return jibPluginConfiguration.getImageIdOutputPath();
+  }
 }

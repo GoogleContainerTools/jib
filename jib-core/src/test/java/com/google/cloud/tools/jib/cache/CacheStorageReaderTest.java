@@ -249,6 +249,35 @@ public class CacheStorageReaderTest {
   }
 
   @Test
+  public void testRetrieveLocalConfig() throws IOException, URISyntaxException, DigestException {
+    Path cacheDirectory = temporaryFolder.newFolder().toPath();
+    Path configDirectory = cacheDirectory.resolve("local").resolve("config");
+    Files.createDirectories(configDirectory);
+    Files.copy(
+        Paths.get(Resources.getResource("core/json/containerconfig.json").toURI()),
+        configDirectory.resolve(
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+
+    CacheStorageFiles cacheStorageFiles = new CacheStorageFiles(cacheDirectory);
+    CacheStorageReader cacheStorageReader = new CacheStorageReader(cacheStorageFiles);
+
+    ContainerConfigurationTemplate configurationTemplate =
+        cacheStorageReader
+            .retrieveLocalConfig(
+                DescriptorDigest.fromHash(
+                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+            .get();
+    Assert.assertEquals("wasm", configurationTemplate.getArchitecture());
+    Assert.assertEquals("js", configurationTemplate.getOs());
+
+    Optional<ContainerConfigurationTemplate> missingConfigurationTemplate =
+        cacheStorageReader.retrieveLocalConfig(
+            DescriptorDigest.fromHash(
+                "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
+    Assert.assertFalse(missingConfigurationTemplate.isPresent());
+  }
+
+  @Test
   public void testSelect_invalidLayerDigest() throws IOException {
     CacheStorageFiles cacheStorageFiles =
         new CacheStorageFiles(temporaryFolder.newFolder().toPath());

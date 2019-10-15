@@ -16,8 +16,9 @@
 
 package com.google.cloud.tools.jib.docker;
 
+import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import java.io.ByteArrayInputStream;
@@ -27,6 +28,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.security.DigestException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -122,7 +124,6 @@ public class DockerClientTest {
   @Test
   public void testLoad_stdinFail_stderrFail() throws InterruptedException {
     DockerClient testDockerClient = new DockerClient(ignored -> mockProcessBuilder);
-    IOException expectedIOException = new IOException();
 
     Mockito.when(mockProcess.getOutputStream())
         .thenReturn(
@@ -130,7 +131,7 @@ public class DockerClientTest {
 
               @Override
               public void write(int b) throws IOException {
-                throw expectedIOException;
+                throw new IOException("I/O failed");
               }
             });
     Mockito.when(mockProcess.getErrorStream())
@@ -148,7 +149,7 @@ public class DockerClientTest {
       Assert.fail("Write should have failed");
 
     } catch (IOException ex) {
-      Assert.assertSame(expectedIOException, ex);
+      Assert.assertEquals("'docker load' command failed with error: I/O failed", ex.getMessage());
     }
   }
 
@@ -168,7 +169,7 @@ public class DockerClientTest {
       Assert.fail("Process should have failed");
 
     } catch (IOException ex) {
-      Assert.assertEquals("'docker load' command failed with output: error", ex.getMessage());
+      Assert.assertEquals("'docker load' command failed with error: error", ex.getMessage());
     }
   }
 
@@ -203,21 +204,8 @@ public class DockerClientTest {
       Assert.fail("docker save should have failed");
 
     } catch (IOException ex) {
-      Assert.assertEquals("'docker save' command failed with output: error", ex.getMessage());
+      Assert.assertEquals("'docker save' command failed with error: error", ex.getMessage());
     }
-  }
-
-  @Test
-  public void testTag() throws InterruptedException, IOException, InvalidImageReferenceException {
-    DockerClient testDockerClient =
-        new DockerClient(
-            subcommand -> {
-              Assert.assertEquals(Arrays.asList("tag", "original", "new"), subcommand);
-              return mockProcessBuilder;
-            });
-    Mockito.when(mockProcess.waitFor()).thenReturn(0);
-
-    testDockerClient.tag(ImageReference.of(null, "original", null), ImageReference.parse("new"));
   }
 
   @Test
@@ -246,11 +234,11 @@ public class DockerClientTest {
   }
 
   @Test
-  public void testTag_fail() throws InterruptedException, InvalidImageReferenceException {
+  public void testSize_fail() throws InterruptedException {
     DockerClient testDockerClient =
         new DockerClient(
             subcommand -> {
-              Assert.assertEquals(Arrays.asList("tag", "original", "new"), subcommand);
+              Assert.assertEquals("inspect", subcommand.get(0));
               return mockProcessBuilder;
             });
     Mockito.when(mockProcess.waitFor()).thenReturn(1);
@@ -259,12 +247,37 @@ public class DockerClientTest {
         .thenReturn(new ByteArrayInputStream("error".getBytes(StandardCharsets.UTF_8)));
 
     try {
-      testDockerClient.tag(ImageReference.of(null, "original", null), ImageReference.parse("new"));
-      Assert.fail("docker tag should have failed");
+      testDockerClient.inspect(ImageReference.of(null, "image", null));
+      Assert.fail("docker inspect should have failed");
 
     } catch (IOException ex) {
-      Assert.assertEquals("'docker tag' command failed with error: error", ex.getMessage());
+      Assert.assertEquals("'docker inspect' command failed with error: error", ex.getMessage());
     }
+  }
+
+  @Test
+  public void testParseInspectResults() throws DigestException, IOException {
+    String output =
+        "{\"size\":488118507,"
+            + "\"imageId\":\"sha256:e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd\","
+            + "\"diffIds\":[\"sha256:55e6b89812f369277290d098c1e44c9e85a5ab0286c649f37e66e11074f8ebd1\","
+            + "\"sha256:26b1991f37bd5b798e1523f65d7f6aa6961b75515f465cf44123fa0ad3b8961b\","
+            + "\"sha256:8bacec4e34468110538ebf108ca8ec0d880a37018a55be91b9670b8e900c593a\"]}\n";
+    DockerImageDetails results = DockerClient.parseInspectResults(output);
+    Assert.assertEquals(488118507, results.getSize());
+    Assert.assertEquals(
+        DescriptorDigest.fromHash(
+            "e8d00769c8a805a0656dbfd49d4f91cbc2e36d0199f10343d1beba36ecdcb3fd"),
+        results.getImageId());
+    Assert.assertEquals(
+        Arrays.asList(
+            DescriptorDigest.fromHash(
+                "55e6b89812f369277290d098c1e44c9e85a5ab0286c649f37e66e11074f8ebd1"),
+            DescriptorDigest.fromHash(
+                "26b1991f37bd5b798e1523f65d7f6aa6961b75515f465cf44123fa0ad3b8961b"),
+            DescriptorDigest.fromHash(
+                "8bacec4e34468110538ebf108ca8ec0d880a37018a55be91b9670b8e900c593a")),
+        results.getDiffIds());
   }
 
   private DockerClient makeDockerSaveClient() {

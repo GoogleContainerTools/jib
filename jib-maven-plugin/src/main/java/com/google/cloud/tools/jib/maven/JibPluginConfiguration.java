@@ -233,6 +233,15 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
     @Parameter private Map<String, String> environment = Collections.emptyMap();
   }
 
+  public static class OutputPathsParameters {
+
+    @Nullable @Parameter private File tar;
+
+    @Nullable @Parameter private File digest;
+
+    @Nullable @Parameter private File imageId;
+  }
+
   @Nullable
   @Parameter(defaultValue = "${session}", readonly = true)
   private MavenSession session;
@@ -259,6 +268,8 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
   @Parameter private ExtraDirectoriesParameters extraDirectories = new ExtraDirectoriesParameters();
 
   @Parameter private DockerClientParameters dockerClient = new DockerClientParameters();
+
+  @Parameter private OutputPathsParameters outputPaths = new OutputPathsParameters();
 
   @Parameter(property = PropertyNames.ALLOW_INSECURE_REGISTRIES)
   private boolean allowInsecureRegistries;
@@ -682,6 +693,36 @@ public abstract class JibPluginConfiguration extends AbstractMojo {
       return ConfigurationPropertyValidator.parseMapProperty(property);
     }
     return dockerClient.environment;
+  }
+
+  Path getTarOutputPath() {
+    Path configuredPath =
+        outputPaths.tar == null
+            ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.tar")
+            : outputPaths.tar.toPath();
+    return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_TAR);
+  }
+
+  Path getDigestOutputPath() {
+    Path configuredPath =
+        outputPaths.digest == null
+            ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.digest")
+            : outputPaths.digest.toPath();
+    return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_DIGEST);
+  }
+
+  Path getImageIdOutputPath() {
+    Path configuredPath =
+        outputPaths.imageId == null
+            ? Paths.get(getProject().getBuild().getDirectory()).resolve("jib-image.id")
+            : outputPaths.imageId.toPath();
+    return getRelativeToProjectRoot(configuredPath, PropertyNames.OUTPUT_PATHS_IMAGE_ID);
+  }
+
+  private Path getRelativeToProjectRoot(Path configuration, String propertyName) {
+    String property = getProperty(propertyName);
+    Path path = property != null ? Paths.get(property) : configuration;
+    return path.isAbsolute() ? path : getProject().getBasedir().toPath().resolve(path);
   }
 
   boolean getAllowInsecureRegistries() {

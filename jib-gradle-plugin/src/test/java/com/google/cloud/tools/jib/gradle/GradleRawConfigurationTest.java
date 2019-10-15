@@ -39,6 +39,7 @@ public class GradleRawConfigurationTest {
     TargetImageParameters targetImageParameters = Mockito.mock(TargetImageParameters.class);
     ContainerParameters containerParameters = Mockito.mock(ContainerParameters.class);
     DockerClientParameters dockerClientParameters = Mockito.mock(DockerClientParameters.class);
+    OutputPathsParameters outputPathsParameters = Mockito.mock(OutputPathsParameters.class);
 
     Mockito.when(authParameters.getUsername()).thenReturn("user");
     Mockito.when(authParameters.getPassword()).thenReturn("password");
@@ -50,6 +51,7 @@ public class GradleRawConfigurationTest {
     Mockito.when(jibExtension.getTo()).thenReturn(targetImageParameters);
     Mockito.when(jibExtension.getContainer()).thenReturn(containerParameters);
     Mockito.when(jibExtension.getDockerClient()).thenReturn(dockerClientParameters);
+    Mockito.when(jibExtension.getOutputPaths()).thenReturn(outputPathsParameters);
     Mockito.when(jibExtension.getAllowInsecureRegistries()).thenReturn(true);
 
     Mockito.when(baseImageParameters.getCredHelper()).thenReturn("gcr");
@@ -76,6 +78,10 @@ public class GradleRawConfigurationTest {
     Mockito.when(dockerClientParameters.getExecutablePath()).thenReturn(Paths.get("test"));
     Mockito.when(dockerClientParameters.getEnvironment())
         .thenReturn(new HashMap<>(ImmutableMap.of("docker", "client")));
+
+    Mockito.when(outputPathsParameters.getDigestPath()).thenReturn(Paths.get("digest/path"));
+    Mockito.when(outputPathsParameters.getImageIdPath()).thenReturn(Paths.get("id/path"));
+    Mockito.when(outputPathsParameters.getTarPath()).thenReturn(Paths.get("tar/path"));
 
     GradleRawConfiguration rawConfiguration = new GradleRawConfiguration(jibExtension);
 
@@ -109,5 +115,8 @@ public class GradleRawConfigurationTest {
     Assert.assertEquals(
         new HashMap<>(ImmutableMap.of("docker", "client")),
         rawConfiguration.getDockerEnvironment());
+    Assert.assertEquals(Paths.get("digest/path"), rawConfiguration.getDigestOutputPath());
+    Assert.assertEquals(Paths.get("id/path"), rawConfiguration.getImageIdOutputPath());
+    Assert.assertEquals(Paths.get("tar/path"), rawConfiguration.getTarOutputPath());
   }
 }

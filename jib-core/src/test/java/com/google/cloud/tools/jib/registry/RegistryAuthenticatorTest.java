@@ -214,4 +214,51 @@ public class RegistryAuthenticatorTest {
           server.getInputRead(), CoreMatchers.containsString("User-Agent: Competent-Agent"));
     }
   }
+
+  @Test
+  public void testSourceImage_differentSourceRepository()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    try (TestWebServer server = new TestWebServer(false)) {
+      try {
+        RegistryEndpointRequestProperties registryEndpointRequestProperties =
+            new RegistryEndpointRequestProperties("someserver", "someimage", "anotherimage");
+        RegistryAuthenticator authenticator =
+            RegistryAuthenticator.fromAuthenticationMethod(
+                    "Bearer realm=\"" + server.getEndpoint() + "\"",
+                    registryEndpointRequestProperties,
+                    "Competent-Agent")
+                .get();
+        authenticator.authenticatePush(null);
+      } catch (RegistryAuthenticationFailedException ex) {
+        // Doesn't matter if auth fails. We only examine what we sent.
+      }
+      Assert.assertThat(
+          server.getInputRead(),
+          CoreMatchers.containsString(
+              "scope=repository:someimage:pull,push&scope=repository:anotherimage:pull"));
+    }
+  }
+
+  @Test
+  public void testSourceImage_sameSourceRepository()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    try (TestWebServer server = new TestWebServer(false)) {
+      try {
+        RegistryEndpointRequestProperties registryEndpointRequestProperties =
+            new RegistryEndpointRequestProperties("someserver", "someimage", "someimage");
+        RegistryAuthenticator authenticator =
+            RegistryAuthenticator.fromAuthenticationMethod(
+                    "Bearer realm=\"" + server.getEndpoint() + "\"",
+                    registryEndpointRequestProperties,
+                    "Competent-Agent")
+                .get();
+        authenticator.authenticatePush(null);
+      } catch (RegistryAuthenticationFailedException ex) {
+        // Doesn't matter if auth fails. We only examine what we sent.
+      }
+      Assert.assertThat(
+          server.getInputRead(),
+          CoreMatchers.containsString("service=someserver&scope=repository:someimage:pull,push "));
+    }
+  }
 }

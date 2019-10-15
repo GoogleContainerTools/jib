@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Build;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.junit.Assert;
@@ -44,11 +45,13 @@ public class JibPluginConfigurationTest {
   private final Properties sessionProperties = new Properties();
   @Mock private MavenSession session;
   @Mock private Log log;
+  @Mock private Build build;
   private JibPluginConfiguration testPluginConfiguration;
 
   @Before
   public void setup() {
     Mockito.when(session.getSystemProperties()).thenReturn(sessionProperties);
+    Mockito.when(build.getDirectory()).thenReturn("/test/directory");
     testPluginConfiguration =
         new JibPluginConfiguration() {
           @Override
@@ -59,6 +62,8 @@ public class JibPluginConfigurationTest {
             return log;
           }
         };
+    project.setBuild(build);
+    project.setFile(new File("/repository/project/pom.xml")); // sets baseDir
     testPluginConfiguration.setProject(project);
     testPluginConfiguration.setSession(session);
   }
@@ -150,6 +155,25 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals(
         ImmutableMap.of("env1", "val1", "env2", "val2"),
         testPluginConfiguration.getDockerClientEnvironment());
+
+    // Absolute paths
+    sessionProperties.put("jib.outputPaths.digest", "/digest/path");
+    Assert.assertEquals(Paths.get("/digest/path"), testPluginConfiguration.getDigestOutputPath());
+    sessionProperties.put("jib.outputPaths.imageId", "/id/path");
+    Assert.assertEquals(Paths.get("/id/path"), testPluginConfiguration.getImageIdOutputPath());
+    sessionProperties.put("jib.outputPaths.tar", "/tar/path");
+    Assert.assertEquals(Paths.get("/tar/path"), testPluginConfiguration.getTarOutputPath());
+    // Relative paths
+    sessionProperties.put("jib.outputPaths.digest", "digest/path");
+    Assert.assertEquals(
+        Paths.get("/repository/project/digest/path"),
+        testPluginConfiguration.getDigestOutputPath());
+    sessionProperties.put("jib.outputPaths.imageId", "id/path");
+    Assert.assertEquals(
+        Paths.get("/repository/project/id/path"), testPluginConfiguration.getImageIdOutputPath());
+    sessionProperties.put("jib.outputPaths.tar", "tar/path");
+    Assert.assertEquals(
+        Paths.get("/repository/project/tar/path"), testPluginConfiguration.getTarOutputPath());
   }
 
   @Test
@@ -233,6 +257,14 @@ public class JibPluginConfigurationTest {
     Assert.assertEquals(
         ImmutableMap.of("env1", "val1", "env2", "val2"),
         testPluginConfiguration.getDockerClientEnvironment());
+
+    project.getProperties().setProperty("jib.outputPaths.digest", "/digest/path");
+    Assert.assertEquals(Paths.get("/digest/path"), testPluginConfiguration.getDigestOutputPath());
+    project.getProperties().setProperty("jib.outputPaths.imageId", "/id/path");
+    Assert.assertEquals(Paths.get("/id/path"), testPluginConfiguration.getImageIdOutputPath());
+    project.getProperties().setProperty("jib.outputPaths.tar", "tar/path");
+    Assert.assertEquals(
+        Paths.get("/repository/project/tar/path"), testPluginConfiguration.getTarOutputPath());
   }
 
   @Test
@@ -369,7 +401,6 @@ public class JibPluginConfigurationTest {
   public void testIsContainerizable_artifactId() {
     project.setGroupId("group");
     project.setArtifactId("artifact");
-    project.setFile(new File("/repository/project/pom.xml")); // sets baseDir
 
     Properties projectProperties = project.getProperties();
     projectProperties.setProperty("jib.containerize", ":artifact");
@@ -383,7 +414,6 @@ public class JibPluginConfigurationTest {
   public void testIsContainerizable_groupAndArtifactId() {
     project.setGroupId("group");
     project.setArtifactId("artifact");
-    project.setFile(new File("/repository/project/pom.xml")); // sets baseDir
 
     Properties projectProperties = project.getProperties();
     projectProperties.setProperty("jib.containerize", "group:artifact");
@@ -397,7 +427,6 @@ public class JibPluginConfigurationTest {
   public void testIsContainerizable_directory() {
     project.setGroupId("group");
     project.setArtifactId("artifact");
-    project.setFile(new File("/repository/project/pom.xml")); // sets baseDir
 
     Properties projectProperties = project.getProperties();
     projectProperties.setProperty("jib.containerize", "project");

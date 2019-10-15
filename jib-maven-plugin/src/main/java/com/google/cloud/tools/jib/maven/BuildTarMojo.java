@@ -38,7 +38,8 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 
 /**
- * Builds a container image and exports to disk at {@code ${project.build.directory}/jib-image.tar}.
+ * Builds a container image and exports to disk at the configured location ({@code
+ * ${project.build.directory}/jib-image.tar} by default).
  */
 @Mojo(
     name = BuildTarMojo.GOAL_NAME,

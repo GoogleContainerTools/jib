@@ -27,8 +27,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-/** Tests for {@link TemporaryDirectory}. */
-public class TemporaryDirectoryTest {
+/** Tests for {@link TempDirectoryProvider}. */
+public class TempDirectoryProviderTest {
 
   private static void createFilesInDirectory(Path directory)
       throws IOException, URISyntaxException {
@@ -41,13 +41,18 @@ public class TemporaryDirectoryTest {
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testClose_directoryDeleted() throws IOException, URISyntaxException {
-    try (TemporaryDirectory temporaryDirectory =
-        new TemporaryDirectory(temporaryFolder.newFolder().toPath())) {
-      createFilesInDirectory(temporaryDirectory.getDirectory());
+  public void testClose_directoriesDeleted() throws IOException, URISyntaxException {
+    Path parent = temporaryFolder.newFolder().toPath();
 
-      temporaryDirectory.close();
-      Assert.assertFalse(Files.exists(temporaryDirectory.getDirectory()));
+    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+      Path directory1 = tempDirectoryProvider.newDirectory(parent);
+      createFilesInDirectory(directory1);
+      Path directory2 = tempDirectoryProvider.newDirectory(parent);
+      createFilesInDirectory(directory2);
+
+      tempDirectoryProvider.close();
+      Assert.assertFalse(Files.exists(directory1));
+      Assert.assertFalse(Files.exists(directory2));
     }
   }
 
@@ -55,15 +60,15 @@ public class TemporaryDirectoryTest {
   public void testClose_directoryNotDeletedIfMoved() throws IOException, URISyntaxException {
     Path destinationParent = temporaryFolder.newFolder().toPath();
 
-    try (TemporaryDirectory temporaryDirectory =
-        new TemporaryDirectory(temporaryFolder.newFolder().toPath())) {
-      createFilesInDirectory(temporaryDirectory.getDirectory());
+    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
+      Path directory = tempDirectoryProvider.newDirectory(destinationParent);
+      createFilesInDirectory(directory);
 
       Assert.assertFalse(Files.exists(destinationParent.resolve("destination")));
-      Files.move(temporaryDirectory.getDirectory(), destinationParent.resolve("destination"));
+      Files.move(directory, destinationParent.resolve("destination"));
 
-      temporaryDirectory.close();
-      Assert.assertFalse(Files.exists(temporaryDirectory.getDirectory()));
+      tempDirectoryProvider.close();
+      Assert.assertFalse(Files.exists(directory));
       Assert.assertTrue(Files.exists(destinationParent.resolve("destination")));
     }
   }

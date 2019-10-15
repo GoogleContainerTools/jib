@@ -80,7 +80,8 @@ class PushBlobStep implements Callable<BlobDescriptor> {
       // check if the BLOB is available
       if (!forcePush && registryClient.checkBlob(blobDigest).isPresent()) {
         eventHandlers.dispatch(
-            LogEvent.info("BLOB : " + blobDescriptor + " already exists on registry"));
+            LogEvent.info(
+                "Skipping push; BLOB already exists on target registry : " + blobDescriptor));
         return blobDescriptor;
       }
 

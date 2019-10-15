@@ -5,9 +5,21 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- `jib.outputPaths` object for configuration output file locations ([#1561](https://github.com/GoogleContainerTools/jib/issues/1561))
+  - `jib.outputPaths.tar` configures output path of `jibBuildTar` (`build/jib-image.tar` by default)
+  - `jib.outputPaths.digest` configures the output path of the image digest (`build/jib-image.digest` by default)
+  - `jib.outputPaths.imageId` configures output path of the image id  (`build/jib-image.id` by default)
+- Main class inference support for Java 13/14. ([#2015](https://github.com/GoogleContainerTools/jib/issues/2015))
+
 ### Changed
 
+- Local base image layers are now processed in parallel, speeding up builds using large local base images. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
+- The base image manifest is no longer pulled from the registry if a digest is provided and the manifest is already cached. ([#1881](https://github.com/GoogleContainerTools/jib/issues/1881))
+
 ### Fixed
+
+- Fixed temporary directory cleanup during builds using local base images. ([#2016](https://github.com/GoogleContainerTools/jib/issues/2016))
+- Fixed additional tags being ignored when building to a tarball. ([#2043](https://github.com/GoogleContainerTools/jib/issues/2043))
 
 ## 1.6.1
 

@@ -35,7 +35,6 @@ import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.ConnectException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Locale;
@@ -55,8 +54,6 @@ class RegistryEndpointCaller<T> {
    *     href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308">https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308</a>
    */
   @VisibleForTesting static final int STATUS_CODE_PERMANENT_REDIRECT = 308;
-
-  private static final String DEFAULT_PROTOCOL = "https";
 
   private static boolean isHttpsProtocol(URL url) {
     return "https".equals(url.getProtocol());
@@ -81,7 +78,6 @@ class RegistryEndpointCaller<T> {
   }
 
   private final EventHandlers eventHandlers;
-  private final URL initialRequestUrl;
   private final String userAgent;
   private final RegistryEndpointProvider<T> registryEndpointProvider;
   @Nullable private final Authorization authorization;
@@ -99,26 +95,21 @@ class RegistryEndpointCaller<T> {
    *
    * @param eventHandlers the event dispatcher used for dispatching log events
    * @param userAgent {@code User-Agent} header to send with the request
-   * @param apiRouteBase the endpoint's API root, without the protocol
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
    * @param authorization optional authentication credentials to use
    * @param registryEndpointRequestProperties properties of the registry endpoint request
    * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
-   * @throws MalformedURLException if the URL generated for the endpoint is malformed
    */
   RegistryEndpointCaller(
       EventHandlers eventHandlers,
       String userAgent,
-      String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      boolean allowInsecureRegistries)
-      throws MalformedURLException {
+      boolean allowInsecureRegistries) {
     this(
         eventHandlers,
         userAgent,
-        apiRouteBase,
         registryEndpointProvider,
         authorization,
         registryEndpointRequestProperties,
@@ -131,17 +122,13 @@ class RegistryEndpointCaller<T> {
   RegistryEndpointCaller(
       EventHandlers eventHandlers,
       String userAgent,
-      String apiRouteBase,
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       boolean allowInsecureRegistries,
       Function<URL, Connection> connectionFactory,
-      @Nullable Function<URL, Connection> insecureConnectionFactory)
-      throws MalformedURLException {
+      @Nullable Function<URL, Connection> insecureConnectionFactory) {
     this.eventHandlers = eventHandlers;
-    this.initialRequestUrl =
-        registryEndpointProvider.getApiRoute(DEFAULT_PROTOCOL + "://" + apiRouteBase);
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;
     this.authorization = authorization;
@@ -160,6 +147,8 @@ class RegistryEndpointCaller<T> {
    */
   T call() throws IOException, RegistryException {
     try {
+      String apiRouteBase = "https://" + registryEndpointRequestProperties.getServerUrl() + "/v2/";
+      URL initialRequestUrl = registryEndpointProvider.getApiRoute(apiRouteBase);
       return callWithAllowInsecureRegistryHandling(initialRequestUrl);
 
     } catch (IOException ex) {

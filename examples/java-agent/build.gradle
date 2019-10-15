@@ -1,8 +1,8 @@
 plugins {
   id 'java'
   id 'com.google.cloud.tools.jib' version '1.6.1'
-  id 'de.undercouch.download' version '3.4.0'
-  id "com.gorylenko.gradle-git-properties" version "1.5.2"
+  id 'de.undercouch.download' version '4.0.0'
+  id "com.gorylenko.gradle-git-properties" version "2.2.0"
 }
 
 ext {
@@ -24,8 +24,8 @@ repositories {
 }
 
 dependencies {
-  compile "com.sparkjava:spark-core:2.7.2"
-  compile "org.slf4j:slf4j-simple:1.7.21"
+  compile "com.sparkjava:spark-core:2.9.1"
+  compile "org.slf4j:slf4j-simple:1.7.28"
 }
 
 // Download and extract the Cloud Debugger Java Agent
@@ -42,7 +42,7 @@ jib {
   to {
     image = 'gcr.io/REPLACE-WITH-YOUR-GCP-PROJECT/image-built-with-jib'
   }
-  extraDirectory = file(jibExtraDirectory)
+  extraDirectories.paths = [file(jibExtraDirectory)]
   container {
     ports = ['4567']
     jvmFlags = [

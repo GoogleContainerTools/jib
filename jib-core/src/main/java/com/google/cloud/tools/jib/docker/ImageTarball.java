@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.tar.TarStreamBuilder;
+import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collections;
@@ -42,16 +43,21 @@ public class ImageTarball {
 
   private final Image image;
   private final ImageReference imageReference;
+  private final ImmutableSet<String> allTargetImageTags;
 
   /**
    * Instantiate with an {@link Image}.
    *
    * @param image the image to convert into a tarball
-   * @param imageReference image reference to set in the manifest
+   * @param imageReference image reference to set in the manifest (note that the tag portion of the
+   *     image reference is ignored)
+   * @param allTargetImageTags the tags to tag the image with
    */
-  public ImageTarball(Image image, ImageReference imageReference) {
+  public ImageTarball(
+      Image image, ImageReference imageReference, ImmutableSet<String> allTargetImageTags) {
     this.image = image;
     this.imageReference = imageReference;
+    this.allTargetImageTags = allTargetImageTags;
   }
 
   public void writeTo(OutputStream out) throws IOException {
@@ -75,7 +81,9 @@ public class ImageTarball {
         CONTAINER_CONFIGURATION_JSON_FILE_NAME);
 
     // Adds the manifest to tarball.
-    manifestTemplate.setRepoTags(imageReference.toStringWithTag());
+    for (String tag : allTargetImageTags) {
+      manifestTemplate.addRepoTag(imageReference.withTag(tag).toStringWithTag());
+    }
     tarStreamBuilder.addByteEntry(
         JsonTemplateMapper.toByteArray(Collections.singletonList(manifestTemplate)),
         MANIFEST_JSON_FILE_NAME);

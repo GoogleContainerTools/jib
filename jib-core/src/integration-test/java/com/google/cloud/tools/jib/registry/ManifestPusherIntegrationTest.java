@@ -47,7 +47,7 @@ public class ManifestPusherIntegrationTest {
   public void testPush_missingBlobs() throws IOException, RegistryException {
     RegistryClient registryClient =
         RegistryClient.factory(EventHandlers.NONE, "gcr.io", "distroless/java").newRegistryClient();
-    ManifestTemplate manifestTemplate = registryClient.pullManifest("latest");
+    ManifestTemplate manifestTemplate = registryClient.pullManifest("latest").getManifest();
 
     registryClient =
         RegistryClient.factory(EventHandlers.NONE, "localhost:5000", "busybox")
@@ -101,7 +101,7 @@ public class ManifestPusherIntegrationTest {
 
     // Pulls the manifest.
     V22ManifestTemplate manifestTemplate =
-        registryClient.pullManifest("latest", V22ManifestTemplate.class);
+        registryClient.pullManifest("latest", V22ManifestTemplate.class).getManifest();
     Assert.assertEquals(1, manifestTemplate.getLayers().size());
     Assert.assertEquals(testLayerBlobDigest, manifestTemplate.getLayers().get(0).getDigest());
     Assert.assertNotNull(manifestTemplate.getContainerConfiguration());
@@ -111,7 +111,9 @@ public class ManifestPusherIntegrationTest {
 
     // Pulls the manifest by digest.
     V22ManifestTemplate manifestTemplateByDigest =
-        registryClient.pullManifest(imageDigest.toString(), V22ManifestTemplate.class);
+        registryClient
+            .pullManifest(imageDigest.toString(), V22ManifestTemplate.class)
+            .getManifest();
     Assert.assertEquals(
         Digests.computeJsonDigest(manifestTemplate),
         Digests.computeJsonDigest(manifestTemplateByDigest));

@@ -33,7 +33,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 /** Tests for {@link DockerManifestEntryTemplate}. */
-public class DockerManifestTemplateTest {
+public class DockerManifestEntryTemplateTest {
 
   @Test
   public void testToJson() throws URISyntaxException, IOException {
@@ -42,8 +42,7 @@ public class DockerManifestTemplateTest {
     String expectedJson = new String(Files.readAllBytes(jsonFile), StandardCharsets.UTF_8);
 
     DockerManifestEntryTemplate template = new DockerManifestEntryTemplate();
-    template.setRepoTags(
-        ImageReference.of("testregistry", "testrepo", "testtag").toStringWithTag());
+    template.addRepoTag(ImageReference.of("testregistry", "testrepo", "testtag").toStringWithTag());
     template.addLayerFile("layer1.tar.gz");
     template.addLayerFile("layer2.tar.gz");
     template.addLayerFile("layer3.tar.gz");

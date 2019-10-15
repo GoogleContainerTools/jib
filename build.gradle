@@ -50,13 +50,13 @@ subprojects {
     GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: '0.16.2',
     GUAVA: '28.0-jre',
 
-    COMMONS_COMPRESS: '1.18',
-    JACKSON_DATABIND: '2.9.9.2',
-    ASM: '7.0',
+    COMMONS_COMPRESS: '1.19',
+    JACKSON_DATABIND: '2.9.10',
+    ASM: '7.2',
 
     //test
     JUNIT: '4.12',
-    MOCKITO_CORE: '2.23.4',
+    MOCKITO_CORE: '3.1.0',
     SLF4J_API: '1.7.25',
     SYSTEM_RULES: '1.19.0',
   ]
