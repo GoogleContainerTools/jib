@@ -213,7 +213,7 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(
         ImmutableSet.of("latest", "tag1", "tag2"), buildConfiguration.getAllTargetImageTags());
     Assert.assertEquals("toolName", buildConfiguration.getToolName());
-    Assert.assertEquals(false,buildConfiguration.isAlwaysCacheBaseImage());
+    Assert.assertFalse(buildConfiguration.isAlwaysCacheBaseImage());
   }
 
   /** Verify that an internally-created ExecutorService is shutdown. */
