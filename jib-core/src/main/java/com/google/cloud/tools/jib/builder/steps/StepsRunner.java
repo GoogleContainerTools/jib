@@ -149,7 +149,8 @@ public class StepsRunner {
 
   public StepsRunner registryPushSteps() {
     rootProgressDescription = "building image to registry";
-    boolean layersRequiredLocally = JibSystemProperties.alwaysCacheBaseImage();
+    boolean layersRequiredLocally =
+        buildConfiguration.isAlwaysCacheBaseImage(); // JibSystemProperties.alwaysCacheBaseImage();
 
     stepsToRun.add(this::retrieveTargetRegistryCredentials);
     stepsToRun.add(this::authenticatePush);

@@ -147,7 +147,14 @@ public class PluginConfigurationProcessor {
         inferredAuthProvider,
         rawConfiguration.getToCredHelper().orElse(null));
 
+    boolean isAlwaysCacheBaseImage =
+        Boolean.getBoolean(
+            rawConfiguration
+                .getProperty(PropertyNames.ALWAYS_CACHE_BASE_IMAGE)
+                .orElse(Boolean.TRUE.toString()));
     Containerizer containerizer = Containerizer.to(targetImage);
+    containerizer.setAlwaysCacheBaseImageFlag(isAlwaysCacheBaseImage);
+
     JibContainerBuilder jibContainerBuilder =
         processCommonConfiguration(
             rawConfiguration, inferredAuthProvider, projectProperties, containerizer);

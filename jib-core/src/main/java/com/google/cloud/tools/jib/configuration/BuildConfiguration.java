@@ -66,6 +66,7 @@ public class BuildConfiguration {
     private String toolName = DEFAULT_TOOL_NAME;
     private EventHandlers eventHandlers = EventHandlers.NONE;
     @Nullable private ExecutorService executorService;
+    private boolean alwaysCacheBaseImage = true;
 
     private Builder() {}
 
@@ -173,6 +174,17 @@ public class BuildConfiguration {
     }
 
     /**
+     * Sets whether or not to perform the build in offline mode.
+     *
+     * @param alwaysCacheBaseImage if {@code true}, the build will optimize by skipping downloading
+     *     base image layers that exist in a target registry
+     * @return this
+     */
+    public Builder setAlwaysCacheBaseImage(boolean alwaysCacheBaseImage) {
+      this.alwaysCacheBaseImage = alwaysCacheBaseImage;
+      return this;
+    }
+    /**
      * Sets the layers to build.
      *
      * @param layerConfigurations the configurations for the layers
@@ -267,7 +279,8 @@ public class BuildConfiguration {
               layerConfigurations,
               toolName,
               eventHandlers,
-              Preconditions.checkNotNull(executorService));
+              Preconditions.checkNotNull(executorService),
+              alwaysCacheBaseImage);
 
         case 1:
           throw new IllegalStateException(missingFields.get(0) + " is required but not set");
@@ -321,6 +334,7 @@ public class BuildConfiguration {
   private final String toolName;
   private final EventHandlers eventHandlers;
   private final ExecutorService executorService;
+  private final boolean alwaysCacheBaseImage;
 
   /** Instantiate with {@link #builder}. */
   private BuildConfiguration(
@@ -336,7 +350,8 @@ public class BuildConfiguration {
       ImmutableList<LayerConfiguration> layerConfigurations,
       String toolName,
       EventHandlers eventHandlers,
-      ExecutorService executorService) {
+      ExecutorService executorService,
+      boolean alwaysCacheBaseImage) {
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
     this.additionalTargetImageTags = additionalTargetImageTags;
@@ -350,6 +365,7 @@ public class BuildConfiguration {
     this.toolName = toolName;
     this.eventHandlers = eventHandlers;
     this.executorService = executorService;
+    this.alwaysCacheBaseImage = alwaysCacheBaseImage;
   }
 
   public ImageConfiguration getBaseImageConfiguration() {
@@ -423,6 +439,15 @@ public class BuildConfiguration {
    */
   public boolean isOffline() {
     return offline;
+  }
+
+  /**
+   * Gets whether or not to cache the base images.
+   *
+   * @return {@code true} if the build can cache the base images; {@code false} otherwise
+   */
+  public boolean isAlwaysCacheBaseImage() {
+    return alwaysCacheBaseImage;
   }
 
   /**
