@@ -130,7 +130,7 @@ public class Containerizer {
   private boolean allowInsecureRegistries = false;
   private boolean offline = false;
   private String toolName = DEFAULT_TOOL_NAME;
-  private boolean alwaysCacheBaseImage = true;
+  private boolean alwaysCacheBaseImage = false;
 
   /** Instantiate with {@link #to}. */
   private Containerizer(
@@ -271,15 +271,17 @@ public class Containerizer {
   }
 
   /**
-   * Sets the alwaysCacheBaseImage flag which controls the optimization to skip downloading base
+   * Sets the alwaysCacheBaseImage property to control the optimization which skips downloading base
    * image layers that exist in a target registry. If the user does not set this property, then read
-   * as true.
+   * as false.
    *
-   * @param alwaysCacheBaseImageFlag the flag to control alwaysCacheBaseImage
+   * @param alwaysCacheBaseImage if {@code true}, base image layers are always pulled and cached. If
+   *     {@code false}, base image layers will not be pulled/cached if they already exist on the
+   *     target registry.
    * @return this
    */
-  public Containerizer setAlwaysCacheBaseImageFlag(boolean alwaysCacheBaseImageFlag) {
-    this.alwaysCacheBaseImage = alwaysCacheBaseImageFlag;
+  public Containerizer setAlwaysCacheBaseImage(boolean alwaysCacheBaseImage) {
+    this.alwaysCacheBaseImage = alwaysCacheBaseImage;
     return this;
   }
 
@@ -325,7 +327,7 @@ public class Containerizer {
     return toolName;
   }
 
-  boolean isAlwaysCacheBaseImage() {
+  boolean getAlwaysCacheBaseImage() {
     return alwaysCacheBaseImage;
   }
 

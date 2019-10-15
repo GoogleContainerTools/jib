@@ -140,7 +140,7 @@ public class JibContainerBuilderTest {
             .setApplicationLayersCache(Paths.get("application/layers"))
             .setExecutorService(mockExecutorService)
             .addEventHandler(mockJibEventConsumer)
-            .setAlwaysCacheBaseImageFlag(false);
+            .setAlwaysCacheBaseImage(true);
 
     ImageConfiguration baseImageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image"))
@@ -213,7 +213,7 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(
         ImmutableSet.of("latest", "tag1", "tag2"), buildConfiguration.getAllTargetImageTags());
     Assert.assertEquals("toolName", buildConfiguration.getToolName());
-    Assert.assertFalse(buildConfiguration.isAlwaysCacheBaseImage());
+    Assert.assertTrue(buildConfiguration.getAlwaysCacheBaseImage());
   }
 
   /** Verify that an internally-created ExecutorService is shutdown. */
@@ -295,7 +295,7 @@ public class JibContainerBuilderTest {
     Mockito.when(mockContainerizer.getToolName()).thenReturn("mocktool");
     Mockito.when(mockContainerizer.getExecutorService()).thenReturn(Optional.empty());
     Mockito.when(mockContainerizer.buildEventHandlers()).thenReturn(EventHandlers.NONE);
-    Mockito.when(mockContainerizer.isAlwaysCacheBaseImage()).thenReturn(true);
+    Mockito.when(mockContainerizer.getAlwaysCacheBaseImage()).thenReturn(true);
     return mockContainerizer;
   }
 }

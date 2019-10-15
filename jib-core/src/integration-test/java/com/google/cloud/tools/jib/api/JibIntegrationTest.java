@@ -84,7 +84,7 @@ public class JibIntegrationTest {
                             .addCredentialRetriever(
                                 () -> Optional.of(Credential.from("username", "password"))))
                     .setAllowInsecureRegistries(true)
-                    .setAlwaysCacheBaseImageFlag(true));
+                    .setAlwaysCacheBaseImage(true));
 
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
     Assert.assertEquals(
@@ -109,7 +109,7 @@ public class JibIntegrationTest {
                             .addCredentialRetriever(
                                 () -> Optional.of(Credential.from("username", "password"))))
                     .setAllowInsecureRegistries(true)
-                    .setAlwaysCacheBaseImageFlag(false));
+                    .setAlwaysCacheBaseImage(true));
 
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
     Assert.assertEquals(
@@ -152,7 +152,7 @@ public class JibIntegrationTest {
                             .addCredentialRetriever(
                                 () -> Optional.of(Credential.from("username", "password"))))
                     .setAllowInsecureRegistries(true)
-                    .setAlwaysCacheBaseImageFlag(true));
+                    .setAlwaysCacheBaseImage(true));
 
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
     Assert.assertEquals(
@@ -179,7 +179,7 @@ public class JibIntegrationTest {
                             .addCredentialRetriever(
                                 () -> Optional.of(Credential.from("username", "password"))))
                     .setAllowInsecureRegistries(true)
-                    .setAlwaysCacheBaseImageFlag(true));
+                    .setAlwaysCacheBaseImage(true));
 
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
     Assert.assertEquals(
@@ -212,7 +212,7 @@ public class JibIntegrationTest {
                             .addCredentialRetriever(
                                 () -> Optional.of(Credential.from("username", "password"))))
                     .setAllowInsecureRegistries(true)
-                    .setAlwaysCacheBaseImageFlag(false));
+                    .setAlwaysCacheBaseImage(true));
 
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
     Assert.assertEquals(
@@ -239,7 +239,7 @@ public class JibIntegrationTest {
                             .addCredentialRetriever(
                                 () -> Optional.of(Credential.from("username", "password"))))
                     .setAllowInsecureRegistries(true)
-                    .setAlwaysCacheBaseImageFlag(true));
+                    .setAlwaysCacheBaseImage(true));
 
     Assert.assertEquals("Hello World\n", pullAndRunBuiltImage(targetImageReference.toString()));
     Assert.assertEquals(
@@ -261,7 +261,7 @@ public class JibIntegrationTest {
                         .addCredentialRetriever(
                             () -> Optional.of(Credential.from("username", "password"))))
                 .setAllowInsecureRegistries(true)
-                .setAlwaysCacheBaseImageFlag(true));
+                .setAlwaysCacheBaseImage(true));
 
     // Check that resulting image has no layers
     localRegistry.pull(targetImageReference.toString());
@@ -342,7 +342,7 @@ public class JibIntegrationTest {
                     .addCredentialRetriever(
                         () -> Optional.of(Credential.from("username", "password"))))
             .setAllowInsecureRegistries(true)
-            .setAlwaysCacheBaseImageFlag(true);
+            .setAlwaysCacheBaseImage(true);
 
     ExecutorService executorService = Executors.newCachedThreadPool();
     containerizer.setExecutorService(executorService);

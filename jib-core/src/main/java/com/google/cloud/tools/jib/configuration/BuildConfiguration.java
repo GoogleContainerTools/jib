@@ -66,7 +66,7 @@ public class BuildConfiguration {
     private String toolName = DEFAULT_TOOL_NAME;
     private EventHandlers eventHandlers = EventHandlers.NONE;
     @Nullable private ExecutorService executorService;
-    private boolean alwaysCacheBaseImage = true;
+    private boolean alwaysCacheBaseImage = false;
 
     private Builder() {}
 
@@ -174,10 +174,13 @@ public class BuildConfiguration {
     }
 
     /**
-     * Sets whether or not to perform the build in offline mode.
+     * Sets the alwaysCacheBaseImage property to control the optimization which skips downloading
+     * base image layers that exist in a target registry. If the user does not set this property,
+     * then read as false.
      *
-     * @param alwaysCacheBaseImage if {@code true}, the build will optimize by skipping downloading
-     *     base image layers that exist in a target registry
+     * @param alwaysCacheBaseImage if {@code true}, base image layers are always pulled and cached.
+     *     If {@code false}, base image layers will not be pulled/cached if they already exist on
+     *     the target registry.
      * @return this
      */
     public Builder setAlwaysCacheBaseImage(boolean alwaysCacheBaseImage) {
@@ -444,9 +447,9 @@ public class BuildConfiguration {
   /**
    * Gets whether or not to cache the base images.
    *
-   * @return {@code true} if the build can cache the base images; {@code false} otherwise
+   * @return {@code true} if the user wants to force the build to always pull the image layers.
    */
-  public boolean isAlwaysCacheBaseImage() {
+  public boolean getAlwaysCacheBaseImage() {
     return alwaysCacheBaseImage;
   }
 

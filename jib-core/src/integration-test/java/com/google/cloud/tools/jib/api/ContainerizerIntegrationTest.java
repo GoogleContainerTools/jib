@@ -304,7 +304,7 @@ public class ContainerizerIntegrationTest {
           ExecutionException {
     return buildImage(
         baseImage,
-        Containerizer.to(RegistryImage.named(targetImage)).setAlwaysCacheBaseImageFlag(true),
+        Containerizer.to(RegistryImage.named(targetImage)).setAlwaysCacheBaseImage(true),
         additionalTags);
   }
 
