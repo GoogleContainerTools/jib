@@ -201,30 +201,29 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
       ProgressEventDispatcher progressEventDispatcher)
       throws IOException, RegistryException, LayerPropertyNotFoundException,
           LayerCountMismatchException, BadContainerConfigurationFormatException {
+    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
     RegistryClient registryClient =
         buildConfiguration
             .newBaseImageRegistryClientFactory()
             .setAuthorization(registryAuthorization)
             .newRegistryClient();
 
-    ManifestTemplate manifestTemplate =
-        registryClient
-            .pullManifest(buildConfiguration.getBaseImageConfiguration().getImageTag())
-            .getManifest();
+    ManifestAndDigest manifestAndDigest =
+        registryClient.pullManifest(buildConfiguration.getBaseImageConfiguration().getImageTag());
+    ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
 
     // special handling if we happen upon a manifest list, redirect to a manifest and continue
     // handling it normally
     if (manifestTemplate instanceof V22ManifestListTemplate) {
-      buildConfiguration
-          .getEventHandlers()
-          .dispatch(
-              LogEvent.lifecycle(
-                  "The base image reference is manifest list, searching for linux/amd64"));
-      manifestTemplate =
+      eventHandlers.dispatch(
+          LogEvent.lifecycle(
+              "The base image reference is manifest list, searching for linux/amd64"));
+      manifestAndDigest =
           obtainPlatformSpecificImageManifest(
-                  registryClient, (V22ManifestListTemplate) manifestTemplate)
-              .getManifest();
+              registryClient, (V22ManifestListTemplate) manifestTemplate);
+      manifestTemplate = manifestAndDigest.getManifest();
     }
+
     switch (manifestTemplate.getSchemaVersion()) {
       case 1:
         V21ManifestTemplate v21ManifestTemplate = (V21ManifestTemplate) manifestTemplate;
@@ -235,6 +234,8 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
         return JsonToImageTranslator.toImage(v21ManifestTemplate);
 
       case 2:
+        eventHandlers.dispatch(
+            LogEvent.lifecycle("Using base image with digest: " + manifestAndDigest.getDigest()));
         BuildableManifestTemplate buildableManifestTemplate =
             (BuildableManifestTemplate) manifestTemplate;
         if (buildableManifestTemplate.getContainerConfiguration() == null
