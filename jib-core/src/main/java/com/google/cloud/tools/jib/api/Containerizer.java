@@ -271,9 +271,8 @@ public class Containerizer {
   }
 
   /**
-   * Sets the alwaysCacheBaseImage property to control the optimization which skips downloading base
-   * image layers that exist in a target registry. If the user does not set this property, then read
-   * as false.
+   * Controls the optimization which skips downloading base image layers that exist in a target
+   * registry. If the user does not set this property, then read as false.
    *
    * @param alwaysCacheBaseImage if {@code true}, base image layers are always pulled and cached. If
    *     {@code false}, base image layers will not be pulled/cached if they already exist on the
