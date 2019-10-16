@@ -34,6 +34,7 @@ import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
+import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
@@ -142,7 +143,8 @@ public class LocalBaseImageSteps {
             buildConfiguration, executorService, tarPath, progressEventDispatcherFactory);
   }
 
-  private static Optional<LocalImage> getCachedDockerImage(
+  @VisibleForTesting
+  static Optional<LocalImage> getCachedDockerImage(
       Cache cache, DockerImageDetails dockerImageDetails)
       throws DigestException, IOException, CacheCorruptedException, LayerCountMismatchException,
           BadContainerConfigurationFormatException {
@@ -168,10 +170,9 @@ public class LocalBaseImageSteps {
     }
 
     // Create manifest
-    ContainerConfigurationTemplate config = cachedConfig.get();
-    BlobDescriptor configDescriptor = Blobs.from(config).writeTo(ByteStreams.nullOutputStream());
+    BlobDescriptor configDescriptor = Digests.computeDigest(cachedConfig.get());
     v22Manifest.setContainerConfiguration(configDescriptor.getSize(), configDescriptor.getDigest());
-    Image image = JsonToImageTranslator.toImage(v22Manifest, config);
+    Image image = JsonToImageTranslator.toImage(v22Manifest, cachedConfig.get());
     return Optional.of(new LocalImage(image, cachedLayers));
   }
 

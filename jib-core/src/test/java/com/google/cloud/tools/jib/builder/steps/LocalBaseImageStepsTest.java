@@ -19,14 +19,23 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.cache.Cache;
+import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.image.LayerCountMismatchException;
+import com.google.cloud.tools.jib.image.json.BadContainerConfigurationFormatException;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.DigestException;
+import java.util.Optional;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -117,6 +126,70 @@ public class LocalBaseImageStepsTest {
         "c10ef24a5cef5092bbcb5a5666721cff7b86ce978c203a958d1fc86ee6c19f94",
         result.layers.get(1).getBlobDescriptor().getDigest().getHash());
     Assert.assertEquals("value1", result.baseImage.getLabels().get("label1"));
+  }
+
+  @Test
+  public void testGetCachedDockerImage()
+      throws IOException, DigestException, BadContainerConfigurationFormatException,
+          CacheCorruptedException, LayerCountMismatchException, URISyntaxException {
+    DockerImageDetails dockerImageDetails =
+        new DockerImageDetails(
+            0,
+            "sha256:066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0",
+            ImmutableList.of(
+                "sha256:5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd",
+                "sha256:f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e"));
+    Path cachePath = temporaryFolder.newFolder("cache").toPath();
+    Files.createDirectories(cachePath.resolve("local/config"));
+    Cache cache = Cache.withDirectory(cachePath);
+
+    // Image not in cache
+    Optional<LocalImage> localImage =
+        LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
+    Assert.assertFalse(localImage.isPresent());
+
+    // Config in cache, but not layers
+    Files.copy(
+        Paths.get(
+            Resources.getResource(
+                    "core/extraction/test-cache/local/config/066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0")
+                .toURI()),
+        cachePath.resolve(
+            "local/config/066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0"));
+    localImage = LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
+    Assert.assertFalse(localImage.isPresent());
+
+    // One layer missing
+    Files.createDirectories(
+        cachePath.resolve(
+            "local/5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd"));
+    Files.copy(
+        Paths.get(
+            Resources.getResource(
+                    "core/extraction/test-cache/local/5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd/0011328ac5dfe3dde40c7c5e0e00c98d1833a3aeae2bfb668cf9eb965c229c7f")
+                .toURI()),
+        cachePath.resolve(
+            "local/5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd/0011328ac5dfe3dde40c7c5e0e00c98d1833a3aeae2bfb668cf9eb965c229c7f"));
+    localImage = LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
+    Assert.assertFalse(localImage.isPresent());
+
+    // Image fully in cache
+    Files.createDirectories(
+        cachePath.resolve(
+            "local/f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e"));
+    Files.copy(
+        Paths.get(
+            Resources.getResource(
+                    "core/extraction/test-cache/local/f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e/c10ef24a5cef5092bbcb5a5666721cff7b86ce978c203a958d1fc86ee6c19f94")
+                .toURI()),
+        cachePath.resolve(
+            "local/f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e/c10ef24a5cef5092bbcb5a5666721cff7b86ce978c203a958d1fc86ee6c19f94"));
+    localImage = LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
+    Assert.assertTrue(localImage.isPresent());
+    LocalImage image = localImage.get();
+    Assert.assertEquals(
+        ImmutableMap.of("label1", "value1", "label2", "value2"), image.baseImage.getLabels());
+    Assert.assertEquals(2, image.layers.size());
   }
 
   @Test
