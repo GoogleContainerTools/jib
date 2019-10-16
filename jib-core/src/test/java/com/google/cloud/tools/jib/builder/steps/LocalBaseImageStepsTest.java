@@ -151,8 +151,7 @@ public class LocalBaseImageStepsTest {
     // Config in cache, but not layers
     String configHash = "066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0";
     Files.copy(
-        Paths.get(
-            Resources.getResource("core/extraction/test-cache/local/config/" + configHash).toURI()),
+        getResource("core/extraction/test-cache/local/config/" + configHash),
         cachePath.resolve("local/config/" + configHash));
     localImage = LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
     Assert.assertFalse(localImage.isPresent());
@@ -162,9 +161,7 @@ public class LocalBaseImageStepsTest {
     String digest = "0011328ac5dfe3dde40c7c5e0e00c98d1833a3aeae2bfb668cf9eb965c229c7f";
     Files.createDirectories(cachePath.resolve("local").resolve(diffId));
     Files.copy(
-        Paths.get(
-            Resources.getResource("core/extraction/test-cache/local/" + diffId + "/" + digest)
-                .toURI()),
+        getResource("core/extraction/test-cache/local/" + diffId + "/" + digest),
         cachePath.resolve("local").resolve(diffId).resolve(digest));
     localImage = LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
     Assert.assertFalse(localImage.isPresent());
@@ -174,9 +171,7 @@ public class LocalBaseImageStepsTest {
     digest = "c10ef24a5cef5092bbcb5a5666721cff7b86ce978c203a958d1fc86ee6c19f94";
     Files.createDirectories(cachePath.resolve("local").resolve(diffId));
     Files.copy(
-        Paths.get(
-            Resources.getResource("core/extraction/test-cache/local/" + diffId + "/" + digest)
-                .toURI()),
+        getResource("core/extraction/test-cache/local/" + diffId + "/" + digest),
         cachePath.resolve("local").resolve(diffId).resolve(digest));
     localImage = LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
     Assert.assertTrue(localImage.isPresent());
