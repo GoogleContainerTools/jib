@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,16 +31,46 @@ import org.junit.Test;
 /** Tests for {@link SkaffoldFilesOutput}. */
 public class SkaffoldSyncMapTemplateTest {
 
+  private static final Path GEN_SRC = Paths.get("/gen/src/").toAbsolutePath();
+  private static final Path DIR_SRC_1 = Paths.get("/dir/src/").toAbsolutePath();
+  private static final Path DIR_SRC_2 = Paths.get("/dir/src/").toAbsolutePath();
+
   private static final String TEST_JSON =
-      "{\"generated\":[{\"src\":\"/make\",\"dest\":\"/it\"}],\"direct\":[{\"src\":\"/makeit\",\"dest\":\"/so\"},{\"src\":\"/ener\",\"dest\":\"/gize\"}]}";
+      "{\"generated\":[{\"src\":\""
+          + GEN_SRC.toString()
+          + "\",\"dest\":\"/genDest\"}],\"direct\":[{\"src\":\""
+          + DIR_SRC_1.toString()
+          + "\",\"dest\":\"/dirDest1\"},{\"src\":\""
+          + DIR_SRC_2
+          + "\",\"dest\":\"/dirDest2\"}]}";
   private static final String TEST_JSON_EMPTY_GENERATED =
-      "{\"generated\":[],\"direct\":[{\"src\":\"/makeit\",\"dest\":\"/so\"},{\"src\":\"/ener\",\"dest\":\"/gize\"}]}";
+      "{\"generated\":[],\"direct\":[{\"src\":\""
+          + DIR_SRC_1.toString()
+          + "\",\"dest\":\"/dirDest1\"},{\"src\":\""
+          + DIR_SRC_2
+          + "\",\"dest\":\"/dirDest2\"}]}";
   private static final String TEST_JSON_NO_GENERATED =
-      "{\"direct\":[{\"src\":\"/makeit\",\"dest\":\"/so\"},{\"src\":\"/ener\",\"dest\":\"/gize\"}]}";
+      "{\"direct\":[{\"src\":\""
+          + DIR_SRC_1.toString()
+          + "\",\"dest\":\"/dirDest1\"},{\"src\":\""
+          + DIR_SRC_2
+          + "\",\"dest\":\"/dirDest2\"}]}";
   private static final String FAIL_TEST_JSON_MISSING_FIELD =
-      "{\"generated\":[{\"src\":\"/makeit\"}],\"direct\":[{\"src\":\"/makeit\",\"dest\":\"/so\"},{\"src\":\"/ener\",\"dest\":\"/gize\"}]}";
+      "{\"generated\":[{\"src\":\""
+          + GEN_SRC.toString()
+          + "\"}],\"direct\":[{\"src\":\""
+          + DIR_SRC_1.toString()
+          + "\",\"dest\":\"/dirDest1\"},{\"src\":\""
+          + DIR_SRC_2
+          + "\",\"dest\":\"/dirDest2\"}]}";
   private static final String FAIL_TEST_JSON_BAD_PROPERTY_NAME =
-      "{\"generated\":[{\"picard\":\"/makeit\",\"src\":\"/make\",\"dest\":\"/it\"}],\"direct\":[{\"src\":\"/makeit\",\"dest\":\"so\"},{\"src\":\"/ener\",\"dest\":\"/gize\"}]}";
+      "{\"generated\":[{\"jean-luc\":\"picard\", \"src\":\""
+          + GEN_SRC.toString()
+          + "\",\"dest\":\"/genDest\"}],\"direct\":[{\"src\":\""
+          + DIR_SRC_1.toString()
+          + "\",\"dest\":\"/dirDest1\"},{\"src\":\""
+          + DIR_SRC_2
+          + "\",\"dest\":\"/dirDest2\"}]}";
 
   @Test
   public void testFrom_badPropertyName() throws IOException {
@@ -47,7 +78,7 @@ public class SkaffoldSyncMapTemplateTest {
       SkaffoldSyncMapTemplate.from(FAIL_TEST_JSON_BAD_PROPERTY_NAME);
       Assert.fail();
     } catch (UnrecognizedPropertyException ex) {
-      Assert.assertTrue(ex.getMessage().contains("Unrecognized field \"picard\""));
+      Assert.assertTrue(ex.getMessage().contains("Unrecognized field \"jean-luc\""));
     }
   }
 
@@ -73,20 +104,20 @@ public class SkaffoldSyncMapTemplateTest {
     SkaffoldSyncMapTemplate ssmt = new SkaffoldSyncMapTemplate();
     ssmt.addGenerated(
         new LayerEntry(
-            Paths.get("/make"),
-            AbsoluteUnixPath.get("/it"),
+            GEN_SRC,
+            AbsoluteUnixPath.get("/genDest"),
             FilePermissions.DEFAULT_FILE_PERMISSIONS,
             LayerConfiguration.DEFAULT_MODIFICATION_TIME));
     ssmt.addDirect(
         new LayerEntry(
-            Paths.get("/makeit"),
-            AbsoluteUnixPath.get("/so"),
+            DIR_SRC_1,
+            AbsoluteUnixPath.get("/dirDest1"),
             FilePermissions.DEFAULT_FILE_PERMISSIONS,
             LayerConfiguration.DEFAULT_MODIFICATION_TIME));
     ssmt.addDirect(
         new LayerEntry(
-            Paths.get("/ener"),
-            AbsoluteUnixPath.get("/gize"),
+            DIR_SRC_2,
+            AbsoluteUnixPath.get("/dirDest2"),
             FilePermissions.DEFAULT_FILE_PERMISSIONS,
             LayerConfiguration.DEFAULT_MODIFICATION_TIME));
     Assert.assertEquals(TEST_JSON, ssmt.getJsonString());
@@ -97,14 +128,14 @@ public class SkaffoldSyncMapTemplateTest {
     SkaffoldSyncMapTemplate ssmt = new SkaffoldSyncMapTemplate();
     ssmt.addDirect(
         new LayerEntry(
-            Paths.get("/makeit"),
-            AbsoluteUnixPath.get("/so"),
+            DIR_SRC_1,
+            AbsoluteUnixPath.get("/dirDest1"),
             FilePermissions.DEFAULT_FILE_PERMISSIONS,
             LayerConfiguration.DEFAULT_MODIFICATION_TIME));
     ssmt.addDirect(
         new LayerEntry(
-            Paths.get("/ener"),
-            AbsoluteUnixPath.get("/gize"),
+            DIR_SRC_2,
+            AbsoluteUnixPath.get("/dirDest2"),
             FilePermissions.DEFAULT_FILE_PERMISSIONS,
             LayerConfiguration.DEFAULT_MODIFICATION_TIME));
     Assert.assertEquals(TEST_JSON_EMPTY_GENERATED, ssmt.getJsonString());

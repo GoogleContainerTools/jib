@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.json.JsonTemplate;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -22,21 +23,21 @@ import java.util.List;
  * {
  *   "generated": [
  *      {
- *        src: "fileX-local"
+ *        src: "fileX-local",
  *        dest: "fileX-remote"
  *      },
  *      {
- *        src: "dirX-local"
+ *        src: "dirX-local",
  *        dest: "dirX-remote"
  *      }
  *   ],
  *   "direct": [
  *      {
- *        src: "fileY-local"
+ *        src: "fileY-local",
  *        dest: "fileY-remote"
  *      },
  *      {
- *        src: "dirY-local"
+ *        src: "dirY-local",
  *        dest: "dirY-remote"
  *      },
  *   ]
@@ -47,7 +48,7 @@ public class SkaffoldSyncMapTemplate implements JsonTemplate {
 
   /**
    * A single entry in the skaffold sync map, may be eventually extended to support permissions and
-   * ownership
+   * ownership.
    */
   public static class FileTemplate implements JsonTemplate {
     private final String src;
@@ -62,23 +63,26 @@ public class SkaffoldSyncMapTemplate implements JsonTemplate {
     }
   }
 
-  private List<FileTemplate> generated = new ArrayList<>();
-  private List<FileTemplate> direct = new ArrayList<>();
+  private final List<FileTemplate> generated = new ArrayList<>();
+  private final List<FileTemplate> direct = new ArrayList<>();
 
-  public static SkaffoldSyncMapTemplate from(String jsonString) throws IOException {
+  @VisibleForTesting
+  static SkaffoldSyncMapTemplate from(String jsonString) throws IOException {
     return new ObjectMapper().readValue(jsonString, SkaffoldSyncMapTemplate.class);
   }
 
   public void addGenerated(LayerEntry layerEntry) {
     generated.add(
         new FileTemplate(
-            layerEntry.getSourceFile().toString(), layerEntry.getExtractionPath().toString()));
+            layerEntry.getSourceFile().toAbsolutePath().toString(),
+            layerEntry.getExtractionPath().toString()));
   }
 
   public void addDirect(LayerEntry layerEntry) {
     direct.add(
         new FileTemplate(
-            layerEntry.getSourceFile().toString(), layerEntry.getExtractionPath().toString()));
+            layerEntry.getSourceFile().toAbsolutePath().toString(),
+            layerEntry.getExtractionPath().toString()));
   }
 
   public String getJsonString() throws IOException {
