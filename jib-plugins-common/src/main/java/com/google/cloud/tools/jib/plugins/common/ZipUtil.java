@@ -56,6 +56,9 @@ public class ZipUtil {
         if (entry.isDirectory()) {
           Files.createDirectories(entryPath);
         } else {
+          if (entryPath.getParent() != null) {
+            Files.createDirectories(entryPath.getParent());
+          }
           try (OutputStream out = new BufferedOutputStream(Files.newOutputStream(entryPath))) {
             ByteStreams.copy(zipIn, out);
           }
