@@ -149,41 +149,35 @@ public class LocalBaseImageStepsTest {
     Assert.assertFalse(localImage.isPresent());
 
     // Config in cache, but not layers
+    String configHash = "066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0";
     Files.copy(
         Paths.get(
-            Resources.getResource(
-                    "core/extraction/test-cache/local/config/066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0")
-                .toURI()),
-        cachePath.resolve(
-            "local/config/066872f17ae819f846a6d5abcfc3165abe13fb0a157640fa8cb7af81077670c0"));
+            Resources.getResource("core/extraction/test-cache/local/config/" + configHash).toURI()),
+        cachePath.resolve("local/config/" + configHash));
     localImage = LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
     Assert.assertFalse(localImage.isPresent());
 
     // One layer missing
-    Files.createDirectories(
-        cachePath.resolve(
-            "local/5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd"));
+    String diffId = "5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd";
+    String digest = "0011328ac5dfe3dde40c7c5e0e00c98d1833a3aeae2bfb668cf9eb965c229c7f";
+    Files.createDirectories(cachePath.resolve("local").resolve(diffId));
     Files.copy(
         Paths.get(
-            Resources.getResource(
-                    "core/extraction/test-cache/local/5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd/0011328ac5dfe3dde40c7c5e0e00c98d1833a3aeae2bfb668cf9eb965c229c7f")
+            Resources.getResource("core/extraction/test-cache/local/" + diffId + "/" + digest)
                 .toURI()),
-        cachePath.resolve(
-            "local/5e701122d3347fae0758cd5b7f0692c686fcd07b0e7fd9c4a125fbdbbedc04dd/0011328ac5dfe3dde40c7c5e0e00c98d1833a3aeae2bfb668cf9eb965c229c7f"));
+        cachePath.resolve("local").resolve(diffId).resolve(digest));
     localImage = LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
     Assert.assertFalse(localImage.isPresent());
 
     // Image fully in cache
-    Files.createDirectories(
-        cachePath.resolve(
-            "local/f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e"));
+    diffId = "f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e";
+    digest = "c10ef24a5cef5092bbcb5a5666721cff7b86ce978c203a958d1fc86ee6c19f94";
+    Files.createDirectories(cachePath.resolve("local").resolve(diffId));
     Files.copy(
         Paths.get(
-            Resources.getResource(
-                    "core/extraction/test-cache/local/f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e/c10ef24a5cef5092bbcb5a5666721cff7b86ce978c203a958d1fc86ee6c19f94")
+            Resources.getResource("core/extraction/test-cache/local/" + diffId + "/" + digest)
                 .toURI()),
-        cachePath.resolve(
-            "local/f1ac3015bcbf0ada4750d728626eb10f0f585199e2b667dcd79e49f0e926178e/c10ef24a5cef5092bbcb5a5666721cff7b86ce978c203a958d1fc86ee6c19f94"));
+        cachePath.resolve("local").resolve(diffId).resolve(digest));
     localImage = LocalBaseImageSteps.getCachedDockerImage(cache, dockerImageDetails);
     Assert.assertTrue(localImage.isPresent());
     LocalImage image = localImage.get();
