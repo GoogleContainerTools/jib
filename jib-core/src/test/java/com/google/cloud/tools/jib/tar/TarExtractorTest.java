@@ -50,4 +50,20 @@ public class TarExtractorTest {
       Assert.assertEquals("Hello", contents);
     }
   }
+
+  @Test
+  public void testExtract_missingDirectoryEntries() throws URISyntaxException, IOException {
+    Path source = Paths.get(Resources.getResource("core/extract-missing-dirs.tar").toURI());
+    Path destination = temporaryFolder.getRoot().toPath();
+    TarExtractor.extract(source, destination);
+
+    Assert.assertTrue(Files.exists(destination.resolve("world")));
+    Assert.assertTrue(
+        Files.exists(destination.resolve("a").resolve("b").resolve("c").resolve("world")));
+
+    try (Stream<String> lines = Files.lines(destination.resolve("world"))) {
+      String contents = lines.collect(Collectors.joining());
+      Assert.assertEquals("world", contents);
+    }
+  }
 }

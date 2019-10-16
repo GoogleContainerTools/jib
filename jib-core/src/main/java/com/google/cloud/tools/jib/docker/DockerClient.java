@@ -55,6 +55,16 @@ public class DockerClient {
     private String imageId = "";
     private List<String> diffIds = Collections.emptyList();
 
+    // Required for JSON
+    public DockerImageDetails() {}
+
+    @VisibleForTesting
+    public DockerImageDetails(long size, String imageId, List<String> diffIds) {
+      this.size = size;
+      this.imageId = imageId;
+      this.diffIds = diffIds;
+    }
+
     public long getSize() {
       return size;
     }

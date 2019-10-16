@@ -12,6 +12,7 @@ If a question you have is not answered below, please [submit an issue](/../../is
 [What image format does Jib use?](#what-image-format-does-jib-use)\
 [Why is my image created 48+ years ago?](#why-is-my-image-created-48-years-ago)\
 [Where is the application in the container filesystem?](#where-is-the-application-in-the-container-filesystem)\
+[How are Jib applications layered?](#how-are-jib-applications-layered)\
 [Can I learn more about container images?](#can-i-learn-more-about-container-images)
 
 **How-Tos**\
@@ -151,6 +152,17 @@ Jib packages your Java application into the following paths on the image:
 * `/app/classes/` contains all the classes files
 * the contents of the extra directory (default `src/main/jib`) are placed relative to the container's root directory (`/`)
 
+### How are Jib applications layered?
+
+Jib makes use of [layering](https://containers.gitbook.io/build-containers-the-hard-way/#layers) to allow for fast rebuilds - it will only rebuild the layers containing files that changed since the previous build and will reuse cached layers containing files that didn't change. Jib organizes files in a way that groups frequently changing files separately from large, rarely changing files. For example, `SNAPSHOT` dependencies are placed in a separate layer from other dependencies, so that a frequently changing `SNAPSHOT` will not force the entire dependency layer to rebuild itself.
+
+Jib applications are split into the following layers:
+* Classes
+* Resources
+* Project dependencies
+* Snapshot dependencies
+* All other dependencies
+* Each extra directory (`jib.extraDirectories` in Gradle, `<extraDirectories>` in Maven) builds to its own layer
 
 ### Can I learn more about container images?
 
@@ -426,6 +438,7 @@ FROM gcr.io/distroless/java:latest
 # Multiple copy statements are used to break the app into layers, allowing for faster rebuilds after small changes
 COPY dependencyJars /app/libs
 COPY snapshotDependencyJars /app/libs
+COPY projectDependencyJars /app/libs
 COPY resources /app/resources
 COPY classFiles /app/classes
 
