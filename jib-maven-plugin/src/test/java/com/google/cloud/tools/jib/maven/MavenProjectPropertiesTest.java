@@ -53,7 +53,6 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.execution.MavenExecutionRequest;
@@ -177,8 +176,7 @@ public class MavenProjectPropertiesTest {
   }
 
   private static Path zipUpDirectory(Path sourceRoot, Path targetZip) throws IOException {
-    try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(targetZip));
-        Stream<Path> stream = Files.walk(sourceRoot)) {
+    try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(targetZip))) {
       for (Path source : new DirectoryWalker(sourceRoot).filterRoot().walk()) {
 
         StringJoiner pathJoiner = new StringJoiner("/", "", "");
