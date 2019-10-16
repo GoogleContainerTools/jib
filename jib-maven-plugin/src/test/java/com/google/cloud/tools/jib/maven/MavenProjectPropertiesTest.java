@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.common.collect.ImmutableList;
@@ -45,11 +46,11 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -178,16 +179,13 @@ public class MavenProjectPropertiesTest {
   private static Path zipUpDirectory(Path sourceRoot, Path targetZip) throws IOException {
     try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(targetZip));
         Stream<Path> stream = Files.walk(sourceRoot)) {
-      for (Iterator<Path> iterator = stream.iterator(); iterator.hasNext(); ) {
-        Path source = iterator.next();
-        if (source.equals(sourceRoot)) {
-          continue;
-        }
+      for (Path source : new DirectoryWalker(sourceRoot).filterRoot().walk()) {
 
-        String zipEntryPath = sourceRoot.relativize(source).toString();
-        if (Files.isDirectory(source)) {
-          zipEntryPath += File.separatorChar;
-        }
+        StringJoiner pathJoiner = new StringJoiner("/", "", "");
+        sourceRoot.relativize(source).forEach(element -> pathJoiner.add(element.toString()));
+        String zipEntryPath =
+            Files.isDirectory(source) ? pathJoiner.toString() + '/' : pathJoiner.toString();
+
         ZipEntry entry = new ZipEntry(zipEntryPath);
         zipOut.putNextEntry(entry);
         if (!Files.isDirectory(source)) {
