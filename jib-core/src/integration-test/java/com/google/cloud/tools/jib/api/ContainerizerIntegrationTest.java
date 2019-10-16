@@ -303,9 +303,7 @@ public class ContainerizerIntegrationTest {
       throws IOException, InterruptedException, RegistryException, CacheDirectoryCreationException,
           ExecutionException {
     return buildImage(
-        baseImage,
-        Containerizer.to(RegistryImage.named(targetImage)).setAlwaysCacheBaseImage(true),
-        additionalTags);
+        baseImage, Containerizer.to(RegistryImage.named(targetImage)), additionalTags);
   }
 
   private JibContainer buildDockerDaemonImage(

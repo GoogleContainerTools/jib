@@ -82,7 +82,7 @@ public class JavaContainerBuilderTest {
             .setMainClass("HelloWorld")
             .toContainerBuilder()
             .toBuildConfiguration(
-                Containerizer.to(RegistryImage.named("hello")).setAlwaysCacheBaseImage(true),
+                Containerizer.to(RegistryImage.named("hello")),
                 MoreExecutors.newDirectExecutorService());
 
     // Check entrypoint
@@ -160,7 +160,7 @@ public class JavaContainerBuilderTest {
             .setMainClass("HelloWorld")
             .toContainerBuilder()
             .toBuildConfiguration(
-                Containerizer.to(RegistryImage.named("hello")).setAlwaysCacheBaseImage(true),
+                Containerizer.to(RegistryImage.named("hello")),
                 MoreExecutors.newDirectExecutorService());
 
     // Check entrypoint
@@ -216,7 +216,7 @@ public class JavaContainerBuilderTest {
             .setMainClass("HelloWorld")
             .toContainerBuilder()
             .toBuildConfiguration(
-                Containerizer.to(RegistryImage.named("hello")).setAlwaysCacheBaseImage(true),
+                Containerizer.to(RegistryImage.named("hello")),
                 MoreExecutors.newDirectExecutorService());
 
     // Check entrypoint
