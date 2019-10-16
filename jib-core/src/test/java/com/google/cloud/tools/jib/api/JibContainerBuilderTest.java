@@ -295,7 +295,6 @@ public class JibContainerBuilderTest {
     Mockito.when(mockContainerizer.getToolName()).thenReturn("mocktool");
     Mockito.when(mockContainerizer.getExecutorService()).thenReturn(Optional.empty());
     Mockito.when(mockContainerizer.buildEventHandlers()).thenReturn(EventHandlers.NONE);
-    Mockito.when(mockContainerizer.getAlwaysCacheBaseImage()).thenReturn(true);
     return mockContainerizer;
   }
 }
