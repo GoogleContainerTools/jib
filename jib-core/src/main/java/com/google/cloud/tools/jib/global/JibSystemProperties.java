@@ -29,8 +29,6 @@ public class JibSystemProperties {
 
   @VisibleForTesting static final String CROSS_REPOSITORY_BLOB_MOUNTS = "jib.blobMounts";
 
-  @VisibleForTesting static final String ALWAYS_CACHE_BASE_IMAGE = "jib.alwaysCacheBaseImage";
-
   @VisibleForTesting
   public static final String SEND_CREDENTIALS_OVER_HTTP = "sendCredentialsOverHttp";
 
@@ -93,16 +91,6 @@ public class JibSystemProperties {
    */
   public static boolean isUserAgentEnabled() {
     return Strings.isNullOrEmpty(System.getProperty(DISABLE_USER_AGENT));
-  }
-
-  /**
-   * Gets whether to always cache base image layers. Determined from the {@code
-   * jib.alwaysCacheBaseImage} system property.
-   *
-   * @return true if the property is set to {@code always}; false otherwise
-   */
-  public static boolean alwaysCacheBaseImage() {
-    return Boolean.getBoolean(ALWAYS_CACHE_BASE_IMAGE);
   }
 
   /**

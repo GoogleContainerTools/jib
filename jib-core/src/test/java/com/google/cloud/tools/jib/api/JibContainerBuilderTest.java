@@ -139,7 +139,8 @@ public class JibContainerBuilderTest {
             .setBaseImageLayersCache(Paths.get("base/image/layers"))
             .setApplicationLayersCache(Paths.get("application/layers"))
             .setExecutorService(mockExecutorService)
-            .addEventHandler(mockJibEventConsumer);
+            .addEventHandler(mockJibEventConsumer)
+            .setAlwaysCacheBaseImage(false);
 
     ImageConfiguration baseImageConfiguration =
         ImageConfiguration.builder(ImageReference.parse("base/image"))
@@ -212,6 +213,7 @@ public class JibContainerBuilderTest {
     Assert.assertEquals(
         ImmutableSet.of("latest", "tag1", "tag2"), buildConfiguration.getAllTargetImageTags());
     Assert.assertEquals("toolName", buildConfiguration.getToolName());
+    Assert.assertFalse(buildConfiguration.getAlwaysCacheBaseImage());
   }
 
   /** Verify that an internally-created ExecutorService is shutdown. */

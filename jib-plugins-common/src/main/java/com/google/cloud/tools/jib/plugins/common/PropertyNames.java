@@ -60,6 +60,7 @@ public class PropertyNames {
   public static final String SKIP = "jib.skip";
   public static final String CONSOLE = "jib.console";
   public static final String CONTAINERIZE = "jib.containerize";
+  public static final String ALWAYS_CACHE_BASE_IMAGE = "jib.alwaysCacheBaseImage";
 
   @Deprecated
   public static final String CONTAINER_USE_CURRENT_TIMESTAMP = "jib.container.useCurrentTimestamp";

@@ -160,28 +160,4 @@ public class JibSystemPropertiesTest {
     System.setProperty(JibSystemProperties.CROSS_REPOSITORY_BLOB_MOUNTS, "nonbool");
     Assert.assertFalse(JibSystemProperties.useCrossRepositoryBlobMounts());
   }
-
-  @Test
-  public void testAlwaysCacheBaseImage_undefined() {
-    System.clearProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE);
-    Assert.assertFalse(JibSystemProperties.alwaysCacheBaseImage());
-  }
-
-  @Test
-  public void testAlwaysCacheBaseImage_true() {
-    System.setProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE, "true");
-    Assert.assertTrue(JibSystemProperties.alwaysCacheBaseImage());
-  }
-
-  @Test
-  public void testAlwaysCacheBaseImage_false() {
-    System.setProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE, "false");
-    Assert.assertFalse(JibSystemProperties.alwaysCacheBaseImage());
-  }
-
-  @Test
-  public void testAlwaysCacheBaseImage_other() {
-    System.setProperty(JibSystemProperties.ALWAYS_CACHE_BASE_IMAGE, "nonbool");
-    Assert.assertFalse(JibSystemProperties.alwaysCacheBaseImage());
-  }
 }
