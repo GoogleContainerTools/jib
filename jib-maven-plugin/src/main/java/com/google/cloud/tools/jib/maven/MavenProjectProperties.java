@@ -25,11 +25,13 @@ import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
+import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
@@ -50,6 +52,7 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Build;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
@@ -77,10 +80,15 @@ public class MavenProjectProperties implements ProjectProperties {
    * @param project the {@link MavenProject} for the plugin.
    * @param session the {@link MavenSession} for the plugin.
    * @param log the Maven {@link Log} to log messages during Jib execution
+   * @param tempDirectoryProvider temporary directory provider
    * @return a MavenProjectProperties from the given project and logger.
    */
-  static MavenProjectProperties getForProject(MavenProject project, MavenSession session, Log log) {
-    return new MavenProjectProperties(project, session, log);
+  static MavenProjectProperties getForProject(
+      MavenProject project,
+      MavenSession session,
+      Log log,
+      TempDirectoryProvider tempDirectoryProvider) {
+    return new MavenProjectProperties(project, session, log, tempDirectoryProvider);
   }
 
   /**
@@ -156,11 +164,17 @@ public class MavenProjectProperties implements ProjectProperties {
   private final MavenSession session;
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final ConsoleLogger consoleLogger;
+  private final TempDirectoryProvider tempDirectoryProvider;
 
   @VisibleForTesting
-  MavenProjectProperties(MavenProject project, MavenSession session, Log log) {
+  MavenProjectProperties(
+      MavenProject project,
+      MavenSession session,
+      Log log,
+      TempDirectoryProvider tempDirectoryProvider) {
     this.project = project;
     this.session = session;
+    this.tempDirectoryProvider = tempDirectoryProvider;
     ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(session)
                 ? ConsoleLoggerBuilder.rich(singleThreadedExecutor, true)
@@ -187,8 +201,10 @@ public class MavenProjectProperties implements ProjectProperties {
       throws IOException {
     try {
       if (isWarProject()) {
-        Path explodedWarPath =
-            Paths.get(project.getBuild().getDirectory(), project.getBuild().getFinalName());
+        Build build = project.getBuild();
+        Path war = Paths.get(build.getDirectory(), build.getFinalName() + ".war");
+        Path explodedWarPath = tempDirectoryProvider.newDirectory();
+        ZipUtil.unzip(war, explodedWarPath);
         return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
       }
 
