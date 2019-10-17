@@ -168,7 +168,7 @@ class GradleProjectProperties implements ProjectProperties {
       FileCollection classesOutputDirectories =
           mainSourceSet.getOutput().getClassesDirs().filter(File::exists);
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
-      FileCollection allFiles = mainSourceSet.getRuntimeClasspath(); // .filter(File::exists);
+      FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
       Configuration runTimeConfiguration =
           project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
 
@@ -212,7 +212,7 @@ class GradleProjectProperties implements ProjectProperties {
           nonProjectDependencies
               .getFiles()
               .stream()
-              .filter(fil -> changingCollections.contains(fil.getName()))
+              .filter(fil -> changingCollections != null && changingCollections.contains(fil.getName()))
               .map(fil -> fil.toPath())
               .collect(Collectors.toList());
 
