@@ -127,33 +127,42 @@ public class JibPlugin implements Plugin<Project> {
                   task.setJibExtension(jibExtension);
                 });
 
-  TaskProvider<BuildDockerTask> buildDockerProviderTask =
+    TaskProvider<BuildDockerTask> buildDockerProviderTask =
+        project
+            .getTasks()
+            .register(
+                BUILD_DOCKER_TASK_NAME,
+                BuildDockerTask.class,
+                task -> {
+                  task.setGroup("Jib");
+                  task.setDescription("Builds a container image to a Docker daemon.");
+                  task.setJibExtension(jibExtension);
+                });
+
+    TaskProvider<BuildTarTask> buildTarProviderTask =
+        project
+            .getTasks()
+            .register(
+                BUILD_TAR_TASK_NAME,
+                BuildTarTask.class,
+                task -> {
+                  task.setGroup("Jib");
+                  task.setDescription("Builds a container image to a tarball.");
+                  task.setJibExtension(jibExtension);
+                });
+
     project
         .getTasks()
-        .register(
-            BUILD_DOCKER_TASK_NAME,
-            BuildDockerTask.class,
-            task -> {
-              task.setGroup("Jib");
-              task.setDescription("Builds a container image to a Docker daemon.");
-              task.setJibExtension(jibExtension);
-        });
-
-  TaskProvider<BuildTarTask> buildTarProviderTask =
+        .register(FILES_TASK_NAME, FilesTask.class)
+        .configure(t -> t.setJibExtension(jibExtension));
     project
         .getTasks()
-        .register(
-            BUILD_TAR_TASK_NAME,
-            BuildTarTask.class,
-            task -> {
-              task.setGroup("Jib");
-              task.setDescription("Builds a container image to a tarball.");
-              task.setJibExtension(jibExtension);
-            });
-
-    project.getTasks().register(FILES_TASK_NAME, FilesTask.class).configure(t -> t.setJibExtension(jibExtension));
-    project.getTasks().register(FILES_TASK_V2_NAME, FilesTaskV2.class).configure(t -> t.setJibExtension(jibExtension));
-    project.getTasks().register(INIT_TASK_NAME, SkaffoldInitTask.class).configure(t -> t.setJibExtension(jibExtension));
+        .register(FILES_TASK_V2_NAME, FilesTaskV2.class)
+        .configure(t -> t.setJibExtension(jibExtension));
+    project
+        .getTasks()
+        .register(INIT_TASK_NAME, SkaffoldInitTask.class)
+        .configure(t -> t.setJibExtension(jibExtension));
 
     // A check to catch older versions of Jib.  This can be removed once we are certain people
     // are using Jib 1.3.1 or later.
@@ -167,12 +176,13 @@ public class JibPlugin implements Plugin<Project> {
             if (warProviderTask != null) {
               TaskProvider<ExplodedWarTask> explodedWarProviderTask =
                   project.getTasks().register(EXPLODED_WAR_TASK_NAME, ExplodedWarTask.class);
-              explodedWarProviderTask.configure(task -> {
-                task.dependsOn(warProviderTask);
-                task.setWarFile(((War) warProviderTask.get()).getArchivePath().toPath());
-                task.setExplodedWarDirectory(
-                  GradleProjectProperties.getExplodedWarDirectory(projectAfterEvaluation));
-              });
+              explodedWarProviderTask.configure(
+                  task -> {
+                    task.dependsOn(warProviderTask);
+                    task.setWarFile(((War) warProviderTask.get()).getArchivePath().toPath());
+                    task.setExplodedWarDirectory(
+                        GradleProjectProperties.getExplodedWarDirectory(projectAfterEvaluation));
+                  });
               // Have all tasks depend on the 'jibExplodedWar' task.
               dependsOnTaskProvider = explodedWarProviderTask;
             } else if ("packaged".equals(jibExtension.getContainerizingMode())) {

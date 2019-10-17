@@ -30,7 +30,6 @@ import org.gradle.api.UnknownTaskException;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.TaskProvider;
-import org.gradle.api.tasks.bundling.War;
 import org.gradle.internal.logging.events.LogEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
@@ -51,7 +50,7 @@ class TaskCommon {
         return project.getTasks().named("bootWar");
       }
       return project.getTasks().named(WarPlugin.WAR_TASK_NAME);
-    } catch(UnknownTaskException ignored) {
+    } catch (UnknownTaskException ignored) {
       return null;
     }
   }
