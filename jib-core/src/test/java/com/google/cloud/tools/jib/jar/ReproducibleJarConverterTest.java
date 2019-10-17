@@ -6,12 +6,16 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.util.Collections;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
+import com.google.common.collect.ImmutableList;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
@@ -24,18 +28,32 @@ public class ReproducibleJarConverterTest {
   private Path convertedJar;
   private Path extractionRoot;
 
+  private Path complexDir;
+  private Path complexFile;
+
+  private Path manifestDir;
+  private Path manifestFile;
+
   @Before
-  public void covertJar() throws IOException {
+  public void covertJar() throws IOException, InterruptedException {
     convertedJar = temporaryFolder.getRoot().toPath().resolve("test.jar");
 
     OutputStream fileOutputStream = Files.newOutputStream(convertedJar);
-    ReproducibleJarConverter jarConverter = new ReproducibleJarConverter(Paths.get("src/test/resources/core/jar/complexLib.jar"));
+    ReproducibleJarConverter jarConverter = new ReproducibleJarConverter(srcJar);
     jarConverter.convert(fileOutputStream);
 
-    Path extractionRoot = convertedJar.getParent();
+    extractionRoot = convertedJar.getParent();
     ProcessBuilder pb = new ProcessBuilder();
     pb.directory(extractionRoot.toFile());
     pb.command("jar", "-xf", convertedJar.toAbsolutePath().toString());
+    pb.start().waitFor();
+
+    complexDir = extractionRoot.resolve("complex");
+    complexFile = complexDir.resolve("Complex.class");
+
+    manifestDir = extractionRoot.resolve("META-INF");
+    manifestFile = manifestDir.resolve("MANIFEST.MF");
+
   }
 
   @Test
@@ -50,20 +68,40 @@ public class ReproducibleJarConverterTest {
   }
 
   @Test
-  public void testFiles() {
-    Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
+  public void testExtractedFiles() throws IOException {
+    Assert.assertTrue(Files.isDirectory(complexDir));
+    Assert.assertTrue(Files.isRegularFile(complexFile));
 
-    Assert.assertTrue(Files.isDirectory(extractionRoot.resolve("complex")));
+    Assert.assertTrue(Files.isDirectory(manifestDir));
+    Assert.assertTrue(Files.isRegularFile(manifestFile));
+
+    FileTime expected = FileTime.fromMillis(ReproducibleJarConverter.CONSTANT_TIME_FOR_ZIP_ENTRIES);
+    for(Path path : ImmutableList.of(complexFile, complexDir, manifestFile, manifestDir)) {
+      BasicFileAttributes basicFileAttributes = Files.readAttributes(path, BasicFileAttributes.class);
+      Assert.assertEquals(expected, basicFileAttributes.lastModifiedTime());
+    }
   }
 
   @Test
-  public void testEntries() throws IOException {
+  public void testFiles() throws IOException {
 
-    JarFile evaluatedJar = new JarFile(convertedJar.toFile());
+    ZipFile zipFile = new ZipFile(convertedJar.toFile());
 
-    ZipEntry zipEntry = evaluatedJar.getEntry("complex/Complex.class");
-    Assert.assertEquals(FileTime.from(LayerConfiguration.DEFAULT_MODIFICATION_TIME), zipEntry.getCreationTime());
-    Assert.assertEquals(FileTime.from(LayerConfiguration.DEFAULT_MODIFICATION_TIME), zipEntry.getLastModifiedTime());
-    Assert.assertEquals(FileTime.from(LayerConfiguration.DEFAULT_MODIFICATION_TIME), zipEntry.getLastAccessTime());
+    for(ZipEntry entry : Collections.list(zipFile.entries())) {
+      Assert.assertEquals(ReproducibleJarConverter.CONSTANT_TIME_FOR_ZIP_ENTRIES, entry.getTime());
+    }
+  }
+
+  @Test
+  public void testManifestEntries() throws IOException {
+    Manifest jarManifest = new JarFile(convertedJar.toFile()).getManifest();
+
+    for (String x : ReproducibleJarConverter.MANIFEST_ATTRIBUTES_TO_STRIP) {
+      Assert.assertFalse(jarManifest.getEntries().containsKey(x));
+      Assert.assertFalse(jarManifest.getMainAttributes().containsKey(x));
+    }
+
+    // we didn't erase everything
+    Assert.assertTrue(jarManifest.getMainAttributes().containsKey(Attributes.Name.MANIFEST_VERSION));
   }
 }

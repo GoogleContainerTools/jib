@@ -1,21 +1,19 @@
 package com.google.cloud.tools.jib.jar;
 
 import com.google.cloud.tools.jib.api.FilePermissions;
-import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import org.apache.commons.compress.archivers.zip.*;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipExtraField;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -27,8 +25,10 @@ import java.util.jar.Manifest;
 public class ReproducibleJarConverter {
 
   // these are all manifest entries we want to remove, I don't know exactly if we cover everything
-  // here given a user can add whatever they want.... :\, but maybe anything that starts with Build*
+  // here given a user can add whatever they want :\, but maybe anything that starts with Build*
   // we should remove?
+  // maven defaults: https://maven.apache.org/shared/maven-archiver/examples/manifest.html
+  // gradle defaults: Manifest-Version only
   @VisibleForTesting
   static final ImmutableList<String> MANIFEST_ATTRIBUTES_TO_STRIP = ImmutableList
       .of("Bnd-LastModified",
@@ -42,16 +42,14 @@ public class ReproducibleJarConverter {
           "Created-By",
           "OpenIDE-Module-Build-Version");
 
+
+  // from gradle: ZipCopyAction.java
+  public static final long CONSTANT_TIME_FOR_ZIP_ENTRIES = new GregorianCalendar(1980, Calendar.FEBRUARY, 1, 0, 0, 0).getTimeInMillis();
+
   private final Path jar;
-  private Instant timestamp = LayerConfiguration.DEFAULT_MODIFICATION_TIME;
 
   public ReproducibleJarConverter(Path jar) {
     this.jar = jar;
-  }
-
-  public ReproducibleJarConverter timestamp(Instant timestamp) {
-    this.timestamp = timestamp;
-    return this;
   }
 
   public void convert(OutputStream target) throws IOException {
@@ -108,8 +106,8 @@ public class ReproducibleJarConverter {
     // ^^^^____________________________ file type as explained (1000 dir, 0100 file)
     //     ^^^_________________________ setuid, setgid, sticky (000)
     //        ^^^^^^^^^________________ permissions (use our defaults)
-    //                 ^^^^^^^^________ unclear (not settable by setUnixMode)
-    //                         ^^^^^^^^ DOS attribute bits (not settable by setUnixMode)
+    //                 ^^^^^^^^________ don't care: unclear (not settable by setUnixMode)
+    //                         ^^^^^^^^ don't care: DOS attribute bits (not settable by setUnixMode)
     if (entry.isDirectory()) {
       entry.setUnixMode((0b0100 << 12) + FilePermissions.DEFAULT_FOLDER_PERMISSIONS.getPermissionBits());
     }
@@ -117,23 +115,9 @@ public class ReproducibleJarConverter {
       entry.setUnixMode((0b1000 << 12) + FilePermissions.DEFAULT_FILE_PERMISSIONS.getPermissionBits());
     }
 
-    // The time used for *nix systems is set below, we clear these out for reproducibility reasons
-    entry.setLastAccessTime(FileTime.from(Instant.EPOCH));
-    entry.setLastModifiedTime(FileTime.from(Instant.EPOCH));
-    entry.setCreationTime(FileTime.from(Instant.EPOCH));
+    entry.setTime(CONSTANT_TIME_FOR_ZIP_ENTRIES);
 
-    // directly setting time on the entry is mostly ineffective for unix systems, so use the X5455 field
-    X5455_ExtendedTimestamp x5455 = new X5455_ExtendedTimestamp();
-    Date date = Date.from(timestamp);
-    x5455.setAccessJavaTime(date);
-    x5455.setCreateJavaTime(date);
-    x5455.setModifyJavaTime(date);
-
-    // TODO: There is another unix extra field for gid/uid but I don't actually understand how to verify this works
-    // X7875_NewUnix x7875 = new X7875_NewUnix();
-    // x7875.setUID(0);
-    // x7875.setGID(0);
-
-    entry.setExtraFields(new ZipExtraField[] {x5455});
+    // clear out extra fields
+    entry.setExtraFields(new ZipExtraField[]{});
   }
 }
