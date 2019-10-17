@@ -36,7 +36,7 @@ import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
 
-  @VisibleForTesting static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("4.6");
+  @VisibleForTesting static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("4.9");
 
   @VisibleForTesting static final String JIB_EXTENSION_NAME = "jib";
   @VisibleForTesting static final String BUILD_IMAGE_TASK_NAME = "jib";
