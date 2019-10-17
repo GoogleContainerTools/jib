@@ -37,40 +37,46 @@ public class SkaffoldSyncMapTemplateTest {
 
   private static final String TEST_JSON =
       "{\"generated\":[{\"src\":\""
-          + GEN_SRC.toString()
+          + getPathForJson(GEN_SRC)
           + "\",\"dest\":\"/genDest\"}],\"direct\":[{\"src\":\""
-          + DIR_SRC_1.toString()
+          + getPathForJson(DIR_SRC_1)
           + "\",\"dest\":\"/dirDest1\"},{\"src\":\""
-          + DIR_SRC_2
+          + getPathForJson(DIR_SRC_2)
           + "\",\"dest\":\"/dirDest2\"}]}";
   private static final String TEST_JSON_EMPTY_GENERATED =
       "{\"generated\":[],\"direct\":[{\"src\":\""
-          + DIR_SRC_1.toString()
+          + getPathForJson(DIR_SRC_1)
           + "\",\"dest\":\"/dirDest1\"},{\"src\":\""
-          + DIR_SRC_2
+          + getPathForJson(DIR_SRC_2)
           + "\",\"dest\":\"/dirDest2\"}]}";
   private static final String TEST_JSON_NO_GENERATED =
       "{\"direct\":[{\"src\":\""
-          + DIR_SRC_1.toString()
+          + getPathForJson(DIR_SRC_1)
           + "\",\"dest\":\"/dirDest1\"},{\"src\":\""
-          + DIR_SRC_2
+          + getPathForJson(DIR_SRC_2)
           + "\",\"dest\":\"/dirDest2\"}]}";
   private static final String FAIL_TEST_JSON_MISSING_FIELD =
       "{\"generated\":[{\"src\":\""
-          + GEN_SRC.toString()
+          + getPathForJson(GEN_SRC)
           + "\"}],\"direct\":[{\"src\":\""
-          + DIR_SRC_1.toString()
+          + getPathForJson(DIR_SRC_1)
           + "\",\"dest\":\"/dirDest1\"},{\"src\":\""
-          + DIR_SRC_2
+          + getPathForJson(DIR_SRC_2)
           + "\",\"dest\":\"/dirDest2\"}]}";
   private static final String FAIL_TEST_JSON_BAD_PROPERTY_NAME =
       "{\"generated\":[{\"jean-luc\":\"picard\", \"src\":\""
-          + GEN_SRC.toString()
+          + getPathForJson(GEN_SRC)
           + "\",\"dest\":\"/genDest\"}],\"direct\":[{\"src\":\""
-          + DIR_SRC_1.toString()
+          + getPathForJson(DIR_SRC_1)
           + "\",\"dest\":\"/dirDest1\"},{\"src\":\""
-          + DIR_SRC_2
+          + getPathForJson(DIR_SRC_2)
           + "\",\"dest\":\"/dirDest2\"}]}";
+
+  // manually correct "\" that we inject into the strings above for windows paths, this is only needed for this
+  // test, when json writes the string out in the actual code, it does the right thing
+  private static String getPathForJson(Path path) {
+    return path.toString().replace("\\", "\\\\");
+  }
 
   @Test
   public void testFrom_badPropertyName() throws IOException {
