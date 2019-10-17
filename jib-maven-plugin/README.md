@@ -209,6 +209,10 @@ Then, you can build your container image by running:
 mvn package
 ```
 
+### Additional Build Artifacts
+
+As part of an image build, Jib also writes out the _image digest_ and the _image ID_. By default, these are written out to `target/jib-image.digest` and `target/jib-image.id` respectively, but the locations can be configured using the `<outputFiles><digest>` and `<outputFiles><imageId>` configuration properties. See [Extended Usage](#outputpaths-object) for more details.
+
 ## Extended Usage
 
 Extended configuration options provide additional options for customizing the image build.
