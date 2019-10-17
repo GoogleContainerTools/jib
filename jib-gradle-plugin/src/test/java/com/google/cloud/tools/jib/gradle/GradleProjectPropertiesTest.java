@@ -52,6 +52,7 @@ import java.util.stream.Collectors;
 import org.gradle.StartParameter;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
@@ -72,7 +73,7 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskDependency;
-import org.gradle.api.tasks.bundling.War;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -193,7 +194,7 @@ public class GradleProjectPropertiesTest {
   @Mock private SourceSetContainer mockSourceSetContainer;
   @Mock private SourceSet mockMainSourceSet;
   @Mock private SourceSetOutput mockMainSourceSetOutput;
-  @Mock private War war;
+  @Mock private TaskProvider<Task> warTaskProvider;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -598,7 +599,7 @@ public class GradleProjectPropertiesTest {
 
   private void setUpWarProject(Path webAppDirectory) {
     Mockito.when(mockProject.getBuildDir()).thenReturn(webAppDirectory.toFile());
-    Mockito.when(mockTaskContainer.findByName("war")).thenReturn(war);
+    Mockito.when(mockTaskContainer.named("war")).thenReturn(warTaskProvider);
     Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
   }
 }
