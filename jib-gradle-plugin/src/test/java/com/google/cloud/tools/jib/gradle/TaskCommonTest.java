@@ -17,9 +17,11 @@
 package com.google.cloud.tools.jib.gradle;
 
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.WarPlugin;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Assert;
@@ -159,9 +161,9 @@ public class TaskCommonTest {
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(JavaPlugin.class);
 
-    War warTask = TaskCommon.getWarTask(project);
+    TaskProvider<Task> warProviderTask = TaskCommon.getWarProviderTask(project);
 
-    Assert.assertNull(warTask);
+    Assert.assertNull(warProviderTask);
   }
 
   @Test
@@ -170,9 +172,9 @@ public class TaskCommonTest {
     project.getPlugins().apply(JavaPlugin.class);
     project.getPlugins().apply(SpringBootPlugin.class);
 
-    War warTask = TaskCommon.getWarTask(project);
+    TaskProvider<Task> warTaskProvider = TaskCommon.getWarProviderTask(project);
 
-    Assert.assertNull(warTask);
+    Assert.assertNull(warTaskProvider);
   }
 
   @Test
@@ -180,9 +182,9 @@ public class TaskCommonTest {
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(WarPlugin.class);
 
-    War warTask = TaskCommon.getWarTask(project);
+    TaskProvider<Task> warTaskProvider = TaskCommon.getWarProviderTask(project);
 
-    Assert.assertNotNull(warTask);
+    Assert.assertNotNull(warTaskProvider);
   }
 
   @Test
@@ -191,9 +193,9 @@ public class TaskCommonTest {
     project.getPlugins().apply(WarPlugin.class);
     project.getPlugins().apply(SpringBootPlugin.class);
 
-    War warTask = TaskCommon.getWarTask(project);
+    TaskProvider<Task> warTaskProviderProvider = TaskCommon.getWarProviderTask(project);
 
-    Assert.assertNotNull(warTask);
-    Assert.assertTrue(warTask instanceof BootWar);
+    Assert.assertNotNull(warTaskProviderProvider);
+    Assert.assertTrue(warTaskProviderProvider.get() instanceof BootWar);
   }
 }
