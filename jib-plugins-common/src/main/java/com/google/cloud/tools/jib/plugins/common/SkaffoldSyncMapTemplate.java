@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Builds a JSON string containing files and directories that <a
  * href="https://github.com/GoogleContainerTools/skaffold">Skaffold</a> can use for synchronizing
- * files against a remote container
+ * files against a remote container.
  *
  * <p>Example:
  *

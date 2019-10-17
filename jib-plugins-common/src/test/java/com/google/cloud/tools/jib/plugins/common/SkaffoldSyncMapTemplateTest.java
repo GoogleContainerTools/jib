@@ -73,8 +73,8 @@ public class SkaffoldSyncMapTemplateTest {
           + "\",\"dest\":\"/dirDest2\"}]}";
 
   // manually correct "\" that we inject into the strings above for windows paths, this is only
-  // needed for this
-  // test, when json writes the string out in the actual code, it does the right thing
+  // needed for this test, when json writes the string out in the actual code, it does the right
+  // thing
   private static String getPathForJson(Path path) {
     return path.toString().replace("\\", "\\\\");
   }
