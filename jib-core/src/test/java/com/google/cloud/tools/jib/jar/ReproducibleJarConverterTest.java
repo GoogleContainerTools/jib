@@ -11,9 +11,8 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+
+import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
 public class ReproducibleJarConverterTest {
@@ -21,21 +20,27 @@ public class ReproducibleJarConverterTest {
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Test
-  public void smokeTest() throws IOException {
+  private final Path srcJar = Paths.get("src/test/resources/core/jar/complexLib.jar");
+  private Path convertedJar;
+  private Path extractionRoot;
 
-    Path destinationJar = temporaryFolder.getRoot().toPath().resolve("test.jar");
+  @Before
+  public void covertJar() throws IOException {
+    convertedJar = temporaryFolder.getRoot().toPath().resolve("test.jar");
 
-    OutputStream fileOutputStream = Files.newOutputStream(destinationJar);
+    OutputStream fileOutputStream = Files.newOutputStream(convertedJar);
     ReproducibleJarConverter jarConverter = new ReproducibleJarConverter(Paths.get("src/test/resources/core/jar/complexLib.jar"));
     jarConverter.convert(fileOutputStream);
 
-    JarFile evaluatedJar = new JarFile(destinationJar.toFile());
+    Path extractionRoot = convertedJar.getParent();
+    ProcessBuilder pb = new ProcessBuilder();
+    pb.directory(extractionRoot.toFile());
+    pb.command("jar", "-xf", convertedJar.toAbsolutePath().toString());
+  }
 
-    ZipEntry zipEntry = evaluatedJar.getEntry("complex/Complex.class");
-    //Assert.assertEquals(FileTime.from(LayerConfiguration.DEFAULT_MODIFICATION_TIME), zipEntry.getCreationTime());
-    Assert.assertEquals(FileTime.from(LayerConfiguration.DEFAULT_MODIFICATION_TIME), zipEntry.getLastModifiedTime());
-    Assert.assertEquals(FileTime.from(LayerConfiguration.DEFAULT_MODIFICATION_TIME), zipEntry.getLastAccessTime());
+  @Test
+  public void testManifest() throws IOException {
+    JarFile evaluatedJar = new JarFile(convertedJar.toFile());
 
     Manifest manifest = evaluatedJar.getManifest();
     for (String attr : ReproducibleJarConverter.MANIFEST_ATTRIBUTES_TO_STRIP) {
@@ -44,4 +49,21 @@ public class ReproducibleJarConverterTest {
     }
   }
 
+  @Test
+  public void testFiles() {
+    Assume.assumeFalse(System.getProperty("os.name").startsWith("Windows"));
+
+    Assert.assertTrue(Files.isDirectory(extractionRoot.resolve("complex")));
+  }
+
+  @Test
+  public void testEntries() throws IOException {
+
+    JarFile evaluatedJar = new JarFile(convertedJar.toFile());
+
+    ZipEntry zipEntry = evaluatedJar.getEntry("complex/Complex.class");
+    Assert.assertEquals(FileTime.from(LayerConfiguration.DEFAULT_MODIFICATION_TIME), zipEntry.getCreationTime());
+    Assert.assertEquals(FileTime.from(LayerConfiguration.DEFAULT_MODIFICATION_TIME), zipEntry.getLastModifiedTime());
+    Assert.assertEquals(FileTime.from(LayerConfiguration.DEFAULT_MODIFICATION_TIME), zipEntry.getLastAccessTime());
+  }
 }

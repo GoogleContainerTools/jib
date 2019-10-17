@@ -4,6 +4,8 @@ import com.google.cloud.tools.jib.api.FilePermissions;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import org.apache.commons.compress.archivers.zip.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,16 +14,15 @@ import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
-import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.compress.archivers.zip.ZipFile;
 
 /**
  * Take a jar and create a reproducible version of it. Much of this logic is derived from
- * see: https://github.com/Zlika/reproducible-build-maven-plugin
+ * https://github.com/Zlika/reproducible-build-maven-plugin and
+ * https://github.com/gradle/gradle (ZipCopyAction.java)
  */
 public class ReproducibleJarConverter {
 
@@ -116,10 +117,23 @@ public class ReproducibleJarConverter {
       entry.setUnixMode((0b1000 << 12) + FilePermissions.DEFAULT_FILE_PERMISSIONS.getPermissionBits());
     }
 
-    // must be set after setUnixMode so timestamps are using unix epoch
-    entry.setTime(timestamp.toEpochMilli());
-    entry.setCreationTime(FileTime.from(timestamp));
-    entry.setLastModifiedTime(FileTime.from(timestamp));
-    entry.setLastAccessTime(FileTime.from(timestamp));
+    // The time used for *nix systems is set below, we clear these out for reproducibility reasons
+    entry.setLastAccessTime(FileTime.from(Instant.EPOCH));
+    entry.setLastModifiedTime(FileTime.from(Instant.EPOCH));
+    entry.setCreationTime(FileTime.from(Instant.EPOCH));
+
+    // directly setting time on the entry is mostly ineffective for unix systems, so use the X5455 field
+    X5455_ExtendedTimestamp x5455 = new X5455_ExtendedTimestamp();
+    Date date = Date.from(timestamp);
+    x5455.setAccessJavaTime(date);
+    x5455.setCreateJavaTime(date);
+    x5455.setModifyJavaTime(date);
+
+    // TODO: There is another unix extra field for gid/uid but I don't actually understand how to verify this works
+    // X7875_NewUnix x7875 = new X7875_NewUnix();
+    // x7875.setUID(0);
+    // x7875.setGID(0);
+
+    entry.setExtraFields(new ZipExtraField[] {x5455});
   }
 }
