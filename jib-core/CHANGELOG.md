@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 0.12.0
+
+### Added
+
 - Main class inference support for Java 13/14. ([#2015](https://github.com/GoogleContainerTools/jib/issues/2015))
 - `Containerizer#setAlwaysCacheBaseImage(boolean)` controls the optimization to skip downloading base image layers that exist in a target registry. ([#1870](https://github.com/GoogleContainerTools/jib/pull/1870))
 
