@@ -341,11 +341,6 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   @Override
-  public Path getOutputDirectory() {
-    return project.getBuildDir().toPath();
-  }
-
-  @Override
   public int getMajorJavaVersion() {
     JavaVersion version = JavaVersion.current();
     JavaPluginConvention javaPluginConvention =

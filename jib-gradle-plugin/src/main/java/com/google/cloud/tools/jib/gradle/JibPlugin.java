@@ -30,12 +30,14 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.plugins.BasePlugin;
+import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.bundling.War;
 import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
 
-  @VisibleForTesting static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("4.6");
+  @VisibleForTesting static final GradleVersion GRADLE_MIN_VERSION = GradleVersion.version("4.9");
 
   @VisibleForTesting static final String JIB_EXTENSION_NAME = "jib";
   @VisibleForTesting static final String BUILD_IMAGE_TASK_NAME = "jib";
@@ -87,7 +89,7 @@ public class JibPlugin implements Plugin<Project> {
   }
 
   /** Check the Jib version matches the required version (if specified). */
-  private static void checkJibVersion(Project project) {
+  private static void checkJibVersion() {
     // todo: should retrieve from project properties?
     String requiredVersion = System.getProperty(REQUIRED_VERSION_PROPERTY_NAME);
     if (requiredVersion == null) {
@@ -109,76 +111,83 @@ public class JibPlugin implements Plugin<Project> {
   @Override
   public void apply(Project project) {
     checkGradleVersion();
-    checkJibVersion(project);
+    checkJibVersion();
 
     JibExtension jibExtension =
         project.getExtensions().create(JIB_EXTENSION_NAME, JibExtension.class, project);
 
-    Task buildImageTask =
-        project
-            .getTasks()
-            .create(
-                BUILD_IMAGE_TASK_NAME,
-                BuildImageTask.class,
-                task -> {
-                  task.setGroup("Jib");
-                  task.setDescription("Builds a container image to a registry.");
-                })
-            .setJibExtension(jibExtension);
-    Task buildDockerTask =
-        project
-            .getTasks()
-            .create(
-                BUILD_DOCKER_TASK_NAME,
-                BuildDockerTask.class,
-                task -> {
-                  task.setGroup("Jib");
-                  task.setDescription("Builds a container image to a Docker daemon.");
-                })
-            .setJibExtension(jibExtension);
-    Task buildTarTask =
-        project
-            .getTasks()
-            .create(
-                BUILD_TAR_TASK_NAME,
-                BuildTarTask.class,
-                task -> {
-                  task.setGroup("Jib");
-                  task.setDescription("Builds a container image to a tarball.");
-                })
-            .setJibExtension(jibExtension);
-    project.getTasks().create(FILES_TASK_NAME, FilesTask.class).setJibExtension(jibExtension);
-    project.getTasks().create(FILES_TASK_V2_NAME, FilesTaskV2.class).setJibExtension(jibExtension);
-    project.getTasks().create(INIT_TASK_NAME, SkaffoldInitTask.class).setJibExtension(jibExtension);
+    TaskContainer tasks = project.getTasks();
+    TaskProvider<BuildImageTask> buildImageTask =
+        tasks.register(
+            BUILD_IMAGE_TASK_NAME,
+            BuildImageTask.class,
+            task -> {
+              task.setGroup("Jib");
+              task.setDescription("Builds a container image to a registry.");
+              task.setJibExtension(jibExtension);
+            });
+
+    TaskProvider<BuildDockerTask> buildDockerTask =
+        tasks.register(
+            BUILD_DOCKER_TASK_NAME,
+            BuildDockerTask.class,
+            task -> {
+              task.setGroup("Jib");
+              task.setDescription("Builds a container image to a Docker daemon.");
+              task.setJibExtension(jibExtension);
+            });
+
+    TaskProvider<BuildTarTask> buildTarTask =
+        tasks.register(
+            BUILD_TAR_TASK_NAME,
+            BuildTarTask.class,
+            task -> {
+              task.setGroup("Jib");
+              task.setDescription("Builds a container image to a tarball.");
+              task.setJibExtension(jibExtension);
+            });
+
+    tasks
+        .register(FILES_TASK_NAME, FilesTask.class)
+        .configure(task -> task.setJibExtension(jibExtension));
+    tasks
+        .register(FILES_TASK_V2_NAME, FilesTaskV2.class)
+        .configure(task -> task.setJibExtension(jibExtension));
+    tasks
+        .register(INIT_TASK_NAME, SkaffoldInitTask.class)
+        .configure(task -> task.setJibExtension(jibExtension));
 
     // A check to catch older versions of Jib.  This can be removed once we are certain people
     // are using Jib 1.3.1 or later.
-    project.getTasks().create(CHECK_REQUIRED_VERSION_TASK_NAME, CheckJibVersionTask.class);
+    tasks.register(CHECK_REQUIRED_VERSION_TASK_NAME, CheckJibVersionTask.class);
 
     project.afterEvaluate(
         projectAfterEvaluation -> {
           try {
-            War warTask = TaskCommon.getWarTask(project);
-            Task dependsOnTask;
+            TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
+            TaskProvider<?> dependsOnTask;
             if (warTask != null) {
-              ExplodedWarTask explodedWarTask =
-                  project.getTasks().create(EXPLODED_WAR_TASK_NAME, ExplodedWarTask.class);
-              explodedWarTask.dependsOn(warTask);
-              explodedWarTask.setWarFile(warTask.getArchivePath().toPath());
-              explodedWarTask.setExplodedWarDirectory(
-                  GradleProjectProperties.getExplodedWarDirectory(projectAfterEvaluation));
+              TaskProvider<ExplodedWarTask> explodedWarTask =
+                  tasks.register(EXPLODED_WAR_TASK_NAME, ExplodedWarTask.class);
+              explodedWarTask.configure(
+                  task -> {
+                    task.dependsOn(warTask);
+                    task.setWarFile(((War) warTask.get()).getArchivePath().toPath());
+                    task.setExplodedWarDirectory(
+                        GradleProjectProperties.getExplodedWarDirectory(projectAfterEvaluation));
+                  });
               // Have all tasks depend on the 'jibExplodedWar' task.
               dependsOnTask = explodedWarTask;
             } else if ("packaged".equals(jibExtension.getContainerizingMode())) {
               // Have all tasks depend on the 'jar' task.
-              dependsOnTask = projectAfterEvaluation.getTasks().getByPath("jar");
+              dependsOnTask = projectAfterEvaluation.getTasks().named("jar");
             } else {
               // Have all tasks depend on the 'classes' task.
-              dependsOnTask = projectAfterEvaluation.getTasks().getByPath("classes");
+              dependsOnTask = projectAfterEvaluation.getTasks().named("classes");
             }
-            buildImageTask.dependsOn(dependsOnTask);
-            buildDockerTask.dependsOn(dependsOnTask);
-            buildTarTask.dependsOn(dependsOnTask);
+            buildImageTask.configure(task -> task.dependsOn(dependsOnTask));
+            buildDockerTask.configure(task -> task.dependsOn(dependsOnTask));
+            buildTarTask.configure(task -> task.dependsOn(dependsOnTask));
 
             // Find project dependencies and add a dependency to their assemble task. We make sure
             // to only add the dependency after BasePlugin is evaluated as otherwise the assemble
@@ -190,11 +199,11 @@ public class JibPlugin implements Plugin<Project> {
                   .withType(
                       BasePlugin.class,
                       unused -> {
-                        Task assembleTask =
-                            dependencyProject.getTasks().getByPath(BasePlugin.ASSEMBLE_TASK_NAME);
-                        buildImageTask.dependsOn(assembleTask);
-                        buildDockerTask.dependsOn(assembleTask);
-                        buildTarTask.dependsOn(assembleTask);
+                        TaskProvider<Task> assembleTask =
+                            dependencyProject.getTasks().named(BasePlugin.ASSEMBLE_TASK_NAME);
+                        buildImageTask.configure(task -> task.dependsOn(assembleTask));
+                        buildDockerTask.configure(task -> task.dependsOn(assembleTask));
+                        buildTarTask.configure(task -> task.dependsOn(assembleTask));
                       });
             }
           } catch (UnknownTaskException ex) {

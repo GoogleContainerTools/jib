@@ -39,29 +39,26 @@ class RegistryErrorExceptionBuilder {
     if (message == null) {
       message = "no details";
     }
+    if (errorCodeString == null) {
+      return "unknown: " + message;
+    }
 
     try {
-      if (errorCodeString == null) {
-        throw new IllegalArgumentException();
+      switch (ErrorCodes.valueOf(errorCodeString)) {
+        case MANIFEST_INVALID:
+        case BLOB_UNKNOWN:
+          return message + " (something went wrong)";
+
+        case MANIFEST_UNKNOWN:
+        case TAG_INVALID:
+        case MANIFEST_UNVERIFIED:
+          return message;
+
+        default:
+          return "other: " + message;
       }
-
-      ErrorCodes errorCode = ErrorCodes.valueOf(errorCodeString);
-
-      if (errorCode == ErrorCodes.MANIFEST_INVALID || errorCode == ErrorCodes.BLOB_UNKNOWN) {
-        return message + " (something went wrong)";
-
-      } else if (errorCode == ErrorCodes.MANIFEST_UNKNOWN
-          || errorCode == ErrorCodes.TAG_INVALID
-          || errorCode == ErrorCodes.MANIFEST_UNVERIFIED) {
-        return message;
-
-      } else {
-        return "other: " + message;
-      }
-
     } catch (IllegalArgumentException ex) {
-      // Unknown errorCodeString
-      return "unknown: " + message;
+      return "unknown error code: " + errorCodeString + " (" + message + ")";
     }
   }
 
