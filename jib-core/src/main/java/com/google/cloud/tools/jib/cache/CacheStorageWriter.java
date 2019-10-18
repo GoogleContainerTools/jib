@@ -144,7 +144,7 @@ class CacheStorageWriter {
           StandardCopyOption.ATOMIC_MOVE,
           StandardCopyOption.REPLACE_EXISTING);
 
-    } catch (AtomicMoveNotSupportedException ignored2) {
+    } catch (AtomicMoveNotSupportedException ignored) {
       Files.move(temporaryFile, destination, StandardCopyOption.REPLACE_EXISTING);
     }
   }

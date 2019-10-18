@@ -208,7 +208,7 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
             .setAuthorization(registryAuthorization)
             .newRegistryClient();
 
-    ManifestAndDigest manifestAndDigest =
+    ManifestAndDigest<?> manifestAndDigest =
         registryClient.pullManifest(buildConfiguration.getBaseImageConfiguration().getImageTag());
     ManifestTemplate manifestTemplate = manifestAndDigest.getManifest();
 
@@ -280,7 +280,7 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
    * Looks through a manifest list for any amd64/linux manifest and downloads and returns the first
    * manifest it finds.
    */
-  private ManifestAndDigest obtainPlatformSpecificImageManifest(
+  private ManifestAndDigest<?> obtainPlatformSpecificImageManifest(
       RegistryClient registryClient, V22ManifestListTemplate manifestListTemplate)
       throws RegistryException, IOException {
 

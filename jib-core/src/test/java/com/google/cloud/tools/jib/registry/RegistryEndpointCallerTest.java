@@ -666,8 +666,8 @@ public class RegistryEndpointCallerTest {
     } catch (RegistryErrorException ex) {
       Assert.assertThat(
           ex.getMessage(),
-          CoreMatchers.containsString(
-              "Tried to actionDescription but failed because: unknown: message"));
+          CoreMatchers.startsWith(
+              "Tried to actionDescription but failed because: unknown error code: code (message)"));
     }
   }
 
