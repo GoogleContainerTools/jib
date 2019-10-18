@@ -279,7 +279,7 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testGetWar_warProject() throws URISyntaxException {
     setUpWarProject(getResource("gradle/webapp"));
-    Assert.assertNotNull(TaskCommon.getWarProviderTask(mockProject));
+    Assert.assertNotNull(TaskCommon.getWarTaskProvider(mockProject));
   }
 
   @Test
@@ -287,12 +287,12 @@ public class GradleProjectPropertiesTest {
     setUpWarProject(getResource("gradle/webapp"));
     Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(false);
 
-    Assert.assertNull(TaskCommon.getWarProviderTask(mockProject));
+    Assert.assertNull(TaskCommon.getWarTaskProvider(mockProject));
   }
 
   @Test
   public void testGetWar_noWarTask() {
-    Assert.assertNull(TaskCommon.getWarProviderTask(mockProject));
+    Assert.assertNull(TaskCommon.getWarTaskProvider(mockProject));
   }
 
   @Test

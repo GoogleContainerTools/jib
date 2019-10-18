@@ -160,7 +160,7 @@ public class TaskCommonTest {
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(JavaPlugin.class);
 
-    TaskProvider<Task> warProviderTask = TaskCommon.getWarProviderTask(project);
+    TaskProvider<Task> warProviderTask = TaskCommon.getWarTaskProvider(project);
 
     Assert.assertNull(warProviderTask);
   }
@@ -171,9 +171,9 @@ public class TaskCommonTest {
     project.getPlugins().apply(JavaPlugin.class);
     project.getPlugins().apply(SpringBootPlugin.class);
 
-    TaskProvider<Task> warTaskProvider = TaskCommon.getWarProviderTask(project);
+    TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
 
-    Assert.assertNull(warTaskProvider);
+    Assert.assertNull(warTask);
   }
 
   @Test
@@ -181,9 +181,9 @@ public class TaskCommonTest {
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(WarPlugin.class);
 
-    TaskProvider<Task> warTaskProvider = TaskCommon.getWarProviderTask(project);
+    TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
 
-    Assert.assertNotNull(warTaskProvider);
+    Assert.assertNotNull(warTask);
   }
 
   @Test
@@ -192,9 +192,9 @@ public class TaskCommonTest {
     project.getPlugins().apply(WarPlugin.class);
     project.getPlugins().apply(SpringBootPlugin.class);
 
-    TaskProvider<Task> warTaskProviderProvider = TaskCommon.getWarProviderTask(project);
+    TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
 
-    Assert.assertNotNull(warTaskProviderProvider);
-    Assert.assertTrue(warTaskProviderProvider.get() instanceof BootWar);
+    Assert.assertNotNull(warTask);
+    Assert.assertTrue(warTask.get() instanceof BootWar);
   }
 }
