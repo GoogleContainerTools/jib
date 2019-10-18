@@ -26,9 +26,10 @@ import java.util.logging.Level;
 import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.UnknownTaskException;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.WarPlugin;
-import org.gradle.api.tasks.bundling.War;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.internal.logging.events.LogEvent;
 import org.gradle.internal.logging.events.OutputEventListener;
 import org.gradle.internal.logging.slf4j.OutputEventListenerBackedLoggerContext;
@@ -38,20 +39,19 @@ import org.slf4j.LoggerFactory;
 class TaskCommon {
 
   @Nullable
-  static War getWarTask(Project project) {
-
+  static TaskProvider<Task> getWarProviderTask(Project project) {
     if (!project.getPlugins().hasPlugin(WarPlugin.class)) {
       return null;
     }
 
     if (project.getPlugins().hasPlugin("org.springframework.boot")) {
-      Task bootWar = project.getTasks().findByName("bootWar");
-      if (bootWar != null) { // Spring Boot > 2.0
-        return (War) bootWar;
+      try {
+        return project.getTasks().named("bootWar");
+      } catch (UnknownTaskException ignored) {
       }
     }
 
-    return (War) project.getTasks().findByName(WarPlugin.WAR_TASK_NAME);
+    return project.getTasks().named(WarPlugin.WAR_TASK_NAME);
   }
 
   /** Disables annoying Apache HTTP client logging. */
