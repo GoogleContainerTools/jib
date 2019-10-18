@@ -19,11 +19,21 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
+import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
+import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import javax.annotation.Nullable;
+import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
@@ -118,6 +128,69 @@ class TaskCommon {
       permissionsMap.put(key, value);
     }
     return permissionsMap;
+  }
+
+  /**
+   * Re-throws a Jib exception as a {@link GradleException} with an appropriate message.
+   *
+   * @param ex the exception to re-throw
+   * @throws GradleException with the correct message
+   */
+  static void rethrowJibException(Exception ex) throws GradleException {
+    if (ex instanceof InvalidAppRootException) {
+      throw new GradleException(
+          "container.appRoot is not an absolute Unix-style path: "
+              + ((InvalidAppRootException) ex).getInvalidPathValue(),
+          ex);
+    }
+    if (ex instanceof InvalidContainerizingModeException) {
+      throw new GradleException(
+          "invalid value for containerizingMode: "
+              + ((InvalidContainerizingModeException) ex).getInvalidContainerizingMode(),
+          ex);
+    }
+    if (ex instanceof InvalidWorkingDirectoryException) {
+      throw new GradleException(
+          "container.workingDirectory is not an absolute Unix-style path: "
+              + ((InvalidWorkingDirectoryException) ex).getInvalidPathValue(),
+          ex);
+    }
+    if (ex instanceof InvalidContainerVolumeException) {
+      throw new GradleException(
+          "container.volumes is not an absolute Unix-style path: "
+              + ((InvalidContainerVolumeException) ex).getInvalidVolume(),
+          ex);
+    }
+    if (ex instanceof InvalidFilesModificationTimeException) {
+      throw new GradleException(
+          "container.filesModificationTime should be an ISO 8601 date-time (see "
+              + "DateTimeFormatter.ISO_DATE_TIME) or special keyword \"EPOCH_PLUS_SECOND\": "
+              + ((InvalidFilesModificationTimeException) ex).getInvalidFilesModificationTime(),
+          ex);
+    }
+    if (ex instanceof InvalidCreationTimeException) {
+      throw new GradleException(
+          "container.creationTime should be an ISO 8601 date-time (see "
+              + "DateTimeFormatter.ISO_DATE_TIME) or a special keyword (\"EPOCH\", "
+              + "\"USE_CURRENT_TIMESTAMP\"): "
+              + ((InvalidCreationTimeException) ex).getInvalidCreationTime(),
+          ex);
+    }
+    if (ex instanceof IncompatibleBaseImageJavaVersionException) {
+      IncompatibleBaseImageJavaVersionException castedEx =
+          (IncompatibleBaseImageJavaVersionException) ex;
+      throw new GradleException(
+          HelpfulSuggestions.forIncompatibleBaseImageJavaVersionForGradle(
+              castedEx.getBaseImageMajorJavaVersion(), castedEx.getProjectMajorJavaVersion()),
+          ex);
+    }
+    if (ex instanceof InvalidImageReferenceException) {
+      throw new GradleException(
+          HelpfulSuggestions.forInvalidImageReference(
+              ((InvalidImageReferenceException) ex).getInvalidReference()),
+          ex);
+    }
+    throw new GradleException(ex.getMessage(), ex);
   }
 
   private TaskCommon() {}

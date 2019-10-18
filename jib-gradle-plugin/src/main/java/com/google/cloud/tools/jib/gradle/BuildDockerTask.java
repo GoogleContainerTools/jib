@@ -16,22 +16,10 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.docker.DockerClient;
-import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
-import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
-import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
-import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
-import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
-import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
-import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
-import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
-import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.common.base.Preconditions;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -87,9 +75,7 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
   }
 
   @TaskAction
-  public void buildDocker()
-      throws IOException, BuildStepsExecutionException, CacheDirectoryCreationException,
-          MainClassInferenceException {
+  public void buildDocker() {
     Preconditions.checkNotNull(jibExtension);
 
     // Check deprecated parameters
@@ -137,48 +123,8 @@ public class BuildDockerTask extends DefaultTask implements JibTask {
               new GradleHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 
-    } catch (InvalidAppRootException ex) {
-      throw new GradleException(
-          "container.appRoot is not an absolute Unix-style path: " + ex.getInvalidPathValue(), ex);
-
-    } catch (InvalidContainerizingModeException ex) {
-      throw new GradleException(
-          "invalid value for containerizingMode: " + ex.getInvalidContainerizingMode(), ex);
-
-    } catch (InvalidWorkingDirectoryException ex) {
-      throw new GradleException(
-          "container.workingDirectory is not an absolute Unix-style path: "
-              + ex.getInvalidPathValue(),
-          ex);
-
-    } catch (InvalidContainerVolumeException ex) {
-      throw new GradleException(
-          "container.volumes is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
-
-    } catch (InvalidFilesModificationTimeException ex) {
-      throw new GradleException(
-          "container.filesModificationTime should be an ISO 8601 date-time (see "
-              + "DateTimeFormatter.ISO_DATE_TIME) or special keyword \"EPOCH_PLUS_SECOND\": "
-              + ex.getInvalidFilesModificationTime(),
-          ex);
-
-    } catch (InvalidCreationTimeException ex) {
-      throw new GradleException(
-          "container.creationTime should be an ISO 8601 date-time (see "
-              + "DateTimeFormatter.ISO_DATE_TIME) or a special keyword (\"EPOCH\", "
-              + "\"USE_CURRENT_TIMESTAMP\"): "
-              + ex.getInvalidCreationTime(),
-          ex);
-
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      throw new GradleException(
-          HelpfulSuggestions.forIncompatibleBaseImageJavaVersionForGradle(
-              ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
-          ex);
-
-    } catch (InvalidImageReferenceException ex) {
-      throw new GradleException(
-          HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
+    } catch (Exception ex) {
+      TaskCommon.rethrowJibException(ex);
 
     } finally {
       projectProperties.waitForLoggingThread();

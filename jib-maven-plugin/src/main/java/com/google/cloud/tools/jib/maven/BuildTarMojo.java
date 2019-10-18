@@ -16,23 +16,10 @@
 
 package com.google.cloud.tools.jib.maven;
 
-import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
-import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
-import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
-import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
-import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
-import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
-import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
-import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
-import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
-import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
-import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
-import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.PluginConfigurationProcessor;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.common.annotations.VisibleForTesting;
-import java.io.IOException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -89,55 +76,8 @@ public class BuildTarMojo extends JibPluginConfiguration {
               new MavenHelpfulSuggestions(HELPFUL_SUGGESTIONS_PREFIX))
           .runBuild();
 
-    } catch (InvalidAppRootException ex) {
-      throw new MojoExecutionException(
-          "<container><appRoot> is not an absolute Unix-style path: " + ex.getInvalidPathValue(),
-          ex);
-
-    } catch (InvalidContainerizingModeException ex) {
-      throw new MojoExecutionException(
-          "invalid value for <containerizingMode>: " + ex.getInvalidContainerizingMode(), ex);
-
-    } catch (InvalidWorkingDirectoryException ex) {
-      throw new MojoExecutionException(
-          "<container><workingDirectory> is not an absolute Unix-style path: "
-              + ex.getInvalidPathValue(),
-          ex);
-
-    } catch (InvalidContainerVolumeException ex) {
-      throw new MojoExecutionException(
-          "<container><volumes> is not an absolute Unix-style path: " + ex.getInvalidVolume(), ex);
-
-    } catch (InvalidFilesModificationTimeException ex) {
-      throw new MojoExecutionException(
-          "<container><filesModificationTime> should be an ISO 8601 date-time (see "
-              + "DateTimeFormatter.ISO_DATE_TIME) or special keyword \"EPOCH_PLUS_SECOND\": "
-              + ex.getInvalidFilesModificationTime(),
-          ex);
-
-    } catch (InvalidCreationTimeException ex) {
-      throw new MojoExecutionException(
-          "<container><creationTime> should be an ISO 8601 date-time (see "
-              + "DateTimeFormatter.ISO_DATE_TIME) or a special keyword (\"EPOCH\", "
-              + "\"USE_CURRENT_TIMESTAMP\"): "
-              + ex.getInvalidCreationTime(),
-          ex);
-
-    } catch (IncompatibleBaseImageJavaVersionException ex) {
-      throw new MojoExecutionException(
-          HelpfulSuggestions.forIncompatibleBaseImageJavaVersionForMaven(
-              ex.getBaseImageMajorJavaVersion(), ex.getProjectMajorJavaVersion()),
-          ex);
-
-    } catch (InvalidImageReferenceException ex) {
-      throw new MojoExecutionException(
-          HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
-
-    } catch (IOException | CacheDirectoryCreationException | MainClassInferenceException ex) {
-      throw new MojoExecutionException(ex.getMessage(), ex);
-
-    } catch (BuildStepsExecutionException ex) {
-      throw new MojoExecutionException(ex.getMessage(), ex.getCause());
+    } catch (Exception ex) {
+      MojoCommon.rethrowJibException(ex);
 
     } finally {
       tempDirectoryProvider.close();

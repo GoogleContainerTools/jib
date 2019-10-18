@@ -17,11 +17,23 @@
 package com.google.cloud.tools.jib.maven;
 
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.FilePermissions;
+import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.maven.JibPluginConfiguration.PermissionConfiguration;
+import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
+import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
+import com.google.cloud.tools.jib.plugins.common.InvalidAppRootException;
+import com.google.cloud.tools.jib.plugins.common.InvalidContainerVolumeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidContainerizingModeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidCreationTimeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidFilesModificationTimeException;
+import com.google.cloud.tools.jib.plugins.common.InvalidWorkingDirectoryException;
+import com.google.cloud.tools.jib.plugins.common.MainClassInferenceException;
 import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -120,6 +132,74 @@ public class MojoCommon {
               actualVersion, acceptableVersionSpec);
       throw new MojoExecutionException(failure);
     }
+  }
+
+  /**
+   * Re-throws a Jib exception as a {@link MojoExecutionException} with an appropriate message.
+   *
+   * @param ex the exception to re-throw
+   * @throws MojoExecutionException with the correct message
+   */
+  static void rethrowJibException(Exception ex) throws MojoExecutionException {
+    if (ex instanceof InvalidAppRootException) {
+      throw new MojoExecutionException(
+          "<container><appRoot> is not an absolute Unix-style path: "
+              + ((InvalidAppRootException) ex).getInvalidPathValue(),
+          ex);
+    }
+    if (ex instanceof InvalidContainerizingModeException) {
+      throw new MojoExecutionException(
+          "invalid value for <containerizingMode>: "
+              + ((InvalidContainerizingModeException) ex).getInvalidContainerizingMode(),
+          ex);
+    }
+    if (ex instanceof InvalidWorkingDirectoryException) {
+      throw new MojoExecutionException(
+          "<container><workingDirectory> is not an absolute Unix-style path: "
+              + ((InvalidWorkingDirectoryException) ex).getInvalidPathValue(),
+          ex);
+    }
+    if (ex instanceof InvalidContainerVolumeException) {
+      throw new MojoExecutionException(
+          "<container><volumes> is not an absolute Unix-style path: "
+              + ((InvalidContainerVolumeException) ex).getInvalidVolume(),
+          ex);
+    }
+    if (ex instanceof InvalidFilesModificationTimeException) {
+      throw new MojoExecutionException(
+          "<container><filesModificationTime> should be an ISO 8601 date-time (see "
+              + "DateTimeFormatter.ISO_DATE_TIME) or special keyword \"EPOCH_PLUS_SECOND\": "
+              + ((InvalidFilesModificationTimeException) ex).getInvalidFilesModificationTime(),
+          ex);
+    }
+    if (ex instanceof InvalidCreationTimeException) {
+      throw new MojoExecutionException(
+          "<container><creationTime> should be an ISO 8601 date-time (see "
+              + "DateTimeFormatter.ISO_DATE_TIME) or a special keyword (\"EPOCH\", "
+              + "\"USE_CURRENT_TIMESTAMP\"): "
+              + ((InvalidCreationTimeException) ex).getInvalidCreationTime(),
+          ex);
+    }
+    if (ex instanceof IncompatibleBaseImageJavaVersionException) {
+      IncompatibleBaseImageJavaVersionException castedEx =
+          (IncompatibleBaseImageJavaVersionException) ex;
+      throw new MojoExecutionException(
+          HelpfulSuggestions.forIncompatibleBaseImageJavaVersionForMaven(
+              castedEx.getBaseImageMajorJavaVersion(), castedEx.getProjectMajorJavaVersion()),
+          ex);
+    }
+    if (ex instanceof InvalidImageReferenceException) {
+      throw new MojoExecutionException(
+          HelpfulSuggestions.forInvalidImageReference(
+              ((InvalidImageReferenceException) ex).getInvalidReference()),
+          ex);
+    }
+    if (ex instanceof IOException
+        || ex instanceof CacheDirectoryCreationException
+        || ex instanceof MainClassInferenceException) {
+      throw new MojoExecutionException(ex.getMessage(), ex);
+    }
+    throw new MojoExecutionException(ex.getMessage(), ex.getCause());
   }
 
   private MojoCommon() {}
