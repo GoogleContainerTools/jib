@@ -43,7 +43,6 @@ public class JibPlugin implements Plugin<Project> {
   @VisibleForTesting static final String BUILD_IMAGE_TASK_NAME = "jib";
   @VisibleForTesting static final String BUILD_TAR_TASK_NAME = "jibBuildTar";
   @VisibleForTesting static final String BUILD_DOCKER_TASK_NAME = "jibDockerBuild";
-  @VisibleForTesting static final String FILES_TASK_NAME = "_jibSkaffoldFiles";
   @VisibleForTesting static final String FILES_TASK_V2_NAME = "_jibSkaffoldFilesV2";
   @VisibleForTesting static final String INIT_TASK_NAME = "_jibSkaffoldInit";
 
@@ -147,9 +146,6 @@ public class JibPlugin implements Plugin<Project> {
               task.setJibExtension(jibExtension);
             });
 
-    tasks
-        .register(FILES_TASK_NAME, FilesTask.class)
-        .configure(task -> task.setJibExtension(jibExtension));
     tasks
         .register(FILES_TASK_V2_NAME, FilesTaskV2.class)
         .configure(task -> task.setJibExtension(jibExtension));
