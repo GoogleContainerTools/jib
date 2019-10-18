@@ -40,19 +40,18 @@ class TaskCommon {
 
   @Nullable
   static TaskProvider<Task> getWarProviderTask(Project project) {
-
     if (!project.getPlugins().hasPlugin(WarPlugin.class)) {
       return null;
     }
 
-    try {
-      if (project.getPlugins().hasPlugin("org.springframework.boot")) {
+    if (project.getPlugins().hasPlugin("org.springframework.boot")) {
+      try {
         return project.getTasks().named("bootWar");
+      } catch (UnknownTaskException ignored) {
       }
-      return project.getTasks().named(WarPlugin.WAR_TASK_NAME);
-    } catch (UnknownTaskException ignored) {
-      return null;
     }
+
+    return project.getTasks().named(WarPlugin.WAR_TASK_NAME);
   }
 
   /** Disables annoying Apache HTTP client logging. */
