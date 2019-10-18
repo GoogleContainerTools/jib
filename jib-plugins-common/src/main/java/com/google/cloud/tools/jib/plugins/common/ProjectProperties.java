@@ -82,8 +82,6 @@ public interface ProjectProperties {
 
   String getVersion();
 
-  Path getOutputDirectory();
-
   int getMajorJavaVersion();
 
   boolean isOffline();
