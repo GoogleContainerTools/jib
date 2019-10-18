@@ -28,13 +28,17 @@ import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.maven.artifact.Artifact;
@@ -56,6 +61,8 @@ import org.apache.maven.model.Build;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.archiver.zip.ZipEntry;
+import org.codehaus.plexus.archiver.zip.ZipOutputStream;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.junit.Assert;
 import org.junit.Before;
@@ -168,6 +175,28 @@ public class MavenProjectPropertiesTest {
     return Paths.get(Resources.getResource(path).toURI());
   }
 
+  private static Path zipUpDirectory(Path sourceRoot, Path targetZip) throws IOException {
+    try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(targetZip))) {
+      for (Path source : new DirectoryWalker(sourceRoot).filterRoot().walk()) {
+
+        StringJoiner pathJoiner = new StringJoiner("/", "", "");
+        sourceRoot.relativize(source).forEach(element -> pathJoiner.add(element.toString()));
+        String zipEntryPath =
+            Files.isDirectory(source) ? pathJoiner.toString() + '/' : pathJoiner.toString();
+
+        ZipEntry entry = new ZipEntry(zipEntryPath);
+        zipOut.putNextEntry(entry);
+        if (!Files.isDirectory(source)) {
+          try (InputStream in = Files.newInputStream(source)) {
+            ByteStreams.copy(in, zipOut);
+          }
+        }
+        zipOut.closeEntry();
+      }
+    }
+    return targetZip;
+  }
+
   @Rule public final TestRepository testRepository = new TestRepository();
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -179,6 +208,7 @@ public class MavenProjectPropertiesTest {
   @Mock private Plugin mockJarPlugin;
   @Mock private Plugin mockCompilerPlugin;
   @Mock private Log mockLog;
+  @Mock private TempDirectoryProvider mockTempDirectoryProvider;
 
   private Xpp3Dom jarPluginConfiguration;
   private Xpp3Dom archive;
@@ -195,7 +225,8 @@ public class MavenProjectPropertiesTest {
   public void setUp() throws IOException, URISyntaxException {
     Mockito.when(mockMavenSession.getRequest()).thenReturn(mockMavenRequest);
     mavenProjectProperties =
-        new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog);
+        new MavenProjectProperties(
+            mockMavenProject, mockMavenSession, mockLog, mockTempDirectoryProvider);
     jarPluginConfiguration = new Xpp3Dom("");
     archive = new Xpp3Dom("archive");
     manifest = new Xpp3Dom("manifest");
@@ -209,11 +240,11 @@ public class MavenProjectPropertiesTest {
 
     Set<Artifact> artifacts =
         ImmutableSet.of(
-            makeArtifact(dependenciesPath.resolve("library.jarC.jar")),
-            makeArtifact(dependenciesPath.resolve("libraryB.jar")),
-            makeArtifact(dependenciesPath.resolve("libraryA.jar")),
-            makeArtifact(dependenciesPath.resolve("more/dependency-1.0.0.jar")),
-            makeArtifact(dependenciesPath.resolve("another/one/dependency-1.0.0.jar")),
+            newArtifact(dependenciesPath.resolve("library.jarC.jar")),
+            newArtifact(dependenciesPath.resolve("libraryB.jar")),
+            newArtifact(dependenciesPath.resolve("libraryA.jar")),
+            newArtifact(dependenciesPath.resolve("more/dependency-1.0.0.jar")),
+            newArtifact(dependenciesPath.resolve("another/one/dependency-1.0.0.jar")),
             // Maven reads and populates "Artifacts" with its own processing, so read some from a
             // repository
             testRepository.findArtifact("com.test", "dependency", "1.0.0"),
@@ -225,12 +256,6 @@ public class MavenProjectPropertiesTest {
     Files.createDirectories(emptyDirectory);
 
     Mockito.when(mockMavenProject.getProperties()).thenReturn(mockMavenProperties);
-  }
-
-  private Artifact makeArtifact(Path path) {
-    Artifact artifact = Mockito.mock(Artifact.class);
-    Mockito.when(artifact.getFile()).thenReturn(path.toFile());
-    return artifact;
   }
 
   @Test
@@ -486,40 +511,36 @@ public class MavenProjectPropertiesTest {
   public void testCreateContainerBuilder_warNonDefaultAppRoot()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Path outputPath = getResource("maven/webapp");
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
-    Mockito.when(mockBuild.getDirectory()).thenReturn(outputPath.toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
+    Path unzipTarget = setUpWar(getResource("maven/webapp/final-name"));
 
     BuildConfiguration configuration =
         setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertSourcePathsUnordered(
-        ImmutableList.of(outputPath.resolve("final-name/WEB-INF/lib/dependency-1.0.0.jar")),
+        ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
         layers.dependenciesLayers.get(0).getLayerEntries());
     assertSourcePathsUnordered(
-        ImmutableList.of(
-            outputPath.resolve("final-name/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
+        ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
         layers.snapshotsLayers.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
-            outputPath.resolve("final-name/META-INF"),
-            outputPath.resolve("final-name/META-INF/context.xml"),
-            outputPath.resolve("final-name/Test.jsp"),
-            outputPath.resolve("final-name/WEB-INF"),
-            outputPath.resolve("final-name/WEB-INF/classes"),
-            outputPath.resolve("final-name/WEB-INF/classes/empty_dir"),
-            outputPath.resolve("final-name/WEB-INF/classes/package"),
-            outputPath.resolve("final-name/WEB-INF/classes/package/test.properties"),
-            outputPath.resolve("final-name/WEB-INF/lib"),
-            outputPath.resolve("final-name/WEB-INF/web.xml")),
+            unzipTarget.resolve("META-INF"),
+            unzipTarget.resolve("META-INF/context.xml"),
+            unzipTarget.resolve("Test.jsp"),
+            unzipTarget.resolve("WEB-INF"),
+            unzipTarget.resolve("WEB-INF/classes"),
+            unzipTarget.resolve("WEB-INF/classes/empty_dir"),
+            unzipTarget.resolve("WEB-INF/classes/package"),
+            unzipTarget.resolve("WEB-INF/classes/package/test.properties"),
+            unzipTarget.resolve("WEB-INF/lib"),
+            unzipTarget.resolve("WEB-INF/web.xml")),
         layers.resourcesLayers.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
-            outputPath.resolve("final-name/WEB-INF/classes/HelloWorld.class"),
-            outputPath.resolve("final-name/WEB-INF/classes/empty_dir"),
-            outputPath.resolve("final-name/WEB-INF/classes/package"),
-            outputPath.resolve("final-name/WEB-INF/classes/package/Other.class")),
+            unzipTarget.resolve("WEB-INF/classes/HelloWorld.class"),
+            unzipTarget.resolve("WEB-INF/classes/empty_dir"),
+            unzipTarget.resolve("WEB-INF/classes/package"),
+            unzipTarget.resolve("WEB-INF/classes/package/Other.class")),
         layers.classesLayers.get(0).getLayerEntries());
 
     assertExtractionPathsUnordered(
@@ -563,10 +584,7 @@ public class MavenProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    temporaryFolder.newFolder("final-name");
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
-    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
+    setUpWar(temporaryFolder.newFolder("final-name").toPath());
 
     setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
@@ -575,9 +593,7 @@ public class MavenProjectPropertiesTest {
   public void testCreateContainerBuilder_noErrorIfWebInfLibDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("final-name", "WEB-INF", "classes");
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
-    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
+    setUpWar(temporaryFolder.getRoot().toPath());
 
     setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
@@ -586,9 +602,7 @@ public class MavenProjectPropertiesTest {
   public void testCreateContainerBuilder_noErrorIfWebInfClassesDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("final-name", "WEB-INF", "lib");
-    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
-    Mockito.when(mockBuild.getDirectory()).thenReturn(temporaryFolder.getRoot().toString());
-    Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
+    setUpWar(temporaryFolder.getRoot().toPath());
 
     setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
@@ -646,7 +660,8 @@ public class MavenProjectPropertiesTest {
             newArtifact("com.test", "projectC", "3.0"));
 
     Map<LayerType, List<Path>> classifyDependencies =
-        new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
+        new MavenProjectProperties(
+                mockMavenProject, mockMavenSession, mockLog, mockTempDirectoryProvider)
             .classifyDependencies(artifacts, projectArtifacts);
 
     Assert.assertEquals(
@@ -677,12 +692,33 @@ public class MavenProjectPropertiesTest {
             .setAppRoot(AbsoluteUnixPath.get(appRoot))
             .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
     JibContainerBuilder jibContainerBuilder =
-        new MavenProjectProperties(mockMavenProject, mockMavenSession, mockLog)
+        new MavenProjectProperties(
+                mockMavenProject, mockMavenSession, mockLog, mockTempDirectoryProvider)
             .createJibContainerBuilder(javaContainerBuilder, containerizingMode);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         jibContainerBuilder,
         Containerizer.to(RegistryImage.named("to"))
             .setExecutorService(MoreExecutors.newDirectExecutorService()));
+  }
+
+  private Path setUpWar(Path explodedWar) throws IOException {
+    Path fakeMavenBuildDirectory = temporaryFolder.getRoot().toPath();
+    Mockito.when(mockBuild.getDirectory()).thenReturn(fakeMavenBuildDirectory.toString());
+    Mockito.when(mockBuild.getFinalName()).thenReturn("final-name");
+    Mockito.when(mockMavenProject.getPackaging()).thenReturn("war");
+
+    zipUpDirectory(explodedWar, fakeMavenBuildDirectory.resolve("final-name.war"));
+
+    // Make "MavenProjectProperties" use this folder to explode the WAR into.
+    Path unzipTarget = temporaryFolder.newFolder("exploded").toPath();
+    Mockito.when(mockTempDirectoryProvider.newDirectory()).thenReturn(unzipTarget);
+    return unzipTarget;
+  }
+
+  private Artifact newArtifact(Path sourceJar) {
+    Artifact artifact = Mockito.mock(Artifact.class);
+    Mockito.when(artifact.getFile()).thenReturn(sourceJar.toFile());
+    return artifact;
   }
 
   private Artifact newArtifact(String group, String artifactId, String version) {

@@ -17,10 +17,11 @@
 package com.google.cloud.tools.jib.gradle;
 
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.WarPlugin;
-import org.gradle.api.tasks.bundling.War;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Assert;
 import org.junit.Before;
@@ -159,9 +160,9 @@ public class TaskCommonTest {
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(JavaPlugin.class);
 
-    War warTask = TaskCommon.getWarTask(project);
+    TaskProvider<Task> warProviderTask = TaskCommon.getWarTaskProvider(project);
 
-    Assert.assertNull(warTask);
+    Assert.assertNull(warProviderTask);
   }
 
   @Test
@@ -170,7 +171,7 @@ public class TaskCommonTest {
     project.getPlugins().apply(JavaPlugin.class);
     project.getPlugins().apply(SpringBootPlugin.class);
 
-    War warTask = TaskCommon.getWarTask(project);
+    TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
 
     Assert.assertNull(warTask);
   }
@@ -180,7 +181,7 @@ public class TaskCommonTest {
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(WarPlugin.class);
 
-    War warTask = TaskCommon.getWarTask(project);
+    TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
 
     Assert.assertNotNull(warTask);
   }
@@ -191,9 +192,9 @@ public class TaskCommonTest {
     project.getPlugins().apply(WarPlugin.class);
     project.getPlugins().apply(SpringBootPlugin.class);
 
-    War warTask = TaskCommon.getWarTask(project);
+    TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
 
     Assert.assertNotNull(warTask);
-    Assert.assertTrue(warTask instanceof BootWar);
+    Assert.assertTrue(warTask.get() instanceof BootWar);
   }
 }

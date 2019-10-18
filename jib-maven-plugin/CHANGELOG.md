@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.7.0
+
+### Added
+
 - `<outputPaths>` object for configuration output file locations ([#1561](https://github.com/GoogleContainerTools/jib/issues/1561))
   - `<outputPaths><tar>` configures output path of `jib:buildTar` (`target/jib-image.tar` by default)
   - `<outputPaths><digest>` configures the output path of the image digest (`target/jib-image.digest` by default)
@@ -15,11 +23,14 @@ All notable changes to this project will be documented in this file.
 
 - Local base image layers are now processed in parallel, speeding up builds using large local base images. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
 - The base image manifest is no longer pulled from the registry if a digest is provided and the manifest is already cached. ([#1881](https://github.com/GoogleContainerTools/jib/issues/1881))
+- Docker daemon base images are now cached more effectively, speeding up builds using `docker://` base images. ([#1912](https://github.com/GoogleContainerTools/jib/issues/1912))
 
 ### Fixed
 
 - Fixed temporary directory cleanup during builds using local base images. ([#2016](https://github.com/GoogleContainerTools/jib/issues/2016))
 - Fixed additional tags being ignored when building to a tarball. ([#2043](https://github.com/GoogleContainerTools/jib/issues/2043))
+- Fixed `tar://` base image failing if tar does not contain explicit directory entries. ([#2067](https://github.com/GoogleContainerTools/jib/issues/2067))
+- Fixed an issue for WAR projects where Jib used an intermediate exploded WAR directory instead of exploding the final WAR file. ([#1091](https://github.com/GoogleContainerTools/jib/issues/1091))
 
 ## 1.6.1
 

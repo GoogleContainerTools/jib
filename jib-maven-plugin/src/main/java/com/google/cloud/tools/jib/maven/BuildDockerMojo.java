@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.maven;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.docker.DockerClient;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
@@ -83,8 +84,10 @@ public class BuildDockerMojo extends JibPluginConfiguration {
     MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
         getSession().getSettings(), getSettingsDecrypter());
 
+    TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
     MavenProjectProperties projectProperties =
-        MavenProjectProperties.getForProject(getProject(), getSession(), getLog());
+        MavenProjectProperties.getForProject(
+            getProject(), getSession(), getLog(), tempDirectoryProvider);
     try {
       PluginConfigurationProcessor.createJibBuildRunnerForDockerDaemonImage(
               new MavenRawConfiguration(this),
@@ -145,6 +148,7 @@ public class BuildDockerMojo extends JibPluginConfiguration {
       throw new MojoExecutionException(ex.getMessage(), ex.getCause());
 
     } finally {
+      tempDirectoryProvider.close();
       projectProperties.waitForLoggingThread();
       getLog().info("");
     }

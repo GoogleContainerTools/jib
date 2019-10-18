@@ -536,6 +536,7 @@ public class JibContainerBuilder {
         .setToolName(containerizer.getToolName())
         .setExecutorService(executorService)
         .setEventHandlers(containerizer.buildEventHandlers())
+        .setAlwaysCacheBaseImage(containerizer.getAlwaysCacheBaseImage())
         .build();
   }
 
