@@ -1,6 +1,6 @@
 package com.google.cloud.tools.jib.jar;
 
-import com.google.cloud.tools.jib.api.LayerConfiguration;
+import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -14,15 +14,12 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import com.google.common.collect.ImmutableList;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
 public class ReproducibleJarConverterTest {
 
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private final Path srcJar = Paths.get("src/test/resources/core/jar/complexLib.jar");
   private Path convertedJar;
@@ -53,7 +50,6 @@ public class ReproducibleJarConverterTest {
 
     manifestDir = extractionRoot.resolve("META-INF");
     manifestFile = manifestDir.resolve("MANIFEST.MF");
-
   }
 
   @Test
@@ -76,8 +72,9 @@ public class ReproducibleJarConverterTest {
     Assert.assertTrue(Files.isRegularFile(manifestFile));
 
     FileTime expected = FileTime.fromMillis(ReproducibleJarConverter.CONSTANT_TIME_FOR_ZIP_ENTRIES);
-    for(Path path : ImmutableList.of(complexFile, complexDir, manifestFile, manifestDir)) {
-      BasicFileAttributes basicFileAttributes = Files.readAttributes(path, BasicFileAttributes.class);
+    for (Path path : ImmutableList.of(complexFile, complexDir, manifestFile, manifestDir)) {
+      BasicFileAttributes basicFileAttributes =
+          Files.readAttributes(path, BasicFileAttributes.class);
       Assert.assertEquals(expected, basicFileAttributes.lastModifiedTime());
     }
   }
@@ -87,7 +84,7 @@ public class ReproducibleJarConverterTest {
 
     ZipFile zipFile = new ZipFile(convertedJar.toFile());
 
-    for(ZipEntry entry : Collections.list(zipFile.entries())) {
+    for (ZipEntry entry : Collections.list(zipFile.entries())) {
       Assert.assertEquals(ReproducibleJarConverter.CONSTANT_TIME_FOR_ZIP_ENTRIES, entry.getTime());
     }
   }
@@ -102,6 +99,16 @@ public class ReproducibleJarConverterTest {
     }
 
     // we didn't erase everything
-    Assert.assertTrue(jarManifest.getMainAttributes().containsKey(Attributes.Name.MANIFEST_VERSION));
+    Assert.assertTrue(
+        jarManifest.getMainAttributes().containsKey(Attributes.Name.MANIFEST_VERSION));
+  }
+
+  @Test
+  public void testIsSigned() throws IOException {
+    Path unsignedJar = srcJar;
+    Path signedJar = srcJar.getParent().resolve("complexLibSigned.jar");
+
+    Assert.assertFalse(new ReproducibleJarConverter(unsignedJar).isSigned());
+    Assert.assertTrue(new ReproducibleJarConverter(signedJar).isSigned());
   }
 }

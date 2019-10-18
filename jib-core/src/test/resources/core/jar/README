@@ -1,0 +1,11 @@
+signed complex lib is a signed version of complex lib created using
+
+jarsigner complexLib.jar com.loosebazooka
+
+where com.loosebazooka is a self signed key used for creating this
+test jar, the key was created using
+
+keytool -genkey -alias com.loosebazooka -keyalg RSA -keystore .keystore -keysize 2048
+
+This key is nowhere to be found, if you wish to update this test, create a new key
+and resign
