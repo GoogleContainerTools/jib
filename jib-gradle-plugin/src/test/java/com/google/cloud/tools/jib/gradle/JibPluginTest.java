@@ -200,6 +200,7 @@ public class JibPluginTest {
                     .collect(Collectors.toSet())));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testWebAppProject() {
     Project rootProject =
@@ -207,43 +208,29 @@ public class JibPluginTest {
     rootProject.getPluginManager().apply("java");
     rootProject.getPluginManager().apply("war");
     rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
+
     ((ProjectInternal) rootProject).evaluate();
-    Assert.assertNotNull(rootProject.getTasks().getByPath(":" + JibPlugin.EXPLODED_WAR_TASK_NAME));
-    ExplodedWarTask explodedWarTask =
-        (ExplodedWarTask) rootProject.getTasks().getByPath(":" + JibPlugin.EXPLODED_WAR_TASK_NAME);
+    TaskContainer tasks = rootProject.getTasks();
+    Task explodedWarTask = tasks.getByPath(":" + JibPlugin.EXPLODED_WAR_TASK_NAME);
+    Assert.assertNotNull(explodedWarTask);
     Assert.assertEquals(
         rootProject.getBuildDir().toPath().resolve(ProjectProperties.EXPLODED_WAR_DIRECTORY_NAME),
-        explodedWarTask.getExplodedWarDirectory().toPath());
+        ((ExplodedWarTask) explodedWarTask).getExplodedWarDirectory().toPath());
 
     Assert.assertEquals(
         explodedWarTask,
         ((TaskProvider<Task>)
-                rootProject
-                    .getTasks()
-                    .getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME)
-                    .getDependsOn()
-                    .iterator()
-                    .next())
+                tasks.getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME).getDependsOn().iterator().next())
             .get());
     Assert.assertEquals(
         explodedWarTask,
         ((TaskProvider<Task>)
-                rootProject
-                    .getTasks()
-                    .getByPath(JibPlugin.BUILD_DOCKER_TASK_NAME)
-                    .getDependsOn()
-                    .iterator()
-                    .next())
+                tasks.getByPath(JibPlugin.BUILD_DOCKER_TASK_NAME).getDependsOn().iterator().next())
             .get());
     Assert.assertEquals(
         explodedWarTask,
         ((TaskProvider<Task>)
-                rootProject
-                    .getTasks()
-                    .getByPath(JibPlugin.BUILD_TAR_TASK_NAME)
-                    .getDependsOn()
-                    .iterator()
-                    .next())
+                tasks.getByPath(JibPlugin.BUILD_TAR_TASK_NAME).getDependsOn().iterator().next())
             .get());
   }
 
