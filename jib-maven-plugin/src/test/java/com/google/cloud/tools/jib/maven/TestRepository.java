@@ -24,9 +24,6 @@ public class TestRepository extends ExternalResource {
 
   private static final String TEST_M2 = "maven/testM2";
 
-  private MojoRule testHarness;
-  private ArtifactRepositoryFactory artifactRepositoryFactory;
-  private ArtifactHandlerManager artifactHandlerManager;
   private ArtifactRepository testLocalRepo;
   private ArtifactResolver artifactResolver;
   private ArtifactHandler jarHandler;
@@ -34,12 +31,11 @@ public class TestRepository extends ExternalResource {
   @Override
   protected void before()
       throws ComponentLookupException, URISyntaxException, MalformedURLException {
-    testHarness = new MojoRule();
-    artifactRepositoryFactory = testHarness.lookup(ArtifactRepositoryFactory.class);
-    artifactHandlerManager = testHarness.lookup(ArtifactHandlerManager.class);
+    MojoRule testHarness = new MojoRule();
+    ArtifactRepositoryFactory artifactRepositoryFactory =
+        testHarness.lookup(ArtifactRepositoryFactory.class);
     artifactResolver = testHarness.lookup(ArtifactResolver.class);
-    jarHandler = artifactHandlerManager.getArtifactHandler("jar");
-
+    jarHandler = testHarness.lookup(ArtifactHandlerManager.class).getArtifactHandler("jar");
     testLocalRepo =
         artifactRepositoryFactory.createArtifactRepository(
             "test",
@@ -49,7 +45,7 @@ public class TestRepository extends ExternalResource {
             null);
   }
 
-  public Artifact findArtifact(String group, String artifact, String version) {
+  Artifact findArtifact(String group, String artifact, String version) {
     ArtifactResolutionRequest artifactResolutionRequest = new ArtifactResolutionRequest();
     artifactResolutionRequest.setLocalRepository(testLocalRepo);
     Artifact artifactToFind =
@@ -63,7 +59,7 @@ public class TestRepository extends ExternalResource {
     return ars.getArtifacts().iterator().next();
   }
 
-  public Path artifactPathOnDisk(String group, String artifact, String version) {
+  Path artifactPathOnDisk(String group, String artifact, String version) {
     return findArtifact(group, artifact, version).getFile().toPath();
   }
 }
