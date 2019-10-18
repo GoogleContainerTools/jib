@@ -89,7 +89,7 @@ public class JibPlugin implements Plugin<Project> {
   }
 
   /** Check the Jib version matches the required version (if specified). */
-  private static void checkJibVersion(Project project) {
+  private static void checkJibVersion() {
     // todo: should retrieve from project properties?
     String requiredVersion = System.getProperty(REQUIRED_VERSION_PROPERTY_NAME);
     if (requiredVersion == null) {
@@ -111,7 +111,7 @@ public class JibPlugin implements Plugin<Project> {
   @Override
   public void apply(Project project) {
     checkGradleVersion();
-    checkJibVersion(project);
+    checkJibVersion();
 
     JibExtension jibExtension =
         project.getExtensions().create(JIB_EXTENSION_NAME, JibExtension.class, project);
