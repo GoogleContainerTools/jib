@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 class TaskCommon {
 
   @Nullable
-  static TaskProvider<Task> getWarProviderTask(Project project) {
+  static TaskProvider<Task> getWarTaskProvider(Project project) {
     if (!project.getPlugins().hasPlugin(WarPlugin.class)) {
       return null;
     }
@@ -47,7 +47,7 @@ class TaskCommon {
     if (project.getPlugins().hasPlugin("org.springframework.boot")) {
       try {
         return project.getTasks().named("bootWar");
-      } catch (UnknownTaskException ignored) {
+      } catch (UnknownTaskException ignored) { // fall through
       }
     }
 
