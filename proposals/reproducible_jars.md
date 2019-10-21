@@ -25,7 +25,8 @@ to the user that signed archives are processed by jib to be reproducible.
 
 ## Current solution
 
-Currently the user must configure their build to be reproducible. 
+Currently the user must configure their build to be reproducible. (we will borrow from these two solutions in our own solution with
+proper attribution)
 
 ### Gradle 
 In gradle that means configuring the jar task explicitly: https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Jar.html
@@ -43,23 +44,33 @@ and removing any changeable meta data from the MANIFEST.MF that they may have pr
 In maven, a user must configure an external plugin to do this, one could use: https://github.com/zlika/reproducible-build-maven-plugin
 on all submodules and potentially achieve this on their own.
 
-## Proposed Configuration
+## Proposed Solution
+
+Jib should just handle this itself on the `PROJECT_DEPENDENCIES` layer. For all jars included in the layer, Jib needs to:
+
+1. Inspect the jar's `MANIFEST.MF` and remove values that could change.
+2. Force a single timestamp on all files
+3. Order the files in the jar(zip) by name (alphabetical)
+
+Jib *will not* do this for any other layer
+
+### Configuration
 
 Jib can make this configurable, but it should be `true` by default. A system property like 
 
 ```
-`jib.projectDependencies.reproducible`
+`-Djib.projectDependencies.reproducible=true/false`
 ```
 
-## Implementation
+### Implementation
 
 1. A utility in jib-core to convert jars to *reproducible* jars.
-2. This utility only impacts the `PROJECT_DEPENDENCIES` layer
-2. Triggering this utility at one of two places
-    1. During layer writing by introducing some new configuration into `LayerConfiguration`
-    2. At the plugin level to rewrite the jar before presenting it to the Jib Containerizer
-
+1. This utility only impacts the `PROJECT_DEPENDENCIES` layer
+1. Triggering this utility at one of two places
+    1. During layer writing by introducing some new configuration into `LayerConfiguration` -- potentially more performant
+    1. At the plugin level to rewrite the jar before presenting it to the Jib Containerizer
 
 ## Potential Issues
 
-Maybe we should just direct users to configure their builds to be reproducible using the gradle/maven mechanism desribed above.
+1. Maybe we should just direct users to configure their builds to be reproducible using the gradle/maven mechanism desribed above.
+2. Can we *really, truly* know every value thrown into the manifest by the user??
