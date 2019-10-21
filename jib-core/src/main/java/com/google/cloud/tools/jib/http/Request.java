@@ -50,9 +50,7 @@ public class Request {
      * @return this
      */
     public Builder setAuthorization(@Nullable Authorization authorization) {
-      if (authorization != null) {
-        headers.setAuthorization(authorization.toString());
-      }
+      headers.setAuthorization(authorization.toString());
       return this;
     }
 

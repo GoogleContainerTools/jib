@@ -34,11 +34,15 @@ class AuthenticationMethodRetriever
     implements RegistryEndpointProvider<Optional<RegistryAuthenticator>> {
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
+  private final boolean allowInsecureConnection;
   private final String userAgent;
 
   AuthenticationMethodRetriever(
-      RegistryEndpointRequestProperties registryEndpointRequestProperties, String userAgent) {
+      RegistryEndpointRequestProperties registryEndpointRequestProperties,
+      boolean allowInsecureConnection,
+      String userAgent) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
+    this.allowInsecureConnection = allowInsecureConnection;
     this.userAgent = userAgent;
   }
 
@@ -99,7 +103,10 @@ class AuthenticationMethodRetriever
     // Parses the header to retrieve the components.
     try {
       return RegistryAuthenticator.fromAuthenticationMethod(
-          authenticationMethod, registryEndpointRequestProperties, userAgent);
+          authenticationMethod,
+          registryEndpointRequestProperties,
+          allowInsecureConnection,
+          userAgent);
 
     } catch (RegistryAuthenticationFailedException ex) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)

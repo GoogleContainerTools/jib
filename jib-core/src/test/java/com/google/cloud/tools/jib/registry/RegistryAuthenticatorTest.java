@@ -43,6 +43,7 @@ public class RegistryAuthenticatorTest {
         RegistryAuthenticator.fromAuthenticationMethod(
                 "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
                 registryEndpointRequestProperties,
+                false,
                 "user-agent")
             .get();
   }
@@ -54,6 +55,7 @@ public class RegistryAuthenticatorTest {
         RegistryAuthenticator.fromAuthenticationMethod(
                 "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
                 registryEndpointRequestProperties,
+                false,
                 "user-agent")
             .get();
     Assert.assertEquals(
@@ -65,6 +67,7 @@ public class RegistryAuthenticatorTest {
         RegistryAuthenticator.fromAuthenticationMethod(
                 "bEaReR realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
                 registryEndpointRequestProperties,
+                false,
                 "user-agent")
             .get();
     Assert.assertEquals(
@@ -131,6 +134,7 @@ public class RegistryAuthenticatorTest {
         RegistryAuthenticator.fromAuthenticationMethod(
                 "Basic realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
                 registryEndpointRequestProperties,
+                false,
                 "user-agent")
             .isPresent());
 
@@ -138,6 +142,7 @@ public class RegistryAuthenticatorTest {
         RegistryAuthenticator.fromAuthenticationMethod(
                 "BASIC realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
                 registryEndpointRequestProperties,
+                false,
                 "user-agent")
             .isPresent());
 
@@ -145,6 +150,7 @@ public class RegistryAuthenticatorTest {
         RegistryAuthenticator.fromAuthenticationMethod(
                 "bASIC realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
                 registryEndpointRequestProperties,
+                false,
                 "user-agent")
             .isPresent());
   }
@@ -155,6 +161,7 @@ public class RegistryAuthenticatorTest {
       RegistryAuthenticator.fromAuthenticationMethod(
           "realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
           registryEndpointRequestProperties,
+          false,
           "user-agent");
       Assert.fail("Authentication method without 'Bearer ' or 'Basic ' should fail");
 
@@ -169,7 +176,7 @@ public class RegistryAuthenticatorTest {
   public void testFromAuthenticationMethod_noRealm() {
     try {
       RegistryAuthenticator.fromAuthenticationMethod(
-          "Bearer scope=\"somescope\"", registryEndpointRequestProperties, "user-agent");
+          "Bearer scope=\"somescope\"", registryEndpointRequestProperties, false, "user-agent");
       Assert.fail("Authentication method without 'realm' should fail");
 
     } catch (RegistryAuthenticationFailedException ex) {
@@ -186,6 +193,7 @@ public class RegistryAuthenticatorTest {
         RegistryAuthenticator.fromAuthenticationMethod(
                 "Bearer realm=\"https://somerealm\"",
                 registryEndpointRequestProperties,
+                false,
                 "user-agent")
             .get();
 
@@ -204,6 +212,7 @@ public class RegistryAuthenticatorTest {
             RegistryAuthenticator.fromAuthenticationMethod(
                     "Bearer realm=\"" + server.getEndpoint() + "\"",
                     registryEndpointRequestProperties,
+                    false,
                     "Competent-Agent")
                 .get();
         authenticator.authenticatePush(null);
@@ -226,6 +235,7 @@ public class RegistryAuthenticatorTest {
             RegistryAuthenticator.fromAuthenticationMethod(
                     "Bearer realm=\"" + server.getEndpoint() + "\"",
                     registryEndpointRequestProperties,
+                    false,
                     "Competent-Agent")
                 .get();
         authenticator.authenticatePush(null);
@@ -250,6 +260,7 @@ public class RegistryAuthenticatorTest {
             RegistryAuthenticator.fromAuthenticationMethod(
                     "Bearer realm=\"" + server.getEndpoint() + "\"",
                     registryEndpointRequestProperties,
+                    false,
                     "Competent-Agent")
                 .get();
         authenticator.authenticatePush(null);

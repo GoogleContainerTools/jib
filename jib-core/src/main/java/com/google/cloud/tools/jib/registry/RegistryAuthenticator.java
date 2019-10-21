@@ -36,9 +36,11 @@ import com.google.common.net.MediaType;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.GeneralSecurityException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -57,6 +59,7 @@ public class RegistryAuthenticator {
    *
    * @param authenticationMethod the {@code WWW-Authenticate} header value
    * @param registryEndpointRequestProperties the registry request properties
+   * @param allowInsecureConnection if {@code true}, insecure connections will be allowed
    * @param userAgent the {@code User-Agent} header value to use in later authentication calls
    * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
    * @throws RegistryAuthenticationFailedException if authentication fails
@@ -66,6 +69,7 @@ public class RegistryAuthenticator {
   static Optional<RegistryAuthenticator> fromAuthenticationMethod(
       String authenticationMethod,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
+      boolean allowInsecureConnection,
       String userAgent)
       throws RegistryAuthenticationFailedException {
     // If the authentication method starts with 'basic ' (case insensitive), no registry
@@ -103,7 +107,8 @@ public class RegistryAuthenticator {
             : registryEndpointRequestProperties.getServerUrl();
 
     return Optional.of(
-        new RegistryAuthenticator(realm, service, registryEndpointRequestProperties, userAgent));
+        new RegistryAuthenticator(
+            realm, service, registryEndpointRequestProperties, allowInsecureConnection, userAgent));
   }
 
   private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(
@@ -115,6 +120,10 @@ public class RegistryAuthenticator {
             + authParam
             + "' was not found in the 'WWW-Authenticate' header, tried to parse: "
             + authenticationMethod);
+  }
+
+  private static boolean isHttpsProtocol(URL url) {
+    return "https".equals(url.getProtocol());
   }
 
   /** Template for the authentication response JSON. */
@@ -144,16 +153,19 @@ public class RegistryAuthenticator {
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final String realm;
   private final String service;
+  private final boolean allowInsecureConnection;
   private final String userAgent;
 
   private RegistryAuthenticator(
       String realm,
       String service,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
+      boolean allowInsecureConnection,
       String userAgent) {
     this.realm = realm;
     this.service = service;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
+    this.allowInsecureConnection = allowInsecureConnection;
     this.userAgent = userAgent;
   }
 
@@ -240,7 +252,7 @@ public class RegistryAuthenticator {
       try {
         return authenticate(credential, ImmutableMap.of(imageName, scope, sourceImageName, "pull"));
       } catch (RegistryAuthenticationFailedException ex) {
-        // Unable to obtain authorization with source image: fallthrough and try without
+        // Unable to obtain authorization with source image: fall through and try without
       }
     }
     return authenticate(credential, ImmutableMap.of(imageName, scope));
@@ -249,9 +261,36 @@ public class RegistryAuthenticator {
   private Authorization authenticate(
       @Nullable Credential credential, Map<String, String> repositoryScopes)
       throws RegistryAuthenticationFailedException {
+
+    try {
+      return authenticate(credential, repositoryScopes, Connection.getConnectionFactory());
+
+    } catch (RegistryAuthenticationFailedException authFailedException) {
+
+      try {
+        return authenticate(
+            credential, repositoryScopes, Connection.getInsecureConnectionFactory());
+
+      } catch (GeneralSecurityException securityException) {
+        throw new RegistryAuthenticationFailedException(
+            registryEndpointRequestProperties.getServerUrl(),
+            registryEndpointRequestProperties.getImageName(),
+            "cannot turn off TLS peer verification",
+            securityException);
+      }
+    }
+  }
+
+  private Authorization authenticate(
+      @Nullable Credential credential,
+      Map<String, String> repositoryScopes,
+      Function<URL, Connection> connectionFactory)
+      throws RegistryAuthenticationFailedException {
+    URL url = getAuthenticationUrl(credential, repositoryScopes);
+    boolean sendCredentials = isHttpsProtocol(url) || JibSystemProperties.sendCredentialsOverHttp();
+
     try (Connection connection =
-        Connection.getConnectionFactory()
-            .apply(getAuthenticationUrl(credential, repositoryScopes))) {
+        connectionFactory.apply(getAuthenticationUrl(credential, repositoryScopes))) {
       Request.Builder requestBuilder =
           Request.builder()
               .setHttpTimeout(JibSystemProperties.getHttpTimeout())

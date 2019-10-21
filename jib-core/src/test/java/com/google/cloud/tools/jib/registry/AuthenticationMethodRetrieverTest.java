@@ -42,7 +42,7 @@ public class AuthenticationMethodRetrieverTest {
   private final RegistryEndpointRequestProperties fakeRegistryEndpointRequestProperties =
       new RegistryEndpointRequestProperties("someServerUrl", "someImageName");
   private final AuthenticationMethodRetriever testAuthenticationMethodRetriever =
-      new AuthenticationMethodRetriever(fakeRegistryEndpointRequestProperties, "user-agent");
+      new AuthenticationMethodRetriever(fakeRegistryEndpointRequestProperties, false, "user-agent");
 
   @Test
   public void testGetContent() {
