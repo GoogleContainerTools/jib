@@ -59,7 +59,7 @@ Jib *will not* do this for any other layer
 Jib can make this configurable, but it should be `true` by default. A system property like 
 
 ```
-`-Djib.projectDependencies.reproducible=true/false`
+-Djib.projectDependencies.reproducible=true/false
 ```
 
 ### Implementation
