@@ -36,11 +36,9 @@ import com.google.common.net.MediaType;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.GeneralSecurityException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -59,8 +57,8 @@ public class RegistryAuthenticator {
    *
    * @param authenticationMethod the {@code WWW-Authenticate} header value
    * @param registryEndpointRequestProperties the registry request properties
-   * @param allowInsecureConnection if {@code true}, insecure connections will be allowed
    * @param userAgent the {@code User-Agent} header value to use in later authentication calls
+   * @param httpClient TLS-failover http client
    * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
    * @throws RegistryAuthenticationFailedException if authentication fails
    * @see <a
@@ -69,8 +67,8 @@ public class RegistryAuthenticator {
   static Optional<RegistryAuthenticator> fromAuthenticationMethod(
       String authenticationMethod,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      boolean allowInsecureConnection,
-      String userAgent)
+      String userAgent,
+      Connection httpClient)
       throws RegistryAuthenticationFailedException {
     // If the authentication method starts with 'basic ' (case insensitive), no registry
     // authentication is needed.
@@ -78,37 +76,30 @@ public class RegistryAuthenticator {
       return Optional.empty();
     }
 
+    String registryUrl = registryEndpointRequestProperties.getServerUrl();
+    String imageName = registryEndpointRequestProperties.getImageName();
     // Checks that the authentication method starts with 'bearer ' (case insensitive).
     if (!authenticationMethod.matches("^(?i)(bearer) .*")) {
       throw newRegistryAuthenticationFailedException(
-          registryEndpointRequestProperties.getServerUrl(),
-          registryEndpointRequestProperties.getImageName(),
-          authenticationMethod,
-          "Bearer");
+          registryUrl, imageName, authenticationMethod, "Bearer");
     }
 
     Pattern realmPattern = Pattern.compile("realm=\"(.*?)\"");
     Matcher realmMatcher = realmPattern.matcher(authenticationMethod);
     if (!realmMatcher.find()) {
       throw newRegistryAuthenticationFailedException(
-          registryEndpointRequestProperties.getServerUrl(),
-          registryEndpointRequestProperties.getImageName(),
-          authenticationMethod,
-          "realm");
+          registryUrl, imageName, authenticationMethod, "realm");
     }
     String realm = realmMatcher.group(1);
 
     Pattern servicePattern = Pattern.compile("service=\"(.*?)\"");
     Matcher serviceMatcher = servicePattern.matcher(authenticationMethod);
     // use the provided registry location when missing service (e.g., for OpenShift)
-    String service =
-        serviceMatcher.find()
-            ? serviceMatcher.group(1)
-            : registryEndpointRequestProperties.getServerUrl();
+    String service = serviceMatcher.find() ? serviceMatcher.group(1) : registryUrl;
 
     return Optional.of(
         new RegistryAuthenticator(
-            realm, service, registryEndpointRequestProperties, allowInsecureConnection, userAgent));
+            realm, service, registryEndpointRequestProperties, userAgent, httpClient));
   }
 
   private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(
@@ -120,10 +111,6 @@ public class RegistryAuthenticator {
             + authParam
             + "' was not found in the 'WWW-Authenticate' header, tried to parse: "
             + authenticationMethod);
-  }
-
-  private static boolean isHttpsProtocol(URL url) {
-    return "https".equals(url.getProtocol());
   }
 
   /** Template for the authentication response JSON. */
@@ -153,20 +140,20 @@ public class RegistryAuthenticator {
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final String realm;
   private final String service;
-  private final boolean allowInsecureConnection;
   private final String userAgent;
+  private final Connection httpClient;
 
   private RegistryAuthenticator(
       String realm,
       String service,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      boolean allowInsecureConnection,
-      String userAgent) {
+      String userAgent,
+      Connection httpClient) {
     this.realm = realm;
     this.service = service;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
-    this.allowInsecureConnection = allowInsecureConnection;
     this.userAgent = userAgent;
+    this.httpClient = httpClient;
   }
 
   /**
@@ -261,66 +248,44 @@ public class RegistryAuthenticator {
   private Authorization authenticate(
       @Nullable Credential credential, Map<String, String> repositoryScopes)
       throws RegistryAuthenticationFailedException {
-
     try {
-      return authenticate(credential, repositoryScopes, Connection.getConnectionFactory());
+      URL url = getAuthenticationUrl(credential, repositoryScopes);
 
-    } catch (RegistryAuthenticationFailedException authFailedException) {
-
-      try {
-        return authenticate(
-            credential, repositoryScopes, Connection.getInsecureConnectionFactory());
-
-      } catch (GeneralSecurityException securityException) {
-        throw new RegistryAuthenticationFailedException(
-            registryEndpointRequestProperties.getServerUrl(),
-            registryEndpointRequestProperties.getImageName(),
-            "cannot turn off TLS peer verification",
-            securityException);
-      }
-    }
-  }
-
-  private Authorization authenticate(
-      @Nullable Credential credential,
-      Map<String, String> repositoryScopes,
-      Function<URL, Connection> connectionFactory)
-      throws RegistryAuthenticationFailedException {
-    URL url = getAuthenticationUrl(credential, repositoryScopes);
-    boolean sendCredentials = isHttpsProtocol(url) || JibSystemProperties.sendCredentialsOverHttp();
-
-    try (Connection connection =
-        connectionFactory.apply(getAuthenticationUrl(credential, repositoryScopes))) {
       Request.Builder requestBuilder =
           Request.builder()
               .setHttpTimeout(JibSystemProperties.getHttpTimeout())
               .setUserAgent(userAgent);
 
-      if (isOAuth2Auth(credential)) {
-        String parameters = getAuthRequestParameters(credential, repositoryScopes);
-        requestBuilder.setBody(
-            new BlobHttpContent(Blobs.from(parameters), MediaType.FORM_DATA.toString()));
-      } else if (credential != null) {
-        requestBuilder.setAuthorization(
-            Authorization.fromBasicCredentials(credential.getUsername(), credential.getPassword()));
+      // Only sends authorization if using HTTPS or explicitly forcing over HTTP.
+      if ("https".equals(url.getProtocol()) && JibSystemProperties.sendCredentialsOverHttp()) {
+        if (isOAuth2Auth(credential)) {
+          String parameters = getAuthRequestParameters(credential, repositoryScopes);
+          requestBuilder.setBody(
+              new BlobHttpContent(Blobs.from(parameters), MediaType.FORM_DATA.toString()));
+        } else if (credential != null) {
+          requestBuilder.setAuthorization(
+              Authorization.fromBasicCredentials(
+                  credential.getUsername(), credential.getPassword()));
+        }
       }
 
       String httpMethod = isOAuth2Auth(credential) ? HttpMethods.POST : HttpMethods.GET;
-      Response response = connection.send(httpMethod, requestBuilder.build());
+      try (Response response = httpClient.call(httpMethod, url, requestBuilder.build())) {
 
-      AuthenticationResponseTemplate responseJson =
-          JsonTemplateMapper.readJson(response.getBody(), AuthenticationResponseTemplate.class);
+        AuthenticationResponseTemplate responseJson =
+            JsonTemplateMapper.readJson(response.getBody(), AuthenticationResponseTemplate.class);
 
-      if (responseJson.getToken() == null) {
-        throw new RegistryAuthenticationFailedException(
-            registryEndpointRequestProperties.getServerUrl(),
-            registryEndpointRequestProperties.getImageName(),
-            "Did not get token in authentication response from "
-                + getAuthenticationUrl(credential, repositoryScopes)
-                + "; parameters: "
-                + getAuthRequestParameters(credential, repositoryScopes));
+        if (responseJson.getToken() == null) {
+          throw new RegistryAuthenticationFailedException(
+              registryEndpointRequestProperties.getServerUrl(),
+              registryEndpointRequestProperties.getImageName(),
+              "Did not get token in authentication response from "
+                  + getAuthenticationUrl(credential, repositoryScopes)
+                  + "; parameters: "
+                  + getAuthRequestParameters(credential, repositoryScopes));
+        }
+        return Authorization.fromBearerToken(responseJson.getToken());
       }
-      return Authorization.fromBearerToken(responseJson.getToken());
 
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(

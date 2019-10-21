@@ -28,6 +28,7 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
@@ -242,8 +243,8 @@ public class RegistryClient {
   private final EventHandlers eventHandlers;
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  private final boolean allowInsecureRegistries;
   private final String userAgent;
+  private final Connection httpClient;
 
   /**
    * Instantiate with {@link #factory}.
@@ -251,7 +252,6 @@ public class RegistryClient {
    * @param eventHandlers the event handlers used for dispatching log events
    * @param authorization the {@link Authorization} to access the registry/repository
    * @param registryEndpointRequestProperties properties of registry endpoint requests
-   * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
    */
   private RegistryClient(
       EventHandlers eventHandlers,
@@ -262,8 +262,8 @@ public class RegistryClient {
     this.eventHandlers = eventHandlers;
     this.authorization = authorization;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
-    this.allowInsecureRegistries = allowInsecureRegistries;
     this.userAgent = userAgent;
+    this.httpClient = new Connection(allowInsecureRegistries, eventHandlers::dispatch);
   }
 
   /**
@@ -278,7 +278,7 @@ public class RegistryClient {
     // realm="https://gcr.io/v2/token",service="gcr.io"')
     return callRegistryEndpoint(
         new AuthenticationMethodRetriever(
-            registryEndpointRequestProperties, allowInsecureRegistries, getUserAgent()));
+            registryEndpointRequestProperties, getUserAgent(), httpClient));
   }
 
   /**
@@ -467,7 +467,7 @@ public class RegistryClient {
             registryEndpointProvider,
             authorization,
             registryEndpointRequestProperties,
-            allowInsecureRegistries)
+            httpClient)
         .call();
   }
 }

@@ -20,7 +20,6 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
@@ -29,23 +28,19 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Connection;
-import com.google.cloud.tools.jib.http.MockConnection;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.common.io.CharStreams;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.ConnectException;
 import java.net.MalformedURLException;
 import java.net.SocketException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -54,7 +49,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -109,200 +103,34 @@ public class RegistryEndpointCallerTest {
     return mock;
   }
 
-  private static HttpResponse mockRedirectHttpResponse(String redirectLocation) throws IOException {
-    int code307 = HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT;
-    return mockHttpResponse(code307, new HttpHeaders().setLocation(redirectLocation));
-  }
-
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   @Mock private EventHandlers mockEventHandlers;
-  @Mock private Connection mockConnection;
-  @Mock private Connection mockInsecureConnection;
+  @Mock private Connection mockHttpClient;
   @Mock private Response mockResponse;
-  @Mock private Function<URL, Connection> mockConnectionFactory;
-  @Mock private Function<URL, Connection> mockInsecureConnectionFactory;
 
   private RegistryEndpointCaller<String> secureEndpointCaller;
 
   @Before
   public void setUp() throws IOException {
-    secureEndpointCaller = createRegistryEndpointCaller(false, -1);
+    secureEndpointCaller =
+        new RegistryEndpointCaller<>(
+            mockEventHandlers,
+            "userAgent",
+            new TestRegistryEndpointProvider(),
+            Authorization.fromBasicToken("token"),
+            new RegistryEndpointRequestProperties("serverUrl", "imageName"),
+            mockHttpClient);
 
-    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-    Mockito.when(mockInsecureConnectionFactory.apply(Mockito.any()))
-        .thenReturn(mockInsecureConnection);
     Mockito.when(mockResponse.getBody())
         .thenReturn(new ByteArrayInputStream("body".getBytes(StandardCharsets.UTF_8)));
-  }
-
-  @Test
-  public void testCall_secureCallerOnUnverifiableServer() throws IOException, RegistryException {
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)); // unverifiable HTTPS server
-
-    try {
-      secureEndpointCaller.call();
-      Assert.fail("Secure caller should fail if cannot verify server");
-    } catch (InsecureRegistryException ex) {
-      Assert.assertEquals(
-          "Failed to verify the server at https://serverUrl/v2/api because only secure connections are allowed.",
-          ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testCall_insecureCallerOnUnverifiableServer() throws IOException, RegistryException {
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)); // unverifiable HTTPS server
-    Mockito.when(mockInsecureConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenReturn(mockResponse); // OK with non-verifying connection
-
-    RegistryEndpointCaller<String> insecureCaller = createRegistryEndpointCaller(true, -1);
-    Assert.assertEquals("body", insecureCaller.call());
-
-    ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
-    Mockito.verify(mockConnectionFactory).apply(urlCaptor.capture());
-    Assert.assertEquals(new URL("https://serverUrl/v2/api"), urlCaptor.getAllValues().get(0));
-
-    Mockito.verify(mockInsecureConnectionFactory).apply(urlCaptor.capture());
-    Assert.assertEquals(new URL("https://serverUrl/v2/api"), urlCaptor.getAllValues().get(1));
-
-    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
-    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
-
-    Mockito.verify(mockEventHandlers)
-        .dispatch(
-            LogEvent.info(
-                "Cannot verify server at https://serverUrl/v2/api. Attempting again with no TLS verification."));
-  }
-
-  @Test
-  public void testCall_insecureCallerOnHttpServer() throws IOException, RegistryException {
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)) // server is not HTTPS
-        .thenReturn(mockResponse);
-    Mockito.when(mockInsecureConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)); // server is not HTTPS
-
-    RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true, -1);
-    Assert.assertEquals("body", insecureEndpointCaller.call());
-
-    ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
-    Mockito.verify(mockConnectionFactory, Mockito.times(2)).apply(urlCaptor.capture());
-    Assert.assertEquals(new URL("https://serverUrl/v2/api"), urlCaptor.getAllValues().get(0));
-    Assert.assertEquals(new URL("http://serverUrl/v2/api"), urlCaptor.getAllValues().get(1));
-
-    Mockito.verify(mockInsecureConnectionFactory).apply(urlCaptor.capture());
-    Assert.assertEquals(new URL("https://serverUrl/v2/api"), urlCaptor.getAllValues().get(2));
-
-    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
-    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
-
-    Mockito.verify(mockEventHandlers)
-        .dispatch(
-            LogEvent.info(
-                "Cannot verify server at https://serverUrl/v2/api. Attempting again with no TLS verification."));
-    Mockito.verify(mockEventHandlers)
-        .dispatch(
-            LogEvent.info(
-                "Failed to connect to https://serverUrl/v2/api over HTTPS. Attempting again with HTTP: http://serverUrl/v2/api"));
-  }
-
-  @Test
-  public void testCall_insecureCallerOnHttpServerAndNoPortSpecified()
-      throws IOException, RegistryException {
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(ConnectException.class)) // server is not listening on 443
-        .thenReturn(mockResponse); // respond when connected through 80
-
-    RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true, -1);
-    Assert.assertEquals("body", insecureEndpointCaller.call());
-
-    ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
-    Mockito.verify(mockConnectionFactory, Mockito.times(2)).apply(urlCaptor.capture());
-    Assert.assertEquals(new URL("https://serverUrl/v2/api"), urlCaptor.getAllValues().get(0));
-    Assert.assertEquals(new URL("http://serverUrl/v2/api"), urlCaptor.getAllValues().get(1));
-
-    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
-    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
-
-    Mockito.verify(mockEventHandlers)
-        .dispatch(
-            LogEvent.info(
-                "Failed to connect to https://serverUrl/v2/api over HTTPS. Attempting again with HTTP: http://serverUrl/v2/api"));
-  }
-
-  @Test
-  public void testCall_secureCallerOnNonListeningServerAndNoPortSpecified()
-      throws IOException, RegistryException {
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(ConnectException.class)); // server is not listening on 443
-
-    try {
-      secureEndpointCaller.call();
-      Assert.fail("Should not fall back to HTTP if not allowInsecureRegistries");
-    } catch (ConnectException ex) {
-      Assert.assertNull(ex.getMessage());
-    }
-
-    ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
-    Mockito.verify(mockConnectionFactory).apply(urlCaptor.capture());
-    Assert.assertEquals(new URL("https://serverUrl/v2/api"), urlCaptor.getAllValues().get(0));
-
-    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
-    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
-  }
-
-  @Test
-  public void testCall_insecureCallerOnNonListeningServerAndPortSpecified()
-      throws IOException, RegistryException {
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(ConnectException.class)); // server is not listening on 5000
-
-    RegistryEndpointCaller<String> insecureEndpointCaller =
-        createRegistryEndpointCaller(true, 5000);
-    try {
-      insecureEndpointCaller.call();
-      Assert.fail("Should not fall back to HTTP if port was explicitly given and cannot connect");
-    } catch (ConnectException ex) {
-      Assert.assertNull(ex.getMessage());
-    }
-
-    ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
-    Mockito.verify(mockConnectionFactory).apply(urlCaptor.capture());
-    Assert.assertEquals(new URL("https://serverUrl:5000/v2/api"), urlCaptor.getAllValues().get(0));
-
-    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
-    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
-  }
-
-  @Test
-  public void testCall_timeoutFromConnectException() throws IOException, RegistryException {
-    ConnectException mockConnectException = Mockito.mock(ConnectException.class);
-    Mockito.when(mockConnectException.getMessage()).thenReturn("Connection timed out");
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(mockConnectException) // server times out on 443
-        .thenReturn(mockResponse); // respond when connected through 80
-
-    try {
-      RegistryEndpointCaller<String> insecureEndpointCaller =
-          createRegistryEndpointCaller(true, -1);
-      insecureEndpointCaller.call();
-      Assert.fail("Should not fall back to HTTP if timed out even for ConnectionException");
-
-    } catch (ConnectException ex) {
-      Assert.assertSame(mockConnectException, ex);
-      Mockito.verify(mockConnection).send(Mockito.anyString(), Mockito.any());
-    }
   }
 
   @Test
   public void testCall_noHttpResponse() throws IOException, RegistryException {
     NoHttpResponseException mockNoHttpResponseException =
         Mockito.mock(NoHttpResponseException.class);
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(mockNoHttpResponseException);
+    mockRegistryHttpCall(mockNoHttpResponseException);
 
     try {
       secureEndpointCaller.call();
@@ -320,20 +148,12 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testCall_credentialsNotSentOverHttp() throws IOException, RegistryException {
-    HttpResponse redirectResponse = mockRedirectHttpResponse("http://newlocation");
     HttpResponse unauthroizedResponse =
         mockHttpResponse(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, null);
+    mockRegistryHttpCall(new HttpResponseException(unauthroizedResponse));
 
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)) // server is not HTTPS
-        .thenThrow(new HttpResponseException(redirectResponse)) // redirect to HTTP
-        .thenThrow(new HttpResponseException(unauthroizedResponse)); // final response
-    Mockito.when(mockInsecureConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)); // server is not HTTPS
-
-    RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true, -1);
     try {
-      insecureEndpointCaller.call();
+      secureEndpointCaller.call();
       Assert.fail("Call should have failed");
 
     } catch (RegistryCredentialsNotSentException ex) {
@@ -345,39 +165,20 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testCall_credentialsForcedOverHttp() throws IOException, RegistryException {
-    HttpResponse redirectResponse = mockRedirectHttpResponse("http://newlocation");
-
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)) // server is not HTTPS
-        .thenThrow(new HttpResponseException(redirectResponse)) // redirect to HTTP
-        .thenReturn(mockResponse); // final response
-    Mockito.when(mockInsecureConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class)); // server is not HTTPS
-
+    HttpResponse unauthroizedResponse =
+        mockHttpResponse(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, null);
+    mockRegistryHttpCall(new HttpResponseException(unauthroizedResponse));
     System.setProperty(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP, "true");
-    RegistryEndpointCaller<String> insecureEndpointCaller = createRegistryEndpointCaller(true, -1);
-    Assert.assertEquals("body", insecureEndpointCaller.call());
 
-    ArgumentCaptor<URL> urlCaptor = ArgumentCaptor.forClass(URL.class);
-    Mockito.verify(mockConnectionFactory, Mockito.times(3)).apply(urlCaptor.capture());
-    Assert.assertEquals(new URL("https://serverUrl/v2/api"), urlCaptor.getAllValues().get(0));
-    Assert.assertEquals(new URL("http://serverUrl/v2/api"), urlCaptor.getAllValues().get(1));
-    Assert.assertEquals(new URL("http://newlocation"), urlCaptor.getAllValues().get(2));
+    try {
+      secureEndpointCaller.call();
+      Assert.fail("Call should have failed");
 
-    Mockito.verify(mockInsecureConnectionFactory).apply(urlCaptor.capture());
-    Assert.assertEquals(new URL("https://serverUrl/v2/api"), urlCaptor.getAllValues().get(3));
-
-    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
-    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
-
-    Mockito.verify(mockEventHandlers)
-        .dispatch(
-            LogEvent.info(
-                "Cannot verify server at https://serverUrl/v2/api. Attempting again with no TLS verification."));
-    Mockito.verify(mockEventHandlers)
-        .dispatch(
-            LogEvent.info(
-                "Failed to connect to https://serverUrl/v2/api over HTTPS. Attempting again with HTTP: http://serverUrl/v2/api"));
+    } catch (RegistryCredentialsNotSentException ex) {
+      Assert.fail("should have sent credentials");
+    } catch (RegistryUnauthorizedException ex) {
+      Assert.assertEquals("Unauthorized for serverUrl/imageName", ex.getMessage());
+    }
   }
 
   @Test
@@ -402,12 +203,10 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testCall_unknown() throws IOException, RegistryException {
-    HttpResponse mockHttpResponse =
-        mockHttpResponse(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, null);
-    HttpResponseException httpResponseException = new HttpResponseException(mockHttpResponse);
+    HttpResponseException httpResponseException =
+        new HttpResponseException(mockHttpResponse(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, null));
 
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(httpResponseException);
+    mockRegistryHttpCall(httpResponseException);
 
     try {
       secureEndpointCaller.call();
@@ -434,28 +233,9 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
-  public void testCall_disallowInsecure() throws IOException, RegistryException {
-    // Mocks a response for temporary redirect to a new location.
-    HttpResponse redirectResponse = mockRedirectHttpResponse("http://newlocation");
-
-    HttpResponseException redirectException = new HttpResponseException(redirectResponse);
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(redirectException);
-
-    try {
-      secureEndpointCaller.call();
-      Assert.fail("Call should have failed");
-
-    } catch (InsecureRegistryException ex) {
-      // pass
-    }
-  }
-
-  @Test
   public void testCall_logErrorOnIoExceptions() throws IOException, RegistryException {
     IOException ioException = new IOException("detailed exception message");
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(ioException);
+    mockRegistryHttpCall(ioException);
 
     try {
       secureEndpointCaller.call();
@@ -475,8 +255,7 @@ public class RegistryEndpointCallerTest {
   @Test
   public void testCall_logErrorOnBrokenPipe() throws IOException, RegistryException {
     IOException ioException = new IOException("this is due to broken pipe");
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(ioException);
+    mockRegistryHttpCall(ioException);
 
     try {
       secureEndpointCaller.call();
@@ -497,67 +276,6 @@ public class RegistryEndpointCallerTest {
                       + "may prevent sending packets that are too large.\u001B[0m"));
       Mockito.verifyNoMoreInteractions(mockEventHandlers);
     }
-  }
-
-  @Test
-  public void testHttpTimeout_propertyNotSet() throws IOException, RegistryException {
-    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-
-    System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
-    secureEndpointCaller.call();
-
-    // We fall back to the default timeout:
-    // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
-    Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout().intValue());
-  }
-
-  @Test
-  public void testHttpTimeout_stringValue() throws IOException, RegistryException {
-    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-
-    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "random string");
-    secureEndpointCaller.call();
-
-    Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout().intValue());
-  }
-
-  @Test
-  public void testHttpTimeout_negativeValue() throws IOException, RegistryException {
-    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-
-    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "-1");
-    secureEndpointCaller.call();
-
-    // We let the negative value pass through:
-    // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
-    Assert.assertEquals(Integer.valueOf(-1), mockConnection.getRequestedHttpTimeout());
-  }
-
-  @Test
-  public void testHttpTimeout_0accepted() throws IOException, RegistryException {
-    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "0");
-
-    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-
-    secureEndpointCaller.call();
-
-    Assert.assertEquals(Integer.valueOf(0), mockConnection.getRequestedHttpTimeout());
-  }
-
-  @Test
-  public void testHttpTimeout() throws IOException, RegistryException {
-    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "7593");
-
-    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-
-    secureEndpointCaller.call();
-
-    Assert.assertEquals(Integer.valueOf(7593), mockConnection.getRequestedHttpTimeout());
   }
 
   @Test
@@ -631,9 +349,7 @@ public class RegistryEndpointCallerTest {
       throws IOException, RegistryException {
     HttpResponse mockHttpResponse = mockHttpResponse(httpStatusCode, null);
     HttpResponseException httpResponseException = new HttpResponseException(mockHttpResponse);
-
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(httpResponseException);
+    mockRegistryHttpCall(httpResponseException);
 
     try {
       secureEndpointCaller.call();
@@ -654,10 +370,7 @@ public class RegistryEndpointCallerTest {
     HttpResponse errorResponse = mockHttpResponse(httpStatusCode, null);
     Mockito.when(errorResponse.parseAsString())
         .thenReturn("{\"errors\":[{\"code\":\"code\",\"message\":\"message\"}]}");
-    HttpResponseException httpResponseException = new HttpResponseException(errorResponse);
-
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(httpResponseException);
+    mockRegistryHttpCall(new HttpResponseException(errorResponse));
 
     try {
       secureEndpointCaller.call();
@@ -683,34 +396,24 @@ public class RegistryEndpointCallerTest {
 
     // Has mockConnection.send throw first, then succeed.
     HttpResponseException redirectException = new HttpResponseException(redirectResponse);
-    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), Mockito.any()))
-        .thenThrow(redirectException)
+    mockRegistryHttpCall(redirectException);
+    Mockito.when(
+            mockHttpClient.call(
+                Mockito.eq("httpMethod"),
+                Mockito.eq(new URL("https://newlocation")),
+                Mockito.any()))
         .thenReturn(mockResponse);
 
     Assert.assertEquals("body", secureEndpointCaller.call());
-
-    // Checks that the URL was changed to the new location.
-    ArgumentCaptor<URL> urlArgumentCaptor = ArgumentCaptor.forClass(URL.class);
-    Mockito.verify(mockConnectionFactory, Mockito.times(2)).apply(urlArgumentCaptor.capture());
-    Assert.assertEquals(
-        new URL("https://serverUrl/v2/api"), urlArgumentCaptor.getAllValues().get(0));
-    Assert.assertEquals(new URL("https://newlocation"), urlArgumentCaptor.getAllValues().get(1));
-
-    Mockito.verifyNoMoreInteractions(mockConnectionFactory);
-    Mockito.verifyNoMoreInteractions(mockInsecureConnectionFactory);
   }
 
-  private RegistryEndpointCaller<String> createRegistryEndpointCaller(
-      boolean allowInsecure, int port) {
-    return new RegistryEndpointCaller<>(
-        mockEventHandlers,
-        "userAgent",
-        new TestRegistryEndpointProvider(),
-        Authorization.fromBasicToken("token"),
-        new RegistryEndpointRequestProperties(
-            (port == -1 ? "serverUrl" : "serverUrl:" + port), "imageName"),
-        allowInsecure,
-        mockConnectionFactory,
-        mockInsecureConnectionFactory);
+  private void mockRegistryHttpCall(Exception exceptionToThrow)
+      throws MalformedURLException, IOException {
+    Mockito.when(
+            mockHttpClient.call(
+                Mockito.eq("httpMethod"),
+                Mockito.eq(new URL("https://serverUrl/v2/api")),
+                Mockito.any()))
+        .thenThrow(exceptionToThrow);
   }
 }

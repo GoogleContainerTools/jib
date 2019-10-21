@@ -21,6 +21,7 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
+import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Response;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -34,16 +35,16 @@ class AuthenticationMethodRetriever
     implements RegistryEndpointProvider<Optional<RegistryAuthenticator>> {
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  private final boolean allowInsecureConnection;
   private final String userAgent;
+  private final Connection httpClient;
 
   AuthenticationMethodRetriever(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      boolean allowInsecureConnection,
-      String userAgent) {
+      String userAgent,
+      Connection httpClient) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
-    this.allowInsecureConnection = allowInsecureConnection;
     this.userAgent = userAgent;
+    this.httpClient = httpClient;
   }
 
   @Nullable
@@ -103,10 +104,7 @@ class AuthenticationMethodRetriever
     // Parses the header to retrieve the components.
     try {
       return RegistryAuthenticator.fromAuthenticationMethod(
-          authenticationMethod,
-          registryEndpointRequestProperties,
-          allowInsecureConnection,
-          userAgent);
+          authenticationMethod, registryEndpointRequestProperties, userAgent, httpClient);
 
     } catch (RegistryAuthenticationFailedException ex) {
       throw new RegistryErrorExceptionBuilder(getActionDescription(), ex)

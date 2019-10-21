@@ -19,43 +19,35 @@ package com.google.cloud.tools.jib.http;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.apache.ApacheHttpTransport;
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import java.io.Closeable;
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
-import java.util.function.Function;
-import javax.annotation.Nullable;
+import java.util.function.Consumer;
+import javax.net.ssl.SSLException;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-/**
- * Sends an HTTP {@link Request} and stores the {@link Response}. Clients should not send more than
- * one request.
- *
- * <p>Example usage:
- *
- * <pre>{@code
- * try (Connection connection = new Connection(url)) {
- *   Response response = connection.get(request);
- *   // ... process the response
- * }
- * }</pre>
- */
-public class Connection implements Closeable {
+/** */
+public class Connection {
 
-  /**
-   * Returns a factory for {@link Connection}.
-   *
-   * @return {@link Connection} factory, a function that generates a {@link Connection} to a URL
-   */
-  public static Function<URL, Connection> getConnectionFactory() {
+  private static boolean isHttpsProtocol(URL url) {
+    return "https".equals(url.getProtocol());
+  }
+
+  private static URL toHttp(URL url) {
+    GenericUrl httpUrl = new GenericUrl(url);
+    httpUrl.setScheme("http");
+    return httpUrl.toURL();
+  }
+
+  private static HttpTransport getHttpTransport() {
     // Do not use NetHttpTransport. It does not process response errors properly.
     // See https://github.com/google/google-http-java-client/issues/39
     //
@@ -63,22 +55,18 @@ public class Connection implements Closeable {
     // connection persistence causes the connection to throw NoHttpResponseException.
     ApacheHttpTransport transport = new ApacheHttpTransport();
     addProxyCredentials(transport);
-    return url -> new Connection(url, transport);
+    return transport;
   }
 
-  /**
-   * Returns a factory for {@link Connection} that does not verify TLS peer verification.
-   *
-   * @throws GeneralSecurityException if unable to turn off TLS peer verification
-   * @return {@link Connection} factory, a function that generates a {@link Connection} to a URL
-   */
-  public static Function<URL, Connection> getInsecureConnectionFactory()
-      throws GeneralSecurityException {
-    // Do not use NetHttpTransport. See comments in getConnectionFactory for details.
-    ApacheHttpTransport transport =
-        new ApacheHttpTransport.Builder().doNotValidateCertificate().build();
-    addProxyCredentials(transport);
-    return url -> new Connection(url, transport);
+  private static HttpTransport getInsecureHttpTransport() {
+    try {
+      ApacheHttpTransport insecureTransport =
+          new ApacheHttpTransport.Builder().doNotValidateCertificate().build();
+      addProxyCredentials(insecureTransport);
+      return insecureTransport;
+    } catch (GeneralSecurityException ex) {
+      throw new RuntimeException("platform does not support TSL protocol", ex);
+    }
   }
 
   /**
@@ -114,87 +102,122 @@ public class Connection implements Closeable {
             new UsernamePasswordCredentials(proxyUser, proxyPassword));
   }
 
-  private HttpRequestFactory requestFactory;
+  private final boolean insecureConnectionAndFailoverEnabled;
+  private final Consumer<LogEvent> logger;
 
-  @Nullable private HttpResponse httpResponse;
-
-  /** The URL to send the request to. */
-  private final GenericUrl url;
-
-  /**
-   * Make sure to wrap with a try-with-resource to ensure that the connection is closed after usage.
-   *
-   * @param url the url to send the request to
-   */
-  @VisibleForTesting
-  Connection(URL url, HttpTransport transport) {
-    this.url = new GenericUrl(url);
-    requestFactory = transport.createRequestFactory();
-  }
-
-  @Override
-  public void close() throws IOException {
-    if (httpResponse == null) {
-      return;
-    }
-
-    httpResponse.disconnect();
+  public Connection(boolean insecureFailoverEnabled, Consumer<LogEvent> logger) {
+    this.insecureConnectionAndFailoverEnabled = insecureFailoverEnabled;
+    this.logger = logger;
   }
 
   /**
    * Sends the request with method GET.
    *
+   * @param url
    * @param request the request to send
    * @return the response to the sent request
    * @throws IOException if sending the request fails
    */
-  public Response get(Request request) throws IOException {
-    return send(HttpMethods.GET, request);
+  public Response get(URL url, Request request) throws IOException {
+    return call(HttpMethods.GET, url, request);
   }
 
   /**
    * Sends the request with method POST.
    *
+   * @param url
    * @param request the request to send
    * @return the response to the sent request
    * @throws IOException if sending the request fails
    */
-  public Response post(Request request) throws IOException {
-    return send(HttpMethods.POST, request);
+  public Response post(URL url, Request request) throws IOException {
+    return call(HttpMethods.POST, url, request);
   }
 
   /**
    * Sends the request with method PUT.
    *
+   * @param url
    * @param request the request to send
    * @return the response to the sent request
    * @throws IOException if sending the request fails
    */
-  public Response put(Request request) throws IOException {
-    return send(HttpMethods.PUT, request);
+  public Response put(URL url, Request request) throws IOException {
+    return call(HttpMethods.PUT, url, request);
   }
 
   /**
    * Sends the request.
    *
    * @param httpMethod the HTTP request method
+   * @param url
    * @param request the request to send
    * @return the response to the sent request
    * @throws IOException if building the HTTP request fails.
    */
-  public Response send(String httpMethod, Request request) throws IOException {
-    Preconditions.checkState(httpResponse == null, "Connection can send only one request");
+  public Response call(String httpMethod, URL url, Request request) throws IOException {
+    if (!isHttpsProtocol(url) && !insecureConnectionAndFailoverEnabled) {
+      throw new SSLException("insecure HTTP connection not allowed: " + url);
+    }
 
+    try {
+      return call(httpMethod, url, request, getHttpTransport());
+
+    } catch (SSLException ex) {
+      if (!insecureConnectionAndFailoverEnabled) {
+        throw ex;
+      }
+
+      try {
+        logInsecureHttpsFailover(url);
+        return call(httpMethod, url, request, getInsecureHttpTransport());
+
+      } catch (SSLException ignored) {
+        logHttpFailover(url);
+        return call(httpMethod, toHttp(url), request, getHttpTransport());
+      }
+
+    } catch (ConnectException ex) {
+      // It is observed that Open/Oracle JDKs sometimes throw SocketTimeoutException but other times
+      // ConnectException for connection timeout. (Could be a JDK bug.) Note SocketTimeoutException
+      // does not extend ConnectException (or vice versa), and we want to be consistent to error out
+      // on timeouts: https://github.com/GoogleContainerTools/jib/issues/1895#issuecomment-527544094
+      if (ex.getMessage() != null && ex.getMessage().contains("timed out")) {
+        throw ex;
+      }
+
+      // Fall back to HTTP only if "url" had no port specified (i.e., we tried the default HTTPS
+      // port 443) and we could not connect to 443. It's worth trying port 80.
+      if (insecureConnectionAndFailoverEnabled && isHttpsProtocol(url) && url.getPort() == -1) {
+        logHttpFailover(url);
+        return call(httpMethod, toHttp(url), request, getHttpTransport());
+      }
+      throw ex;
+    }
+  }
+
+  private static Response call(
+      String httpMethod, URL url, Request request, HttpTransport httpTransport) throws IOException {
     HttpRequest httpRequest =
-        requestFactory
-            .buildRequest(httpMethod, url, request.getHttpContent())
+        httpTransport
+            .createRequestFactory()
+            .buildRequest(httpMethod, new GenericUrl(url), request.getHttpContent())
             .setHeaders(request.getHeaders());
     if (request.getHttpTimeout() != null) {
       httpRequest.setConnectTimeout(request.getHttpTimeout());
       httpRequest.setReadTimeout(request.getHttpTimeout());
     }
 
-    httpResponse = httpRequest.execute();
-    return new Response(httpResponse);
+    return new Response(httpRequest.execute());
+  }
+
+  private void logHttpFailover(URL url) {
+    String log = "Failed to connect to " + url + " over HTTPS. Attempting again with HTTP.";
+    logger.accept(LogEvent.info(log));
+  }
+
+  private void logInsecureHttpsFailover(URL url) {
+    String log = "Cannot verify server at " + url + ". Attempting again with no TLS verification.";
+    logger.accept(LogEvent.info(log));
   }
 }
