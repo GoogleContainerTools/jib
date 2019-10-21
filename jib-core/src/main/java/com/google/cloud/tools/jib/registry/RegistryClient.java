@@ -300,8 +300,7 @@ public class RegistryClient {
     return callRegistryEndpoint(manifestPuller);
   }
 
-  public ManifestAndDigest<ManifestTemplate> pullManifest(String imageTag)
-      throws IOException, RegistryException {
+  public ManifestAndDigest<?> pullManifest(String imageTag) throws IOException, RegistryException {
     return pullManifest(imageTag, ManifestTemplate.class);
   }
 

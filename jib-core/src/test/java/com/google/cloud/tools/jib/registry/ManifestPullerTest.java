@@ -72,7 +72,7 @@ public class ManifestPullerTest {
     v21Manifest.reset();
 
     Mockito.when(mockResponse.getBody()).thenReturn(v21Manifest);
-    ManifestAndDigest manifestAndDigest =
+    ManifestAndDigest<?> manifestAndDigest =
         new ManifestPuller<>(
                 fakeRegistryEndpointRequestProperties, "test-image-tag", V21ManifestTemplate.class)
             .handleResponse(mockResponse);
@@ -92,7 +92,7 @@ public class ManifestPullerTest {
     v22Manifest.reset();
 
     Mockito.when(mockResponse.getBody()).thenReturn(v22Manifest);
-    ManifestAndDigest manifestAndDigest =
+    ManifestAndDigest<?> manifestAndDigest =
         new ManifestPuller<>(
                 fakeRegistryEndpointRequestProperties, "test-image-tag", V22ManifestTemplate.class)
             .handleResponse(mockResponse);
@@ -130,7 +130,7 @@ public class ManifestPullerTest {
     v22ManifestList.reset();
 
     Mockito.when(mockResponse.getBody()).thenReturn(v22ManifestList);
-    ManifestAndDigest manifestAndDigest =
+    ManifestAndDigest<?> manifestAndDigest =
         new ManifestPuller<>(
                 fakeRegistryEndpointRequestProperties, "test-image-tag", ManifestTemplate.class)
             .handleResponse(mockResponse);
