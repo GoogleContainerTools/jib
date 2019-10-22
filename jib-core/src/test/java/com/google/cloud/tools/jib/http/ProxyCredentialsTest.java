@@ -27,10 +27,12 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 
 /** Tests for {@link Connection} with setting proxy credentials. */
-public class ConnectionWithProxyCredentialsTest {
+public class ProxyCredentialsTest {
 
   private static final ImmutableList<String> proxyProperties =
       ImmutableList.of(
@@ -43,28 +45,13 @@ public class ConnectionWithProxyCredentialsTest {
           "https.proxyUser",
           "https.proxyPassword");
 
-  // HashMap to allow saving null values.
-  private final HashMap<String, String> savedProperties = new HashMap<>();
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   private final ApacheHttpTransport transport = new ApacheHttpTransport();
 
   @Before
   public void setUp() {
-    proxyProperties.stream().forEach(key -> savedProperties.put(key, System.getProperty(key)));
     proxyProperties.stream().forEach(key -> System.clearProperty(key));
-  }
-
-  @After
-  public void tearDown() {
-    Consumer<Map.Entry<String, String>> restoreProperty =
-        entry -> {
-          if (entry.getValue() == null) {
-            System.clearProperty(entry.getKey());
-          } else {
-            System.setProperty(entry.getKey(), entry.getValue());
-          }
-        };
-    savedProperties.entrySet().stream().forEach(restoreProperty);
   }
 
   @Test

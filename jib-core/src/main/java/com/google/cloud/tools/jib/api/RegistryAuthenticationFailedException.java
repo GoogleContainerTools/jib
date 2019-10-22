@@ -27,16 +27,13 @@ public class RegistryAuthenticationFailedException extends RegistryException {
 
   public RegistryAuthenticationFailedException(
       String serverUrl, String imageName, Throwable cause) {
-    this(serverUrl, imageName, cause.getMessage(), cause);
+    super(MessageFormat.format(REASON, serverUrl, imageName, cause.getMessage()), cause);
+    this.serverUrl = serverUrl;
+    this.imageName = imageName;
   }
 
   public RegistryAuthenticationFailedException(String serverUrl, String imageName, String reason) {
-    this(serverUrl, imageName, reason, null);
-  }
-
-  public RegistryAuthenticationFailedException(
-      String serverUrl, String imageName, String reason, Throwable cause) {
-    super(MessageFormat.format(REASON, serverUrl, imageName, reason), cause);
+    super(MessageFormat.format(REASON, serverUrl, imageName, reason));
     this.serverUrl = serverUrl;
     this.imageName = imageName;
   }

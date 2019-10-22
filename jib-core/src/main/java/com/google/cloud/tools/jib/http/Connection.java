@@ -17,8 +17,10 @@
 package com.google.cloud.tools.jib.http;
 
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.apache.ApacheHttpTransport;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -29,6 +31,7 @@ import java.net.ConnectException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import javax.net.ssl.SSLException;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -102,18 +105,42 @@ public class Connection {
             new UsernamePasswordCredentials(proxyUser, proxyPassword));
   }
 
-  private final boolean insecureConnectionAndFailoverEnabled;
+  private final boolean enableHttpAndInsecureFailover;
+  private final boolean sendAuthorizationOverHttp;
   private final Consumer<LogEvent> logger;
+  private final Supplier<HttpTransport> httpTransportFactory;
+  private final Supplier<HttpTransport> insecureHttpTransportFactory;
 
-  public Connection(boolean insecureFailoverEnabled, Consumer<LogEvent> logger) {
-    this.insecureConnectionAndFailoverEnabled = insecureFailoverEnabled;
+  public Connection(
+      boolean enableHttpAndInsecureFailover,
+      boolean sendAuthorizationOverHttp,
+      Consumer<LogEvent> logger) {
+    this(
+        enableHttpAndInsecureFailover,
+        sendAuthorizationOverHttp,
+        logger,
+        Connection::getHttpTransport,
+        Connection::getInsecureHttpTransport);
+  }
+
+  @VisibleForTesting
+  Connection(
+      boolean enableHttpAndInsecureFailover,
+      boolean sendAuthorizationOverHttp,
+      Consumer<LogEvent> logger,
+      Supplier<HttpTransport> httpTransportFactory,
+      Supplier<HttpTransport> insecureHttpTransportFactory) {
+    this.enableHttpAndInsecureFailover = enableHttpAndInsecureFailover;
+    this.sendAuthorizationOverHttp = sendAuthorizationOverHttp;
     this.logger = logger;
+    this.httpTransportFactory = httpTransportFactory;
+    this.insecureHttpTransportFactory = insecureHttpTransportFactory;
   }
 
   /**
    * Sends the request with method GET.
    *
-   * @param url
+   * @param url endpoint URL
    * @param request the request to send
    * @return the response to the sent request
    * @throws IOException if sending the request fails
@@ -125,7 +152,7 @@ public class Connection {
   /**
    * Sends the request with method POST.
    *
-   * @param url
+   * @param url endpoint URL
    * @param request the request to send
    * @return the response to the sent request
    * @throws IOException if sending the request fails
@@ -137,7 +164,7 @@ public class Connection {
   /**
    * Sends the request with method PUT.
    *
-   * @param url
+   * @param url endpoint URL
    * @param request the request to send
    * @return the response to the sent request
    * @throws IOException if sending the request fails
@@ -150,31 +177,31 @@ public class Connection {
    * Sends the request.
    *
    * @param httpMethod the HTTP request method
-   * @param url
+   * @param url endpoint URL
    * @param request the request to send
    * @return the response to the sent request
    * @throws IOException if building the HTTP request fails.
    */
   public Response call(String httpMethod, URL url, Request request) throws IOException {
-    if (!isHttpsProtocol(url) && !insecureConnectionAndFailoverEnabled) {
+    if (!isHttpsProtocol(url) && !enableHttpAndInsecureFailover) {
       throw new SSLException("insecure HTTP connection not allowed: " + url);
     }
 
     try {
-      return call(httpMethod, url, request, getHttpTransport());
+      return call(httpMethod, url, request, httpTransportFactory.get());
 
     } catch (SSLException ex) {
-      if (!insecureConnectionAndFailoverEnabled) {
+      if (!enableHttpAndInsecureFailover) {
         throw ex;
       }
 
       try {
         logInsecureHttpsFailover(url);
-        return call(httpMethod, url, request, getInsecureHttpTransport());
+        return call(httpMethod, url, request, insecureHttpTransportFactory.get());
 
       } catch (SSLException ignored) {
         logHttpFailover(url);
-        return call(httpMethod, toHttp(url), request, getHttpTransport());
+        return call(httpMethod, toHttp(url), request, httpTransportFactory.get());
       }
 
     } catch (ConnectException ex) {
@@ -188,27 +215,38 @@ public class Connection {
 
       // Fall back to HTTP only if "url" had no port specified (i.e., we tried the default HTTPS
       // port 443) and we could not connect to 443. It's worth trying port 80.
-      if (insecureConnectionAndFailoverEnabled && isHttpsProtocol(url) && url.getPort() == -1) {
+      if (enableHttpAndInsecureFailover && isHttpsProtocol(url) && url.getPort() == -1) {
         logHttpFailover(url);
-        return call(httpMethod, toHttp(url), request, getHttpTransport());
+        return call(httpMethod, toHttp(url), request, httpTransportFactory.get());
       }
       throw ex;
     }
   }
 
-  private static Response call(
-      String httpMethod, URL url, Request request, HttpTransport httpTransport) throws IOException {
+  private Response call(String httpMethod, URL url, Request request, HttpTransport httpTransport)
+      throws IOException {
+    boolean clearAuthorization = !isHttpsProtocol(url) && !sendAuthorizationOverHttp;
+
+    HttpHeaders requestHeaders = request.getHeaders();
+    if (clearAuthorization) {
+      requestHeaders.clone().setAuthenticate(null);
+    }
+
     HttpRequest httpRequest =
         httpTransport
             .createRequestFactory()
             .buildRequest(httpMethod, new GenericUrl(url), request.getHttpContent())
-            .setHeaders(request.getHeaders());
+            .setHeaders(requestHeaders);
     if (request.getHttpTimeout() != null) {
       httpRequest.setConnectTimeout(request.getHttpTimeout());
       httpRequest.setReadTimeout(request.getHttpTimeout());
     }
 
-    return new Response(httpRequest.execute());
+    try {
+      return new Response(httpRequest.execute());
+    } catch (HttpResponseException ex) {
+      throw new ResponseException(ex, clearAuthorization);
+    }
   }
 
   private void logHttpFailover(URL url) {

@@ -17,9 +17,8 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpHeaders;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
@@ -28,7 +27,10 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Connection;
+import com.google.cloud.tools.jib.http.Request;
+import com.google.cloud.tools.jib.http.RequestWrapper;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.common.io.CharStreams;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -41,6 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLPeerUnverifiedException;
 import org.apache.http.NoHttpResponseException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
@@ -49,6 +52,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -94,11 +98,10 @@ public class RegistryEndpointCallerTest {
     }
   }
 
-  private static HttpResponse mockHttpResponse(int statusCode, @Nullable HttpHeaders headers)
-      throws IOException {
-    HttpResponse mock = Mockito.mock(HttpResponse.class);
+  private static ResponseException mockResponseException(
+      int statusCode, @Nullable HttpHeaders headers) {
+    ResponseException mock = Mockito.mock(ResponseException.class);
     Mockito.when(mock.getStatusCode()).thenReturn(statusCode);
-    Mockito.when(mock.parseAsString()).thenReturn("");
     Mockito.when(mock.getHeaders()).thenReturn(headers != null ? headers : new HttpHeaders());
     return mock;
   }
@@ -109,11 +112,11 @@ public class RegistryEndpointCallerTest {
   @Mock private Connection mockHttpClient;
   @Mock private Response mockResponse;
 
-  private RegistryEndpointCaller<String> secureEndpointCaller;
+  private RegistryEndpointCaller<String> endpointCaller;
 
   @Before
   public void setUp() throws IOException {
-    secureEndpointCaller =
+    endpointCaller =
         new RegistryEndpointCaller<>(
             mockEventHandlers,
             "userAgent",
@@ -128,16 +131,15 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testCall_noHttpResponse() throws IOException, RegistryException {
-    NoHttpResponseException mockNoHttpResponseException =
-        Mockito.mock(NoHttpResponseException.class);
-    mockRegistryHttpCall(mockNoHttpResponseException);
+    NoHttpResponseException mockNoResponseException = Mockito.mock(NoHttpResponseException.class);
+    setUpRegistryResponse(mockNoResponseException);
 
     try {
-      secureEndpointCaller.call();
+      endpointCaller.call();
       Assert.fail("Call should have failed");
 
     } catch (NoHttpResponseException ex) {
-      Assert.assertSame(mockNoHttpResponseException, ex);
+      Assert.assertSame(mockNoResponseException, ex);
     }
   }
 
@@ -148,12 +150,13 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testCall_credentialsNotSentOverHttp() throws IOException, RegistryException {
-    HttpResponse unauthroizedResponse =
-        mockHttpResponse(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, null);
-    mockRegistryHttpCall(new HttpResponseException(unauthroizedResponse));
+    ResponseException unauthroizedException =
+        mockResponseException(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, null);
+    Mockito.when(unauthroizedException.requestAuthorizationCleared()).thenReturn(true);
+    setUpRegistryResponse(unauthroizedException);
 
     try {
-      secureEndpointCaller.call();
+      endpointCaller.call();
       Assert.fail("Call should have failed");
 
     } catch (RegistryCredentialsNotSentException ex) {
@@ -165,17 +168,17 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testCall_credentialsForcedOverHttp() throws IOException, RegistryException {
-    HttpResponse unauthroizedResponse =
-        mockHttpResponse(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, null);
-    mockRegistryHttpCall(new HttpResponseException(unauthroizedResponse));
+    ResponseException unauthroizedException =
+        mockResponseException(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, null);
+    setUpRegistryResponse(unauthroizedException);
     System.setProperty(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP, "true");
 
     try {
-      secureEndpointCaller.call();
+      endpointCaller.call();
       Assert.fail("Call should have failed");
 
     } catch (RegistryCredentialsNotSentException ex) {
-      Assert.fail("should have sent credentials");
+      throw new AssertionError("should have sent credentials", ex);
     } catch (RegistryUnauthorizedException ex) {
       Assert.assertEquals("Unauthorized for serverUrl/imageName", ex.getMessage());
     }
@@ -203,17 +206,16 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testCall_unknown() throws IOException, RegistryException {
-    HttpResponseException httpResponseException =
-        new HttpResponseException(mockHttpResponse(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, null));
-
-    mockRegistryHttpCall(httpResponseException);
+    ResponseException responseException =
+        mockResponseException(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, null);
+    setUpRegistryResponse(responseException);
 
     try {
-      secureEndpointCaller.call();
+      endpointCaller.call();
       Assert.fail("Call should have failed");
 
-    } catch (HttpResponseException ex) {
-      Assert.assertSame(httpResponseException, ex);
+    } catch (ResponseException ex) {
+      Assert.assertSame(responseException, ex);
     }
   }
 
@@ -235,10 +237,10 @@ public class RegistryEndpointCallerTest {
   @Test
   public void testCall_logErrorOnIoExceptions() throws IOException, RegistryException {
     IOException ioException = new IOException("detailed exception message");
-    mockRegistryHttpCall(ioException);
+    setUpRegistryResponse(ioException);
 
     try {
-      secureEndpointCaller.call();
+      endpointCaller.call();
       Assert.fail();
 
     } catch (IOException ex) {
@@ -255,10 +257,10 @@ public class RegistryEndpointCallerTest {
   @Test
   public void testCall_logErrorOnBrokenPipe() throws IOException, RegistryException {
     IOException ioException = new IOException("this is due to broken pipe");
-    mockRegistryHttpCall(ioException);
+    setUpRegistryResponse(ioException);
 
     try {
-      secureEndpointCaller.call();
+      endpointCaller.call();
       Assert.fail();
 
     } catch (IOException ex) {
@@ -308,13 +310,13 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testNewRegistryErrorException_jsonErrorOutput() {
-    HttpResponseException httpException = Mockito.mock(HttpResponseException.class);
+    ResponseException httpException = Mockito.mock(ResponseException.class);
     Mockito.when(httpException.getContent())
         .thenReturn(
             "{\"errors\": [{\"code\": \"MANIFEST_UNKNOWN\", \"message\": \"manifest unknown\"}]}");
 
     RegistryErrorException registryException =
-        secureEndpointCaller.newRegistryErrorException(httpException);
+        endpointCaller.newRegistryErrorException(httpException);
     Assert.assertSame(httpException, registryException.getCause());
     Assert.assertEquals(
         "Tried to actionDescription but failed because: manifest unknown | If this is a bug, "
@@ -323,14 +325,78 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
+  public void testHttpTimeout_propertyNotSet() throws IOException, RegistryException {
+    System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
+
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
+        .thenReturn(mockResponse);
+
+    endpointCaller.call();
+    // We fall back to the default timeout:
+    // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
+    Assert.assertEquals(20000, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
+  }
+
+  @Test
+  public void testHttpTimeout_stringValue() throws IOException, RegistryException {
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "random string");
+
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
+        .thenReturn(mockResponse);
+
+    endpointCaller.call();
+    Assert.assertEquals(20000, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
+  }
+
+  @Test
+  public void testHttpTimeout_negativeValue() throws IOException, RegistryException {
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "-1");
+
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
+        .thenReturn(mockResponse);
+
+    endpointCaller.call();
+    // We let the negative value pass through:
+    // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
+    Assert.assertEquals(-1, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
+  }
+
+  @Test
+  public void testHttpTimeout_0accepted() throws IOException, RegistryException {
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "0");
+
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
+        .thenReturn(mockResponse);
+
+    endpointCaller.call();
+    Assert.assertEquals(0, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
+  }
+
+  @Test
+  public void testHttpTimeout() throws IOException, RegistryException {
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "7593");
+
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
+        .thenReturn(mockResponse);
+
+    endpointCaller.call();
+    Assert.assertEquals(7593, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
+  }
+
+  @Test
   public void testNewRegistryErrorException_nonJsonErrorOutput() {
-    HttpResponseException httpException = Mockito.mock(HttpResponseException.class);
+    ResponseException httpException = Mockito.mock(ResponseException.class);
     // Registry returning non-structured error output
     Mockito.when(httpException.getContent()).thenReturn(">>>>> (404) page not found <<<<<");
     Mockito.when(httpException.getStatusCode()).thenReturn(404);
 
     RegistryErrorException registryException =
-        secureEndpointCaller.newRegistryErrorException(httpException);
+        endpointCaller.newRegistryErrorException(httpException);
     Assert.assertSame(httpException, registryException.getCause());
     Assert.assertEquals(
         "Tried to actionDescription but failed because: registry returned error code 404; "
@@ -341,23 +407,38 @@ public class RegistryEndpointCallerTest {
         registryException.getMessage());
   }
 
+  @Test
+  public void testCall_secureCallerOnUnverifiableServer() throws IOException, RegistryException {
+    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), Mockito.any()))
+        .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class));
+
+    try {
+      endpointCaller.call();
+      Assert.fail();
+    } catch (InsecureRegistryException ex) {
+      Assert.assertEquals(
+          "Failed to verify the server at https://serverUrl/v2/api because only secure connections "
+              + "are allowed.",
+          ex.getMessage());
+    }
+  }
+
   /**
    * Verifies that a response with {@code httpStatusCode} throws {@link
    * RegistryUnauthorizedException}.
    */
   private void verifyThrowsRegistryUnauthorizedException(int httpStatusCode)
       throws IOException, RegistryException {
-    HttpResponse mockHttpResponse = mockHttpResponse(httpStatusCode, null);
-    HttpResponseException httpResponseException = new HttpResponseException(mockHttpResponse);
-    mockRegistryHttpCall(httpResponseException);
+    ResponseException responseException = mockResponseException(httpStatusCode, null);
+    setUpRegistryResponse(responseException);
 
     try {
-      secureEndpointCaller.call();
+      endpointCaller.call();
       Assert.fail("Call should have failed");
 
     } catch (RegistryUnauthorizedException ex) {
       Assert.assertEquals("serverUrl/imageName", ex.getImageReference());
-      Assert.assertSame(httpResponseException, ex.getHttpResponseException());
+      Assert.assertSame(responseException, ex.getCause());
     }
   }
 
@@ -367,13 +448,13 @@ public class RegistryEndpointCallerTest {
    */
   private void verifyThrowsRegistryErrorException(int httpStatusCode)
       throws IOException, RegistryException {
-    HttpResponse errorResponse = mockHttpResponse(httpStatusCode, null);
-    Mockito.when(errorResponse.parseAsString())
+    ResponseException errorResponse = mockResponseException(httpStatusCode, null);
+    Mockito.when(errorResponse.getContent())
         .thenReturn("{\"errors\":[{\"code\":\"code\",\"message\":\"message\"}]}");
-    mockRegistryHttpCall(new HttpResponseException(errorResponse));
+    setUpRegistryResponse(errorResponse);
 
     try {
-      secureEndpointCaller.call();
+      endpointCaller.call();
       Assert.fail("Call should have failed");
 
     } catch (RegistryErrorException ex) {
@@ -391,12 +472,11 @@ public class RegistryEndpointCallerTest {
   private void verifyRetriesWithNewLocation(int httpStatusCode)
       throws IOException, RegistryException {
     // Mocks a response for temporary redirect to a new location.
-    HttpResponse redirectResponse =
-        mockHttpResponse(httpStatusCode, new HttpHeaders().setLocation("https://newlocation"));
+    ResponseException redirectException =
+        mockResponseException(httpStatusCode, new HttpHeaders().setLocation("https://newlocation"));
 
-    // Has mockConnection.send throw first, then succeed.
-    HttpResponseException redirectException = new HttpResponseException(redirectResponse);
-    mockRegistryHttpCall(redirectException);
+    // Make httpClient.call() throw first, then succeed.
+    setUpRegistryResponse(redirectException);
     Mockito.when(
             mockHttpClient.call(
                 Mockito.eq("httpMethod"),
@@ -404,10 +484,10 @@ public class RegistryEndpointCallerTest {
                 Mockito.any()))
         .thenReturn(mockResponse);
 
-    Assert.assertEquals("body", secureEndpointCaller.call());
+    Assert.assertEquals("body", endpointCaller.call());
   }
 
-  private void mockRegistryHttpCall(Exception exceptionToThrow)
+  private void setUpRegistryResponse(Exception exceptionToThrow)
       throws MalformedURLException, IOException {
     Mockito.when(
             mockHttpClient.call(

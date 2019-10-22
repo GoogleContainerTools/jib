@@ -16,14 +16,13 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.api.client.http.HttpHeaders;
-import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.io.Resources;
@@ -157,15 +156,13 @@ public class ManifestPusherTest {
 
   /** Docker Registry 2.0 and 2.1 return 400 / TAG_INVALID. */
   @Test
-  public void testHandleHttpResponseException_dockerRegistry_tagInvalid()
-      throws HttpResponseException {
-    HttpResponseException exception =
-        new HttpResponseException.Builder(
-                HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
-            .setContent(
-                "{\"errors\":[{\"code\":\"TAG_INVALID\","
-                    + "\"message\":\"manifest tag did not match URI\"}]}")
-            .build();
+  public void testHandleHttpResponseException_dockerRegistry_tagInvalid() throws ResponseException {
+    ResponseException exception = Mockito.mock(ResponseException.class);
+    Mockito.when(exception.getStatusCode()).thenReturn(HttpStatus.SC_BAD_REQUEST);
+    Mockito.when(exception.getContent())
+        .thenReturn(
+            "{\"errors\":[{\"code\":\"TAG_INVALID\","
+                + "\"message\":\"manifest tag did not match URI\"}]}");
     try {
       testManifestPusher.handleHttpResponseException(exception);
       Assert.fail();
@@ -182,14 +179,13 @@ public class ManifestPusherTest {
   /** Docker Registry 2.2 returns a 400 / MANIFEST_INVALID. */
   @Test
   public void testHandleHttpResponseException_dockerRegistry_manifestInvalid()
-      throws HttpResponseException {
-    HttpResponseException exception =
-        new HttpResponseException.Builder(
-                HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
-            .setContent(
-                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\","
-                    + "\"message\":\"manifest invalid\",\"detail\":{}}]}")
-            .build();
+      throws ResponseException {
+    ResponseException exception = Mockito.mock(ResponseException.class);
+    Mockito.when(exception.getStatusCode()).thenReturn(HttpStatus.SC_BAD_REQUEST);
+    Mockito.when(exception.getContent())
+        .thenReturn(
+            "{\"errors\":[{\"code\":\"MANIFEST_INVALID\","
+                + "\"message\":\"manifest invalid\",\"detail\":{}}]}");
     try {
       testManifestPusher.handleHttpResponseException(exception);
       Assert.fail();
@@ -205,15 +201,14 @@ public class ManifestPusherTest {
 
   /** Quay.io returns an undocumented 415 / MANIFEST_INVALID. */
   @Test
-  public void testHandleHttpResponseException_quayIo() throws HttpResponseException {
-    HttpResponseException exception =
-        new HttpResponseException.Builder(
-                HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE, "UNSUPPORTED MEDIA TYPE", new HttpHeaders())
-            .setContent(
-                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\","
-                    + "\"detail\":{\"message\":\"manifest schema version not supported\"},"
-                    + "\"message\":\"manifest invalid\"}]}")
-            .build();
+  public void testHandleHttpResponseException_quayIo() throws ResponseException {
+    ResponseException exception = Mockito.mock(ResponseException.class);
+    Mockito.when(exception.getStatusCode()).thenReturn(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE);
+    Mockito.when(exception.getContent())
+        .thenReturn(
+            "{\"errors\":[{\"code\":\"MANIFEST_INVALID\","
+                + "\"detail\":{\"message\":\"manifest schema version not supported\"},"
+                + "\"message\":\"manifest invalid\"}]}");
     try {
       testManifestPusher.handleHttpResponseException(exception);
       Assert.fail();
@@ -229,16 +224,14 @@ public class ManifestPusherTest {
 
   @Test
   public void testHandleHttpResponseException_otherError() throws RegistryErrorException {
-    HttpResponseException exception =
-        new HttpResponseException.Builder(
-                HttpStatus.SC_UNAUTHORIZED, "Unauthorized", new HttpHeaders())
-            .setContent("{\"errors\":[{\"code\":\"UNAUTHORIZED\",\"message\":\"Unauthorized\"]}}")
-            .build();
+    ResponseException exception = Mockito.mock(ResponseException.class);
+    Mockito.when(exception.getStatusCode()).thenReturn(HttpStatus.SC_UNAUTHORIZED);
+
     try {
       testManifestPusher.handleHttpResponseException(exception);
       Assert.fail();
 
-    } catch (HttpResponseException ex) {
+    } catch (ResponseException ex) {
       Assert.assertSame(exception, ex);
     }
   }

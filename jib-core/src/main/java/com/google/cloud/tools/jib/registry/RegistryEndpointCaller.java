@@ -16,8 +16,8 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
+import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Locale;
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLException;
 
 /**
  * Makes requests to a registry endpoint.
@@ -107,10 +109,81 @@ class RegistryEndpointCaller<T> {
    * @throws RegistryException for known exceptions when interacting with the registry
    */
   T call() throws IOException, RegistryException {
-    try {
-      String apiRouteBase = "https://" + registryEndpointRequestProperties.getServerUrl() + "/v2/";
-      URL initialRequestUrl = registryEndpointProvider.getApiRoute(apiRouteBase);
-      return call(initialRequestUrl);
+    String apiRouteBase = "https://" + registryEndpointRequestProperties.getServerUrl() + "/v2/";
+    URL initialRequestUrl = registryEndpointProvider.getApiRoute(apiRouteBase);
+    return call(initialRequestUrl);
+  }
+
+  /**
+   * Calls the registry endpoint with a certain {@link URL}.
+   *
+   * @param url the endpoint URL to call
+   * @return an object representing the response
+   * @throws IOException for most I/O exceptions when making the request
+   * @throws RegistryException for known exceptions when interacting with the registry
+   */
+  private T call(URL url) throws IOException, RegistryException {
+    Request.Builder requestBuilder =
+        Request.builder()
+            .setUserAgent(userAgent)
+            .setHttpTimeout(JibSystemProperties.getHttpTimeout())
+            .setAccept(registryEndpointProvider.getAccept())
+            .setBody(registryEndpointProvider.getContent())
+            .setAuthorization(authorization);
+
+    try (Response response =
+        httpClient.call(registryEndpointProvider.getHttpMethod(), url, requestBuilder.build())) {
+
+      return registryEndpointProvider.handleResponse(response);
+
+    } catch (ResponseException ex) {
+      // First, see if the endpoint provider handles an exception as an expected response.
+      try {
+        return registryEndpointProvider.handleHttpResponseException(ex);
+
+      } catch (ResponseException responseException) {
+        if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
+            || responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
+            || responseException.getStatusCode()
+                == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
+          // The name or reference was invalid.
+          throw newRegistryErrorException(responseException);
+
+        } else if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+          throw new RegistryUnauthorizedException(
+              registryEndpointRequestProperties.getServerUrl(),
+              registryEndpointRequestProperties.getImageName(),
+              responseException);
+
+        } else if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
+          if (responseException.requestAuthorizationCleared()) {
+            throw new RegistryCredentialsNotSentException(
+                registryEndpointRequestProperties.getServerUrl(),
+                registryEndpointRequestProperties.getImageName());
+          } else {
+            // Credentials are either missing or wrong.
+            throw new RegistryUnauthorizedException(
+                registryEndpointRequestProperties.getServerUrl(),
+                registryEndpointRequestProperties.getImageName(),
+                responseException);
+          }
+
+        } else if (responseException.getStatusCode()
+                == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT
+            || responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
+            || responseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
+          // 'Location' header can be relative or absolute.
+          URL redirectLocation = new URL(url, responseException.getHeaders().getLocation());
+          return call(redirectLocation);
+
+        } else {
+          // Unknown
+          throw responseException;
+        }
+      }
+
+    } catch (SSLException ex) {
+      throw new InsecureRegistryException(url);
 
     } catch (IOException ex) {
       String registry = registryEndpointRequestProperties.getServerUrl();
@@ -127,103 +200,24 @@ class RegistryEndpointCaller<T> {
     }
   }
 
-  /**
-   * Calls the registry endpoint with a certain {@link URL}.
-   *
-   * @param url the endpoint URL to call
-   * @return an object representing the response
-   * @throws IOException for most I/O exceptions when making the request
-   * @throws RegistryException for known exceptions when interacting with the registry
-   */
-  private T call(URL url) throws IOException, RegistryException {
-    // Only sends authorization if using HTTPS or explicitly forcing over HTTP.
-    boolean sendCredentials =
-        "https".equals(url.getProtocol()) || JibSystemProperties.sendCredentialsOverHttp();
-
-    Request.Builder requestBuilder =
-        Request.builder()
-            .setUserAgent(userAgent)
-            .setHttpTimeout(JibSystemProperties.getHttpTimeout())
-            .setAccept(registryEndpointProvider.getAccept())
-            .setBody(registryEndpointProvider.getContent());
-    if (sendCredentials) {
-      requestBuilder.setAuthorization(authorization);
-    }
-
-    try (Response response =
-        httpClient.call(registryEndpointProvider.getHttpMethod(), url, requestBuilder.build())) {
-
-      return registryEndpointProvider.handleResponse(response);
-
-    } catch (HttpResponseException ex) {
-      // First, see if the endpoint provider handles an exception as an expected response.
-      try {
-        return registryEndpointProvider.handleHttpResponseException(ex);
-
-      } catch (HttpResponseException httpResponseException) {
-        if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
-            || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
-            || httpResponseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
-          // The name or reference was invalid.
-          throw newRegistryErrorException(httpResponseException);
-
-        } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-          throw new RegistryUnauthorizedException(
-              registryEndpointRequestProperties.getServerUrl(),
-              registryEndpointRequestProperties.getImageName(),
-              httpResponseException);
-
-        } else if (httpResponseException.getStatusCode()
-            == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
-          if (sendCredentials) {
-            // Credentials are either missing or wrong.
-            throw new RegistryUnauthorizedException(
-                registryEndpointRequestProperties.getServerUrl(),
-                registryEndpointRequestProperties.getImageName(),
-                httpResponseException);
-          } else {
-            throw new RegistryCredentialsNotSentException(
-                registryEndpointRequestProperties.getServerUrl(),
-                registryEndpointRequestProperties.getImageName());
-          }
-
-        } else if (httpResponseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT
-            || httpResponseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
-            || httpResponseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
-          // 'Location' header can be relative or absolute.
-          URL redirectLocation = new URL(url, httpResponseException.getHeaders().getLocation());
-          return call(redirectLocation);
-
-        } else {
-          // Unknown
-          throw httpResponseException;
-        }
-      }
-    }
-  }
-
   @VisibleForTesting
-  RegistryErrorException newRegistryErrorException(HttpResponseException httpResponseException) {
+  RegistryErrorException newRegistryErrorException(ResponseException responseException) {
     RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
         new RegistryErrorExceptionBuilder(
-            registryEndpointProvider.getActionDescription(), httpResponseException);
+            registryEndpointProvider.getActionDescription(), responseException);
 
     try {
       ErrorResponseTemplate errorResponse =
-          JsonTemplateMapper.readJson(
-              httpResponseException.getContent(), ErrorResponseTemplate.class);
+          JsonTemplateMapper.readJson(responseException.getContent(), ErrorResponseTemplate.class);
       for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
         registryErrorExceptionBuilder.addReason(errorEntry);
       }
     } catch (IOException ex) {
       registryErrorExceptionBuilder.addReason(
           "registry returned error code "
-              + httpResponseException.getStatusCode()
+              + responseException.getStatusCode()
               + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
-              + httpResponseException.getContent()
+              + responseException.getContent()
               + "\n");
     }
 

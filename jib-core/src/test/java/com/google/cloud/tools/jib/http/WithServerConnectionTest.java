@@ -47,7 +47,7 @@ public class WithServerConnectionTest {
   @Test
   public void testInsecureConnection_plainHttp()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    Connection httpClient = new Connection(true, logger);
+    Connection httpClient = new Connection(true, false, logger);
     try (TestWebServer server = new TestWebServer(false);
         Response response =
             httpClient.get(new URL(server.getEndpoint()), new Request.Builder().build())) {
@@ -63,7 +63,7 @@ public class WithServerConnectionTest {
   @Test
   public void testGet_insecureHttps()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    Connection httpClient = new Connection(false, logger);
+    Connection httpClient = new Connection(false, false, logger);
     try (TestWebServer server = new TestWebServer(true)) {
       try (Response ignored =
           httpClient.get(new URL(server.getEndpoint()), new Request.Builder().build())) {
@@ -78,7 +78,7 @@ public class WithServerConnectionTest {
   @Test
   public void testInsecureFailover_insecureHttps()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    Connection httpClient = new Connection(true, logger);
+    Connection httpClient = new Connection(true, false, logger);
     try (TestWebServer server = new TestWebServer(true, 2);
         Response response =
             httpClient.get(new URL(server.getEndpoint()), new Request.Builder().build())) {
@@ -98,7 +98,7 @@ public class WithServerConnectionTest {
   @Test
   public void testInsecureFailover_fallBackToHttp()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    Connection httpClient = new Connection(true, logger);
+    Connection httpClient = new Connection(true, false, logger);
     try (TestWebServer server = new TestWebServer(false, 3)) {
       String httpsUrl = server.getEndpoint().replace("http://", "https://");
       try (Response response = httpClient.get(new URL(httpsUrl), new Request.Builder().build())) {
@@ -129,7 +129,7 @@ public class WithServerConnectionTest {
             + "Content-Length: 0\n\n";
     String targetServerResponse = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
 
-    Connection httpClient = new Connection(true, logger);
+    Connection httpClient = new Connection(true, false, logger);
     try (TestWebServer server =
         new TestWebServer(false, Arrays.asList(proxyResponse, targetServerResponse), 1)) {
       System.setProperty("http.proxyHost", "localhost");

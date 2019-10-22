@@ -252,6 +252,8 @@ public class RegistryClient {
    * @param eventHandlers the event handlers used for dispatching log events
    * @param authorization the {@link Authorization} to access the registry/repository
    * @param registryEndpointRequestProperties properties of registry endpoint requests
+   * @param allowInsecureRegistries if {@code true}, insecure connections will be allowed
+   * @param userAgent {@code User-Agent} header to send with the request
    */
   private RegistryClient(
       EventHandlers eventHandlers,
@@ -263,7 +265,11 @@ public class RegistryClient {
     this.authorization = authorization;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.userAgent = userAgent;
-    this.httpClient = new Connection(allowInsecureRegistries, eventHandlers::dispatch);
+    this.httpClient =
+        new Connection(
+            allowInsecureRegistries,
+            JibSystemProperties.sendCredentialsOverHttp(),
+            eventHandlers::dispatch);
   }
 
   /**
