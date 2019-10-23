@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed reporting parent build file when `skaffold init` is run on multi-module projects.
+
 ## 1.7.0
 
 ### Added
