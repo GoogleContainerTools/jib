@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
@@ -45,24 +46,33 @@ public class TestWebServer implements Closeable {
 
   private final boolean https;
   private final ServerSocket serverSocket;
-  private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-  private final Semaphore threadStarted = new Semaphore(0);
+  private final ExecutorService executorService;
+  private final Semaphore threadsStarted;
   private final StringBuilder inputRead = new StringBuilder();
 
   private final List<String> responses;
 
   public TestWebServer(boolean https)
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    this(https, Arrays.asList("HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!"));
+    this(https, Arrays.asList("HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!"), 1);
   }
 
-  public TestWebServer(boolean https, List<String> responses)
+  public TestWebServer(boolean https, int numThreads)
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    this(https, Arrays.asList("HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!"), numThreads);
+  }
+
+  public TestWebServer(boolean https, List<String> responses, int numThreads)
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     this.https = https;
     this.responses = responses;
     serverSocket = https ? createHttpsServerSocket() : new ServerSocket(0);
-    ignoreReturn(executorService.submit(this::serveResponses));
-    threadStarted.acquire();
+    threadsStarted = new Semaphore(1 - numThreads);
+    executorService = Executors.newFixedThreadPool(numThreads);
+    for (int i = 0; i < numThreads; i++) {
+      ignoreReturn(executorService.submit(this::serveResponses));
+    }
+    threadsStarted.acquire();
   }
 
   public int getLocalPort() {
@@ -99,18 +109,26 @@ public class TestWebServer implements Closeable {
   }
 
   private Void serveResponses() throws IOException {
-    threadStarted.release();
+    threadsStarted.release();
     try (Socket socket = serverSocket.accept()) {
       InputStream in = socket.getInputStream();
-      BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+      OutputStream out = socket.getOutputStream();
 
+      int firstByte = in.read();
+      if (firstByte != 'G' && firstByte != 'P') { // GET, POST, ...
+        out.write("HTTP/1.1 400 Bad Request\n\n".getBytes(StandardCharsets.UTF_8));
+        return null;
+      }
+      inputRead.append((char) firstByte);
+
+      BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
       for (String response : responses) {
         for (String line = reader.readLine();
             line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
             line = reader.readLine()) {
           inputRead.append(line + "\n");
         }
-        socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
+        out.write(response.getBytes(StandardCharsets.UTF_8));
         socket.getOutputStream().flush();
       }
     }

@@ -18,16 +18,14 @@ package com.google.cloud.tools.jib.http;
 
 import com.google.api.client.http.apache.ApacheHttpTransport;
 import com.google.common.collect.ImmutableList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 
 /** Tests for {@link Connection} with setting proxy credentials. */
 public class ConnectionWithProxyCredentialsTest {
@@ -43,28 +41,13 @@ public class ConnectionWithProxyCredentialsTest {
           "https.proxyUser",
           "https.proxyPassword");
 
-  // HashMap to allow saving null values.
-  private final HashMap<String, String> savedProperties = new HashMap<>();
+  @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   private final ApacheHttpTransport transport = new ApacheHttpTransport();
 
   @Before
   public void setUp() {
-    proxyProperties.stream().forEach(key -> savedProperties.put(key, System.getProperty(key)));
     proxyProperties.stream().forEach(key -> System.clearProperty(key));
-  }
-
-  @After
-  public void tearDown() {
-    Consumer<Map.Entry<String, String>> restoreProperty =
-        entry -> {
-          if (entry.getValue() == null) {
-            System.clearProperty(entry.getKey());
-          } else {
-            System.setProperty(entry.getKey(), entry.getValue());
-          }
-        };
-    savedProperties.entrySet().stream().forEach(restoreProperty);
   }
 
   @Test

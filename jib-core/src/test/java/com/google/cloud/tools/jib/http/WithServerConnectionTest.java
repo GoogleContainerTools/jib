@@ -108,7 +108,7 @@ public class WithServerConnectionTest {
     String targetServerResponse = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
 
     try (TestWebServer server =
-        new TestWebServer(false, Arrays.asList(proxyResponse, targetServerResponse))) {
+        new TestWebServer(false, Arrays.asList(proxyResponse, targetServerResponse), 1)) {
       System.setProperty("http.proxyHost", "localhost");
       System.setProperty("http.proxyPort", String.valueOf(server.getLocalPort()));
       System.setProperty("http.proxyUser", "user_sys_prop");
