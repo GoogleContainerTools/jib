@@ -25,10 +25,10 @@ import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
-import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
+import com.google.cloud.tools.jib.http.TlsFailoverHttpClient;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -70,7 +70,7 @@ public class RegistryAuthenticator {
       String authenticationMethod,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       String userAgent,
-      Connection httpClient)
+      TlsFailoverHttpClient httpClient)
       throws RegistryAuthenticationFailedException {
     // If the authentication method starts with 'basic ' (case insensitive), no registry
     // authentication is needed.
@@ -143,14 +143,14 @@ public class RegistryAuthenticator {
   private final String realm;
   private final String service;
   private final String userAgent;
-  private final Connection httpClient;
+  private final TlsFailoverHttpClient httpClient;
 
   private RegistryAuthenticator(
       String realm,
       String service,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       String userAgent,
-      Connection httpClient) {
+      TlsFailoverHttpClient httpClient) {
     this.realm = realm;
     this.service = service;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;

@@ -18,20 +18,16 @@ package com.google.cloud.tools.jib.http;
 
 import com.google.api.client.http.apache.ApacheHttpTransport;
 import com.google.common.collect.ImmutableList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Consumer;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 
-/** Tests for {@link Connection} with setting proxy credentials. */
+/** Tests for {@link TlsFailoverHttpClient} with setting proxy credentials. */
 public class ProxyCredentialsTest {
 
   private static final ImmutableList<String> proxyProperties =
@@ -56,7 +52,7 @@ public class ProxyCredentialsTest {
 
   @Test
   public void testAddProxyCredentials_undefined() {
-    Connection.addProxyCredentials(transport);
+    TlsFailoverHttpClient.addProxyCredentials(transport);
     DefaultHttpClient httpClient = (DefaultHttpClient) transport.getHttpClient();
     Credentials credentials = httpClient.getCredentialsProvider().getCredentials(AuthScope.ANY);
     Assert.assertNull(credentials);
@@ -74,7 +70,7 @@ public class ProxyCredentialsTest {
     System.setProperty("https.proxyUser", "s-user");
     System.setProperty("https.proxyPassword", "s-pass");
 
-    Connection.addProxyCredentials(transport);
+    TlsFailoverHttpClient.addProxyCredentials(transport);
     DefaultHttpClient httpClient = (DefaultHttpClient) transport.getHttpClient();
     Credentials httpCredentials =
         httpClient.getCredentialsProvider().getCredentials(new AuthScope("http://localhost", 1080));
@@ -97,7 +93,7 @@ public class ProxyCredentialsTest {
     System.setProperty("https.proxyUser", "s-user");
     System.setProperty("https.proxyPassword", "s-pass");
 
-    Connection.addProxyCredentials(transport);
+    TlsFailoverHttpClient.addProxyCredentials(transport);
     DefaultHttpClient httpClient = (DefaultHttpClient) transport.getHttpClient();
     Credentials httpCredentials =
         httpClient.getCredentialsProvider().getCredentials(new AuthScope("http://localhost", 80));
@@ -118,7 +114,7 @@ public class ProxyCredentialsTest {
     System.setProperty("https.proxyUser", "s-user");
     System.setProperty("https.proxyPassword", "s-pass");
 
-    Connection.addProxyCredentials(transport);
+    TlsFailoverHttpClient.addProxyCredentials(transport);
     DefaultHttpClient httpClient = (DefaultHttpClient) transport.getHttpClient();
     Credentials credentials = httpClient.getCredentialsProvider().getCredentials(AuthScope.ANY);
     Assert.assertNull(credentials);
@@ -132,7 +128,7 @@ public class ProxyCredentialsTest {
     System.setProperty("https.proxyHost", "https://host.com");
     System.setProperty("https.proxyPassword", "s-pass");
 
-    Connection.addProxyCredentials(transport);
+    TlsFailoverHttpClient.addProxyCredentials(transport);
     DefaultHttpClient httpClient = (DefaultHttpClient) transport.getHttpClient();
     Credentials credentials = httpClient.getCredentialsProvider().getCredentials(AuthScope.ANY);
     Assert.assertNull(credentials);
@@ -146,7 +142,7 @@ public class ProxyCredentialsTest {
     System.setProperty("https.proxyHost", "https://host.com");
     System.setProperty("https.proxyUser", "s-user");
 
-    Connection.addProxyCredentials(transport);
+    TlsFailoverHttpClient.addProxyCredentials(transport);
     DefaultHttpClient httpClient = (DefaultHttpClient) transport.getHttpClient();
     Credentials credentials = httpClient.getCredentialsProvider().getCredentials(AuthScope.ANY);
     Assert.assertNull(credentials);

@@ -47,14 +47,14 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link Connection}. */
+/** Tests for {@link TlsFailoverHttpClient}. */
 @RunWith(MockitoJUnitRunner.class)
-public class ConnectionTest {
+public class TlsFailoverHttpClientTest {
 
   @FunctionalInterface
   private interface CallFunction {
 
-    Response call(Connection connection, URL url, Request request) throws IOException;
+    Response call(TlsFailoverHttpClient httpClient, URL url, Request request) throws IOException;
   }
 
   @Mock private HttpTransport mockHttpTransport;
@@ -77,13 +77,14 @@ public class ConnectionTest {
     Mockito.when(mockHttpResponse.getContent()).thenReturn(inStream);
   }
 
-  private Connection newHttpClient(boolean insecure, boolean authOverHttp) throws IOException {
+  private TlsFailoverHttpClient newHttpClient(boolean insecure, boolean authOverHttp)
+      throws IOException {
     setUpMocks(mockHttpTransport, mockHttpRequestFactory, mockHttpRequest);
     if (insecure) {
       setUpMocks(
           mockInsecureHttpTransport, mockInsecureHttpRequestFactory, mockInsecureHttpRequest);
     }
-    return new Connection(
+    return new TlsFailoverHttpClient(
         insecure, authOverHttp, logger, () -> mockHttpTransport, () -> mockInsecureHttpTransport);
   }
 
@@ -106,17 +107,17 @@ public class ConnectionTest {
 
   @Test
   public void testGet() throws IOException {
-    testCall(HttpMethods.GET, Connection::get);
+    testCall(HttpMethods.GET, TlsFailoverHttpClient::get);
   }
 
   @Test
   public void testPost() throws IOException {
-    testCall(HttpMethods.POST, Connection::post);
+    testCall(HttpMethods.POST, TlsFailoverHttpClient::post);
   }
 
   @Test
   public void testPut() throws IOException {
-    testCall(HttpMethods.PUT, Connection::put);
+    testCall(HttpMethods.PUT, TlsFailoverHttpClient::put);
   }
 
   @Test
@@ -129,7 +130,7 @@ public class ConnectionTest {
 
   @Test
   public void testHttpTimeout() throws IOException {
-    Connection httpClient = newHttpClient(false, false);
+    TlsFailoverHttpClient httpClient = newHttpClient(false, false);
     try (Response ignored = httpClient.get(fakeUrl.toURL(), fakeRequest(5982))) {}
 
     Mockito.verify(mockHttpRequest).setConnectTimeout(5982);
@@ -139,7 +140,7 @@ public class ConnectionTest {
   @Test
   public void testGet_nonHttpsServer_insecureConnectionAndFailoverDisabled()
       throws MalformedURLException, IOException {
-    Connection httpClient = newHttpClient(false, false);
+    TlsFailoverHttpClient httpClient = newHttpClient(false, false);
     try (Response response = httpClient.get(new URL("http://plain.http"), fakeRequest(null))) {
       Assert.fail("Should disallow non-HTTP attempt");
     } catch (SSLException ex) {
@@ -150,7 +151,7 @@ public class ConnectionTest {
 
   @Test
   public void testCall_secureClientOnUnverifiableServer() throws IOException {
-    Connection httpClient = newHttpClient(false, false);
+    TlsFailoverHttpClient httpClient = newHttpClient(false, false);
 
     Mockito.when(mockHttpRequest.execute()).thenThrow(new SSLPeerUnverifiedException("unverified"));
 
@@ -164,7 +165,7 @@ public class ConnectionTest {
 
   @Test
   public void testCall_insecureClientOnUnverifiableServer() throws IOException {
-    Connection insecureHttpClient = newHttpClient(true, false);
+    TlsFailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute()).thenThrow(new SSLPeerUnverifiedException(""));
 
@@ -187,7 +188,7 @@ public class ConnectionTest {
 
   @Test
   public void testCall_insecureClientOnHttpServer() throws IOException {
-    Connection insecureHttpClient = newHttpClient(true, false);
+    TlsFailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
         .thenThrow(new SSLException("")) // server is not HTTPS
@@ -220,7 +221,7 @@ public class ConnectionTest {
 
   @Test
   public void testCall_insecureClientOnHttpServerAndNoPortSpecified() throws IOException {
-    Connection insecureHttpClient = newHttpClient(true, false);
+    TlsFailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
         .thenThrow(new ConnectException()) // server is not listening on 443
@@ -247,7 +248,7 @@ public class ConnectionTest {
 
   @Test
   public void testCall_secureClientOnNonListeningServerAndNoPortSpecified() throws IOException {
-    Connection httpClient = newHttpClient(false, false);
+    TlsFailoverHttpClient httpClient = newHttpClient(false, false);
 
     Mockito.when(mockHttpRequest.execute())
         .thenThrow(new ConnectException("my exception")); // server not listening on 443
@@ -267,7 +268,7 @@ public class ConnectionTest {
 
   @Test
   public void testCall_insecureClientOnNonListeningServerAndPortSpecified() throws IOException {
-    Connection insecureHttpClient = newHttpClient(true, false);
+    TlsFailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
         .thenThrow(new ConnectException("my exception")); // server is not listening on 5000
@@ -288,7 +289,7 @@ public class ConnectionTest {
 
   @Test
   public void testCall_timeoutFromConnectException() throws IOException {
-    Connection insecureHttpClient = newHttpClient(true, false);
+    TlsFailoverHttpClient insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute()).thenThrow(new ConnectException("Connection timed out"));
 
@@ -318,7 +319,7 @@ public class ConnectionTest {
   }
 
   private void testCall(String httpMethod, CallFunction callFunction) throws IOException {
-    Connection httpClient = newHttpClient(false, false);
+    TlsFailoverHttpClient httpClient = newHttpClient(false, false);
     try (Response ignored = callFunction.call(httpClient, fakeUrl.toURL(), fakeRequest(null))) {}
 
     ArgumentCaptor<HttpHeaders> httpHeadersArgumentCaptor =

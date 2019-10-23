@@ -18,8 +18,8 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
-import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.TestWebServer;
+import com.google.cloud.tools.jib.http.TlsFailoverHttpClient;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -39,7 +39,8 @@ public class RegistryAuthenticatorTest {
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties =
       new RegistryEndpointRequestProperties("someserver", "someimage");
 
-  private final Connection httpClient = new Connection(true, true, ignored -> {});
+  private final TlsFailoverHttpClient httpClient =
+      new TlsFailoverHttpClient(true, true, ignored -> {});
 
   private RegistryAuthenticator registryAuthenticator;
 

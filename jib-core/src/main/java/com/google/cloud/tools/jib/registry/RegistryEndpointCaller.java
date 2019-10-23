@@ -24,10 +24,10 @@ import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
+import com.google.cloud.tools.jib.http.TlsFailoverHttpClient;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
@@ -74,7 +74,7 @@ class RegistryEndpointCaller<T> {
   private final RegistryEndpointProvider<T> registryEndpointProvider;
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
-  private final Connection httpClient;
+  private final TlsFailoverHttpClient httpClient;
 
   /**
    * Constructs with parameters for making the request.
@@ -92,7 +92,7 @@ class RegistryEndpointCaller<T> {
       RegistryEndpointProvider<T> registryEndpointProvider,
       @Nullable Authorization authorization,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      Connection httpClient) {
+      TlsFailoverHttpClient httpClient) {
     this.eventHandlers = eventHandlers;
     this.userAgent = userAgent;
     this.registryEndpointProvider = registryEndpointProvider;

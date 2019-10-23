@@ -37,8 +37,11 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-/** */
-public class Connection {
+/**
+ * Thread-safe HTTP client with the automatic insecure connection failover feature. Intended to be
+ * created once and at multiple places. Callers should close the returned {@link Response}.
+ */
+public class TlsFailoverHttpClient {
 
   private static boolean isHttpsProtocol(URL url) {
     return "https".equals(url.getProtocol());
@@ -111,7 +114,7 @@ public class Connection {
   private final Supplier<HttpTransport> httpTransportFactory;
   private final Supplier<HttpTransport> insecureHttpTransportFactory;
 
-  public Connection(
+  public TlsFailoverHttpClient(
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger) {
@@ -119,12 +122,12 @@ public class Connection {
         enableHttpAndInsecureFailover,
         sendAuthorizationOverHttp,
         logger,
-        Connection::getHttpTransport,
-        Connection::getInsecureHttpTransport);
+        TlsFailoverHttpClient::getHttpTransport,
+        TlsFailoverHttpClient::getInsecureHttpTransport);
   }
 
   @VisibleForTesting
-  Connection(
+  TlsFailoverHttpClient(
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger,
