@@ -33,7 +33,7 @@ public class ErrorResponseUtil {
    *
    * @param responseException the response exception
    * @return the parsed {@link ErrorCodes} if found
-   * @throws HttpResponseException rethrows the original exception if an error object could not be
+   * @throws ResponseException rethrows the original exception if an error object could not be
    *     parsed, if there were multiple error objects, or if the error code is unknown.
    */
   public static ErrorCodes getErrorCode(ResponseException responseException)
