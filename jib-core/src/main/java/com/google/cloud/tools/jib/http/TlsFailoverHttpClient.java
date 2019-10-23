@@ -202,7 +202,7 @@ public class TlsFailoverHttpClient {
         logInsecureHttpsFailover(url);
         return call(httpMethod, url, request, insecureHttpTransportFactory.get());
 
-      } catch (SSLException ignored) {
+      } catch (SSLException ignored) { // This is usually when the server is plain-HTTP.
         logHttpFailover(url);
         return call(httpMethod, toHttp(url), request, httpTransportFactory.get());
       }
