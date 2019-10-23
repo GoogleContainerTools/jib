@@ -44,13 +44,14 @@ public class WithServerTlsFailoverHttpClientTest {
 
   @Mock private Consumer<LogEvent> logger;
 
+  private final Request request = new Request.Builder().build();
+
   @Test
-  public void testInsecureConnection_plainHttp()
+  public void testGet()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    TlsFailoverHttpClient httpClient = new TlsFailoverHttpClient(true, false, logger);
+    TlsFailoverHttpClient insecureHttpClient = new TlsFailoverHttpClient(true, false, logger);
     try (TestWebServer server = new TestWebServer(false);
-        Response response =
-            httpClient.get(new URL(server.getEndpoint()), new Request.Builder().build())) {
+        Response response = insecureHttpClient.get(new URL(server.getEndpoint()), request)) {
 
       Assert.assertEquals(200, response.getStatusCode());
       Assert.assertArrayEquals(
@@ -61,27 +62,24 @@ public class WithServerTlsFailoverHttpClientTest {
   }
 
   @Test
-  public void testGet_insecureHttps()
+  public void testSecureConnectionOnInsecureHttpsServer()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    TlsFailoverHttpClient httpClient = new TlsFailoverHttpClient(false, false, logger);
-    try (TestWebServer server = new TestWebServer(true)) {
-      try (Response ignored =
-          httpClient.get(new URL(server.getEndpoint()), new Request.Builder().build())) {
-        Assert.fail("Should fail if cannot verify peer");
+    TlsFailoverHttpClient secureHttpClient = new TlsFailoverHttpClient(false, false, logger);
+    try (TestWebServer server = new TestWebServer(true);
+        Response ignored = secureHttpClient.get(new URL(server.getEndpoint()), request)) {
+      Assert.fail("Should fail if cannot verify peer");
 
-      } catch (SSLException ex) {
-        Assert.assertNotNull(ex.getMessage());
-      }
+    } catch (SSLException ex) {
+      Assert.assertNotNull(ex.getMessage());
     }
   }
 
   @Test
-  public void testInsecureFailover_insecureHttps()
+  public void testInsecureConnection_insecureHttpsFailover()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    TlsFailoverHttpClient httpClient = new TlsFailoverHttpClient(true, false, logger);
+    TlsFailoverHttpClient insecureHttpClient = new TlsFailoverHttpClient(true, false, logger);
     try (TestWebServer server = new TestWebServer(true, 2);
-        Response response =
-            httpClient.get(new URL(server.getEndpoint()), new Request.Builder().build())) {
+        Response response = insecureHttpClient.get(new URL(server.getEndpoint()), request)) {
 
       Assert.assertEquals(200, response.getStatusCode());
       Assert.assertArrayEquals(
@@ -96,12 +94,12 @@ public class WithServerTlsFailoverHttpClientTest {
   }
 
   @Test
-  public void testInsecureFailover_fallBackToHttp()
+  public void testInsecureConnection_plainHttpFailover()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    TlsFailoverHttpClient httpClient = new TlsFailoverHttpClient(true, false, logger);
+    TlsFailoverHttpClient insecureHttpClient = new TlsFailoverHttpClient(true, false, logger);
     try (TestWebServer server = new TestWebServer(false, 3)) {
       String httpsUrl = server.getEndpoint().replace("http://", "https://");
-      try (Response response = httpClient.get(new URL(httpsUrl), new Request.Builder().build())) {
+      try (Response response = insecureHttpClient.get(new URL(httpsUrl), request)) {
 
         Assert.assertEquals(200, response.getStatusCode());
         Assert.assertArrayEquals(
@@ -137,9 +135,7 @@ public class WithServerTlsFailoverHttpClientTest {
       System.setProperty("http.proxyUser", "user_sys_prop");
       System.setProperty("http.proxyPassword", "pass_sys_prop");
 
-      try (Response response =
-          httpClient.call(
-              "GET", new URL("http://does.not.matter"), new Request.Builder().build())) {
+      try (Response response = httpClient.get(new URL("http://does.not.matter"), request)) {
         Assert.assertThat(
             server.getInputRead(),
             CoreMatchers.containsString(
