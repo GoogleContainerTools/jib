@@ -282,13 +282,13 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testHttpTimeout_propertyNotSet() throws IOException, RegistryException {
-    System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
-
     ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
     Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
         .thenReturn(mockResponse);
 
+    System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
     endpointCaller.call();
+
     // We fall back to the default timeout:
     // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
     Assert.assertEquals(20000, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
