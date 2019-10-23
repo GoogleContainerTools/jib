@@ -21,6 +21,7 @@ import com.google.common.base.Preconditions;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.Project;
 import org.gradle.api.tasks.TaskAction;
 
 /**
@@ -39,10 +40,15 @@ public class SkaffoldInitTask extends DefaultTask {
 
   @TaskAction
   public void listModulesAndTargets() throws IOException {
+    Project project = getProject();
+    // Ignore parent projects
+    if (project.getSubprojects().size() > 0) {
+      return;
+    }
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
     skaffoldInitOutput.setImage(Preconditions.checkNotNull(jibExtension).getTo().getImage());
-    if (!getProject().equals(getProject().getRootProject())) {
-      skaffoldInitOutput.setProject(getProject().getName());
+    if (!project.equals(project.getRootProject())) {
+      skaffoldInitOutput.setProject(project.getName());
     }
     System.out.println("\nBEGIN JIB JSON");
     System.out.println(skaffoldInitOutput.getJsonString());
