@@ -77,17 +77,13 @@ public class SkaffoldInitTaskTest {
   @Test
   public void testFilesTask_multiProject() throws IOException {
     List<String> outputs = getJsons(multiTestProject);
-    Assert.assertEquals(3, outputs.size());
+    Assert.assertEquals(2, outputs.size());
 
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertNull(skaffoldInitOutput.getProject());
-
-    skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(1));
-    Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
     Assert.assertEquals("complex-service", skaffoldInitOutput.getProject());
 
-    skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(2));
+    skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(1));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
     Assert.assertEquals("simple-service", skaffoldInitOutput.getProject());
   }

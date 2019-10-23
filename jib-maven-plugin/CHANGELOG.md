@@ -9,6 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- Fixed reporting wrong module name when `skaffold init` is run on multi-module projects ([#2088](https://github.com/GoogleContainerTools/jib/issues/2088)).
+
 ## 1.7.0
 
 ### Added
