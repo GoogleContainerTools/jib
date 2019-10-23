@@ -47,7 +47,7 @@ public class SkaffoldInitMojo extends JibPluginConfiguration {
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
     skaffoldInitOutput.setImage(getTargetImage());
     if (project.getParent() != null && project.getParent().getFile() != null) {
-      skaffoldInitOutput.setProject(project.getName());
+      skaffoldInitOutput.setProject(project.getArtifactId());
     }
     System.out.println("\nBEGIN JIB JSON");
     try {
