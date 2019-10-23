@@ -130,6 +130,22 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
+  public void testCall_secureCallerOnUnverifiableServer() throws IOException, RegistryException {
+    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), Mockito.any()))
+        .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class));
+
+    try {
+      endpointCaller.call();
+      Assert.fail("Should throw InsecureRegistryException when getting SSLException");
+    } catch (InsecureRegistryException ex) {
+      Assert.assertEquals(
+          "Failed to verify the server at https://serverUrl/v2/api because only secure connections "
+              + "are allowed.",
+          ex.getMessage());
+    }
+  }
+
+  @Test
   public void testCall_noHttpResponse() throws IOException, RegistryException {
     NoHttpResponseException mockNoResponseException = Mockito.mock(NoHttpResponseException.class);
     setUpRegistryResponse(mockNoResponseException);
@@ -405,22 +421,6 @@ public class RegistryEndpointCallerTest {
             + " | If this is a bug, please file an issue at "
             + "https://github.com/GoogleContainerTools/jib/issues/new",
         registryException.getMessage());
-  }
-
-  @Test
-  public void testCall_secureCallerOnUnverifiableServer() throws IOException, RegistryException {
-    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), Mockito.any()))
-        .thenThrow(Mockito.mock(SSLPeerUnverifiedException.class));
-
-    try {
-      endpointCaller.call();
-      Assert.fail();
-    } catch (InsecureRegistryException ex) {
-      Assert.assertEquals(
-          "Failed to verify the server at https://serverUrl/v2/api because only secure connections "
-              + "are allowed.",
-          ex.getMessage());
-    }
   }
 
   /**
