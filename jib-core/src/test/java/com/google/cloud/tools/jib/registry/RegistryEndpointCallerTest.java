@@ -29,7 +29,8 @@ import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Connection;
-import com.google.cloud.tools.jib.http.MockConnection;
+import com.google.cloud.tools.jib.http.Request;
+import com.google.cloud.tools.jib.http.RequestWrapper;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.common.io.CharStreams;
 import java.io.ByteArrayInputStream;
@@ -501,63 +502,66 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testHttpTimeout_propertyNotSet() throws IOException, RegistryException {
-    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), requestCaptor.capture()))
+        .thenReturn(mockResponse);
 
     System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
     secureEndpointCaller.call();
 
     // We fall back to the default timeout:
     // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
-    Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout().intValue());
+    Assert.assertEquals(20000, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
   }
 
   @Test
   public void testHttpTimeout_stringValue() throws IOException, RegistryException {
-    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), requestCaptor.capture()))
+        .thenReturn(mockResponse);
 
     System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "random string");
     secureEndpointCaller.call();
 
-    Assert.assertEquals(20000, mockConnection.getRequestedHttpTimeout().intValue());
+    Assert.assertEquals(20000, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
   }
 
   @Test
   public void testHttpTimeout_negativeValue() throws IOException, RegistryException {
-    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), requestCaptor.capture()))
+        .thenReturn(mockResponse);
 
     System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "-1");
     secureEndpointCaller.call();
 
     // We let the negative value pass through:
     // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
-    Assert.assertEquals(Integer.valueOf(-1), mockConnection.getRequestedHttpTimeout());
+    Assert.assertEquals(-1, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
   }
 
   @Test
   public void testHttpTimeout_0accepted() throws IOException, RegistryException {
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), requestCaptor.capture()))
+        .thenReturn(mockResponse);
+
     System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "0");
-
-    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-
     secureEndpointCaller.call();
 
-    Assert.assertEquals(Integer.valueOf(0), mockConnection.getRequestedHttpTimeout());
+    Assert.assertEquals(0, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
   }
 
   @Test
   public void testHttpTimeout() throws IOException, RegistryException {
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockConnection.send(Mockito.eq("httpMethod"), requestCaptor.capture()))
+        .thenReturn(mockResponse);
+
     System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "7593");
-
-    MockConnection mockConnection = new MockConnection((httpMethod, request) -> mockResponse);
-    Mockito.when(mockConnectionFactory.apply(Mockito.any())).thenReturn(mockConnection);
-
     secureEndpointCaller.call();
 
-    Assert.assertEquals(Integer.valueOf(7593), mockConnection.getRequestedHttpTimeout());
+    Assert.assertEquals(7593, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
   }
 
   @Test
