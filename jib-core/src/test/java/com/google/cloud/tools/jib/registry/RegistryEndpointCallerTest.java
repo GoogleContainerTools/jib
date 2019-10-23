@@ -281,6 +281,70 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
+  public void testHttpTimeout_propertyNotSet() throws IOException, RegistryException {
+    System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
+
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
+        .thenReturn(mockResponse);
+
+    endpointCaller.call();
+    // We fall back to the default timeout:
+    // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
+    Assert.assertEquals(20000, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
+  }
+
+  @Test
+  public void testHttpTimeout_stringValue() throws IOException, RegistryException {
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
+        .thenReturn(mockResponse);
+
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "random string");
+    endpointCaller.call();
+
+    Assert.assertEquals(20000, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
+  }
+
+  @Test
+  public void testHttpTimeout_negativeValue() throws IOException, RegistryException {
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
+        .thenReturn(mockResponse);
+
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "-1");
+    endpointCaller.call();
+
+    // We let the negative value pass through:
+    // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
+    Assert.assertEquals(-1, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
+  }
+
+  @Test
+  public void testHttpTimeout_0accepted() throws IOException, RegistryException {
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
+        .thenReturn(mockResponse);
+
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "0");
+    endpointCaller.call();
+
+    Assert.assertEquals(0, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
+  }
+
+  @Test
+  public void testHttpTimeout() throws IOException, RegistryException {
+    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
+    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
+        .thenReturn(mockResponse);
+
+    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "7593");
+    endpointCaller.call();
+
+    Assert.assertEquals(7593, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
+  }
+
+  @Test
   public void testIsBrokenPipe_notBrokenPipe() {
     Assert.assertFalse(RegistryEndpointCaller.isBrokenPipe(new IOException()));
     Assert.assertFalse(RegistryEndpointCaller.isBrokenPipe(new SocketException()));
@@ -322,70 +386,6 @@ public class RegistryEndpointCallerTest {
         "Tried to actionDescription but failed because: manifest unknown | If this is a bug, "
             + "please file an issue at https://github.com/GoogleContainerTools/jib/issues/new",
         registryException.getMessage());
-  }
-
-  @Test
-  public void testHttpTimeout_propertyNotSet() throws IOException, RegistryException {
-    System.clearProperty(JibSystemProperties.HTTP_TIMEOUT);
-
-    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
-    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
-        .thenReturn(mockResponse);
-
-    endpointCaller.call();
-    // We fall back to the default timeout:
-    // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
-    Assert.assertEquals(20000, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
-  }
-
-  @Test
-  public void testHttpTimeout_stringValue() throws IOException, RegistryException {
-    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "random string");
-
-    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
-    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
-        .thenReturn(mockResponse);
-
-    endpointCaller.call();
-    Assert.assertEquals(20000, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
-  }
-
-  @Test
-  public void testHttpTimeout_negativeValue() throws IOException, RegistryException {
-    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "-1");
-
-    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
-    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
-        .thenReturn(mockResponse);
-
-    endpointCaller.call();
-    // We let the negative value pass through:
-    // https://github.com/GoogleContainerTools/jib/pull/656#discussion_r203562639
-    Assert.assertEquals(-1, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
-  }
-
-  @Test
-  public void testHttpTimeout_0accepted() throws IOException, RegistryException {
-    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "0");
-
-    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
-    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
-        .thenReturn(mockResponse);
-
-    endpointCaller.call();
-    Assert.assertEquals(0, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
-  }
-
-  @Test
-  public void testHttpTimeout() throws IOException, RegistryException {
-    System.setProperty(JibSystemProperties.HTTP_TIMEOUT, "7593");
-
-    ArgumentCaptor<Request> requestCaptor = ArgumentCaptor.forClass(Request.class);
-    Mockito.when(mockHttpClient.call(Mockito.any(), Mockito.any(), requestCaptor.capture()))
-        .thenReturn(mockResponse);
-
-    endpointCaller.call();
-    Assert.assertEquals(7593, new RequestWrapper(requestCaptor.getValue()).getHttpTimeout());
   }
 
   @Test
