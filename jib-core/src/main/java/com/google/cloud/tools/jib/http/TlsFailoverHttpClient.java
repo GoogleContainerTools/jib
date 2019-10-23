@@ -230,10 +230,10 @@ public class TlsFailoverHttpClient {
       throws IOException {
     boolean clearAuthorization = !isHttpsProtocol(url) && !sendAuthorizationOverHttp;
 
-    HttpHeaders requestHeaders = request.getHeaders();
-    if (clearAuthorization) {
-      requestHeaders.clone().setAuthenticate(null);
-    }
+    HttpHeaders requestHeaders =
+        clearAuthorization
+            ? request.getHeaders().clone().setAuthorization((String) null) // deep clone implemented
+            : request.getHeaders();
 
     HttpRequest httpRequest =
         httpTransport
