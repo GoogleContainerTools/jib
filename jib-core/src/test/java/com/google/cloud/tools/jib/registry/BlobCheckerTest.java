@@ -82,7 +82,7 @@ public class BlobCheckerTest {
   }
 
   @Test
-  public void testHandleHttpResponseException() throws IOException, RegistryErrorException {
+  public void testHandleHttpResponseException() throws IOException {
     ResponseException mockResponseException = Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
@@ -98,8 +98,7 @@ public class BlobCheckerTest {
   }
 
   @Test
-  public void testHandleHttpResponseException_hasOtherErrors()
-      throws IOException, RegistryErrorException {
+  public void testHandleHttpResponseException_hasOtherErrors() throws IOException {
     ResponseException mockResponseException = Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
@@ -140,7 +139,7 @@ public class BlobCheckerTest {
   }
 
   @Test
-  public void testHandleHttpResponseException_invalidStatusCode() throws RegistryErrorException {
+  public void testHandleHttpResponseException_invalidStatusCode() {
     ResponseException mockResponseException = Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode()).thenReturn(-1);
 

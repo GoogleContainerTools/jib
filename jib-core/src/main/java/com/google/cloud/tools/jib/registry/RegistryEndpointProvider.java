@@ -54,16 +54,16 @@ interface RegistryEndpointProvider<T> {
   T handleResponse(Response response) throws IOException, RegistryException;
 
   /**
-   * Handles an {@link HttpResponseException} that occurs.
+   * Handles an {@link ResponseException} that occurs.
    *
-   * @param httpResponseException the {@link HttpResponseException} to handle
-   * @throws HttpResponseException {@code httpResponseException} if {@code httpResponseException}
-   *     could not be handled
+   * @param responseException the {@link ResponseException} to handle
+   * @throws HttpResponseException {@code responseException} if {@code responseException} could not
+   *     be handled
    * @throws RegistryErrorException if there is an error with a remote registry
    */
-  default T handleHttpResponseException(ResponseException httpResponseException)
+  default T handleHttpResponseException(ResponseException responseException)
       throws ResponseException, RegistryErrorException {
-    throw httpResponseException;
+    throw responseException;
   }
 
   /**
