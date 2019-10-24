@@ -21,7 +21,7 @@
         <!-- for exec-maven-plugin -->
         <mainClass>example.JibExampleApplication</mainClass>
 
-        <dropwizard.version>1.3.7</dropwizard.version>
+        <dropwizard.version>1.3.16</dropwizard.version>
         <dropwizard.server.config>dropwizard.yml</dropwizard.server.config>
         <dropwizard-template-config.version>1.5.0</dropwizard-template-config.version>
 
