@@ -45,7 +45,6 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -463,25 +462,15 @@ public class PluginConfigurationProcessor {
     }
   }
 
-  @VisibleForTesting
   static ContainerizingMode getContainerizingModeChecked(
       RawConfiguration rawConfiguration, ProjectProperties projectProperties)
       throws InvalidContainerizingModeException {
-    String rawMode = rawConfiguration.getContainerizingMode();
-    try {
-      if (!rawMode.toLowerCase(Locale.US).equals(rawMode)) {
-        throw new InvalidContainerizingModeException(rawMode, rawMode);
-      }
-
-      ContainerizingMode mode = ContainerizingMode.valueOf(rawMode.toUpperCase(Locale.US));
-      if (mode == ContainerizingMode.PACKAGED && projectProperties.isWarProject()) {
-        throw new UnsupportedOperationException(
-            "packaged containerizing mode for WAR is not yet supported");
-      }
-      return mode;
-    } catch (IllegalArgumentException ex) {
-      throw new InvalidContainerizingModeException(rawMode, rawMode);
+    ContainerizingMode mode = ContainerizingMode.from(rawConfiguration.getContainerizingMode());
+    if (mode == ContainerizingMode.PACKAGED && projectProperties.isWarProject()) {
+      throw new UnsupportedOperationException(
+          "packaged containerizing mode for WAR is not yet supported");
     }
+    return mode;
   }
 
   @VisibleForTesting

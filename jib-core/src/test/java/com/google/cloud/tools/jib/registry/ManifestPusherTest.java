@@ -226,7 +226,6 @@ public class ManifestPusherTest {
   public void testHandleHttpResponseException_otherError() throws RegistryErrorException {
     ResponseException exception = Mockito.mock(ResponseException.class);
     Mockito.when(exception.getStatusCode()).thenReturn(HttpStatus.SC_UNAUTHORIZED);
-
     try {
       testManifestPusher.handleHttpResponseException(exception);
       Assert.fail();

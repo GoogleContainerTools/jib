@@ -256,7 +256,7 @@ public class RegistryAuthenticatorTest {
       Assert.assertThat(
           server.getInputRead(),
           CoreMatchers.containsString(
-              "scope=repository:someimage:pull,push&scope=repository:anotherimage:pull"));
+              "scope=repository:someimage:pull,push&scope=repository:anotherimage:pull "));
     }
   }
 

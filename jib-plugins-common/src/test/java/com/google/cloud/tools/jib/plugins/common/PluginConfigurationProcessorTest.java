@@ -531,56 +531,6 @@ public class PluginConfigurationProcessorTest {
   }
 
   @Test
-  public void testGetContainerizingModeChecked_exploded()
-      throws InvalidContainerizingModeException {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("exploded");
-
-    Assert.assertEquals(
-        ContainerizingMode.EXPLODED,
-        PluginConfigurationProcessor.getContainerizingModeChecked(
-            rawConfiguration, projectProperties));
-  }
-
-  @Test
-  public void testGetContainerizingModeChecked_packaged()
-      throws InvalidContainerizingModeException {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
-
-    Assert.assertEquals(
-        ContainerizingMode.PACKAGED,
-        PluginConfigurationProcessor.getContainerizingModeChecked(
-            rawConfiguration, projectProperties));
-  }
-
-  @Test
-  public void testGetContainerizingModeChecked_caseSensitive() {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("PACKAGED");
-
-    try {
-      PluginConfigurationProcessor.getContainerizingModeChecked(
-          rawConfiguration, projectProperties);
-      Assert.fail();
-    } catch (InvalidContainerizingModeException ex) {
-      Assert.assertEquals("PACKAGED", ex.getInvalidContainerizingMode());
-      Assert.assertEquals("PACKAGED", ex.getMessage());
-    }
-  }
-
-  @Test
-  public void testGetContainerizingModeChecked_invalidValue() {
-    Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("this is wrong");
-
-    try {
-      PluginConfigurationProcessor.getContainerizingModeChecked(
-          rawConfiguration, projectProperties);
-      Assert.fail();
-    } catch (InvalidContainerizingModeException ex) {
-      Assert.assertEquals("this is wrong", ex.getInvalidContainerizingMode());
-      Assert.assertEquals("this is wrong", ex.getMessage());
-    }
-  }
-
-  @Test
   public void testGetContainerizingModeChecked_packagedWithWar()
       throws InvalidContainerizingModeException {
     Mockito.when(rawConfiguration.getContainerizingMode()).thenReturn("packaged");
