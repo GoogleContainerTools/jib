@@ -82,75 +82,73 @@ public class BlobCheckerTest {
   }
 
   @Test
-  public void testHandleHttpResponseException() throws IOException, RegistryErrorException {
-    HttpResponseException mockHttpResponseException = Mockito.mock(HttpResponseException.class);
-    Mockito.when(mockHttpResponseException.getStatusCode())
+  public void testHandleHttpResponseException() throws IOException {
+    HttpResponseException mockResponseException = Mockito.mock(HttpResponseException.class);
+    Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
 
     ErrorResponseTemplate emptyErrorResponseTemplate =
         new ErrorResponseTemplate()
             .addError(new ErrorEntryTemplate(ErrorCodes.BLOB_UNKNOWN.name(), "some message"));
-    Mockito.when(mockHttpResponseException.getContent())
+    Mockito.when(mockResponseException.getContent())
         .thenReturn(JsonTemplateMapper.toUtf8String(emptyErrorResponseTemplate));
 
     Assert.assertFalse(
-        testBlobChecker.handleHttpResponseException(mockHttpResponseException).isPresent());
+        testBlobChecker.handleHttpResponseException(mockResponseException).isPresent());
   }
 
   @Test
-  public void testHandleHttpResponseException_hasOtherErrors()
-      throws IOException, RegistryErrorException {
-    HttpResponseException mockHttpResponseException = Mockito.mock(HttpResponseException.class);
-    Mockito.when(mockHttpResponseException.getStatusCode())
+  public void testHandleHttpResponseException_hasOtherErrors() throws IOException {
+    HttpResponseException mockResponseException = Mockito.mock(HttpResponseException.class);
+    Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
 
     ErrorResponseTemplate emptyErrorResponseTemplate =
         new ErrorResponseTemplate()
             .addError(new ErrorEntryTemplate(ErrorCodes.BLOB_UNKNOWN.name(), "some message"))
             .addError(new ErrorEntryTemplate(ErrorCodes.MANIFEST_UNKNOWN.name(), "some message"));
-    Mockito.when(mockHttpResponseException.getContent())
+    Mockito.when(mockResponseException.getContent())
         .thenReturn(JsonTemplateMapper.toUtf8String(emptyErrorResponseTemplate));
 
     try {
-      testBlobChecker.handleHttpResponseException(mockHttpResponseException);
+      testBlobChecker.handleHttpResponseException(mockResponseException);
       Assert.fail("Non-BLOB_UNKNOWN errors should not be handled");
 
     } catch (HttpResponseException ex) {
-      Assert.assertEquals(mockHttpResponseException, ex);
+      Assert.assertEquals(mockResponseException, ex);
     }
   }
 
   @Test
-  public void testHandleHttpResponseException_notBlobUnknown()
-      throws IOException, RegistryErrorException {
-    HttpResponseException mockHttpResponseException = Mockito.mock(HttpResponseException.class);
-    Mockito.when(mockHttpResponseException.getStatusCode())
+  public void testHandleHttpResponseException_notBlobUnknown() throws IOException {
+    HttpResponseException mockResponseException = Mockito.mock(HttpResponseException.class);
+    Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
 
     ErrorResponseTemplate emptyErrorResponseTemplate = new ErrorResponseTemplate();
-    Mockito.when(mockHttpResponseException.getContent())
+    Mockito.when(mockResponseException.getContent())
         .thenReturn(JsonTemplateMapper.toUtf8String(emptyErrorResponseTemplate));
 
     try {
-      testBlobChecker.handleHttpResponseException(mockHttpResponseException);
+      testBlobChecker.handleHttpResponseException(mockResponseException);
       Assert.fail("Non-BLOB_UNKNOWN errors should not be handled");
 
     } catch (HttpResponseException ex) {
-      Assert.assertEquals(mockHttpResponseException, ex);
+      Assert.assertEquals(mockResponseException, ex);
     }
   }
 
   @Test
-  public void testHandleHttpResponseException_invalidStatusCode() throws RegistryErrorException {
-    HttpResponseException mockHttpResponseException = Mockito.mock(HttpResponseException.class);
-    Mockito.when(mockHttpResponseException.getStatusCode()).thenReturn(-1);
+  public void testHandleHttpResponseException_invalidStatusCode() {
+    HttpResponseException mockResponseException = Mockito.mock(HttpResponseException.class);
+    Mockito.when(mockResponseException.getStatusCode()).thenReturn(-1);
 
     try {
-      testBlobChecker.handleHttpResponseException(mockHttpResponseException);
+      testBlobChecker.handleHttpResponseException(mockResponseException);
       Assert.fail("Non-404 status codes should not be handled");
 
     } catch (HttpResponseException ex) {
-      Assert.assertEquals(mockHttpResponseException, ex);
+      Assert.assertEquals(mockResponseException, ex);
     }
   }
 

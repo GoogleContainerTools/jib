@@ -92,7 +92,7 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   }
 
   @Override
-  public DescriptorDigest handleHttpResponseException(HttpResponseException httpResponseException)
+  public DescriptorDigest handleHttpResponseException(HttpResponseException responseException)
       throws HttpResponseException, RegistryErrorException {
     // docker registry 2.0 and 2.1 returns:
     //   400 Bad Request
@@ -105,21 +105,21 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
     //   {"errors":[{"code":"MANIFEST_INVALID","detail":
     //   {"message":"manifest schema version not supported"},"message":"manifest invalid"}]}
 
-    if (httpResponseException.getStatusCode() != HttpStatus.SC_BAD_REQUEST
-        && httpResponseException.getStatusCode() != HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE) {
-      throw httpResponseException;
+    if (responseException.getStatusCode() != HttpStatus.SC_BAD_REQUEST
+        && responseException.getStatusCode() != HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE) {
+      throw responseException;
     }
 
-    ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(httpResponseException);
+    ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(responseException);
     if (errorCode == ErrorCodes.MANIFEST_INVALID || errorCode == ErrorCodes.TAG_INVALID) {
-      throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
+      throw new RegistryErrorExceptionBuilder(getActionDescription(), responseException)
           .addReason(
               "Registry may not support pushing OCI Manifest or "
                   + "Docker Image Manifest Version 2, Schema 2")
           .build();
     }
     // rethrow: unhandled error response code.
-    throw httpResponseException;
+    throw responseException;
   }
 
   @Override

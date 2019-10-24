@@ -74,33 +74,26 @@ public class RegistryAuthenticator {
       return Optional.empty();
     }
 
+    String registryUrl = registryEndpointRequestProperties.getServerUrl();
+    String imageName = registryEndpointRequestProperties.getImageName();
     // Checks that the authentication method starts with 'bearer ' (case insensitive).
     if (!authenticationMethod.matches("^(?i)(bearer) .*")) {
       throw newRegistryAuthenticationFailedException(
-          registryEndpointRequestProperties.getServerUrl(),
-          registryEndpointRequestProperties.getImageName(),
-          authenticationMethod,
-          "Bearer");
+          registryUrl, imageName, authenticationMethod, "Bearer");
     }
 
     Pattern realmPattern = Pattern.compile("realm=\"(.*?)\"");
     Matcher realmMatcher = realmPattern.matcher(authenticationMethod);
     if (!realmMatcher.find()) {
       throw newRegistryAuthenticationFailedException(
-          registryEndpointRequestProperties.getServerUrl(),
-          registryEndpointRequestProperties.getImageName(),
-          authenticationMethod,
-          "realm");
+          registryUrl, imageName, authenticationMethod, "realm");
     }
     String realm = realmMatcher.group(1);
 
     Pattern servicePattern = Pattern.compile("service=\"(.*?)\"");
     Matcher serviceMatcher = servicePattern.matcher(authenticationMethod);
     // use the provided registry location when missing service (e.g., for OpenShift)
-    String service =
-        serviceMatcher.find()
-            ? serviceMatcher.group(1)
-            : registryEndpointRequestProperties.getServerUrl();
+    String service = serviceMatcher.find() ? serviceMatcher.group(1) : registryUrl;
 
     return Optional.of(
         new RegistryAuthenticator(realm, service, registryEndpointRequestProperties, userAgent));
@@ -240,7 +233,7 @@ public class RegistryAuthenticator {
       try {
         return authenticate(credential, ImmutableMap.of(imageName, scope, sourceImageName, "pull"));
       } catch (RegistryAuthenticationFailedException ex) {
-        // Unable to obtain authorization with source image: fallthrough and try without
+        // Unable to obtain authorization with source image: fall through and try without
       }
     }
     return authenticate(credential, ImmutableMap.of(imageName, scope));
@@ -249,6 +242,8 @@ public class RegistryAuthenticator {
   private Authorization authenticate(
       @Nullable Credential credential, Map<String, String> repositoryScopes)
       throws RegistryAuthenticationFailedException {
+    String registryUrl = registryEndpointRequestProperties.getServerUrl();
+    String imageName = registryEndpointRequestProperties.getImageName();
     try (Connection connection =
         Connection.getConnectionFactory()
             .apply(getAuthenticationUrl(credential, repositoryScopes))) {
@@ -274,8 +269,8 @@ public class RegistryAuthenticator {
 
       if (responseJson.getToken() == null) {
         throw new RegistryAuthenticationFailedException(
-            registryEndpointRequestProperties.getServerUrl(),
-            registryEndpointRequestProperties.getImageName(),
+            registryUrl,
+            imageName,
             "Did not get token in authentication response from "
                 + getAuthenticationUrl(credential, repositoryScopes)
                 + "; parameters: "
@@ -284,10 +279,7 @@ public class RegistryAuthenticator {
       return Authorization.fromBearerToken(responseJson.getToken());
 
     } catch (IOException ex) {
-      throw new RegistryAuthenticationFailedException(
-          registryEndpointRequestProperties.getServerUrl(),
-          registryEndpointRequestProperties.getImageName(),
-          ex);
+      throw new RegistryAuthenticationFailedException(registryUrl, imageName, ex);
     }
   }
 }
