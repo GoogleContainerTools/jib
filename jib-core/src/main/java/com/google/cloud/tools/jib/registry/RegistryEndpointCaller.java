@@ -250,46 +250,44 @@ class RegistryEndpointCaller<T> {
       try {
         return registryEndpointProvider.handleHttpResponseException(ex);
 
-      } catch (HttpResponseException httpResponseException) {
-        if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
-            || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
-            || httpResponseException.getStatusCode()
+      } catch (HttpResponseException responseException) {
+        if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
+            || responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
+            || responseException.getStatusCode()
                 == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
           // The name or reference was invalid.
-          throw newRegistryErrorException(httpResponseException);
+          throw newRegistryErrorException(responseException);
 
-        } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+        } else if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
           throw new RegistryUnauthorizedException(
               registryEndpointRequestProperties.getServerUrl(),
               registryEndpointRequestProperties.getImageName(),
-              httpResponseException);
+              responseException);
 
-        } else if (httpResponseException.getStatusCode()
-            == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
+        } else if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
           if (sendCredentials) {
             // Credentials are either missing or wrong.
             throw new RegistryUnauthorizedException(
                 registryEndpointRequestProperties.getServerUrl(),
                 registryEndpointRequestProperties.getImageName(),
-                httpResponseException);
+                responseException);
           } else {
             throw new RegistryCredentialsNotSentException(
                 registryEndpointRequestProperties.getServerUrl(),
                 registryEndpointRequestProperties.getImageName());
           }
 
-        } else if (httpResponseException.getStatusCode()
+        } else if (responseException.getStatusCode()
                 == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT
-            || httpResponseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
-            || httpResponseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
+            || responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
+            || responseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
           // 'Location' header can be relative or absolute.
-          URL redirectLocation = new URL(url, httpResponseException.getHeaders().getLocation());
+          URL redirectLocation = new URL(url, responseException.getHeaders().getLocation());
           return callWithAllowInsecureRegistryHandling(redirectLocation);
 
         } else {
           // Unknown
-          throw httpResponseException;
+          throw responseException;
         }
       }
 
@@ -309,24 +307,23 @@ class RegistryEndpointCaller<T> {
   }
 
   @VisibleForTesting
-  RegistryErrorException newRegistryErrorException(HttpResponseException httpResponseException) {
+  RegistryErrorException newRegistryErrorException(HttpResponseException responseException) {
     RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
         new RegistryErrorExceptionBuilder(
-            registryEndpointProvider.getActionDescription(), httpResponseException);
+            registryEndpointProvider.getActionDescription(), responseException);
 
     try {
       ErrorResponseTemplate errorResponse =
-          JsonTemplateMapper.readJson(
-              httpResponseException.getContent(), ErrorResponseTemplate.class);
+          JsonTemplateMapper.readJson(responseException.getContent(), ErrorResponseTemplate.class);
       for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
         registryErrorExceptionBuilder.addReason(errorEntry);
       }
     } catch (IOException ex) {
       registryErrorExceptionBuilder.addReason(
           "registry returned error code "
-              + httpResponseException.getStatusCode()
+              + responseException.getStatusCode()
               + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
-              + httpResponseException.getContent()
+              + responseException.getContent()
               + "\n");
     }
 
