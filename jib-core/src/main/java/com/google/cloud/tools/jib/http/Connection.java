@@ -41,7 +41,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
  * Thread-safe HTTP client with the automatic insecure connection failover feature. Intended to be
  * created once and at multiple places. Callers should close the returned {@link Response}.
  */
-public class TlsFailoverHttpClient {
+public class Connection { // TODO: rename to TlsFailoverHttpClient
 
   private static boolean isHttpsProtocol(URL url) {
     return "https".equals(url.getProtocol());
@@ -114,7 +114,7 @@ public class TlsFailoverHttpClient {
   private final Supplier<HttpTransport> httpTransportFactory;
   private final Supplier<HttpTransport> insecureHttpTransportFactory;
 
-  public TlsFailoverHttpClient(
+  public Connection(
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger) {
@@ -122,12 +122,12 @@ public class TlsFailoverHttpClient {
         enableHttpAndInsecureFailover,
         sendAuthorizationOverHttp,
         logger,
-        TlsFailoverHttpClient::getHttpTransport,
-        TlsFailoverHttpClient::getInsecureHttpTransport);
+        Connection::getHttpTransport,
+        Connection::getInsecureHttpTransport);
   }
 
   @VisibleForTesting
-  TlsFailoverHttpClient(
+  Connection(
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger,

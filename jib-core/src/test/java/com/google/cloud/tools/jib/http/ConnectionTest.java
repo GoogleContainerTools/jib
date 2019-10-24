@@ -47,14 +47,14 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-/** Tests for {@link TlsFailoverHttpClient}. */
+/** Tests for {@link Connection}. */
 @RunWith(MockitoJUnitRunner.class)
-public class TlsFailoverHttpClientTest {
+public class ConnectionTest { // TODO: rename to TlsFailoverHttpClient
 
   @FunctionalInterface
   private interface CallFunction {
 
-    Response call(TlsFailoverHttpClient httpClient, URL url, Request request) throws IOException;
+    Response call(Connection httpClient, URL url, Request request) throws IOException;
   }
 
   @Mock private HttpTransport mockHttpTransport;
@@ -66,8 +66,9 @@ public class TlsFailoverHttpClientTest {
   @Mock private HttpResponse mockHttpResponse;
   @Mock private Consumer<LogEvent> logger;
 
-  @Captor private ArgumentCaptor<GenericUrl> urlCaptor;
   @Captor private ArgumentCaptor<HttpHeaders> httpHeadersCaptor;
+  @Captor private ArgumentCaptor<BlobHttpContent> blobHttpContentCaptor;
+  @Captor private ArgumentCaptor<GenericUrl> urlCaptor;
 
   private final GenericUrl fakeUrl = new GenericUrl("https://crepecake/fake/url");
   private final LongAdder totalByteCount = new LongAdder();
@@ -78,15 +79,57 @@ public class TlsFailoverHttpClientTest {
     Mockito.when(mockHttpResponse.getContent()).thenReturn(inStream);
   }
 
-  private TlsFailoverHttpClient newHttpClient(boolean insecure, boolean authOverHttp)
-      throws IOException {
+  private Connection newHttpClient(boolean insecure, boolean authOverHttp) throws IOException {
     setUpMocks(mockHttpTransport, mockHttpRequestFactory, mockHttpRequest);
     if (insecure) {
       setUpMocks(
           mockInsecureHttpTransport, mockInsecureHttpRequestFactory, mockInsecureHttpRequest);
     }
-    return new TlsFailoverHttpClient(
+    return new Connection(
         insecure, authOverHttp, logger, () -> mockHttpTransport, () -> mockInsecureHttpTransport);
+  }
+
+  @Test
+  public void testGet() throws IOException {
+    testCall(HttpMethods.GET, Connection::get);
+  }
+
+  @Test
+  public void testPost() throws IOException {
+    testCall(HttpMethods.POST, Connection::post);
+  }
+
+  @Test
+  public void testPut() throws IOException {
+    testCall(HttpMethods.PUT, Connection::put);
+  }
+
+  @Test
+  public void testHttpTimeout_doNotSetByDefault() throws IOException {
+    try (Response ignored = newHttpClient(false, false).get(fakeUrl.toURL(), fakeRequest(null))) {}
+
+    Mockito.verify(mockHttpRequest, Mockito.never()).setConnectTimeout(Mockito.anyInt());
+    Mockito.verify(mockHttpRequest, Mockito.never()).setReadTimeout(Mockito.anyInt());
+  }
+
+  @Test
+  public void testHttpTimeout() throws IOException {
+    Connection httpClient = newHttpClient(false, false);
+    try (Response ignored = httpClient.get(fakeUrl.toURL(), fakeRequest(5982))) {}
+
+    Mockito.verify(mockHttpRequest).setConnectTimeout(5982);
+    Mockito.verify(mockHttpRequest).setReadTimeout(5982);
+  }
+
+  private Request fakeRequest(Integer httpTimeout) {
+    return Request.builder()
+        .setAccept(Arrays.asList("fake.accept", "another.fake.accept"))
+        .setUserAgent("fake user agent")
+        .setBody(
+            new BlobHttpContent(Blobs.from("crepecake"), "fake.content.type", totalByteCount::add))
+        .setAuthorization(Authorization.fromBasicCredentials("fake-username", "fake-secret"))
+        .setHttpTimeout(httpTimeout)
+        .build();
   }
 
   private void setUpMocks(
@@ -106,42 +149,33 @@ public class TlsFailoverHttpClientTest {
     Mockito.when(mockHttpRequest.execute()).thenReturn(mockHttpResponse);
   }
 
-  @Test
-  public void testGet() throws IOException {
-    testCall(HttpMethods.GET, TlsFailoverHttpClient::get);
-  }
+  private void testCall(String httpMethod, CallFunction callFunction) throws IOException {
+    Connection httpClient = newHttpClient(false, false);
+    try (Response ignored = callFunction.call(httpClient, fakeUrl.toURL(), fakeRequest(null))) {}
 
-  @Test
-  public void testPost() throws IOException {
-    testCall(HttpMethods.POST, TlsFailoverHttpClient::post);
-  }
+    Assert.assertEquals(
+        "fake.accept,another.fake.accept", httpHeadersCaptor.getValue().getAccept());
+    Assert.assertEquals("fake user agent", httpHeadersCaptor.getValue().getUserAgent());
+    // Base64 representation of "fake-username:fake-secret"
+    Assert.assertEquals(
+        "Basic ZmFrZS11c2VybmFtZTpmYWtlLXNlY3JldA==",
+        httpHeadersCaptor.getValue().getAuthorization());
 
-  @Test
-  public void testPut() throws IOException {
-    testCall(HttpMethods.PUT, TlsFailoverHttpClient::put);
-  }
+    Mockito.verify(mockHttpRequestFactory)
+        .buildRequest(Mockito.eq(httpMethod), Mockito.eq(fakeUrl), blobHttpContentCaptor.capture());
+    Assert.assertEquals("fake.content.type", blobHttpContentCaptor.getValue().getType());
 
-  @Test
-  public void testHttpTimeout_doNotSetByDefault() throws IOException {
-    try (Response ignored = newHttpClient(false, false).get(fakeUrl.toURL(), fakeRequest(null))) {}
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    blobHttpContentCaptor.getValue().writeTo(byteArrayOutputStream);
 
-    Mockito.verify(mockHttpRequest, Mockito.never()).setConnectTimeout(Mockito.anyInt());
-    Mockito.verify(mockHttpRequest, Mockito.never()).setReadTimeout(Mockito.anyInt());
-  }
-
-  @Test
-  public void testHttpTimeout() throws IOException {
-    TlsFailoverHttpClient httpClient = newHttpClient(false, false);
-    try (Response ignored = httpClient.get(fakeUrl.toURL(), fakeRequest(5982))) {}
-
-    Mockito.verify(mockHttpRequest).setConnectTimeout(5982);
-    Mockito.verify(mockHttpRequest).setReadTimeout(5982);
+    Assert.assertEquals("crepecake", byteArrayOutputStream.toString(StandardCharsets.UTF_8.name()));
+    Assert.assertEquals("crepecake".length(), totalByteCount.longValue());
   }
 
   @Test
   public void testGet_nonHttpsServer_insecureConnectionAndFailoverDisabled()
       throws MalformedURLException, IOException {
-    TlsFailoverHttpClient httpClient = newHttpClient(false, false);
+    Connection httpClient = newHttpClient(false, false);
     try (Response response = httpClient.get(new URL("http://plain.http"), fakeRequest(null))) {
       Assert.fail("Should disallow non-HTTP attempt");
     } catch (SSLException ex) {
@@ -152,7 +186,7 @@ public class TlsFailoverHttpClientTest {
 
   @Test
   public void testCall_secureClientOnUnverifiableServer() throws IOException {
-    TlsFailoverHttpClient httpClient = newHttpClient(false, false);
+    Connection httpClient = newHttpClient(false, false);
 
     Mockito.when(mockHttpRequest.execute()).thenThrow(new SSLPeerUnverifiedException("unverified"));
 
@@ -166,7 +200,7 @@ public class TlsFailoverHttpClientTest {
 
   @Test
   public void testGet_insecureClientOnUnverifiableServer() throws IOException {
-    TlsFailoverHttpClient insecureHttpClient = newHttpClient(true, false);
+    Connection insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute()).thenThrow(new SSLPeerUnverifiedException(""));
 
@@ -189,7 +223,7 @@ public class TlsFailoverHttpClientTest {
 
   @Test
   public void testGet_insecureClientOnHttpServer() throws IOException {
-    TlsFailoverHttpClient insecureHttpClient = newHttpClient(true, false);
+    Connection insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
         .thenThrow(new SSLException("")) // server is not HTTPS
@@ -222,7 +256,7 @@ public class TlsFailoverHttpClientTest {
 
   @Test
   public void testGet_insecureClientOnHttpServerAndNoPortSpecified() throws IOException {
-    TlsFailoverHttpClient insecureHttpClient = newHttpClient(true, false);
+    Connection insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
         .thenThrow(new ConnectException()) // server is not listening on 443
@@ -249,7 +283,7 @@ public class TlsFailoverHttpClientTest {
 
   @Test
   public void testGet_secureClientOnNonListeningServerAndNoPortSpecified() throws IOException {
-    TlsFailoverHttpClient httpClient = newHttpClient(false, false);
+    Connection httpClient = newHttpClient(false, false);
 
     Mockito.when(mockHttpRequest.execute())
         .thenThrow(new ConnectException("my exception")); // server not listening on 443
@@ -269,7 +303,7 @@ public class TlsFailoverHttpClientTest {
 
   @Test
   public void testGet_insecureClientOnNonListeningServerAndPortSpecified() throws IOException {
-    TlsFailoverHttpClient insecureHttpClient = newHttpClient(true, false);
+    Connection insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute())
         .thenThrow(new ConnectException("my exception")); // server is not listening on 5000
@@ -290,7 +324,7 @@ public class TlsFailoverHttpClientTest {
 
   @Test
   public void testGet_timeoutFromConnectException() throws IOException {
-    TlsFailoverHttpClient insecureHttpClient = newHttpClient(true, false);
+    Connection insecureHttpClient = newHttpClient(true, false);
 
     Mockito.when(mockHttpRequest.execute()).thenThrow(new ConnectException("Connection timed out"));
 
@@ -310,7 +344,7 @@ public class TlsFailoverHttpClientTest {
 
   @Test
   public void testGet_doNotSendCredentialsOverHttp() throws IOException {
-    TlsFailoverHttpClient insecureHttpClient = newHttpClient(true, false);
+    Connection insecureHttpClient = newHttpClient(true, false);
 
     // make it fall back to HTTP
     Mockito.when(mockHttpRequest.execute())
@@ -333,7 +367,7 @@ public class TlsFailoverHttpClientTest {
 
   @Test
   public void testGet_sendCredentialsOverHttp() throws IOException {
-    TlsFailoverHttpClient insecureHttpClient = newHttpClient(true, true); // sendCredentialsOverHttp
+    Connection insecureHttpClient = newHttpClient(true, true); // sendCredentialsOverHttp
 
     try (Response response =
         insecureHttpClient.get(new URL("http://plain.http"), fakeRequest(null))) {}
@@ -347,7 +381,7 @@ public class TlsFailoverHttpClientTest {
 
   @Test
   public void testGet_originalRequestHeaderUntouchedWhenClearingHeader() throws IOException {
-    TlsFailoverHttpClient insecureHttpClient = newHttpClient(true, false);
+    Connection insecureHttpClient = newHttpClient(true, false);
 
     Request request = fakeRequest(null);
     try (Response response = insecureHttpClient.get(new URL("http://plain.http"), request)) {}
@@ -358,42 +392,5 @@ public class TlsFailoverHttpClientTest {
     Assert.assertNull(httpHeadersCaptor.getValue().getAuthorization());
     Assert.assertEquals(
         "Basic ZmFrZS11c2VybmFtZTpmYWtlLXNlY3JldA==", request.getHeaders().getAuthorization());
-  }
-
-  private Request fakeRequest(Integer httpTimeout) {
-    return Request.builder()
-        .setAccept(Arrays.asList("fake.accept", "another.fake.accept"))
-        .setUserAgent("fake user agent")
-        .setBody(
-            new BlobHttpContent(Blobs.from("crepecake"), "fake.content.type", totalByteCount::add))
-        .setAuthorization(Authorization.fromBasicCredentials("fake-username", "fake-secret"))
-        .setHttpTimeout(httpTimeout)
-        .build();
-  }
-
-  private void testCall(String httpMethod, CallFunction callFunction) throws IOException {
-    TlsFailoverHttpClient httpClient = newHttpClient(false, false);
-    try (Response ignored = callFunction.call(httpClient, fakeUrl.toURL(), fakeRequest(null))) {}
-
-    ArgumentCaptor<BlobHttpContent> blobHttpContentCaptor =
-        ArgumentCaptor.forClass(BlobHttpContent.class);
-
-    Assert.assertEquals(
-        "fake.accept,another.fake.accept", httpHeadersCaptor.getValue().getAccept());
-    Assert.assertEquals("fake user agent", httpHeadersCaptor.getValue().getUserAgent());
-    // Base64 representation of "fake-username:fake-secret"
-    Assert.assertEquals(
-        "Basic ZmFrZS11c2VybmFtZTpmYWtlLXNlY3JldA==",
-        httpHeadersCaptor.getValue().getAuthorization());
-
-    Mockito.verify(mockHttpRequestFactory)
-        .buildRequest(Mockito.eq(httpMethod), Mockito.eq(fakeUrl), blobHttpContentCaptor.capture());
-    Assert.assertEquals("fake.content.type", blobHttpContentCaptor.getValue().getType());
-
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    blobHttpContentCaptor.getValue().writeTo(byteArrayOutputStream);
-
-    Assert.assertEquals("crepecake", byteArrayOutputStream.toString(StandardCharsets.UTF_8.name()));
-    Assert.assertEquals("crepecake".length(), totalByteCount.longValue());
   }
 }

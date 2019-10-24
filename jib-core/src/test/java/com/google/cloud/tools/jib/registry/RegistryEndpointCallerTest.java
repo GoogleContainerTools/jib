@@ -26,11 +26,11 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
+import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
 import com.google.cloud.tools.jib.http.RequestWrapper;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
-import com.google.cloud.tools.jib.http.TlsFailoverHttpClient;
 import com.google.common.io.CharStreams;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -109,7 +109,7 @@ public class RegistryEndpointCallerTest {
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
   @Mock private EventHandlers mockEventHandlers;
-  @Mock private TlsFailoverHttpClient mockHttpClient;
+  @Mock private Connection mockHttpClient;
   @Mock private Response mockResponse;
 
   private RegistryEndpointCaller<String> endpointCaller;
