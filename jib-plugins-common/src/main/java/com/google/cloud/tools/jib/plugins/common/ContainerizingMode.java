@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import java.util.Locale;
+
 /**
  * Containerizing mode.
  *
@@ -26,5 +28,25 @@ package com.google.cloud.tools.jib.plugins.common;
  */
 public enum ContainerizingMode {
   EXPLODED,
-  PACKAGED
+  PACKAGED;
+
+  /**
+   * Converts a string representation of ContainerizingMode to Enum. It requires an all lowercase
+   * string that matches the enum value exactly.
+   *
+   * @param rawMode the raw string to parse
+   * @return the enum equivalent of the mode
+   * @throws InvalidContainerizingModeException when not lowercase, or cannot match to an values of
+   *     this enum class
+   */
+  public static ContainerizingMode from(String rawMode) throws InvalidContainerizingModeException {
+    try {
+      if (!rawMode.toLowerCase(Locale.US).equals(rawMode)) {
+        throw new InvalidContainerizingModeException(rawMode, rawMode);
+      }
+      return ContainerizingMode.valueOf(rawMode.toUpperCase(Locale.US));
+    } catch (IllegalArgumentException ex) {
+      throw new InvalidContainerizingModeException(rawMode, rawMode);
+    }
+  }
 }
