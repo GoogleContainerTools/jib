@@ -285,6 +285,9 @@ class RegistryEndpointCaller<T> {
         }
       }
 
+    } catch (SSLException ex) {
+      throw ex;
+
     } catch (IOException ex) {
       logError("I/O error for image [" + serverUrl + "/" + imageName + "]:");
       logError("    " + ex.getMessage());
