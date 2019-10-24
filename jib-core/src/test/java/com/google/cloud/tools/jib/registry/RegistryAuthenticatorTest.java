@@ -218,7 +218,7 @@ public class RegistryAuthenticatorTest {
   @Test
   public void testSourceImage_differentSourceRepository()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    try (TestWebServer server = new TestWebServer(false)) {
+    try (TestWebServer server = new TestWebServer(false, 2)) {
       try {
         RegistryEndpointRequestProperties registryEndpointRequestProperties =
             new RegistryEndpointRequestProperties("someserver", "someimage", "anotherimage");
@@ -235,7 +235,7 @@ public class RegistryAuthenticatorTest {
       Assert.assertThat(
           server.getInputRead(),
           CoreMatchers.containsString(
-              "scope=repository:someimage:pull,push&scope=repository:anotherimage:pull"));
+              "scope=repository:someimage:pull,push&scope=repository:anotherimage:pull "));
     }
   }
 
