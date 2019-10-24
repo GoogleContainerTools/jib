@@ -16,78 +16,71 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponseException;
-import org.apache.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Test for {@link ErrorReponseUtil}. */
+@RunWith(MockitoJUnitRunner.class)
 public class ErrorResponseUtilTest {
+
+  @Mock HttpResponseException responseException;
 
   @Test
   public void testGetErrorCode_knownErrorCode() throws HttpResponseException {
-    HttpResponseException httpResponseException =
-        new HttpResponseException.Builder(
-                HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
-            .setContent(
-                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\",\"message\":\"manifest invalid\",\"detail\":{}}]}")
-            .build();
+    Mockito.when(responseException.getContent())
+        .thenReturn(
+            "{\"errors\":[{\"code\":\"MANIFEST_INVALID\",\"message\":\"manifest invalid\",\"detail\":{}}]}");
 
     Assert.assertSame(
-        ErrorCodes.MANIFEST_INVALID, ErrorResponseUtil.getErrorCode(httpResponseException));
+        ErrorCodes.MANIFEST_INVALID, ErrorResponseUtil.getErrorCode(responseException));
   }
 
   /** An unknown {@link ErrorCodes} should cause original exception to be rethrown. */
   @Test
   public void testGetErrorCode_unknownErrorCode() {
-    HttpResponseException httpResponseException =
-        new HttpResponseException.Builder(
-                HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
-            .setContent(
-                "{\"errors\":[{\"code\":\"INVALID_ERROR_CODE\",\"message\":\"invalid code\",\"detail\":{}}]}")
-            .build();
+    Mockito.when(responseException.getContent())
+        .thenReturn(
+            "{\"errors\":[{\"code\":\"INVALID_ERROR_CODE\",\"message\":\"invalid code\",\"detail\":{}}]}");
     try {
-      ErrorResponseUtil.getErrorCode(httpResponseException);
+      ErrorResponseUtil.getErrorCode(responseException);
       Assert.fail();
     } catch (HttpResponseException ex) {
-      Assert.assertSame(httpResponseException, ex);
+      Assert.assertSame(responseException, ex);
     }
   }
 
   /** Multiple error objects should cause original exception to be rethrown. */
   @Test
   public void testGetErrorCode_multipleErrors() {
-    HttpResponseException httpResponseException =
-        new HttpResponseException.Builder(
-                HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
-            .setContent(
-                "{\"errors\":["
-                    + "{\"code\":\"MANIFEST_INVALID\",\"message\":\"message 1\",\"detail\":{}},"
-                    + "{\"code\":\"TAG_INVALID\",\"message\":\"message 2\",\"detail\":{}}"
-                    + "]}")
-            .build();
+    Mockito.when(responseException.getContent())
+        .thenReturn(
+            "{\"errors\":["
+                + "{\"code\":\"MANIFEST_INVALID\",\"message\":\"message 1\",\"detail\":{}},"
+                + "{\"code\":\"TAG_INVALID\",\"message\":\"message 2\",\"detail\":{}}"
+                + "]}");
     try {
-      ErrorResponseUtil.getErrorCode(httpResponseException);
+      ErrorResponseUtil.getErrorCode(responseException);
       Assert.fail();
     } catch (HttpResponseException ex) {
-      Assert.assertSame(httpResponseException, ex);
+      Assert.assertSame(responseException, ex);
     }
   }
 
   /** An non-error object should cause original exception to be rethrown. */
   @Test
   public void testGetErrorCode_invalidErrorObject() {
-    HttpResponseException httpResponseException =
-        new HttpResponseException.Builder(
-                HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
-            .setContent("{\"type\":\"other\",\"message\":\"some other object\"}")
-            .build();
+    Mockito.when(responseException.getContent())
+        .thenReturn("{\"type\":\"other\",\"message\":\"some other object\"}");
     try {
-      ErrorResponseUtil.getErrorCode(httpResponseException);
+      ErrorResponseUtil.getErrorCode(responseException);
       Assert.fail();
     } catch (HttpResponseException ex) {
-      Assert.assertSame(httpResponseException, ex);
+      Assert.assertSame(responseException, ex);
     }
   }
 }

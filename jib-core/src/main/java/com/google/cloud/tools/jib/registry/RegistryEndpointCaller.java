@@ -146,24 +146,9 @@ class RegistryEndpointCaller<T> {
    * @throws RegistryException for known exceptions when interacting with the registry
    */
   T call() throws IOException, RegistryException {
-    try {
-      String apiRouteBase = "https://" + registryEndpointRequestProperties.getServerUrl() + "/v2/";
-      URL initialRequestUrl = registryEndpointProvider.getApiRoute(apiRouteBase);
-      return callWithAllowInsecureRegistryHandling(initialRequestUrl);
-
-    } catch (IOException ex) {
-      String registry = registryEndpointRequestProperties.getServerUrl();
-      String repository = registryEndpointRequestProperties.getImageName();
-      logError("I/O error for image [" + registry + "/" + repository + "]:");
-      logError("    " + ex.getMessage());
-      if (isBrokenPipe(ex)) {
-        logError(
-            "broken pipe: the server shut down the connection. Check the server log if possible. "
-                + "This could also be a proxy issue. For example, a proxy may prevent sending "
-                + "packets that are too large.");
-      }
-      throw ex;
-    }
+    String apiRouteBase = "https://" + registryEndpointRequestProperties.getServerUrl() + "/v2/";
+    URL initialRequestUrl = registryEndpointProvider.getApiRoute(apiRouteBase);
+    return callWithAllowInsecureRegistryHandling(initialRequestUrl);
   }
 
   private T callWithAllowInsecureRegistryHandling(URL url) throws IOException, RegistryException {
@@ -244,6 +229,8 @@ class RegistryEndpointCaller<T> {
       throws IOException, RegistryException {
     // Only sends authorization if using HTTPS or explicitly forcing over HTTP.
     boolean sendCredentials = isHttpsProtocol(url) || JibSystemProperties.sendCredentialsOverHttp();
+    String serverUrl = registryEndpointRequestProperties.getServerUrl();
+    String imageName = registryEndpointRequestProperties.getImageName();
 
     try (Connection connection = connectionFactory.apply(url)) {
       Request.Builder requestBuilder =
@@ -265,70 +252,69 @@ class RegistryEndpointCaller<T> {
       try {
         return registryEndpointProvider.handleHttpResponseException(ex);
 
-      } catch (HttpResponseException httpResponseException) {
-        if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
-            || httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
-            || httpResponseException.getStatusCode()
+      } catch (HttpResponseException responseException) {
+        if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_BAD_REQUEST
+            || responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_NOT_FOUND
+            || responseException.getStatusCode()
                 == HttpStatusCodes.STATUS_CODE_METHOD_NOT_ALLOWED) {
           // The name or reference was invalid.
-          throw newRegistryErrorException(httpResponseException);
+          throw newRegistryErrorException(responseException);
 
-        } else if (httpResponseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-          throw new RegistryUnauthorizedException(
-              registryEndpointRequestProperties.getServerUrl(),
-              registryEndpointRequestProperties.getImageName(),
-              httpResponseException);
+        } else if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
+          throw new RegistryUnauthorizedException(serverUrl, imageName, responseException);
 
-        } else if (httpResponseException.getStatusCode()
-            == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
+        } else if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
           if (sendCredentials) {
             // Credentials are either missing or wrong.
-            throw new RegistryUnauthorizedException(
-                registryEndpointRequestProperties.getServerUrl(),
-                registryEndpointRequestProperties.getImageName(),
-                httpResponseException);
+            throw new RegistryUnauthorizedException(serverUrl, imageName, responseException);
           } else {
-            throw new RegistryCredentialsNotSentException(
-                registryEndpointRequestProperties.getServerUrl(),
-                registryEndpointRequestProperties.getImageName());
+            throw new RegistryCredentialsNotSentException(serverUrl, imageName);
           }
 
-        } else if (httpResponseException.getStatusCode()
+        } else if (responseException.getStatusCode()
                 == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT
-            || httpResponseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
-            || httpResponseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
+            || responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
+            || responseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
           // 'Location' header can be relative or absolute.
-          URL redirectLocation = new URL(url, httpResponseException.getHeaders().getLocation());
+          URL redirectLocation = new URL(url, responseException.getHeaders().getLocation());
           return callWithAllowInsecureRegistryHandling(redirectLocation);
 
         } else {
           // Unknown
-          throw httpResponseException;
+          throw responseException;
         }
       }
+
+    } catch (SSLException ex) {
+      logErrorIfBrokenPipe(ex);
+      throw ex;
+
+    } catch (IOException ex) {
+      logError("I/O error for image [" + serverUrl + "/" + imageName + "]:");
+      logError("    " + ex.getMessage());
+      logErrorIfBrokenPipe(ex);
+      throw ex;
     }
   }
 
   @VisibleForTesting
-  RegistryErrorException newRegistryErrorException(HttpResponseException httpResponseException) {
+  RegistryErrorException newRegistryErrorException(HttpResponseException responseException) {
     RegistryErrorExceptionBuilder registryErrorExceptionBuilder =
         new RegistryErrorExceptionBuilder(
-            registryEndpointProvider.getActionDescription(), httpResponseException);
+            registryEndpointProvider.getActionDescription(), responseException);
 
     try {
       ErrorResponseTemplate errorResponse =
-          JsonTemplateMapper.readJson(
-              httpResponseException.getContent(), ErrorResponseTemplate.class);
+          JsonTemplateMapper.readJson(responseException.getContent(), ErrorResponseTemplate.class);
       for (ErrorEntryTemplate errorEntry : errorResponse.getErrors()) {
         registryErrorExceptionBuilder.addReason(errorEntry);
       }
     } catch (IOException ex) {
       registryErrorExceptionBuilder.addReason(
           "registry returned error code "
-              + httpResponseException.getStatusCode()
+              + responseException.getStatusCode()
               + "; possible causes include invalid or wrong reference. Actual error output follows:\n"
-              + httpResponseException.getContent()
+              + responseException.getContent()
               + "\n");
     }
 
@@ -338,5 +324,14 @@ class RegistryEndpointCaller<T> {
   /** Logs error message in red. */
   private void logError(String message) {
     eventHandlers.dispatch(LogEvent.error("\u001B[31;1m" + message + "\u001B[0m"));
+  }
+
+  private void logErrorIfBrokenPipe(IOException ex) {
+    if (isBrokenPipe(ex)) {
+      logError(
+          "broken pipe: the server shut down the connection. Check the server log if possible. "
+              + "This could also be a proxy issue. For example, a proxy may prevent sending "
+              + "packets that are too large.");
+    }
   }
 }

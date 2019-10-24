@@ -81,17 +81,17 @@ class AuthenticationMethodRetriever
 
   @Override
   public Optional<RegistryAuthenticator> handleHttpResponseException(
-      HttpResponseException httpResponseException)
+      HttpResponseException responseException)
       throws HttpResponseException, RegistryErrorException {
     // Only valid for status code of '401 Unauthorized'.
-    if (httpResponseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
-      throw httpResponseException;
+    if (responseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
+      throw responseException;
     }
 
     // Checks if the 'WWW-Authenticate' header is present.
-    String authenticationMethod = httpResponseException.getHeaders().getAuthenticate();
+    String authenticationMethod = responseException.getHeaders().getAuthenticate();
     if (authenticationMethod == null) {
-      throw new RegistryErrorExceptionBuilder(getActionDescription(), httpResponseException)
+      throw new RegistryErrorExceptionBuilder(getActionDescription(), responseException)
           .addReason("'WWW-Authenticate' header not found")
           .build();
     }

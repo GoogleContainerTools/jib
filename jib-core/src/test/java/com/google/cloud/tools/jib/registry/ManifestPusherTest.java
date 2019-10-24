@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
@@ -159,13 +158,12 @@ public class ManifestPusherTest {
   @Test
   public void testHandleHttpResponseException_dockerRegistry_tagInvalid()
       throws HttpResponseException {
-    HttpResponseException exception =
-        new HttpResponseException.Builder(
-                HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
-            .setContent(
-                "{\"errors\":[{\"code\":\"TAG_INVALID\","
-                    + "\"message\":\"manifest tag did not match URI\"}]}")
-            .build();
+    HttpResponseException exception = Mockito.mock(HttpResponseException.class);
+    Mockito.when(exception.getStatusCode()).thenReturn(HttpStatus.SC_BAD_REQUEST);
+    Mockito.when(exception.getContent())
+        .thenReturn(
+            "{\"errors\":[{\"code\":\"TAG_INVALID\","
+                + "\"message\":\"manifest tag did not match URI\"}]}");
     try {
       testManifestPusher.handleHttpResponseException(exception);
       Assert.fail();
@@ -183,13 +181,12 @@ public class ManifestPusherTest {
   @Test
   public void testHandleHttpResponseException_dockerRegistry_manifestInvalid()
       throws HttpResponseException {
-    HttpResponseException exception =
-        new HttpResponseException.Builder(
-                HttpStatus.SC_BAD_REQUEST, "Bad Request", new HttpHeaders())
-            .setContent(
-                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\","
-                    + "\"message\":\"manifest invalid\",\"detail\":{}}]}")
-            .build();
+    HttpResponseException exception = Mockito.mock(HttpResponseException.class);
+    Mockito.when(exception.getStatusCode()).thenReturn(HttpStatus.SC_BAD_REQUEST);
+    Mockito.when(exception.getContent())
+        .thenReturn(
+            "{\"errors\":[{\"code\":\"MANIFEST_INVALID\","
+                + "\"message\":\"manifest invalid\",\"detail\":{}}]}");
     try {
       testManifestPusher.handleHttpResponseException(exception);
       Assert.fail();
@@ -206,14 +203,13 @@ public class ManifestPusherTest {
   /** Quay.io returns an undocumented 415 / MANIFEST_INVALID. */
   @Test
   public void testHandleHttpResponseException_quayIo() throws HttpResponseException {
-    HttpResponseException exception =
-        new HttpResponseException.Builder(
-                HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE, "UNSUPPORTED MEDIA TYPE", new HttpHeaders())
-            .setContent(
-                "{\"errors\":[{\"code\":\"MANIFEST_INVALID\","
-                    + "\"detail\":{\"message\":\"manifest schema version not supported\"},"
-                    + "\"message\":\"manifest invalid\"}]}")
-            .build();
+    HttpResponseException exception = Mockito.mock(HttpResponseException.class);
+    Mockito.when(exception.getStatusCode()).thenReturn(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE);
+    Mockito.when(exception.getContent())
+        .thenReturn(
+            "{\"errors\":[{\"code\":\"MANIFEST_INVALID\","
+                + "\"detail\":{\"message\":\"manifest schema version not supported\"},"
+                + "\"message\":\"manifest invalid\"}]}");
     try {
       testManifestPusher.handleHttpResponseException(exception);
       Assert.fail();
@@ -229,11 +225,8 @@ public class ManifestPusherTest {
 
   @Test
   public void testHandleHttpResponseException_otherError() throws RegistryErrorException {
-    HttpResponseException exception =
-        new HttpResponseException.Builder(
-                HttpStatus.SC_UNAUTHORIZED, "Unauthorized", new HttpHeaders())
-            .setContent("{\"errors\":[{\"code\":\"UNAUTHORIZED\",\"message\":\"Unauthorized\"]}}")
-            .build();
+    HttpResponseException exception = Mockito.mock(HttpResponseException.class);
+    Mockito.when(exception.getStatusCode()).thenReturn(HttpStatus.SC_UNAUTHORIZED);
     try {
       testManifestPusher.handleHttpResponseException(exception);
       Assert.fail();
