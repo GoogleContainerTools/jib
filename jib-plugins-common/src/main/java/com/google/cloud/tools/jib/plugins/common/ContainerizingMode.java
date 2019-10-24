@@ -16,6 +16,8 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
+import java.util.Locale;
+
 /**
  * Containerizing mode.
  *
@@ -26,5 +28,16 @@ package com.google.cloud.tools.jib.plugins.common;
  */
 public enum ContainerizingMode {
   EXPLODED,
-  PACKAGED
+  PACKAGED;
+
+  public static ContainerizingMode from(String rawMode) throws InvalidContainerizingModeException {
+    try {
+      if (!rawMode.toLowerCase(Locale.US).equals(rawMode)) {
+        throw new InvalidContainerizingModeException(rawMode, rawMode);
+      }
+      return ContainerizingMode.valueOf(rawMode.toUpperCase(Locale.US));
+    } catch (IllegalArgumentException ex) {
+      throw new InvalidContainerizingModeException(rawMode, rawMode);
+    }
+  }
 }
