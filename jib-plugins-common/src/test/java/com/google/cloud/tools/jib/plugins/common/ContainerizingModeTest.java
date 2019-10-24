@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.plugins.common;
 import org.junit.Assert;
 import org.junit.Test;
 
+/** Tests for {@link ContainerizingMode}. */
 public class ContainerizingModeTest {
 
   @Test
