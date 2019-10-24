@@ -146,24 +146,9 @@ class RegistryEndpointCaller<T> {
    * @throws RegistryException for known exceptions when interacting with the registry
    */
   T call() throws IOException, RegistryException {
-    try {
-      String apiRouteBase = "https://" + registryEndpointRequestProperties.getServerUrl() + "/v2/";
-      URL initialRequestUrl = registryEndpointProvider.getApiRoute(apiRouteBase);
-      return callWithAllowInsecureRegistryHandling(initialRequestUrl);
-
-    } catch (IOException ex) {
-      String registry = registryEndpointRequestProperties.getServerUrl();
-      String repository = registryEndpointRequestProperties.getImageName();
-      logError("I/O error for image [" + registry + "/" + repository + "]:");
-      logError("    " + ex.getMessage());
-      if (isBrokenPipe(ex)) {
-        logError(
-            "broken pipe: the server shut down the connection. Check the server log if possible. "
-                + "This could also be a proxy issue. For example, a proxy may prevent sending "
-                + "packets that are too large.");
-      }
-      throw ex;
-    }
+    String apiRouteBase = "https://" + registryEndpointRequestProperties.getServerUrl() + "/v2/";
+    URL initialRequestUrl = registryEndpointProvider.getApiRoute(apiRouteBase);
+    return callWithAllowInsecureRegistryHandling(initialRequestUrl);
   }
 
   private T callWithAllowInsecureRegistryHandling(URL url) throws IOException, RegistryException {
@@ -307,6 +292,19 @@ class RegistryEndpointCaller<T> {
           throw httpResponseException;
         }
       }
+
+    } catch (IOException ex) {
+      String registry = registryEndpointRequestProperties.getServerUrl();
+      String repository = registryEndpointRequestProperties.getImageName();
+      logError("I/O error for image [" + registry + "/" + repository + "]:");
+      logError("    " + ex.getMessage());
+      if (isBrokenPipe(ex)) {
+        logError(
+            "broken pipe: the server shut down the connection. Check the server log if possible. "
+                + "This could also be a proxy issue. For example, a proxy may prevent sending "
+                + "packets that are too large.");
+      }
+      throw ex;
     }
   }
 
