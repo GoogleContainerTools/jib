@@ -61,25 +61,25 @@ class BlobChecker implements RegistryEndpointProvider<Optional<BlobDescriptor>> 
 
   @Override
   public Optional<BlobDescriptor> handleHttpResponseException(
-      HttpResponseException httpResponseException) throws HttpResponseException {
-    if (httpResponseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
-      throw httpResponseException;
+      HttpResponseException responseException) throws HttpResponseException {
+    if (responseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
+      throw responseException;
     }
 
     // Finds a BLOB_UNKNOWN error response code.
-    if (httpResponseException.getContent() == null) {
+    if (responseException.getContent() == null) {
       // TODO: The Google HTTP client gives null content for HEAD requests. Make the content never
       // be null, even for HEAD requests.
       return Optional.empty();
     }
 
-    ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(httpResponseException);
+    ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(responseException);
     if (errorCode == ErrorCodes.BLOB_UNKNOWN) {
       return Optional.empty();
     }
 
     // BLOB_UNKNOWN was not found as a error response code.
-    throw httpResponseException;
+    throw responseException;
   }
 
   @Override

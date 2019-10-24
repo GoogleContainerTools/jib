@@ -30,17 +30,17 @@ public class ErrorResponseUtil {
    * Extract an {@link ErrorCodes} response from the error object encoded in an {@link
    * HttpResponseException}.
    *
-   * @param httpResponseException the response exception
+   * @param responseException the response exception
    * @return the parsed {@link ErrorCodes} if found
    * @throws HttpResponseException rethrows the original exception if an error object could not be
    *     parsed, if there were multiple error objects, or if the error code is unknown.
    */
-  public static ErrorCodes getErrorCode(HttpResponseException httpResponseException)
+  public static ErrorCodes getErrorCode(HttpResponseException responseException)
       throws HttpResponseException {
     // Obtain the error response code.
-    String errorContent = httpResponseException.getContent();
+    String errorContent = responseException.getContent();
     if (errorContent == null) {
-      throw httpResponseException;
+      throw responseException;
     }
 
     try {
@@ -62,7 +62,7 @@ public class ErrorResponseUtil {
     }
 
     // rethrow the original exception
-    throw httpResponseException;
+    throw responseException;
   }
 
   // not intended to be instantiated

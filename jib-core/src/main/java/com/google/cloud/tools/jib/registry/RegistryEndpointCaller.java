@@ -229,6 +229,8 @@ class RegistryEndpointCaller<T> {
       throws IOException, RegistryException {
     // Only sends authorization if using HTTPS or explicitly forcing over HTTP.
     boolean sendCredentials = isHttpsProtocol(url) || JibSystemProperties.sendCredentialsOverHttp();
+    String serverUrl = registryEndpointRequestProperties.getServerUrl();
+    String imageName = registryEndpointRequestProperties.getImageName();
 
     try (Connection connection = connectionFactory.apply(url)) {
       Request.Builder requestBuilder =
@@ -259,22 +261,14 @@ class RegistryEndpointCaller<T> {
           throw newRegistryErrorException(responseException);
 
         } else if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_FORBIDDEN) {
-          throw new RegistryUnauthorizedException(
-              registryEndpointRequestProperties.getServerUrl(),
-              registryEndpointRequestProperties.getImageName(),
-              responseException);
+          throw new RegistryUnauthorizedException(serverUrl, imageName, responseException);
 
         } else if (responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED) {
           if (sendCredentials) {
             // Credentials are either missing or wrong.
-            throw new RegistryUnauthorizedException(
-                registryEndpointRequestProperties.getServerUrl(),
-                registryEndpointRequestProperties.getImageName(),
-                responseException);
+            throw new RegistryUnauthorizedException(serverUrl, imageName, responseException);
           } else {
-            throw new RegistryCredentialsNotSentException(
-                registryEndpointRequestProperties.getServerUrl(),
-                registryEndpointRequestProperties.getImageName());
+            throw new RegistryCredentialsNotSentException(serverUrl, imageName);
           }
 
         } else if (responseException.getStatusCode()
@@ -292,9 +286,7 @@ class RegistryEndpointCaller<T> {
       }
 
     } catch (IOException ex) {
-      String registry = registryEndpointRequestProperties.getServerUrl();
-      String repository = registryEndpointRequestProperties.getImageName();
-      logError("I/O error for image [" + registry + "/" + repository + "]:");
+      logError("I/O error for image [" + serverUrl + "/" + imageName + "]:");
       logError("    " + ex.getMessage());
       if (isBrokenPipe(ex)) {
         logError(
