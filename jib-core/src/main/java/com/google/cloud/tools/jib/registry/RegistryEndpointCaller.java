@@ -286,17 +286,13 @@ class RegistryEndpointCaller<T> {
       }
 
     } catch (SSLException ex) {
+      logErrorIfBrokenPipe(ex);
       throw ex;
 
     } catch (IOException ex) {
       logError("I/O error for image [" + serverUrl + "/" + imageName + "]:");
       logError("    " + ex.getMessage());
-      if (isBrokenPipe(ex)) {
-        logError(
-            "broken pipe: the server shut down the connection. Check the server log if possible. "
-                + "This could also be a proxy issue. For example, a proxy may prevent sending "
-                + "packets that are too large.");
-      }
+      logErrorIfBrokenPipe(ex);
       throw ex;
     }
   }
@@ -328,5 +324,14 @@ class RegistryEndpointCaller<T> {
   /** Logs error message in red. */
   private void logError(String message) {
     eventHandlers.dispatch(LogEvent.error("\u001B[31;1m" + message + "\u001B[0m"));
+  }
+
+  private void logErrorIfBrokenPipe(IOException ex) {
+    if (isBrokenPipe(ex)) {
+      logError(
+          "broken pipe: the server shut down the connection. Check the server log if possible. "
+              + "This could also be a proxy issue. For example, a proxy may prevent sending "
+              + "packets that are too large.");
+    }
   }
 }
