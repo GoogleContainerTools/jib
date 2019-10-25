@@ -82,8 +82,10 @@ class GradleProjectProperties implements ProjectProperties {
 
   String getWarFilePath() {
     TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
-    if (warTask != null) return warTask.get().getOutputs().getFiles().getAsPath();
-    else throw new GradleException("Obtaining project build output files failed");
+    if (warTask != null) {
+      return warTask.get().getOutputs().getFiles().getAsPath();
+    }
+    throw new GradleException("Obtaining project build output files failed");
   }
 
   private static boolean isProgressFooterEnabled(Project project) {
@@ -144,8 +146,7 @@ class GradleProjectProperties implements ProjectProperties {
         final String warFilePath = getWarFilePath();
         logger.info("WAR project identified, creating WAR image from: " + warFilePath);
         Path explodedWarPath = tempDirectoryProvider.newDirectory();
-        Path war = Paths.get(warFilePath);
-        ZipUtil.unzip(war, explodedWarPath);
+        ZipUtil.unzip(Paths.get(warFilePath), explodedWarPath);
         return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
       }
 
