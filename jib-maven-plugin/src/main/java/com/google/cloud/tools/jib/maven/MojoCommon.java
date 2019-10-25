@@ -124,12 +124,20 @@ public class MojoCommon {
     }
   }
 
+  /**
+   * Determines if Jib goal execution on this project/module should be skipped due to configuration.
+   *
+   * @param jibPluginConfiguration usually {@code this}, the Mojo this check is applied in.
+   * @return {@code true} if Jib should be skipped (should not execute goal), or {@code false} if it
+   *     should continue with execution.
+   */
   public static boolean shouldSkipJibExecution(JibPluginConfiguration jibPluginConfiguration) {
     Log log = jibPluginConfiguration.getLog();
     if (jibPluginConfiguration.isSkipped()) {
       log.info("Skipping containerization because jib-maven-plugin: skip = true");
       return true;
-    } else if (!jibPluginConfiguration.isContainerizable()) {
+    }
+    if (!jibPluginConfiguration.isContainerizable()) {
       log.info(
           "Skipping containerization of this module (not specified in "
               + PropertyNames.CONTAINERIZE
