@@ -39,7 +39,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 
 /**
  * Thread-safe HTTP client with the automatic insecure connection failover feature. Intended to be
- * created once and at multiple places. Callers should close the returned {@link Response}.
+ * created once and shared to be called at multiple places. Callers should close the returned {@link
+ * Response}.
  */
 public class Connection { // TODO: rename to TlsFailoverHttpClient
 
