@@ -260,8 +260,7 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir.toFile());
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
     // We can't commit an empty directory in Git, so create (if not exist).
-    Path emptyDirectory =
-        getResource("gradle/webapp").resolve("jib-exploded-war/WEB-INF/classes/empty_dir");
+    Path emptyDirectory = getResource("gradle/webapp").resolve("WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
 
     gradleProjectProperties =
@@ -466,7 +465,7 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_war()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Path webAppDirectory = getResource("gradle/webapp/jib-exploded-war");
+    Path webAppDirectory = getResource("gradle/webapp");
     Path unzipTarget = setUpWarProject(webAppDirectory);
 
     BuildConfiguration configuration =
@@ -531,7 +530,7 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_defaultWebAppRoot()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Path unzipTarget = setUpWarProject(getResource("gradle/webapp/jib-exploded-war"));
+    Path unzipTarget = setUpWarProject(getResource("gradle/webapp"));
 
     BuildConfiguration configuration =
         setupBuildConfiguration(
@@ -568,7 +567,7 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfClassesDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "lib");
+    temporaryFolder.newFolder("WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
     setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
@@ -576,7 +575,7 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfLibDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "classes");
+    temporaryFolder.newFolder("WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
     setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
@@ -584,7 +583,6 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    temporaryFolder.newFolder("jib-exploded-war");
     setUpWarProject(temporaryFolder.getRoot().toPath());
     setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
