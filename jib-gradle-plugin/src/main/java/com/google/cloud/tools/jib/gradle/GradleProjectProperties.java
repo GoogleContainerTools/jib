@@ -212,7 +212,8 @@ class GradleProjectProperties implements ProjectProperties {
           nonProjectDependencies
               .getFiles()
               .stream()
-              .filter(fil -> changingCollections != null && changingCollections.contains(fil.getName()))
+              .filter(
+                  fil -> changingCollections != null && changingCollections.contains(fil.getName()))
               .map(fil -> fil.toPath())
               .collect(Collectors.toList());
 

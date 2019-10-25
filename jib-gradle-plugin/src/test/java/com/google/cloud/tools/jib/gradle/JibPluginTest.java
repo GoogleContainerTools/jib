@@ -204,7 +204,6 @@ public class JibPluginTest {
   @Test
   public void testWebAppProject() {
     Project project = createProject("java", "war", "com.google.cloud.tools.jib");
-
     ((ProjectInternal) project).evaluate();
     TaskContainer tasks = project.getTasks();
     Task warTask = tasks.getByPath(":war");
