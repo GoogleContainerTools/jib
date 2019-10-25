@@ -569,8 +569,8 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_noErrorIfWebInfClassesDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "lib");
-    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
     setUpWarProject(temporaryFolder.getRoot().toPath());
+    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
