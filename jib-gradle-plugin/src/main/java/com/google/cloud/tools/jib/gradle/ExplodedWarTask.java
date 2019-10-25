@@ -23,6 +23,7 @@ import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.Sync;
 
 /** Gradle task that explodes a WAR file into a directory. */
+@Deprecated
 public class ExplodedWarTask extends Sync {
 
   @Nullable private File explodedWarDirectory;

@@ -29,26 +29,28 @@ import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.RegistryImage;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import org.gradle.StartParameter;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
@@ -83,6 +85,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -180,7 +183,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
-
+  @Mock public final TempDirectoryProvider mocktempDirectoryProvider = new TempDirectoryProvider();
   @Mock private FileResolver mockFileResolver;
   @Mock private Jar mockJar;
   @Mock private Project mockProject;
@@ -194,7 +197,9 @@ public class GradleProjectPropertiesTest {
   @Mock private SourceSetContainer mockSourceSetContainer;
   @Mock private SourceSet mockMainSourceSet;
   @Mock private SourceSetOutput mockMainSourceSetOutput;
-  @Mock private TaskProvider<Task> warTaskProvider;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private TaskProvider<Task> mockWarTaskProvider;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -248,13 +253,13 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockMainSourceSetOutput.getClassesDirs()).thenReturn(classesFileCollection);
     Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir.toFile());
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
-
     // We can't commit an empty directory in Git, so create (if not exist).
     Path emptyDirectory =
-        getResource("gradle/webapp").resolve("jib-exploded-war/WEB-INF/classes/empty_dir");
+        getResource("gradle/webapp").resolve("final-name/WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
 
-    gradleProjectProperties = new GradleProjectProperties(mockProject, mockLogger);
+    gradleProjectProperties =
+        new GradleProjectProperties(mockProject, mockLogger, mocktempDirectoryProvider);
   }
 
   @Test
@@ -271,20 +276,20 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testIsWarProject() throws URISyntaxException {
-    setUpWarProject(getResource("gradle/webapp"));
+  public void testIsWarProject() throws URISyntaxException, IOException {
+    setUpWarProject(getResource("gradle/webapp/libs"));
     Assert.assertTrue(gradleProjectProperties.isWarProject());
   }
 
   @Test
-  public void testGetWar_warProject() throws URISyntaxException {
-    setUpWarProject(getResource("gradle/webapp"));
+  public void testGetWar_warProject() throws URISyntaxException, IOException {
+    setUpWarProject(getResource("gradle/webapp/libs"));
     Assert.assertNotNull(TaskCommon.getWarTaskProvider(mockProject));
   }
 
   @Test
-  public void testGetWar_noWarPlugin() throws URISyntaxException {
-    setUpWarProject(getResource("gradle/webapp"));
+  public void testGetWar_noWarPlugin() throws URISyntaxException, IOException {
+    setUpWarProject(getResource("gradle/webapp/libs"));
     Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(false);
 
     Assert.assertNull(TaskCommon.getWarTaskProvider(mockProject));
@@ -456,39 +461,38 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_war()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Path webAppDirectory = getResource("gradle/webapp");
-    setUpWarProject(webAppDirectory);
+
+    Path webAppDirectory = getResource("gradle/webapp/libs");
+    Path unzipTarget = setUpWarProject(webAppDirectory);
 
     BuildConfiguration configuration =
         setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
     assertSourcePathsUnordered(
-        ImmutableList.of(
-            webAppDirectory.resolve("jib-exploded-war/WEB-INF/lib/dependency-1.0.0.jar")),
+        ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
         layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
-        ImmutableList.of(
-            webAppDirectory.resolve("jib-exploded-war/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
+        ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
         layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
-            webAppDirectory.resolve("jib-exploded-war/META-INF"),
-            webAppDirectory.resolve("jib-exploded-war/META-INF/context.xml"),
-            webAppDirectory.resolve("jib-exploded-war/Test.jsp"),
-            webAppDirectory.resolve("jib-exploded-war/WEB-INF"),
-            webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes"),
-            webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/empty_dir"),
-            webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/package"),
-            webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/package/test.properties"),
-            webAppDirectory.resolve("jib-exploded-war/WEB-INF/lib"),
-            webAppDirectory.resolve("jib-exploded-war/WEB-INF/web.xml")),
+            unzipTarget.resolve("META-INF"),
+            unzipTarget.resolve("META-INF/context.xml"),
+            unzipTarget.resolve("Test.jsp"),
+            unzipTarget.resolve("WEB-INF"),
+            unzipTarget.resolve("WEB-INF/classes"),
+            unzipTarget.resolve("WEB-INF/classes/empty_dir"),
+            unzipTarget.resolve("WEB-INF/classes/package"),
+            unzipTarget.resolve("WEB-INF/classes/package/test.properties"),
+            unzipTarget.resolve("WEB-INF/lib"),
+            unzipTarget.resolve("WEB-INF/web.xml")),
         layers.resourcesLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
-            webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/HelloWorld.class"),
-            webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/empty_dir"),
-            webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/package"),
-            webAppDirectory.resolve("jib-exploded-war/WEB-INF/classes/package/Other.class")),
+            unzipTarget.resolve("WEB-INF/classes/HelloWorld.class"),
+            unzipTarget.resolve("WEB-INF/classes/empty_dir"),
+            unzipTarget.resolve("WEB-INF/classes/package"),
+            unzipTarget.resolve("WEB-INF/classes/package/Other.class")),
         layers.classesLayerEntries.get(0).getLayerEntries());
 
     assertExtractionPathsUnordered(
@@ -523,61 +527,64 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_defaultWebAppRoot()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    setUpWarProject(getResource("gradle/webapp"));
+    Path unzipTarget = setUpWarProject(getResource("gradle/webapp/libs"));
 
     BuildConfiguration configuration =
         setupBuildConfiguration(
             JavaContainerBuilder.DEFAULT_WEB_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
-    assertExtractionPathsUnordered(
-        Collections.singletonList("/jetty/webapps/ROOT/WEB-INF/lib/dependency-1.0.0.jar"),
+    assertSourcePathsUnordered(
+        ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
         layers.dependenciesLayerEntries.get(0).getLayerEntries());
-    assertExtractionPathsUnordered(
-        Collections.singletonList("/jetty/webapps/ROOT/WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar"),
+    assertSourcePathsUnordered(
+        ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependencyX-1.0.0-SNAPSHOT.jar")),
         layers.snapshotsLayerEntries.get(0).getLayerEntries());
-    assertExtractionPathsUnordered(
-        Arrays.asList(
-            "/jetty/webapps/ROOT/META-INF",
-            "/jetty/webapps/ROOT/META-INF/context.xml",
-            "/jetty/webapps/ROOT/Test.jsp",
-            "/jetty/webapps/ROOT/WEB-INF",
-            "/jetty/webapps/ROOT/WEB-INF/classes",
-            "/jetty/webapps/ROOT/WEB-INF/classes/empty_dir",
-            "/jetty/webapps/ROOT/WEB-INF/classes/package",
-            "/jetty/webapps/ROOT/WEB-INF/classes/package/test.properties",
-            "/jetty/webapps/ROOT/WEB-INF/lib",
-            "/jetty/webapps/ROOT/WEB-INF/web.xml"),
+    assertSourcePathsUnordered(
+        ImmutableList.of(
+            unzipTarget.resolve("META-INF"),
+            unzipTarget.resolve("META-INF/context.xml"),
+            unzipTarget.resolve("Test.jsp"),
+            unzipTarget.resolve("WEB-INF"),
+            unzipTarget.resolve("WEB-INF/classes"),
+            unzipTarget.resolve("WEB-INF/classes/empty_dir"),
+            unzipTarget.resolve("WEB-INF/classes/package"),
+            unzipTarget.resolve("WEB-INF/classes/package/test.properties"),
+            unzipTarget.resolve("WEB-INF/lib"),
+            unzipTarget.resolve("WEB-INF/web.xml")),
         layers.resourcesLayerEntries.get(0).getLayerEntries());
-    assertExtractionPathsUnordered(
+    assertSourcePathsUnordered(
         Arrays.asList(
-            "/jetty/webapps/ROOT/WEB-INF/classes/HelloWorld.class",
-            "/jetty/webapps/ROOT/WEB-INF/classes/empty_dir",
-            "/jetty/webapps/ROOT/WEB-INF/classes/package",
-            "/jetty/webapps/ROOT/WEB-INF/classes/package/Other.class"),
+            unzipTarget.resolve("WEB-INF/classes/HelloWorld.class"),
+            unzipTarget.resolve("WEB-INF/classes/empty_dir"),
+            unzipTarget.resolve("WEB-INF/classes/package"),
+            unzipTarget.resolve("WEB-INF/classes/package/Other.class")),
         layers.classesLayerEntries.get(0).getLayerEntries());
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfClassesDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "lib");
-    setUpWarProject(temporaryFolder.getRoot().toPath());
+    temporaryFolder.newFolder("final-name", "WEB-INF", "lib");
+    temporaryFolder.newFolder("libs");
+    setUpWarProject(temporaryFolder.getRoot().toPath().resolve("final-name"));
     setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfLibDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "classes");
-    setUpWarProject(temporaryFolder.getRoot().toPath());
+    temporaryFolder.newFolder("final-name", "WEB-INF", "classes");
+    temporaryFolder.newFolder("libs");
+    setUpWarProject(temporaryFolder.getRoot().toPath().resolve("final-name"));
     setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    temporaryFolder.newFolder("jib-exploded-war");
-    setUpWarProject(temporaryFolder.getRoot().toPath());
+    temporaryFolder.newFolder("final-name");
+    temporaryFolder.newFolder("libs");
+    setUpWarProject(temporaryFolder.getRoot().toPath().resolve("final-name"));
     setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
@@ -589,7 +596,7 @@ public class GradleProjectPropertiesTest {
             .setAppRoot(AbsoluteUnixPath.get(appRoot))
             .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
     JibContainerBuilder jibContainerBuilder =
-        new GradleProjectProperties(mockProject, mockLogger)
+        new GradleProjectProperties(mockProject, mockLogger, mocktempDirectoryProvider)
             .createJibContainerBuilder(javaContainerBuilder, containerizingMode);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         jibContainerBuilder,
@@ -597,9 +604,43 @@ public class GradleProjectPropertiesTest {
             .setExecutorService(MoreExecutors.newDirectExecutorService()));
   }
 
-  private void setUpWarProject(Path webAppDirectory) {
-    Mockito.when(mockProject.getBuildDir()).thenReturn(webAppDirectory.toFile());
-    Mockito.when(mockTaskContainer.named("war")).thenReturn(warTaskProvider);
+  private Path setUpWarProject(Path webAppDirectory) throws IOException {
+
+    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
     Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
+    Path targetZip =
+        zipUpDirectory(
+            webAppDirectory.getParent().resolve("final-name"),
+            webAppDirectory.toFile().toPath().resolve("final-name.war"));
+
+    // Make "GradleProjectProperties" use this folder to explode the WAR into.
+    Path unzipTarget = temporaryFolder.newFolder("exploded").toPath();
+    Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
+        .thenReturn(targetZip.toString());
+    Mockito.when(gradleProjectProperties.getWarFilePath()).thenReturn(targetZip.toString());
+    Mockito.when(mocktempDirectoryProvider.newDirectory()).thenReturn(unzipTarget);
+    return unzipTarget;
+  }
+
+  private static Path zipUpDirectory(Path sourceRoot, Path targetZip) throws IOException {
+    try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(targetZip))) {
+      for (Path source : new DirectoryWalker(sourceRoot).filterRoot().walk()) {
+
+        StringJoiner pathJoiner = new StringJoiner("/", "", "");
+        sourceRoot.relativize(source).forEach(element -> pathJoiner.add(element.toString()));
+        String zipEntryPath =
+            Files.isDirectory(source) ? pathJoiner.toString() + '/' : pathJoiner.toString();
+
+        ZipEntry entry = new ZipEntry(zipEntryPath);
+        zipOut.putNextEntry(entry);
+        if (!Files.isDirectory(source)) {
+          try (InputStream in = Files.newInputStream(source)) {
+            ByteStreams.copy(in, zipOut);
+          }
+        }
+        zipOut.closeEntry();
+      }
+    }
+    return targetZip;
   }
 }

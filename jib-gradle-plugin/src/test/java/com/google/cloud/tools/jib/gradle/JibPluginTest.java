@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.gradle;
 
-import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -31,6 +30,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
 import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.testfixtures.ProjectBuilder;
@@ -211,12 +211,8 @@ public class JibPluginTest {
 
     ((ProjectInternal) rootProject).evaluate();
     TaskContainer tasks = rootProject.getTasks();
-    Task explodedWarTask = tasks.getByPath(":" + JibPlugin.EXPLODED_WAR_TASK_NAME);
+    Task explodedWarTask = tasks.getByPath(":" + WarPlugin.WAR_TASK_NAME);
     Assert.assertNotNull(explodedWarTask);
-    Assert.assertEquals(
-        rootProject.getBuildDir().toPath().resolve(ProjectProperties.EXPLODED_WAR_DIRECTORY_NAME),
-        ((ExplodedWarTask) explodedWarTask).getExplodedWarDirectory().toPath());
-
     Assert.assertEquals(
         explodedWarTask,
         ((TaskProvider<Task>)
@@ -243,7 +239,7 @@ public class JibPluginTest {
     ((ProjectInternal) rootProject).evaluate();
     TaskContainer tasks = rootProject.getTasks();
     try {
-      tasks.getByPath(":" + JibPlugin.EXPLODED_WAR_TASK_NAME);
+      tasks.getByPath(":" + WarPlugin.WAR_TASK_NAME);
       Assert.fail();
     } catch (UnknownTaskException ex) {
       Assert.assertNotNull(ex.getMessage());
