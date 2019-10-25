@@ -618,8 +618,6 @@ public class GradleProjectPropertiesTest {
     // Make "GradleProjectProperties" use this folder to explode the WAR into.
     Path unzipTarget = temporaryFolder.newFolder("exploded").toPath();
     Mockito.when(mockTempDirectoryProvider.newDirectory()).thenReturn(unzipTarget);
-    System.out.println(targetZip);
-    System.out.println(unzipTarget);
     return unzipTarget;
   }
 
