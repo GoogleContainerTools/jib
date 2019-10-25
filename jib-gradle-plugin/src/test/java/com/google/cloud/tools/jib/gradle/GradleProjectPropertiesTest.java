@@ -257,6 +257,8 @@ public class GradleProjectPropertiesTest {
     Path emptyDirectory =
         getResource("gradle/webapp").resolve("final-name/WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
+    Path emptyLibsDirectory = getResource("gradle/webapp").resolve("libs");
+    Files.createDirectories(emptyLibsDirectory);
 
     gradleProjectProperties =
         new GradleProjectProperties(mockProject, mockLogger, mocktempDirectoryProvider);
