@@ -24,20 +24,24 @@ import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
 import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
 import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
 import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
+import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +51,7 @@ import org.apache.tools.ant.taskdefs.condition.Os;
 import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.file.FileCollection;
@@ -55,6 +60,7 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
@@ -75,12 +81,14 @@ class GradleProjectProperties implements ProjectProperties {
   private static final Duration LOGGING_THREAD_SHUTDOWN_TIMEOUT = Duration.ofSeconds(1);
 
   /** @return a GradleProjectProperties from the given project and logger. */
-  static GradleProjectProperties getForProject(Project project, Logger logger) {
-    return new GradleProjectProperties(project, logger);
+  static GradleProjectProperties getForProject(
+      Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
+    return new GradleProjectProperties(project, logger, tempDirectoryProvider);
   }
 
-  static Path getExplodedWarDirectory(Project project) {
-    return project.getBuildDir().toPath().resolve(ProjectProperties.EXPLODED_WAR_DIRECTORY_NAME);
+  String getWarFilePath() {
+    TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
+    return Verify.verifyNotNull(warTask).get().getOutputs().getFiles().getAsPath();
   }
 
   private static boolean isProgressFooterEnabled(Project project) {
@@ -105,11 +113,14 @@ class GradleProjectProperties implements ProjectProperties {
   private final SingleThreadedExecutor singleThreadedExecutor = new SingleThreadedExecutor();
   private final Logger logger;
   private final ConsoleLogger consoleLogger;
+  private final TempDirectoryProvider tempDirectoryProvider;
 
   @VisibleForTesting
-  GradleProjectProperties(Project project, Logger logger) {
+  GradleProjectProperties(
+      Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
     this.project = project;
     this.logger = logger;
+    this.tempDirectoryProvider = tempDirectoryProvider;
     ConsoleLoggerBuilder consoleLoggerBuilder =
         (isProgressFooterEnabled(project)
                 ? ConsoleLoggerBuilder.rich(singleThreadedExecutor, false)
@@ -135,8 +146,10 @@ class GradleProjectProperties implements ProjectProperties {
       JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode) {
     try {
       if (isWarProject()) {
-        logger.info("WAR project identified, creating WAR image: " + project.getDisplayName());
-        Path explodedWarPath = GradleProjectProperties.getExplodedWarDirectory(project);
+        String warFilePath = getWarFilePath();
+        logger.info("WAR project identified, creating WAR image from: " + warFilePath);
+        Path explodedWarPath = tempDirectoryProvider.newDirectory();
+        ZipUtil.unzip(Paths.get(warFilePath), explodedWarPath);
         return JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, explodedWarPath);
       }
 

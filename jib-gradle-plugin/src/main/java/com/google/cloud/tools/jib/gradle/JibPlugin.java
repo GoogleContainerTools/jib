@@ -32,7 +32,6 @@ import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
-import org.gradle.api.tasks.bundling.War;
 import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
@@ -167,17 +166,8 @@ public class JibPlugin implements Plugin<Project> {
             TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
             TaskProvider<?> dependsOnTask;
             if (warTask != null) {
-              TaskProvider<ExplodedWarTask> explodedWarTask =
-                  tasks.register(EXPLODED_WAR_TASK_NAME, ExplodedWarTask.class);
-              explodedWarTask.configure(
-                  task -> {
-                    task.dependsOn(warTask);
-                    task.setWarFile(((War) warTask.get()).getArchivePath().toPath());
-                    task.setExplodedWarDirectory(
-                        GradleProjectProperties.getExplodedWarDirectory(projectAfterEvaluation));
-                  });
-              // Have all tasks depend on the 'jibExplodedWar' task.
-              dependsOnTask = explodedWarTask;
+              // Have all tasks depend on the 'war' task.
+              dependsOnTask = warTask;
             } else if ("packaged".equals(jibExtension.getContainerizingMode())) {
               // Have all tasks depend on the 'jar' task.
               dependsOnTask = projectAfterEvaluation.getTasks().named("jar");
