@@ -183,7 +183,7 @@ public class GradleProjectPropertiesTest {
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
-  @Mock public final TempDirectoryProvider mocktempDirectoryProvider = new TempDirectoryProvider();
+  @Mock public TempDirectoryProvider mocktempDirectoryProvider;
   @Mock private FileResolver mockFileResolver;
   @Mock private Jar mockJar;
   @Mock private Project mockProject;
@@ -279,19 +279,19 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testIsWarProject() throws URISyntaxException, IOException {
-    setUpWarProject(getResource("gradle/webapp/libs"));
+    setUpWarProject(getResource("gradle/webapp/final-name"));
     Assert.assertTrue(gradleProjectProperties.isWarProject());
   }
 
   @Test
   public void testGetWar_warProject() throws URISyntaxException, IOException {
-    setUpWarProject(getResource("gradle/webapp/libs"));
+    setUpWarProject(getResource("gradle/webapp/final-name"));
     Assert.assertNotNull(TaskCommon.getWarTaskProvider(mockProject));
   }
 
   @Test
   public void testGetWar_noWarPlugin() throws URISyntaxException, IOException {
-    setUpWarProject(getResource("gradle/webapp/libs"));
+    setUpWarProject(getResource("gradle/webapp/final-name"));
     Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(false);
 
     Assert.assertNull(TaskCommon.getWarTaskProvider(mockProject));
@@ -464,7 +464,7 @@ public class GradleProjectPropertiesTest {
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
 
-    Path webAppDirectory = getResource("gradle/webapp/libs");
+    Path webAppDirectory = getResource("gradle/webapp/final-name");
     Path unzipTarget = setUpWarProject(webAppDirectory);
 
     BuildConfiguration configuration =
@@ -529,7 +529,7 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_defaultWebAppRoot()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Path unzipTarget = setUpWarProject(getResource("gradle/webapp/libs"));
+    Path unzipTarget = setUpWarProject(getResource("gradle/webapp/final-name"));
 
     BuildConfiguration configuration =
         setupBuildConfiguration(
@@ -612,8 +612,7 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
     Path targetZip =
         zipUpDirectory(
-            webAppDirectory.getParent().resolve("final-name"),
-            webAppDirectory.toFile().toPath().resolve("final-name.war"));
+            webAppDirectory, webAppDirectory.getParent().resolve("libs").resolve("final-name.war"));
 
     // Make "GradleProjectProperties" use this folder to explode the WAR into.
     Path unzipTarget = temporaryFolder.newFolder("exploded").toPath();

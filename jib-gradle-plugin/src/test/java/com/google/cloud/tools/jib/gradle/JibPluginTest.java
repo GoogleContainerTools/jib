@@ -211,20 +211,20 @@ public class JibPluginTest {
 
     ((ProjectInternal) rootProject).evaluate();
     TaskContainer tasks = rootProject.getTasks();
-    Task explodedWarTask = tasks.getByPath(":" + WarPlugin.WAR_TASK_NAME);
-    Assert.assertNotNull(explodedWarTask);
+    Task warTask = tasks.getByPath(":" + WarPlugin.WAR_TASK_NAME);
+    Assert.assertNotNull(warTask);
     Assert.assertEquals(
-        explodedWarTask,
+        warTask,
         ((TaskProvider<Task>)
                 tasks.getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME).getDependsOn().iterator().next())
             .get());
     Assert.assertEquals(
-        explodedWarTask,
+        warTask,
         ((TaskProvider<Task>)
                 tasks.getByPath(JibPlugin.BUILD_DOCKER_TASK_NAME).getDependsOn().iterator().next())
             .get());
     Assert.assertEquals(
-        explodedWarTask,
+        warTask,
         ((TaskProvider<Task>)
                 tasks.getByPath(JibPlugin.BUILD_TAR_TASK_NAME).getDependsOn().iterator().next())
             .get());
