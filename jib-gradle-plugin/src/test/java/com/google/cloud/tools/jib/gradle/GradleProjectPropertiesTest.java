@@ -46,7 +46,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -183,7 +188,8 @@ public class GradleProjectPropertiesTest {
   }
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
-  @Mock public final TempDirectoryProvider mocktempDirectoryProvider = new TempDirectoryProvider();
+
+  @Mock private TempDirectoryProvider mockTempDirectoryProvider;
   @Mock private FileResolver mockFileResolver;
   @Mock private Jar mockJar;
   @Mock private Project mockProject;
@@ -255,13 +261,11 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
     // We can't commit an empty directory in Git, so create (if not exist).
     Path emptyDirectory =
-        getResource("gradle/webapp").resolve("final-name/WEB-INF/classes/empty_dir");
+        getResource("gradle/webapp").resolve("jib-exploded-war/WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
-    Path emptyLibsDirectory = getResource("gradle/webapp").resolve("libs");
-    Files.createDirectories(emptyLibsDirectory);
 
     gradleProjectProperties =
-        new GradleProjectProperties(mockProject, mockLogger, mocktempDirectoryProvider);
+        new GradleProjectProperties(mockProject, mockLogger, mockTempDirectoryProvider);
   }
 
   @Test
@@ -278,22 +282,21 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testIsWarProject() throws URISyntaxException, IOException {
-    setUpWarProject(getResource("gradle/webapp/libs"));
+  public void testIsWarProject() {
+    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
     Assert.assertTrue(gradleProjectProperties.isWarProject());
   }
 
   @Test
-  public void testGetWar_warProject() throws URISyntaxException, IOException {
-    setUpWarProject(getResource("gradle/webapp/libs"));
+  public void testGetWar_warProject() {
+    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
+    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
     Assert.assertNotNull(TaskCommon.getWarTaskProvider(mockProject));
   }
 
   @Test
-  public void testGetWar_noWarPlugin() throws URISyntaxException, IOException {
-    setUpWarProject(getResource("gradle/webapp/libs"));
+  public void testGetWar_noWarPlugin() {
     Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(false);
-
     Assert.assertNull(TaskCommon.getWarTaskProvider(mockProject));
   }
 
@@ -463,8 +466,7 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_war()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-
-    Path webAppDirectory = getResource("gradle/webapp/libs");
+    Path webAppDirectory = getResource("gradle/webapp/jib-exploded-war");
     Path unzipTarget = setUpWarProject(webAppDirectory);
 
     BuildConfiguration configuration =
@@ -529,7 +531,7 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_defaultWebAppRoot()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    Path unzipTarget = setUpWarProject(getResource("gradle/webapp/libs"));
+    Path unzipTarget = setUpWarProject(getResource("gradle/webapp/jib-exploded-war"));
 
     BuildConfiguration configuration =
         setupBuildConfiguration(
@@ -566,27 +568,24 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfClassesDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    temporaryFolder.newFolder("final-name", "WEB-INF", "lib");
-    temporaryFolder.newFolder("libs");
-    setUpWarProject(temporaryFolder.getRoot().toPath().resolve("final-name"));
+    temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "lib");
     setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setUpWarProject(temporaryFolder.getRoot().toPath());
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfLibDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    temporaryFolder.newFolder("final-name", "WEB-INF", "classes");
-    temporaryFolder.newFolder("libs");
-    setUpWarProject(temporaryFolder.getRoot().toPath().resolve("final-name"));
+    temporaryFolder.newFolder("jib-exploded-war", "WEB-INF", "classes");
+    setUpWarProject(temporaryFolder.getRoot().toPath());
     setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    temporaryFolder.newFolder("final-name");
-    temporaryFolder.newFolder("libs");
-    setUpWarProject(temporaryFolder.getRoot().toPath().resolve("final-name"));
+    temporaryFolder.newFolder("jib-exploded-war");
+    setUpWarProject(temporaryFolder.getRoot().toPath());
     setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
@@ -598,7 +597,7 @@ public class GradleProjectPropertiesTest {
             .setAppRoot(AbsoluteUnixPath.get(appRoot))
             .setModificationTimeProvider((ignored1, ignored2) -> SAMPLE_FILE_MODIFICATION_TIME);
     JibContainerBuilder jibContainerBuilder =
-        new GradleProjectProperties(mockProject, mockLogger, mocktempDirectoryProvider)
+        new GradleProjectProperties(mockProject, mockLogger, mockTempDirectoryProvider)
             .createJibContainerBuilder(javaContainerBuilder, containerizingMode);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
         jibContainerBuilder,
@@ -607,20 +606,20 @@ public class GradleProjectPropertiesTest {
   }
 
   private Path setUpWarProject(Path webAppDirectory) throws IOException {
-
-    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
-    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
     Path targetZip =
-        zipUpDirectory(
-            webAppDirectory.getParent().resolve("final-name"),
-            webAppDirectory.toFile().toPath().resolve("final-name.war"));
+        zipUpDirectory(webAppDirectory, temporaryFolder.getRoot().toPath().resolve("my-app.war"));
 
-    // Make "GradleProjectProperties" use this folder to explode the WAR into.
-    Path unzipTarget = temporaryFolder.newFolder("exploded").toPath();
+    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
+    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
     Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
         .thenReturn(targetZip.toString());
     Mockito.when(gradleProjectProperties.getWarFilePath()).thenReturn(targetZip.toString());
-    Mockito.when(mocktempDirectoryProvider.newDirectory()).thenReturn(unzipTarget);
+
+    // Make "GradleProjectProperties" use this folder to explode the WAR into.
+    Path unzipTarget = temporaryFolder.newFolder("exploded").toPath();
+    Mockito.when(mockTempDirectoryProvider.newDirectory()).thenReturn(unzipTarget);
+    System.out.println(targetZip);
+    System.out.println(unzipTarget);
     return unzipTarget;
   }
 
