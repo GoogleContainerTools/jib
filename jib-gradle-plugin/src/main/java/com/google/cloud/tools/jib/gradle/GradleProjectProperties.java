@@ -25,7 +25,12 @@ import com.google.cloud.tools.jib.event.events.TimerEvent;
 import com.google.cloud.tools.jib.event.progress.ProgressEventHandler;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
-import com.google.cloud.tools.jib.plugins.common.*;
+import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
+import com.google.cloud.tools.jib.plugins.common.JavaContainerBuilderHelper;
+import com.google.cloud.tools.jib.plugins.common.ProjectProperties;
+import com.google.cloud.tools.jib.plugins.common.PropertyNames;
+import com.google.cloud.tools.jib.plugins.common.TimerEventHandler;
+import com.google.cloud.tools.jib.plugins.common.ZipUtil;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLogger;
 import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
@@ -83,11 +88,7 @@ class GradleProjectProperties implements ProjectProperties {
 
   String getWarFilePath() {
     TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
-    return Verify.verifyNotNull(warTask, "Obtaining project build output files failed")
-        .get()
-        .getOutputs()
-        .getFiles()
-        .getAsPath();
+    return Verify.verifyNotNull(warTask).get().getOutputs().getFiles().getAsPath();
   }
 
   private static boolean isProgressFooterEnabled(Project project) {
