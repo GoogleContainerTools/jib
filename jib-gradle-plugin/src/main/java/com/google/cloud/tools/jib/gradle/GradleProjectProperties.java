@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.plugins.common.logging.ConsoleLoggerBuilder;
 import com.google.cloud.tools.jib.plugins.common.logging.ProgressDisplayGenerator;
 import com.google.cloud.tools.jib.plugins.common.logging.SingleThreadedExecutor;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Verify;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -82,10 +83,11 @@ class GradleProjectProperties implements ProjectProperties {
 
   String getWarFilePath() {
     TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
-    if (warTask != null) {
-      return warTask.get().getOutputs().getFiles().getAsPath();
-    }
-    throw new GradleException("Obtaining project build output files failed");
+    return Verify.verifyNotNull(warTask, "Obtaining project build output files failed")
+        .get()
+        .getOutputs()
+        .getFiles()
+        .getAsPath();
   }
 
   private static boolean isProgressFooterEnabled(Project project) {
@@ -143,7 +145,7 @@ class GradleProjectProperties implements ProjectProperties {
       JavaContainerBuilder javaContainerBuilder, ContainerizingMode containerizingMode) {
     try {
       if (isWarProject()) {
-        final String warFilePath = getWarFilePath();
+        String warFilePath = getWarFilePath();
         logger.info("WAR project identified, creating WAR image from: " + warFilePath);
         Path explodedWarPath = tempDirectoryProvider.newDirectory();
         ZipUtil.unzip(Paths.get(warFilePath), explodedWarPath);
