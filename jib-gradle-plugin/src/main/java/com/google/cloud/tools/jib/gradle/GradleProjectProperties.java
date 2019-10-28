@@ -87,6 +87,11 @@ class GradleProjectProperties implements ProjectProperties {
   }
 
   String getWarFilePath() {
+    TaskProvider<Task> bootWarTask = TaskCommon.getBootWarTaskProvider(project);
+    if (bootWarTask != null && bootWarTask.get().getEnabled()) {
+      return bootWarTask.get().getOutputs().getFiles().getAsPath();
+    }
+
     TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
     return Verify.verifyNotNull(warTask).get().getOutputs().getFiles().getAsPath();
   }
