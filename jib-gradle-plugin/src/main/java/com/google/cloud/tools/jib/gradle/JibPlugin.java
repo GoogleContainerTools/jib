@@ -108,17 +108,6 @@ public class JibPlugin implements Plugin<Project> {
     }
   }
 
-  private static TaskProvider<?> getTaskProvider(
-      Project project, String pluginName, String taskName) {
-    try {
-      if (project.getPlugins().hasPlugin(pluginName)) {
-        return project.getTasks().named(taskName);
-      }
-    } catch (UnknownTaskException ignored) { // fall through
-    }
-    return null;
-  }
-
   @Override
   public void apply(Project project) {
     checkGradleVersion();
