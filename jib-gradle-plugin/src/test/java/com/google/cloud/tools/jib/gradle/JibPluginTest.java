@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -134,6 +135,7 @@ public class JibPluginTest {
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testProjectDependencyAssembleTasksAreRun() {
     // root project is our jib packaged service
@@ -177,10 +179,10 @@ public class JibPluginTest {
     // check by applying the jib plugin and inspect the task dependencies
     rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
 
+    TaskContainer tasks = rootProject.getTasks();
     // add a custom task that our jib tasks depend on to ensure we do not overwrite this dependsOn
     TaskProvider<Task> dependencyTask = rootProject.getTasks().register("myCustomTask", task -> {});
-    KNOWN_JIB_TASKS.forEach(
-        taskName -> rootProject.getTasks().getByPath(taskName).dependsOn(dependencyTask));
+    KNOWN_JIB_TASKS.forEach(taskName -> tasks.getByPath(taskName).dependsOn(dependencyTask));
 
     ((ProjectInternal) rootProject).evaluate();
 
@@ -188,46 +190,92 @@ public class JibPluginTest {
         taskName ->
             Assert.assertEquals(
                 ImmutableSet.of(":sub:assemble", ":classes", ":myCustomTask"),
-                rootProject
-                    .getTasks()
+                tasks
                     .getByPath(taskName)
                     .getDependsOn()
                     .stream()
-                    .map(TaskProvider.class::cast)
-                    .map(TaskProvider::get)
-                    .map(Task.class::cast)
-                    .map(Task::getPath)
+                    .map(
+                        object ->
+                            object instanceof List ? object : Collections.singletonList(object))
+                    .map(List.class::cast)
+                    .flatMap(List::stream)
+                    .map(object -> ((TaskProvider<Task>) object).get().getPath())
                     .collect(Collectors.toSet())));
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void testWebAppProject() {
-    Project rootProject =
+    Project project =
         ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
-    rootProject.getPluginManager().apply("java");
-    rootProject.getPluginManager().apply("war");
-    rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
+    project.getPluginManager().apply("java");
+    project.getPluginManager().apply("war");
+    project.getPluginManager().apply("com.google.cloud.tools.jib");
 
-    ((ProjectInternal) rootProject).evaluate();
-    TaskContainer tasks = rootProject.getTasks();
-    Task warTask = tasks.getByPath(":" + WarPlugin.WAR_TASK_NAME);
+    ((ProjectInternal) project).evaluate();
+    TaskContainer tasks = project.getTasks();
+    Task warTask = tasks.getByPath(":war");
     Assert.assertNotNull(warTask);
-    Assert.assertEquals(
-        warTask,
-        ((TaskProvider<Task>)
-                tasks.getByPath(JibPlugin.BUILD_IMAGE_TASK_NAME).getDependsOn().iterator().next())
-            .get());
-    Assert.assertEquals(
-        warTask,
-        ((TaskProvider<Task>)
-                tasks.getByPath(JibPlugin.BUILD_DOCKER_TASK_NAME).getDependsOn().iterator().next())
-            .get());
-    Assert.assertEquals(
-        warTask,
-        ((TaskProvider<Task>)
-                tasks.getByPath(JibPlugin.BUILD_TAR_TASK_NAME).getDependsOn().iterator().next())
-            .get());
+
+    for (String taskName : KNOWN_JIB_TASKS) {
+      List<TaskProvider<?>> taskProviders =
+          (List<TaskProvider<?>>) tasks.getByPath(taskName).getDependsOn().iterator().next();
+      Assert.assertEquals(1, taskProviders.size());
+      Assert.assertEquals(warTask, taskProviders.get(0).get());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testWebAppProject_bootWar() {
+    Project project =
+        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
+    project.getPluginManager().apply("java");
+    project.getPluginManager().apply("war");
+    project.getPluginManager().apply("org.springframework.boot");
+    project.getPluginManager().apply("com.google.cloud.tools.jib");
+
+    ((ProjectInternal) project).evaluate();
+    TaskContainer tasks = project.getTasks();
+    Task warTask = tasks.getByPath(":war");
+    Task bootWarTask = tasks.getByPath(":bootWar");
+    Assert.assertNotNull(warTask);
+    Assert.assertNotNull(bootWarTask);
+
+    for (String taskName : KNOWN_JIB_TASKS) {
+      List<TaskProvider<?>> taskProviders =
+          (List<TaskProvider<?>>) tasks.getByPath(taskName).getDependsOn().iterator().next();
+      Assert.assertEquals(
+          ImmutableSet.of(warTask, bootWarTask),
+          taskProviders.stream().map(TaskProvider::get).collect(Collectors.toSet()));
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testWebAppProject_bootWarDisabled() {
+    Project project =
+        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
+    project.getPluginManager().apply("java");
+    project.getPluginManager().apply("war");
+    project.getPluginManager().apply("org.springframework.boot");
+    project.getPluginManager().apply("com.google.cloud.tools.jib");
+
+    ((ProjectInternal) project).evaluate();
+    TaskContainer tasks = project.getTasks();
+    Task warTask = tasks.getByPath(":war");
+    Task bootWarTask = tasks.getByPath(":bootWar");
+    Assert.assertNotNull(warTask);
+    Assert.assertNotNull(bootWarTask);
+    bootWarTask.setEnabled(false); // should depend on bootWar even if disabled
+
+    for (String taskName : KNOWN_JIB_TASKS) {
+      List<TaskProvider<?>> taskProviders =
+          (List<TaskProvider<?>>) tasks.getByPath(taskName).getDependsOn().iterator().next();
+      Assert.assertEquals(
+          ImmutableSet.of(warTask, bootWarTask),
+          taskProviders.stream().map(TaskProvider::get).collect(Collectors.toSet()));
+    }
   }
 
   @Test
