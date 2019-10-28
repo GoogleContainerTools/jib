@@ -3,13 +3,12 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.jib.test</groupId>
   <artifactId>lib</artifactId>
   <version>1.0.0.TEST-SNAPSHOT</version>
   <name>lib</name>
 
   <parent>
-    <groupId>com.example</groupId>
+    <groupId>com.jib.test</groupId>
     <artifactId>multimodule</artifactId>
     <version>1.0.0.TEST-SNAPSHOT</version>
   </parent>

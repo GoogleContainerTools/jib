@@ -6,7 +6,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <!-- Defines artifact information for this parent POM. -->
-  <groupId>com.example</groupId>
+  <groupId>com.jib.test</groupId>
   <artifactId>multimodule</artifactId>
   <packaging>pom</packaging>
   <version>1.0.0.TEST-SNAPSHOT</version>
