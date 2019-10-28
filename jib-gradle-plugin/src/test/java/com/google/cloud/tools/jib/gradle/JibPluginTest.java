@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -31,7 +32,6 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.UnknownTaskException;
 import org.gradle.api.internal.project.ProjectInternal;
-import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
 import org.gradle.testfixtures.ProjectBuilder;
@@ -121,11 +121,10 @@ public class JibPluginTest {
 
   @Test
   public void testCheckJibVersionInvoked() {
-    Project rootProject =
-        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
+    Project project = createProject();
     System.setProperty(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME, "10000.0"); // not here yet
     try {
-      rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
+      project.getPluginManager().apply("com.google.cloud.tools.jib");
       Assert.fail("should have failed");
     } catch (GradleException ex) {
       // Gradle tests aren't run from a jar and so don't have an identifiable plugin version
@@ -139,9 +138,7 @@ public class JibPluginTest {
   @Test
   public void testProjectDependencyAssembleTasksAreRun() {
     // root project is our jib packaged service
-    Project rootProject =
-        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
-    rootProject.getPluginManager().apply("java");
+    Project rootProject = createProject("java");
 
     // our service DOES depend on this, and jib should trigger an assemble from this project
     Project subProject =
@@ -206,11 +203,7 @@ public class JibPluginTest {
   @SuppressWarnings("unchecked")
   @Test
   public void testWebAppProject() {
-    Project project =
-        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
-    project.getPluginManager().apply("java");
-    project.getPluginManager().apply("war");
-    project.getPluginManager().apply("com.google.cloud.tools.jib");
+    Project project = createProject("java", "war", "com.google.cloud.tools.jib");
 
     ((ProjectInternal) project).evaluate();
     TaskContainer tasks = project.getTasks();
@@ -229,13 +222,9 @@ public class JibPluginTest {
   @Test
   public void testWebAppProject_bootWar() {
     Project project =
-        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
-    project.getPluginManager().apply("java");
-    project.getPluginManager().apply("war");
-    project.getPluginManager().apply("org.springframework.boot");
-    project.getPluginManager().apply("com.google.cloud.tools.jib");
-
+        createProject("java", "war", "org.springframework.boot", "com.google.cloud.tools.jib");
     ((ProjectInternal) project).evaluate();
+
     TaskContainer tasks = project.getTasks();
     Task warTask = tasks.getByPath(":war");
     Task bootWarTask = tasks.getByPath(":bootWar");
@@ -255,13 +244,9 @@ public class JibPluginTest {
   @Test
   public void testWebAppProject_bootWarDisabled() {
     Project project =
-        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
-    project.getPluginManager().apply("java");
-    project.getPluginManager().apply("war");
-    project.getPluginManager().apply("org.springframework.boot");
-    project.getPluginManager().apply("com.google.cloud.tools.jib");
-
+        createProject("java", "war", "org.springframework.boot", "com.google.cloud.tools.jib");
     ((ProjectInternal) project).evaluate();
+
     TaskContainer tasks = project.getTasks();
     Task warTask = tasks.getByPath(":war");
     Task bootWarTask = tasks.getByPath(":bootWar");
@@ -280,14 +265,12 @@ public class JibPluginTest {
 
   @Test
   public void testNonWebAppProject() {
-    Project rootProject =
-        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
-    rootProject.getPluginManager().apply("java");
-    rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
-    ((ProjectInternal) rootProject).evaluate();
-    TaskContainer tasks = rootProject.getTasks();
+    Project project = createProject("java", "com.google.cloud.tools.jib");
+    ((ProjectInternal) project).evaluate();
+
+    TaskContainer tasks = project.getTasks();
     try {
-      tasks.getByPath(":" + WarPlugin.WAR_TASK_NAME);
+      tasks.getByPath(":war");
       Assert.fail();
     } catch (UnknownTaskException ex) {
       Assert.assertNotNull(ex.getMessage());
@@ -296,14 +279,18 @@ public class JibPluginTest {
 
   @Test
   public void testJibTaskGroupIsSet() {
-    Project rootProject =
-        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
-    rootProject.getPluginManager().apply("java");
-    rootProject.getPluginManager().apply("com.google.cloud.tools.jib");
-    ((ProjectInternal) rootProject).evaluate();
-    TaskContainer tasks = rootProject.getTasks();
+    Project project = createProject("java", "com.google.cloud.tools.jib");
+    ((ProjectInternal) project).evaluate();
 
+    TaskContainer tasks = project.getTasks();
     KNOWN_JIB_TASKS.forEach(
         taskName -> Assert.assertEquals(taskName, "Jib", tasks.getByPath(taskName).getGroup()));
+  }
+
+  private Project createProject(String... plugins) {
+    Project project =
+        ProjectBuilder.builder().withProjectDir(testProjectRoot.getRoot()).withName("root").build();
+    Arrays.asList(plugins).forEach(project.getPluginManager()::apply);
+    return project;
   }
 }
