@@ -121,8 +121,6 @@ public class JibPluginConfigurationTest {
     sessionProperties.put("jib.container.ports", "port1,port2,port3");
     Assert.assertEquals(
         ImmutableList.of("port1", "port2", "port3"), testPluginConfiguration.getExposedPorts());
-    sessionProperties.put("jib.container.useCurrentTimestamp", "true");
-    Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
     sessionProperties.put("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
     sessionProperties.put("jib.container.workingDirectory", "/working/directory");
@@ -219,8 +217,6 @@ public class JibPluginConfigurationTest {
     project.getProperties().setProperty("jib.container.ports", "port1,port2,port3");
     Assert.assertEquals(
         ImmutableList.of("port1", "port2", "port3"), testPluginConfiguration.getExposedPorts());
-    project.getProperties().setProperty("jib.container.useCurrentTimestamp", "true");
-    Assert.assertTrue(testPluginConfiguration.getUseCurrentTimestamp());
     project.getProperties().setProperty("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testPluginConfiguration.getUser());
     project.getProperties().setProperty("jib.container.workingDirectory", "/working/directory");

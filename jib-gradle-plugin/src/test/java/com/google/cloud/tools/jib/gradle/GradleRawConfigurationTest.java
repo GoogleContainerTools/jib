@@ -71,7 +71,6 @@ public class GradleRawConfigurationTest {
         .thenReturn(new HashMap<>(ImmutableMap.of("unit", "cm")));
     Mockito.when(containerParameters.getMainClass()).thenReturn("com.example.Main");
     Mockito.when(containerParameters.getPorts()).thenReturn(Arrays.asList("80/tcp", "0"));
-    Mockito.when(containerParameters.getUseCurrentTimestamp()).thenReturn(true);
     Mockito.when(containerParameters.getUser()).thenReturn("admin:wheel");
     Mockito.when(containerParameters.getFilesModificationTime()).thenReturn("2011-12-03T22:42:05Z");
 
@@ -108,7 +107,6 @@ public class GradleRawConfigurationTest {
     Assert.assertEquals(
         new HashSet<>(Arrays.asList("additional", "tags")),
         Sets.newHashSet(rawConfiguration.getToTags()));
-    Assert.assertTrue(rawConfiguration.getUseCurrentTimestamp());
     Assert.assertEquals("admin:wheel", rawConfiguration.getUser().get());
     Assert.assertEquals("2011-12-03T22:42:05Z", rawConfiguration.getFilesModificationTime());
     Assert.assertEquals(Paths.get("test"), rawConfiguration.getDockerExecutable().get());

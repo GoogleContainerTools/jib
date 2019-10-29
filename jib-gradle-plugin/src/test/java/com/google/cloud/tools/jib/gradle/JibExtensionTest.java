@@ -285,8 +285,6 @@ public class JibExtensionTest {
     System.setProperty("jib.container.ports", "port1,port2,port3");
     Assert.assertEquals(
         ImmutableList.of("port1", "port2", "port3"), testJibExtension.getContainer().getPorts());
-    System.setProperty("jib.container.useCurrentTimestamp", "true");
-    Assert.assertTrue(testJibExtension.getContainer().getUseCurrentTimestamp());
     System.setProperty("jib.container.user", "myUser");
     Assert.assertEquals("myUser", testJibExtension.getContainer().getUser());
     System.setProperty("jib.container.filesModificationTime", "2011-12-03T22:42:05Z");

@@ -132,11 +132,6 @@ class GradleRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public boolean getUseCurrentTimestamp() {
-    return jibExtension.getContainer().getUseCurrentTimestamp();
-  }
-
-  @Override
   public boolean getAllowInsecureRegistries() {
     return jibExtension.getAllowInsecureRegistries();
   }

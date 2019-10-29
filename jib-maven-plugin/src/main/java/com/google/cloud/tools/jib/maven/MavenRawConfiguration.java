@@ -137,11 +137,6 @@ class MavenRawConfiguration implements RawConfiguration {
   }
 
   @Override
-  public boolean getUseCurrentTimestamp() {
-    return jibPluginConfiguration.getUseCurrentTimestamp();
-  }
-
-  @Override
   public boolean getAllowInsecureRegistries() {
     return jibPluginConfiguration.getAllowInsecureRegistries();
   }

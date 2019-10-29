@@ -58,8 +58,6 @@ public class BuildTarMojo extends JibPluginConfiguration {
       return;
     }
 
-    MojoCommon.checkUseCurrentTimestampDeprecation(this);
-
     MavenSettingsProxyProvider.activateHttpAndHttpsProxies(
         getSession().getSettings(), getSettingsDecrypter());
 
