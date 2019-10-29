@@ -300,7 +300,11 @@ In Maven, you can use the `maven-resources-plugin` to copy files to your extra d
     <artifact>jib-maven-plugin</artifact>
     ...
     <configuration>
-      <extraDirectories>${project.basedir}/target/extra-directory/</extraDirectories>
+      <extraDirectories>
+        <paths>
+          <path>${project.basedir}/target/extra-directory/</path>
+        </paths>
+      </extraDirectories>
     </configuration>
   </plugin>
   ...
