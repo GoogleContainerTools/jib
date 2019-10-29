@@ -211,8 +211,6 @@ class GradleProjectProperties implements ProjectProperties {
               .map(fil -> fil.toPath())
               .collect(Collectors.toList());
 
-      snapshotDependencies.forEach(System.out::println);
-
       FileCollection dependencies =
           allFiles
               .minus(classesOutputDirectories)
