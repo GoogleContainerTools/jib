@@ -60,7 +60,7 @@ public class RegistryAuthenticator {
    * @param authenticationMethod the {@code WWW-Authenticate} header value
    * @param registryEndpointRequestProperties the registry request properties
    * @param userAgent the {@code User-Agent} header value to use in later authentication calls
-   * @param httpClient http client
+   * @param httpClient HTTP client
    * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
    * @throws RegistryAuthenticationFailedException if authentication fails
    * @see <a

@@ -91,17 +91,17 @@ public class ConnectionTest { // TODO: rename to TlsFailoverHttpClient
 
   @Test
   public void testGet() throws IOException {
-    testCall(HttpMethods.GET, Connection::get);
+    verifyCall(HttpMethods.GET, Connection::get);
   }
 
   @Test
   public void testPost() throws IOException {
-    testCall(HttpMethods.POST, Connection::post);
+    verifyCall(HttpMethods.POST, Connection::post);
   }
 
   @Test
   public void testPut() throws IOException {
-    testCall(HttpMethods.PUT, Connection::put);
+    verifyCall(HttpMethods.PUT, Connection::put);
   }
 
   @Test
@@ -149,7 +149,7 @@ public class ConnectionTest { // TODO: rename to TlsFailoverHttpClient
     Mockito.when(mockHttpRequest.execute()).thenReturn(mockHttpResponse);
   }
 
-  private void testCall(String httpMethod, CallFunction callFunction) throws IOException {
+  private void verifyCall(String httpMethod, CallFunction callFunction) throws IOException {
     Connection httpClient = newHttpClient(false, false);
     try (Response ignored = callFunction.call(httpClient, fakeUrl.toURL(), fakeRequest(null))) {}
 

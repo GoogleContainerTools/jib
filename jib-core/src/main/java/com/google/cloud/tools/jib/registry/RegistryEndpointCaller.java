@@ -84,6 +84,7 @@ class RegistryEndpointCaller<T> {
    * @param registryEndpointProvider the {@link RegistryEndpointProvider} to the endpoint
    * @param authorization optional authentication credentials to use
    * @param registryEndpointRequestProperties properties of the registry endpoint request
+   * @param httpClient HTTP client
    */
   @VisibleForTesting
   RegistryEndpointCaller(

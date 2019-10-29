@@ -38,7 +38,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link Connection} using an actual local server. */
 @RunWith(MockitoJUnitRunner.class)
-public class WithServerTlsFailoverHttpClientTest {
+public class WithServerConnectionTest { // TODO: rename to WithServerTlsFailoverHttpClientTest
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
 
