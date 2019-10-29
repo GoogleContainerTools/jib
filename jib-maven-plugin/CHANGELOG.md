@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Removed deprecated `<extraDirectory>` configuration in favor of `<extraDirectories>`. ([#1691](https://github.com/GoogleContainerTools/jib/issues/1691))
+
 ### Fixed
 
 - Fixed reporting wrong module name when `skaffold init` is run on multi-module projects ([#2088](https://github.com/GoogleContainerTools/jib/issues/2088)).
