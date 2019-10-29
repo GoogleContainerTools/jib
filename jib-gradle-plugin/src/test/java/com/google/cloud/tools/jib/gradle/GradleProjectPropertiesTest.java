@@ -199,10 +199,10 @@ public class GradleProjectPropertiesTest {
   private Project mockProject;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  private TaskProvider<Task> mockTaskProvider1;
+  private TaskProvider<Task> mockWarTaskProvider;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  private TaskProvider<Task> mockTaskProvider2;
+  private TaskProvider<Task> mockBootWarTaskProvider;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -566,8 +566,8 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testGetWarFilePath() {
     Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
-    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockTaskProvider1);
-    Mockito.when(mockTaskProvider1.get().getOutputs().getFiles().getAsPath())
+    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
+    Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
         .thenReturn("/war/file/here.war");
 
     Assert.assertEquals("/war/file/here.war", gradleProjectProperties.getWarFilePath());
@@ -576,9 +576,9 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testGetWarFilePath_bootWar() {
     Mockito.when(mockProject.getPlugins().hasPlugin("org.springframework.boot")).thenReturn(true);
-    Mockito.when(mockTaskContainer.named("bootWar")).thenReturn(mockTaskProvider1);
-    Mockito.when(mockTaskProvider1.get().getEnabled()).thenReturn(true);
-    Mockito.when(mockTaskProvider1.get().getOutputs().getFiles().getAsPath())
+    Mockito.when(mockTaskContainer.named("bootWar")).thenReturn(mockBootWarTaskProvider);
+    Mockito.when(mockBootWarTaskProvider.get().getEnabled()).thenReturn(true);
+    Mockito.when(mockBootWarTaskProvider.get().getOutputs().getFiles().getAsPath())
         .thenReturn("/boot/war/file.war");
 
     Assert.assertEquals("/boot/war/file.war", gradleProjectProperties.getWarFilePath());
@@ -587,13 +587,14 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testGetWarFilePath_bootWarDisabled() {
     Mockito.when(mockProject.getPlugins().hasPlugin("org.springframework.boot")).thenReturn(true);
-    Mockito.when(mockTaskContainer.named("bootWar")).thenReturn(mockTaskProvider1);
-    Mockito.when(mockTaskProvider1.get().getOutputs().getFiles().getAsPath())
+    Mockito.when(mockTaskContainer.named("bootWar")).thenReturn(mockBootWarTaskProvider);
+    Mockito.when(mockBootWarTaskProvider.get().getOutputs().getFiles().getAsPath())
         .thenReturn("boot.war");
 
     Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
-    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockTaskProvider2);
-    Mockito.when(mockTaskProvider2.get().getOutputs().getFiles().getAsPath()).thenReturn("war.war");
+    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
+    Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
+        .thenReturn("war.war");
 
     Assert.assertEquals("war.war", gradleProjectProperties.getWarFilePath());
   }
@@ -619,8 +620,8 @@ public class GradleProjectPropertiesTest {
         zipUpDirectory(webAppDirectory, temporaryFolder.getRoot().toPath().resolve("my-app.war"));
 
     Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
-    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockTaskProvider1);
-    Mockito.when(mockTaskProvider1.get().getOutputs().getFiles().getAsPath())
+    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
+    Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
         .thenReturn(targetZip.toString());
 
     // Make "GradleProjectProperties" use this folder to explode the WAR into.
