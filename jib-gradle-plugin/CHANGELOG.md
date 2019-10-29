@@ -9,7 +9,8 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- Fixed reporting parent build file when `skaffold init` is run on multi-module projects.
+- Fixed reporting parent build file when `skaffold init` is run on multi-module projects. ([#2091](https://github.com/GoogleContainerTools/jib/pull/2091))
+- Now correctly uses the `war` task if it is enabled and the `bootWar` task is disabled for Spring WAR projects. ([#2096](https://github.com/GoogleContainerTools/jib/issues/2096))
 
 ## 1.7.0
 

@@ -56,16 +56,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import org.gradle.StartParameter;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.AbstractFileCollection;
 import org.gradle.api.internal.file.FileResolver;
-import org.gradle.api.invocation.Gradle;
 import org.gradle.api.java.archives.Manifest;
 import org.gradle.api.java.archives.internal.DefaultManifest;
 import org.gradle.api.logging.Logger;
@@ -73,7 +70,6 @@ import org.gradle.api.logging.configuration.ConsoleOutput;
 import org.gradle.api.plugins.Convention;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
-import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
@@ -191,21 +187,22 @@ public class GradleProjectPropertiesTest {
 
   @Mock private TempDirectoryProvider mockTempDirectoryProvider;
   @Mock private FileResolver mockFileResolver;
-  @Mock private Jar mockJar;
-  @Mock private Project mockProject;
   @Mock private Convention mockConvention;
   @Mock private TaskContainer mockTaskContainer;
-  @Mock private PluginContainer mockPluginContainer;
   @Mock private Logger mockLogger;
-  @Mock private Gradle mockGradle;
-  @Mock private StartParameter mockStartParameter;
   @Mock private JavaPluginConvention mockJavaPluginConvention;
   @Mock private SourceSetContainer mockSourceSetContainer;
   @Mock private SourceSet mockMainSourceSet;
   @Mock private SourceSetOutput mockMainSourceSetOutput;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private Project mockProject;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private TaskProvider<Task> mockWarTaskProvider;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private TaskProvider<Task> mockBootWarTaskProvider;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -218,15 +215,10 @@ public class GradleProjectPropertiesTest {
         .thenReturn(mockJavaPluginConvention);
     Mockito.when(mockJavaPluginConvention.getSourceSets()).thenReturn(mockSourceSetContainer);
     Mockito.when(mockProject.getTasks()).thenReturn(mockTaskContainer);
-    Mockito.when(mockProject.getPlugins()).thenReturn(mockPluginContainer);
-    Mockito.when(mockJar.getManifest()).thenReturn(manifest);
-    Mockito.when(mockProject.getGradle()).thenReturn(mockGradle);
-    Mockito.when(mockGradle.getStartParameter()).thenReturn(mockStartParameter);
-    Mockito.when(mockStartParameter.getConsoleOutput()).thenReturn(ConsoleOutput.Auto);
+    Mockito.when(mockProject.getGradle().getStartParameter().getConsoleOutput())
+        .thenReturn(ConsoleOutput.Auto);
 
     // mocking to complete ignore project dependency resolution
-    Mockito.when(mockProject.getConfigurations())
-        .thenReturn(Mockito.mock(ConfigurationContainer.class, Mockito.RETURNS_DEEP_STUBS));
     Mockito.when(
             mockProject
                 .getConfigurations()
@@ -270,6 +262,8 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testGetMainClassFromJar_success() {
     manifest.attributes(ImmutableMap.of("Main-Class", "some.main.class"));
+    Jar mockJar = Mockito.mock(Jar.class);
+    Mockito.when(mockJar.getManifest()).thenReturn(manifest);
     Mockito.when(mockTaskContainer.findByName("jar")).thenReturn(mockJar);
     Assert.assertEquals("some.main.class", gradleProjectProperties.getMainClassFromJar());
   }
@@ -282,26 +276,8 @@ public class GradleProjectPropertiesTest {
 
   @Test
   public void testIsWarProject() {
-    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
+    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
     Assert.assertTrue(gradleProjectProperties.isWarProject());
-  }
-
-  @Test
-  public void testGetWar_warProject() {
-    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
-    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
-    Assert.assertNotNull(TaskCommon.getWarTaskProvider(mockProject));
-  }
-
-  @Test
-  public void testGetWar_noWarPlugin() {
-    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(false);
-    Assert.assertNull(TaskCommon.getWarTaskProvider(mockProject));
-  }
-
-  @Test
-  public void testGetWar_noWarTask() {
-    Assert.assertNull(TaskCommon.getWarTaskProvider(mockProject));
   }
 
   @Test
@@ -587,6 +563,42 @@ public class GradleProjectPropertiesTest {
     setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
+  @Test
+  public void testGetWarFilePath() {
+    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
+    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
+    Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
+        .thenReturn("/war/file/here.war");
+
+    Assert.assertEquals("/war/file/here.war", gradleProjectProperties.getWarFilePath());
+  }
+
+  @Test
+  public void testGetWarFilePath_bootWar() {
+    Mockito.when(mockProject.getPlugins().hasPlugin("org.springframework.boot")).thenReturn(true);
+    Mockito.when(mockTaskContainer.named("bootWar")).thenReturn(mockBootWarTaskProvider);
+    Mockito.when(mockBootWarTaskProvider.get().getEnabled()).thenReturn(true);
+    Mockito.when(mockBootWarTaskProvider.get().getOutputs().getFiles().getAsPath())
+        .thenReturn("/boot/war/file.war");
+
+    Assert.assertEquals("/boot/war/file.war", gradleProjectProperties.getWarFilePath());
+  }
+
+  @Test
+  public void testGetWarFilePath_bootWarDisabled() {
+    Mockito.when(mockProject.getPlugins().hasPlugin("org.springframework.boot")).thenReturn(true);
+    Mockito.when(mockTaskContainer.named("bootWar")).thenReturn(mockBootWarTaskProvider);
+    Mockito.when(mockBootWarTaskProvider.get().getOutputs().getFiles().getAsPath())
+        .thenReturn("boot.war");
+
+    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
+    Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
+    Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
+        .thenReturn("war.war");
+
+    Assert.assertEquals("war.war", gradleProjectProperties.getWarFilePath());
+  }
+
   private BuildConfiguration setupBuildConfiguration(
       String appRoot, ContainerizingMode containerizingMode)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
@@ -607,11 +619,10 @@ public class GradleProjectPropertiesTest {
     Path targetZip =
         zipUpDirectory(webAppDirectory, temporaryFolder.getRoot().toPath().resolve("my-app.war"));
 
-    Mockito.when(mockPluginContainer.hasPlugin(WarPlugin.class)).thenReturn(true);
+    Mockito.when(mockProject.getPlugins().hasPlugin(WarPlugin.class)).thenReturn(true);
     Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
     Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
         .thenReturn(targetZip.toString());
-    Mockito.when(gradleProjectProperties.getWarFilePath()).thenReturn(targetZip.toString());
 
     // Make "GradleProjectProperties" use this folder to explode the WAR into.
     Path unzipTarget = temporaryFolder.newFolder("exploded").toPath();
