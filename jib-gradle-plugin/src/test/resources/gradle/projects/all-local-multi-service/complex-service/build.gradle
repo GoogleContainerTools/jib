@@ -33,4 +33,7 @@ dependencies {
   compile project(':lib')
   compile name: "dependency-1.0.0"
   compile name: "dependencyX-1.0.0-SNAPSHOT"
+  compile (group: 'junit', name: 'junit', version: '4.12'){
+    changing = true;
+  }
 }
