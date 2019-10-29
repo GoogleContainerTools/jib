@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Removed `jibDockerBuild.dockerClient` in favor of `jib.dockerClient`. ([#1983](https://github.com/GoogleContainerTools/jib/issues/1983))
+
 ### Fixed
 
 - Fixed reporting parent build file when `skaffold init` is run on multi-module projects. ([#2091](https://github.com/GoogleContainerTools/jib/pull/2091))
