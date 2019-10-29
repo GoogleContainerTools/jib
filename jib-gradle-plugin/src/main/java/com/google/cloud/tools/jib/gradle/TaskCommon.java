@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.api.client.http.HttpTransport;
 import com.google.cloud.tools.jib.api.AbsoluteUnixPath;
 import com.google.cloud.tools.jib.api.FilePermissions;
-import com.google.cloud.tools.jib.plugins.common.PropertyNames;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -74,22 +73,6 @@ class TaskCommon {
 
   @Deprecated
   static void checkDeprecatedUsage(JibExtension jibExtension, Logger logger) {
-    if (jibExtension.extraDirectoryConfigured
-        || System.getProperty(PropertyNames.EXTRA_DIRECTORY_PATH) != null
-        || System.getProperty(PropertyNames.EXTRA_DIRECTORY_PERMISSIONS) != null) {
-      logger.warn(
-          "'jib.extraDirectory', 'jib.extraDirectory.path', and 'jib.extraDirectory.permissions' "
-              + "are deprecated; use 'jib.extraDirectories.paths' and "
-              + "'jib.extraDirectories.permissions'");
-
-      if (jibExtension.extraDirectoriesConfigured
-          || System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PATHS) != null
-          || System.getProperty(PropertyNames.EXTRA_DIRECTORIES_PERMISSIONS) != null) {
-        throw new IllegalArgumentException(
-            "You cannot configure both 'jib.extraDirectory.path' and 'jib.extraDirectories.paths'");
-      }
-    }
-
     if (jibExtension.getContainer().getUseCurrentTimestamp()) {
       if (!jibExtension.getContainer().getCreationTime().equals("EPOCH")) {
         throw new IllegalArgumentException(

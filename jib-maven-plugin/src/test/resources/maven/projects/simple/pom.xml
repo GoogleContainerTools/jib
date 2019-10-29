@@ -59,7 +59,9 @@
             </volumes>
             <workingDirectory>/home</workingDirectory>
           </container>
-          <extraDirectory>${project.basedir}/src/main/jib-custom</extraDirectory>
+          <extraDirectories>
+            <paths><path>${project.basedir}/src/main/jib-custom</path></paths>
+          </extraDirectories>
           <outputPaths>
             <tar>${project.build.directory}/different-jib-image.tar</tar>
           </outputPaths>
