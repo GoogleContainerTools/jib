@@ -22,6 +22,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.api.tasks.bundling.War;
 import org.gradle.testfixtures.ProjectBuilder;
 import org.junit.Assert;
 import org.junit.Before;
@@ -161,19 +162,7 @@ public class TaskCommonTest {
     project.getPlugins().apply(JavaPlugin.class);
 
     TaskProvider<Task> warProviderTask = TaskCommon.getWarTaskProvider(project);
-
     Assert.assertNull(warProviderTask);
-  }
-
-  @Test
-  public void testGetWarTask_bootJavaProject() {
-    Project project = ProjectBuilder.builder().build();
-    project.getPlugins().apply(JavaPlugin.class);
-    project.getPlugins().apply(SpringBootPlugin.class);
-
-    TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
-
-    Assert.assertNull(warTask);
   }
 
   @Test
@@ -182,19 +171,18 @@ public class TaskCommonTest {
     project.getPlugins().apply(WarPlugin.class);
 
     TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
-
     Assert.assertNotNull(warTask);
+    Assert.assertNotNull(warTask instanceof War);
   }
 
   @Test
-  public void testGetWarTask_bootWarProject() {
+  public void testGetBootWarTask_bootWarProject() {
     Project project = ProjectBuilder.builder().build();
     project.getPlugins().apply(WarPlugin.class);
     project.getPlugins().apply(SpringBootPlugin.class);
 
-    TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
-
-    Assert.assertNotNull(warTask);
-    Assert.assertTrue(warTask.get() instanceof BootWar);
+    TaskProvider<Task> bootWarTask = TaskCommon.getBootWarTaskProvider(project);
+    Assert.assertNotNull(bootWarTask);
+    Assert.assertNotNull(bootWarTask instanceof BootWar);
   }
 }

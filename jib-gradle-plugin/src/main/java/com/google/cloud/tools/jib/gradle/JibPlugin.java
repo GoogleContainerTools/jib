@@ -19,6 +19,7 @@ package com.google.cloud.tools.jib.gradle;
 import com.google.cloud.tools.jib.ProjectInfo;
 import com.google.cloud.tools.jib.plugins.common.VersionChecker;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.gradle.api.GradleException;
@@ -32,7 +33,6 @@ import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
-import org.gradle.api.tasks.bundling.War;
 import org.gradle.util.GradleVersion;
 
 public class JibPlugin implements Plugin<Project> {
@@ -165,25 +165,22 @@ public class JibPlugin implements Plugin<Project> {
         projectAfterEvaluation -> {
           try {
             TaskProvider<Task> warTask = TaskCommon.getWarTaskProvider(project);
-            TaskProvider<?> dependsOnTask;
-            if (warTask != null) {
-              TaskProvider<ExplodedWarTask> explodedWarTask =
-                  tasks.register(EXPLODED_WAR_TASK_NAME, ExplodedWarTask.class);
-              explodedWarTask.configure(
-                  task -> {
-                    task.dependsOn(warTask);
-                    task.setWarFile(((War) warTask.get()).getArchivePath().toPath());
-                    task.setExplodedWarDirectory(
-                        GradleProjectProperties.getExplodedWarDirectory(projectAfterEvaluation));
-                  });
-              // Have all tasks depend on the 'jibExplodedWar' task.
-              dependsOnTask = explodedWarTask;
+            TaskProvider<Task> bootWarTask = TaskCommon.getBootWarTaskProvider(project);
+            List<TaskProvider<?>> dependsOnTask = new ArrayList<>();
+            if (warTask != null || bootWarTask != null) {
+              // Have all tasks depend on the 'war' and/or 'bootWar' task.
+              if (warTask != null) {
+                dependsOnTask.add(warTask);
+              }
+              if (bootWarTask != null) {
+                dependsOnTask.add(bootWarTask);
+              }
             } else if ("packaged".equals(jibExtension.getContainerizingMode())) {
               // Have all tasks depend on the 'jar' task.
-              dependsOnTask = projectAfterEvaluation.getTasks().named("jar");
+              dependsOnTask.add(projectAfterEvaluation.getTasks().named("jar"));
             } else {
               // Have all tasks depend on the 'classes' task.
-              dependsOnTask = projectAfterEvaluation.getTasks().named("classes");
+              dependsOnTask.add(projectAfterEvaluation.getTasks().named("classes"));
             }
             buildImageTask.configure(task -> task.dependsOn(dependsOnTask));
             buildDockerTask.configure(task -> task.dependsOn(dependsOnTask));

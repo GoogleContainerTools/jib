@@ -31,12 +31,6 @@ public interface ProjectProperties {
   /** Directory name for the cache. The directory will be relative to the build output directory. */
   String CACHE_DIRECTORY_NAME = "jib-cache";
 
-  /**
-   * Directory name for the exploded WAR. The directory will be relative to the build output
-   * directory.
-   */
-  String EXPLODED_WAR_DIRECTORY_NAME = "jib-exploded-war";
-
   // TODO: Move out of ProjectProperties.
   void waitForLoggingThread();
 

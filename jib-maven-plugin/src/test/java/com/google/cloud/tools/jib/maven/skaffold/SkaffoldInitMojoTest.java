@@ -88,7 +88,7 @@ public class SkaffoldInitMojoTest {
 
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(0));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertEquals("name-service", skaffoldInitOutput.getProject());
+    Assert.assertEquals("simple-service", skaffoldInitOutput.getProject());
 
     skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(1));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
@@ -96,6 +96,6 @@ public class SkaffoldInitMojoTest {
 
     skaffoldInitOutput = new SkaffoldInitOutput(outputs.get(2));
     Assert.assertEquals("testimage", skaffoldInitOutput.getImage());
-    Assert.assertEquals("service", skaffoldInitOutput.getProject());
+    Assert.assertEquals("complex-service", skaffoldInitOutput.getProject());
   }
 }
