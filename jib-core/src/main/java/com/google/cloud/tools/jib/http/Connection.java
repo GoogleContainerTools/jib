@@ -54,7 +54,7 @@ public class Connection { // TODO: rename to TlsFailoverHttpClient
     return httpUrl.toURL();
   }
 
-  private static HttpTransport getHttpTransport() {
+  private static HttpTransport getSecureHttpTransport() {
     // Do not use NetHttpTransport. It does not process response errors properly.
     // See https://github.com/google/google-http-java-client/issues/39
     //
@@ -72,7 +72,7 @@ public class Connection { // TODO: rename to TlsFailoverHttpClient
       addProxyCredentials(insecureTransport);
       return insecureTransport;
     } catch (GeneralSecurityException ex) {
-      throw new RuntimeException("platform does not support TSL protocol", ex);
+      throw new RuntimeException("platform does not support TLS protocol", ex);
     }
   }
 
@@ -112,7 +112,7 @@ public class Connection { // TODO: rename to TlsFailoverHttpClient
   private final boolean enableHttpAndInsecureFailover;
   private final boolean sendAuthorizationOverHttp;
   private final Consumer<LogEvent> logger;
-  private final Supplier<HttpTransport> httpTransportFactory;
+  private final Supplier<HttpTransport> secureHttpTransportFactory;
   private final Supplier<HttpTransport> insecureHttpTransportFactory;
 
   public Connection(
@@ -123,7 +123,7 @@ public class Connection { // TODO: rename to TlsFailoverHttpClient
         enableHttpAndInsecureFailover,
         sendAuthorizationOverHttp,
         logger,
-        Connection::getHttpTransport,
+        Connection::getSecureHttpTransport,
         Connection::getInsecureHttpTransport);
   }
 
@@ -132,12 +132,12 @@ public class Connection { // TODO: rename to TlsFailoverHttpClient
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger,
-      Supplier<HttpTransport> httpTransportFactory,
+      Supplier<HttpTransport> secureHttpTransportFactory,
       Supplier<HttpTransport> insecureHttpTransportFactory) {
     this.enableHttpAndInsecureFailover = enableHttpAndInsecureFailover;
     this.sendAuthorizationOverHttp = sendAuthorizationOverHttp;
     this.logger = logger;
-    this.httpTransportFactory = httpTransportFactory;
+    this.secureHttpTransportFactory = secureHttpTransportFactory;
     this.insecureHttpTransportFactory = insecureHttpTransportFactory;
   }
 
@@ -192,7 +192,7 @@ public class Connection { // TODO: rename to TlsFailoverHttpClient
     }
 
     try {
-      return call(httpMethod, url, request, httpTransportFactory.get());
+      return call(httpMethod, url, request, secureHttpTransportFactory.get());
 
     } catch (SSLException ex) {
       if (!enableHttpAndInsecureFailover) {
@@ -205,7 +205,7 @@ public class Connection { // TODO: rename to TlsFailoverHttpClient
 
       } catch (SSLException ignored) { // This is usually when the server is plain-HTTP.
         logHttpFailover(url);
-        return call(httpMethod, toHttp(url), request, httpTransportFactory.get());
+        return call(httpMethod, toHttp(url), request, secureHttpTransportFactory.get());
       }
 
     } catch (ConnectException ex) {
@@ -221,7 +221,7 @@ public class Connection { // TODO: rename to TlsFailoverHttpClient
       // port 443) and we could not connect to 443. It's worth trying port 80.
       if (enableHttpAndInsecureFailover && isHttpsProtocol(url) && url.getPort() == -1) {
         logHttpFailover(url);
-        return call(httpMethod, toHttp(url), request, httpTransportFactory.get());
+        return call(httpMethod, toHttp(url), request, secureHttpTransportFactory.get());
       }
       throw ex;
     }
