@@ -40,10 +40,10 @@ class TaskCommon {
 
   @Nullable
   static TaskProvider<Task> getWarTaskProvider(Project project) {
-    if (!project.getPlugins().hasPlugin(WarPlugin.class)) {
-      return null;
+    if (project.getPlugins().hasPlugin(WarPlugin.class)) {
+      return project.getTasks().named(WarPlugin.WAR_TASK_NAME);
     }
-    return project.getTasks().named(WarPlugin.WAR_TASK_NAME);
+    return null;
   }
 
   @Nullable
