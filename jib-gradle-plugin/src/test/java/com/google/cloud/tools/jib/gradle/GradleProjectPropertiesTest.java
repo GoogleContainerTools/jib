@@ -54,13 +54,19 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.artifacts.DefaultDependencySet;
+import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency;
 import org.gradle.api.internal.file.AbstractFileCollection;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.java.archives.Manifest;
@@ -190,9 +196,19 @@ public class GradleProjectPropertiesTest {
   @Mock private Convention mockConvention;
   @Mock private TaskContainer mockTaskContainer;
   @Mock private Logger mockLogger;
-  @Mock private JavaPluginConvention mockJavaPluginConvention;
-  @Mock private SourceSetContainer mockSourceSetContainer;
-  @Mock private SourceSet mockMainSourceSet;
+  @Mock private ResolvedConfiguration mockResolvedConfiguration;
+  @Mock private DefaultDependencySet mockDefaultDependencySet;
+  @Mock private DefaultExternalModuleDependency mockDefaultExternalModuleDependency;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private JavaPluginConvention mockJavaPluginConvention;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private SourceSetContainer mockSourceSetContainer;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private SourceSet mockMainSourceSet;
+
   @Mock private SourceSetOutput mockMainSourceSetOutput;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
@@ -203,6 +219,9 @@ public class GradleProjectPropertiesTest {
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private TaskProvider<Task> mockBootWarTaskProvider;
+
+  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+  private Configuration mockRunTimeConfiguration;
 
   private Manifest manifest;
   private GradleProjectProperties gradleProjectProperties;
@@ -219,13 +238,16 @@ public class GradleProjectPropertiesTest {
         .thenReturn(ConsoleOutput.Auto);
 
     // mocking to complete ignore project dependency resolution
+    Mockito.when(mockProject.getConfigurations())
+        .thenReturn(Mockito.mock(ConfigurationContainer.class, Mockito.RETURNS_DEEP_STUBS));
     Mockito.when(
             mockProject
                 .getConfigurations()
-                .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
-                .getResolvedConfiguration()
-                .getResolvedArtifacts())
-        .thenReturn(ImmutableSet.of());
+                .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME))
+        .thenReturn(mockRunTimeConfiguration);
+    Mockito.when(mockRunTimeConfiguration.getResolvedConfiguration())
+        .thenReturn(mockResolvedConfiguration);
+    Mockito.when(mockResolvedConfiguration.getResolvedArtifacts()).thenReturn(ImmutableSet.of());
     ConfigurableFileCollection emptyFileCollection = Mockito.mock(ConfigurableFileCollection.class);
     Mockito.when(emptyFileCollection.getFiles()).thenReturn(ImmutableSet.of());
     Mockito.when(mockProject.files(ImmutableList.of())).thenReturn(emptyFileCollection);
@@ -240,17 +262,19 @@ public class GradleProjectPropertiesTest {
     allFiles.add(getResource("gradle/application/dependencies/library.jarC.jar"));
     allFiles.add(getResource("gradle/application/dependencies/libraryB.jar"));
     allFiles.add(getResource("gradle/application/dependencies/libraryA.jar"));
+    allFiles.add(getResource("gradle/application/dependencies/changing-dependency-1.0.0.jar"));
     allFiles.add(getResource("gradle/application/dependencies/dependency-1.0.0.jar"));
     allFiles.add(getResource("gradle/application/dependencies/more/dependency-1.0.0.jar"));
     allFiles.add(getResource("gradle/application/dependencies/another/one/dependency-1.0.0.jar"));
     allFiles.add(getResource("gradle/application/dependencies/dependencyX-1.0.0-SNAPSHOT.jar"));
     FileCollection runtimeFileCollection = new TestFileCollection(allFiles);
 
-    Mockito.when(mockSourceSetContainer.getByName("main")).thenReturn(mockMainSourceSet);
+    Mockito.when((Object) mockSourceSetContainer.getByName("main")).thenReturn(mockMainSourceSet);
     Mockito.when(mockMainSourceSet.getOutput()).thenReturn(mockMainSourceSetOutput);
     Mockito.when(mockMainSourceSetOutput.getClassesDirs()).thenReturn(classesFileCollection);
     Mockito.when(mockMainSourceSetOutput.getResourcesDir()).thenReturn(resourcesOutputDir.toFile());
     Mockito.when(mockMainSourceSet.getRuntimeClasspath()).thenReturn(runtimeFileCollection);
+
     // We can't commit an empty directory in Git, so create (if not exist).
     Path emptyDirectory = getResource("gradle/webapp").resolve("WEB-INF/classes/empty_dir");
     Files.createDirectories(emptyDirectory);
@@ -340,11 +364,11 @@ public class GradleProjectPropertiesTest {
 
     Path applicationDirectory = getResource("gradle/application");
     assertSourcePathsUnordered(
-        ImmutableList.of(
-            applicationDirectory.resolve("dependencies/dependencyX-1.0.0-SNAPSHOT.jar")),
+        Arrays.asList(applicationDirectory.resolve("dependencies/dependencyX-1.0.0-SNAPSHOT.jar")),
         layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertSourcePathsUnordered(
         ImmutableList.of(
+            applicationDirectory.resolve("dependencies/changing-dependency-1.0.0.jar"),
             applicationDirectory.resolve("dependencies/dependency-1.0.0.jar"),
             applicationDirectory.resolve("dependencies/more/dependency-1.0.0.jar"),
             applicationDirectory.resolve("dependencies/another/one/dependency-1.0.0.jar"),
@@ -389,6 +413,7 @@ public class GradleProjectPropertiesTest {
 
     assertExtractionPathsUnordered(
         Arrays.asList(
+            "/my/app/libs/changing-dependency-1.0.0.jar",
             "/my/app/libs/dependency-1.0.0-770.jar",
             "/my/app/libs/dependency-1.0.0-200.jar",
             "/my/app/libs/dependency-1.0.0-480.jar",
@@ -411,8 +436,16 @@ public class GradleProjectPropertiesTest {
   }
 
   @Test
-  public void testCreateContainerBuilder_defaultAppRoot()
+  public void testCreateContainerBuilder_defaultAppRootWithChangingJar()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
+
+    Mockito.when(mockDefaultExternalModuleDependency.getName()).thenReturn("changing-dependency");
+    Mockito.when(mockDefaultExternalModuleDependency.getVersion()).thenReturn("1.0.0");
+    Mockito.when(mockDefaultExternalModuleDependency.isChanging()).thenReturn(true);
+    Mockito.when(mockRunTimeConfiguration.getAllDependencies())
+        .thenReturn(mockDefaultDependencySet);
+    Mockito.when(mockRunTimeConfiguration.getAllDependencies().stream())
+        .thenReturn(Stream.of(mockDefaultExternalModuleDependency));
     BuildConfiguration configuration =
         setupBuildConfiguration(JavaContainerBuilder.DEFAULT_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
     ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
@@ -426,7 +459,8 @@ public class GradleProjectPropertiesTest {
             "/app/libs/library.jarC.jar"),
         layers.dependenciesLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
-        Collections.singletonList("/app/libs/dependencyX-1.0.0-SNAPSHOT.jar"),
+        Arrays.asList(
+            "/app/libs/dependencyX-1.0.0-SNAPSHOT.jar", "/app/libs/changing-dependency-1.0.0.jar"),
         layers.snapshotsLayerEntries.get(0).getLayerEntries());
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -623,7 +657,7 @@ public class GradleProjectPropertiesTest {
     Mockito.when(mockTaskContainer.named("war")).thenReturn(mockWarTaskProvider);
     Mockito.when(mockWarTaskProvider.get().getOutputs().getFiles().getAsPath())
         .thenReturn(targetZip.toString());
-
+    Mockito.when(gradleProjectProperties.getWarFilePath()).thenReturn(targetZip.toString());
     // Make "GradleProjectProperties" use this folder to explode the WAR into.
     Path unzipTarget = temporaryFolder.newFolder("exploded").toPath();
     Mockito.when(mockTempDirectoryProvider.newDirectory()).thenReturn(unzipTarget);

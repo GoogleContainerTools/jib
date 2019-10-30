@@ -62,7 +62,11 @@ public class GradleLayerConfigurationIntegrationTest {
     // verify snapshot dependencies
     List<String> snapshotDependencies = layers.get(4);
     List<String> expectedSnapshotDependencies =
-        ImmutableList.of("app/", "app/libs/", "app/libs/dependencyX-1.0.0-SNAPSHOT.jar");
+        ImmutableList.of(
+            "app/",
+            "app/libs/",
+            "app/libs/dependencyX-1.0.0-SNAPSHOT.jar",
+            "app/libs/junit-4.12.jar");
     Assert.assertEquals(expectedSnapshotDependencies, snapshotDependencies);
 
     // verify project dependencies

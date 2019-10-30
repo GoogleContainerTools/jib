@@ -52,6 +52,8 @@ import org.gradle.api.GradleException;
 import org.gradle.api.JavaVersion;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ExternalModuleDependency;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.file.FileCollection;
@@ -168,11 +170,12 @@ class GradleProjectProperties implements ProjectProperties {
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
       FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
 
+      Configuration runTimeConfiguration =
+          project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
+
       FileCollection projectDependencies =
           project.files(
-              project
-                  .getConfigurations()
-                  .getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME)
+              runTimeConfiguration
                   .getResolvedConfiguration()
                   .getResolvedArtifacts()
                   .stream()
@@ -191,18 +194,48 @@ class GradleProjectProperties implements ProjectProperties {
 
       FileCollection snapshotDependencies =
           nonProjectDependencies.filter(file -> file.getName().contains("SNAPSHOT"));
+
+      List<String> changingCollections =
+          runTimeConfiguration
+              .getAllDependencies()
+              .stream()
+              .filter(fil -> ((ExternalModuleDependency) fil).isChanging())
+              .map(
+                  moduleDependency ->
+                      moduleDependency
+                          .getName()
+                          .concat("-")
+                          .concat(moduleDependency.getVersion())
+                          .concat(".jar"))
+              .collect(Collectors.toList());
+
+      List<Path> changingDependenciesCollection =
+          nonProjectDependencies
+              .getFiles()
+              .stream()
+              .filter(
+                  fil -> changingCollections != null && changingCollections.contains(fil.getName()))
+              .map(fil -> fil.toPath())
+              .collect(Collectors.toList());
+
       FileCollection dependencies = nonProjectDependencies.minus(snapshotDependencies);
 
       // Adds dependency files
       javaContainerBuilder
           .addDependencies(
-              dependencies.getFiles().stream().map(File::toPath).collect(Collectors.toList()))
+              dependencies
+                  .getFiles()
+                  .stream()
+                  .filter(fil -> !changingDependenciesCollection.contains(fil.toPath()))
+                  .map(File::toPath)
+                  .collect(Collectors.toList()))
           .addSnapshotDependencies(
               snapshotDependencies
                   .getFiles()
                   .stream()
                   .map(File::toPath)
                   .collect(Collectors.toList()))
+          .addSnapshotDependencies(changingDependenciesCollection)
           .addProjectDependencies(
               projectDependencies
                   .getFiles()
