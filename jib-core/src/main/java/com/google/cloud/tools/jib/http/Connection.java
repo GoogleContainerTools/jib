@@ -41,6 +41,23 @@ import org.apache.http.impl.client.DefaultHttpClient;
  * Thread-safe HTTP client with the automatic insecure connection failover feature. Intended to be
  * created once and shared to be called at multiple places. Callers should close the returned {@link
  * Response}.
+ *
+ * <p>The failover (if enabled) in the following way:
+ *
+ * <ul>
+ *   <li>When port was given:
+ *       <ol>
+ *         <li>Attempts secure HTTPS.
+ *         <li>If it fails due to {@link SSLException}, attempts insecure HTTPS.
+ *         <li>If it fails again due to {@link SSLException}, attempts plain-HTTP.
+ *       </ol>
+ *   <li>When port was not given: follows same execution path above, but additionally, if the very
+ *       first secure HTTPS (at port 443) fails due to non-timeout {@link ConnectException},
+ *       attempts plain-HTTP at port 80.
+ * </ul>
+ *
+ * This failover behavior is similar to how the Docker client works:
+ * https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
  */
 public class Connection { // TODO: rename to TlsFailoverHttpClient
 
