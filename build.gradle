@@ -351,3 +351,20 @@ subprojects {
   }
   /* INCLUDED PROJECT DEPENDENCY HELPER */
 }
+
+tasks.register("dev") {
+  subprojects.each { subproject ->
+    subproject.tasks.check.dependsOn subproject.tasks.googleJavaFormat
+    dependsOn subproject.tasks.check
+  }
+}
+
+tasks.register("devFull") {
+  if (!System.getenv('JIB_INTEGRATION_TESTING_PROJECT')) {
+    throw new GradleException('Required evironment variable: JIB_INTEGRATION_TESTING_PROJECT, not set.')
+  }
+  dependsOn tasks.dev
+  subprojects.each { subproject ->
+    dependsOn subproject.tasks.integrationTest
+  }
+}
