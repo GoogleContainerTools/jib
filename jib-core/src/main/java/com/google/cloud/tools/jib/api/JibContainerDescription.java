@@ -1,5 +1,6 @@
 package com.google.cloud.tools.jib.api;
 
+import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 
