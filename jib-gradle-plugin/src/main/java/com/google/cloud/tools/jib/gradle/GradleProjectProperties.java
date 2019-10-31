@@ -170,12 +170,12 @@ class GradleProjectProperties implements ProjectProperties {
       Path resourcesOutputDirectory = mainSourceSet.getOutput().getResourcesDir().toPath();
       FileCollection allFiles = mainSourceSet.getRuntimeClasspath().filter(File::exists);
 
-      Configuration runTimeConfiguration =
+      Configuration runtimeConfiguration =
           project.getConfigurations().getByName(JavaPlugin.RUNTIME_CLASSPATH_CONFIGURATION_NAME);
 
       FileCollection projectDependencies =
           project.files(
-              runTimeConfiguration
+              runtimeConfiguration
                   .getResolvedConfiguration()
                   .getResolvedArtifacts()
                   .stream()
@@ -196,16 +196,16 @@ class GradleProjectProperties implements ProjectProperties {
           nonProjectDependencies.filter(file -> file.getName().contains("SNAPSHOT"));
 
       List<String> changingCollections =
-          runTimeConfiguration
+          runtimeConfiguration
               .getAllDependencies()
               .stream()
-              .filter(fil -> ((ExternalModuleDependency) fil).isChanging())
+              .filter(dependency -> ((ExternalModuleDependency) dependency).isChanging())
               .map(
-                  moduleDependency ->
-                      moduleDependency
+                  dependency ->
+                      dependency
                           .getName()
                           .concat("-")
-                          .concat(moduleDependency.getVersion())
+                          .concat(dependency.getVersion())
                           .concat(".jar"))
               .collect(Collectors.toList());
 
@@ -214,8 +214,9 @@ class GradleProjectProperties implements ProjectProperties {
               .getFiles()
               .stream()
               .filter(
-                  fil -> changingCollections != null && changingCollections.contains(fil.getName()))
-              .map(fil -> fil.toPath())
+                  file ->
+                      changingCollections != null && changingCollections.contains(file.getName()))
+              .map(file -> file.toPath())
               .collect(Collectors.toList());
 
       FileCollection dependencies = nonProjectDependencies.minus(snapshotDependencies);
@@ -226,7 +227,7 @@ class GradleProjectProperties implements ProjectProperties {
               dependencies
                   .getFiles()
                   .stream()
-                  .filter(fil -> !changingDependenciesCollection.contains(fil.toPath()))
+                  .filter(file -> !changingDependenciesCollection.contains(file.toPath()))
                   .map(File::toPath)
                   .collect(Collectors.toList()))
           .addSnapshotDependencies(
