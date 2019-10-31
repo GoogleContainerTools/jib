@@ -51,7 +51,6 @@ public class ContainerParameters {
   private String creationTime = "EPOCH";
 
   @Input
-  @Optional
   public boolean getUseCurrentTimestamp() {
     if (System.getProperty(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP) != null) {
       return Boolean.getBoolean(PropertyNames.CONTAINER_USE_CURRENT_TIMESTAMP);
