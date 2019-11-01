@@ -58,7 +58,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
  *         <li>If (1) fails due to {@link SSLException}, attempts insecure HTTPS (disables
  *             certificate validation).
  *         <li>If (2) fails again due to {@link SSLException}, attempts plain-HTTP.
- *         <li>If (1) due to non-timeout {@link ConnectException}, attempts plain-HTTP at port 80.
+ *         <li>Or, if (1) fails due to non-timeout {@link ConnectException}, attempts plain-HTTP at
+ *             port 80.
  *       </ol>
  *       In sum, this follows the same execution path as when a port is provided, but additionally,
  *       it can fall back to HTTP at port 80 when the very first secure HTTPS (at port 443) fails
