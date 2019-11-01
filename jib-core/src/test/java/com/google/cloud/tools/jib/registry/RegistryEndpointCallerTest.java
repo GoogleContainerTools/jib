@@ -166,10 +166,10 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testCall_credentialsNotSentOverHttp() throws IOException, RegistryException {
-    ResponseException unauthroizedException =
+    ResponseException unauthorizedException =
         mockResponseException(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, null);
-    Mockito.when(unauthroizedException.requestAuthorizationCleared()).thenReturn(true);
-    setUpRegistryResponse(unauthroizedException);
+    Mockito.when(unauthorizedException.requestAuthorizationCleared()).thenReturn(true);
+    setUpRegistryResponse(unauthorizedException);
 
     try {
       endpointCaller.call();
@@ -184,9 +184,9 @@ public class RegistryEndpointCallerTest {
 
   @Test
   public void testCall_credentialsForcedOverHttp() throws IOException, RegistryException {
-    ResponseException unauthroizedException =
+    ResponseException unauthorizedException =
         mockResponseException(HttpStatusCodes.STATUS_CODE_UNAUTHORIZED, null);
-    setUpRegistryResponse(unauthroizedException);
+    setUpRegistryResponse(unauthorizedException);
     System.setProperty(JibSystemProperties.SEND_CREDENTIALS_OVER_HTTP, "true");
 
     try {

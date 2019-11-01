@@ -49,7 +49,7 @@ public class WithServerConnectionTest { // TODO: rename to WithServerTlsFailover
   @Test
   public void testGet()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    Connection insecureHttpClient = new Connection(true, false, logger);
+    Connection insecureHttpClient = new Connection(true /*insecure*/, false, logger);
     try (TestWebServer server = new TestWebServer(false);
         Response response = insecureHttpClient.get(new URL(server.getEndpoint()), request)) {
 
@@ -64,7 +64,7 @@ public class WithServerConnectionTest { // TODO: rename to WithServerTlsFailover
   @Test
   public void testSecureConnectionOnInsecureHttpsServer()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    Connection secureHttpClient = new Connection(false, false, logger);
+    Connection secureHttpClient = new Connection(false /*secure*/, false, logger);
     try (TestWebServer server = new TestWebServer(true);
         Response ignored = secureHttpClient.get(new URL(server.getEndpoint()), request)) {
       Assert.fail("Should fail if cannot verify peer");
@@ -77,7 +77,7 @@ public class WithServerConnectionTest { // TODO: rename to WithServerTlsFailover
   @Test
   public void testInsecureConnection_insecureHttpsFailover()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    Connection insecureHttpClient = new Connection(true, false, logger);
+    Connection insecureHttpClient = new Connection(true /*insecure*/, false, logger);
     try (TestWebServer server = new TestWebServer(true, 2);
         Response response = insecureHttpClient.get(new URL(server.getEndpoint()), request)) {
 
@@ -96,7 +96,7 @@ public class WithServerConnectionTest { // TODO: rename to WithServerTlsFailover
   @Test
   public void testInsecureConnection_plainHttpFailover()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    Connection insecureHttpClient = new Connection(true, false, logger);
+    Connection insecureHttpClient = new Connection(true /*insecure*/, false, logger);
     try (TestWebServer server = new TestWebServer(false, 3)) {
       String httpsUrl = server.getEndpoint().replace("http://", "https://");
       try (Response response = insecureHttpClient.get(new URL(httpsUrl), request)) {
@@ -127,7 +127,7 @@ public class WithServerConnectionTest { // TODO: rename to WithServerTlsFailover
             + "Content-Length: 0\n\n";
     String targetServerResponse = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
 
-    Connection httpClient = new Connection(true, false, logger);
+    Connection httpClient = new Connection(true /*insecure*/, false, logger);
     try (TestWebServer server =
         new TestWebServer(false, Arrays.asList(proxyResponse, targetServerResponse), 1)) {
       System.setProperty("http.proxyHost", "localhost");

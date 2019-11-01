@@ -47,23 +47,22 @@ import org.apache.http.impl.client.DefaultHttpClient;
  * <ul>
  *   <li>When a port is provided (for example {@code my-registry:5000/my-repo}):
  *       <ol>
- *         <li>Attempts secure HTTPS.
- *         <li>If (1) fails due to {@link SSLException}, attempts insecure HTTPS (disables
- *             certificate validation).
- *         <li>If (2) fails again due to {@link SSLException}, attempts plain-HTTP.
+ *         <li>Attempts secure HTTPS on the specified port.
+ *         <li>If (1) fails due to {@link SSLException}, re-attempts secure HTTPS on the specified
+ *             port but disabling certificate validation.
+ *         <li>If (2) fails again due to {@link SSLException}, attempts plain-HTTP on the specified
+ *             port.
  *       </ol>
  *   <li>When a port is not provided (for example {@code my-registry/my-repo}):
  *       <ol>
- *         <li>Attempts secure HTTPS.
- *         <li>If (1) fails due to {@link SSLException}, attempts insecure HTTPS (disables
- *             certificate validation).
- *         <li>If (2) fails again due to {@link SSLException}, attempts plain-HTTP.
- *         <li>Or, if (1) fails due to non-timeout {@link ConnectException}, attempts plain-HTTP at
+ *         <li>Attempts secure HTTPS on port 443 (default HTTPS port).
+ *         <li>If (1) fails due to {@link SSLException}, re-attempts secure HTTPS on port 443 but
+ *             disabling certificate validation.
+ *         <li>If (2) fails again due to {@link SSLException}, attempts plain-HTTP on port 80
+ *             (default HTTP port).
+ *         <li>Or, if (1) fails due to non-timeout {@link ConnectException}, attempts plain-HTTP on
  *             port 80.
  *       </ol>
- *       In sum, this follows the same execution path as when a port is provided, but additionally,
- *       it can fall back to HTTP at port 80 when the very first secure HTTPS (at port 443) fails
- *       when it cannot connect at all.
  * </ul>
  *
  * This failover behavior is similar to how the Docker client works:
