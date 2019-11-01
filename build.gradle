@@ -353,23 +353,26 @@ subprojects {
 }
 
 
+/* LOCAL DEVELOPMENT HELPER TASKS */
 tasks.register("dev") {
   subprojects.each { subproject ->
     subproject.tasks.check.dependsOn subproject.tasks.googleJavaFormat
     dependsOn subproject.tasks.check
+    dependsOn subproject.tasks.javadoc
   }
 }
 
 tasks.register("devFull") {
-  if (!System.getenv('JIB_INTEGRATION_TESTING_PROJECT') 
+  if (!System.getenv('JIB_INTEGRATION_TESTING_PROJECT')
       && !System.getenv('JIB_INTEGRATION_TESTING_LOCATION')) {
     throw new GradleException(
-        "Must set environment variable JIB_INTEGRATION_TESTING_PROJECT to the " 
-        + "GCP project to use for integration testing or " 
-        + "JIB_INTEGRATION_TESTING_LOCATION to a suitable registry/repository location."); 
+        "Must set environment variable JIB_INTEGRATION_TESTING_PROJECT to the "
+        + "GCP project to use for integration testing or "
+        + "JIB_INTEGRATION_TESTING_LOCATION to a suitable registry/repository location.");
   }
   dependsOn tasks.dev
   subprojects.each { subproject ->
     dependsOn subproject.tasks.integrationTest
   }
 }
+/* LOCAL DEVELOPMENT HELPER TASKS */
