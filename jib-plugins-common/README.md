@@ -1,0 +1,1 @@
+Common code for Jib plugins. NOT intended for use outside of `jib-maven-plugin` or `jib-gradle-plugin` in its current state.
