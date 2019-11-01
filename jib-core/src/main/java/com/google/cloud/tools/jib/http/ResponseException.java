@@ -45,6 +45,11 @@ public class ResponseException extends IOException {
     return httpResponseException.getHeaders();
   }
 
+  /**
+   * Returns whether the {@code Authorization} HTTP header was cleared (and thus not sent).
+   *
+   * @return whether the {@code Authorization} HTTP header was cleared
+   */
   public boolean requestAuthorizationCleared() {
     return requestAuthorizationCleared;
   }
