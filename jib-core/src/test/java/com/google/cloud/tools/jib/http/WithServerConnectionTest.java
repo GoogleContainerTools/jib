@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.jib.http;
 
+import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -23,76 +24,95 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
+import java.util.function.Consumer;
 import javax.net.ssl.SSLException;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link Connection} using an actual local server. */
-public class WithServerConnectionTest {
+@RunWith(MockitoJUnitRunner.class)
+public class WithServerConnectionTest { // TODO: rename to WithServerTlsFailoverHttpClientTest
 
   @Rule public final RestoreSystemProperties systemPropertyRestorer = new RestoreSystemProperties();
+
+  @Mock private Consumer<LogEvent> logger;
+
+  private final Request request = new Request.Builder().build();
 
   @Test
   public void testGet()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    Connection insecureHttpClient = new Connection(true /*insecure*/, false, logger);
     try (TestWebServer server = new TestWebServer(false);
-        Connection connection =
-            Connection.getConnectionFactory().apply(new URL(server.getEndpoint()))) {
-      Response response = connection.send("GET", new Request.Builder().build());
+        Response response = insecureHttpClient.get(new URL(server.getEndpoint()), request)) {
 
       Assert.assertEquals(200, response.getStatusCode());
       Assert.assertArrayEquals(
           "Hello World!".getBytes(StandardCharsets.UTF_8),
           ByteStreams.toByteArray(response.getBody()));
-    }
-  }
-
-  @Test
-  public void testErrorOnSecondSend()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    try (TestWebServer server = new TestWebServer(false);
-        Connection connection =
-            Connection.getConnectionFactory().apply(new URL(server.getEndpoint()))) {
-      connection.send("GET", new Request.Builder().build());
-      try {
-        connection.send("GET", new Request.Builder().build());
-        Assert.fail("Should fail on the second send");
-      } catch (IllegalStateException ex) {
-        Assert.assertEquals("Connection can send only one request", ex.getMessage());
-      }
+      Mockito.verifyNoInteractions(logger);
     }
   }
 
   @Test
   public void testSecureConnectionOnInsecureHttpsServer()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    Connection secureHttpClient = new Connection(false /*secure*/, false, logger);
     try (TestWebServer server = new TestWebServer(true);
-        Connection connection =
-            Connection.getConnectionFactory().apply(new URL(server.getEndpoint()))) {
-      try {
-        connection.send("GET", new Request.Builder().build());
-        Assert.fail("Should fail if cannot verify peer");
-      } catch (SSLException ex) {
-        Assert.assertNotNull(ex.getMessage());
-      }
+        Response ignored = secureHttpClient.get(new URL(server.getEndpoint()), request)) {
+      Assert.fail("Should fail if cannot verify peer");
+
+    } catch (SSLException ex) {
+      Assert.assertNotNull(ex.getMessage());
     }
   }
 
   @Test
-  public void testInsecureConnection()
+  public void testInsecureConnection_insecureHttpsFailover()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    try (TestWebServer server = new TestWebServer(true);
-        Connection connection =
-            Connection.getInsecureConnectionFactory().apply(new URL(server.getEndpoint()))) {
-      Response response = connection.send("GET", new Request.Builder().build());
+    Connection insecureHttpClient = new Connection(true /*insecure*/, false, logger);
+    try (TestWebServer server = new TestWebServer(true, 2);
+        Response response = insecureHttpClient.get(new URL(server.getEndpoint()), request)) {
 
       Assert.assertEquals(200, response.getStatusCode());
       Assert.assertArrayEquals(
           "Hello World!".getBytes(StandardCharsets.UTF_8),
           ByteStreams.toByteArray(response.getBody()));
+
+      String endpoint = server.getEndpoint();
+      String expectedLog =
+          "Cannot verify server at " + endpoint + ". Attempting again with no TLS verification.";
+      Mockito.verify(logger).accept(LogEvent.info(expectedLog));
+    }
+  }
+
+  @Test
+  public void testInsecureConnection_plainHttpFailover()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    Connection insecureHttpClient = new Connection(true /*insecure*/, false, logger);
+    try (TestWebServer server = new TestWebServer(false, 3)) {
+      String httpsUrl = server.getEndpoint().replace("http://", "https://");
+      try (Response response = insecureHttpClient.get(new URL(httpsUrl), request)) {
+
+        Assert.assertEquals(200, response.getStatusCode());
+        Assert.assertArrayEquals(
+            "Hello World!".getBytes(StandardCharsets.UTF_8),
+            ByteStreams.toByteArray(response.getBody()));
+
+        String expectedLog1 =
+            "Cannot verify server at " + httpsUrl + ". Attempting again with no TLS verification.";
+        String expectedLog2 =
+            "Failed to connect to " + httpsUrl + " over HTTPS. Attempting again with HTTP.";
+        Mockito.verify(logger).accept(LogEvent.info(expectedLog1));
+        Mockito.verify(logger).accept(LogEvent.info(expectedLog2));
+      }
     }
   }
 
@@ -107,6 +127,7 @@ public class WithServerConnectionTest {
             + "Content-Length: 0\n\n";
     String targetServerResponse = "HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!";
 
+    Connection httpClient = new Connection(true /*insecure*/, false, logger);
     try (TestWebServer server =
         new TestWebServer(false, Arrays.asList(proxyResponse, targetServerResponse), 1)) {
       System.setProperty("http.proxyHost", "localhost");
@@ -114,9 +135,7 @@ public class WithServerConnectionTest {
       System.setProperty("http.proxyUser", "user_sys_prop");
       System.setProperty("http.proxyPassword", "pass_sys_prop");
 
-      try (Connection connection =
-          Connection.getConnectionFactory().apply(new URL("http://does.not.matter"))) {
-        Response response = connection.send("GET", new Request.Builder().build());
+      try (Response response = httpClient.get(new URL("http://does.not.matter"), request)) {
         Assert.assertThat(
             server.getInputRead(),
             CoreMatchers.containsString(

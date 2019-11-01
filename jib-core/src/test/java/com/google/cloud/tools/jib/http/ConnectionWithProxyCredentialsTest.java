@@ -28,6 +28,7 @@ import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 
 /** Tests for {@link Connection} with setting proxy credentials. */
+// TODO: rename to TlsFailoverHttpClientProxyCredentialsTest
 public class ConnectionWithProxyCredentialsTest {
 
   private static final ImmutableList<String> proxyProperties =

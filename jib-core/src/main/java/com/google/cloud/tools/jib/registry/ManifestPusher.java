@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
-import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -25,6 +24,7 @@ import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -92,8 +92,8 @@ class ManifestPusher implements RegistryEndpointProvider<DescriptorDigest> {
   }
 
   @Override
-  public DescriptorDigest handleHttpResponseException(HttpResponseException responseException)
-      throws HttpResponseException, RegistryErrorException {
+  public DescriptorDigest handleHttpResponseException(ResponseException responseException)
+      throws ResponseException, RegistryErrorException {
     // docker registry 2.0 and 2.1 returns:
     //   400 Bad Request
     //   {"errors":[{"code":"TAG_INVALID","message":"manifest tag did not match URI"}]}

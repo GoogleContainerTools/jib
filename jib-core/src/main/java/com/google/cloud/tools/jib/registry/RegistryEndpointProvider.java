@@ -20,6 +20,7 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -53,15 +54,15 @@ interface RegistryEndpointProvider<T> {
   T handleResponse(Response response) throws IOException, RegistryException;
 
   /**
-   * Handles an {@link HttpResponseException} that occurs.
+   * Handles an {@link ResponseException} that occurs.
    *
-   * @param responseException the {@link HttpResponseException} to handle
+   * @param responseException the {@link ResponseException} to handle
    * @throws HttpResponseException {@code responseException} if {@code responseException} could not
    *     be handled
    * @throws RegistryErrorException if there is an error with a remote registry
    */
-  default T handleHttpResponseException(HttpResponseException responseException)
-      throws HttpResponseException, RegistryErrorException {
+  default T handleHttpResponseException(ResponseException responseException)
+      throws ResponseException, RegistryErrorException {
     throw responseException;
   }
 

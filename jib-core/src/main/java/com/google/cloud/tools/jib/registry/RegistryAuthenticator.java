@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.registry;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.api.client.http.HttpMethods;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.blob.Blobs;
@@ -27,6 +28,7 @@ import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Connection;
 import com.google.cloud.tools.jib.http.Request;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.common.annotations.VisibleForTesting;
@@ -58,6 +60,7 @@ public class RegistryAuthenticator {
    * @param authenticationMethod the {@code WWW-Authenticate} header value
    * @param registryEndpointRequestProperties the registry request properties
    * @param userAgent the {@code User-Agent} header value to use in later authentication calls
+   * @param httpClient HTTP client
    * @return a new {@link RegistryAuthenticator} for authenticating with the registry service
    * @throws RegistryAuthenticationFailedException if authentication fails
    * @see <a
@@ -66,7 +69,8 @@ public class RegistryAuthenticator {
   static Optional<RegistryAuthenticator> fromAuthenticationMethod(
       String authenticationMethod,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      String userAgent)
+      String userAgent,
+      Connection httpClient)
       throws RegistryAuthenticationFailedException {
     // If the authentication method starts with 'basic ' (case insensitive), no registry
     // authentication is needed.
@@ -96,7 +100,8 @@ public class RegistryAuthenticator {
     String service = serviceMatcher.find() ? serviceMatcher.group(1) : registryUrl;
 
     return Optional.of(
-        new RegistryAuthenticator(realm, service, registryEndpointRequestProperties, userAgent));
+        new RegistryAuthenticator(
+            realm, service, registryEndpointRequestProperties, userAgent, httpClient));
   }
 
   private static RegistryAuthenticationFailedException newRegistryAuthenticationFailedException(
@@ -138,16 +143,19 @@ public class RegistryAuthenticator {
   private final String realm;
   private final String service;
   private final String userAgent;
+  private final Connection httpClient;
 
   private RegistryAuthenticator(
       String realm,
       String service,
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
-      String userAgent) {
+      String userAgent,
+      Connection httpClient) {
     this.realm = realm;
     this.service = service;
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.userAgent = userAgent;
+    this.httpClient = httpClient;
   }
 
   /**
@@ -156,9 +164,11 @@ public class RegistryAuthenticator {
    * @param credential the credential used to authenticate
    * @return an {@code Authorization} authenticating the pull
    * @throws RegistryAuthenticationFailedException if authentication fails
+   * @throws RegistryCredentialsNotSentException if authentication is failed and credentials were
+   *     not sent over plain HTTP
    */
   public Authorization authenticatePull(@Nullable Credential credential)
-      throws RegistryAuthenticationFailedException {
+      throws RegistryAuthenticationFailedException, RegistryCredentialsNotSentException {
     return authenticate(credential, "pull");
   }
 
@@ -168,9 +178,11 @@ public class RegistryAuthenticator {
    * @param credential the credential used to authenticate
    * @return an {@code Authorization} authenticating the push
    * @throws RegistryAuthenticationFailedException if authentication fails
+   * @throws RegistryCredentialsNotSentException if authentication is failed and credentials were
+   *     not sent over plain HTTP
    */
   public Authorization authenticatePush(@Nullable Credential credential)
-      throws RegistryAuthenticationFailedException {
+      throws RegistryAuthenticationFailedException, RegistryCredentialsNotSentException {
     return authenticate(credential, "pull,push");
   }
 
@@ -220,11 +232,13 @@ public class RegistryAuthenticator {
    * @param scope the scope of permissions to authenticate for
    * @return the {@link Authorization} response
    * @throws RegistryAuthenticationFailedException if authentication fails
+   * @throws RegistryCredentialsNotSentException if authentication is failed and credentials were
+   *     not sent over plain HTTP
    * @see <a
    *     href="https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate">https://docs.docker.com/registry/spec/auth/token/#how-to-authenticate</a>
    */
   private Authorization authenticate(@Nullable Credential credential, String scope)
-      throws RegistryAuthenticationFailedException {
+      throws RegistryAuthenticationFailedException, RegistryCredentialsNotSentException {
     // try authorizing against both the main repository and the source repository too
     // to enable cross-repository mounts on pushes
     String sourceImageName = registryEndpointRequestProperties.getSourceImageName();
@@ -241,12 +255,12 @@ public class RegistryAuthenticator {
 
   private Authorization authenticate(
       @Nullable Credential credential, Map<String, String> repositoryScopes)
-      throws RegistryAuthenticationFailedException {
+      throws RegistryAuthenticationFailedException, RegistryCredentialsNotSentException {
     String registryUrl = registryEndpointRequestProperties.getServerUrl();
     String imageName = registryEndpointRequestProperties.getImageName();
-    try (Connection connection =
-        Connection.getConnectionFactory()
-            .apply(getAuthenticationUrl(credential, repositoryScopes))) {
+    try {
+      URL url = getAuthenticationUrl(credential, repositoryScopes);
+
       Request.Builder requestBuilder =
           Request.builder()
               .setHttpTimeout(JibSystemProperties.getHttpTimeout())
@@ -262,21 +276,29 @@ public class RegistryAuthenticator {
       }
 
       String httpMethod = isOAuth2Auth(credential) ? HttpMethods.POST : HttpMethods.GET;
-      Response response = connection.send(httpMethod, requestBuilder.build());
+      try (Response response = httpClient.call(httpMethod, url, requestBuilder.build())) {
 
-      AuthenticationResponseTemplate responseJson =
-          JsonTemplateMapper.readJson(response.getBody(), AuthenticationResponseTemplate.class);
+        AuthenticationResponseTemplate responseJson =
+            JsonTemplateMapper.readJson(response.getBody(), AuthenticationResponseTemplate.class);
 
-      if (responseJson.getToken() == null) {
-        throw new RegistryAuthenticationFailedException(
-            registryUrl,
-            imageName,
-            "Did not get token in authentication response from "
-                + getAuthenticationUrl(credential, repositoryScopes)
-                + "; parameters: "
-                + getAuthRequestParameters(credential, repositoryScopes));
+        if (responseJson.getToken() == null) {
+          throw new RegistryAuthenticationFailedException(
+              registryUrl,
+              imageName,
+              "Did not get token in authentication response from "
+                  + getAuthenticationUrl(credential, repositoryScopes)
+                  + "; parameters: "
+                  + getAuthRequestParameters(credential, repositoryScopes));
+        }
+        return Authorization.fromBearerToken(responseJson.getToken());
       }
-      return Authorization.fromBearerToken(responseJson.getToken());
+
+    } catch (ResponseException ex) {
+      if (ex.getStatusCode() == HttpStatusCodes.STATUS_CODE_UNAUTHORIZED
+          && ex.requestAuthorizationCleared()) {
+        throw new RegistryCredentialsNotSentException(registryUrl, imageName);
+      }
+      throw new RegistryAuthenticationFailedException(registryUrl, imageName, ex);
 
     } catch (IOException ex) {
       throw new RegistryAuthenticationFailedException(registryUrl, imageName, ex);
