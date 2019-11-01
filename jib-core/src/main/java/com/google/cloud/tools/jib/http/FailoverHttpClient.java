@@ -22,10 +22,10 @@ import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.apache.ApacheHttpTransport;
+import com.google.api.client.http.apache.v2.ApacheHttpTransport;
+import com.google.api.client.util.SslUtils;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URL;
@@ -33,9 +33,8 @@ import java.security.GeneralSecurityException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.net.ssl.SSLException;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.impl.client.HttpClientBuilder;
 
 /**
  * Thread-safe HTTP client that can automatically failover from secure HTTPS to insecure HTTPS or
@@ -86,53 +85,21 @@ public class FailoverHttpClient {
     //
     // A new ApacheHttpTransport needs to be created for each connection because otherwise HTTP
     // connection persistence causes the connection to throw NoHttpResponseException.
-    ApacheHttpTransport transport = new ApacheHttpTransport();
-    addProxyCredentials(transport);
-    return transport;
+    return new ApacheHttpTransport();
   }
 
   private static HttpTransport getInsecureHttpTransport() {
     try {
-      ApacheHttpTransport insecureTransport =
-          new ApacheHttpTransport.Builder().doNotValidateCertificate().build();
-      addProxyCredentials(insecureTransport);
-      return insecureTransport;
+      HttpClientBuilder httpClientBuilder =
+          ApacheHttpTransport.newDefaultHttpClientBuilder()
+              .setSSLSocketFactory(null) // creates new factory with the SSLContext given below
+              .setSSLContext(SslUtils.trustAllSSLContext())
+              .setSSLHostnameVerifier(new NoopHostnameVerifier());
+      // Do not use NetHttpTransport. See comments in getConnectionFactory for details.
+      return new ApacheHttpTransport(httpClientBuilder.build());
     } catch (GeneralSecurityException ex) {
       throw new RuntimeException("platform does not support TLS protocol", ex);
     }
-  }
-
-  /**
-   * Registers proxy credentials onto transport client, in order to deal with proxies that require
-   * basic authentication.
-   *
-   * @param transport Apache HTTP transport
-   */
-  @VisibleForTesting
-  static void addProxyCredentials(ApacheHttpTransport transport) {
-    addProxyCredentials(transport, "https");
-    addProxyCredentials(transport, "http");
-  }
-
-  private static void addProxyCredentials(ApacheHttpTransport transport, String protocol) {
-    Preconditions.checkArgument(protocol.equals("http") || protocol.equals("https"));
-
-    String proxyHost = System.getProperty(protocol + ".proxyHost");
-    String proxyUser = System.getProperty(protocol + ".proxyUser");
-    String proxyPassword = System.getProperty(protocol + ".proxyPassword");
-    if (proxyHost == null || proxyUser == null || proxyPassword == null) {
-      return;
-    }
-
-    String defaultProxyPort = protocol.equals("http") ? "80" : "443";
-    int proxyPort = Integer.parseInt(System.getProperty(protocol + ".proxyPort", defaultProxyPort));
-
-    DefaultHttpClient httpClient = (DefaultHttpClient) transport.getHttpClient();
-    httpClient
-        .getCredentialsProvider()
-        .setCredentials(
-            new AuthScope(proxyHost, proxyPort),
-            new UsernamePasswordCredentials(proxyUser, proxyPassword));
   }
 
   private final boolean enableHttpAndInsecureFailover;
