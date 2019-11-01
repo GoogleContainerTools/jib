@@ -228,7 +228,7 @@ public class FailoverHttpClientTest {
         .thenThrow(new ConnectException("my exception")); // server not listening on 443
 
     try (Response response = httpClient.get(new URL("https://insecure"), fakeRequest(null))) {
-      Assert.fail("Should not fall back to HTTP if port was explicitly given and cannot connect");
+      Assert.fail("Should not fall back to HTTP if secure client");
     } catch (ConnectException ex) {
       Assert.assertEquals("my exception", ex.getMessage());
 
@@ -331,6 +331,17 @@ public class FailoverHttpClientTest {
     Assert.assertNull(httpHeadersCaptor.getValue().getAuthorization());
     Assert.assertEquals(
         "Basic ZmFrZS11c2VybmFtZTpmYWtlLXNlY3JldA==", request.getHeaders().getAuthorization());
+  }
+
+  @Test
+  public void testShutDown() throws IOException {
+    FailoverHttpClient secureHttpClient = newHttpClient(false, false);
+
+    try (Response response = secureHttpClient.get(fakeUrl.toURL(), fakeRequest(null))) {
+      secureHttpClient.shutDown();
+      Mockito.verify(mockHttpTransport).shutdown();
+      Mockito.verify(mockHttpResponse).disconnect();
+    }
   }
 
   private void setUpMocks(
