@@ -352,6 +352,7 @@ subprojects {
   /* INCLUDED PROJECT DEPENDENCY HELPER */
 }
 
+
 tasks.register("dev") {
   subprojects.each { subproject ->
     subproject.tasks.check.dependsOn subproject.tasks.googleJavaFormat
@@ -360,8 +361,12 @@ tasks.register("dev") {
 }
 
 tasks.register("devFull") {
-  if (!System.getenv('JIB_INTEGRATION_TESTING_PROJECT')) {
-    throw new GradleException('Required evironment variable: JIB_INTEGRATION_TESTING_PROJECT, not set.')
+  if (!System.getenv('JIB_INTEGRATION_TESTING_PROJECT') 
+      && !System.getenv('JIB_INTEGRATION_TESTING_LOCATION')) {
+    throw new GradleException(
+        "Must set environment variable JIB_INTEGRATION_TESTING_PROJECT to the " 
+        + "GCP project to use for integration testing or " 
+        + "JIB_INTEGRATION_TESTING_LOCATION to a suitable registry/repository location."); 
   }
   dependsOn tasks.dev
   subprojects.each { subproject ->
