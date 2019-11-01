@@ -96,6 +96,12 @@ public class RegistryEndpointCallerTest {
     public String getActionDescription() {
       return "actionDescription";
     }
+
+    @Override
+    public String handleHttpResponseException(ResponseException responseException)
+        throws ResponseException, RegistryErrorException {
+      throw responseException;
+    }
   }
 
   private static ResponseException mockResponseException(
