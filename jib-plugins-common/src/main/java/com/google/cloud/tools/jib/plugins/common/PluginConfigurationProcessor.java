@@ -176,24 +176,12 @@ public class PluginConfigurationProcessor {
   static JibContainerBuilder processCommonConfiguration(
       RawConfiguration rawConfiguration,
       InferredAuthProvider inferredAuthProvider,
-      ProjectProperties projectProperties,
-      Containerizer containerizer)
-      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
-          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
-          IncompatibleBaseImageJavaVersionException, NumberFormatException,
-          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+      ProjectProperties projectProperties)
+      throws InvalidFilesModificationTimeException, InvalidAppRootException,
+          IncompatibleBaseImageJavaVersionException, IOException, InvalidImageReferenceException,
+          InvalidContainerizingModeException, MainClassInferenceException,
+          InvalidContainerVolumeException, InvalidWorkingDirectoryException,
           InvalidCreationTimeException {
-    JibSystemProperties.checkHttpTimeoutProperty();
-    JibSystemProperties.checkProxyPortProperty();
-
-    if (JibSystemProperties.sendCredentialsOverHttp()) {
-      projectProperties.log(
-          LogEvent.warn(
-              "Authentication over HTTP is enabled. It is strongly recommended that you do not "
-                  + "enable this on a public network!"));
-    }
-
-    configureContainerizer(containerizer, rawConfiguration, projectProperties);
 
     // Create and configure JibContainerBuilder
     BiFunction<Path, AbsoluteUnixPath, Instant> modificationTimeProvider =
@@ -238,6 +226,32 @@ public class PluginConfigurationProcessor {
       }
     }
     return jibContainerBuilder;
+  }
+
+  @VisibleForTesting
+  static JibContainerBuilder processCommonConfiguration(
+      RawConfiguration rawConfiguration,
+      InferredAuthProvider inferredAuthProvider,
+      ProjectProperties projectProperties,
+      Containerizer containerizer)
+      throws InvalidImageReferenceException, MainClassInferenceException, InvalidAppRootException,
+          IOException, InvalidWorkingDirectoryException, InvalidContainerVolumeException,
+          IncompatibleBaseImageJavaVersionException, NumberFormatException,
+          InvalidContainerizingModeException, InvalidFilesModificationTimeException,
+          InvalidCreationTimeException {
+    JibSystemProperties.checkHttpTimeoutProperty();
+    JibSystemProperties.checkProxyPortProperty();
+
+    if (JibSystemProperties.sendCredentialsOverHttp()) {
+      projectProperties.log(
+          LogEvent.warn(
+              "Authentication over HTTP is enabled. It is strongly recommended that you do not "
+                  + "enable this on a public network!"));
+    }
+
+    configureContainerizer(containerizer, rawConfiguration, projectProperties);
+
+    return processCommonConfiguration(rawConfiguration, inferredAuthProvider, projectProperties);
   }
 
   /**
