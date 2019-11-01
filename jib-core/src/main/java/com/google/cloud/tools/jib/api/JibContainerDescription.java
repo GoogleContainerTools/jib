@@ -16,14 +16,13 @@
 package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
-import com.google.common.annotations.Beta;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 
 /**
  * A class containing the representation of the contents of a container. Currently only exposes
- * "layers", but can be extended to expose {@link ContainerConfiguration}, {@link ImageReference}
- * of the base image, or other informational classes.
+ * "layers", but can be extended to expose {@link ContainerConfiguration}, {@link ImageReference} of
+ * the base image, or other informational classes.
  *
  * <p>This class is immutable and thread-safe.
  */
@@ -37,6 +36,7 @@ public class JibContainerDescription {
 
   /**
    * Returns a list of "user configured" layers, does *not* include base layer information.
+   *
    * @return An {@link ImmutableList} of {@link LayerConfiguration}s
    */
   public List<LayerConfiguration> getLayers() {
