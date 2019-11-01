@@ -20,7 +20,7 @@ import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
-import com.google.cloud.tools.jib.http.Connection;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
 import java.net.MalformedURLException;
@@ -36,12 +36,12 @@ class AuthenticationMethodRetriever
 
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final String userAgent;
-  private final Connection httpClient;
+  private final FailoverHttpClient httpClient;
 
   AuthenticationMethodRetriever(
       RegistryEndpointRequestProperties registryEndpointRequestProperties,
       String userAgent,
-      Connection httpClient) {
+      FailoverHttpClient httpClient) {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.userAgent = userAgent;
     this.httpClient = httpClient;

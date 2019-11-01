@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
-import com.google.cloud.tools.jib.http.Connection;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.http.TestWebServer;
@@ -47,7 +47,7 @@ public class RegistryAuthenticatorTest {
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties =
       new RegistryEndpointRequestProperties("someserver", "someimage");
 
-  @Mock private Connection httpClient;
+  @Mock private FailoverHttpClient httpClient;
   @Mock private Response response;
 
   @Captor private ArgumentCaptor<URL> urlCaptor;
@@ -240,7 +240,7 @@ public class RegistryAuthenticatorTest {
                     "Bearer realm=\"" + server.getEndpoint() + "\"",
                     registryEndpointRequestProperties,
                     "Competent-Agent",
-                    new Connection(true, false, ignored -> {}))
+                    new FailoverHttpClient(true, false, ignored -> {}))
                 .get();
         authenticator.authenticatePush(null);
       } catch (RegistryAuthenticationFailedException ex) {

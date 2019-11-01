@@ -19,7 +19,7 @@ package com.google.cloud.tools.jib.registry;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpStatusCodes;
-import com.google.cloud.tools.jib.http.Connection;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.http.ResponseException;
 import java.net.MalformedURLException;
@@ -39,7 +39,7 @@ public class AuthenticationMethodRetrieverTest {
 
   @Mock private ResponseException mockResponseException;
   @Mock private HttpHeaders mockHeaders;
-  @Mock private Connection httpClient;
+  @Mock private FailoverHttpClient httpClient;
 
   private final RegistryEndpointRequestProperties fakeRegistryEndpointRequestProperties =
       new RegistryEndpointRequestProperties("someServerUrl", "someImageName");
