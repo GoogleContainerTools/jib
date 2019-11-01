@@ -27,7 +27,6 @@ import java.util.List;
  *
  * <p>This class is immutable and thread-safe.
  */
-@Beta
 public class JibContainerDescription {
 
   private final ImmutableList<LayerConfiguration> layers;
