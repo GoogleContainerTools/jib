@@ -164,10 +164,11 @@ class RegistryEndpointCaller<T> {
             throw new RegistryUnauthorizedException(serverUrl, imageName, responseException);
           }
 
-        } else if (responseException.getStatusCode()
-                == HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT
-            || responseException.getStatusCode() == HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY
-            || responseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
+          // 301 (Moved Permanently), 302 (Found), 303 (See Other), and 307 (Temporary Redirect) are
+          // automatically followed by Google HTTP Client (setFollowRedirects(true)), but 308 isn't.
+          // https://github.com/googleapis/google-http-java-client/issues/873
+          // TODO: remove this when the bug is fixed.
+        } else if (responseException.getStatusCode() == STATUS_CODE_PERMANENT_REDIRECT) {
           // 'Location' header can be relative or absolute.
           URL redirectLocation = new URL(url, responseException.getHeaders().getLocation());
           return call(redirectLocation);
