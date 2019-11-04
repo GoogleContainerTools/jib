@@ -22,7 +22,11 @@ import com.google.common.collect.ImmutableMap;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
 
-/** Represents read/write/execute file permissions for owner, group, and others. */
+/**
+ * Represents read/write/execute file permissions for owner, group, and others.
+ *
+ * <p>This class is immutable and thread-safe.
+ */
 public class FilePermissions {
 
   /** Default permissions for files added to the container. */

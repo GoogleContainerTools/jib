@@ -477,6 +477,16 @@ public class JibContainerBuilder {
     return containerize(containerizer, Executors::newCachedThreadPool);
   }
 
+  /**
+   * Describes the container contents and configuration without actually physically building a
+   * container.
+   *
+   * @return a description of the container being built
+   */
+  public JibContainerDescription describeContainer() {
+    return new JibContainerDescription(layerConfigurations);
+  }
+
   @VisibleForTesting
   JibContainer containerize(
       Containerizer containerizer, Supplier<ExecutorService> defaultExecutorServiceFactory)

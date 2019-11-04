@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- New method: `JibContainerBuilder#describeContainer` which returns new class: `JibContainerDescription`, containing a selection of information used for the Jib build. ([#2115](https://github.com/GoogleContainerTools/jib/issues/2115))
+
 ### Changed
 
 ### Fixed
