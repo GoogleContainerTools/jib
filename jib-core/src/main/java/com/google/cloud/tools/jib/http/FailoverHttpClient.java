@@ -68,7 +68,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
  * This failover behavior is similar to how the Docker client works:
  * https://docs.docker.com/registry/insecure/#deploy-a-plain-http-registry
  */
-public class Connection { // TODO: rename to TlsFailoverHttpClient
+public class FailoverHttpClient {
 
   private static boolean isHttpsProtocol(URL url) {
     return "https".equals(url.getProtocol());
@@ -141,7 +141,7 @@ public class Connection { // TODO: rename to TlsFailoverHttpClient
   private final Supplier<HttpTransport> secureHttpTransportFactory;
   private final Supplier<HttpTransport> insecureHttpTransportFactory;
 
-  public Connection(
+  public FailoverHttpClient(
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger) {
@@ -149,12 +149,12 @@ public class Connection { // TODO: rename to TlsFailoverHttpClient
         enableHttpAndInsecureFailover,
         sendAuthorizationOverHttp,
         logger,
-        Connection::getSecureHttpTransport,
-        Connection::getInsecureHttpTransport);
+        FailoverHttpClient::getSecureHttpTransport,
+        FailoverHttpClient::getInsecureHttpTransport);
   }
 
   @VisibleForTesting
-  Connection(
+  FailoverHttpClient(
       boolean enableHttpAndInsecureFailover,
       boolean sendAuthorizationOverHttp,
       Consumer<LogEvent> logger,

@@ -28,7 +28,7 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.Connection;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.http.Response;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ManifestTemplate;
@@ -244,7 +244,7 @@ public class RegistryClient {
   @Nullable private final Authorization authorization;
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties;
   private final String userAgent;
-  private final Connection httpClient;
+  private final FailoverHttpClient httpClient;
 
   /**
    * Instantiate with {@link #factory}.
@@ -266,7 +266,7 @@ public class RegistryClient {
     this.registryEndpointRequestProperties = registryEndpointRequestProperties;
     this.userAgent = userAgent;
     this.httpClient =
-        new Connection(
+        new FailoverHttpClient(
             allowInsecureRegistries,
             JibSystemProperties.sendCredentialsOverHttp(),
             eventHandlers::dispatch);
