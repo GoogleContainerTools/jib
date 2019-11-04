@@ -65,7 +65,10 @@ subprojects {
   // Use this to ensure we correctly override transitive dependencies
   // TODO: There might be a plugin that does this
   task ensureTransitiveDependencyOverrides {
-    def rules = ["google-http-client": dependencyVersions.GOOGLE_HTTP_CLIENT]
+    def rules = [
+        "google-http-client": dependencyVersions.GOOGLE_HTTP_CLIENT,
+        "google-http-client-apache-v2": dependencyVersions.GOOGLE_HTTP_CLIENT_APACHE_V2,
+    ]
     doLast {
       configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
         def dependency = artifact.moduleVersion.id
