@@ -18,7 +18,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-/** Tests for {@link SyncMapMojo} */
+/** Tests for {@link SyncMapMojo}. */
 public class SyncMapMojoTest {
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
