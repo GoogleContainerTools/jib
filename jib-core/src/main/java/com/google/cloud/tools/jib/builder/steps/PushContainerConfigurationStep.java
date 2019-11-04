@@ -24,6 +24,7 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
 import com.google.cloud.tools.jib.json.JsonTemplate;
@@ -38,19 +39,21 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
 
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
-
   @Nullable private final Authorization pushAuthorization;
   private final Image builtImage;
+  private final FailoverHttpClient httpClient;
 
   PushContainerConfigurationStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization authenticatePushStep,
-      Image builtImage) {
+      Image builtImage,
+      FailoverHttpClient httpClient) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.pushAuthorization = authenticatePushStep;
     this.builtImage = builtImage;
+    this.httpClient = httpClient;
   }
 
   @Override
@@ -68,7 +71,8 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
               pushAuthorization,
               Digests.computeDigest(containerConfiguration),
               Blobs.from(containerConfiguration),
-              false)
+              false,
+              httpClient)
           .call();
     }
   }

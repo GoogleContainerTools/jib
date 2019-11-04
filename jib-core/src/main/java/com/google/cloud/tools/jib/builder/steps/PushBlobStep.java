@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.progress.ThrottledAccumulatingConsumer;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.io.IOException;
 import java.util.concurrent.Callable;
@@ -44,6 +45,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
   private final BlobDescriptor blobDescriptor;
   private final Blob blob;
   private final boolean forcePush;
+  private final FailoverHttpClient httpClient;
 
   PushBlobStep(
       BuildConfiguration buildConfiguration,
@@ -51,13 +53,15 @@ class PushBlobStep implements Callable<BlobDescriptor> {
       @Nullable Authorization authorization,
       BlobDescriptor blobDescriptor,
       Blob blob,
-      boolean forcePush) {
+      boolean forcePush,
+      FailoverHttpClient httpClient) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.authorization = authorization;
     this.blobDescriptor = blobDescriptor;
     this.blob = blob;
     this.forcePush = forcePush;
+    this.httpClient = httpClient;
   }
 
   @Override
@@ -73,7 +77,7 @@ class PushBlobStep implements Callable<BlobDescriptor> {
             new ThrottledAccumulatingConsumer(progressEventDispatcher::dispatchProgress)) {
       RegistryClient registryClient =
           buildConfiguration
-              .newTargetImageRegistryClientFactory()
+              .newTargetImageRegistryClientFactory(httpClient)
               .setAuthorization(authorization)
               .newRegistryClient();
 

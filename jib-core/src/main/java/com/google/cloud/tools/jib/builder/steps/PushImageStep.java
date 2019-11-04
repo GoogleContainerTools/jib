@@ -26,6 +26,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.ImageToJsonTranslator;
@@ -49,7 +50,8 @@ class PushImageStep implements Callable<BuildResult> {
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Authorization pushAuthorization,
       BlobDescriptor containerConfigurationDigestAndSize,
-      Image builtImage)
+      Image builtImage,
+      FailoverHttpClient httpClient)
       throws IOException {
     Set<String> tags = buildConfiguration.getAllTargetImageTags();
 
@@ -77,7 +79,8 @@ class PushImageStep implements Callable<BuildResult> {
                       manifestTemplate,
                       tag,
                       manifestDigest,
-                      containerConfigurationDigestAndSize.getDigest()))
+                      containerConfigurationDigestAndSize.getDigest(),
+                      httpClient))
           .collect(ImmutableList.toImmutableList());
     }
   }
@@ -90,6 +93,7 @@ class PushImageStep implements Callable<BuildResult> {
   private final String tag;
   private final DescriptorDigest imageDigest;
   private final DescriptorDigest imageId;
+  private final FailoverHttpClient httpClient;
 
   PushImageStep(
       BuildConfiguration buildConfiguration,
@@ -98,7 +102,8 @@ class PushImageStep implements Callable<BuildResult> {
       BuildableManifestTemplate manifestTemplate,
       String tag,
       DescriptorDigest imageDigest,
-      DescriptorDigest imageId) {
+      DescriptorDigest imageId,
+      FailoverHttpClient httpClient) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.pushAuthorization = pushAuthorization;
@@ -106,6 +111,7 @@ class PushImageStep implements Callable<BuildResult> {
     this.tag = tag;
     this.imageDigest = imageDigest;
     this.imageId = imageId;
+    this.httpClient = httpClient;
   }
 
   @Override
@@ -118,7 +124,7 @@ class PushImageStep implements Callable<BuildResult> {
 
       RegistryClient registryClient =
           buildConfiguration
-              .newTargetImageRegistryClientFactory()
+              .newTargetImageRegistryClientFactory(httpClient)
               .setAuthorization(pushAuthorization)
               .newRegistryClient();
 
