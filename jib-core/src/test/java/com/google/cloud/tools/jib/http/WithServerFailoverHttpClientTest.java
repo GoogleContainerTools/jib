@@ -152,8 +152,10 @@ public class WithServerFailoverHttpClientTest {
   }
 
   @Test
-  public void testVerbatimRedirectionUrls()
+  public void testRedirectionUrls()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    // Sample query strings from
+    // https://github.com/GoogleContainerTools/jib/issues/1986#issuecomment-547610104
     String url1 = "?id=301&_auth_=exp=1572285389~hmac=f0a387f0";
     String url2 = "?id=302&Signature=2wYOD0a%2BDAkK%2F9lQJUOuIpYti8o%3D&Expires=1569997614";
     String url3 = "?id=303&_auth_=exp=1572285389~hmac=f0a387f0";
