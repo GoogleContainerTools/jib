@@ -339,8 +339,9 @@ public class FailoverHttpClientTest {
 
     try (Response response = secureHttpClient.get(fakeUrl.toURL(), fakeRequest(null))) {
       secureHttpClient.shutDown();
-      Mockito.verify(mockHttpTransport).shutdown();
-      Mockito.verify(mockHttpResponse).disconnect();
+      secureHttpClient.shutDown();
+      Mockito.verify(mockHttpTransport, Mockito.times(1)).shutdown();
+      Mockito.verify(mockHttpResponse, Mockito.times(1)).disconnect();
     }
   }
 
