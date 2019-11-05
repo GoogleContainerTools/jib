@@ -48,13 +48,12 @@ public class SyncMapMojo extends JibPluginConfiguration {
       MavenRawConfiguration configuration = new MavenRawConfiguration(this);
 
       try {
-        // should I print something out here to ID it? sync map might require that "package" is
-        // also run next to in the multimodule case to identify submodule dependencies
-        // print BEGIN JIB SYNC MAP
         String syncMapJson =
             PluginConfigurationProcessor.getSkaffoldSyncMap(configuration, projectProperties);
+
+        System.out.println("\nBEGIN JIB JSON");
         System.out.println(syncMapJson);
-        // print END JIB SYNC MAP
+
       } catch (Exception e) {
         throw new MojoExecutionException("Failed to generate Jib file map", e);
       }

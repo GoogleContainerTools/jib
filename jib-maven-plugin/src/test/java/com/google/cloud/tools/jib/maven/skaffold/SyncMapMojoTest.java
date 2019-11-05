@@ -25,7 +25,7 @@ public class SyncMapMojoTest {
 
   @ClassRule public static final TestProject multiTestProject = new TestProject("multi");
 
-  private static String getLines(Path projectRoot, String module)
+  private static String getSyncMapJson(Path projectRoot, String module)
       throws VerificationException, IOException {
     Verifier verifier = new Verifier(projectRoot.toString());
     verifier.setAutoclean(false);
@@ -40,7 +40,9 @@ public class SyncMapMojoTest {
     verifier.executeGoals(ImmutableList.of("package", "jib:" + SyncMapMojo.GOAL_NAME));
 
     Path logFile = Paths.get(verifier.getBasedir()).resolve(verifier.getLogFileName());
-    return new String(Files.readAllBytes(logFile), Charsets.UTF_8);
+    List<String> outputLines = Files.readAllLines(logFile, Charsets.UTF_8);
+    Assert.assertEquals(3, outputLines.size()); // we expect ["\n", "BEGIN JIB JSON", "<sync-json>"]
+    return outputLines.get(2); // this is the JSON output
   }
 
   private static void assertFilePaths(Path src, AbsoluteUnixPath dest, FileTemplate template) {
@@ -51,8 +53,8 @@ public class SyncMapMojoTest {
   @Test
   public void testSyncMapMojo_simpleTestProjectOutput() throws IOException, VerificationException {
     Path projectRoot = simpleTestProject.getProjectRoot();
-    String JSON = getLines(projectRoot, null);
-    SkaffoldSyncMapTemplate parsed = SkaffoldSyncMapTemplate.from(JSON);
+    String json = getSyncMapJson(projectRoot, null);
+    SkaffoldSyncMapTemplate parsed = SkaffoldSyncMapTemplate.from(json);
 
     List<FileTemplate> generated = parsed.getGenerated();
     Assert.assertEquals(2, generated.size());
@@ -81,8 +83,8 @@ public class SyncMapMojoTest {
   public void testSyncMapMojo_multiProjectOutput() throws IOException, VerificationException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path m2 = Paths.get(System.getProperty("user.home")).resolve(".m2").resolve("repository");
-    String JSON = getLines(projectRoot, "complex-service");
-    SkaffoldSyncMapTemplate parsed = SkaffoldSyncMapTemplate.from(JSON);
+    String json = getSyncMapJson(projectRoot, "complex-service");
+    SkaffoldSyncMapTemplate parsed = SkaffoldSyncMapTemplate.from(json);
 
     List<FileTemplate> generated = parsed.getGenerated();
     Assert.assertEquals(2, generated.size());
