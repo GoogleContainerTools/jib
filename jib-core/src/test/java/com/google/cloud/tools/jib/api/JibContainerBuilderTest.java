@@ -269,7 +269,7 @@ public class JibContainerBuilderTest {
 
   private Containerizer createMockContainerizer()
       throws CacheDirectoryCreationException, InvalidImageReferenceException, InterruptedException,
-          ExecutionException, DigestException {
+          ExecutionException, DigestException, IOException {
 
     ImageReference targetImage = ImageReference.parse("target-image");
     Containerizer mockContainerizer = Mockito.mock(Containerizer.class);
