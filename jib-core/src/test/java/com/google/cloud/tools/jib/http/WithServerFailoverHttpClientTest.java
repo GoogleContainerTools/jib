@@ -152,6 +152,21 @@ public class WithServerFailoverHttpClientTest {
   }
 
   @Test
+  public void testClosingResourcesMultipleTimes_noErrors()
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    FailoverHttpClient httpClient = new FailoverHttpClient(true /*insecure*/, false, logger);
+    try (TestWebServer server = new TestWebServer(false, 2);
+        Response ignored1 = httpClient.get(new URL(server.getEndpoint()), request);
+        Response ignored2 = httpClient.get(new URL(server.getEndpoint()), request)) {
+      ignored1.close();
+      ignored2.close();
+    } finally {
+      httpClient.shutDown();
+      httpClient.shutDown(); // test should complete with no error
+    }
+  }
+
+  @Test
   public void testRedirectionUrls()
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     // Sample query strings from
