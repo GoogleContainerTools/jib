@@ -22,20 +22,21 @@ import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.apache.ApacheHttpTransport;
+import com.google.api.client.http.apache.v2.ApacheHttpTransport;
+import com.google.api.client.util.SslUtils;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.net.ssl.SSLException;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.impl.client.HttpClientBuilder;
 
 /**
  * Thread-safe HTTP client that can automatically failover from secure HTTPS to insecure HTTPS or
@@ -86,53 +87,21 @@ public class FailoverHttpClient {
     //
     // A new ApacheHttpTransport needs to be created for each connection because otherwise HTTP
     // connection persistence causes the connection to throw NoHttpResponseException.
-    ApacheHttpTransport transport = new ApacheHttpTransport();
-    addProxyCredentials(transport);
-    return transport;
+    return new ApacheHttpTransport();
   }
 
   private static HttpTransport getInsecureHttpTransport() {
     try {
-      ApacheHttpTransport insecureTransport =
-          new ApacheHttpTransport.Builder().doNotValidateCertificate().build();
-      addProxyCredentials(insecureTransport);
-      return insecureTransport;
+      HttpClientBuilder httpClientBuilder =
+          ApacheHttpTransport.newDefaultHttpClientBuilder()
+              .setSSLSocketFactory(null) // creates new factory with the SSLContext given below
+              .setSSLContext(SslUtils.trustAllSSLContext())
+              .setSSLHostnameVerifier(new NoopHostnameVerifier());
+      // Do not use NetHttpTransport. See comments in getConnectionFactory for details.
+      return new ApacheHttpTransport(httpClientBuilder.build());
     } catch (GeneralSecurityException ex) {
       throw new RuntimeException("platform does not support TLS protocol", ex);
     }
-  }
-
-  /**
-   * Registers proxy credentials onto transport client, in order to deal with proxies that require
-   * basic authentication.
-   *
-   * @param transport Apache HTTP transport
-   */
-  @VisibleForTesting
-  static void addProxyCredentials(ApacheHttpTransport transport) {
-    addProxyCredentials(transport, "https");
-    addProxyCredentials(transport, "http");
-  }
-
-  private static void addProxyCredentials(ApacheHttpTransport transport, String protocol) {
-    Preconditions.checkArgument(protocol.equals("http") || protocol.equals("https"));
-
-    String proxyHost = System.getProperty(protocol + ".proxyHost");
-    String proxyUser = System.getProperty(protocol + ".proxyUser");
-    String proxyPassword = System.getProperty(protocol + ".proxyPassword");
-    if (proxyHost == null || proxyUser == null || proxyPassword == null) {
-      return;
-    }
-
-    String defaultProxyPort = protocol.equals("http") ? "80" : "443";
-    int proxyPort = Integer.parseInt(System.getProperty(protocol + ".proxyPort", defaultProxyPort));
-
-    DefaultHttpClient httpClient = (DefaultHttpClient) transport.getHttpClient();
-    httpClient
-        .getCredentialsProvider()
-        .setCredentials(
-            new AuthScope(proxyHost, proxyPort),
-            new UsernamePasswordCredentials(proxyUser, proxyPassword));
   }
 
   private final boolean enableHttpAndInsecureFailover;
@@ -140,6 +109,9 @@ public class FailoverHttpClient {
   private final Consumer<LogEvent> logger;
   private final Supplier<HttpTransport> secureHttpTransportFactory;
   private final Supplier<HttpTransport> insecureHttpTransportFactory;
+
+  private final Deque<HttpTransport> transportsCreated = new ArrayDeque<>();
+  private final Deque<Response> responsesCreated = new ArrayDeque<>();
 
   public FailoverHttpClient(
       boolean enableHttpAndInsecureFailover,
@@ -165,6 +137,30 @@ public class FailoverHttpClient {
     this.logger = logger;
     this.secureHttpTransportFactory = secureHttpTransportFactory;
     this.insecureHttpTransportFactory = insecureHttpTransportFactory;
+  }
+
+  /**
+   * Closes all connections and allocated resources, whether they are currently used or not.
+   *
+   * <p>If an I/O error occurs, shutdown attempts stop immediately, resulting in partial resource
+   * release up to that point. The method can be called again later to re-attempt releasing all
+   * resources.
+   *
+   * @throws IOException when I/O error shutting down resources
+   */
+  public void shutDown() throws IOException {
+    synchronized (transportsCreated) {
+      while (!transportsCreated.isEmpty()) {
+        transportsCreated.peekFirst().shutdown();
+        transportsCreated.removeFirst();
+      }
+    }
+    synchronized (responsesCreated) {
+      while (!responsesCreated.isEmpty()) {
+        responsesCreated.peekFirst().close();
+        responsesCreated.removeFirst();
+      }
+    }
   }
 
   /**
@@ -218,7 +214,7 @@ public class FailoverHttpClient {
     }
 
     try {
-      return call(httpMethod, url, request, secureHttpTransportFactory.get());
+      return call(httpMethod, url, request, getHttpTransport(true));
 
     } catch (SSLException ex) {
       if (!enableHttpAndInsecureFailover) {
@@ -227,11 +223,11 @@ public class FailoverHttpClient {
 
       try {
         logInsecureHttpsFailover(url);
-        return call(httpMethod, url, request, insecureHttpTransportFactory.get());
+        return call(httpMethod, url, request, getHttpTransport(false));
 
       } catch (SSLException ignored) { // This is usually when the server is plain-HTTP.
         logHttpFailover(url);
-        return call(httpMethod, toHttp(url), request, secureHttpTransportFactory.get());
+        return call(httpMethod, toHttp(url), request, getHttpTransport(true));
       }
 
     } catch (ConnectException ex) {
@@ -247,7 +243,7 @@ public class FailoverHttpClient {
       // port 443) and we could not connect to 443. It's worth trying port 80.
       if (enableHttpAndInsecureFailover && isHttpsProtocol(url) && url.getPort() == -1) {
         logHttpFailover(url);
-        return call(httpMethod, toHttp(url), request, secureHttpTransportFactory.get());
+        return call(httpMethod, toHttp(url), request, getHttpTransport(true));
       }
       throw ex;
     }
@@ -273,10 +269,23 @@ public class FailoverHttpClient {
     }
 
     try {
-      return new Response(httpRequest.execute());
+      Response response = new Response(httpRequest.execute());
+      synchronized (responsesCreated) {
+        responsesCreated.addLast(response);
+      }
+      return response;
     } catch (HttpResponseException ex) {
       throw new ResponseException(ex, clearAuthorization);
     }
+  }
+
+  private HttpTransport getHttpTransport(boolean secureTransport) {
+    HttpTransport transport =
+        secureTransport ? secureHttpTransportFactory.get() : insecureHttpTransportFactory.get();
+    synchronized (transportsCreated) {
+      transportsCreated.addLast(transport);
+    }
+    return transport;
   }
 
   private void logHttpFailover(URL url) {

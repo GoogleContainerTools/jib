@@ -242,18 +242,22 @@ public class RegistryEndpointCallerTest {
   }
 
   @Test
-  public void testCall_temporaryRedirect() throws IOException, RegistryException {
-    verifyRetriesWithNewLocation(HttpStatusCodes.STATUS_CODE_TEMPORARY_REDIRECT);
-  }
-
-  @Test
-  public void testCall_movedPermanently() throws IOException, RegistryException {
-    verifyRetriesWithNewLocation(HttpStatusCodes.STATUS_CODE_MOVED_PERMANENTLY);
-  }
-
-  @Test
   public void testCall_permanentRedirect() throws IOException, RegistryException {
-    verifyRetriesWithNewLocation(RegistryEndpointCaller.STATUS_CODE_PERMANENT_REDIRECT);
+    ResponseException redirectException =
+        mockResponseException(
+            RegistryEndpointCaller.STATUS_CODE_PERMANENT_REDIRECT,
+            new HttpHeaders().setLocation("https://newlocation"));
+
+    // Make httpClient.call() throw first, then succeed.
+    setUpRegistryResponse(redirectException);
+    Mockito.when(
+            mockHttpClient.call(
+                Mockito.eq("httpMethod"),
+                Mockito.eq(new URL("https://newlocation")),
+                Mockito.any()))
+        .thenReturn(mockResponse);
+
+    Assert.assertEquals("body", endpointCaller.call());
   }
 
   @Test
@@ -469,28 +473,6 @@ public class RegistryEndpointCallerTest {
           CoreMatchers.startsWith(
               "Tried to actionDescription but failed because: unknown error code: code (message)"));
     }
-  }
-
-  /**
-   * Verifies that a response with {@code httpStatusCode} retries the request with the {@code
-   * Location} header.
-   */
-  private void verifyRetriesWithNewLocation(int httpStatusCode)
-      throws IOException, RegistryException {
-    // Mocks a response for temporary redirect to a new location.
-    ResponseException redirectException =
-        mockResponseException(httpStatusCode, new HttpHeaders().setLocation("https://newlocation"));
-
-    // Make httpClient.call() throw first, then succeed.
-    setUpRegistryResponse(redirectException);
-    Mockito.when(
-            mockHttpClient.call(
-                Mockito.eq("httpMethod"),
-                Mockito.eq(new URL("https://newlocation")),
-                Mockito.any()))
-        .thenReturn(mockResponse);
-
-    Assert.assertEquals("body", endpointCaller.call());
   }
 
   private void setUpRegistryResponse(Exception exceptionToThrow)

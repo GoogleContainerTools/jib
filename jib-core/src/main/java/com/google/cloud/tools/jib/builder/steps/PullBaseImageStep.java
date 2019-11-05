@@ -19,7 +19,6 @@ package com.google.cloud.tools.jib.builder.steps;
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.api.ImageReference;
-import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
@@ -127,12 +126,12 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
 
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("pulling base image manifest", 2);
-        TimerEventDispatcher ignored = new TimerEventDispatcher(eventHandlers, DESCRIPTION)) {
+        TimerEventDispatcher ignored1 = new TimerEventDispatcher(eventHandlers, DESCRIPTION)) {
       // First, try with no credentials.
       try {
         return new ImageAndAuthorization(pullBaseImage(null, progressEventDispatcher), null);
 
-      } catch (RegistryUnauthorizedException ex) {
+      } catch (RegistryUnauthorizedException ignored2) {
         eventHandlers.dispatch(
             LogEvent.lifecycle(
                 "The base image requires auth. Trying again for " + imageReference + "..."));
@@ -159,26 +158,22 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
         } catch (RegistryUnauthorizedException registryUnauthorizedException) {
           // The registry requires us to authenticate using the Docker Token Authentication.
           // See https://docs.docker.com/registry/spec/auth/token
-          try {
-            Optional<RegistryAuthenticator> registryAuthenticator =
-                buildConfiguration
-                    .newBaseImageRegistryClientFactory(httpClient)
-                    .newRegistryClient()
-                    .getRegistryAuthenticator();
-            if (registryAuthenticator.isPresent()) {
-              Authorization pullAuthorization =
-                  registryAuthenticator.get().authenticatePull(registryCredential);
+          Optional<RegistryAuthenticator> registryAuthenticator =
+              buildConfiguration
+                  .newBaseImageRegistryClientFactory(httpClient)
+                  .newRegistryClient()
+                  .getRegistryAuthenticator();
+          if (registryAuthenticator.isPresent()) {
+            Authorization pullAuthorization =
+                registryAuthenticator.get().authenticatePull(registryCredential);
 
-              return new ImageAndAuthorization(
-                  pullBaseImage(pullAuthorization, progressEventDispatcher), pullAuthorization);
-            }
-
-          } catch (InsecureRegistryException insecureRegistryException) {
-            // Cannot skip certificate validation or use HTTP; fall through.
+            return new ImageAndAuthorization(
+                pullBaseImage(pullAuthorization, progressEventDispatcher), pullAuthorization);
           }
           eventHandlers.dispatch(
               LogEvent.error(
-                  "Failed to retrieve authentication challenge for registry that required token authentication"));
+                  "Failed to retrieve authentication challenge for registry that required token "
+                      + "authentication"));
           throw registryUnauthorizedException;
         }
       }
