@@ -35,6 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -172,7 +173,7 @@ public class StepsRunner {
     return this;
   }
 
-  public BuildResult run() throws ExecutionException, InterruptedException {
+  public BuildResult run() throws ExecutionException, InterruptedException, IOException {
     Preconditions.checkNotNull(rootProgressDescription);
 
     try (ProgressEventDispatcher progressEventDispatcher =
@@ -192,7 +193,7 @@ public class StepsRunner {
 
     } finally {
       tempDirectoryProvider.close();
-      // httpClient.shutDown();
+      httpClient.shutDown();
     }
   }
 
