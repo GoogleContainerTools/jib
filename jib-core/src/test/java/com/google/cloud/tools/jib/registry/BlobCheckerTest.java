@@ -16,11 +16,11 @@
 
 package com.google.cloud.tools.jib.registry;
 
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.json.JsonTemplateMapper;
 import com.google.cloud.tools.jib.registry.json.ErrorEntryTemplate;
 import com.google.cloud.tools.jib.registry.json.ErrorResponseTemplate;
@@ -83,7 +83,7 @@ public class BlobCheckerTest {
 
   @Test
   public void testHandleHttpResponseException() throws IOException {
-    HttpResponseException mockResponseException = Mockito.mock(HttpResponseException.class);
+    ResponseException mockResponseException = Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
 
@@ -99,7 +99,7 @@ public class BlobCheckerTest {
 
   @Test
   public void testHandleHttpResponseException_hasOtherErrors() throws IOException {
-    HttpResponseException mockResponseException = Mockito.mock(HttpResponseException.class);
+    ResponseException mockResponseException = Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
 
@@ -114,14 +114,14 @@ public class BlobCheckerTest {
       testBlobChecker.handleHttpResponseException(mockResponseException);
       Assert.fail("Non-BLOB_UNKNOWN errors should not be handled");
 
-    } catch (HttpResponseException ex) {
+    } catch (ResponseException ex) {
       Assert.assertEquals(mockResponseException, ex);
     }
   }
 
   @Test
   public void testHandleHttpResponseException_notBlobUnknown() throws IOException {
-    HttpResponseException mockResponseException = Mockito.mock(HttpResponseException.class);
+    ResponseException mockResponseException = Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode())
         .thenReturn(HttpStatusCodes.STATUS_CODE_NOT_FOUND);
 
@@ -133,21 +133,21 @@ public class BlobCheckerTest {
       testBlobChecker.handleHttpResponseException(mockResponseException);
       Assert.fail("Non-BLOB_UNKNOWN errors should not be handled");
 
-    } catch (HttpResponseException ex) {
+    } catch (ResponseException ex) {
       Assert.assertEquals(mockResponseException, ex);
     }
   }
 
   @Test
   public void testHandleHttpResponseException_invalidStatusCode() {
-    HttpResponseException mockResponseException = Mockito.mock(HttpResponseException.class);
+    ResponseException mockResponseException = Mockito.mock(ResponseException.class);
     Mockito.when(mockResponseException.getStatusCode()).thenReturn(-1);
 
     try {
       testBlobChecker.handleHttpResponseException(mockResponseException);
       Assert.fail("Non-404 status codes should not be handled");
 
-    } catch (HttpResponseException ex) {
+    } catch (ResponseException ex) {
       Assert.assertEquals(mockResponseException, ex);
     }
   }

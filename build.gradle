@@ -46,9 +46,10 @@ subprojects {
     // For Google libraries, check <http-client-bom.version>, <google.auth.version>, <guava.version>,
     // ... in https://github.com/googleapis/google-cloud-java/blob/master/google-cloud-clients/pom.xml
     // for best compatibility.
-    GOOGLE_HTTP_CLIENT: '1.27.0',
-    GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: '0.16.2',
-    GUAVA: '28.0-jre',
+    GOOGLE_HTTP_CLIENT: '1.33.0',
+    GOOGLE_HTTP_CLIENT_APACHE_V2: '1.33.0',
+    GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: '0.18.0',
+    GUAVA: '28.1-jre',
 
     COMMONS_COMPRESS: '1.19',
     JACKSON_DATABIND: '2.9.10',
@@ -64,7 +65,10 @@ subprojects {
   // Use this to ensure we correctly override transitive dependencies
   // TODO: There might be a plugin that does this
   task ensureTransitiveDependencyOverrides {
-    def rules = ["google-http-client": dependencyVersions.GOOGLE_HTTP_CLIENT]
+    def rules = [
+        "google-http-client": dependencyVersions.GOOGLE_HTTP_CLIENT,
+        "google-http-client-apache-v2": dependencyVersions.GOOGLE_HTTP_CLIENT_APACHE_V2,
+    ]
     doLast {
       configurations.runtimeClasspath.resolvedConfiguration.resolvedArtifacts.each { artifact ->
         def dependency = artifact.moduleVersion.id
@@ -351,3 +355,28 @@ subprojects {
   }
   /* INCLUDED PROJECT DEPENDENCY HELPER */
 }
+
+
+/* LOCAL DEVELOPMENT HELPER TASKS */
+tasks.register("dev") {
+  subprojects.each { subproject ->
+    subproject.tasks.check.dependsOn subproject.tasks.googleJavaFormat
+    dependsOn subproject.tasks.check
+    dependsOn subproject.tasks.javadoc
+  }
+}
+
+tasks.register("devFull") {
+  if (!System.getenv('JIB_INTEGRATION_TESTING_PROJECT')
+      && !System.getenv('JIB_INTEGRATION_TESTING_LOCATION')) {
+    throw new GradleException(
+        "Must set environment variable JIB_INTEGRATION_TESTING_PROJECT to the "
+        + "GCP project to use for integration testing or "
+        + "JIB_INTEGRATION_TESTING_LOCATION to a suitable registry/repository location.");
+  }
+  dependsOn tasks.dev
+  subprojects.each { subproject ->
+    dependsOn subproject.tasks.integrationTest
+  }
+}
+/* LOCAL DEVELOPMENT HELPER TASKS */

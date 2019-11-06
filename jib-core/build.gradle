@@ -5,9 +5,8 @@ plugins {
 
 dependencies {
   implementation "com.google.http-client:google-http-client:${dependencyVersions.GOOGLE_HTTP_CLIENT}"
-  implementation("com.google.auth:google-auth-library-oauth2-http:${dependencyVersions.GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP}") {
-    exclude group: "com.google.http-client", module: "google-http-client"
-  }
+  implementation "com.google.http-client:google-http-client-apache-v2:${dependencyVersions.GOOGLE_HTTP_CLIENT_APACHE_V2}"
+  implementation "com.google.auth:google-auth-library-oauth2-http:${dependencyVersions.GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP}"
 
   implementation "org.apache.commons:commons-compress:${dependencyVersions.COMMONS_COMPRESS}"
   implementation "com.google.guava:guava:${dependencyVersions.GUAVA}"

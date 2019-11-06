@@ -18,33 +18,57 @@ package com.google.cloud.tools.jib.registry;
 
 import com.google.cloud.tools.jib.api.Credential;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
+import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.http.TestWebServer;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
 
 /** Tests for {@link RegistryAuthenticator}. */
+@RunWith(MockitoJUnitRunner.class)
 public class RegistryAuthenticatorTest {
   private final RegistryEndpointRequestProperties registryEndpointRequestProperties =
       new RegistryEndpointRequestProperties("someserver", "someimage");
 
+  @Mock private FailoverHttpClient httpClient;
+  @Mock private Response response;
+
+  @Captor private ArgumentCaptor<URL> urlCaptor;
+
   private RegistryAuthenticator registryAuthenticator;
 
   @Before
-  public void setUp() throws RegistryAuthenticationFailedException {
+  public void setUp() throws RegistryAuthenticationFailedException, IOException {
     registryAuthenticator =
         RegistryAuthenticator.fromAuthenticationMethod(
                 "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
                 registryEndpointRequestProperties,
-                "user-agent")
+                "user-agent",
+                httpClient)
             .get();
+
+    ByteArrayInputStream tokenJson =
+        new ByteArrayInputStream("{\"token\":\"my_token\"}".getBytes(StandardCharsets.UTF_8));
+    Mockito.when(response.getBody()).thenReturn(tokenJson);
+    Mockito.when(httpClient.call(Mockito.any(), urlCaptor.capture(), Mockito.any()))
+        .thenReturn(response);
   }
 
   @Test
@@ -54,7 +78,8 @@ public class RegistryAuthenticatorTest {
         RegistryAuthenticator.fromAuthenticationMethod(
                 "Bearer realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
                 registryEndpointRequestProperties,
-                "user-agent")
+                "user-agent",
+                httpClient)
             .get();
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
@@ -65,7 +90,8 @@ public class RegistryAuthenticatorTest {
         RegistryAuthenticator.fromAuthenticationMethod(
                 "bEaReR realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
                 registryEndpointRequestProperties,
-                "user-agent")
+                "user-agent",
+                httpClient)
             .get();
     Assert.assertEquals(
         new URL("https://somerealm?service=someservice&scope=repository:someimage:scope"),
@@ -131,21 +157,24 @@ public class RegistryAuthenticatorTest {
         RegistryAuthenticator.fromAuthenticationMethod(
                 "Basic realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
                 registryEndpointRequestProperties,
-                "user-agent")
+                "user-agent",
+                httpClient)
             .isPresent());
 
     Assert.assertFalse(
         RegistryAuthenticator.fromAuthenticationMethod(
                 "BASIC realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
                 registryEndpointRequestProperties,
-                "user-agent")
+                "user-agent",
+                httpClient)
             .isPresent());
 
     Assert.assertFalse(
         RegistryAuthenticator.fromAuthenticationMethod(
                 "bASIC realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
                 registryEndpointRequestProperties,
-                "user-agent")
+                "user-agent",
+                httpClient)
             .isPresent());
   }
 
@@ -155,7 +184,8 @@ public class RegistryAuthenticatorTest {
       RegistryAuthenticator.fromAuthenticationMethod(
           "realm=\"https://somerealm\",service=\"someservice\",scope=\"somescope\"",
           registryEndpointRequestProperties,
-          "user-agent");
+          "user-agent",
+          httpClient);
       Assert.fail("Authentication method without 'Bearer ' or 'Basic ' should fail");
 
     } catch (RegistryAuthenticationFailedException ex) {
@@ -169,7 +199,10 @@ public class RegistryAuthenticatorTest {
   public void testFromAuthenticationMethod_noRealm() {
     try {
       RegistryAuthenticator.fromAuthenticationMethod(
-          "Bearer scope=\"somescope\"", registryEndpointRequestProperties, "user-agent");
+          "Bearer scope=\"somescope\"",
+          registryEndpointRequestProperties,
+          "user-agent",
+          httpClient);
       Assert.fail("Authentication method without 'realm' should fail");
 
     } catch (RegistryAuthenticationFailedException ex) {
@@ -186,7 +219,8 @@ public class RegistryAuthenticatorTest {
         RegistryAuthenticator.fromAuthenticationMethod(
                 "Bearer realm=\"https://somerealm\"",
                 registryEndpointRequestProperties,
-                "user-agent")
+                "user-agent",
+                httpClient)
             .get();
 
     Assert.assertEquals(
@@ -197,14 +231,16 @@ public class RegistryAuthenticatorTest {
 
   @Test
   public void testUserAgent()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException,
+          RegistryCredentialsNotSentException {
     try (TestWebServer server = new TestWebServer(false)) {
       try {
         RegistryAuthenticator authenticator =
             RegistryAuthenticator.fromAuthenticationMethod(
                     "Bearer realm=\"" + server.getEndpoint() + "\"",
                     registryEndpointRequestProperties,
-                    "Competent-Agent")
+                    "Competent-Agent",
+                    new FailoverHttpClient(true, false, ignored -> {}))
                 .get();
         authenticator.authenticatePush(null);
       } catch (RegistryAuthenticationFailedException ex) {
@@ -217,48 +253,53 @@ public class RegistryAuthenticatorTest {
 
   @Test
   public void testSourceImage_differentSourceRepository()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    try (TestWebServer server = new TestWebServer(false, 2)) {
-      try {
-        RegistryEndpointRequestProperties registryEndpointRequestProperties =
-            new RegistryEndpointRequestProperties("someserver", "someimage", "anotherimage");
-        RegistryAuthenticator authenticator =
-            RegistryAuthenticator.fromAuthenticationMethod(
-                    "Bearer realm=\"" + server.getEndpoint() + "\"",
-                    registryEndpointRequestProperties,
-                    "Competent-Agent")
-                .get();
-        authenticator.authenticatePush(null);
-      } catch (RegistryAuthenticationFailedException ex) {
-        // Doesn't matter if auth fails. We only examine what we sent.
-      }
-      Assert.assertThat(
-          server.getInputRead(),
-          CoreMatchers.containsString(
-              "scope=repository:someimage:pull,push&scope=repository:anotherimage:pull "));
-    }
+      throws RegistryCredentialsNotSentException, RegistryAuthenticationFailedException {
+    RegistryAuthenticator authenticator =
+        RegistryAuthenticator.fromAuthenticationMethod(
+                "Bearer realm=\"https://1.2.3.4:5\"",
+                new RegistryEndpointRequestProperties("someserver", "someimage", "anotherimage"),
+                "Competent-Agent",
+                httpClient)
+            .get();
+    authenticator.authenticatePush(null);
+    Assert.assertThat(
+        urlCaptor.getValue().toString(),
+        CoreMatchers.endsWith(
+            "scope=repository:someimage:pull,push&scope=repository:anotherimage:pull"));
   }
 
   @Test
   public void testSourceImage_sameSourceRepository()
-      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    try (TestWebServer server = new TestWebServer(false)) {
-      try {
-        RegistryEndpointRequestProperties registryEndpointRequestProperties =
-            new RegistryEndpointRequestProperties("someserver", "someimage", "someimage");
-        RegistryAuthenticator authenticator =
-            RegistryAuthenticator.fromAuthenticationMethod(
-                    "Bearer realm=\"" + server.getEndpoint() + "\"",
-                    registryEndpointRequestProperties,
-                    "Competent-Agent")
-                .get();
-        authenticator.authenticatePush(null);
-      } catch (RegistryAuthenticationFailedException ex) {
-        // Doesn't matter if auth fails. We only examine what we sent.
-      }
-      Assert.assertThat(
-          server.getInputRead(),
-          CoreMatchers.containsString("service=someserver&scope=repository:someimage:pull,push "));
+      throws RegistryCredentialsNotSentException, RegistryAuthenticationFailedException {
+    RegistryAuthenticator authenticator =
+        RegistryAuthenticator.fromAuthenticationMethod(
+                "Bearer realm=\"https://1.2.3.4:5\"",
+                new RegistryEndpointRequestProperties("someserver", "someimage", "someimage"),
+                "Competent-Agent",
+                httpClient)
+            .get();
+    authenticator.authenticatePush(null);
+    Assert.assertThat(
+        urlCaptor.getValue().toString(),
+        CoreMatchers.endsWith("service=someserver&scope=repository:someimage:pull,push"));
+  }
+
+  @Test
+  public void testAuthorizationCleared() throws RegistryAuthenticationFailedException, IOException {
+    ResponseException responseException = Mockito.mock(ResponseException.class);
+    Mockito.when(responseException.getStatusCode()).thenReturn(401);
+    Mockito.when(responseException.requestAuthorizationCleared()).thenReturn(true);
+    Mockito.when(httpClient.call(Mockito.any(), Mockito.any(), Mockito.any()))
+        .thenThrow(responseException);
+
+    try {
+      registryAuthenticator.authenticatePush(null);
+      Assert.fail();
+    } catch (RegistryCredentialsNotSentException ex) {
+      Assert.assertEquals(
+          "Required credentials for someserver/someimage were not sent because the connection was "
+              + "over HTTP",
+          ex.getMessage());
     }
   }
 }

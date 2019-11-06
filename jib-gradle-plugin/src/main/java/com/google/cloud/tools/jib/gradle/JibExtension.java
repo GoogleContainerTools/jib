@@ -167,7 +167,6 @@ public class JibExtension {
   }
 
   @Input
-  @Optional
   boolean getAllowInsecureRegistries() {
     if (System.getProperty(PropertyNames.ALLOW_INSECURE_REGISTRIES) != null) {
       return Boolean.getBoolean(PropertyNames.ALLOW_INSECURE_REGISTRIES);
