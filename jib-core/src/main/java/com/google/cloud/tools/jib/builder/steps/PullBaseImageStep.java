@@ -31,6 +31,7 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.event.events.ProgressEvent;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.LayerCountMismatchException;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -84,12 +85,15 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
 
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
+  private final FailoverHttpClient httpClient;
 
   PullBaseImageStep(
       BuildConfiguration buildConfiguration,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory) {
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      FailoverHttpClient httpClient) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
+    this.httpClient = httpClient;
   }
 
   @Override
@@ -156,7 +160,7 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
           // See https://docs.docker.com/registry/spec/auth/token
           Optional<RegistryAuthenticator> registryAuthenticator =
               buildConfiguration
-                  .newBaseImageRegistryClientFactory()
+                  .newBaseImageRegistryClientFactory(httpClient)
                   .newRegistryClient()
                   .getRegistryAuthenticator();
           if (registryAuthenticator.isPresent()) {
@@ -199,7 +203,7 @@ class PullBaseImageStep implements Callable<ImageAndAuthorization> {
     EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
     RegistryClient registryClient =
         buildConfiguration
-            .newBaseImageRegistryClientFactory()
+            .newBaseImageRegistryClientFactory(httpClient)
             .setAuthorization(registryAuthorization)
             .newRegistryClient();
 

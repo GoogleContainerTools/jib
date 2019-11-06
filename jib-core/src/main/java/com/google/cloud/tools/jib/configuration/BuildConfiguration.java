@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
@@ -465,19 +466,21 @@ public class BuildConfiguration {
    * Creates a new {@link RegistryClient.Factory} for the base image with fields from the build
    * configuration.
    *
+   * @param httpClient HTTP client
    * @return a new {@link RegistryClient.Factory}
    */
-  public RegistryClient.Factory newBaseImageRegistryClientFactory() {
-    return newRegistryClientFactory(baseImageConfiguration);
+  public RegistryClient.Factory newBaseImageRegistryClientFactory(FailoverHttpClient httpClient) {
+    return newRegistryClientFactory(baseImageConfiguration, httpClient);
   }
 
   /**
    * Creates a new {@link RegistryClient.Factory} for the target image with fields from the build
    * configuration.
    *
+   * @param httpClient HTTP client
    * @return a new {@link RegistryClient.Factory}
    */
-  public RegistryClient.Factory newTargetImageRegistryClientFactory() {
+  public RegistryClient.Factory newTargetImageRegistryClientFactory(FailoverHttpClient httpClient) {
     // if base and target are on the same registry, try enabling cross-repository mounts
     if (baseImageConfiguration
         .getImageRegistry()
@@ -486,19 +489,20 @@ public class BuildConfiguration {
               getEventHandlers(),
               targetImageConfiguration.getImageRegistry(),
               targetImageConfiguration.getImageRepository(),
-              baseImageConfiguration.getImageRepository())
-          .setAllowInsecureRegistries(getAllowInsecureRegistries())
+              baseImageConfiguration.getImageRepository(),
+              httpClient)
           .setUserAgentSuffix(getToolName());
     }
-    return newRegistryClientFactory(targetImageConfiguration);
+    return newRegistryClientFactory(targetImageConfiguration, httpClient);
   }
 
-  private RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
+  private RegistryClient.Factory newRegistryClientFactory(
+      ImageConfiguration imageConfiguration, FailoverHttpClient httpClient) {
     return RegistryClient.factory(
             getEventHandlers(),
             imageConfiguration.getImageRegistry(),
-            imageConfiguration.getImageRepository())
-        .setAllowInsecureRegistries(getAllowInsecureRegistries())
+            imageConfiguration.getImageRepository(),
+            httpClient)
         .setUserAgentSuffix(getToolName());
   }
 }

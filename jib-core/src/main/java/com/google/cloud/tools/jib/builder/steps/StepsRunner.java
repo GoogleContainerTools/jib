@@ -27,6 +27,7 @@ import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Verify;
@@ -34,6 +35,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -103,6 +105,7 @@ public class StepsRunner {
   private final ExecutorService executorService;
   private final BuildConfiguration buildConfiguration;
   private final TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
+  private final FailoverHttpClient httpClient;
 
   // We save steps to run by wrapping each step into a Runnable, only because of the unfortunate
   // chicken-and-egg situation arising from using ProgressEventDispatcher. The current
@@ -120,6 +123,11 @@ public class StepsRunner {
       ListeningExecutorService executorService, BuildConfiguration buildConfiguration) {
     this.executorService = executorService;
     this.buildConfiguration = buildConfiguration;
+    httpClient =
+        new FailoverHttpClient(
+            buildConfiguration.getAllowInsecureRegistries(),
+            JibSystemProperties.sendCredentialsOverHttp(),
+            buildConfiguration.getEventHandlers()::dispatch);
   }
 
   public StepsRunner dockerLoadSteps(DockerClient dockerClient) {
@@ -165,7 +173,7 @@ public class StepsRunner {
     return this;
   }
 
-  public BuildResult run() throws ExecutionException, InterruptedException {
+  public BuildResult run() throws ExecutionException, InterruptedException, IOException {
     Preconditions.checkNotNull(rootProgressDescription);
 
     try (ProgressEventDispatcher progressEventDispatcher =
@@ -185,6 +193,7 @@ public class StepsRunner {
 
     } finally {
       tempDirectoryProvider.close();
+      httpClient.shutDown();
     }
   }
 
@@ -226,7 +235,8 @@ public class StepsRunner {
                 new AuthenticatePushStep(
                         buildConfiguration,
                         childProgressDispatcherFactory,
-                        results.targetRegistryCredentials.get().orElse(null))
+                        results.targetRegistryCredentials.get().orElse(null),
+                        httpClient)
                     .call());
   }
 
@@ -274,7 +284,7 @@ public class StepsRunner {
 
     results.baseImageAndAuth =
         executorService.submit(
-            new PullBaseImageStep(buildConfiguration, childProgressDispatcherFactory));
+            new PullBaseImageStep(buildConfiguration, childProgressDispatcherFactory, httpClient));
   }
 
   private void obtainBaseImageLayers(boolean layersRequiredLocally) {
@@ -289,12 +299,14 @@ public class StepsRunner {
                         ? ObtainBaseImageLayerStep.makeListForForcedDownload(
                             buildConfiguration,
                             childProgressDispatcherFactory,
-                            results.baseImageAndAuth.get())
+                            results.baseImageAndAuth.get(),
+                            httpClient)
                         : ObtainBaseImageLayerStep.makeListForSelectiveDownload(
                             buildConfiguration,
                             childProgressDispatcherFactory,
                             results.baseImageAndAuth.get(),
-                            results.pushAuthorization.get().orElse(null))));
+                            results.pushAuthorization.get().orElse(null),
+                            httpClient)));
   }
 
   private void pushBaseImageLayers() {
@@ -309,7 +321,8 @@ public class StepsRunner {
                         buildConfiguration,
                         childProgressDispatcherFactory,
                         results.pushAuthorization.get().orElse(null),
-                        results.baseImageLayers.get())));
+                        results.baseImageLayers.get(),
+                        httpClient)));
   }
 
   private void buildAndCacheApplicationLayers() {
@@ -349,7 +362,8 @@ public class StepsRunner {
                         buildConfiguration,
                         childProgressDispatcherFactory,
                         results.pushAuthorization.get().orElse(null),
-                        results.builtImage.get())
+                        results.builtImage.get(),
+                        httpClient)
                     .call());
   }
 
@@ -365,7 +379,8 @@ public class StepsRunner {
                         buildConfiguration,
                         childProgressDispatcherFactory,
                         results.pushAuthorization.get().orElse(null),
-                        Verify.verifyNotNull(results.applicationLayers))));
+                        Verify.verifyNotNull(results.applicationLayers),
+                        httpClient)));
   }
 
   private void pushImages() {
@@ -385,7 +400,8 @@ public class StepsRunner {
                           childProgressDispatcherFactory,
                           results.pushAuthorization.get().orElse(null),
                           results.containerConfigurationPushResult.get(),
-                          results.builtImage.get()));
+                          results.builtImage.get(),
+                          httpClient));
               realizeFutures(manifestPushResults);
               // Manifest pushers return the same BuildResult.
               return manifestPushResults.get(0).get();

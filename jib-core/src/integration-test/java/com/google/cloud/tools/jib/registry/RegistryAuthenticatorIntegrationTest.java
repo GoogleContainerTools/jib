@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.Authorization;
+import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import java.io.IOException;
 import java.util.Optional;
 import org.junit.Assert;
@@ -28,6 +29,8 @@ import org.junit.Test;
 
 /** Integration tests for {@link RegistryAuthenticator}. */
 public class RegistryAuthenticatorIntegrationTest {
+
+  private final FailoverHttpClient httpClient = new FailoverHttpClient(true, false, ignored -> {});
 
   @Test
   public void testAuthenticate()
@@ -37,7 +40,8 @@ public class RegistryAuthenticatorIntegrationTest {
         RegistryClient.factory(
                 EventHandlers.NONE,
                 dockerHubImageReference.getRegistry(),
-                dockerHubImageReference.getRepository())
+                dockerHubImageReference.getRepository(),
+                httpClient)
             .newRegistryClient()
             .getRegistryAuthenticator();
     Assert.assertTrue(registryAuthenticator.isPresent());
