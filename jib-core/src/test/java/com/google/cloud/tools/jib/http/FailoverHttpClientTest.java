@@ -156,7 +156,7 @@ public class FailoverHttpClientTest {
 
     String log =
         "Cannot verify server at https://insecure. Attempting again with no TLS verification.";
-    Mockito.verify(logger).accept(LogEvent.info(log));
+    Mockito.verify(logger).accept(LogEvent.warn(log));
     Mockito.verifyNoMoreInteractions(logger);
   }
 
@@ -188,8 +188,8 @@ public class FailoverHttpClientTest {
     String log1 =
         "Cannot verify server at https://insecure. Attempting again with no TLS verification.";
     String log2 = "Failed to connect to https://insecure over HTTPS. Attempting again with HTTP.";
-    Mockito.verify(logger).accept(LogEvent.info(log1));
-    Mockito.verify(logger).accept(LogEvent.info(log2));
+    Mockito.verify(logger).accept(LogEvent.warn(log1));
+    Mockito.verify(logger).accept(LogEvent.warn(log2));
     Mockito.verifyNoMoreInteractions(logger);
   }
 
@@ -216,7 +216,7 @@ public class FailoverHttpClientTest {
     Assert.assertEquals(new GenericUrl("http://insecure"), urlCaptor.getAllValues().get(1));
 
     String log = "Failed to connect to https://insecure over HTTPS. Attempting again with HTTP.";
-    Mockito.verify(logger).accept(LogEvent.info(log));
+    Mockito.verify(logger).accept(LogEvent.warn(log));
     Mockito.verifyNoMoreInteractions(logger);
   }
 

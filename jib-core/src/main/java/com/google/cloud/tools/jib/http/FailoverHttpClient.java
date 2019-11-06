@@ -26,6 +26,7 @@ import com.google.api.client.http.apache.v2.ApacheHttpTransport;
 import com.google.api.client.util.SslUtils;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URL;
@@ -281,6 +282,7 @@ public class FailoverHttpClient {
   @VisibleForTesting
   Optional<Response> followFailoverHistory(String httpMethod, URL url, Request request)
       throws IOException {
+    Preconditions.checkArgument(isHttpsProtocol(url));
     switch (failoverHistory.getOrDefault(getHostAndPort(url), Failover.NONE)) {
       case INSECURE_HTTPS:
         return Optional.of(call(httpMethod, url, request, getHttpTransport(false)));
@@ -313,7 +315,7 @@ public class FailoverHttpClient {
     try {
       Response response = new Response(httpRequest.execute());
       synchronized (responsesCreated) {
-        responsesCreated.addLast(response);
+        responsesCreated.add(response);
       }
       return response;
     } catch (HttpResponseException ex) {
@@ -332,11 +334,11 @@ public class FailoverHttpClient {
 
   private void logHttpFailover(URL url) {
     String log = "Failed to connect to " + url + " over HTTPS. Attempting again with HTTP.";
-    logger.accept(LogEvent.info(log));
+    logger.accept(LogEvent.warn(log));
   }
 
   private void logInsecureHttpsFailover(URL url) {
     String log = "Cannot verify server at " + url + ". Attempting again with no TLS verification.";
-    logger.accept(LogEvent.info(log));
+    logger.accept(LogEvent.warn(log));
   }
 }
