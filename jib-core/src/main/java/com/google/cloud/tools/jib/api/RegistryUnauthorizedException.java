@@ -44,6 +44,6 @@ public class RegistryUnauthorizedException extends RegistryException {
   }
 
   public HttpResponseException getHttpResponseException() {
-    return (HttpResponseException) getCause();
+    return (HttpResponseException) getCause().getCause();
   }
 }
