@@ -93,7 +93,6 @@ public class LocalBaseImageSteps {
   }
 
   static Callable<LocalImage> retrieveDockerDaemonImageStep(
-      ExecutorService executorService,
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       DockerClient dockerClient) {
@@ -125,22 +124,16 @@ public class LocalBaseImageSteps {
         }
 
         return cacheDockerImageTar(
-            buildConfiguration,
-            executorService,
-            tarPath,
-            progressEventDispatcher.newChildProducer());
+            buildConfiguration, tarPath, progressEventDispatcher.newChildProducer());
       }
     };
   }
 
   static Callable<LocalImage> retrieveTarImageStep(
-      ExecutorService executorService,
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Path tarPath) {
-    return () ->
-        cacheDockerImageTar(
-            buildConfiguration, executorService, tarPath, progressEventDispatcherFactory);
+    return () -> cacheDockerImageTar(buildConfiguration, tarPath, progressEventDispatcherFactory);
   }
 
   @VisibleForTesting
@@ -179,11 +172,11 @@ public class LocalBaseImageSteps {
   @VisibleForTesting
   static LocalImage cacheDockerImageTar(
       BuildConfiguration buildConfiguration,
-      ExecutorService executorService,
       Path tarPath,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory)
       throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException,
           ExecutionException, InterruptedException {
+    ExecutorService executorService = buildConfiguration.getExecutorService();
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
       Path destination = tempDirectoryProvider.newDirectory();
 

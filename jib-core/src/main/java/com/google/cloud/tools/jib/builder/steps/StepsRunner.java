@@ -239,10 +239,7 @@ public class StepsRunner {
     assignLocalImageResult(
         executorService.submit(
             LocalBaseImageSteps.retrieveDockerDaemonImageStep(
-                executorService,
-                buildConfiguration,
-                childProgressDispatcherFactory,
-                dockerClient.get())));
+                buildConfiguration, childProgressDispatcherFactory, dockerClient.get())));
   }
 
   private void extractTar() {
@@ -253,10 +250,7 @@ public class StepsRunner {
     assignLocalImageResult(
         executorService.submit(
             LocalBaseImageSteps.retrieveTarImageStep(
-                executorService,
-                buildConfiguration,
-                childProgressDispatcherFactory,
-                tarPath.get())));
+                buildConfiguration, childProgressDispatcherFactory, tarPath.get())));
   }
 
   private void assignLocalImageResult(Future<LocalImage> localImageFuture) {
