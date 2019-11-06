@@ -138,7 +138,7 @@ subprojects {
     // add in copyright header check on only java files
     def copyrightNode = parser.parseText('''
     <module name="RegexpHeader">
-        <property name="headerFile" value="config/checkstyle/copyright-java.header"/>
+        <property name="headerFile" value="${config_loc}/copyright-java.header"/>
         <property name="fileExtensions" value="java"/>
         <property name="id" value="header"/>
     </module>
