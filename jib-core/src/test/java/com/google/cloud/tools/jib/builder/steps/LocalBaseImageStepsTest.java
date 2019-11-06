@@ -64,6 +64,8 @@ public class LocalBaseImageStepsTest {
 
   @Before
   public void setup() throws IOException {
+    Mockito.when(buildConfiguration.getExecutorService())
+        .thenReturn(MoreExecutors.newDirectExecutorService());
     Mockito.when(buildConfiguration.getBaseImageLayersCache())
         .thenReturn(Cache.withDirectory(temporaryFolder.newFolder().toPath()));
     Mockito.when(buildConfiguration.getEventHandlers()).thenReturn(eventHandlers);
@@ -79,10 +81,7 @@ public class LocalBaseImageStepsTest {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
         LocalBaseImageSteps.cacheDockerImageTar(
-            buildConfiguration,
-            MoreExecutors.newDirectExecutorService(),
-            dockerBuild,
-            progressEventDispatcherFactory);
+            buildConfiguration, dockerBuild, progressEventDispatcherFactory);
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
@@ -106,10 +105,7 @@ public class LocalBaseImageStepsTest {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
         LocalBaseImageSteps.cacheDockerImageTar(
-            buildConfiguration,
-            MoreExecutors.newDirectExecutorService(),
-            tarBuild,
-            progressEventDispatcherFactory);
+            buildConfiguration, tarBuild, progressEventDispatcherFactory);
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
