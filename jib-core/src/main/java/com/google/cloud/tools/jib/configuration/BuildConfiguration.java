@@ -46,7 +46,7 @@ import javax.annotation.Nullable;
  * Build context for the builder process that includes build configuration options and various
  * services for execution (for example, event dispatching, thread execution service, HTTP client).
  * Informational instances (particularly configuration options such as {@link
- * ContainerConfiguration), {@link ImageConfiguration}, and {@link LayerConfiguration}) held in are
+ * ContainerConfiguration}, {@link ImageConfiguration}, and {@link LayerConfiguration}) held in are
  * immutable.
  */
 public class BuildConfiguration implements Closeable {
