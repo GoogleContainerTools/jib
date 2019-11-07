@@ -35,7 +35,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Resources;
-import com.google.common.util.concurrent.MoreExecutors;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -696,9 +695,7 @@ public class MavenProjectPropertiesTest {
                 mockMavenProject, mockMavenSession, mockLog, mockTempDirectoryProvider)
             .createJibContainerBuilder(javaContainerBuilder, containerizingMode);
     return JibContainerBuilderTestHelper.toBuildConfiguration(
-        jibContainerBuilder,
-        Containerizer.to(RegistryImage.named("to"))
-            .setExecutorService(MoreExecutors.newDirectExecutorService()));
+        jibContainerBuilder, Containerizer.to(RegistryImage.named("to")));
   }
 
   private Path setUpWar(Path explodedWar) throws IOException {

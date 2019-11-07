@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -108,8 +109,7 @@ public class BuildConfigurationTest {
             .setTargetFormat(ImageFormat.OCI)
             .setAllowInsecureRegistries(true)
             .setLayerConfigurations(expectedLayerConfigurations)
-            .setToolName(expectedCreatedBy)
-            .setExecutorService(MoreExecutors.newDirectExecutorService());
+            .setToolName(expectedCreatedBy);
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
@@ -154,7 +154,6 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         expectedBaseImageLayersCacheDirectory,
         buildConfigurationBuilder.getBaseImageLayersCacheDirectory());
-    Assert.assertTrue(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(expectedLayerConfigurations, buildConfiguration.getLayerConfigurations());
     Assert.assertEquals(
         expectedEntrypoint, buildConfiguration.getContainerConfiguration().getEntrypoint());
@@ -187,8 +186,7 @@ public class BuildConfigurationTest {
             .setBaseImageConfiguration(baseImageConfiguration)
             .setTargetImageConfiguration(targetImageConfiguration)
             .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
-            .setApplicationLayersCacheDirectory(Paths.get("ignored"))
-            .setExecutorService(MoreExecutors.newDirectExecutorService());
+            .setApplicationLayersCacheDirectory(Paths.get("ignored"));
     BuildConfiguration buildConfiguration = buildConfigurationBuilder.build();
 
     Assert.assertEquals(ImmutableSet.of("targettag"), buildConfiguration.getAllTargetImageTags());
@@ -200,7 +198,6 @@ public class BuildConfigurationTest {
     Assert.assertEquals(
         Paths.get("ignored"), buildConfigurationBuilder.getBaseImageLayersCacheDirectory());
     Assert.assertNull(buildConfiguration.getContainerConfiguration());
-    Assert.assertFalse(buildConfiguration.getAllowInsecureRegistries());
     Assert.assertEquals(Collections.emptyList(), buildConfiguration.getLayerConfigurations());
     Assert.assertEquals("jib", buildConfiguration.getToolName());
   }
@@ -214,7 +211,6 @@ public class BuildConfigurationTest {
               ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
           .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
           .setApplicationLayersCacheDirectory(Paths.get("ignored"))
-          .setExecutorService(MoreExecutors.newDirectExecutorService())
           .build();
       Assert.fail("Build configuration should not be built with missing values");
 
@@ -227,7 +223,6 @@ public class BuildConfigurationTest {
       BuildConfiguration.builder()
           .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
           .setApplicationLayersCacheDirectory(Paths.get("ignored"))
-          .setExecutorService(MoreExecutors.newDirectExecutorService())
           .build();
       Assert.fail("Build configuration should not be built with missing values");
 
@@ -244,8 +239,8 @@ public class BuildConfigurationTest {
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
-          "base image configuration, target image configuration, base image layers cache directory, "
-              + "application layers cache directory, and executor service are required but not set",
+          "base image configuration, target image configuration, base image layers cache "
+              + "directory, and application layers cache directory are required but not set",
           ex.getMessage());
     }
   }
@@ -259,8 +254,7 @@ public class BuildConfigurationTest {
             .setTargetImageConfiguration(
                 ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
             .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
-            .setApplicationLayersCacheDirectory(Paths.get("ignored"))
-            .setExecutorService(MoreExecutors.newDirectExecutorService());
+            .setApplicationLayersCacheDirectory(Paths.get("ignored"));
 
     builder
         .setBaseImageConfiguration(
@@ -279,5 +273,40 @@ public class BuildConfigurationTest {
         .dispatch(
             LogEvent.warn(
                 "Base image 'image:tag' does not use a specific image digest - build may not be reproducible"));
+  }
+
+  @Test
+  public void testClose_shutDownInternalExecutorService() throws IOException {
+    BuildConfiguration buildConfiguration =
+        BuildConfiguration.builder()
+            .setBaseImageConfiguration(
+                ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
+            .setTargetImageConfiguration(
+                ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
+            .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
+            .setApplicationLayersCacheDirectory(Paths.get("ignored"))
+            .build();
+    buildConfiguration.close();
+
+    Assert.assertTrue(buildConfiguration.getExecutorService().isShutdown());
+  }
+
+  @Test
+  public void testClose_doNotShutDownProvidedExecutorService() throws IOException {
+    ExecutorService executorService = MoreExecutors.newDirectExecutorService();
+    BuildConfiguration buildConfiguration =
+        BuildConfiguration.builder()
+            .setBaseImageConfiguration(
+                ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
+            .setTargetImageConfiguration(
+                ImageConfiguration.builder(Mockito.mock(ImageReference.class)).build())
+            .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
+            .setApplicationLayersCacheDirectory(Paths.get("ignored"))
+            .setExecutorService(executorService)
+            .build();
+    buildConfiguration.close();
+
+    Assert.assertSame(executorService, buildConfiguration.getExecutorService());
+    Assert.assertFalse(buildConfiguration.getExecutorService().isShutdown());
   }
 }
