@@ -52,7 +52,7 @@ public class PushBlobStepTest {
         Mockito.mock(RegistryClient.Factory.class, Answers.RETURNS_SELF);
     Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(registryClient);
 
-    Mockito.when(buildConfiguration.newTargetImageRegistryClientFactory(null))
+    Mockito.when(buildConfiguration.newTargetImageRegistryClientFactory())
         .thenReturn(registryClientFactory);
     Mockito.when(buildConfiguration.getTargetImageConfiguration())
         .thenReturn(ImageConfiguration.builder(ImageReference.scratch()).build());
@@ -91,13 +91,7 @@ public class PushBlobStepTest {
 
   private void call(boolean forcePush) throws IOException, RegistryException {
     new PushBlobStep(
-            buildConfiguration,
-            progressDispatcherFactory,
-            null,
-            blobDescriptor,
-            null,
-            forcePush,
-            null)
+            buildConfiguration, progressDispatcherFactory, null, blobDescriptor, null, forcePush)
         .call();
   }
 }

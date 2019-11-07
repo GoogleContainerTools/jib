@@ -22,7 +22,6 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.registry.RegistryAuthenticator;
 import java.io.IOException;
 import java.util.Optional;
@@ -42,17 +41,14 @@ class AuthenticatePushStep implements Callable<Optional<Authorization>> {
   private final BuildConfiguration buildConfiguration;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   @Nullable private final Credential registryCredential;
-  private final FailoverHttpClient httpClient;
 
   AuthenticatePushStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      @Nullable Credential registryCredential,
-      FailoverHttpClient httpClient) {
+      @Nullable Credential registryCredential) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.registryCredential = registryCredential;
-    this.httpClient = httpClient;
   }
 
   @Override
@@ -65,7 +61,7 @@ class AuthenticatePushStep implements Callable<Optional<Authorization>> {
                 buildConfiguration.getEventHandlers(), String.format(DESCRIPTION, registry))) {
       Optional<RegistryAuthenticator> registryAuthenticator =
           buildConfiguration
-              .newTargetImageRegistryClientFactory(httpClient)
+              .newTargetImageRegistryClientFactory()
               .newRegistryClient()
               .getRegistryAuthenticator();
       if (registryAuthenticator.isPresent()) {

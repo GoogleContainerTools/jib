@@ -23,7 +23,6 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PreparedLayer.StateInTarget;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
@@ -38,8 +37,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization pushAuthorization,
-      List<Future<PreparedLayer>> cachedLayers,
-      FailoverHttpClient httpClient) {
+      List<Future<PreparedLayer>> cachedLayers) {
     try (TimerEventDispatcher ignored =
             new TimerEventDispatcher(
                 buildConfiguration.getEventHandlers(), "Preparing layer pushers");
@@ -55,8 +53,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
                       buildConfiguration,
                       progressEventDispatcher.newChildProducer(),
                       pushAuthorization,
-                      layer,
-                      httpClient))
+                      layer))
           .collect(ImmutableList.toImmutableList());
     }
   }
@@ -66,19 +63,16 @@ class PushLayerStep implements Callable<BlobDescriptor> {
 
   @Nullable private final Authorization pushAuthorization;
   private final Future<PreparedLayer> preparedLayer;
-  private final FailoverHttpClient httpClient;
 
   PushLayerStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization pushAuthorization,
-      Future<PreparedLayer> preparedLayer,
-      FailoverHttpClient httpClient) {
+      Future<PreparedLayer> preparedLayer) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.pushAuthorization = pushAuthorization;
     this.preparedLayer = preparedLayer;
-    this.httpClient = httpClient;
   }
 
   @Override
@@ -97,8 +91,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
             pushAuthorization,
             layer.getBlobDescriptor(),
             layer.getBlob(),
-            forcePush,
-            httpClient)
+            forcePush)
         .call();
   }
 }

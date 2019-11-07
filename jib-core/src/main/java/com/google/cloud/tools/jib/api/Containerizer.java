@@ -339,7 +339,7 @@ public class Containerizer {
   }
 
   BuildResult run(BuildConfiguration buildConfiguration)
-      throws ExecutionException, InterruptedException, IOException {
+      throws ExecutionException, InterruptedException {
     return stepsRunnerFactory.apply(buildConfiguration).run();
   }
 }
