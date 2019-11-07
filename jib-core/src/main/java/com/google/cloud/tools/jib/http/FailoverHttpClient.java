@@ -81,11 +81,6 @@ public class FailoverHttpClient {
     HTTP
   }
 
-  @VisibleForTesting
-  static String getHostAndPort(URL url) {
-    return url.getHost() + ":" + (url.getPort() == -1 ? url.getDefaultPort() : url.getPort());
-  }
-
   private static boolean isHttpsProtocol(URL url) {
     return "https".equals(url.getProtocol());
   }
@@ -233,7 +228,6 @@ public class FailoverHttpClient {
       throw new SSLException("insecure HTTP connection not allowed: " + url);
     }
 
-    System.out.println("#### host and port: " + getHostAndPort(url));
     Optional<Response> optionalResponse = followFailoverHistory(httpMethod, url, request);
     if (optionalResponse.isPresent()) {
       return optionalResponse.get();
@@ -250,13 +244,13 @@ public class FailoverHttpClient {
       try {
         logInsecureHttpsFailover(url);
         Response response = call(httpMethod, url, request, getHttpTransport(false));
-        failoverHistory.put(getHostAndPort(url), Failover.INSECURE_HTTPS);
+        failoverHistory.put(url.getHost() + ":" + url.getPort(), Failover.INSECURE_HTTPS);
         return response;
 
       } catch (SSLException ignored) { // This is usually when the server is plain-HTTP.
         logHttpFailover(url);
         Response response = call(httpMethod, toHttp(url), request, getHttpTransport(true));
-        failoverHistory.put(getHostAndPort(url), Failover.HTTP);
+        failoverHistory.put(url.getHost() + ":" + url.getPort(), Failover.HTTP);
         return response;
       }
 
@@ -271,7 +265,7 @@ public class FailoverHttpClient {
         if (enableHttpAndInsecureFailover && isHttpsProtocol(url) && url.getPort() == -1) {
           logHttpFailover(url);
           Response response = call(httpMethod, toHttp(url), request, getHttpTransport(true));
-          failoverHistory.put(getHostAndPort(url), Failover.HTTP);
+          failoverHistory.put(url.getHost() + ":" + url.getPort(), Failover.HTTP);
           return response;
         }
       }
@@ -283,7 +277,7 @@ public class FailoverHttpClient {
   Optional<Response> followFailoverHistory(String httpMethod, URL url, Request request)
       throws IOException {
     Preconditions.checkArgument(isHttpsProtocol(url));
-    switch (failoverHistory.getOrDefault(getHostAndPort(url), Failover.NONE)) {
+    switch (failoverHistory.getOrDefault(url.getHost() + ":" + url.getPort(), Failover.NONE)) {
       case INSECURE_HTTPS:
         return Optional.of(call(httpMethod, url, request, getHttpTransport(false)));
       case HTTP:
