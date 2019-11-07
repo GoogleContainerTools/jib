@@ -119,14 +119,37 @@ subprojects {
   checkstyle {
     toolVersion = '8.18'
 
-    // get the google_checks.xml file from the checkstyle jar and take out the java checks
+    // use the google checks packaged with the jar
     def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()
-    def fileExtensionsBefore = '<property name="fileExtensions" value="java, properties, xml"/>'
-    def fileExtensionsAfter = '<property name="fileExtensions" value="properties, xml"/>'
-    def googleChecksNoJava = googleChecks.replace(fileExtensionsBefore, fileExtensionsAfter)
-    assert !googleChecks.equals(googleChecksNoJava)
 
-    config = resources.text.fromString(googleChecksNoJava)
+    // preserve these, the parser erases them
+    def xmlVersionNode = googleChecks.find(/<\?xml version.*>/)
+    def doctypeNode = googleChecks.find(/(?s)<!DOCTYPE[^>]*>/)
+
+    def parser = new XmlParser()
+    parser.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false)
+    parser.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+    def rootModule = parser.parseText(googleChecks)
+
+    // force each module within the root checker to only work on "properties, xml", ignore "java"
+    def fileExtensionNode = parser.parseText('<property name="fileExtensions" value="properties, xml"/>')
+    rootModule.module*.append(fileExtensionNode)
+
+    // add in copyright header check on only java files
+    def copyrightNode = parser.parseText('''
+    <module name="RegexpHeader">
+        <property name="headerFile" value="${config_loc}/copyright-java.header"/>
+        <property name="fileExtensions" value="java"/>
+        <property name="id" value="header"/>
+    </module>
+    ''')
+    rootModule.append(copyrightNode)
+
+    def xmlOutput = new StringWriter()
+    new XmlNodePrinter(new PrintWriter(xmlOutput)).print(rootModule)
+
+    // this is the actual checkstyle config
+    config = resources.text.fromString(xmlVersionNode + doctypeNode + xmlOutput.toString())
 
     maxErrors = 0
     maxWarnings = 0
