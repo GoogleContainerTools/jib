@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Google LLC.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
 package com.google.cloud.tools.jib.maven.skaffold;
 
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
@@ -29,12 +45,22 @@ public class SyncMapMojo extends JibPluginConfiguration {
 
     // add check that means this is only for jars
     if (!"jar".equals(getProject().getPackaging())) {
-      throw new MojoExecutionException("Sync is currently only available for jar style projects");
+      throw new MojoExecutionException(
+          "Skaffold sync is currently only available for 'jar' style Jib projects, but the packaging of "
+              + getProject().getArtifactId()
+              + " is '"
+              + getProject().getPackaging()
+              + "'");
     }
     // add check for exploded containerization
     try {
       if (!ContainerizingMode.EXPLODED.equals(ContainerizingMode.from(getContainerizingMode()))) {
-        throw new MojoExecutionException("Sync is only available in exploded mode");
+        throw new MojoExecutionException(
+            "Skaffold sync is currently only available for Jib projects in 'exploded' containerizing mode, but the containerizing mode of "
+                + getProject().getArtifactId()
+                + " is '"
+                + getContainerizingMode()
+                + "'");
       }
     } catch (InvalidContainerizingModeException ex) {
       throw new MojoExecutionException("Invalid containerizing mode", ex);
@@ -54,8 +80,9 @@ public class SyncMapMojo extends JibPluginConfiguration {
         System.out.println("\nBEGIN JIB JSON");
         System.out.println(syncMapJson);
 
-      } catch (Exception e) {
-        throw new MojoExecutionException("Failed to generate Jib file map", e);
+      } catch (Exception ex) {
+        throw new MojoExecutionException(
+            "Failed to generate a Jib file map for sync with Skaffold", ex);
       }
     }
   }
