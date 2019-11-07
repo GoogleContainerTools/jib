@@ -33,11 +33,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.stream.Stream;
 import org.hamcrest.CoreMatchers;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -74,7 +71,6 @@ public class ContainerizerIntegrationTest {
 
   @ClassRule public static final LocalRegistry localRegistry = new LocalRegistry(5000);
 
-  private static final ExecutorService executorService = Executors.newCachedThreadPool();
   private static final Logger logger = LoggerFactory.getLogger(ContainerizerIntegrationTest.class);
   private static final String DISTROLESS_DIGEST =
       "sha256:f488c213f278bc5f9ffe3ddf30c5dbb2303a15a74146b738d12453088e662880";
@@ -89,11 +85,6 @@ public class ContainerizerIntegrationTest {
             makeLayerConfiguration("core/application/dependencies", "/app/libs/"),
             makeLayerConfiguration("core/application/resources", "/app/resources/"),
             makeLayerConfiguration("core/application/classes", "/app/classes/"));
-  }
-
-  @AfterClass
-  public static void cleanUp() {
-    executorService.shutdown();
   }
 
   /**
@@ -346,7 +337,6 @@ public class ContainerizerIntegrationTest {
         .setApplicationLayersCache(cacheDirectory)
         .setAllowInsecureRegistries(true)
         .setToolName("jib-integration-test")
-        .setExecutorService(executorService)
         .addEventHandler(ProgressEvent.class, progressChecker.progressEventHandler);
     additionalTags.forEach(containerizer::withAdditionalTag);
 

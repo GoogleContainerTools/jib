@@ -29,7 +29,6 @@ import com.google.cloud.tools.jib.cache.CachedLayer;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.Authorization;
-import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import com.google.common.base.Verify;
@@ -55,28 +54,22 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
   static ImmutableList<ObtainBaseImageLayerStep> makeListForForcedDownload(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      ImageAndAuthorization baseImageAndAuth,
-      FailoverHttpClient httpClient) {
+      ImageAndAuthorization baseImageAndAuth) {
     BlobExistenceChecker noOpChecker = ignored -> StateInTarget.UNKNOWN;
     return makeList(
-        buildConfiguration,
-        progressEventDispatcherFactory,
-        baseImageAndAuth,
-        noOpChecker,
-        httpClient);
+        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, noOpChecker);
   }
 
   static ImmutableList<ObtainBaseImageLayerStep> makeListForSelectiveDownload(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth,
-      Authorization pushAuthorization,
-      FailoverHttpClient httpClient) {
+      Authorization pushAuthorization) {
     Verify.verify(!buildConfiguration.isOffline());
 
     RegistryClient targetRegistryClient =
         buildConfiguration
-            .newTargetImageRegistryClientFactory(httpClient)
+            .newTargetImageRegistryClientFactory()
             .setAuthorization(pushAuthorization)
             .newRegistryClient();
     // TODO: also check if cross-repo blob mount is possible.
@@ -87,19 +80,14 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
                 : StateInTarget.MISSING;
 
     return makeList(
-        buildConfiguration,
-        progressEventDispatcherFactory,
-        baseImageAndAuth,
-        blobExistenceChecker,
-        httpClient);
+        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, blobExistenceChecker);
   }
 
   private static ImmutableList<ObtainBaseImageLayerStep> makeList(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth,
-      BlobExistenceChecker blobExistenceChecker,
-      FailoverHttpClient httpClient) {
+      BlobExistenceChecker blobExistenceChecker) {
     ImmutableList<Layer> baseImageLayers = baseImageAndAuth.getImage().getLayers();
 
     try (ProgressEventDispatcher progressEventDispatcher =
@@ -117,8 +105,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
                 progressEventDispatcher.newChildProducer(),
                 layer,
                 baseImageAndAuth.getAuthorization(),
-                blobExistenceChecker,
-                httpClient));
+                blobExistenceChecker));
       }
       return ImmutableList.copyOf(layerPullers);
     }
@@ -130,21 +117,18 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
   private final Layer layer;
   private final @Nullable Authorization pullAuthorization;
   private final BlobExistenceChecker blobExistenceChecker;
-  private final FailoverHttpClient httpClient;
 
   private ObtainBaseImageLayerStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Layer layer,
       @Nullable Authorization pullAuthorization,
-      BlobExistenceChecker blobExistenceChecker,
-      FailoverHttpClient httpClient) {
+      BlobExistenceChecker blobExistenceChecker) {
     this.buildConfiguration = buildConfiguration;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.layer = layer;
     this.pullAuthorization = pullAuthorization;
     this.blobExistenceChecker = blobExistenceChecker;
-    this.httpClient = httpClient;
   }
 
   @Override
@@ -182,7 +166,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
 
       RegistryClient registryClient =
           buildConfiguration
-              .newBaseImageRegistryClientFactory(httpClient)
+              .newBaseImageRegistryClientFactory()
               .setAuthorization(pullAuthorization)
               .newRegistryClient();
 

@@ -67,7 +67,7 @@ public class PullBaseImageStepTest {
     Mockito.when(buildConfiguration.getEventHandlers()).thenReturn(EventHandlers.NONE);
     Mockito.when(buildConfiguration.getBaseImageLayersCache()).thenReturn(cache);
 
-    pullBaseImageStep = new PullBaseImageStep(buildConfiguration, progressDispatcherFactory, null);
+    pullBaseImageStep = new PullBaseImageStep(buildConfiguration, progressDispatcherFactory);
   }
 
   @Test
@@ -86,8 +86,7 @@ public class PullBaseImageStepTest {
     Assert.assertEquals("fat system", result.getImage().getOs());
     Assert.assertNull(result.getAuthorization());
 
-    Mockito.verify(buildConfiguration, Mockito.never())
-        .newBaseImageRegistryClientFactory(Mockito.any());
+    Mockito.verify(buildConfiguration, Mockito.never()).newBaseImageRegistryClientFactory();
   }
 
   @Test
@@ -121,7 +120,6 @@ public class PullBaseImageStepTest {
     Assert.assertEquals("fat system", result.getImage().getOs());
     Assert.assertNull(result.getAuthorization());
 
-    Mockito.verify(buildConfiguration, Mockito.never())
-        .newBaseImageRegistryClientFactory(Mockito.any());
+    Mockito.verify(buildConfiguration, Mockito.never()).newBaseImageRegistryClientFactory();
   }
 }

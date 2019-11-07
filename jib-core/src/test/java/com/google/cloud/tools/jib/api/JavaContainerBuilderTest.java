@@ -20,7 +20,6 @@ import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
-import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -81,9 +80,7 @@ public class JavaContainerBuilderTest {
             .addJvmFlags("-xflag1", "-xflag2")
             .setMainClass("HelloWorld")
             .toContainerBuilder()
-            .toBuildConfiguration(
-                Containerizer.to(RegistryImage.named("hello")),
-                MoreExecutors.newDirectExecutorService());
+            .toBuildConfiguration(Containerizer.to(RegistryImage.named("hello")));
 
     // Check entrypoint
     ContainerConfiguration containerConfiguration = buildConfiguration.getContainerConfiguration();
@@ -159,9 +156,7 @@ public class JavaContainerBuilderTest {
             .addClasses(getResource("core/class-finder-tests/extension"))
             .setMainClass("HelloWorld")
             .toContainerBuilder()
-            .toBuildConfiguration(
-                Containerizer.to(RegistryImage.named("hello")),
-                MoreExecutors.newDirectExecutorService());
+            .toBuildConfiguration(Containerizer.to(RegistryImage.named("hello")));
 
     // Check entrypoint
     ContainerConfiguration containerConfiguration = buildConfiguration.getContainerConfiguration();
@@ -215,9 +210,7 @@ public class JavaContainerBuilderTest {
             .setAppRoot("/different")
             .setMainClass("HelloWorld")
             .toContainerBuilder()
-            .toBuildConfiguration(
-                Containerizer.to(RegistryImage.named("hello")),
-                MoreExecutors.newDirectExecutorService());
+            .toBuildConfiguration(Containerizer.to(RegistryImage.named("hello")));
 
     // Check entrypoint
     ContainerConfiguration containerConfiguration = buildConfiguration.getContainerConfiguration();
@@ -267,9 +260,7 @@ public class JavaContainerBuilderTest {
         JavaContainerBuilder.fromDistroless()
             .addClasses(getResource("core/application/classes/"))
             .toContainerBuilder()
-            .toBuildConfiguration(
-                Containerizer.to(RegistryImage.named("hello")),
-                MoreExecutors.newDirectExecutorService());
+            .toBuildConfiguration(Containerizer.to(RegistryImage.named("hello")));
     Assert.assertNotNull(buildConfiguration.getContainerConfiguration());
     Assert.assertNull(buildConfiguration.getContainerConfiguration().getEntrypoint());
 

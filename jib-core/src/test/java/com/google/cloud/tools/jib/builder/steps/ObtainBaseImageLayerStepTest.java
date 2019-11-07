@@ -88,9 +88,9 @@ public class ObtainBaseImageLayerStepTest {
     Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(registryClient);
 
     Mockito.lenient()
-        .when(buildConfiguration.newBaseImageRegistryClientFactory(null))
+        .when(buildConfiguration.newBaseImageRegistryClientFactory())
         .thenReturn(registryClientFactory);
-    Mockito.when(buildConfiguration.newTargetImageRegistryClientFactory(null))
+    Mockito.when(buildConfiguration.newTargetImageRegistryClientFactory())
         .thenReturn(registryClientFactory);
 
     // necessary to prevent error from classes dealing with progress report
@@ -108,7 +108,7 @@ public class ObtainBaseImageLayerStepTest {
       throws IOException, CacheCorruptedException, RegistryException {
     ImmutableList<ObtainBaseImageLayerStep> pullers =
         ObtainBaseImageLayerStep.makeListForSelectiveDownload(
-            buildConfiguration, progressDispatcherFactory, baseImageAndAuth, null, null);
+            buildConfiguration, progressDispatcherFactory, baseImageAndAuth, null);
 
     Assert.assertEquals(2, pullers.size());
     PreparedLayer preparedExistingLayer = pullers.get(0).call();
@@ -133,7 +133,7 @@ public class ObtainBaseImageLayerStepTest {
       throws IOException, CacheCorruptedException, RegistryException {
     ImmutableList<ObtainBaseImageLayerStep> pullers =
         ObtainBaseImageLayerStep.makeListForForcedDownload(
-            buildConfiguration, progressDispatcherFactory, baseImageAndAuth, null);
+            buildConfiguration, progressDispatcherFactory, baseImageAndAuth);
 
     Assert.assertEquals(2, pullers.size());
     PreparedLayer preparedExistingLayer = pullers.get(0).call();
@@ -161,7 +161,7 @@ public class ObtainBaseImageLayerStepTest {
 
     ImmutableList<ObtainBaseImageLayerStep> pullers =
         ObtainBaseImageLayerStep.makeListForForcedDownload(
-            buildConfiguration, progressDispatcherFactory, baseImageAndAuth, null);
+            buildConfiguration, progressDispatcherFactory, baseImageAndAuth);
     try {
       pullers.get(1).call();
       Assert.fail();

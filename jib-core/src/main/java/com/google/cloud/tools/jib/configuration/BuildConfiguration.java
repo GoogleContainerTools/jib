@@ -21,6 +21,7 @@ import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.global.JibSystemProperties;
 import com.google.cloud.tools.jib.http.FailoverHttpClient;
 import com.google.cloud.tools.jib.image.json.BuildableManifestTemplate;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
@@ -30,6 +31,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -40,8 +42,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import javax.annotation.Nullable;
 
-/** Immutable configuration options for the builder process. */
-public class BuildConfiguration {
+/**
+ * Build context for the builder process that includes build configuration options and various
+ * services for execution (for example, event dispatching, thread execution service, HTTP client).
+ * Informational instances (particularly configuration options such as {@link
+ * ContainerConfiguration}, {@link ImageConfiguration}, and {@link LayerConfiguration}) held in are
+ * immutable.
+ */
+public class BuildConfiguration implements Closeable {
 
   /** The default target format of the container manifest. */
   private static final Class<? extends BuildableManifestTemplate> DEFAULT_TARGET_FORMAT =
@@ -227,7 +235,7 @@ public class BuildConfiguration {
      * @param executorService the {@link ExecutorService}
      * @return this
      */
-    public Builder setExecutorService(ExecutorService executorService) {
+    public Builder setExecutorService(@Nullable ExecutorService executorService) {
       this.executorService = executorService;
       return this;
     }
@@ -253,9 +261,6 @@ public class BuildConfiguration {
       if (applicationLayersCacheDirectory == null) {
         missingFields.add("application layers cache directory");
       }
-      if (executorService == null) {
-        missingFields.add("executor service");
-      }
 
       switch (missingFields.size()) {
         case 0: // No errors
@@ -277,12 +282,17 @@ public class BuildConfiguration {
               Cache.withDirectory(Preconditions.checkNotNull(baseImageLayersCacheDirectory)),
               Cache.withDirectory(Preconditions.checkNotNull(applicationLayersCacheDirectory)),
               targetFormat,
-              allowInsecureRegistries,
               offline,
               layerConfigurations,
               toolName,
               eventHandlers,
-              Preconditions.checkNotNull(executorService),
+              // TODO: try setting global User-Agent: here
+              new FailoverHttpClient(
+                  allowInsecureRegistries,
+                  JibSystemProperties.sendCredentialsOverHttp(),
+                  eventHandlers::dispatch),
+              executorService == null ? Executors.newCachedThreadPool() : executorService,
+              executorService == null, // shutDownExecutorService
               alwaysCacheBaseImage);
 
         case 1:
@@ -331,12 +341,13 @@ public class BuildConfiguration {
   private final Cache baseImageLayersCache;
   private final Cache applicationLayersCache;
   private Class<? extends BuildableManifestTemplate> targetFormat;
-  private final boolean allowInsecureRegistries;
   private final boolean offline;
   private final ImmutableList<LayerConfiguration> layerConfigurations;
   private final String toolName;
   private final EventHandlers eventHandlers;
+  private final FailoverHttpClient httpClient;
   private final ExecutorService executorService;
+  private final boolean shutDownExecutorService;
   private final boolean alwaysCacheBaseImage;
 
   /** Instantiate with {@link #builder}. */
@@ -348,12 +359,13 @@ public class BuildConfiguration {
       Cache baseImageLayersCache,
       Cache applicationLayersCache,
       Class<? extends BuildableManifestTemplate> targetFormat,
-      boolean allowInsecureRegistries,
       boolean offline,
       ImmutableList<LayerConfiguration> layerConfigurations,
       String toolName,
       EventHandlers eventHandlers,
+      FailoverHttpClient httpClient,
       ExecutorService executorService,
+      boolean shutDownExecutorService,
       boolean alwaysCacheBaseImage) {
     this.baseImageConfiguration = baseImageConfiguration;
     this.targetImageConfiguration = targetImageConfiguration;
@@ -362,12 +374,13 @@ public class BuildConfiguration {
     this.baseImageLayersCache = baseImageLayersCache;
     this.applicationLayersCache = applicationLayersCache;
     this.targetFormat = targetFormat;
-    this.allowInsecureRegistries = allowInsecureRegistries;
     this.offline = offline;
     this.layerConfigurations = layerConfigurations;
     this.toolName = toolName;
     this.eventHandlers = eventHandlers;
+    this.httpClient = httpClient;
     this.executorService = executorService;
+    this.shutDownExecutorService = shutDownExecutorService;
     this.alwaysCacheBaseImage = alwaysCacheBaseImage;
   }
 
@@ -404,6 +417,10 @@ public class BuildConfiguration {
     return eventHandlers;
   }
 
+  public FailoverHttpClient getHttpClient() {
+    return httpClient;
+  }
+
   public ExecutorService getExecutorService() {
     return executorService;
   }
@@ -423,16 +440,6 @@ public class BuildConfiguration {
    */
   public Cache getApplicationLayersCache() {
     return applicationLayersCache;
-  }
-
-  /**
-   * Gets whether or not to allow insecure registries (ignoring certificate validation failure or
-   * communicating over HTTP if all else fail).
-   *
-   * @return {@code true} if insecure connections will be allowed; {@code false} otherwise
-   */
-  public boolean getAllowInsecureRegistries() {
-    return allowInsecureRegistries;
   }
 
   /**
@@ -466,21 +473,19 @@ public class BuildConfiguration {
    * Creates a new {@link RegistryClient.Factory} for the base image with fields from the build
    * configuration.
    *
-   * @param httpClient HTTP client
    * @return a new {@link RegistryClient.Factory}
    */
-  public RegistryClient.Factory newBaseImageRegistryClientFactory(FailoverHttpClient httpClient) {
-    return newRegistryClientFactory(baseImageConfiguration, httpClient);
+  public RegistryClient.Factory newBaseImageRegistryClientFactory() {
+    return newRegistryClientFactory(baseImageConfiguration);
   }
 
   /**
    * Creates a new {@link RegistryClient.Factory} for the target image with fields from the build
    * configuration.
    *
-   * @param httpClient HTTP client
    * @return a new {@link RegistryClient.Factory}
    */
-  public RegistryClient.Factory newTargetImageRegistryClientFactory(FailoverHttpClient httpClient) {
+  public RegistryClient.Factory newTargetImageRegistryClientFactory() {
     // if base and target are on the same registry, try enabling cross-repository mounts
     if (baseImageConfiguration
         .getImageRegistry()
@@ -493,16 +498,23 @@ public class BuildConfiguration {
               httpClient)
           .setUserAgentSuffix(getToolName());
     }
-    return newRegistryClientFactory(targetImageConfiguration, httpClient);
+    return newRegistryClientFactory(targetImageConfiguration);
   }
 
-  private RegistryClient.Factory newRegistryClientFactory(
-      ImageConfiguration imageConfiguration, FailoverHttpClient httpClient) {
+  private RegistryClient.Factory newRegistryClientFactory(ImageConfiguration imageConfiguration) {
     return RegistryClient.factory(
             getEventHandlers(),
             imageConfiguration.getImageRegistry(),
             imageConfiguration.getImageRepository(),
             httpClient)
         .setUserAgentSuffix(getToolName());
+  }
+
+  @Override
+  public void close() throws IOException {
+    if (shutDownExecutorService) {
+      executorService.shutdown();
+    }
+    httpClient.shutDown();
   }
 }
