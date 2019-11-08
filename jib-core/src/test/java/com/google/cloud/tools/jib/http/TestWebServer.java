@@ -45,12 +45,13 @@ import javax.net.ssl.SSLContext;
 public class TestWebServer implements Closeable {
 
   private final boolean https;
+  private final int numThreads;
+  private final List<String> responses;
+
   private final ServerSocket serverSocket;
   private final ExecutorService executorService;
-  private final Semaphore threadsStarted;
-  private final StringBuffer inputRead = new StringBuffer(); // StringBuilder not thread-safe
-
-  private final List<String> responses;
+  private final Semaphore serverStarted = new Semaphore(1);
+  private final StringBuilder inputRead = new StringBuilder();
 
   public TestWebServer(boolean https)
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
@@ -66,13 +67,11 @@ public class TestWebServer implements Closeable {
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     this.https = https;
     this.responses = responses;
+    this.numThreads = numThreads;
     serverSocket = https ? createHttpsServerSocket() : new ServerSocket(0);
-    threadsStarted = new Semaphore(1 - numThreads);
-    executorService = Executors.newFixedThreadPool(numThreads);
-    for (int i = 0; i < numThreads; i++) {
-      ignoreReturn(executorService.submit(this::serveResponses));
-    }
-    threadsStarted.acquire();
+    executorService = Executors.newFixedThreadPool(numThreads + 1);
+    ignoreReturn(executorService.submit(this::listen));
+    serverStarted.acquire();
   }
 
   public int getLocalPort() {
@@ -108,9 +107,17 @@ public class TestWebServer implements Closeable {
     return sslContext.getServerSocketFactory().createServerSocket(0);
   }
 
-  private Void serveResponses() throws IOException {
-    threadsStarted.release();
-    try (Socket socket = serverSocket.accept()) {
+  private Void listen() throws IOException {
+    serverStarted.release();
+    for (int i = 0; i < numThreads; i++) {
+      Socket socket = serverSocket.accept();
+      ignoreReturn(executorService.submit(() -> serveResponses(socket)));
+    }
+    return null;
+  }
+
+  private Void serveResponses(Socket socket) throws IOException {
+    try (Socket toClose = socket) {
       InputStream in = socket.getInputStream();
       OutputStream out = socket.getOutputStream();
 
@@ -125,11 +132,12 @@ public class TestWebServer implements Closeable {
         for (String line = reader.readLine();
             line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
             line = reader.readLine()) {
-          if (firstByte == -1) {
-            inputRead.append(line + "\n");
-          } else {
-            inputRead.append(((char) firstByte) + line + "\n");
-            firstByte = -1;
+          synchronized (inputRead) {
+            if (firstByte != -1) {
+              inputRead.append((char) firstByte);
+              firstByte = -1;
+            }
+            inputRead.append(line).append('\n');
           }
         }
         out.write(response.getBytes(StandardCharsets.UTF_8));
