@@ -75,16 +75,19 @@
     </profile>
   </profiles>
 
-  <!-- The local repo contains one tiny test library installed with
+  <!-- The fake remote repo contains one tiny test library installed with
     mvn org.apache.maven.plugins:maven-install-plugin:2.3.1:install-file \
-        -Dfile=tiny.jar -DlocalRepositoryPath=local-m2-repo/ \
+        -Dfile=tiny.jar -DlocalRepositoryPath=fake-remote-repo/ \
         -DgroupId=com.google.cloud.tools -DartifactId=tiny-test-lib \
         -Dversion=0.0.1-SNAPSHOT -Dpackaging=jar
+
+    it will be treated as a remote dependency and copied into the user's local
+    maven repository.
    -->
   <repositories>
     <repository>
-      <id>local-m2-repo</id>
-      <url>file:${project.basedir}/local-m2-repo</url>
+      <id>fake-remote-repo</id>
+      <url>file:${project.basedir}/fake-remote-repo</url>
     </repository>
   </repositories>
 
