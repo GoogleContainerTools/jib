@@ -83,7 +83,7 @@ public class MavenProjectProperties implements ProjectProperties {
    * @param tempDirectoryProvider temporary directory provider
    * @return a MavenProjectProperties from the given project and logger.
    */
-  static MavenProjectProperties getForProject(
+  public static MavenProjectProperties getForProject(
       MavenProject project,
       MavenSession session,
       Log log,
