@@ -273,15 +273,14 @@ public class FailoverHttpClient {
     }
   }
 
-  @VisibleForTesting
-  Optional<Response> followFailoverHistory(String httpMethod, URL url, Request request)
+  private Optional<Response> followFailoverHistory(String httpMethod, URL url, Request request)
       throws IOException {
     Preconditions.checkArgument(isHttpsProtocol(url));
     switch (failoverHistory.getOrDefault(url.getHost() + ":" + url.getPort(), Failover.NONE)) {
       case INSECURE_HTTPS:
         return Optional.of(call(httpMethod, url, request, getHttpTransport(false)));
       case HTTP:
-        return Optional.of(call(httpMethod, toHttp(url), request, getHttpTransport(false)));
+        return Optional.of(call(httpMethod, toHttp(url), request, getHttpTransport(true)));
       default:
         return Optional.empty();
     }
