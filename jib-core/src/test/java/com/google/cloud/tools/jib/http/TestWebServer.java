@@ -48,7 +48,7 @@ public class TestWebServer implements Closeable {
   private final ServerSocket serverSocket;
   private final ExecutorService executorService;
   private final Semaphore threadsStarted;
-  private final StringBuilder inputRead = new StringBuilder();
+  private final StringBuffer inputRead = new StringBuffer(); // StringBuilder not thread-safe
 
   private final List<String> responses;
 
@@ -119,14 +119,18 @@ public class TestWebServer implements Closeable {
         out.write("HTTP/1.1 400 Bad Request\n\n".getBytes(StandardCharsets.UTF_8));
         return null;
       }
-      inputRead.append((char) firstByte);
 
       BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
       for (String response : responses) {
         for (String line = reader.readLine();
             line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
             line = reader.readLine()) {
-          inputRead.append(line + "\n");
+          if (firstByte == -1) {
+            inputRead.append(line + "\n");
+          } else {
+            inputRead.append(((char) firstByte) + line + "\n");
+            firstByte = -1;
+          }
         }
         out.write(response.getBytes(StandardCharsets.UTF_8));
         socket.getOutputStream().flush();
@@ -141,6 +145,10 @@ public class TestWebServer implements Closeable {
     // do nothing; to make Error Prone happy
   }
 
+  /**
+   * Returns input read. Note if there were concurrent connections, input lines from different
+   * connections can be intermixed. However, no lines will ever be broken in the middle.
+   */
   public String getInputRead() {
     return inputRead.toString();
   }
