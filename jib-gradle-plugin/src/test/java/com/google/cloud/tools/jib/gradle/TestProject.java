@@ -75,7 +75,11 @@ class TestProject extends TemporaryFolder implements Closeable {
     projectRoot = newFolder().toPath();
     copyProject(testProjectName, projectRoot);
 
-    gradleRunner = GradleRunner.create().withProjectDir(projectRoot.toFile()).withPluginClasspath();
+    gradleRunner =
+        GradleRunner.create()
+            .withGradleVersion(JibPlugin.GRADLE_MIN_VERSION.getVersion())
+            .withProjectDir(projectRoot.toFile())
+            .withPluginClasspath();
   }
 
   BuildResult build(String... gradleArguments) {
