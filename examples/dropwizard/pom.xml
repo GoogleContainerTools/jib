@@ -72,14 +72,14 @@
 
                         <!-- good defaults intended for Java 8 (>= 8u191) containers -->
                         <jvmFlags>
-                            <jmxFlag>-server</jmxFlag>
-                            <jmxFlag>-Djava.awt.headless=true</jmxFlag>
-                            <jmxFlag>-XX:InitialRAMFraction=2</jmxFlag>
-                            <jmxFlag>-XX:MinRAMFraction=2</jmxFlag>
-                            <jmxFlag>-XX:MaxRAMFraction=2</jmxFlag>
-                            <jmxFlag>-XX:+UseG1GC</jmxFlag>
-                            <jmxFlag>-XX:MaxGCPauseMillis=100</jmxFlag>
-                            <jmxFlag>-XX:+UseStringDeduplication</jmxFlag>
+                            <jvmFlag>-server</jvmFlag>
+                            <jvmFlag>-Djava.awt.headless=true</jvmFlag>
+                            <jvmFlag>-XX:InitialRAMFraction=2</jvmFlag>
+                            <jvmFlag>-XX:MinRAMFraction=2</jvmFlag>
+                            <jvmFlag>-XX:MaxRAMFraction=2</jvmFlag>
+                            <jvmFlag>-XX:+UseG1GC</jvmFlag>
+                            <jvmFlag>-XX:MaxGCPauseMillis=100</jvmFlag>
+                            <jvmFlag>-XX:+UseStringDeduplication</jvmFlag>
                         </jvmFlags>
                     </container>
                 </configuration>
