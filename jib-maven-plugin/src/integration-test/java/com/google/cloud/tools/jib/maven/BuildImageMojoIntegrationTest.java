@@ -219,7 +219,7 @@ public class BuildImageMojoIntegrationTest {
       String password,
       LocalRegistry targetRegistry,
       String pomFile)
-      throws VerificationException, IOException, InterruptedException, DigestException {
+      throws VerificationException, IOException, InterruptedException {
     Verifier verifier = new Verifier(simpleTestProject.getProjectRoot().toString());
     verifier.setSystemProperty("jib.useOnlyProjectCache", "true");
     verifier.setSystemProperty("_TARGET_IMAGE", imageReference);
