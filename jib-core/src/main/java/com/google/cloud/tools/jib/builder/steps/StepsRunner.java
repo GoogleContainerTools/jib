@@ -236,10 +236,13 @@ public class StepsRunner {
     Preconditions.checkArgument(dockerClient.isPresent());
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-    assignLocalImageResult(
+    Future<LocalImage> localImage =
         executorService.submit(
-            LocalBaseImageSteps.retrieveDockerDaemonImageStep(
-                buildConfiguration, childProgressDispatcherFactory, dockerClient.get())));
+            LocalBaseImageSteps.retrieveDockerDaemonLayersStep(
+                buildConfiguration, childProgressDispatcherFactory, dockerClient.get()));
+    results.baseImageLayers = executorService.submit(() -> localImage.get().layers);
+    results.baseImageAndAuth =
+        executorService.submit(LocalBaseImageSteps.retrieveLocalImageStep(localImage));
   }
 
   private void extractTar() {
@@ -247,25 +250,13 @@ public class StepsRunner {
     Preconditions.checkArgument(tarPath.isPresent());
     ProgressEventDispatcher.Factory childProgressDispatcherFactory =
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
-    assignLocalImageResult(
+    Future<LocalImage> localImage =
         executorService.submit(
-            LocalBaseImageSteps.retrieveTarImageStep(
-                buildConfiguration, childProgressDispatcherFactory, tarPath.get())));
-  }
-
-  private void assignLocalImageResult(Future<LocalImage> localImageFuture) {
+            LocalBaseImageSteps.retrieveTarLayersStep(
+                buildConfiguration, childProgressDispatcherFactory, tarPath.get()));
+    results.baseImageLayers = executorService.submit(() -> localImage.get().layers);
     results.baseImageAndAuth =
-        executorService.submit(
-            () -> new ImageAndAuthorization(localImageFuture.get().baseImage, null));
-    results.baseImageLayers =
-        executorService.submit(
-            () ->
-                localImageFuture
-                    .get()
-                    .layers
-                    .stream()
-                    .map(Futures::immediateFuture)
-                    .collect(Collectors.toList()));
+        executorService.submit(LocalBaseImageSteps.retrieveLocalImageStep(localImage));
   }
 
   private void pullBaseImage() {
