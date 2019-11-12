@@ -75,10 +75,11 @@ import org.apache.http.impl.client.HttpClientBuilder;
  */
 public class FailoverHttpClient {
 
+  /** Represents failover actions taken. To be recorded in the failover history. */
   private static enum Failover {
-    NONE,
-    INSECURE_HTTPS,
-    HTTP
+    NONE, // no failover (secure HTTPS)
+    INSECURE_HTTPS, // HTTPS with certificate validation disabled
+    HTTP // plain HTTP
   }
 
   private static boolean isHttpsProtocol(URL url) {
@@ -277,12 +278,12 @@ public class FailoverHttpClient {
       throws IOException {
     Preconditions.checkArgument(isHttpsProtocol(url));
     switch (failoverHistory.getOrDefault(url.getHost() + ":" + url.getPort(), Failover.NONE)) {
-      case INSECURE_HTTPS:
-        return Optional.of(call(httpMethod, url, request, getHttpTransport(false)));
       case HTTP:
         return Optional.of(call(httpMethod, toHttp(url), request, getHttpTransport(true)));
+      case INSECURE_HTTPS:
+        return Optional.of(call(httpMethod, url, request, getHttpTransport(false)));
       default:
-        return Optional.empty();
+        return Optional.empty(); // No history found. Should go for normal execution path.
     }
   }
 
