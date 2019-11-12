@@ -99,8 +99,9 @@ public class JibContainerBuilder {
   }
 
   @VisibleForTesting
-  JibContainerBuilder(ImageConfiguration imageConfiguration, BuildContext.Builder buildContext) {
-    this.buildContextBuilder = buildContext.setBaseImageConfiguration(imageConfiguration);
+  JibContainerBuilder(
+      ImageConfiguration imageConfiguration, BuildContext.Builder buildContextBuilder) {
+    this.buildContextBuilder = buildContextBuilder.setBaseImageConfiguration(imageConfiguration);
   }
 
   /**
