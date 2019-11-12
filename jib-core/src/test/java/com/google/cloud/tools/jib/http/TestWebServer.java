@@ -22,6 +22,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URISyntaxException;
@@ -44,25 +45,33 @@ import javax.net.ssl.SSLContext;
 public class TestWebServer implements Closeable {
 
   private final boolean https;
-  private final ServerSocket serverSocket;
-  private final ExecutorService executorService = Executors.newSingleThreadExecutor();
-  private final Semaphore threadStarted = new Semaphore(0);
-  private final StringBuilder inputRead = new StringBuilder();
-
+  private final int numThreads;
   private final List<String> responses;
+
+  private final ServerSocket serverSocket;
+  private final ExecutorService executorService;
+  private final Semaphore serverStarted = new Semaphore(1);
+  private final StringBuilder inputRead = new StringBuilder();
 
   public TestWebServer(boolean https)
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
-    this(https, Arrays.asList("HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!"));
+    this(https, Arrays.asList("HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!"), 1);
   }
 
-  public TestWebServer(boolean https, List<String> responses)
+  public TestWebServer(boolean https, int numThreads)
+      throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
+    this(https, Arrays.asList("HTTP/1.1 200 OK\nContent-Length:12\n\nHello World!"), numThreads);
+  }
+
+  public TestWebServer(boolean https, List<String> responses, int numThreads)
       throws IOException, InterruptedException, GeneralSecurityException, URISyntaxException {
     this.https = https;
     this.responses = responses;
+    this.numThreads = numThreads;
     serverSocket = https ? createHttpsServerSocket() : new ServerSocket(0);
-    ignoreReturn(executorService.submit(this::serveResponses));
-    threadStarted.acquire();
+    executorService = Executors.newFixedThreadPool(numThreads + 1);
+    ignoreReturn(executorService.submit(this::listen));
+    serverStarted.acquire();
   }
 
   public int getLocalPort() {
@@ -98,19 +107,40 @@ public class TestWebServer implements Closeable {
     return sslContext.getServerSocketFactory().createServerSocket(0);
   }
 
-  private Void serveResponses() throws IOException {
-    threadStarted.release();
-    try (Socket socket = serverSocket.accept()) {
-      InputStream in = socket.getInputStream();
-      BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+  private Void listen() throws IOException {
+    serverStarted.release();
+    for (int i = 0; i < numThreads; i++) {
+      Socket socket = serverSocket.accept();
+      ignoreReturn(executorService.submit(() -> serveResponses(socket)));
+    }
+    return null;
+  }
 
+  private Void serveResponses(Socket socket) throws IOException {
+    try (Socket toClose = socket) {
+      InputStream in = socket.getInputStream();
+      OutputStream out = socket.getOutputStream();
+
+      int firstByte = in.read();
+      if (firstByte != 'G' && firstByte != 'P') { // GET, POST, ...
+        out.write("HTTP/1.1 400 Bad Request\n\n".getBytes(StandardCharsets.UTF_8));
+        return null;
+      }
+
+      BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
       for (String response : responses) {
         for (String line = reader.readLine();
             line != null && !line.isEmpty(); // An empty line marks the end of an HTTP request.
             line = reader.readLine()) {
-          inputRead.append(line + "\n");
+          synchronized (inputRead) {
+            if (firstByte != -1) {
+              inputRead.append((char) firstByte);
+              firstByte = -1;
+            }
+            inputRead.append(line).append('\n');
+          }
         }
-        socket.getOutputStream().write(response.getBytes(StandardCharsets.UTF_8));
+        out.write(response.getBytes(StandardCharsets.UTF_8));
         socket.getOutputStream().flush();
       }
     }
@@ -123,6 +153,10 @@ public class TestWebServer implements Closeable {
     // do nothing; to make Error Prone happy
   }
 
+  /**
+   * Returns input read. Note if there were concurrent connections, input lines from different
+   * connections can be intermixed. However, no lines will ever be broken in the middle.
+   */
   public String getInputRead() {
     return inputRead.toString();
   }

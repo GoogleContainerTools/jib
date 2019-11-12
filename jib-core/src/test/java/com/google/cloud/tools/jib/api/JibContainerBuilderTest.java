@@ -16,11 +16,9 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.builder.steps.BuildResult;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
-import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.json.OCIManifestTemplate;
 import com.google.cloud.tools.jib.image.json.V22ManifestTemplate;
 import com.google.cloud.tools.jib.registry.credentials.CredentialRetrievalException;
@@ -29,12 +27,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.security.DigestException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 import org.junit.Assert;
@@ -53,7 +48,6 @@ public class JibContainerBuilderTest {
   @Mock private LayerConfiguration mockLayerConfiguration1;
   @Mock private LayerConfiguration mockLayerConfiguration2;
   @Mock private CredentialRetriever mockCredentialRetriever;
-  @Mock private ExecutorService mockExecutorService;
   @Mock private Consumer<JibEvent> mockJibEventConsumer;
   @Mock private JibEvent mockJibEvent;
 
@@ -75,8 +69,7 @@ public class JibContainerBuilderTest {
 
     BuildConfiguration buildConfiguration =
         jibContainerBuilder.toBuildConfiguration(
-            Containerizer.to(RegistryImage.named("target/image")),
-            MoreExecutors.newDirectExecutorService());
+            Containerizer.to(RegistryImage.named("target/image")));
     ContainerConfiguration containerConfiguration = buildConfiguration.getContainerConfiguration();
     Assert.assertEquals(Arrays.asList("entry", "point"), containerConfiguration.getEntrypoint());
     Assert.assertEquals(
@@ -110,8 +103,7 @@ public class JibContainerBuilderTest {
 
     BuildConfiguration buildConfiguration =
         jibContainerBuilder.toBuildConfiguration(
-            Containerizer.to(RegistryImage.named("target/image")),
-            MoreExecutors.newDirectExecutorService());
+            Containerizer.to(RegistryImage.named("target/image")));
     ContainerConfiguration containerConfiguration = buildConfiguration.getContainerConfiguration();
     Assert.assertEquals(Arrays.asList("entry", "point"), containerConfiguration.getEntrypoint());
     Assert.assertEquals(
@@ -131,6 +123,7 @@ public class JibContainerBuilderTest {
   public void testToBuildConfiguration()
       throws InvalidImageReferenceException, CredentialRetrievalException, IOException,
           CacheDirectoryCreationException {
+    ExecutorService executorService = MoreExecutors.newDirectExecutorService();
     RegistryImage targetImage =
         RegistryImage.named(ImageReference.of("gcr.io", "my-project/my-app", null))
             .addCredential("username", "password");
@@ -138,7 +131,7 @@ public class JibContainerBuilderTest {
         Containerizer.to(targetImage)
             .setBaseImageLayersCache(Paths.get("base/image/layers"))
             .setApplicationLayersCache(Paths.get("application/layers"))
-            .setExecutorService(mockExecutorService)
+            .setExecutorService(executorService)
             .addEventHandler(mockJibEventConsumer)
             .setAlwaysCacheBaseImage(false);
 
@@ -149,9 +142,7 @@ public class JibContainerBuilderTest {
     JibContainerBuilder jibContainerBuilder =
         new JibContainerBuilder(baseImageConfiguration, spyBuildConfigurationBuilder)
             .setLayers(Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2));
-    BuildConfiguration buildConfiguration =
-        jibContainerBuilder.toBuildConfiguration(
-            containerizer, containerizer.getExecutorService().get());
+    BuildConfiguration buildConfiguration = jibContainerBuilder.toBuildConfiguration(containerizer);
 
     Assert.assertEquals(
         spyBuildConfigurationBuilder.build().getContainerConfiguration(),
@@ -188,7 +179,7 @@ public class JibContainerBuilderTest {
         Arrays.asList(mockLayerConfiguration1, mockLayerConfiguration2),
         buildConfiguration.getLayerConfigurations());
 
-    Assert.assertEquals(mockExecutorService, buildConfiguration.getExecutorService());
+    Assert.assertSame(executorService, buildConfiguration.getExecutorService());
 
     buildConfiguration.getEventHandlers().dispatch(mockJibEvent);
     Mockito.verify(mockJibEventConsumer).accept(mockJibEvent);
@@ -207,94 +198,11 @@ public class JibContainerBuilderTest {
                 containerizer
                     .withAdditionalTag("tag1")
                     .withAdditionalTag("tag2")
-                    .setToolName("toolName"),
-                MoreExecutors.newDirectExecutorService());
+                    .setToolName("toolName"));
     Assert.assertSame(OCIManifestTemplate.class, buildConfiguration.getTargetFormat());
     Assert.assertEquals(
         ImmutableSet.of("latest", "tag1", "tag2"), buildConfiguration.getAllTargetImageTags());
     Assert.assertEquals("toolName", buildConfiguration.getToolName());
     Assert.assertFalse(buildConfiguration.getAlwaysCacheBaseImage());
-  }
-
-  /** Verify that an internally-created ExecutorService is shutdown. */
-  @Test
-  public void testContainerize_executorCreated() throws Exception {
-    ImageConfiguration imageConfiguration =
-        ImageConfiguration.builder(ImageReference.parse("base/image")).build();
-    JibContainerBuilder jibContainerBuilder =
-        new JibContainerBuilder(imageConfiguration, spyBuildConfigurationBuilder)
-            .setEntrypoint(Arrays.asList("entry", "point"))
-            .setEnvironment(ImmutableMap.of("name", "value"))
-            .setExposedPorts(ImmutableSet.of(Port.tcp(1234), Port.udp(5678)))
-            .setLabels(ImmutableMap.of("key", "value"))
-            .setProgramArguments(Arrays.asList("program", "arguments"))
-            .setCreationTime(Instant.ofEpochMilli(1000))
-            .setUser("user")
-            .setWorkingDirectory(AbsoluteUnixPath.get("/working/directory"));
-
-    Containerizer mockContainerizer = createMockContainerizer();
-
-    jibContainerBuilder.containerize(mockContainerizer, () -> mockExecutorService);
-
-    Mockito.verify(mockExecutorService).shutdown();
-  }
-
-  /** Verify that a provided ExecutorService is not shutdown. */
-  @Test
-  public void testContainerize_configuredExecutor() throws Exception {
-    ImageConfiguration imageConfiguration =
-        ImageConfiguration.builder(ImageReference.parse("base/image")).build();
-    JibContainerBuilder jibContainerBuilder =
-        new JibContainerBuilder(imageConfiguration, spyBuildConfigurationBuilder)
-            .setEntrypoint(Arrays.asList("entry", "point"))
-            .setEnvironment(ImmutableMap.of("name", "value"))
-            .setExposedPorts(ImmutableSet.of(Port.tcp(1234), Port.udp(5678)))
-            .setLabels(ImmutableMap.of("key", "value"))
-            .setProgramArguments(Arrays.asList("program", "arguments"))
-            .setCreationTime(Instant.ofEpochMilli(1000))
-            .setUser("user")
-            .setWorkingDirectory(AbsoluteUnixPath.get("/working/directory"));
-    Containerizer mockContainerizer = createMockContainerizer();
-    Mockito.when(mockContainerizer.getExecutorService())
-        .thenReturn(Optional.of(mockExecutorService));
-
-    jibContainerBuilder.containerize(
-        mockContainerizer,
-        () -> {
-          throw new AssertionError();
-        });
-
-    Mockito.verify(mockExecutorService, Mockito.never()).shutdown();
-  }
-
-  private Containerizer createMockContainerizer()
-      throws CacheDirectoryCreationException, InvalidImageReferenceException, InterruptedException,
-          ExecutionException, DigestException {
-
-    ImageReference targetImage = ImageReference.parse("target-image");
-    Containerizer mockContainerizer = Mockito.mock(Containerizer.class);
-    BuildResult mockBuildResult = Mockito.mock(BuildResult.class);
-
-    Mockito.when(mockContainerizer.getImageConfiguration())
-        .thenReturn(ImageConfiguration.builder(targetImage).build());
-    Mockito.when(mockContainerizer.run(Mockito.any(BuildConfiguration.class)))
-        .thenReturn(mockBuildResult);
-    Mockito.when(mockBuildResult.getImageDigest())
-        .thenReturn(
-            DescriptorDigest.fromHash(
-                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
-    Mockito.when(mockBuildResult.getImageId())
-        .thenReturn(
-            DescriptorDigest.fromHash(
-                "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"));
-
-    Mockito.when(mockContainerizer.getAdditionalTags()).thenReturn(Collections.emptySet());
-    Mockito.when(mockContainerizer.getBaseImageLayersCacheDirectory()).thenReturn(Paths.get("/"));
-    Mockito.when(mockContainerizer.getApplicationLayersCacheDirectory()).thenReturn(Paths.get("/"));
-    Mockito.when(mockContainerizer.getAllowInsecureRegistries()).thenReturn(false);
-    Mockito.when(mockContainerizer.getToolName()).thenReturn("mocktool");
-    Mockito.when(mockContainerizer.getExecutorService()).thenReturn(Optional.empty());
-    Mockito.when(mockContainerizer.buildEventHandlers()).thenReturn(EventHandlers.NONE);
-    return mockContainerizer;
   }
 }

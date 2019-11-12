@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.NotifyingOutputStream;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
@@ -113,5 +114,11 @@ class BlobPuller implements RegistryEndpointProvider<Void> {
         + registryEndpointRequestProperties.getImageName()
         + " with digest "
         + blobDigest;
+  }
+
+  @Override
+  public Void handleHttpResponseException(ResponseException responseException)
+      throws ResponseException, RegistryErrorException {
+    throw responseException;
   }
 }

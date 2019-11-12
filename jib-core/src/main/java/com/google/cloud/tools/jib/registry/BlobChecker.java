@@ -17,12 +17,12 @@
 package com.google.cloud.tools.jib.registry;
 
 import com.google.api.client.http.HttpMethods;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.DescriptorDigest;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.http.BlobHttpContent;
 import com.google.cloud.tools.jib.http.Response;
+import com.google.cloud.tools.jib.http.ResponseException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collections;
@@ -60,26 +60,26 @@ class BlobChecker implements RegistryEndpointProvider<Optional<BlobDescriptor>> 
   }
 
   @Override
-  public Optional<BlobDescriptor> handleHttpResponseException(
-      HttpResponseException httpResponseException) throws HttpResponseException {
-    if (httpResponseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
-      throw httpResponseException;
+  public Optional<BlobDescriptor> handleHttpResponseException(ResponseException responseException)
+      throws ResponseException {
+    if (responseException.getStatusCode() != HttpStatusCodes.STATUS_CODE_NOT_FOUND) {
+      throw responseException;
     }
 
     // Finds a BLOB_UNKNOWN error response code.
-    if (httpResponseException.getContent() == null) {
+    if (responseException.getContent() == null) {
       // TODO: The Google HTTP client gives null content for HEAD requests. Make the content never
       // be null, even for HEAD requests.
       return Optional.empty();
     }
 
-    ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(httpResponseException);
+    ErrorCodes errorCode = ErrorResponseUtil.getErrorCode(responseException);
     if (errorCode == ErrorCodes.BLOB_UNKNOWN) {
       return Optional.empty();
     }
 
     // BLOB_UNKNOWN was not found as a error response code.
-    throw httpResponseException;
+    throw responseException;
   }
 
   @Override

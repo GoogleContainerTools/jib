@@ -14,8 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.gradle;
+package com.google.cloud.tools.jib.gradle.skaffold;
 
+import com.google.cloud.tools.jib.gradle.JibExtension;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldFilesOutput;
 import com.google.common.base.Preconditions;
 import java.io.File;

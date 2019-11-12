@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /** Maven-specific adapter for providing raw configuration parameter values. */
-class MavenRawConfiguration implements RawConfiguration {
+public class MavenRawConfiguration implements RawConfiguration {
 
   private final JibPluginConfiguration jibPluginConfiguration;
 
@@ -37,7 +37,7 @@ class MavenRawConfiguration implements RawConfiguration {
    *
    * @param jibPluginConfiguration the Jib plugin configuration
    */
-  MavenRawConfiguration(JibPluginConfiguration jibPluginConfiguration) {
+  public MavenRawConfiguration(JibPluginConfiguration jibPluginConfiguration) {
     this.jibPluginConfiguration = jibPluginConfiguration;
   }
 

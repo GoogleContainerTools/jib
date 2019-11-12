@@ -16,7 +16,6 @@
 
 package com.google.cloud.tools.jib.plugins.common;
 
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.Containerizer;
@@ -28,6 +27,7 @@ import com.google.cloud.tools.jib.api.LogEvent;
 import com.google.cloud.tools.jib.api.RegistryAuthenticationFailedException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.api.RegistryUnauthorizedException;
+import com.google.cloud.tools.jib.http.ResponseException;
 import com.google.cloud.tools.jib.registry.RegistryCredentialsNotSentException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Verify;
@@ -251,10 +251,10 @@ public class JibBuildRunner {
       throw new BuildStepsExecutionException(helpfulSuggestions.forCredentialsNotSent(), ex);
 
     } catch (RegistryAuthenticationFailedException ex) {
-      if (ex.getCause() instanceof HttpResponseException) {
+      if (ex.getCause() instanceof ResponseException) {
         handleRegistryUnauthorizedException(
             new RegistryUnauthorizedException(
-                ex.getServerUrl(), ex.getImageName(), (HttpResponseException) ex.getCause()),
+                ex.getServerUrl(), ex.getImageName(), (ResponseException) ex.getCause()),
             helpfulSuggestions);
       } else {
         // Unknown cause

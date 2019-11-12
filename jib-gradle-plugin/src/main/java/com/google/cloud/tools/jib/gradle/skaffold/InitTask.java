@@ -14,13 +14,15 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.gradle;
+package com.google.cloud.tools.jib.gradle.skaffold;
 
+import com.google.cloud.tools.jib.gradle.JibExtension;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldInitOutput;
 import com.google.common.base.Preconditions;
 import java.io.IOException;
 import javax.annotation.Nullable;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.Project;
 import org.gradle.api.tasks.TaskAction;
 
 /**
@@ -28,21 +30,26 @@ import org.gradle.api.tasks.TaskAction;
  *
  * <p>Expected use: {@code ./gradlew _jibSkaffoldInit -q}
  */
-public class SkaffoldInitTask extends DefaultTask {
+public class InitTask extends DefaultTask {
 
   @Nullable private JibExtension jibExtension;
 
-  public SkaffoldInitTask setJibExtension(JibExtension jibExtension) {
+  public InitTask setJibExtension(JibExtension jibExtension) {
     this.jibExtension = jibExtension;
     return this;
   }
 
   @TaskAction
   public void listModulesAndTargets() throws IOException {
+    Project project = getProject();
+    // Ignore parent projects
+    if (project.getSubprojects().size() > 0) {
+      return;
+    }
     SkaffoldInitOutput skaffoldInitOutput = new SkaffoldInitOutput();
     skaffoldInitOutput.setImage(Preconditions.checkNotNull(jibExtension).getTo().getImage());
-    if (!getProject().equals(getProject().getRootProject())) {
-      skaffoldInitOutput.setProject(getProject().getName());
+    if (!project.equals(project.getRootProject())) {
+      skaffoldInitOutput.setProject(project.getName());
     }
     System.out.println("\nBEGIN JIB JSON");
     System.out.println(skaffoldInitOutput.getJsonString());

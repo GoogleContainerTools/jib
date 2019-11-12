@@ -5,9 +5,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- New method: `JibContainerBuilder#describeContainer` which returns new class: `JibContainerDescription`, containing a selection of information used for the Jib build. ([#2115](https://github.com/GoogleContainerTools/jib/issues/2115))
+
 ### Changed
 
 ### Fixed
+
+- `Containerizer#setAllowInsecureRegistries(boolean)` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074)
 
 ## 0.12.0
 

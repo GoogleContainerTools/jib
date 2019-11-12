@@ -4,12 +4,12 @@
   <modelVersion>4.0.0</modelVersion>
 
   <!-- Defines artifact information for this module. -->
-  <artifactId>name-service</artifactId>
+  <artifactId>simple-service</artifactId>
   <version>1.0.0.TEST-SNAPSHOT</version>
 
   <!-- Inherits from the Jib Multimodule parent POM. -->
   <parent>
-    <groupId>com.example</groupId>
+    <groupId>com.jib.test</groupId>
     <artifactId>multimodule</artifactId>
     <version>1.0.0.TEST-SNAPSHOT</version>
   </parent>

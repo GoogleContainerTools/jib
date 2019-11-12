@@ -17,7 +17,6 @@
 package com.google.cloud.tools.jib.builder.steps;
 
 import com.google.cloud.tools.jib.api.Credential;
-import com.google.cloud.tools.jib.api.InsecureRegistryException;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
@@ -68,8 +67,6 @@ class AuthenticatePushStep implements Callable<Optional<Authorization>> {
       if (registryAuthenticator.isPresent()) {
         return Optional.of(registryAuthenticator.get().authenticatePush(registryCredential));
       }
-    } catch (InsecureRegistryException ex) {
-      // Cannot skip certificate validation or use HTTP; fall through.
     }
 
     return (registryCredential == null || registryCredential.isOAuth2RefreshToken())

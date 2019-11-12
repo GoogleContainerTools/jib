@@ -31,7 +31,7 @@ import org.apache.maven.settings.crypto.SettingsDecrypter;
 import org.sonatype.plexus.components.cipher.DefaultPlexusCipher;
 import org.sonatype.plexus.components.sec.dispatcher.DefaultSecDispatcher;
 
-public class SettingsFixture {
+class SettingsFixture {
 
   /**
    * Create a new {@link Settings} for testing purposes.
@@ -39,7 +39,7 @@ public class SettingsFixture {
    * @param settingsFile absolute path to settings.xml
    * @return {@link Settings} built from settingsFile
    */
-  public static Settings newSettings(Path settingsFile) {
+  static Settings newSettings(Path settingsFile) {
     Preconditions.checkArgument(Files.isRegularFile(settingsFile));
     try {
       SettingsBuilder settingsBuilder = new DefaultSettingsBuilderFactory().newInstance();
@@ -57,7 +57,7 @@ public class SettingsFixture {
    * @param settingsSecurityFile absolute path to security-settings.xml
    * @return {@link SettingsDecrypter} built from settingsSecurityFile
    */
-  public static SettingsDecrypter newSettingsDecrypter(Path settingsSecurityFile) {
+  static SettingsDecrypter newSettingsDecrypter(Path settingsSecurityFile) {
     Preconditions.checkArgument(Files.isRegularFile(settingsSecurityFile));
     try {
 

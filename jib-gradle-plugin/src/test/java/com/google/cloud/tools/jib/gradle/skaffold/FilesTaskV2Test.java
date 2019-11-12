@@ -14,8 +14,10 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.gradle;
+package com.google.cloud.tools.jib.gradle.skaffold;
 
+import com.google.cloud.tools.jib.gradle.JibPlugin;
+import com.google.cloud.tools.jib.gradle.TestProject;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldFilesOutput;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -47,7 +49,7 @@ public class FilesTaskV2Test {
    */
   private static String verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
     String taskName =
-        ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.FILES_TASK_V2_NAME;
+        ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.SKAFFOLD_FILES_TASK_V2_NAME;
     BuildResult buildResult = project.build(taskName, "-q");
     BuildTask jibTask = buildResult.task(taskName);
     Assert.assertNotNull(jibTask);

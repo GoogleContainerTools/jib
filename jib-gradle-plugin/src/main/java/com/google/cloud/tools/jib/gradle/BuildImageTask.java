@@ -18,6 +18,7 @@ package com.google.cloud.tools.jib.gradle;
 
 import com.google.cloud.tools.jib.api.CacheDirectoryCreationException;
 import com.google.cloud.tools.jib.api.InvalidImageReferenceException;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.BuildStepsExecutionException;
 import com.google.cloud.tools.jib.plugins.common.HelpfulSuggestions;
 import com.google.cloud.tools.jib.plugins.common.IncompatibleBaseImageJavaVersionException;
@@ -77,9 +78,10 @@ public class BuildImageTask extends DefaultTask implements JibTask {
     Preconditions.checkNotNull(jibExtension);
     TaskCommon.checkDeprecatedUsage(jibExtension, getLogger());
     TaskCommon.disableHttpLogging();
+    TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
     GradleProjectProperties projectProperties =
-        GradleProjectProperties.getForProject(getProject(), getLogger());
+        GradleProjectProperties.getForProject(getProject(), getLogger(), tempDirectoryProvider);
     try {
       if (Strings.isNullOrEmpty(jibExtension.getTo().getImage())) {
         throw new GradleException(
@@ -141,6 +143,7 @@ public class BuildImageTask extends DefaultTask implements JibTask {
           HelpfulSuggestions.forInvalidImageReference(ex.getInvalidReference()), ex);
 
     } finally {
+      tempDirectoryProvider.close();
       projectProperties.waitForLoggingThread();
     }
   }
