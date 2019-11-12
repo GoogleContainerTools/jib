@@ -208,7 +208,7 @@ public class BuildContextTest {
           .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
           .setApplicationLayersCacheDirectory(Paths.get("ignored"))
           .build();
-      Assert.fail("Build configuration should not be built with missing values");
+      Assert.fail("BuildContext should not be built with missing values");
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals("target image configuration is required but not set", ex.getMessage());
@@ -220,7 +220,7 @@ public class BuildContextTest {
           .setBaseImageLayersCacheDirectory(Paths.get("ignored"))
           .setApplicationLayersCacheDirectory(Paths.get("ignored"))
           .build();
-      Assert.fail("Build configuration should not be built with missing values");
+      Assert.fail("BuildContext should not be built with missing values");
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals(
@@ -231,7 +231,7 @@ public class BuildContextTest {
     // All required fields missing
     try {
       BuildContext.builder().build();
-      Assert.fail("Build configuration should not be built with missing values");
+      Assert.fail("BuildContext should not be built with missing values");
 
     } catch (IllegalStateException ex) {
       Assert.assertEquals(

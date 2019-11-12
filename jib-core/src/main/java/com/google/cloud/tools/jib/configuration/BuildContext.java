@@ -243,7 +243,7 @@ public class BuildContext implements Closeable {
     /**
      * Builds a new {@link BuildContext} using the parameters passed into the builder.
      *
-     * @return the corresponding build configuration
+     * @return the corresponding build context
      * @throws IOException if an I/O exception occurs
      */
     public BuildContext build() throws IOException {
