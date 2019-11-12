@@ -242,7 +242,7 @@ public class StepsRunner {
                 buildConfiguration, childProgressDispatcherFactory, dockerClient.get()));
     results.baseImageLayers = executorService.submit(() -> localImage.get().layers);
     results.baseImageAndAuth =
-        executorService.submit(LocalBaseImageSteps.retrieveLocalImageStep(localImage));
+        executorService.submit(LocalBaseImageSteps.retrieveImageAndAuthorizationStep(localImage));
   }
 
   private void extractTar() {
@@ -256,7 +256,7 @@ public class StepsRunner {
                 buildConfiguration, childProgressDispatcherFactory, tarPath.get()));
     results.baseImageLayers = executorService.submit(() -> localImage.get().layers);
     results.baseImageAndAuth =
-        executorService.submit(LocalBaseImageSteps.retrieveLocalImageStep(localImage));
+        executorService.submit(LocalBaseImageSteps.retrieveImageAndAuthorizationStep(localImage));
   }
 
   private void pullBaseImage() {

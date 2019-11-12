@@ -136,7 +136,7 @@ public class LocalBaseImageSteps {
     return () -> cacheDockerImageTar(buildConfiguration, tarPath, progressEventDispatcherFactory);
   }
 
-  static Callable<ImageAndAuthorization> retrieveLocalImageStep(
+  static Callable<ImageAndAuthorization> retrieveImageAndAuthorizationStep(
       Future<LocalImage> localImageFuture) {
     return () -> {
       // Collect compressed layers and add to manifest
