@@ -239,7 +239,10 @@ public class StepsRunner {
     Future<LocalImage> localImage =
         executorService.submit(
             LocalBaseImageSteps.retrieveDockerDaemonLayersStep(
-                buildConfiguration, childProgressDispatcherFactory, dockerClient.get()));
+                buildConfiguration,
+                childProgressDispatcherFactory,
+                dockerClient.get(),
+                tempDirectoryProvider));
     results.baseImageLayers = executorService.submit(() -> localImage.get().layers);
     results.baseImageAndAuth =
         executorService.submit(LocalBaseImageSteps.retrieveImageAndAuthorizationStep(localImage));
@@ -253,7 +256,10 @@ public class StepsRunner {
     Future<LocalImage> localImage =
         executorService.submit(
             LocalBaseImageSteps.retrieveTarLayersStep(
-                buildConfiguration, childProgressDispatcherFactory, tarPath.get()));
+                buildConfiguration,
+                childProgressDispatcherFactory,
+                tarPath.get(),
+                tempDirectoryProvider));
     results.baseImageLayers = executorService.submit(() -> localImage.get().layers);
     results.baseImageAndAuth =
         executorService.submit(LocalBaseImageSteps.retrieveImageAndAuthorizationStep(localImage));

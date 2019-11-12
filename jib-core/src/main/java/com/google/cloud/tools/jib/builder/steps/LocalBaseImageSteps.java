@@ -95,11 +95,11 @@ public class LocalBaseImageSteps {
   static Callable<LocalImage> retrieveDockerDaemonLayersStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      DockerClient dockerClient) {
+      DockerClient dockerClient,
+      TempDirectoryProvider tempDirectoryProvider) {
     return () -> {
       ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
-      try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
-          ProgressEventDispatcher progressEventDispatcher =
+      try (ProgressEventDispatcher progressEventDispatcher =
               progressEventDispatcherFactory.create("processing base image " + imageReference, 2);
           TimerEventDispatcher ignored =
               new TimerEventDispatcher(
@@ -124,7 +124,10 @@ public class LocalBaseImageSteps {
         }
 
         return cacheDockerImageTar(
-            buildConfiguration, tarPath, progressEventDispatcher.newChildProducer());
+            buildConfiguration,
+            tarPath,
+            progressEventDispatcher.newChildProducer(),
+            tempDirectoryProvider);
       }
     };
   }
@@ -132,8 +135,11 @@ public class LocalBaseImageSteps {
   static Callable<LocalImage> retrieveTarLayersStep(
       BuildConfiguration buildConfiguration,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
-      Path tarPath) {
-    return () -> cacheDockerImageTar(buildConfiguration, tarPath, progressEventDispatcherFactory);
+      Path tarPath,
+      TempDirectoryProvider tempDirectoryProvider) {
+    return () ->
+        cacheDockerImageTar(
+            buildConfiguration, tarPath, progressEventDispatcherFactory, tempDirectoryProvider);
   }
 
   static Callable<ImageAndAuthorization> retrieveImageAndAuthorizationStep(
@@ -185,72 +191,71 @@ public class LocalBaseImageSteps {
   static LocalImage cacheDockerImageTar(
       BuildConfiguration buildConfiguration,
       Path tarPath,
-      ProgressEventDispatcher.Factory progressEventDispatcherFactory)
+      ProgressEventDispatcher.Factory progressEventDispatcherFactory,
+      TempDirectoryProvider tempDirectoryProvider)
       throws IOException, LayerCountMismatchException {
     ExecutorService executorService = buildConfiguration.getExecutorService();
-    try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
-      Path destination = tempDirectoryProvider.newDirectory();
+    Path destination = tempDirectoryProvider.newDirectory();
 
-      try (TimerEventDispatcher ignored =
-          new TimerEventDispatcher(
-              buildConfiguration.getEventHandlers(),
-              "Extracting tar " + tarPath + " into " + destination)) {
-        TarExtractor.extract(tarPath, destination);
+    try (TimerEventDispatcher ignored =
+        new TimerEventDispatcher(
+            buildConfiguration.getEventHandlers(),
+            "Extracting tar " + tarPath + " into " + destination)) {
+      TarExtractor.extract(tarPath, destination);
 
-        InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
-        DockerManifestEntryTemplate loadManifest =
-            new ObjectMapper()
-                .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-                .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
-        manifestStream.close();
+      InputStream manifestStream = Files.newInputStream(destination.resolve("manifest.json"));
+      DockerManifestEntryTemplate loadManifest =
+          new ObjectMapper()
+              .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+              .readValue(manifestStream, DockerManifestEntryTemplate[].class)[0];
+      manifestStream.close();
 
-        Path configPath = destination.resolve(loadManifest.getConfig());
-        ContainerConfigurationTemplate configurationTemplate =
-            JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
-        BlobDescriptor originalConfigDescriptor =
-            Blobs.from(configPath).writeTo(ByteStreams.nullOutputStream());
+      Path configPath = destination.resolve(loadManifest.getConfig());
+      ContainerConfigurationTemplate configurationTemplate =
+          JsonTemplateMapper.readJsonFromFile(configPath, ContainerConfigurationTemplate.class);
+      BlobDescriptor originalConfigDescriptor =
+          Blobs.from(configPath).writeTo(ByteStreams.nullOutputStream());
 
-        List<String> layerFiles = loadManifest.getLayerFiles();
-        if (configurationTemplate.getLayerCount() != layerFiles.size()) {
-          throw new LayerCountMismatchException(
-              "Invalid base image format: manifest contains "
-                  + layerFiles.size()
-                  + " layers, but container configuration contains "
-                  + configurationTemplate.getLayerCount()
-                  + " layers");
+      List<String> layerFiles = loadManifest.getLayerFiles();
+      if (configurationTemplate.getLayerCount() != layerFiles.size()) {
+        throw new LayerCountMismatchException(
+            "Invalid base image format: manifest contains "
+                + layerFiles.size()
+                + " layers, but container configuration contains "
+                + configurationTemplate.getLayerCount()
+                + " layers");
+      }
+      buildConfiguration
+          .getBaseImageLayersCache()
+          .writeLocalConfig(originalConfigDescriptor.getDigest(), configurationTemplate);
+
+      // Check the first layer to see if the layers are compressed already. 'docker save' output
+      // is uncompressed, but a jib-built tar has compressed layers.
+      boolean layersAreCompressed =
+          layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
+
+      // Process layer blobs
+      try (ProgressEventDispatcher progressEventDispatcher =
+          progressEventDispatcherFactory.create(
+              "processing base image layers", layerFiles.size())) {
+        // Start compressing layers in parallel
+        List<Future<PreparedLayer>> preparedLayers = new ArrayList<>();
+        for (int index = 0; index < layerFiles.size(); index++) {
+          Path layerFile = destination.resolve(layerFiles.get(index));
+          DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
+          ProgressEventDispatcher.Factory layerProgressDispatcherFactory =
+              progressEventDispatcher.newChildProducer();
+          preparedLayers.add(
+              executorService.submit(
+                  () ->
+                      compressAndCacheTarLayer(
+                          buildConfiguration.getBaseImageLayersCache(),
+                          diffId,
+                          layerFile,
+                          layersAreCompressed,
+                          layerProgressDispatcherFactory)));
         }
-        buildConfiguration
-            .getBaseImageLayersCache()
-            .writeLocalConfig(originalConfigDescriptor.getDigest(), configurationTemplate);
-
-        // Check the first layer to see if the layers are compressed already. 'docker save' output
-        // is uncompressed, but a jib-built tar has compressed layers.
-        boolean layersAreCompressed =
-            layerFiles.size() > 0 && isGzipped(destination.resolve(layerFiles.get(0)));
-
-        // Process layer blobs
-        try (ProgressEventDispatcher progressEventDispatcher =
-            progressEventDispatcherFactory.create(
-                "processing base image layers", layerFiles.size())) {
-          // Start compressing layers in parallel
-          List<Future<PreparedLayer>> preparedLayers = new ArrayList<>();
-          for (int index = 0; index < layerFiles.size(); index++) {
-            Path layerFile = destination.resolve(layerFiles.get(index));
-            DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
-            ProgressEventDispatcher.Factory layerProgressDispatcherFactory =
-                progressEventDispatcher.newChildProducer();
-            preparedLayers.add(
-                executorService.submit(
-                    () ->
-                        compressAndCacheTarLayer(
-                            buildConfiguration.getBaseImageLayersCache(),
-                            diffId,
-                            layerFile,
-                            layersAreCompressed,
-                            layerProgressDispatcherFactory)));
-          }
-          return new LocalImage(preparedLayers, configurationTemplate);
-        }
+        return new LocalImage(preparedLayers, configurationTemplate);
       }
     }
   }

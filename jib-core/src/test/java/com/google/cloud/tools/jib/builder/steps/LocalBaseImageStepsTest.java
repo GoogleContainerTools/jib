@@ -23,6 +23,7 @@ import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.configuration.BuildConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
 import com.google.cloud.tools.jib.event.EventHandlers;
+import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -33,6 +34,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.DigestException;
 import java.util.Optional;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -47,6 +49,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class LocalBaseImageStepsTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  private final TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
   @Mock private BuildConfiguration buildConfiguration;
   @Mock private EventHandlers eventHandlers;
@@ -73,12 +77,17 @@ public class LocalBaseImageStepsTest {
         .thenReturn(childDispatcher);
   }
 
+  @After
+  public void cleanup() {
+    tempDirectoryProvider.close();
+  }
+
   @Test
   public void testCacheDockerImageTar_validDocker() throws Exception {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
         LocalBaseImageSteps.cacheDockerImageTar(
-            buildConfiguration, dockerBuild, progressEventDispatcherFactory);
+            buildConfiguration, dockerBuild, progressEventDispatcherFactory, tempDirectoryProvider);
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
@@ -102,7 +111,7 @@ public class LocalBaseImageStepsTest {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
         LocalBaseImageSteps.cacheDockerImageTar(
-            buildConfiguration, tarBuild, progressEventDispatcherFactory);
+            buildConfiguration, tarBuild, progressEventDispatcherFactory, tempDirectoryProvider);
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
