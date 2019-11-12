@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Each local base image layer is pushed immediately after being compressed, rather than waiting for all layers to finish compressing before starting to push. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
+
 ### Fixed
 
 - Fixed reporting wrong module name when `skaffold init` is run on multi-module projects ([#2088](https://github.com/GoogleContainerTools/jib/issues/2088)).
