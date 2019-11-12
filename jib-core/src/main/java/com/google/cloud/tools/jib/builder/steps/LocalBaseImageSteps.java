@@ -143,22 +143,21 @@ public class LocalBaseImageSteps {
   }
 
   static Callable<ImageAndAuthorization> retrieveImageAndAuthorizationStep(
-      Future<LocalImage> localImageFuture) {
+      List<PreparedLayer> layers, ContainerConfigurationTemplate configurationTemplate) {
     return () -> {
       // Collect compressed layers and add to manifest
-      LocalImage localImage = localImageFuture.get();
       V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
-      for (Future<PreparedLayer> layerFuture : localImage.layers) {
-        BlobDescriptor descriptor = layerFuture.get().getBlobDescriptor();
+      for (PreparedLayer layerFuture : layers) {
+        BlobDescriptor descriptor = layerFuture.getBlobDescriptor();
         v22Manifest.addLayer(descriptor.getSize(), descriptor.getDigest());
       }
 
       BlobDescriptor configDescriptor =
-          Blobs.from(localImage.configurationTemplate).writeTo(ByteStreams.nullOutputStream());
+          Blobs.from(configurationTemplate).writeTo(ByteStreams.nullOutputStream());
       v22Manifest.setContainerConfiguration(
           configDescriptor.getSize(), configDescriptor.getDigest());
       return new ImageAndAuthorization(
-          JsonToImageTranslator.toImage(v22Manifest, localImage.configurationTemplate), null);
+          JsonToImageTranslator.toImage(v22Manifest, configurationTemplate), null);
     };
   }
 

@@ -78,7 +78,7 @@ public class LocalBaseImageStepsTest {
   }
 
   @After
-  public void cleanup() {
+  public void tearDown() {
     tempDirectoryProvider.close();
   }
 
