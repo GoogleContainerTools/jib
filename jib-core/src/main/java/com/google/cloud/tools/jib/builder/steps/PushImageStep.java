@@ -22,7 +22,7 @@ import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.Authorization;
@@ -45,17 +45,17 @@ class PushImageStep implements Callable<BuildResult> {
   private static final String DESCRIPTION = "Pushing manifest";
 
   static ImmutableList<PushImageStep> makeList(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Authorization pushAuthorization,
       BlobDescriptor containerConfigurationDigestAndSize,
       Image builtImage)
       throws IOException {
-    Set<String> tags = buildConfiguration.getAllTargetImageTags();
+    Set<String> tags = buildContext.getAllTargetImageTags();
 
     try (TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), "Preparing manifest pushers");
+                buildContext.getEventHandlers(), "Preparing manifest pushers");
         ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("launching manifest pushers", tags.size())) {
 
@@ -63,7 +63,7 @@ class PushImageStep implements Callable<BuildResult> {
       BuildableManifestTemplate manifestTemplate =
           new ImageToJsonTranslator(builtImage)
               .getManifestTemplate(
-                  buildConfiguration.getTargetFormat(), containerConfigurationDigestAndSize);
+                  buildContext.getTargetFormat(), containerConfigurationDigestAndSize);
 
       DescriptorDigest manifestDigest = Digests.computeJsonDigest(manifestTemplate);
 
@@ -71,7 +71,7 @@ class PushImageStep implements Callable<BuildResult> {
           .map(
               tag ->
                   new PushImageStep(
-                      buildConfiguration,
+                      buildContext,
                       progressEventDispatcher.newChildProducer(),
                       pushAuthorization,
                       manifestTemplate,
@@ -82,7 +82,7 @@ class PushImageStep implements Callable<BuildResult> {
     }
   }
 
-  private final BuildConfiguration buildConfiguration;
+  private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final BuildableManifestTemplate manifestTemplate;
@@ -92,14 +92,14 @@ class PushImageStep implements Callable<BuildResult> {
   private final DescriptorDigest imageId;
 
   PushImageStep(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization pushAuthorization,
       BuildableManifestTemplate manifestTemplate,
       String tag,
       DescriptorDigest imageDigest,
       DescriptorDigest imageId) {
-    this.buildConfiguration = buildConfiguration;
+    this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.pushAuthorization = pushAuthorization;
     this.manifestTemplate = manifestTemplate;
@@ -110,14 +110,14 @@ class PushImageStep implements Callable<BuildResult> {
 
   @Override
   public BuildResult call() throws IOException, RegistryException {
-    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
     try (TimerEventDispatcher ignored = new TimerEventDispatcher(eventHandlers, DESCRIPTION);
         ProgressEventDispatcher ignored2 =
             progressEventDispatcherFactory.create("pushing manifest for " + tag, 1)) {
       eventHandlers.dispatch(LogEvent.info("Pushing manifest for " + tag + "..."));
 
       RegistryClient registryClient =
-          buildConfiguration
+          buildContext
               .newTargetImageRegistryClientFactory()
               .setAuthorization(pushAuthorization)
               .newRegistryClient();

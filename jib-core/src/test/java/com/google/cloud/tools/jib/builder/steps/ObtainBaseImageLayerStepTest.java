@@ -24,7 +24,7 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PreparedLayer.StateInTarget;
 import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthorization;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.image.Image;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.ReferenceLayer;
@@ -58,7 +58,7 @@ public class ObtainBaseImageLayerStepTest {
   @Mock private RegistryClient registryClient;
 
   @Mock(answer = Answers.RETURNS_MOCKS)
-  private BuildConfiguration buildConfiguration;
+  private BuildContext buildContext;
 
   @Mock(answer = Answers.RETURNS_MOCKS)
   private ProgressEventDispatcher.Factory progressDispatcherFactory;
@@ -88,9 +88,9 @@ public class ObtainBaseImageLayerStepTest {
     Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(registryClient);
 
     Mockito.lenient()
-        .when(buildConfiguration.newBaseImageRegistryClientFactory())
+        .when(buildContext.newBaseImageRegistryClientFactory())
         .thenReturn(registryClientFactory);
-    Mockito.when(buildConfiguration.newTargetImageRegistryClientFactory())
+    Mockito.when(buildContext.newTargetImageRegistryClientFactory())
         .thenReturn(registryClientFactory);
 
     // necessary to prevent error from classes dealing with progress report
@@ -108,7 +108,7 @@ public class ObtainBaseImageLayerStepTest {
       throws IOException, CacheCorruptedException, RegistryException {
     ImmutableList<ObtainBaseImageLayerStep> pullers =
         ObtainBaseImageLayerStep.makeListForSelectiveDownload(
-            buildConfiguration, progressDispatcherFactory, baseImageAndAuth, null);
+            buildContext, progressDispatcherFactory, baseImageAndAuth, null);
 
     Assert.assertEquals(2, pullers.size());
     PreparedLayer preparedExistingLayer = pullers.get(0).call();
@@ -133,7 +133,7 @@ public class ObtainBaseImageLayerStepTest {
       throws IOException, CacheCorruptedException, RegistryException {
     ImmutableList<ObtainBaseImageLayerStep> pullers =
         ObtainBaseImageLayerStep.makeListForForcedDownload(
-            buildConfiguration, progressDispatcherFactory, baseImageAndAuth);
+            buildContext, progressDispatcherFactory, baseImageAndAuth);
 
     Assert.assertEquals(2, pullers.size());
     PreparedLayer preparedExistingLayer = pullers.get(0).call();
@@ -157,11 +157,11 @@ public class ObtainBaseImageLayerStepTest {
   @Test
   public void testLayerMissingInCacheInOfflineMode()
       throws CacheCorruptedException, RegistryException {
-    Mockito.when(buildConfiguration.isOffline()).thenReturn(true);
+    Mockito.when(buildContext.isOffline()).thenReturn(true);
 
     ImmutableList<ObtainBaseImageLayerStep> pullers =
         ObtainBaseImageLayerStep.makeListForForcedDownload(
-            buildConfiguration, progressDispatcherFactory, baseImageAndAuth);
+            buildContext, progressDispatcherFactory, baseImageAndAuth);
     try {
       pullers.get(1).call();
       Assert.fail();

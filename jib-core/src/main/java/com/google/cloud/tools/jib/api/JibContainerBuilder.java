@@ -18,7 +18,7 @@ package com.google.cloud.tools.jib.api;
 
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.BuildResult;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ContainerConfiguration;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.docker.DockerClient;
@@ -65,7 +65,7 @@ public class JibContainerBuilder {
 
   private final ContainerConfiguration.Builder containerConfigurationBuilder =
       ContainerConfiguration.builder();
-  private final BuildConfiguration.Builder buildConfigurationBuilder;
+  private final BuildContext.Builder buildContextBuilder;
 
   private List<LayerConfiguration> layerConfigurations = new ArrayList<>();
 
@@ -75,7 +75,7 @@ public class JibContainerBuilder {
         ImageConfiguration.builder(baseImage.getImageReference())
             .setCredentialRetrievers(baseImage.getCredentialRetrievers())
             .build(),
-        BuildConfiguration.builder());
+        BuildContext.builder());
   }
 
   /** Instantiate with {@link Jib#from}. */
@@ -85,7 +85,7 @@ public class JibContainerBuilder {
             .setDockerClient(
                 new DockerClient(baseImage.getDockerExecutable(), baseImage.getDockerEnvironment()))
             .build(),
-        BuildConfiguration.builder());
+        BuildContext.builder());
   }
 
   /** Instantiate with {@link Jib#from}. */
@@ -95,14 +95,12 @@ public class JibContainerBuilder {
         ImageConfiguration.builder(baseImage.getImageReference().orElse(ImageReference.scratch()))
             .setTarPath(baseImage.getPath())
             .build(),
-        BuildConfiguration.builder());
+        BuildContext.builder());
   }
 
   @VisibleForTesting
-  JibContainerBuilder(
-      ImageConfiguration imageConfiguration, BuildConfiguration.Builder buildConfigurationBuilder) {
-    this.buildConfigurationBuilder =
-        buildConfigurationBuilder.setBaseImageConfiguration(imageConfiguration);
+  JibContainerBuilder(ImageConfiguration imageConfiguration, BuildContext.Builder buildContext) {
+    this.buildContextBuilder = buildContext.setBaseImageConfiguration(imageConfiguration);
   }
 
   /**
@@ -400,7 +398,7 @@ public class JibContainerBuilder {
    * @return this
    */
   public JibContainerBuilder setFormat(ImageFormat imageFormat) {
-    buildConfigurationBuilder.setTargetFormat(imageFormat);
+    buildContextBuilder.setTargetFormat(imageFormat);
     return this;
   }
 
@@ -471,13 +469,13 @@ public class JibContainerBuilder {
   public JibContainer containerize(Containerizer containerizer)
       throws InterruptedException, RegistryException, IOException, CacheDirectoryCreationException,
           ExecutionException {
-    try (BuildConfiguration buildConfiguration = toBuildConfiguration(containerizer);
+    try (BuildContext buildContext = toBuildContext(containerizer);
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), containerizer.getDescription())) {
-      logSources(buildConfiguration.getEventHandlers());
+                buildContext.getEventHandlers(), containerizer.getDescription())) {
+      logSources(buildContext.getEventHandlers());
 
-      BuildResult result = containerizer.run(buildConfiguration);
+      BuildResult result = containerizer.run(buildContext);
       return new JibContainer(result.getImageDigest(), result.getImageId());
 
     } catch (ExecutionException ex) {
@@ -500,17 +498,17 @@ public class JibContainerBuilder {
   }
 
   /**
-   * Builds a {@link BuildConfiguration} using this and a {@link Containerizer}.
+   * Builds a {@link BuildContext} using this and a {@link Containerizer}.
    *
    * @param containerizer the {@link Containerizer}
-   * @return the {@link BuildConfiguration}
+   * @return the {@link BuildContext}
    * @throws CacheDirectoryCreationException if a cache directory could not be created
    * @throws IOException if an I/O exception occurs
    */
   @VisibleForTesting
-  BuildConfiguration toBuildConfiguration(Containerizer containerizer)
+  BuildContext toBuildContext(Containerizer containerizer)
       throws CacheDirectoryCreationException, IOException {
-    return buildConfigurationBuilder
+    return buildContextBuilder
         .setTargetImageConfiguration(containerizer.getImageConfiguration())
         .setAdditionalTargetImageTags(containerizer.getAdditionalTags())
         .setBaseImageLayersCacheDirectory(containerizer.getBaseImageLayersCacheDirectory())

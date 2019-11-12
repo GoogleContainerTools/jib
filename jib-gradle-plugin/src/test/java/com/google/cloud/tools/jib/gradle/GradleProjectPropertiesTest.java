@@ -28,7 +28,7 @@ import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.DirectoryWalker;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
 import com.google.cloud.tools.jib.plugins.common.ContainerizingMode;
@@ -122,7 +122,7 @@ public class GradleProjectPropertiesTest {
     }
   }
 
-  /** Helper for reading back layers in a {@code BuildConfiguration}. */
+  /** Helper for reading back layers in a {@link buildContext}. */
   private static class ContainerBuilderLayers {
 
     private final List<LayerConfiguration> resourcesLayerEntries;
@@ -130,21 +130,20 @@ public class GradleProjectPropertiesTest {
     private final List<LayerConfiguration> dependenciesLayerEntries;
     private final List<LayerConfiguration> snapshotsLayerEntries;
 
-    private ContainerBuilderLayers(BuildConfiguration configuration) {
+    private ContainerBuilderLayers(BuildContext buildContext) {
       resourcesLayerEntries =
-          getLayerConfigurationsByName(configuration, LayerType.RESOURCES.getName());
-      classesLayerEntries =
-          getLayerConfigurationsByName(configuration, LayerType.CLASSES.getName());
+          getLayerConfigurationsByName(buildContext, LayerType.RESOURCES.getName());
+      classesLayerEntries = getLayerConfigurationsByName(buildContext, LayerType.CLASSES.getName());
       dependenciesLayerEntries =
-          getLayerConfigurationsByName(configuration, LayerType.DEPENDENCIES.getName());
+          getLayerConfigurationsByName(buildContext, LayerType.DEPENDENCIES.getName());
       snapshotsLayerEntries =
-          getLayerConfigurationsByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+          getLayerConfigurationsByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
     }
   }
 
   private static List<LayerConfiguration> getLayerConfigurationsByName(
-      BuildConfiguration buildConfiguration, String name) {
-    return buildConfiguration
+      BuildContext buildContext, String name) {
+    return buildContext
         .getLayerConfigurations()
         .stream()
         .filter(layer -> layer.getName().equals(name))
@@ -334,8 +333,8 @@ public class GradleProjectPropertiesTest {
   public void testCreateContainerBuilder_correctFiles()
       throws URISyntaxException, IOException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    BuildConfiguration configuration = setupBuildConfiguration("/app", DEFAULT_CONTAINERIZING_MODE);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
+    BuildContext buildContext = setupBuildContext("/app", DEFAULT_CONTAINERIZING_MODE);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
 
     Path applicationDirectory = getResource("gradle/application");
     assertSourcePathsUnordered(
@@ -382,9 +381,8 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_nonDefaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildConfiguration configuration =
-        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
+    BuildContext buildContext = setupBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
 
     assertExtractionPathsUnordered(
         Arrays.asList(
@@ -412,9 +410,9 @@ public class GradleProjectPropertiesTest {
   @Test
   public void testCreateContainerBuilder_defaultAppRoot()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
-    BuildConfiguration configuration =
-        setupBuildConfiguration(JavaContainerBuilder.DEFAULT_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
+    BuildContext buildContext =
+        setupBuildContext(JavaContainerBuilder.DEFAULT_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertExtractionPathsUnordered(
         Arrays.asList(
             "/app/libs/dependency-1.0.0-770.jar",
@@ -443,9 +441,8 @@ public class GradleProjectPropertiesTest {
     Path webAppDirectory = getResource("gradle/webapp");
     Path unzipTarget = setUpWarProject(webAppDirectory);
 
-    BuildConfiguration configuration =
-        setupBuildConfiguration("/my/app", DEFAULT_CONTAINERIZING_MODE);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
+    BuildContext buildContext = setupBuildContext("/my/app", DEFAULT_CONTAINERIZING_MODE);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertSourcePathsUnordered(
         ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
         layers.dependenciesLayerEntries.get(0).getLayerEntries());
@@ -507,10 +504,9 @@ public class GradleProjectPropertiesTest {
           CacheDirectoryCreationException {
     Path unzipTarget = setUpWarProject(getResource("gradle/webapp"));
 
-    BuildConfiguration configuration =
-        setupBuildConfiguration(
-            JavaContainerBuilder.DEFAULT_WEB_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
-    ContainerBuilderLayers layers = new ContainerBuilderLayers(configuration);
+    BuildContext buildContext =
+        setupBuildContext(JavaContainerBuilder.DEFAULT_WEB_APP_ROOT, DEFAULT_CONTAINERIZING_MODE);
+    ContainerBuilderLayers layers = new ContainerBuilderLayers(buildContext);
     assertSourcePathsUnordered(
         ImmutableList.of(unzipTarget.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
         layers.dependenciesLayerEntries.get(0).getLayerEntries());
@@ -544,7 +540,7 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("WEB-INF", "lib");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setupBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -552,14 +548,14 @@ public class GradleProjectPropertiesTest {
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     temporaryFolder.newFolder("WEB-INF", "classes");
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setupBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
   public void testCreateContainerBuilder_noErrorIfWebInfDoesNotExist()
       throws IOException, InvalidImageReferenceException, CacheDirectoryCreationException {
     setUpWarProject(temporaryFolder.getRoot().toPath());
-    setupBuildConfiguration("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
+    setupBuildContext("/anything", DEFAULT_CONTAINERIZING_MODE); // should pass
   }
 
   @Test
@@ -598,8 +594,7 @@ public class GradleProjectPropertiesTest {
     Assert.assertEquals("war.war", gradleProjectProperties.getWarFilePath());
   }
 
-  private BuildConfiguration setupBuildConfiguration(
-      String appRoot, ContainerizingMode containerizingMode)
+  private BuildContext setupBuildContext(String appRoot, ContainerizingMode containerizingMode)
       throws InvalidImageReferenceException, IOException, CacheDirectoryCreationException {
     JavaContainerBuilder javaContainerBuilder =
         JavaContainerBuilder.from(RegistryImage.named("base"))
@@ -608,7 +603,7 @@ public class GradleProjectPropertiesTest {
     JibContainerBuilder jibContainerBuilder =
         new GradleProjectProperties(mockProject, mockLogger, mockTempDirectoryProvider)
             .createJibContainerBuilder(javaContainerBuilder, containerizingMode);
-    return JibContainerBuilderTestHelper.toBuildConfiguration(
+    return JibContainerBuilderTestHelper.toBuildContext(
         jibContainerBuilder, Containerizer.to(RegistryImage.named("to")));
   }
 

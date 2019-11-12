@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.PreparedLayer.StateInTarget;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
@@ -34,13 +34,12 @@ import javax.annotation.Nullable;
 class PushLayerStep implements Callable<BlobDescriptor> {
 
   static ImmutableList<PushLayerStep> makeList(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization pushAuthorization,
       List<Future<PreparedLayer>> cachedLayers) {
     try (TimerEventDispatcher ignored =
-            new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), "Preparing layer pushers");
+            new TimerEventDispatcher(buildContext.getEventHandlers(), "Preparing layer pushers");
         ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("launching layer pushers", cachedLayers.size())) {
 
@@ -50,7 +49,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
           .map(
               layer ->
                   new PushLayerStep(
-                      buildConfiguration,
+                      buildContext,
                       progressEventDispatcher.newChildProducer(),
                       pushAuthorization,
                       layer))
@@ -58,18 +57,18 @@ class PushLayerStep implements Callable<BlobDescriptor> {
     }
   }
 
-  private final BuildConfiguration buildConfiguration;
+  private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   @Nullable private final Authorization pushAuthorization;
   private final Future<PreparedLayer> preparedLayer;
 
   PushLayerStep(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization pushAuthorization,
       Future<PreparedLayer> preparedLayer) {
-    this.buildConfiguration = buildConfiguration;
+    this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.pushAuthorization = pushAuthorization;
     this.preparedLayer = preparedLayer;
@@ -86,7 +85,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
 
     boolean forcePush = layer.getStateInTarget() == StateInTarget.MISSING;
     return new PushBlobStep(
-            buildConfiguration,
+            buildContext,
             progressEventDispatcherFactory,
             pushAuthorization,
             layer.getBlobDescriptor(),

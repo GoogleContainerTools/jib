@@ -25,7 +25,7 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.image.Layer;
 import com.google.cloud.tools.jib.image.LayerPropertyNotFoundException;
@@ -83,7 +83,7 @@ public class BuildAndCacheApplicationLayerStepTest {
 
   @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Mock private BuildConfiguration mockBuildConfiguration;
+  @Mock private BuildContext mockBuildContext;
 
   private Cache cache;
 
@@ -120,8 +120,8 @@ public class BuildAndCacheApplicationLayerStepTest {
 
     cache = Cache.withDirectory(temporaryFolder.newFolder().toPath());
 
-    Mockito.when(mockBuildConfiguration.getEventHandlers()).thenReturn(EventHandlers.NONE);
-    Mockito.when(mockBuildConfiguration.getApplicationLayersCache()).thenReturn(cache);
+    Mockito.when(mockBuildContext.getEventHandlers()).thenReturn(EventHandlers.NONE);
+    Mockito.when(mockBuildContext.getApplicationLayersCache()).thenReturn(cache);
   }
 
   private List<Layer> buildFakeLayersToCache()
@@ -130,7 +130,7 @@ public class BuildAndCacheApplicationLayerStepTest {
 
     ImmutableList<BuildAndCacheApplicationLayerStep> buildAndCacheApplicationLayerSteps =
         BuildAndCacheApplicationLayerStep.makeList(
-            mockBuildConfiguration,
+            mockBuildContext,
             ProgressEventDispatcher.newRoot(EventHandlers.NONE, "ignored", 1).newChildProducer());
 
     for (BuildAndCacheApplicationLayerStep buildAndCacheApplicationLayerStep :
@@ -151,8 +151,7 @@ public class BuildAndCacheApplicationLayerStepTest {
             fakeResourcesLayerConfiguration,
             fakeClassesLayerConfiguration,
             fakeExtraFilesLayerConfiguration);
-    Mockito.when(mockBuildConfiguration.getLayerConfigurations())
-        .thenReturn(fakeLayerConfigurations);
+    Mockito.when(mockBuildContext.getLayerConfigurations()).thenReturn(fakeLayerConfigurations);
 
     // Populates the cache.
     List<Layer> applicationLayers = buildFakeLayersToCache();
@@ -212,8 +211,7 @@ public class BuildAndCacheApplicationLayerStepTest {
             fakeResourcesLayerConfiguration,
             fakeClassesLayerConfiguration,
             emptyLayerConfiguration);
-    Mockito.when(mockBuildConfiguration.getLayerConfigurations())
-        .thenReturn(fakeLayerConfigurations);
+    Mockito.when(mockBuildContext.getLayerConfigurations()).thenReturn(fakeLayerConfigurations);
 
     // Populates the cache.
     List<Layer> applicationLayers = buildFakeLayersToCache();
