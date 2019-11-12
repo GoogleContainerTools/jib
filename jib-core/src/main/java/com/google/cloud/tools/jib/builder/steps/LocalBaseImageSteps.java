@@ -233,13 +233,13 @@ public class LocalBaseImageSteps {
             progressEventDispatcherFactory.create(
                 "processing base image layers", layerFiles.size())) {
           // Start compressing layers in parallel
-          List<Future<PreparedLayer>> cachedLayers = new ArrayList<>();
+          List<Future<PreparedLayer>> preparedLayers = new ArrayList<>();
           for (int index = 0; index < layerFiles.size(); index++) {
             Path layerFile = destination.resolve(layerFiles.get(index));
             DescriptorDigest diffId = configurationTemplate.getLayerDiffId(index);
             ProgressEventDispatcher.Factory layerProgressDispatcherFactory =
                 progressEventDispatcher.newChildProducer();
-            cachedLayers.add(
+            preparedLayers.add(
                 executorService.submit(
                     () ->
                         compressAndCacheTarLayer(
@@ -249,7 +249,7 @@ public class LocalBaseImageSteps {
                             layersAreCompressed,
                             layerProgressDispatcherFactory)));
           }
-          return new LocalImage(cachedLayers, configurationTemplate);
+          return new LocalImage(preparedLayers, configurationTemplate);
         }
       }
     }
