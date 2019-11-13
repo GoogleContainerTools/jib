@@ -263,7 +263,7 @@ public class StepsRunner {
     results.baseImageAndAuth =
         executorService.submit(
             () ->
-                LocalBaseImageSteps.retrieveImageAndAuthorizationStep(
+                LocalBaseImageSteps.returnImageAndAuthorizationStep(
                         realizeFutures(results.baseImageLayers.get()),
                         localImage.get().configurationTemplate)
                     .call());

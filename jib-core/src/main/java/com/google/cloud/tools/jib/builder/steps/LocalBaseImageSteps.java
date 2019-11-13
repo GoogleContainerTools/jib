@@ -142,13 +142,13 @@ public class LocalBaseImageSteps {
             buildContext, tarPath, progressEventDispatcherFactory, tempDirectoryProvider);
   }
 
-  static Callable<ImageAndAuthorization> retrieveImageAndAuthorizationStep(
+  static Callable<ImageAndAuthorization> returnImageAndAuthorizationStep(
       List<PreparedLayer> layers, ContainerConfigurationTemplate configurationTemplate) {
     return () -> {
       // Collect compressed layers and add to manifest
       V22ManifestTemplate v22Manifest = new V22ManifestTemplate();
-      for (PreparedLayer layerFuture : layers) {
-        BlobDescriptor descriptor = layerFuture.getBlobDescriptor();
+      for (PreparedLayer layer : layers) {
+        BlobDescriptor descriptor = layer.getBlobDescriptor();
         v22Manifest.addLayer(descriptor.getSize(), descriptor.getDigest());
       }
 
