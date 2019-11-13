@@ -28,7 +28,7 @@ import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.docker.DockerClient;
 import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
 import com.google.cloud.tools.jib.docker.json.DockerManifestEntryTemplate;
@@ -93,21 +93,21 @@ public class LocalBaseImageSteps {
   }
 
   static Callable<LocalImage> retrieveDockerDaemonImageStep(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       DockerClient dockerClient) {
     return () -> {
-      ImageReference imageReference = buildConfiguration.getBaseImageConfiguration().getImage();
+      ImageReference imageReference = buildContext.getBaseImageConfiguration().getImage();
       try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
           ProgressEventDispatcher progressEventDispatcher =
               progressEventDispatcherFactory.create("processing base image " + imageReference, 2);
           TimerEventDispatcher ignored =
               new TimerEventDispatcher(
-                  buildConfiguration.getEventHandlers(),
+                  buildContext.getEventHandlers(),
                   "Saving " + imageReference + " from Docker daemon")) {
         DockerClient.DockerImageDetails dockerImageDetails = dockerClient.inspect(imageReference);
         Optional<LocalImage> cachedImage =
-            getCachedDockerImage(buildConfiguration.getBaseImageLayersCache(), dockerImageDetails);
+            getCachedDockerImage(buildContext.getBaseImageLayersCache(), dockerImageDetails);
         if (cachedImage.isPresent()) {
           return cachedImage.get();
         }
@@ -124,16 +124,16 @@ public class LocalBaseImageSteps {
         }
 
         return cacheDockerImageTar(
-            buildConfiguration, tarPath, progressEventDispatcher.newChildProducer());
+            buildContext, tarPath, progressEventDispatcher.newChildProducer());
       }
     };
   }
 
   static Callable<LocalImage> retrieveTarImageStep(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Path tarPath) {
-    return () -> cacheDockerImageTar(buildConfiguration, tarPath, progressEventDispatcherFactory);
+    return () -> cacheDockerImageTar(buildContext, tarPath, progressEventDispatcherFactory);
   }
 
   @VisibleForTesting
@@ -171,18 +171,18 @@ public class LocalBaseImageSteps {
 
   @VisibleForTesting
   static LocalImage cacheDockerImageTar(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       Path tarPath,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory)
       throws IOException, LayerCountMismatchException, BadContainerConfigurationFormatException,
           ExecutionException, InterruptedException {
-    ExecutorService executorService = buildConfiguration.getExecutorService();
+    ExecutorService executorService = buildContext.getExecutorService();
     try (TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider()) {
       Path destination = tempDirectoryProvider.newDirectory();
 
       try (TimerEventDispatcher ignored =
           new TimerEventDispatcher(
-              buildConfiguration.getEventHandlers(),
+              buildContext.getEventHandlers(),
               "Extracting tar " + tarPath + " into " + destination)) {
         TarExtractor.extract(tarPath, destination);
 
@@ -208,7 +208,7 @@ public class LocalBaseImageSteps {
                   + configurationTemplate.getLayerCount()
                   + " layers");
         }
-        buildConfiguration
+        buildContext
             .getBaseImageLayersCache()
             .writeLocalConfig(originalConfigDescriptor.getDigest(), configurationTemplate);
 
@@ -235,7 +235,7 @@ public class LocalBaseImageSteps {
                 executorService.submit(
                     () ->
                         compressAndCacheTarLayer(
-                            buildConfiguration.getBaseImageLayersCache(),
+                            buildContext.getBaseImageLayersCache(),
                             diffId,
                             layerFile,
                             layersAreCompressed,

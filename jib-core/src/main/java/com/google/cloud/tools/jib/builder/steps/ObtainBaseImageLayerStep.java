@@ -26,7 +26,7 @@ import com.google.cloud.tools.jib.builder.steps.PullBaseImageStep.ImageAndAuthor
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
 import com.google.cloud.tools.jib.cache.CachedLayer;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Layer;
@@ -52,23 +52,22 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
   }
 
   static ImmutableList<ObtainBaseImageLayerStep> makeListForForcedDownload(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth) {
     BlobExistenceChecker noOpChecker = ignored -> StateInTarget.UNKNOWN;
-    return makeList(
-        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, noOpChecker);
+    return makeList(buildContext, progressEventDispatcherFactory, baseImageAndAuth, noOpChecker);
   }
 
   static ImmutableList<ObtainBaseImageLayerStep> makeListForSelectiveDownload(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth,
       Authorization pushAuthorization) {
-    Verify.verify(!buildConfiguration.isOffline());
+    Verify.verify(!buildContext.isOffline());
 
     RegistryClient targetRegistryClient =
-        buildConfiguration
+        buildContext
             .newTargetImageRegistryClientFactory()
             .setAuthorization(pushAuthorization)
             .newRegistryClient();
@@ -80,11 +79,11 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
                 : StateInTarget.MISSING;
 
     return makeList(
-        buildConfiguration, progressEventDispatcherFactory, baseImageAndAuth, blobExistenceChecker);
+        buildContext, progressEventDispatcherFactory, baseImageAndAuth, blobExistenceChecker);
   }
 
   private static ImmutableList<ObtainBaseImageLayerStep> makeList(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       ImageAndAuthorization baseImageAndAuth,
       BlobExistenceChecker blobExistenceChecker) {
@@ -95,13 +94,13 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
                 "launching base image layer pullers", baseImageLayers.size());
         TimerEventDispatcher ignored =
             new TimerEventDispatcher(
-                buildConfiguration.getEventHandlers(), "Preparing base image layer pullers")) {
+                buildContext.getEventHandlers(), "Preparing base image layer pullers")) {
 
       List<ObtainBaseImageLayerStep> layerPullers = new ArrayList<>();
       for (Layer layer : baseImageLayers) {
         layerPullers.add(
             new ObtainBaseImageLayerStep(
-                buildConfiguration,
+                buildContext,
                 progressEventDispatcher.newChildProducer(),
                 layer,
                 baseImageAndAuth.getAuthorization(),
@@ -111,7 +110,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
     }
   }
 
-  private final BuildConfiguration buildConfiguration;
+  private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   private final Layer layer;
@@ -119,12 +118,12 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
   private final BlobExistenceChecker blobExistenceChecker;
 
   private ObtainBaseImageLayerStep(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       Layer layer,
       @Nullable Authorization pullAuthorization,
       BlobExistenceChecker blobExistenceChecker) {
-    this.buildConfiguration = buildConfiguration;
+    this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.layer = layer;
     this.pullAuthorization = pullAuthorization;
@@ -133,7 +132,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
 
   @Override
   public PreparedLayer call() throws IOException, CacheCorruptedException, RegistryException {
-    EventHandlers eventHandlers = buildConfiguration.getEventHandlers();
+    EventHandlers eventHandlers = buildContext.getEventHandlers();
     DescriptorDigest layerDigest = layer.getBlobDescriptor().getDigest();
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("checking base image layer " + layerDigest, 1);
@@ -149,14 +148,14 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
         return new PreparedLayer.Builder(layer).setStateInTarget(stateInTarget).build();
       }
 
-      Cache cache = buildConfiguration.getBaseImageLayersCache();
+      Cache cache = buildContext.getBaseImageLayersCache();
 
       // Checks if the layer already exists in the cache.
       Optional<CachedLayer> optionalCachedLayer = cache.retrieve(layerDigest);
       if (optionalCachedLayer.isPresent()) {
         CachedLayer cachedLayer = optionalCachedLayer.get();
         return new PreparedLayer.Builder(cachedLayer).setStateInTarget(stateInTarget).build();
-      } else if (buildConfiguration.isOffline()) {
+      } else if (buildContext.isOffline()) {
         throw new IOException(
             "Cannot run Jib in offline mode; local Jib cache for base image is missing image layer "
                 + layerDigest
@@ -165,7 +164,7 @@ class ObtainBaseImageLayerStep implements Callable<PreparedLayer> {
       }
 
       RegistryClient registryClient =
-          buildConfiguration
+          buildContext
               .newBaseImageRegistryClientFactory()
               .setAuthorization(pullAuthorization)
               .newRegistryClient();

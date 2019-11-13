@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.api.ImageReference;
 import com.google.cloud.tools.jib.api.RegistryException;
 import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.configuration.ImageConfiguration;
 import com.google.cloud.tools.jib.registry.RegistryClient;
 import java.io.IOException;
@@ -44,7 +44,7 @@ public class PushBlobStepTest {
   private ProgressEventDispatcher.Factory progressDispatcherFactory;
 
   @Mock(answer = Answers.RETURNS_MOCKS)
-  private BuildConfiguration buildConfiguration;
+  private BuildContext buildContext;
 
   @Before
   public void setUp() {
@@ -52,9 +52,9 @@ public class PushBlobStepTest {
         Mockito.mock(RegistryClient.Factory.class, Answers.RETURNS_SELF);
     Mockito.when(registryClientFactory.newRegistryClient()).thenReturn(registryClient);
 
-    Mockito.when(buildConfiguration.newTargetImageRegistryClientFactory())
+    Mockito.when(buildContext.newTargetImageRegistryClientFactory())
         .thenReturn(registryClientFactory);
-    Mockito.when(buildConfiguration.getTargetImageConfiguration())
+    Mockito.when(buildContext.getTargetImageConfiguration())
         .thenReturn(ImageConfiguration.builder(ImageReference.scratch()).build());
   }
 
@@ -90,8 +90,7 @@ public class PushBlobStepTest {
   }
 
   private void call(boolean forcePush) throws IOException, RegistryException {
-    new PushBlobStep(
-            buildConfiguration, progressDispatcherFactory, null, blobDescriptor, null, forcePush)
+    new PushBlobStep(buildContext, progressDispatcherFactory, null, blobDescriptor, null, forcePush)
         .call();
   }
 }
