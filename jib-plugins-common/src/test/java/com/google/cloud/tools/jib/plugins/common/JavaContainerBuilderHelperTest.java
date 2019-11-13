@@ -27,7 +27,7 @@ import com.google.cloud.tools.jib.api.JibContainerBuilderTestHelper;
 import com.google.cloud.tools.jib.api.LayerConfiguration;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.api.RegistryImage;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.filesystem.FileOperations;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.Resources;
@@ -70,8 +70,8 @@ public class JavaContainerBuilderHelperTest {
   }
 
   private static List<LayerConfiguration> getLayerConfigurationsByName(
-      BuildConfiguration buildConfiguration, String name) {
-    return buildConfiguration
+      BuildContext buildContext, String name) {
+    return buildContext
         .getLayerConfigurations()
         .stream()
         .filter(layer -> layer.getName().equals(name))
@@ -114,20 +114,20 @@ public class JavaContainerBuilderHelperTest {
             .setAppRoot(AbsoluteUnixPath.get("/my/app"));
     JibContainerBuilder jibContainerBuilder =
         JavaContainerBuilderHelper.fromExplodedWar(javaContainerBuilder, temporaryExplodedWar);
-    BuildConfiguration configuration =
-        JibContainerBuilderTestHelper.toBuildConfiguration(
+    BuildContext buildContext =
+        JibContainerBuilderTestHelper.toBuildContext(
             jibContainerBuilder,
             Containerizer.to(RegistryImage.named("target"))
                 .setExecutorService(MoreExecutors.newDirectExecutorService()));
 
     List<LayerConfiguration> resourcesLayerConfigurations =
-        getLayerConfigurationsByName(configuration, LayerType.RESOURCES.getName());
+        getLayerConfigurationsByName(buildContext, LayerType.RESOURCES.getName());
     List<LayerConfiguration> classesLayerConfigurations =
-        getLayerConfigurationsByName(configuration, LayerType.CLASSES.getName());
+        getLayerConfigurationsByName(buildContext, LayerType.CLASSES.getName());
     List<LayerConfiguration> dependenciesLayerConfigurations =
-        getLayerConfigurationsByName(configuration, LayerType.DEPENDENCIES.getName());
+        getLayerConfigurationsByName(buildContext, LayerType.DEPENDENCIES.getName());
     List<LayerConfiguration> snapshotsLayerConfigurations =
-        getLayerConfigurationsByName(configuration, LayerType.SNAPSHOT_DEPENDENCIES.getName());
+        getLayerConfigurationsByName(buildContext, LayerType.SNAPSHOT_DEPENDENCIES.getName());
 
     assertSourcePathsUnordered(
         Collections.singletonList(temporaryExplodedWar.resolve("WEB-INF/lib/dependency-1.0.0.jar")),
