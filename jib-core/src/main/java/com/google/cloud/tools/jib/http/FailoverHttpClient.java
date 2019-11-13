@@ -33,9 +33,8 @@ import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.net.ssl.SSLException;
@@ -121,7 +120,7 @@ public class FailoverHttpClient {
   private final Supplier<HttpTransport> secureHttpTransportFactory;
   private final Supplier<HttpTransport> insecureHttpTransportFactory;
 
-  private final Map<String, Failover> failoverHistory = new HashMap<>();
+  private final ConcurrentHashMap<String, Failover> failoverHistory = new ConcurrentHashMap<>();
 
   private final Deque<HttpTransport> transportsCreated = new ArrayDeque<>();
   private final Deque<Response> responsesCreated = new ArrayDeque<>();
@@ -223,15 +222,15 @@ public class FailoverHttpClient {
    */
   public Response call(String httpMethod, URL url, Request request) throws IOException {
     if (!isHttpsProtocol(url)) {
-      if (enableHttpAndInsecureFailover) {
+      if (enableHttpAndInsecureFailover) { // HTTP requested. We only care if HTTP is enabled.
         return call(httpMethod, url, request, getHttpTransport(true));
       }
       throw new SSLException("insecure HTTP connection not allowed: " + url);
     }
 
-    Optional<Response> optionalResponse = followFailoverHistory(httpMethod, url, request);
-    if (optionalResponse.isPresent()) {
-      return optionalResponse.get();
+    Optional<Response> fastPathResponse = followFailoverHistory(httpMethod, url, request);
+    if (fastPathResponse.isPresent()) {
+      return fastPathResponse.get();
     }
 
     try {
