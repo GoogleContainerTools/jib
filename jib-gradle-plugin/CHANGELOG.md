@@ -7,6 +7,8 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- Optimized building to a registry with local base images. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
+
 ### Fixed
 
 - Fixed reporting parent build file when `skaffold init` is run on multi-module projects. ([#2091](https://github.com/GoogleContainerTools/jib/pull/2091))

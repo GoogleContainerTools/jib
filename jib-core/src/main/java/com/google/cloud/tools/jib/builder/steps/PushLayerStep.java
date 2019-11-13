@@ -63,7 +63,7 @@ class PushLayerStep implements Callable<BlobDescriptor> {
   @Nullable private final Authorization pushAuthorization;
   private final Future<PreparedLayer> preparedLayer;
 
-  PushLayerStep(
+  private PushLayerStep(
       BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization pushAuthorization,

@@ -237,8 +237,11 @@ public class StepsRunner {
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
     assignLocalImageResult(
         executorService.submit(
-            LocalBaseImageSteps.retrieveDockerDaemonImageStep(
-                buildContext, childProgressDispatcherFactory, dockerClient.get())));
+            LocalBaseImageSteps.retrieveDockerDaemonLayersStep(
+                buildContext,
+                childProgressDispatcherFactory,
+                dockerClient.get(),
+                tempDirectoryProvider)));
   }
 
   private void extractTar() {
@@ -248,23 +251,22 @@ public class StepsRunner {
         Verify.verifyNotNull(rootProgressDispatcher).newChildProducer();
     assignLocalImageResult(
         executorService.submit(
-            LocalBaseImageSteps.retrieveTarImageStep(
-                buildContext, childProgressDispatcherFactory, tarPath.get())));
+            LocalBaseImageSteps.retrieveTarLayersStep(
+                buildContext,
+                childProgressDispatcherFactory,
+                tarPath.get(),
+                tempDirectoryProvider)));
   }
 
-  private void assignLocalImageResult(Future<LocalImage> localImageFuture) {
+  private void assignLocalImageResult(Future<LocalImage> localImage) {
+    results.baseImageLayers = executorService.submit(() -> localImage.get().layers);
     results.baseImageAndAuth =
         executorService.submit(
-            () -> new ImageAndAuthorization(localImageFuture.get().baseImage, null));
-    results.baseImageLayers =
-        executorService.submit(
             () ->
-                localImageFuture
-                    .get()
-                    .layers
-                    .stream()
-                    .map(Futures::immediateFuture)
-                    .collect(Collectors.toList()));
+                LocalBaseImageSteps.returnImageAndAuthorizationStep(
+                        realizeFutures(results.baseImageLayers.get()),
+                        localImage.get().configurationTemplate)
+                    .call());
   }
 
   private void pullBaseImage() {
