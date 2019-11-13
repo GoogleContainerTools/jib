@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Google LLC.
+ * Copyright 2018 Google LLC.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,25 +14,27 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.gradle;
+package com.google.cloud.tools.jib.gradle.skaffold;
 
-import com.google.cloud.tools.jib.plugins.common.SkaffoldFilesOutput;
+import com.google.cloud.tools.jib.gradle.JibPlugin;
+import com.google.cloud.tools.jib.gradle.TestProject;
+import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.TaskOutcome;
-import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-/** Tests for {@link FilesTaskV2}. */
-public class FilesTaskV2Test {
+/** Tests for {@link FilesTask}. */
+public class FilesTaskTest {
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
@@ -43,20 +45,22 @@ public class FilesTaskV2Test {
    *
    * @param project the project to run the task on
    * @param moduleName the name of the sub-project, or {@code null} if no sub-project
-   * @return the JSON string printed by the task
+   * @return the list of paths printed by the task
    */
-  private static String verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
+  private static List<Path> verifyTaskSuccess(TestProject project, @Nullable String moduleName) {
     String taskName =
-        ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.FILES_TASK_V2_NAME;
+        ":" + (moduleName == null ? "" : moduleName + ":") + JibPlugin.SKAFFOLD_FILES_TASK_NAME;
     BuildResult buildResult = project.build(taskName, "-q");
     BuildTask jibTask = buildResult.task(taskName);
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
-    String output = buildResult.getOutput().trim();
-    Assert.assertThat(output, CoreMatchers.startsWith("BEGIN JIB JSON"));
 
-    // Return task output with header removed
-    return output.replace("BEGIN JIB JSON", "").trim();
+    return Splitter.on(System.lineSeparator())
+        .omitEmptyStrings()
+        .splitToList(buildResult.getOutput())
+        .stream()
+        .map(Paths::get)
+        .collect(Collectors.toList());
   }
 
   /**
@@ -67,47 +71,40 @@ public class FilesTaskV2Test {
    * @param actual the actual list of paths
    * @throws IOException if checking if two files are the same fails
    */
-  private static void assertPathListsAreEqual(List<Path> expected, List<String> actual)
+  private static void assertPathListsAreEqual(List<Path> expected, List<Path> actual)
       throws IOException {
     Assert.assertEquals(expected.size(), actual.size());
     for (int index = 0; index < expected.size(); index++) {
-      Assert.assertEquals(
-          expected.get(index).toRealPath(), Paths.get(actual.get(index)).toRealPath());
+      Assert.assertEquals(expected.get(index).toRealPath(), actual.get(index).toRealPath());
     }
   }
 
   @Test
   public void testFilesTask_singleProject() throws IOException {
     Path projectRoot = simpleTestProject.getProjectRoot();
-    SkaffoldFilesOutput result =
-        new SkaffoldFilesOutput(verifyTaskSuccess(simpleTestProject, null));
-    assertPathListsAreEqual(
-        ImmutableList.of(projectRoot.resolve("build.gradle")), result.getBuild());
-    assertPathListsAreEqual(
+    List<Path> result = verifyTaskSuccess(simpleTestProject, null);
+    List<Path> expected =
         ImmutableList.of(
+            projectRoot.resolve("build.gradle"),
             projectRoot.resolve("src/main/resources"),
             projectRoot.resolve("src/main/java"),
-            projectRoot.resolve("src/main/custom-extra-dir")),
-        result.getInputs());
-    Assert.assertEquals(result.getIgnore().size(), 0);
+            projectRoot.resolve("src/main/custom-extra-dir"));
+    assertPathListsAreEqual(expected, result);
   }
 
   @Test
   public void testFilesTask_multiProjectSimpleService() throws IOException {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path simpleServiceRoot = projectRoot.resolve("simple-service");
-    SkaffoldFilesOutput result =
-        new SkaffoldFilesOutput(verifyTaskSuccess(multiTestProject, "simple-service"));
-    assertPathListsAreEqual(
+    List<Path> result = verifyTaskSuccess(multiTestProject, "simple-service");
+    List<Path> expected =
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("settings.gradle"),
             projectRoot.resolve("gradle.properties"),
-            simpleServiceRoot.resolve("build.gradle")),
-        result.getBuild());
-    assertPathListsAreEqual(
-        ImmutableList.of(simpleServiceRoot.resolve("src/main/java")), result.getInputs());
-    Assert.assertEquals(result.getIgnore().size(), 0);
+            simpleServiceRoot.resolve("build.gradle"),
+            simpleServiceRoot.resolve("src/main/java"));
+    assertPathListsAreEqual(expected, result);
   }
 
   @Test
@@ -115,27 +112,22 @@ public class FilesTaskV2Test {
     Path projectRoot = multiTestProject.getProjectRoot();
     Path complexServiceRoot = projectRoot.resolve("complex-service");
     Path libRoot = projectRoot.resolve("lib");
-    SkaffoldFilesOutput result =
-        new SkaffoldFilesOutput(verifyTaskSuccess(multiTestProject, "complex-service"));
-    assertPathListsAreEqual(
+    List<Path> result = verifyTaskSuccess(multiTestProject, "complex-service");
+    List<Path> expected =
         ImmutableList.of(
             projectRoot.resolve("build.gradle"),
             projectRoot.resolve("settings.gradle"),
             projectRoot.resolve("gradle.properties"),
             complexServiceRoot.resolve("build.gradle"),
-            libRoot.resolve("build.gradle")),
-        result.getBuild());
-    assertPathListsAreEqual(
-        ImmutableList.of(
             complexServiceRoot.resolve("src/main/extra-resources-1"),
             complexServiceRoot.resolve("src/main/extra-resources-2"),
             complexServiceRoot.resolve("src/main/java"),
             complexServiceRoot.resolve("src/main/other-jib"),
+            libRoot.resolve("build.gradle"),
             libRoot.resolve("src/main/resources"),
             libRoot.resolve("src/main/java"),
             complexServiceRoot.resolve(
-                "local-m2-repo/com/google/cloud/tools/tiny-test-lib/0.0.1-SNAPSHOT/tiny-test-lib-0.0.1-SNAPSHOT.jar")),
-        result.getInputs());
-    Assert.assertEquals(result.getIgnore().size(), 0);
+                "local-m2-repo/com/google/cloud/tools/tiny-test-lib/0.0.1-SNAPSHOT/tiny-test-lib-0.0.1-SNAPSHOT.jar"));
+    assertPathListsAreEqual(expected, result);
   }
 }

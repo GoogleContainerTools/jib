@@ -14,8 +14,9 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.gradle;
+package com.google.cloud.tools.jib.gradle.skaffold;
 
+import com.google.cloud.tools.jib.gradle.JibPlugin;
 import com.google.common.base.Strings;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -36,7 +37,7 @@ public class CheckJibVersionTask extends DefaultTask {
   public void checkVersion() {
     if (Strings.isNullOrEmpty(System.getProperty(JibPlugin.REQUIRED_VERSION_PROPERTY_NAME))) {
       throw new GradleException(
-          JibPlugin.CHECK_REQUIRED_VERSION_TASK_NAME
+          JibPlugin.SKAFFOLD_CHECK_REQUIRED_VERSION_TASK_NAME
               + " requires "
               + JibPlugin.REQUIRED_VERSION_PROPERTY_NAME
               + " to be set");

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.tools.jib.api.LayerEntry;
 import com.google.cloud.tools.jib.json.JsonTemplate;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -77,13 +78,23 @@ public class SkaffoldSyncMapTemplate implements JsonTemplate {
       this.src = src;
       this.dest = dest;
     }
+
+    @VisibleForTesting
+    public String getSrc() {
+      return src;
+    }
+
+    @VisibleForTesting
+    public String getDest() {
+      return dest;
+    }
   }
 
   private final List<FileTemplate> generated = new ArrayList<>();
   private final List<FileTemplate> direct = new ArrayList<>();
 
   @VisibleForTesting
-  static SkaffoldSyncMapTemplate from(String jsonString) throws IOException {
+  public static SkaffoldSyncMapTemplate from(String jsonString) throws IOException {
     return new ObjectMapper().readValue(jsonString, SkaffoldSyncMapTemplate.class);
   }
 
@@ -106,5 +117,15 @@ public class SkaffoldSyncMapTemplate implements JsonTemplate {
       new ObjectMapper().writeValue(outputStream, this);
       return outputStream.toString();
     }
+  }
+
+  @VisibleForTesting
+  public List<FileTemplate> getGenerated() {
+    return ImmutableList.copyOf(generated);
+  }
+
+  @VisibleForTesting
+  public List<FileTemplate> getDirect() {
+    return ImmutableList.copyOf(direct);
   }
 }
