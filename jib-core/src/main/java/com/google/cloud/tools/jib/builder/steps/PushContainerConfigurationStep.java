@@ -21,7 +21,7 @@ import com.google.cloud.tools.jib.blob.BlobDescriptor;
 import com.google.cloud.tools.jib.blob.Blobs;
 import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.TimerEventDispatcher;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.hash.Digests;
 import com.google.cloud.tools.jib.http.Authorization;
 import com.google.cloud.tools.jib.image.Image;
@@ -36,18 +36,18 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
 
   private static final String DESCRIPTION = "Pushing container configuration";
 
-  private final BuildConfiguration buildConfiguration;
+  private final BuildContext buildContext;
   private final ProgressEventDispatcher.Factory progressEventDispatcherFactory;
 
   @Nullable private final Authorization pushAuthorization;
   private final Image builtImage;
 
   PushContainerConfigurationStep(
-      BuildConfiguration buildConfiguration,
+      BuildContext buildContext,
       ProgressEventDispatcher.Factory progressEventDispatcherFactory,
       @Nullable Authorization authenticatePushStep,
       Image builtImage) {
-    this.buildConfiguration = buildConfiguration;
+    this.buildContext = buildContext;
     this.progressEventDispatcherFactory = progressEventDispatcherFactory;
     this.pushAuthorization = authenticatePushStep;
     this.builtImage = builtImage;
@@ -58,12 +58,12 @@ class PushContainerConfigurationStep implements Callable<BlobDescriptor> {
     try (ProgressEventDispatcher progressEventDispatcher =
             progressEventDispatcherFactory.create("pushing container configuration", 1);
         TimerEventDispatcher ignored =
-            new TimerEventDispatcher(buildConfiguration.getEventHandlers(), DESCRIPTION)) {
+            new TimerEventDispatcher(buildContext.getEventHandlers(), DESCRIPTION)) {
       JsonTemplate containerConfiguration =
           new ImageToJsonTranslator(builtImage).getContainerConfiguration();
 
       return new PushBlobStep(
-              buildConfiguration,
+              buildContext,
               progressEventDispatcher.newChildProducer(),
               pushAuthorization,
               Digests.computeDigest(containerConfiguration),

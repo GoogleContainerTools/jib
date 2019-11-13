@@ -20,7 +20,7 @@ import com.google.cloud.tools.jib.builder.ProgressEventDispatcher;
 import com.google.cloud.tools.jib.builder.steps.LocalBaseImageSteps.LocalImage;
 import com.google.cloud.tools.jib.cache.Cache;
 import com.google.cloud.tools.jib.cache.CacheCorruptedException;
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import com.google.cloud.tools.jib.docker.DockerClient.DockerImageDetails;
 import com.google.cloud.tools.jib.event.EventHandlers;
 import com.google.cloud.tools.jib.filesystem.TempDirectoryProvider;
@@ -52,7 +52,7 @@ public class LocalBaseImageStepsTest {
 
   private final TempDirectoryProvider tempDirectoryProvider = new TempDirectoryProvider();
 
-  @Mock private BuildConfiguration buildConfiguration;
+  @Mock private BuildContext buildContext;
   @Mock private EventHandlers eventHandlers;
   @Mock private ProgressEventDispatcher.Factory progressEventDispatcherFactory;
   @Mock private ProgressEventDispatcher progressEventDispatcher;
@@ -65,11 +65,11 @@ public class LocalBaseImageStepsTest {
 
   @Before
   public void setup() throws IOException {
-    Mockito.when(buildConfiguration.getExecutorService())
+    Mockito.when(buildContext.getExecutorService())
         .thenReturn(MoreExecutors.newDirectExecutorService());
-    Mockito.when(buildConfiguration.getBaseImageLayersCache())
+    Mockito.when(buildContext.getBaseImageLayersCache())
         .thenReturn(Cache.withDirectory(temporaryFolder.newFolder().toPath()));
-    Mockito.when(buildConfiguration.getEventHandlers()).thenReturn(eventHandlers);
+    Mockito.when(buildContext.getEventHandlers()).thenReturn(eventHandlers);
     Mockito.when(progressEventDispatcherFactory.create(Mockito.anyString(), Mockito.anyLong()))
         .thenReturn(progressEventDispatcher);
     Mockito.when(progressEventDispatcher.newChildProducer()).thenReturn(childFactory);
@@ -87,7 +87,7 @@ public class LocalBaseImageStepsTest {
     Path dockerBuild = getResource("core/extraction/docker-save.tar");
     LocalImage result =
         LocalBaseImageSteps.cacheDockerImageTar(
-            buildConfiguration, dockerBuild, progressEventDispatcherFactory, tempDirectoryProvider);
+            buildContext, dockerBuild, progressEventDispatcherFactory, tempDirectoryProvider);
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());
@@ -111,7 +111,7 @@ public class LocalBaseImageStepsTest {
     Path tarBuild = getResource("core/extraction/jib-image.tar");
     LocalImage result =
         LocalBaseImageSteps.cacheDockerImageTar(
-            buildConfiguration, tarBuild, progressEventDispatcherFactory, tempDirectoryProvider);
+            buildContext, tarBuild, progressEventDispatcherFactory, tempDirectoryProvider);
 
     Mockito.verify(progressEventDispatcher, Mockito.times(2)).newChildProducer();
     Assert.assertEquals(2, result.layers.size());

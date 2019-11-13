@@ -30,7 +30,7 @@ import org.junit.rules.TemporaryFolder;
 
 // TODO: Consolidate with TestProject in jib-maven-plugin.
 /** Works with the test Gradle projects in the {@code resources/projects} directory. */
-class TestProject extends TemporaryFolder implements Closeable {
+public class TestProject extends TemporaryFolder implements Closeable {
 
   private static final String PROJECTS_PATH_IN_RESOURCES = "gradle/projects/";
 
@@ -59,7 +59,7 @@ class TestProject extends TemporaryFolder implements Closeable {
   private Path projectRoot;
 
   /** Initialize with a specific project directory. */
-  TestProject(String testProjectName) {
+  public TestProject(String testProjectName) {
     this.testProjectName = testProjectName;
   }
 
@@ -82,11 +82,11 @@ class TestProject extends TemporaryFolder implements Closeable {
             .withPluginClasspath();
   }
 
-  BuildResult build(String... gradleArguments) {
+  public BuildResult build(String... gradleArguments) {
     return gradleRunner.withArguments(gradleArguments).build();
   }
 
-  Path getProjectRoot() {
+  public Path getProjectRoot() {
     return projectRoot;
   }
 }

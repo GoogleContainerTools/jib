@@ -16,16 +16,16 @@
 
 package com.google.cloud.tools.jib.api;
 
-import com.google.cloud.tools.jib.configuration.BuildConfiguration;
+import com.google.cloud.tools.jib.configuration.BuildContext;
 import java.io.IOException;
 
 /** Test helper to expose package-private members of {@link JibContainerBuilder}. */
 public class JibContainerBuilderTestHelper {
 
-  public static BuildConfiguration toBuildConfiguration(
+  public static BuildContext toBuildContext(
       JibContainerBuilder jibContainerBuilder, Containerizer containerizer)
       throws IOException, CacheDirectoryCreationException {
-    return jibContainerBuilder.toBuildConfiguration(containerizer);
+    return jibContainerBuilder.toBuildContext(containerizer);
   }
 
   private JibContainerBuilderTestHelper() {}

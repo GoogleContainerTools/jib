@@ -14,8 +14,10 @@
  * the License.
  */
 
-package com.google.cloud.tools.jib.gradle;
+package com.google.cloud.tools.jib.gradle.skaffold;
 
+import com.google.cloud.tools.jib.gradle.JibPlugin;
+import com.google.cloud.tools.jib.gradle.TestProject;
 import com.google.cloud.tools.jib.plugins.common.SkaffoldInitOutput;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,8 +32,8 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-/** Tests for {@link SkaffoldInitTask}. */
-public class SkaffoldInitTaskTest {
+/** Tests for {@link InitTask}. */
+public class InitTaskTest {
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
 
@@ -46,8 +48,8 @@ public class SkaffoldInitTaskTest {
    */
   private static List<String> getJsons(TestProject project) {
     BuildResult buildResult =
-        project.build(JibPlugin.INIT_TASK_NAME, "-q", "-D_TARGET_IMAGE=testimage");
-    BuildTask jibTask = buildResult.task(":" + JibPlugin.INIT_TASK_NAME);
+        project.build(JibPlugin.SKAFFOLD_INIT_TASK_NAME, "-q", "-D_TARGET_IMAGE=testimage");
+    BuildTask jibTask = buildResult.task(":" + JibPlugin.SKAFFOLD_INIT_TASK_NAME);
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
     String output = buildResult.getOutput().trim();

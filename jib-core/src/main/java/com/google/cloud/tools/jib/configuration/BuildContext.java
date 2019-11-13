@@ -49,7 +49,7 @@ import javax.annotation.Nullable;
  * ContainerConfiguration}, {@link ImageConfiguration}, and {@link LayerConfiguration}) held in are
  * immutable.
  */
-public class BuildConfiguration implements Closeable {
+public class BuildContext implements Closeable {
 
   /** The default target format of the container manifest. */
   private static final Class<? extends BuildableManifestTemplate> DEFAULT_TARGET_FORMAT =
@@ -58,7 +58,7 @@ public class BuildConfiguration implements Closeable {
   /** The default tool identifier. */
   private static final String DEFAULT_TOOL_NAME = "jib";
 
-  /** Builds an immutable {@link BuildConfiguration}. Instantiate with {@link #builder}. */
+  /** Builds an immutable {@link BuildContext}. Instantiate with {@link #builder}. */
   public static class Builder {
 
     // All the parameters below are set to their default values.
@@ -241,12 +241,12 @@ public class BuildConfiguration implements Closeable {
     }
 
     /**
-     * Builds a new {@link BuildConfiguration} using the parameters passed into the builder.
+     * Builds a new {@link BuildContext} using the parameters passed into the builder.
      *
-     * @return the corresponding build configuration
+     * @return the corresponding build context
      * @throws IOException if an I/O exception occurs
      */
-    public BuildConfiguration build() throws IOException {
+    public BuildContext build() throws IOException {
       // Validates the parameters.
       List<String> missingFields = new ArrayList<>();
       if (baseImageConfiguration == null) {
@@ -274,7 +274,7 @@ public class BuildConfiguration implements Closeable {
                         + "' does not use a specific image digest - build may not be reproducible"));
           }
 
-          return new BuildConfiguration(
+          return new BuildContext(
               baseImageConfiguration,
               Preconditions.checkNotNull(targetImageConfiguration),
               additionalTargetImageTags,
@@ -326,7 +326,7 @@ public class BuildConfiguration implements Closeable {
   }
 
   /**
-   * Creates a new {@link Builder} to build a {@link BuildConfiguration}.
+   * Creates a new {@link Builder} to build a {@link BuildContext}.
    *
    * @return a new {@link Builder}
    */
@@ -351,7 +351,7 @@ public class BuildConfiguration implements Closeable {
   private final boolean alwaysCacheBaseImage;
 
   /** Instantiate with {@link #builder}. */
-  private BuildConfiguration(
+  private BuildContext(
       ImageConfiguration baseImageConfiguration,
       ImageConfiguration targetImageConfiguration,
       ImmutableSet<String> additionalTargetImageTags,
