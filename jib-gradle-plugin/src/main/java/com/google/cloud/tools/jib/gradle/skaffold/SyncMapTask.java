@@ -29,6 +29,12 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.tasks.TaskAction;
 
+/**
+ * Prints out a map of local files to their location on the container.
+ *
+ * <p>Expected use: {@code ./gradlew _jibSkaffoldSyncMap -q} or {@code ./gradlew
+ * :<subproject>:_jibSkaffoldSyncMap -q}
+ */
 public class SyncMapTask extends DefaultTask {
 
   @Nullable private JibExtension jibExtension;

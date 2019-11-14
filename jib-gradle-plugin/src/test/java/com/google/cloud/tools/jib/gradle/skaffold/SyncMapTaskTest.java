@@ -36,7 +36,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 
-/** Tests for {@link FilesTask}. */
+/** Tests for {@link SyncMapTask}. */
 public class SyncMapTaskTest {
 
   @ClassRule public static final TestProject simpleTestProject = new TestProject("simple");
@@ -44,11 +44,13 @@ public class SyncMapTaskTest {
   @ClassRule public static final TestProject warProject = new TestProject("war_servlet25");
 
   /**
-   * Verifies that the files task succeeded and returns the list of paths it prints out.
+   * Verifies that the sync map task succeeded and returns the parsed json.
    *
    * @param project the project to run the task on
    * @param moduleName the name of the sub-project, or {@code null} if no sub-project
+   * @param params extra gradle cli params to use during the build
    * @return the list of paths printed by the task
+   * @throws IOException if the json parser fails
    */
   private static SkaffoldSyncMapTemplate generateTemplate(
       TestProject project, @Nullable String moduleName, @Nullable List<String> params)
@@ -75,7 +77,7 @@ public class SyncMapTaskTest {
   }
 
   private static void assertFilePaths(Path src, AbsoluteUnixPath dest, FileTemplate template) {
-    Assert.assertEquals(src.toString(), template.getSrc());
+    Assert.assertEquals(src.toAbsolutePath().toString(), template.getSrc());
     Assert.assertEquals(dest.toString(), template.getDest());
   }
 

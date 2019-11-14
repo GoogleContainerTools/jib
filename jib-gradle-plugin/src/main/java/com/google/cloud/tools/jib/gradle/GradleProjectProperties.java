@@ -84,9 +84,9 @@ public class GradleProjectProperties implements ProjectProperties {
    * Generate an instance for a gradle project.
    *
    * @param project a gradle project
-   * @param logger an gradle logging instance to use for logging during the build
+   * @param logger a gradle logging instance to use for logging during the build
    * @param tempDirectoryProvider for scratch space during the build
-   * @return a GradleProjectProperties from the given project and logger.
+   * @return a GradleProjectProperties instance to use in a jib build
    */
   public static GradleProjectProperties getForProject(
       Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
