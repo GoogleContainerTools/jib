@@ -417,10 +417,6 @@ public class BuildContext implements Closeable {
     return eventHandlers;
   }
 
-  public FailoverHttpClient getHttpClient() {
-    return httpClient;
-  }
-
   public ExecutorService getExecutorService() {
     return executorService;
   }

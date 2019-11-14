@@ -33,8 +33,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import org.junit.Assert;
@@ -150,14 +152,9 @@ public class FailoverHttpClientTest {
       Assert.assertEquals("body", new String(bytes, StandardCharsets.UTF_8));
     }
 
-    Assert.assertEquals(2, urlCaptor.getAllValues().size());
-    Assert.assertEquals(new GenericUrl("https://insecure"), urlCaptor.getAllValues().get(0));
-    Assert.assertEquals(new GenericUrl("https://insecure"), urlCaptor.getAllValues().get(1));
-
-    String log =
-        "Cannot verify server at https://insecure. Attempting again with no TLS verification.";
-    Mockito.verify(logger).accept(LogEvent.info(log));
-    Mockito.verifyNoMoreInteractions(logger);
+    verifyCapturedUrls("https://insecure", "https://insecure");
+    verifyWarnings(
+        "Cannot verify server at https://insecure. Attempting again with no TLS verification.");
   }
 
   @Test
@@ -180,17 +177,10 @@ public class FailoverHttpClientTest {
     Mockito.verify(mockHttpRequest, Mockito.times(2)).execute();
     Mockito.verify(mockInsecureHttpRequest, Mockito.times(1)).execute();
 
-    Assert.assertEquals(3, urlCaptor.getAllValues().size());
-    Assert.assertEquals(new GenericUrl("https://insecure"), urlCaptor.getAllValues().get(0));
-    Assert.assertEquals(new GenericUrl("https://insecure"), urlCaptor.getAllValues().get(1));
-    Assert.assertEquals(new GenericUrl("http://insecure"), urlCaptor.getAllValues().get(2));
-
-    String log1 =
-        "Cannot verify server at https://insecure. Attempting again with no TLS verification.";
-    String log2 = "Failed to connect to https://insecure over HTTPS. Attempting again with HTTP.";
-    Mockito.verify(logger).accept(LogEvent.info(log1));
-    Mockito.verify(logger).accept(LogEvent.info(log2));
-    Mockito.verifyNoMoreInteractions(logger);
+    verifyCapturedUrls("https://insecure", "https://insecure", "http://insecure");
+    verifyWarnings(
+        "Cannot verify server at https://insecure. Attempting again with no TLS verification.",
+        "Failed to connect to https://insecure over HTTPS. Attempting again with HTTP.");
   }
 
   @Test
@@ -211,13 +201,8 @@ public class FailoverHttpClientTest {
     Mockito.verify(mockHttpRequest, Mockito.times(2)).execute();
     Mockito.verifyNoInteractions(mockInsecureHttpRequest);
 
-    Assert.assertEquals(2, urlCaptor.getAllValues().size());
-    Assert.assertEquals(new GenericUrl("https://insecure"), urlCaptor.getAllValues().get(0));
-    Assert.assertEquals(new GenericUrl("http://insecure"), urlCaptor.getAllValues().get(1));
-
-    String log = "Failed to connect to https://insecure over HTTPS. Attempting again with HTTP.";
-    Mockito.verify(logger).accept(LogEvent.info(log));
-    Mockito.verifyNoMoreInteractions(logger);
+    verifyCapturedUrls("https://insecure", "http://insecure");
+    verifyWarnings("Failed to connect to https://insecure over HTTPS. Attempting again with HTTP.");
   }
 
   @Test
@@ -232,8 +217,7 @@ public class FailoverHttpClientTest {
     } catch (ConnectException ex) {
       Assert.assertEquals("my exception", ex.getMessage());
 
-      Assert.assertEquals(1, urlCaptor.getAllValues().size());
-      Assert.assertEquals(new GenericUrl("https://insecure"), urlCaptor.getValue());
+      verifyCapturedUrls("https://insecure");
 
       Mockito.verify(mockHttpRequest, Mockito.times(1)).execute();
       Mockito.verifyNoInteractions(mockInsecureHttpRequest, logger);
@@ -253,8 +237,7 @@ public class FailoverHttpClientTest {
     } catch (ConnectException ex) {
       Assert.assertEquals("my exception", ex.getMessage());
 
-      Assert.assertEquals(1, urlCaptor.getAllValues().size());
-      Assert.assertEquals(new GenericUrl("https://insecure:5000"), urlCaptor.getValue());
+      verifyCapturedUrls("https://insecure:5000");
 
       Mockito.verify(mockHttpRequest, Mockito.times(1)).execute();
       Mockito.verifyNoInteractions(mockInsecureHttpRequest, logger);
@@ -273,8 +256,7 @@ public class FailoverHttpClientTest {
     } catch (ConnectException ex) {
       Assert.assertEquals("Connection timed out", ex.getMessage());
 
-      Assert.assertEquals(1, urlCaptor.getAllValues().size());
-      Assert.assertEquals(new GenericUrl("https://insecure"), urlCaptor.getValue());
+      verifyCapturedUrls("https://insecure");
 
       Mockito.verify(mockHttpRequest, Mockito.times(1)).execute();
       Mockito.verifyNoInteractions(mockInsecureHttpRequest, logger);
@@ -293,9 +275,7 @@ public class FailoverHttpClientTest {
     try (Response response =
         insecureHttpClient.get(new URL("https://insecure"), fakeRequest(null))) {}
 
-    Assert.assertEquals(2, urlCaptor.getAllValues().size());
-    Assert.assertEquals(new GenericUrl("https://insecure"), urlCaptor.getAllValues().get(0));
-    Assert.assertEquals(new GenericUrl("http://insecure"), urlCaptor.getAllValues().get(1));
+    verifyCapturedUrls("https://insecure", "http://insecure");
 
     Assert.assertEquals(2, httpHeadersCaptor.getAllValues().size());
     Assert.assertEquals(
@@ -343,6 +323,79 @@ public class FailoverHttpClientTest {
       Mockito.verify(mockHttpTransport, Mockito.times(1)).shutdown();
       Mockito.verify(mockHttpResponse, Mockito.times(1)).disconnect();
     }
+  }
+
+  @Test
+  public void testFollowFailoverHistory_insecureHttps() throws IOException {
+    FailoverHttpClient httpClient = newHttpClient(true, false);
+
+    Mockito.when(mockHttpRequest.execute())
+        .thenThrow(new SSLException(""))
+        .thenReturn(mockHttpResponse);
+    try (Response response1 = httpClient.get(new URL("https://url"), fakeRequest(null));
+        Response response2 = httpClient.post(new URL("https://url"), fakeRequest(null))) {}
+
+    Mockito.verify(mockHttpRequest, Mockito.times(1)).execute();
+    Mockito.verify(mockInsecureHttpRequest, Mockito.times(2)).execute();
+    verifyCapturedUrls("https://url", "https://url", "https://url");
+    verifyWarnings(
+        "Cannot verify server at https://url. Attempting again with no TLS verification.");
+  }
+
+  @Test
+  public void testFollowFailoverHistory_httpFailoverByConnectionError() throws IOException {
+    FailoverHttpClient httpClient = newHttpClient(true, false);
+
+    Mockito.when(mockHttpRequest.execute())
+        .thenThrow(new ConnectException())
+        .thenReturn(mockHttpResponse);
+
+    try (Response response1 = httpClient.get(new URL("https://url"), fakeRequest(null));
+        Response response2 = httpClient.post(new URL("https://url"), fakeRequest(null))) {}
+
+    Mockito.verify(mockHttpRequest, Mockito.times(3)).execute();
+    verifyCapturedUrls("https://url", "http://url", "http://url");
+    verifyWarnings("Failed to connect to https://url over HTTPS. Attempting again with HTTP.");
+  }
+
+  @Test
+  public void testFollowFailoverHistory_httpFailover() throws IOException {
+    FailoverHttpClient httpClient = newHttpClient(true, false);
+
+    Mockito.when(mockHttpRequest.execute())
+        .thenThrow(new SSLException(""))
+        .thenReturn(mockHttpResponse);
+    Mockito.when(mockInsecureHttpRequest.execute()).thenThrow(new SSLException(""));
+
+    try (Response response1 = httpClient.get(new URL("https://url:123"), fakeRequest(null));
+        Response response2 = httpClient.post(new URL("https://url:123"), fakeRequest(null))) {}
+
+    Mockito.verify(mockHttpRequest, Mockito.times(3)).execute();
+    Mockito.verify(mockInsecureHttpRequest, Mockito.times(1)).execute();
+    verifyCapturedUrls("https://url:123", "https://url:123", "http://url:123", "http://url:123");
+    verifyWarnings(
+        "Cannot verify server at https://url:123. Attempting again with no TLS verification.",
+        "Failed to connect to https://url:123 over HTTPS. Attempting again with HTTP.");
+  }
+
+  @Test
+  public void testFollowFailoverHistory_portsDifferent() throws IOException {
+    FailoverHttpClient httpClient = newHttpClient(true, false);
+
+    Mockito.when(mockHttpRequest.execute())
+        .thenThrow(new SSLException(""))
+        .thenThrow(new SSLException(""))
+        .thenReturn(mockHttpResponse);
+
+    try (Response response1 = httpClient.get(new URL("https://url:1"), fakeRequest(null));
+        Response response2 = httpClient.post(new URL("https://url:2"), fakeRequest(null))) {}
+
+    Mockito.verify(mockHttpRequest, Mockito.times(2)).execute();
+    Mockito.verify(mockInsecureHttpRequest, Mockito.times(2)).execute();
+    verifyCapturedUrls("https://url:1", "https://url:1", "https://url:2", "https://url:2");
+    verifyWarnings(
+        "Cannot verify server at https://url:1. Attempting again with no TLS verification.",
+        "Cannot verify server at https://url:2. Attempting again with no TLS verification.");
   }
 
   private void setUpMocks(
@@ -405,5 +458,18 @@ public class FailoverHttpClientTest {
 
     Assert.assertEquals("crepecake", byteArrayOutputStream.toString(StandardCharsets.UTF_8.name()));
     Assert.assertEquals("crepecake".length(), totalByteCount.longValue());
+  }
+
+  private void verifyWarnings(String... logs) {
+    for (String log : logs) {
+      Mockito.verify(logger, Mockito.times(1)).accept(LogEvent.warn(log));
+    }
+    Mockito.verifyNoMoreInteractions(logger);
+  }
+
+  private void verifyCapturedUrls(String... urls) {
+    List<String> captured =
+        urlCaptor.getAllValues().stream().map(GenericUrl::toString).collect(Collectors.toList());
+    Assert.assertEquals(Arrays.asList(urls), captured);
   }
 }

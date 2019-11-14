@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - Fixed reporting parent build file when `skaffold init` is run on multi-module projects. ([#2091](https://github.com/GoogleContainerTools/jib/pull/2091))
 - Now correctly uses the `war` task if it is enabled and the `bootWar` task is disabled for Spring WAR projects. ([#2096](https://github.com/GoogleContainerTools/jib/issues/2096))
 - `allowInsecureRegistries` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074)
+- Fixed inefficient communications when interacting with insecure registries and servers (when `allowInsecureRegistries` is set). ([#946](https://github.com/GoogleContainerTools/jib/issues/946))
 
 ## 1.7.0
 
