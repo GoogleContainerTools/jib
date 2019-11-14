@@ -67,11 +67,11 @@ public class SyncMapTaskTest {
     Assert.assertNotNull(jibTask);
     Assert.assertEquals(TaskOutcome.SUCCESS, jibTask.getOutcome());
 
-    List<String> potato =
+    List<String> outputLines =
         Splitter.on(System.lineSeparator()).omitEmptyStrings().splitToList(buildResult.getOutput());
-    Assert.assertEquals(2, potato.size());
-    Assert.assertEquals("BEGIN JIB JSON", potato.get(0));
-    return SkaffoldSyncMapTemplate.from(potato.get(1));
+    Assert.assertEquals(2, outputLines.size());
+    Assert.assertEquals("BEGIN JIB JSON", outputLines.get(0));
+    return SkaffoldSyncMapTemplate.from(outputLines.get(1));
   }
 
   private static void assertFilePaths(Path src, AbsoluteUnixPath dest, FileTemplate template) {
