@@ -46,8 +46,8 @@ subprojects {
     // For Google libraries, check <http-client-bom.version>, <google.auth.version>, <guava.version>,
     // ... in https://github.com/googleapis/google-cloud-java/blob/master/google-cloud-clients/pom.xml
     // for best compatibility.
-    GOOGLE_HTTP_CLIENT: '1.33.0',
-    GOOGLE_HTTP_CLIENT_APACHE_V2: '1.33.0',
+    GOOGLE_HTTP_CLIENT: '1.33.1',
+    GOOGLE_HTTP_CLIENT_APACHE_V2: '1.33.1',
     GOOGLE_AUTH_LIBRARY_OAUTH2_HTTP: '0.18.0',
     GUAVA: '28.1-jre',
 
