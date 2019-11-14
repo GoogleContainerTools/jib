@@ -320,7 +320,7 @@ public class FailoverHttpClient {
     HttpTransport transport =
         secureTransport ? secureHttpTransportFactory.get() : insecureHttpTransportFactory.get();
     synchronized (transportsCreated) {
-      transportsCreated.addLast(transport);
+      transportsCreated.add(transport);
     }
     return transport;
   }
