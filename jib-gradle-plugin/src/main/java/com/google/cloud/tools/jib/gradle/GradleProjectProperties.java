@@ -64,7 +64,7 @@ import org.gradle.api.tasks.TaskProvider;
 import org.gradle.jvm.tasks.Jar;
 
 /** Obtains information about a Gradle {@link Project} that uses Jib. */
-class GradleProjectProperties implements ProjectProperties {
+public class GradleProjectProperties implements ProjectProperties {
 
   /** Used to generate the User-Agent header and history metadata. */
   private static final String TOOL_NAME = "jib-gradle-plugin";
@@ -80,8 +80,15 @@ class GradleProjectProperties implements ProjectProperties {
 
   private static final Duration LOGGING_THREAD_SHUTDOWN_TIMEOUT = Duration.ofSeconds(1);
 
-  /** @return a GradleProjectProperties from the given project and logger. */
-  static GradleProjectProperties getForProject(
+  /**
+   * Generate an instance for a gradle project.
+   *
+   * @param project a gradle project
+   * @param logger an gradle logging instance to use for logging during the build
+   * @param tempDirectoryProvider for scratch space during the build
+   * @return a GradleProjectProperties from the given project and logger.
+   */
+  public static GradleProjectProperties getForProject(
       Project project, Logger logger, TempDirectoryProvider tempDirectoryProvider) {
     return new GradleProjectProperties(project, logger, tempDirectoryProvider);
   }
