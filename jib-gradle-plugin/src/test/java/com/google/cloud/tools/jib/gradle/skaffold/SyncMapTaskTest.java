@@ -80,8 +80,9 @@ public class SyncMapTaskTest {
     return SkaffoldSyncMapTemplate.from(outputLines.get(1));
   }
 
-  private static void assertFilePaths(Path src, AbsoluteUnixPath dest, FileTemplate template) {
-    Assert.assertEquals(src.toAbsolutePath().toString(), template.getSrc());
+  private static void assertFilePaths(Path src, AbsoluteUnixPath dest, FileTemplate template)
+      throws IOException {
+    Assert.assertEquals(src.toRealPath().toString(), template.getSrc());
     Assert.assertEquals(dest.toString(), template.getDest());
   }
 
