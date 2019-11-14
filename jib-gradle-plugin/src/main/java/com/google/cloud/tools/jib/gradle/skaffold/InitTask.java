@@ -51,7 +51,8 @@ public class InitTask extends DefaultTask {
     if (!project.equals(project.getRootProject())) {
       skaffoldInitOutput.setProject(project.getName());
     }
-    System.out.println("\nBEGIN JIB JSON");
+    System.out.println();
+    System.out.println("BEGIN JIB JSON");
     System.out.println(skaffoldInitOutput.getJsonString());
   }
 }
