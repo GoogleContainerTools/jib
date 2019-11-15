@@ -7,13 +7,20 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+### Fixed
+
+## 1.8.0
+
+### Changed
+
+- Requires Gradle 4.9 or newer (up from 4.6).
 - Optimized building to a registry with local base images. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
 
 ### Fixed
 
 - Fixed reporting parent build file when `skaffold init` is run on multi-module projects. ([#2091](https://github.com/GoogleContainerTools/jib/pull/2091))
 - Now correctly uses the `war` task if it is enabled and the `bootWar` task is disabled for Spring WAR projects. ([#2096](https://github.com/GoogleContainerTools/jib/issues/2096))
-- `allowInsecureRegistries` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074)
+- `allowInsecureRegistries` and the `sendCredentialsOverHttp` system property are now effective for authentication service server connections. ([#2074](https://github.com/GoogleContainerTools/jib/pull/2074))
 - Fixed inefficient communications when interacting with insecure registries and servers (when `allowInsecureRegistries` is set). ([#946](https://github.com/GoogleContainerTools/jib/issues/946))
 
 ## 1.7.0
