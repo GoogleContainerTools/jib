@@ -13,4 +13,13 @@
     <artifactId>jib-multimodule</artifactId>
     <version>0.1.0</version>
   </parent>
+
+  <dependencies>
+    <dependency>
+      <!-- a module dependency on "shared-library" -->
+      <groupId>com.example</groupId>
+      <artifactId>shared-library</artifactId>
+      <version>0.1.0</version>
+    </dependency>
+  </dependencies>
 </project>
