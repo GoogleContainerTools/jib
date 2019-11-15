@@ -23,6 +23,7 @@
   <modules>
     <module>name-service</module>
     <module>hello-service</module>
+    <module>shared-library</module>
   </modules>
 
   <!-- Uses Java 8. -->
