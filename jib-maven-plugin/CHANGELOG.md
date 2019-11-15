@@ -7,6 +7,12 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+### Fixed
+
+## 1.8.0
+
+## Changed
+
 - Optimized building to a registry with local base images. ([#1913](https://github.com/GoogleContainerTools/jib/issues/1913))
 
 ### Fixed
